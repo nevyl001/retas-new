@@ -64,19 +64,41 @@ function normalizeScheduleDraft(
 }
 
 function inferDurationMinutes(partidos: TorneoExpressPartido[]): number {
-  const times = partidos
-    .map((p) => new Date(partidoScheduleIso(p)).getTime())
-    .filter((t) => Number.isFinite(t))
-    .sort((a, b) => a - b);
+  const uniqueTimes = Array.from(
+    new Set(
+      partidos
+        .map((p) => new Date(partidoScheduleIso(p)).getTime())
+        .filter((t) => Number.isFinite(t))
+    )
+  ).sort((a, b) => a - b);
 
-  for (let i = 1; i < times.length; i += 1) {
-    const gapMinutes = Math.round((times[i] - times[i - 1]) / 60_000);
+  const gaps: number[] = [];
+  for (let i = 1; i < uniqueTimes.length; i += 1) {
+    const gapMinutes = Math.round((uniqueTimes[i]! - uniqueTimes[i - 1]!) / 60_000);
     if (gapMinutes >= 15 && gapMinutes <= 180) {
-      return gapMinutes;
+      gaps.push(gapMinutes);
     }
   }
 
-  return DEFAULT_SCHEDULE.durationMinutes;
+  if (gaps.length === 0) {
+    return DEFAULT_SCHEDULE.durationMinutes;
+  }
+
+  const counts = new Map<number, number>();
+  for (const gap of gaps) {
+    counts.set(gap, (counts.get(gap) ?? 0) + 1);
+  }
+
+  let bestGap = gaps[0]!;
+  let bestCount = 0;
+  for (const [gap, count] of Array.from(counts.entries())) {
+    if (count > bestCount || (count === bestCount && gap < bestGap)) {
+      bestGap = gap;
+      bestCount = count;
+    }
+  }
+
+  return bestGap;
 }
 
 /** Valores iniciales del editor de programación a partir de partidos existentes. */

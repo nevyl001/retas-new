@@ -5,6 +5,7 @@ import {
 } from "./draftScheduleMatch";
 import { assignRoundRobinSchedule } from "./assignRoundRobinSchedule";
 import { validateScheduleInvariants } from "./scheduleInvariants";
+import { partidoTimeInputValue24 } from "./teScheduleTime";
 import type { TorneoExpressBundle, TorneoExpressPartido } from "./types";
 
 function partido(
@@ -34,7 +35,10 @@ describe("reschedule mapping across groups", () => {
   it("reprograma todos los partidos pendientes de ambos grupos", () => {
     const g1 = "grupo-1";
     const g2 = "grupo-2";
-    const bundle: Pick<TorneoExpressBundle, "grupos" | "parejasPorGrupo" | "partidosPorGrupo"> = {
+    const bundle: Pick<
+      TorneoExpressBundle,
+      "grupos" | "parejasPorGrupo" | "partidosPorGrupo"
+    > = {
       grupos: [
         { id: g1, torneo_id: "t1", nombre: "Grupo 1", orden: 0, created_at: "" },
         { id: g2, torneo_id: "t1", nombre: "Grupo 2", orden: 1, created_at: "" },
@@ -89,5 +93,76 @@ describe("reschedule mapping across groups", () => {
     const g2Updates = updates.filter((u) => u.partidoId.startsWith("p2-"));
     expect(g1Updates).toHaveLength(6);
     expect(g2Updates).toHaveLength(6);
+  });
+
+  it("con 45 min y 2 canchas, cada grupo queda en slots intercalados sin mezclar", () => {
+    const g1 = "grupo-1";
+    const g2 = "grupo-2";
+    const draft = buildDraftScheduleMatches([
+      {
+        nombre: "Grupo 1",
+        orden: 0,
+        parejaIds: ["a1", "a2", "a3", "a4"],
+      },
+      {
+        nombre: "Grupo 2",
+        orden: 1,
+        parejaIds: ["b1", "b2", "b3", "b4"],
+      },
+    ]);
+
+    // BD legacy: ronda/orden incorrectos
+    const bundle: Pick<
+      TorneoExpressBundle,
+      "grupos" | "partidosPorGrupo"
+    > = {
+      grupos: [
+        { id: g1, torneo_id: "t1", nombre: "Grupo 1", orden: 0, created_at: "" },
+        { id: g2, torneo_id: "t1", nombre: "Grupo 2", orden: 1, created_at: "" },
+      ],
+      partidosPorGrupo: {
+        [g1]: draft
+          .filter((m) => m.groupKey === 0)
+          .map((m, i) =>
+            partido(`p1-${i}`, g1, m.parejaLocalId, m.parejaVisitanteId, 1, 1)
+          ),
+        [g2]: draft
+          .filter((m) => m.groupKey === 1)
+          .map((m, i) =>
+            partido(`p2-${i}`, g2, m.parejaLocalId, m.parejaVisitanteId, 1, 1)
+          ),
+      },
+    };
+
+    const scheduled = assignRoundRobinSchedule({
+      matches: draft,
+      courts: ["1", "Estadio"],
+      date: "2026-08-24",
+      startTime: "09:00",
+      durationMinutes: 45,
+    });
+    validateScheduleInvariants(draft, scheduled);
+
+    const updates = mapScheduledMatchesToPartidoUpdates(scheduled, bundle);
+    expect(updates).toHaveLength(12);
+
+    const g1Times = Array.from(
+      new Set(
+        updates
+          .filter((u) => u.partidoId.startsWith("p1-"))
+          .map((u) => partidoTimeInputValue24(u.programado_en))
+      )
+    ).sort();
+    const g2Times = Array.from(
+      new Set(
+        updates
+          .filter((u) => u.partidoId.startsWith("p2-"))
+          .map((u) => partidoTimeInputValue24(u.programado_en))
+      )
+    ).sort();
+
+    expect(g1Times).toEqual(["09:00", "10:30", "12:00"]);
+    expect(g2Times).toEqual(["09:45", "11:15", "12:45"]);
+    expect(updates.every((u) => u.ronda >= 1 && u.orden >= 1)).toBe(true);
   });
 });

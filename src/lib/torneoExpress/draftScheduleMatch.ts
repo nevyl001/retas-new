@@ -129,6 +129,8 @@ export type ScheduledPartidoUpdate = {
   partidoId: string;
   programado_en: string;
   cancha: string;
+  ronda: number;
+  orden: number;
 };
 
 /** Mapea la programación calculada a ids de partido en BD (sin duplicar). */
@@ -154,6 +156,8 @@ export function mapScheduledMatchesToPartidoUpdates(
       partidoId: partido.id,
       programado_en: match.programado_en,
       cancha: match.cancha,
+      ronda: match.ronda,
+      orden: match.orden,
     });
   }
 
@@ -195,4 +199,30 @@ export function buildScheduleMatchesFromBundle(
   }
 
   return matches;
+}
+
+/** Updates directos desde el scheduler cuando el draft ya trae partidoId. */
+export function mapPersistedScheduleToPartidoUpdates(
+  scheduled: Array<DraftScheduleMatch & { partidoId?: string }>
+): ScheduledPartidoUpdate[] {
+  const updates: ScheduledPartidoUpdate[] = [];
+  const used = new Set<string>();
+
+  for (const match of scheduled) {
+    const partidoId = match.partidoId?.trim();
+    const programadoEn = match.programado_en?.trim();
+    const cancha = match.cancha?.trim();
+    if (!partidoId || !programadoEn || !cancha) continue;
+    if (used.has(partidoId)) continue;
+    used.add(partidoId);
+    updates.push({
+      partidoId,
+      programado_en: programadoEn,
+      cancha,
+      ronda: match.ronda,
+      orden: match.orden,
+    });
+  }
+
+  return updates;
 }

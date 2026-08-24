@@ -1471,6 +1471,8 @@ export async function rescheduleTorneoExpressGruposPartidos(
     throw new Error("Cada grupo debe tener al menos 2 parejas para reprogramar.");
   }
 
+  // Regenera RR canónico (ronda/orden) y programa; evita horarios rotos si la BD
+  // tenía ronda/orden duplicados o desfasados.
   const draftMatches = buildDraftScheduleMatches(assignments);
   if (draftMatches.length === 0) {
     throw new Error("No hay partidos para reprogramar.");
@@ -1527,6 +1529,8 @@ export async function rescheduleTorneoExpressGruposPartidos(
         .update({
           programado_en: row.programado_en,
           cancha: row.cancha,
+          ronda: row.ronda,
+          orden: row.orden,
         })
         .eq("id", row.partidoId);
       if (error) {

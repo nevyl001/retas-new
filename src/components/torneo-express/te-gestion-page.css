@@ -478,6 +478,28 @@
   font-size: 0.875rem;
 }
 
+/* Modal va a portal (fuera de .te-gestion-page): mismos estilos del campo duración */
+.te-reprogramar-modal__duration {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.te-reprogramar-modal__duration input {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 10rem;
+}
+
+.te-reprogramar-modal__unit {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  color: var(--text-secondary, #6e6e73);
+  font-size: 0.875rem;
+}
+
 .te-gestion-page .te-reprogramar-modal__courts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

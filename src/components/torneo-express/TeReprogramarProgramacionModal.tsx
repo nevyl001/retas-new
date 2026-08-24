@@ -1,10 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { TorneoExpressBundle } from "../../lib/torneoExpress/types";
-import {
-  assignRoundRobinSchedule,
-  defaultCourtNames,
-  validateCourtNames,
-} from "../../lib/torneoExpress/assignRoundRobinSchedule";
 import { buildDraftScheduleMatches, buildGrupoAssignmentsFromBundle } from "../../lib/torneoExpress/draftScheduleMatch";
 import {
   inferScheduleDraftFromPartidos,
@@ -14,6 +9,11 @@ import {
 import { validateScheduleInvariants } from "../../lib/torneoExpress/scheduleInvariants";
 import { PARTIDO_CANCHA_OCUPADA_MSG } from "../../lib/torneoExpress/partidoCourtSlotConflict";
 import { Button, Modal } from "../ui";
+import {
+  assignRoundRobinSchedule,
+  defaultCourtNames,
+  validateCourtNames,
+} from "../../lib/torneoExpress/assignRoundRobinSchedule";
 
 type TeReprogramarProgramacionModalProps = {
   open: boolean;
@@ -184,7 +184,10 @@ export const TeReprogramarProgramacionModal: React.FC<
       <div className="te-reprogramar-modal">
         <p className="te-reprogramar-modal__lead">
           Ajusta el día, la hora de inicio, la duración y las canchas. Se
-          recalculan todos los partidos pendientes de todos los grupos.
+          recalculan todos los partidos pendientes de todos los grupos. Con 2
+          grupos y 2 canchas, los grupos se intercalan cada N minutos de
+          duración (ej. 45 → Grupo 1 a las 9:00 / 10:30, Grupo 2 a las 9:45 /
+          11:15).
         </p>
         {playedCount > 0 ? (
           <p className="te-reprogramar-modal__note" role="note">
