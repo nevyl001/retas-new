@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { dedupePartidosExpress } from "../../lib/torneoExpress/roundRobin";
 import {
+  hasPairSameSlotConflict,
+  reassignScheduleSlotsOnReorder,
+  REORDER_PAIR_SLOT_CONFLICT_MSG,
+} from "../../lib/torneoExpress/reorderPartidosSlots";
+import {
   canchaDraftFromStored,
   formatCanchaDisplay,
   normalizeCanchaForSave,
@@ -16,6 +21,12 @@ import {
   getPartidoSets,
   matchWinnerSideFromPartido,
 } from "../../lib/torneoExpress/partidoSets";
+import {
+  assertPartidoCourtSlotAvailable,
+  findConflictingPartidoIds,
+  planCanchaChange,
+  PARTIDO_CANCHA_OCUPADA_MSG,
+} from "../../lib/torneoExpress/partidoCourtSlotConflict";
 import type {
   PartidoSetScore,
   TorneoExpressGrupoPareja,
@@ -47,8 +58,15 @@ interface PartidosGrupoProps {
     programadoEn: string | null
   ) => Promise<void>;
   onSaveOrden?: (
-    updates: Array<{ id: string; orden: number }>
+    updates: Array<{
+      id: string;
+      orden: number;
+      programado_en?: string | null;
+      cancha?: string | null;
+    }>
   ) => Promise<void>;
+  /** Partidos del torneo usados para validar cancha+horario (todos los grupos). */
+  partidosCourtCheckScope?: TorneoExpressPartido[];
 }
 
 function PartidoStatusBadge({
@@ -72,6 +90,7 @@ function PartidoCanchaField({
   canchaEditable,
   savingCancha,
   onSaveCancha,
+  courtCheckScope,
   forceEdit = false,
   onClose,
 }: {
@@ -79,6 +98,7 @@ function PartidoCanchaField({
   canchaEditable: boolean;
   savingCancha: boolean;
   onSaveCancha?: PartidosGrupoProps["onSaveCancha"];
+  courtCheckScope: TorneoExpressPartido[];
   forceEdit?: boolean;
   onClose?: () => void;
 }) {
@@ -106,16 +126,26 @@ function PartidoCanchaField({
   const guardarCancha = () => {
     if (!onSaveCancha) return;
     const next = normalizeCanchaForSave(draft);
-    const prev = normalizeCanchaForSave(canchaDraftFromStored(partido.cancha));
-    if (next === prev) {
+    let plan;
+    try {
+      plan = planCanchaChange(partido, next, courtCheckScope);
+    } catch (e) {
+      setCanchaError(
+        e instanceof Error ? e.message : PARTIDO_CANCHA_OCUPADA_MSG
+      );
+      return;
+    }
+    if (plan.kind === "noop") {
       closeEdit();
       return;
     }
     setCanchaError(null);
-    void onSaveCancha(partido.id, next)
+    void onSaveCancha(partido.id, plan.cancha)
       .then(() => closeEdit())
-      .catch(() => {
-        setCanchaError("No se pudo guardar la cancha");
+      .catch((e) => {
+        setCanchaError(
+          e instanceof Error ? e.message : "No se pudo guardar la cancha"
+        );
         setDraft(canchaDraftFromStored(partido.cancha));
       });
   };
@@ -178,6 +208,7 @@ function PartidoHorarioField({
   horarioEditable,
   savingProgramado,
   onSaveProgramado,
+  courtCheckScope,
   forceEdit = false,
   onClose,
 }: {
@@ -185,6 +216,7 @@ function PartidoHorarioField({
   horarioEditable: boolean;
   savingProgramado: boolean;
   onSaveProgramado?: PartidosGrupoProps["onSaveProgramado"];
+  courtCheckScope: TorneoExpressPartido[];
   forceEdit?: boolean;
   onClose?: () => void;
 }) {
@@ -222,6 +254,19 @@ function PartidoHorarioField({
       setHorarioError("Revisa la fecha y la hora");
       return;
     }
+    try {
+      assertPartidoCourtSlotAvailable(
+        partido.id,
+        next,
+        partido.cancha,
+        courtCheckScope
+      );
+    } catch (e) {
+      setHorarioError(
+        e instanceof Error ? e.message : PARTIDO_CANCHA_OCUPADA_MSG
+      );
+      return;
+    }
     const prevMs = new Date(partidoScheduleIso(partido)).getTime();
     const nextMs = new Date(next).getTime();
     if (prevMs === nextMs) {
@@ -231,8 +276,10 @@ function PartidoHorarioField({
     setHorarioError(null);
     void onSaveProgramado(partido.id, next)
       .then(() => closeEdit())
-      .catch(() => {
-        setHorarioError("No se pudo guardar fecha y hora");
+      .catch((e) => {
+        setHorarioError(
+          e instanceof Error ? e.message : "No se pudo guardar fecha y hora"
+        );
         const d = programadoDraftFromPartido(partido);
         setDraftDate(d.date);
         setDraftTime(d.time);
@@ -307,11 +354,13 @@ function PartidoRow({
   onSave,
   onSaveCancha,
   onSaveProgramado,
+  courtCheckScope,
   canchaEditable,
   horarioEditable,
   savingCancha,
   savingProgramado,
   dragHandle,
+  courtConflict = false,
 }: {
   partido: TorneoExpressPartido;
   localLabel: string;
@@ -325,6 +374,8 @@ function PartidoRow({
   enJuego: boolean;
   canchaEditable: boolean;
   horarioEditable: boolean;
+  courtCheckScope: TorneoExpressPartido[];
+  courtConflict?: boolean;
   dragHandle?: React.ReactNode;
   onSave?: PartidosGrupoProps["onSaveResultado"];
   onSaveCancha?: PartidosGrupoProps["onSaveCancha"];
@@ -362,7 +413,11 @@ function PartidoRow({
 
   return (
     <>
-      <div className="te-partido-row te-partido-card">
+      <div
+        className={`te-partido-row te-partido-card${
+          courtConflict ? " te-partido-card--court-conflict" : ""
+        }`}
+      >
         <div className="te-partido-row__toolbar">
           <div className="te-partido-row__toolbar-start">
             {dragHandle ?? null}
@@ -372,6 +427,14 @@ function PartidoRow({
         </div>
 
         <div className="te-partido-meta-chips">
+          {courtConflict ? (
+            <span
+              className="te-partido-chip te-partido-chip--conflict"
+              role="status"
+            >
+              Cancha ocupada
+            </span>
+          ) : null}
           {horarioEditable && onSaveProgramado ? (
             <button
               type="button"
@@ -480,6 +543,7 @@ function PartidoRow({
                 horarioEditable={horarioEditable}
                 savingProgramado={savingProgramado}
                 onSaveProgramado={onSaveProgramado}
+                courtCheckScope={courtCheckScope}
                 forceEdit
                 onClose={() => setHorarioEditOpen(false)}
               />
@@ -490,6 +554,7 @@ function PartidoRow({
                 canchaEditable={canchaEditable}
                 savingCancha={savingCancha}
                 onSaveCancha={onSaveCancha}
+                courtCheckScope={courtCheckScope}
                 forceEdit
                 onClose={() => setCanchaEditOpen(false)}
               />
@@ -557,10 +622,25 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
   onSaveCancha,
   onSaveProgramado,
   onSaveOrden,
+  partidosCourtCheckScope,
 }) => {
   const partidosLimpios = useMemo(
     () => dedupePartidosExpress(partidos),
     [partidos]
+  );
+  const courtCheckScope = useMemo(
+    () =>
+      dedupePartidosExpress(
+        partidosCourtCheckScope && partidosCourtCheckScope.length > 0
+          ? partidosCourtCheckScope
+          : partidos
+      ),
+    [partidos, partidosCourtCheckScope]
+  );
+
+  const conflictingPartidoIds = useMemo(
+    () => findConflictingPartidoIds(courtCheckScope),
+    [courtCheckScope]
   );
   const duplicadosOcultos = partidos.length - partidosLimpios.length;
 
@@ -569,6 +649,16 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [pendingOrderSave, setPendingOrderSave] = useState(false);
+
+  const conflictMatchLabels = useMemo(() => {
+    return localPartidos
+      .map((partido, index) =>
+        conflictingPartidoIds.has(partido.id)
+          ? `Partido ${String(index + 1).padStart(2, "0")}`
+          : null
+      )
+      .filter((label): label is string => Boolean(label));
+  }, [localPartidos, conflictingPartidoIds]);
 
   useEffect(() => {
     if (!pendingOrderSave && !savingOrden) {
@@ -599,6 +689,8 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
       const updates = ordered.map((p, index) => ({
         id: p.id,
         orden: index + 1,
+        programado_en: p.programado_en ?? null,
+        cancha: p.cancha ?? null,
       }));
       try {
         await onSaveOrden(updates);
@@ -617,9 +709,15 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
   const reorderPartidos = useCallback(
     async (fromIndex: number, toIndex: number) => {
       if (fromIndex === toIndex) return;
-      const next = [...localPartidos];
-      const [moved] = next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, moved);
+      const next = reassignScheduleSlotsOnReorder(
+        localPartidos,
+        fromIndex,
+        toIndex
+      );
+      if (hasPairSameSlotConflict(next)) {
+        setOrdenError(REORDER_PAIR_SLOT_CONFLICT_MSG);
+        return;
+      }
       setLocalPartidos(next);
       await persistOrder(next);
     },
@@ -667,7 +765,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
         <p className="te-partidos-order-hint">
           Arrastra el icono{" "}
           <TablerIcon name="grip-vertical" size={14} aria-hidden={false} /> para
-          cambiar el orden de los juegos.
+          que el partido ocupe ese horario y cancha.
         </p>
       ) : null}
 
@@ -680,6 +778,19 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
       ) : null}
 
       {ordenError ? <p className="te-error">{ordenError}</p> : null}
+
+      {conflictingPartidoIds.size > 0 ? (
+        <div className="te-partidos-court-conflict-banner" role="alert">
+          <span className="te-partidos-court-conflict-banner__label">
+            Conflicto de programación
+          </span>
+          <p className="te-partidos-court-conflict-banner__text">
+            {conflictMatchLabels.length > 0
+              ? `Corrige ${conflictMatchLabels.join(" y ")}: misma cancha y horario.`
+              : "Corrige los partidos marcados en rojo: misma cancha y horario."}
+          </p>
+        </div>
+      ) : null}
 
       {localPartidos.map((partido, index) => (
         <div
@@ -715,6 +826,8 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
             onSave={onSaveResultado}
             onSaveCancha={onSaveCancha}
             onSaveProgramado={onSaveProgramado}
+            courtCheckScope={courtCheckScope}
+            courtConflict={conflictingPartidoIds.has(partido.id)}
             dragHandle={
               showReorder ? (
                 <button

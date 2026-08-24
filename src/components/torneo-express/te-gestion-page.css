@@ -426,6 +426,83 @@
   margin-bottom: 0.45rem;
 }
 
+.te-gestion-page .te-gestion-section-head--partidos,
+.te-gestion-page .te-gestion-layout__partidos .te-gestion-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+}
+
+.te-gestion-page .te-gestion-edit-schedule-btn {
+  flex: 0 0 auto;
+}
+
+.te-gestion-page .te-reprogramar-modal__lead {
+  margin: 0 0 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.te-gestion-page .te-reprogramar-modal__note {
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--ro-radius-sm, 8px);
+  background: color-mix(in srgb, var(--text-primary) 4%, transparent);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.te-gestion-page .te-reprogramar-modal__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.te-gestion-page .te-reprogramar-modal__duration {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.te-gestion-page .te-reprogramar-modal__duration input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.te-gestion-page .te-reprogramar-modal__unit {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.te-gestion-page .te-reprogramar-modal__courts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.te-gestion-page .te-reprogramar-modal__error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ro-error, #c0392b);
+}
+
+.te-gestion-page .te-reprogramar-modal__actions {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .te-gestion-page .te-reprogramar-modal__fields,
+  .te-gestion-page .te-reprogramar-modal__courts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .te-gestion-page .te-gestion-layout__standings {
   padding-top: 0.85rem;
   border-top: 1px solid var(--ro-border-subtle);
@@ -657,6 +734,7 @@
 
 .te-gestion-page .te-partidos-list > .te-partidos-order-hint,
 .te-gestion-page .te-partidos-list > .te-partidos-dedupe-hint,
+.te-gestion-page .te-partidos-list > .te-partidos-court-conflict-banner,
 .te-gestion-page .te-partidos-list > .te-error {
   grid-column: 1 / -1;
 }
@@ -1176,7 +1254,67 @@
 .te-gestion-page .te-partido-meta-edit__error {
   margin: 0.5rem 0 0;
   font-size: 0.75rem;
-  color: var(--error, var(--loss));
+  color: var(--text-secondary, var(--ro-text-secondary));
+}
+
+.te-gestion-page .te-partidos-court-conflict-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.85rem;
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0 0.7rem 0.95rem;
+  border: none;
+  border-left: 2px solid var(--error, var(--loss, #b42318));
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-primary, #111);
+}
+
+.te-gestion-page .te-partidos-court-conflict-banner__label {
+  flex: 0 0 auto;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--error, var(--loss, #b42318));
+}
+
+.te-gestion-page .te-partidos-court-conflict-banner__text {
+  margin: 0;
+  flex: 1 1 12rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-secondary, var(--ro-text-secondary));
+  font-weight: 400;
+}
+
+.te-gestion-page .te-partido-card--court-conflict {
+  border-color: color-mix(
+    in srgb,
+    var(--error, var(--loss, #b42318)) 38%,
+    var(--ro-border-subtle)
+  );
+  box-shadow: inset 2px 0 0 var(--error, var(--loss, #b42318));
+  background: color-mix(
+    in srgb,
+    var(--error, var(--loss, #b42318)) 3.5%,
+    var(--ro-bg-elevated)
+  );
+}
+
+.te-gestion-page .te-partido-chip--conflict {
+  margin: 0;
+  padding: 0.22rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--error, var(--loss, #b42318)) 35%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--error, var(--loss, #b42318)) 8%, transparent);
+  color: var(--error, var(--loss, #b42318));
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
 }
 
 /* Anular estilos legacy (cajas doradas duplicadas) dentro de gestión */

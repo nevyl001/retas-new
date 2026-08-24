@@ -36,7 +36,7 @@ export const CrearTorneoExpressPage: React.FC = () => {
         </div>
 
         <section
-          className="te-inicio-crear te-inicio-crear__shell"
+          className="te-inicio-crear te-inicio-crear__shell te-inicio-crear--standalone"
           aria-label="Formulario para crear torneo"
         >
           <CrearTorneoExpress />

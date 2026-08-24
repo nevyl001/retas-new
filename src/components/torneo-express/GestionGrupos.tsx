@@ -25,6 +25,7 @@ import { TePageShell } from "./TePageShell";
 import { TorneoExpressBracketModal } from "./TorneoExpressBracketModal";
 import { TorneoExpressNotificacionesPanel } from "./TorneoExpressNotificacionesPanel";
 import { TorneoExpressResetEliminatoriaModal } from "./TorneoExpressResetEliminatoriaModal";
+import { TeReprogramarProgramacionModal } from "./TeReprogramarProgramacionModal";
 import { torneoEstadoBadgeVariant } from "./teEstadoBadge";
 import {
   navigateTorneoExpress,
@@ -93,6 +94,8 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     reiniciandoEliminatoria,
     saveGrupoNombre,
     savingGrupoNombreId,
+    rescheduleGruposProgramacion,
+    savingReprogramacion,
   } = useTorneoExpress(torneoId, { publicMode: false, realtime: true });
 
   const [activeGrupoId, setActiveGrupoId] = useState<string | null>(null);
@@ -101,6 +104,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const [copyMsg, setCopyMsg] = useState("");
   const [bracketOpen, setBracketOpen] = useState(false);
   const [resetElimOpen, setResetElimOpen] = useState(false);
+  const [reprogramOpen, setReprogramOpen] = useState(false);
   const [vista, setVista] = useState<"grupos" | "eliminatoria">("grupos");
   const [mobileTab, setMobileTab] = useState<TeMobileTabId>("resumen");
   const isMobile = useMobileViewport(767);
@@ -129,6 +133,20 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const fasePill = useMemo(
     () => torneoExpressFaseLabel(faseTorneo),
     [faseTorneo]
+  );
+
+  const puedeEditarProgramacion =
+    faseTorneo === "grupos" &&
+    bundle?.torneo.estado !== "finalizado" &&
+    partidosProgramadoDisponible &&
+    partidosCanchaDisponible;
+
+  const allTorneoPartidos = useMemo(
+    () =>
+      bundle
+        ? Object.values(bundle.partidosPorGrupo).flat()
+        : [],
+    [bundle]
   );
 
   const puedeFinalizarTorneo = useMemo(() => {
@@ -357,9 +375,23 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         <h3 className="te-grupos-card__partidos-title te-label-section">
           Partidos
         </h3>
-        <p className="te-grupos-card__partidos-hint">
-          Captura resultados, horarios y canchas de cada juego.
-        </p>
+        <div className="te-gestion-section-head te-gestion-section-head--partidos">
+          <p className="te-grupos-card__partidos-hint">
+            Captura resultados, horarios y canchas de cada juego. También puedes
+            reprogramar todos los partidos pendientes.
+          </p>
+          {puedeEditarProgramacion ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="te-gestion-edit-schedule-btn"
+              onClick={() => setReprogramOpen(true)}
+            >
+              Editar programación
+            </Button>
+          ) : null}
+        </div>
         {faseTorneo !== "grupos" ? (
           <p className="te-partidos-migration-hint" role="status">
             La eliminatoria ya fue generada. Para corregir resultados de grupos
@@ -395,6 +427,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         <PartidosGrupo
           partidos={bundle!.partidosPorGrupo[grupo.id] ?? []}
           parejas={bundle!.parejasPorGrupo[grupo.id] ?? []}
+          partidosCourtCheckScope={allTorneoPartidos}
           editable={faseTorneo === "grupos"}
           allowReorder={partidosOrdenDisponible}
           canchaEditable={partidosCanchaDisponible}
@@ -1112,12 +1145,26 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
             <div className="te-grupos-card__body te-gestion-layout te-gestion-layout--stack">
               <section className="te-gestion-layout__partidos">
                 <div className="te-gestion-section-head">
-                  <h3 className="te-grupos-card__partidos-title te-label-section">
-                    Partidos del grupo
-                  </h3>
-                  <p className="te-grupos-card__partidos-hint">
-                    Captura resultados, horarios y canchas de cada juego.
-                  </p>
+                  <div>
+                    <h3 className="te-grupos-card__partidos-title te-label-section">
+                      Partidos del grupo
+                    </h3>
+                    <p className="te-grupos-card__partidos-hint">
+                      Captura resultados, horarios y canchas de cada juego.
+                      También puedes reprogramar todos los partidos pendientes.
+                    </p>
+                  </div>
+                  {puedeEditarProgramacion ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="te-gestion-edit-schedule-btn"
+                      onClick={() => setReprogramOpen(true)}
+                    >
+                      Editar programación
+                    </Button>
+                  ) : null}
                 </div>
                 {faseTorneo !== "grupos" ? (
                   <p className="te-partidos-migration-hint" role="status">
@@ -1155,6 +1202,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                 <PartidosGrupo
                   partidos={bundle.partidosPorGrupo[grupo.id] ?? []}
                   parejas={bundle.parejasPorGrupo[grupo.id] ?? []}
+                  partidosCourtCheckScope={allTorneoPartidos}
                   editable={faseTorneo === "grupos"}
                   allowReorder={partidosOrdenDisponible}
                   canchaEditable={partidosCanchaDisponible}
@@ -1247,6 +1295,31 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
             "Eliminatoria confirmada. Los avisos por email se envían automáticamente.",
             "success"
           );
+        }}
+      />
+
+      <TeReprogramarProgramacionModal
+        open={reprogramOpen}
+        saving={savingReprogramacion}
+        bundle={bundle}
+        onCancel={() => setReprogramOpen(false)}
+        onConfirm={(schedule) => {
+          void rescheduleGruposProgramacion(schedule)
+            .then((count) => {
+              setReprogramOpen(false);
+              showActionToast(
+                `Programación actualizada en ${count} partido${
+                  count === 1 ? "" : "s"
+                }.`,
+                "success"
+              );
+            })
+            .catch(() => {
+              showActionToast(
+                "No se pudo aplicar la programación. Revisa los datos.",
+                "error"
+              );
+            });
         }}
       />
 

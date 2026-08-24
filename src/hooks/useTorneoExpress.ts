@@ -25,7 +25,9 @@ import {
   savePartidoProgramado,
   savePartidoResultado,
   savePartidosOrden,
+  rescheduleTorneoExpressGruposPartidos,
   subscribeTorneoExpress,
+  type TeCreateScheduleInput,
 } from "../services/torneoExpressService";
 
 export function useTorneoExpress(
@@ -69,6 +71,7 @@ export function useTorneoExpress(
   const [savingGrupoNombreId, setSavingGrupoNombreId] = useState<string | null>(
     null
   );
+  const [savingReprogramacion, setSavingReprogramacion] = useState(false);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
 
   const reload = useCallback(async (opts?: { silent?: boolean }) => {
@@ -257,8 +260,39 @@ export function useTorneoExpress(
     [reload]
   );
 
+  const rescheduleGruposProgramacion = useCallback(
+    async (schedule: TeCreateScheduleInput) => {
+      if (!torneoId) return 0;
+      setSavingReprogramacion(true);
+      setError(null);
+      try {
+        const count = await rescheduleTorneoExpressGruposPartidos(
+          torneoId,
+          schedule
+        );
+        await reload();
+        return count;
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "No se pudo reprogramar los partidos"
+        );
+        throw e;
+      } finally {
+        setSavingReprogramacion(false);
+      }
+    },
+    [torneoId, reload]
+  );
+
   const saveOrden = useCallback(
-    async (updates: Array<{ id: string; orden: number }>) => {
+    async (
+      updates: Array<{
+        id: string;
+        orden: number;
+        programado_en?: string | null;
+        cancha?: string | null;
+      }>
+    ) => {
       setSavingOrden(true);
       setError(null);
       try {
@@ -459,6 +493,7 @@ export function useTorneoExpress(
     saveCancha,
     saveProgramado,
     saveOrden,
+    rescheduleGruposProgramacion,
     saveGrupoNombre,
     saveEliminatoriaResultado,
     saveEliminatoriaCancha,
@@ -479,6 +514,7 @@ export function useTorneoExpress(
     reiniciandoEliminatoria,
     savingOrden,
     savingGrupoNombreId,
+    savingReprogramacion,
     partidosOrdenDisponible,
     partidosCanchaDisponible,
     partidosProgramadoDisponible,

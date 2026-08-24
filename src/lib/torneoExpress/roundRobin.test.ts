@@ -2,6 +2,7 @@ import {
   dedupePartidosExpress,
   expectedMatchCount,
   generateBalancedRoundRobin,
+  sortPartidosByOrden,
 } from "./roundRobin";
 
 describe("generateBalancedRoundRobin", () => {
@@ -87,5 +88,59 @@ describe("dedupePartidosExpress", () => {
       },
     ];
     expect(dedupePartidosExpress(list)).toHaveLength(1);
+  });
+});
+
+describe("sortPartidosByOrden", () => {
+  it("ordena por horario programado (no solo por orden)", () => {
+    const list = [
+      {
+        id: "late",
+        grupo_id: "g",
+        pareja_local_id: "a",
+        pareja_visitante_id: "b",
+        puntos_local: null,
+        puntos_visitante: null,
+        ganador_id: null,
+        estado: "pendiente" as const,
+        orden: 1,
+        ronda: 1,
+        cancha: "1",
+        programado_en: "2026-08-24T16:30:00.000Z",
+        created_at: "2026-08-24T12:00:00.000Z",
+      },
+      {
+        id: "early",
+        grupo_id: "g",
+        pareja_local_id: "c",
+        pareja_visitante_id: "d",
+        puntos_local: null,
+        puntos_visitante: null,
+        ganador_id: null,
+        estado: "pendiente" as const,
+        orden: 2,
+        ronda: 2,
+        cancha: "Estadio",
+        programado_en: "2026-08-24T14:30:00.000Z",
+        created_at: "2026-08-24T12:00:00.000Z",
+      },
+      {
+        id: "mid",
+        grupo_id: "g",
+        pareja_local_id: "e",
+        pareja_visitante_id: "f",
+        puntos_local: null,
+        puntos_visitante: null,
+        ganador_id: null,
+        estado: "pendiente" as const,
+        orden: 3,
+        ronda: 1,
+        cancha: "Estadio",
+        programado_en: "2026-08-24T14:30:00.000Z",
+        created_at: "2026-08-24T12:00:00.000Z",
+      },
+    ];
+    const sorted = sortPartidosByOrden(list);
+    expect(sorted.map((p) => p.id)).toEqual(["early", "mid", "late"]);
   });
 });

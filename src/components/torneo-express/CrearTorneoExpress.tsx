@@ -26,8 +26,11 @@ import {
   TE_EXPRESS_DRAFT_TOURNAMENT_NAME,
   clearTeWizardDraft,
   loadTeWizardDraft,
+  normalizeTeWizardScheduleDraft,
+  resolveActiveCourtNames,
   saveTeWizardDraft,
   teDraftTournamentStorageKey,
+  type TeWizardScheduleDraft,
   type TeWizardStepId,
 } from "./crearTorneoExpressTypes";
 import { persistTournamentGameMode } from "../../lib/gameModeMapping";
@@ -47,6 +50,15 @@ import {
 } from "../../lib/torneoExpress/numGruposInput";
 import { TE_CREATE_NOTIFS_ENABLED } from "../../lib/torneoExpress/teCreateNotifs";
 import { Button } from "../ui";
+import {
+  assignRoundRobinSchedule,
+  buildSchedulePreviewSummary,
+  defaultCourtNames,
+  validateCourtNames,
+} from "../../lib/torneoExpress/assignRoundRobinSchedule";
+import { buildDraftScheduleMatches } from "../../lib/torneoExpress/draftScheduleMatch";
+import { validateScheduleInvariants } from "../../lib/torneoExpress/scheduleInvariants";
+import { formatPairDisplay } from "../../lib/torneoExpress/standings";
 
 type PlayerWithContact = Player & {
   email_verified?: boolean | null;
@@ -56,7 +68,8 @@ const WIZARD_STEPS = [
   { id: "datos", label: "Datos", num: 1 },
   { id: "parejas", label: "Parejas", num: 2 },
   { id: "grupos", label: "Grupos", num: 3 },
-  { id: "crear", label: "Crear", num: 4 },
+  { id: "programacion", label: "Horarios", num: 4 },
+  { id: "confirmar", label: "Crear", num: 5 },
 ] as const;
 
 type WizardStepId = TeWizardStepId;
@@ -109,7 +122,12 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   const [wizardStep, setWizardStep] = useState<WizardStepId>(
     initialDraft?.wizardStep ?? "datos"
   );
+  const [schedule, setSchedule] = useState<TeWizardScheduleDraft>(
+    normalizeTeWizardScheduleDraft(initialDraft?.schedule)
+  );
   const [loadingJugadores, setLoadingJugadores] = useState(false);
+  /** Evita crear el torneo con un doble clic al pasar de programación → confirmar. */
+  const [confirmArmed, setConfirmArmed] = useState(false);
 
   const jugadoresEnParejasSinEmail = useMemo(() => {
     const ids = new Set<string>();
@@ -159,6 +177,15 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
       setLoadingJugadores(false);
     }
   }, [user?.id, handleJugadoresChange]);
+
+  useEffect(() => {
+    if (wizardStep !== "confirmar") {
+      setConfirmArmed(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setConfirmArmed(true), 450);
+    return () => window.clearTimeout(timer);
+  }, [wizardStep]);
 
   useEffect(() => {
     if (!user?.id || initializing) return;
@@ -294,6 +321,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
       numGrupos,
       assignments,
       draftTournamentId,
+      schedule,
     });
   }, [
     initializing,
@@ -304,6 +332,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     numGrupos,
     assignments,
     draftTournamentId,
+    schedule,
   ]);
 
   const jugadoresForPairsRef = useRef(jugadores);
@@ -337,6 +366,100 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     assignments.forEach((g) => g.parejaIds.forEach((id) => s.add(id)));
     return s;
   }, [assignments]);
+
+  const pairLabelById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of parejas) {
+      map.set(
+        p.id,
+        formatPairDisplay(p.jugador1.name, p.jugador2.name)
+      );
+    }
+    return map;
+  }, [parejas]);
+
+  const activeCourtNames = useMemo(
+    () => resolveActiveCourtNames(schedule),
+    [schedule]
+  );
+
+  const scheduleCourtError = useMemo(
+    () => validateCourtNames(activeCourtNames),
+    [activeCourtNames]
+  );
+
+  const gruposIncomplete = useMemo(() => {
+    if (parejas.length < 2) return true;
+    return assignments.some((g) => g.parejaIds.length < 2);
+  }, [parejas.length, assignments]);
+
+  const schedulePreview = useMemo(() => {
+    if (gruposIncomplete || scheduleCourtError) return null;
+    if (!schedule.playDate.trim() || !schedule.startTime.trim()) return null;
+    if (!Number.isFinite(schedule.durationMinutes) || schedule.durationMinutes <= 0) {
+      return null;
+    }
+    if (activeCourtNames.length === 0) return null;
+
+    try {
+      const draftMatches = buildDraftScheduleMatches(assignments);
+      if (draftMatches.length === 0) return null;
+
+      const scheduled = assignRoundRobinSchedule({
+        matches: draftMatches,
+        courts: activeCourtNames,
+        date: schedule.playDate.trim(),
+        startTime: schedule.startTime.trim(),
+        durationMinutes: Math.floor(schedule.durationMinutes),
+      });
+      validateScheduleInvariants(draftMatches, scheduled);
+
+      return buildSchedulePreviewSummary(scheduled, {
+        courts: activeCourtNames,
+        date: schedule.playDate.trim(),
+        startTime: schedule.startTime.trim(),
+        durationMinutes: Math.floor(schedule.durationMinutes),
+      });
+    } catch {
+      return null;
+    }
+  }, [
+    assignments,
+    activeCourtNames,
+    gruposIncomplete,
+    schedule.playDate,
+    schedule.startTime,
+    schedule.durationMinutes,
+    scheduleCourtError,
+  ]);
+
+  const scheduleReady = Boolean(schedulePreview) && !scheduleCourtError;
+
+  const handleCourtCountChange = (raw: string) => {
+    const parsed = Number(raw);
+    const nextCount = Number.isFinite(parsed)
+      ? Math.max(1, Math.min(8, Math.floor(parsed)))
+      : 1;
+    setSchedule((prev) => {
+      const names = [...prev.courtNames];
+      while (names.length < nextCount) {
+        names.push(defaultCourtNames(nextCount)[names.length] ?? `Cancha ${names.length + 1}`);
+      }
+      return normalizeTeWizardScheduleDraft({
+        ...prev,
+        courtCount: nextCount,
+        courtNames: names,
+      });
+    });
+  };
+
+  const handleCourtNameChange = (index: number, value: string) => {
+    setSchedule((prev) => {
+      const names = [...prev.courtNames];
+      names[index] = value;
+      return { ...prev, courtNames: names };
+    });
+  };
 
   const formarPareja = async (j1: Player, j2: Player) => {
     if (!user?.id || !draftTournamentId) return;
@@ -428,6 +551,9 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (wizardStep !== "confirmar") {
+      return;
+    }
     if (!user) {
       setError("Debes iniciar sesión");
       return;
@@ -450,6 +576,26 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         return;
       }
     }
+    if (scheduleCourtError) {
+      setError(scheduleCourtError);
+      return;
+    }
+    if (!schedule.playDate.trim() || !schedule.startTime.trim()) {
+      setError("Indica el día y la hora de inicio.");
+      return;
+    }
+    if (!Number.isFinite(schedule.durationMinutes) || schedule.durationMinutes <= 0) {
+      setError("La duración por partido debe ser mayor a 0 minutos.");
+      return;
+    }
+    if (activeCourtNames.length === 0) {
+      setError("Agrega al menos una cancha.");
+      return;
+    }
+    if (!schedulePreview) {
+      setError("No fue posible programar todos los partidos. Revisa la configuración.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -462,6 +608,12 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         sourceTournamentId: draftTournamentId,
         grupos: assignments,
         keepPairIds: keepIds,
+        schedule: {
+          playDate: schedule.playDate.trim(),
+          startTime: schedule.startTime.trim(),
+          durationMinutes: Math.floor(schedule.durationMinutes),
+          courtNames: activeCourtNames,
+        },
       });
       sessionStorage.removeItem(teDraftTournamentStorageKey(eventoId));
       clearTeWizardDraft(eventoId);
@@ -490,11 +642,6 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
 
   const stepIndex = WIZARD_STEPS.findIndex((s) => s.id === wizardStep);
 
-  const gruposIncomplete = useMemo(() => {
-    if (parejas.length < 2) return true;
-    return assignments.some((g) => g.parejaIds.length < 2);
-  }, [parejas.length, assignments]);
-
   const goNext = () => {
     setError(null);
     if (wizardStep === "datos") {
@@ -519,7 +666,17 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         setError("Cada grupo necesita al menos 2 parejas");
         return;
       }
-      setWizardStep("crear");
+      setWizardStep("programacion");
+      return;
+    }
+    if (wizardStep === "programacion") {
+      if (!scheduleReady) {
+        setError(
+          "Revisa la programación: día, hora, duración y canchas deben ser válidos."
+        );
+        return;
+      }
+      setWizardStep("confirmar");
     }
   };
 
@@ -527,7 +684,8 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     setError(null);
     if (wizardStep === "parejas") setWizardStep("datos");
     else if (wizardStep === "grupos") setWizardStep("parejas");
-    else if (wizardStep === "crear") setWizardStep("grupos");
+    else if (wizardStep === "programacion") setWizardStep("grupos");
+    else if (wizardStep === "confirmar") setWizardStep("programacion");
   };
 
   const jumpToStep = (id: WizardStepId) => {
@@ -537,10 +695,23 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     setWizardStep(id);
   };
 
+  const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key !== "Enter" || wizardStep === "confirmar") return;
+    const target = e.target;
+    if (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLSelectElement ||
+      target instanceof HTMLTextAreaElement
+    ) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <form
       className="te-crear-layout te-crear-form te-crear-layout--wizard"
       onSubmit={handleSubmit}
+      onKeyDown={handleFormKeyDown}
     >
       <div className="te-crear-layout__main">
         <div className="te-crear-layout__panel">
@@ -590,7 +761,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                   aria-labelledby="te-step-datos-heading"
                 >
                   <header className="te-crear-step__head">
-                    <span className="te-crear-step__badge">Paso 1 de 4</span>
+                    <span className="te-crear-step__badge">Paso 1 de 5</span>
                     <h3
                       id="te-step-datos-heading"
                       className="te-crear-step__title"
@@ -677,7 +848,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                   aria-labelledby="te-step-parejas-heading"
                 >
                   <header className="te-crear-step__head">
-                    <span className="te-crear-step__badge">Paso 2 de 4</span>
+                    <span className="te-crear-step__badge">Paso 2 de 5</span>
                     <h3
                       id="te-step-parejas-heading"
                       className="te-crear-step__title"
@@ -712,7 +883,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                   aria-labelledby="te-step-grupos-heading"
                 >
                   <header className="te-crear-step__head">
-                    <span className="te-crear-step__badge">Paso 3 de 4</span>
+                    <span className="te-crear-step__badge">Paso 3 de 5</span>
                     <h3
                       id="te-step-grupos-heading"
                       className="te-crear-step__title"
@@ -735,15 +906,221 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                 </section>
               ) : null}
 
-              {wizardStep === "crear" ? (
+              {wizardStep === "programacion" ? (
                 <section
                   className="te-crear-step"
-                  aria-labelledby="te-step-crear-heading"
+                  aria-labelledby="te-step-programacion-heading"
                 >
                   <header className="te-crear-step__head">
-                    <span className="te-crear-step__badge">Paso 4 de 4</span>
+                    <span className="te-crear-step__badge">Paso 4 de 5</span>
                     <h3
-                      id="te-step-crear-heading"
+                      id="te-step-programacion-heading"
+                      className="te-crear-step__title"
+                    >
+                      Programación y canchas
+                    </h3>
+                  </header>
+                  <p className="te-crear-step__lead">
+                    Elige el día, la hora de inicio, la duración por partido y
+                    las canchas disponibles.
+                  </p>
+                  <div className="te-crear-step__body">
+                    <section
+                      className="te-crear-schedule"
+                      aria-labelledby="te-crear-schedule-heading"
+                    >
+                      <h4
+                        id="te-crear-schedule-heading"
+                        className="te-crear-schedule__title"
+                      >
+                        Horarios
+                      </h4>
+
+                      <div className="te-crear-schedule__fields">
+                        <div className="torneo-express-field">
+                          <label htmlFor="te-play-date">Día de juego</label>
+                          <input
+                            id="te-play-date"
+                            type="date"
+                            value={schedule.playDate}
+                            onChange={(e) =>
+                              setSchedule((prev) => ({
+                                ...prev,
+                                playDate: e.target.value,
+                              }))
+                            }
+                            required
+                          />
+                        </div>
+                        <div className="torneo-express-field">
+                          <label htmlFor="te-start-time">Hora de inicio</label>
+                          <input
+                            id="te-start-time"
+                            type="time"
+                            value={schedule.startTime}
+                            onChange={(e) =>
+                              setSchedule((prev) => ({
+                                ...prev,
+                                startTime: e.target.value,
+                              }))
+                            }
+                            required
+                          />
+                        </div>
+                        <div className="torneo-express-field">
+                          <label htmlFor="te-duration">
+                            Duración por partido
+                          </label>
+                          <div className="te-crear-schedule__duration">
+                            <input
+                              id="te-duration"
+                              type="number"
+                              min={1}
+                              step={1}
+                              value={schedule.durationMinutes}
+                              onChange={(e) => {
+                                const parsed = Number(e.target.value);
+                                setSchedule((prev) => ({
+                                  ...prev,
+                                  durationMinutes: Number.isFinite(parsed)
+                                    ? parsed
+                                    : prev.durationMinutes,
+                                }));
+                              }}
+                              required
+                            />
+                            <span className="te-crear-schedule__unit">min</span>
+                          </div>
+                        </div>
+                        <div className="torneo-express-field">
+                          <label htmlFor="te-court-count">
+                            Canchas disponibles
+                          </label>
+                          <input
+                            id="te-court-count"
+                            type="number"
+                            min={1}
+                            max={8}
+                            step={1}
+                            value={schedule.courtCount}
+                            onChange={(e) => handleCourtCountChange(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="te-crear-schedule__courts">
+                        {Array.from({ length: schedule.courtCount }, (_, i) => (
+                          <div
+                            key={`court-${i}`}
+                            className="torneo-express-field te-crear-schedule__court-field"
+                          >
+                            <label htmlFor={`te-court-name-${i}`}>
+                              Cancha {i + 1}
+                            </label>
+                            <input
+                              id={`te-court-name-${i}`}
+                              type="text"
+                              value={schedule.courtNames[i] ?? ""}
+                              onChange={(e) =>
+                                handleCourtNameChange(i, e.target.value)
+                              }
+                              placeholder={`Cancha ${i + 1}`}
+                              required
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      {scheduleCourtError ? (
+                        <p className="te-crear-schedule__error" role="alert">
+                          {scheduleCourtError}
+                        </p>
+                      ) : null}
+
+                      {schedulePreview ? (
+                        <div className="te-crear-schedule__preview">
+                          <h5 className="te-crear-schedule__preview-title">
+                            Resumen de programación
+                          </h5>
+                          <ul className="te-crear-schedule__preview-stats">
+                            <li>
+                              <span>Partidos</span>
+                              <strong>{schedulePreview.matchCount}</strong>
+                            </li>
+                            <li>
+                              <span>Canchas</span>
+                              <strong>{schedulePreview.courtCount}</strong>
+                            </li>
+                            <li>
+                              <span>Bloques</span>
+                              <strong>{schedulePreview.blockCount}</strong>
+                            </li>
+                            <li>
+                              <span>Inicio</span>
+                              <strong>{schedulePreview.startTime}</strong>
+                            </li>
+                            <li>
+                              <span>Final estimado</span>
+                              <strong>{schedulePreview.endTime}</strong>
+                            </li>
+                          </ul>
+
+                          <div className="te-crear-schedule__slots">
+                            {schedulePreview.slots.map((slot) => (
+                              <div
+                                key={slot.slotKey}
+                                className="te-crear-schedule__slot"
+                              >
+                                <h6 className="te-crear-schedule__slot-time">
+                                  {slot.time}
+                                </h6>
+                                <ul className="te-crear-schedule__slot-list">
+                                  {slot.matches.map((match) => (
+                                    <li
+                                      key={match.matchKey}
+                                      className="te-crear-schedule__slot-item"
+                                    >
+                                      <span className="te-crear-schedule__slot-court">
+                                        {match.cancha}
+                                      </span>
+                                      <span className="te-crear-schedule__slot-group">
+                                        {match.grupoNombre}
+                                      </span>
+                                      <span className="te-crear-schedule__slot-vs">
+                                        {pairLabelById.get(match.parejaLocalId) ??
+                                          match.parejaLocalId}{" "}
+                                        vs{" "}
+                                        {pairLabelById.get(
+                                          match.parejaVisitanteId
+                                        ) ?? match.parejaVisitanteId}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : !scheduleCourtError ? (
+                        <p className="te-crear-schedule__hint">
+                          Completa la programación para ver la vista previa.
+                        </p>
+                      ) : null}
+                    </section>
+                  </div>
+                </section>
+              ) : null}
+
+              {wizardStep === "confirmar" ? (
+                <section
+                  className="te-crear-step"
+                  aria-labelledby="te-step-confirmar-heading"
+                >
+                  <header className="te-crear-step__head">
+                    <span className="te-crear-step__badge">Paso 5 de 5</span>
+                    <h3
+                      id="te-step-confirmar-heading"
                       className="te-crear-step__title"
                     >
                       Confirmar y crear
@@ -770,6 +1147,26 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                         <span>Parejas</span>
                         <strong>{parejas.length}</strong>
                       </li>
+                      {schedulePreview ? (
+                        <>
+                          <li>
+                            <span>Día de juego</span>
+                            <strong>{schedule.playDate}</strong>
+                          </li>
+                          <li>
+                            <span>Hora de inicio</span>
+                            <strong>{schedulePreview.startTime}</strong>
+                          </li>
+                          <li>
+                            <span>Partidos</span>
+                            <strong>{schedulePreview.matchCount}</strong>
+                          </li>
+                          <li>
+                            <span>Canchas</span>
+                            <strong>{schedulePreview.courtCount}</strong>
+                          </li>
+                        </>
+                      ) : null}
                     </ul>
                   </div>
                 </section>
@@ -789,8 +1186,15 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                   <span />
                 )}
 
-                {wizardStep !== "crear" ? (
-                  <Button type="button" variant="primary" onClick={goNext}>
+                {wizardStep !== "confirmar" ? (
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={goNext}
+                    disabled={
+                      wizardStep === "programacion" && !scheduleReady
+                    }
+                  >
                     Siguiente →
                   </Button>
                 ) : (
@@ -798,12 +1202,17 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     type="submit"
                     variant="primary"
                     className="te-crear-submit"
-                    disabled={submitting || parejas.length < 2}
+                    disabled={
+                      submitting ||
+                      parejas.length < 2 ||
+                      !scheduleReady ||
+                      !confirmArmed
+                    }
                     loading={submitting}
                   >
                     {submitting
                       ? "Creando…"
-                      : "Crear torneo y generar partidos"}
+                      : "Confirmar y crear torneo"}
                   </Button>
                 )}
               </div>

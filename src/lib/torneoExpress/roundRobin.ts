@@ -1,4 +1,5 @@
 import type { TorneoExpressPartido } from "./types";
+import { partidoScheduleIso } from "./partidoSchedule";
 
 export interface BalancedRoundRobinMatchup {
   localId: string;
@@ -72,6 +73,17 @@ export function sortPartidosByOrden(
   partidos: TorneoExpressPartido[]
 ): TorneoExpressPartido[] {
   return [...partidos].sort((a, b) => {
+    const ta = Date.parse(partidoScheduleIso(a));
+    const tb = Date.parse(partidoScheduleIso(b));
+    const aOk = Number.isFinite(ta);
+    const bOk = Number.isFinite(tb);
+    if (aOk && bOk && ta !== tb) return ta - tb;
+    if (aOk !== bOk) return aOk ? -1 : 1;
+
+    const ca = (a.cancha ?? "").trim().toLowerCase();
+    const cb = (b.cancha ?? "").trim().toLowerCase();
+    if (ca && cb && ca !== cb) return ca.localeCompare(cb, "es");
+
     const oa = a.orden ?? 0;
     const ob = b.orden ?? 0;
     const hasOrden = oa > 0 || ob > 0;

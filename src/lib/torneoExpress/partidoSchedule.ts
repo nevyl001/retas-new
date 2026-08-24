@@ -4,6 +4,7 @@ import {
   formatMatchTime,
   toMexicoCalendarDate,
 } from "../matchDate";
+import { programadoIsoFromMexicoCalendar } from "./teScheduleTime";
 import type { TorneoExpressPartido } from "./types";
 
 /** ISO usado para mostrar/editar (programado_en o created_at). */
@@ -82,5 +83,6 @@ export function programadoIsoFromDraft(
   date: string,
   time: string
 ): string | null {
-  return combinePartidoDateAndTime(date, time);
+  // Misma base que el scheduler (calendario México), no Date local del navegador.
+  return programadoIsoFromMexicoCalendar(date, time);
 }
