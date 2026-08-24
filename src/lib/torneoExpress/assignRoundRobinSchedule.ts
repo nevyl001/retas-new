@@ -48,19 +48,51 @@ function compareMatchesForScheduling(
   a: DraftScheduleMatch,
   b: DraftScheduleMatch
 ): number {
-  if (a.groupKey !== b.groupKey) return a.groupKey - b.groupKey;
   if (a.ronda !== b.ronda) return a.ronda - b.ronda;
+  if (a.groupKey !== b.groupKey) return a.groupKey - b.groupKey;
   return a.orden - b.orden;
 }
 
-function sortUniqueNumbers(values: number[]): number[] {
-  return Array.from(new Set(values)).sort((a, b) => a - b);
+function sortUniqueRounds(matches: DraftScheduleMatch[]): number[] {
+  const set = new Set<number>();
+  for (const m of matches) set.add(m.ronda);
+  return Array.from(set).sort((a, b) => a - b);
+}
+
+/** G1-M1, G2-M1, G1-M2, G2-M2… para repartir canchas en paralelo por grupo. */
+function interleavePendingByGroup(
+  pending: DraftScheduleMatch[]
+): DraftScheduleMatch[] {
+  const byGroup = new Map<number, DraftScheduleMatch[]>();
+  for (const match of pending) {
+    const list = byGroup.get(match.groupKey) ?? [];
+    list.push(match);
+    byGroup.set(match.groupKey, list);
+  }
+  for (const list of byGroup.values()) {
+    list.sort((a, b) => a.orden - b.orden);
+  }
+
+  const groupKeys = Array.from(byGroup.keys()).sort((a, b) => a - b);
+  const interleaved: DraftScheduleMatch[] = [];
+  let added = true;
+  while (added) {
+    added = false;
+    for (const groupKey of groupKeys) {
+      const list = byGroup.get(groupKey)!;
+      if (list.length > 0) {
+        interleaved.push(list.shift()!);
+        added = true;
+      }
+    }
+  }
+  return interleaved;
 }
 
 /**
- * Programa partidos existentes sin alterar enfrentamientos.
- * Orden: grupo → ronda → huecos de cancha; avanza `durationMinutes` entre huecos.
- * Así la duración se nota dentro de cada grupo (ej. 45 → 9:00, 9:45, 10:30).
+ * Programa partidos existentes sin alterar enfrentamientos ni rondas.
+ * Por ronda, reparte grupos en paralelo sobre las canchas (mismo horario,
+ * distinta cancha) para que terminen casi a la par.
  */
 export function assignRoundRobinSchedule(
   input: AssignRoundRobinScheduleInput
@@ -83,77 +115,74 @@ export function assignRoundRobinSchedule(
   let currentDate = date;
   let currentTime = startTime;
 
-  const groupKeys = sortUniqueNumbers(matches.map((m) => m.groupKey));
+  const rounds = sortUniqueRounds(matches);
 
-  for (const groupKey of groupKeys) {
-    const groupMatches = matches.filter((m) => m.groupKey === groupKey);
-    const rounds = sortUniqueNumbers(groupMatches.map((m) => m.ronda));
+  for (const ronda of rounds) {
+    let pending = interleavePendingByGroup(
+      matches.filter((m) => m.ronda === ronda)
+    );
 
-    for (const ronda of rounds) {
-      let pending = groupMatches
-        .filter((m) => m.ronda === ronda)
-        .sort((a, b) => a.orden - b.orden);
-
-      while (pending.length > 0) {
-        const programadoIso = programadoIsoFromMexicoCalendar(
-          currentDate,
-          currentTime
-        );
-        if (!programadoIso) {
-          throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
-        }
-
-        const rotatedCourts = rotateCourts(courts, slotIndex);
-        const busyPairs = new Set<string>();
-        const availableCourts = [...rotatedCourts];
-        const scheduledThisSlot: Array<{
-          match: DraftScheduleMatch;
-          court: string;
-        }> = [];
-
-        for (const match of pending) {
-          if (availableCourts.length === 0) break;
-          if (
-            busyPairs.has(match.parejaLocalId) ||
-            busyPairs.has(match.parejaVisitanteId)
-          ) {
-            continue;
-          }
-
-          const court = availableCourts.shift()!;
-          scheduledThisSlot.push({ match, court });
-          busyPairs.add(match.parejaLocalId);
-          busyPairs.add(match.parejaVisitanteId);
-        }
-
-        if (scheduledThisSlot.length === 0) {
-          throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
-        }
-
-        for (const { match, court } of scheduledThisSlot) {
-          scheduled.push({
-            ...match,
-            programado_en: programadoIso,
-            cancha: court,
-          });
-        }
-
-        pending = pending.filter(
-          (m) => !scheduledThisSlot.some((s) => s.match.matchKey === m.matchKey)
-        );
-
-        slotIndex += 1;
-        const next = addMinutesToMexicoCalendar(
-          currentDate,
-          currentTime,
-          durationMinutes
-        );
-        if (!next) {
-          throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
-        }
-        currentDate = next.date;
-        currentTime = next.time;
+    while (pending.length > 0) {
+      const programadoIso = programadoIsoFromMexicoCalendar(
+        currentDate,
+        currentTime
+      );
+      if (!programadoIso) {
+        throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
       }
+
+      const rotatedCourts = rotateCourts(courts, slotIndex);
+      const busyPairs = new Set<string>();
+      const availableCourts = [...rotatedCourts];
+      const scheduledThisSlot: Array<{
+        match: DraftScheduleMatch;
+        court: string;
+      }> = [];
+
+      for (const match of pending) {
+        if (availableCourts.length === 0) break;
+        if (
+          busyPairs.has(match.parejaLocalId) ||
+          busyPairs.has(match.parejaVisitanteId)
+        ) {
+          continue;
+        }
+
+        const court = availableCourts.shift()!;
+        scheduledThisSlot.push({ match, court });
+        busyPairs.add(match.parejaLocalId);
+        busyPairs.add(match.parejaVisitanteId);
+      }
+
+      if (scheduledThisSlot.length === 0) {
+        throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+      }
+
+      for (const { match, court } of scheduledThisSlot) {
+        scheduled.push({
+          ...match,
+          programado_en: programadoIso,
+          cancha: court,
+        });
+      }
+
+      pending = interleavePendingByGroup(
+        pending.filter(
+          (m) => !scheduledThisSlot.some((s) => s.match.matchKey === m.matchKey)
+        )
+      );
+
+      slotIndex += 1;
+      const next = addMinutesToMexicoCalendar(
+        currentDate,
+        currentTime,
+        durationMinutes
+      );
+      if (!next) {
+        throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+      }
+      currentDate = next.date;
+      currentTime = next.time;
     }
   }
 

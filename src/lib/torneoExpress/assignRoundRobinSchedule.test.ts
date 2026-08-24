@@ -234,7 +234,7 @@ describe("assignRoundRobinSchedule", () => {
     expect(keys.size).toBe(scheduled.length);
   });
 
-  test("multiple groups use courts sequentially by group", () => {
+  test("multiple groups share slot pool (parallel on courts)", () => {
     const matches = [
       mkMatch({
         matchKey: "ga",
@@ -254,14 +254,12 @@ describe("assignRoundRobinSchedule", () => {
     ];
 
     const scheduled = assignRoundRobinSchedule(
-      scheduleInput(matches, {
-        courts: ["Central", "Cristal"],
-        durationMinutes: 45,
-      })
+      scheduleInput(matches, { courts: ["Central", "Cristal"] })
     );
 
-    expect(partidoTimeInputValue24(scheduled[0]!.programado_en!)).toBe("19:00");
-    expect(partidoTimeInputValue24(scheduled[1]!.programado_en!)).toBe("19:45");
+    expect(
+      partidoTimeInputValue24(scheduled[0]!.programado_en!)
+    ).toBe(partidoTimeInputValue24(scheduled[1]!.programado_en!));
     validateScheduleInvariants(matches, scheduled);
   });
 
@@ -322,7 +320,7 @@ describe("assignRoundRobinSchedule", () => {
     expect(validateCourtNames(["Central", " central "])).toMatch(/únicos/i);
   });
 
-  test("each group finishes its rounds before the next group (45 min gaps)", () => {
+  test("multi-group rounds complete R1 before R2, groups in parallel", () => {
     const grupos: GrupoAssignmentDraft[] = [
       { nombre: "Grupo A", orden: 0, parejaIds: ["a1", "a2", "a3", "a4"] },
       { nombre: "Grupo B", orden: 1, parejaIds: ["b1", "b2", "b3", "b4"] },
@@ -331,10 +329,24 @@ describe("assignRoundRobinSchedule", () => {
     const scheduled = assignRoundRobinSchedule(
       scheduleInput(draft, {
         courts: ["Central", "Cristal"],
-        durationMinutes: 45,
+        durationMinutes: 30,
         startTime: "09:00",
       })
     );
+
+    const round1 = scheduled.filter((m) => m.ronda === 1);
+    const round2 = scheduled.filter((m) => m.ronda === 2);
+
+    const maxR1 = round1.reduce((max, m) => {
+      const iso = m.programado_en!;
+      return max > iso ? max : iso;
+    }, "");
+    const minR2 = round2.reduce((min, m) => {
+      const iso = m.programado_en!;
+      return !min || iso < min ? iso : min;
+    }, "");
+
+    expect(minR2 >= maxR1).toBe(true);
 
     const g1 = scheduled.filter((m) => m.groupKey === 0);
     const g2 = scheduled.filter((m) => m.groupKey === 1);
@@ -344,19 +356,7 @@ describe("assignRoundRobinSchedule", () => {
     const g2Times = Array.from(
       new Set(g2.map((m) => partidoTimeInputValue24(m.programado_en!)))
     ).sort();
-
-    expect(g1Times).toEqual(["09:00", "09:45", "10:30"]);
-    expect(g2Times).toEqual(["11:15", "12:00", "12:45"]);
-
-    const maxG1 = g1.reduce((max, m) => {
-      const iso = m.programado_en!;
-      return max > iso ? max : iso;
-    }, "");
-    const minG2 = g2.reduce((min, m) => {
-      const iso = m.programado_en!;
-      return !min || iso < min ? iso : min;
-    }, "");
-    expect(minG2 > maxG1).toBe(true);
+    expect(g1Times).toEqual(g2Times);
 
     validateScheduleInvariants(draft, scheduled);
   });

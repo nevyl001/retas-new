@@ -188,9 +188,10 @@ export const TeReprogramarProgramacionModal: React.FC<
       <div className="te-reprogramar-modal">
         <p className="te-reprogramar-modal__lead">
           Ajusta el día, la hora de inicio, la duración y las canchas. Se
-          recalculan todos los partidos pendientes. Cada grupo usa las canchas
-          completo y luego sigue el siguiente (ej. 45 min → Grupo 1 a las 9:00 /
-          9:45 / 10:30, después Grupo 2).
+          recalculan todos los partidos pendientes. Con varios grupos, cada
+          cancha lleva un grupo distinto en el mismo horario para que terminen
+          casi a la par (ej. 2 grupos y 2 canchas → ambos a las 9:00, luego
+          ambos a las 9:30).
         </p>
         {playedCount > 0 ? (
           <p className="te-reprogramar-modal__note" role="note">
