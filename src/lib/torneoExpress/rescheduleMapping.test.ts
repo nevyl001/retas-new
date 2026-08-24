@@ -161,8 +161,8 @@ describe("reschedule mapping across groups", () => {
       )
     ).sort();
 
-    expect(g1Times).toEqual(["09:00", "10:30", "12:00"]);
-    expect(g2Times).toEqual(["09:45", "11:15", "12:45"]);
+    expect(g1Times).toEqual(["09:00", "09:45", "10:30"]);
+    expect(g2Times).toEqual(["11:15", "12:00", "12:45"]);
     expect(updates.every((u) => u.ronda >= 1 && u.orden >= 1)).toBe(true);
   });
 });

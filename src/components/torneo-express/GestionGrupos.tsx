@@ -1314,9 +1314,11 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                 "success"
               );
             })
-            .catch(() => {
+            .catch((e) => {
               showActionToast(
-                "No se pudo aplicar la programación. Revisa los datos.",
+                e instanceof Error
+                  ? e.message
+                  : "No se pudo aplicar la programación. Revisa los datos.",
                 "error"
               );
             });

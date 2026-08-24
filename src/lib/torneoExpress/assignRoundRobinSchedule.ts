@@ -48,18 +48,20 @@ function compareMatchesForScheduling(
   a: DraftScheduleMatch,
   b: DraftScheduleMatch
 ): number {
-  if (a.ronda !== b.ronda) return a.ronda - b.ronda;
   if (a.groupKey !== b.groupKey) return a.groupKey - b.groupKey;
+  if (a.ronda !== b.ronda) return a.ronda - b.ronda;
   return a.orden - b.orden;
 }
 
-function sortUniqueRounds(matches: DraftScheduleMatch[]): number[] {
-  const set = new Set<number>();
-  for (const m of matches) set.add(m.ronda);
-  return Array.from(set).sort((a, b) => a - b);
+function sortUniqueNumbers(values: number[]): number[] {
+  return Array.from(new Set(values)).sort((a, b) => a - b);
 }
 
-/** Programa partidos existentes sin alterar enfrentamientos ni rondas. */
+/**
+ * Programa partidos existentes sin alterar enfrentamientos.
+ * Orden: grupo → ronda → huecos de cancha; avanza `durationMinutes` entre huecos.
+ * Así la duración se nota dentro de cada grupo (ej. 45 → 9:00, 9:45, 10:30).
+ */
 export function assignRoundRobinSchedule(
   input: AssignRoundRobinScheduleInput
 ): DraftScheduleMatch[] {
@@ -81,76 +83,77 @@ export function assignRoundRobinSchedule(
   let currentDate = date;
   let currentTime = startTime;
 
-  const rounds = sortUniqueRounds(matches);
+  const groupKeys = sortUniqueNumbers(matches.map((m) => m.groupKey));
 
-  for (const ronda of rounds) {
-    let pending = matches
-      .filter((m) => m.ronda === ronda)
-      .sort((a, b) =>
-        a.groupKey !== b.groupKey
-          ? a.groupKey - b.groupKey
-          : a.orden - b.orden
-      );
+  for (const groupKey of groupKeys) {
+    const groupMatches = matches.filter((m) => m.groupKey === groupKey);
+    const rounds = sortUniqueNumbers(groupMatches.map((m) => m.ronda));
 
-    while (pending.length > 0) {
-      const programadoIso = programadoIsoFromMexicoCalendar(
-        currentDate,
-        currentTime
-      );
-      if (!programadoIso) {
-        throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
-      }
+    for (const ronda of rounds) {
+      let pending = groupMatches
+        .filter((m) => m.ronda === ronda)
+        .sort((a, b) => a.orden - b.orden);
 
-      const rotatedCourts = rotateCourts(courts, slotIndex);
-      const busyPairs = new Set<string>();
-      const availableCourts = [...rotatedCourts];
-      const scheduledThisSlot: Array<{
-        match: DraftScheduleMatch;
-        court: string;
-      }> = [];
-
-      for (const match of pending) {
-        if (availableCourts.length === 0) break;
-        if (
-          busyPairs.has(match.parejaLocalId) ||
-          busyPairs.has(match.parejaVisitanteId)
-        ) {
-          continue;
+      while (pending.length > 0) {
+        const programadoIso = programadoIsoFromMexicoCalendar(
+          currentDate,
+          currentTime
+        );
+        if (!programadoIso) {
+          throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
         }
 
-        const court = availableCourts.shift()!;
-        scheduledThisSlot.push({ match, court });
-        busyPairs.add(match.parejaLocalId);
-        busyPairs.add(match.parejaVisitanteId);
-      }
+        const rotatedCourts = rotateCourts(courts, slotIndex);
+        const busyPairs = new Set<string>();
+        const availableCourts = [...rotatedCourts];
+        const scheduledThisSlot: Array<{
+          match: DraftScheduleMatch;
+          court: string;
+        }> = [];
 
-      if (scheduledThisSlot.length === 0) {
-        throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
-      }
+        for (const match of pending) {
+          if (availableCourts.length === 0) break;
+          if (
+            busyPairs.has(match.parejaLocalId) ||
+            busyPairs.has(match.parejaVisitanteId)
+          ) {
+            continue;
+          }
 
-      for (const { match, court } of scheduledThisSlot) {
-        scheduled.push({
-          ...match,
-          programado_en: programadoIso,
-          cancha: court,
-        });
-      }
+          const court = availableCourts.shift()!;
+          scheduledThisSlot.push({ match, court });
+          busyPairs.add(match.parejaLocalId);
+          busyPairs.add(match.parejaVisitanteId);
+        }
 
-      pending = pending.filter(
-        (m) => !scheduledThisSlot.some((s) => s.match.matchKey === m.matchKey)
-      );
+        if (scheduledThisSlot.length === 0) {
+          throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+        }
 
-      slotIndex += 1;
-      const next = addMinutesToMexicoCalendar(
-        currentDate,
-        currentTime,
-        durationMinutes
-      );
-      if (!next) {
-        throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+        for (const { match, court } of scheduledThisSlot) {
+          scheduled.push({
+            ...match,
+            programado_en: programadoIso,
+            cancha: court,
+          });
+        }
+
+        pending = pending.filter(
+          (m) => !scheduledThisSlot.some((s) => s.match.matchKey === m.matchKey)
+        );
+
+        slotIndex += 1;
+        const next = addMinutesToMexicoCalendar(
+          currentDate,
+          currentTime,
+          durationMinutes
+        );
+        if (!next) {
+          throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+        }
+        currentDate = next.date;
+        currentTime = next.time;
       }
-      currentDate = next.date;
-      currentTime = next.time;
     }
   }
 
@@ -198,7 +201,7 @@ export function buildSchedulePreviewSummary(
   let endTime = input.startTime;
 
   if (slots.length > 0) {
-    const last = slots[slots.length - 1];
+    const last = slots[slots.length - 1]!;
     endDate = last.date;
     endTime = last.time;
     const next = addMinutesToMexicoCalendar(

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { TorneoExpressBundle } from "../../lib/torneoExpress/types";
-import { buildDraftScheduleMatches, buildGrupoAssignmentsFromBundle } from "../../lib/torneoExpress/draftScheduleMatch";
+import { buildScheduleMatchesFromBundle } from "../../lib/torneoExpress/draftScheduleMatch";
 import {
   inferScheduleDraftFromPartidos,
   resolveActiveCourtNamesFromDraft,
@@ -75,24 +75,28 @@ export const TeReprogramarProgramacionModal: React.FC<
     }
 
     try {
-      const assignments = buildGrupoAssignmentsFromBundle(bundle);
-      const draftMatches = buildDraftScheduleMatches(assignments);
-      if (draftMatches.length === 0) return null;
+      const persistedMatches = buildScheduleMatchesFromBundle(
+        bundle.grupos,
+        bundle.partidosPorGrupo
+      );
+      if (persistedMatches.length === 0) return null;
 
       const scheduled = assignRoundRobinSchedule({
-        matches: draftMatches,
+        matches: persistedMatches,
         courts: activeCourtNames,
         date: schedule.playDate.trim(),
         startTime: schedule.startTime.trim(),
         durationMinutes: Math.floor(schedule.durationMinutes),
       });
-      validateScheduleInvariants(draftMatches, scheduled);
+      validateScheduleInvariants(persistedMatches, scheduled);
       return null;
     } catch (e) {
       if (e instanceof Error && e.message === PARTIDO_CANCHA_OCUPADA_MSG) {
         return PARTIDO_CANCHA_OCUPADA_MSG;
       }
-      return "No fue posible programar todos los partidos con esta configuración.";
+      return e instanceof Error
+        ? e.message
+        : "No fue posible programar todos los partidos con esta configuración.";
     }
   }, [
     bundle,
@@ -184,10 +188,9 @@ export const TeReprogramarProgramacionModal: React.FC<
       <div className="te-reprogramar-modal">
         <p className="te-reprogramar-modal__lead">
           Ajusta el día, la hora de inicio, la duración y las canchas. Se
-          recalculan todos los partidos pendientes de todos los grupos. Con 2
-          grupos y 2 canchas, los grupos se intercalan cada N minutos de
-          duración (ej. 45 → Grupo 1 a las 9:00 / 10:30, Grupo 2 a las 9:45 /
-          11:15).
+          recalculan todos los partidos pendientes. Cada grupo usa las canchas
+          completo y luego sigue el siguiente (ej. 45 min → Grupo 1 a las 9:00 /
+          9:45 / 10:30, después Grupo 2).
         </p>
         {playedCount > 0 ? (
           <p className="te-reprogramar-modal__note" role="note">

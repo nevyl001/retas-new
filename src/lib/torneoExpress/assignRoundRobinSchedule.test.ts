@@ -234,7 +234,7 @@ describe("assignRoundRobinSchedule", () => {
     expect(keys.size).toBe(scheduled.length);
   });
 
-  test("multiple groups share slot pool", () => {
+  test("multiple groups use courts sequentially by group", () => {
     const matches = [
       mkMatch({
         matchKey: "ga",
@@ -254,14 +254,14 @@ describe("assignRoundRobinSchedule", () => {
     ];
 
     const scheduled = assignRoundRobinSchedule(
-      scheduleInput(matches, { courts: ["Central", "Cristal"] })
+      scheduleInput(matches, {
+        courts: ["Central", "Cristal"],
+        durationMinutes: 45,
+      })
     );
 
-    expect(
-      partidoTimeInputValue24(scheduled[0].programado_en!)
-    ).toBe(
-      partidoTimeInputValue24(scheduled[1].programado_en!)
-    );
+    expect(partidoTimeInputValue24(scheduled[0]!.programado_en!)).toBe("19:00");
+    expect(partidoTimeInputValue24(scheduled[1]!.programado_en!)).toBe("19:45");
     validateScheduleInvariants(matches, scheduled);
   });
 
@@ -322,39 +322,42 @@ describe("assignRoundRobinSchedule", () => {
     expect(validateCourtNames(["Central", " central "])).toMatch(/únicos/i);
   });
 
-  test("multi-group rounds complete R1 before R2", () => {
+  test("each group finishes its rounds before the next group (45 min gaps)", () => {
     const grupos: GrupoAssignmentDraft[] = [
       { nombre: "Grupo A", orden: 0, parejaIds: ["a1", "a2", "a3", "a4"] },
       { nombre: "Grupo B", orden: 1, parejaIds: ["b1", "b2", "b3", "b4"] },
-      { nombre: "Grupo C", orden: 2, parejaIds: ["c1", "c2", "c3", "c4"] },
     ];
     const draft = buildDraftScheduleMatches(grupos);
     const scheduled = assignRoundRobinSchedule(
       scheduleInput(draft, {
         courts: ["Central", "Cristal"],
-        durationMinutes: 20,
+        durationMinutes: 45,
+        startTime: "09:00",
       })
     );
 
-    const round1 = scheduled.filter((m) => m.ronda === 1);
-    const round2 = scheduled.filter((m) => m.ronda === 2);
+    const g1 = scheduled.filter((m) => m.groupKey === 0);
+    const g2 = scheduled.filter((m) => m.groupKey === 1);
+    const g1Times = Array.from(
+      new Set(g1.map((m) => partidoTimeInputValue24(m.programado_en!)))
+    ).sort();
+    const g2Times = Array.from(
+      new Set(g2.map((m) => partidoTimeInputValue24(m.programado_en!)))
+    ).sort();
 
-    const maxR1 = round1.reduce((max, m) => {
+    expect(g1Times).toEqual(["09:00", "09:45", "10:30"]);
+    expect(g2Times).toEqual(["11:15", "12:00", "12:45"]);
+
+    const maxG1 = g1.reduce((max, m) => {
       const iso = m.programado_en!;
       return max > iso ? max : iso;
     }, "");
-    const minR2 = round2.reduce((min, m) => {
+    const minG2 = g2.reduce((min, m) => {
       const iso = m.programado_en!;
       return !min || iso < min ? iso : min;
     }, "");
+    expect(minG2 > maxG1).toBe(true);
 
-    expect(minR2 >= maxR1).toBe(true);
-
-    for (const m of scheduled) {
-      const orig = draft.find((d) => d.matchKey === m.matchKey)!;
-      expect(m.parejaLocalId).toBe(orig.parejaLocalId);
-      expect(m.parejaVisitanteId).toBe(orig.parejaVisitanteId);
-    }
     validateScheduleInvariants(draft, scheduled);
   });
 });

@@ -8,7 +8,12 @@ import {
   normalizeCourtNames,
   validateCourtNames,
 } from "../lib/torneoExpress/assignRoundRobinSchedule";
-import { buildDraftScheduleMatches, buildGrupoAssignmentsFromBundle, mapScheduledMatchesToPartidoUpdates } from "../lib/torneoExpress/draftScheduleMatch";
+import {
+  buildDraftScheduleMatches,
+  buildGrupoAssignmentsFromBundle,
+  buildScheduleMatchesFromBundle,
+  mapPersistedScheduleToPartidoUpdates,
+} from "../lib/torneoExpress/draftScheduleMatch";
 import {
   validateScheduleInvariants,
   ScheduleInvariantError,
@@ -1471,23 +1476,24 @@ export async function rescheduleTorneoExpressGruposPartidos(
     throw new Error("Cada grupo debe tener al menos 2 parejas para reprogramar.");
   }
 
-  // Regenera RR canónico (ronda/orden) y programa; evita horarios rotos si la BD
-  // tenía ronda/orden duplicados o desfasados.
-  const draftMatches = buildDraftScheduleMatches(assignments);
-  if (draftMatches.length === 0) {
+  const persistedMatches = buildScheduleMatchesFromBundle(
+    bundle.grupos,
+    bundle.partidosPorGrupo
+  );
+  if (persistedMatches.length === 0) {
     throw new Error("No hay partidos para reprogramar.");
   }
 
   let scheduled;
   try {
     scheduled = assignRoundRobinSchedule({
-      matches: draftMatches,
+      matches: persistedMatches,
       courts,
       date: schedule.playDate.trim(),
       startTime: schedule.startTime.trim(),
       durationMinutes,
     });
-    validateScheduleInvariants(draftMatches, scheduled);
+    validateScheduleInvariants(persistedMatches, scheduled);
   } catch (e) {
     if (e instanceof ScheduleInvariantError) {
       throw new Error(e.message);
@@ -1507,7 +1513,7 @@ export async function rescheduleTorneoExpressGruposPartidos(
     }
   }
 
-  const mapped = mapScheduledMatchesToPartidoUpdates(scheduled, bundle);
+  const mapped = mapPersistedScheduleToPartidoUpdates(scheduled);
   const updates = mapped.filter((row) => !jugadoIds.has(row.partidoId));
 
   if (updates.length === 0) {
@@ -1524,17 +1530,36 @@ export async function rescheduleTorneoExpressGruposPartidos(
 
   await Promise.all(
     updates.map(async (row) => {
+      const payload: {
+        programado_en: string;
+        cancha: string;
+        ronda?: number;
+        orden?: number;
+      } = {
+        programado_en: row.programado_en,
+        cancha: row.cancha,
+      };
+      // ronda/orden solo si la columna orden está disponible (ya validada arriba)
+      if (ordenOk) {
+        payload.ronda = row.ronda;
+        payload.orden = row.orden;
+      }
       const { error } = await supabase
         .from("torneo_express_partidos")
-        .update({
-          programado_en: row.programado_en,
-          cancha: row.cancha,
-          ronda: row.ronda,
-          orden: row.orden,
-        })
+        .update(payload)
         .eq("id", row.partidoId);
       if (error) {
-        throwIfError(error, "reschedule torneo_express_partidos");
+        // Fallback: al menos guarda horario/cancha para no bloquear la UI
+        const { error: fallbackErr } = await supabase
+          .from("torneo_express_partidos")
+          .update({
+            programado_en: row.programado_en,
+            cancha: row.cancha,
+          })
+          .eq("id", row.partidoId);
+        if (fallbackErr) {
+          throwIfError(fallbackErr, "reschedule torneo_express_partidos");
+        }
       }
     })
   );
