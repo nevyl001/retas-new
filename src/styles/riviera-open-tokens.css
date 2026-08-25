@@ -246,7 +246,11 @@ html[data-club="hack-padel"],
 html[data-brand="padel-court-series"],
 html[data-club="padel-court-series"],
 .club-experience-scope[data-brand="padel-court-series"],
-.club-experience-scope[data-club="padel-court-series"] {
+.club-experience-scope[data-club="padel-court-series"],
+html[data-brand="padelito-warehouse"],
+html[data-club="padelito-warehouse"],
+.club-experience-scope[data-brand="padelito-warehouse"],
+.club-experience-scope[data-club="padelito-warehouse"] {
   /* Además de redefinir los tokens, fija el color heredado: sin esto, el texto
      que no declara color explícito (labels, hints, valores de inputs) heredaba
      el color oscuro del body (tema claro) y quedaba invisible sobre el negro. */
@@ -324,6 +328,46 @@ html[data-club="hack-padel"] .ro-surface-dark,
   --ro-success: #bfff00;
   --ro-text-secondary: #a0a0a0;
   --ro-text-muted: #6a6a6a;
+}
+
+/* =============================================
+   PADELITO WAREHOUSE — tenant premium
+   Negro + azul royal + lima (manifiesto padelito-warehouse.ts).
+============================================= */
+html[data-brand="padelito-warehouse"],
+html[data-club="padelito-warehouse"],
+.club-experience-scope[data-brand="padelito-warehouse"],
+.club-experience-scope[data-club="padelito-warehouse"],
+html[data-brand="padelito-warehouse"] .ro-surface-dark,
+html[data-club="padelito-warehouse"] .ro-surface-dark,
+.club-experience-scope[data-brand="padelito-warehouse"] .ro-surface-dark,
+.club-experience-scope[data-club="padelito-warehouse"] .ro-surface-dark {
+  --ro-accent: #d6ef3a;
+  --ro-accent-hover: #e3f76a;
+  --ro-accent-dim: rgba(214, 239, 58, 0.14);
+  --ro-text-on-accent: #12161b;
+
+  --ro-bg-base: #000000;
+  --ro-bg-deep: #000000;
+  --ro-bg-surface: #000000;
+  --ro-bg-card: #0d1118;
+  --ro-bg-elevated: #121820;
+  --ro-bg-inset: #121820;
+
+  --ro-border: #2a4ba7;
+  --ro-border-subtle: rgba(42, 75, 167, 0.35);
+  --ro-border-strong: #3d62c4;
+  --ro-border-accent: rgba(214, 239, 58, 0.45);
+
+  --ro-success: #d6ef3a;
+  --ro-text-primary: #ffffff;
+  --ro-text-secondary: #c8d4ea;
+  --ro-text-muted: #a8b8d8;
+
+  --ro-font-heading: "Abadi MT Condensed Extra Bold", "Abadi MT Condensed",
+    "Arial Narrow", "Stack Sans Headline", system-ui, sans-serif;
+  --ro-font-body: "Abadi MT Condensed", "Arial Narrow", "Inter", system-ui,
+    sans-serif;
 }
 
 /* =============================================

@@ -17,6 +17,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { HACK_PADEL_MANIFEST } from "./manifests/hack-padel";
 import { PADEL_COURT_SERIES_MANIFEST } from "./manifests/padel-court-series";
+import { PADELITO_WAREHOUSE_MANIFEST } from "./manifests/padelito-warehouse";
 import type { BrandManifest } from "./types";
 
 const TOKENS_CSS = join(__dirname, "../styles/riviera-open-tokens.css");
@@ -59,6 +60,7 @@ const rootBlock = blocks.find(
 const PREMIUM_TENANTS: Array<{ key: string; manifest: BrandManifest }> = [
   { key: "hack-padel", manifest: HACK_PADEL_MANIFEST },
   { key: "padel-court-series", manifest: PADEL_COURT_SERIES_MANIFEST },
+  { key: "padelito-warehouse", manifest: PADELITO_WAREHOUSE_MANIFEST },
 ];
 
 describe.each(PREMIUM_TENANTS)(

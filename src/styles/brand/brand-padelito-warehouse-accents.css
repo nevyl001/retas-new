@@ -1,0 +1,88 @@
+/* Padelito Warehouse — acentos premium (negro + azul royal + lima). */
+
+[data-brand="padelito-warehouse"] .user-header,
+[data-club="padelito-warehouse"] .user-header {
+  background: var(--brand-surface, #000000);
+  border-bottom-color: color-mix(in srgb, var(--brand-border) 55%, transparent);
+}
+
+[data-brand="padelito-warehouse"] .user-profile-btn:hover,
+[data-club="padelito-warehouse"] .user-profile-btn:hover,
+[data-brand="padelito-warehouse"] .user-header-mobile-btn:hover,
+[data-club="padelito-warehouse"] .user-header-mobile-btn:hover {
+  background: var(--ro-accent-dim);
+}
+
+[data-brand="padelito-warehouse"] .rv-button-primary,
+[data-club="padelito-warehouse"] .rv-button-primary {
+  background: var(--brand-accent, #d6ef3a);
+  color: var(--ro-text-on-accent, #12161b);
+  border-color: transparent;
+}
+
+[data-brand="padelito-warehouse"] .rv-button-primary:hover:not(:disabled),
+[data-club="padelito-warehouse"] .rv-button-primary:hover:not(:disabled) {
+  background: var(--ro-accent-hover, #e3f76a);
+}
+
+[data-brand="padelito-warehouse"] .home-mode-card:hover,
+[data-club="padelito-warehouse"] .home-mode-card:hover,
+[data-brand="padelito-warehouse"] .home-mode-card:focus-visible,
+[data-club="padelito-warehouse"] .home-mode-card:focus-visible {
+  border-color: color-mix(in srgb, var(--brand-accent) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-accent) 25%, transparent);
+}
+
+[data-brand="padelito-warehouse"] .rv-mode-header__eyebrow,
+[data-club="padelito-warehouse"] .rv-mode-header__eyebrow {
+  color: var(--brand-accent, #d6ef3a);
+}
+
+[data-brand="padelito-warehouse"] a:focus-visible,
+[data-club="padelito-warehouse"] a:focus-visible,
+[data-brand="padelito-warehouse"] button:focus-visible,
+[data-club="padelito-warehouse"] button:focus-visible,
+[data-brand="padelito-warehouse"] input:focus-visible,
+[data-club="padelito-warehouse"] input:focus-visible {
+  outline-color: var(--brand-accent, #d6ef3a);
+}
+
+[data-brand="padelito-warehouse"] .club-identity__attribution-brand,
+[data-club="padelito-warehouse"] .club-identity__attribution-brand {
+  color: var(--brand-text, #ffffff);
+}
+
+[data-brand="padelito-warehouse"] .club-identity__attribution-by,
+[data-club="padelito-warehouse"] .club-identity__attribution-by {
+  color: var(--brand-muted, #a8b8d8);
+}
+
+[data-brand="padelito-warehouse"] .main-layout .game-mode-card:hover:not(:disabled),
+[data-club="padelito-warehouse"] .main-layout .game-mode-card:hover:not(:disabled),
+[data-brand="padelito-warehouse"] .main-layout .game-mode-card:focus-visible,
+[data-club="padelito-warehouse"] .main-layout .game-mode-card:focus-visible {
+  border-color: color-mix(in srgb, var(--brand-accent) 45%, transparent);
+}
+
+[data-brand="padelito-warehouse"] .main-layout .rv-button-primary,
+[data-club="padelito-warehouse"] .main-layout .rv-button-primary,
+[data-brand="padelito-warehouse"] .liga-page .rv-button-primary,
+[data-club="padelito-warehouse"] .liga-page .rv-button-primary {
+  background: var(--brand-accent, #d6ef3a);
+  color: var(--ro-text-on-accent, #12161b);
+}
+
+[data-brand="padelito-warehouse"] .liga-page .liga-tab--active,
+[data-club="padelito-warehouse"] .liga-page .liga-tab--active {
+  border-color: var(--brand-accent, #d6ef3a);
+  color: var(--brand-accent, #d6ef3a);
+}
+
+[data-brand="padelito-warehouse"] .liga-page .liga-badge--live,
+[data-club="padelito-warehouse"] .liga-page .liga-badge--live,
+[data-brand="padelito-warehouse"] .liga-page .liga-badge--in_progress,
+[data-club="padelito-warehouse"] .liga-page .liga-badge--in_progress {
+  background: color-mix(in srgb, var(--brand-accent) 18%, transparent);
+  color: var(--brand-accent, #d6ef3a);
+  border-color: color-mix(in srgb, var(--brand-accent) 35%, transparent);
+}

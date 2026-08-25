@@ -86,6 +86,39 @@ html[data-club="padel-court-series"] .ro-surface-dark,
   --border-accent: color-mix(in srgb, var(--brand-accent) 35%, transparent);
 }
 
+html[data-brand="padelito-warehouse"],
+html[data-club="padelito-warehouse"],
+.club-experience-scope[data-brand="padelito-warehouse"],
+.club-experience-scope[data-club="padelito-warehouse"],
+html[data-brand="padelito-warehouse"] .ro-surface-dark,
+html[data-club="padelito-warehouse"] .ro-surface-dark,
+.club-experience-scope[data-brand="padelito-warehouse"] .ro-surface-dark,
+.club-experience-scope[data-club="padelito-warehouse"] .ro-surface-dark {
+  --brand-primary: #2a4ba7;
+  --brand-secondary: #1e3578;
+  --brand-accent: #d6ef3a;
+  --brand-surface: #000000;
+  --brand-surface-alt: #0d1118;
+  --brand-border: #2a4ba7;
+  --brand-text: #ffffff;
+  --brand-muted: #a8b8d8;
+  --brand-success: #d6ef3a;
+  --brand-warning: #fbbf24;
+  --brand-danger: #f87171;
+  --brand-font-heading: "Abadi MT Condensed Extra Bold", "Abadi MT Condensed",
+    "Arial Narrow", var(--ro-font-heading, system-ui, sans-serif);
+  --brand-font-body: "Abadi MT Condensed", "Arial Narrow",
+    var(--ro-font-body, system-ui, sans-serif);
+  --brand-heading-weight: 700;
+  --brand-heading-letter-spacing: 0.02em;
+  --bg-canvas: var(--brand-surface);
+  --bg-base: var(--brand-surface);
+  --accent-gold: var(--brand-accent);
+  --accent-gold-light: var(--brand-accent);
+  --accent-gold-dim: color-mix(in srgb, var(--brand-accent) 14%, transparent);
+  --border-accent: color-mix(in srgb, var(--brand-accent) 35%, transparent);
+}
+
 html[data-brand="valvidub-sports"],
 html[data-club="valvidub-sports"],
 .club-experience-scope[data-brand="valvidub-sports"],

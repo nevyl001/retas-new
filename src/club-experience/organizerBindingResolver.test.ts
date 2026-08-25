@@ -6,6 +6,7 @@ import {
 import {
   ORGANIZADOR_CLUB_BINDINGS,
   PADEL_COURT_SERIES_ORGANIZADOR_ID,
+  PADELITO_WAREHOUSE_ORGANIZADOR_ID,
   VALVIDUB_SPORTS_ORGANIZADOR_ID,
 } from "./organizadorClubIndex";
 import { listPremiumManifestOptions } from "./manifestRegistry";
@@ -88,11 +89,24 @@ describe("organizerBindingResolver", () => {
     );
   });
 
+  it("resuelve Padelito Warehouse por UUID de organizador", () => {
+    expect(PADELITO_WAREHOUSE_ORGANIZADOR_ID).toBe(
+      "cd45cea7-a8ac-4596-b0ee-24959b4cbb5d"
+    );
+    expect(
+      isPremiumBrandingEnabledForOrganizador(PADELITO_WAREHOUSE_ORGANIZADOR_ID)
+    ).toBe(true);
+    expect(
+      resolveBrandingKeyForOrganizador(PADELITO_WAREHOUSE_ORGANIZADOR_ID)
+    ).toBe("padelito-warehouse");
+  });
+
   it("lista tenants premium en el registry", () => {
     const options = listPremiumManifestOptions();
     expect(options.some((o) => o.key === "hack-padel")).toBe(true);
     expect(options.some((o) => o.key === "padel-court-series")).toBe(true);
     expect(options.some((o) => o.key === "valvidub-sports")).toBe(true);
+    expect(options.some((o) => o.key === "padelito-warehouse")).toBe(true);
     expect(options.some((o) => o.key === "riviera")).toBe(false);
   });
 });

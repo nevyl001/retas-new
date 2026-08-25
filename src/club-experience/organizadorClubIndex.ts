@@ -24,6 +24,10 @@ import type { ClubOrganizerBinding } from "./types";
  * Valvidub Sports (upgrade premium):
  *   Nombre visible: Valvidub Sports
  *   Email (referencia humana): valvidubsportspadel@outlook.com
+ *
+ * Padelito Warehouse (upgrade premium):
+ *   Nombre visible: Padelito Warehouse
+ *   UUID (Club Test / cuenta demo): cd45cea7-a8ac-4596-b0ee-24959b4cbb5d
  */
 
 const HACK_PADEL_ORGANIZADOR_ID = (
@@ -39,6 +43,11 @@ export const PADEL_COURT_SERIES_ORGANIZADOR_ID = (
 export const VALVIDUB_SPORTS_ORGANIZADOR_ID = (
   process.env.REACT_APP_VALVIDUB_SPORTS_ORGANIZADOR_ID?.trim() ||
   "cbc93677-0450-4622-a2fa-2f40947e385b"
+).toLowerCase();
+
+export const PADELITO_WAREHOUSE_ORGANIZADOR_ID = (
+  process.env.REACT_APP_PADELITO_WAREHOUSE_ORGANIZADOR_ID?.trim() ||
+  "cd45cea7-a8ac-4596-b0ee-24959b4cbb5d"
 ).toLowerCase();
 
 export const ORGANIZADOR_CLUB_BINDINGS: readonly ClubOrganizerBinding[] = [
@@ -57,6 +66,12 @@ export const ORGANIZADOR_CLUB_BINDINGS: readonly ClubOrganizerBinding[] = [
   {
     organizadorId: VALVIDUB_SPORTS_ORGANIZADOR_ID,
     brandingKey: "valvidub-sports",
+    active: true,
+    premiumBrandingEnabled: true,
+  },
+  {
+    organizadorId: PADELITO_WAREHOUSE_ORGANIZADOR_ID,
+    brandingKey: "padelito-warehouse",
     active: true,
     premiumBrandingEnabled: true,
   },

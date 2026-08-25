@@ -1,5 +1,6 @@
 import { HACK_PADEL_MANIFEST } from "./manifests/hack-padel";
 import { PADEL_COURT_SERIES_MANIFEST } from "./manifests/padel-court-series";
+import { PADELITO_WAREHOUSE_MANIFEST } from "./manifests/padelito-warehouse";
 import { VALVIDUB_SPORTS_MANIFEST } from "./manifests/valvidub-sports";
 import { RIVIERA_DEFAULT_MANIFEST } from "./manifests/riviera-default";
 import { resolveBrandingKeyForOrganizador } from "./organizerBindingResolver";
@@ -9,6 +10,7 @@ const MANIFESTS_BY_KEY: Record<string, BrandManifest> = {
   riviera: RIVIERA_DEFAULT_MANIFEST,
   "hack-padel": HACK_PADEL_MANIFEST,
   "padel-court-series": PADEL_COURT_SERIES_MANIFEST,
+  "padelito-warehouse": PADELITO_WAREHOUSE_MANIFEST,
   "valvidub-sports": VALVIDUB_SPORTS_MANIFEST,
 };
 

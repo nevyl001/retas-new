@@ -40,19 +40,18 @@ const CATEGORIAS: RivieraJugadorCategoria[] = [
   "6ta_fuerza",
 ];
 
-const PREMIUM_MANIFEST_OPTIONS = listPremiumManifestOptions();
-const DEFAULT_PREMIUM_MANIFEST_KEY =
-  PREMIUM_MANIFEST_OPTIONS[0]?.key ?? "hack-padel";
-
 export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   organizadorId,
   accountLabel,
   layout = "modal",
 }) => {
+  const premiumManifestOptions = useMemo(() => listPremiumManifestOptions(), []);
+  const defaultPremiumManifestKey =
+    premiumManifestOptions[0]?.key ?? "hack-padel";
   const [modes, setModes] = useState<Record<GameModeId, boolean> | null>(null);
   const [permiteAjustePuntos, setPermiteAjustePuntos] = useState(true);
   const [premiumBrandingEnabled, setPremiumBrandingEnabled] = useState(false);
-  const [brandingKey, setBrandingKey] = useState<string>(DEFAULT_PREMIUM_MANIFEST_KEY);
+  const [brandingKey, setBrandingKey] = useState<string>(defaultPremiumManifestKey);
   const [jugadores, setJugadores] = useState<AdminJugadorRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingModes, setSavingModes] = useState(false);
@@ -146,7 +145,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
       setModes(settings.modes);
       setPermiteAjustePuntos(settings.permiteAjustePuntosManuales);
       setPremiumBrandingEnabled(settings.premiumBrandingEnabled);
-      setBrandingKey(settings.brandingKey ?? DEFAULT_PREMIUM_MANIFEST_KEY);
+      setBrandingKey(settings.brandingKey ?? defaultPremiumManifestKey);
       setJugadores(j);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar controles");
@@ -373,7 +372,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
               value={brandingKey}
               onChange={(e) => setBrandingKey(e.target.value)}
             >
-              {PREMIUM_MANIFEST_OPTIONS.map((option) => (
+              {premiumManifestOptions.map((option) => (
                 <option key={option.key} value={option.key}>
                   {option.label}
                 </option>
