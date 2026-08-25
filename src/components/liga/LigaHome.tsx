@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useClubModeEyebrow } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import type { Liga } from "../../lib/liga/types";
+import { isEquiposModalidad } from "../../lib/liga/ligaModalidad";
 import { ligaModalidadLabel } from "../../lib/liga/types";
 import { deleteLiga, getLigas } from "../../services/ligaService";
 import { Button } from "../ui";
@@ -116,7 +117,7 @@ export const LigaHome: React.FC = () => {
                 <p className="liga-list-item__meta">
                   {ligaModalidadLabel(liga.modalidad)}
                   {" · "}
-                  {liga.modalidad === "parejas_fijas"
+                  {isEquiposModalidad(liga.modalidad)
                     ? `${liga.equipos_count ?? 0} parejas`
                     : `${liga.inscripciones_count ?? 0} jugadores`}
                   {" · "}

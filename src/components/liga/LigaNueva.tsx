@@ -130,6 +130,26 @@ export const LigaNueva: React.FC = () => {
                 </small>
               </span>
             </label>
+            <label className="liga-modalidad-option">
+              <input
+                type="radio"
+                name="liga-modalidad"
+                value="parejas_fijas_playoffs"
+                checked={modalidad === "parejas_fijas_playoffs"}
+                onChange={() => setModalidad("parejas_fijas_playoffs")}
+              />
+              <span>
+                <strong>Liga por parejas fijas con semifinales y final</strong>
+                <small>
+                  Desde 4 parejas · ida y vuelta · semifinales (top 4),
+                  clasificación y gran final.
+                </small>
+                <small>
+                  1º–4º disputan el cuadro principal; 5º–Nº juegan cruces de
+                  clasificación.
+                </small>
+              </span>
+            </label>
           </div>
         </fieldset>
 

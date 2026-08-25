@@ -7,6 +7,11 @@ import type {
 import {
   resolveParejasFijasPartidoTotals,
 } from "./parejasFijasMatchScore";
+import {
+  computePlayoffsMatchPoints,
+  parsePlayoffsSetScoresJson,
+  playoffsMatchDisplay,
+} from "./parejasFijasPlayoffsMatchScore";
 import { formatPartidoCanchaHorarioLabel } from "./programacion";
 
 export function formatEquipoNombre(
@@ -39,7 +44,7 @@ export type JornadaPublicMatch = {
   programacion: string | null;
 };
 
-/** Marcador para tarjeta pública (sets si hay detalle en parejas fijas). */
+/** Marcador para tarjeta pública (sets legacy o games playoffs). */
 export function formatPartidoPublicScore(
   partido: Pick<
     LigaPartido,
@@ -49,15 +54,39 @@ export function formatPartidoPublicScore(
 ): string | null {
   if (partido.estado !== "completed") return null;
 
+  const playoffs = parsePlayoffsSetScoresJson(partido.set_scores);
+  if (
+    playoffs &&
+    partido.score_pareja1 != null &&
+    partido.score_pareja2 != null
+  ) {
+    return playoffsMatchDisplay(
+      partido.score_pareja1,
+      partido.score_pareja2,
+      playoffs
+    );
+  }
+
   if (esParejasFijas) {
-    const totals = resolveParejasFijasPartidoTotals(partido);
-    if (partido.set_scores?.sets?.length && totals) return totals.display;
+    const legacySets = parseLegacySetsOnly(partido.set_scores);
+    const totals = resolveParejasFijasPartidoTotals({
+      score_pareja1: partido.score_pareja1,
+      score_pareja2: partido.score_pareja2,
+      set_scores: legacySets,
+    });
+    if (legacySets?.sets?.length && totals) return totals.display;
     if (totals) {
       return `${partido.score_pareja1 ?? 0} – ${partido.score_pareja2 ?? 0}`;
     }
   }
 
   return `${partido.score_pareja1 ?? 0} – ${partido.score_pareja2 ?? 0}`;
+}
+
+function parseLegacySetsOnly(raw: LigaPartido["set_scores"]) {
+  if (!raw || typeof raw !== "object") return null;
+  if (!("sets" in raw)) return null;
+  return raw as import("./parejasFijasMatchScore").LigaPartidoSetScores;
 }
 
 /** Ganador del partido: 1 = pareja local, 2 = visitante. */
@@ -70,8 +99,27 @@ export function partidoMatchWinnerSide(
 ): 1 | 2 | null {
   if (partido.estado !== "completed") return null;
 
+  const playoffs = parsePlayoffsSetScoresJson(partido.set_scores);
+  if (
+    playoffs &&
+    partido.score_pareja1 != null &&
+    partido.score_pareja2 != null
+  ) {
+    const pts = computePlayoffsMatchPoints(
+      partido.score_pareja1,
+      partido.score_pareja2,
+      playoffs
+    );
+    if (!pts.ok) return null;
+    return pts.result.p1Won ? 1 : 2;
+  }
+
   if (esParejasFijas) {
-    const totals = resolveParejasFijasPartidoTotals(partido);
+    const totals = resolveParejasFijasPartidoTotals({
+      score_pareja1: partido.score_pareja1,
+      score_pareja2: partido.score_pareja2,
+      set_scores: parseLegacySetsOnly(partido.set_scores),
+    });
     if (!totals) return null;
     return totals.p1WonMatch ? 1 : 2;
   }

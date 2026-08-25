@@ -12,11 +12,9 @@ import {
 } from "../../lib/liga/publicDisplay";
 import { formatPartidoCanchaHorarioLabel } from "../../lib/liga/programacion";
 import type { LigaDetalle, LigaJornada, LigaJornadaPareja, LigaPartido } from "../../lib/liga/types";
+import { isEquiposModalidad } from "../../lib/liga/ligaModalidad";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
-import {
-  resolvePlayerPublicProfiles,
-  type PlayerPublicProfile,
-} from "../../lib/rivieraJugadores/publicPlayerAvatars";
+import { resolveLigaJugadorPublicFotos } from "../../lib/liga/publicParejaAvatars";
 import { getLigaById } from "../../services/ligaService";
 import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
@@ -27,8 +25,13 @@ import { PublicModeShell } from "../platform/PublicModeShell";
 import { StatusBadge } from "../platform/StatusBadge";
 import { PublicHero } from "../public/peds";
 import { LigaParejaVictoriaCelebrate } from "./LigaParejaVictoriaCelebrate";
+import {
+  LigaPublicParejaPlayers,
+  parejaPlayerNames,
+} from "./LigaPublicParejaFaces";
 import "./liga-pareja-victoria-celebrate.css";
 import "./liga-public-pantalla.css";
+import "../jugadores/riviera-jugadores.css";
 
 function jornadaEstadoLabel(estado: LigaJornada["estado"]): string {
   if (estado === "completed") return "Finalizada";
@@ -52,16 +55,6 @@ function formatJornadaFechaPublica(fecha: string | null | undefined): string | n
 interface LigaJornadaPublicaProps {
   ligaId: string;
   numero: number;
-}
-
-function parejaNombre(
-  parejaId: string,
-  jornada: LigaJornada | undefined,
-  equiposById: Map<string, LigaDetalle["equipos"][number]>
-): string {
-  const p = jornada?.parejas?.find((x) => x.id === parejaId);
-  if (!p) return "—";
-  return formatJornadaParejaNombre(p, equiposById);
 }
 
 function rondaLabel(estado: string): string {
@@ -97,9 +90,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [playerProfiles, setPlayerProfiles] = useState<
-    Record<string, PlayerPublicProfile>
-  >({});
+  const [parejaFotos, setParejaFotos] = useState<Record<string, string | null>>(
+    {}
+  );
   const organizerName = useOrganizerDisplayName(detalle?.organizador_id);
   const { isClubBranded } = useClubExperience();
   const cancelledRef = useRef(false);
@@ -152,26 +145,24 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     const organizadorId = detalle?.organizador_id;
     const parejas = jornada?.parejas;
     if (!organizadorId || !parejas?.length) {
-      setPlayerProfiles({});
+      setParejaFotos({});
       return;
     }
 
     const entries = parejas.flatMap((p) => {
       const list: { id: string; name: string }[] = [];
-      if (p.jugador1) {
-        list.push({ id: p.jugador1_id, name: p.jugador1.nombre });
+      if (p.jugador1_id) {
+        list.push({ id: p.jugador1_id, name: p.jugador1?.nombre ?? "" });
       }
-      if (p.jugador2) {
-        list.push({ id: p.jugador2_id, name: p.jugador2.nombre });
+      if (p.jugador2_id) {
+        list.push({ id: p.jugador2_id, name: p.jugador2?.nombre ?? "" });
       }
       return list;
     });
 
     let cancelled = false;
-    void resolvePlayerPublicProfiles(organizadorId, entries, {
-      publicOnly: true,
-    }).then((profiles) => {
-      if (!cancelled) setPlayerProfiles(profiles);
+    void resolveLigaJugadorPublicFotos(organizadorId, entries).then((fotos) => {
+      if (!cancelled) setParejaFotos(fotos);
     });
 
     return () => {
@@ -213,7 +204,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     });
   }, [partidosByRonda]);
 
-  const esParejasFijas = detalle?.modalidad === "parejas_fijas";
+  const esParejasFijas = isEquiposModalidad(detalle?.modalidad ?? "individual_rotativo");
 
   const jornadaStats = useMemo(
     () => computeJornadaPublicStats(jornada, { parejasFijas: esParejasFijas }),
@@ -248,14 +239,24 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       {
         name: pareja.jugador1?.nombre ?? "?",
         jugadorId: pareja.jugador1_id,
-        fotoUrl: playerProfiles[pareja.jugador1_id]?.fotoUrl,
+        fotoUrl: parejaFotos[pareja.jugador1_id] ?? undefined,
       },
       {
         name: pareja.jugador2?.nombre ?? "?",
         jugadorId: pareja.jugador2_id,
-        fotoUrl: playerProfiles[pareja.jugador2_id]?.fotoUrl,
+        fotoUrl: parejaFotos[pareja.jugador2_id] ?? undefined,
       },
     ];
+  };
+
+  const resolveParejaFace = (parejaId: string) => {
+    const pareja = jornada?.parejas?.find((x) => x.id === parejaId);
+    const names = parejaPlayerNames(pareja, equiposById);
+    return {
+      ...names,
+      foto1: names.id1 ? parejaFotos[names.id1] ?? null : null,
+      foto2: names.id2 ? parejaFotos[names.id2] ?? null : null,
+    };
   };
 
   if (loading && !detalle) {
@@ -286,9 +287,6 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       </ClubExperienceScope>
     );
   }
-
-  const nombrePareja = (parejaId: string) =>
-    parejaNombre(parejaId, jornada, equiposById);
 
   const jornadaEstadoText = jornadaEstadoLabel(jornada.estado);
   const jornadaFechaText = formatJornadaFechaPublica(jornada.fecha);
@@ -336,17 +334,37 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
           </header>
         )}
 
-        <div
-          className={`liga-pantalla-parejas${
-            esParejasFijas ? " liga-pantalla-parejas--center" : ""
-          }`}
-        >
-          {(jornada.parejas ?? []).map((p) => (
-            <span key={p.id} className="liga-pantalla-pareja">
-              {formatJornadaParejaNombre(p, equiposById)}
-            </span>
-          ))}
-        </div>
+        {(jornada.parejas ?? []).length > 0 ? (
+          <section
+            className={`liga-pub-jornada-roster${
+              esParejasFijas ? " liga-pub-jornada-roster--fijas" : ""
+            }`}
+            aria-label="Parejas de la jornada"
+          >
+            <div className="liga-pub-jornada-roster__head">
+              <h2 className="liga-pub-jornada-roster__title">Parejas</h2>
+              <span className="liga-pub-jornada-roster__count">
+                {(jornada.parejas ?? []).length}
+              </span>
+            </div>
+            <ul className="liga-pub-jornada-roster__grid">
+              {(jornada.parejas ?? []).map((p) => {
+                const face = parejaPlayerNames(p, equiposById);
+                return (
+                  <li key={p.id} className="liga-pub-jornada-roster__card">
+                    <LigaPublicParejaPlayers
+                      name1={face.name1}
+                      name2={face.name2}
+                      foto1={parejaFotos[face.id1] ?? null}
+                      foto2={parejaFotos[face.id2] ?? null}
+                      size="md"
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ) : null}
 
         {!esParejasFijas &&
           todosPartidosCompletos &&
@@ -403,9 +421,11 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                   const winner = partidoMatchWinnerSide(partido, true);
                   const p1Wins = winner === 1;
                   const p2Wins = winner === 2;
+                  const side1 = resolveParejaFace(partido.pareja1_id);
+                  const side2 = resolveParejaFace(partido.pareja2_id);
 
                   return (
-                    <article key={partido.id} className="liga-pantalla-match">
+                    <article key={partido.id} className="liga-pantalla-match liga-pantalla-match--faces">
                       <header className="liga-pantalla-match__head">
                         {formatPartidoCanchaHorarioLabel(
                           partido.cancha,
@@ -415,13 +435,18 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                       </header>
                       <div className="liga-pantalla-match__board">
                         <div
-                          className={`liga-pantalla-match__row${
+                          className={`liga-pantalla-match__row liga-pantalla-match__row--face${
                             p1Wins ? " liga-pantalla-match__row--win" : ""
                           }`}
                         >
-                          <span className="liga-pantalla-match__name">
-                            {nombrePareja(partido.pareja1_id)}
-                          </span>
+                          <LigaPublicParejaPlayers
+                            name1={side1.name1}
+                            name2={side1.name2}
+                            foto1={side1.foto1}
+                            foto2={side1.foto2}
+                            size="md"
+                            win={p1Wins}
+                            />
                         </div>
                         {setsLabel ? (
                           <p className="liga-pantalla-match__sets">{setsLabel}</p>
@@ -429,13 +454,18 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                           <p className="liga-pantalla-match__vs">vs</p>
                         )}
                         <div
-                          className={`liga-pantalla-match__row${
+                          className={`liga-pantalla-match__row liga-pantalla-match__row--face${
                             p2Wins ? " liga-pantalla-match__row--win" : ""
                           }`}
                         >
-                          <span className="liga-pantalla-match__name">
-                            {nombrePareja(partido.pareja2_id)}
-                          </span>
+                          <LigaPublicParejaPlayers
+                            name1={side2.name1}
+                            name2={side2.name2}
+                            foto1={side2.foto1}
+                            foto2={side2.foto2}
+                            size="md"
+                            win={p2Wins}
+                            />
                         </div>
                         {pending && !setsLabel ? (
                           <p className="liga-pantalla-match__pending">Pendiente</p>
@@ -483,11 +513,13 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                         );
                         const p1Wins = winner === 1;
                         const p2Wins = winner === 2;
+                        const side1 = resolveParejaFace(partido.pareja1_id);
+                        const side2 = resolveParejaFace(partido.pareja2_id);
 
                         return (
                           <article
                             key={partido.id}
-                            className="liga-pantalla-match"
+                            className="liga-pantalla-match liga-pantalla-match--faces"
                           >
                             <header className="liga-pantalla-match__head">
                               {formatPartidoCanchaHorarioLabel(
@@ -498,13 +530,18 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                             </header>
                             <div className="liga-pantalla-match__board">
                               <div
-                                className={`liga-pantalla-match__row${
+                                className={`liga-pantalla-match__row liga-pantalla-match__row--face${
                                   p1Wins ? " liga-pantalla-match__row--win" : ""
                                 }`}
                               >
-                                <span className="liga-pantalla-match__name">
-                                  {nombrePareja(partido.pareja1_id)}
-                                </span>
+                                <LigaPublicParejaPlayers
+                                  name1={side1.name1}
+                                  name2={side1.name2}
+                                  foto1={side1.foto1}
+                                  foto2={side1.foto2}
+                                  size="sm"
+                                  win={p1Wins}
+                                  />
                                 {!esParejasFijas || !setsLabel ? (
                                   <span
                                     className={`liga-pantalla-match__pts${
@@ -523,13 +560,18 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                                 <p className="liga-pantalla-match__vs">vs</p>
                               )}
                               <div
-                                className={`liga-pantalla-match__row${
+                                className={`liga-pantalla-match__row liga-pantalla-match__row--face${
                                   p2Wins ? " liga-pantalla-match__row--win" : ""
                                 }`}
                               >
-                                <span className="liga-pantalla-match__name">
-                                  {nombrePareja(partido.pareja2_id)}
-                                </span>
+                                <LigaPublicParejaPlayers
+                                  name1={side2.name1}
+                                  name2={side2.name2}
+                                  foto1={side2.foto1}
+                                  foto2={side2.foto2}
+                                  size="sm"
+                                  win={p2Wins}
+                                  />
                                 {!esParejasFijas || !setsLabel ? (
                                   <span
                                     className={`liga-pantalla-match__pts${

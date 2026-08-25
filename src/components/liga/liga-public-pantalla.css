@@ -483,7 +483,160 @@
   }
 }
 
-/* Chips de parejas */
+/* ─── Rosters / caras de pareja (jornada pública) ─── */
+
+.liga-pub-pair-players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.liga-pub-pair-players__person {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.liga-pub-pair-players__avatar.rj-avatar {
+  flex-shrink: 0;
+  border: 2px solid var(--liga-pub-surface);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.liga-pub-pair-players--sm .liga-pub-pair-players__avatar.rj-avatar {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.58rem;
+}
+
+.liga-pub-pair-players--md .liga-pub-pair-players__avatar.rj-avatar {
+  width: 2.55rem;
+  height: 2.55rem;
+  font-size: 0.7rem;
+}
+
+.liga-pub-pair-players__name {
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--liga-pub-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liga-pub-pair-players--win .liga-pub-pair-players__name {
+  color: var(--liga-pub-gold-light);
+}
+
+.liga-pub-jornada-roster {
+  margin: 0 0 1.75rem;
+}
+
+.liga-pub-jornada-roster__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.liga-pub-jornada-roster__title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--liga-pub-text-muted);
+}
+
+.liga-pub-jornada-roster--fijas .liga-pub-jornada-roster__title {
+  color: var(--liga-pub-gold-muted);
+  letter-spacing: 0.22em;
+}
+
+.liga-pub-jornada-roster__count {
+  min-width: 1.7rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--liga-pub-border-card);
+  color: var(--liga-pub-text-muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.liga-pub-jornada-roster__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.7rem;
+}
+
+@media (min-width: 520px) {
+  .liga-pub-jornada-roster__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 880px) {
+  .liga-pub-jornada-roster__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.liga-pub-jornada-roster__card {
+  display: block;
+  min-width: 0;
+  padding: 0.85rem 0.95rem;
+  border-radius: 12px;
+  border: 1px solid var(--liga-pub-border-card);
+  background: var(--liga-pub-surface);
+  box-shadow: var(--liga-pub-shadow);
+}
+
+.liga-pub-jornada-roster--fijas .liga-pub-jornada-roster__card {
+  background: rgba(0, 0, 0, 0.28);
+  border-color: var(--liga-pub-gold-border);
+  box-shadow: none;
+}
+
+.liga-pantalla-match__row--face {
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding: 0.65rem 0.45rem;
+}
+
+.liga-pantalla-match--faces .liga-pantalla-match__pts {
+  margin-left: auto;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match {
+  max-width: 420px;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__row--face {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__board {
+  padding: 0.95rem 1.05rem 1.1rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ronda__matches--jornada {
+  gap: 1.35rem;
+  max-width: 920px;
+}
+
+/* Chips de parejas (detalle liga / legacy) */
 
 .liga-pantalla-parejas {
   display: flex;
@@ -984,17 +1137,18 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 1.15rem;
+  gap: 1.35rem;
   width: 100%;
+  max-width: 920px;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-match {
   background: transparent;
   border: 1px solid var(--liga-pub-gold-border);
-  border-radius: 6px;
+  border-radius: 10px;
   box-shadow: none;
   width: 100%;
-  max-width: 290px;
+  max-width: 420px;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-match__head {
@@ -1002,38 +1156,45 @@
   border-bottom: 1px solid var(--liga-pub-gold-border);
   color: var(--liga-pub-gold-muted);
   letter-spacing: 0.14em;
-  padding: 0.55rem 0.75rem;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.68rem;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-match__board {
-  padding: 0.85rem 1rem 1rem;
+  padding: 0.95rem 1.05rem 1.1rem;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-match__row {
-  justify-content: center;
-  padding: 0.45rem 0.25rem;
+  justify-content: flex-start;
+  padding: 0.55rem 0.35rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__row--face {
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-match__name {
-  text-align: center;
-  font-size: 0.92rem;
-  font-weight: 500;
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-match__row--win {
   background: var(--liga-pub-gold-dim);
   border-left: 2px solid var(--liga-pub-gold);
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-match__vs {
-  margin: 0.25rem 0;
+  margin: 0.35rem 0;
+  font-size: 0.72rem;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-match__pending {
-  margin: 0.45rem 0 0;
+  margin: 0.55rem 0 0;
   text-align: center;
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1154,4 +1315,129 @@
 .liga-pantalla--liga-fijas .liga-pantalla-ranking tr.liga-pantalla-ranking-top .liga-pantalla-ranking__name,
 .liga-pantalla--jornada-fijas .liga-pantalla-ranking tr.liga-pantalla-ranking-top .liga-pantalla-ranking__name {
   color: var(--liga-pub-gold-light);
+}
+
+/* ── Ranking público por pareja (avatares + pts + posición) ── */
+.liga-pub-standings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.liga-pub-standings__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem 0.9rem;
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  background: var(--liga-pub-surface);
+  border: 1px solid var(--liga-pub-border-card);
+  box-shadow: var(--liga-pub-shadow);
+}
+
+.liga-pub-standings__row--1 {
+  border-color: var(--liga-pub-gold-border-strong);
+  background: linear-gradient(
+    105deg,
+    var(--liga-pub-gold-dim) 0%,
+    var(--liga-pub-surface) 55%
+  );
+}
+
+.liga-pub-standings__row--2 {
+  border-color: rgba(192, 192, 200, 0.35);
+}
+
+.liga-pub-standings__row--3 {
+  border-color: rgba(180, 120, 70, 0.35);
+}
+
+.liga-pub-standings__pos {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  min-width: 2.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.liga-pub-standings__pos-num {
+  font-family: var(--liga-pub-font-display);
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--liga-pub-text);
+}
+
+.liga-pub-standings__row--1 .liga-pub-standings__pos-num {
+  color: var(--liga-pub-gold);
+}
+
+.liga-pub-standings__pos-suffix {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--liga-pub-text-muted);
+  margin-left: 0.05rem;
+}
+
+.liga-pub-standings__players {
+  min-width: 0;
+}
+
+.liga-pub-standings__meta {
+  margin: 0.4rem 0 0;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--liga-pub-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.liga-pub-standings__pts-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 3.25rem;
+  padding-left: 0.25rem;
+}
+
+.liga-pub-standings__pts {
+  font-family: var(--liga-pub-font-display);
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--liga-pub-text);
+}
+
+.liga-pub-standings__row--1 .liga-pub-standings__pts {
+  color: var(--liga-pub-gold);
+}
+
+.liga-pub-standings__pts-label {
+  margin-top: 0.15rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--liga-pub-text-muted);
+}
+
+@media (max-width: 420px) {
+  .liga-pub-standings__row {
+    gap: 0.55rem 0.7rem;
+    padding: 0.8rem 0.75rem;
+  }
+
+  .liga-pub-standings__pos-num {
+    font-size: 1.45rem;
+  }
+
+  .liga-pub-standings__pts {
+    font-size: 1.35rem;
+  }
 }

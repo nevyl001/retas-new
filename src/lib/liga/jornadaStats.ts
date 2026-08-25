@@ -2,6 +2,10 @@ import {
   parejasFijasVictoryRankingPoints,
   resolveParejasFijasPartidoTotals,
 } from "./parejasFijasMatchScore";
+import {
+  computePlayoffsMatchPoints,
+  parsePlayoffsSetScoresJson,
+} from "./parejasFijasPlayoffsMatchScore";
 import type { LigaJornada, LigaJornadaPareja } from "./types";
 
 export interface ParejaJornadaStat {
@@ -89,7 +93,45 @@ export function computeJornadaPublicStats(
     const id2 = m.pareja2_id;
 
     if (parejasFijas) {
-      const totals = resolveParejasFijasPartidoTotals(m);
+      const playoffsPayload = parsePlayoffsSetScoresJson(m.set_scores);
+      if (
+        playoffsPayload &&
+        m.score_pareja1 != null &&
+        m.score_pareja2 != null
+      ) {
+        const computed = computePlayoffsMatchPoints(
+          Number(m.score_pareja1),
+          Number(m.score_pareja2),
+          playoffsPayload
+        );
+        if (!computed.ok) continue;
+        const st1 = statsPareja.get(id1);
+        const st2 = statsPareja.get(id2);
+        if (st1) {
+          st1.puntos += computed.result.pointsP1;
+          st1.games_favor += Number(m.score_pareja1);
+          if (computed.result.p1Won) st1.victorias += 1;
+          else st1.derrotas += 1;
+        }
+        if (st2) {
+          st2.puntos += computed.result.pointsP2;
+          st2.games_favor += Number(m.score_pareja2);
+          if (!computed.result.p1Won) st2.victorias += 1;
+          else st2.derrotas += 1;
+        }
+        continue;
+      }
+
+      const totals = resolveParejasFijasPartidoTotals({
+        score_pareja1: m.score_pareja1,
+        score_pareja2: m.score_pareja2,
+        set_scores:
+          m.set_scores &&
+          typeof m.set_scores === "object" &&
+          "sets" in m.set_scores
+            ? (m.set_scores as import("./parejasFijasMatchScore").LigaPartidoSetScores)
+            : null,
+      });
       if (!totals) continue;
 
       const pts1 = parejasFijasVictoryRankingPoints(totals, true);

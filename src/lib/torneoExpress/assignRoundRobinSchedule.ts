@@ -69,7 +69,7 @@ function interleavePendingByGroup(
     list.push(match);
     byGroup.set(match.groupKey, list);
   }
-  for (const list of byGroup.values()) {
+  for (const list of Array.from(byGroup.values())) {
     list.sort((a, b) => a.orden - b.orden);
   }
 

@@ -1,4 +1,9 @@
+import { isEquiposModalidad } from "./ligaModalidad";
 import type { LigaDetalle } from "./types";
+import {
+  PLAYOFFS_MIN_TEAMS,
+  PLAYOFFS_MIN_TEAMS_MSG,
+} from "./parejasFijasPlayoffsFixture";
 
 export function validateInscripcionesParaCalendario(count: number): void {
   if (count < 4) {
@@ -19,9 +24,15 @@ export function validateEquiposParaCalendario(count: number): void {
   }
 }
 
+export function validateEquiposParaPlayoffsCalendario(count: number): void {
+  if (count < PLAYOFFS_MIN_TEAMS) {
+    throw new Error(PLAYOFFS_MIN_TEAMS_MSG);
+  }
+}
+
 /** Equipos del calendario ≠ equipos inscritos actuales. */
 export function calendarioEquiposDesactualizado(detalle: LigaDetalle): boolean {
-  if (detalle.modalidad !== "parejas_fijas") return false;
+  if (!isEquiposModalidad(detalle.modalidad)) return false;
   if (detalle.estado === "upcoming" || detalle.jornadas.length === 0) {
     return false;
   }
@@ -41,7 +52,7 @@ export function calendarioEquiposDesactualizado(detalle: LigaDetalle): boolean {
 
 /** Inscritos actuales ≠ jugadores del calendario generado. */
 export function calendarioDesactualizado(detalle: LigaDetalle): boolean {
-  if (detalle.modalidad === "parejas_fijas") {
+  if (isEquiposModalidad(detalle.modalidad)) {
     return calendarioEquiposDesactualizado(detalle);
   }
   if (detalle.estado === "upcoming" || detalle.jornadas.length === 0) {

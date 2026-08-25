@@ -328,24 +328,29 @@
   color: var(--liga-text-soft);
 }
 
-.liga-field input,
+.liga-field input:not([type="radio"]):not([type="checkbox"]),
 .liga-field select {
   width: 100%;
   min-height: var(--mode-tab-min-height, 44px);
   padding: 0.65rem 0.75rem;
   border-radius: var(--liga-radius-sm);
   border: 0.5px solid var(--liga-border);
-  background: var(--liga-surface-deep);
+  background: var(--ro-bg-input);
   color: var(--liga-text);
   font-size: 1rem;
   font-family: inherit;
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.liga-field input:focus,
+.liga-field input:not([type="radio"]):not([type="checkbox"])::placeholder {
+  color: var(--liga-text-muted);
+  opacity: 1;
+}
+
+.liga-field input:not([type="radio"]):not([type="checkbox"]):focus,
 .liga-field select:focus {
   outline: none;
-  border-color: var(--liga-gold);
+  border-color: var(--brand-accent, var(--ro-accent));
   box-shadow: 0 0 0 2px var(--ro-accent-ring);
 }
 
@@ -693,15 +698,125 @@
   }
 }
 
-/* ─── Chips & links ─── */
+/* ─── Parejas de la jornada (roster admin) ─── */
 
+.liga-jornada-parejas-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--liga-space-md);
+  margin-bottom: var(--liga-space-md);
+}
+
+.liga-jornada-parejas-head .liga-card__title {
+  margin-bottom: 0;
+}
+
+.liga-jornada-parejas-count {
+  flex-shrink: 0;
+  min-width: 1.75rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--liga-border);
+  background: var(--liga-surface-deep);
+  color: var(--liga-text-muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.liga-jornada-parejas {
+  list-style: none;
+  margin: 0 0 var(--liga-space-lg);
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+@media (min-width: 560px) {
+  .liga-jornada-parejas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .liga-jornada-parejas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.liga-jornada-pareja {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--liga-radius-md);
+  border: 1px solid var(--liga-border-subtle);
+  background: var(--liga-surface);
+  box-shadow: var(--liga-shadow-card);
+}
+
+.liga-jornada-pareja__players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.liga-jornada-pareja__person {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.liga-jornada-pareja__avatar.rj-avatar {
+  flex-shrink: 0;
+  width: 2.05rem;
+  height: 2.05rem;
+  font-size: 0.58rem;
+  border: 2px solid var(--liga-surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.liga-jornada-pareja__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--liga-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liga-jornada-parejas-actions {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.liga-jornada-parejas-actions .liga-hint,
+.liga-jornada-parejas-actions .liga-error {
+  max-width: 36rem;
+  margin-bottom: 0;
+}
+
+/* Legacy chip (por si queda algún uso residual) */
 .liga-pareja-chip {
   display: inline-block;
   padding: 0.4rem 0.75rem;
   margin: 0.2rem var(--liga-space-sm) 0.2rem 0;
   border-radius: var(--liga-radius-sm);
-  background: var(--liga-purple-dim);
-  color: var(--liga-purple-text);
+  background: var(--liga-surface-deep);
+  color: var(--liga-text);
+  border: 1px solid var(--liga-border-subtle);
   font-size: 0.875rem;
 }
 
@@ -764,17 +879,122 @@
   line-height: 1;
 }
 
-.liga-equipo-pool {
+.liga-page .liga-equipo-pool {
   list-style: none;
-  margin: 0 0 var(--liga-space-md);
+  margin: 0 0 var(--liga-space-sm);
   padding: 0;
   display: grid;
+  gap: 0.4rem;
+}
+
+@media (min-width: 480px) {
+  .liga-page .liga-equipo-pool {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem 0.65rem;
+  }
+}
+
+.liga-page .liga-equipo-pool > li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.liga-page .liga-equipo-pool__item {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 0;
+  height: auto;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--liga-radius-md);
+  border: 1px solid var(--liga-border);
+  background: var(--liga-surface);
+  color: var(--liga-text);
+  font-size: 0.875rem;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.liga-page .liga-equipo-pool__item:hover:not(:disabled) {
+  border-color: var(--ro-border);
+  background: var(--ro-bg-inset);
+}
+
+.liga-page .liga-equipo-pool__item--selected {
+  border-color: var(--ro-border);
+  background: var(--ro-bg-inset);
+}
+
+.liga-page .liga-equipo-pool__item--bloqueado {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.liga-page .liga-equipo-pool__identity {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+}
+
+.liga-page .liga-equipo-pool__nombre {
+  font-weight: 600;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.liga-page .liga-equipo-pool__riviera {
+  display: inline;
+  margin-top: 0;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--liga-text-muted);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.liga-page .liga-equipo-pool__cat {
+  flex-shrink: 0;
+}
+
+.liga-page .liga-equipo-pool__cat.rj-cat-badge {
+  font-size: 0.65rem;
+  padding: 0.12rem 0.35rem;
+  line-height: 1.2;
+}
+
+.liga-page .liga-equipo-pool__check {
+  color: var(--liga-text);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Compat sin .liga-page */
+.liga-equipo-pool {
+  list-style: none;
+  margin: 0 0 var(--liga-space-sm);
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
 }
 
 @media (min-width: 480px) {
   .liga-equipo-pool {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem 0.65rem;
   }
 }
 
@@ -783,44 +1003,46 @@
   align-items: center;
   gap: 0.5rem;
   width: 100%;
-  min-height: 44px;
-  padding: 0.65rem 0.85rem;
+  box-sizing: border-box;
+  min-height: 0;
+  padding: 0.45rem 0.65rem;
   border-radius: var(--liga-radius-md);
   border: 1px solid var(--liga-border);
   background: var(--liga-surface);
   color: var(--liga-text);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
 }
 
-.liga-equipo-pool__item:hover:not(:disabled) {
+.liga-equipo-pool__item--selected {
   border-color: var(--ro-border);
   background: var(--ro-bg-inset);
 }
 
-.liga-equipo-pool__item--selected {
-  border-color: var(--liga-gold);
-  background: rgba(212, 175, 55, 0.1);
-}
-
-.liga-equipo-pool__item--bloqueado {
-  opacity: 0.45;
-  cursor: not-allowed;
+.liga-equipo-pool__identity {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
 }
 
 .liga-equipo-pool__nombre {
-  flex: 1;
   font-weight: 600;
+  line-height: 1.25;
 }
 
-.liga-equipo-pool__cat {
-  flex-shrink: 0;
+.liga-equipo-pool__riviera {
+  font-size: 0.72rem;
+  color: var(--liga-text-muted);
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .liga-equipo-pool__check {
-  color: var(--liga-gold);
   font-weight: 700;
 }
 
@@ -1013,10 +1235,27 @@
   border: 1px solid var(--liga-border);
   background: var(--liga-surface);
   cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
 }
 
-.liga-modalidad-option input {
+.liga-modalidad-option:has(input:checked) {
+  border-color: var(--brand-accent, var(--ro-accent));
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 10%,
+    var(--liga-surface)
+  );
+}
+
+.liga-modalidad-option input[type="radio"] {
+  width: auto;
+  min-height: auto;
   margin-top: 0.2rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  accent-color: var(--brand-accent, var(--ro-accent));
 }
 
 .liga-modalidad-option strong {

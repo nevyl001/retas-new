@@ -7,9 +7,20 @@ import {
 } from "../../lib/liga/calendario";
 import type { LigaDetalle, LigaEquipo, LigaJugadorPoolItem } from "../../lib/liga/types";
 import { ligaModalidadLabel } from "../../lib/liga/types";
+import {
+  isEquiposModalidad,
+  isParejasFijasPlayoffs,
+} from "../../lib/liga/ligaModalidad";
+import { PLAYOFFS_MIN_TEAMS } from "../../lib/liga/parejasFijasPlayoffsFixture";
 import { formatFechaLegible, dateInputValue } from "../../lib/liga/programacion";
 import { JugadorCategoriaBadge } from "../jugadores/JugadorCategoriaBadge";
+import { RivieraIdBadge } from "../jugadores/RivieraIdBadge";
 import { navigateJugadoresLista } from "../jugadores/jugadoresGeneroNav";
+import {
+  JUGADOR_CATEGORIA_LABELS,
+  JUGADOR_CATEGORIAS_ORDER,
+} from "../../lib/rivieraJugadores/constants";
+import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import "../jugadores/riviera-jugadores.css";
 import {
   createEquipoLiga,
@@ -108,6 +119,8 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const [jugadoresPool, setJugadoresPool] = useState<LigaJugadorPoolItem[]>([]);
   const [tab, setTab] = useState<LigaGestionarTab>("jugadores");
   const [seleccionParejaIds, setSeleccionParejaIds] = useState<string[]>([]);
+  const [parejaGridSearch, setParejaGridSearch] = useState("");
+  const [parejaCategoryFilter, setParejaCategoryFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -149,7 +162,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
       if (isStale()) return;
       setDetalle(d);
       setJugadoresPool(pool);
-      if (d.modalidad === "parejas_fijas") {
+      if (isEquiposModalidad(d.modalidad)) {
         setTab((prev) => (prev === "jugadores" ? "parejas" : prev));
       }
     } catch (e) {
@@ -169,7 +182,10 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     [detalle]
   );
 
-  const esParejasFijas = detalle?.modalidad === "parejas_fijas";
+  const esParejasFijas = detalle ? isEquiposModalidad(detalle.modalidad) : false;
+  const esPlayoffs = detalle
+    ? isParejasFijasPlayoffs(detalle.modalidad)
+    : false;
 
   const jugadoresEnEquipo = useMemo(() => {
     const s = new Set<string>();
@@ -185,20 +201,72 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     [jugadoresPool, jugadoresEnEquipo]
   );
 
+  const jugadoresDisponiblesParejaFiltrados = useMemo(() => {
+    const q = parejaGridSearch.trim().toLowerCase();
+    return jugadoresDisponiblesPareja.filter((j) => {
+      if (parejaCategoryFilter && j.categoria !== parejaCategoryFilter) {
+        return false;
+      }
+      if (!q) return true;
+      const riv = (j.riviera_id ?? "").toLowerCase();
+      return j.nombre.toLowerCase().includes(q) || riv.includes(q);
+    });
+  }, [jugadoresDisponiblesPareja, parejaGridSearch, parejaCategoryFilter]);
+
   const parejaSeleccionCompleta = seleccionParejaIds.length === 2;
 
-  const toggleJugadorEnPareja = (jugadorId: string) => {
-    setSeleccionParejaIds((prev) => {
-      if (prev.includes(jugadorId)) {
-        return prev.filter((id) => id !== jugadorId);
-      }
-      if (prev.length >= 2) return prev;
-      return [...prev, jugadorId];
-    });
+  const registrarPareja = async (jugador1_id: string, jugador2_id: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await createEquipoLiga(ligaId, { jugador1_id, jugador2_id });
+      setSeleccionParejaIds([]);
+      setMessage("Pareja registrada.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+      setSeleccionParejaIds([]);
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const limpiarSeleccionPareja = () => setSeleccionParejaIds([]);
+  const toggleJugadorEnPareja = (jugadorId: string) => {
+    if (busy) return;
+    if (seleccionParejaIds.includes(jugadorId)) {
+      setSeleccionParejaIds((prev) => prev.filter((id) => id !== jugadorId));
+      return;
+    }
+    if (seleccionParejaIds.length === 0) {
+      setSeleccionParejaIds([jugadorId]);
+      return;
+    }
+    if (seleccionParejaIds.length === 1) {
+      const jugador1_id = seleccionParejaIds[0]!;
+      setSeleccionParejaIds([jugador1_id, jugadorId]);
+      void registrarPareja(jugador1_id, jugadorId);
+    }
+  };
 
+  const limpiarSeleccionPareja = () => {
+    if (busy) return;
+    setSeleccionParejaIds([]);
+  };
+
+  const handleDeleteEquipo = async (equipoId: string) => {
+    if (!window.confirm("¿Borrar esta pareja?")) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteEquipoLiga(equipoId);
+      setMessage("Pareja borrada.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(false);
+    }
+  };
   const calendarioStale = useMemo(
     () => (detalle ? calendarioDesactualizado(detalle) : false),
     [detalle]
@@ -212,7 +280,10 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const puedeIniciar = useMemo(() => {
     if (!detalle || detalle.estado === "completed") return false;
     if (detalle.jornadas.length > 0) return false;
-    if (detalle.modalidad === "parejas_fijas") {
+    if (isParejasFijasPlayoffs(detalle.modalidad)) {
+      return detalle.equipos.length >= PLAYOFFS_MIN_TEAMS;
+    }
+    if (isEquiposModalidad(detalle.modalidad)) {
       return detalle.equipos.length >= 3;
     }
     const n = detalle.inscripciones.length;
@@ -221,7 +292,10 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
   const puedeRegenerar = useMemo(() => {
     if (!detalle || detalle.estado === "completed") return false;
-    if (detalle.modalidad === "parejas_fijas") {
+    if (isParejasFijasPlayoffs(detalle.modalidad)) {
+      return detalle.equipos.length >= PLAYOFFS_MIN_TEAMS;
+    }
+    if (isEquiposModalidad(detalle.modalidad)) {
       return detalle.equipos.length >= 3;
     }
     const n = detalle.inscripciones.length;
@@ -237,42 +311,6 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   }, [detalle]);
 
   const ligaEditable = detalle?.estado !== "completed";
-
-  const handleCrearEquipo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!parejaSeleccionCompleta) {
-      setError("Selecciona dos jugadores distintos de la lista.");
-      return;
-    }
-    const [jugador1_id, jugador2_id] = seleccionParejaIds;
-    setBusy(true);
-    setError(null);
-    try {
-      await createEquipoLiga(ligaId, { jugador1_id, jugador2_id });
-      setSeleccionParejaIds([]);
-      setMessage("Pareja registrada.");
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleDeleteEquipo = async (equipoId: string) => {
-    if (!window.confirm("¿Eliminar esta pareja?")) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await deleteEquipoLiga(equipoId);
-      setMessage("Pareja eliminada.");
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const toggleInscripcion = async (jugadorId: string, inscrito: boolean) => {
     setBusy(true);
@@ -584,7 +622,17 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
         </div>
       )}
 
-      {ligaEditable && esParejasFijas && detalle.equipos.length < 3 && (
+      {ligaEditable && esPlayoffs && detalle.equipos.length < PLAYOFFS_MIN_TEAMS && (
+        <p className="liga-hint">
+          Este formato requiere al menos {PLAYOFFS_MIN_TEAMS} parejas
+          ({detalle.equipos.length} actuales).
+        </p>
+      )}
+
+      {ligaEditable &&
+        esParejasFijas &&
+        !esPlayoffs &&
+        detalle.equipos.length < 3 && (
         <p className="liga-hint">
           Mínimo 3 parejas inscritas para generar el calendario.
         </p>
@@ -676,21 +724,56 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
       {esParejasFijas && (
         <ModeSectionPanel id="parejas" activeId={tab}>
+          <div className="liga-card rv-card">
+            <h2 className="liga-card__title">Parejas inscritas</h2>
+            {detalle.equipos.length === 0 ? (
+              <p className="liga-empty">Aún no hay parejas registradas.</p>
+            ) : (
+              <ul className="liga-list">
+                {detalle.equipos.map((eq) => (
+                  <li key={eq.id} className="liga-list-item">
+                    <div className="liga-list-item__main">
+                      <p className="liga-list-item__title">{equipoNombre(eq)}</p>
+                      <p className="liga-list-item__meta">
+                        {eq.partidos_jugados > 0
+                          ? `${eq.puntos} pts · ${eq.partidos_jugados} PJ`
+                          : "Sin partidos jugados"}
+                      </p>
+                    </div>
+                    {ligaEditable && detalle.jornadas.length === 0 && (
+                      <div className="liga-list-item__actions">
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => void handleDeleteEquipo(eq.id)}
+                        >
+                          Borrar pareja
+                        </Button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           {ligaEditable && detalle.jornadas.length === 0 && (
-            <form
-              className="liga-card rv-card liga-equipo-form"
-              onSubmit={(e) => void handleCrearEquipo(e)}
-            >
+            <div className="liga-card rv-card liga-equipo-form">
               <h2 className="liga-card__title">Nueva pareja</h2>
               <p className="liga-hint">
-                Solo aparecen jugadores de tu registro Riviera. Toca dos nombres
-                distintos; los que ya están en otra pareja no se muestran.
+                Toca dos jugadores distintos: al elegir el segundo se registra
+                la pareja al instante. Los que ya están en otra pareja no
+                aparecen.
               </p>
 
               {seleccionParejaIds.length > 0 && (
                 <div className="liga-equipo-seleccion" aria-live="polite">
                   <span className="liga-equipo-seleccion__label">
-                    Selección ({seleccionParejaIds.length}/2)
+                    {busy && parejaSeleccionCompleta
+                      ? "Registrando pareja…"
+                      : `Selección (${seleccionParejaIds.length}/2)`}
                   </span>
                   <div className="liga-equipo-seleccion__chips">
                     {seleccionParejaIds.map((id, index) => {
@@ -729,105 +812,149 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
               {jugadoresDisponiblesPareja.length === 0 ? (
                 <p className="liga-empty">
-                  No quedan jugadores libres. Elimina una pareja o agrega más al
+                  No quedan jugadores libres. Borra una pareja o agrega más al
                   registro.
                 </p>
               ) : (
-                <ul className="liga-equipo-pool" role="listbox" aria-label="Jugadores disponibles">
-                  {jugadoresDisponiblesPareja.map((j) => {
-                    const selected = seleccionParejaIds.includes(j.id);
-                    const bloqueado =
-                      !selected && seleccionParejaIds.length >= 2;
-                    return (
-                      <li key={j.id} role="presentation">
-                        <button
-                          type="button"
-                          role="option"
-                          aria-selected={selected}
-                          className={`liga-equipo-pool__item${
-                            selected ? " liga-equipo-pool__item--selected" : ""
-                          }${bloqueado ? " liga-equipo-pool__item--bloqueado" : ""}`}
-                          disabled={busy || bloqueado}
-                          onClick={() => toggleJugadorEnPareja(j.id)}
-                        >
-                          <span className="liga-equipo-pool__nombre">{j.nombre}</span>
-                          {j.categoria ? (
-                            <JugadorCategoriaBadge
-                              categoria={j.categoria}
-                              className="liga-equipo-pool__cat"
-                            />
-                          ) : null}
-                          {selected ? (
-                            <span className="liga-equipo-pool__check" aria-hidden>
-                              ✓
-                            </span>
-                          ) : null}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+                <>
+                  <div className="elegant-grid-filters">
+                    <input
+                      type="search"
+                      className="elegant-grid-search"
+                      placeholder="Buscar jugador por nombre…"
+                      value={parejaGridSearch}
+                      onChange={(e) => setParejaGridSearch(e.target.value)}
+                      disabled={busy}
+                    />
+                    <select
+                      className="riviera-input"
+                      value={parejaCategoryFilter}
+                      onChange={(e) => setParejaCategoryFilter(e.target.value)}
+                      aria-label="Filtrar por categoría"
+                      disabled={busy}
+                    >
+                      <option value="">Todas las categorías</option>
+                      {JUGADOR_CATEGORIAS_ORDER.map((c) => (
+                        <option key={c} value={c}>
+                          {JUGADOR_CATEGORIA_LABELS[c]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div className="liga-actions">
-                <Button
-                  type="submit"
-                  variant="secondary"
-                  disabled={busy || !parejaSeleccionCompleta}
-                >
-                  Agregar pareja
-                </Button>
-              </div>
-            </form>
+                  {jugadoresDisponiblesParejaFiltrados.length === 0 ? (
+                    <p className="liga-hint">
+                      Ningún jugador coincide con la búsqueda o el filtro.
+                    </p>
+                  ) : (
+                    <div
+                      className="elegant-players-grid"
+                      role="listbox"
+                      aria-label="Jugadores disponibles"
+                    >
+                      {jugadoresDisponiblesParejaFiltrados.map((j) => {
+                        const selected = seleccionParejaIds.includes(j.id);
+                        const bloqueado =
+                          !selected &&
+                          (seleccionParejaIds.length >= 2 || busy);
+                        const fotoUrl =
+                          typeof j.foto_url === "string" && j.foto_url.trim()
+                            ? j.foto_url.trim()
+                            : null;
+                        const rivieraId =
+                          typeof j.riviera_id === "string" && j.riviera_id.trim()
+                            ? j.riviera_id.trim()
+                            : null;
+                        const categoria =
+                          j.categoria as RivieraJugadorCategoria | null;
+                        return (
+                          <div key={j.id} role="presentation">
+                            <button
+                              type="button"
+                              role="option"
+                              aria-selected={selected}
+                              className={`elegant-player-card${
+                                fotoUrl
+                                  ? " elegant-player-card--has-photo"
+                                  : ""
+                              }${selected ? " selected" : ""}`}
+                              disabled={busy || bloqueado}
+                              onClick={() => toggleJugadorEnPareja(j.id)}
+                              aria-label={`${j.nombre}${
+                                rivieraId ? ` · ${rivieraId}` : ""
+                              }`}
+                            >
+                              {fotoUrl ? (
+                                <>
+                                  <span
+                                    className="elegant-player-card__photo"
+                                    style={{
+                                      backgroundImage: `url(${fotoUrl})`,
+                                    }}
+                                    aria-hidden
+                                  />
+                                  <span
+                                    className="elegant-player-card__overlay"
+                                    aria-hidden
+                                  />
+                                </>
+                              ) : null}
+                              <span className="elegant-player-info">
+                                <span
+                                  className="elegant-player-name"
+                                  title={j.nombre}
+                                >
+                                  {j.nombre}
+                                </span>
+                                <span className="elegant-player-meta">
+                                  {categoria ? (
+                                    <JugadorCategoriaBadge
+                                      categoria={categoria}
+                                      className="elegant-player-cat"
+                                    />
+                                  ) : null}
+                                  {rivieraId ? (
+                                    <RivieraIdBadge
+                                      rivieraId={rivieraId}
+                                      size="sm"
+                                      embedded
+                                      className="elegant-player-riviera-id"
+                                    />
+                                  ) : null}
+                                </span>
+                              </span>
+                              {selected ? (
+                                <span
+                                  className="elegant-player-mark"
+                                  aria-hidden
+                                >
+                                  ✓
+                                </span>
+                              ) : null}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           )}
 
-          <div className="liga-card rv-card">
-            <h2 className="liga-card__title">Parejas inscritas</h2>
-            {detalle.equipos.length === 0 ? (
-              <p className="liga-empty">Aún no hay parejas registradas.</p>
-            ) : (
-              <ul className="liga-list">
-                {detalle.equipos.map((eq) => (
-                  <li key={eq.id} className="liga-list-item">
-                    <div className="liga-list-item__main">
-                      <p className="liga-list-item__title">{equipoNombre(eq)}</p>
-                        <p className="liga-list-item__meta">
-                        {eq.partidos_jugados > 0
-                          ? `${eq.puntos} pts · ${eq.partidos_jugados} PJ`
-                          : "Sin partidos jugados"}
-                      </p>
-                    </div>
-                    {ligaEditable && detalle.jornadas.length === 0 && (
-                      <div className="liga-list-item__actions">
-                        <Button
-                          type="button"
-                          variant="danger"
-                          size="sm"
-                          disabled={busy}
-                          onClick={() => void handleDeleteEquipo(eq.id)}
-                        >
-                          Eliminar
-                        </Button>
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {jugadoresPool.length === 0 && (
-              <div className="liga-empty">
-                <p>Aún no hay jugadores en el registro.</p>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigateJugadoresLista("M")}
-                >
-                  Ir al registro de jugadores
-                </Button>
-              </div>
-            )}
-          </div>
+          {jugadoresPool.length === 0 && (
+            <div className="liga-empty">
+              <p>Aún no hay jugadores en el registro.</p>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => navigateJugadoresLista("M")}
+              >
+                Ir al registro de jugadores
+              </Button>
+            </div>
+          )}
         </ModeSectionPanel>
       )}
 

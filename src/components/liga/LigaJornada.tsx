@@ -21,6 +21,7 @@ import {
   startJornada,
   updateScore,
   updateScoreParejasFijas,
+  updateScoreParejasFijasPlayoffs,
   updateJornadaFecha,
   updateJornadaHorarioPartidos,
   updatePartidoProgramacion,
@@ -33,9 +34,23 @@ import {
   type ParejasFijasSetsDraft,
 } from "../../lib/liga/parejasFijasMatchScore";
 import {
+  buildPlayoffsPayloadFromDraft,
+  type PlayoffsScoreDraft,
+} from "../../lib/liga/parejasFijasPlayoffsMatchScore";
+import {
+  isEquiposModalidad,
+  isParejasFijasLegacy,
+  isParejasFijasPlayoffs,
+} from "../../lib/liga/ligaModalidad";
+import { ligaJornadaTitulo } from "../../lib/liga/types";
+import {
   getSetsDraftForPartido,
   LigaPartidoSetsScoreForm,
 } from "./LigaPartidoSetsScoreForm";
+import {
+  getPlayoffsDraftForPartido,
+  LigaPartidoPlayoffsScoreForm,
+} from "./LigaPartidoPlayoffsScoreForm";
 import {
   getProgramacionDraftForPartido,
   jornadaFechaDraft,
@@ -43,7 +58,9 @@ import {
   LigaPartidoProgramacionFields,
   type PartidoProgramacionDraft,
 } from "./LigaPartidoProgramacionFields";
+import { resolveLigaJugadorPublicFotos } from "../../lib/liga/publicParejaAvatars";
 import { Button } from "../ui";
+import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import { ActionBar } from "../platform/ActionBar";
 import { ModeEventHeader } from "../platform";
 import { ModeHeader } from "../platform/ModeHeader";
@@ -53,6 +70,7 @@ import { LigaPageShell } from "./LigaPageShell";
 import { LigaSimpleRankingDual } from "./LigaSimpleRankingDual";
 import type { SimpleRankingPresentationRow } from "../../lib/modePresentation/standingsRowAdapters";
 import "./liga-page.css";
+import "../jugadores/riviera-jugadores.css";
 
 interface LigaJornadaProps {
   ligaId: string;
@@ -136,6 +154,9 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const [setsDrafts, setSetsDrafts] = useState<
     Record<string, ParejasFijasSetsDraft>
   >({});
+  const [playoffsDrafts, setPlayoffsDrafts] = useState<
+    Record<string, PlayoffsScoreDraft>
+  >({});
   const [jornadaFechaDrafts, setJornadaFechaDrafts] = useState<
     Record<string, string>
   >({});
@@ -152,6 +173,9 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   );
   const [manualPuntos, setManualPuntos] = useState<Record<string, string>>({});
   const [showManualEdit, setShowManualEdit] = useState(false);
+  const [parejaFotos, setParejaFotos] = useState<Record<string, string | null>>(
+    {}
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -159,7 +183,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     try {
       const d = await getLigaById(ligaId);
       setDetalle(d);
-      if (d.modalidad === "parejas_fijas") {
+      if (isEquiposModalidad(d.modalidad)) {
         const rEq = await getRankingEquipos(ligaId);
         setRankingEquipos(rEq);
         setRanking([]);
@@ -188,7 +212,13 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     [detalle, numero]
   );
 
-  const esParejasFijas = detalle?.modalidad === "parejas_fijas";
+  const esParejasFijas = detalle ? isEquiposModalidad(detalle.modalidad) : false;
+  const esPlayoffs = detalle
+    ? isParejasFijasPlayoffs(detalle.modalidad)
+    : false;
+  const esFijasLegacy = detalle
+    ? isParejasFijasLegacy(detalle.modalidad)
+    : false;
 
   const jornadaStats = useMemo(
     () => computeJornadaPublicStats(jornada, { parejasFijas: esParejasFijas }),
@@ -217,6 +247,37 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
       })),
     [jornadaStats.rankingParejas]
   );
+
+  useEffect(() => {
+    const organizadorId = detalle?.organizador_id;
+    const parejas = jornada?.parejas ?? [];
+    if (!organizadorId || parejas.length === 0) {
+      setParejaFotos({});
+      return;
+    }
+
+    const entries = parejas.flatMap((p) => {
+      const list: { id: string; name: string }[] = [];
+      if (p.jugador1_id) {
+        list.push({ id: p.jugador1_id, name: p.jugador1?.nombre ?? "" });
+      }
+      if (p.jugador2_id) {
+        list.push({ id: p.jugador2_id, name: p.jugador2?.nombre ?? "" });
+      }
+      return list;
+    });
+
+    let cancelled = false;
+    void resolveLigaJugadorPublicFotos(organizadorId, entries, {
+      publicOnly: false,
+    }).then((fotos) => {
+      if (!cancelled) setParejaFotos(fotos);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detalle?.organizador_id, jornada?.parejas]);
 
   const rankingEquiposRows = useMemo<SimpleRankingPresentationRow[]>(
     () =>
@@ -324,6 +385,53 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         }
       }
       setError(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveScoreParejasFijasPlayoffs = async (
+    partido: LigaPartido,
+    force = false
+  ) => {
+    const draft = getPlayoffsDraftForPartido(partido, playoffsDrafts);
+    setBusy(true);
+    setError(null);
+    try {
+      const built = buildPlayoffsPayloadFromDraft(draft);
+      const result = await updateScoreParejasFijasPlayoffs(
+        partido.id,
+        built.score1,
+        built.score2,
+        built.payload,
+        { force }
+      );
+      if (!result.ok) {
+        if (result.error === "conflict" && !force) {
+          if (
+            window.confirm(
+              "Ya hay un resultado distinto. ¿Sobrescribir?"
+            )
+          ) {
+            await saveScoreParejasFijasPlayoffs(partido, true);
+            return;
+          }
+        }
+        throw new Error(result.error ?? "No se pudo guardar");
+      }
+      setPlayoffsDrafts((prev) => {
+        const next = { ...prev };
+        delete next[partido.id];
+        return next;
+      });
+      setMessage(
+        partido.estado === "completed"
+          ? "Resultado corregido."
+          : "Resultado guardado."
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
     } finally {
       setBusy(false);
     }
@@ -625,7 +733,11 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
       <ModeHeader
         className="liga-header rv-mode-header liga-jornada-header-desktop"
         eyebrow={modeEyebrow}
-        title={`Liga: ${detalle.nombre} — Jornada ${numero}`}
+        title={`Liga: ${detalle.nombre} — ${ligaJornadaTitulo(
+          numero,
+          detalle.modalidad,
+          detalle.equipos?.length
+        )}`}
         subtitle={`Estado: ${jornadaEstadoLabel(jornada.estado)}${
           totalPartidos > 0
             ? esParejasFijas
@@ -641,7 +753,11 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
        * sin overrides — nunca coexiste visualmente con el header de arriba. */}
       <ModeEventHeader
         eyebrow={modeEyebrow}
-        title={`Jornada ${numero}`}
+        title={ligaJornadaTitulo(
+          numero,
+          detalle.modalidad,
+          detalle.equipos?.length
+        )}
         modality={detalle.nombre}
         statusLabel={jornadaEstadoLabel(jornada.estado)}
         statusVariant={jornadaEstadoStatusVariant(jornada.estado)}
@@ -700,16 +816,48 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
       )}
 
       <div className="liga-card rv-card">
-        <h2 className="liga-card__title">Parejas de la jornada</h2>
-        <div>
-          {(jornada.parejas ?? []).map((p) => (
-            <span key={p.id} className="liga-pareja-chip">
-              {p.jugador1?.nombre ?? "?"} / {p.jugador2?.nombre ?? "?"}
-            </span>
-          ))}
+        <div className="liga-jornada-parejas-head">
+          <h2 className="liga-card__title">Parejas de la jornada</h2>
+          {nParejas > 0 ? (
+            <span className="liga-jornada-parejas-count">{nParejas}</span>
+          ) : null}
         </div>
+        {nParejas === 0 ? (
+          <p className="liga-hint">Aún no hay parejas en esta jornada.</p>
+        ) : (
+          <ul className="liga-jornada-parejas" aria-label="Parejas de la jornada">
+            {(jornada.parejas ?? []).map((p) => {
+              const name1 = p.jugador1?.nombre?.trim() || "?";
+              const name2 = p.jugador2?.nombre?.trim() || "?";
+              return (
+                <li key={p.id} className="liga-jornada-pareja">
+                  <div className="liga-jornada-pareja__players">
+                    <div className="liga-jornada-pareja__person">
+                      <JugadorAvatar
+                        fotoUrl={parejaFotos[p.jugador1_id] ?? null}
+                        nombre={name1}
+                        size="sm"
+                        className="liga-jornada-pareja__avatar"
+                      />
+                      <span className="liga-jornada-pareja__name">{name1}</span>
+                    </div>
+                    <div className="liga-jornada-pareja__person">
+                      <JugadorAvatar
+                        fotoUrl={parejaFotos[p.jugador2_id] ?? null}
+                        nombre={name2}
+                        size="sm"
+                        className="liga-jornada-pareja__avatar"
+                      />
+                      <span className="liga-jornada-pareja__name">{name2}</span>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
         {jornada.estado === "upcoming" && (
-          <div className="liga-actions">
+          <div className="liga-actions liga-jornada-parejas-actions">
             <Button
               type="button"
               variant="primary"
@@ -771,6 +919,10 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
           </div>
           {partidosJornadaOrdenados.map((partido) => {
             const setsDraft = getSetsDraftForPartido(partido, setsDrafts);
+            const playoffsDraft = getPlayoffsDraftForPartido(
+              partido,
+              playoffsDrafts
+            );
             const progDraft = getProgramacionDraftForPartido(
               partido,
               programacionDrafts
@@ -787,6 +939,9 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                 <p className="liga-partido-row__teams">
                   {parejaLabel(partido.pareja1_id, jornada)} vs{" "}
                   {parejaLabel(partido.pareja2_id, jornada)}
+                  {partido.bracket_slot ? (
+                    <span className="liga-hint"> · {partido.bracket_slot}</span>
+                  ) : null}
                 </p>
                 <LigaPartidoProgramacionFields
                   partido={partido}
@@ -802,19 +957,35 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                   }
                   onSave={() => savePartidoProgramacion(partido)}
                 />
-                <LigaPartidoSetsScoreForm
-                  partido={partido}
-                  draft={setsDraft}
-                  disabled={bloqueado}
-                  busy={busy}
-                  onChange={(next) =>
-                    setSetsDrafts((prev) => ({
-                      ...prev,
-                      [partido.id]: next,
-                    }))
-                  }
-                  onSave={() => saveScoreParejasFijas(partido)}
-                />
+                {esPlayoffs ? (
+                  <LigaPartidoPlayoffsScoreForm
+                    partido={partido}
+                    draft={playoffsDraft}
+                    disabled={bloqueado}
+                    busy={busy}
+                    onChange={(next) =>
+                      setPlayoffsDrafts((prev) => ({
+                        ...prev,
+                        [partido.id]: next,
+                      }))
+                    }
+                    onSave={() => saveScoreParejasFijasPlayoffs(partido)}
+                  />
+                ) : esFijasLegacy ? (
+                  <LigaPartidoSetsScoreForm
+                    partido={partido}
+                    draft={setsDraft}
+                    disabled={bloqueado}
+                    busy={busy}
+                    onChange={(next) =>
+                      setSetsDrafts((prev) => ({
+                        ...prev,
+                        [partido.id]: next,
+                      }))
+                    }
+                    onSave={() => saveScoreParejasFijas(partido)}
+                  />
+                ) : null}
               </div>
             );
           })}

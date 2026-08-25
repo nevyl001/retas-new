@@ -5,12 +5,14 @@ import type {
   LigaJornada,
   RankingItem,
 } from "../../lib/liga/types";
+import { isEquiposModalidad } from "../../lib/liga/ligaModalidad";
 import { ligaModalidadLabel } from "../../lib/liga/types";
 import {
   listJornadaPublicMatches,
 } from "../../lib/liga/publicDisplay";
 import { formatFechaLegible, dateInputValue } from "../../lib/liga/programacion";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
+import { resolveLigaJugadorPublicFotos } from "../../lib/liga/publicParejaAvatars";
 import {
   getLigaById,
   getRanking,
@@ -24,7 +26,9 @@ import { useVisiblePolling } from "../../hooks/useVisiblePolling";
 import { PublicModeShell } from "../platform/PublicModeShell";
 import { StatusBadge } from "../platform/StatusBadge";
 import { PublicHero } from "../public/peds";
+import { LigaPublicParejasStandings } from "./LigaPublicParejasStandings";
 import "./liga-public-pantalla.css";
+import "../jugadores/riviera-jugadores.css";
 
 function estadoLigaBadgeVariant(
   estado: LigaDetalle["estado"]
@@ -75,6 +79,9 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const [rankingEquipos, setRankingEquipos] = useState<LigaEquipoRankingItem[]>(
     []
   );
+  const [parejaFotos, setParejaFotos] = useState<Record<string, string | null>>(
+    {}
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
@@ -93,7 +100,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     try {
       const d = await getLigaById(ligaId, true);
       if (cancelledRef.current) return;
-      if (d.modalidad === "parejas_fijas") {
+      if (isEquiposModalidad(d.modalidad)) {
         const rEq = await getRankingEquipos(ligaId);
         if (cancelledRef.current) return;
         setDetalle(d);
@@ -133,6 +140,55 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     enabled: true,
   });
 
+  useEffect(() => {
+    const organizadorId = detalle?.organizador_id;
+    const equipos = detalle?.equipos ?? [];
+    if (!organizadorId || !isEquiposModalidad(detalle?.modalidad) || !equipos.length) {
+      setParejaFotos({});
+      return;
+    }
+
+    const entries = equipos.flatMap((eq) => {
+      const list: { id: string; name: string }[] = [];
+      if (eq.jugador1_id) {
+        list.push({
+          id: eq.jugador1_id,
+          name: eq.jugador1?.nombre ?? "",
+        });
+      }
+      if (eq.jugador2_id) {
+        list.push({
+          id: eq.jugador2_id,
+          name: eq.jugador2?.nombre ?? "",
+        });
+      }
+      return list;
+    });
+
+    let cancelled = false;
+    void resolveLigaJugadorPublicFotos(organizadorId, entries).then((fotos) => {
+      if (!cancelled) setParejaFotos(fotos);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detalle?.organizador_id, detalle?.modalidad, detalle?.equipos]);
+
+  const rankingParejasPublicas = useMemo(() => {
+    if (!detalle || !isEquiposModalidad(detalle.modalidad)) return [];
+    const byId = new Map(detalle.equipos.map((e) => [e.id, e]));
+    return rankingEquipos.map((ranking) => {
+      const equipo = byId.get(ranking.equipo_id);
+      return {
+        ranking,
+        equipo,
+        foto1: equipo ? parejaFotos[equipo.jugador1_id] ?? null : null,
+        foto2: equipo ? parejaFotos[equipo.jugador2_id] ?? null : null,
+      };
+    });
+  }, [detalle, rankingEquipos, parejaFotos]);
+
   if (loading && !detalle) {
     return (
       <ClubExperienceScope organizadorId={null} pendingUntilOrganizador>
@@ -168,7 +224,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const ligaTerminada =
     detalle.estado === "completed" || todasJornadasCompletas;
 
-  const esParejasFijas = detalle.modalidad === "parejas_fijas";
+  const esParejasFijas = isEquiposModalidad(detalle.modalidad);
 
   const podio = esParejasFijas
     ? rankingEquipos.slice(0, 3)
@@ -237,69 +293,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
               {esParejasFijas ? "Ranking por pareja" : "Ranking acumulado"}
             </h2>
             {esParejasFijas ? (
-              rankingEquipos.length === 0 ? (
-                <p className="liga-pantalla__loading">Sin puntos aún.</p>
-              ) : (
-                <div className="liga-pantalla-ranking__scroll">
-                  <table className="liga-pantalla-ranking__table">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Pareja</th>
-                        <th title="Partidos jugados">PJ</th>
-                        <th title="Partidos ganados">PG</th>
-                        <th title="Partidos perdidos">PP</th>
-                        <th title="Games a favor">GF</th>
-                        <th title="Games en contra">GC</th>
-                        <th title="Diferencia de games">DIF</th>
-                        <th title="Puntos ranking (3 victoria 2-0, 2 con STB)">PTS</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rankingEquipos.map((row) => (
-                        <tr
-                          key={row.equipo_id}
-                          className={
-                            row.posicion === 1
-                              ? "liga-pantalla-ranking-top"
-                              : undefined
-                          }
-                        >
-                          <td className="liga-pantalla-ranking__rank">
-                            {row.posicion}
-                          </td>
-                          <td className="liga-pantalla-ranking__name">
-                            {row.nombre}
-                          </td>
-                          <td className="liga-pantalla-ranking__stat">
-                            {row.partidos_jugados}
-                          </td>
-                          <td className="liga-pantalla-ranking__stat">
-                            {row.partidos_ganados}
-                          </td>
-                          <td className="liga-pantalla-ranking__stat">
-                            {row.partidos_perdidos}
-                          </td>
-                          <td className="liga-pantalla-ranking__stat">
-                            {row.games_favor}
-                          </td>
-                          <td className="liga-pantalla-ranking__stat">
-                            {row.games_contra}
-                          </td>
-                          <td className="liga-pantalla-ranking__stat">
-                            {row.diferencia_games >= 0
-                              ? `+${row.diferencia_games}`
-                              : row.diferencia_games}
-                          </td>
-                          <td className="liga-pantalla-ranking__pts">
-                            {row.puntos}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )
+              <LigaPublicParejasStandings rows={rankingParejasPublicas} />
             ) : ranking.length === 0 ? (
               <p className="liga-pantalla__loading">Sin puntos aún.</p>
             ) : (

@@ -16,6 +16,7 @@ import type {
 } from "../lib/liga/types";
 import {
   validateEquiposParaCalendario,
+  validateEquiposParaPlayoffsCalendario,
   validateInscripcionesParaCalendario,
 } from "../lib/liga/calendario";
 import {
@@ -24,17 +25,35 @@ import {
   recalcularPuntosLigaEquipos,
   resetPuntosEquiposLiga,
 } from "./ligaParejasFijasService";
+import {
+  clearPlayoffSeeds,
+  insertJornadasForLigaParejasFijasPlayoffs,
+  recalcularPuntosLigaEquiposPlayoffs,
+} from "./ligaParejasFijasPlayoffsService";
 import { dedupeLigaJugadoresById } from "../lib/liga/dedupeJugadores";
 import {
   computeParejasFijasMatchTotals,
   parseSetScoresJson,
   type LigaPartidoSetScore,
 } from "../lib/liga/parejasFijasMatchScore";
+import { parsePlayoffsSetScoresJson } from "../lib/liga/parejasFijasPlayoffsMatchScore";
+import {
+  isEquiposModalidad,
+  isParejasFijasLegacy,
+  isParejasFijasPlayoffs,
+  parseLigaModalidad,
+} from "../lib/liga/ligaModalidad";
 import {
   normalizeHoraInicio,
   validateCancha,
 } from "../lib/liga/programacion";
 import type { RivieraJugadorCategoria } from "../lib/rivieraJugadores/types";
+
+function mapPartidoSetScores(raw: unknown): LigaPartido["set_scores"] {
+  const playoffs = parsePlayoffsSetScoresJson(raw);
+  if (playoffs) return playoffs;
+  return parseSetScoresJson(raw);
+}
 
 async function requireUserId(): Promise<string> {
   const {
@@ -55,10 +74,7 @@ function mapLiga(row: Record<string, unknown>): Liga {
     id: String(row.id),
     nombre: String(row.nombre),
     estado: row.estado as Liga["estado"],
-    modalidad:
-      row.modalidad === "parejas_fijas"
-        ? "parejas_fijas"
-        : "individual_rotativo",
+    modalidad: parseLigaModalidad(row.modalidad),
     vueltas,
     organizador_id: row.organizador_id ? String(row.organizador_id) : null,
     canchas_disponibles: Number(row.canchas_disponibles ?? 3),
@@ -71,6 +87,13 @@ function mapLiga(row: Record<string, unknown>): Liga {
         : undefined,
     equipos_count:
       row.equipos_count != null ? Number(row.equipos_count) : undefined,
+    playoff_seeds:
+      row.playoff_seeds && typeof row.playoff_seeds === "object"
+        ? (row.playoff_seeds as Record<string, string>)
+        : null,
+    playoff_seeded_at: row.playoff_seeded_at
+      ? String(row.playoff_seeded_at)
+      : null,
   };
 }
 
@@ -320,15 +343,24 @@ export async function getLigaById(
       pareja2_id: String(m.pareja2_id),
       score_pareja1: m.score_pareja1 != null ? Number(m.score_pareja1) : null,
       score_pareja2: m.score_pareja2 != null ? Number(m.score_pareja2) : null,
-      set_scores: parseSetScoresJson(
+      set_scores: mapPartidoSetScores(
         (m as { set_scores?: unknown }).set_scores
       ),
       cancha: m.cancha != null ? Number(m.cancha) : null,
       hora_inicio: (m as { hora_inicio?: string | null }).hora_inicio
         ? String((m as { hora_inicio?: string | null }).hora_inicio)
         : null,
-      ronda: Number(m.ronda),
+      ronda: Number(m.ronda ?? 1),
       estado: m.estado as LigaPartido["estado"],
+      fase: (m as { fase?: string | null }).fase
+        ? ((m as { fase: string }).fase as LigaPartido["fase"])
+        : null,
+      bracket_slot: (m as { bracket_slot?: string | null }).bracket_slot
+        ? ((m as { bracket_slot: string }).bracket_slot as LigaPartido["bracket_slot"])
+        : null,
+      liga_id: (m as { liga_id?: string | null }).liga_id
+        ? String((m as { liga_id: string }).liga_id)
+        : null,
       created_at: String(m.created_at),
     }));
   }
@@ -586,8 +618,11 @@ export async function resetLiga(ligaId: string): Promise<void> {
 
   await deleteAllJornadasLiga(ligaId);
 
-  if (liga?.modalidad === "parejas_fijas") {
+  if (isEquiposModalidad(parseLigaModalidad(liga?.modalidad))) {
     await resetPuntosEquiposLiga(ligaId);
+    if (isParejasFijasPlayoffs(parseLigaModalidad(liga?.modalidad))) {
+      await clearPlayoffSeeds(ligaId);
+    }
   } else {
     await resetPuntosLiga(ligaId);
   }
@@ -612,7 +647,19 @@ export async function regenerarCalendarioLiga(
   await requireUserId();
   const detalle = await getLigaById(ligaId);
 
-  if (detalle.modalidad === "parejas_fijas") {
+  if (isParejasFijasPlayoffs(detalle.modalidad)) {
+    validateEquiposParaPlayoffsCalendario(detalle.equipos.length);
+    await deleteAllJornadasLiga(ligaId);
+    await clearPlayoffSeeds(ligaId);
+    if (options?.resetPuntos) {
+      await resetPuntosEquiposLiga(ligaId);
+    }
+    await insertJornadasForLigaParejasFijasPlayoffs(
+      ligaId,
+      detalle.equipos,
+      detalle.canchas_disponibles
+    );
+  } else if (isParejasFijasLegacy(detalle.modalidad)) {
     validateEquiposParaCalendario(detalle.equipos.length);
     await deleteAllJornadasLiga(ligaId);
 
@@ -658,30 +705,83 @@ async function enrichLigaJugadoresWithCategoria(
 ): Promise<LigaJugadorPoolItem[]> {
   const { data, error } = await supabase
     .from("riviera_jugadores")
-    .select("categoria, legacy_liga_jugador_id, nombre")
+    .select("id, categoria, legacy_liga_jugador_id, foto_url")
     .eq("organizador_id", organizadorId)
     .neq("estado", "archivado");
 
   if (error) {
     console.warn("enrichLigaJugadoresWithCategoria:", error.message);
-    return jugadores.map((j) => ({ ...j, categoria: null }));
+    return jugadores.map((j) => ({
+      ...j,
+      categoria: null,
+      riviera_id: null,
+      foto_url: null,
+    }));
   }
 
-  const byLigaId = new Map<string, RivieraJugadorCategoria>();
+  const byLigaId = new Map<
+    string,
+    {
+      categoria: RivieraJugadorCategoria | null;
+      rivieraJugadorId: string;
+      foto_url: string | null;
+    }
+  >();
 
   for (const row of data ?? []) {
-    const cat = row.categoria as RivieraJugadorCategoria | null;
-    if (!cat) continue;
-    if (row.legacy_liga_jugador_id) {
-      byLigaId.set(String(row.legacy_liga_jugador_id), cat);
+    if (!row.legacy_liga_jugador_id || !row.id) continue;
+    const ligaId = String(row.legacy_liga_jugador_id);
+    const rivieraJugadorId = String(row.id);
+    const cat = (row.categoria as RivieraJugadorCategoria | null) ?? null;
+    const foto =
+      typeof row.foto_url === "string" && row.foto_url.trim()
+        ? row.foto_url.trim()
+        : null;
+    const prev = byLigaId.get(ligaId);
+    if (!prev || (cat && !prev.categoria)) {
+      byLigaId.set(ligaId, {
+        categoria: cat,
+        rivieraJugadorId,
+        foto_url: foto,
+      });
+    } else if (!prev.foto_url && foto) {
+      byLigaId.set(ligaId, { ...prev, foto_url: foto });
     }
-    // No enriquecer por nombre: homónimos no deben heredar categoría ajena.
   }
 
-  return jugadores.map((j) => ({
-    ...j,
-    categoria: byLigaId.get(j.id) ?? null,
-  }));
+  const rivieraJugadorIds = Array.from(
+    new Set(
+      Array.from(byLigaId.values()).map((m) => m.rivieraJugadorId)
+    )
+  );
+
+  let rivieraIdByJugador = new Map<string, string>();
+  if (rivieraJugadorIds.length > 0) {
+    try {
+      const { fetchRivieraIdMapForJugadorIds } = await import(
+        "../lib/rivieraJugadores/rivieraIdDisplay"
+      );
+      rivieraIdByJugador = await fetchRivieraIdMapForJugadorIds(
+        rivieraJugadorIds,
+        { ensureLimit: Math.min(40, rivieraJugadorIds.length) }
+      );
+    } catch (e) {
+      console.warn("enrichLigaJugadoresWithCategoria riviera_id:", e);
+    }
+  }
+
+  return jugadores.map((j) => {
+    const meta = byLigaId.get(j.id);
+    const riviera_id = meta
+      ? rivieraIdByJugador.get(meta.rivieraJugadorId) ?? null
+      : null;
+    return {
+      ...j,
+      categoria: meta?.categoria ?? null,
+      riviera_id,
+      foto_url: meta?.foto_url ?? null,
+    };
+  });
 }
 
 /**
@@ -823,7 +923,14 @@ export async function startLiga(ligaId: string): Promise<void> {
     );
   }
 
-  if (detalle.modalidad === "parejas_fijas") {
+  if (isParejasFijasPlayoffs(detalle.modalidad)) {
+    validateEquiposParaPlayoffsCalendario(detalle.equipos.length);
+    await insertJornadasForLigaParejasFijasPlayoffs(
+      ligaId,
+      detalle.equipos,
+      detalle.canchas_disponibles
+    );
+  } else if (isParejasFijasLegacy(detalle.modalidad)) {
     validateEquiposParaCalendario(detalle.equipos.length);
     await insertJornadasForLigaParejasFijas(
       ligaId,
@@ -1027,9 +1134,9 @@ export async function startJornada(jornadaId: string): Promise<void> {
     canchas_disponibles?: number;
     modalidad?: string;
   };
-  const modalidad = ligaRow?.modalidad ?? "individual_rotativo";
+  const modalidad = parseLigaModalidad(ligaRow?.modalidad);
 
-  if (modalidad === "parejas_fijas") {
+  if (isEquiposModalidad(modalidad)) {
     const { data: existing, error: exErr } = await supabase
       .from("liga_partidos")
       .select("id")
@@ -1499,8 +1606,12 @@ export async function recalcularPuntosLiga(ligaId: string): Promise<void> {
 
   if (lErr) throw new Error(lErr.message);
 
-  if (liga?.modalidad === "parejas_fijas") {
+  if (isParejasFijasLegacy(parseLigaModalidad(liga?.modalidad))) {
     await recalcularPuntosLigaEquipos(ligaId);
+    return;
+  }
+  if (isParejasFijasPlayoffs(parseLigaModalidad(liga?.modalidad))) {
+    await recalcularPuntosLigaEquiposPlayoffs(ligaId);
     return;
   }
 
@@ -1895,5 +2006,7 @@ export {
   deleteEquipoLiga,
   getRankingEquipos,
 } from "./ligaParejasFijasService";
+
+export { updateScoreParejasFijasPlayoffs } from "./ligaParejasFijasPlayoffsService";
 
 export { buildFixedPairLeagueSchedule } from "../lib/liga/fixedPairSchedule";

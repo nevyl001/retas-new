@@ -24,7 +24,8 @@
   --liga-bg-gradient: var(--bg-base);
   --liga-surface: var(--bg-card);
   --liga-surface-hover: var(--bg-card-hover);
-  --liga-surface-deep: var(--ro-scrim-modal);
+  /* Superficie hundida de formulario — NO usar --ro-scrim-modal (overlay). */
+  --liga-surface-deep: var(--ro-bg-inset);
   --liga-border: var(--border-default);
   --liga-border-subtle: var(--border-subtle);
   --liga-text: var(--text-primary);

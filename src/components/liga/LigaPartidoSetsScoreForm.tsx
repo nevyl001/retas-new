@@ -56,7 +56,13 @@ export function getSetsDraftForPartido(
   partido: LigaPartido,
   drafts: Record<string, ParejasFijasSetsDraft>
 ): ParejasFijasSetsDraft {
-  const base = drafts[partido.id] ?? draftFromSetScores(partido.set_scores);
+  const legacyScores =
+    partido.set_scores &&
+    typeof partido.set_scores === "object" &&
+    "sets" in partido.set_scores
+      ? (partido.set_scores as import("../../lib/liga/parejasFijasMatchScore").LigaPartidoSetScores)
+      : null;
+  const base = drafts[partido.id] ?? draftFromSetScores(legacyScores);
   return normalizeParejasFijasDraft(base);
 }
 

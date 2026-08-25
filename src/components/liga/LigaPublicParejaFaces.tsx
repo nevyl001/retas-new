@@ -1,0 +1,80 @@
+import React from "react";
+import type { LigaEquipo, LigaJornadaPareja } from "../../lib/liga/types";
+import { JugadorAvatar } from "../jugadores/JugadorAvatar";
+
+export function parejaPlayerNames(
+  pareja: LigaJornadaPareja | undefined,
+  equiposById?: Map<string, LigaEquipo>
+): { name1: string; name2: string; id1: string; id2: string } {
+  if (!pareja) {
+    return { name1: "?", name2: "?", id1: "", id2: "" };
+  }
+
+  const equipoId = pareja.equipo_id?.trim();
+  const equipo =
+    equipoId && equiposById?.has(equipoId)
+      ? equiposById.get(equipoId)
+      : undefined;
+
+  const name1 =
+    equipo?.jugador1?.nombre?.trim() ||
+    pareja.jugador1?.nombre?.trim() ||
+    "?";
+  const name2 =
+    equipo?.jugador2?.nombre?.trim() ||
+    pareja.jugador2?.nombre?.trim() ||
+    "?";
+
+  return {
+    name1,
+    name2,
+    id1: pareja.jugador1_id,
+    id2: pareja.jugador2_id,
+  };
+}
+
+interface LigaPublicParejaPlayersProps {
+  name1: string;
+  name2: string;
+  foto1?: string | null;
+  foto2?: string | null;
+  size?: "sm" | "md";
+  className?: string;
+  win?: boolean;
+}
+
+/** Cada jugador con su avatar al lado del nombre. */
+export const LigaPublicParejaPlayers: React.FC<LigaPublicParejaPlayersProps> = ({
+  name1,
+  name2,
+  foto1,
+  foto2,
+  size = "sm",
+  className = "",
+  win = false,
+}) => (
+  <div
+    className={`liga-pub-pair-players liga-pub-pair-players--${size}${
+      win ? " liga-pub-pair-players--win" : ""
+    }${className ? ` ${className}` : ""}`}
+  >
+    <div className="liga-pub-pair-players__person">
+      <JugadorAvatar
+        fotoUrl={foto1}
+        nombre={name1}
+        size={size}
+        className="liga-pub-pair-players__avatar"
+      />
+      <span className="liga-pub-pair-players__name">{name1}</span>
+    </div>
+    <div className="liga-pub-pair-players__person">
+      <JugadorAvatar
+        fotoUrl={foto2}
+        nombre={name2}
+        size={size}
+        className="liga-pub-pair-players__avatar"
+      />
+      <span className="liga-pub-pair-players__name">{name2}</span>
+    </div>
+  </div>
+);

@@ -47,7 +47,7 @@ export const LigaDetalle: React.FC<LigaDetalleProps> = ({
       const d = await getLigaById(ligaId);
       if (cancelledRef.current) return;
       setDetalle(d);
-      if (d.modalidad === "parejas_fijas") {
+      if (d.modalidad === "parejas_fijas" || d.modalidad === "parejas_fijas_playoffs") {
         const rEq = await getRankingEquipos(ligaId);
         if (cancelledRef.current) return;
         setRankingEquipos(rEq);
@@ -96,7 +96,8 @@ export const LigaDetalle: React.FC<LigaDetalleProps> = ({
         </p>
       </header>
 
-      {detalle.modalidad === "parejas_fijas" ? (
+      {detalle.modalidad === "parejas_fijas" ||
+      detalle.modalidad === "parejas_fijas_playoffs" ? (
         <LigaRankingEquipos rows={rankingEquipos} />
       ) : (
         <LigaRanking rows={ranking} title="Ranking acumulado" />

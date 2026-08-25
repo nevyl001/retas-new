@@ -4,6 +4,7 @@ import { isValidUuid } from "../db/schemaHelpers";
 import { errorMessageWithCode } from "../errors/normalizeError";
 import { getGames, getMatches, getPairs, getTournaments } from "../database";
 import { computeJornadaPublicStats } from "../liga/jornadaStats";
+import { isEquiposModalidad } from "../liga/ligaModalidad";
 import { formatLugarOrdinal } from "./historialDisplay";
 import {
   buildParticipacionFechaFields,
@@ -1877,7 +1878,7 @@ export async function syncLigaJornada(
       ...(jornada.partidos ?? []).map((partido) => partido.created_at)
     );
     const jornadaStats = computeJornadaPublicStats(jornada, {
-      parejasFijas: detalle.modalidad === "parejas_fijas",
+      parejasFijas: isEquiposModalidad(detalle.modalidad),
     });
     const partidosDetalleByJugador =
       buildLigaJornadaPartidosDetalleByJugadorId(jornada);
