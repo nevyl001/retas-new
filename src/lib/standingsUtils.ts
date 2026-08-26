@@ -13,6 +13,8 @@ import { pairPlayersDisplayLabel } from "./pairPlayerNames";
 export interface TeamConfig {
   teamNames: string[];
   pairToTeam: Record<string, number>;
+  /** Paralelo a teamNames; null/undefined = sin logo. */
+  teamLogos?: (string | null)[];
 }
 
 export interface PairWithStats extends Pair {
@@ -358,6 +360,88 @@ function isCompleteTeamConfig(
     typeof tc.pairToTeam === "object" &&
     Object.keys(tc.pairToTeam).length > 0
   );
+}
+
+/** Guarda borrador de equipos (prep) en localStorage. */
+export function saveTeamConfigToStorage(
+  tournamentId: string,
+  config: TeamConfig
+): void {
+  if (!tournamentId) return;
+  try {
+    localStorage.setItem(
+      `${TEAM_CONFIG_KEY}${tournamentId}`,
+      JSON.stringify({
+        teamNames: config.teamNames,
+        pairToTeam: config.pairToTeam,
+        ...(config.teamLogos ? { teamLogos: config.teamLogos } : {}),
+      })
+    );
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+/**
+ * Conserva asignaciones previas; solo coloca parejas nuevas
+ * (balanceando al equipo con menos miembros). No reordena las ya elegidas.
+ */
+export function mergePairToTeamAssignments(input: {
+  pairIds: string[];
+  teamsCount: number;
+  previous: Record<string, number>;
+}): Record<string, number> {
+  const n = Math.max(2, input.teamsCount);
+  const next: Record<string, number> = {};
+  const pairIdSet = new Set(input.pairIds);
+
+  for (const id of input.pairIds) {
+    const prev = input.previous[id];
+    if (typeof prev === "number" && Number.isInteger(prev)) {
+      if (prev >= 0 && prev < n) {
+        next[id] = prev;
+      } else if (prev >= n) {
+        next[id] = n - 1;
+      }
+    }
+  }
+
+  const unassigned = input.pairIds
+    .filter((id) => next[id] === undefined)
+    .sort((a, b) => a.localeCompare(b));
+
+  for (const id of unassigned) {
+    const counts = Array.from({ length: n }, (_, i) => 0);
+    for (const tid of Object.values(next)) {
+      if (tid >= 0 && tid < n) counts[tid]! += 1;
+    }
+    let minIdx = 0;
+    for (let i = 1; i < n; i++) {
+      if (counts[i]! < counts[minIdx]!) minIdx = i;
+    }
+    next[id] = minIdx;
+  }
+
+  // Drop keys for pairs that no longer exist (already omitted).
+  void pairIdSet;
+  return next;
+}
+
+export function resizeTeamNamesArray(prev: string[], n: number): string[] {
+  const next = prev.slice(0, n);
+  while (next.length < n) next.push("");
+  return next;
+}
+
+/** Conserva URLs de logo al recortar/ampliar el número de equipos. */
+export function resizeTeamLogosArray(
+  prev: (string | null)[] | null | undefined,
+  n: number
+): (string | null)[] {
+  const base = Array.isArray(prev) ? prev : [];
+  const next: (string | null)[] = base.slice(0, n);
+  while (next.length < n) next.push(null);
+  return next;
 }
 
 /**

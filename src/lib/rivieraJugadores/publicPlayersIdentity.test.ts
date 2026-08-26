@@ -17,6 +17,7 @@ describe("publicIdentityToResolvedRating", () => {
     mano: null,
     lado: null,
     nacionalidad: "MX",
+    edad: null,
   };
 
   it("prefiere rating real de identidad sobre default de evento", () => {

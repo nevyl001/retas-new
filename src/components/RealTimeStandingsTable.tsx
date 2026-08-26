@@ -66,6 +66,7 @@ import "../styles/standings-mobile-cards.css";
 export interface TeamConfig {
   teamNames: string[];
   pairToTeam: Record<string, number>;
+  teamLogos?: (string | null)[];
   dynamicLineups?: {
     enabled: boolean;
     totalRounds: number;

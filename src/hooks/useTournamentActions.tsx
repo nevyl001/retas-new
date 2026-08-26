@@ -52,6 +52,7 @@ async function startDynamicLineupsTournament(params: {
   userId: string;
   teamNames: string[];
   pairToTeam: Record<string, number>;
+  teamLogos?: (string | null)[];
   dynamicLineups: DynamicLineupsStartOpts;
   setSelectedTournament: (tournament: Tournament | null) => void;
   loadTournamentData: (tournament?: Tournament) => void | Promise<void>;
@@ -64,6 +65,7 @@ async function startDynamicLineupsTournament(params: {
     userId,
     teamNames,
     pairToTeam,
+    teamLogos,
     dynamicLineups,
     setSelectedTournament,
     loadTournamentData,
@@ -218,6 +220,7 @@ async function startDynamicLineupsTournament(params: {
     team_config: {
       teamNames,
       pairToTeam,
+      ...(teamLogos ? { teamLogos } : {}),
       dynamicLineups: {
         enabled: true,
         totalRounds: dynamicLineups.totalRounds,
@@ -263,7 +266,11 @@ async function startDynamicLineupsTournament(params: {
   try {
     localStorage.setItem(
       `rivieraapp_teams_${selectedTournament.id}`,
-      JSON.stringify({ teamNames, pairToTeam })
+      JSON.stringify({
+        teamNames,
+        pairToTeam,
+        ...(teamLogos ? { teamLogos } : {}),
+      })
     );
   } catch (e) {
     console.warn("No se pudo guardar configuración de equipos en localStorage", e);
@@ -313,6 +320,7 @@ export const useTournamentActions = (
       teamsCount?: number;
       teamNames?: string[];
       pairToTeam?: Record<string, number>;
+      teamLogos?: (string | null)[];
       dynamicLineups?: DynamicLineupsStartOpts;
     }
   ) => {
@@ -385,6 +393,7 @@ export const useTournamentActions = (
           userId,
           teamNames: opts.teamNames,
           pairToTeam: opts.pairToTeam,
+          teamLogos: opts.teamLogos,
           dynamicLineups: opts.dynamicLineups,
           setSelectedTournament,
           loadTournamentData,
@@ -415,7 +424,13 @@ export const useTournamentActions = (
         };
         const teamConfigPayload =
           format === "teams" && opts?.teamNames?.length && opts?.pairToTeam && Object.keys(opts.pairToTeam).length > 0
-            ? { team_config: { teamNames: opts.teamNames, pairToTeam: opts.pairToTeam } }
+            ? {
+                team_config: {
+                  teamNames: opts.teamNames,
+                  pairToTeam: opts.pairToTeam,
+                  ...(opts.teamLogos ? { teamLogos: opts.teamLogos } : {}),
+                },
+              }
             : null;
 
         if (teamConfigPayload) {
@@ -453,7 +468,13 @@ export const useTournamentActions = (
           try {
             localStorage.setItem(
               `rivieraapp_teams_${selectedTournament.id}`,
-              JSON.stringify({ teamNames: teamConfigPayload.team_config.teamNames, pairToTeam: teamConfigPayload.team_config.pairToTeam })
+              JSON.stringify({
+                teamNames: teamConfigPayload.team_config.teamNames,
+                pairToTeam: teamConfigPayload.team_config.pairToTeam,
+                ...(teamConfigPayload.team_config.teamLogos
+                  ? { teamLogos: teamConfigPayload.team_config.teamLogos }
+                  : {}),
+              })
             );
           } catch (e) {
             console.warn("No se pudo guardar configuración de equipos en localStorage", e);

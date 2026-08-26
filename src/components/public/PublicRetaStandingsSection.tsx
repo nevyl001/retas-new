@@ -9,6 +9,7 @@ import { StandingsScoringHelp } from "../standings/StandingsScoringHelp";
 import type { StandingsHelpMode } from "../../lib/standingsHelpMode";
 import "../../styles/standings-scoring-help.css";
 import "../../styles/standings-criterion.css";
+import "./reta-public-scoreboard.css";
 
 export type PublicRetaStandingRow = {
   id: string;
@@ -94,12 +95,20 @@ export const PublicRetaStandingsSection: React.FC<{
           <tbody>
             {rows.map((row, index) => {
               const isLeader = index === 0;
+              const medalClass =
+                index === 0
+                  ? " te-pub-standings-row--medal-1"
+                  : index === 1
+                    ? " te-pub-standings-row--medal-2"
+                    : index === 2
+                      ? " te-pub-standings-row--medal-3"
+                      : "";
               return (
                 <tr
                   key={row.id}
                   className={`te-pub-standings-row te-pub-fade-in-up${
                     isLeader ? " te-pub-standings-row--leader" : ""
-                  }`}
+                  }${medalClass}`}
                   style={{ animationDelay: `${0.08 + index * staggerBase}s` }}
                 >
                   <td className="te-pub-standings-row__pos">
@@ -151,12 +160,20 @@ export const PublicRetaStandingsSection: React.FC<{
       <div className="te-pub-standings-cards">
         {rows.map((row, index) => {
           const isLeader = index === 0;
+          const medalClass =
+            index === 0
+              ? " te-pub-standing-card--medal-1"
+              : index === 1
+                ? " te-pub-standing-card--medal-2"
+                : index === 2
+                  ? " te-pub-standing-card--medal-3"
+                  : "";
           return (
             <article
               key={`m-${row.id}`}
               className={`te-pub-standing-card te-pub-fade-in-up${
                 isLeader ? " te-pub-standing-card--leader" : ""
-              }`}
+              }${medalClass}`}
               style={{ animationDelay: `${0.1 + index * staggerBase}s` }}
             >
               <span className="te-pub-standing-card__pos-bg" aria-hidden>

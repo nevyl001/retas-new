@@ -5,11 +5,19 @@ import {
   getStartFormatLabel,
   resolveTournamentStartFormat,
 } from "../lib/gameModeMapping";
-import { Card, Input } from "./ui";
+import {
+  getTeamConfigFromStorage,
+  mergePairToTeamAssignments,
+  resizeTeamLogosArray,
+  resizeTeamNamesArray,
+  saveTeamConfigToStorage,
+} from "../lib/standingsUtils";
 import {
   QuickModeHero,
   QuickModePrimaryCta,
 } from "./platform/quickMode";
+import { RetaEquiposOrganizerCards } from "./reta/equipos/RetaEquiposOrganizerCards";
+import "./reta/equipos/reta-equipos.css";
 
 interface StartTournamentSectionProps {
   tournament: Tournament;
@@ -20,6 +28,7 @@ interface StartTournamentSectionProps {
     teamsCount?: number;
     teamNames?: string[];
     pairToTeam?: Record<string, number>;
+    teamLogos?: (string | null)[];
   }) => void;
 }
 
@@ -35,9 +44,22 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
     [tournament]
   );
 
-  const [teamsCount, setTeamsCount] = useState<number>(2);
-  const [teamNames, setTeamNames] = useState<string[]>(["", ""]);
-  const [pairToTeam, setPairToTeam] = useState<Record<string, number>>({});
+  const [teamsCount, setTeamsCount] = useState<number>(() => {
+    const draft = getTeamConfigFromStorage(tournament.id);
+    return draft?.teamNames?.length || 2;
+  });
+  const [teamNames, setTeamNames] = useState<string[]>(() => {
+    const draft = getTeamConfigFromStorage(tournament.id);
+    return draft?.teamNames?.length ? [...draft.teamNames] : ["", ""];
+  });
+  const [pairToTeam, setPairToTeam] = useState<Record<string, number>>(() => {
+    const draft = getTeamConfigFromStorage(tournament.id);
+    return draft?.pairToTeam ? { ...draft.pairToTeam } : {};
+  });
+  const [teamLogos, setTeamLogos] = useState<(string | null)[]>(() => {
+    const draft = getTeamConfigFromStorage(tournament.id);
+    return resizeTeamLogosArray(draft?.teamLogos, draft?.teamNames?.length || 2);
+  });
 
   const safeTeams = useMemo(
     () =>
@@ -50,18 +72,26 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
   useEffect(() => {
     if (format !== "teams" || teamsCount < 2 || pairs.length === 0) return;
     const n = Math.min(teamsCount, pairs.length);
-    setTeamNames((prev) => {
-      const next = [...prev.slice(0, n)];
-      while (next.length < n) next.push("");
-      return next;
-    });
-    const sortedPairs = [...pairs].sort((a, b) => a.id.localeCompare(b.id));
-    const next: Record<string, number> = {};
-    sortedPairs.forEach((p, idx) => {
-      next[p.id] = idx % n;
-    });
-    setPairToTeam(next);
+    setTeamNames((prev) => resizeTeamNamesArray(prev, n));
+    setTeamLogos((prev) => resizeTeamLogosArray(prev, n));
+    setPairToTeam((prev) =>
+      mergePairToTeamAssignments({
+        pairIds: pairs.map((p) => p.id),
+        teamsCount: n,
+        previous: prev,
+      })
+    );
   }, [format, teamsCount, pairs]);
+
+  useEffect(() => {
+    if (format !== "teams" || !tournament.id) return;
+    if (Object.keys(pairToTeam).length === 0) return;
+    saveTeamConfigToStorage(tournament.id, {
+      teamNames: resizeTeamNamesArray(teamNames, Math.max(2, teamsCount)),
+      pairToTeam,
+      teamLogos: resizeTeamLogosArray(teamLogos, Math.max(2, teamsCount)),
+    });
+  }, [format, tournament.id, teamNames, pairToTeam, teamLogos, teamsCount]);
 
   const teamsPreview = useMemo(() => {
     if (format !== "teams" || safeTeams < 2 || pairs.length < 2) return null;
@@ -147,72 +177,48 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
                 ? teamNames.map((name, i) => name.trim() || `Equipo ${i + 1}`)
                 : undefined,
             pairToTeam: format === "teams" ? pairToTeam : undefined,
+            teamLogos:
+              format === "teams"
+                ? resizeTeamLogosArray(teamLogos, Math.max(2, teamsCount))
+                : undefined,
           })
         }
       />
 
-      {format === "teams" && pairs.length >= 2 && (
-        <Card variant="elevated" className="start-tournament-section__teams">
-          <p className="riviera-label">Organiza tus equipos</p>
-          <div className="start-tournament-section__teams-toolbar">
-            <Input
-              type="number"
-              label="Número de equipos"
-              className="start-tournament-section__teams-count"
-              min={2}
-              max={Math.max(2, pairs.length)}
-              value={teamsCount}
-              onChange={(e) =>
-                setTeamsCount(parseInt(e.target.value || "2", 10))
-              }
-              disabled={loading}
-            />
-          </div>
-
-          {teamsPreview?.map((t) => (
-            <div key={t.teamIndex} className="start-tournament-section__team-block">
-              <Input
-                type="text"
-                value={teamNames[t.teamIndex] ?? ""}
-                placeholder={`Equipo ${t.teamIndex + 1}`}
-                onChange={(e) => {
-                  const next = [...teamNames];
-                  next[t.teamIndex] = e.target.value;
-                  setTeamNames(next);
-                }}
-                disabled={loading}
-              />
-              <div className="start-tournament-section__pair-list">
-                {t.pairs.map((p) => (
-                  <div key={p.id} className="start-tournament-section__pair-row">
-                    <span>
-                      {p.player1_name} / {p.player2_name}
-                    </span>
-                    <select
-                      className="riviera-input start-tournament-section__pair-move"
-                      value={pairToTeam[p.id] ?? t.teamIndex}
-                      onChange={(e) => {
-                        setPairToTeam((prev) => ({
-                          ...prev,
-                          [p.id]: parseInt(e.target.value, 10),
-                        }));
-                      }}
-                      disabled={loading}
-                    >
-                      {teamsPreview.map((other) => (
-                        <option key={other.teamIndex} value={other.teamIndex}>
-                          {teamNames[other.teamIndex]?.trim() ||
-                            `Equipo ${other.teamIndex + 1}`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </Card>
-      )}
+      {format === "teams" && pairs.length >= 2 && teamsPreview ? (
+        <RetaEquiposOrganizerCards
+          tournamentId={tournament.id}
+          organizadorId={tournament.user_id?.trim() || null}
+          teamsCount={teamsCount}
+          maxTeams={pairs.length}
+          teamNames={teamNames}
+          teamLogos={teamLogos}
+          teamsPreview={teamsPreview}
+          pairToTeam={pairToTeam}
+          loading={loading}
+          onTeamsCountChange={setTeamsCount}
+          onTeamNameChange={(teamIndex, name) => {
+            setTeamNames((prev) => {
+              const next = [...prev];
+              next[teamIndex] = name;
+              return next;
+            });
+          }}
+          onTeamLogoChange={(teamIndex, url) => {
+            setTeamLogos((prev) => {
+              const next = resizeTeamLogosArray(prev, Math.max(2, teamsCount));
+              next[teamIndex] = url;
+              return next;
+            });
+          }}
+          onPairTeamChange={(pairId, teamIndex) => {
+            setPairToTeam((prev) => ({
+              ...prev,
+              [pairId]: teamIndex,
+            }));
+          }}
+        />
+      ) : null}
     </div>
   );
 };

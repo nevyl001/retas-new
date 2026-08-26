@@ -54,6 +54,7 @@ interface TournamentDetailsProps {
     teamsCount?: number;
     teamNames?: string[];
     pairToTeam?: Record<string, number>;
+    teamLogos?: (string | null)[];
     dynamicLineups?: { enabled: boolean; totalRounds: number };
   }) => void;
   onCopyPublicLink: (tournamentId: string, teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null) => void;

@@ -1,0 +1,912 @@
+/**
+ * Riviera Open luxury broadcast scoreboard (public Reta).
+ * #0B0C10 · glass #13141B · Gold #E5C158 · Terracotta #D95D39 · Live #10B981
+ */
+
+:root {
+  --reta-sb-obsidian: #0b0c10;
+  --reta-sb-glass: #13141b;
+  --reta-sb-panel: #181a24;
+  --reta-sb-gold: #e5c158;
+  --reta-sb-terra: #d95d39;
+  --reta-sb-live: #10b981;
+  --reta-sb-muted: #9ca3af;
+}
+
+/* —— Full-width shell —— */
+/* Transparent so .ro-public-view court (::before) shows through; cards keep glass. */
+.te-public--reta.te-public--reta-wide .te-public__inner,
+.te-public--reta .te-public__inner {
+  width: 100% !important;
+  max-width: 1440px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  box-sizing: border-box;
+  background: transparent !important;
+}
+
+@media (min-width: 1024px) {
+  .te-public--reta.te-public--reta-wide .te-public__inner,
+  .te-public--reta .te-public__inner {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+  }
+}
+
+/* —— Matrix canvas: fluid within shell —— */
+.te-public--reta #reta-equipos-en-vivo,
+.te-public--reta .te-public-section:has(.te-pub-matches-grid--wide),
+.te-public--reta .te-public-section:has(.te-pub-standings-table) {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0;
+  padding-right: 0;
+  box-sizing: border-box;
+}
+
+/* —— Match scoreboard card —— */
+.te-public--reta .te-pub-match.reta-sb-card,
+.te-public--reta .reta-sb-card,
+.reta-sb-card {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0;
+  height: auto !important;
+  min-width: 0;
+  background: rgba(19, 20, 27, 0.92) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  padding: 0.9rem !important;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  color: #ffffff !important;
+  transition:
+    transform 300ms ease-out,
+    border-color 300ms ease-out,
+    box-shadow 300ms ease-out;
+  will-change: transform;
+}
+
+.te-public--reta .te-pub-match.reta-sb-card:hover,
+.te-public--reta .reta-sb-card:hover,
+.reta-sb-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(229, 193, 88, 0.28) !important;
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(229, 193, 88, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.te-public--reta .reta-sb-card--live,
+.reta-sb-card--live {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+.reta-sb-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.reta-sb-card__meta-line {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9ca3af !important;
+  line-height: 1.3;
+}
+
+.reta-sb-card__meta-sep {
+  opacity: 0.55;
+}
+
+@keyframes reta-sb-sheen {
+  0%, 70% { transform: translateX(-120%); }
+  85% { transform: translateX(120%); }
+  100% { transform: translateX(120%); }
+}
+
+.reta-sb-card--teams .reta-sb-card__board {
+  gap: 0;
+}
+
+.reta-sb-card__status {
+  flex-shrink: 0;
+}
+
+.te-public--reta .reta-sb-card .te-pub-status,
+.reta-sb-card .te-pub-status {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem !important;
+  border-radius: 999px !important;
+  white-space: nowrap;
+}
+
+.te-public--reta .reta-sb-card .te-pub-status--pending,
+.reta-sb-card .te-pub-status--pending,
+.te-public--reta .reta-sb-card .te-pub-status--upcoming,
+.reta-sb-card .te-pub-status--upcoming {
+  background: rgba(229, 193, 88, 0.1) !important;
+  color: #e5c158 !important;
+  border: 1px solid rgba(229, 193, 88, 0.3) !important;
+}
+
+.te-public--reta .reta-sb-card .te-pub-status--played,
+.te-public--reta .reta-sb-card .te-pub-status--finished,
+.reta-sb-card .te-pub-status--played {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.te-public--reta .reta-sb-card .te-pub-status--live,
+.reta-sb-card .te-pub-status--live {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #10b981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+}
+
+.te-public--reta .reta-sb-card .te-pub-status--live .te-pub-status__dot,
+.reta-sb-card .te-pub-status--live .te-pub-status__dot {
+  width: 6px !important;
+  height: 6px !important;
+  background: #10b981 !important;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
+  animation: reta-sb-pulse 1.8s ease-out infinite !important;
+}
+
+@keyframes reta-sb-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); }
+  70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.reta-sb-card__board {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Explicit team blocks — each pair belongs to a labeled team */
+.reta-sb-team {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.7rem 0.65rem 0.7rem 0.75rem;
+  border-radius: 10px;
+  background: var(--reta-sb-panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left-width: 2px;
+  border-left-style: solid;
+}
+
+.reta-sb-team--a {
+  border-left-color: var(--reta-sb-gold);
+  box-shadow: inset 0 0 0 1px rgba(229, 193, 88, 0.04);
+}
+
+.reta-sb-team--b {
+  border-left-color: var(--reta-sb-terra);
+  box-shadow: inset 0 0 0 1px rgba(217, 93, 57, 0.04);
+}
+
+.reta-sb-team--win.reta-sb-team--a {
+  border-color: rgba(229, 193, 88, 0.35);
+  border-left-color: var(--reta-sb-gold);
+  background: rgba(229, 193, 88, 0.08);
+}
+
+.reta-sb-team--win.reta-sb-team--b {
+  border-color: rgba(217, 93, 57, 0.35);
+  border-left-color: var(--reta-sb-terra);
+  background: rgba(217, 93, 57, 0.08);
+}
+
+.reta-sb-team__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.reta-sb-team__identity {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.reta-sb-team__logo,
+.reta-sb-team .reta-eq-logo.reta-sb-team__logo {
+  width: 2rem !important;
+  height: 2rem !important;
+  min-width: 2rem !important;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background: var(--reta-sb-obsidian) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.reta-sb-team--a .reta-sb-team__logo {
+  border-color: rgba(229, 193, 88, 0.45) !important;
+}
+
+.reta-sb-team--b .reta-sb-team__logo {
+  border-color: rgba(217, 93, 57, 0.45) !important;
+}
+
+.reta-sb-team__name {
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.reta-sb-team--a .reta-sb-team__name {
+  color: #f5e6b8 !important;
+}
+
+.reta-sb-team--b .reta-sb-team__name {
+  color: #f0c4b4 !important;
+}
+
+.reta-sb-team__name--pair {
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-size: 0.85rem !important;
+  color: #ffffff !important;
+}
+
+.reta-sb-team__score {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--reta-sb-obsidian);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff !important;
+  line-height: 1;
+  animation: reta-sb-score-in 360ms ease-out;
+}
+
+.reta-sb-team__score.te-pub-score__num--win {
+  color: var(--reta-sb-gold) !important;
+  border-color: rgba(229, 193, 88, 0.5) !important;
+  background: rgba(229, 193, 88, 0.12) !important;
+  box-shadow: 0 0 12px rgba(229, 193, 88, 0.2);
+}
+
+.reta-sb-team__score.te-pub-score__num--tie {
+  color: #ffffff !important;
+}
+
+.reta-sb-team__players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding-left: 0.1rem;
+}
+
+.reta-sb-vs {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.45rem 0;
+}
+
+.reta-sb-vs__line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(229, 193, 88, 0.25),
+    rgba(217, 93, 57, 0.25),
+    transparent
+  );
+}
+
+.reta-sb-vs__badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.85rem;
+  height: 1.85rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(229, 193, 88, 0.25);
+  background: var(--reta-sb-obsidian);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--reta-sb-gold);
+}
+
+/* Legacy duel strip removed — team identity lives in each TeamPairBlock */
+
+.reta-sb-card__divider {
+  height: 1px;
+  margin: 0.2rem 0;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.reta-sb-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 3.4rem;
+  padding: 0.4rem 0.1rem;
+}
+
+.reta-sb-row__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.28rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.reta-sb-row__team {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9ca3af !important;
+}
+
+.reta-sb-row__players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.reta-sb-player {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.reta-sb-player__av,
+.reta-sb-player .rj-avatar.reta-sb-player__av {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  font-size: 0.62rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em;
+  color: #ffffff !important;
+  background: linear-gradient(145deg, #52525b 0%, #171717 100%) !important;
+  overflow: hidden;
+  line-height: 1 !important;
+}
+
+.reta-sb-player__av .rj-avatar__img,
+.reta-sb-player .rj-avatar__img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center top !important;
+  display: block !important;
+}
+
+.reta-sb-player__av--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reta-sb-player__name {
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+  color: #ffffff !important;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reta-sb-row__score {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #18181f;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff !important;
+  line-height: 1;
+  animation: reta-sb-score-in 360ms ease-out;
+}
+
+.reta-sb-row__score.te-pub-score__num--win {
+  color: #e5c158 !important;
+  border-color: rgba(229, 193, 88, 0.45) !important;
+  background: rgba(229, 193, 88, 0.1) !important;
+  box-shadow: 0 0 0 1px rgba(229, 193, 88, 0.12);
+}
+
+.reta-sb-row__score.te-pub-score__num--tie {
+  color: #ffffff !important;
+}
+
+@keyframes reta-sb-score-in {
+  from {
+    opacity: 0.35;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.reta-sb-row--win .reta-sb-player__name {
+  color: #ffffff !important;
+}
+
+.te-public--reta .reta-sb-card .te-pub-match-winner--compact,
+.reta-sb-card .te-pub-match-winner--compact {
+  margin-top: 0.7rem !important;
+  color: #9ca3af !important;
+  font-size: 0.78rem !important;
+}
+
+.reta-sb-card .te-pub-match-winner__name {
+  color: var(--reta-sb-gold) !important;
+  font-weight: 700 !important;
+}
+
+.reta-sb-card .te-pub-games__title {
+  color: #9ca3af !important;
+  font-size: 11px !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reta-sb-card .te-pub-games__chip {
+  color: #ffffff !important;
+  background: #18181f !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.reta-sb-card > .te-pub-match__top,
+.reta-sb-card > .te-pub-match__faceoff {
+  display: none !important;
+}
+
+.te-public--reta .te-public-round-block {
+  margin-bottom: 1.85rem;
+  padding-bottom: 0.15rem;
+}
+
+.te-public--reta .te-public-round-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  margin-bottom: 1rem;
+  padding: 0.35rem 0 0.65rem;
+  border-bottom: 1px solid rgba(229, 193, 88, 0.15);
+  background: linear-gradient(
+    180deg,
+    rgba(11, 12, 16, 0.97) 50%,
+    rgba(11, 12, 16, 0.78) 100%
+  );
+  backdrop-filter: blur(8px);
+}
+
+.te-public--reta .te-public-round-head__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.65rem;
+  margin: 0 !important;
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff !important;
+}
+
+.te-public--reta .te-public-round-head__title::after {
+  display: none;
+}
+
+.te-public--reta .te-public-round-head__num {
+  color: #ffffff !important;
+}
+
+.te-public--reta .te-public-round-head__phase,
+.te-public--reta .te-public-round-head__sep {
+  color: #9ca3af !important;
+  font-weight: 550;
+  font-size: 0.72rem;
+}
+
+.te-public--reta .te-public-round-head__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(229, 193, 88, 0.3);
+  background: rgba(229, 193, 88, 0.1);
+  font-size: 10px !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--reta-sb-gold) !important;
+}
+
+.te-public--reta .te-public-round-head__live:not(.te-public-round-head__live--pending) {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981 !important;
+}
+
+.te-public--reta .te-pub-matches-grid--wide {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 0.85rem !important;
+  width: 100%;
+  align-items: stretch;
+}
+
+@media (min-width: 768px) {
+  .te-public--reta .te-pub-matches-grid--wide,
+  .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1.15rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .te-public--reta .te-pub-matches-grid--wide,
+  .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 1.25rem !important;
+  }
+}
+
+.te-public--reta .te-pub-matches-grid--wide > .reta-sb-card,
+.te-public--reta .te-pub-matches-grid--wide > .te-pub-match.reta-sb-card {
+  width: 100%;
+  max-width: none;
+}
+
+.reta-round-tabs {
+  display: none;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0.15rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.reta-round-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.reta-round-tabs__btn {
+  appearance: none;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #a3a3a3;
+  border-radius: 999px;
+  padding: 0.5rem 0.95rem;
+  min-height: 2.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.reta-round-tabs__btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.reta-round-tabs__btn.is-active {
+  background: rgba(229, 193, 88, 0.12);
+  color: var(--reta-sb-gold, #e5c158);
+  border-color: #e5c158;
+  font-weight: 800;
+  box-shadow: 0 0 16px rgba(229, 193, 88, 0.28);
+}
+
+.reta-round-tabs__btn:focus-visible {
+  outline: 2px solid rgba(229, 193, 88, 0.7);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .te-public--reta .reta-round-tabs {
+    display: flex;
+  }
+
+  .te-public--reta .te-public-round-block.is-tab-hidden {
+    display: none;
+  }
+
+  .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.te-public--reta .te-public-section__title {
+  color: #ffffff !important;
+  font-size: 1.05rem !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 800 !important;
+}
+
+.te-public--reta .te-pub-standings-table-wrap {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--reta-sb-glass);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.te-public--reta .te-pub-standings-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow: visible;
+}
+
+.te-public--reta .te-pub-standings-table thead th {
+  height: 44px;
+  padding: 0 0.85rem !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase;
+  color: #9ca3af !important;
+  background: var(--reta-sb-panel) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.te-public--reta .te-pub-standings-table thead th:nth-child(1),
+.te-public--reta .te-pub-standings-table thead th:nth-child(2) {
+  text-align: left;
+}
+
+.te-public--reta .te-pub-standings-table tbody td {
+  min-height: 48px;
+  height: 52px;
+  padding: 0 0.85rem !important;
+  font-size: 0.9rem !important;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: var(--reta-sb-glass) !important;
+  vertical-align: middle;
+  text-align: center;
+  transition: background-color 180ms ease;
+}
+
+.te-public--reta .te-pub-standings-table tbody td:nth-child(1),
+.te-public--reta .te-pub-standings-table tbody td:nth-child(2) {
+  text-align: left;
+}
+
+.te-public--reta .te-pub-standings-table tbody tr:hover td {
+  background: var(--reta-sb-panel) !important;
+}
+
+.te-public--reta .te-pub-standings-table tbody tr:nth-child(even) td {
+  background: #15161e !important;
+}
+
+.te-public--reta .te-pub-standings-table tbody tr:nth-child(even):hover td {
+  background: var(--reta-sb-panel) !important;
+}
+
+.te-public--reta .te-pub-standings-row__name {
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+  color: #ffffff !important;
+}
+
+.te-public--reta .te-pub-standings-row__pos-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: var(--reta-sb-panel);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.te-public--reta .te-pub-standings-row--medal-1 .te-pub-standings-row__pos-num {
+  background: linear-gradient(145deg, #f0d56a, var(--reta-sb-gold));
+  color: #0b0c10;
+  border-color: rgba(240, 213, 106, 0.55);
+  box-shadow: 0 2px 8px rgba(229, 193, 88, 0.35);
+}
+
+.te-public--reta .te-pub-standings-row--medal-2 .te-pub-standings-row__pos-num {
+  background: linear-gradient(145deg, #e8e8e8, #b8b8b8);
+  color: #0b0c10;
+  border-color: rgba(232, 232, 232, 0.45);
+}
+
+.te-public--reta .te-pub-standings-row--medal-3 .te-pub-standings-row__pos-num {
+  background: linear-gradient(145deg, #e08a5a, var(--reta-sb-terra));
+  color: #0b0c10;
+  border-color: rgba(217, 93, 57, 0.4);
+}
+
+.te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__name,
+.te-public--reta .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__name {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.te-public--reta .te-pub-standings-row--leader td,
+.te-public--reta .te-pub-standings-table tbody tr:first-child td {
+  background: rgba(229, 193, 88, 0.08) !important;
+}
+
+.te-public--reta .te-pub-standings-row--leader:hover td,
+.te-public--reta .te-pub-standings-table tbody tr:first-child:hover td {
+  background: rgba(229, 193, 88, 0.12) !important;
+}
+
+.te-public--reta .te-pub-standings-row__pts {
+  font-weight: 800 !important;
+  color: #ffffff !important;
+}
+
+.te-public--reta .te-pub-standing-card--medal-1 .te-pub-standing-card__pos {
+  color: #e5c158 !important;
+}
+
+.te-public--reta .te-pub-standing-card--medal-2 .te-pub-standing-card__pos {
+  color: #b8b8b8 !important;
+}
+
+.te-public--reta .te-pub-standing-card--medal-3 .te-pub-standing-card__pos {
+  color: var(--reta-sb-terra) !important;
+}
+
+.te-public--reta .te-pub-dif {
+  color: #ffffff !important;
+  font-weight: 650;
+}
+
+.te-public--reta .te-pub-standing-card {
+  background: var(--reta-sb-glass) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  padding: 0.95rem 1rem !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.te-public--reta .te-pub-standing-card__name {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+}
+
+.te-public--reta .te-pub-standing-card__pos {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+.te-public--reta .te-pub-standing-card__stats,
+.te-public--reta .te-pub-standing-card__stats small {
+  color: #9ca3af !important;
+}
+
+.te-public--reta .te-pub-standing-card__pts {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+.te-public--reta .te-public-section__divider {
+  background: rgba(229, 193, 88, 0.2) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .te-public--reta .reta-sb-card,
+  .reta-sb-card,
+  .te-public--reta .reta-sb-card:hover,
+  .reta-sb-card:hover {
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .reta-sb-card .te-pub-status--live .te-pub-status__dot,
+  .reta-sb-team__score,
+  .reta-sb-row__score {
+    animation: none !important;
+    transform: none !important;
+  }
+}

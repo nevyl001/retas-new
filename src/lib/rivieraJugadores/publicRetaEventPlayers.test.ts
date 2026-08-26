@@ -138,6 +138,7 @@ describe("assignEventPlayersToPair", () => {
             mano: null,
             lado: null,
             nacionalidad: "MX",
+            edad: null,
           },
         ],
         [
@@ -155,6 +156,7 @@ describe("assignEventPlayersToPair", () => {
             mano: null,
             lado: null,
             nacionalidad: "MX",
+            edad: null,
           },
         ],
       ])
@@ -229,6 +231,7 @@ describe("assignEventPlayersToPair", () => {
             mano: null,
             lado: null,
             nacionalidad: "MX",
+            edad: null,
           },
         ],
         [
@@ -246,6 +249,7 @@ describe("assignEventPlayersToPair", () => {
             mano: null,
             lado: null,
             nacionalidad: "MX",
+            edad: null,
           },
         ],
       ])

@@ -10,6 +10,7 @@ import {
 import { Match, Pair, Game, Tournament } from "../lib/database";
 import { repairMatchCourtRotation } from "../lib/circleRoundRobinSchedule";
 import { compareMatchCourt, maxAssignedCourt } from "../lib/matchCourt";
+import { resolveTeamLogoUrl } from "../lib/reta/teamLogoDisplay";
 import { isTeamsTournament } from "../lib/gameModeMapping";
 import { PUBLIC_TOURNAMENT_POLL_INTERVAL_MS } from "../lib/publicTournament/publicPoll";
 import {
@@ -68,6 +69,14 @@ import {
   RetaParticipantsThanksSection,
   type RetaThanksParticipant,
 } from "./reta/RetaParticipantsThanksSection";
+import { RetaEquiposPublicHero } from "./reta/equipos/RetaEquiposPublicHero";
+import type { RetaEquiposPlayerCardData } from "./reta/equipos/RetaEquiposPlayerCard";
+import "./reta/equipos/reta-equipos.css";
+import {
+  collectPublicPlayerRefsFromPairs,
+  getPublicPlayersIdentityMap,
+  type PublicPlayerIdentity,
+} from "../lib/rivieraJugadores/publicPlayersIdentity";
 import {
   pairPlayer1DisplayName,
   pairPlayer2DisplayName,
@@ -96,6 +105,7 @@ import {
   resolvePublicMatchStatusVariant,
 } from "../lib/public/eventScheduleStatus";
 import "./public/riviera-public-americano.css";
+import "./public/reta-public-scoreboard.css";
 import "./ModernStandingsTable.css";
 
 interface PublicTournamentViewProps {
@@ -203,6 +213,13 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [pairPlayersByPairId, setPairPlayersByPairId] = useState<
     Record<string, PublicRetaPairPlayer[]>
   >({});
+  const [playerIdentityByLegacyId, setPlayerIdentityByLegacyId] = useState<
+    Record<string, PublicPlayerIdentity>
+  >({});
+  /** Reta por equipos: canchas ocultas hasta "IR AL EN VIVO". */
+  const [teamsLiveRevealed, setTeamsLiveRevealed] = useState(false);
+  /** Mobile: filtro de ronda en matriz pública (solo presentación). */
+  const [mobileRoundTab, setMobileRoundTab] = useState<string | null>(null);
   const configFetchOnDemandRef = useRef(false);
 
   const loadTournamentData = useCallback(async () => {
@@ -310,8 +327,27 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           { publicOnly: true }
         );
         setPairPlayersByPairId(pairPlayers);
+
+        if (resolvedTeamConfig) {
+          try {
+            const identityMap = await getPublicPlayersIdentityMap(
+              orgId,
+              collectPublicPlayerRefsFromPairs(pairsData)
+            );
+            const asRecord: Record<string, PublicPlayerIdentity> = {};
+            identityMap.forEach((value, key) => {
+              asRecord[key] = value;
+            });
+            setPlayerIdentityByLegacyId(asRecord);
+          } catch {
+            setPlayerIdentityByLegacyId({});
+          }
+        } else {
+          setPlayerIdentityByLegacyId({});
+        }
       } else {
         setPairPlayersByPairId({});
+        setPlayerIdentityByLegacyId({});
       }
 
       debugLog("🔄 Vista pública actualizada:", new Date().toLocaleTimeString());
@@ -527,6 +563,21 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         : formatPairLabel(match.pair2_id);
     }
 
+    const pair1TeamIndex = teamConfig
+      ? getPairTeamIndex(
+          match.pair1_id,
+          teamConfig,
+          pairs.find((p) => p.id === match.pair1_id)
+        )
+      : null;
+    const pair2TeamIndex = teamConfig
+      ? getPairTeamIndex(
+          match.pair2_id,
+          teamConfig,
+          pairs.find((p) => p.id === match.pair2_id)
+        )
+      : null;
+
     return (
       <PublicRetaMatchCard
         key={match.id}
@@ -552,24 +603,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               )
             : null
         }
-        pair1TeamIndex={
-          teamConfig
-            ? getPairTeamIndex(
-                match.pair1_id,
-                teamConfig,
-                pairs.find((p) => p.id === match.pair1_id)
-              )
-            : null
-        }
-        pair2TeamIndex={
-          teamConfig
-            ? getPairTeamIndex(
-                match.pair2_id,
-                teamConfig,
-                pairs.find((p) => p.id === match.pair2_id)
-              )
-            : null
-        }
+        pair1TeamIndex={pair1TeamIndex}
+        pair2TeamIndex={pair2TeamIndex}
         score1={result.hasResult ? result.pair1Score : 0}
         score2={result.hasResult ? result.pair2Score : 0}
         hasResult={result.hasResult}
@@ -589,6 +624,16 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         games={matchGames.length > 0 ? matchGames : undefined}
         remontadaRound={opts?.remontadaRound}
         encounterLabel={opts?.encounterLabel}
+        pair1LogoUrl={
+          pair1TeamIndex != null
+            ? resolveTeamLogoUrl(teamConfig?.teamLogos, pair1TeamIndex)
+            : null
+        }
+        pair2LogoUrl={
+          pair2TeamIndex != null
+            ? resolveTeamLogoUrl(teamConfig?.teamLogos, pair2TeamIndex)
+            : null
+        }
       />
     );
   };
@@ -808,6 +853,14 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   ]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash.replace(/^#/, "");
+    if (hash === "reta-equipos-en-vivo" || hash === "en-vivo") {
+      setTeamsLiveRevealed(true);
+    }
+  }, []);
+
+  useEffect(() => {
     const defaultTitle = formatTenantDocumentTitle(
       null,
       organizerName,
@@ -855,6 +908,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     return acc;
   }, {} as Record<number, Match[]>);
 
+  const sortedRoundKeys = Object.keys(matchesByRound).sort(
+    (a, b) => parseInt(a, 10) - parseInt(b, 10)
+  );
+
   const effectiveChampionshipConfig =
     championshipMatches.length > 0 || championshipConfig?.championshipEnabled
       ? enrichChampionshipConfigForPartition(matches, championshipConfig)
@@ -901,12 +958,96 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   );
   const heroMeta = formatKicker;
 
+  const isTeamsPublicView = Boolean(
+    teamConfig?.teamNames?.length &&
+      teamConfig?.pairToTeam &&
+      Object.keys(teamConfig.pairToTeam).length > 0
+  );
+  /** Compacto solo tras CTA (no auto por horario). */
+  const teamsLiveCompact = isTeamsPublicView && teamsLiveRevealed;
+
+  const equiposRosterTeams = (() => {
+    if (!teamConfig?.teamNames?.length || !teamConfig.pairToTeam) return [];
+    return teamConfig.teamNames.map((name, teamIndex) => {
+      const teamPairs = pairs.filter(
+        (p) => teamConfig.pairToTeam[p.id] === teamIndex
+      );
+      const players: RetaEquiposPlayerCardData[] = [];
+      const seen = new Set<string>();
+      for (const pair of teamPairs) {
+        const slots: Array<{ legacyId: string; fallbackName: string }> = [
+          { legacyId: pair.player1_id, fallbackName: pairPlayer1DisplayName(pair) },
+          { legacyId: pair.player2_id, fallbackName: pairPlayer2DisplayName(pair) },
+        ];
+        for (const slot of slots) {
+          const legacyId = slot.legacyId?.trim();
+          if (!legacyId || seen.has(legacyId)) continue;
+          seen.add(legacyId);
+          const identity = playerIdentityByLegacyId[legacyId];
+          const resolvedPairPlayers = pairPlayersByPairId[pair.id] ?? [];
+          const fromPair = resolvedPairPlayers.find(
+            (pl) => pl.id === legacyId || pl.name === slot.fallbackName
+          );
+          players.push({
+            id: legacyId,
+            nombre: identity?.nombre || fromPair?.name || slot.fallbackName,
+            fotoUrl: identity?.fotoUrl ?? fromPair?.fotoUrl ?? null,
+            edad: identity?.edad ?? null,
+            nacionalidad: identity?.nacionalidad ?? null,
+            mano: identity?.mano ?? null,
+            lado: identity?.lado ?? null,
+          });
+        }
+      }
+      return {
+        teamIndex,
+        name: name.trim() || `Equipo ${teamIndex + 1}`,
+        players,
+      };
+    });
+  })();
+
+  const teamsLiveScoreLabel = (() => {
+    if (!teamStandings || teamStandings.length < 2) return null;
+    const a = teamStandings.find((r) => r.teamIndex === 0) ?? teamStandings[0];
+    const b = teamStandings.find((r) => r.teamIndex === 1) ?? teamStandings[1];
+    if (!a || !b) return null;
+    return `${a.pg} — ${b.pg}`;
+  })();
+
+  const scrollToEnVivo = () => {
+    setTeamsLiveRevealed(true);
+    window.requestAnimationFrame(() => {
+      const el = document.getElementById("reta-equipos-en-vivo");
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const showMatchesSection = !isTeamsPublicView || teamsLiveRevealed;
+
   return (
     <PublicTorneoExpressShell
       className="te-public--reta te-public--reta-wide"
       organizadorId={organizadorId}
     >
-      {isPubDsV2Enabled ? (
+      {isTeamsPublicView ? (
+        <RetaEquiposPublicHero
+          eventName={publicTournamentName}
+          teamNames={teamConfig!.teamNames}
+          teamLogos={teamConfig?.teamLogos}
+          teams={equiposRosterTeams}
+          fechaHorario={fechaHorarioLine}
+          lugar={lugarPublico}
+          statusLabel={eventScheduleStatus.label}
+          schedulePhase={eventScheduleStatus.phase}
+          programadoEn={programadoEn}
+          programadoHasta={programadoHasta}
+          isFinished={tournamentFinalizado}
+          compact={teamsLiveCompact}
+          liveScoreLabel={teamsLiveScoreLabel}
+          onGoLive={teamsLiveRevealed ? undefined : scrollToEnVivo}
+        />
+      ) : isPubDsV2Enabled ? (
         <PublicHero
           estado={
             <StatusBadge variant={eventScheduleStatus.tone}>
@@ -933,18 +1074,59 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         />
       )}
 
-      <section className="te-public-section te-pub-fade-in">
-        <h2 className="te-public-section__title">Partidos por ronda</h2>
+      {showMatchesSection ? (
+      <section
+        id="reta-equipos-en-vivo"
+        className="te-public-section te-pub-fade-in"
+      >
+        <h2 className="te-public-section__title">
+          {isTeamsPublicView ? "En vivo · Canchas" : "Partidos por ronda"}
+        </h2>
         <div className="te-public-section__divider" aria-hidden />
 
-        {Object.keys(matchesByRound)
-          .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
-          .map((roundKey, roundIdx) => {
+        {sortedRoundKeys.length > 1 ? (
+          <div
+            className="reta-round-tabs"
+            role="tablist"
+            aria-label="Rondas"
+          >
+            {sortedRoundKeys.map((roundKey) => {
+              const roundNum = parseInt(roundKey, 10);
+              const isActive =
+                (mobileRoundTab && sortedRoundKeys.includes(mobileRoundTab)
+                  ? mobileRoundTab
+                  : sortedRoundKeys[0]) === roundKey;
+              return (
+                <button
+                  key={`tab-${roundKey}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`reta-round-tabs__btn${isActive ? " is-active" : ""}`}
+                  onClick={() => setMobileRoundTab(roundKey)}
+                >
+                  {`Ronda ${String(roundNum).padStart(2, "0")}`}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {sortedRoundKeys.map((roundKey, roundIdx) => {
             const roundNum = parseInt(roundKey, 10);
             const roundMatches = matchesByRound[roundNum];
             const roundInProgress =
               eventScheduleStatus.phase === "in_window" &&
               roundMatches.some((m) => m.status !== "finished");
+            const roundComplete =
+              eventScheduleStatus.phase === "after" ||
+              roundMatches.every((m) => m.status === "finished");
+            const activeMobileRound =
+              mobileRoundTab && sortedRoundKeys.includes(mobileRoundTab)
+                ? mobileRoundTab
+                : sortedRoundKeys[0];
+            const tabHidden =
+              sortedRoundKeys.length > 1 && roundKey !== activeMobileRound;
 
             const pairsPerTeam = teamConfig?.dynamicLineups?.pairsPerTeam;
             let restingPairsSource = pairs;
@@ -968,15 +1150,17 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             return (
               <div
                 key={roundKey}
-                className="te-public-round-block te-pub-fade-in-up"
+                className={`te-public-round-block te-pub-fade-in-up${
+                  tabHidden ? " is-tab-hidden" : ""
+                }`}
                 style={{ animationDelay: `${0.05 + roundIdx * 0.06}s` }}
               >
                 <div className="te-public-round-head">
                   <h3 className="te-public-round-head__title">
                     <span className="te-public-round-head__num">
-                      Ronda {roundNum}
+                      {`Ronda ${String(roundNum).padStart(2, "0")}`}
                     </span>
-                    {publicTournamentDescription ? (
+                    {!isTeamsPublicView && publicTournamentDescription ? (
                       <>
                         <span className="te-public-round-head__sep">·</span>
                         <span className="te-public-round-head__phase">
@@ -986,17 +1170,16 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                     ) : null}
                     {eventScheduleStatus.phase === "upcoming" ? (
                       <span className="te-public-round-head__live te-public-round-head__live--pending">
-                        por comenzar
+                        Por jugar
                       </span>
                     ) : roundInProgress ? (
                       <span className="te-public-round-head__live">
                         <span className="te-pub-status__dot" aria-hidden />
-                        en curso
+                        En curso
                       </span>
-                    ) : eventScheduleStatus.phase === "after" ||
-                      roundMatches.every((m) => m.status === "finished") ? (
+                    ) : roundComplete ? (
                       <span className="te-public-round-head__live te-public-round-head__live--pending">
-                        finalizada
+                        Completada
                       </span>
                     ) : null}
                   </h3>
@@ -1111,7 +1294,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           </div>
         )}
       </section>
+      ) : null}
 
+      {showMatchesSection ? (
       <PublicRetaStandingsSection
         rows={standingRows}
         title={
@@ -1122,6 +1307,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         entityHeader={teamStandings?.length ? "EQUIPO" : "PAREJA"}
         scoringMode={standingsScoringMode}
       />
+      ) : null}
 
       {showWinner &&
         teamStandings &&

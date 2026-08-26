@@ -22,6 +22,12 @@ export interface DynamicLineupsConfig {
 export interface TournamentTeamConfig {
   teamNames: string[];
   pairToTeam: Record<string, number>;
+  /**
+   * URLs públicas de logo por índice de equipo (paralelo a `teamNames`).
+   * Opcional / nullable: eventos antiguos sin logo usan fallback de iniciales.
+   * Se persiste dentro del jsonb `team_config` (sin migración de columnas).
+   */
+  teamLogos?: (string | null)[];
   dynamicLineups?: DynamicLineupsConfig;
 }
 

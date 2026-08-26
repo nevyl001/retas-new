@@ -1,0 +1,1305 @@
+/* Reta por Equipos — admin Team Cards + vista pública premium.
+   Scoped: .reta-eq-* / .reta-eq-org / .reta-eq-hero
+   Tokens existentes; sin neón; prefers-reduced-motion. */
+
+/* ——— Logo ——— */
+.reta-eq-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: var(--bg-elevated, #161616);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.reta-eq-logo--sm { width: 2.5rem; height: 2.5rem; }
+.reta-eq-logo--md { width: 3.5rem; height: 3.5rem; }
+.reta-eq-logo--lg { width: 4.5rem; height: 4.5rem; }
+.reta-eq-logo--xl { width: 5.5rem; height: 5.5rem; }
+.reta-eq-logo--hero { width: 6.25rem; height: 6.25rem; }
+
+@media (min-width: 768px) {
+  .reta-eq-logo--xl { width: 7rem; height: 7rem; }
+  .reta-eq-logo--hero { width: 8.5rem; height: 8.5rem; }
+}
+
+.reta-eq-logo--ring {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.reta-eq-logo--hero-surface {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.08), transparent 62%),
+    #121214;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.reta-eq-logo__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 14%;
+  display: block;
+}
+
+.reta-eq-logo__initials {
+  font-size: 0.85em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #f4f1eb;
+  text-transform: uppercase;
+}
+
+.reta-eq-logo--xl .reta-eq-logo__initials { font-size: 1.35rem; }
+.reta-eq-logo--lg .reta-eq-logo__initials { font-size: 1.1rem; }
+.reta-eq-logo--hero .reta-eq-logo__initials { font-size: 1.75rem; }
+
+/* ——— Uploader (admin) ——— */
+.reta-eq-logo-uploader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.reta-eq-logo-uploader__file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.reta-eq-logo-uploader__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reta-eq-logo-uploader__btn {
+  appearance: none;
+  /* Contraste fijo: en admin dark `--bg-surface` + `--text-primary` pueden
+     resolverse ambos claros y el label queda ilegible. */
+  border: 1px solid transparent;
+  background: #f4f1eb;
+  color: #14161a;
+  border-radius: var(--radius-sm, 8px);
+  padding: 0.45rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 2.25rem;
+}
+
+.reta-eq-logo-uploader__btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #ebe6dc;
+  color: #14161a;
+}
+
+.reta-eq-logo-uploader__btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.reta-eq-logo-uploader__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.reta-eq-logo-uploader__btn:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--ro-accent, #c9a227));
+  outline-offset: 2px;
+}
+
+.reta-eq-logo-uploader__btn--ghost {
+  background: transparent;
+  color: #f4f1eb;
+  border-color: rgba(244, 241, 235, 0.35);
+  font-weight: 500;
+}
+
+.reta-eq-logo-uploader__btn--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4f1eb;
+}
+
+.reta-eq-logo-uploader__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-muted, #777);
+}
+
+.reta-eq-logo-uploader__error {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ro-error, #e85d5d);
+}
+
+/* ——— Admin organizer ——— */
+.reta-eq-org__head {
+  margin-bottom: 1rem;
+}
+
+.reta-eq-org__sub {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #a8a8a8);
+  line-height: 1.45;
+  max-width: 36rem;
+}
+
+.reta-eq-org__warn {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+}
+
+.reta-eq-org__grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 900px) {
+  .reta-eq-org__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.reta-eq-team-card {
+  background: var(--bg-elevated, #141414);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.07));
+  border-radius: var(--radius-md, 12px);
+  padding: 1.15rem 1.1rem 1rem;
+}
+
+.reta-eq-team-card__stats {
+  margin: 0.55rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+}
+
+.reta-eq-team-card__pairs {
+  list-style: none;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.reta-eq-team-card__pair {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: var(--radius-sm, 8px);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid transparent;
+}
+
+.reta-eq-team-card__pair-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.reta-eq-team-card__pair-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted, #777);
+}
+
+.reta-eq-team-card__pair-names {
+  font-size: 0.9rem;
+  color: var(--text-primary, #f2f2f2);
+  overflow-wrap: anywhere;
+}
+
+.reta-eq-team-card__move {
+  flex-shrink: 0;
+}
+
+.reta-eq-team-card__move select {
+  max-width: 8.5rem;
+}
+
+
+/* =============================================================================
+   PUBLIC — Broadcast previa (scoped .reta-eq-stage*)
+   ============================================================================= */
+
+.reta-eq-stage {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  margin: 0 0 1.5rem;
+  color: #ffffff;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 85% 50% at 50% -8%, rgba(229, 193, 88, 0.08), transparent 55%),
+    #0b0c10;
+}
+
+.reta-eq-stage__atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: #0b0c10;
+}
+
+.reta-eq-stage__court {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 0.18;
+  filter: saturate(0.55) brightness(0.55);
+}
+
+.reta-eq-stage__vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 35%, transparent 0%, #0a0a0e 78%),
+    linear-gradient(180deg, rgba(10, 10, 14, 0.55) 0%, rgba(10, 10, 14, 0.92) 100%);
+}
+
+.reta-eq-stage__glow {
+  position: absolute;
+  width: 42%;
+  height: 55%;
+  top: 12%;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.22;
+}
+
+.reta-eq-stage__glow--a {
+  left: -4%;
+  background: radial-gradient(circle, rgba(244, 241, 235, 0.22), transparent 70%);
+}
+
+.reta-eq-stage__glow--b {
+  right: -4%;
+  background: radial-gradient(circle, rgba(244, 241, 235, 0.16), transparent 70%);
+}
+
+.reta-eq-stage__shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 1rem 0.75rem 1.15rem;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.reta-eq-stage__header {
+  text-align: center;
+  margin-bottom: 0.65rem;
+}
+
+.reta-eq-stage__date {
+  margin: 0 0 0.25rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 235, 0.55);
+}
+
+.reta-eq-stage__eyebrow {
+  margin: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 235, 0.72);
+}
+
+.reta-eq-stage__title {
+  margin: 0.35rem auto 0;
+  max-width: 40rem;
+  font-size: clamp(1rem, 4.2vw, 1.85rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: #f4f1eb;
+}
+
+/* Unique match header — no triple duplication */
+.reta-eq-matchbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(19, 20, 27, 0.88);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.reta-eq-matchbar__side {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  position: relative;
+}
+
+.reta-eq-matchbar__side--a {
+  justify-content: flex-start;
+}
+
+.reta-eq-matchbar__side--b {
+  justify-content: flex-end;
+}
+
+.reta-eq-matchbar__side--a::before,
+.reta-eq-matchbar__side--b::before {
+  content: "";
+  position: absolute;
+  inset: -30% -10%;
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(18px);
+  opacity: 0.45;
+}
+
+.reta-eq-matchbar__side--a::before {
+  background: radial-gradient(circle, rgba(229, 193, 88, 0.35), transparent 70%);
+}
+
+.reta-eq-matchbar__side--b::before {
+  background: radial-gradient(circle, rgba(217, 93, 57, 0.32), transparent 70%);
+}
+
+.reta-eq-matchbar__logo,
+.reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo {
+  position: relative;
+  z-index: 1;
+  width: 36px !important;
+  height: 36px !important;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.reta-eq-matchbar__side--a .reta-eq-matchbar__logo {
+  border-color: rgba(229, 193, 88, 0.5) !important;
+}
+
+.reta-eq-matchbar__side--b .reta-eq-matchbar__logo {
+  border-color: rgba(217, 93, 57, 0.5) !important;
+}
+
+.reta-eq-matchbar__name {
+  position: relative;
+  z-index: 1;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .reta-eq-matchbar__name {
+    font-size: 1rem;
+  }
+}
+
+.reta-eq-matchbar__side--a .reta-eq-matchbar__name {
+  color: #f5e6b8;
+}
+
+.reta-eq-matchbar__side--b .reta-eq-matchbar__name {
+  color: #f0c4b4;
+}
+
+.reta-eq-matchbar__vs {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(229, 193, 88, 0.28);
+  background: #0b0c10;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #e5c158;
+}
+
+.reta-eq-stage .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Mobile: 2-col duel (A | B) + controls below */
+.reta-eq-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.875rem;
+  align-items: start;
+}
+
+.reta-eq-grid__a {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.reta-eq-grid__b {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.reta-eq-grid__center {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.reta-eq-col {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.reta-eq-col__identity {
+  display: none; /* mobile: emblems row handles identity */
+}
+
+.reta-eq-col__empty {
+  margin: 0;
+  padding: 1.25rem 0.5rem;
+  text-align: center;
+  color: rgba(244, 241, 235, 0.45);
+  font-size: 0.75rem;
+}
+
+.reta-eq-col__stage {
+  width: 100%;
+  max-width: none;
+}
+
+.reta-eq-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.reta-eq-identity__name {
+  margin: 0;
+  font-size: clamp(1.1rem, 2vw, 1.65rem);
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+/* Full-bleed player spotlight */
+.reta-eq-frame {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #121216;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.reta-eq-frame--empty {
+  aspect-ratio: 3 / 4;
+  min-height: clamp(210px, 32vh, 260px);
+  display: grid;
+  place-items: center;
+}
+
+.reta-eq-frame--enter {
+  animation: reta-eq-morph 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes reta-eq-morph {
+  from {
+    opacity: 0.4;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.reta-eq-frame__media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  height: auto;
+  max-height: clamp(210px, 32vh, 260px);
+  overflow: hidden;
+  background: #121216;
+}
+
+.reta-eq-frame__cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.reta-eq-frame__bg,
+.reta-eq-frame__fg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.reta-eq-frame__fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.07), transparent 55%),
+    linear-gradient(165deg, #16161a, #0a0a0e);
+}
+
+.reta-eq-frame__fallback-initials {
+  font-size: clamp(2rem, 9vw, 3.25rem);
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  color: rgba(244, 241, 235, 0.22);
+}
+
+.reta-eq-frame__shade {
+  position: absolute;
+  inset: auto 0 0;
+  height: 48%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(10, 10, 14, 0.5) 35%,
+    rgba(10, 10, 14, 0.96) 100%
+  );
+  pointer-events: none;
+}
+
+.reta-eq-frame__body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0 0.6rem 0.65rem;
+  z-index: 2;
+  text-align: left;
+}
+
+.reta-eq-frame__team {
+  margin: 0 0 0.15rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a3a3a3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reta-eq-frame__name {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.reta-eq-frame__name-first,
+.reta-eq-frame__name-rest {
+  display: none;
+}
+
+.reta-eq-frame__name-compact {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reta-eq-frame__pais {
+  margin-top: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 10px;
+  color: #d4d4d4;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.reta-eq-frame__pais span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reta-eq-frame__meta {
+  margin: 0.2rem 0 0;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.15rem 0.25rem;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #d4d4d4;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.reta-eq-frame__meta--full {
+  display: none;
+}
+
+.reta-eq-frame__meta--compact {
+  display: block;
+}
+
+.reta-eq-frame__meta-sep { opacity: 0.5; }
+
+.reta-eq-frame__pos {
+  display: none;
+  margin: 0.25rem 0 0;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  color: #a3a3a3;
+}
+
+/* Tactical fluid roster dock — pills per team */
+.reta-eq-dock {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+  max-width: 100%;
+}
+
+.reta-eq-dock__pill {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.3rem 0.55rem 0.3rem 0.3rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #d4d4d4;
+  cursor: pointer;
+  transition:
+    color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reta-eq-dock__pill:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.reta-eq-dock__pill:focus-visible {
+  outline: 2px solid rgba(229, 193, 88, 0.7);
+  outline-offset: 2px;
+}
+
+.reta-eq-dock__pill--a.is-active {
+  color: #ffffff;
+  border-color: #e5c158;
+  background: rgba(229, 193, 88, 0.12);
+  box-shadow: 0 0 12px rgba(229, 193, 88, 0.3);
+}
+
+.reta-eq-dock__pill--b.is-active {
+  color: #ffffff;
+  border-color: #d95d39;
+  background: rgba(217, 93, 57, 0.12);
+  box-shadow: 0 0 12px rgba(217, 93, 57, 0.28);
+}
+
+.reta-eq-dock__av {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(145deg, #52525b, #171717);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reta-eq-dock__av-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.reta-eq-dock__av-initials {
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+.reta-eq-dock__surname {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 4.25rem;
+}
+
+@media (min-width: 769px) {
+  .reta-eq-dock__surname {
+    font-size: 0.68rem;
+    max-width: 6rem;
+  }
+}
+
+/* Legacy rail aliases (safe if leftover) */
+.reta-eq-rail { display: none; }
+
+/* Center column — locked under duel on mobile */
+.reta-eq-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  text-align: center;
+  padding: 0.15rem 0 0;
+}
+
+.reta-eq-center__vs {
+  display: none;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: rgba(244, 241, 235, 0.7);
+}
+
+.reta-eq-meta-rail {
+  margin: 0;
+  max-width: 100%;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+  color: #d4d4d4;
+  text-wrap: balance;
+}
+
+.reta-eq-center__countdown {
+  width: min(100%, 18rem);
+  padding: 0.65rem 0.75rem 0.7rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(18, 18, 22, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.reta-eq-countdown__headline {
+  margin: 0;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #a3a3a3;
+}
+
+.reta-eq-countdown__digits {
+  margin: 0.3rem 0 0;
+  font-size: clamp(1.35rem, 5.5vw, 2.6rem);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.reta-eq-countdown__seg {
+  display: inline-block;
+  min-width: 1.35ch;
+}
+
+.reta-eq-countdown__sep {
+  opacity: 0.35;
+  margin: 0 0.06em;
+}
+
+.reta-eq-countdown__live-mark {
+  margin: 0.4rem 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #d4d4d4;
+}
+
+.reta-eq-countdown__pulse {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: #3ecf8e;
+  animation: reta-eq-pulse 2.2s ease-out infinite;
+}
+
+@keyframes reta-eq-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(62, 207, 142, 0.35); }
+  70% { box-shadow: 0 0 0 7px rgba(62, 207, 142, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(62, 207, 142, 0); }
+}
+
+.reta-eq-cta {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0;
+  padding: 0.7rem 1.1rem;
+  min-height: 2.65rem;
+  width: min(100%, 20rem);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: #f4f1eb;
+  color: #14161a;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.reta-eq-cta:hover {
+  transform: translateY(-1px);
+  background: #ebe6dc;
+}
+
+.reta-eq-cta:active { transform: scale(0.98); }
+
+.reta-eq-cta:focus-visible {
+  outline: 2px solid rgba(244, 241, 235, 0.7);
+  outline-offset: 3px;
+}
+
+.reta-eq-cta__dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: #1a9f5c;
+}
+
+.reta-eq-cta--live {
+  background: rgba(229, 193, 88, 0.14);
+  color: #e5c158;
+  border: 1px solid rgba(229, 193, 88, 0.45);
+  box-shadow: 0 0 20px rgba(229, 193, 88, 0.2);
+}
+
+.reta-eq-cta--live:hover {
+  background: rgba(229, 193, 88, 0.2);
+  color: #f0d56a;
+}
+
+/* Live compact header */
+.reta-eq-live-header {
+  max-width: 48rem;
+  margin: 0 auto 1.35rem;
+  padding: 0.85rem 0.75rem 0.35rem;
+}
+
+.reta-eq-live-header__kicker {
+  margin: 0 0 0.7rem;
+  text-align: center;
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #e5c158;
+}
+
+.reta-eq-live-header__row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 14px;
+  border: 1px solid rgba(229, 193, 88, 0.18);
+  background: rgba(19, 20, 27, 0.92);
+  box-shadow: 0 0 24px rgba(229, 193, 88, 0.06);
+}
+
+.reta-eq-live-header__side {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.reta-eq-live-header__side--b { justify-content: flex-end; }
+
+.reta-eq-live-header__name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reta-eq-live-header__score {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.reta-eq-live-header__meta {
+  margin: 0.65rem 0 0;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(244, 241, 235, 0.62);
+  line-height: 1.35;
+}
+
+.reta-eq-anim-in {
+  animation: reta-eq-fade-up 560ms ease both;
+}
+
+@keyframes reta-eq-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tablet+ — restore taller frames before full desktop broadcast */
+@media (min-width: 769px) {
+  .reta-eq-stage__shell {
+    padding: 1.15rem 1.25rem 1.75rem;
+  }
+
+  .reta-eq-stage__header {
+    margin-bottom: 1rem;
+  }
+
+
+  .reta-eq-grid {
+    gap: 1rem 0.85rem;
+  }
+
+  .reta-eq-col {
+    gap: 0.75rem;
+  }
+
+  .reta-eq-frame {
+    border-radius: 16px;
+  }
+
+  .reta-eq-frame__media {
+    aspect-ratio: auto;
+    max-height: none;
+    height: clamp(280px, 42vh, 420px);
+  }
+
+  .reta-eq-frame__body {
+    margin-top: 0;
+    padding: 0 1rem 1rem;
+  }
+
+  .reta-eq-frame__name-first {
+    display: block;
+    font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+    font-weight: 750;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #ffffff;
+  }
+
+  .reta-eq-frame__name-rest {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 550;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(244, 241, 235, 0.72);
+  }
+
+  .reta-eq-frame__name-compact {
+    display: none;
+  }
+
+  .reta-eq-frame__team {
+    font-size: 0.62rem;
+    color: rgba(244, 241, 235, 0.5);
+  }
+
+  .reta-eq-frame__pais {
+    margin-top: 0.4rem;
+    font-size: 0.78rem;
+    color: rgba(244, 241, 235, 0.75);
+  }
+
+  .reta-eq-frame__meta--full {
+    display: flex;
+    flex-wrap: wrap;
+    white-space: normal;
+    font-size: 0.7rem;
+    color: rgba(244, 241, 235, 0.55);
+  }
+
+  .reta-eq-frame__meta--compact {
+    display: none;
+  }
+
+  .reta-eq-frame__pos {
+    display: block;
+  }
+
+  .reta-eq-frame__fallback-initials {
+    font-size: clamp(3.5rem, 10vw, 5.5rem);
+  }
+
+  .reta-eq-dock {
+    justify-content: center;
+    gap: 0.4rem;
+  }
+
+  .reta-eq-center {
+    gap: 0.85rem;
+  }
+
+  .reta-eq-cta {
+    width: auto;
+    min-height: 3rem;
+    padding: 0.85rem 1.35rem;
+    font-size: 0.76rem;
+  }
+
+  .reta-eq-center__countdown {
+    width: min(100%, 20rem);
+    padding: 0.95rem 1rem 1rem;
+  }
+}
+
+/* Desktop broadcast grid ≥1100px */
+@media (min-width: 1100px) {
+  /* emblems removed */
+
+  .reta-eq-stage__shell {
+    padding: 1.5rem 2rem 2.35rem;
+    min-height: clamp(720px, 88svh, 980px);
+  }
+
+  .reta-eq-stage__title {
+    max-width: 52rem;
+  }
+
+  .reta-eq-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1.5rem 1.75rem;
+    align-items: start;
+  }
+
+  .reta-eq-grid__a {
+    grid-column: 1 / 6;
+    grid-row: 1;
+  }
+
+  .reta-eq-grid__center {
+    grid-column: 6 / 8;
+    grid-row: 1;
+    align-self: center;
+    position: sticky;
+    top: 1.25rem;
+  }
+
+  .reta-eq-grid__b {
+    grid-column: 8 / 13;
+    grid-row: 1;
+  }
+
+  .reta-eq-col {
+    align-items: center;
+    gap: 0.95rem;
+  }
+
+  .reta-eq-col__identity {
+    display: none; /* matchbar is the single team header */
+  }
+
+  .reta-eq-col__stage {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .reta-eq-dock {
+    max-width: 420px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .reta-eq-frame__media {
+    height: clamp(380px, 48vh, 560px);
+  }
+
+  .reta-eq-center {
+    gap: 1.15rem;
+    padding: 0.5rem 0.25rem;
+  }
+
+  .reta-eq-center__vs {
+    display: grid;
+  }
+
+  .reta-eq-meta-rail {
+    max-width: 15rem;
+    font-size: 0.74rem;
+  }
+
+  .reta-eq-center__countdown {
+    width: min(100%, 16rem);
+  }
+}
+
+/* Wide canvas — fill 1440 intentionally */
+@media (min-width: 1440px) {
+  .reta-eq-stage__shell {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+
+  .reta-eq-grid {
+    gap: 1.75rem 2rem;
+  }
+
+  .reta-eq-grid__a {
+    grid-column: 1 / 5;
+  }
+
+  .reta-eq-grid__center {
+    grid-column: 5 / 9;
+  }
+
+  .reta-eq-grid__b {
+    grid-column: 9 / 13;
+  }
+
+  .reta-eq-col__stage,
+  .reta-eq-dock {
+    max-width: 420px;
+  }
+
+  .reta-eq-frame__media {
+    height: clamp(420px, 50vh, 580px);
+  }
+
+  .reta-eq-center {
+    gap: 1.35rem;
+  }
+
+  .reta-eq-meta-rail {
+    max-width: 18rem;
+  }
+
+  .reta-eq-center__countdown {
+    width: min(100%, 18rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reta-eq-anim-in,
+  .reta-eq-frame--enter,
+  .reta-eq-dock__pill,
+  .reta-eq-countdown__pulse {
+    animation: none !important;
+  }
+
+  .reta-eq-cta:hover,
+  .reta-eq-logo-uploader__btn:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+.reta-eq-team-card .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

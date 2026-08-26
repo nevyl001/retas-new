@@ -32,6 +32,8 @@ export type PublicPlayerIdentity = {
   mano: string | null;
   lado: string | null;
   nacionalidad: string | null;
+  /** Edad desde riviera_jugadores del club (si existe). */
+  edad: number | null;
 };
 
 type HostRivieraRow = {
@@ -46,6 +48,7 @@ type HostRivieraRow = {
   mano_dominante?: string | null;
   en_cancha?: string | null;
   pais_codigo?: string | null;
+  edad?: unknown;
 };
 
 const DEFAULT_PUBLIC_RATING = 3;
@@ -112,7 +115,7 @@ async function fetchHostOrgRivieraRowsByLegacy(
   const { data, error } = await supabasePublicRead
     .from("riviera_jugadores")
     .select(
-      "id, legacy_player_id, nombre, slug, foto_url, rating, nivel, categoria, mano_dominante, en_cancha, pais_codigo"
+      "id, legacy_player_id, nombre, slug, foto_url, rating, nivel, categoria, mano_dominante, en_cancha, pais_codigo, edad"
     )
     .eq("organizador_id", organizadorId.trim())
     .eq("estado", "activo")
@@ -174,6 +177,11 @@ function buildIdentity(
   const hostRating = normalizeRating(hostRow?.rating);
   const canonicalRating = canonical?.rating ?? null;
   const rating = preferRating(hostRating, canonicalRating);
+  const edadRaw = hostRow?.edad;
+  const edad =
+    edadRaw != null && Number.isFinite(Number(edadRaw))
+      ? Number(edadRaw)
+      : null;
 
   return {
     legacyPlayerId: legacyId,
@@ -188,6 +196,7 @@ function buildIdentity(
     mano: hostRow?.mano_dominante?.trim() || null,
     lado: hostRow?.en_cancha?.trim() || null,
     nacionalidad: hostRow?.pais_codigo?.trim() || null,
+    edad,
   };
 }
 
