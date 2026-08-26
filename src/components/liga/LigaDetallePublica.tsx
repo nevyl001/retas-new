@@ -503,20 +503,20 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                                       </>
                                     ) : null}
                                   </div>
-                                  <div className="liga-pub-programa__result-row">
+                                  <div className="liga-pub-programa__result-block">
                                     {m.score ? (
-                                      <span className="liga-pantalla-matchup__score">
+                                      <p className="liga-pantalla-matchup__score">
                                         {m.score}
-                                      </span>
+                                      </p>
                                     ) : (
-                                      <span className="liga-pub-programa__pending">
+                                      <p className="liga-pub-programa__pending">
                                         Por jugar
-                                      </span>
+                                      </p>
                                     )}
                                     {m.programacion ? (
-                                      <span className="liga-pantalla-matchup__meta">
+                                      <p className="liga-pantalla-matchup__meta">
                                         {m.programacion}
-                                      </span>
+                                      </p>
                                     ) : null}
                                   </div>
                                 </li>
