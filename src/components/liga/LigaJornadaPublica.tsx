@@ -253,21 +253,10 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   const resolveParejaFace = (parejaId: string) => {
     const pareja = jornada?.parejas?.find((x) => x.id === parejaId);
     const names = parejaPlayerNames(pareja, equiposById);
-    const equipo = pareja?.equipo_id
-      ? equiposById.get(pareja.equipo_id)
-      : undefined;
     return {
       ...names,
-      foto1:
-        parejaFotos[names.id1] ??
-        equipo?.jugador1?.foto_url ??
-        pareja?.jugador1?.foto_url ??
-        null,
-      foto2:
-        parejaFotos[names.id2] ??
-        equipo?.jugador2?.foto_url ??
-        pareja?.jugador2?.foto_url ??
-        null,
+      foto1: names.id1 ? parejaFotos[names.id1] ?? null : null,
+      foto2: names.id2 ? parejaFotos[names.id2] ?? null : null,
     };
   };
 
