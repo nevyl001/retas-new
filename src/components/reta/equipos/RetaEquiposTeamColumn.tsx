@@ -19,7 +19,7 @@ type RetaEquiposTeamColumnProps = {
 const ROTATE_MS = 4000;
 
 /**
- * Columna de equipo: spotlight glass + dock (dots móvil / pills desktop).
+ * Columna de equipo: spotlight glass + dock (segmentos móvil / pills desktop).
  * Rotación aislada (no afecta countdown ni hero padre).
  */
 export const RetaEquiposTeamColumn: React.FC<RetaEquiposTeamColumnProps> = ({

@@ -63,7 +63,8 @@ const DockPill: React.FC<{
 };
 
 /**
- * Móvil: dots de cristal. Desktop: pills foto + apellido.
+ * Móvil: barra segmentada (sin bolitas que chocan).
+ * Desktop ≥1100px: pills foto + apellido.
  */
 export const RetaEquiposRosterRail: React.FC<RetaEquiposRosterRailProps> = ({
   players,
@@ -80,17 +81,17 @@ export const RetaEquiposRosterRail: React.FC<RetaEquiposRosterRailProps> = ({
       role="tablist"
       aria-label={`Jugadores ${teamName}`}
     >
-      <div className="reta-eq-dock__dots">
+      <div className="reta-eq-dock__track">
         {players.map((player, i) => (
           <button
-            key={`dot-${player.id}`}
+            key={`seg-${player.id}`}
             type="button"
             role="tab"
             aria-selected={i === activeIndex}
             aria-label={player.nombre}
             className={[
-              "reta-eq-dock__dot",
-              `reta-eq-dock__dot--${side}`,
+              "reta-eq-dock__seg",
+              `reta-eq-dock__seg--${side}`,
               i === activeIndex ? "is-active" : "",
             ]
               .filter(Boolean)
