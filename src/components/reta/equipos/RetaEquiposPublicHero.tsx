@@ -50,6 +50,7 @@ type RetaEquiposPublicHeroProps = {
   liveProgressLabel?: string | null;
   arenaSlots?: RetaEquiposArenaSlot[];
   onGoLive?: () => void;
+  onBackToLineup?: () => void;
 };
 
 function parseScorePair(
@@ -141,6 +142,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   liveProgressLabel = null,
   arenaSlots = [],
   onGoLive,
+  onBackToLineup,
 }) => {
   const teamA = teams[0];
   const teamB = teams[1];
@@ -207,6 +209,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
           lugar={lugar}
           statusLabel={statusLabel}
           isLive={arenaLive}
+          onBackToLineup={onBackToLineup}
         />
       </header>
     );

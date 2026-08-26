@@ -23,6 +23,8 @@ type RetaEquiposArenaScoreboardProps = {
   lugar?: string | null;
   statusLabel?: string;
   isLive?: boolean;
+  /** Regresa al hero con jugadores (alineación). */
+  onBackToLineup?: () => void;
 };
 
 function shortTeamLabel(name: string): string {
@@ -95,6 +97,7 @@ export const RetaEquiposArenaScoreboard: React.FC<
   lugar = null,
   statusLabel = "",
   isLive = false,
+  onBackToLineup,
 }) => {
   const labelA = shortTeamLabel(teamAName);
   const labelB = shortTeamLabel(teamBName);
@@ -188,6 +191,21 @@ export const RetaEquiposArenaScoreboard: React.FC<
         statusLabel={statusLabel}
         isLive={isLive}
       />
+
+      {onBackToLineup ? (
+        <div className="reta-eq-arena__back-wrap">
+          <button
+            type="button"
+            className="reta-eq-arena__back"
+            onClick={onBackToLineup}
+          >
+            <span className="reta-eq-arena__back-arrow" aria-hidden>
+              ←
+            </span>
+            <span>Volver a alineación</span>
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 };

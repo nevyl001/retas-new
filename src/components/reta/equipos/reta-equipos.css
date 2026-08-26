@@ -2169,6 +2169,57 @@
   text-transform: uppercase;
 }
 
+.reta-eq-arena__back-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.55rem;
+}
+
+.reta-eq-arena__back {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.55rem 1rem;
+  min-height: 2.25rem;
+  max-width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: #d4d4d4;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease,
+    transform 160ms ease;
+}
+
+.reta-eq-arena__back:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.reta-eq-arena__back:active {
+  transform: scale(0.98);
+}
+
+.reta-eq-arena__back:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 2px;
+}
+
+.reta-eq-arena__back-arrow {
+  font-size: 0.85rem;
+  line-height: 1;
+  opacity: 0.85;
+}
+
 /* Mobile: columna por equipo para que nombres largos (p. ej. BREAKPOINT) no se corten */
 @media (max-width: 639px) {
   .reta-eq-arena__board {

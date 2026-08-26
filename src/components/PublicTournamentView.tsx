@@ -1153,6 +1153,17 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     });
   };
 
+  const backToLineup = () => {
+    setTeamsLiveRevealed(false);
+    if (typeof window !== "undefined") {
+      const base = `${window.location.pathname}${window.location.search}`;
+      if (window.location.hash) {
+        window.history.replaceState(null, "", base);
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   const showMatchesSection = !isTeamsPublicView || teamsLiveRevealed;
 
   return (
@@ -1183,6 +1194,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           liveProgressLabel={teamsLiveProgressLabel}
           arenaSlots={teamsArenaSlots}
           onGoLive={teamsLiveRevealed ? undefined : scrollToEnVivo}
+          onBackToLineup={teamsLiveRevealed ? backToLineup : undefined}
         />
       ) : isPubDsV2Enabled ? (
         <PublicHero
