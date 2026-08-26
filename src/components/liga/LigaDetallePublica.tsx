@@ -86,6 +86,9 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [programaJornadaId, setProgramaJornadaId] = useState<string | null>(
+    null
+  );
   const organizerName = useOrganizerDisplayName(detalle?.organizador_id);
   const { isClubBranded } = useClubExperience();
   const cancelledRef = useRef(false);
@@ -189,6 +192,23 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       };
     });
   }, [detalle, rankingEquipos, parejaFotos]);
+
+  useEffect(() => {
+    if (!detalle?.jornadas.length) {
+      setProgramaJornadaId(null);
+      return;
+    }
+    const preferred =
+      detalle.jornadas.find((j) => j.estado === "in_progress")?.id ??
+      detalle.jornadas.find((j) => j.estado === "upcoming")?.id ??
+      detalle.jornadas[detalle.jornadas.length - 1]?.id ??
+      detalle.jornadas[0]?.id ??
+      null;
+    setProgramaJornadaId((prev) => {
+      if (prev && detalle.jornadas.some((j) => j.id === prev)) return prev;
+      return preferred;
+    });
+  }, [detalle]);
 
   if (loading && !detalle) {
     return (
@@ -364,132 +384,170 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                 El calendario se publicará pronto.
               </p>
             ) : (
-              <div
-                className={`liga-pantalla-jornadas__grid${
-                  esParejasFijas
-                    ? " liga-pantalla-jornadas__grid--parejas liga-pub-programa__grid"
-                    : ""
-                }`}
-              >
-                {detalle.jornadas.map((j, jornadaIndex) => {
-                  const tienePantalla = (j.partidos?.length ?? 0) > 0;
-                  const esActiva = jornadaActiva?.id === j.id;
-                  const matchups = listJornadaPublicMatches(
-                    j,
-                    detalle.equipos,
-                    esParejasFijas
-                  );
-                  const estadoMod =
-                    j.estado === "in_progress"
-                      ? "live"
-                      : j.estado === "completed"
-                        ? "done"
-                        : "upcoming";
-                  return (
-                    <article
-                      key={j.id}
-                      className={`liga-pantalla-jornada-card${
-                        esActiva ? " liga-pantalla-jornada-card--live" : ""
-                      }${
-                        esParejasFijas
-                          ? ` liga-pub-programa__card liga-pub-programa__card--${estadoMod}`
-                          : ""
-                      }`}
-                      style={
-                        esParejasFijas
-                          ? ({
-                              ["--liga-prog-i" as string]: jornadaIndex,
-                            } as React.CSSProperties)
-                          : undefined
-                      }
+              <>
+                {esParejasFijas ? (
+                  <div className="liga-pub-programa__picker">
+                    <label
+                      className="liga-pub-programa__picker-label"
+                      htmlFor="liga-pub-programa-select"
                     >
-                      <div className="liga-pantalla-jornada-card__head">
-                        <div className="liga-pub-programa__card-titles">
-                          <h3 className="liga-pantalla-jornada-card__num">
+                      Elegir jornada
+                    </label>
+                    <div className="liga-pub-programa__picker-shell">
+                      <select
+                        id="liga-pub-programa-select"
+                        className="liga-pub-programa__select"
+                        value={programaJornadaId ?? ""}
+                        onChange={(e) => setProgramaJornadaId(e.target.value)}
+                      >
+                        {detalle.jornadas.map((j) => (
+                          <option key={j.id} value={j.id}>
                             Jornada {j.numero}
-                          </h3>
-                          {j.fecha ? (
-                            <p className="liga-pantalla-jornada-card__fecha">
-                              {formatFechaLegible(dateInputValue(j.fecha))}
-                            </p>
-                          ) : null}
-                        </div>
-                        <span className={jornadaBadgeClass(j.estado)}>
-                          {jornadaBadgeLabel(j.estado)}
-                        </span>
-                      </div>
-                      <div className="liga-pantalla-jornada-card__body">
-                        {matchups.length === 0 ? (
-                          <p className="liga-pantalla-jornada-card__hint">
-                            Partidos pendientes de iniciar
-                          </p>
-                        ) : esParejasFijas ? (
-                          <ul className="liga-pantalla-matchups liga-pub-programa__matchups">
-                            {matchups.map((m) => (
-                              <li
-                                key={m.id}
-                                className="liga-pantalla-matchup liga-pub-programa__match"
-                              >
-                                <div className="liga-pub-programa__sides">
-                                  <span className="liga-pantalla-matchup__team">
-                                    {m.local}
-                                  </span>
-                                  {m.visitante ? (
-                                    <>
-                                      <span
-                                        className="liga-pantalla-matchup__vs"
-                                        aria-hidden
-                                      >
-                                        vs
-                                      </span>
-                                      <span className="liga-pantalla-matchup__team">
-                                        {m.visitante}
-                                      </span>
-                                    </>
-                                  ) : null}
-                                </div>
-                                {m.score ? (
-                                  <span className="liga-pantalla-matchup__score">
-                                    {m.score}
-                                  </span>
-                                ) : (
-                                  <span className="liga-pub-programa__pending">
-                                    Por jugar
-                                  </span>
-                                )}
-                                {m.programacion ? (
-                                  <span className="liga-pantalla-matchup__meta">
-                                    {m.programacion}
-                                  </span>
-                                ) : null}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <div className="liga-pantalla-parejas liga-pantalla-parejas--card">
-                            {matchups.map((m) => (
-                              <span key={m.id} className="liga-pantalla-pareja">
-                                {m.local}
-                              </span>
-                            ))}
+                            {j.fecha
+                              ? ` · ${formatFechaLegible(dateInputValue(j.fecha))}`
+                              : ""}
+                            {` · ${jornadaBadgeLabel(j.estado)}`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ) : null}
+                <div
+                  className={`liga-pantalla-jornadas__grid${
+                    esParejasFijas
+                      ? " liga-pantalla-jornadas__grid--parejas liga-pub-programa__grid"
+                      : ""
+                  }`}
+                >
+                  {detalle.jornadas.map((j, jornadaIndex) => {
+                    const tienePantalla = (j.partidos?.length ?? 0) > 0;
+                    const esActiva = jornadaActiva?.id === j.id;
+                    const matchups = listJornadaPublicMatches(
+                      j,
+                      detalle.equipos,
+                      esParejasFijas
+                    );
+                    const estadoMod =
+                      j.estado === "in_progress"
+                        ? "live"
+                        : j.estado === "completed"
+                          ? "done"
+                          : "upcoming";
+                    const isSelected =
+                      !esParejasFijas || j.id === programaJornadaId;
+                    return (
+                      <article
+                        key={j.id}
+                        className={`liga-pantalla-jornada-card${
+                          esActiva ? " liga-pantalla-jornada-card--live" : ""
+                        }${
+                          esParejasFijas
+                            ? ` liga-pub-programa__card liga-pub-programa__card--${estadoMod}${
+                                isSelected
+                                  ? " liga-pub-programa__card--selected"
+                                  : ""
+                              }`
+                            : ""
+                        }`}
+                        style={
+                          esParejasFijas
+                            ? ({
+                                ["--liga-prog-i" as string]: jornadaIndex,
+                              } as React.CSSProperties)
+                            : undefined
+                        }
+                      >
+                        <div className="liga-pantalla-jornada-card__head">
+                          <div className="liga-pub-programa__card-titles">
+                            <h3 className="liga-pantalla-jornada-card__num">
+                              Jornada {j.numero}
+                            </h3>
+                            {j.fecha ? (
+                              <p className="liga-pantalla-jornada-card__fecha">
+                                {formatFechaLegible(dateInputValue(j.fecha))}
+                              </p>
+                            ) : null}
                           </div>
-                        )}
-                      </div>
-                      {tienePantalla ? (
-                        <a
-                          href={publicLigaJornadaUrl(ligaId, j.numero)}
-                          className="liga-pantalla-jornada-card__link liga-pub-programa__link"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Ver resultados
-                          <span aria-hidden> →</span>
-                        </a>
-                      ) : null}
-                    </article>
-                  );
-                })}
-              </div>
+                          <span className={jornadaBadgeClass(j.estado)}>
+                            {jornadaBadgeLabel(j.estado)}
+                          </span>
+                        </div>
+                        <div className="liga-pantalla-jornada-card__body">
+                          {matchups.length === 0 ? (
+                            <p className="liga-pantalla-jornada-card__hint">
+                              Partidos pendientes de iniciar
+                            </p>
+                          ) : esParejasFijas ? (
+                            <ul className="liga-pantalla-matchups liga-pub-programa__matchups">
+                              {matchups.map((m) => (
+                                <li
+                                  key={m.id}
+                                  className="liga-pantalla-matchup liga-pub-programa__match"
+                                >
+                                  <div className="liga-pub-programa__sides">
+                                    <span className="liga-pantalla-matchup__team">
+                                      {m.local}
+                                    </span>
+                                    {m.visitante ? (
+                                      <>
+                                        <span
+                                          className="liga-pantalla-matchup__vs"
+                                          aria-hidden
+                                        >
+                                          vs
+                                        </span>
+                                        <span className="liga-pantalla-matchup__team">
+                                          {m.visitante}
+                                        </span>
+                                      </>
+                                    ) : null}
+                                  </div>
+                                  <div className="liga-pub-programa__result-row">
+                                    {m.score ? (
+                                      <span className="liga-pantalla-matchup__score">
+                                        {m.score}
+                                      </span>
+                                    ) : (
+                                      <span className="liga-pub-programa__pending">
+                                        Por jugar
+                                      </span>
+                                    )}
+                                    {m.programacion ? (
+                                      <span className="liga-pantalla-matchup__meta">
+                                        {m.programacion}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <div className="liga-pantalla-parejas liga-pantalla-parejas--card">
+                              {matchups.map((m) => (
+                                <span key={m.id} className="liga-pantalla-pareja">
+                                  {m.local}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {tienePantalla ? (
+                          <a
+                            href={publicLigaJornadaUrl(ligaId, j.numero)}
+                            className="liga-pantalla-jornada-card__link liga-pub-programa__link"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Ver resultados
+                            <span aria-hidden> →</span>
+                          </a>
+                        ) : null}
+                      </article>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </section>
         </div>
