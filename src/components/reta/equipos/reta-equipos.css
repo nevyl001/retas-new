@@ -2963,25 +2963,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.22rem;
   flex-shrink: 0;
-  max-width: 46%;
-  padding: 0.14rem 0.32rem;
+  padding: 0.14rem 0.28rem;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  font-size: 0.56rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
-}
-
-.reta-eq-cara__pais > span:last-child {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 0;
 }
 
 .reta-eq-cara__medal {
@@ -3045,7 +3032,7 @@
   z-index: 2;
   text-align: left;
   min-width: 0;
-  max-width: 74%;
+  max-width: 88%;
   padding: 0.32rem 0.5rem 0.38rem 0.42rem;
   border-radius: 0 0.55rem 0 0;
   background: linear-gradient(
@@ -3058,28 +3045,17 @@
 
 .reta-eq-cara__name {
   margin: 0;
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: #fff;
-  white-space: nowrap;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
-}
-
-.reta-eq-cara__pais-foot {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin-top: 0.16rem;
-  line-height: 0;
-}
-
-.reta-eq-cara__pais-foot .rjp-pais-badge,
-.reta-eq-cara__pais-foot .jugador-pais-badge {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
+  text-shadow: none;
 }
 
 .reta-eq-center--duel {
@@ -3177,19 +3153,7 @@
   }
 
   .reta-eq-cara__name {
-    font-size: 0.76rem;
-  }
-
-  .reta-eq-cara__lado {
-    font-size: 0.6rem;
-  }
-
-  .reta-eq-cara__pais {
-    font-size: 0.58rem;
-  }
-
-  .reta-eq-cara__pais-foot {
-    margin-top: 0.24rem;
+    font-size: 0.64rem;
   }
 
   .reta-eq-stage__marquee-date {
@@ -3254,15 +3218,7 @@
   }
 
   .reta-eq-cara__name {
-    font-size: 0.85rem;
-  }
-
-  .reta-eq-cara__pais {
-    font-size: 0.62rem;
-  }
-
-  .reta-eq-cara__pais-foot {
-    margin-top: 0.22rem;
+    font-size: 0.68rem;
   }
 }
 

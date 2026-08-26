@@ -35,13 +35,6 @@ function ladoLabel(lado: RetaEquiposPlayerCardData["lado"]): string | null {
   return null;
 }
 
-function playerSurname(nombre: string): string {
-  const parts = nombre.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "—";
-  if (parts.length === 1) return parts[0]!;
-  return parts[parts.length - 1]!;
-}
-
 type CylinderMetrics = { radius: number; scale: number };
 
 /** Radio + escala global para auto-fit sin solapamiento. */
@@ -89,7 +82,6 @@ const CylinderCard: React.FC<{
 }> = ({ player, side, angle, direction }) => {
   const { src, onError } = useRetryableImage(player.fotoUrl);
   const initials = getJugadorInitials(player.nombre).slice(0, 2) || "RO";
-  const surname = playerSurname(player.nombre);
   const pais = getPaisOption(player.nacionalidad);
   const lado = ladoLabel(player.lado);
 
@@ -131,22 +123,21 @@ const CylinderCard: React.FC<{
 
         <header className="reta-eq-cara__top">
           {lado ? <span className="reta-eq-cara__lado">{lado}</span> : <span />}
-        </header>
-
-        <footer className="reta-eq-cara__foot">
-          <p className="reta-eq-cara__name">{surname}</p>
           {pais ? (
-            <span
-              className="reta-eq-cara__pais-foot"
-              aria-label={pais.nombre}
-            >
+            <span className="reta-eq-cara__pais" aria-label={pais.nombre}>
               <JugadorPaisBadge
                 codigo={player.nacionalidad}
                 size="sm"
                 showCode={false}
               />
             </span>
-          ) : null}
+          ) : (
+            <span />
+          )}
+        </header>
+
+        <footer className="reta-eq-cara__foot">
+          <p className="reta-eq-cara__name">{player.nombre}</p>
         </footer>
       </article>
     </div>
