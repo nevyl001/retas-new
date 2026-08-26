@@ -395,19 +395,24 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     force = false
   ) => {
     const draft = getPlayoffsDraftForPartido(partido, playoffsDrafts);
+    // Corregir siempre sobrescribe el marcador previo y recalcula ranking.
+    const forceWrite = force || partido.estado === "completed";
     setBusy(true);
     setError(null);
     try {
-      const built = buildPlayoffsPayloadFromDraft(draft);
+      const built = buildPlayoffsPayloadFromDraft({
+        ...draft,
+        woWinner: null,
+      });
       const result = await updateScoreParejasFijasPlayoffs(
         partido.id,
         built.score1,
         built.score2,
         built.payload,
-        { force }
+        { force: forceWrite }
       );
       if (!result.ok) {
-        if (result.error === "conflict" && !force) {
+        if (result.error === "conflict" && !forceWrite) {
           if (
             window.confirm(
               "Ya hay un resultado distinto. ¿Sobrescribir?"
@@ -426,8 +431,8 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
       });
       setMessage(
         partido.estado === "completed"
-          ? "Resultado corregido."
-          : "Resultado guardado."
+          ? "Resultado corregido. Ranking actualizado."
+          : "Resultado guardado. Ranking actualizado."
       );
       await load();
     } catch (err) {

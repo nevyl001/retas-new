@@ -89,10 +89,7 @@ export function getPlayoffsDraftForPartido(
     base.stb1 = String(payload.stb.p1);
     base.stb2 = String(payload.stb.p2);
   }
-  if (payload?.wo) {
-    base.woWinner =
-      partido.score_pareja1 > partido.score_pareja2 ? 1 : 2;
-  }
+  // WO no se captura en UI admin; si existiera en BD, se puede sobrescribir al corregir.
   return base;
 }
 
@@ -104,13 +101,14 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
   onChange,
   onSave,
 }) => {
-  const locked = disabled || busy || draft.woWinner != null;
+  const locked = Boolean(disabled || busy);
   const showStb = needsPlayoffsStbDraft(draft);
   const totals = playoffsTotalsFromDraft(draft);
   const preview = previewPlayoffsPointsFromDraft(draft);
+  const isCompleted = partido.estado === "completed";
 
   const saved =
-    partido.estado === "completed" &&
+    isCompleted &&
     partido.score_pareja1 != null &&
     partido.score_pareja2 != null
       ? playoffsMatchDisplay(
@@ -149,7 +147,7 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
           </span>
         </p>
       ) : null}
-      {preview.kind !== "incomplete" ? (
+      {preview.kind !== "incomplete" && preview.kind !== "wo" ? (
         <p
           className={`liga-playoffs-score__preview liga-playoffs-score__preview--${preview.kind}`}
           role="status"
@@ -169,10 +167,10 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
               <input
                 type="number"
                 min={0}
-                disabled={disabled || busy}
+                disabled={locked}
                 value={draft.stb1}
                 onChange={(e) =>
-                  onChange({ ...draft, stb1: e.target.value })
+                  onChange({ ...draft, stb1: e.target.value, woWinner: null })
                 }
                 aria-label="Súper tie-break pareja 1"
               />
@@ -185,10 +183,10 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
               <input
                 type="number"
                 min={0}
-                disabled={disabled || busy}
+                disabled={locked}
                 value={draft.stb2}
                 onChange={(e) =>
-                  onChange({ ...draft, stb2: e.target.value })
+                  onChange({ ...draft, stb2: e.target.value, woWinner: null })
                 }
                 aria-label="Súper tie-break pareja 2"
               />
@@ -199,44 +197,17 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
       <div className="liga-actions" style={{ marginTop: 8 }}>
         <Button
           type="button"
-          variant="ghost"
-          size="sm"
-          disabled={disabled || busy}
-          onClick={() =>
-            onChange({
-              ...emptyPlayoffsScoreDraft(),
-              woWinner: draft.woWinner === 1 ? null : 1,
-            })
-          }
-        >
-          {draft.woWinner === 1 ? "Quitar WO P1" : "WO P1"}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={disabled || busy}
-          onClick={() =>
-            onChange({
-              ...emptyPlayoffsScoreDraft(),
-              woWinner: draft.woWinner === 2 ? null : 2,
-            })
-          }
-        >
-          {draft.woWinner === 2 ? "Quitar WO P2" : "WO P2"}
-        </Button>
-        <Button
-          type="button"
           variant="primary"
           size="sm"
-          disabled={disabled || busy}
+          disabled={locked}
           onClick={onSave}
         >
-          {partido.estado === "completed" ? "Corregir" : "Guardar"}
+          {isCompleted ? "Corregir" : "Guardar"}
         </Button>
       </div>
       <p className="liga-hint">
-        WO → 3/−1 · El resultado de Liga usa la suma de games, no sets ganados.
+        Al corregir se recalcula el ranking al momento. El resultado usa la suma
+        de games, no sets ganados.
       </p>
     </div>
   );
