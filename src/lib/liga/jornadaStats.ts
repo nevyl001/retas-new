@@ -8,10 +8,7 @@ import {
   derivePlayoffsGamesTotals,
   parsePlayoffsSetScoresJson,
 } from "./parejasFijasPlayoffsMatchScore";
-import {
-  compareEquiposRanking,
-  diferenciaGamesFromStats,
-} from "./equiposRanking";
+import { compareEquiposRanking } from "./equiposRanking";
 import type { LigaJornada, LigaJornadaPareja } from "./types";
 
 export interface ParejaJornadaStat {
@@ -394,7 +391,7 @@ export function computeJornadaPublicStats(
       return compareEquiposRanking(
         {
           puntos: a.puntos,
-          diferencia_games: diferenciaGamesFromStats(a),
+          diferencia_games: a.games_favor - a.games_contra,
           games_favor: a.games_favor,
           partidos_ganados: a.victorias,
           partidos_jugados: a.victorias + a.derrotas + a.empates,
@@ -402,7 +399,7 @@ export function computeJornadaPublicStats(
         },
         {
           puntos: b.puntos,
-          diferencia_games: diferenciaGamesFromStats(b),
+          diferencia_games: b.games_favor - b.games_contra,
           games_favor: b.games_favor,
           partidos_ganados: b.victorias,
           partidos_jugados: b.victorias + b.derrotas + b.empates,
