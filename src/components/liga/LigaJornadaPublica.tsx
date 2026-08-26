@@ -239,10 +239,6 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     (jornada?.partidos?.length ?? 0) > 0 &&
     jornada!.partidos!.every((p) => p.estado === "completed");
 
-  const parejasGanadorasJornada = useMemo(() => {
-    return jornadaStats.rankingParejas.filter((row) => row.victorias > 0);
-  }, [jornadaStats.rankingParejas]);
-
   const nombreParejaGanadora = (parejaId: string, fallback: string) => {
     const pareja = jornada?.parejas?.find((p) => p.id === parejaId);
     return pareja
@@ -557,45 +553,6 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         {/* Roster de parejas solo en el link completo de la liga (LigaDetallePublica).
             En jornada pública: solo partidos + tabla. */}
 
-        {!esParejasFijas &&
-          todosPartidosCompletos &&
-          jornadaStats.ganadorPareja && (
-          <div className="liga-pantalla-winner" role="status">
-            <p className="liga-pantalla-winner__eyebrow">¡Felicidades!</p>
-            <p className="liga-pantalla-winner__title">
-              {jornadaStats.ganadorPareja.nombre}
-            </p>
-            <p className="liga-pantalla-winner__meta">
-              Pareja ganadora de la jornada · {jornadaStats.ganadorPareja.victorias}{" "}
-              {jornadaStats.ganadorPareja.victorias === 1 ? "victoria" : "victorias"} ·{" "}
-              {jornadaStats.ganadorPareja.puntos} pts
-            </p>
-          </div>
-        )}
-
-        {esParejasFijas &&
-          todosPartidosCompletos &&
-          parejasGanadorasJornada.length > 0 && (
-          <div className="liga-parejas-victorias-grid" role="status">
-            {parejasGanadorasJornada.map((row) => {
-              const pareja = jornada.parejas?.find((p) => p.id === row.parejaId);
-              const pairLabel = nombreParejaGanadora(row.parejaId, row.nombre);
-              const partidoGanado = findPartidoGanadoPareja(row.parejaId, jornada);
-              return (
-                <LigaParejaVictoriaCelebrate
-                  key={row.parejaId}
-                  pairId={row.parejaId}
-                  pairLabel={pairLabel}
-                  torneoNombre={detalle.nombre}
-                  rankLabel={buildVictoriaRankLabel(partidoGanado, jornada.fecha)}
-                  stats={statsParejaJornadaVictoria(row.parejaId, jornada, row)}
-                  winners={winnerAvatarsForPareja(pareja)}
-                />
-              );
-            })}
-          </div>
-        )}
-
         <div
           className={`liga-pantalla__layout${
             esParejasFijas ? " liga-pantalla__layout--parejas" : ""
@@ -848,6 +805,57 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
             )}
           </aside>
         </div>
+
+        {!esParejasFijas &&
+          todosPartidosCompletos &&
+          jornadaStats.ganadorPareja && (
+          <div className="liga-pantalla-winner" role="status">
+            <p className="liga-pantalla-winner__eyebrow">¡Felicidades!</p>
+            <p className="liga-pantalla-winner__title">
+              {jornadaStats.ganadorPareja.nombre}
+            </p>
+            <p className="liga-pantalla-winner__meta">
+              Pareja ganadora de la jornada · {jornadaStats.ganadorPareja.victorias}{" "}
+              {jornadaStats.ganadorPareja.victorias === 1 ? "victoria" : "victorias"} ·{" "}
+              {jornadaStats.ganadorPareja.puntos} pts
+            </p>
+          </div>
+        )}
+
+        {esParejasFijas &&
+          todosPartidosCompletos &&
+          jornadaStats.ganadorPareja && (
+            <div
+              className="liga-parejas-victorias-grid liga-parejas-victorias-grid--winner"
+              role="status"
+            >
+              <LigaParejaVictoriaCelebrate
+                pairId={jornadaStats.ganadorPareja.parejaId}
+                pairLabel={nombreParejaGanadora(
+                  jornadaStats.ganadorPareja.parejaId,
+                  jornadaStats.ganadorPareja.nombre
+                )}
+                torneoNombre={detalle.nombre}
+                rankLabel={buildVictoriaRankLabel(
+                  findPartidoGanadoPareja(
+                    jornadaStats.ganadorPareja.parejaId,
+                    jornada
+                  ),
+                  jornada.fecha
+                )}
+                stats={statsParejaJornadaVictoria(
+                  jornadaStats.ganadorPareja.parejaId,
+                  jornada,
+                  jornadaStats.ganadorPareja
+                )}
+                winners={winnerAvatarsForPareja(
+                  jornada.parejas?.find(
+                    (p) => p.id === jornadaStats.ganadorPareja?.parejaId
+                  )
+                )}
+              />
+            </div>
+          )}
 
         <footer className="liga-pantalla__footer">
           Actualización automática

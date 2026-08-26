@@ -8,6 +8,12 @@
   width: 100%;
 }
 
+.liga-parejas-victorias-grid--winner {
+  grid-template-columns: minmax(0, 360px);
+  justify-content: center;
+  margin: clamp(1.5rem, 3vw, 2.25rem) 0 clamp(1rem, 2vw, 1.5rem);
+}
+
 /* Podio en contexto liga: dorado sutil, sin glow */
 .liga-parejas-victorias-grid .podium-card {
   --podium-accent: #c4ad72;
