@@ -31,8 +31,15 @@ function buildBriefOrderText(
   if (mode === "dual-meet") {
     return (
       <>
-        Orden: <strong>FAV</strong> → <strong>CON</strong> (menos) →{" "}
-        <strong>PG</strong> · <strong>PTS</strong> = referencia
+        Orden: <strong>FAV</strong>
+        {" → "}
+        <strong>CON</strong> (menos)
+        {" → "}
+        <strong>PG</strong>
+        {" · "}
+        <strong>PTS</strong> referencia
+        {" · "}
+        Duelo por equipo
       </>
     );
   }

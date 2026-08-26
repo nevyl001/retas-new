@@ -37,7 +37,8 @@ export function getStandingsCompactSchedulingHint(
 ): string | null {
   switch (mode) {
     case "dual-meet":
-      return "Duelo · tabla por equipo";
+      /* Ya va en el brief de orden (“Duelo por equipo”). */
+      return null;
     case "round-robin":
       return "Round robin";
     case "remontada-final":
