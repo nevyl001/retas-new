@@ -1016,6 +1016,19 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     });
   })();
 
+  const teamWinnerPlayerAvatars = useMemo((): PublicRetaWinnerAvatar[] => {
+    if (!showWinner || !winningTeamRow || !isTeamsPublicView) return [];
+    const roster = equiposRosterTeams.find(
+      (team) => team.teamIndex === winningTeamRow.teamIndex
+    );
+    if (!roster?.players.length) return [];
+    return roster.players.map((player) => ({
+      name: player.nombre,
+      fotoUrl: player.fotoUrl ?? null,
+      jugadorId: player.id,
+    }));
+  }, [showWinner, winningTeamRow, isTeamsPublicView, equiposRosterTeams]);
+
   const teamsLiveScoreLabel = (() => {
     if (!teamStandings || teamStandings.length < 2) return null;
     const a = teamStandings.find((r) => r.teamIndex === 0) ?? teamStandings[0];
@@ -1414,6 +1427,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             torneoNombre={publicTournamentName ?? undefined}
             formatKicker={TEAMS_PUBLIC_FORMAT_LABEL}
             stats={teamWinnerCelebrateStats}
+            winners={teamWinnerPlayerAvatars}
             shareable
           />
         )}

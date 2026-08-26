@@ -54,7 +54,8 @@ export const PublicRetaWinnerSection: React.FC<{
   const hasWinners = Boolean(winners && winners.length > 0);
   const hasRunnersUp = Boolean(runnersUp && runnersUp.length > 0);
   const hasStats = Boolean(stats && stats.length > 0);
-  const isTeamShareCard = shareable && !hasWinners;
+  const isTeamShareCard = Boolean(shareable);
+  const teamTitle = title.replace(/\s*\/\s*/g, " · ");
 
   return (
     <section
@@ -77,13 +78,24 @@ export const PublicRetaWinnerSection: React.FC<{
         <p className="ro-pub-celebrate__badge">Ganadores</p>
         <h2 className="ro-pub-celebrate__headline">¡Felicidades!</h2>
 
+        {isTeamShareCard ? (
+          <p className="ro-pub-celebrate__names ro-pub-celebrate__names--team">
+            {teamTitle}
+          </p>
+        ) : null}
+
         {hasWinners ? (
           <div
-            className="ro-pub-celebrate__heroes"
-            aria-label={title.replace(/\s*\/\s*/g, ", ")}
+            className={[
+              "ro-pub-celebrate__heroes",
+              isTeamShareCard ? "ro-pub-celebrate__heroes--team" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            aria-label={`Jugadores de ${teamTitle}`}
           >
             {winners!.map((w) => (
-              <div key={w.name} className="ro-pub-celebrate__hero">
+              <div key={w.jugadorId || w.name} className="ro-pub-celebrate__hero">
                 <div className="ro-pub-celebrate__hero-ring">
                   <JugadorAvatar
                     fotoUrl={w.fotoUrl}
@@ -96,18 +108,9 @@ export const PublicRetaWinnerSection: React.FC<{
               </div>
             ))}
           </div>
-        ) : (
-          <p
-            className={[
-              "ro-pub-celebrate__names",
-              isTeamShareCard ? "ro-pub-celebrate__names--team" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-          >
-            {title.replace(/\s*\/\s*/g, " · ")}
-          </p>
-        )}
+        ) : !isTeamShareCard ? (
+          <p className="ro-pub-celebrate__names">{teamTitle}</p>
+        ) : null}
 
         <p className="ro-pub-celebrate__motivational">{fraseMotivacional}</p>
         {subtitle ? <p className="ro-pub-celebrate__rank">{subtitle}</p> : null}
