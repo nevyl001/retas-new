@@ -32,10 +32,12 @@ function ladoLabel(lado: RetaEquiposPlayerCardData["lado"]): string | null {
 }
 
 /**
- * Glass spotlight + holographic 3D reveal (`.reta-eq-frame--holo`).
- * País + lado en cancha (Drive/Revés). Sin edad ni mano.
+ * Carta holográfica broadcast (reveal 3D + shimmer).
+ * País + Drive/Revés. Sin edad ni mano.
  */
-export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProps> = ({
+export const RetaEquiposPlayerSpotlight: React.FC<
+  RetaEquiposPlayerSpotlightProps
+> = ({
   player,
   teamName,
   side = "a",
@@ -45,6 +47,7 @@ export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProp
 }) => {
   const { first, rest } = splitNombre(player.nombre);
   const initials = getJugadorInitials(player.nombre);
+  const mark = initials.slice(0, 2) || "RO";
   const { src, onError } = useRetryableImage(player.fotoUrl);
   const pais = getPaisOption(player.nacionalidad);
   const lado = ladoLabel(player.lado);
@@ -72,8 +75,13 @@ export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProp
           />
         ) : (
           <div className="reta-eq-frame__fallback" aria-hidden>
-            <span className="reta-eq-frame__fallback-mark">RO</span>
-            <span className="reta-eq-frame__fallback-initials">{initials}</span>
+            <span className="reta-eq-frame__fallback-wm">{mark}</span>
+            <span className={`reta-eq-frame__emblem reta-eq-frame__emblem--${side}`}>
+              <span className="reta-eq-frame__emblem-glow" />
+              <span className="reta-eq-frame__emblem-shield">
+                <span className="reta-eq-frame__emblem-initials">{mark}</span>
+              </span>
+            </span>
           </div>
         )}
         <div className="reta-eq-frame__shade" aria-hidden />
@@ -90,7 +98,7 @@ export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProp
 
         <div className="reta-eq-frame__attrs">
           {pais ? (
-            <span className="reta-eq-frame__chip">
+            <span className="reta-eq-frame__chip reta-eq-frame__chip--pais">
               <JugadorPaisBadge
                 codigo={player.nacionalidad}
                 size="sm"
@@ -100,7 +108,13 @@ export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProp
             </span>
           ) : null}
           {lado ? (
-            <span className="reta-eq-frame__chip">
+            <span
+              className={[
+                "reta-eq-frame__chip",
+                "reta-eq-frame__chip--lado",
+                `reta-eq-frame__chip--lado-${side}`,
+              ].join(" ")}
+            >
               <span>{lado}</span>
             </span>
           ) : null}

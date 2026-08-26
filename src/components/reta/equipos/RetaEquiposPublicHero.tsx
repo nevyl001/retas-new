@@ -253,26 +253,36 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
           </div>
 
           <div className="reta-eq-grid__center">
-            <div className="reta-eq-center">
+            <div
+              className={[
+                "reta-eq-center",
+                cta.live ? "reta-eq-center--hub" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
               <TransmissionPill
                 fecha={fechaOnly}
                 horario={horarioOnly}
                 lugar={lugar}
-                status={statusLabel}
+                status={cta.live ? "" : statusLabel}
               />
-              <div className="reta-eq-center__countdown">
-                <RetaEquiposCountdown
-                  programadoEn={programadoEn}
-                  programadoHasta={programadoHasta}
-                  isFinished={isFinished}
-                />
-              </div>
+              {/* Countdown solo en previa; en vivo el hub CTA evita EN VIVO duplicado */}
+              {!cta.live ? (
+                <div className="reta-eq-center__countdown">
+                  <RetaEquiposCountdown
+                    programadoEn={programadoEn}
+                    programadoHasta={programadoHasta}
+                    isFinished={isFinished}
+                  />
+                </div>
+              ) : null}
               {onGoLive ? (
                 <button
                   type="button"
                   className={[
                     "reta-eq-cta",
-                    cta.live ? "reta-eq-cta--live" : "",
+                    cta.live ? "reta-eq-cta--hub" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}

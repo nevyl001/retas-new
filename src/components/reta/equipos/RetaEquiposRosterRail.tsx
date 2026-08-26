@@ -11,14 +11,41 @@ type RetaEquiposRosterRailProps = {
   side?: "a" | "b";
 };
 
-function playerSurname(nombre: string): string {
-  const parts = nombre.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "—";
-  if (parts.length === 1) return parts[0]!;
-  return parts[parts.length - 1]!;
-}
+/**
+ * Carousel horizontal de avatares (anillo activo por equipo).
+ * Reemplaza track segmentado + grilla de pills.
+ */
+export const RetaEquiposRosterRail: React.FC<RetaEquiposRosterRailProps> = ({
+  players,
+  activeIndex,
+  onSelect,
+  teamName,
+  side = "a",
+}) => {
+  if (players.length <= 1) return null;
 
-const DockPill: React.FC<{
+  return (
+    <div
+      className={`reta-eq-dock reta-eq-dock--${side}`}
+      role="tablist"
+      aria-label={`Jugadores ${teamName}`}
+    >
+      <div className="reta-eq-dock__carousel">
+        {players.map((player, i) => (
+          <RosterAvatar
+            key={player.id}
+            player={player}
+            active={i === activeIndex}
+            onSelect={() => onSelect(i)}
+            side={side}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const RosterAvatar: React.FC<{
   player: RetaEquiposPlayerCardData;
   active: boolean;
   onSelect: () => void;
@@ -26,7 +53,6 @@ const DockPill: React.FC<{
 }> = ({ player, active, onSelect, side }) => {
   const { src, onError } = useRetryableImage(player.fotoUrl);
   const initials = getJugadorInitials(player.nombre);
-  const surname = playerSurname(player.nombre);
 
   return (
     <button
@@ -34,9 +60,10 @@ const DockPill: React.FC<{
       role="tab"
       aria-selected={active}
       aria-label={player.nombre}
+      title={player.nombre}
       className={[
-        "reta-eq-dock__pill",
-        `reta-eq-dock__pill--${side}`,
+        "reta-eq-dock__av-btn",
+        `reta-eq-dock__av-btn--${side}`,
         active ? "is-active" : "",
       ]
         .filter(Boolean)
@@ -54,64 +81,11 @@ const DockPill: React.FC<{
             onError={onError}
           />
         ) : (
-          <span className="reta-eq-dock__av-initials">{initials.slice(0, 2)}</span>
+          <span className="reta-eq-dock__av-initials">
+            {initials.slice(0, 2)}
+          </span>
         )}
       </span>
-      <span className="reta-eq-dock__surname">{surname}</span>
     </button>
-  );
-};
-
-/**
- * Móvil: barra segmentada (sin bolitas que chocan).
- * Desktop ≥1100px: pills foto + apellido.
- */
-export const RetaEquiposRosterRail: React.FC<RetaEquiposRosterRailProps> = ({
-  players,
-  activeIndex,
-  onSelect,
-  teamName,
-  side = "a",
-}) => {
-  if (players.length <= 1) return null;
-
-  return (
-    <div
-      className={`reta-eq-dock reta-eq-dock--${side}`}
-      role="tablist"
-      aria-label={`Jugadores ${teamName}`}
-    >
-      <div className="reta-eq-dock__track">
-        {players.map((player, i) => (
-          <button
-            key={`seg-${player.id}`}
-            type="button"
-            role="tab"
-            aria-selected={i === activeIndex}
-            aria-label={player.nombre}
-            className={[
-              "reta-eq-dock__seg",
-              `reta-eq-dock__seg--${side}`,
-              i === activeIndex ? "is-active" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            onClick={() => onSelect(i)}
-          />
-        ))}
-      </div>
-
-      <div className="reta-eq-dock__pills">
-        {players.map((player, i) => (
-          <DockPill
-            key={player.id}
-            player={player}
-            active={i === activeIndex}
-            onSelect={() => onSelect(i)}
-            side={side}
-          />
-        ))}
-      </div>
-    </div>
   );
 };

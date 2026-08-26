@@ -554,6 +554,7 @@
 .reta-eq-col__stage {
   width: 100%;
   max-width: none;
+  perspective: 1200px;
 }
 
 .reta-eq-identity {
@@ -574,28 +575,54 @@
   max-width: 100%;
 }
 
-/* Glassmorphic player spotlight — cancha se ve a través */
+/* Glassmorphic / hologram player spotlight */
+.reta-eq-col__stage--float {
+  animation: cardFloatGlow 4.5s ease-in-out infinite;
+}
+
 .reta-eq-frame {
   position: relative;
   width: 100%;
-  border-radius: 16px;
+  border-radius: 1.35rem;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.38);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: none;
+  background: linear-gradient(
+    180deg,
+    rgba(28, 26, 20, 0.9) 0%,
+    rgba(18, 19, 26, 0.95) 48%,
+    rgba(10, 10, 14, 0.98) 100%
+  );
+  backdrop-filter: blur(24px) saturate(1.1);
+  -webkit-backdrop-filter: blur(24px) saturate(1.1);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
   transform-style: preserve-3d;
+  transition: border-color 320ms ease, box-shadow 320ms ease;
 }
 
 .reta-eq-frame--a {
-  border-top: 2px solid #e5c158;
-  box-shadow: none;
+  border-color: rgba(229, 193, 88, 0.4);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.45),
+    0 0 28px rgba(229, 193, 88, 0.18);
+  background: linear-gradient(
+    180deg,
+    rgba(28, 26, 20, 0.92) 0%,
+    rgba(18, 19, 26, 0.96) 48%,
+    rgba(10, 10, 14, 0.98) 100%
+  );
 }
 
 .reta-eq-frame--b {
-  border-top: 2px solid #d95d39;
-  box-shadow: none;
+  border-color: rgba(217, 93, 57, 0.4);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.45),
+    0 0 28px rgba(217, 93, 57, 0.18);
+  background: linear-gradient(
+    180deg,
+    rgba(30, 20, 18, 0.92) 0%,
+    rgba(18, 19, 26, 0.96) 48%,
+    rgba(10, 10, 14, 0.98) 100%
+  );
 }
 
 .reta-eq-frame--empty {
@@ -611,7 +638,7 @@
 
 .reta-eq-frame--broadcast,
 .reta-eq-frame--holo {
-  animation: holoCardReveal 0.75s cubic-bezier(0.19, 1, 0.22, 1) both;
+  animation: ultimateCardReveal 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes reta-eq-morph {
@@ -625,25 +652,83 @@
   }
 }
 
-@keyframes holoCardReveal {
+@keyframes ultimateCardReveal {
   0% {
     opacity: 0;
-    transform: perspective(1200px) rotateY(-25deg) rotateX(8deg) scale(0.88) translateY(20px);
-    filter: blur(10px) brightness(1.8) contrast(1.2);
+    transform: perspective(1200px) rotateY(-35deg) rotateX(15deg) scale(0.82)
+      translateY(30px);
+    filter: blur(12px) brightness(2) contrast(1.3);
   }
-  50% {
-    filter: blur(0) brightness(1.3) contrast(1.1);
+  60% {
+    filter: blur(0) brightness(1.2) contrast(1.1);
+    transform: perspective(1200px) rotateY(5deg) rotateX(-3deg) scale(1.03)
+      translateY(-4px);
   }
   100% {
     opacity: 1;
-    transform: perspective(1200px) rotateY(0deg) rotateX(0deg) scale(1) translateY(0);
+    transform: perspective(1200px) rotateY(0deg) rotateX(0deg) scale(1)
+      translateY(0);
+    filter: blur(0) brightness(1) contrast(1);
+  }
+}
+
+@keyframes holographicBeam {
+  0% {
+    transform: translateX(-180%) skewX(-30deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateX(220%) skewX(-30deg);
+    opacity: 0;
+  }
+}
+
+@keyframes cardFloatGlow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Legacy alias */
+@keyframes holoCardReveal {
+  0% {
+    opacity: 0;
+    transform: perspective(1200px) rotateY(-35deg) rotateX(15deg) scale(0.82)
+      translateY(30px);
+    filter: blur(12px) brightness(2) contrast(1.3);
+  }
+  60% {
+    filter: blur(0) brightness(1.2) contrast(1.1);
+    transform: perspective(1200px) rotateY(5deg) rotateX(-3deg) scale(1.03)
+      translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1200px) rotateY(0deg) rotateX(0deg) scale(1)
+      translateY(0);
     filter: blur(0) brightness(1) contrast(1);
   }
 }
 
 @keyframes lightShimmerSweep {
-  0% { transform: translateX(-150%) skewX(-25deg); }
-  100% { transform: translateX(250%) skewX(-25deg); }
+  0% {
+    transform: translateX(-180%) skewX(-30deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateX(220%) skewX(-30deg);
+    opacity: 0;
+  }
 }
 
 .reta-eq-frame__shimmer {
@@ -652,9 +737,11 @@
   z-index: 3;
   pointer-events: none;
   background: linear-gradient(
-    90deg,
+    105deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.08) 42%,
+    rgba(255, 255, 255, 0.38) 50%,
+    rgba(255, 255, 255, 0.08) 58%,
     transparent 100%
   );
   opacity: 0;
@@ -662,7 +749,7 @@
 
 .reta-eq-frame--holo .reta-eq-frame__shimmer,
 .reta-eq-frame--broadcast .reta-eq-frame__shimmer {
-  animation: lightShimmerSweep 1.2s ease-out both;
+  animation: holographicBeam 1.3s cubic-bezier(0.4, 0, 0.2, 1) both;
   opacity: 1;
 }
 
@@ -702,36 +789,134 @@
   inset: 0;
   display: grid;
   place-items: center;
-  background: linear-gradient(180deg, #1e202e 0%, #111218 48%, #0a0a0e 100%);
+  overflow: hidden;
 }
 
-.reta-eq-frame__fallback-mark {
+.reta-eq-frame--a .reta-eq-frame__fallback {
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 42%,
+      rgba(229, 193, 88, 0.28) 0%,
+      transparent 70%
+    ),
+    linear-gradient(180deg, #1c1a14 0%, #12131a 50%, #0a0a0e 100%);
+}
+
+.reta-eq-frame--b .reta-eq-frame__fallback {
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 42%,
+      rgba(217, 93, 57, 0.26) 0%,
+      transparent 70%
+    ),
+    linear-gradient(180deg, #1e1412 0%, #12131a 50%, #0a0a0e 100%);
+}
+
+.reta-eq-frame__fallback-wm {
   position: absolute;
-  top: 12%;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.28em;
-  color: rgba(244, 241, 235, 0.28);
-  text-shadow: 0 0 18px rgba(244, 241, 235, 0.2);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: clamp(5.5rem, 28vw, 8rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.05);
+  user-select: none;
+  pointer-events: none;
+}
+
+.reta-eq-frame__emblem {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: clamp(4.5rem, 28%, 6.5rem);
+  aspect-ratio: 1;
+}
+
+.reta-eq-frame__emblem-glow {
+  position: absolute;
+  inset: -18%;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.reta-eq-frame__emblem--a .reta-eq-frame__emblem-glow {
+  background: radial-gradient(
+    circle,
+    rgba(229, 193, 88, 0.45) 0%,
+    transparent 68%
+  );
+}
+
+.reta-eq-frame__emblem--b .reta-eq-frame__emblem-glow {
+  background: radial-gradient(
+    circle,
+    rgba(217, 93, 57, 0.4) 0%,
+    transparent 68%
+  );
+}
+
+.reta-eq-frame__emblem-shield {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 28% 28% 34% 34% / 22% 22% 42% 42%;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.reta-eq-frame__emblem--a .reta-eq-frame__emblem-shield {
+  background: linear-gradient(145deg, #f3e2a8 0%, #e5c158 42%, #9a7a28 100%);
+}
+
+.reta-eq-frame__emblem--b .reta-eq-frame__emblem-shield {
+  background: linear-gradient(145deg, #f0a288 0%, #d95d39 42%, #8c2c19 100%);
+}
+
+.reta-eq-frame__emblem-initials {
+  font-size: clamp(1.15rem, 5.5vw, 1.55rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  background: linear-gradient(180deg, #fff8e7 0%, #f5e6b8 45%, #c9a84a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.35));
+}
+
+.reta-eq-frame__emblem--b .reta-eq-frame__emblem-initials {
+  background: linear-gradient(180deg, #fff5f0 0%, #ffd0c0 45%, #c24a2a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Legacy hooks (por si quedan nodos viejos) */
+.reta-eq-frame__fallback-mark {
+  display: none;
 }
 
 .reta-eq-frame__fallback-initials {
-  font-size: clamp(4.5rem, 22vw, 6.8rem);
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.05);
-  line-height: 1;
+  display: none;
 }
 
 .reta-eq-frame__shade {
   position: absolute;
   inset: auto 0 0;
-  height: 48%;
+  height: 52%;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(10, 10, 14, 0.5) 35%,
-    rgba(10, 10, 14, 0.96) 100%
+    rgba(10, 10, 14, 0.55) 35%,
+    rgba(10, 10, 14, 0.97) 100%
   );
   pointer-events: none;
 }
@@ -742,7 +927,7 @@
   right: 0;
   bottom: 0;
   margin: 0;
-  padding: 0 0.6rem 0.65rem;
+  padding: 0 0.7rem 0.75rem;
   z-index: 2;
   text-align: left;
 }
@@ -774,9 +959,9 @@
 
 .reta-eq-frame__name-compact {
   display: block;
-  font-size: 0.75rem;
-  font-weight: 750;
-  letter-spacing: 0.02em;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #ffffff;
   overflow: hidden;
@@ -823,7 +1008,9 @@
   display: block;
 }
 
-.reta-eq-frame__meta-sep { opacity: 0.5; }
+.reta-eq-frame__meta-sep {
+  opacity: 0.5;
+}
 
 .reta-eq-frame__pos {
   display: none;
@@ -833,135 +1020,79 @@
   color: #a3a3a3;
 }
 
-/* Roster: barra segmentada en móvil (sin bolitas que chocan); pills en desktop */
+/* Roster: carousel horizontal de avatares */
 .reta-eq-dock {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0.4rem;
-  margin-top: 0.35rem;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
   width: 100%;
   max-width: 100%;
   min-width: 0;
 }
 
-.reta-eq-dock__track {
+.reta-eq-dock__carousel {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.45rem;
   width: 100%;
-  padding: 0.2rem 0.1rem;
-  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.35rem 0.15rem 0.45rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
 
-.reta-eq-dock__seg {
+.reta-eq-dock__carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.reta-eq-dock__av-btn {
   appearance: none;
-  flex: 1 1 0;
-  min-width: 0;
-  height: 3px;
+  flex: 0 0 auto;
   margin: 0;
   padding: 0;
   border: none;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
+  background: transparent;
   cursor: pointer;
-  transform-origin: center;
-  transition:
-    flex-grow 420ms cubic-bezier(0.19, 1, 0.22, 1),
-    height 420ms cubic-bezier(0.19, 1, 0.22, 1),
-    background-color 320ms ease,
-    opacity 320ms ease;
+  scroll-snap-align: center;
+  border-radius: 999px;
 }
 
-.reta-eq-dock__seg--a.is-active {
-  flex: 1.85 1 0;
-  height: 4px;
-  background: #e5c158;
-  box-shadow: none;
-}
-
-.reta-eq-dock__seg--b.is-active {
-  flex: 1.85 1 0;
-  height: 4px;
-  background: #d95d39;
-  box-shadow: none;
-}
-
-.reta-eq-dock__seg:focus-visible {
+.reta-eq-dock__av-btn:focus-visible {
   outline: 2px solid rgba(244, 241, 235, 0.55);
   outline-offset: 3px;
 }
 
-/* Legacy dots ocultos */
-.reta-eq-dock__dots,
-.reta-eq-dock__dot {
-  display: none !important;
-}
-
-/* Pills: ocultas en móvil (anti-matriz) */
-.reta-eq-dock__pills {
-  display: none;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  justify-content: center;
-  max-width: 100%;
-}
-
-.reta-eq-dock__pill {
-  appearance: none;
+.reta-eq-dock__av-btn .reta-eq-dock__av {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  max-width: 100%;
-  padding: 0.3rem 0.55rem 0.3rem 0.3rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  color: #d4d4d4;
-  cursor: pointer;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(145deg, #3f3f46, #171717);
   transition:
-    color 220ms cubic-bezier(0.16, 1, 0.3, 1),
-    background 220ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 220ms ease,
+    box-shadow 220ms ease,
     transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.reta-eq-dock__pill:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.reta-eq-dock__pill:focus-visible {
-  outline: 2px solid rgba(229, 193, 88, 0.7);
-  outline-offset: 2px;
-}
-
-.reta-eq-dock__pill--a.is-active {
-  color: #ffffff;
+.reta-eq-dock__av-btn--a.is-active .reta-eq-dock__av {
   border-color: #e5c158;
-  background: rgba(229, 193, 88, 0.12);
-  box-shadow: none;
+  box-shadow: 0 0 0 2px rgba(229, 193, 88, 0.25), 0 0 14px rgba(229, 193, 88, 0.35);
+  transform: scale(1.08);
 }
 
-.reta-eq-dock__pill--b.is-active {
-  color: #ffffff;
+.reta-eq-dock__av-btn--b.is-active .reta-eq-dock__av {
   border-color: #d95d39;
-  background: rgba(217, 93, 57, 0.12);
-  box-shadow: none;
-}
-
-.reta-eq-dock__av {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: linear-gradient(145deg, #52525b, #171717);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  box-shadow: 0 0 0 2px rgba(217, 93, 57, 0.25), 0 0 14px rgba(217, 93, 57, 0.32);
+  transform: scale(1.08);
 }
 
 .reta-eq-dock__av-img {
@@ -972,62 +1103,30 @@
 }
 
 .reta-eq-dock__av-initials {
-  font-size: 0.52rem;
+  font-size: 0.55rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   color: #ffffff;
 }
 
+/* Legacy dock pieces (ocultos) */
+.reta-eq-dock__track,
+.reta-eq-dock__seg,
+.reta-eq-dock__dots,
+.reta-eq-dock__dot,
+.reta-eq-dock__pills,
+.reta-eq-dock__pill {
+  display: none !important;
+}
+
 .reta-eq-dock__surname {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 6rem;
+  display: none;
 }
 
-@media (min-width: 1100px) {
-  .reta-eq-dock__track {
-    display: none;
-  }
-
-  .reta-eq-dock__pills {
-    display: flex;
-  }
-}
-
-/* Mobile: compact — attrs chips sí; pos discreto */
-@media (max-width: 768px) {
-  .reta-eq-frame__pos {
-    display: none !important;
-  }
-
-  .reta-eq-grid {
-    gap: 0.75rem;
-  }
-
-  .reta-eq-col {
-    gap: 0.4rem;
-  }
-
-  .reta-eq-stage__shell {
-    padding-bottom: 0.65rem;
-  }
-
-  .reta-eq-center {
-    gap: 0.7rem;
-    margin-top: 0.35rem;
-  }
-
-  .reta-eq-dock__pills {
-    display: none !important;
-  }
-
-  .reta-eq-dock__track {
-    display: flex !important;
+@media (min-width: 640px) {
+  .reta-eq-dock__av-btn .reta-eq-dock__av {
+    width: 42px;
+    height: 42px;
   }
 }
 
@@ -1065,26 +1164,46 @@
 }
 
 .reta-eq-frame__attrs {
-  margin-top: 0.35rem;
+  margin-top: 0.4rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
+  gap: 0.35rem;
 }
 
 .reta-eq-frame__chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.28rem;
+  gap: 0.3rem;
   max-width: 100%;
-  padding: 0.2rem 0.45rem;
-  border-radius: 999px;
+  padding: 0.28rem 0.55rem;
+  border-radius: 0.55rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   font-size: 0.62rem;
-  font-weight: 650;
-  letter-spacing: 0.02em;
-  color: #f4f1eb;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffffff;
   line-height: 1.2;
+}
+
+.reta-eq-frame__chip--lado {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #e5e5e5;
+}
+
+.reta-eq-frame__chip--lado-a {
+  background: rgba(229, 193, 88, 0.14);
+  border-color: rgba(229, 193, 88, 0.32);
+  color: #f0d56a;
+}
+
+.reta-eq-frame__chip--lado-b {
+  background: rgba(217, 93, 57, 0.14);
+  border-color: rgba(217, 93, 57, 0.32);
+  color: #f0a288;
 }
 
 .reta-eq-frame__chip span {
@@ -1093,7 +1212,7 @@
   white-space: nowrap;
 }
 
-/* Center column — presencia elegante (sin neón / sin glow) */
+/* Center column — hub de transmisión */
 .reta-eq-center {
   display: flex;
   flex-direction: column;
@@ -1101,6 +1220,10 @@
   gap: 0.75rem;
   text-align: center;
   padding: 0.35rem 0 0;
+}
+
+.reta-eq-center--hub {
+  gap: 0.85rem;
 }
 
 .reta-eq-center__vs {
@@ -1138,6 +1261,10 @@
   backdrop-filter: blur(18px) saturate(1.05);
   -webkit-backdrop-filter: blur(18px) saturate(1.05);
   box-shadow: none;
+}
+
+.reta-eq-center--hub .reta-eq-center__countdown {
+  display: none;
 }
 
 .reta-eq-countdown__headline {
@@ -1249,6 +1376,41 @@
 .reta-eq-cta--live:hover {
   background: rgba(229, 193, 88, 0.2);
   color: #f0d56a;
+}
+
+/* Hub directo de transmisión (único CTA en vivo) */
+.reta-eq-cta--hub {
+  background: linear-gradient(105deg, #10b981 0%, #0d9488 100%);
+  color: #ffffff;
+  border: 1px solid rgba(16, 185, 129, 0.55);
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.42);
+  font-weight: 800;
+}
+
+.reta-eq-cta--hub .reta-eq-cta__dot {
+  background: #ffffff;
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.45);
+  animation: reta-eq-hub-pulse 1.8s ease-out infinite;
+}
+
+.reta-eq-cta--hub:hover {
+  transform: translateY(-2px) scale(1.03);
+  background: linear-gradient(105deg, #14c78c 0%, #10a89a 100%);
+  color: #ffffff;
+  border-color: rgba(52, 211, 153, 0.7);
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.55);
+}
+
+@keyframes reta-eq-hub-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
 }
 
 /* Live compact header — Premier Broadcast Arena */
@@ -1929,18 +2091,23 @@
   .reta-eq-frame--broadcast,
   .reta-eq-frame--holo,
   .reta-eq-frame__shimmer,
+  .reta-eq-col__stage--float,
   .reta-eq-dock__pill,
   .reta-eq-dock__dot,
   .reta-eq-dock__seg,
-  .reta-eq-countdown__pulse {
+  .reta-eq-dock__av-btn .reta-eq-dock__av,
+  .reta-eq-countdown__pulse,
+  .reta-eq-cta--hub .reta-eq-cta__dot {
     animation: none !important;
   }
 
-  .reta-eq-dock__seg {
+  .reta-eq-dock__seg,
+  .reta-eq-dock__av-btn .reta-eq-dock__av {
     transition: none !important;
   }
 
   .reta-eq-cta:hover,
+  .reta-eq-cta--hub:hover,
   .reta-eq-logo-uploader__btn:hover:not(:disabled) {
     transform: none;
   }

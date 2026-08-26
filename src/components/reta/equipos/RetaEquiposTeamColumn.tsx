@@ -19,7 +19,7 @@ type RetaEquiposTeamColumnProps = {
 const ROTATE_MS = 4000;
 
 /**
- * Columna de equipo: spotlight glass + dock (segmentos móvil / pills desktop).
+ * Columna de equipo: carta holográfica + carousel de avatares.
  * Rotación aislada (no afecta countdown ni hero padre).
  */
 export const RetaEquiposTeamColumn: React.FC<RetaEquiposTeamColumnProps> = ({
@@ -91,7 +91,10 @@ export const RetaEquiposTeamColumn: React.FC<RetaEquiposTeamColumnProps> = ({
         />
       ) : null}
 
-      <div className="reta-eq-col__stage" aria-live="polite">
+      <div
+        className="reta-eq-col__stage reta-eq-col__stage--float"
+        aria-live="polite"
+      >
         {player ? (
           <RetaEquiposPlayerSpotlight
             key={player.id}
