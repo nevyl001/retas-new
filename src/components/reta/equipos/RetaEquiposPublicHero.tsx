@@ -206,28 +206,30 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
         >
           <div className="reta-eq-matchbar__glow reta-eq-matchbar__glow--a" aria-hidden />
           <div className="reta-eq-matchbar__glow reta-eq-matchbar__glow--b" aria-hidden />
-          <div className="reta-eq-matchbar__side reta-eq-matchbar__side--a">
-            <TeamLogo
-              logoUrl={logoA}
-              teamName={nameA}
-              size="xl"
-              loading="eager"
-              className="reta-eq-matchbar__logo reta-eq-matchbar__logo--a"
-            />
-            <span className="reta-eq-matchbar__name">{labelA}</span>
-          </div>
-          <span className="reta-eq-matchbar__vs" aria-hidden>
-            VS
-          </span>
-          <div className="reta-eq-matchbar__side reta-eq-matchbar__side--b">
-            <span className="reta-eq-matchbar__name">{labelB}</span>
-            <TeamLogo
-              logoUrl={logoB}
-              teamName={nameB}
-              size="xl"
-              loading="eager"
-              className="reta-eq-matchbar__logo reta-eq-matchbar__logo--b"
-            />
+          <div className="reta-eq-matchbar__cluster">
+            <div className="reta-eq-matchbar__side reta-eq-matchbar__side--a">
+              <TeamLogo
+                logoUrl={logoA}
+                teamName={nameA}
+                size="xl"
+                loading="eager"
+                className="reta-eq-matchbar__logo reta-eq-matchbar__logo--a"
+              />
+              <span className="reta-eq-matchbar__name">{labelA}</span>
+            </div>
+            <span className="reta-eq-matchbar__vs" aria-hidden>
+              VS
+            </span>
+            <div className="reta-eq-matchbar__side reta-eq-matchbar__side--b">
+              <span className="reta-eq-matchbar__name">{labelB}</span>
+              <TeamLogo
+                logoUrl={logoB}
+                teamName={nameB}
+                size="xl"
+                loading="eager"
+                className="reta-eq-matchbar__logo reta-eq-matchbar__logo--b"
+              />
+            </div>
           </div>
         </div>
 

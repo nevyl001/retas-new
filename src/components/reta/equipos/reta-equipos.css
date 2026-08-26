@@ -353,25 +353,53 @@
   box-shadow: none;
 }
 
-/* Banner de transmisión monumental (previa) */
+/* Banner de transmisión (previa) — cluster centrado alrededor del VS */
 .reta-eq-matchbar--arena {
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   overflow: hidden;
-  margin: 0 0 1.15rem;
-  padding: 1.15rem 1rem 1.25rem;
-  border-radius: 0 0 1.5rem 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-top: none;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.12);
+  margin: 0 auto 1.15rem;
+  width: 100%;
+  max-width: 42rem;
+  padding: 0.95rem 1rem 1.05rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background: linear-gradient(
     180deg,
     rgba(20, 22, 34, 0.92) 0%,
     rgba(11, 12, 16, 0.96) 100%
   );
-  backdrop-filter: blur(28px) saturate(1.1);
-  -webkit-backdrop-filter: blur(28px) saturate(1.1);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-  gap: 0.45rem 0.55rem;
+  backdrop-filter: blur(22px) saturate(1.05);
+  -webkit-backdrop-filter: blur(22px) saturate(1.05);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+  gap: 0;
+}
+
+.reta-eq-matchbar__cluster {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem 0.75rem;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.reta-eq-matchbar--arena .reta-eq-matchbar__side {
+  flex: 0 1 auto;
+  gap: 0.45rem;
+}
+
+.reta-eq-matchbar--arena .reta-eq-matchbar__side--a {
+  justify-content: flex-end;
+}
+
+.reta-eq-matchbar--arena .reta-eq-matchbar__side--b {
+  justify-content: flex-start;
 }
 
 .reta-eq-matchbar__glow {
@@ -439,8 +467,8 @@
 
 .reta-eq-matchbar--arena .reta-eq-matchbar__logo,
 .reta-eq-matchbar--arena .reta-eq-logo.reta-eq-matchbar__logo {
-  width: 44px !important;
-  height: 44px !important;
+  width: 48px !important;
+  height: 48px !important;
   border-width: 2px !important;
   background: #0d0e15 !important;
   padding: 2px;
@@ -523,9 +551,10 @@
 }
 
 .reta-eq-matchbar--arena .reta-eq-matchbar__name {
-  font-size: clamp(0.82rem, 3.6vw, 1.25rem);
-  letter-spacing: 0.08em;
+  font-size: clamp(0.95rem, 3.8vw, 1.35rem);
+  letter-spacing: 0.1em;
   text-shadow: none;
+  text-align: center;
 }
 
 @media (min-width: 768px) {
@@ -537,15 +566,19 @@
   }
 
   .reta-eq-matchbar--arena {
-    padding: 1.5rem 1.75rem 1.65rem;
-    gap: 1rem 1.25rem;
+    max-width: 48rem;
+    padding: 1.15rem 1.5rem 1.25rem;
+  }
+
+  .reta-eq-matchbar__cluster {
+    gap: 0.75rem 1.1rem;
   }
 
   .reta-eq-matchbar--arena .reta-eq-matchbar__logo,
   .reta-eq-matchbar--arena .reta-eq-logo.reta-eq-matchbar__logo {
-    width: 72px !important;
-    height: 72px !important;
-    border-width: 2.5px !important;
+    width: 64px !important;
+    height: 64px !important;
+    border-width: 2px !important;
   }
 
   .reta-eq-matchbar__name {
@@ -553,7 +586,7 @@
   }
 
   .reta-eq-matchbar--arena .reta-eq-matchbar__name {
-    font-size: clamp(1.35rem, 2.8vw, 2.15rem);
+    font-size: clamp(1.25rem, 2.4vw, 1.85rem);
     letter-spacing: 0.12em;
   }
 
