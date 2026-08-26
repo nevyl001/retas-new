@@ -186,14 +186,116 @@ describe("parejasFijasPlayoffsMatchScore — sets first (no games decide winner)
     expect(r.result.pointsP2).toBe(0);
   });
 
-  it("rechaza set empatado", () => {
-    const r = computePlayoffsMatchFromSetInputs({
-      set1P1: 3,
-      set1P2: 3,
-      set2P1: 6,
-      set2P2: 4,
+  describe("sets empatados por tiempo (Tests A–E)", () => {
+    it("Test A — 6-4 / 5-5 → sets 1-0, games 11-9, diff 2, CERRADA 2/1, sin STB", () => {
+      const r = computePlayoffsMatchFromSetInputs({
+        set1P1: 6,
+        set1P2: 4,
+        set2P1: 5,
+        set2P2: 5,
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.result.setsWonP1).toBe(1);
+      expect(r.result.setsWonP2).toBe(0);
+      expect(r.gamesTotalP1).toBe(11);
+      expect(r.gamesTotalP2).toBe(9);
+      expect(r.result.gameDiff).toBe(2);
+      expect(r.result.requiresSuperTieBreak).toBe(false);
+      expect(r.result.viaStb).toBe(false);
+      expect(r.result.p1Won).toBe(true);
+      expect(r.result.resultType).toBe("CERRADA");
+      expect(r.result.pointsP1).toBe(2);
+      expect(r.result.pointsP2).toBe(1);
     });
-    expect(r.ok).toBe(false);
+
+    it("Test B — 6-2 / 5-5 → games 11-7, diff 4, HOLGADA 3/0", () => {
+      const r = computePlayoffsMatchFromSetInputs({
+        set1P1: 6,
+        set1P2: 2,
+        set2P1: 5,
+        set2P2: 5,
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.result.setsWonP1).toBe(1);
+      expect(r.result.setsWonP2).toBe(0);
+      expect(r.gamesTotalP1).toBe(11);
+      expect(r.gamesTotalP2).toBe(7);
+      expect(r.result.gameDiff).toBe(4);
+      expect(r.result.resultType).toBe("HOLGADA");
+      expect(r.result.pointsP1).toBe(3);
+      expect(r.result.pointsP2).toBe(0);
+    });
+
+    it("Test C — 5-5 / 4-3 → sets 1-0, games 9-8, CERRADA 2/1", () => {
+      const r = computePlayoffsMatchFromSetInputs({
+        set1P1: 5,
+        set1P2: 5,
+        set2P1: 4,
+        set2P2: 3,
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.result.setsWonP1).toBe(1);
+      expect(r.result.setsWonP2).toBe(0);
+      expect(r.gamesTotalP1).toBe(9);
+      expect(r.gamesTotalP2).toBe(8);
+      expect(r.result.gameDiff).toBe(1);
+      expect(r.result.resultType).toBe("CERRADA");
+      expect(r.result.pointsP1).toBe(2);
+      expect(r.result.pointsP2).toBe(1);
+    });
+
+    it("Test D — 5-5 / 4-4 → sets 0-0 → requiere STB", () => {
+      const r = computePlayoffsMatchFromSetInputs({
+        set1P1: 5,
+        set1P2: 5,
+        set2P1: 4,
+        set2P2: 4,
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.error).toMatch(/súper tie-break/i);
+    });
+
+    it("Test E — 6-0 / 4-6 → sets 1-1, games 10-6 → requiere STB (no 3/0)", () => {
+      const r = computePlayoffsMatchFromSetInputs({
+        set1P1: 6,
+        set1P2: 0,
+        set2P1: 4,
+        set2P2: 6,
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.error).toMatch(/1-1|súper tie-break/i);
+    });
+
+    it("GF/GC incluyen games del set empatado (6-4 / 5-5 → A +11/+9)", () => {
+      const r = computePlayoffsMatchFromSetInputs({
+        set1P1: 6,
+        set1P2: 4,
+        set2P1: 5,
+        set2P2: 5,
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const a = emptyEquipoRankingStats();
+      const b = emptyEquipoRankingStats();
+      applyPlayoffsMatchBothSides(
+        a,
+        b,
+        r.gamesTotalP1,
+        r.gamesTotalP2,
+        r.result
+      );
+      expect(a.games_favor).toBe(11);
+      expect(a.games_contra).toBe(9);
+      expect(b.games_favor).toBe(9);
+      expect(b.games_contra).toBe(11);
+      expect(a.puntos).toBe(2);
+      expect(b.puntos).toBe(1);
+    });
   });
 
   it("STB no permitido si ya hay 2-0", () => {

@@ -3,17 +3,21 @@
  * NO usar desde parejas_fijas legacy.
  *
  * REGLA OFICIAL:
- * “Los sets determinan al ganador directo o la necesidad de Súper Tie-Break.
- * Los games acumulados únicamente clasifican una victoria 2-0: diferencia mayor
- * a 2 = victoria holgada (3/0); diferencia de 1 o 2 = victoria cerrada (2/1).
- * Un empate 1-1 en sets siempre va a Súper Tie-Break (2/1). La Tabla General se
- * ordena por puntos, después diferencia GF-GC y finalmente enfrentamiento directo.”
+ * “Cada set se registra como terminó por tiempo y puede ser ganado, perdido o
+ * empatado. La pareja con más sets ganados gana directamente; si ambas tienen
+ * la misma cantidad de sets ganados, el partido se resuelve por Súper Tie-Break.
+ * En una victoria directa, los games acumulados determinan el margen: diferencia
+ * >2 = holgada (3/0), diferencia de 1–2 = cerrada (2/1).”
+ *
+ * Tabla General: 1. Puntos · 2. DIF GF−GC · 3. Enfrentamiento directo.
  *
  * Algoritmo del partido (orden fijo):
  * 1. WO → +3 / −1
- * 2–4. Ganador Set 1 / Set 2 → setsWonA / setsWonB (no hace falta llegar a 6)
- * 5. 1-1 en sets → requiere STB → +2 / +1 (games NO deciden)
- * 6–7. 2-0 en sets → ganador deportivo; gameDiff > 2 → holgada 3/0; 1–2 → cerrada 2/1
+ * 2–3. Evaluar Set 1 / Set 2: A gana / B gana / empate (empate no suma set)
+ * 4. setsWonA / setsWonB
+ * 5. Si setsWonA === setsWonB → STB (+2 / +1); sin STB → pendiente
+ * 6–7. Si una pareja tiene más sets → victoria directa; gameDiff > 2 → holgada;
+ *      gameDiff 1–2 → cerrada. Games de sets empatados sí cuentan en GF/GC.
  */
 
 export const PLAYOFFS_SCORE_FORMAT = "parejas_fijas_playoffs" as const;
@@ -166,20 +170,14 @@ export function validatePlayoffsGamesValue(
 }
 
 /**
- * Un set debe tener ganador (games distintos). No hace falta llegar a 6.
- * Empate dentro del set no es válido: no hay ganador de set.
+ * Set válido: enteros ≥0. Empate permitido (tiempo); no hace falta llegar a 6.
  */
 export function validatePlayoffsSetPair(
   a: number,
   b: number,
   label: string
 ): string | null {
-  const base = validatePlayoffsGamesValue(a, b, label);
-  if (base) return base;
-  if (a === b) {
-    return `${label}: debe haber un ganador (sin empate en el set).`;
-  }
-  return null;
+  return validatePlayoffsGamesValue(a, b, label);
 }
 
 export function validatePlayoffsMainScores(
@@ -208,17 +206,70 @@ export function setWinnerSide(set: PlayoffsSetPair): 1 | 2 | null {
   return set.p1 > set.p2 ? 1 : 2;
 }
 
+/** Empate en un set = nadie suma ese set. */
 export function countSetsWon(
   set1: PlayoffsSetPair,
   set2: PlayoffsSetPair
-): { setsWonP1: number; setsWonP2: number } | { error: string } {
+): { setsWonP1: number; setsWonP2: number } {
   const w1 = setWinnerSide(set1);
   const w2 = setWinnerSide(set2);
-  if (w1 == null) return { error: "Set 1: debe haber un ganador (sin empate en el set)." };
-  if (w2 == null) return { error: "Set 2: debe haber un ganador (sin empate en el set)." };
   return {
     setsWonP1: (w1 === 1 ? 1 : 0) + (w2 === 1 ? 1 : 0),
     setsWonP2: (w1 === 2 ? 1 : 0) + (w2 === 2 ? 1 : 0),
+  };
+}
+
+/**
+ * STB cuando setsWonA === setsWonB (cubre 1-1 y 0-0 con ambos sets empatados).
+ */
+export function requiresPlayoffsSuperTieBreak(
+  setsWonP1: number,
+  setsWonP2: number
+): boolean {
+  return setsWonP1 === setsWonP2;
+}
+
+function directWinByGameDiff(
+  p1Won: boolean,
+  setsWonP1: number,
+  setsWonP2: number,
+  gamesTotalP1: number,
+  gamesTotalP2: number
+): PlayoffsMatchPoints {
+  const winnerGames = p1Won ? gamesTotalP1 : gamesTotalP2;
+  const loserGames = p1Won ? gamesTotalP2 : gamesTotalP1;
+  const gameDiff = winnerGames - loserGames;
+
+  if (gameDiff > 2) {
+    return {
+      pointsP1: p1Won ? 3 : 0,
+      pointsP2: p1Won ? 0 : 3,
+      p1Won,
+      viaWo: false,
+      viaStb: false,
+      resultType: "HOLGADA",
+      setsWonP1,
+      setsWonP2,
+      gamesTotalP1,
+      gamesTotalP2,
+      gameDiff,
+      requiresSuperTieBreak: false,
+    };
+  }
+
+  return {
+    pointsP1: p1Won ? 2 : 1,
+    pointsP2: p1Won ? 1 : 2,
+    p1Won,
+    viaWo: false,
+    viaStb: false,
+    resultType: "CERRADA",
+    setsWonP1,
+    setsWonP2,
+    gamesTotalP1,
+    gamesTotalP2,
+    gameDiff,
+    requiresSuperTieBreak: false,
   };
 }
 
@@ -298,8 +349,8 @@ function woMatchPoints(
 
 /**
  * Calcula puntos ranking playoffs: PRIMERO mandan los sets.
- * Games totales solo clasifican una victoria 2-0 (holgada/cerrada).
- * Empate 1-1 en sets → STB obligatorio (independiente de games).
+ * Set empatado válido (no suma). Games clasifican victoria directa (holgada/cerrada).
+ * Empate de sets (1-1 o 0-0) → STB.
  */
 export function computePlayoffsMatchPoints(
   score1: number,
@@ -330,19 +381,18 @@ export function computePlayoffsMatchPoints(
   const err2 = validatePlayoffsSetPair(set2.p1, set2.p2, "Set 2");
   if (err2) return { ok: false, error: err2 };
 
-  const sets = countSetsWon(set1, set2);
-  if ("error" in sets) return { ok: false, error: sets.error };
-
+  const { setsWonP1, setsWonP2 } = countSetsWon(set1, set2);
   const gamesTotalP1 = set1.p1 + set2.p1;
   const gamesTotalP2 = set1.p2 + set2.p2;
-  const { setsWonP1, setsWonP2 } = sets;
 
-  // 1-1 en sets → siempre STB (games no pueden evitarlo ni decidir el partido).
-  if (setsWonP1 === 1 && setsWonP2 === 1) {
+  if (requiresPlayoffsSuperTieBreak(setsWonP1, setsWonP2)) {
     if (!payload.stb) {
       return {
         ok: false,
-        error: "Empate 1-1 en sets: registra el súper tie-break a 5.",
+        error:
+          setsWonP1 === 1 && setsWonP2 === 1
+            ? "Empate 1-1 en sets: registra el súper tie-break a 5."
+            : "Empate en sets: registra el súper tie-break a 5.",
       };
     }
     const stbErr = validatePlayoffsStb(payload.stb.p1, payload.stb.p2);
@@ -370,53 +420,33 @@ export function computePlayoffsMatchPoints(
   if (payload.stb) {
     return {
       ok: false,
-      error: "Súper tie-break solo aplica con empate 1-1 en sets.",
+      error: "Súper tie-break solo aplica con empate en sets (1-1 o 0-0).",
     };
   }
 
-  if (setsWonP1 === 2 || setsWonP2 === 2) {
-    const p1Won = setsWonP1 === 2;
-    const winnerGames = p1Won ? gamesTotalP1 : gamesTotalP2;
-    const loserGames = p1Won ? gamesTotalP2 : gamesTotalP1;
-    const gameDiff = winnerGames - loserGames;
-
-    if (gameDiff > 2) {
-      return {
-        ok: true,
-        result: {
-          pointsP1: p1Won ? 3 : 0,
-          pointsP2: p1Won ? 0 : 3,
-          p1Won,
-          viaWo: false,
-          viaStb: false,
-          resultType: "HOLGADA",
-          setsWonP1,
-          setsWonP2,
-          gamesTotalP1,
-          gamesTotalP2,
-          gameDiff,
-          requiresSuperTieBreak: false,
-        },
-      };
-    }
-
-    // gameDiff === 1 o 2 → victoria cerrada (exactamente 2 es cerrada, no holgada).
+  // Victoria directa: más sets ganados (2-0 o 1-0 con un set empatado).
+  if (setsWonP1 > setsWonP2) {
     return {
       ok: true,
-      result: {
-        pointsP1: p1Won ? 2 : 1,
-        pointsP2: p1Won ? 1 : 2,
-        p1Won,
-        viaWo: false,
-        viaStb: false,
-        resultType: "CERRADA",
+      result: directWinByGameDiff(
+        true,
         setsWonP1,
         setsWonP2,
         gamesTotalP1,
-        gamesTotalP2,
-        gameDiff,
-        requiresSuperTieBreak: false,
-      },
+        gamesTotalP2
+      ),
+    };
+  }
+  if (setsWonP2 > setsWonP1) {
+    return {
+      ok: true,
+      result: directWinByGameDiff(
+        false,
+        setsWonP1,
+        setsWonP2,
+        gamesTotalP1,
+        gamesTotalP2
+      ),
     };
   }
 
@@ -478,10 +508,9 @@ export function computePlayoffsMatchFromSetInputs(input: {
     { p1: input.set1P1, p2: input.set1P2 },
     { p1: input.set2P1, p2: input.set2P2 }
   );
-  if ("error" in sets) return { ok: false, error: sets.error };
 
   let stb: PlayoffsStbScore | null = null;
-  if (sets.setsWonP1 === 1 && sets.setsWonP2 === 1) {
+  if (requiresPlayoffsSuperTieBreak(sets.setsWonP1, sets.setsWonP2)) {
     if (
       input.stbP1 == null ||
       input.stbP2 == null ||
@@ -490,7 +519,10 @@ export function computePlayoffsMatchFromSetInputs(input: {
     ) {
       return {
         ok: false,
-        error: "Empate 1-1 en sets: registra el súper tie-break a 5.",
+        error:
+          sets.setsWonP1 === 1 && sets.setsWonP2 === 1
+            ? "Empate 1-1 en sets: registra el súper tie-break a 5."
+            : "Empate en sets: registra el súper tie-break a 5.",
       };
     }
     stb = { p1: input.stbP1, p2: input.stbP2 };
@@ -557,7 +589,7 @@ export function playoffsTotalsFromDraft(
   return { score1: s1p1 + s2p1, score2: s1p2 + s2p2 };
 }
 
-/** Sets ganados desde draft (null si incompleto o set empatado). */
+/** Sets ganados desde draft (null si incompleto). Empate de set = 0 para ambos. */
 export function playoffsSetsFromDraft(
   draft: PlayoffsScoreDraft
 ): { setsP1: number; setsP2: number } | null {
@@ -583,14 +615,14 @@ export function playoffsSetsFromDraft(
     return null;
   }
   const counted = countSetsWon(set1, set2);
-  if ("error" in counted) return null;
   return { setsP1: counted.setsWonP1, setsP2: counted.setsWonP2 };
 }
 
 export function needsPlayoffsStbDraft(draft: PlayoffsScoreDraft): boolean {
   if (draft.woWinner != null) return false;
   const sets = playoffsSetsFromDraft(draft);
-  return Boolean(sets && sets.setsP1 === 1 && sets.setsP2 === 1);
+  if (!sets) return false;
+  return requiresPlayoffsSuperTieBreak(sets.setsP1, sets.setsP2);
 }
 
 export function previewPlayoffsPointsFromDraft(
@@ -611,7 +643,7 @@ export function previewPlayoffsPointsFromDraft(
   const { setsP1, setsP2 } = sets;
   const { score1: gamesP1, score2: gamesP2 } = totals;
 
-  if (setsP1 === 1 && setsP2 === 1) {
+  if (requiresPlayoffsSuperTieBreak(setsP1, setsP2)) {
     const stb1 = Number(draft.stb1);
     const stb2 = Number(draft.stb2);
     if (
@@ -643,9 +675,11 @@ export function previewPlayoffsPointsFromDraft(
     };
   }
 
-  if (setsP1 === 2 || setsP2 === 2) {
-    const winnerGames = setsP1 === 2 ? gamesP1 : gamesP2;
-    const loserGames = setsP1 === 2 ? gamesP2 : gamesP1;
+  // Victoria directa (más sets: 2-0 o 1-0 con un set empatado)
+  if (setsP1 > setsP2 || setsP2 > setsP1) {
+    const p1Won = setsP1 > setsP2;
+    const winnerGames = p1Won ? gamesP1 : gamesP2;
+    const loserGames = p1Won ? gamesP2 : gamesP1;
     const gameDiff = winnerGames - loserGames;
     if (gameDiff > 2) {
       return {
@@ -699,9 +733,10 @@ export function buildPlayoffsPayloadFromDraft(
   const set1 = parseDraftSetField(draft.set1, "Set 1");
   const set2 = parseDraftSetField(draft.set2, "Set 2");
   const sets = countSetsWon(set1, set2);
-  if ("error" in sets) throw new Error(sets.error);
-
-  const needsStb = sets.setsWonP1 === 1 && sets.setsWonP2 === 1;
+  const needsStb = requiresPlayoffsSuperTieBreak(
+    sets.setsWonP1,
+    sets.setsWonP2
+  );
   const stb1 = draft.stb1 === "" ? null : Number(draft.stb1);
   const stb2 = draft.stb2 === "" ? null : Number(draft.stb2);
 
