@@ -37,6 +37,8 @@ import {
 } from "../lib/reta/dynamicTeamLineups";
 import {
   TEAMS_PUBLIC_FORMAT_LABEL,
+  TEAMS_PUBLIC_LIVE_TITLE,
+  TEAMS_PUBLIC_TAGLINE,
   formatTeamsPublicHeroMeta,
 } from "../lib/reta/teamsPublicCopy";
 import type { TeamConfig } from "./RealTimeStandingsTable";
@@ -1097,8 +1099,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         className="te-public-section te-pub-fade-in"
       >
         <h2 className="te-public-section__title">
-          {isTeamsPublicView ? "En vivo · Canchas" : "Partidos por ronda"}
+          {isTeamsPublicView ? TEAMS_PUBLIC_LIVE_TITLE : "Partidos por ronda"}
         </h2>
+        {isTeamsPublicView ? (
+          <p className="te-public-section__tagline">{TEAMS_PUBLIC_TAGLINE}</p>
+        ) : null}
         <div className="te-public-section__divider" aria-hidden />
 
         {sortedRoundKeys.length > 1 ? (

@@ -5,6 +5,8 @@
 
 export const TEAMS_PUBLIC_FORMAT_LABEL = "Duelo";
 export const TEAMS_PUBLIC_TAGLINE = "Que gane el mejor";
+/** Título de la sección live (canchas / enfrentamientos). */
+export const TEAMS_PUBLIC_LIVE_TITLE = "Duelo en vivo";
 
 /** "Equipo 1 vs Equipo 2" (usa nombres reales si existen). */
 export function formatTeamsPublicFaceoff(

@@ -1,5 +1,6 @@
 import {
   TEAMS_PUBLIC_FORMAT_LABEL,
+  TEAMS_PUBLIC_LIVE_TITLE,
   TEAMS_PUBLIC_TAGLINE,
   formatTeamsPublicFaceoff,
   formatTeamsPublicHeroMeta,
@@ -19,5 +20,10 @@ describe("teamsPublicCopy", () => {
     expect(formatTeamsPublicHeroMeta(["Norte", "Sur"])).toBe(
       `${TEAMS_PUBLIC_FORMAT_LABEL} · Norte vs Sur · ${TEAMS_PUBLIC_TAGLINE}`
     );
+  });
+
+  it("expone título live de duelo", () => {
+    expect(TEAMS_PUBLIC_LIVE_TITLE).toBe("Duelo en vivo");
+    expect(TEAMS_PUBLIC_TAGLINE).toBe("Que gane el mejor");
   });
 });

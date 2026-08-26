@@ -745,6 +745,15 @@
   font-weight: 800 !important;
 }
 
+.te-public--reta .te-public-section__tagline {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 550;
+  letter-spacing: 0.06em;
+  color: rgba(244, 241, 235, 0.7);
+  line-height: 1.35;
+}
+
 .te-public--reta .te-pub-standings-table-wrap {
   border-radius: 14px;
   overflow: hidden;
