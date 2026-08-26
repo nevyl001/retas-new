@@ -56,7 +56,7 @@ function useCylinderMetrics(overridePx?: number): CylinderMetrics {
         return;
       }
       if (w < 640) {
-        setMetrics({ radius: 85, scale: 0.82 });
+        setMetrics({ radius: 92, scale: 0.96 });
         return;
       }
       setMetrics({ radius: 160, scale: 1 });
@@ -92,26 +92,22 @@ const CylinderCard: React.FC<{
         } as React.CSSProperties
       }
     >
-      <article className="reta-eq-cara__card">
-        <div className="reta-eq-cara__sheen" aria-hidden />
-
-        <header className="reta-eq-cara__top">
-          <span className="reta-eq-cara__pro">PRO</span>
-          {lado ? <span className="reta-eq-cara__lado">{lado}</span> : null}
-        </header>
-
-        <div className="reta-eq-cara__avatar">
+      <article
+        className="reta-eq-cara__card"
+        aria-label={`${player.nombre}${lado ? `, ${lado}` : ""}${
+          pais ? `, ${pais.nombre}` : ""
+        }`}
+      >
+        <div className="reta-eq-cara__media" aria-hidden={!src}>
           {src ? (
-            <span className="reta-eq-cara__photo-ring">
-              <img
-                src={src}
-                alt={player.nombre}
-                className="reta-eq-cara__img"
-                loading="lazy"
-                decoding="async"
-                onError={onError}
-              />
-            </span>
+            <img
+              src={src}
+              alt=""
+              className="reta-eq-cara__img"
+              loading="lazy"
+              decoding="async"
+              onError={onError}
+            />
           ) : (
             <span className="reta-eq-cara__medal" aria-hidden>
               <span className="reta-eq-cara__medal-sheen" />
@@ -119,7 +115,13 @@ const CylinderCard: React.FC<{
               <span className="reta-eq-cara__medal-ini">{initials}</span>
             </span>
           )}
+          <span className="reta-eq-cara__scrim" aria-hidden />
         </div>
+
+        <header className="reta-eq-cara__top">
+          <span className="reta-eq-cara__pro">PRO</span>
+          {lado ? <span className="reta-eq-cara__lado">{lado}</span> : null}
+        </header>
 
         <footer className="reta-eq-cara__foot">
           <p className="reta-eq-cara__name">{surname}</p>

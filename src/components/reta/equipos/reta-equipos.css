@@ -2576,8 +2576,8 @@
 .reta-eq-scene {
   position: relative;
   width: 100%;
-  max-width: 10.5rem;
-  height: 13.5rem;
+  max-width: 11.25rem;
+  height: 14.5rem;
   margin: 0 auto;
   --reta-eq-rad: 85px;
   --reta-eq-tambor-dur: 60s;
@@ -2606,8 +2606,8 @@
 
 .reta-eq-tambor {
   position: relative;
-  width: 7.8rem;
-  height: 11.25rem;
+  width: 8.25rem;
+  height: 12rem;
   transform-style: preserve-3d;
   will-change: transform;
 }
@@ -2654,20 +2654,20 @@
 @keyframes retaEqCaraDepth {
   0%,
   100% {
-    transform: scale(1.05);
+    transform: scale(1.04);
     opacity: 1;
-    filter: brightness(1.14) blur(0);
+    filter: brightness(1.05);
   }
   25%,
   75% {
-    transform: scale(0.94);
-    opacity: 0.62;
-    filter: brightness(0.78) blur(0.4px);
+    transform: scale(0.99);
+    opacity: 0.92;
+    filter: brightness(0.96);
   }
   50% {
-    transform: scale(0.86);
-    opacity: 0.3;
-    filter: brightness(0.5) blur(1px);
+    transform: scale(0.96);
+    opacity: 0.72;
+    filter: brightness(0.88);
   }
 }
 
@@ -2684,9 +2684,9 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 7.5rem;
-  height: 11rem;
-  margin: -5.5rem 0 0 -3.75rem;
+  width: 7.75rem;
+  height: 11.25rem;
+  margin: -5.625rem 0 0 -3.875rem;
   --rad: var(--reta-eq-rad, 85px);
   transform: rotateY(var(--ang, 0deg)) translateZ(var(--rad));
   transform-style: preserve-3d;
@@ -2701,36 +2701,45 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 0.55rem 0.55rem 0.6rem;
+  padding: 0;
   border-radius: 1rem;
   border: 2px solid rgba(255, 255, 255, 0.14);
-  background: rgba(18, 16, 14, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: #12131a;
   overflow: hidden;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   transform-origin: center center;
   animation: retaEqCaraDepth var(--reta-eq-tambor-dur, 60s) linear infinite;
   will-change: transform, opacity, filter;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
 }
 
-.reta-eq-cara__sheen {
+.reta-eq-cara__media {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 34%;
+  inset: 0;
+  z-index: 0;
+}
+
+.reta-eq-cara__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+.reta-eq-cara__scrim {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
-  border-radius: 1rem 1rem 0 0;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.12) 0%,
-    transparent 100%
-  );
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 9, 13, 0.55) 0%,
+      transparent 28%,
+      transparent 52%,
+      rgba(8, 9, 13, 0.88) 100%
+    );
 }
 
 .reta-eq-cara--left .reta-eq-cara__card {
@@ -2745,126 +2754,78 @@
 
 .reta-eq-cara--a .reta-eq-cara__card {
   border-color: rgba(229, 193, 88, 0.78);
-  background: rgba(24, 22, 16, 0.95);
   box-shadow:
     0 12px 30px rgba(0, 0, 0, 0.55),
-    0 0 18px rgba(229, 193, 88, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 0 18px rgba(229, 193, 88, 0.22);
 }
 
 .reta-eq-cara--b .reta-eq-cara__card {
   border-color: rgba(217, 93, 57, 0.78);
-  background: rgba(24, 18, 17, 0.95);
   box-shadow:
     0 12px 30px rgba(0, 0, 0, 0.55),
-    0 0 18px rgba(217, 93, 57, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 0 18px rgba(217, 93, 57, 0.22);
 }
 
 .reta-eq-cara__top {
+  position: relative;
+  z-index: 2;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.3rem;
-  z-index: 1;
+  padding: 0.45rem 0.45rem 0;
 }
 
 .reta-eq-cara__pro {
-  font-size: 0.56rem;
+  font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.48);
+  color: rgba(255, 255, 255, 0.78);
   text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
 }
 
 .reta-eq-cara__lado {
-  font-size: 0.56rem;
+  font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 0.14rem 0.4rem;
+  padding: 0.18rem 0.42rem;
   border-radius: 0.35rem;
   border: 1px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .reta-eq-cara--a .reta-eq-cara__lado {
-  color: #e5c158;
-  background: rgba(229, 193, 88, 0.18);
-  border-color: rgba(229, 193, 88, 0.4);
+  color: #1a1408;
+  background: rgba(229, 193, 88, 0.95);
+  border-color: rgba(229, 193, 88, 0.9);
 }
 
 .reta-eq-cara--b .reta-eq-cara__lado {
-  color: #d95d39;
-  background: rgba(217, 93, 57, 0.18);
-  border-color: rgba(217, 93, 57, 0.4);
-}
-
-.reta-eq-cara__avatar {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0.25rem 0;
-  z-index: 1;
-}
-
-.reta-eq-cara__photo-ring {
-  display: block;
-  width: 3.5rem;
-  height: 3.5rem;
-  padding: 2px;
-  border-radius: 999px;
-  background: linear-gradient(
-    160deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    rgba(255, 255, 255, 0.06) 55%,
-    transparent 100%
-  );
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-}
-
-.reta-eq-cara__img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 999px;
-  object-fit: cover;
-  object-position: center 18%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #1a0c08;
+  background: rgba(217, 93, 57, 0.95);
+  border-color: rgba(217, 93, 57, 0.9);
 }
 
 .reta-eq-cara__medal {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 999px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -6px 14px rgba(0, 0, 0, 0.35),
-    0 4px 12px rgba(0, 0, 0, 0.35);
+  border-radius: inherit;
 }
 
 .reta-eq-cara--a .reta-eq-cara__medal {
   color: #e5c158;
   background: linear-gradient(145deg, #2a2312 0%, #1c1a14 50%, #12131a 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 0 1px rgba(229, 193, 88, 0.5),
-    0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 .reta-eq-cara--b .reta-eq-cara__medal {
   color: #d95d39;
   background: linear-gradient(145deg, #2d1b18 0%, #1e1412 50%, #12131a 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 0 1px rgba(217, 93, 57, 0.5),
-    0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 .reta-eq-cara__medal-sheen {
@@ -2885,16 +2846,16 @@
 
 .reta-eq-cara__medal-ring {
   position: absolute;
-  inset: 3px;
+  inset: 12%;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   pointer-events: none;
 }
 
 .reta-eq-cara__medal-ini {
   position: relative;
   z-index: 1;
-  font-size: 0.95rem;
+  font-size: clamp(1.35rem, 4.5vw, 1.85rem);
   font-weight: 900;
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
@@ -2902,14 +2863,16 @@
 }
 
 .reta-eq-cara__foot {
+  position: relative;
+  z-index: 2;
   text-align: center;
   min-width: 0;
-  z-index: 1;
+  padding: 0.55rem 0.45rem 0.55rem;
 }
 
 .reta-eq-cara__name {
   margin: 0;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -2917,7 +2880,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
 }
 
 .reta-eq-cara__pais {
@@ -2925,11 +2888,12 @@
   align-items: center;
   justify-content: center;
   gap: 0.28rem;
-  margin-top: 0.22rem;
-  font-size: 0.58rem;
+  margin-top: 0.28rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  color: rgba(220, 220, 230, 0.78);
+  color: rgba(255, 255, 255, 0.9);
   max-width: 100%;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
 .reta-eq-cara__pais > span:last-child {
@@ -3016,32 +2980,31 @@
 
   .reta-eq-scene {
     max-width: 12.5rem;
-    height: 15rem;
+    height: 15.5rem;
   }
 
   .reta-eq-tambor {
     width: 9rem;
-    height: 12.5rem;
+    height: 13rem;
   }
 
   .reta-eq-cara {
-    width: 8.5rem;
-    height: 12.25rem;
-    margin: -6.125rem 0 0 -4.25rem;
-  }
-
-  .reta-eq-cara__photo-ring,
-  .reta-eq-cara__medal {
-    width: 4.25rem;
-    height: 4.25rem;
-  }
-
-  .reta-eq-cara__medal-ini {
-    font-size: 1.15rem;
+    width: 8.75rem;
+    height: 12.75rem;
+    margin: -6.375rem 0 0 -4.375rem;
   }
 
   .reta-eq-cara__name {
-    font-size: 0.78rem;
+    font-size: 0.8rem;
+  }
+
+  .reta-eq-cara__lado,
+  .reta-eq-cara__pro {
+    font-size: 0.62rem;
+  }
+
+  .reta-eq-cara__pais {
+    font-size: 0.66rem;
   }
 
   .reta-eq-stage__marquee-date {
@@ -3094,23 +3057,16 @@
   }
 
   .reta-eq-cara__card {
-    padding: 0.7rem 0.7rem 0.8rem;
     border-radius: 1.15rem;
   }
 
-  .reta-eq-cara__photo-ring,
-  .reta-eq-cara__medal {
-    width: 5rem;
-    height: 5rem;
-  }
-
   .reta-eq-cara__medal-ini {
-    font-size: 1.35rem;
+    font-size: 1.85rem;
   }
 
   .reta-eq-cara__pro,
   .reta-eq-cara__lado {
-    font-size: 0.62rem;
+    font-size: 0.64rem;
   }
 
   .reta-eq-cara__name {
@@ -3118,7 +3074,7 @@
   }
 
   .reta-eq-cara__pais {
-    font-size: 0.64rem;
+    font-size: 0.66rem;
   }
 }
 
