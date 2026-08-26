@@ -16,7 +16,7 @@
   position: relative;
 }
 
-/* Shell + ambient balls */
+/* Shell + ambient padel balls (inside card via podium-card__ambient) */
 .liga-celebrate-shell {
   position: relative;
   isolation: isolate;
@@ -24,90 +24,165 @@
   min-width: 0;
 }
 
-.liga-celebrate-ambient {
+.liga-parejas-victorias-grid .liga-pareja-victoria-celebrate__podium.podium-card {
+  overflow: clip;
+}
+
+.liga-parejas-victorias-grid .podium-card__ambient {
   position: absolute;
-  inset: -8% -6%;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
   overflow: clip;
 }
 
+.liga-parejas-victorias-grid .podium-card__inner {
+  position: relative;
+  z-index: 1;
+}
+
+.liga-parejas-victorias-grid .podium-card__corner {
+  z-index: 2;
+}
+
+.liga-celebrate-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: clip;
+}
+
+/* Real padel-ball look: felt + curved seams, visible soft float */
 .liga-celebrate-ball {
   position: absolute;
+  display: block;
   border-radius: 50%;
+  pointer-events: none;
   background:
     radial-gradient(
       circle at 32% 28%,
-      color-mix(in srgb, var(--brand-accent, #d6ef3a) 45%, #fff) 0%,
-      color-mix(in srgb, var(--brand-accent, #d6ef3a) 22%, transparent) 48%,
-      transparent 74%
+      #f4f7c4 0%,
+      #d6ef3a 38%,
+      #b6c92e 68%,
+      #8a9a22 100%
     );
-  opacity: 0.09;
-  filter: blur(2.5px);
+  box-shadow:
+    inset -3px -4px 8px rgba(0, 0, 0, 0.28),
+    inset 2px 2px 5px rgba(255, 255, 255, 0.35),
+    0 4px 14px rgba(0, 0, 0, 0.18);
+  opacity: 0.32;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+.liga-celebrate-ball::before,
+.liga-celebrate-ball::after {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  border-top-color: rgba(40, 48, 12, 0.35);
+  border-bottom-color: rgba(40, 48, 12, 0.22);
   pointer-events: none;
 }
 
+.liga-celebrate-ball::before {
+  transform: rotate(-28deg) scale(1.05);
+}
+
+.liga-celebrate-ball::after {
+  inset: 18%;
+  transform: rotate(48deg) scale(0.92);
+  border-top-color: rgba(40, 48, 12, 0.28);
+  border-bottom-color: rgba(40, 48, 12, 0.18);
+}
+
 .liga-celebrate-ball--a {
-  width: 64px;
-  height: 64px;
-  left: 4%;
-  top: 22%;
-  animation: liga-celebrate-ball-drift-a 26s ease-in-out infinite alternate;
+  width: 52px;
+  height: 52px;
+  left: 5%;
+  top: 16%;
+  opacity: 0.36;
+  animation: liga-celebrate-ball-float-a 9s ease-in-out infinite;
 }
 
 .liga-celebrate-ball--b {
-  width: 40px;
-  height: 40px;
-  right: 8%;
-  bottom: 24%;
-  opacity: 0.07;
-  animation: liga-celebrate-ball-drift-b 32s ease-in-out infinite alternate;
+  width: 38px;
+  height: 38px;
+  right: 7%;
+  top: 36%;
+  opacity: 0.28;
+  animation: liga-celebrate-ball-float-b 11s ease-in-out infinite;
+  animation-delay: -2.5s;
 }
 
-.liga-celebrate-ball--c,
+.liga-celebrate-ball--c {
+  width: 46px;
+  height: 46px;
+  left: 10%;
+  bottom: 14%;
+  opacity: 0.3;
+  animation: liga-celebrate-ball-float-c 10s ease-in-out infinite;
+  animation-delay: -5s;
+}
+
 .liga-celebrate-ball--d {
   display: none;
 }
 
-@keyframes liga-celebrate-ball-drift-a {
-  from {
-    transform: translate3d(0, 0, 0);
+@keyframes liga-celebrate-ball-float-a {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
   }
-  to {
-    transform: translate3d(10px, -12px, 0);
+  25% {
+    transform: translate3d(22px, -28px, 0) rotate(18deg);
   }
-}
-
-@keyframes liga-celebrate-ball-drift-b {
-  from {
-    transform: translate3d(0, 0, 0);
+  50% {
+    transform: translate3d(8px, -46px, 0) rotate(36deg);
   }
-  to {
-    transform: translate3d(-8px, 10px, 0);
+  75% {
+    transform: translate3d(-10px, -22px, 0) rotate(18deg);
   }
-}
-
-@keyframes liga-celebrate-ball-drift-c {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(8px, 8px, 0);
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
   }
 }
 
-@keyframes liga-celebrate-ball-drift-d {
-  from {
-    transform: translate3d(0, 0, 0);
+@keyframes liga-celebrate-ball-float-b {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
   }
-  to {
-    transform: translate3d(-6px, -8px, 0);
+  25% {
+    transform: translate3d(-26px, 18px, 0) rotate(-16deg);
+  }
+  50% {
+    transform: translate3d(-14px, 38px, 0) rotate(-32deg);
+  }
+  75% {
+    transform: translate3d(12px, 20px, 0) rotate(-14deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
   }
 }
 
-.liga-celebrate-shell .liga-pareja-victoria-celebrate__podium {
-  position: relative;
-  z-index: 1;
+@keyframes liga-celebrate-ball-float-c {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate3d(18px, 16px, 0) rotate(12deg);
+  }
+  50% {
+    transform: translate3d(34px, -8px, 0) rotate(28deg);
+  }
+  75% {
+    transform: translate3d(14px, -24px, 0) rotate(14deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
 }
 
 /* Match results against rivals — editorial strip, not nested cards */
@@ -236,6 +311,7 @@
 @media (prefers-reduced-motion: reduce) {
   .liga-celebrate-ball {
     animation: none !important;
+    transform: none !important;
   }
 
   .liga-parejas-victorias-grid--winner.liga-celebrate--play .liga-celebrate-matches,

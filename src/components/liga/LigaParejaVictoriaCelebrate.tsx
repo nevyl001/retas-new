@@ -115,11 +115,6 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
 
   return (
     <div className="liga-celebrate-shell">
-      <div className="liga-celebrate-ambient" aria-hidden>
-        <span className="liga-celebrate-ball liga-celebrate-ball--a" />
-        <span className="liga-celebrate-ball liga-celebrate-ball--b" />
-      </div>
-
       <PodiumCard
         position={1}
         entry={{ label: pairLabel, parejaId: pairId }}
@@ -129,6 +124,13 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
         stats={stats}
         copyOverrides={copyOverrides}
         className="liga-pareja-victoria-celebrate__podium"
+        ambient={
+          <div className="liga-celebrate-ambient">
+            <span className="liga-celebrate-ball liga-celebrate-ball--a" />
+            <span className="liga-celebrate-ball liga-celebrate-ball--b" />
+            <span className="liga-celebrate-ball liga-celebrate-ball--c" />
+          </div>
+        }
         afterStats={
           matchLines.length > 0 ? (
             <div

@@ -189,6 +189,8 @@ export const PodiumCard: React.FC<{
   copyOverrides?: PodiumCopyOverrides;
   /** Contenido opcional entre stats y footer (p. ej. enfrentamientos de liga). */
   afterStats?: React.ReactNode;
+  /** Capa decorativa detrás del contenido (p. ej. pelotas ambient). */
+  ambient?: React.ReactNode;
   id?: string;
   className?: string;
 }> = ({
@@ -201,6 +203,7 @@ export const PodiumCard: React.FC<{
   statsLayout = "default",
   copyOverrides,
   afterStats,
+  ambient,
   id,
   className = "",
 }) => {
@@ -256,6 +259,12 @@ export const PodiumCard: React.FC<{
       <span className="podium-card__corner podium-card__corner--tr" aria-hidden />
       <span className="podium-card__corner podium-card__corner--bl" aria-hidden />
       <span className="podium-card__corner podium-card__corner--br" aria-hidden />
+
+      {ambient ? (
+        <div className="podium-card__ambient" aria-hidden>
+          {ambient}
+        </div>
+      ) : null}
 
       <div className="podium-card__inner">
         <p className="podium-card__torneo-name">{torneoNombre}</p>
