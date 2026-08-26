@@ -104,6 +104,108 @@ export function collectPublicPlayerRefsFromPairs(
   return refs;
 }
 
+type PublicIdentityRpcRow = {
+  legacy_player_id?: string | null;
+  riviera_jugador_id?: string | null;
+  nombre?: string | null;
+  slug?: string | null;
+  foto_url?: unknown;
+  rating?: unknown;
+  nivel?: string | null;
+  categoria?: string | null;
+  mano_dominante?: string | null;
+  en_cancha?: string | null;
+  pais_codigo?: string | null;
+  edad?: unknown;
+};
+
+function hostRowNeedsPublicIdentityRpc(row: HostRivieraRow | undefined): boolean {
+  if (!row) return true;
+  const hasLado = Boolean(String(row.en_cancha ?? "").trim());
+  const hasPais = Boolean(String(row.pais_codigo ?? "").trim());
+  return !hasLado || !hasPais;
+}
+
+function mergeHostRivieraRow(
+  current: HostRivieraRow | undefined,
+  incoming: HostRivieraRow
+): HostRivieraRow {
+  if (!current) return incoming;
+  return {
+    id: current.id || incoming.id,
+    legacy_player_id: current.legacy_player_id || incoming.legacy_player_id,
+    nombre: current.nombre?.trim() || incoming.nombre,
+    slug: current.slug?.trim() || incoming.slug,
+    foto_url:
+      (typeof current.foto_url === "string" && current.foto_url.trim()
+        ? current.foto_url.trim()
+        : null) ?? incoming.foto_url,
+    rating: current.rating ?? incoming.rating,
+    nivel: current.nivel?.trim() || incoming.nivel,
+    categoria: current.categoria?.trim() || incoming.categoria,
+    mano_dominante: current.mano_dominante?.trim() || incoming.mano_dominante,
+    en_cancha: current.en_cancha?.trim() || incoming.en_cancha,
+    pais_codigo: current.pais_codigo?.trim() || incoming.pais_codigo,
+    edad: current.edad ?? incoming.edad,
+  };
+}
+
+/**
+ * SECURITY DEFINER: identidad pública cuando RLS bloquea SELECT directo
+ * (ranking oficial off / visible_publico / suma_ranking).
+ */
+async function fetchPublicIdentityRowsByLegacy(
+  organizadorId: string,
+  legacyIds: string[]
+): Promise<Map<string, HostRivieraRow>> {
+  const map = new Map<string, HostRivieraRow>();
+  const ids = Array.from(new Set(legacyIds.map((id) => id.trim()).filter(Boolean)));
+  if (!organizadorId.trim() || ids.length === 0) return map;
+
+  try {
+    const { data, error } = await supabasePublicRead.rpc(
+      "riviera_public_event_legacy_player_identity",
+      {
+        p_organizador_id: organizadorId.trim(),
+        p_legacy_player_ids: ids,
+      }
+    );
+
+    if (error) {
+      if (
+        !error.message?.includes("riviera_public_event_legacy_player_identity") &&
+        !error.message?.includes("Could not find the function")
+      ) {
+        console.warn("[publicPlayersIdentity] identity rpc:", error.message);
+      }
+      return map;
+    }
+
+    for (const raw of (data ?? []) as PublicIdentityRpcRow[]) {
+      const legacy = String(raw.legacy_player_id ?? "").trim();
+      if (!legacy) continue;
+      map.set(legacy, {
+        id: String(raw.riviera_jugador_id ?? "").trim() || undefined,
+        legacy_player_id: legacy,
+        nombre: raw.nombre,
+        slug: raw.slug,
+        foto_url: raw.foto_url,
+        rating: raw.rating,
+        nivel: raw.nivel,
+        categoria: raw.categoria,
+        mano_dominante: raw.mano_dominante,
+        en_cancha: raw.en_cancha,
+        pais_codigo: raw.pais_codigo,
+        edad: raw.edad,
+      });
+    }
+  } catch {
+    /* RPC opcional hasta desplegar el SQL */
+  }
+
+  return map;
+}
+
 async function fetchHostOrgRivieraRowsByLegacy(
   organizadorId: string,
   legacyIds: string[]
@@ -123,13 +225,45 @@ async function fetchHostOrgRivieraRowsByLegacy(
 
   if (error) {
     console.warn("[publicPlayersIdentity] host rows:", error.message);
-    return map;
+  } else {
+    for (const row of (data ?? []) as HostRivieraRow[]) {
+      const legacy = String(row.legacy_player_id ?? "").trim();
+      if (legacy) map.set(legacy, row);
+    }
   }
 
-  for (const row of (data ?? []) as HostRivieraRow[]) {
-    const legacy = String(row.legacy_player_id ?? "").trim();
-    if (legacy) map.set(legacy, row);
+  /* También intenta por id = legacy (parejas antiguas / ids riviera). */
+  const stillMissing = ids.filter((id) => !map.has(id));
+  if (stillMissing.length > 0) {
+    const { data: byId, error: byIdErr } = await supabasePublicRead
+      .from("riviera_jugadores")
+      .select(
+        "id, legacy_player_id, nombre, slug, foto_url, rating, nivel, categoria, mano_dominante, en_cancha, pais_codigo, edad"
+      )
+      .eq("organizador_id", organizadorId.trim())
+      .eq("estado", "activo")
+      .in("id", stillMissing);
+
+    if (!byIdErr && byId?.length) {
+      for (const row of byId as HostRivieraRow[]) {
+        const key =
+          String(row.legacy_player_id ?? "").trim() ||
+          String(row.id ?? "").trim();
+        const requestKey = stillMissing.find(
+          (id) => id === String(row.id ?? "").trim() || id === key
+        );
+        if (requestKey) map.set(requestKey, { ...row, legacy_player_id: requestKey });
+      }
+    }
   }
+
+  const needRpc = ids.filter((id) => hostRowNeedsPublicIdentityRpc(map.get(id)));
+  if (needRpc.length === 0) return map;
+
+  const fromRpc = await fetchPublicIdentityRowsByLegacy(organizadorId, needRpc);
+  fromRpc.forEach((row, legacy) => {
+    map.set(legacy, mergeHostRivieraRow(map.get(legacy), row));
+  });
 
   return map;
 }
