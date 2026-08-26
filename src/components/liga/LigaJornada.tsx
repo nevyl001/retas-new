@@ -907,6 +907,12 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
             Cada pareja juega un enfrentamiento distinto. Ajusta cancha y horario
             para rotar entre canchas.
           </p>
+          {esPlayoffs ? (
+            <p className="liga-hint liga-jornada-score-rules">
+              Anota los games por set. Diff {">"}2 → 3/0 · Diff 1–2 → 2/1 · Empate
+              → STB a 5. Al guardar se actualiza el ranking.
+            </p>
+          ) : null}
           <div className="liga-ronda-programacion liga-jornada-horario-bulk">
             <label className="liga-programacion-field">
               <span className="liga-programacion-field__label">
