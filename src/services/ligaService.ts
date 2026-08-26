@@ -287,7 +287,9 @@ export async function getLigaById(
       .select("*")
       .eq("liga_id", ligaId)
       .order("numero", { ascending: true }),
-    fetchEquiposForLiga(ligaId).catch(() => [] as LigaEquipo[]),
+    fetchEquiposForLiga(ligaId, { publicRead: usePublicClient }).catch(
+      () => [] as LigaEquipo[]
+    ),
   ]);
 
   if (iErr) throw new Error(iErr.message);

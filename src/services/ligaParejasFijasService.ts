@@ -59,10 +59,20 @@ export function mapLigaEquipo(row: Record<string, unknown>): LigaEquipo {
   };
 }
 
-export async function fetchEquiposForLiga(ligaId: string): Promise<LigaEquipo[]> {
+/** Columnas de liga_jugadores sin PII (email/telefono) — embed público / anon. */
+const LIGA_JUGADOR_EMBED_PUBLIC =
+  "id,nombre,genero,nivel,estado,organizador_id,created_at" as const;
+
+export async function fetchEquiposForLiga(
+  ligaId: string,
+  opts?: { publicRead?: boolean }
+): Promise<LigaEquipo[]> {
+  const jugadorCols = opts?.publicRead ? LIGA_JUGADOR_EMBED_PUBLIC : "*";
   const { data, error } = await supabase
     .from("liga_equipos")
-    .select("*, jugador1:liga_jugadores!liga_equipos_jugador1_id_fkey(*), jugador2:liga_jugadores!liga_equipos_jugador2_id_fkey(*)")
+    .select(
+      `*, jugador1:liga_jugadores!liga_equipos_jugador1_id_fkey(${jugadorCols}), jugador2:liga_jugadores!liga_equipos_jugador2_id_fkey(${jugadorCols})`
+    )
     .eq("liga_id", ligaId)
     .order("created_at", { ascending: true });
 
