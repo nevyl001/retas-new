@@ -70,32 +70,60 @@ describe("parejasFijasPlayoffsMatchScore (aislado de legacy)", () => {
   });
 
   it("guardar dos veces no duplica puntos (recalc replace)", () => {
-    const draft = buildPlayoffsPayloadFromDraft({
-      score1: "4",
-      score2: "2",
+    const draftOk = buildPlayoffsPayloadFromDraft({
+      set1: { p1: "6", p2: "4" },
+      set2: { p1: "6", p2: "3" },
       stb1: "",
       stb2: "",
       woWinner: null,
     });
+    expect(draftOk.score1).toBe(12);
+    expect(draftOk.score2).toBe(7);
     const pts = computePlayoffsMatchPoints(
-      draft.score1,
-      draft.score2,
-      draft.payload
+      draftOk.score1,
+      draftOk.score2,
+      draftOk.payload
     );
     expect(pts.ok).toBe(true);
     if (!pts.ok) return;
 
     const a = emptyEquipoRankingStats();
     const b = emptyEquipoRankingStats();
-    applyPlayoffsMatchBothSides(a, b, 4, 2, pts.result);
-    // "edit": reset + apply once (simula recalc)
+    applyPlayoffsMatchBothSides(a, b, 12, 7, pts.result);
     const a2 = emptyEquipoRankingStats();
     const b2 = emptyEquipoRankingStats();
-    applyPlayoffsMatchBothSides(a2, b2, 4, 2, pts.result);
+    applyPlayoffsMatchBothSides(a2, b2, 12, 7, pts.result);
     expect(a2.puntos).toBe(a.puntos);
     expect(b2.puntos).toBe(b.puntos);
     expect(a2.puntos).toBe(3);
     expect(b2.puntos).toBe(0);
+  });
+
+  it("Set1+Set2 empatados exige STB", () => {
+    expect(() =>
+      buildPlayoffsPayloadFromDraft({
+        set1: { p1: "6", p2: "4" },
+        set2: { p1: "4", p2: "6" },
+        stb1: "",
+        stb2: "",
+        woWinner: null,
+      })
+    ).toThrow(/súper tie-break/i);
+
+    const built = buildPlayoffsPayloadFromDraft({
+      set1: { p1: "6", p2: "4" },
+      set2: { p1: "4", p2: "6" },
+      stb1: "5",
+      stb2: "3",
+      woWinner: null,
+    });
+    expect(built.score1).toBe(10);
+    expect(built.score2).toBe(10);
+    expect(built.payload.stb).toEqual({ p1: 5, p2: 3 });
+    expect(built.payload.sets).toEqual([
+      { p1: 6, p2: 4 },
+      { p1: 4, p2: 6 },
+    ]);
   });
 
   it("no importa parejasFijasVictoryRankingPoints", () => {

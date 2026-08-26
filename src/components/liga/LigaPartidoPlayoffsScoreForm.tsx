@@ -2,9 +2,12 @@ import React from "react";
 import type { LigaPartido } from "../../lib/liga/types";
 import {
   emptyPlayoffsScoreDraft,
+  needsPlayoffsStbDraft,
   parsePlayoffsSetScoresJson,
   playoffsMatchDisplay,
+  playoffsTotalsFromDraft,
   type PlayoffsScoreDraft,
+  type PlayoffsSetDraft,
 } from "../../lib/liga/parejasFijasPlayoffsMatchScore";
 import { Button } from "../ui";
 
@@ -17,6 +20,49 @@ type Props = {
   onSave: () => void;
 };
 
+function SetRow({
+  label,
+  draft,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  draft: PlayoffsSetDraft;
+  disabled?: boolean;
+  onChange: (next: PlayoffsSetDraft) => void;
+}) {
+  return (
+    <div className="liga-score-row liga-playoffs-score__set">
+      <span className="liga-playoffs-score__set-label">{label}</span>
+      <label>
+        P1
+        <input
+          type="number"
+          min={0}
+          disabled={disabled}
+          value={draft.p1}
+          onChange={(e) => onChange({ ...draft, p1: e.target.value })}
+          aria-label={`${label} pareja 1`}
+        />
+      </label>
+      <span className="liga-playoffs-score__sep" aria-hidden>
+        —
+      </span>
+      <label>
+        P2
+        <input
+          type="number"
+          min={0}
+          disabled={disabled}
+          value={draft.p2}
+          onChange={(e) => onChange({ ...draft, p2: e.target.value })}
+          aria-label={`${label} pareja 2`}
+        />
+      </label>
+    </div>
+  );
+}
+
 export function getPlayoffsDraftForPartido(
   partido: LigaPartido,
   drafts: Record<string, PlayoffsScoreDraft>
@@ -26,17 +72,27 @@ export function getPlayoffsDraftForPartido(
   if (partido.score_pareja1 == null || partido.score_pareja2 == null) {
     return emptyPlayoffsScoreDraft();
   }
-  return {
-    score1: String(partido.score_pareja1),
-    score2: String(partido.score_pareja2),
-    stb1: payload?.stb ? String(payload.stb.p1) : "",
-    stb2: payload?.stb ? String(payload.stb.p2) : "",
-    woWinner: payload?.wo
-      ? partido.score_pareja1 > partido.score_pareja2
-        ? 1
-        : 2
-      : null,
-  };
+
+  const base = emptyPlayoffsScoreDraft();
+  if (payload?.sets && payload.sets.length === 2) {
+    base.set1 = {
+      p1: String(payload.sets[0].p1),
+      p2: String(payload.sets[0].p2),
+    };
+    base.set2 = {
+      p1: String(payload.sets[1].p1),
+      p2: String(payload.sets[1].p2),
+    };
+  }
+  if (payload?.stb) {
+    base.stb1 = String(payload.stb.p1);
+    base.stb2 = String(payload.stb.p2);
+  }
+  if (payload?.wo) {
+    base.woWinner =
+      partido.score_pareja1 > partido.score_pareja2 ? 1 : 2;
+  }
+  return base;
 }
 
 export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
@@ -47,11 +103,9 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
   onChange,
   onSave,
 }) => {
-  const tied =
-    draft.woWinner == null &&
-    draft.score1 !== "" &&
-    draft.score2 !== "" &&
-    Number(draft.score1) === Number(draft.score2);
+  const locked = disabled || busy || draft.woWinner != null;
+  const showStb = needsPlayoffsStbDraft(draft);
+  const totals = playoffsTotalsFromDraft(draft);
 
   const saved =
     partido.estado === "completed" &&
@@ -69,55 +123,58 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
       {saved ? (
         <p className="liga-hint">Resultado: {saved}</p>
       ) : null}
-      <div className="liga-score-row">
-        <label>
-          Games P1
-          <input
-            type="number"
-            min={0}
-            disabled={disabled || busy || draft.woWinner != null}
-            value={draft.woWinner != null ? "" : draft.score1}
-            onChange={(e) =>
-              onChange({ ...draft, score1: e.target.value, woWinner: null })
-            }
-          />
-        </label>
-        <label>
-          Games P2
-          <input
-            type="number"
-            min={0}
-            disabled={disabled || busy || draft.woWinner != null}
-            value={draft.woWinner != null ? "" : draft.score2}
-            onChange={(e) =>
-              onChange({ ...draft, score2: e.target.value, woWinner: null })
-            }
-          />
-        </label>
-      </div>
-      {tied ? (
-        <div className="liga-score-row">
-          <label>
-            STB P1
-            <input
-              type="number"
-              min={0}
-              disabled={disabled || busy}
-              value={draft.stb1}
-              onChange={(e) => onChange({ ...draft, stb1: e.target.value })}
-            />
-          </label>
-          <label>
-            STB P2
-            <input
-              type="number"
-              min={0}
-              disabled={disabled || busy}
-              value={draft.stb2}
-              onChange={(e) => onChange({ ...draft, stb2: e.target.value })}
-            />
-          </label>
-        </div>
+      <p className="liga-playoffs-score__rules">
+        2 sets a 6 · Diff ≥2 → 3/0 · Diff 1 → 2/1 · Empate → STB a 5 (2/1)
+      </p>
+      <SetRow
+        label="Set 1"
+        draft={draft.set1}
+        disabled={locked}
+        onChange={(set1) => onChange({ ...draft, set1, woWinner: null })}
+      />
+      <SetRow
+        label="Set 2"
+        draft={draft.set2}
+        disabled={locked}
+        onChange={(set2) => onChange({ ...draft, set2, woWinner: null })}
+      />
+      {totals ? (
+        <p className="liga-playoffs-score__totals">
+          Games totales: {totals.score1}–{totals.score2}
+        </p>
+      ) : null}
+      {showStb ? (
+        <>
+          <p className="liga-playoffs-score__stb-hint" role="status">
+            Empate en games: registra el súper tie-break a 5.
+          </p>
+          <div className="liga-score-row">
+            <label>
+              STB P1
+              <input
+                type="number"
+                min={0}
+                disabled={disabled || busy}
+                value={draft.stb1}
+                onChange={(e) =>
+                  onChange({ ...draft, stb1: e.target.value })
+                }
+              />
+            </label>
+            <label>
+              STB P2
+              <input
+                type="number"
+                min={0}
+                disabled={disabled || busy}
+                value={draft.stb2}
+                onChange={(e) =>
+                  onChange({ ...draft, stb2: e.target.value })
+                }
+              />
+            </label>
+          </div>
+        </>
       ) : null}
       <div className="liga-actions" style={{ marginTop: 8 }}>
         <Button

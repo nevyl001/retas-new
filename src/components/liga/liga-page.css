@@ -650,6 +650,46 @@
   box-shadow: 0 0 0 2px var(--ro-accent-ring);
 }
 
+.liga-playoffs-score {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.liga-playoffs-score__rules {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--liga-text-muted);
+  line-height: 1.4;
+}
+
+.liga-playoffs-score__set-label {
+  min-width: 3.25rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--liga-text-soft);
+}
+
+.liga-playoffs-score__sep {
+  color: var(--liga-text-muted);
+  font-weight: 600;
+}
+
+.liga-playoffs-score__totals {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--liga-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.liga-playoffs-score__stb-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--liga-text-soft);
+}
+
 .liga-sets-form {
   display: flex;
   flex-direction: column;
