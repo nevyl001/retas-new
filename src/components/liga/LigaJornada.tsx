@@ -936,6 +936,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               Aplicar a todos
             </Button>
           </div>
+          <div className="liga-jornada-partidos-grid">
           {partidosJornadaOrdenados.map((partido) => {
             const setsDraft = getSetsDraftForPartido(partido, setsDrafts);
             const playoffsDraft = getPlayoffsDraftForPartido(
@@ -951,7 +952,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
             return (
               <div
                 key={partido.id}
-                className={`liga-partido-row${
+                className={`liga-partido-row liga-partido-row--card${
                   bloqueado ? " liga-partido-row--locked" : ""
                 }`}
               >
@@ -1016,6 +1017,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               </div>
             );
           })}
+          </div>
         </div>
       )}
 
