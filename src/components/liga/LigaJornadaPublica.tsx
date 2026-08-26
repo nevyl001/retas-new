@@ -689,6 +689,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                       const face = resolveParejaFace(row.parejaId);
                       const matchLines =
                         jornadaMatchBreakdowns.get(row.parejaId) ?? [];
+                      const gamesDif = row.games_favor - row.games_contra;
+                      const gamesDifLabel =
+                        gamesDif >= 0 ? `+${gamesDif}` : String(gamesDif);
                       const topClass =
                         row.posicion === 1
                           ? " liga-pub-standings__row--1"
@@ -724,6 +727,10 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                             />
                             <p className="liga-pub-standings__meta">
                               {row.victorias} PG · {row.derrotas} PP
+                            </p>
+                            <p className="liga-pub-standings__meta liga-pub-standings__meta--games">
+                              {row.games_favor} GF · {row.games_contra} GC · DIF{" "}
+                              {gamesDifLabel}
                             </p>
                             {matchLines.length > 0 ? (
                               <ul

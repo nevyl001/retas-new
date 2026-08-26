@@ -8,6 +8,10 @@ import {
   derivePlayoffsGamesTotals,
   parsePlayoffsSetScoresJson,
 } from "./parejasFijasPlayoffsMatchScore";
+import {
+  compareEquiposRanking,
+  diferenciaGamesFromStats,
+} from "./equiposRanking";
 import type { LigaJornada, LigaJornadaPareja } from "./types";
 
 export interface ParejaJornadaStat {
@@ -18,6 +22,7 @@ export interface ParejaJornadaStat {
   empates: number;
   derrotas: number;
   games_favor: number;
+  games_contra: number;
 }
 
 export interface JugadorJornadaStat {
@@ -213,6 +218,7 @@ export function computeJornadaPublicStats(
       empates: number;
       derrotas: number;
       games_favor: number;
+      games_contra: number;
     }
   >();
   for (const p of parejas) {
@@ -222,6 +228,7 @@ export function computeJornadaPublicStats(
       empates: 0,
       derrotas: 0,
       games_favor: 0,
+      games_contra: 0,
     });
   }
 
@@ -267,12 +274,14 @@ export function computeJornadaPublicStats(
         if (st1) {
           st1.puntos += computed.result.pointsP1;
           st1.games_favor += derived.gamesTotalP1;
+          st1.games_contra += derived.gamesTotalP2;
           if (computed.result.p1Won) st1.victorias += 1;
           else st1.derrotas += 1;
         }
         if (st2) {
           st2.puntos += computed.result.pointsP2;
           st2.games_favor += derived.gamesTotalP2;
+          st2.games_contra += derived.gamesTotalP1;
           if (!computed.result.p1Won) st2.victorias += 1;
           else st2.derrotas += 1;
         }
@@ -299,12 +308,14 @@ export function computeJornadaPublicStats(
       if (st1) {
         st1.puntos += pts1;
         st1.games_favor += totals.gamesP1;
+        st1.games_contra += totals.gamesP2;
         if (totals.p1WonMatch) st1.victorias += 1;
         else st1.derrotas += 1;
       }
       if (st2) {
         st2.puntos += pts2;
         st2.games_favor += totals.gamesP2;
+        st2.games_contra += totals.gamesP1;
         if (!totals.p1WonMatch) st2.victorias += 1;
         else st2.derrotas += 1;
       }
@@ -319,6 +330,7 @@ export function computeJornadaPublicStats(
     if (st1) {
       st1.puntos += s1;
       st1.games_favor += s1;
+      st1.games_contra += s2;
       if (s1 > s2) st1.victorias += 1;
       else if (s1 === s2) st1.empates += 1;
       else st1.derrotas += 1;
@@ -326,6 +338,7 @@ export function computeJornadaPublicStats(
     if (st2) {
       st2.puntos += s2;
       st2.games_favor += s2;
+      st2.games_contra += s1;
       if (s2 > s1) st2.victorias += 1;
       else if (s2 === s1) st2.empates += 1;
       else st2.derrotas += 1;
@@ -362,6 +375,7 @@ export function computeJornadaPublicStats(
       empates: 0,
       derrotas: 0,
       games_favor: 0,
+      games_contra: 0,
     };
     return {
       parejaId: p.id,
@@ -371,15 +385,30 @@ export function computeJornadaPublicStats(
       empates: st.empates,
       derrotas: st.derrotas,
       games_favor: st.games_favor,
+      games_contra: st.games_contra,
     };
   });
 
   rankingParejasRaw.sort((a, b) => {
     if (parejasFijas) {
-      if (b.puntos !== a.puntos) return b.puntos - a.puntos;
-      if (b.victorias !== a.victorias) return b.victorias - a.victorias;
-      if (b.games_favor !== a.games_favor) return b.games_favor - a.games_favor;
-      return a.nombre.localeCompare(b.nombre);
+      return compareEquiposRanking(
+        {
+          puntos: a.puntos,
+          diferencia_games: diferenciaGamesFromStats(a),
+          games_favor: a.games_favor,
+          partidos_ganados: a.victorias,
+          partidos_jugados: a.victorias + a.derrotas + a.empates,
+          nombre: a.nombre,
+        },
+        {
+          puntos: b.puntos,
+          diferencia_games: diferenciaGamesFromStats(b),
+          games_favor: b.games_favor,
+          partidos_ganados: b.victorias,
+          partidos_jugados: b.victorias + b.derrotas + b.empates,
+          nombre: b.nombre,
+        }
+      );
     }
     if (b.victorias !== a.victorias) return b.victorias - a.victorias;
     if (b.puntos !== a.puntos) return b.puntos - a.puntos;

@@ -1742,6 +1742,12 @@
   font-size: 0.65rem;
 }
 
+.liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__meta--games {
+  margin-top: 0.12rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
 .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-pair-players--md {
   gap: 0.55rem;
 }
