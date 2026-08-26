@@ -22,6 +22,7 @@ import {
 } from "../lib/liga/parejasFijasPlayoffsBracket";
 import {
   computePlayoffsMatchPoints,
+  derivePlayoffsGamesTotals,
   parsePlayoffsSetScoresJson,
   type PlayoffsSetScoresPayload,
 } from "../lib/liga/parejasFijasPlayoffsMatchScore";
@@ -227,12 +228,16 @@ export async function recalcularPuntosLigaEquiposPlayoffs(
       if (!payload || !Number.isFinite(score1) || !Number.isFinite(score2)) {
         continue;
       }
-      const computed = computePlayoffsMatchPoints(score1, score2, payload);
+      const derived = derivePlayoffsGamesTotals(payload, score1, score2);
+      if ("error" in derived) continue;
+      const games1 = derived.gamesTotalP1;
+      const games2 = derived.gamesTotalP2;
+      const computed = computePlayoffsMatchPoints(games1, games2, payload);
       if (!computed.ok) continue;
 
       const st1 = statsByEquipo.get(eq1) ?? emptyEquipoRankingStats();
       const st2 = statsByEquipo.get(eq2) ?? emptyEquipoRankingStats();
-      applyPlayoffsMatchBothSides(st1, st2, score1, score2, computed.result);
+      applyPlayoffsMatchBothSides(st1, st2, games1, games2, computed.result);
       statsByEquipo.set(eq1, st1);
       statsByEquipo.set(eq2, st2);
     }
@@ -519,7 +524,13 @@ export async function updateScoreParejasFijasPlayoffs(
   error?: string;
   jornada_id?: string;
 }> {
-  const computed = computePlayoffsMatchPoints(score1, score2, payload);
+  const derived = derivePlayoffsGamesTotals(payload, score1, score2);
+  if ("error" in derived) {
+    return { ok: false, error: derived.error };
+  }
+  const games1 = derived.gamesTotalP1;
+  const games2 = derived.gamesTotalP2;
+  const computed = computePlayoffsMatchPoints(games1, games2, payload);
   if (!computed.ok) {
     return { ok: false, error: computed.error };
   }
@@ -528,8 +539,8 @@ export async function updateScoreParejasFijasPlayoffs(
     "update_liga_partido_score_parejas_fijas_playoffs",
     {
       p_partido_id: partidoId,
-      p_score1: score1,
-      p_score2: score2,
+      p_score1: games1,
+      p_score2: games2,
       p_set_scores: payload,
       p_force: options?.force ?? false,
     }

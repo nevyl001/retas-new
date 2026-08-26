@@ -7,12 +7,12 @@ import {
 } from "../../lib/liga/jornadaCelebrate";
 import {
   formatJornadaParejaNombre,
-  formatPartidoPublicScore,
+  getPartidoPublicScoreboard,
   partidoMatchWinnerSide,
 } from "../../lib/liga/publicDisplay";
 import { timeInputValue } from "../../lib/liga/programacion";
 import type { LigaDetalle, LigaJornada, LigaJornadaPareja, LigaPartido } from "../../lib/liga/types";
-import { isEquiposModalidad } from "../../lib/liga/ligaModalidad";
+import { isEquiposModalidad, isParejasFijasPlayoffs } from "../../lib/liga/ligaModalidad";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
 import { resolveLigaJugadorPublicFotos } from "../../lib/liga/publicParejaAvatars";
 import { getLigaById } from "../../services/ligaService";
@@ -78,21 +78,14 @@ function partidoPublicEstadoMod(
 }
 
 function scoreDisplay(
-  partido: LigaPartido,
-  esParejasFijas: boolean
-): { s1: string; s2: string; setsLabel: string | null } {
+  partido: LigaPartido
+): { s1: string; s2: string } {
   if (partido.estado !== "completed") {
-    return { s1: "—", s2: "—", setsLabel: null };
+    return { s1: "—", s2: "—" };
   }
-
-  const setsLabel = esParejasFijas
-    ? formatPartidoPublicScore(partido, true)
-    : null;
-
   return {
     s1: String(partido.score_pareja1 ?? 0),
     s2: String(partido.score_pareja2 ?? 0),
-    setsLabel,
   };
 }
 
@@ -212,6 +205,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   }, [partidosByRonda]);
 
   const esParejasFijas = isEquiposModalidad(detalle?.modalidad ?? "individual_rotativo");
+  const esParejasFijasPlayoffs = isParejasFijasPlayoffs(
+    detalle?.modalidad ?? "individual_rotativo"
+  );
 
   const jornadaStats = useMemo(
     () => computeJornadaPublicStats(jornada, { parejasFijas: esParejasFijas }),
@@ -301,7 +297,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   const totalPartidos = jornada.partidos?.length ?? 0;
 
   const renderMatchCard = (partido: LigaPartido, duelLayout: boolean) => {
-    const { s1, s2, setsLabel } = scoreDisplay(partido, esParejasFijas);
+    const { s1, s2 } = scoreDisplay(partido);
     const pending = partido.estado !== "completed";
     const winner = partidoMatchWinnerSide(partido, esParejasFijas);
     const p1Wins = winner === 1;
@@ -312,6 +308,62 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     const horario = timeInputValue(partido.hora_inicio) || null;
     const estadoMod = partidoPublicEstadoMod(partido.estado);
     const estadoText = partidoPublicEstadoLabel(partido.estado);
+    const board = getPartidoPublicScoreboard(partido, esParejasFijas);
+
+    const renderDuelSeparator = () => {
+      if (board.kind === "wo") {
+        return (
+          <p className="liga-pantalla-match__wo-pill" role="status">
+            WO
+          </p>
+        );
+      }
+      if (board.kind === "board") {
+        return (
+          <div className="liga-pantalla-match__setboard" aria-label="Marcador">
+            {board.columns.map((col) => {
+              const topWin = col.p1 > col.p2;
+              const botWin = col.p2 > col.p1;
+              return (
+                <div key={col.label} className="liga-pantalla-match__setboard-col">
+                  <span className="liga-pantalla-match__setboard-label">
+                    {col.label}
+                  </span>
+                  <span
+                    className={`liga-pantalla-match__setboard-cell${
+                      topWin ? " liga-pantalla-match__setboard-cell--win" : ""
+                    }`}
+                  >
+                    {col.p1}
+                  </span>
+                  <span
+                    className={`liga-pantalla-match__setboard-cell${
+                      botWin ? " liga-pantalla-match__setboard-cell--win" : ""
+                    }`}
+                  >
+                    {col.p2}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
+      if (board.kind === "simple") {
+        return (
+          <p className="liga-pantalla-match__scoreline">
+            <span className={p1Wins ? "liga-pantalla-match__scoreline-win" : undefined}>
+              {board.s1}
+            </span>
+            <span className="liga-pantalla-match__vs-pill">VS</span>
+            <span className={p2Wins ? "liga-pantalla-match__scoreline-win" : undefined}>
+              {board.s2}
+            </span>
+          </p>
+        );
+      }
+      return <p className="liga-pantalla-match__vs-pill">VS</p>;
+    };
 
     if (duelLayout) {
       return (
@@ -351,17 +403,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
               />
             </div>
             <div className="liga-pantalla-match__separator">
-              {setsLabel ? (
-                <p className="liga-pantalla-match__sets">{setsLabel}</p>
-              ) : !esParejasFijas && !pending ? (
-                <p className="liga-pantalla-match__scoreline">
-                  <span>{s1}</span>
-                  <span className="liga-pantalla-match__vs-pill">VS</span>
-                  <span>{s2}</span>
-                </p>
-              ) : (
-                <p className="liga-pantalla-match__vs-pill">VS</p>
-              )}
+              {renderDuelSeparator()}
             </div>
             <div
               className={`liga-pantalla-match__side${
@@ -615,7 +657,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                   Ranking de la jornada
                 </h2>
                 <p className="liga-pantalla-ranking__hint">
-                  Puntos: 3 si gana en 2 sets, 2 si gana en super tie-break, 0 si pierde.
+                  {esParejasFijasPlayoffs
+                    ? "Puntos por games totales: Diff ≥2 → 3/0 · Diff 1 → 2/1 · Empate + STB → 2/1 · WO → 3/−1."
+                    : "Puntos: 3 si gana en 2 sets, 2 si gana en super tie-break, 0 si pierde."}
                 </p>
                 {jornadaStats.rankingParejas.length === 0 ? (
                   <p className="liga-pantalla__loading">Sin parejas en jornada.</p>

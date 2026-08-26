@@ -113,8 +113,8 @@ export interface LigaPartido {
   score_pareja2: number | null;
   /**
    * Detalle de marcador:
-   * - parejas_fijas: { sets: [...] }
-   * - parejas_fijas_playoffs: { format, wo, stb }
+   * - parejas_fijas: { sets: [...] } (mejor de 3 / legacy)
+   * - parejas_fijas_playoffs: { format, wo, stb, sets } — Liga por games totales (suma Set1+Set2), no sets ganados
    */
   set_scores?: LigaPartidoSetScores | Record<string, unknown> | null;
   cancha: number | null;

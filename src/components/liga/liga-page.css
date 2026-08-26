@@ -677,16 +677,56 @@
 
 .liga-playoffs-score__totals {
   margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.65rem;
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--liga-text);
   font-variant-numeric: tabular-nums;
 }
 
+.liga-playoffs-score__totals-values {
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.liga-playoffs-score__preview {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--liga-border, rgba(255, 255, 255, 0.12));
+  background: color-mix(in srgb, var(--brand-primary, #2a4ba7) 10%, transparent);
+  font-size: 0.8rem;
+  color: var(--liga-text-soft);
+}
+
+.liga-playoffs-score__preview strong {
+  color: var(--liga-text);
+  font-weight: 700;
+}
+
+.liga-playoffs-score__preview--needs_stb {
+  border-color: color-mix(in srgb, var(--brand-accent, #d6ef3a) 40%, transparent);
+}
+
+.liga-playoffs-score__preview--holgada,
+.liga-playoffs-score__preview--ajustada,
+.liga-playoffs-score__preview--stb {
+  border-color: color-mix(in srgb, var(--brand-primary, #2a4ba7) 45%, transparent);
+}
+
 .liga-playoffs-score__stb-hint {
   margin: 0;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--liga-text-soft);
 }
 

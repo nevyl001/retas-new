@@ -1395,8 +1395,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 1.35rem;
-  padding: 0.05rem 0;
+  min-height: 2.4rem;
+  padding: 0.15rem 0;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-match__vs-pill {
@@ -1444,6 +1444,102 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--liga-pub-text);
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__scoreline-win {
+  color: var(--liga-jornada-accent, var(--liga-pub-text));
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__setboard {
+  display: inline-flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.15rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__setboard-col {
+  display: grid;
+  grid-template-rows: auto 1fr 1fr;
+  justify-items: center;
+  min-width: 1.85rem;
+  gap: 0.12rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__setboard-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--liga-jornada-muted, var(--liga-pub-text-muted));
+  line-height: 1;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__setboard-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.55rem;
+  min-height: 1.45rem;
+  padding: 0.1rem 0.28rem;
+  border-radius: 6px;
+  background: color-mix(
+    in srgb,
+    var(--brand-primary, rgba(255, 255, 255, 0.08)) 14%,
+    rgba(0, 0, 0, 0.35)
+  );
+  border: 1px solid var(--liga-jornada-border, rgba(255, 255, 255, 0.1));
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--liga-pub-text-muted);
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__setboard-cell--win {
+  color: var(--liga-pub-text);
+  border-color: color-mix(
+    in srgb,
+    var(--liga-jornada-accent, rgba(255, 255, 255, 0.35)) 45%,
+    transparent
+  );
+  background: color-mix(
+    in srgb,
+    var(--liga-jornada-accent, rgba(255, 255, 255, 0.18)) 16%,
+    rgba(0, 0, 0, 0.3)
+  );
+  box-shadow: inset 0 0 0 1px
+    color-mix(
+      in srgb,
+      var(--liga-jornada-accent, rgba(255, 255, 255, 0.2)) 28%,
+      transparent
+    );
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__wo-pill {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.6rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--liga-jornada-accent, rgba(255, 255, 255, 0.25)) 45%,
+      transparent
+    );
+  background: color-mix(
+    in srgb,
+    var(--liga-jornada-accent, rgba(255, 255, 255, 0.14)) 18%,
+    rgba(0, 0, 0, 0.4)
+  );
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--liga-jornada-accent, var(--liga-pub-text));
 }
 
 /* Avatares densos para 4 columnas */

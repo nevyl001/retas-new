@@ -1248,7 +1248,9 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               {esParejasFijas ? "Ranking por pareja" : "Ranking acumulado"}
             </h2>
             <p className="liga-hint">
-              {esParejasFijas
+              {esPlayoffs
+                ? "Puntos por games totales: Diff ≥2 → 3/0 · Diff 1 → 2/1 · Empate + STB → 2/1 · WO → 3/−1. Se recalcula al guardar."
+                : esParejasFijas
                 ? "Puntos: 3 victoria en 2 sets, 2 con super tie-break. Se recalcula al guardar resultados."
                 : "Puntos en base de datos de la liga. Al guardar resultados o finalizar, se recalcula automáticamente."}
             </p>

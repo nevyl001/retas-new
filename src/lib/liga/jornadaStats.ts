@@ -4,6 +4,7 @@ import {
 } from "./parejasFijasMatchScore";
 import {
   computePlayoffsMatchPoints,
+  derivePlayoffsGamesTotals,
   parsePlayoffsSetScoresJson,
 } from "./parejasFijasPlayoffsMatchScore";
 import type { LigaJornada, LigaJornadaPareja } from "./types";
@@ -99,9 +100,15 @@ export function computeJornadaPublicStats(
         m.score_pareja1 != null &&
         m.score_pareja2 != null
       ) {
-        const computed = computePlayoffsMatchPoints(
+        const derived = derivePlayoffsGamesTotals(
+          playoffsPayload,
           Number(m.score_pareja1),
-          Number(m.score_pareja2),
+          Number(m.score_pareja2)
+        );
+        if ("error" in derived) continue;
+        const computed = computePlayoffsMatchPoints(
+          derived.gamesTotalP1,
+          derived.gamesTotalP2,
           playoffsPayload
         );
         if (!computed.ok) continue;
@@ -109,13 +116,13 @@ export function computeJornadaPublicStats(
         const st2 = statsPareja.get(id2);
         if (st1) {
           st1.puntos += computed.result.pointsP1;
-          st1.games_favor += Number(m.score_pareja1);
+          st1.games_favor += derived.gamesTotalP1;
           if (computed.result.p1Won) st1.victorias += 1;
           else st1.derrotas += 1;
         }
         if (st2) {
           st2.puntos += computed.result.pointsP2;
-          st2.games_favor += Number(m.score_pareja2);
+          st2.games_favor += derived.gamesTotalP2;
           if (!computed.result.p1Won) st2.victorias += 1;
           else st2.derrotas += 1;
         }

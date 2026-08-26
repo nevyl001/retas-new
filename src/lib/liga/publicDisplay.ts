@@ -83,6 +83,87 @@ export function formatPartidoPublicScore(
   return `${partido.score_pareja1 ?? 0} – ${partido.score_pareja2 ?? 0}`;
 }
 
+export type PartidoPublicScoreColumn = {
+  label: string;
+  p1: number;
+  p2: number;
+};
+
+/** Estructura visual elegante para el marcador del duelo público. */
+export type PartidoPublicScoreboard =
+  | { kind: "pending" }
+  | { kind: "wo"; winner: 1 | 2 }
+  | { kind: "board"; columns: PartidoPublicScoreColumn[] }
+  | { kind: "simple"; s1: number; s2: number };
+
+export function getPartidoPublicScoreboard(
+  partido: Pick<
+    LigaPartido,
+    "estado" | "score_pareja1" | "score_pareja2" | "set_scores"
+  >,
+  esParejasFijas: boolean
+): PartidoPublicScoreboard {
+  if (partido.estado !== "completed") return { kind: "pending" };
+
+  const playoffs = parsePlayoffsSetScoresJson(partido.set_scores);
+  if (playoffs) {
+    if (playoffs.wo) {
+      const s1 = Number(partido.score_pareja1 ?? 0);
+      const s2 = Number(partido.score_pareja2 ?? 0);
+      return { kind: "wo", winner: s1 > s2 ? 1 : 2 };
+    }
+    const columns: PartidoPublicScoreColumn[] = [];
+    if (playoffs.sets?.length === 2) {
+      columns.push(
+        { label: "S1", p1: playoffs.sets[0].p1, p2: playoffs.sets[0].p2 },
+        { label: "S2", p1: playoffs.sets[1].p1, p2: playoffs.sets[1].p2 }
+      );
+    }
+    if (playoffs.stb) {
+      columns.push({
+        label: "STB",
+        p1: playoffs.stb.p1,
+        p2: playoffs.stb.p2,
+      });
+    }
+    if (columns.length > 0) return { kind: "board", columns };
+    if (partido.score_pareja1 != null && partido.score_pareja2 != null) {
+      return {
+        kind: "simple",
+        s1: Number(partido.score_pareja1),
+        s2: Number(partido.score_pareja2),
+      };
+    }
+  }
+
+  if (esParejasFijas) {
+    const legacySets = parseLegacySetsOnly(partido.set_scores);
+    if (legacySets?.sets?.length) {
+      const columns: PartidoPublicScoreColumn[] = legacySets.sets.map(
+        (set, idx) => ({
+          label:
+            set.kind === "super_tiebreak" || idx === 2
+              ? "STB"
+              : `S${idx + 1}`,
+          p1: Number(set.p1),
+          p2: Number(set.p2),
+        })
+      );
+      return { kind: "board", columns };
+    }
+  }
+
+  if (partido.score_pareja1 != null && partido.score_pareja2 != null) {
+    return {
+      kind: "simple",
+      s1: Number(partido.score_pareja1),
+      s2: Number(partido.score_pareja2),
+    };
+  }
+
+  return { kind: "pending" };
+}
+
 function parseLegacySetsOnly(raw: LigaPartido["set_scores"]) {
   if (!raw || typeof raw !== "object") return null;
   if (!("sets" in raw)) return null;

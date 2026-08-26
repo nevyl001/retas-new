@@ -6,6 +6,7 @@ import {
   parsePlayoffsSetScoresJson,
   playoffsMatchDisplay,
   playoffsTotalsFromDraft,
+  previewPlayoffsPointsFromDraft,
   type PlayoffsScoreDraft,
   type PlayoffsSetDraft,
 } from "../../lib/liga/parejasFijasPlayoffsMatchScore";
@@ -106,6 +107,7 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
   const locked = disabled || busy || draft.woWinner != null;
   const showStb = needsPlayoffsStbDraft(draft);
   const totals = playoffsTotalsFromDraft(draft);
+  const preview = previewPlayoffsPointsFromDraft(draft);
 
   const saved =
     partido.estado === "completed" &&
@@ -124,7 +126,8 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
         <p className="liga-hint">Resultado: {saved}</p>
       ) : null}
       <p className="liga-playoffs-score__rules">
-        2 sets a 6 · Diff ≥2 → 3/0 · Diff 1 → 2/1 · Empate → STB a 5 (2/1)
+        Clasificación por games totales (Set 1 + Set 2). No hace falta llegar a
+        6. Diff ≥2 → 3/0 · Diff 1 → 2/1 · Empate → STB a 5 (2/1).
       </p>
       <SetRow
         label="Set 1"
@@ -139,18 +142,30 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
         onChange={(set2) => onChange({ ...draft, set2, woWinner: null })}
       />
       {totals ? (
-        <p className="liga-playoffs-score__totals">
-          Games totales: {totals.score1}–{totals.score2}
+        <p className="liga-playoffs-score__totals" aria-live="polite">
+          Games totales
+          <span className="liga-playoffs-score__totals-values">
+            P1 {totals.score1} — {totals.score2} P2
+          </span>
+        </p>
+      ) : null}
+      {preview.kind !== "incomplete" ? (
+        <p
+          className={`liga-playoffs-score__preview liga-playoffs-score__preview--${preview.kind}`}
+          role="status"
+        >
+          <strong>{preview.title}</strong>
+          <span>{preview.line}</span>
         </p>
       ) : null}
       {showStb ? (
         <>
           <p className="liga-playoffs-score__stb-hint" role="status">
-            Empate en games: registra el súper tie-break a 5.
+            Súper Tie-Break a 5
           </p>
-          <div className="liga-score-row">
+          <div className="liga-score-row liga-playoffs-score__stb">
             <label>
-              STB P1
+              P1
               <input
                 type="number"
                 min={0}
@@ -159,10 +174,14 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
                 onChange={(e) =>
                   onChange({ ...draft, stb1: e.target.value })
                 }
+                aria-label="Súper tie-break pareja 1"
               />
             </label>
+            <span className="liga-playoffs-score__sep" aria-hidden>
+              —
+            </span>
             <label>
-              STB P2
+              P2
               <input
                 type="number"
                 min={0}
@@ -171,6 +190,7 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
                 onChange={(e) =>
                   onChange({ ...draft, stb2: e.target.value })
                 }
+                aria-label="Súper tie-break pareja 2"
               />
             </label>
           </div>
@@ -216,7 +236,7 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
         </Button>
       </div>
       <p className="liga-hint">
-        Diff ≥2 → 3/0 · Diff 1 → 2/1 · Empate → STB a 5 (2/1) · WO → 3/−1
+        WO → 3/−1 · El resultado de Liga usa la suma de games, no sets ganados.
       </p>
     </div>
   );

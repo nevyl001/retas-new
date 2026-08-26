@@ -137,6 +137,26 @@
   border-color: color-mix(in srgb, var(--brand-accent, #d6ef3a) 70%, #000);
 }
 
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match__setboard-cell--win,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match__setboard-cell--win {
+  color: #0a0c10;
+  background: var(--brand-accent, #d6ef3a);
+  border-color: color-mix(in srgb, var(--brand-accent, #d6ef3a) 65%, #000);
+  box-shadow: none;
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match__setboard-label,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match__setboard-label {
+  color: color-mix(in srgb, var(--brand-muted, #a8b8d8) 90%, transparent);
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match__wo-pill,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match__wo-pill {
+  color: #0a0c10;
+  background: var(--brand-accent, #d6ef3a);
+  border-color: color-mix(in srgb, var(--brand-accent, #d6ef3a) 70%, #000);
+}
+
 [data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match__side,
 [data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match__side {
   background: color-mix(in srgb, var(--brand-primary, #2a4ba7) 14%, rgba(255, 255, 255, 0.03));
