@@ -56,10 +56,15 @@ function useCylinderMetrics(overridePx?: number): CylinderMetrics {
         return;
       }
       if (w < 640) {
-        setMetrics({ radius: 92, scale: 0.96 });
+        /* Radio amplio + cards chicas: evita el amontonamiento en móvil. */
+        setMetrics({ radius: 138, scale: 0.92 });
         return;
       }
-      setMetrics({ radius: 160, scale: 1 });
+      if (w < 900) {
+        setMetrics({ radius: 145, scale: 0.96 });
+        return;
+      }
+      setMetrics({ radius: 168, scale: 1 });
     };
 
     handleResize();

@@ -2525,15 +2525,15 @@
 .reta-eq-duel-stage {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   align-items: center;
   justify-items: center;
-  gap: 0.25rem;
-  min-height: 210px;
-  margin: 0.35rem 0 0.75rem;
-  padding: 0.75rem 0.2rem 1rem;
-  border-radius: 1.35rem;
-  overflow: hidden;
+  gap: 1.15rem;
+  min-height: 0;
+  margin: 0.45rem 0 0.85rem;
+  padding: 0.85rem 0.45rem 1.05rem;
+  border-radius: 1.25rem;
+  overflow: visible;
   background:
     radial-gradient(
       ellipse 70% 55% at 50% 42%,
@@ -2555,6 +2555,7 @@
   inset: 0;
   pointer-events: none;
   opacity: 0.22;
+  border-radius: inherit;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
@@ -2571,27 +2572,54 @@
   position: relative;
   z-index: 2;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 0.45rem;
   width: 100%;
   min-width: 0;
   overflow: visible;
 }
 
+.reta-eq-duel-stage__team-label {
+  margin: 0;
+  font-family: var(--font-display, var(--ro-font-heading), sans-serif);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.reta-eq-duel-stage__team-label--a {
+  color: #e5c158;
+}
+
+.reta-eq-duel-stage__team-label--b {
+  color: #d95d39;
+}
+
+@media (min-width: 640px) {
+  .reta-eq-duel-stage__team-label {
+    display: none;
+  }
+}
+
 .reta-eq-scene {
   position: relative;
   width: 100%;
-  max-width: 11.25rem;
-  height: 14.5rem;
+  max-width: 18rem;
+  height: 15.5rem;
   margin: 0 auto;
-  --reta-eq-rad: 85px;
+  --reta-eq-rad: 138px;
   --reta-eq-tambor-dur: 60s;
-  --reta-eq-scene-scale: 0.75;
-  perspective: 900px;
-  perspective-origin: 50% 50%;
+  --reta-eq-scene-scale: 0.92;
+  perspective: 1100px;
+  perspective-origin: 50% 48%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: scale(var(--reta-eq-scene-scale, 0.75));
+  transform: scale(var(--reta-eq-scene-scale, 0.92));
   transform-origin: center center;
 }
 
@@ -2610,8 +2638,8 @@
 
 .reta-eq-tambor {
   position: relative;
-  width: 8.25rem;
-  height: 12rem;
+  width: 7.25rem;
+  height: 11rem;
   transform-style: preserve-3d;
   will-change: transform;
 }
@@ -2658,20 +2686,20 @@
 @keyframes retaEqCaraDepth {
   0%,
   100% {
-    transform: scale(1.04);
+    transform: scale(1.06);
     opacity: 1;
-    filter: brightness(1.05);
+    filter: brightness(1.06);
   }
   25%,
   75% {
-    transform: scale(0.99);
-    opacity: 0.92;
-    filter: brightness(0.96);
+    transform: scale(0.97);
+    opacity: 0.78;
+    filter: brightness(0.94);
   }
   50% {
-    transform: scale(0.96);
-    opacity: 0.72;
-    filter: brightness(0.88);
+    transform: scale(0.9);
+    opacity: 0.42;
+    filter: brightness(0.82);
   }
 }
 
@@ -2688,10 +2716,10 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 7.75rem;
-  height: 11.25rem;
-  margin: -5.625rem 0 0 -3.875rem;
-  --rad: var(--reta-eq-rad, 85px);
+  width: 6.35rem;
+  height: 9.5rem;
+  margin: -4.75rem 0 0 -3.175rem;
+  --rad: var(--reta-eq-rad, 138px);
   transform: rotateY(var(--ang, 0deg)) translateZ(var(--rad));
   transform-style: preserve-3d;
   backface-visibility: hidden;
@@ -2975,40 +3003,42 @@
   color: rgba(180, 184, 196, 0.7);
 }
 
-@media (min-width: 480px) {
+@media (min-width: 640px) {
   .reta-eq-duel-stage {
-    gap: 0.65rem;
-    min-height: 250px;
-    padding: 1rem 0.45rem 1.25rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.85rem;
+    min-height: 280px;
+    padding: 1.1rem 0.65rem 1.35rem;
+    overflow: hidden;
   }
 
   .reta-eq-scene {
-    max-width: 12.5rem;
-    height: 15.5rem;
+    max-width: 14rem;
+    height: 16.5rem;
   }
 
   .reta-eq-tambor {
-    width: 9rem;
-    height: 13rem;
+    width: 8.5rem;
+    height: 12.5rem;
   }
 
   .reta-eq-cara {
-    width: 8.75rem;
-    height: 12.75rem;
-    margin: -6.375rem 0 0 -4.375rem;
+    width: 7.5rem;
+    height: 11rem;
+    margin: -5.5rem 0 0 -3.75rem;
   }
 
   .reta-eq-cara__name {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
   }
 
   .reta-eq-cara__lado,
   .reta-eq-cara__pro {
-    font-size: 0.62rem;
+    font-size: 0.6rem;
   }
 
   .reta-eq-cara__pais {
-    font-size: 0.66rem;
+    font-size: 0.64rem;
   }
 
   .reta-eq-stage__marquee-date {
@@ -3016,11 +3046,11 @@
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 900px) {
   .reta-eq-duel-stage {
-    gap: 1.25rem;
-    min-height: 320px;
-    padding: 1.4rem 0.9rem 1.7rem;
+    gap: 1.35rem;
+    min-height: 340px;
+    padding: 1.45rem 1rem 1.75rem;
   }
 
   .reta-eq-duel-stage__laser {
@@ -3044,20 +3074,20 @@
   }
 
   .reta-eq-scene {
-    max-width: 16rem;
-    height: 18rem;
-    perspective: 1000px;
+    max-width: 17rem;
+    height: 18.5rem;
+    perspective: 1100px;
   }
 
   .reta-eq-tambor {
-    width: 11rem;
+    width: 10.5rem;
     height: 14.5rem;
   }
 
   .reta-eq-cara {
-    width: 9.35rem;
-    height: 13.75rem;
-    margin: -6.875rem 0 0 -4.675rem;
+    width: 8.75rem;
+    height: 12.75rem;
+    margin: -6.375rem 0 0 -4.375rem;
   }
 
   .reta-eq-cara__card {
