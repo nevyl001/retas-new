@@ -13,6 +13,7 @@ import type { RetaEquiposPlayerCardData } from "./RetaEquiposPlayerCard";
 type RetaEquiposPlayerSpotlightProps = {
   player: RetaEquiposPlayerCardData;
   teamName?: string;
+  side?: "a" | "b";
   index?: number;
   total?: number;
   className?: string;
@@ -25,12 +26,12 @@ function splitNombre(nombre: string): { first: string; rest: string | null } {
 }
 
 /**
- * Full-bleed player spotlight + gradient vignette.
- * Cross-fade / micro-scale morph via `.reta-eq-frame--enter`.
+ * Glass spotlight + broadcast 3D reveal (`.reta-eq-frame--broadcast`).
  */
 export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProps> = ({
   player,
   teamName,
+  side = "a",
   index,
   total,
   className = "",
@@ -60,7 +61,13 @@ export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProp
 
   return (
     <article
-      className={["reta-eq-frame", className].filter(Boolean).join(" ")}
+      className={[
+        "reta-eq-frame",
+        `reta-eq-frame--${side}`,
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       <div className="reta-eq-frame__media">
         {src ? (

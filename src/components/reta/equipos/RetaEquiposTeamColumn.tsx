@@ -16,10 +16,10 @@ type RetaEquiposTeamColumnProps = {
   className?: string;
 };
 
-const ROTATE_MS = 5500;
+const ROTATE_MS = 4000;
 
 /**
- * Columna de equipo: spotlight full-bleed + dock táctico de roster.
+ * Columna de equipo: spotlight glass + dock (dots móvil / pills desktop).
  * Rotación aislada (no afecta countdown ni hero padre).
  */
 export const RetaEquiposTeamColumn: React.FC<RetaEquiposTeamColumnProps> = ({
@@ -97,9 +97,10 @@ export const RetaEquiposTeamColumn: React.FC<RetaEquiposTeamColumnProps> = ({
             key={player.id}
             player={player}
             teamName={teamName}
+            side={side}
             index={active}
             total={players.length}
-            className="reta-eq-frame--enter"
+            className="reta-eq-frame--broadcast"
           />
         ) : (
           <div className="reta-eq-frame reta-eq-frame--empty">

@@ -63,8 +63,7 @@ const DockPill: React.FC<{
 };
 
 /**
- * Tactical fluid roster dock — pills (foto + apellido) por equipo.
- * Sustituye el carrusel de bolitas de iniciales.
+ * Móvil: dots de cristal. Desktop: pills foto + apellido.
  */
 export const RetaEquiposRosterRail: React.FC<RetaEquiposRosterRailProps> = ({
   players,
@@ -81,15 +80,37 @@ export const RetaEquiposRosterRail: React.FC<RetaEquiposRosterRailProps> = ({
       role="tablist"
       aria-label={`Jugadores ${teamName}`}
     >
-      {players.map((player, i) => (
-        <DockPill
-          key={player.id}
-          player={player}
-          active={i === activeIndex}
-          onSelect={() => onSelect(i)}
-          side={side}
-        />
-      ))}
+      <div className="reta-eq-dock__dots">
+        {players.map((player, i) => (
+          <button
+            key={`dot-${player.id}`}
+            type="button"
+            role="tab"
+            aria-selected={i === activeIndex}
+            aria-label={player.nombre}
+            className={[
+              "reta-eq-dock__dot",
+              `reta-eq-dock__dot--${side}`,
+              i === activeIndex ? "is-active" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            onClick={() => onSelect(i)}
+          />
+        ))}
+      </div>
+
+      <div className="reta-eq-dock__pills">
+        {players.map((player, i) => (
+          <DockPill
+            key={player.id}
+            player={player}
+            active={i === activeIndex}
+            onSelect={() => onSelect(i)}
+            side={side}
+          />
+        ))}
+      </div>
     </div>
   );
 };

@@ -237,6 +237,42 @@
    PUBLIC — Broadcast previa (scoped .reta-eq-stage*)
    ============================================================================= */
 
+
+/* Cancha global más visible con hero/live de equipos (sin placa negra) */
+.ro-public-view:has(.reta-eq-stage)::before,
+.ro-public-view:has(.reta-eq-live-header)::before {
+  opacity: 0.32;
+}
+
+.ro-public-view:has(.reta-eq-stage)::after,
+.ro-public-view:has(.reta-eq-live-header)::after {
+  background: linear-gradient(
+    180deg,
+    rgba(12, 12, 12, 0.45) 0%,
+    rgba(12, 12, 12, 0.18) 35%,
+    rgba(12, 12, 12, 0.28) 65%,
+    rgba(12, 12, 12, 0.55) 100%
+  );
+}
+
+@media (max-width: 768px), (orientation: portrait) and (max-width: 1024px) {
+  .ro-public-view:has(.reta-eq-stage)::before,
+  .ro-public-view:has(.reta-eq-live-header)::before {
+    opacity: 0.36;
+  }
+
+  .ro-public-view:has(.reta-eq-stage)::after,
+  .ro-public-view:has(.reta-eq-live-header)::after {
+    background: linear-gradient(
+      180deg,
+      rgba(12, 12, 12, 0.4) 0%,
+      rgba(12, 12, 12, 0.15) 35%,
+      rgba(12, 12, 12, 0.25) 65%,
+      rgba(12, 12, 12, 0.5) 100%
+    );
+  }
+}
+
 .reta-eq-stage {
   position: relative;
   width: 100%;
@@ -488,26 +524,47 @@
   max-width: 100%;
 }
 
-/* Full-bleed player spotlight */
+/* Glassmorphic player spotlight — cancha se ve a través */
 .reta-eq-frame {
   position: relative;
   width: 100%;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #121216;
-  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  transform-style: preserve-3d;
+}
+
+.reta-eq-frame--a {
+  border-top: 2px solid #e5c158;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    0 0 18px rgba(229, 193, 88, 0.12);
+}
+
+.reta-eq-frame--b {
+  border-top: 2px solid #d95d39;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    0 0 18px rgba(217, 93, 57, 0.12);
 }
 
 .reta-eq-frame--empty {
   aspect-ratio: 3 / 4;
-  min-height: clamp(210px, 32vh, 260px);
+  min-height: clamp(160px, 28vh, 220px);
   display: grid;
   place-items: center;
 }
 
 .reta-eq-frame--enter {
   animation: reta-eq-morph 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.reta-eq-frame--broadcast {
+  animation: broadcastCardReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes reta-eq-morph {
@@ -521,14 +578,30 @@
   }
 }
 
+@keyframes broadcastCardReveal {
+  0% {
+    opacity: 0;
+    transform: perspective(1000px) rotateY(-12deg) scale(0.93) translateY(10px);
+    filter: blur(6px) brightness(1.4);
+  }
+  60% {
+    filter: blur(0) brightness(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1000px) rotateY(0deg) scale(1) translateY(0);
+    filter: blur(0) brightness(1);
+  }
+}
+
 .reta-eq-frame__media {
   position: relative;
   width: 100%;
   aspect-ratio: 3 / 4;
   height: auto;
-  max-height: clamp(210px, 32vh, 260px);
+  max-height: clamp(160px, 28vh, 220px);
   overflow: hidden;
-  background: #121216;
+  background: rgba(10, 10, 14, 0.35);
 }
 
 .reta-eq-frame__cover {
@@ -558,8 +631,8 @@
   display: grid;
   place-items: center;
   background:
-    radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.07), transparent 55%),
-    linear-gradient(165deg, #16161a, #0a0a0e);
+    radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.08), transparent 55%),
+    rgba(10, 10, 14, 0.45);
 }
 
 .reta-eq-frame__fallback-initials {
@@ -679,12 +752,66 @@
   color: #a3a3a3;
 }
 
-/* Tactical fluid roster dock — pills per team */
+/* Roster: dots en móvil, pills en desktop */
 .reta-eq-dock {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+  max-width: 100%;
+}
+
+.reta-eq-dock__dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 12px;
+  padding: 0.15rem 0;
+}
+
+.reta-eq-dock__dot {
+  appearance: none;
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition:
+    width 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reta-eq-dock__dot--a.is-active {
+  width: 18px;
+  background: #e5c158;
+  border-color: #e5c158;
+  box-shadow: 0 0 10px rgba(229, 193, 88, 0.45);
+}
+
+.reta-eq-dock__dot--b.is-active {
+  width: 18px;
+  background: #d95d39;
+  border-color: #d95d39;
+  box-shadow: 0 0 10px rgba(217, 93, 57, 0.4);
+}
+
+.reta-eq-dock__dot:focus-visible {
+  outline: 2px solid rgba(229, 193, 88, 0.7);
+  outline-offset: 2px;
+}
+
+/* Pills: ocultas en móvil (anti-matriz) */
+.reta-eq-dock__pills {
+  display: none;
   flex-wrap: wrap;
   gap: 0.35rem;
-  margin-top: 0.15rem;
+  justify-content: center;
   max-width: 100%;
 }
 
@@ -760,25 +887,50 @@
 }
 
 .reta-eq-dock__surname {
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 4.25rem;
+  max-width: 6rem;
 }
 
 @media (min-width: 769px) {
-  .reta-eq-dock__surname {
-    font-size: 0.68rem;
-    max-width: 6rem;
+  .reta-eq-dock__dots {
+    display: none;
+  }
+
+  .reta-eq-dock__pills {
+    display: flex;
   }
 }
 
-/* Legacy rail aliases (safe if leftover) */
-.reta-eq-rail { display: none; }
+/* Mobile: solo foto + nombre (sin meta secundaria) */
+@media (max-width: 768px) {
+  .reta-eq-frame__pais,
+  .reta-eq-frame__meta,
+  .reta-eq-frame__pos {
+    display: none !important;
+  }
+
+  .reta-eq-grid {
+    gap: 0.625rem;
+  }
+
+  .reta-eq-col {
+    gap: 0.3rem;
+  }
+
+  .reta-eq-stage__shell {
+    padding-bottom: 0.65rem;
+  }
+
+  .reta-eq-center {
+    gap: 0.55rem;
+  }
+}
 
 /* Center column — locked under duel on mobile */
 .reta-eq-center {
@@ -1240,7 +1392,9 @@
 @media (prefers-reduced-motion: reduce) {
   .reta-eq-anim-in,
   .reta-eq-frame--enter,
+  .reta-eq-frame--broadcast,
   .reta-eq-dock__pill,
+  .reta-eq-dock__dot,
   .reta-eq-countdown__pulse {
     animation: none !important;
   }

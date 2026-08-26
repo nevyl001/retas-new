@@ -1027,7 +1027,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   return (
     <PublicTorneoExpressShell
-      className="te-public--reta te-public--reta-wide"
+      className={`te-public--reta te-public--reta-wide${
+        isTeamsPublicView ? " te-public--reta-equipos" : ""
+      }`}
       organizadorId={organizadorId}
     >
       {isTeamsPublicView ? (
