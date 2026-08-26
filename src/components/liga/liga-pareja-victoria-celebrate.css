@@ -9,10 +9,259 @@
 }
 
 .liga-parejas-victorias-grid--winner {
-  grid-template-columns: minmax(0, 420px);
+  grid-template-columns: minmax(0, 460px);
   justify-content: center;
   margin: clamp(1.75rem, 3.5vw, 2.75rem) auto clamp(1.25rem, 2.5vw, 1.75rem);
   max-width: 100%;
+  position: relative;
+}
+
+/* Shell + ambient balls */
+.liga-celebrate-shell {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-width: 0;
+}
+
+.liga-celebrate-ambient {
+  position: absolute;
+  inset: -12% -8%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.liga-celebrate-ball {
+  position: absolute;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 32% 28%,
+      color-mix(in srgb, var(--brand-accent, #d6ef3a) 55%, #fff) 0%,
+      color-mix(in srgb, var(--brand-accent, #d6ef3a) 35%, transparent) 42%,
+      transparent 72%
+    );
+  opacity: 0.14;
+  filter: blur(0.2px);
+  will-change: transform;
+}
+
+.liga-celebrate-ball--a {
+  width: 52px;
+  height: 52px;
+  left: 6%;
+  top: 18%;
+  animation: liga-celebrate-ball-drift-a 18s ease-in-out infinite alternate;
+}
+
+.liga-celebrate-ball--b {
+  width: 34px;
+  height: 34px;
+  right: 10%;
+  top: 28%;
+  opacity: 0.1;
+  animation: liga-celebrate-ball-drift-b 22s ease-in-out infinite alternate;
+}
+
+.liga-celebrate-ball--c {
+  width: 44px;
+  height: 44px;
+  left: 18%;
+  bottom: 16%;
+  opacity: 0.11;
+  background:
+    radial-gradient(
+      circle at 32% 28%,
+      color-mix(in srgb, var(--brand-primary, #2a4ba7) 50%, #fff) 0%,
+      color-mix(in srgb, var(--brand-primary, #2a4ba7) 28%, transparent) 45%,
+      transparent 72%
+    );
+  animation: liga-celebrate-ball-drift-c 20s ease-in-out infinite alternate;
+}
+
+.liga-celebrate-ball--d {
+  width: 28px;
+  height: 28px;
+  right: 16%;
+  bottom: 22%;
+  opacity: 0.12;
+  animation: liga-celebrate-ball-drift-d 16s ease-in-out infinite alternate;
+}
+
+@keyframes liga-celebrate-ball-drift-a {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(10px, -12px, 0);
+  }
+}
+
+@keyframes liga-celebrate-ball-drift-b {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-8px, 10px, 0);
+  }
+}
+
+@keyframes liga-celebrate-ball-drift-c {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(8px, 8px, 0);
+  }
+}
+
+@keyframes liga-celebrate-ball-drift-d {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-6px, -8px, 0);
+  }
+}
+
+.liga-celebrate-shell .liga-pareja-victoria-celebrate__podium {
+  position: relative;
+  z-index: 1;
+}
+
+/* Match results against rivals */
+.liga-celebrate-matches {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.85rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid
+    color-mix(in srgb, var(--brand-primary, #2a4ba7) 40%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--brand-primary, #2a4ba7) 12%,
+    rgba(6, 8, 12, 0.72)
+  );
+  backdrop-filter: blur(8px);
+}
+
+.liga-celebrate-matches__title {
+  margin: 0 0 0.55rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brand-accent, #d6ef3a);
+}
+
+.liga-celebrate-matches__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.liga-celebrate-matches__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.4rem 0.45rem;
+  border-radius: 8px;
+  border: 1px solid
+    color-mix(in srgb, var(--brand-primary, #2a4ba7) 28%, transparent);
+  background: color-mix(in srgb, var(--brand-surface, #0a0e14) 55%, transparent);
+}
+
+.liga-celebrate-matches__rival {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.liga-celebrate-matches__vs {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-muted, #a8b8d8);
+}
+
+.liga-celebrate-matches__name {
+  min-width: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--brand-text, #f2efe8);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liga-celebrate-matches__cancha {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: var(--brand-muted, #a8b8d8);
+}
+
+.liga-celebrate-matches__result {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.liga-celebrate-matches__score {
+  font-size: 0.72rem;
+  color: var(--brand-muted, #a8b8d8);
+}
+
+.liga-celebrate-matches__pts {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--brand-accent, #d6ef3a);
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .liga-celebrate-matches {
+  animation: liga-motion-fade-up var(--motion-enter) both;
+  animation-delay: 780ms;
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .liga-celebrate-matches__row {
+  animation: liga-motion-fade var(--motion-micro) both;
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .liga-celebrate-matches__row:nth-child(1) {
+  animation-delay: 820ms;
+}
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .liga-celebrate-matches__row:nth-child(2) {
+  animation-delay: 880ms;
+}
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .liga-celebrate-matches__row:nth-child(3) {
+  animation-delay: 940ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liga-celebrate-ball {
+    animation: none !important;
+  }
+
+  .liga-parejas-victorias-grid--winner.liga-celebrate--play .liga-celebrate-matches,
+  .liga-parejas-victorias-grid--winner.liga-celebrate--play .liga-celebrate-matches__row {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* Brand tokens — no gold chrome; champion accent = brand accent */

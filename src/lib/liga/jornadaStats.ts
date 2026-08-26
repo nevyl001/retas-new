@@ -47,6 +47,9 @@ export type ParejaJornadaMatchLine = {
   /** Marcador desde la perspectiva de la pareja (sus games primero). */
   scoreLabel: string;
   points: number;
+  /** Nombre de la pareja rival. */
+  opponentLabel?: string;
+  cancha?: number | null;
 };
 
 function formatSignedPoints(points: number): string {
@@ -94,15 +97,32 @@ export function buildJornadaParejaMatchBreakdowns(
 ): Map<string, ParejaJornadaMatchLine[]> {
   const parejasFijas = options?.parejasFijas === true;
   const out = new Map<string, ParejaJornadaMatchLine[]>();
+  const parejaNombre = new Map<string, string>();
+  for (const p of jornada?.parejas ?? []) {
+    parejaNombre.set(p.id, parejaDisplayName(p));
+  }
   const partidos = (jornada?.partidos ?? []).filter(
     (p) => p.estado === "completed"
   );
 
+  const pushLine = (
+    parejaId: string,
+    opponentId: string,
+    line: Omit<ParejaJornadaMatchLine, "opponentLabel" | "cancha"> & {
+      cancha?: number | null;
+    }
+  ) => {
+    if (!out.has(parejaId)) out.set(parejaId, []);
+    out.get(parejaId)!.push({
+      ...line,
+      opponentLabel: parejaNombre.get(opponentId) ?? "Rival",
+      cancha: line.cancha ?? null,
+    });
+  };
+
   for (const m of partidos) {
     const id1 = m.pareja1_id;
     const id2 = m.pareja2_id;
-    if (!out.has(id1)) out.set(id1, []);
-    if (!out.has(id2)) out.set(id2, []);
 
     if (parejasFijas) {
       const playoffsPayload = parsePlayoffsSetScoresJson(m.set_scores);
@@ -123,7 +143,7 @@ export function buildJornadaParejaMatchBreakdowns(
           playoffsPayload
         );
         if (!computed.ok) continue;
-        out.get(id1)!.push({
+        pushLine(id1, id2, {
           partidoId: m.id,
           scoreLabel: flipPlayoffsScoreLabel(
             derived.gamesTotalP1,
@@ -132,8 +152,9 @@ export function buildJornadaParejaMatchBreakdowns(
             1
           ),
           points: computed.result.pointsP1,
+          cancha: m.cancha,
         });
-        out.get(id2)!.push({
+        pushLine(id2, id1, {
           partidoId: m.id,
           scoreLabel: flipPlayoffsScoreLabel(
             derived.gamesTotalP1,
@@ -142,6 +163,7 @@ export function buildJornadaParejaMatchBreakdowns(
             2
           ),
           points: computed.result.pointsP2,
+          cancha: m.cancha,
         });
         continue;
       }
@@ -159,30 +181,34 @@ export function buildJornadaParejaMatchBreakdowns(
       if (!totals) continue;
       const pts1 = parejasFijasVictoryRankingPoints(totals, true);
       const pts2 = parejasFijasVictoryRankingPoints(totals, false);
-      out.get(id1)!.push({
+      pushLine(id1, id2, {
         partidoId: m.id,
         scoreLabel: totals.display,
         points: pts1,
+        cancha: m.cancha,
       });
-      out.get(id2)!.push({
+      pushLine(id2, id1, {
         partidoId: m.id,
         scoreLabel: totals.display,
         points: pts2,
+        cancha: m.cancha,
       });
       continue;
     }
 
     const s1 = Number(m.score_pareja1 ?? 0);
     const s2 = Number(m.score_pareja2 ?? 0);
-    out.get(id1)!.push({
+    pushLine(id1, id2, {
       partidoId: m.id,
       scoreLabel: `${s1}-${s2}`,
       points: s1,
+      cancha: m.cancha,
     });
-    out.get(id2)!.push({
+    pushLine(id2, id1, {
       partidoId: m.id,
       scoreLabel: `${s2}-${s1}`,
       points: s2,
+      cancha: m.cancha,
     });
   }
 

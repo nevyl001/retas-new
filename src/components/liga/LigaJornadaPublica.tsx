@@ -5,8 +5,6 @@ import {
   formatSignedPoints,
 } from "../../lib/liga/jornadaStats";
 import {
-  buildVictoriaRankLabel,
-  findPartidoGanadoPareja,
   statsParejaJornadaVictoria,
 } from "../../lib/liga/jornadaCelebrate";
 import {
@@ -931,13 +929,11 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 )}
                 torneoNombre={detalle.nombre}
                 jornadaNumero={numero}
-                rankLabel={buildVictoriaRankLabel(
-                  findPartidoGanadoPareja(
-                    jornadaStats.ganadorPareja.parejaId,
-                    jornada
-                  ),
-                  jornada.fecha
-                )}
+                matchLines={
+                  jornadaMatchBreakdowns.get(
+                    jornadaStats.ganadorPareja.parejaId
+                  ) ?? []
+                }
                 stats={statsParejaJornadaVictoria(
                   jornadaStats.ganadorPareja.parejaId,
                   jornada,
