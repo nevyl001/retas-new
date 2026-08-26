@@ -2964,11 +2964,38 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  padding: 0.14rem 0.28rem;
+  width: 1.65rem;
+  height: 1.65rem;
+  padding: 0;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  line-height: 0;
+  line-height: 1;
+  overflow: hidden;
+}
+
+.reta-eq-cara__pais .rj-pais-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  gap: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.reta-eq-cara__pais .rj-pais-badge__flag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  font-size: 0.95rem;
+  line-height: 1;
 }
 
 .reta-eq-cara__medal {
@@ -3055,7 +3082,9 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  text-shadow: none;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.92),
+    0 0 6px rgba(0, 0, 0, 0.65);
 }
 
 .reta-eq-center--duel {
