@@ -48,7 +48,7 @@ function parseScorePair(
   label: string | null | undefined
 ): { a: number; b: number } | null {
   if (!label) return null;
-  const m = label.match(/(\d+)\s*[—–\-]\s*(\d+)/);
+  const m = label.match(/(\d+)\s*[—–-]\s*(\d+)/);
   if (!m) return null;
   return { a: Number(m[1]), b: Number(m[2]) };
 }
