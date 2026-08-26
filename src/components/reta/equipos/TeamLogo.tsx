@@ -28,6 +28,7 @@ export const TeamLogo: React.FC<TeamLogoProps> = ({
   const cls = [
     "reta-eq-logo",
     `reta-eq-logo--${size}`,
+    src ? "reta-eq-logo--has-img" : "reta-eq-logo--fallback",
     className,
   ]
     .filter(Boolean)

@@ -375,41 +375,66 @@
 }
 
 .reta-eq-matchbar__logo,
-.reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo {
+.reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo,
+.reta-eq-live-header .reta-eq-matchbar__logo {
   position: relative;
   z-index: 1;
-  width: 52px !important;
-  height: 52px !important;
+  width: 64px !important;
+  height: 64px !important;
   flex-shrink: 0;
-  border: 1px solid transparent !important;
+  overflow: hidden;
+  border: 2px solid rgba(244, 241, 235, 0.2) !important;
+  background: #0f1116 !important;
+  box-shadow: none !important;
 }
 
+/* Acento de equipo: anillo, no relleno que aplaste el logo */
 .reta-eq-matchbar__logo--a,
-.reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo--a {
-  background: linear-gradient(145deg, #e5c158, #997a23) !important;
-  border-color: rgba(229, 193, 88, 0.55) !important;
-  box-shadow: 0 0 20px rgba(229, 193, 88, 0.35) !important;
-  color: #0b0c10;
+.reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo--a,
+.reta-eq-live-header .reta-eq-matchbar__logo--a {
+  border-color: rgba(229, 193, 88, 0.7) !important;
+  box-shadow: 0 0 0 1px rgba(229, 193, 88, 0.2) !important;
 }
 
 .reta-eq-matchbar__logo--b,
-.reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo--b {
+.reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo--b,
+.reta-eq-live-header .reta-eq-matchbar__logo--b {
+  border-color: rgba(224, 86, 56, 0.7) !important;
+  box-shadow: 0 0 0 1px rgba(224, 86, 56, 0.2) !important;
+}
+
+/* Fallback sin imagen: gradiente de equipo + iniciales legibles */
+.reta-eq-matchbar__logo--a.reta-eq-logo--fallback,
+.reta-eq-live-header .reta-eq-matchbar__logo--a.reta-eq-logo--fallback {
+  background: linear-gradient(145deg, #e5c158, #997a23) !important;
+  color: #0b0c10;
+}
+
+.reta-eq-matchbar__logo--b.reta-eq-logo--fallback,
+.reta-eq-live-header .reta-eq-matchbar__logo--b.reta-eq-logo--fallback {
   background: linear-gradient(145deg, #e05638, #8c2c19) !important;
-  border-color: rgba(224, 86, 56, 0.55) !important;
-  box-shadow: 0 0 20px rgba(224, 86, 56, 0.35) !important;
   color: #fff8f5;
 }
 
-.reta-eq-matchbar__logo--a .reta-eq-logo__initials,
-.reta-eq-matchbar__logo--b .reta-eq-logo__initials {
+.reta-eq-matchbar__logo .reta-eq-logo__initials,
+.reta-eq-live-header .reta-eq-matchbar__logo .reta-eq-logo__initials {
   color: inherit;
   font-weight: 800;
-  font-size: 0.85rem;
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
 }
 
-.reta-eq-matchbar__logo--a .reta-eq-logo__img,
-.reta-eq-matchbar__logo--b .reta-eq-logo__img {
-  background: rgba(0, 0, 0, 0.2);
+/* Logo real: llena el círculo, sin padding que lo achique */
+.reta-eq-matchbar__logo .reta-eq-logo__img,
+.reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo .reta-eq-logo__img,
+.reta-eq-live-header .reta-eq-matchbar__logo .reta-eq-logo__img {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 6% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  background: transparent !important;
+  display: block;
 }
 
 .reta-eq-matchbar__name {
@@ -428,18 +453,24 @@
 
 @media (min-width: 768px) {
   .reta-eq-matchbar__logo,
-  .reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo {
-    width: 60px !important;
-    height: 60px !important;
+  .reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo,
+  .reta-eq-live-header .reta-eq-matchbar__logo {
+    width: 76px !important;
+    height: 76px !important;
   }
 
   .reta-eq-matchbar__name {
     font-size: 1.45rem;
   }
 
-  .reta-eq-matchbar__logo--a .reta-eq-logo__initials,
-  .reta-eq-matchbar__logo--b .reta-eq-logo__initials {
-    font-size: 1rem;
+  .reta-eq-matchbar__logo .reta-eq-logo__initials,
+  .reta-eq-live-header .reta-eq-matchbar__logo .reta-eq-logo__initials {
+    font-size: 1.35rem;
+  }
+
+  .reta-eq-matchbar__logo .reta-eq-logo__img,
+  .reta-eq-live-header .reta-eq-matchbar__logo .reta-eq-logo__img {
+    padding: 5% !important;
   }
 }
 

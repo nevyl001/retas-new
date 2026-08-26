@@ -146,7 +146,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
             <TeamLogo
               logoUrl={logoA}
               teamName={nameA}
-              size="lg"
+              size="xl"
               loading="eager"
               className="reta-eq-matchbar__logo reta-eq-matchbar__logo--a"
             />
@@ -163,7 +163,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
             <TeamLogo
               logoUrl={logoB}
               teamName={nameB}
-              size="lg"
+              size="xl"
               loading="eager"
               className="reta-eq-matchbar__logo reta-eq-matchbar__logo--b"
             />
@@ -201,7 +201,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
             <TeamLogo
               logoUrl={logoA}
               teamName={nameA}
-              size="lg"
+              size="xl"
               loading="eager"
               className="reta-eq-matchbar__logo reta-eq-matchbar__logo--a"
             />
@@ -215,7 +215,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
             <TeamLogo
               logoUrl={logoB}
               teamName={nameB}
-              size="lg"
+              size="xl"
               loading="eager"
               className="reta-eq-matchbar__logo reta-eq-matchbar__logo--b"
             />
