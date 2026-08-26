@@ -4,15 +4,47 @@ import "../styles/public-link-section.css";
 
 const TEAM_CONFIG_KEY = "rivieraapp_teams_";
 
-function getTeamConfig(tournament: Tournament): { teamNames: string[]; pairToTeam: Record<string, number> } | null {
-  if (tournament.format === "teams" && tournament.team_config?.teamNames?.length && tournament.team_config?.pairToTeam)
-    return tournament.team_config;
+function getTeamConfig(tournament: Tournament): {
+  teamNames: string[];
+  pairToTeam: Record<string, number>;
+  teamLogos?: (string | null)[];
+} | null {
+  if (
+    tournament.format === "teams" &&
+    tournament.team_config?.teamNames?.length &&
+    tournament.team_config?.pairToTeam
+  ) {
+    return {
+      teamNames: tournament.team_config.teamNames,
+      pairToTeam: tournament.team_config.pairToTeam,
+      ...(tournament.team_config.teamLogos
+        ? { teamLogos: tournament.team_config.teamLogos }
+        : {}),
+    };
+  }
   try {
-    const raw = typeof window !== "undefined" ? localStorage.getItem(`${TEAM_CONFIG_KEY}${tournament.id}`) : null;
+    const raw =
+      typeof window !== "undefined"
+        ? localStorage.getItem(`${TEAM_CONFIG_KEY}${tournament.id}`)
+        : null;
     if (!raw) return null;
-    const data = JSON.parse(raw);
-    if (data?.teamNames?.length && data?.pairToTeam && typeof data.pairToTeam === "object") return data;
-    return null;
+    const data = JSON.parse(raw) as {
+      teamNames?: string[];
+      pairToTeam?: Record<string, number>;
+      teamLogos?: (string | null)[];
+    };
+    if (
+      !data?.teamNames?.length ||
+      !data?.pairToTeam ||
+      typeof data.pairToTeam !== "object"
+    ) {
+      return null;
+    }
+    return {
+      teamNames: data.teamNames,
+      pairToTeam: data.pairToTeam,
+      ...(data.teamLogos ? { teamLogos: data.teamLogos } : {}),
+    };
   } catch {
     return null;
   }

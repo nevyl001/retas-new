@@ -657,6 +657,7 @@ export const isTournamentPublicConfigColumnAvailable = async (
 /**
  * Guarda config pública para que la vista pública (anon) pueda mostrar tabla por equipos.
  * Llamar al iniciar reta por equipos. Tabla tournament_public_config con RLS: INSERT/UPDATE para authenticated.
+ * Si el payload nuevo no trae logos, conserva los de la fila existente.
  */
 export const upsertTournamentPublicConfig = async (
   tournamentId: string,
@@ -664,8 +665,34 @@ export const upsertTournamentPublicConfig = async (
   team_config: TournamentTeamConfig | null
 ) => {
   try {
+    let nextConfig = team_config;
+    const incomingHasLogos =
+      Array.isArray(team_config?.teamLogos) &&
+      team_config!.teamLogos!.some(
+        (url) => typeof url === "string" && url.trim().length > 0
+      );
+
+    if (team_config && !incomingHasLogos) {
+      const { data: existing } = await supabase
+        .from("tournament_public_config")
+        .select("team_config")
+        .eq("tournament_id", tournamentId)
+        .maybeSingle();
+      const existingLogos = (
+        existing?.team_config as TournamentTeamConfig | null | undefined
+      )?.teamLogos;
+      const existingHasLogos =
+        Array.isArray(existingLogos) &&
+        existingLogos.some(
+          (url) => typeof url === "string" && url.trim().length > 0
+        );
+      if (existingHasLogos) {
+        nextConfig = { ...team_config, teamLogos: existingLogos };
+      }
+    }
+
     const { error } = await supabase.from("tournament_public_config").upsert(
-      { tournament_id: tournamentId, format, team_config: team_config ?? null },
+      { tournament_id: tournamentId, format, team_config: nextConfig ?? null },
       { onConflict: "tournament_id" }
     );
     if (error) {

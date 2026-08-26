@@ -356,6 +356,29 @@ function isCompleteTeamConfig(
   );
 }
 
+function hasUsableTeamLogos(
+  logos: (string | null)[] | null | undefined
+): boolean {
+  return (
+    Array.isArray(logos) &&
+    logos.some((url) => typeof url === "string" && url.trim().length > 0)
+  );
+}
+
+/** Conserva logos de otra fuente si la config primaria no trae ninguno usable. */
+export function enrichTeamConfigWithLogos(
+  primary: TeamConfig,
+  ...sources: (TeamConfig | TournamentTeamConfig | null | undefined)[]
+): TeamConfig {
+  if (hasUsableTeamLogos(primary.teamLogos)) return primary;
+  for (const source of sources) {
+    if (hasUsableTeamLogos(source?.teamLogos)) {
+      return { ...primary, teamLogos: source!.teamLogos };
+    }
+  }
+  return primary;
+}
+
 /** Guarda borrador de equipos (prep) en localStorage. */
 export function saveTeamConfigToStorage(
   tournamentId: string,
@@ -497,6 +520,8 @@ export function getTeamConfigFromStorage(tournamentId: string): TeamConfig | nul
  * Vista pública: team_config solo si el torneo es por equipos o hay config explícita
  * (Supabase `tournament_public_config`, fila del torneo, localStorage o hash #teams=).
  * No usa inferencia ni "Equipo 1 / Equipo 2" para retas round robin.
+ * Si la fuente primaria no trae logos, se enriquecen desde las demás (evita
+ * que un public_config sin teamLogos oculte logos válidos del torneo/LS).
  */
 export function resolvePublicStandingsTeamConfig(
   tournament: Tournament | null | undefined,
@@ -507,21 +532,36 @@ export function resolvePublicStandingsTeamConfig(
   if (tournament?.format === "round_robin") {
     return null;
   }
+
+  const stored = getTeamConfigFromStorage(tournamentId);
+  const logoSources = [
+    configFromPublic,
+    tournament?.team_config,
+    stored,
+    hashTeamConfig,
+  ];
+
+  const withLogos = (cfg: TeamConfig): TeamConfig =>
+    enrichTeamConfigWithLogos(cfg, ...logoSources);
+
   if (isCompleteTeamConfig(configFromPublic ?? undefined)) {
-    return configFromPublic as TeamConfig;
+    return withLogos(configFromPublic as TeamConfig);
   }
   if (tournament?.format === "teams") {
     if (isCompleteTeamConfig(tournament.team_config)) {
-      return tournament.team_config as TeamConfig;
+      return withLogos(tournament.team_config as TeamConfig);
     }
-    const stored = getTeamConfigFromStorage(tournamentId);
-    if (isCompleteTeamConfig(stored)) return stored;
-    if (isCompleteTeamConfig(hashTeamConfig ?? undefined)) return hashTeamConfig!;
+    if (isCompleteTeamConfig(stored)) return withLogos(stored);
+    if (isCompleteTeamConfig(hashTeamConfig ?? undefined)) {
+      return withLogos(hashTeamConfig!);
+    }
     return null;
   }
   if (isCompleteTeamConfig(tournament?.team_config)) {
-    return tournament!.team_config as TeamConfig;
+    return withLogos(tournament!.team_config as TeamConfig);
   }
-  if (isCompleteTeamConfig(hashTeamConfig ?? undefined)) return hashTeamConfig!;
+  if (isCompleteTeamConfig(hashTeamConfig ?? undefined)) {
+    return withLogos(hashTeamConfig!);
+  }
   return null;
 }

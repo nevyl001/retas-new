@@ -2,8 +2,11 @@ import {
   getMatchScoresForStandings,
   computePairsWithStats,
   sortPairsForStandings,
+  enrichTeamConfigWithLogos,
+  resolvePublicStandingsTeamConfig,
 } from "./standingsUtils";
 import type { Game, Match, Pair } from "./database";
+import type { Tournament } from "./db/types";
 
 const pair = (
   id: string,
@@ -85,5 +88,42 @@ describe("standingsUtils", () => {
     const sorted = sortPairsForStandings(withStats, matches, []);
     expect(sorted[0]?.id).toBe("p1");
     expect(sorted[0]?.points).toBeGreaterThan(sorted[1]?.points ?? 0);
+  });
+
+  it("enriquece teamLogos cuando la config primaria no los trae", () => {
+    const primary = {
+      teamNames: ["Oasis", "Break"],
+      pairToTeam: { p1: 0, p2: 1 },
+    };
+    const withLogos = enrichTeamConfigWithLogos(primary, {
+      teamNames: ["Oasis", "Break"],
+      pairToTeam: { p1: 0, p2: 1 },
+      teamLogos: ["https://cdn.example/oasis.png", null],
+    });
+    expect(withLogos.teamLogos?.[0]).toBe("https://cdn.example/oasis.png");
+  });
+
+  it("recupera logos del torneo si public_config no los trae", () => {
+    const tournament = {
+      id: "t-logos",
+      format: "teams",
+      team_config: {
+        teamNames: ["Oasis", "Break"],
+        pairToTeam: { p1: 0, p2: 1 },
+        teamLogos: ["https://cdn.example/a.png", "https://cdn.example/b.png"],
+      },
+    } as Tournament;
+    const publicCfg = {
+      teamNames: ["Oasis", "Break"],
+      pairToTeam: { p1: 0, p2: 1 },
+    };
+    const resolved = resolvePublicStandingsTeamConfig(
+      tournament,
+      publicCfg,
+      "t-logos",
+      null
+    );
+    expect(resolved?.teamLogos?.[0]).toBe("https://cdn.example/a.png");
+    expect(resolved?.teamLogos?.[1]).toBe("https://cdn.example/b.png");
   });
 });
