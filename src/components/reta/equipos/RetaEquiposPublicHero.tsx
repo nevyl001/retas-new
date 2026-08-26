@@ -52,6 +52,49 @@ function shortTeamLabel(name: string): string {
   return cleaned || name;
 }
 
+function TransmissionPill({
+  fecha,
+  horario,
+  lugar,
+  status,
+}: {
+  fecha: string | null;
+  horario: string | null;
+  lugar?: string | null;
+  status: string;
+}) {
+  const parts: { key: string; icon: string; text: string }[] = [];
+  if (fecha) parts.push({ key: "fecha", icon: "📅", text: fecha });
+  if (horario) parts.push({ key: "hora", icon: "⏰", text: horario });
+  if (lugar?.trim()) {
+    parts.push({ key: "lugar", icon: "📍", text: `Cancha ${lugar.trim()}` });
+  }
+  if (status) parts.push({ key: "status", icon: "", text: status });
+  if (parts.length === 0) return null;
+
+  return (
+    <p className="reta-eq-tx-pill" aria-label="Datos del duelo">
+      {parts.map((p, i) => (
+        <React.Fragment key={p.key}>
+          {i > 0 ? (
+            <span className="reta-eq-tx-pill__sep" aria-hidden>
+              ·
+            </span>
+          ) : null}
+          <span className="reta-eq-tx-pill__item">
+            {p.icon ? (
+              <span className="reta-eq-tx-pill__icon" aria-hidden>
+                {p.icon}
+              </span>
+            ) : null}
+            <span>{p.text}</span>
+          </span>
+        </React.Fragment>
+      ))}
+    </p>
+  );
+}
+
 export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   eventName,
   teamNames,
@@ -88,11 +131,6 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
     [programadoEn, programadoHasta]
   );
 
-  const metaRail = useMemo(() => {
-    const bits = [fechaOnly, horarioOnly, lugar, statusLabel].filter(Boolean);
-    return bits.join(" · ");
-  }, [fechaOnly, horarioOnly, lugar, statusLabel]);
-
   const eventTitle = eventName?.trim() || null;
   const defaultVs = `${nameA} vs ${nameB}`;
   const showEventTitle =
@@ -103,19 +141,14 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   if (compact) {
     return (
       <header className="reta-eq-live-header reta-eq-anim-in">
-        <p className="reta-eq-live-header__kicker">
-          {TEAMS_PUBLIC_FORMAT_LABEL}
-          <span aria-hidden> · </span>
-          {statusLabel}
-        </p>
         <div className="reta-eq-live-header__row">
           <div className="reta-eq-live-header__side">
             <TeamLogo
               logoUrl={logoA}
               teamName={nameA}
-              size="md"
+              size="lg"
               loading="eager"
-              className="reta-eq-logo--ring"
+              className="reta-eq-matchbar__logo reta-eq-matchbar__logo--a"
             />
             <span className="reta-eq-live-header__name">{labelA}</span>
           </div>
@@ -130,15 +163,18 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
             <TeamLogo
               logoUrl={logoB}
               teamName={nameB}
-              size="md"
+              size="lg"
               loading="eager"
-              className="reta-eq-logo--ring"
+              className="reta-eq-matchbar__logo reta-eq-matchbar__logo--b"
             />
           </div>
         </div>
-        {metaRail ? (
-          <p className="reta-eq-live-header__meta">{metaRail}</p>
-        ) : null}
+        <TransmissionPill
+          fecha={fechaOnly}
+          horario={horarioOnly}
+          lugar={lugar}
+          status={statusLabel}
+        />
       </header>
     );
   }
@@ -147,10 +183,6 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
     <section className="reta-eq-stage reta-eq-anim-in">
       <div className="reta-eq-stage__shell">
         <header className="reta-eq-stage__header">
-          {fechaOnly ? (
-            <p className="reta-eq-stage__date">{fechaOnly}</p>
-          ) : null}
-          <p className="reta-eq-stage__eyebrow">{TEAMS_PUBLIC_FORMAT_LABEL}</p>
           {showEventTitle ? (
             <h1 className="reta-eq-stage__title">{eventTitle}</h1>
           ) : (
@@ -158,9 +190,9 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
               {labelA} versus {labelB}
             </h1>
           )}
+          <p className="visually-hidden">{TEAMS_PUBLIC_FORMAT_LABEL}</p>
         </header>
 
-        {/* Única barra de enfrentamiento — sin capas duplicadas */}
         <div
           className="reta-eq-matchbar"
           aria-label={`${labelA} versus ${labelB}`}
@@ -169,9 +201,9 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
             <TeamLogo
               logoUrl={logoA}
               teamName={nameA}
-              size="md"
+              size="lg"
               loading="eager"
-              className="reta-eq-logo--ring reta-eq-matchbar__logo"
+              className="reta-eq-matchbar__logo reta-eq-matchbar__logo--a"
             />
             <span className="reta-eq-matchbar__name">{labelA}</span>
           </div>
@@ -183,9 +215,9 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
             <TeamLogo
               logoUrl={logoB}
               teamName={nameB}
-              size="md"
+              size="lg"
               loading="eager"
-              className="reta-eq-logo--ring reta-eq-matchbar__logo"
+              className="reta-eq-matchbar__logo reta-eq-matchbar__logo--b"
             />
           </div>
         </div>
@@ -215,9 +247,12 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
 
           <div className="reta-eq-grid__center">
             <div className="reta-eq-center">
-              {metaRail ? (
-                <p className="reta-eq-meta-rail">{metaRail}</p>
-              ) : null}
+              <TransmissionPill
+                fecha={fechaOnly}
+                horario={horarioOnly}
+                lugar={lugar}
+                status={statusLabel}
+              />
               <div className="reta-eq-center__countdown">
                 <RetaEquiposCountdown
                   programadoEn={programadoEn}

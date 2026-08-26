@@ -100,7 +100,7 @@ export const RetaEquiposTeamColumn: React.FC<RetaEquiposTeamColumnProps> = ({
             side={side}
             index={active}
             total={players.length}
-            className="reta-eq-frame--broadcast"
+            className="reta-eq-frame--holo"
           />
         ) : (
           <div className="reta-eq-frame reta-eq-frame--empty">

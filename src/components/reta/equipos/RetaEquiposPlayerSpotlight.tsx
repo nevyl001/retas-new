@@ -25,8 +25,28 @@ function splitNombre(nombre: string): { first: string; rest: string | null } {
   return { first: parts[0]!, rest: parts.slice(1).join(" ") };
 }
 
+function manoLabel(mano: RetaEquiposPlayerCardData["mano"]): string | null {
+  if (mano === "derecha") return "Derecha";
+  if (mano === "izquierda") return "Zurda";
+  if (mano === "ambidiestro") return "Ambas";
+  if (mano && mano in MANO_DOMINANTE_LABELS) {
+    return MANO_DOMINANTE_LABELS[mano as ManoDominante];
+  }
+  return null;
+}
+
+function ladoLabel(lado: RetaEquiposPlayerCardData["lado"]): string | null {
+  if (lado === "drive") return "Drive";
+  if (lado === "reves") return "Revés";
+  if (lado && lado in EN_CANCHA_LABELS) {
+    return EN_CANCHA_LABELS[lado as EnCancha];
+  }
+  return null;
+}
+
 /**
- * Glass spotlight + broadcast 3D reveal (`.reta-eq-frame--broadcast`).
+ * Glass spotlight + holographic 3D reveal (`.reta-eq-frame--holo`).
+ * Sin edad. Atributos: país, mano, posición.
  */
 export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProps> = ({
   player,
@@ -40,23 +60,8 @@ export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProp
   const initials = getJugadorInitials(player.nombre);
   const { src, onError } = useRetryableImage(player.fotoUrl);
   const pais = getPaisOption(player.nacionalidad);
-
-  const compactBits: string[] = [];
-  if (player.edad != null && Number.isFinite(player.edad)) {
-    compactBits.push(`${player.edad}a`);
-  }
-  if (player.mano === "derecha") compactBits.push("DER");
-  else if (player.mano === "izquierda") compactBits.push("IZQ");
-  else if (player.mano === "ambidiestro") compactBits.push("AMB");
-  else if (player.mano && player.mano in MANO_DOMINANTE_LABELS) {
-    compactBits.push(MANO_DOMINANTE_LABELS[player.mano as ManoDominante].slice(0, 3).toUpperCase());
-  }
-  if (player.lado === "drive") compactBits.push("DR");
-  else if (player.lado === "reves") compactBits.push("REV");
-  else if (player.lado && player.lado in EN_CANCHA_LABELS) {
-    compactBits.push(EN_CANCHA_LABELS[player.lado as EnCancha].slice(0, 3).toUpperCase());
-  }
-
+  const mano = manoLabel(player.mano);
+  const lado = ladoLabel(player.lado);
   const displayName = rest ? `${first} ${rest}` : first;
 
   return (
@@ -81,10 +86,12 @@ export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProp
           />
         ) : (
           <div className="reta-eq-frame__fallback" aria-hidden>
+            <span className="reta-eq-frame__fallback-mark">RO</span>
             <span className="reta-eq-frame__fallback-initials">{initials}</span>
           </div>
         )}
         <div className="reta-eq-frame__shade" aria-hidden />
+        <div className="reta-eq-frame__shimmer" aria-hidden />
       </div>
 
       <div className="reta-eq-frame__body">
@@ -94,21 +101,32 @@ export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProp
           <span className="reta-eq-frame__name-first">{first}</span>
           {rest ? <span className="reta-eq-frame__name-rest">{rest}</span> : null}
         </h3>
-        {pais ? (
-          <div className="reta-eq-frame__pais">
-            <JugadorPaisBadge
-              codigo={player.nacionalidad}
-              size="sm"
-              showCode={false}
-            />
-            <span>{pais.nombre}</span>
-          </div>
-        ) : null}
-        {compactBits.length > 0 ? (
-          <p className="reta-eq-frame__meta reta-eq-frame__meta--compact">
-            {compactBits.join(" · ")}
-          </p>
-        ) : null}
+
+        <div className="reta-eq-frame__attrs">
+          {pais ? (
+            <span className="reta-eq-frame__chip">
+              <JugadorPaisBadge
+                codigo={player.nacionalidad}
+                size="sm"
+                showCode={false}
+              />
+              <span>{pais.nombre}</span>
+            </span>
+          ) : null}
+          {mano ? (
+            <span className="reta-eq-frame__chip">
+              <span aria-hidden>🖐️</span>
+              <span>{mano}</span>
+            </span>
+          ) : null}
+          {lado ? (
+            <span className="reta-eq-frame__chip">
+              <span aria-hidden>📍</span>
+              <span>{lado}</span>
+            </span>
+          ) : null}
+        </div>
+
         {typeof index === "number" && typeof total === "number" && total > 1 ? (
           <p className="reta-eq-frame__pos" aria-hidden>
             {index + 1} / {total}
