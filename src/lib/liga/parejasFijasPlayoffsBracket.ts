@@ -2,7 +2,11 @@
  * Bracket playoffs N-variable: top4 SF+Final; 5..N cruces extremos + BYE opcional.
  */
 
-import { compareEquiposRanking, type EquipoRankingSortRow } from "./equiposRanking";
+import type { EquipoRankingSortRow } from "./equiposRanking";
+import {
+  compareParejasFijasPlayoffsStandings,
+  type PlayoffsStandingsContext,
+} from "./parejasFijasPlayoffsStandings";
 
 export type PlayoffBracketSlot = string; // SF1 | SF2 | CL1..CLk | FINAL
 export type PlayoffFase =
@@ -200,12 +204,18 @@ function seedOf(seeds: PlayoffSeeds, equipoId: string): number {
   return 999;
 }
 
+/**
+ * Dentro de un bloque de playoff: PTS → DIF → H2H.
+ * Si sigue empate absoluto, desempate administrativo por seed congelado
+ * (NO es 4.º criterio deportivo; no hay regla deportiva aprobada más allá de H2H).
+ */
 function compareWithSeedFallback(
   a: EquipoStandingRow,
   b: EquipoStandingRow,
-  seeds: PlayoffSeeds
+  seeds: PlayoffSeeds,
+  context: PlayoffsStandingsContext
 ): number {
-  const cmp = compareEquiposRanking(a, b);
+  const cmp = compareParejasFijasPlayoffsStandings(a, b, context);
   if (cmp !== 0) return cmp;
   return seedOf(seeds, a.equipo_id) - seedOf(seeds, b.equipo_id);
 }
@@ -213,26 +223,33 @@ function compareWithSeedFallback(
 function sortBlock(
   ids: string[],
   byId: Map<string, EquipoStandingRow>,
-  seeds: PlayoffSeeds
+  seeds: PlayoffSeeds,
+  context: PlayoffsStandingsContext
 ): string[] {
   return [...ids].sort((a, b) => {
     const ra = byId.get(a);
     const rb = byId.get(b);
     if (!ra || !rb) return seedOf(seeds, a) - seedOf(seeds, b);
-    return compareWithSeedFallback(ra, rb, seeds);
+    return compareWithSeedFallback(ra, rb, seeds, context);
   });
 }
 
 /**
  * Clasificación final 1..N.
+ * Primero bloque deportivo (FINAL / SF / CL); dentro del bloque: PTS → DIF → H2H.
  * 1–2 FINAL; 3–4 perdedores SF; 5..N ganadores CL / BYE / perdedores CL.
  */
 export function resolvePlayoffsFinalStandings(input: {
   seeds: PlayoffSeeds;
   results: PlayoffMatchResult[];
   standings: EquipoStandingRow[];
+  /** Cruces regulares para H2H dentro del bloque; default vacío. */
+  headToHeadMatches?: PlayoffsStandingsContext["headToHeadMatches"];
 }): string[] {
   const n = seedCount(input.seeds);
+  const context: PlayoffsStandingsContext = {
+    headToHeadMatches: input.headToHeadMatches ?? [],
+  };
   const bySlot = new Map(input.results.map((r) => [r.slot, r]));
   const final = bySlot.get("FINAL");
   const sf1 = bySlot.get("SF1");
@@ -250,12 +267,17 @@ export function resolvePlayoffsFinalStandings(input: {
   }
 
   const byId = new Map(input.standings.map((s) => [s.equipo_id, s]));
-  const thirds = sortBlock([sf1.loser_id, sf2.loser_id], byId, input.seeds);
+  const thirds = sortBlock(
+    [sf1.loser_id, sf2.loser_id],
+    byId,
+    input.seeds,
+    context
+  );
 
   const winners = clResults.map((r) => r.winner_id);
   const losers = clResults.map((r) => r.loser_id);
-  const winnersSorted = sortBlock(winners, byId, input.seeds);
-  const losersSorted = sortBlock(losers, byId, input.seeds);
+  const winnersSorted = sortBlock(winners, byId, input.seeds, context);
+  const losersSorted = sortBlock(losers, byId, input.seeds, context);
 
   const byeId =
     input.seeds[PLAYOFFS_SEEDS_BYE_KEY] ??

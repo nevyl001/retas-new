@@ -5,6 +5,7 @@ import {
   needsPlayoffsStbDraft,
   parsePlayoffsSetScoresJson,
   playoffsMatchDisplay,
+  playoffsSetsFromDraft,
   playoffsTotalsFromDraft,
   previewPlayoffsPointsFromDraft,
   type PlayoffsScoreDraft,
@@ -70,6 +71,7 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
 }) => {
   const locked = Boolean(disabled || busy);
   const showStb = needsPlayoffsStbDraft(draft);
+  const sets = playoffsSetsFromDraft(draft);
   const totals = playoffsTotalsFromDraft(draft);
   const preview = previewPlayoffsPointsFromDraft(draft);
   const isCompleted = partido.estado === "completed";
@@ -176,14 +178,14 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
           className="liga-playoffs-score__board-row liga-playoffs-score__board-row--totals"
           aria-live="polite"
         >
-          <span className="liga-playoffs-score__board-label">Totales</span>
-          <strong>{totals ? totals.score1 : "—"}</strong>
-          <strong>{totals ? totals.score2 : "—"}</strong>
+          <span className="liga-playoffs-score__board-label">Sets</span>
+          <strong>{sets ? sets.setsP1 : "—"}</strong>
+          <strong>{sets ? sets.setsP2 : "—"}</strong>
         </div>
 
         {showStb ? (
           <div className="liga-playoffs-score__board-row liga-playoffs-score__board-row--stb">
-            <span className="liga-playoffs-score__board-label">STB</span>
+            <span className="liga-playoffs-score__board-label">STB a 5</span>
             <input
               type="number"
               min={0}
@@ -215,10 +217,15 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
         >
           <strong>{preview.title}</strong>
           <span>{preview.line}</span>
+          {totals && preview.kind !== "needs_stb" ? (
+            <span className="liga-playoffs-score__preview-games">
+              Games {totals.score1}–{totals.score2}
+            </span>
+          ) : null}
         </p>
       ) : showStb ? (
         <p className="liga-playoffs-score__stb-hint" role="status">
-          Empate en games: registra el STB a 5.
+          Empate 1-1 en sets: registra el Súper Tie-Break a 5.
         </p>
       ) : null}
 

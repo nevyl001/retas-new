@@ -688,7 +688,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 </h2>
                 <p className="liga-pantalla-ranking__hint">
                   {esParejasFijasPlayoffs
-                    ? "Puntos por games totales: Diff >2 → 3/0 · Diff 1–2 → 2/1 · Empate + STB → 2/1."
+                    ? "PUNTAJE: Victoria 2-0 en sets → Diff games >2 = 3/0 · Diff 1–2 = 2/1. Empate 1-1 en sets → STB a 5 = 2/1. WO = 3/−1. Tabla: PTS → DIF (GF−GC) → enfrentamiento directo."
                     : "Puntos: 3 si gana en 2 sets, 2 si gana en super tie-break, 0 si pierde."}
                 </p>
                 {jornadaStats.rankingParejas.length === 0 ? (

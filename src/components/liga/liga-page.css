@@ -817,6 +817,7 @@
 }
 
 .liga-playoffs-score__preview--holgada,
+.liga-playoffs-score__preview--cerrada,
 .liga-playoffs-score__preview--ajustada,
 .liga-playoffs-score__preview--stb {
   border-color: color-mix(in srgb, var(--brand-primary, #2a4ba7) 45%, transparent);

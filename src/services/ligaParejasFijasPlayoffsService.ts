@@ -35,7 +35,12 @@ import {
   diferenciaGamesFromStats,
 } from "../lib/liga/equiposRanking";
 import {
+  findUnresolvedPlayoffsStandingTies,
+  type PlayoffsStandingRow,
+} from "../lib/liga/parejasFijasPlayoffsStandings";
+import {
   fetchEquiposForLiga,
+  fetchPlayoffsRegularH2HMatches,
   getRankingEquipos,
   mapLigaEquipo,
   resetPuntosEquiposLiga,
@@ -328,6 +333,28 @@ export async function maybeFreezeAndGeneratePlayoffsJornada9(
     if (ranking.length !== n) {
       throw new Error(
         `Se requieren ${n} equipos en la tabla para playoffs.`
+      );
+    }
+    const headToHeadMatches = await fetchPlayoffsRegularH2HMatches(ligaId);
+    const standingRows: PlayoffsStandingRow[] = ranking.map((r) => ({
+      equipo_id: r.equipo_id,
+      puntos: r.puntos,
+      diferencia_games: r.diferencia_games,
+      games_favor: r.games_favor,
+      partidos_ganados: r.partidos_ganados,
+      partidos_jugados: r.partidos_jugados,
+      nombre: r.nombre,
+    }));
+    const unresolved = findUnresolvedPlayoffsStandingTies(standingRows, {
+      headToHeadMatches,
+    });
+    if (unresolved.length > 0) {
+      const sample = unresolved
+        .slice(0, 3)
+        .map((t) => `${t.a}/${t.b}`)
+        .join(", ");
+      throw new Error(
+        `Empate absoluto en tabla (PTS + DIF + enfrentamiento directo) entre parejas: ${sample}. No hay 4.º criterio deportivo aprobado para congelar seeds.`
       );
     }
     seeds = seedsFromRankingOrder(ranking.map((r) => r.equipo_id));

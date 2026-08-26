@@ -22,6 +22,12 @@ import {
   resolveParejasFijasPartidoTotals,
   type ParejasFijasMatchTotals,
 } from "../lib/liga/parejasFijasMatchScore";
+import {
+  sortParejasFijasPlayoffsStandings,
+  tryBuildPlayoffsH2HMatch,
+  type PlayoffsH2HMatch,
+  type PlayoffsStandingRow,
+} from "../lib/liga/parejasFijasPlayoffsStandings";
 
 function mapJugador(row: Record<string, unknown>): LigaJugador {
   return {
@@ -474,6 +480,65 @@ export async function recalcularPuntosLigaEquipos(ligaId: string): Promise<void>
   }
 }
 
+export async function fetchPlayoffsRegularH2HMatches(
+  ligaId: string
+): Promise<PlayoffsH2HMatch[]> {
+  const { data: partidos, error } = await supabase
+    .from("liga_partidos")
+    .select(
+      "score_pareja1, score_pareja2, set_scores, pareja1_id, pareja2_id, jornada_id, estado, fase"
+    )
+    .eq("liga_id", ligaId)
+    .eq("fase", "regular")
+    .eq("estado", "completed");
+
+  if (error) throw new Error(error.message);
+
+  const jornadaIds = Array.from(
+    new Set(
+      (partidos ?? [])
+        .map((p) => (p.jornada_id != null ? String(p.jornada_id) : null))
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  if (jornadaIds.length === 0) return [];
+
+  const { data: parejas, error: parErr } = await supabase
+    .from("liga_jornada_parejas")
+    .select("id, equipo_id, jornada_id")
+    .in("jornada_id", jornadaIds);
+
+  if (parErr) throw new Error(parErr.message);
+
+  const equipoByParejaId = new Map<string, string>();
+  for (const p of parejas ?? []) {
+    if (p.equipo_id) {
+      equipoByParejaId.set(String(p.id), String(p.equipo_id));
+    }
+  }
+
+  const matches: PlayoffsH2HMatch[] = [];
+  for (const m of partidos ?? []) {
+    const eq1 = equipoByParejaId.get(String(m.pareja1_id));
+    const eq2 = equipoByParejaId.get(String(m.pareja2_id));
+    if (!eq1 || !eq2) continue;
+    const score1 =
+      m.score_pareja1 != null ? Number(m.score_pareja1) : NaN;
+    const score2 =
+      m.score_pareja2 != null ? Number(m.score_pareja2) : NaN;
+    if (!Number.isFinite(score1) || !Number.isFinite(score2)) continue;
+    const h2h = tryBuildPlayoffsH2HMatch({
+      equipo1Id: eq1,
+      equipo2Id: eq2,
+      score1,
+      score2,
+      setScores: m.set_scores,
+    });
+    if (h2h) matches.push(h2h);
+  }
+  return matches;
+}
+
 export async function getRankingEquipos(
   ligaId: string
 ): Promise<LigaEquipoRankingItem[]> {
@@ -485,6 +550,46 @@ export async function getRankingEquipos(
   if (error) throw new Error(error.message);
 
   const rows = (data ?? []).map((r) => mapLigaEquipo(r as Record<string, unknown>));
+
+  const { data: ligaRow } = await supabase
+    .from("ligas")
+    .select("modalidad")
+    .eq("id", ligaId)
+    .maybeSingle();
+
+  if (ligaRow?.modalidad === "parejas_fijas_playoffs") {
+    const headToHeadMatches = await fetchPlayoffsRegularH2HMatches(ligaId);
+    const standingRows: PlayoffsStandingRow[] = rows.map((a) => ({
+      equipo_id: a.id,
+      puntos: a.puntos,
+      diferencia_games: a.diferencia_games,
+      games_favor: a.games_favor,
+      partidos_ganados: a.partidos_ganados,
+      partidos_jugados: a.partidos_jugados,
+      nombre: a.nombre,
+    }));
+    const sorted = sortParejasFijasPlayoffsStandings(standingRows, {
+      headToHeadMatches,
+    });
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    return sorted.map((st, index) => {
+      const row = byId.get(st.equipo_id)!;
+      return {
+        posicion: index + 1,
+        equipo_id: row.id,
+        nombre:
+          row.nombre?.trim() ||
+          `${row.jugador1?.nombre ?? "?"} / ${row.jugador2?.nombre ?? "?"}`,
+        puntos: row.puntos,
+        partidos_jugados: row.partidos_jugados,
+        partidos_ganados: row.partidos_ganados,
+        partidos_perdidos: row.partidos_perdidos,
+        games_favor: row.games_favor,
+        games_contra: row.games_contra,
+        diferencia_games: row.diferencia_games,
+      };
+    });
+  }
 
   rows.sort((a, b) =>
     compareEquiposRanking(

@@ -2,8 +2,11 @@ import {
   buildPlayoffsPayloadFromDraft,
   computePlayoffsMatchFromSetInputs,
   computePlayoffsMatchPoints,
+  needsPlayoffsStbDraft,
   parsePlayoffsSetScoresJson,
   PLAYOFFS_SCORE_FORMAT,
+  playoffsSetsFromDraft,
+  previewPlayoffsPointsFromDraft,
   type PlayoffsSetScoresPayload,
 } from "./parejasFijasPlayoffsMatchScore";
 import { applyPlayoffsMatchBothSides } from "./parejasFijasPlayoffsRanking";
@@ -20,38 +23,128 @@ function payload(
   };
 }
 
-describe("parejasFijasPlayoffsMatchScore — games totales (no sets ganados)", () => {
-  it("Set1 6-4 + Set2 3-2 → Total 9-6 → 3/0", () => {
+describe("parejasFijasPlayoffsMatchScore — sets first (no games decide winner)", () => {
+  it("Test 1 — Cerrada: 6-5 / 6-5 → sets 2-0, games 12-10, diff 2, 2/1", () => {
     const r = computePlayoffsMatchFromSetInputs({
       set1P1: 6,
-      set1P2: 4,
-      set2P1: 3,
-      set2P2: 2,
+      set1P2: 5,
+      set2P1: 6,
+      set2P2: 5,
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.gamesTotalP1).toBe(9);
-    expect(r.gamesTotalP2).toBe(6);
-    expect(r.result.pointsP1).toBe(3);
-    expect(r.result.pointsP2).toBe(0);
-  });
-
-  it("Set1 6-4 + Set2 2-3 → Total 8-7 → 2/1", () => {
-    const r = computePlayoffsMatchFromSetInputs({
-      set1P1: 6,
-      set1P2: 4,
-      set2P1: 2,
-      set2P2: 3,
-    });
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.gamesTotalP1).toBe(8);
-    expect(r.gamesTotalP2).toBe(7);
+    expect(r.result.setsWonP1).toBe(2);
+    expect(r.result.setsWonP2).toBe(0);
+    expect(r.gamesTotalP1).toBe(12);
+    expect(r.gamesTotalP2).toBe(10);
+    expect(r.result.gameDiff).toBe(2);
+    expect(r.result.resultType).toBe("CERRADA");
     expect(r.result.pointsP1).toBe(2);
     expect(r.result.pointsP2).toBe(1);
   });
 
-  it("Set1 6-4 + Set2 2-4 → Total 8-8 → requiere STB", () => {
+  it("Test 2 — Holgada: 6-4 / 6-4 → sets 2-0, games 12-8, diff 4, 3/0", () => {
+    const r = computePlayoffsMatchFromSetInputs({
+      set1P1: 6,
+      set1P2: 4,
+      set2P1: 6,
+      set2P2: 4,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.result.setsWonP1).toBe(2);
+    expect(r.result.resultType).toBe("HOLGADA");
+    expect(r.result.gameDiff).toBe(4);
+    expect(r.result.pointsP1).toBe(3);
+    expect(r.result.pointsP2).toBe(0);
+  });
+
+  it("Test 3 — Set corto: 4-3 / 5-4 → cerrada 2/1", () => {
+    const r = computePlayoffsMatchFromSetInputs({
+      set1P1: 4,
+      set1P2: 3,
+      set2P1: 5,
+      set2P2: 4,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.gamesTotalP1).toBe(9);
+    expect(r.gamesTotalP2).toBe(7);
+    expect(r.result.gameDiff).toBe(2);
+    expect(r.result.resultType).toBe("CERRADA");
+    expect(r.result.pointsP1).toBe(2);
+    expect(r.result.pointsP2).toBe(1);
+  });
+
+  it("Test 4 — 1-1 manda a STB aunque games 11-6", () => {
+    const r = computePlayoffsMatchFromSetInputs({
+      set1P1: 6,
+      set1P2: 0,
+      set2P1: 5,
+      set2P2: 6,
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error).toMatch(/1-1|súper tie-break/i);
+  });
+
+  it("Test 5 — STB 5-3 → siempre 2/1", () => {
+    const r = computePlayoffsMatchFromSetInputs({
+      set1P1: 6,
+      set1P2: 0,
+      set2P1: 5,
+      set2P2: 6,
+      stbP1: 5,
+      stbP2: 3,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.result.viaStb).toBe(true);
+    expect(r.result.resultType).toBe("SUPER_TIE_BREAK");
+    expect(r.result.pointsP1).toBe(2);
+    expect(r.result.pointsP2).toBe(1);
+  });
+
+  it("Test 5b — gana STB quien tenía menos games", () => {
+    const r = computePlayoffsMatchFromSetInputs({
+      set1P1: 6,
+      set1P2: 0,
+      set2P1: 1,
+      set2P2: 6,
+      stbP1: 3,
+      stbP2: 5,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.result.p1Won).toBe(false);
+    expect(r.result.pointsP1).toBe(1);
+    expect(r.result.pointsP2).toBe(2);
+  });
+
+  it("Test 6 — WO → 3 / -1", () => {
+    const r = computePlayoffsMatchPoints(6, 0, payload({ wo: true }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.result.resultType).toBe("WO");
+    expect(r.result.pointsP1).toBe(3);
+    expect(r.result.pointsP2).toBe(-1);
+  });
+
+  it("NO decide por games: 6-0 + 0-5 → sets 1-1 → requiere STB (antes era 6-5→2/1)", () => {
+    const r = computePlayoffsMatchFromSetInputs({
+      set1P1: 6,
+      set1P2: 0,
+      set2P1: 0,
+      set2P2: 5,
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error).toMatch(/1-1|súper tie-break/i);
+  });
+
+  it("empate en games totales con 2-0 sets NO exige STB", () => {
+    // Imposible en sets válidos con 2-0 y games iguales; 2-0 siempre diff>=2.
+    // Caso inverso: games iguales vía 1-1 sets (6-4 + 2-4 = 8-8) sí STB por sets.
     const r = computePlayoffsMatchFromSetInputs({
       set1P1: 6,
       set1P2: 4,
@@ -60,111 +153,30 @@ describe("parejasFijasPlayoffsMatchScore — games totales (no sets ganados)", (
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.error).toMatch(/súper tie-break/i);
+    expect(r.error).toMatch(/1-1/);
   });
 
-  it("8-8 + STB 5-3 → 2/1", () => {
+  it("diff exactamente 2 es cerrada (no holgada): 6-5 / 6-5", () => {
     const r = computePlayoffsMatchFromSetInputs({
       set1P1: 6,
-      set1P2: 4,
-      set2P1: 2,
-      set2P2: 4,
-      stbP1: 5,
-      stbP2: 3,
-    });
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.gamesTotalP1).toBe(8);
-    expect(r.gamesTotalP2).toBe(8);
-    expect(r.result.pointsP1).toBe(2);
-    expect(r.result.pointsP2).toBe(1);
-    expect(r.result.viaStb).toBe(true);
-  });
-
-  it("Set1 4-2 + Set2 0-0 → Total 4-2 → 2/1 (diff 2 no es holgada)", () => {
-    const r = computePlayoffsMatchFromSetInputs({
-      set1P1: 4,
-      set1P2: 2,
-      set2P1: 0,
-      set2P2: 0,
-    });
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.gamesTotalP1).toBe(4);
-    expect(r.gamesTotalP2).toBe(2);
-    expect(r.result.pointsP1).toBe(2);
-    expect(r.result.pointsP2).toBe(1);
-  });
-
-  it("Total 10-8 (diff 2) → victoria ajustada 2/1, no holgada", () => {
-    const r = computePlayoffsMatchFromSetInputs({
-      set1P1: 4,
-      set1P2: 6,
+      set1P2: 5,
       set2P1: 6,
-      set2P2: 2,
-    });
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.gamesTotalP1).toBe(10);
-    expect(r.gamesTotalP2).toBe(8);
-    expect(r.result.pointsP1).toBe(2);
-    expect(r.result.pointsP2).toBe(1);
-  });
-
-  it("Caso A: 6-3 + 4-2 → 10-5 → 3/0 (diff 5 > 2)", () => {
-    const r = computePlayoffsMatchFromSetInputs({
-      set1P1: 6,
-      set1P2: 3,
-      set2P1: 4,
-      set2P2: 2,
-    });
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.gamesTotalP1).toBe(10);
-    expect(r.gamesTotalP2).toBe(5);
-    expect(r.result.pointsP1).toBe(3);
-    expect(r.result.pointsP2).toBe(0);
-  });
-
-  it("STB 5-0 sigue siendo 2/1 (diff STB no importa)", () => {
-    const r = computePlayoffsMatchFromSetInputs({
-      set1P1: 6,
-      set1P2: 4,
-      set2P1: 2,
-      set2P2: 4,
-      stbP1: 5,
-      stbP2: 0,
-    });
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.result.pointsP1).toBe(2);
-    expect(r.result.pointsP2).toBe(1);
-  });
-
-  it("no usa sets ganados: Set1 6-0 + Set2 0-5 → Total 6-5 → 2/1 (no 1-1 sets)", () => {
-    const r = computePlayoffsMatchFromSetInputs({
-      set1P1: 6,
-      set1P2: 0,
-      set2P1: 0,
       set2P2: 5,
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.gamesTotalP1).toBe(6);
-    expect(r.gamesTotalP2).toBe(5);
+    expect(r.result.resultType).toBe("CERRADA");
     expect(r.result.pointsP1).toBe(2);
-    expect(r.result.pointsP2).toBe(1);
-    expect(r.result.viaStb).toBe(false);
   });
 
-  it("recalcula totales desde sets aunque el cliente mande totales malos", () => {
+  it("recalcula desde sets aunque el cliente mande totales malos", () => {
     const r = computePlayoffsMatchPoints(
       99,
       99,
       payload({
         sets: [
           { p1: 6, p2: 4 },
-          { p1: 3, p2: 2 },
+          { p1: 6, p2: 4 },
         ],
       })
     );
@@ -174,56 +186,56 @@ describe("parejasFijasPlayoffsMatchScore — games totales (no sets ganados)", (
     expect(r.result.pointsP2).toBe(0);
   });
 
-  it("WO → 3 / -1", () => {
-    const r = computePlayoffsMatchPoints(6, 0, payload({ wo: true }));
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.result.pointsP1).toBe(3);
-    expect(r.result.pointsP2).toBe(-1);
+  it("rechaza set empatado", () => {
+    const r = computePlayoffsMatchFromSetInputs({
+      set1P1: 3,
+      set1P2: 3,
+      set2P1: 6,
+      set2P2: 4,
+    });
+    expect(r.ok).toBe(false);
   });
 
-  it("parsePlayoffsSetScoresJson ignora payload legacy de sets", () => {
-    expect(
-      parsePlayoffsSetScoresJson({
-        sets: [{ p1: 6, p2: 4, kind: "regular" }],
-      })
-    ).toBeNull();
+  it("STB no permitido si ya hay 2-0", () => {
+    const r = computePlayoffsMatchPoints(12, 8, payload({
+      sets: [
+        { p1: 6, p2: 4 },
+        { p1: 6, p2: 4 },
+      ],
+      stb: { p1: 5, p2: 3 },
+    }));
+    expect(r.ok).toBe(false);
   });
 
-  it("guardar dos veces no duplica puntos (recalc replace)", () => {
-    const draftOk = buildPlayoffsPayloadFromDraft({
-      set1: { p1: "6", p2: "4" },
-      set2: { p1: "3", p2: "2" },
+  it("preview + needsStb usan sets 1-1 (no empate de games)", () => {
+    const draft = {
+      set1: { p1: "6", p2: "0" },
+      set2: { p1: "5", p2: "6" },
+      stb1: "",
+      stb2: "",
+      woWinner: null as null,
+    };
+    expect(playoffsSetsFromDraft(draft)).toEqual({ setsP1: 1, setsP2: 1 });
+    expect(needsPlayoffsStbDraft(draft)).toBe(true);
+    const preview = previewPlayoffsPointsFromDraft(draft);
+    expect(preview.kind).toBe("needs_stb");
+  });
+
+  it("preview cerrada 6-5/6-5", () => {
+    const preview = previewPlayoffsPointsFromDraft({
+      set1: { p1: "6", p2: "5" },
+      set2: { p1: "6", p2: "5" },
       stb1: "",
       stb2: "",
       woWinner: null,
     });
-    expect(draftOk.score1).toBe(9);
-    expect(draftOk.score2).toBe(6);
-    const pts = computePlayoffsMatchPoints(
-      draftOk.score1,
-      draftOk.score2,
-      draftOk.payload
-    );
-    expect(pts.ok).toBe(true);
-    if (!pts.ok) return;
-
-    const a = emptyEquipoRankingStats();
-    const b = emptyEquipoRankingStats();
-    applyPlayoffsMatchBothSides(a, b, 9, 6, pts.result);
-    const a2 = emptyEquipoRankingStats();
-    const b2 = emptyEquipoRankingStats();
-    applyPlayoffsMatchBothSides(a2, b2, 9, 6, pts.result);
-    expect(a2.puntos).toBe(a.puntos);
-    expect(b2.puntos).toBe(b.puntos);
-    expect(a2.puntos).toBe(3);
-    expect(b2.puntos).toBe(0);
+    expect(preview.kind).toBe("cerrada");
   });
 
-  it("edición de marcador sin doble acumulación (replace stats)", () => {
+  it("edición 6-5/6-5 → 6-2/6-2 reemplaza (2/1 → 3/0), no acumula", () => {
     const first = buildPlayoffsPayloadFromDraft({
-      set1: { p1: "4", p2: "2" },
-      set2: { p1: "0", p2: "0" },
+      set1: { p1: "6", p2: "5" },
+      set2: { p1: "6", p2: "5" },
       stb1: "",
       stb2: "",
       woWinner: null,
@@ -235,10 +247,11 @@ describe("parejasFijasPlayoffsMatchScore — games totales (no sets ganados)", (
     );
     expect(pts1.ok).toBe(true);
     if (!pts1.ok) return;
+    expect(pts1.result.pointsP1).toBe(2);
 
     const corrected = buildPlayoffsPayloadFromDraft({
-      set1: { p1: "6", p2: "4" },
-      set2: { p1: "2", p2: "3" },
+      set1: { p1: "6", p2: "2" },
+      set2: { p1: "6", p2: "2" },
       stb1: "",
       stb2: "",
       woWinner: null,
@@ -251,7 +264,6 @@ describe("parejasFijasPlayoffsMatchScore — games totales (no sets ganados)", (
     expect(pts2.ok).toBe(true);
     if (!pts2.ok) return;
 
-    // El ranking playoffs se recalcula desde cero por partidos; simular replace.
     const a = emptyEquipoRankingStats();
     const b = emptyEquipoRankingStats();
     applyPlayoffsMatchBothSides(
@@ -261,13 +273,61 @@ describe("parejasFijasPlayoffsMatchScore — games totales (no sets ganados)", (
       corrected.score2,
       pts2.result
     );
-    expect(a.puntos).toBe(2);
-    expect(b.puntos).toBe(1);
-    expect(a.puntos).not.toBe(3 + 2);
+    expect(a.puntos).toBe(3);
+    expect(b.puntos).toBe(0);
+    expect(a.puntos).not.toBe(2 + 3);
+  });
+
+  it("cambio 2-0 → 1-1 exige STB (no cierra sin STB)", () => {
+    expect(() =>
+      buildPlayoffsPayloadFromDraft({
+        set1: { p1: "6", p2: "4" },
+        set2: { p1: "4", p2: "6" },
+        stb1: "",
+        stb2: "",
+        woWinner: null,
+      })
+    ).toThrow(/1-1|súper tie-break/i);
+  });
+
+  it("cambio 1-1+STB → 2-0 limpia STB del payload", () => {
+    const withStb = buildPlayoffsPayloadFromDraft({
+      set1: { p1: "6", p2: "4" },
+      set2: { p1: "4", p2: "6" },
+      stb1: "5",
+      stb2: "3",
+      woWinner: null,
+    });
+    expect(withStb.payload.stb).toEqual({ p1: 5, p2: 3 });
+
+    const direct = buildPlayoffsPayloadFromDraft({
+      set1: { p1: "6", p2: "4" },
+      set2: { p1: "6", p2: "2" },
+      stb1: "5",
+      stb2: "3",
+      woWinner: null,
+    });
+    expect(direct.payload.stb).toBeNull();
+    const pts = computePlayoffsMatchPoints(
+      direct.score1,
+      direct.score2,
+      direct.payload
+    );
+    expect(pts.ok).toBe(true);
+    if (!pts.ok) return;
+    expect(pts.result.resultType).toBe("HOLGADA");
+    expect(pts.result.viaStb).toBe(false);
+  });
+
+  it("parsePlayoffsSetScoresJson ignora payload legacy de sets", () => {
+    expect(
+      parsePlayoffsSetScoresJson({
+        sets: [{ p1: 6, p2: 4, kind: "regular" }],
+      })
+    ).toBeNull();
   });
 
   it("no importa parejasFijasVictoryRankingPoints", () => {
-    // Guardrail de aislamiento: este módulo no debe depender del helper legacy.
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const src = require("fs").readFileSync(
       require("path").join(__dirname, "parejasFijasPlayoffsMatchScore.ts"),

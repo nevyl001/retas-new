@@ -1278,7 +1278,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
             </h2>
             <p className="liga-hint">
               {esPlayoffs
-                ? "Puntos por games totales: Diff >2 → 3/0 · Diff 1–2 → 2/1 · Empate + STB → 2/1. Se recalcula al guardar."
+                ? "PUNTAJE POR PARTIDO: Victoria 2-0 en sets → Diff games >2 = 3/0 · Diff 1–2 = 2/1. Empate 1-1 en sets → STB a 5 = 2/1. WO = 3/−1. DESEMPATES TABLA: 1. Puntos 2. DIF (GF−GC) 3. Enfrentamiento directo. Se recalcula al guardar."
                 : esParejasFijas
                 ? "Puntos: 3 victoria en 2 sets, 2 con super tie-break. Se recalcula al guardar resultados."
                 : "Puntos en base de datos de la liga. Al guardar resultados o finalizar, se recalcula automáticamente."}

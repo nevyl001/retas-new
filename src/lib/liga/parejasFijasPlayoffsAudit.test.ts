@@ -1,5 +1,6 @@
 import { isParejasFijasLegacy, isParejasFijasPlayoffs } from "./ligaModalidad";
 import {
+  computePlayoffsMatchFromSetInputs,
   computePlayoffsMatchPoints,
   PLAYOFFS_SCORE_FORMAT,
   type PlayoffsMatchPoints,
@@ -45,24 +46,26 @@ describe("routing modalidad → helper de scoring", () => {
     expect(parejasFijasVictoryRankingPoints(totals!, false)).toBe(0);
   });
 
-  it("parejas_fijas_playoffs usa helper nuevo (diff>2 → 3/0; diff=2 → 2/1)", () => {
+  it("parejas_fijas_playoffs usa sets-first (cerrada/holgada/STB)", () => {
     expect(isParejasFijasPlayoffs("parejas_fijas_playoffs")).toBe(true);
     expect(isParejasFijasLegacy("parejas_fijas_playoffs")).toBe(false);
 
-    const ajustada = computePlayoffsMatchPoints(4, 2, {
-      format: PLAYOFFS_SCORE_FORMAT,
-      wo: false,
-      stb: null,
+    const cerrada = computePlayoffsMatchFromSetInputs({
+      set1P1: 6,
+      set1P2: 5,
+      set2P1: 6,
+      set2P2: 5,
     });
-    expect(ajustada.ok).toBe(true);
-    if (!ajustada.ok) return;
-    expect(ajustada.result.pointsP1).toBe(2);
-    expect(ajustada.result.pointsP2).toBe(1);
+    expect(cerrada.ok).toBe(true);
+    if (!cerrada.ok) return;
+    expect(cerrada.result.pointsP1).toBe(2);
+    expect(cerrada.result.pointsP2).toBe(1);
 
-    const holgada = computePlayoffsMatchPoints(5, 2, {
-      format: PLAYOFFS_SCORE_FORMAT,
-      wo: false,
-      stb: null,
+    const holgada = computePlayoffsMatchFromSetInputs({
+      set1P1: 6,
+      set1P2: 4,
+      set2P1: 6,
+      set2P2: 4,
     });
     expect(holgada.ok).toBe(true);
     if (!holgada.ok) return;
@@ -93,41 +96,59 @@ function requireResult(
 }
 
 describe("scoring playoffs casos auditoría", () => {
-  const base: PlayoffsSetScoresPayload = {
+  const sets = (
+    a: [number, number],
+    b: [number, number],
+    stb?: { p1: number; p2: number } | null,
+    wo = false
+  ): PlayoffsSetScoresPayload => ({
     format: PLAYOFFS_SCORE_FORMAT,
-    wo: false,
-    stb: null,
-  };
-
-  it("5-2 → 3/0; 4-2 → 2/1; 4-3 → 2/1; 4-4 sin STB falla; STB 5-3 → 2/1; WO → 3/-1", () => {
-    expectPoints(5, 2, base, 3, 0);
-    expectPoints(4, 2, base, 2, 1);
-    expectPoints(4, 3, base, 2, 1);
-    expect(computePlayoffsMatchPoints(4, 4, base).ok).toBe(false);
-    expectPoints(4, 4, { ...base, stb: { p1: 5, p2: 3 } }, 2, 1);
-    expectPoints(6, 0, { ...base, wo: true }, 3, -1);
+    wo,
+    stb: stb ?? null,
+    sets: wo
+      ? undefined
+      : [
+          { p1: a[0], p2: a[1] },
+          { p1: b[0], p2: b[1] },
+        ],
   });
 
-  it("editar 4-3 → 5-2 reemplaza (recalc), no acumula", () => {
-    const first = requireResult(computePlayoffsMatchPoints(4, 3, base));
+  it("6-5/6-5 → 2/1; 6-4/6-4 → 3/0; 1-1 sin STB falla; STB → 2/1; WO → 3/-1", () => {
+    expectPoints(12, 10, sets([6, 5], [6, 5]), 2, 1);
+    expectPoints(12, 8, sets([6, 4], [6, 4]), 3, 0);
+    expect(computePlayoffsMatchPoints(11, 6, sets([6, 0], [5, 6])).ok).toBe(
+      false
+    );
+    expectPoints(11, 6, sets([6, 0], [5, 6], { p1: 5, p2: 3 }), 2, 1);
+    expectPoints(6, 0, sets([0, 0], [0, 0], null, true), 3, -1);
+  });
+
+  it("editar 6-5/6-5 → 6-4/6-4 reemplaza (recalc), no acumula", () => {
+    const first = requireResult(
+      computePlayoffsMatchPoints(12, 10, sets([6, 5], [6, 5]))
+    );
     const a = emptyEquipoRankingStats();
     const b = emptyEquipoRankingStats();
-    applyPlayoffsMatchBothSides(a, b, 4, 3, first);
+    applyPlayoffsMatchBothSides(a, b, 12, 10, first);
 
     const a2 = emptyEquipoRankingStats();
     const b2 = emptyEquipoRankingStats();
-    const second = requireResult(computePlayoffsMatchPoints(5, 2, base));
-    applyPlayoffsMatchBothSides(a2, b2, 5, 2, second);
+    const second = requireResult(
+      computePlayoffsMatchPoints(12, 8, sets([6, 4], [6, 4]))
+    );
+    applyPlayoffsMatchBothSides(a2, b2, 12, 8, second);
     expect(a2.puntos).toBe(3);
     expect(b2.puntos).toBe(0);
     expect(a2.puntos).not.toBe(a.puntos + 3);
   });
 
-  it("invertir ganador 5-2 → 2-5 corrige puntos y PG/PP", () => {
-    const second = requireResult(computePlayoffsMatchPoints(2, 5, base));
+  it("invertir ganador 6-4/6-4 → 4-6/4-6 corrige puntos y PG/PP", () => {
+    const second = requireResult(
+      computePlayoffsMatchPoints(8, 12, sets([4, 6], [4, 6]))
+    );
     const a = emptyEquipoRankingStats();
     const b = emptyEquipoRankingStats();
-    applyPlayoffsMatchBothSides(a, b, 2, 5, second);
+    applyPlayoffsMatchBothSides(a, b, 8, 12, second);
     expect(a.puntos).toBe(0);
     expect(b.puntos).toBe(3);
     expect(a.partidos_ganados).toBe(0);
