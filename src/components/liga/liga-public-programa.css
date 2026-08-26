@@ -258,13 +258,13 @@
   color: var(--liga-prog-ink);
 }
 
-.liga-pantalla--liga-fijas .liga-pub-programa__team--win {
+.liga-pantalla--liga-fijas .liga-pub-programa__match .liga-pantalla-matchup__team.liga-pub-programa__team--win {
   color: var(--liga-prog-accent);
   font-weight: 700;
 }
 
-.liga-pantalla--liga-fijas .liga-pub-programa__team--loss {
-  color: color-mix(in srgb, var(--liga-prog-ink) 58%, transparent);
+.liga-pantalla--liga-fijas .liga-pub-programa__match .liga-pantalla-matchup__team.liga-pub-programa__team--loss {
+  color: color-mix(in srgb, var(--liga-prog-ink) 52%, transparent);
   font-weight: 500;
 }
 
