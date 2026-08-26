@@ -1378,22 +1378,16 @@
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-match__side--win {
-  background: color-mix(in srgb, #22c55e 12%, rgba(0, 0, 0, 0.35));
-  border: 1px solid color-mix(in srgb, #22c55e 55%, transparent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, #22c55e 35%, transparent),
-    0 0 18px color-mix(in srgb, #22c55e 45%, transparent),
-    inset 0 0 14px color-mix(in srgb, #22c55e 12%, transparent);
+  background: color-mix(in srgb, #22c55e 8%, rgba(0, 0, 0, 0.35));
+  border: 1px solid color-mix(in srgb, #22c55e 32%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, #22c55e 18%, transparent);
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-match__side--loss {
-  background: color-mix(in srgb, #ef4444 10%, rgba(0, 0, 0, 0.4));
-  border: 1px solid color-mix(in srgb, #ef4444 45%, transparent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, #ef4444 28%, transparent),
-    0 0 16px color-mix(in srgb, #ef4444 38%, transparent),
-    inset 0 0 12px color-mix(in srgb, #ef4444 10%, transparent);
-  opacity: 0.92;
+  background: color-mix(in srgb, #ef4444 6%, rgba(0, 0, 0, 0.4));
+  border: 1px solid color-mix(in srgb, #ef4444 26%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, #ef4444 14%, transparent);
+  opacity: 0.94;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-match__separator {
