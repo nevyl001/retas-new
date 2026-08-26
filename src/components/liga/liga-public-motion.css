@@ -1,0 +1,361 @@
+/* Liga pública — motion editorial (CSS only + FLIP helpers).
+   Tokens: --motion-* from riviera-tokens.css
+   No Framer / GSAP. Poll must NOT re-trigger page enter. */
+
+.liga-pantalla--jornada-fijas {
+  --liga-motion-y: 12px;
+  --liga-motion-y-sm: 8px;
+  --liga-motion-hover-y: -2px;
+}
+
+@media (max-width: 700px) {
+  .liga-pantalla--jornada-fijas {
+    --liga-motion-y: 8px;
+    --liga-motion-y-sm: 6px;
+    --liga-motion-hover-y: -1px;
+  }
+}
+
+/* ── Keyframes ── */
+
+@keyframes liga-motion-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(var(--liga-motion-y));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes liga-motion-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes liga-motion-title-reveal {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes liga-motion-value-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes liga-motion-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes liga-motion-avatar-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes liga-motion-avatar-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes liga-motion-trophy-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes liga-motion-ring {
+  from {
+    outline-color: transparent;
+  }
+  to {
+    outline-color: color-mix(
+      in srgb,
+      var(--brand-accent, #d6ef3a) 45%,
+      transparent
+    );
+  }
+}
+
+/* ── Page enter (once via .liga-pantalla--enter) ── */
+
+.liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero.te-pub-fade-in {
+  animation: none;
+}
+
+.liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero .peds-hero__logo {
+  animation: liga-motion-fade-up var(--motion-enter) both;
+  animation-delay: 0ms;
+}
+
+.liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero .peds-hero__estado {
+  animation: liga-motion-fade var(--motion-enter) both;
+  animation-delay: calc(var(--motion-stagger) * 1);
+}
+
+.liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero .peds-hero__evento {
+  animation: liga-motion-title-reveal var(--motion-slow) both;
+  animation-delay: calc(var(--motion-stagger) * 2);
+}
+
+.liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero .peds-hero__club {
+  animation: liga-motion-fade var(--motion-enter) both;
+  animation-delay: calc(var(--motion-stagger) * 3);
+}
+
+.liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero .peds-hero__meta-row {
+  animation: liga-motion-fade-up var(--motion-enter) both;
+  animation-delay: calc(var(--motion-stagger) * 4);
+}
+
+.liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero .peds-hero__meta {
+  animation: liga-motion-fade var(--motion-enter) both;
+  animation-delay: calc(var(--motion-stagger) * 5);
+}
+
+.liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla__layout {
+  animation: liga-motion-fade-up var(--motion-enter) both;
+  animation-delay: calc(var(--motion-stagger) * 6);
+}
+
+/* Ronda title */
+.liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-ronda__title {
+  animation: liga-motion-fade-up var(--motion-enter) both;
+  animation-delay: calc(var(--motion-stagger) * 7);
+}
+
+/* Match cards stagger */
+.liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-ronda__matches--courts > .liga-pantalla-match {
+  animation: liga-motion-fade-up var(--motion-enter) both;
+  animation-delay: calc(
+    var(--motion-stagger) * 8 + var(--liga-match-i, 0) * var(--motion-stagger)
+  );
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match {
+  transition:
+    transform var(--motion-micro),
+    border-color var(--motion-micro),
+    background-color var(--motion-micro);
+  will-change: transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .liga-pantalla--jornada-fijas .liga-pantalla-match:hover {
+    transform: translateY(var(--liga-motion-hover-y));
+    border-color: color-mix(
+      in srgb,
+      var(--brand-primary, #2a4ba7) 65%,
+      transparent
+    );
+  }
+
+  .liga-pantalla--jornada-fijas .liga-pantalla-match:hover .liga-pub-pair-players__avatar.rj-avatar {
+    transform: scale(1.025);
+  }
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-pair-players__avatar.rj-avatar {
+  transition: transform var(--motion-micro);
+}
+
+/* Win/loss sides — soft state change */
+.liga-pantalla--jornada-fijas .liga-pantalla-match__side {
+  transition:
+    border-color var(--motion-slow),
+    background-color var(--motion-slow),
+    box-shadow var(--motion-slow);
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__status {
+  transition:
+    color var(--motion-base),
+    background-color var(--motion-base),
+    border-color var(--motion-base);
+}
+
+/* Score cells morph */
+.liga-pantalla--jornada-fijas .liga-pantalla-match__setboard-cell {
+  transition:
+    background-color var(--motion-base),
+    color var(--motion-base),
+    border-color var(--motion-base);
+  overflow: hidden;
+}
+
+.liga-motion-value {
+  display: inline-block;
+  animation: liga-motion-value-in var(--motion-micro) both;
+}
+
+/* Scroll reveal once */
+.liga-motion-reveal {
+  opacity: 0;
+  transform: translateY(var(--liga-motion-y-sm));
+}
+
+.liga-motion-reveal.is-inview {
+  animation: liga-motion-fade-up var(--motion-enter) both;
+}
+
+/* Ranking cards */
+.liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row {
+  transition:
+    border-color var(--motion-base),
+    background-color var(--motion-base);
+  will-change: transform;
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row.is-revealing {
+  animation: liga-motion-fade-up var(--motion-enter) both;
+  animation-delay: calc(var(--liga-rank-i, 0) * var(--motion-stagger));
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__breakdown-line {
+  animation: liga-motion-fade var(--motion-micro) both;
+  animation-delay: calc(var(--liga-line-i, 0) * 40ms);
+}
+
+/* Winner celebrate — only when .liga-celebrate--play (once) */
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card {
+  animation: liga-motion-fade-up var(--motion-slow) both;
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__torneo-name {
+  animation: liga-motion-fade var(--motion-enter) both;
+  animation-delay: 80ms;
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__badge {
+  animation: liga-motion-scale-in var(--motion-enter) both;
+  animation-delay: 160ms;
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__title {
+  animation: liga-motion-title-reveal var(--motion-slow) both;
+  animation-delay: 220ms;
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__player:first-child {
+  animation: liga-motion-avatar-in-left var(--motion-enter) both;
+  animation-delay: 340ms;
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__player:last-child {
+  animation: liga-motion-avatar-in-right var(--motion-enter) both;
+  animation-delay: 340ms;
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__trophy {
+  animation: liga-motion-trophy-in var(--motion-enter) both;
+  animation-delay: 400ms;
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__avatar-shell {
+  animation: liga-motion-ring var(--motion-slow) both;
+  animation-delay: 420ms;
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__quote {
+  animation: liga-motion-fade var(--motion-enter) both;
+  animation-delay: 480ms;
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__stat {
+  animation: liga-motion-fade-up var(--motion-enter) both;
+}
+
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__stat:nth-child(1) {
+  animation-delay: 540ms;
+}
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__stat:nth-child(2) {
+  animation-delay: 600ms;
+}
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__stat:nth-child(3) {
+  animation-delay: 660ms;
+}
+.liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__stat:nth-child(4) {
+  animation-delay: 720ms;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero .peds-hero__logo,
+  .liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero .peds-hero__estado,
+  .liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero .peds-hero__evento,
+  .liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero .peds-hero__club,
+  .liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero .peds-hero__meta-row,
+  .liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-jornada-hero .peds-hero__meta,
+  .liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla__layout,
+  .liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-ronda__title,
+  .liga-pantalla--jornada-fijas.liga-pantalla--enter .liga-pantalla-ronda__matches--courts > .liga-pantalla-match,
+  .liga-motion-reveal.is-inview,
+  .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row.is-revealing,
+  .liga-motion-value,
+  .liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card,
+  .liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__torneo-name,
+  .liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__badge,
+  .liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__title,
+  .liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__player:first-child,
+  .liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__player:last-child,
+  .liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__trophy,
+  .liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__avatar-shell,
+  .liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__quote,
+  .liga-parejas-victorias-grid--winner.liga-celebrate--play .podium-card__stat {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+
+  .liga-motion-reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  .liga-pantalla--jornada-fijas .liga-pantalla-match:hover {
+    transform: none;
+  }
+}

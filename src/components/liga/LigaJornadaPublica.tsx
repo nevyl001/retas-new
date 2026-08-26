@@ -29,12 +29,19 @@ import { PublicModeShell } from "../platform/PublicModeShell";
 import { StatusBadge } from "../platform/StatusBadge";
 import { PublicHero } from "../public/peds";
 import { LigaParejaVictoriaCelebrate } from "./LigaParejaVictoriaCelebrate";
+import { LigaMotionValue } from "./LigaMotionValue";
 import {
   LigaPublicParejaPlayers,
   parejaPlayerNames,
 } from "./LigaPublicParejaFaces";
+import {
+  useFlipReorder,
+  useInViewOnce,
+  useLigaPublicEnterOnce,
+} from "../../lib/liga/ligaPublicMotion";
 import "./liga-pareja-victoria-celebrate.css";
 import "./liga-public-pantalla.css";
+import "./liga-public-motion.css";
 import "../jugadores/riviera-jugadores.css";
 
 function jornadaEstadoLabel(estado: LigaJornada["estado"]): string {
@@ -274,6 +281,47 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     };
   };
 
+  const motionReady = Boolean(detalle && jornada);
+  const motionResetKey = `${ligaId}:${numero}`;
+  const { enterActive, enterDone } = useLigaPublicEnterOnce(
+    motionReady && esParejasFijas,
+    motionResetKey
+  );
+
+  const rankingFlipKeys = useMemo(
+    () => jornadaStats.rankingParejas.map((r) => r.parejaId),
+    [jornadaStats.rankingParejas]
+  );
+  const rankingFlipRef = useFlipReorder(
+    rankingFlipKeys,
+    motionReady && esParejasFijas && enterDone
+  );
+  const [rankingRevealRef, rankingInView] = useInViewOnce<HTMLOListElement>(
+    motionReady && esParejasFijas && enterDone,
+    motionResetKey
+  );
+  const [celebrateRevealRef, celebrateInView] = useInViewOnce<HTMLDivElement>(
+    motionReady &&
+      esParejasFijas &&
+      enterDone &&
+      todosPartidosCompletos &&
+      Boolean(jornadaStats.ganadorPareja),
+    motionResetKey
+  );
+
+  const celebratePlayRef = useRef<string | null>(null);
+  const [celebratePlay, setCelebratePlay] = useState(false);
+  useEffect(() => {
+    setCelebratePlay(false);
+  }, [motionResetKey]);
+  useEffect(() => {
+    if (!celebrateInView || !jornadaStats.ganadorPareja) return;
+    const key = `${motionResetKey}:${jornadaStats.ganadorPareja.parejaId}`;
+    if (celebratePlayRef.current === key) return;
+    celebratePlayRef.current = key;
+    setCelebratePlay(true);
+  }, [celebrateInView, jornadaStats.ganadorPareja, motionResetKey]);
+
   if (loading && !detalle) {
     return (
       <ClubExperienceScope organizadorId={null} pendingUntilOrganizador>
@@ -300,7 +348,11 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   const canchasDisponibles = Math.max(1, detalle.canchas_disponibles ?? 4);
   const totalPartidos = jornada.partidos?.length ?? 0;
 
-  const renderMatchCard = (partido: LigaPartido, duelLayout: boolean) => {
+  const renderMatchCard = (
+    partido: LigaPartido,
+    duelLayout: boolean,
+    matchIndex: number
+  ) => {
     const { s1, s2 } = scoreDisplay(partido);
     const pending = partido.estado !== "completed";
     const winner = partidoMatchWinnerSide(partido, esParejasFijas);
@@ -313,6 +365,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     const estadoMod = partidoPublicEstadoMod(partido.estado);
     const estadoText = partidoPublicEstadoLabel(partido.estado);
     const board = getPartidoPublicScoreboard(partido, esParejasFijas);
+    const matchStyle = {
+      ["--liga-match-i" as string]: matchIndex,
+    } as React.CSSProperties;
 
     const renderDuelSeparator = () => {
       if (board.kind === "wo") {
@@ -338,14 +393,14 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                       topWin ? " liga-pantalla-match__setboard-cell--win" : ""
                     }`}
                   >
-                    {col.p1}
+                    <LigaMotionValue morphKey={col.p1} value={col.p1} />
                   </span>
                   <span
                     className={`liga-pantalla-match__setboard-cell${
                       botWin ? " liga-pantalla-match__setboard-cell--win" : ""
                     }`}
                   >
-                    {col.p2}
+                    <LigaMotionValue morphKey={col.p2} value={col.p2} />
                   </span>
                 </div>
               );
@@ -374,6 +429,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         <article
           key={partido.id}
           className="liga-pantalla-match liga-pantalla-match--duel"
+          style={matchStyle}
         >
           <header className="liga-pantalla-match__head">
             <div className="liga-pantalla-match__head-left">
@@ -441,6 +497,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       <article
         key={partido.id}
         className="liga-pantalla-match liga-pantalla-match--faces"
+        style={matchStyle}
       >
         <header className="liga-pantalla-match__head">
           <span className="liga-pantalla-match__cancha">Cancha {canchaNum}</span>
@@ -467,7 +524,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 pending ? " liga-pantalla-match__pts--pending" : ""
               }`}
             >
-              {s1}
+              <LigaMotionValue morphKey={s1} value={s1} />
             </span>
           </div>
           <div className="liga-pantalla-match__mid">
@@ -491,7 +548,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 pending ? " liga-pantalla-match__pts--pending" : ""
               }`}
             >
-              {s2}
+              <LigaMotionValue morphKey={s2} value={s2} />
             </span>
           </div>
         </div>
@@ -508,7 +565,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     <div
       className={`liga-pantalla App--public-full-width ro-public-view ro-surface-dark${
         esParejasFijas ? " liga-pantalla--jornada-fijas" : ""
-      }`}
+      }${enterActive ? " liga-pantalla--enter" : ""}`}
     >
       <div className="liga-pantalla__grain" aria-hidden />
       <PublicModeShell className="liga-pantalla__inner">
@@ -608,8 +665,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                           : ""
                       }`}
                     >
-                      {partidos.map((partido) =>
-                        renderMatchCard(partido, esParejasFijas)
+                      {partidos.map((partido, matchIndex) =>
+                        renderMatchCard(partido, esParejasFijas, matchIndex)
                       )}
                     </div>
                   </section>
@@ -639,10 +696,20 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                   <p className="liga-pantalla__loading">Sin parejas en jornada.</p>
                 ) : (
                   <ol
-                    className="liga-pub-standings liga-pub-standings--jornada"
+                    ref={(node) => {
+                      (
+                        rankingFlipRef as React.MutableRefObject<HTMLElement | null>
+                      ).current = node;
+                      (
+                        rankingRevealRef as React.MutableRefObject<HTMLOListElement | null>
+                      ).current = node;
+                    }}
+                    className={`liga-pub-standings liga-pub-standings--jornada liga-motion-reveal${
+                      rankingInView ? " is-inview" : ""
+                    }`}
                     aria-label="Ranking de la jornada"
                   >
-                    {jornadaStats.rankingParejas.map((row) => {
+                    {jornadaStats.rankingParejas.map((row, rankIndex) => {
                       const face = resolveParejaFace(row.parejaId);
                       const matchLines =
                         jornadaMatchBreakdowns.get(row.parejaId) ?? [];
@@ -660,14 +727,25 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                       return (
                         <li
                           key={row.parejaId}
-                          className={`liga-pub-standings__row${topClass}`}
+                          data-flip-key={row.parejaId}
+                          className={`liga-pub-standings__row${topClass}${
+                            rankingInView ? " is-revealing" : ""
+                          }`}
+                          style={
+                            {
+                              ["--liga-rank-i" as string]: rankIndex,
+                            } as React.CSSProperties
+                          }
                         >
                           <div
                             className="liga-pub-standings__pos"
                             aria-label={`Posición ${row.posicion}`}
                           >
                             <span className="liga-pub-standings__pos-num">
-                              {row.posicion}
+                              <LigaMotionValue
+                                morphKey={row.posicion}
+                                value={row.posicion}
+                              />
                             </span>
                             <span className="liga-pub-standings__pos-suffix">
                               °
@@ -683,21 +761,31 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                               win={row.posicion === 1}
                             />
                             <p className="liga-pub-standings__meta">
-                              {row.victorias} PG · {row.derrotas} PP
+                              <LigaMotionValue
+                                morphKey={`${row.victorias}-${row.derrotas}`}
+                                value={`${row.victorias} PG · ${row.derrotas} PP`}
+                              />
                             </p>
                             <p className="liga-pub-standings__meta liga-pub-standings__meta--games">
-                              {row.games_favor} GF · {row.games_contra} GC · DIF{" "}
-                              {gamesDifLabel}
+                              <LigaMotionValue
+                                morphKey={`${row.games_favor}-${row.games_contra}`}
+                                value={`${row.games_favor} GF · ${row.games_contra} GC · DIF ${gamesDifLabel}`}
+                              />
                             </p>
                             {matchLines.length > 0 ? (
                               <ul
                                 className="liga-pub-standings__breakdown"
                                 aria-label="Puntos por partido"
                               >
-                                {matchLines.map((line) => (
+                                {matchLines.map((line, lineIndex) => (
                                   <li
                                     key={line.partidoId}
                                     className="liga-pub-standings__breakdown-line"
+                                    style={
+                                      {
+                                        ["--liga-line-i" as string]: lineIndex,
+                                      } as React.CSSProperties
+                                    }
                                   >
                                     <span className="liga-pub-standings__breakdown-score">
                                       {line.scoreLabel}
@@ -721,7 +809,10 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                           </div>
                           <div className="liga-pub-standings__pts-block">
                             <span className="liga-pub-standings__pts">
-                              {row.puntos}
+                              <LigaMotionValue
+                                morphKey={row.puntos}
+                                value={row.puntos}
+                              />
                             </span>
                             <span className="liga-pub-standings__pts-label">
                               pts
@@ -826,7 +917,10 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
           todosPartidosCompletos &&
           jornadaStats.ganadorPareja && (
             <div
-              className="liga-parejas-victorias-grid liga-parejas-victorias-grid--winner"
+              ref={celebrateRevealRef}
+              className={`liga-parejas-victorias-grid liga-parejas-victorias-grid--winner liga-motion-reveal${
+                celebrateInView ? " is-inview" : ""
+              }${celebratePlay ? " liga-celebrate--play" : ""}`}
               role="status"
             >
               <LigaParejaVictoriaCelebrate
