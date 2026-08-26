@@ -21,9 +21,15 @@ type RetaEquiposTeamCylinderProps = {
 };
 
 function ladoLabel(lado: RetaEquiposPlayerCardData["lado"]): string | null {
-  if (lado === "drive") return "Drive";
-  if (lado === "reves") return "Revés";
-  if (lado && lado in EN_CANCHA_LABELS) {
+  if (!lado) return null;
+  const normalized = lado
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  if (normalized === "drive" || normalized === "derecha") return "Drive";
+  if (normalized === "reves" || normalized.includes("reves")) return "Revés";
+  if (lado in EN_CANCHA_LABELS) {
     return EN_CANCHA_LABELS[lado as EnCancha];
   }
   return null;
@@ -124,12 +130,7 @@ const CylinderCard: React.FC<{
         </div>
 
         <header className="reta-eq-cara__top">
-          <span className="reta-eq-cara__pro">PRO</span>
-          {lado ? <span className="reta-eq-cara__lado">{lado}</span> : null}
-        </header>
-
-        <footer className="reta-eq-cara__foot">
-          <p className="reta-eq-cara__name">{surname}</p>
+          {lado ? <span className="reta-eq-cara__lado">{lado}</span> : <span />}
           {pais ? (
             <span className="reta-eq-cara__pais">
               <JugadorPaisBadge
@@ -137,8 +138,15 @@ const CylinderCard: React.FC<{
                 size="sm"
                 showCode={false}
               />
-              <span>{pais.nombre}</span>
+              <span>{pais.codigo}</span>
             </span>
+          ) : null}
+        </header>
+
+        <footer className="reta-eq-cara__foot">
+          <p className="reta-eq-cara__name">{surname}</p>
+          {pais ? (
+            <span className="reta-eq-cara__pais-name">{pais.nombre}</span>
           ) : null}
         </footer>
       </article>

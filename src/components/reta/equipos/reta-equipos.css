@@ -2716,9 +2716,9 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 6.35rem;
-  height: 9.5rem;
-  margin: -4.75rem 0 0 -3.175rem;
+  width: 6.85rem;
+  height: 10.5rem;
+  margin: -5.25rem 0 0 -3.425rem;
   --rad: var(--reta-eq-rad, 138px);
   transform: rotateY(var(--ang, 0deg)) translateZ(var(--rad));
   transform-style: preserve-3d;
@@ -2767,10 +2767,11 @@
   background:
     linear-gradient(
       180deg,
-      rgba(8, 9, 13, 0.55) 0%,
-      transparent 28%,
-      transparent 52%,
-      rgba(8, 9, 13, 0.88) 100%
+      rgba(8, 9, 13, 0.72) 0%,
+      rgba(8, 9, 13, 0.2) 22%,
+      transparent 40%,
+      rgba(8, 9, 13, 0.55) 68%,
+      rgba(8, 9, 13, 0.92) 100%
     );
 }
 
@@ -2802,30 +2803,26 @@
   position: relative;
   z-index: 2;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 0.3rem;
-  padding: 0.45rem 0.45rem 0;
-}
-
-.reta-eq-cara__pro {
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.78);
-  text-transform: uppercase;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+  gap: 0.28rem;
+  padding: 0.4rem 0.4rem 0;
 }
 
 .reta-eq-cara__lado {
+  flex: 0 1 auto;
+  min-width: 0;
   font-size: 0.58rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 0.18rem 0.42rem;
+  padding: 0.2rem 0.4rem;
   border-radius: 0.35rem;
   border: 1px solid transparent;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .reta-eq-cara--a .reta-eq-cara__lado {
@@ -2838,6 +2835,31 @@
   color: #1a0c08;
   background: rgba(217, 93, 57, 0.95);
   border-color: rgba(217, 93, 57, 0.9);
+}
+
+.reta-eq-cara__pais {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.22rem;
+  flex-shrink: 0;
+  max-width: 46%;
+  padding: 0.14rem 0.32rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.reta-eq-cara__pais > span:last-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .reta-eq-cara__medal {
@@ -2899,14 +2921,14 @@
   z-index: 2;
   text-align: center;
   min-width: 0;
-  padding: 0.55rem 0.45rem 0.55rem;
+  padding: 0.45rem 0.4rem 0.5rem;
 }
 
 .reta-eq-cara__name {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #fff;
   white-space: nowrap;
@@ -2915,23 +2937,17 @@
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
 }
 
-.reta-eq-cara__pais {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.28rem;
-  margin-top: 0.28rem;
-  font-size: 0.62rem;
+.reta-eq-cara__pais-name {
+  display: block;
+  margin-top: 0.18rem;
+  font-size: 0.55rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  max-width: 100%;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
-}
-
-.reta-eq-cara__pais > span:last-child {
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.88);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
 .reta-eq-center--duel {
@@ -3023,22 +3039,25 @@
   }
 
   .reta-eq-cara {
-    width: 7.5rem;
-    height: 11rem;
-    margin: -5.5rem 0 0 -3.75rem;
+    width: 7.75rem;
+    height: 11.5rem;
+    margin: -5.75rem 0 0 -3.875rem;
   }
 
   .reta-eq-cara__name {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
   }
 
-  .reta-eq-cara__lado,
-  .reta-eq-cara__pro {
+  .reta-eq-cara__lado {
     font-size: 0.6rem;
   }
 
   .reta-eq-cara__pais {
-    font-size: 0.64rem;
+    font-size: 0.58rem;
+  }
+
+  .reta-eq-cara__pais-name {
+    font-size: 0.58rem;
   }
 
   .reta-eq-stage__marquee-date {
@@ -3085,9 +3104,9 @@
   }
 
   .reta-eq-cara {
-    width: 8.75rem;
-    height: 12.75rem;
-    margin: -6.375rem 0 0 -4.375rem;
+    width: 8.85rem;
+    height: 13.25rem;
+    margin: -6.625rem 0 0 -4.425rem;
   }
 
   .reta-eq-cara__card {
@@ -3098,7 +3117,6 @@
     font-size: 1.85rem;
   }
 
-  .reta-eq-cara__pro,
   .reta-eq-cara__lado {
     font-size: 0.64rem;
   }
@@ -3108,7 +3126,11 @@
   }
 
   .reta-eq-cara__pais {
-    font-size: 0.66rem;
+    font-size: 0.62rem;
+  }
+
+  .reta-eq-cara__pais-name {
+    font-size: 0.62rem;
   }
 }
 
