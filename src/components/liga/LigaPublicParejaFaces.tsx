@@ -47,23 +47,26 @@ interface LigaPublicParejaPlayersProps {
   name2: string;
   foto1?: string | null;
   foto2?: string | null;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
+  /** inline = avatar al lado del nombre (default). stack = nombre debajo. */
+  orientation?: "inline" | "stack";
   className?: string;
   win?: boolean;
 }
 
-/** Cada jugador con su avatar al lado del nombre. */
+/** Pareja pública: dos jugadores con avatar + nombre. */
 export const LigaPublicParejaPlayers: React.FC<LigaPublicParejaPlayersProps> = ({
   name1,
   name2,
   foto1,
   foto2,
   size = "sm",
+  orientation = "inline",
   className = "",
   win = false,
 }) => (
   <div
-    className={`liga-pub-pair-players liga-pub-pair-players--${size}${
+    className={`liga-pub-pair-players liga-pub-pair-players--${size} liga-pub-pair-players--${orientation}${
       win ? " liga-pub-pair-players--win" : ""
     }${className ? ` ${className}` : ""}`}
   >
@@ -71,8 +74,9 @@ export const LigaPublicParejaPlayers: React.FC<LigaPublicParejaPlayersProps> = (
       <JugadorAvatar
         fotoUrl={foto1}
         nombre={name1}
-        size={size}
+        size={size === "lg" ? "lg" : size}
         className="liga-pub-pair-players__avatar"
+        alt={name1 !== "?" ? name1 : ""}
       />
       <span className="liga-pub-pair-players__name">{name1}</span>
     </div>
@@ -80,8 +84,9 @@ export const LigaPublicParejaPlayers: React.FC<LigaPublicParejaPlayersProps> = (
       <JugadorAvatar
         fotoUrl={foto2}
         nombre={name2}
-        size={size}
+        size={size === "lg" ? "lg" : size}
         className="liga-pub-pair-players__avatar"
+        alt={name2 !== "?" ? name2 : ""}
       />
       <span className="liga-pub-pair-players__name">{name2}</span>
     </div>
