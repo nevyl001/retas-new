@@ -297,7 +297,10 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
         >
           <div className="reta-eq-duel-foot">
             {sedeLabel ? (
-              <p className="reta-eq-duel-foot__sede">{sedeLabel}</p>
+              <p className="reta-eq-duel-foot__sede">
+                <span className="reta-eq-duel-foot__sede-kicker">Sede</span>
+                <span className="reta-eq-duel-foot__sede-name">{sedeLabel}</span>
+              </p>
             ) : null}
             <p className="reta-eq-duel-foot__motto">
               {TEAMS_PUBLIC_MOTIVATIONAL}

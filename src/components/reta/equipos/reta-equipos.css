@@ -2959,15 +2959,30 @@
 }
 
 .reta-eq-duel-foot__sede {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
   margin: 0;
-  font-family: var(--font-display, var(--ro-font-heading), sans-serif);
-  font-size: clamp(1.45rem, 5.5vw, 2.15rem);
+}
+
+.reta-eq-duel-foot__sede-kicker {
+  font-family: var(--font-body, var(--ro-font-body), system-ui, sans-serif);
+  font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  line-height: 1.1;
-  color: var(--text-primary, #f4f5f7);
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+  color: rgba(180, 184, 196, 0.72);
+}
+
+.reta-eq-duel-foot__sede-name {
+  font-family: var(--font-display, var(--ro-font-heading), sans-serif);
+  font-size: clamp(1.05rem, 3.8vw, 1.45rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.15;
+  color: rgba(244, 241, 235, 0.92);
 }
 
 .reta-eq-duel-foot__motto {
