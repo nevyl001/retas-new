@@ -725,6 +725,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         fav: row.points,
         con: row.pointsReceived,
         pts: row.puntosTorneo,
+        teamIndex: row.teamIndex,
+        logoUrl: resolveTeamLogoUrl(teamConfig?.teamLogos, row.teamIndex),
       }));
     }
     return sortedPairs.map((pair) => ({
@@ -737,7 +739,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       con: pair.pointsReceived,
       pts: pair.puntosTorneo,
     }));
-  }, [teamStandings, sortedPairs, formatPairLabel]);
+  }, [teamStandings, sortedPairs, formatPairLabel, teamConfig?.teamLogos]);
 
   const winnerAvatars = useMemo((): PublicRetaWinnerAvatar[] => {
     if (!showWinner) return [];
@@ -1387,6 +1389,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         }
         entityHeader={teamStandings?.length ? "EQUIPO" : "PAREJA"}
         scoringMode={standingsScoringMode}
+        arena={Boolean(teamStandings?.length)}
       />
       ) : null}
 
