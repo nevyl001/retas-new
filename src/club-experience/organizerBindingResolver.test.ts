@@ -89,16 +89,31 @@ describe("organizerBindingResolver", () => {
     );
   });
 
-  it("resuelve Padelito Warehouse por UUID de organizador", () => {
-    expect(PADELITO_WAREHOUSE_ORGANIZADOR_ID).toBe(
-      "cd45cea7-a8ac-4596-b0ee-24959b4cbb5d"
-    );
+  it("no ata Padelito Warehouse al UUID de Club Test", () => {
+    const clubTestId = "cd45cea7-a8ac-4596-b0ee-24959b4cbb5d";
+    expect(PADELITO_WAREHOUSE_ORGANIZADOR_ID).not.toBe(clubTestId);
+    expect(isPremiumBrandingEnabledForOrganizador(clubTestId)).toBe(false);
+    expect(resolveBrandingKeyForOrganizador(clubTestId)).toBe("riviera");
+  });
+
+  it("Club Test conserva estilos Riviera (sin premium estático)", () => {
+    const clubTestId = "cd45cea7-a8ac-4596-b0ee-24959b4cbb5d";
     expect(
-      isPremiumBrandingEnabledForOrganizador(PADELITO_WAREHOUSE_ORGANIZADOR_ID)
-    ).toBe(true);
+      ORGANIZADOR_CLUB_BINDINGS.some(
+        (b) => b.organizadorId === clubTestId
+      )
+    ).toBe(false);
+  });
+
+  it("resuelve Padelito Warehouse por UUID de env cuando existe", () => {
+    // Sin REACT_APP_PADELITO_WAREHOUSE_ORGANIZADOR_ID no hay binding estático
+    // (el upgrade llega por runtime sync desde BD).
+    expect(PADELITO_WAREHOUSE_ORGANIZADOR_ID).toBe("");
     expect(
-      resolveBrandingKeyForOrganizador(PADELITO_WAREHOUSE_ORGANIZADOR_ID)
-    ).toBe("padelito-warehouse");
+      ORGANIZADOR_CLUB_BINDINGS.some(
+        (b) => b.brandingKey === "padelito-warehouse"
+      )
+    ).toBe(false);
   });
 
   it("lista tenants premium en el registry", () => {

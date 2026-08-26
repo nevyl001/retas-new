@@ -6,7 +6,7 @@ SELECT id AS organizador_id_login, email, raw_user_meta_data->>'name' AS name
 FROM auth.users
 WHERE lower(email) = lower('padelitopadel@gmail.com');
 
--- 2) Club Test (binding frontend legacy — puede NO ser tu cuenta)
+-- 2) Club Test (cuenta demo Riviera — NUNCA binding de Padelito)
 SELECT 'cd45cea7-a8ac-4596-b0ee-24959b4cbb5d'::uuid AS club_test_uuid;
 
 -- 3) Branding del login real (debe premium=true, branding_key=padelito-warehouse)

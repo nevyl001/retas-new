@@ -83,5 +83,19 @@ export async function syncRuntimeBindingForOrganizador(
 
   const settings = await fetchOrganizerBrandingPublicSettings(id);
   const binding = bindingFromBrandingSettings(id, settings);
-  setRuntimeOrganizerClubBindings(binding ? [binding] : []);
+  if (binding) {
+    setRuntimeOrganizerClubBindings([binding]);
+    return;
+  }
+
+  // DB sin upgrade: binding runtime explícito para que el índice estático
+  // no “robe” la cuenta (p. ej. Club Test ≠ Padelito Warehouse).
+  setRuntimeOrganizerClubBindings([
+    {
+      organizadorId: id,
+      brandingKey: "riviera",
+      active: true,
+      premiumBrandingEnabled: false,
+    },
+  ]);
 }
