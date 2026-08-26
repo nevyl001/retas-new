@@ -239,62 +239,19 @@
 
 .reta-eq-stage {
   position: relative;
-  isolation: isolate;
   width: 100%;
   margin: 0 0 1.5rem;
   color: #ffffff;
-  overflow: hidden;
+  overflow: visible;
   background: transparent;
 }
 
-.reta-eq-stage__atmosphere {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: transparent;
-}
-
-.reta-eq-stage__court {
-  position: absolute;
-  inset: 0;
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  opacity: 0.42;
-  filter: saturate(0.75) brightness(0.85);
-}
-
-.reta-eq-stage__vignette {
-  position: absolute;
-  inset: 0;
-  /* Lectura ligera — sin placa negra / sombra pesada */
-  background: linear-gradient(
-    180deg,
-    rgba(10, 10, 14, 0.18) 0%,
-    rgba(10, 10, 14, 0.08) 45%,
-    rgba(10, 10, 14, 0.28) 100%
-  );
-}
-
+/* Fondo = cancha global de .ro-public-view (sin capa local / sombra) */
+.reta-eq-stage__atmosphere,
+.reta-eq-stage__court,
+.reta-eq-stage__vignette,
 .reta-eq-stage__glow {
-  position: absolute;
-  width: 42%;
-  height: 55%;
-  top: 12%;
-  border-radius: 50%;
-  filter: blur(48px);
-  opacity: 0.22;
-}
-
-.reta-eq-stage__glow--a {
-  left: -4%;
-  background: radial-gradient(circle, rgba(244, 241, 235, 0.22), transparent 70%);
-}
-
-.reta-eq-stage__glow--b {
-  right: -4%;
-  background: radial-gradient(circle, rgba(244, 241, 235, 0.16), transparent 70%);
+  display: none;
 }
 
 .reta-eq-stage__shell {
@@ -349,9 +306,9 @@
   padding: 0.7rem 0.85rem;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(19, 20, 27, 0.88);
+  background: rgba(19, 20, 27, 0.72);
   backdrop-filter: blur(10px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  box-shadow: none;
 }
 
 .reta-eq-matchbar__side {
@@ -539,7 +496,7 @@
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: #121216;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 .reta-eq-frame--empty {

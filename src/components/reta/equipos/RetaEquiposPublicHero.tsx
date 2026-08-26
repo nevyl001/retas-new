@@ -145,16 +145,6 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
 
   return (
     <section className="reta-eq-stage reta-eq-anim-in">
-      <div className="reta-eq-stage__atmosphere" aria-hidden>
-        <div
-          className="reta-eq-stage__court"
-          style={{ backgroundImage: 'url("/images/cancha-riviera.jpg")' }}
-        />
-        <div className="reta-eq-stage__vignette" />
-        <div className="reta-eq-stage__glow reta-eq-stage__glow--a" />
-        <div className="reta-eq-stage__glow reta-eq-stage__glow--b" />
-      </div>
-
       <div className="reta-eq-stage__shell">
         <header className="reta-eq-stage__header">
           {fechaOnly ? (
