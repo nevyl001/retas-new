@@ -238,37 +238,41 @@
    ============================================================================= */
 
 
-/* Cancha global más visible con hero/live de equipos (sin placa negra) */
+/* Overlay nocturno cinematográfico — cancha visible, tono elegante */
 .ro-public-view:has(.reta-eq-stage)::before,
-.ro-public-view:has(.reta-eq-live-header)::before {
-  opacity: 0.32;
+.ro-public-view:has(.reta-eq-live-header)::before,
+.ro-public-view:has(.te-public--reta-equipos)::before {
+  opacity: 0.22;
 }
 
 .ro-public-view:has(.reta-eq-stage)::after,
-.ro-public-view:has(.reta-eq-live-header)::after {
+.ro-public-view:has(.reta-eq-live-header)::after,
+.ro-public-view:has(.te-public--reta-equipos)::after {
   background: linear-gradient(
     180deg,
-    rgba(12, 12, 12, 0.45) 0%,
-    rgba(12, 12, 12, 0.18) 35%,
-    rgba(12, 12, 12, 0.28) 65%,
-    rgba(12, 12, 12, 0.55) 100%
+    rgba(10, 10, 14, 0.88) 0%,
+    rgba(10, 10, 14, 0.72) 28%,
+    rgba(10, 10, 14, 0.78) 62%,
+    rgba(10, 10, 14, 0.92) 100%
   );
 }
 
 @media (max-width: 768px), (orientation: portrait) and (max-width: 1024px) {
   .ro-public-view:has(.reta-eq-stage)::before,
-  .ro-public-view:has(.reta-eq-live-header)::before {
-    opacity: 0.36;
+  .ro-public-view:has(.reta-eq-live-header)::before,
+  .ro-public-view:has(.te-public--reta-equipos)::before {
+    opacity: 0.24;
   }
 
   .ro-public-view:has(.reta-eq-stage)::after,
-  .ro-public-view:has(.reta-eq-live-header)::after {
+  .ro-public-view:has(.reta-eq-live-header)::after,
+  .ro-public-view:has(.te-public--reta-equipos)::after {
     background: linear-gradient(
       180deg,
-      rgba(12, 12, 12, 0.4) 0%,
-      rgba(12, 12, 12, 0.15) 35%,
-      rgba(12, 12, 12, 0.25) 65%,
-      rgba(12, 12, 12, 0.5) 100%
+      rgba(10, 10, 14, 0.85) 0%,
+      rgba(10, 10, 14, 0.68) 30%,
+      rgba(10, 10, 14, 0.74) 60%,
+      rgba(10, 10, 14, 0.9) 100%
     );
   }
 }
@@ -514,26 +518,22 @@
   width: 100%;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: none;
   transform-style: preserve-3d;
 }
 
 .reta-eq-frame--a {
   border-top: 2px solid #e5c158;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.45),
-    0 0 18px rgba(229, 193, 88, 0.12);
+  box-shadow: none;
 }
 
 .reta-eq-frame--b {
   border-top: 2px solid #d95d39;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.45),
-    0 0 18px rgba(217, 93, 57, 0.12);
+  box-shadow: none;
 }
 
 .reta-eq-frame--empty {
