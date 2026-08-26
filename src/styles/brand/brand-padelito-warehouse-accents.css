@@ -178,3 +178,25 @@
 [data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-ranking th {
   border-bottom-color: color-mix(in srgb, var(--brand-primary, #2a4ba7) 45%, transparent);
 }
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row {
+  border-color: color-mix(in srgb, var(--brand-primary, #2a4ba7) 48%, transparent);
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row--1,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row--1 {
+  border-color: color-mix(in srgb, var(--brand-accent, #d6ef3a) 45%, transparent);
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--brand-accent, #d6ef3a) 12%, transparent) 0%,
+    color-mix(in srgb, var(--brand-primary, #2a4ba7) 16%, rgba(0, 0, 0, 0.45)) 55%
+  );
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row--1 .liga-pub-standings__pos-num,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row--1 .liga-pub-standings__pos-num,
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row--1 .liga-pub-standings__pts,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row--1 .liga-pub-standings__pts {
+  color: var(--brand-accent, #d6ef3a);
+}

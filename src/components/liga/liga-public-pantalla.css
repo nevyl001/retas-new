@@ -1644,7 +1644,7 @@
   box-shadow: none !important;
   padding: 0 !important;
   margin: 0 auto;
-  max-width: 620px;
+  max-width: min(720px, 100%);
   width: 100%;
   text-align: center;
   position: static;
@@ -1661,6 +1661,43 @@
   margin-bottom: 1.35rem;
   font-size: 0.72rem;
   color: var(--liga-pub-text-hint);
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-standings--jornada {
+  text-align: left;
+  gap: 0.75rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row {
+  background: color-mix(
+    in srgb,
+    var(--brand-surface-alt, #0d1118) 78%,
+    rgba(0, 0, 0, 0.45)
+  );
+  border-color: var(--liga-jornada-border, var(--liga-pub-border-card));
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(6px);
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__pts {
+  font-size: 1.75rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-pair-players--md .liga-pub-pair-players__avatar.rj-avatar {
+  width: 44px;
+  height: 44px;
+  font-size: 0.72rem;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--brand-primary, rgba(255, 255, 255, 0.2)) 55%,
+      transparent
+    );
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-pair-players__name {
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-ranking__scroll {

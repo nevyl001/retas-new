@@ -665,57 +665,61 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 {jornadaStats.rankingParejas.length === 0 ? (
                   <p className="liga-pantalla__loading">Sin parejas en jornada.</p>
                 ) : (
-                  <div className="liga-pantalla-ranking__scroll">
-                    <table className="liga-pantalla-ranking__table">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Pareja</th>
-                          <th title="Partido ganado">PG</th>
-                          <th title="Partido perdido">PP</th>
-                          <th title="Puntos de la jornada">PTS</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {jornadaStats.rankingParejas.map((row) => {
-                          const pareja = jornada.parejas?.find(
-                            (p) => p.id === row.parejaId
-                          );
-                          const label = pareja
-                            ? formatJornadaParejaNombre(pareja, equiposById)
-                            : row.nombre;
-                          return (
-                            <tr
-                              key={row.parejaId}
-                              className={
-                                row.victorias > 0
-                                  ? "liga-pantalla-ranking-winner"
-                                  : row.posicion <= 3
-                                    ? "liga-pantalla-ranking-top"
-                                    : undefined
-                              }
-                            >
-                              <td className="liga-pantalla-ranking__rank">
-                                {row.posicion}
-                              </td>
-                              <td className="liga-pantalla-ranking__name">
-                                {label}
-                              </td>
-                              <td className="liga-pantalla-ranking__stat">
-                                {row.victorias}
-                              </td>
-                              <td className="liga-pantalla-ranking__stat">
-                                {row.derrotas}
-                              </td>
-                              <td className="liga-pantalla-ranking__pts">
-                                {row.puntos}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                  <ol
+                    className="liga-pub-standings liga-pub-standings--jornada"
+                    aria-label="Ranking de la jornada"
+                  >
+                    {jornadaStats.rankingParejas.map((row) => {
+                      const face = resolveParejaFace(row.parejaId);
+                      const topClass =
+                        row.posicion === 1
+                          ? " liga-pub-standings__row--1"
+                          : row.posicion === 2
+                            ? " liga-pub-standings__row--2"
+                            : row.posicion === 3
+                              ? " liga-pub-standings__row--3"
+                              : "";
+                      return (
+                        <li
+                          key={row.parejaId}
+                          className={`liga-pub-standings__row${topClass}`}
+                        >
+                          <div
+                            className="liga-pub-standings__pos"
+                            aria-label={`Posición ${row.posicion}`}
+                          >
+                            <span className="liga-pub-standings__pos-num">
+                              {row.posicion}
+                            </span>
+                            <span className="liga-pub-standings__pos-suffix">
+                              °
+                            </span>
+                          </div>
+                          <div className="liga-pub-standings__players">
+                            <LigaPublicParejaPlayers
+                              name1={face.name1}
+                              name2={face.name2}
+                              foto1={face.foto1}
+                              foto2={face.foto2}
+                              size="md"
+                              win={row.posicion === 1}
+                            />
+                            <p className="liga-pub-standings__meta">
+                              {row.victorias} PG · {row.derrotas} PP
+                            </p>
+                          </div>
+                          <div className="liga-pub-standings__pts-block">
+                            <span className="liga-pub-standings__pts">
+                              {row.puntos}
+                            </span>
+                            <span className="liga-pub-standings__pts-label">
+                              pts
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
                 )}
               </>
             ) : (
