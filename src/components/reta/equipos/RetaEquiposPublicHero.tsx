@@ -201,9 +201,11 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
         </header>
 
         <div
-          className="reta-eq-matchbar"
+          className="reta-eq-matchbar reta-eq-matchbar--arena"
           aria-label={`${labelA} versus ${labelB}`}
         >
+          <div className="reta-eq-matchbar__glow reta-eq-matchbar__glow--a" aria-hidden />
+          <div className="reta-eq-matchbar__glow reta-eq-matchbar__glow--b" aria-hidden />
           <div className="reta-eq-matchbar__side reta-eq-matchbar__side--a">
             <TeamLogo
               logoUrl={logoA}

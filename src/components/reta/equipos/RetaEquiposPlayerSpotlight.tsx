@@ -32,7 +32,7 @@ function ladoLabel(lado: RetaEquiposPlayerCardData["lado"]): string | null {
 }
 
 /**
- * Carta holográfica broadcast (reveal 3D + shimmer).
+ * Carta vertical tipo Ultimate Team (sin botón cuadrado).
  * País + Drive/Revés. Sin edad ni mano.
  */
 export const RetaEquiposPlayerSpotlight: React.FC<
@@ -52,11 +52,13 @@ export const RetaEquiposPlayerSpotlight: React.FC<
   const pais = getPaisOption(player.nacionalidad);
   const lado = ladoLabel(player.lado);
   const displayName = rest ? `${first} ${rest}` : first;
+  const wm = (rest || first || mark).slice(0, 10).toUpperCase();
 
   return (
     <article
       className={[
         "reta-eq-frame",
+        "reta-eq-frame--card",
         `reta-eq-frame--${side}`,
         className,
       ]
@@ -75,13 +77,18 @@ export const RetaEquiposPlayerSpotlight: React.FC<
           />
         ) : (
           <div className="reta-eq-frame__fallback" aria-hidden>
-            <span className="reta-eq-frame__fallback-wm">{mark}</span>
-            <span className={`reta-eq-frame__emblem reta-eq-frame__emblem--${side}`}>
-              <span className="reta-eq-frame__emblem-glow" />
-              <span className="reta-eq-frame__emblem-shield">
-                <span className="reta-eq-frame__emblem-initials">{mark}</span>
-              </span>
-            </span>
+            <span className="reta-eq-frame__fallback-wm">{wm}</span>
+            <div
+              className={`reta-eq-frame__crest reta-eq-frame__crest--${side}`}
+            >
+              <span className="reta-eq-frame__crest-glow" />
+              <div className="reta-eq-frame__crest-shell">
+                <div className="reta-eq-frame__crest-inner">
+                  <span className="reta-eq-frame__crest-mark">{mark}</span>
+                  <span className="reta-eq-frame__crest-tag">PRO</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
         <div className="reta-eq-frame__shade" aria-hidden />

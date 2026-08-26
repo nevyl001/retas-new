@@ -12,8 +12,7 @@ type RetaEquiposRosterRailProps = {
 };
 
 /**
- * Carousel horizontal de avatares (anillo activo por equipo).
- * Reemplaza track segmentado + grilla de pills.
+ * Dock flotante estilo Apple TV — avatares en barra glass.
  */
 export const RetaEquiposRosterRail: React.FC<RetaEquiposRosterRailProps> = ({
   players,
@@ -30,16 +29,18 @@ export const RetaEquiposRosterRail: React.FC<RetaEquiposRosterRailProps> = ({
       role="tablist"
       aria-label={`Jugadores ${teamName}`}
     >
-      <div className="reta-eq-dock__carousel">
-        {players.map((player, i) => (
-          <RosterAvatar
-            key={player.id}
-            player={player}
-            active={i === activeIndex}
-            onSelect={() => onSelect(i)}
-            side={side}
-          />
-        ))}
+      <div className="reta-eq-dock__shell">
+        <div className="reta-eq-dock__carousel">
+          {players.map((player, i) => (
+            <RosterAvatar
+              key={player.id}
+              player={player}
+              active={i === activeIndex}
+              onSelect={() => onSelect(i)}
+              side={side}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
