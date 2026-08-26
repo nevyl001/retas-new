@@ -1010,7 +1010,7 @@
 .te-public--reta-equipos .te-pub-standings-arena__trophy {
   display: inline-flex;
   color: #e5c158;
-  filter: drop-shadow(0 0 8px rgba(229, 193, 88, 0.35));
+  filter: none;
 }
 
 .te-public--reta-equipos .te-pub-standings-arena__order,
@@ -1087,12 +1087,12 @@
 
 .te-public--reta-equipos .te-pub-standings-row--side-a .te-pub-standings-row__logo {
   border-color: rgba(229, 193, 88, 0.55) !important;
-  box-shadow: 0 0 10px rgba(229, 193, 88, 0.28) !important;
+  box-shadow: none !important;
 }
 
 .te-public--reta-equipos .te-pub-standings-row--side-b .te-pub-standings-row__logo {
   border-color: rgba(217, 93, 57, 0.55) !important;
-  box-shadow: 0 0 10px rgba(217, 93, 57, 0.26) !important;
+  box-shadow: none !important;
 }
 
 .te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row__label,
@@ -1133,14 +1133,14 @@
   background: #e5c158 !important;
   color: #0d0e15 !important;
   border-color: rgba(229, 193, 88, 0.8) !important;
-  box-shadow: 0 0 14px rgba(229, 193, 88, 0.55) !important;
+  box-shadow: none !important;
 }
 
 .te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-1 .te-pub-standings-row__pts {
   font-size: 1.2rem !important;
   font-weight: 900 !important;
   color: #e5c158 !important;
-  text-shadow: 0 0 10px rgba(229, 193, 88, 0.35);
+  text-shadow: none;
 }
 
 .te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-2 {
@@ -1164,7 +1164,7 @@
   background: #d95d39 !important;
   color: #ffffff !important;
   border-color: rgba(217, 93, 57, 0.75) !important;
-  box-shadow: 0 0 14px rgba(217, 93, 57, 0.45) !important;
+  box-shadow: none !important;
 }
 
 .te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-2 .te-pub-standings-row__pts {

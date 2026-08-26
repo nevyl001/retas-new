@@ -370,8 +370,8 @@
   );
   backdrop-filter: blur(28px) saturate(1.1);
   -webkit-backdrop-filter: blur(28px) saturate(1.1);
-  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.65);
-  gap: 0.65rem 0.85rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  gap: 0.45rem 0.55rem;
 }
 
 .reta-eq-matchbar__glow {
@@ -386,18 +386,18 @@
 .reta-eq-matchbar__glow--a {
   left: 0;
   background: radial-gradient(
-    ellipse 85% 80% at 15% 50%,
-    rgba(229, 193, 88, 0.22) 0%,
-    transparent 70%
+    ellipse 80% 70% at 12% 50%,
+    rgba(229, 193, 88, 0.08) 0%,
+    transparent 72%
   );
 }
 
 .reta-eq-matchbar__glow--b {
   right: 0;
   background: radial-gradient(
-    ellipse 85% 80% at 85% 50%,
-    rgba(217, 93, 57, 0.2) 0%,
-    transparent 70%
+    ellipse 80% 70% at 88% 50%,
+    rgba(217, 93, 57, 0.07) 0%,
+    transparent 72%
   );
 }
 
@@ -439,11 +439,11 @@
 
 .reta-eq-matchbar--arena .reta-eq-matchbar__logo,
 .reta-eq-matchbar--arena .reta-eq-logo.reta-eq-matchbar__logo {
-  width: 72px !important;
-  height: 72px !important;
-  border-width: 3px !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-width: 2px !important;
   background: #0d0e15 !important;
-  padding: 3px;
+  padding: 2px;
   box-sizing: border-box;
 }
 
@@ -456,10 +456,8 @@
 }
 
 .reta-eq-matchbar--arena .reta-eq-matchbar__logo--a {
-  border-color: #e5c158 !important;
-  box-shadow:
-    0 0 0 2px rgba(229, 193, 88, 0.25),
-    0 0 28px rgba(229, 193, 88, 0.45) !important;
+  border-color: rgba(229, 193, 88, 0.75) !important;
+  box-shadow: none !important;
 }
 
 .reta-eq-matchbar__logo--b,
@@ -470,10 +468,8 @@
 }
 
 .reta-eq-matchbar--arena .reta-eq-matchbar__logo--b {
-  border-color: #d95d39 !important;
-  box-shadow:
-    0 0 0 2px rgba(217, 93, 57, 0.25),
-    0 0 28px rgba(217, 93, 57, 0.42) !important;
+  border-color: rgba(217, 93, 57, 0.75) !important;
+  box-shadow: none !important;
 }
 
 /* Fallback sin imagen: gradiente de equipo + iniciales legibles */
@@ -515,19 +511,21 @@
   z-index: 1;
   font-size: 1.05rem;
   font-weight: 900;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #ffffff;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  line-height: 1.15;
   max-width: 100%;
+  word-break: break-word;
 }
 
 .reta-eq-matchbar--arena .reta-eq-matchbar__name {
-  font-size: clamp(1.05rem, 4.5vw, 1.65rem);
-  letter-spacing: 0.14em;
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.75);
+  font-size: clamp(0.82rem, 3.6vw, 1.25rem);
+  letter-spacing: 0.08em;
+  text-shadow: none;
 }
 
 @media (min-width: 768px) {
@@ -545,9 +543,9 @@
 
   .reta-eq-matchbar--arena .reta-eq-matchbar__logo,
   .reta-eq-matchbar--arena .reta-eq-logo.reta-eq-matchbar__logo {
-    width: 96px !important;
-    height: 96px !important;
-    border-width: 4px !important;
+    width: 72px !important;
+    height: 72px !important;
+    border-width: 2.5px !important;
   }
 
   .reta-eq-matchbar__name {
@@ -555,8 +553,8 @@
   }
 
   .reta-eq-matchbar--arena .reta-eq-matchbar__name {
-    font-size: clamp(1.75rem, 3.5vw, 2.75rem);
-    letter-spacing: 0.16em;
+    font-size: clamp(1.35rem, 2.8vw, 2.15rem);
+    letter-spacing: 0.12em;
   }
 
   .reta-eq-matchbar__logo .reta-eq-logo__initials,
@@ -597,17 +595,17 @@
 }
 
 .reta-eq-matchbar--arena .reta-eq-matchbar__vs {
-  width: 3.25rem;
-  min-width: 3.25rem;
-  height: 3.25rem;
-  font-size: 0.85rem;
+  width: 2.6rem;
+  min-width: 2.6rem;
+  height: 2.6rem;
+  font-size: 0.72rem;
   font-style: italic;
   font-weight: 900;
   letter-spacing: 0.08em;
-  color: #e5c158;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: linear-gradient(180deg, #52525b 0%, #171717 100%);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  color: #d4d4d4;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(180deg, #3f3f46 0%, #171717 100%);
+  box-shadow: none;
 }
 
 @media (min-width: 768px) {
@@ -700,7 +698,7 @@
 
 /* Glassmorphic / hologram player spotlight */
 .reta-eq-col__stage--float {
-  animation: cardFloatGlow 4.5s ease-in-out infinite;
+  animation: none;
 }
 
 .reta-eq-frame {
@@ -726,10 +724,8 @@
 }
 
 .reta-eq-frame--a {
-  border-color: rgba(229, 193, 88, 0.5);
-  box-shadow:
-    0 12px 36px rgba(0, 0, 0, 0.45),
-    0 0 36px rgba(229, 193, 88, 0.18);
+  border-color: rgba(229, 193, 88, 0.4);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
   background: radial-gradient(
       ellipse 90% 55% at 50% 0%,
       rgba(38, 33, 21, 0.98) 0%,
@@ -739,10 +735,8 @@
 }
 
 .reta-eq-frame--b {
-  border-color: rgba(217, 93, 57, 0.5);
-  box-shadow:
-    0 12px 36px rgba(0, 0, 0, 0.45),
-    0 0 36px rgba(217, 93, 57, 0.18);
+  border-color: rgba(217, 93, 57, 0.4);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
   background: radial-gradient(
       ellipse 90% 55% at 50% 0%,
       rgba(42, 24, 20, 0.98) 0%,
@@ -781,33 +775,26 @@
 @keyframes ultimateCardReveal {
   0% {
     opacity: 0;
-    transform: perspective(1200px) rotateY(-35deg) rotateX(15deg) scale(0.82)
-      translateY(30px);
-    filter: blur(12px) brightness(2) contrast(1.3);
-  }
-  60% {
-    filter: blur(0) brightness(1.2) contrast(1.1);
-    transform: perspective(1200px) rotateY(5deg) rotateX(-3deg) scale(1.03)
-      translateY(-4px);
+    transform: perspective(1200px) rotateY(-12deg) scale(0.96) translateY(12px);
+    filter: blur(4px);
   }
   100% {
     opacity: 1;
-    transform: perspective(1200px) rotateY(0deg) rotateX(0deg) scale(1)
-      translateY(0);
-    filter: blur(0) brightness(1) contrast(1);
+    transform: perspective(1200px) rotateY(0deg) scale(1) translateY(0);
+    filter: blur(0);
   }
 }
 
 @keyframes holographicBeam {
   0% {
-    transform: translateX(-180%) skewX(-30deg);
+    transform: translateX(-180%) skewX(-24deg);
     opacity: 0;
   }
-  30% {
-    opacity: 0.75;
+  35% {
+    opacity: 0.28;
   }
   100% {
-    transform: translateX(220%) skewX(-30deg);
+    transform: translateX(220%) skewX(-24deg);
     opacity: 0;
   }
 }
@@ -923,9 +910,9 @@
 .reta-eq-frame--a .reta-eq-frame__fallback {
   background:
     radial-gradient(
-      ellipse 70% 55% at 50% 42%,
-      rgba(229, 193, 88, 0.28) 0%,
-      transparent 70%
+      ellipse 65% 50% at 50% 40%,
+      rgba(229, 193, 88, 0.12) 0%,
+      transparent 72%
     ),
     linear-gradient(180deg, #1c1a14 0%, #12131a 50%, #0a0a0e 100%);
 }
@@ -933,9 +920,9 @@
 .reta-eq-frame--b .reta-eq-frame__fallback {
   background:
     radial-gradient(
-      ellipse 70% 55% at 50% 42%,
-      rgba(217, 93, 57, 0.26) 0%,
-      transparent 70%
+      ellipse 65% 50% at 50% 40%,
+      rgba(217, 93, 57, 0.1) 0%,
+      transparent 72%
     ),
     linear-gradient(180deg, #1e1412 0%, #12131a 50%, #0a0a0e 100%);
 }
@@ -969,18 +956,19 @@
 
 .reta-eq-frame__crest-glow {
   position: absolute;
-  inset: -22%;
+  inset: -10%;
   border-radius: 999px;
   pointer-events: none;
-  filter: blur(18px);
+  filter: blur(12px);
+  opacity: 0.45;
 }
 
 .reta-eq-frame__crest--a .reta-eq-frame__crest-glow {
-  background: rgba(229, 193, 88, 0.35);
+  background: rgba(229, 193, 88, 0.16);
 }
 
 .reta-eq-frame__crest--b .reta-eq-frame__crest-glow {
-  background: rgba(217, 93, 57, 0.32);
+  background: rgba(217, 93, 57, 0.14);
 }
 
 .reta-eq-frame__crest-shell {
@@ -1186,7 +1174,7 @@
   color: #a3a3a3;
 }
 
-/* Roster: dock flotante estilo Apple TV */
+/* Roster: barras segmentadas broadcast (sin círculos) */
 .reta-eq-dock {
   display: flex;
   flex-direction: column;
@@ -1198,125 +1186,81 @@
   min-width: 0;
 }
 
-.reta-eq-dock__shell {
-  display: inline-flex;
-  max-width: 100%;
-  padding: 0.4rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(13, 14, 21, 0.82);
-  backdrop-filter: blur(18px) saturate(1.1);
-  -webkit-backdrop-filter: blur(18px) saturate(1.1);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
-}
-
-.reta-eq-dock__carousel {
+.reta-eq-dock__segments {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.3rem;
   width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+  max-width: 16rem;
   padding: 0.15rem 0.1rem;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  box-sizing: border-box;
 }
 
-.reta-eq-dock__carousel::-webkit-scrollbar {
-  display: none;
-}
-
-.reta-eq-dock__av-btn {
+.reta-eq-dock__seg {
   appearance: none;
-  flex: 0 0 auto;
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 3px;
   margin: 0;
   padding: 0;
   border: none;
-  background: transparent;
-  cursor: pointer;
-  scroll-snap-align: center;
   border-radius: 999px;
-  z-index: 1;
+  background: rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  overflow: hidden;
 }
 
-.reta-eq-dock__av-btn.is-active {
-  z-index: 2;
+.reta-eq-dock__seg-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.35);
 }
 
-.reta-eq-dock__av-btn:focus-visible {
-  outline: 2px solid rgba(244, 241, 235, 0.55);
+.reta-eq-dock__seg.is-past .reta-eq-dock__seg-fill {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.reta-eq-dock__seg--a.is-active .reta-eq-dock__seg-fill {
+  background: #e5c158;
+  animation: reta-eq-seg-fill var(--reta-eq-seg-ms, 5000ms) linear forwards;
+}
+
+.reta-eq-dock__seg--b.is-active .reta-eq-dock__seg-fill {
+  background: #d95d39;
+  animation: reta-eq-seg-fill var(--reta-eq-seg-ms, 5000ms) linear forwards;
+}
+
+.reta-eq-dock__seg.is-paused .reta-eq-dock__seg-fill {
+  animation-play-state: paused;
+}
+
+.reta-eq-dock__seg:focus-visible {
+  outline: 2px solid rgba(244, 241, 235, 0.5);
   outline-offset: 3px;
 }
 
-.reta-eq-dock__av-btn .reta-eq-dock__av {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  overflow: hidden;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid rgba(255, 255, 255, 0.14);
-  background: linear-gradient(145deg, #3f3f46, #171717);
-  transition:
-    border-color 220ms ease,
-    box-shadow 220ms ease,
-    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reta-eq-dock__av-btn--a.is-active .reta-eq-dock__av {
-  border-color: #e5c158;
-  box-shadow:
-    0 0 0 3px rgba(229, 193, 88, 0.28),
-    0 0 16px rgba(229, 193, 88, 0.45);
-  transform: scale(1.12);
-}
-
-.reta-eq-dock__av-btn--b.is-active .reta-eq-dock__av {
-  border-color: #d95d39;
-  box-shadow:
-    0 0 0 3px rgba(217, 93, 57, 0.28),
-    0 0 16px rgba(217, 93, 57, 0.42);
-  transform: scale(1.12);
-}
-
-.reta-eq-dock__av-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.reta-eq-dock__av-initials {
-  font-size: 0.55rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: #ffffff;
+@keyframes reta-eq-seg-fill {
+  from { width: 0%; }
+  to { width: 100%; }
 }
 
 /* Legacy dock pieces (ocultos) */
+.reta-eq-dock__shell,
+.reta-eq-dock__carousel,
+.reta-eq-dock__av-btn,
+.reta-eq-dock__av,
 .reta-eq-dock__track,
-.reta-eq-dock__seg,
 .reta-eq-dock__dots,
 .reta-eq-dock__dot,
 .reta-eq-dock__pills,
-.reta-eq-dock__pill {
+.reta-eq-dock__pill,
+.reta-eq-dock__surname {
   display: none !important;
 }
-
-.reta-eq-dock__surname {
-  display: none;
-}
-
-@media (min-width: 640px) {
-  .reta-eq-dock__av-btn .reta-eq-dock__av {
-    width: 44px;
-    height: 44px;
-  }
-}
-
 
 /* Pill de transmisión unificado (fecha · hora · lugar · estado) */
 .reta-eq-tx-pill {
@@ -1569,8 +1513,8 @@
 .reta-eq-cta--hub {
   background: linear-gradient(105deg, #10b981 0%, #0d9488 100%);
   color: #ffffff;
-  border: 1px solid rgba(16, 185, 129, 0.55);
-  box-shadow: 0 0 24px rgba(16, 185, 129, 0.42);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
   font-weight: 800;
 }
 
@@ -1581,11 +1525,11 @@
 }
 
 .reta-eq-cta--hub:hover {
-  transform: translateY(-2px) scale(1.03);
+  transform: translateY(-1px);
   background: linear-gradient(105deg, #14c78c 0%, #10a89a 100%);
   color: #ffffff;
-  border-color: rgba(52, 211, 153, 0.7);
-  box-shadow: 0 0 30px rgba(16, 185, 129, 0.55);
+  border-color: rgba(52, 211, 153, 0.55);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
 }
 
 @keyframes reta-eq-hub-pulse {
@@ -1630,7 +1574,7 @@
   background: rgba(13, 14, 21, 0.9);
   backdrop-filter: blur(28px) saturate(1.08);
   -webkit-backdrop-filter: blur(28px) saturate(1.08);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
 }
 
 .reta-eq-arena__glow {
@@ -1645,18 +1589,18 @@
 .reta-eq-arena__glow--a {
   left: 0;
   background: radial-gradient(
-    ellipse 80% 70% at 18% 45%,
-    rgba(229, 193, 88, 0.18) 0%,
-    transparent 68%
+    ellipse 75% 65% at 18% 45%,
+    rgba(229, 193, 88, 0.08) 0%,
+    transparent 70%
   );
 }
 
 .reta-eq-arena__glow--b {
   right: 0;
   background: radial-gradient(
-    ellipse 80% 70% at 82% 45%,
-    rgba(217, 93, 57, 0.18) 0%,
-    transparent 68%
+    ellipse 75% 65% at 82% 45%,
+    rgba(217, 93, 57, 0.07) 0%,
+    transparent 70%
   );
 }
 
@@ -1721,12 +1665,12 @@
 
 .reta-eq-arena__digit--a {
   color: #e5c158;
-  text-shadow: 0 0 28px rgba(229, 193, 88, 0.35);
+  text-shadow: none;
 }
 
 .reta-eq-arena__digit--b {
   color: #d95d39;
-  text-shadow: 0 0 28px rgba(217, 93, 57, 0.35);
+  text-shadow: none;
 }
 
 .reta-eq-arena__logo,
@@ -1743,14 +1687,14 @@
 
 .reta-eq-arena__logo--a,
 .reta-eq-arena .reta-eq-logo.reta-eq-arena__logo--a {
-  border-color: #e5c158 !important;
-  box-shadow: 0 0 18px rgba(229, 193, 88, 0.35) !important;
+  border-color: rgba(229, 193, 88, 0.7) !important;
+  box-shadow: none !important;
 }
 
 .reta-eq-arena__logo--b,
 .reta-eq-arena .reta-eq-logo.reta-eq-arena__logo--b {
-  border-color: #d95d39 !important;
-  box-shadow: 0 0 18px rgba(217, 93, 57, 0.32) !important;
+  border-color: rgba(217, 93, 57, 0.7) !important;
+  box-shadow: none !important;
 }
 
 .reta-eq-arena__logo--a.reta-eq-logo--fallback {
@@ -2297,10 +2241,15 @@
   .reta-eq-dock__pill,
   .reta-eq-dock__dot,
   .reta-eq-dock__seg,
+  .reta-eq-dock__seg-fill,
   .reta-eq-dock__av-btn .reta-eq-dock__av,
   .reta-eq-countdown__pulse,
   .reta-eq-cta--hub .reta-eq-cta__dot {
     animation: none !important;
+  }
+
+  .reta-eq-dock__seg.is-active .reta-eq-dock__seg-fill {
+    width: 100% !important;
   }
 
   .reta-eq-dock__seg,

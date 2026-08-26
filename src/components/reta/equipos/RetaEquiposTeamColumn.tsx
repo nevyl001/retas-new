@@ -16,11 +16,10 @@ type RetaEquiposTeamColumnProps = {
   className?: string;
 };
 
-const ROTATE_MS = 4000;
+const ROTATE_MS = 5000;
 
 /**
- * Columna de equipo: carta holográfica + carousel de avatares.
- * Rotación aislada (no afecta countdown ni hero padre).
+ * Columna de equipo: carta + barras segmentadas + autoplay 5s.
  */
 export const RetaEquiposTeamColumn: React.FC<RetaEquiposTeamColumnProps> = ({
   teamName,
@@ -35,6 +34,7 @@ export const RetaEquiposTeamColumn: React.FC<RetaEquiposTeamColumnProps> = ({
   const [paused, setPaused] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const rootRef = useRef<HTMLElement | null>(null);
+  const firstTick = useRef(true);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -46,18 +46,19 @@ export const RetaEquiposTeamColumn: React.FC<RetaEquiposTeamColumnProps> = ({
   }, []);
 
   useEffect(() => {
+    firstTick.current = true;
+    setActive(0);
+  }, [players.length]);
+
+  useEffect(() => {
     if (reduceMotion || paused || players.length <= 1) return;
-    let intervalId = 0;
-    const startId = window.setTimeout(() => {
-      intervalId = window.setInterval(() => {
-        setActive((prev) => (prev + 1) % players.length);
-      }, ROTATE_MS);
-    }, staggerMs);
-    return () => {
-      window.clearTimeout(startId);
-      window.clearInterval(intervalId);
-    };
-  }, [players.length, reduceMotion, paused, staggerMs]);
+    const delay = firstTick.current ? ROTATE_MS + staggerMs : ROTATE_MS;
+    firstTick.current = false;
+    const id = window.setTimeout(() => {
+      setActive((prev) => (prev + 1) % players.length);
+    }, delay);
+    return () => window.clearTimeout(id);
+  }, [active, players.length, reduceMotion, paused, staggerMs]);
 
   const player = players[active] ?? null;
 
@@ -91,10 +92,7 @@ export const RetaEquiposTeamColumn: React.FC<RetaEquiposTeamColumnProps> = ({
         />
       ) : null}
 
-      <div
-        className="reta-eq-col__stage reta-eq-col__stage--float"
-        aria-live="polite"
-      >
+      <div className="reta-eq-col__stage" aria-live="polite">
         {player ? (
           <RetaEquiposPlayerSpotlight
             key={player.id}
@@ -115,9 +113,14 @@ export const RetaEquiposTeamColumn: React.FC<RetaEquiposTeamColumnProps> = ({
       <RetaEquiposRosterRail
         players={players}
         activeIndex={active}
-        onSelect={setActive}
+        onSelect={(index) => {
+          firstTick.current = false;
+          setActive(index);
+        }}
         teamName={teamName}
         side={side}
+        paused={paused || reduceMotion}
+        rotateMs={ROTATE_MS}
       />
     </section>
   );
