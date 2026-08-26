@@ -63,32 +63,23 @@ function TransmissionPill({
   lugar?: string | null;
   status: string;
 }) {
-  const parts: { key: string; icon: string; text: string }[] = [];
-  if (fecha) parts.push({ key: "fecha", icon: "📅", text: fecha });
-  if (horario) parts.push({ key: "hora", icon: "⏰", text: horario });
-  if (lugar?.trim()) {
-    parts.push({ key: "lugar", icon: "📍", text: `Cancha ${lugar.trim()}` });
-  }
-  if (status) parts.push({ key: "status", icon: "", text: status });
+  const parts: string[] = [];
+  if (fecha) parts.push(fecha);
+  if (horario) parts.push(horario);
+  if (lugar?.trim()) parts.push(lugar.trim());
+  if (status) parts.push(status);
   if (parts.length === 0) return null;
 
   return (
     <p className="reta-eq-tx-pill" aria-label="Datos del duelo">
-      {parts.map((p, i) => (
-        <React.Fragment key={p.key}>
+      {parts.map((text, i) => (
+        <React.Fragment key={`${text}-${i}`}>
           {i > 0 ? (
             <span className="reta-eq-tx-pill__sep" aria-hidden>
               ·
             </span>
           ) : null}
-          <span className="reta-eq-tx-pill__item">
-            {p.icon ? (
-              <span className="reta-eq-tx-pill__icon" aria-hidden>
-                {p.icon}
-              </span>
-            ) : null}
-            <span>{p.text}</span>
-          </span>
+          <span className="reta-eq-tx-pill__item">{text}</span>
         </React.Fragment>
       ))}
     </p>

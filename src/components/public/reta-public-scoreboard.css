@@ -97,6 +97,7 @@
   justify-content: space-between;
   gap: 0.65rem;
   margin-bottom: 0.75rem;
+  min-height: 1.6rem;
 }
 
 .reta-sb-card__meta-line {
@@ -110,11 +111,18 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #9ca3af !important;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .reta-sb-card__meta-sep {
   opacity: 0.55;
+}
+
+.reta-sb-card__status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
 }
 
 @keyframes reta-sb-sheen {
@@ -133,11 +141,16 @@
 
 .te-public--reta .reta-sb-card .te-pub-status,
 .reta-sb-card .te-pub-status {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   font-size: 10px !important;
   font-weight: 700 !important;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0.2rem 0.55rem !important;
+  padding: 0.28rem 0.55rem !important;
+  min-height: 1.45rem;
+  line-height: 1 !important;
   border-radius: 999px !important;
   white-space: nowrap;
 }
@@ -542,19 +555,21 @@
   padding-bottom: 0.15rem;
 }
 
-/* Cabecera de ronda: pill flotante de cristal (sin franja negra full-width) */
+/* Cabecera de ronda: fila alineada, sin franja/linea chueca */
 .te-public--reta .te-public-round-head {
   position: relative;
   top: auto;
   z-index: 1;
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 0.5rem 0.75rem;
+  width: auto;
   max-width: 100%;
-  margin: 0 0 0.85rem;
-  padding: 0.45rem 0.85rem;
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.9rem;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -562,24 +577,32 @@
 }
 
 .te-public--reta .te-public-round-head__title {
-  display: flex;
-  flex-wrap: wrap;
+  display: inline-flex !important;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0.4rem 0.65rem;
+  gap: 0.5rem 0.65rem;
   margin: 0 !important;
+  padding: 0 !important;
   font-size: 0.95rem !important;
   font-weight: 800 !important;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #ffffff !important;
+  line-height: 1.2 !important;
 }
 
 .te-public--reta .te-public-round-head__title::after {
-  display: none;
+  display: none !important;
+  content: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  background: none !important;
 }
 
 .te-public--reta .te-public-round-head__num {
   color: #ffffff !important;
+  line-height: 1.2;
 }
 
 .te-public--reta .te-public-round-head__phase,
@@ -587,14 +610,17 @@
   color: #9ca3af !important;
   font-weight: 550;
   font-size: 0.72rem;
+  line-height: 1.2;
 }
 
 .te-public--reta .te-public-round-head__live {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  margin-left: 0.35rem;
-  padding: 0.22rem 0.55rem;
+  justify-content: center;
+  align-self: center;
+  margin-left: 0;
+  padding: 0.28rem 0.6rem;
+  min-height: 1.5rem;
   border-radius: 999px;
   border: 1px solid rgba(229, 193, 88, 0.3);
   background: rgba(229, 193, 88, 0.1);
@@ -603,6 +629,7 @@
   text-transform: uppercase;
   color: var(--reta-sb-gold) !important;
   box-shadow: none !important;
+  line-height: 1 !important;
 }
 
 .te-public--reta .te-public-round-head__live:not(.te-public-round-head__live--pending) {
@@ -896,7 +923,10 @@
 }
 
 .te-public--reta .te-public-section__divider {
-  background: rgba(229, 193, 88, 0.2) !important;
+  background: rgba(244, 241, 235, 0.12) !important;
+  height: 1px !important;
+  opacity: 1;
+  margin: 0.35rem 0 1rem !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
