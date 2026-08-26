@@ -161,7 +161,7 @@ export const RetaEquiposArenaScoreboard: React.FC<
         </div>
 
         {showSlots ? (
-          <ul className="reta-eq-arena__slots" aria-label="Encuentros">
+          <ul className="reta-eq-arena__slots" aria-label="Rondas">
             {slots.map((slot) => (
               <li
                 key={slot.code}

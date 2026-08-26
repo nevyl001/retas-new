@@ -55,15 +55,11 @@ function useCylinderMetrics(overridePx?: number): CylinderMetrics {
         });
         return;
       }
-      if (w < 480) {
-        setMetrics({ radius: 85, scale: 0.75 });
+      if (w < 640) {
+        setMetrics({ radius: 85, scale: 0.82 });
         return;
       }
-      if (w < 768) {
-        setMetrics({ radius: 120, scale: 0.88 });
-        return;
-      }
-      setMetrics({ radius: 180, scale: 1 });
+      setMetrics({ radius: 160, scale: 1 });
     };
 
     handleResize();

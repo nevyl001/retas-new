@@ -1048,36 +1048,43 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   const teamsArenaSlots = (() => {
     if (!isTeamsPublicView || sortedRoundKeys.length === 0) return [];
-    const activeRound =
-      mobileRoundTab && sortedRoundKeys.includes(mobileRoundTab)
-        ? mobileRoundTab
-        : sortedRoundKeys[0];
-    const roundMatches = matchesByRound[parseInt(activeRound!, 10)] ?? [];
-    return [...roundMatches]
-      .sort((a, b) => compareMatchCourt(a.court, b.court))
-      .slice(0, 4)
-      .map((match, idx) => {
-        const statusVariant = resolvePublicMatchStatusVariant({
-          matchFinished:
-            match.status === "finished" || getMatchResult(match.id).hasResult,
-          eventPhase: eventScheduleStatus.phase,
-        });
-        const live = statusVariant === "live";
-        const detail =
-          statusVariant === "finished"
-            ? "Finalizado"
-            : live
-              ? "EN JUEGO"
-              : statusVariant === "upcoming"
-                ? "Por jugar"
-                : "Pendiente";
-        return {
-          code: `E${idx + 1}`,
-          title: `Encuentro ${idx + 1}`,
-          detail,
-          live,
-        };
-      });
+    const inWindow =
+      eventScheduleStatus.phase === "in_window" ||
+      eventScheduleStatus.phase === "unknown";
+
+    const roundStates = sortedRoundKeys.map((roundKey) => {
+      const roundMatches = matchesByRound[parseInt(roundKey, 10)] ?? [];
+      const finishedCount = roundMatches.filter(
+        (m) => m.status === "finished" || getMatchResult(m.id).hasResult
+      ).length;
+      const allFinished =
+        roundMatches.length > 0 && finishedCount === roundMatches.length;
+      return { allFinished, finishedCount };
+    });
+
+    const currentRoundIdx = roundStates.findIndex((s) => !s.allFinished);
+
+    return sortedRoundKeys.map((_, idx) => {
+      const state = roundStates[idx]!;
+      let detail = "Por jugar";
+      let live = false;
+      if (state.allFinished) {
+        detail = "Finalizada";
+      } else if (
+        idx === currentRoundIdx &&
+        (state.finishedCount > 0 || inWindow)
+      ) {
+        detail = "EN JUEGO";
+        live = true;
+      }
+
+      return {
+        code: `R${idx + 1}`,
+        title: `Ronda ${idx + 1}`,
+        detail,
+        live,
+      };
+    });
   })();
 
   const scrollToEnVivo = () => {
@@ -1110,6 +1117,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {isTeamsPublicView ? (
         <RetaEquiposPublicHero
           eventName={publicTournamentName}
+          clubName={showClubBranding ? organizerName : undefined}
           teamNames={teamConfig!.teamNames}
           teamLogos={teamConfig?.teamLogos}
           teams={equiposRosterTeams}
@@ -1395,6 +1403,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       ) : null}
 
       {showWinner &&
+        showMatchesSection &&
         teamStandings &&
         teamStandings.length > 0 &&
         !dynamicTeamWinner?.isDraw &&
@@ -1409,11 +1418,15 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           />
         )}
 
-      {showWinner && isDynamicLineups && dynamicTeamWinner?.isDraw && (
+      {showWinner &&
+        showMatchesSection &&
+        isDynamicLineups &&
+        dynamicTeamWinner?.isDraw && (
         <p className="dynamic-team-standings-outcome">Empate</p>
       )}
 
       {showWinner &&
+        showMatchesSection &&
         (!teamStandings || teamStandings.length === 0) &&
         tournamentWinner && (
           <RetaRoundRobinWinnerCelebrate
@@ -1435,6 +1448,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         )}
 
       {showWinner &&
+        showMatchesSection &&
         (!teamStandings || teamStandings.length === 0) &&
         tournamentWinner &&
         thanksParticipants.length > 0 && (

@@ -1,11 +1,14 @@
 import {
   TEAMS_PUBLIC_BRAND_LINE,
+  TEAMS_PUBLIC_CLUB_FALLBACK,
+  TEAMS_PUBLIC_EVENT_FALLBACK,
   TEAMS_PUBLIC_FORMAT_LABEL,
   TEAMS_PUBLIC_LIVE_TITLE,
   TEAMS_PUBLIC_MOTIVATIONAL,
   TEAMS_PUBLIC_TAGLINE,
   formatTeamsPublicFaceoff,
   formatTeamsPublicHeroMeta,
+  isRedundantTeamsFaceoffTitle,
 } from "./teamsPublicCopy";
 
 describe("teamsPublicCopy", () => {
@@ -24,13 +27,28 @@ describe("teamsPublicCopy", () => {
     );
   });
 
+  it("detecta título de evento que solo repite el faceoff", () => {
+    expect(
+      isRedundantTeamsFaceoffTitle("TEAM BREAKPOINT VS TEAM OASIS", [
+        "Team Oasis",
+        "Team Breakpoint",
+      ])
+    ).toBe(true);
+    expect(
+      isRedundantTeamsFaceoffTitle("Copa Verano 2026", ["Oasis", "Break"])
+    ).toBe(false);
+    expect(isRedundantTeamsFaceoffTitle(null, ["Oasis", "Break"])).toBe(false);
+  });
+
   it("expone título live de duelo", () => {
     expect(TEAMS_PUBLIC_LIVE_TITLE).toBe("Duelo en vivo");
     expect(TEAMS_PUBLIC_TAGLINE).toBe("Que gane el mejor");
   });
 
   it("expone copy motivacional y de marca", () => {
-    expect(TEAMS_PUBLIC_MOTIVATIONAL).toBe("Denlo todo");
+    expect(TEAMS_PUBLIC_MOTIVATIONAL).toBe("Que gane el mejor");
     expect(TEAMS_PUBLIC_BRAND_LINE).toBe("Vive Riviera Open");
+    expect(TEAMS_PUBLIC_EVENT_FALLBACK).toBe("Reta de equipos");
+    expect(TEAMS_PUBLIC_CLUB_FALLBACK).toBe("Riviera Open");
   });
 });

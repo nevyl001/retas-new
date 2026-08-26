@@ -1,8 +1,10 @@
 import React, { useMemo } from "react";
 import {
   TEAMS_PUBLIC_BRAND_LINE,
-  TEAMS_PUBLIC_FORMAT_LABEL,
+  TEAMS_PUBLIC_CLUB_FALLBACK,
+  TEAMS_PUBLIC_EVENT_FALLBACK,
   TEAMS_PUBLIC_MOTIVATIONAL,
+  isRedundantTeamsFaceoffTitle,
 } from "../../../lib/reta/teamsPublicCopy";
 import { resolveTeamLogoUrl } from "../../../lib/reta/teamLogoDisplay";
 import type { EventSchedulePhase } from "../../../lib/public/eventScheduleStatus";
@@ -27,6 +29,8 @@ export type RetaEquiposRosterTeam = {
 
 type RetaEquiposPublicHeroProps = {
   eventName?: string | null;
+  /** Nombre del club / organizador (subtítulo). */
+  clubName?: string | null;
   teamNames: string[];
   teamLogos?: (string | null)[] | null;
   teams: RetaEquiposRosterTeam[];
@@ -103,7 +107,7 @@ function TransmissionPill({
   if (parts.length === 0) return null;
 
   return (
-    <p className="reta-eq-tx-pill" aria-label="Horario del duelo">
+    <p className="reta-eq-tx-pill" aria-label="Horario del evento">
       {parts.map((text, i) => (
         <React.Fragment key={`${text}-${i}`}>
           {i > 0 ? (
@@ -120,6 +124,7 @@ function TransmissionPill({
 
 export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   eventName,
+  clubName,
   teamNames,
   teamLogos,
   teams,
@@ -175,13 +180,15 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
     (schedulePhase === "in_window" || schedulePhase === "unknown");
 
   const sedeLabel = lugar?.trim() || null;
-
   const eventTitle = eventName?.trim() || null;
-  const defaultVs = `${nameA} vs ${nameB}`;
-  const showEventTitle =
-    Boolean(eventTitle) &&
-    eventTitle!.toLowerCase() !== defaultVs.toLowerCase() &&
-    !eventTitle!.toLowerCase().includes(labelA.toLowerCase());
+  const hideFaceoffTitle = isRedundantTeamsFaceoffTitle(eventTitle, [
+    nameA,
+    nameB,
+  ]);
+  const headline = hideFaceoffTitle
+    ? null
+    : eventTitle || TEAMS_PUBLIC_EVENT_FALLBACK;
+  const clubLine = clubName?.trim() || TEAMS_PUBLIC_CLUB_FALLBACK;
 
   if (compact) {
     return (
@@ -206,56 +213,56 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   }
 
   return (
-    <section className="reta-eq-stage reta-eq-anim-in">
+    <section className="reta-eq-stage reta-eq-stage--broadcast reta-eq-anim-in">
+      <div className="reta-eq-stage__grid" aria-hidden />
+      <div className="reta-eq-stage__glow reta-eq-stage__glow--a" aria-hidden />
+      <div className="reta-eq-stage__glow reta-eq-stage__glow--b" aria-hidden />
+
       <div className="reta-eq-stage__shell">
         <header className="reta-eq-stage__header reta-eq-stage__header--broadcast">
           {marqueeDate ? (
             <p className="reta-eq-stage__marquee-date">{marqueeDate}</p>
           ) : null}
-          <h1 className="reta-eq-stage__battle-title">
-            {TEAMS_PUBLIC_FORMAT_LABEL}
-          </h1>
-          {showEventTitle ? (
-            <p className="reta-eq-stage__title reta-eq-stage__title--sub">
-              {eventTitle}
-            </p>
+          {headline ? (
+            <h1 className="reta-eq-stage__battle-title">{headline}</h1>
           ) : (
-            <span className="visually-hidden">
+            <h1 className="visually-hidden">
               {labelA} versus {labelB}
-            </span>
+            </h1>
           )}
+          <p className="reta-eq-stage__club">{clubLine}</p>
         </header>
 
         <div
-          className="reta-eq-matchbar reta-eq-matchbar--arena"
+          className="reta-eq-faceoff"
           aria-label={`${labelA} versus ${labelB}`}
         >
-          <div className="reta-eq-matchbar__glow reta-eq-matchbar__glow--a" aria-hidden />
-          <div className="reta-eq-matchbar__glow reta-eq-matchbar__glow--b" aria-hidden />
-          <div className="reta-eq-matchbar__cluster">
-            <div className="reta-eq-matchbar__side reta-eq-matchbar__side--a">
-              <TeamLogo
-                logoUrl={logoA}
-                teamName={nameA}
-                size="xl"
-                loading="eager"
-                className="reta-eq-matchbar__logo reta-eq-matchbar__logo--a"
-              />
-              <span className="reta-eq-matchbar__name">{labelA}</span>
-            </div>
-            <span className="reta-eq-matchbar__vs" aria-hidden>
-              VS
+          <div className="reta-eq-faceoff__team reta-eq-faceoff__team--a">
+            <TeamLogo
+              logoUrl={logoA}
+              teamName={nameA}
+              size="xl"
+              loading="eager"
+              className="reta-eq-faceoff__logo reta-eq-faceoff__logo--a"
+            />
+            <span className="reta-eq-faceoff__name reta-eq-faceoff__name--a">
+              {labelA}
             </span>
-            <div className="reta-eq-matchbar__side reta-eq-matchbar__side--b">
-              <span className="reta-eq-matchbar__name">{labelB}</span>
-              <TeamLogo
-                logoUrl={logoB}
-                teamName={nameB}
-                size="xl"
-                loading="eager"
-                className="reta-eq-matchbar__logo reta-eq-matchbar__logo--b"
-              />
-            </div>
+          </div>
+          <span className="reta-eq-faceoff__vs" aria-hidden>
+            VS
+          </span>
+          <div className="reta-eq-faceoff__team reta-eq-faceoff__team--b">
+            <TeamLogo
+              logoUrl={logoB}
+              teamName={nameB}
+              size="xl"
+              loading="eager"
+              className="reta-eq-faceoff__logo reta-eq-faceoff__logo--b"
+            />
+            <span className="reta-eq-faceoff__name reta-eq-faceoff__name--b">
+              {labelB}
+            </span>
           </div>
         </div>
 
