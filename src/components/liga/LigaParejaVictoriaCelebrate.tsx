@@ -118,8 +118,6 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
       <div className="liga-celebrate-ambient" aria-hidden>
         <span className="liga-celebrate-ball liga-celebrate-ball--a" />
         <span className="liga-celebrate-ball liga-celebrate-ball--b" />
-        <span className="liga-celebrate-ball liga-celebrate-ball--c" />
-        <span className="liga-celebrate-ball liga-celebrate-ball--d" />
       </div>
 
       <PodiumCard

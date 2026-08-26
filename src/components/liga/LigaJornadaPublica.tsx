@@ -39,6 +39,7 @@ import {
 } from "../../lib/liga/ligaPublicMotion";
 import "./liga-pareja-victoria-celebrate.css";
 import "./liga-public-pantalla.css";
+import "./liga-public-premium-2026.css";
 import "./liga-public-motion.css";
 import "../jugadores/riviera-jugadores.css";
 
@@ -756,6 +757,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                               foto1={face.foto1}
                               foto2={face.foto2}
                               size="md"
+                              orientation="stack"
                               win={row.posicion === 1}
                             />
                             <p className="liga-pub-standings__meta">

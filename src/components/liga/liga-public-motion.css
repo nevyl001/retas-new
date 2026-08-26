@@ -179,7 +179,7 @@
     transform var(--motion-micro),
     border-color var(--motion-micro),
     background-color var(--motion-micro);
-  will-change: transform;
+  /* No persistent will-change — promotes layers that break iOS document scroll */
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -222,7 +222,7 @@
     background-color var(--motion-base),
     color var(--motion-base),
     border-color var(--motion-base);
-  overflow: hidden;
+  overflow: clip;
 }
 
 .liga-motion-value {
@@ -244,8 +244,8 @@
 .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row {
   transition:
     border-color var(--motion-base),
-    background-color var(--motion-base);
-  will-change: transform;
+    background-color var(--motion-base),
+    box-shadow var(--motion-base);
 }
 
 .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row.is-revealing {
