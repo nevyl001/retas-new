@@ -854,10 +854,15 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const hash = window.location.hash.replace(/^#/, "");
-    if (hash === "reta-equipos-en-vivo" || hash === "en-vivo") {
-      setTeamsLiveRevealed(true);
-    }
+    const syncEnVivoFromHash = () => {
+      const hash = window.location.hash.replace(/^#/, "");
+      if (hash === "reta-equipos-en-vivo" || hash === "en-vivo") {
+        setTeamsLiveRevealed(true);
+      }
+    };
+    syncEnVivoFromHash();
+    window.addEventListener("hashchange", syncEnVivoFromHash);
+    return () => window.removeEventListener("hashchange", syncEnVivoFromHash);
   }, []);
 
   useEffect(() => {
@@ -1017,6 +1022,16 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   const scrollToEnVivo = () => {
     setTeamsLiveRevealed(true);
+    if (typeof window !== "undefined") {
+      const nextHash = "#en-vivo";
+      if (window.location.hash !== nextHash) {
+        window.history.replaceState(
+          null,
+          "",
+          `${window.location.pathname}${window.location.search}${nextHash}`
+        );
+      }
+    }
     window.requestAnimationFrame(() => {
       const el = document.getElementById("reta-equipos-en-vivo");
       el?.scrollIntoView({ behavior: "smooth", block: "start" });
