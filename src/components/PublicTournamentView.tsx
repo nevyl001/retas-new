@@ -1022,6 +1022,61 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     return `${a.pg} — ${b.pg}`;
   })();
 
+  const teamsLiveScoreA = (() => {
+    if (!teamStandings || teamStandings.length < 2) return null;
+    const a = teamStandings.find((r) => r.teamIndex === 0) ?? teamStandings[0];
+    return a?.pg ?? null;
+  })();
+
+  const teamsLiveScoreB = (() => {
+    if (!teamStandings || teamStandings.length < 2) return null;
+    const b = teamStandings.find((r) => r.teamIndex === 1) ?? teamStandings[1];
+    return b?.pg ?? null;
+  })();
+
+  const teamsLiveProgressLabel = (() => {
+    if (!isTeamsPublicView || regularMatches.length === 0) return null;
+    const finished = regularMatches.filter((m) => {
+      if (m.status === "finished") return true;
+      return getMatchResult(m.id).hasResult;
+    }).length;
+    return `${finished} / ${regularMatches.length}`;
+  })();
+
+  const teamsArenaSlots = (() => {
+    if (!isTeamsPublicView || sortedRoundKeys.length === 0) return [];
+    const activeRound =
+      mobileRoundTab && sortedRoundKeys.includes(mobileRoundTab)
+        ? mobileRoundTab
+        : sortedRoundKeys[0];
+    const roundMatches = matchesByRound[parseInt(activeRound!, 10)] ?? [];
+    return [...roundMatches]
+      .sort((a, b) => compareMatchCourt(a.court, b.court))
+      .slice(0, 4)
+      .map((match, idx) => {
+        const statusVariant = resolvePublicMatchStatusVariant({
+          matchFinished:
+            match.status === "finished" || getMatchResult(match.id).hasResult,
+          eventPhase: eventScheduleStatus.phase,
+        });
+        const live = statusVariant === "live";
+        const detail =
+          statusVariant === "finished"
+            ? "Finalizado"
+            : live
+              ? "EN JUEGO"
+              : statusVariant === "upcoming"
+                ? "Por jugar"
+                : "Pendiente";
+        return {
+          code: `E${idx + 1}`,
+          title: `Encuentro ${idx + 1}`,
+          detail,
+          live,
+        };
+      });
+  })();
+
   const scrollToEnVivo = () => {
     setTeamsLiveRevealed(true);
     if (typeof window !== "undefined") {
@@ -1064,6 +1119,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           isFinished={tournamentFinalizado}
           compact={teamsLiveCompact}
           liveScoreLabel={teamsLiveScoreLabel}
+          liveScoreA={teamsLiveScoreA}
+          liveScoreB={teamsLiveScoreB}
+          liveProgressLabel={teamsLiveProgressLabel}
+          arenaSlots={teamsArenaSlots}
           onGoLive={teamsLiveRevealed ? undefined : scrollToEnVivo}
         />
       ) : isPubDsV2Enabled ? (

@@ -9,6 +9,10 @@ import {
 import { TeamLogo } from "./TeamLogo";
 import { RetaEquiposCountdown } from "./RetaEquiposCountdown";
 import { RetaEquiposTeamColumn } from "./RetaEquiposTeamColumn";
+import {
+  RetaEquiposArenaScoreboard,
+  type RetaEquiposArenaSlot,
+} from "./RetaEquiposArenaScoreboard";
 import type { RetaEquiposPlayerCardData } from "./RetaEquiposPlayerCard";
 
 export type RetaEquiposRosterTeam = {
@@ -31,8 +35,23 @@ type RetaEquiposPublicHeroProps = {
   isFinished?: boolean;
   compact?: boolean;
   liveScoreLabel?: string | null;
+  /** Marcador por bando (arena). Si falta, se parsea liveScoreLabel. */
+  liveScoreA?: number | null;
+  liveScoreB?: number | null;
+  /** Progreso global p.ej. "2 / 12". */
+  liveProgressLabel?: string | null;
+  arenaSlots?: RetaEquiposArenaSlot[];
   onGoLive?: () => void;
 };
+
+function parseScorePair(
+  label: string | null | undefined
+): { a: number; b: number } | null {
+  if (!label) return null;
+  const m = label.match(/(\d+)\s*[—–\-]\s*(\d+)/);
+  if (!m) return null;
+  return { a: Number(m[1]), b: Number(m[2]) };
+}
 
 function resolveCtaLabel(
   phase: EventSchedulePhase | undefined,
@@ -99,6 +118,10 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   isFinished = false,
   compact = false,
   liveScoreLabel = null,
+  liveScoreA = null,
+  liveScoreB = null,
+  liveProgressLabel = null,
+  arenaSlots = [],
   onGoLive,
 }) => {
   const teamA = teams[0];
@@ -122,6 +145,18 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
     [programadoEn, programadoHasta]
   );
 
+  const parsedScores = useMemo(
+    () => parseScorePair(liveScoreLabel),
+    [liveScoreLabel]
+  );
+  const scoreA =
+    liveScoreA != null ? liveScoreA : parsedScores?.a ?? null;
+  const scoreB =
+    liveScoreB != null ? liveScoreB : parsedScores?.b ?? null;
+  const arenaLive =
+    !isFinished &&
+    (schedulePhase === "in_window" || schedulePhase === "unknown");
+
   const eventTitle = eventName?.trim() || null;
   const defaultVs = `${nameA} vs ${nameB}`;
   const showEventTitle =
@@ -132,39 +167,20 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   if (compact) {
     return (
       <header className="reta-eq-live-header reta-eq-anim-in">
-        <div className="reta-eq-live-header__row">
-          <div className="reta-eq-live-header__side">
-            <TeamLogo
-              logoUrl={logoA}
-              teamName={nameA}
-              size="xl"
-              loading="eager"
-              className="reta-eq-matchbar__logo reta-eq-matchbar__logo--a"
-            />
-            <span className="reta-eq-live-header__name">{labelA}</span>
-          </div>
-          <div
-            className="reta-eq-live-header__score"
-            aria-label="Marcador de equipos"
-          >
-            {liveScoreLabel || "VS"}
-          </div>
-          <div className="reta-eq-live-header__side reta-eq-live-header__side--b">
-            <span className="reta-eq-live-header__name">{labelB}</span>
-            <TeamLogo
-              logoUrl={logoB}
-              teamName={nameB}
-              size="xl"
-              loading="eager"
-              className="reta-eq-matchbar__logo reta-eq-matchbar__logo--b"
-            />
-          </div>
-        </div>
-        <TransmissionPill
+        <RetaEquiposArenaScoreboard
+          teamAName={nameA}
+          teamBName={nameB}
+          logoA={logoA}
+          logoB={logoB}
+          scoreA={scoreA}
+          scoreB={scoreB}
+          progressLabel={liveProgressLabel}
+          slots={arenaSlots}
           fecha={fechaOnly}
           horario={horarioOnly}
           lugar={lugar}
-          status={statusLabel}
+          statusLabel={statusLabel}
+          isLive={arenaLive}
         />
       </header>
     );
