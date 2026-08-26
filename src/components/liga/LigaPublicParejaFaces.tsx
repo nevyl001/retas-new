@@ -25,11 +25,20 @@ export function parejaPlayerNames(
     pareja.jugador2?.nombre?.trim() ||
     "?";
 
+  const id1 =
+    (equipo?.jugador1_id || pareja.jugador1_id || "").trim() ||
+    equipo?.jugador1?.id ||
+    "";
+  const id2 =
+    (equipo?.jugador2_id || pareja.jugador2_id || "").trim() ||
+    equipo?.jugador2?.id ||
+    "";
+
   return {
     name1,
     name2,
-    id1: pareja.jugador1_id,
-    id2: pareja.jugador2_id,
+    id1,
+    id2,
   };
 }
 

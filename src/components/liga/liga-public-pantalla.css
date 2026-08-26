@@ -1122,6 +1122,13 @@
   color: var(--liga-pub-gold-light);
 }
 
+.liga-pantalla--jornada-fijas .liga-pantalla-jornadas__title--jornada {
+  color: var(--liga-pub-gold-muted);
+  letter-spacing: 0.22em;
+  text-align: center;
+  margin: 0 0 1.15rem;
+}
+
 .liga-pantalla--jornada-fijas .liga-pantalla__layout--parejas {
   max-width: 960px;
   margin: 0 auto;

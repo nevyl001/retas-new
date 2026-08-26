@@ -149,14 +149,15 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       return;
     }
 
+    const equiposMap = new Map(
+      (detalle?.equipos ?? []).map((e) => [e.id, e] as const)
+    );
+
     const entries = parejas.flatMap((p) => {
+      const face = parejaPlayerNames(p, equiposMap);
       const list: { id: string; name: string }[] = [];
-      if (p.jugador1_id) {
-        list.push({ id: p.jugador1_id, name: p.jugador1?.nombre ?? "" });
-      }
-      if (p.jugador2_id) {
-        list.push({ id: p.jugador2_id, name: p.jugador2?.nombre ?? "" });
-      }
+      if (face.id1) list.push({ id: face.id1, name: face.name1 });
+      if (face.id2) list.push({ id: face.id2, name: face.name2 });
       return list;
     });
 
@@ -168,7 +169,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [detalle?.organizador_id, jornada?.parejas]);
+  }, [detalle?.organizador_id, detalle?.equipos, jornada?.parejas]);
 
   const partidosJornadaOrdenados = useMemo(
     () =>
@@ -252,10 +253,21 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   const resolveParejaFace = (parejaId: string) => {
     const pareja = jornada?.parejas?.find((x) => x.id === parejaId);
     const names = parejaPlayerNames(pareja, equiposById);
+    const equipo = pareja?.equipo_id
+      ? equiposById.get(pareja.equipo_id)
+      : undefined;
     return {
       ...names,
-      foto1: names.id1 ? parejaFotos[names.id1] ?? null : null,
-      foto2: names.id2 ? parejaFotos[names.id2] ?? null : null,
+      foto1:
+        parejaFotos[names.id1] ??
+        equipo?.jugador1?.foto_url ??
+        pareja?.jugador1?.foto_url ??
+        null,
+      foto2:
+        parejaFotos[names.id2] ??
+        equipo?.jugador2?.foto_url ??
+        pareja?.jugador2?.foto_url ??
+        null,
     };
   };
 
@@ -334,37 +346,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
           </header>
         )}
 
-        {(jornada.parejas ?? []).length > 0 ? (
-          <section
-            className={`liga-pub-jornada-roster${
-              esParejasFijas ? " liga-pub-jornada-roster--fijas" : ""
-            }`}
-            aria-label="Parejas de la jornada"
-          >
-            <div className="liga-pub-jornada-roster__head">
-              <h2 className="liga-pub-jornada-roster__title">Parejas</h2>
-              <span className="liga-pub-jornada-roster__count">
-                {(jornada.parejas ?? []).length}
-              </span>
-            </div>
-            <ul className="liga-pub-jornada-roster__grid">
-              {(jornada.parejas ?? []).map((p) => {
-                const face = parejaPlayerNames(p, equiposById);
-                return (
-                  <li key={p.id} className="liga-pub-jornada-roster__card">
-                    <LigaPublicParejaPlayers
-                      name1={face.name1}
-                      name2={face.name2}
-                      foto1={parejaFotos[face.id1] ?? null}
-                      foto2={parejaFotos[face.id2] ?? null}
-                      size="md"
-                    />
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ) : null}
+        {/* Roster de parejas solo en el link completo de la liga (LigaDetallePublica).
+            En jornada pública: solo partidos + tabla. */}
 
         {!esParejasFijas &&
           todosPartidosCompletos &&
@@ -409,6 +392,11 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
           }`}
         >
           <div className="liga-pantalla__rondas">
+            {partidosJornadaOrdenados.length > 0 ? (
+              <h2 className="liga-pantalla-jornadas__title liga-pantalla-jornadas__title--jornada">
+                Partidos
+              </h2>
+            ) : null}
             {partidosJornadaOrdenados.length === 0 ? (
               <p className="liga-pantalla__loading">
                 Los partidos aparecerán cuando se inicie la jornada.
