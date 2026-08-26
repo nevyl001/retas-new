@@ -2583,12 +2583,13 @@
 
 .reta-eq-duel-stage__team-label {
   margin: 0;
-  font-family: var(--font-display, var(--ro-font-heading), sans-serif);
+  font-family: var(--font-body, var(--ro-font-body), system-ui, sans-serif);
   font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  line-height: 1;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .reta-eq-duel-stage__team-label--a {
@@ -2601,7 +2602,8 @@
 
 @media (min-width: 640px) {
   .reta-eq-duel-stage__team-label {
-    display: none;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
   }
 }
 

@@ -269,7 +269,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
         <div className="reta-eq-duel-stage">
           <div className="reta-eq-duel-stage__side reta-eq-duel-stage__side--a">
             <p className="reta-eq-duel-stage__team-label reta-eq-duel-stage__team-label--a">
-              {labelA}
+              Jugadores {labelA}
             </p>
             <RetaEquiposTeamCylinder
               players={playersA}
@@ -281,7 +281,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
           <div className="reta-eq-duel-stage__laser" aria-hidden />
           <div className="reta-eq-duel-stage__side reta-eq-duel-stage__side--b">
             <p className="reta-eq-duel-stage__team-label reta-eq-duel-stage__team-label--b">
-              {labelB}
+              Jugadores {labelB}
             </p>
             <RetaEquiposTeamCylinder
               players={playersB}
