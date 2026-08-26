@@ -709,6 +709,59 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     );
   }, [winningTeamRow]);
 
+  const isTeamsPublicView = Boolean(
+    teamConfig?.teamNames?.length &&
+      teamConfig?.pairToTeam &&
+      Object.keys(teamConfig.pairToTeam).length > 0
+  );
+
+  const teamWinnerPlayerAvatars = useMemo((): PublicRetaWinnerAvatar[] => {
+    if (!showWinner || !winningTeamRow || !isTeamsPublicView || !teamConfig) {
+      return [];
+    }
+    const teamPairs = pairs.filter(
+      (p) => teamConfig.pairToTeam[p.id] === winningTeamRow.teamIndex
+    );
+    const players: PublicRetaWinnerAvatar[] = [];
+    const seen = new Set<string>();
+    for (const pair of teamPairs) {
+      const slots: Array<{ legacyId: string; fallbackName: string }> = [
+        {
+          legacyId: pair.player1_id,
+          fallbackName: pairPlayer1DisplayName(pair),
+        },
+        {
+          legacyId: pair.player2_id,
+          fallbackName: pairPlayer2DisplayName(pair),
+        },
+      ];
+      for (const slot of slots) {
+        const legacyId = slot.legacyId?.trim();
+        if (!legacyId || seen.has(legacyId)) continue;
+        seen.add(legacyId);
+        const identity = playerIdentityByLegacyId[legacyId];
+        const resolvedPairPlayers = pairPlayersByPairId[pair.id] ?? [];
+        const fromPair = resolvedPairPlayers.find(
+          (pl) => pl.id === legacyId || pl.name === slot.fallbackName
+        );
+        players.push({
+          name: identity?.nombre || fromPair?.name || slot.fallbackName,
+          fotoUrl: identity?.fotoUrl ?? fromPair?.fotoUrl ?? null,
+          jugadorId: legacyId,
+        });
+      }
+    }
+    return players;
+  }, [
+    showWinner,
+    winningTeamRow,
+    isTeamsPublicView,
+    teamConfig,
+    pairs,
+    playerIdentityByLegacyId,
+    pairPlayersByPairId,
+  ]);
+
   const sortedPairs = useMemo(
     () => sortPairsForStandings(pairsWithStats, standingsMatches, games),
     [pairsWithStats, standingsMatches, games]
@@ -967,11 +1020,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   );
   const heroMeta = formatKicker;
 
-  const isTeamsPublicView = Boolean(
-    teamConfig?.teamNames?.length &&
-      teamConfig?.pairToTeam &&
-      Object.keys(teamConfig.pairToTeam).length > 0
-  );
   /** Compacto solo tras CTA (no auto por horario). */
   const teamsLiveCompact = isTeamsPublicView && teamsLiveRevealed;
 
@@ -1015,19 +1063,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       };
     });
   })();
-
-  const teamWinnerPlayerAvatars = useMemo((): PublicRetaWinnerAvatar[] => {
-    if (!showWinner || !winningTeamRow || !isTeamsPublicView) return [];
-    const roster = equiposRosterTeams.find(
-      (team) => team.teamIndex === winningTeamRow.teamIndex
-    );
-    if (!roster?.players.length) return [];
-    return roster.players.map((player) => ({
-      name: player.nombre,
-      fotoUrl: player.fotoUrl ?? null,
-      jugadorId: player.id,
-    }));
-  }, [showWinner, winningTeamRow, isTeamsPublicView, equiposRosterTeams]);
 
   const teamsLiveScoreLabel = (() => {
     if (!teamStandings || teamStandings.length < 2) return null;
