@@ -594,76 +594,158 @@
   }
 }
 
-/* —— Tarjeta equipo (dual meet) lista para compartir —— */
-.ro-pub-celebrate--team-share .ro-pub-celebrate__inner {
-  padding: clamp(1.75rem, 5vw, 3rem) clamp(1.25rem, 4vw, 2.25rem);
+/* —— Tarjeta equipo (dual meet) lista para compartir / screenshot móvil —— */
+.ro-pub-celebrate--team-share {
+  margin: 0.65rem 0 0.85rem;
+}
+
+.ro-pub-celebrate--team-share .ro-pub-celebrate__inner,
+.ro-pub-celebrate--team-share.ro-pub-celebrate--winners .ro-pub-celebrate__inner {
+  padding: 0.85rem 0.8rem 0.95rem;
+}
+
+.ro-pub-celebrate--team-share .ro-pub-celebrate__brand {
+  margin-bottom: 0.3rem;
+  gap: 0.2rem;
+}
+
+.ro-pub-celebrate--team-share .ro-pub-celebrate__wordmark {
+  margin: 0;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+}
+
+.ro-pub-celebrate--team-share .ro-pub-celebrate__badge {
+  margin: 0 0 0.28rem;
+  padding: 0.16rem 0.55rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+}
+
+.ro-pub-celebrate--team-share.ro-pub-celebrate--winners .ro-pub-celebrate__headline {
+  margin-bottom: 0.15rem;
+  font-size: clamp(1.25rem, 6.5vw, 1.75rem);
+  text-shadow: 0 2px 14px rgba(255, 255, 255, 0.18);
 }
 
 .ro-pub-celebrate--team-share .ro-pub-celebrate__names--team {
-  margin: 0.15rem 0 0.85rem;
-  font-size: clamp(2rem, 9vw, 3.5rem);
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.35rem, 7vw, 2.1rem);
   font-weight: 900;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+  line-height: 1.05;
   color: var(--ro-gold-light, var(--accent-gold));
   text-shadow:
-    0 0 32px rgba(232, 197, 71, 0.35),
-    0 2px 12px rgba(0, 0, 0, 0.5);
+    0 0 20px rgba(232, 197, 71, 0.28),
+    0 2px 8px rgba(0, 0, 0, 0.45);
 }
 
 .ro-pub-celebrate__heroes--team {
+  display: flex;
   flex-wrap: wrap;
-  max-width: min(100%, 40rem);
-  gap: clamp(0.85rem, 3.5vw, 1.35rem);
-  margin-bottom: 1.1rem;
+  justify-content: center;
+  max-width: 100%;
+  gap: 0.4rem 0.5rem;
+  margin: 0 auto 0.45rem;
 }
 
 .ro-pub-celebrate__heroes--team .ro-pub-celebrate__hero {
-  flex: 0 1 auto;
-  width: clamp(4.5rem, 22vw, 6.5rem);
-  gap: 0.45rem;
+  flex: 0 0 calc(33.333% - 0.4rem);
+  width: auto;
+  max-width: 4.5rem;
+  gap: 0.22rem;
+}
+
+.ro-pub-celebrate__heroes--team .ro-pub-celebrate__hero-ring {
+  padding: 1.5px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.15),
+    0 6px 14px rgba(0, 0, 0, 0.4);
 }
 
 .ro-pub-celebrate__heroes--team .ro-pub-celebrate__hero-avatar.rj-avatar--xl {
-  width: clamp(64px, 18vw, 88px);
-  height: clamp(64px, 18vw, 88px);
-  font-size: clamp(1.15rem, 4vw, 1.55rem);
+  width: 2.65rem;
+  height: 2.65rem;
+  font-size: 0.9rem;
 }
 
 .ro-pub-celebrate__heroes--team .ro-pub-celebrate__hero-name {
-  font-size: clamp(0.62rem, 2.4vw, 0.78rem);
+  font-size: 0.52rem;
+  letter-spacing: 0.02em;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.ro-pub-celebrate--team-share .ro-pub-celebrate__motivational {
+  margin: 0 0 0.15rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
 .ro-pub-celebrate--team-share .ro-pub-celebrate__rank {
+  margin: 0 0 0.4rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  line-height: 1.25;
   color: var(--ro-gold-light, var(--accent-gold));
   opacity: 0.92;
 }
 
 .ro-pub-celebrate__format-kicker {
-  margin: 1rem 0 0;
+  margin: 0.4rem 0 0;
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.55);
 }
 
 .ro-pub-celebrate--team-share .ro-pub-celebrate__stats--team {
-  margin-top: 1.35rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  max-width: min(100%, 42rem);
-  gap: 0.6rem;
+  margin-top: 0.25rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 100%;
+  gap: 0.32rem;
 }
 
-@media (min-width: 520px) {
-  .ro-pub-celebrate--team-share .ro-pub-celebrate__stats--team {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+.ro-pub-celebrate--team-share .ro-pub-celebrate__stat {
+  padding: 0.32rem 0.28rem;
+  border-radius: 0.45rem;
+}
+
+.ro-pub-celebrate--team-share .ro-pub-celebrate__stat-value {
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+
+.ro-pub-celebrate--team-share .ro-pub-celebrate__stat--highlight .ro-pub-celebrate__stat-value {
+  font-size: 1.05rem;
+}
+
+.ro-pub-celebrate--team-share .ro-pub-celebrate__stat-label {
+  margin-top: 0.12rem;
+  font-size: 0.48rem;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+}
+
+.ro-pub-celebrate--team-share .ro-pub-celebrate__footer,
+.ro-pub-celebrate--team-share .ro-pub-celebrate__closing {
+  margin-top: 0.3rem;
+}
+
+.ro-pub-celebrate--team-share .ro-pub-celebrate__closing,
+.ro-pub-celebrate--team-share .ro-pub-celebrate__torneo {
+  font-size: 0.58rem;
+  line-height: 1.25;
+}
+
+.ro-pub-celebrate--team-share .ro-pub-celebrate__social.ro-pub-social {
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
 }
 
 .ro-pub-celebrate__stat--highlight {
@@ -676,7 +758,6 @@
 
 .ro-pub-celebrate__stat--highlight .ro-pub-celebrate__stat-value {
   color: var(--ro-gold-light, var(--accent-gold));
-  font-size: clamp(1.35rem, 4.5vw, 1.85rem);
   font-weight: 800;
 }
 
@@ -684,4 +765,61 @@
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 480px) {
+  .ro-pub-celebrate--team-share .ro-pub-celebrate__inner,
+  .ro-pub-celebrate--team-share.ro-pub-celebrate--winners .ro-pub-celebrate__inner {
+    padding: 0.7rem 0.65rem 0.8rem;
+  }
+
+  .ro-pub-celebrate__heroes--team .ro-pub-celebrate__hero {
+    flex: 0 0 calc(33.333% - 0.35rem);
+    max-width: 3.85rem;
+  }
+
+  .ro-pub-celebrate__heroes--team .ro-pub-celebrate__hero-avatar.rj-avatar--xl {
+    width: 2.35rem;
+    height: 2.35rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-height: 780px) {
+  .ro-pub-celebrate--team-share .ro-pub-celebrate__social {
+    display: none;
+  }
+
+  .ro-pub-celebrate--team-share .ro-pub-celebrate__format-kicker {
+    margin-top: 0.28rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .ro-pub-celebrate--team-share .ro-pub-celebrate__inner,
+  .ro-pub-celebrate--team-share.ro-pub-celebrate--winners .ro-pub-celebrate__inner {
+    padding: 1.15rem 1.25rem 1.25rem;
+  }
+
+  .ro-pub-celebrate--team-share.ro-pub-celebrate--winners .ro-pub-celebrate__headline {
+    font-size: 2rem;
+  }
+
+  .ro-pub-celebrate--team-share .ro-pub-celebrate__names--team {
+    font-size: 2.35rem;
+  }
+
+  .ro-pub-celebrate__heroes--team .ro-pub-celebrate__hero {
+    max-width: 5.25rem;
+  }
+
+  .ro-pub-celebrate__heroes--team .ro-pub-celebrate__hero-avatar.rj-avatar--xl {
+    width: 3.25rem;
+    height: 3.25rem;
+    font-size: 1.05rem;
+  }
+
+  .ro-pub-celebrate__heroes--team .ro-pub-celebrate__hero-name {
+    font-size: 0.62rem;
+  }
 }
