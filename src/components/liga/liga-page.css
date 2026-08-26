@@ -614,6 +614,12 @@
   line-height: 1.45;
 }
 
+.liga-partido-row__cancha {
+  font-weight: 600;
+  color: var(--liga-text);
+  letter-spacing: 0.01em;
+}
+
 .liga-partido-row--locked {
   opacity: 0.45;
   pointer-events: none;
@@ -1339,22 +1345,9 @@
 
 .liga-jornada-admin {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--liga-space-xl);
   align-items: start;
-}
-
-@media (min-width: 900px) {
-  .liga-jornada-admin {
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-    gap: var(--liga-space-2xl);
-  }
-}
-
-@media (min-width: 1200px) {
-  .liga-jornada-admin {
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
-    gap: clamp(32px, 4vw, 56px);
-  }
 }
 
 .liga-jornada-admin__main {
@@ -1365,6 +1358,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--liga-space-lg);
+  min-width: 0;
 }
 
 .liga-jornada-admin__finish {

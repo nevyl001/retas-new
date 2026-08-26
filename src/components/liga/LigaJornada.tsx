@@ -318,7 +318,11 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
       .sort((a, b) => a[0] - b[0])
       .map(([ronda, partidos]) => [
         ronda,
-        [...partidos].sort((a, b) => (a.cancha ?? 0) - (b.cancha ?? 0)),
+        [...partidos].sort((a, b) => {
+          const byCancha = (a.cancha ?? 0) - (b.cancha ?? 0);
+          if (byCancha !== 0) return byCancha;
+          return a.id.localeCompare(b.id);
+        }),
       ] as [number, LigaPartido[]]);
   }, [jornada]);
 
@@ -334,9 +338,13 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
   const partidosJornadaOrdenados = useMemo(
     () =>
-      [...(jornada?.partidos ?? [])].sort(
-        (a, b) => (a.cancha ?? 0) - (b.cancha ?? 0)
-      ),
+      [...(jornada?.partidos ?? [])].sort((a, b) => {
+        const byRonda = (a.ronda ?? 0) - (b.ronda ?? 0);
+        if (byRonda !== 0) return byRonda;
+        const byCancha = (a.cancha ?? 0) - (b.cancha ?? 0);
+        if (byCancha !== 0) return byCancha;
+        return a.id.localeCompare(b.id);
+      }),
     [jornada]
   );
 
@@ -942,6 +950,12 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                 }`}
               >
                 <p className="liga-partido-row__teams">
+                  {partido.cancha != null ? (
+                    <span className="liga-partido-row__cancha">
+                      Cancha {partido.cancha}
+                      {" · "}
+                    </span>
+                  ) : null}
                   {parejaLabel(partido.pareja1_id, jornada)} vs{" "}
                   {parejaLabel(partido.pareja2_id, jornada)}
                   {partido.bracket_slot ? (

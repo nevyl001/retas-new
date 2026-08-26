@@ -1,6 +1,7 @@
 import {
   parejasFijasVictoryRankingPoints,
   resolveParejasFijasPartidoTotals,
+  type LigaPartidoSetScores,
 } from "./parejasFijasMatchScore";
 import {
   computePlayoffsMatchPoints,
@@ -38,6 +39,155 @@ function parejaDisplayName(p: LigaJornadaPareja): string {
 export interface JornadaPublicStatsOptions {
   parejasFijas?: boolean;
 }
+
+export type ParejaJornadaMatchLine = {
+  partidoId: string;
+  /** Marcador desde la perspectiva de la pareja (sus games primero). */
+  scoreLabel: string;
+  points: number;
+};
+
+function formatSignedPoints(points: number): string {
+  if (points > 0) return `+${points}`;
+  return String(points);
+}
+
+function flipPlayoffsScoreLabel(
+  score1: number,
+  score2: number,
+  payload: ReturnType<typeof parsePlayoffsSetScoresJson>,
+  side: 1 | 2
+): string {
+  if (!payload) return side === 1 ? `${score1}-${score2}` : `${score2}-${score1}`;
+  if (payload.wo) {
+    return side === 1 ? `WO ${score1}-${score2}` : `WO ${score2}-${score1}`;
+  }
+  const parts: string[] = [];
+  if (payload.sets && payload.sets.length === 2) {
+    for (const set of payload.sets) {
+      parts.push(
+        side === 1 ? `${set.p1}-${set.p2}` : `${set.p2}-${set.p1}`
+      );
+    }
+  } else {
+    parts.push(side === 1 ? `${score1}-${score2}` : `${score2}-${score1}`);
+  }
+  if (payload.stb) {
+    parts.push(
+      side === 1
+        ? `STB ${payload.stb.p1}-${payload.stb.p2}`
+        : `STB ${payload.stb.p2}-${payload.stb.p1}`
+    );
+  }
+  return parts.join(" · ");
+}
+
+/**
+ * Desglose por partido de la jornada: marcador + puntos que aportó a cada pareja.
+ * Sirve para explicar el total del ranking.
+ */
+export function buildJornadaParejaMatchBreakdowns(
+  jornada: LigaJornada | undefined,
+  options?: JornadaPublicStatsOptions
+): Map<string, ParejaJornadaMatchLine[]> {
+  const parejasFijas = options?.parejasFijas === true;
+  const out = new Map<string, ParejaJornadaMatchLine[]>();
+  const partidos = (jornada?.partidos ?? []).filter(
+    (p) => p.estado === "completed"
+  );
+
+  for (const m of partidos) {
+    const id1 = m.pareja1_id;
+    const id2 = m.pareja2_id;
+    if (!out.has(id1)) out.set(id1, []);
+    if (!out.has(id2)) out.set(id2, []);
+
+    if (parejasFijas) {
+      const playoffsPayload = parsePlayoffsSetScoresJson(m.set_scores);
+      if (
+        playoffsPayload &&
+        m.score_pareja1 != null &&
+        m.score_pareja2 != null
+      ) {
+        const derived = derivePlayoffsGamesTotals(
+          playoffsPayload,
+          Number(m.score_pareja1),
+          Number(m.score_pareja2)
+        );
+        if ("error" in derived) continue;
+        const computed = computePlayoffsMatchPoints(
+          derived.gamesTotalP1,
+          derived.gamesTotalP2,
+          playoffsPayload
+        );
+        if (!computed.ok) continue;
+        out.get(id1)!.push({
+          partidoId: m.id,
+          scoreLabel: flipPlayoffsScoreLabel(
+            derived.gamesTotalP1,
+            derived.gamesTotalP2,
+            playoffsPayload,
+            1
+          ),
+          points: computed.result.pointsP1,
+        });
+        out.get(id2)!.push({
+          partidoId: m.id,
+          scoreLabel: flipPlayoffsScoreLabel(
+            derived.gamesTotalP1,
+            derived.gamesTotalP2,
+            playoffsPayload,
+            2
+          ),
+          points: computed.result.pointsP2,
+        });
+        continue;
+      }
+
+      const totals = resolveParejasFijasPartidoTotals({
+        score_pareja1: m.score_pareja1,
+        score_pareja2: m.score_pareja2,
+        set_scores:
+          m.set_scores &&
+          typeof m.set_scores === "object" &&
+          "sets" in m.set_scores
+            ? (m.set_scores as LigaPartidoSetScores)
+            : null,
+      });
+      if (!totals) continue;
+      const pts1 = parejasFijasVictoryRankingPoints(totals, true);
+      const pts2 = parejasFijasVictoryRankingPoints(totals, false);
+      out.get(id1)!.push({
+        partidoId: m.id,
+        scoreLabel: totals.display,
+        points: pts1,
+      });
+      out.get(id2)!.push({
+        partidoId: m.id,
+        scoreLabel: totals.display,
+        points: pts2,
+      });
+      continue;
+    }
+
+    const s1 = Number(m.score_pareja1 ?? 0);
+    const s2 = Number(m.score_pareja2 ?? 0);
+    out.get(id1)!.push({
+      partidoId: m.id,
+      scoreLabel: `${s1}-${s2}`,
+      points: s1,
+    });
+    out.get(id2)!.push({
+      partidoId: m.id,
+      scoreLabel: `${s2}-${s1}`,
+      points: s2,
+    });
+  }
+
+  return out;
+}
+
+export { formatSignedPoints };
 
 /** Puntos de jornada por jugador y pareja (rotativo: games; parejas fijas: 3/2/0). */
 export function computeJornadaPublicStats(
@@ -136,7 +286,7 @@ export function computeJornadaPublicStats(
           m.set_scores &&
           typeof m.set_scores === "object" &&
           "sets" in m.set_scores
-            ? (m.set_scores as import("./parejasFijasMatchScore").LigaPartidoSetScores)
+            ? (m.set_scores as LigaPartidoSetScores)
             : null,
       });
       if (!totals) continue;

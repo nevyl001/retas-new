@@ -1,5 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { computeJornadaPublicStats } from "../../lib/liga/jornadaStats";
+import {
+  buildJornadaParejaMatchBreakdowns,
+  computeJornadaPublicStats,
+  formatSignedPoints,
+} from "../../lib/liga/jornadaStats";
 import {
   buildVictoriaRankLabel,
   findPartidoGanadoPareja,
@@ -189,7 +193,11 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       .sort((a, b) => a[0] - b[0])
       .map(([ronda, partidos]) => [
         ronda,
-        [...partidos].sort((a, b) => (a.cancha ?? 0) - (b.cancha ?? 0)),
+        [...partidos].sort((a, b) => {
+          const byCancha = (a.cancha ?? 0) - (b.cancha ?? 0);
+          if (byCancha !== 0) return byCancha;
+          return a.id.localeCompare(b.id);
+        }),
       ] as [number, LigaPartido[]]);
   }, [jornada]);
 
@@ -211,6 +219,14 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
 
   const jornadaStats = useMemo(
     () => computeJornadaPublicStats(jornada, { parejasFijas: esParejasFijas }),
+    [jornada, esParejasFijas]
+  );
+
+  const jornadaMatchBreakdowns = useMemo(
+    () =>
+      buildJornadaParejaMatchBreakdowns(jornada, {
+        parejasFijas: esParejasFijas,
+      }),
     [jornada, esParejasFijas]
   );
 
@@ -671,6 +687,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                   >
                     {jornadaStats.rankingParejas.map((row) => {
                       const face = resolveParejaFace(row.parejaId);
+                      const matchLines =
+                        jornadaMatchBreakdowns.get(row.parejaId) ?? [];
                       const topClass =
                         row.posicion === 1
                           ? " liga-pub-standings__row--1"
@@ -707,6 +725,35 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                             <p className="liga-pub-standings__meta">
                               {row.victorias} PG · {row.derrotas} PP
                             </p>
+                            {matchLines.length > 0 ? (
+                              <ul
+                                className="liga-pub-standings__breakdown"
+                                aria-label="Puntos por partido"
+                              >
+                                {matchLines.map((line) => (
+                                  <li
+                                    key={line.partidoId}
+                                    className="liga-pub-standings__breakdown-line"
+                                  >
+                                    <span className="liga-pub-standings__breakdown-score">
+                                      {line.scoreLabel}
+                                    </span>
+                                    <span
+                                      className="liga-pub-standings__breakdown-arrow"
+                                      aria-hidden="true"
+                                    >
+                                      →
+                                    </span>
+                                    <span
+                                      className="liga-pub-standings__breakdown-pts"
+                                      aria-label={`${formatSignedPoints(line.points)} puntos`}
+                                    >
+                                      {formatSignedPoints(line.points)}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : null}
                           </div>
                           <div className="liga-pub-standings__pts-block">
                             <span className="liga-pub-standings__pts">
