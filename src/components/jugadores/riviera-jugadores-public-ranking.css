@@ -1,38 +1,50 @@
 /* Ranking público — experiencia deportiva premium */
 
 /*
-  Fondo cancha: en móvil la foto vertical (rejas/luces claras) se filtra por el
-  overlay a media opacidad y se lee como “bloque / sombra blanca”. En ranking
-  tapamos casi todo; la atmósfera queda en paneles opacos, no en la foto.
+  Fondo cancha visible (Riviera madre). Antes se tapó casi al 100 % por un
+  “bloque blanco” en móvil (foto vertical clara). Ahora la cancha se ve con
+  filtro oscuro + overlay legible; paneles siguen opacos para el contenido.
 */
-.App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::before,
-html[data-brand="valvidub-sports"]
-  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::before,
-html[data-club="valvidub-sports"]
-  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::before {
-  opacity: 0.025 !important;
+.App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::before {
+  opacity: 0.42 !important;
+  filter: brightness(0.42) saturate(0.9) contrast(1.12);
 }
 
-.App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::after,
-html[data-brand="valvidub-sports"]
-  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::after,
-html[data-club="valvidub-sports"]
-  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::after,
-.club-experience-scope[data-brand="valvidub-sports"]
-  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::after,
-.club-experience-scope[data-club="valvidub-sports"]
-  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::after {
+.App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::after {
   background: linear-gradient(
     180deg,
-    rgba(12, 10, 9, 0.98) 0%,
-    rgba(14, 11, 10, 0.97) 40%,
-    rgba(12, 10, 9, 0.98) 100%
+    rgba(8, 8, 10, 0.78) 0%,
+    rgba(10, 10, 12, 0.48) 32%,
+    rgba(10, 10, 12, 0.55) 62%,
+    rgba(6, 6, 8, 0.88) 100%
   ) !important;
 }
 
-.rjp-public--ranking > .rjp-public__grain,
+@media (max-width: 768px), (orientation: portrait) and (max-width: 1024px) {
+  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::before {
+    opacity: 0.38 !important;
+    filter: brightness(0.36) saturate(0.85) contrast(1.15);
+  }
+
+  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::after {
+    background: linear-gradient(
+      180deg,
+      rgba(8, 8, 10, 0.82) 0%,
+      rgba(10, 10, 12, 0.52) 30%,
+      rgba(10, 10, 12, 0.58) 60%,
+      rgba(6, 6, 8, 0.9) 100%
+    ) !important;
+  }
+}
+
+/* Sin glow blanco (niebla); grain suave sí aporta textura sobre la cancha */
 .rjp-public--ranking > .rjp-public__glow--top {
   display: none !important;
+}
+
+.rjp-public--ranking > .rjp-public__grain {
+  display: block !important;
+  opacity: 0.04;
 }
 
 .rjp-ranking {
@@ -409,7 +421,9 @@ html[data-club="valvidub-sports"]
   padding: 0.85rem 0.65rem 0.9rem;
   border: 1px solid var(--border-default);
   border-radius: 14px;
-  background: var(--ro-bg-card, #16110e);
+  background: rgba(12, 12, 14, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: inherit;
   font-family: inherit;
   cursor: pointer;
@@ -435,7 +449,7 @@ html[data-club="valvidub-sports"]
   background: color-mix(
     in srgb,
     var(--brand-accent, var(--accent-gold)) 12%,
-    var(--ro-bg-card, #16110e)
+    rgba(12, 12, 14, 0.82)
   );
 }
 
@@ -534,7 +548,9 @@ html[data-club="valvidub-sports"]
   flex-direction: column;
   border-radius: 14px;
   border: 1px solid var(--border-default);
-  background: var(--ro-bg-card, #16110e);
+  background: rgba(12, 12, 14, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   overflow: hidden;
   transition: opacity 0.15s ease;
 }
