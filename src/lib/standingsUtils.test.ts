@@ -6,7 +6,6 @@ import {
   resolvePublicStandingsTeamConfig,
 } from "./standingsUtils";
 import type { Game, Match, Pair } from "./database";
-import type { Tournament } from "./db/types";
 
 const pair = (
   id: string,
@@ -106,13 +105,13 @@ describe("standingsUtils", () => {
   it("recupera logos del torneo si public_config no los trae", () => {
     const tournament = {
       id: "t-logos",
-      format: "teams",
+      format: "teams" as const,
       team_config: {
         teamNames: ["Oasis", "Break"],
         pairToTeam: { p1: 0, p2: 1 },
         teamLogos: ["https://cdn.example/a.png", "https://cdn.example/b.png"],
       },
-    } as Tournament;
+    };
     const publicCfg = {
       teamNames: ["Oasis", "Break"],
       pairToTeam: { p1: 0, p2: 1 },

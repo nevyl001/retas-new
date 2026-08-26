@@ -524,7 +524,10 @@ export function getTeamConfigFromStorage(tournamentId: string): TeamConfig | nul
  * que un public_config sin teamLogos oculte logos válidos del torneo/LS).
  */
 export function resolvePublicStandingsTeamConfig(
-  tournament: Tournament | null | undefined,
+  tournament:
+    | Pick<Tournament, "format" | "team_config">
+    | null
+    | undefined,
   configFromPublic: TournamentTeamConfig | TeamConfig | null | undefined,
   tournamentId: string,
   hashTeamConfig: TeamConfig | null | undefined
