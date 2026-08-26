@@ -1240,13 +1240,17 @@
 
 /* Live compact header */
 .reta-eq-live-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.95rem;
   max-width: 48rem;
-  margin: 0 auto 1.35rem;
-  padding: 0.85rem 0.75rem 0.35rem;
+  margin: 0 auto 1.5rem;
+  padding: 0.85rem 0.75rem 0.55rem;
 }
 
 .reta-eq-live-header__kicker {
-  margin: 0 0 0.7rem;
+  margin: 0;
   text-align: center;
   font-size: 0.72rem;
   font-weight: 650;
@@ -1260,6 +1264,7 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 0.55rem 0.75rem;
+  width: 100%;
   padding: 0.75rem 0.9rem;
   border-radius: 14px;
   border: 1px solid rgba(244, 241, 235, 0.14);
@@ -1296,13 +1301,17 @@
 }
 
 .reta-eq-live-header__meta {
-  margin: 0.7rem 0 0;
+  margin: 0;
   text-align: center;
   font-size: 0.76rem;
   font-weight: 550;
   letter-spacing: 0.04em;
   color: #f4f1eb;
   line-height: 1.4;
+}
+
+.reta-eq-live-header .reta-eq-tx-pill {
+  margin-top: 0.15rem;
 }
 
 .reta-eq-anim-in {
