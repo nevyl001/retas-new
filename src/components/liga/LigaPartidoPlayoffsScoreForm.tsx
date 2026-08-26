@@ -125,7 +125,7 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
       ) : null}
       <p className="liga-playoffs-score__rules">
         Clasificación por games totales (Set 1 + Set 2). No hace falta llegar a
-        6. Diff ≥2 → 3/0 · Diff 1 → 2/1 · Empate → STB a 5 (2/1).
+        6. Diff {">"}2 → 3/0 · Diff 1–2 → 2/1 · Empate → STB a 5 (2/1).
       </p>
       <SetRow
         label="Set 1"

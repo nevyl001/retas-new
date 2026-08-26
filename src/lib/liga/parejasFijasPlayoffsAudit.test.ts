@@ -45,19 +45,29 @@ describe("routing modalidad → helper de scoring", () => {
     expect(parejasFijasVictoryRankingPoints(totals!, false)).toBe(0);
   });
 
-  it("parejas_fijas_playoffs usa helper nuevo (4-2 → 3/0)", () => {
+  it("parejas_fijas_playoffs usa helper nuevo (diff>2 → 3/0; diff=2 → 2/1)", () => {
     expect(isParejasFijasPlayoffs("parejas_fijas_playoffs")).toBe(true);
     expect(isParejasFijasLegacy("parejas_fijas_playoffs")).toBe(false);
 
-    const r = computePlayoffsMatchPoints(4, 2, {
+    const ajustada = computePlayoffsMatchPoints(4, 2, {
       format: PLAYOFFS_SCORE_FORMAT,
       wo: false,
       stb: null,
     });
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.result.pointsP1).toBe(3);
-    expect(r.result.pointsP2).toBe(0);
+    expect(ajustada.ok).toBe(true);
+    if (!ajustada.ok) return;
+    expect(ajustada.result.pointsP1).toBe(2);
+    expect(ajustada.result.pointsP2).toBe(1);
+
+    const holgada = computePlayoffsMatchPoints(5, 2, {
+      format: PLAYOFFS_SCORE_FORMAT,
+      wo: false,
+      stb: null,
+    });
+    expect(holgada.ok).toBe(true);
+    if (!holgada.ok) return;
+    expect(holgada.result.pointsP1).toBe(3);
+    expect(holgada.result.pointsP2).toBe(0);
   });
 });
 
@@ -89,15 +99,16 @@ describe("scoring playoffs casos auditoría", () => {
     stb: null,
   };
 
-  it("4-2 → 3/0; 4-3 → 2/1; 4-4 sin STB falla; STB 5-3 → 2/1; WO → 3/-1", () => {
-    expectPoints(4, 2, base, 3, 0);
+  it("5-2 → 3/0; 4-2 → 2/1; 4-3 → 2/1; 4-4 sin STB falla; STB 5-3 → 2/1; WO → 3/-1", () => {
+    expectPoints(5, 2, base, 3, 0);
+    expectPoints(4, 2, base, 2, 1);
     expectPoints(4, 3, base, 2, 1);
     expect(computePlayoffsMatchPoints(4, 4, base).ok).toBe(false);
     expectPoints(4, 4, { ...base, stb: { p1: 5, p2: 3 } }, 2, 1);
     expectPoints(6, 0, { ...base, wo: true }, 3, -1);
   });
 
-  it("editar 4-3 → 4-2 reemplaza (recalc), no acumula", () => {
+  it("editar 4-3 → 5-2 reemplaza (recalc), no acumula", () => {
     const first = requireResult(computePlayoffsMatchPoints(4, 3, base));
     const a = emptyEquipoRankingStats();
     const b = emptyEquipoRankingStats();
@@ -105,18 +116,18 @@ describe("scoring playoffs casos auditoría", () => {
 
     const a2 = emptyEquipoRankingStats();
     const b2 = emptyEquipoRankingStats();
-    const second = requireResult(computePlayoffsMatchPoints(4, 2, base));
-    applyPlayoffsMatchBothSides(a2, b2, 4, 2, second);
+    const second = requireResult(computePlayoffsMatchPoints(5, 2, base));
+    applyPlayoffsMatchBothSides(a2, b2, 5, 2, second);
     expect(a2.puntos).toBe(3);
     expect(b2.puntos).toBe(0);
     expect(a2.puntos).not.toBe(a.puntos + 3);
   });
 
-  it("invertir ganador 4-2 → 2-4 corrige puntos y PG/PP", () => {
-    const second = requireResult(computePlayoffsMatchPoints(2, 4, base));
+  it("invertir ganador 5-2 → 2-5 corrige puntos y PG/PP", () => {
+    const second = requireResult(computePlayoffsMatchPoints(2, 5, base));
     const a = emptyEquipoRankingStats();
     const b = emptyEquipoRankingStats();
-    applyPlayoffsMatchBothSides(a, b, 2, 4, second);
+    applyPlayoffsMatchBothSides(a, b, 2, 5, second);
     expect(a.puntos).toBe(0);
     expect(b.puntos).toBe(3);
     expect(a.partidos_ganados).toBe(0);

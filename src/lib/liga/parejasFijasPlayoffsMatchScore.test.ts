@@ -81,7 +81,7 @@ describe("parejasFijasPlayoffsMatchScore — games totales (no sets ganados)", (
     expect(r.result.viaStb).toBe(true);
   });
 
-  it("Set1 4-2 + Set2 0-0 → Total 4-2 → 3/0 (no obliga llegar a 6)", () => {
+  it("Set1 4-2 + Set2 0-0 → Total 4-2 → 2/1 (diff 2 no es holgada)", () => {
     const r = computePlayoffsMatchFromSetInputs({
       set1P1: 4,
       set1P2: 2,
@@ -92,11 +92,26 @@ describe("parejasFijasPlayoffsMatchScore — games totales (no sets ganados)", (
     if (!r.ok) return;
     expect(r.gamesTotalP1).toBe(4);
     expect(r.gamesTotalP2).toBe(2);
-    expect(r.result.pointsP1).toBe(3);
-    expect(r.result.pointsP2).toBe(0);
+    expect(r.result.pointsP1).toBe(2);
+    expect(r.result.pointsP2).toBe(1);
   });
 
-  it("Caso A: 6-3 + 4-2 → 10-5 → 3/0", () => {
+  it("Total 10-8 (diff 2) → victoria ajustada 2/1, no holgada", () => {
+    const r = computePlayoffsMatchFromSetInputs({
+      set1P1: 4,
+      set1P2: 6,
+      set2P1: 6,
+      set2P2: 2,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.gamesTotalP1).toBe(10);
+    expect(r.gamesTotalP2).toBe(8);
+    expect(r.result.pointsP1).toBe(2);
+    expect(r.result.pointsP2).toBe(1);
+  });
+
+  it("Caso A: 6-3 + 4-2 → 10-5 → 3/0 (diff 5 > 2)", () => {
     const r = computePlayoffsMatchFromSetInputs({
       set1P1: 6,
       set1P2: 3,

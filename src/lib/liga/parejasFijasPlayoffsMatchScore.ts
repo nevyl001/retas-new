@@ -9,7 +9,7 @@
  * gamesTotalP1 = set1P1 + set2P1
  * gamesTotalP2 = set1P2 + set2P2
  *
- * Diff ≥ 2 → 3/0 · Diff === 1 → 2/1 · Empate totales → STB a 5 → 2/1 · WO → 3/−1
+ * Diff > 2 → 3/0 · Diff 1 o 2 → 2/1 · Empate totales → STB a 5 → 2/1 · WO → 3/−1
  */
 
 export const PLAYOFFS_SCORE_FORMAT = "parejas_fijas_playoffs" as const;
@@ -271,7 +271,8 @@ export function computePlayoffsMatchPoints(
 
   const diff = Math.abs(gamesTotalP1 - gamesTotalP2);
   const p1Won = gamesTotalP1 > gamesTotalP2;
-  if (diff >= 2) {
+  // Victoria holgada: más de 2 games de diferencia (no igual a 2).
+  if (diff > 2) {
     return {
       ok: true,
       result: {
@@ -284,7 +285,7 @@ export function computePlayoffsMatchPoints(
     };
   }
 
-  // diff === 1 → victoria ajustada
+  // diff === 1 o 2 → victoria ajustada
   return {
     ok: true,
     result: {
@@ -475,7 +476,7 @@ export function previewPlayoffsPointsFromDraft(
   }
 
   const diff = Math.abs(gamesP1 - gamesP2);
-  if (diff >= 2) {
+  if (diff > 2) {
     return {
       kind: "holgada",
       title: "Victoria holgada",
