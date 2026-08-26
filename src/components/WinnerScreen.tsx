@@ -12,6 +12,7 @@ import {
   buildTeamWinnerCelebrateStatCards,
   type TeamWinnerCelebrateStats,
 } from "../lib/teamWinnerCelebrate";
+import { TEAMS_PUBLIC_FORMAT_LABEL } from "../lib/reta/teamsPublicCopy";
 import {
   pairPlayer1DisplayName,
   pairPlayer2DisplayName,
@@ -88,7 +89,7 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({
           title={winningTeamName}
           subtitle="Equipo ganador por games acumulados"
           torneoNombre={torneoNombre}
-          formatKicker="Dual meet"
+          formatKicker={TEAMS_PUBLIC_FORMAT_LABEL}
           stats={teamCelebrateStats}
           shareable
         />

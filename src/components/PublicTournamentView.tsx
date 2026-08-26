@@ -34,6 +34,10 @@ import {
   resolveDynamicTeamWinner,
   toLegacyTeamStandingRows,
 } from "../lib/reta/dynamicTeamLineups";
+import {
+  TEAMS_PUBLIC_FORMAT_LABEL,
+  formatTeamsPublicHeroMeta,
+} from "../lib/reta/teamsPublicCopy";
 import type { TeamConfig } from "./RealTimeStandingsTable";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
 import { useVisiblePolling } from "../hooks/useVisiblePolling";
@@ -868,7 +872,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   );
 
   const formatKicker = teamStandings?.length
-    ? "Dual meet"
+    ? formatTeamsPublicHeroMeta(teamConfig?.teamNames)
     : remontadaActiva
       ? "Round Robin · Remontada final"
       : "Round Robin";
@@ -1128,7 +1132,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             title={winningTeamName || teamStandings[0]?.name}
             subtitle="Equipo ganador por games acumulados"
             torneoNombre={publicTournamentName ?? undefined}
-            formatKicker="Dual meet"
+            formatKicker={TEAMS_PUBLIC_FORMAT_LABEL}
             stats={teamWinnerCelebrateStats}
             shareable
           />

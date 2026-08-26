@@ -18,7 +18,7 @@ export function resolveRetaStandingsHelpMode(opts: {
 export function getStandingsSchedulingNoteText(mode: StandingsHelpMode): string {
   switch (mode) {
     case "dual-meet":
-      return "En un dual meet cada equipo suma games y partidos de sus parejas; esta tabla ordena el marcador global por equipo.";
+      return "En un Duelo cada equipo suma games y partidos de sus parejas; esta tabla ordena el marcador global por equipo.";
     case "round-robin":
       return "La tabla ordena el acumulado de la fase.";
     case "remontada-final":
@@ -37,7 +37,7 @@ export function getStandingsCompactSchedulingHint(
 ): string | null {
   switch (mode) {
     case "dual-meet":
-      return "Dual meet · tabla por equipo";
+      return "Duelo · tabla por equipo";
     case "round-robin":
       return "Round robin";
     case "remontada-final":
@@ -57,7 +57,7 @@ export function getStandingsSchedulingNoteHighlights(
 ): string[] {
   switch (mode) {
     case "dual-meet":
-      return ["dual meet"];
+      return ["Duelo"];
     case "round-robin":
       return ["round robin"];
     case "remontada-final":
