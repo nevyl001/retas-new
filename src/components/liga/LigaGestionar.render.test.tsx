@@ -53,6 +53,7 @@ jest.mock("../../services/ligaService", () => ({
   regenerarCalendarioLiga: jest.fn(),
   resetLiga: jest.fn(),
   startLiga: jest.fn(),
+  updateLigaNombre: jest.fn(),
 }));
 
 const mockGetLigaById = getLigaById as jest.Mock;
@@ -148,6 +149,64 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
     expect(header?.textContent).toContain("En curso");
     expect(header?.textContent).toContain(
       "Liga individual con parejas rotativas"
+    );
+    expect(
+      container.querySelector('[aria-label="Editar nombre de la liga"]')
+    ).not.toBeNull();
+  });
+
+  it("permite editar el nombre con la liga en curso", async () => {
+    const { updateLigaNombre } = jest.requireMock(
+      "../../services/ligaService"
+    ) as { updateLigaNombre: jest.Mock };
+    updateLigaNombre.mockResolvedValue({
+      ...baseDetalle({ estado: "in_progress", nombre: "Liga Otoño Renombrada" }),
+    });
+
+    await renderLiga(
+      baseDetalle({ nombre: "Liga Otoño", estado: "in_progress" })
+    );
+
+    const pencil = container.querySelector(
+      '[aria-label="Editar nombre de la liga"]'
+    ) as HTMLButtonElement;
+    expect(pencil).toBeDefined();
+
+    await act(async () => {
+      pencil.click();
+    });
+
+    const input = container.querySelector(
+      "#liga-edit-nombre"
+    ) as HTMLInputElement;
+    expect(input).not.toBeNull();
+    expect(input.value).toBe("Liga Otoño");
+
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value"
+      )?.set;
+      setter?.call(input, "Liga Otoño Renombrada");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    const form = container.querySelector(
+      "form.liga-nombre-edit"
+    ) as HTMLFormElement;
+    expect(form).not.toBeNull();
+
+    await act(async () => {
+      form.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true })
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(updateLigaNombre).toHaveBeenCalledWith(
+      "liga-1",
+      "Liga Otoño Renombrada"
     );
   });
 

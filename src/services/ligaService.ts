@@ -205,6 +205,30 @@ export async function createLiga(data: CreateLigaInput): Promise<Liga> {
   return mapLiga(row as Record<string, unknown>);
 }
 
+/** Renombra la liga en cualquier estado (próxima, en curso o finalizada). */
+export async function updateLigaNombre(
+  ligaId: string,
+  nombre: string
+): Promise<Liga> {
+  const uid = await requireUserId();
+  const nombreTrim = nombre.trim();
+  if (!nombreTrim) {
+    throw new Error("El nombre es obligatorio.");
+  }
+
+  const { data: row, error } = await supabase
+    .from("ligas")
+    .update({ nombre: nombreTrim })
+    .eq("id", ligaId)
+    .eq("organizador_id", uid)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  if (!row) throw new Error("Liga no encontrada.");
+  return mapLiga(row as Record<string, unknown>);
+}
+
 export async function getLigas(): Promise<Liga[]> {
   const uid = await requireUserId();
   const { data: ligas, error } = await supabase

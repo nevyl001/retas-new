@@ -36,8 +36,10 @@ import {
   regenerarCalendarioLiga,
   resetLiga,
   startLiga,
+  updateLigaNombre,
 } from "../../services/ligaService";
 import { Button } from "../ui";
+import { TablerIcon } from "../ui/TablerIcon";
 import { ActionBar } from "../platform/ActionBar";
 import {
   ModeDangerZone,
@@ -125,6 +127,8 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [editingNombre, setEditingNombre] = useState(false);
+  const [nombreDraft, setNombreDraft] = useState("");
   const mountedRef = useRef(true);
   // Generación de carga: si un load() más nuevo arrancó mientras uno viejo
   // seguía en vuelo (incluido el callback de sync en segundo plano de uno
@@ -162,6 +166,8 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
       if (isStale()) return;
       setDetalle(d);
       setJugadoresPool(pool);
+      setNombreDraft(d.nombre);
+      setEditingNombre(false);
       if (isEquiposModalidad(d.modalidad)) {
         setTab((prev) => (prev === "jugadores" ? "parejas" : prev));
       }
@@ -346,6 +352,38 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     }
   };
 
+  const handleSaveNombre = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!detalle) return;
+    const next = nombreDraft.trim();
+    if (!next) {
+      setError("El nombre es obligatorio.");
+      return;
+    }
+    if (next === detalle.nombre) {
+      setEditingNombre(false);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = await updateLigaNombre(ligaId, next);
+      setDetalle((prev) => (prev ? { ...prev, nombre: updated.nombre } : prev));
+      setNombreDraft(updated.nombre);
+      setEditingNombre(false);
+      setMessage("Nombre actualizado.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo renombrar");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleCancelNombre = () => {
+    if (detalle) setNombreDraft(detalle.nombre);
+    setEditingNombre(false);
+  };
+
   const handleRegenerar = async () => {
     const msg = jornadasActivas
       ? "Se borrarán TODAS las jornadas y resultados. ¿Regenerar calendario con los inscritos actuales?"
@@ -511,6 +549,57 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
         className="liga-event-header"
         eyebrow={modeEyebrow}
         title={`Liga: ${detalle.nombre}`}
+        titleContent={
+          editingNombre ? (
+            <form className="liga-nombre-edit" onSubmit={handleSaveNombre}>
+              <span className="liga-nombre-edit__prefix">Liga:</span>
+              <input
+                id="liga-edit-nombre"
+                className="liga-nombre-edit__input"
+                value={nombreDraft}
+                onChange={(ev) => setNombreDraft(ev.target.value)}
+                aria-label="Nombre de la liga"
+                autoFocus
+                disabled={busy}
+                maxLength={120}
+              />
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                disabled={busy || !nombreDraft.trim()}
+              >
+                Guardar
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={busy}
+                onClick={handleCancelNombre}
+              >
+                Cancelar
+              </Button>
+            </form>
+          ) : (
+            <div className="liga-nombre-edit liga-nombre-edit--view">
+              <h2 className="mode-event-header__title">Liga: {detalle.nombre}</h2>
+              <button
+                type="button"
+                className="liga-nombre-edit__pencil"
+                aria-label="Editar nombre de la liga"
+                title="Editar nombre"
+                disabled={busy}
+                onClick={() => {
+                  setNombreDraft(detalle.nombre);
+                  setEditingNombre(true);
+                }}
+              >
+                <TablerIcon name="pencil" size={14} aria-hidden={false} />
+              </button>
+            </div>
+          )
+        }
         modality={ligaModalidadLabel(detalle.modalidad)}
         statusLabel={estadoLigaLabel(detalle.estado)}
         statusVariant={estadoLigaStatusVariant(detalle.estado)}

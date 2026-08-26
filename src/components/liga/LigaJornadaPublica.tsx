@@ -10,7 +10,7 @@ import {
   formatPartidoPublicScore,
   partidoMatchWinnerSide,
 } from "../../lib/liga/publicDisplay";
-import { formatPartidoCanchaHorarioLabel } from "../../lib/liga/programacion";
+import { timeInputValue } from "../../lib/liga/programacion";
 import type { LigaDetalle, LigaJornada, LigaJornadaPareja, LigaPartido } from "../../lib/liga/types";
 import { isEquiposModalidad } from "../../lib/liga/ligaModalidad";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
@@ -171,14 +171,6 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     };
   }, [detalle?.organizador_id, detalle?.equipos, jornada?.parejas]);
 
-  const partidosJornadaOrdenados = useMemo(
-    () =>
-      [...(jornada?.partidos ?? [])].sort(
-        (a, b) => (a.cancha ?? 0) - (b.cancha ?? 0)
-      ),
-    [jornada]
-  );
-
   const partidosByRonda = useMemo(() => {
     const map = new Map<number, LigaPartido[]>();
     for (const p of jornada?.partidos ?? []) {
@@ -291,6 +283,98 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
 
   const jornadaEstadoText = jornadaEstadoLabel(jornada.estado);
   const jornadaFechaText = formatJornadaFechaPublica(jornada.fecha);
+  const canchasDisponibles = Math.max(1, detalle.canchas_disponibles ?? 4);
+  const totalPartidos = jornada.partidos?.length ?? 0;
+
+  const renderMatchCard = (partido: LigaPartido, compactCourts: boolean) => {
+    const { s1, s2, setsLabel } = scoreDisplay(partido, esParejasFijas);
+    const pending = partido.estado !== "completed";
+    const winner = partidoMatchWinnerSide(partido, esParejasFijas);
+    const p1Wins = winner === 1;
+    const p2Wins = winner === 2;
+    const side1 = resolveParejaFace(partido.pareja1_id);
+    const side2 = resolveParejaFace(partido.pareja2_id);
+    const canchaNum = partido.cancha ?? "?";
+    const horario = timeInputValue(partido.hora_inicio) || null;
+
+    return (
+      <article
+        key={partido.id}
+        className={`liga-pantalla-match liga-pantalla-match--faces${
+          compactCourts ? " liga-pantalla-match--court" : ""
+        }`}
+      >
+        <header className="liga-pantalla-match__head">
+          <span className="liga-pantalla-match__cancha">Cancha {canchaNum}</span>
+          {horario ? (
+            <span className="liga-pantalla-match__hora">{horario}</span>
+          ) : null}
+        </header>
+        <div
+          className={`liga-pantalla-match__board${
+            compactCourts ? " liga-pantalla-match__board--split" : ""
+          }`}
+        >
+          <div
+            className={`liga-pantalla-match__row liga-pantalla-match__row--face${
+              p1Wins ? " liga-pantalla-match__row--win" : ""
+            }`}
+          >
+            <LigaPublicParejaPlayers
+              name1={side1.name1}
+              name2={side1.name2}
+              foto1={side1.foto1}
+              foto2={side1.foto2}
+              size="sm"
+              win={p1Wins}
+            />
+            {!esParejasFijas || !setsLabel ? (
+              <span
+                className={`liga-pantalla-match__pts${
+                  pending ? " liga-pantalla-match__pts--pending" : ""
+                }`}
+              >
+                {s1}
+              </span>
+            ) : null}
+          </div>
+          <div className="liga-pantalla-match__mid">
+            {esParejasFijas && setsLabel ? (
+              <p className="liga-pantalla-match__sets">{setsLabel}</p>
+            ) : (
+              <p className="liga-pantalla-match__vs">vs</p>
+            )}
+          </div>
+          <div
+            className={`liga-pantalla-match__row liga-pantalla-match__row--face${
+              p2Wins ? " liga-pantalla-match__row--win" : ""
+            }`}
+          >
+            <LigaPublicParejaPlayers
+              name1={side2.name1}
+              name2={side2.name2}
+              foto1={side2.foto1}
+              foto2={side2.foto2}
+              size="sm"
+              win={p2Wins}
+            />
+            {!esParejasFijas || !setsLabel ? (
+              <span
+                className={`liga-pantalla-match__pts${
+                  pending ? " liga-pantalla-match__pts--pending" : ""
+                }`}
+              >
+                {s2}
+              </span>
+            ) : null}
+          </div>
+          {pending && esParejasFijas && !setsLabel ? (
+            <p className="liga-pantalla-match__pending">Pendiente</p>
+          ) : null}
+        </div>
+      </article>
+    );
+  };
 
   return (
     <ClubExperienceScope
@@ -318,7 +402,13 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
             club={isClubBranded ? organizerName : undefined}
             categoria={`Jornada ${numero}`}
             fecha={jornadaFechaText}
-            meta="Liga"
+            meta={
+              totalPartidos > 0
+                ? `${partidosByRonda.length} ronda${
+                    partidosByRonda.length === 1 ? "" : "s"
+                  } · ${canchasDisponibles} canchas`
+                : "Liga"
+            }
           />
         ) : (
           <header className="liga-pantalla__header">
@@ -381,77 +471,10 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
           }`}
         >
           <div className="liga-pantalla__rondas">
-            {partidosJornadaOrdenados.length > 0 ? (
-              <h2 className="liga-pantalla-jornadas__title liga-pantalla-jornadas__title--jornada">
-                Partidos
-              </h2>
-            ) : null}
-            {partidosJornadaOrdenados.length === 0 ? (
+            {totalPartidos === 0 ? (
               <p className="liga-pantalla__loading">
                 Los partidos aparecerán cuando se inicie la jornada.
               </p>
-            ) : esParejasFijas ? (
-              <div className="liga-pantalla-ronda__matches liga-pantalla-ronda__matches--jornada">
-                {partidosJornadaOrdenados.map((partido) => {
-                  const { setsLabel } = scoreDisplay(partido, true);
-                  const pending = partido.estado !== "completed";
-                  const winner = partidoMatchWinnerSide(partido, true);
-                  const p1Wins = winner === 1;
-                  const p2Wins = winner === 2;
-                  const side1 = resolveParejaFace(partido.pareja1_id);
-                  const side2 = resolveParejaFace(partido.pareja2_id);
-
-                  return (
-                    <article key={partido.id} className="liga-pantalla-match liga-pantalla-match--faces">
-                      <header className="liga-pantalla-match__head">
-                        {formatPartidoCanchaHorarioLabel(
-                          partido.cancha,
-                          partido.hora_inicio,
-                          jornada.fecha
-                        ) || `Cancha ${partido.cancha ?? "?"}`}
-                      </header>
-                      <div className="liga-pantalla-match__board">
-                        <div
-                          className={`liga-pantalla-match__row liga-pantalla-match__row--face${
-                            p1Wins ? " liga-pantalla-match__row--win" : ""
-                          }`}
-                        >
-                          <LigaPublicParejaPlayers
-                            name1={side1.name1}
-                            name2={side1.name2}
-                            foto1={side1.foto1}
-                            foto2={side1.foto2}
-                            size="md"
-                            win={p1Wins}
-                            />
-                        </div>
-                        {setsLabel ? (
-                          <p className="liga-pantalla-match__sets">{setsLabel}</p>
-                        ) : (
-                          <p className="liga-pantalla-match__vs">vs</p>
-                        )}
-                        <div
-                          className={`liga-pantalla-match__row liga-pantalla-match__row--face${
-                            p2Wins ? " liga-pantalla-match__row--win" : ""
-                          }`}
-                        >
-                          <LigaPublicParejaPlayers
-                            name1={side2.name1}
-                            name2={side2.name2}
-                            foto1={side2.foto1}
-                            foto2={side2.foto2}
-                            size="md"
-                            win={p2Wins}
-                            />
-                        </div>
-                        {pending && !setsLabel ? (
-                          <p className="liga-pantalla-match__pending">Pendiente</p>
-                        ) : null}
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
             ) : (
               partidosByRonda.map(([ronda, partidos]) => {
                 const meta = rondaEstados.find((x) => x.ronda === ronda);
@@ -460,11 +483,13 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                   <section
                     key={ronda}
                     className={`liga-pantalla-ronda${
-                      estado === "live" ? " liga-pantalla-ronda--live" : ""
-                    }`}
+                      esParejasFijas ? " liga-pantalla-ronda--courts" : ""
+                    }${estado === "live" ? " liga-pantalla-ronda--live" : ""}`}
                   >
                     <div className="liga-pantalla-ronda__head">
-                      <h2 className="liga-pantalla-ronda__title">Ronda {ronda}</h2>
+                      <h2 className="liga-pantalla-ronda__title">
+                        Ronda {ronda}
+                      </h2>
                       <span
                         className={`liga-pantalla-ronda__badge${
                           estado === "live"
@@ -477,94 +502,25 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                         {rondaLabel(estado)}
                       </span>
                     </div>
-                    <div className="liga-pantalla-ronda__matches">
-                      {partidos.map((partido) => {
-                        const { s1, s2, setsLabel } = scoreDisplay(
-                          partido,
-                          esParejasFijas
-                        );
-                        const pending = partido.estado !== "completed";
-                        const winner = partidoMatchWinnerSide(
-                          partido,
-                          esParejasFijas
-                        );
-                        const p1Wins = winner === 1;
-                        const p2Wins = winner === 2;
-                        const side1 = resolveParejaFace(partido.pareja1_id);
-                        const side2 = resolveParejaFace(partido.pareja2_id);
-
-                        return (
-                          <article
-                            key={partido.id}
-                            className="liga-pantalla-match liga-pantalla-match--faces"
-                          >
-                            <header className="liga-pantalla-match__head">
-                              {formatPartidoCanchaHorarioLabel(
-                                partido.cancha,
-                                partido.hora_inicio,
-                                jornada.fecha
-                              ) || `Cancha ${partido.cancha ?? "?"}`}
-                            </header>
-                            <div className="liga-pantalla-match__board">
-                              <div
-                                className={`liga-pantalla-match__row liga-pantalla-match__row--face${
-                                  p1Wins ? " liga-pantalla-match__row--win" : ""
-                                }`}
-                              >
-                                <LigaPublicParejaPlayers
-                                  name1={side1.name1}
-                                  name2={side1.name2}
-                                  foto1={side1.foto1}
-                                  foto2={side1.foto2}
-                                  size="sm"
-                                  win={p1Wins}
-                                  />
-                                {!esParejasFijas || !setsLabel ? (
-                                  <span
-                                    className={`liga-pantalla-match__pts${
-                                      pending
-                                        ? " liga-pantalla-match__pts--pending"
-                                        : ""
-                                    }`}
-                                  >
-                                    {s1}
-                                  </span>
-                                ) : null}
-                              </div>
-                              {esParejasFijas && setsLabel ? (
-                                <p className="liga-pantalla-match__sets">{setsLabel}</p>
-                              ) : (
-                                <p className="liga-pantalla-match__vs">vs</p>
-                              )}
-                              <div
-                                className={`liga-pantalla-match__row liga-pantalla-match__row--face${
-                                  p2Wins ? " liga-pantalla-match__row--win" : ""
-                                }`}
-                              >
-                                <LigaPublicParejaPlayers
-                                  name1={side2.name1}
-                                  name2={side2.name2}
-                                  foto1={side2.foto1}
-                                  foto2={side2.foto2}
-                                  size="sm"
-                                  win={p2Wins}
-                                  />
-                                {!esParejasFijas || !setsLabel ? (
-                                  <span
-                                    className={`liga-pantalla-match__pts${
-                                      pending
-                                        ? " liga-pantalla-match__pts--pending"
-                                        : ""
-                                    }`}
-                                  >
-                                    {s2}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </div>
-                          </article>
-                        );
-                      })}
+                    <div
+                      className={`liga-pantalla-ronda__matches${
+                        esParejasFijas
+                          ? " liga-pantalla-ronda__matches--courts"
+                          : ""
+                      }`}
+                      style={
+                        esParejasFijas
+                          ? ({
+                              ["--liga-courts" as string]: String(
+                                Math.min(4, Math.max(2, canchasDisponibles))
+                              ),
+                            } as React.CSSProperties)
+                          : undefined
+                      }
+                    >
+                      {partidos.map((partido) =>
+                        renderMatchCard(partido, esParejasFijas)
+                      )}
                     </div>
                   </section>
                 );

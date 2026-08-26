@@ -4,6 +4,8 @@ import { StatusBadge } from "./StatusBadge";
 export const ModeEventHeader: React.FC<{
   eyebrow?: string;
   title: string;
+  /** Si se pasa, reemplaza el `<h2>` del título (p. ej. edición inline). */
+  titleContent?: React.ReactNode;
   modality?: string;
   statusLabel: string;
   statusVariant?: "live" | "pending" | "gold" | "muted";
@@ -14,6 +16,7 @@ export const ModeEventHeader: React.FC<{
 }> = ({
   eyebrow,
   title,
+  titleContent,
   modality,
   statusLabel,
   statusVariant = "pending",
@@ -25,7 +28,7 @@ export const ModeEventHeader: React.FC<{
   <header className={["mode-event-header", className].filter(Boolean).join(" ")}>
     {eyebrow ? <p className="mode-event-header__eyebrow">{eyebrow}</p> : null}
     <div className="mode-event-header__top">
-      <h2 className="mode-event-header__title">{title}</h2>
+      {titleContent ?? <h2 className="mode-event-header__title">{title}</h2>}
       <StatusBadge variant={statusVariant}>{statusLabel}</StatusBadge>
     </div>
     {modality ? <p className="mode-event-header__modality">{modality}</p> : null}

@@ -108,6 +108,86 @@
   letter-spacing: 0.02em;
 }
 
+/* Edición inline del nombre (cualquier estado de la liga) */
+.liga-nombre-edit {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.liga-nombre-edit--view {
+  gap: 0.35rem;
+}
+
+.liga-nombre-edit__prefix {
+  flex: 0 0 auto;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ro-text-primary);
+}
+
+.liga-nombre-edit__input {
+  flex: 1 1 10rem;
+  min-width: 0;
+  max-width: 22rem;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.7rem;
+  border: 0.5px solid var(--liga-border);
+  border-radius: var(--liga-radius-sm);
+  background: var(--ro-bg-input);
+  color: var(--liga-text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.liga-nombre-edit__input:focus {
+  outline: none;
+  border-color: var(--brand-accent, var(--ro-accent));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 28%, transparent);
+}
+
+.liga-nombre-edit__pencil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ro-text-muted);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.liga-nombre-edit__pencil:hover:not(:disabled) {
+  color: var(--brand-accent, var(--ro-accent));
+  border-color: var(--ro-border-subtle);
+  background: var(--ro-bg-surface);
+}
+
+.liga-nombre-edit__pencil:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 767px) {
+  .liga-nombre-edit__input {
+    max-width: none;
+    width: 100%;
+  }
+}
+
 /* ─── Lists ─── */
 
 .liga-list {
