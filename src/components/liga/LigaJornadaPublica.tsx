@@ -514,7 +514,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
           </div>
         )}
 
-        {esParejasFijas && parejasGanadorasJornada.length > 0 && (
+        {esParejasFijas &&
+          todosPartidosCompletos &&
+          parejasGanadorasJornada.length > 0 && (
           <div className="liga-parejas-victorias-grid" role="status">
             {parejasGanadorasJornada.map((row) => {
               const pareja = jornada.parejas?.find((p) => p.id === row.parejaId);

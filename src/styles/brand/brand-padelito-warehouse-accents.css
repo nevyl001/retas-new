@@ -86,3 +86,75 @@
   color: var(--brand-accent, #d6ef3a);
   border-color: color-mix(in srgb, var(--brand-accent) 35%, transparent);
 }
+
+/* Jornada pública — acentos Padelito (lima + azul royal, sobrios) */
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__categoria,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__categoria {
+  background: color-mix(in srgb, var(--brand-primary, #2a4ba7) 28%, transparent);
+  border-color: color-mix(in srgb, var(--brand-primary, #2a4ba7) 55%, transparent);
+  color: var(--brand-text, #ffffff);
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__fecha,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__fecha {
+  border-color: color-mix(in srgb, var(--brand-accent, #d6ef3a) 35%, transparent);
+  color: var(--brand-accent, #d6ef3a);
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-ronda--courts .liga-pantalla-ronda__head,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-ronda--courts .liga-pantalla-ronda__head {
+  border-bottom-color: color-mix(in srgb, var(--brand-primary, #2a4ba7) 40%, transparent);
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-ronda--courts .liga-pantalla-ronda__title,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-ronda--courts .liga-pantalla-ronda__title {
+  color: var(--brand-text, #ffffff);
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match--duel,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match--duel {
+  border-color: color-mix(in srgb, var(--brand-primary, #2a4ba7) 55%, transparent);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 color-mix(in srgb, var(--brand-primary, #2a4ba7) 22%, transparent);
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match--duel .liga-pantalla-match__head,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match--duel .liga-pantalla-match__head {
+  background: color-mix(in srgb, var(--brand-primary, #2a4ba7) 18%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--brand-primary, #2a4ba7) 40%, transparent);
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match--duel .liga-pantalla-match__cancha,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match--duel .liga-pantalla-match__cancha {
+  color: var(--brand-accent, #d6ef3a);
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match__vs-pill,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match__vs-pill {
+  color: #0a0c10;
+  background: var(--brand-accent, #d6ef3a);
+  border-color: color-mix(in srgb, var(--brand-accent, #d6ef3a) 70%, #000);
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match__side,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match__side {
+  background: color-mix(in srgb, var(--brand-primary, #2a4ba7) 14%, rgba(255, 255, 255, 0.03));
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match--duel .liga-pub-pair-players__avatar.rj-avatar,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-match--duel .liga-pub-pair-players__avatar.rj-avatar {
+  border-color: color-mix(in srgb, var(--brand-primary, #2a4ba7) 65%, transparent);
+  background: color-mix(in srgb, var(--brand-primary, #2a4ba7) 32%, #0a0e14) !important;
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-ranking__title,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-ranking__title {
+  color: var(--brand-accent, #d6ef3a);
+  letter-spacing: 0.16em;
+}
+
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-ranking th,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-pantalla-ranking th {
+  border-bottom-color: color-mix(in srgb, var(--brand-primary, #2a4ba7) 45%, transparent);
+}
