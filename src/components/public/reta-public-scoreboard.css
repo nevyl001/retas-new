@@ -50,7 +50,9 @@
   box-sizing: border-box;
 }
 
-/* —— Match scoreboard card —— */
+/* —— Match scoreboard card (premium flat glass — sin sombra) —— */
+.te-public--reta .te-pub-match,
+.te-public--reta .te-pub-match--wide,
 .te-public--reta .te-pub-match.reta-sb-card,
 .te-public--reta .reta-sb-card,
 .reta-sb-card {
@@ -59,26 +61,29 @@
   gap: 0;
   height: auto !important;
   min-width: 0;
-  background: rgba(19, 20, 27, 0.72) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(8, 10, 14, 0.42) !important;
+  backdrop-filter: blur(16px) saturate(1.05);
+  -webkit-backdrop-filter: blur(16px) saturate(1.05);
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
   border-radius: 14px !important;
   padding: 0.9rem !important;
   box-shadow: none !important;
+  filter: none !important;
   color: #ffffff !important;
-  transition:
-    border-color 200ms ease-out,
-    background 200ms ease-out;
+  transform: none !important;
+  transition: border-color 180ms ease-out, background 180ms ease-out;
 }
 
+.te-public--reta .te-pub-match:hover,
+.te-public--reta .te-pub-match--wide:hover,
 .te-public--reta .te-pub-match.reta-sb-card:hover,
 .te-public--reta .reta-sb-card:hover,
 .reta-sb-card:hover {
-  transform: none;
-  border-color: rgba(255, 255, 255, 0.18) !important;
+  transform: none !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
   box-shadow: none !important;
-  background: rgba(19, 20, 27, 0.82) !important;
+  filter: none !important;
+  background: rgba(8, 10, 14, 0.52) !important;
 }
 
 .te-public--reta .reta-sb-card--live,
@@ -187,22 +192,20 @@
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-  padding: 0.7rem 0.65rem 0.7rem 0.75rem;
-  border-radius: 10px;
-  background: var(--reta-sb-panel);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-left-width: 2px;
-  border-left-style: solid;
+  padding: 0.65rem 0.5rem 0.65rem 0.7rem;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  border-left: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: none !important;
 }
 
 .reta-sb-team--a {
   border-left-color: var(--reta-sb-gold);
-  box-shadow: inset 0 0 0 1px rgba(229, 193, 88, 0.04);
 }
 
 .reta-sb-team--b {
   border-left-color: var(--reta-sb-terra);
-  box-shadow: inset 0 0 0 1px rgba(217, 93, 57, 0.04);
 }
 
 .reta-sb-team--win.reta-sb-team--a {
@@ -240,8 +243,8 @@
   min-width: 2rem !important;
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  background: var(--reta-sb-obsidian) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.35) !important;
+  box-shadow: none !important;
 }
 
 .reta-sb-team--a .reta-sb-team__logo {
@@ -264,12 +267,9 @@
   line-height: 1.2;
 }
 
-.reta-sb-team--a .reta-sb-team__name {
-  color: #f5e6b8 !important;
-}
-
+.reta-sb-team--a .reta-sb-team__name,
 .reta-sb-team--b .reta-sb-team__name {
-  color: #f0c4b4 !important;
+  color: #ffffff !important;
 }
 
 .reta-sb-team__name--pair {
@@ -302,7 +302,7 @@
   color: var(--reta-sb-gold) !important;
   border-color: rgba(229, 193, 88, 0.5) !important;
   background: rgba(229, 193, 88, 0.12) !important;
-  box-shadow: 0 0 12px rgba(229, 193, 88, 0.2);
+  box-shadow: none !important;
 }
 
 .reta-sb-team__score.te-pub-score__num--tie {
@@ -420,7 +420,7 @@
   margin: 0 !important;
   border-radius: 50% !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  box-shadow: none !important;
   font-size: 0.62rem !important;
   font-weight: 800 !important;
   letter-spacing: 0.02em;
@@ -446,6 +446,8 @@
 }
 
 .reta-sb-player__name {
+  color: #f4f1eb !important;
+  font-weight: 650 !important;
   min-width: 0;
   flex: 1 1 auto;
   font-size: 0.875rem !important;
@@ -500,6 +502,8 @@
 }
 
 .reta-sb-row--win .reta-sb-player__name {
+  color: #f4f1eb !important;
+  font-weight: 650 !important;
   color: #ffffff !important;
 }
 
@@ -679,7 +683,7 @@
   color: var(--reta-sb-gold, #e5c158);
   border-color: #e5c158;
   font-weight: 800;
-  box-shadow: 0 0 16px rgba(229, 193, 88, 0.28);
+  box-shadow: none !important;
 }
 
 .reta-round-tabs__btn:focus-visible {
@@ -713,8 +717,10 @@
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: var(--reta-sb-glass);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  background: rgba(8, 10, 14, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: none !important;
 }
 
 .te-public--reta .te-pub-standings-table {
@@ -903,4 +909,18 @@
     animation: none !important;
     transform: none !important;
   }
+}
+
+
+/* Kill residual drop-shadows from shared TE/polish styles */
+.te-public--reta .te-pub-match,
+.te-public--reta .te-pub-match--wide,
+.te-public--reta .reta-sb-card,
+.te-public--reta .reta-sb-team,
+.te-public--reta .reta-sb-team__logo,
+.te-public--reta .reta-sb-player__av,
+.te-public--reta .reta-sb-team__score,
+.te-public--reta .te-pub-standings-table-wrap {
+  box-shadow: none !important;
+  filter: none !important;
 }
