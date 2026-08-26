@@ -2,8 +2,7 @@
  * Contrato de `forceRivieraLogo` (vistas públicas, 2026-08-08, sin white label):
  * - Cuenta con nombre propio distinto de "Riviera Open": logo Riviera Open +
  *   nombre de la cuenta + atribución "by Riviera Open".
- * - Cuenta que ES Riviera Open (sin nombre de organizador distinto): solo el
- *   logo, sin ningún texto.
+ * - Cuenta que ES Riviera Open: logo + "Riviera Open" (sin atribución redundante).
  * Nunca se usa el logo propio del club, tenga o no upgrade de branding.
  *
  * Usa react-dom/test-utils `act` (no @testing-library), igual que
@@ -81,28 +80,49 @@ describe("ClubIdentity forceRivieraLogo (vista pública genérica)", () => {
     ).toContain(RIVIERA_CO_BRAND_ATTRIBUTION);
   });
 
-  it('cuenta que ES Riviera Open (organizerName === "Riviera Open"): solo logo, sin texto', () => {
+  it('cuenta que ES Riviera Open: logo + "Riviera Open", sin atribución', () => {
     mockOrganizerName = RIVIERA_PRODUCT_NAME;
     act(() => {
-      root.render(<ClubIdentity variant="compact" showTagline={false} forceRivieraLogo />);
+      root.render(
+        <ClubIdentity
+          variant="compact"
+          showTagline={false}
+          showMotherAttribution
+          forceRivieraLogo
+        />
+      );
     });
 
     const logoSrc = container.querySelector<HTMLImageElement>(
       ".club-identity__logo"
     )?.src;
     expect(logoSrc).toContain("/logo-riviera.png");
-    expect(container.querySelector(".club-identity__text")).toBeNull();
-    expect(container.querySelector(".club-identity__organizer")).toBeNull();
+    expect(
+      container.querySelector(".club-identity__organizer")?.textContent
+    ).toBe(RIVIERA_PRODUCT_NAME);
     expect(container.querySelector(".club-identity__attribution")).toBeNull();
+    expect(
+      container.querySelector(".club-identity--logo-only")
+    ).toBeNull();
   });
 
-  it("sin nombre de organizador (vacío/null): solo logo, sin texto", () => {
+  it("sin nombre de organizador (vacío/null): logo + Riviera Open por defecto", () => {
     mockOrganizerName = null;
     act(() => {
-      root.render(<ClubIdentity variant="compact" showTagline={false} forceRivieraLogo />);
+      root.render(
+        <ClubIdentity
+          variant="compact"
+          showTagline={false}
+          showMotherAttribution
+          forceRivieraLogo
+        />
+      );
     });
 
-    expect(container.querySelector(".club-identity__text")).toBeNull();
+    expect(
+      container.querySelector(".club-identity__organizer")?.textContent
+    ).toBe(RIVIERA_PRODUCT_NAME);
+    expect(container.querySelector(".club-identity__attribution")).toBeNull();
   });
 
   it("hideOrganizerName: solo logo Riviera Open, sin nombre de cuenta ni atribución", () => {

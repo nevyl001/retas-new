@@ -71,8 +71,9 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
   if (forceRivieraLogo) {
     // Vistas públicas (2026-08-08, sin white label): el logo SIEMPRE es el de
     // Riviera Open (nunca el propio del club, aunque tenga upgrade).
-    // - hideOrganizerName / cuenta propia Riviera Open: solo el logo, sin texto.
-    // - Cualquier otra cuenta: nombre de la cuenta + atribución "by Riviera Open".
+    // - hideOrganizerName: solo el logo (p. ej. celebraciones con wordmark propio).
+    // - Cuenta Riviera Open: logo + "Riviera Open" (sin atribución redundante).
+    // - Otras cuentas: nombre de la cuenta + atribución "by Riviera Open".
     const logoUrl = resolveClubLogo(RIVIERA_DEFAULT_MANIFEST, logoSurface);
     const showLogo = Boolean(logoUrl) && !logoFailed;
     const logoSizeHint = variant === "auth" ? 56 : variant === "inline" ? 32 : 40;
@@ -82,12 +83,18 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
       organizerLabel.localeCompare(RIVIERA_PRODUCT_NAME, undefined, {
         sensitivity: "accent",
       }) === 0;
-    const hideAccountText = hideOrganizerName || isRivieraOwnAccount;
+    const displayOrganizer = isRivieraOwnAccount
+      ? RIVIERA_PRODUCT_NAME
+      : organizerLabel;
+    const showAccountText =
+      !hideOrganizerName && Boolean(displayOrganizer);
+    const showAttribution =
+      showMotherAttribution && showAccountText && !isRivieraOwnAccount;
 
     return (
       <div
         className={`club-identity club-identity--mother club-identity--${variant} club-identity--public${
-          hideAccountText ? " club-identity--logo-only" : ""
+          hideOrganizerName ? " club-identity--logo-only" : ""
         } ${className}`.trim()}
       >
         {showLogo ? (
@@ -100,10 +107,10 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
             onError={() => setLogoFailed(true)}
           />
         ) : null}
-        {!hideAccountText ? (
+        {showAccountText ? (
           <div className="club-identity__text">
-            <span className="club-identity__organizer">{organizerLabel}</span>
-            {showMotherAttribution ? motherAttribution : null}
+            <span className="club-identity__organizer">{displayOrganizer}</span>
+            {showAttribution ? motherAttribution : null}
           </div>
         ) : null}
       </div>
