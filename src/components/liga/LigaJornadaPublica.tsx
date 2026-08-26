@@ -836,6 +836,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                   jornadaStats.ganadorPareja.nombre
                 )}
                 torneoNombre={detalle.nombre}
+                jornadaNumero={numero}
                 rankLabel={buildVictoriaRankLabel(
                   findPartidoGanadoPareja(
                     jornadaStats.ganadorPareja.parejaId,
