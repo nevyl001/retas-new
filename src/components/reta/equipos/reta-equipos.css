@@ -244,9 +244,7 @@
   margin: 0 0 1.5rem;
   color: #ffffff;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse 85% 50% at 50% -8%, rgba(229, 193, 88, 0.08), transparent 55%),
-    #0b0c10;
+  background: transparent;
 }
 
 .reta-eq-stage__atmosphere {
@@ -254,7 +252,7 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: #0b0c10;
+  background: transparent;
 }
 
 .reta-eq-stage__court {
@@ -263,16 +261,20 @@
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
-  opacity: 0.18;
-  filter: saturate(0.55) brightness(0.55);
+  opacity: 0.42;
+  filter: saturate(0.75) brightness(0.85);
 }
 
 .reta-eq-stage__vignette {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse 80% 70% at 50% 35%, transparent 0%, #0a0a0e 78%),
-    linear-gradient(180deg, rgba(10, 10, 14, 0.55) 0%, rgba(10, 10, 14, 0.92) 100%);
+  /* Lectura ligera — sin placa negra / sombra pesada */
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 14, 0.18) 0%,
+    rgba(10, 10, 14, 0.08) 45%,
+    rgba(10, 10, 14, 0.28) 100%
+  );
 }
 
 .reta-eq-stage__glow {
