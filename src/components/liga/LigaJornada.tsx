@@ -966,6 +966,8 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                   <LigaPartidoPlayoffsScoreForm
                     partido={partido}
                     draft={playoffsDraft}
+                    pareja1Label={parejaLabel(partido.pareja1_id, jornada)}
+                    pareja2Label={parejaLabel(partido.pareja2_id, jornada)}
                     disabled={bloqueado}
                     busy={busy}
                     onChange={(next) =>

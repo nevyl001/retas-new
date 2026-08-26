@@ -15,51 +15,71 @@ import { Button } from "../ui";
 type Props = {
   partido: LigaPartido;
   draft: PlayoffsScoreDraft;
+  /** Nombre visible de la pareja local (izquierda / games p1). */
+  pareja1Label: string;
+  /** Nombre visible de la pareja visitante (derecha / games p2). */
+  pareja2Label: string;
   disabled?: boolean;
   busy?: boolean;
   onChange: (next: PlayoffsScoreDraft) => void;
   onSave: () => void;
 };
 
-function SetRow({
-  label,
+function shortPairLabel(label: string): string {
+  const trimmed = label.trim();
+  if (trimmed.length <= 28) return trimmed;
+  return `${trimmed.slice(0, 26)}…`;
+}
+
+function ScoreColumnInputs({
+  setLabel,
   draft,
+  pareja1Label,
+  pareja2Label,
   disabled,
   onChange,
 }: {
-  label: string;
+  setLabel: string;
   draft: PlayoffsSetDraft;
+  pareja1Label: string;
+  pareja2Label: string;
   disabled?: boolean;
   onChange: (next: PlayoffsSetDraft) => void;
 }) {
   return (
-    <div className="liga-score-row liga-playoffs-score__set">
-      <span className="liga-playoffs-score__set-label">{label}</span>
-      <label>
-        P1
-        <input
-          type="number"
-          min={0}
-          disabled={disabled}
-          value={draft.p1}
-          onChange={(e) => onChange({ ...draft, p1: e.target.value })}
-          aria-label={`${label} pareja 1`}
-        />
-      </label>
-      <span className="liga-playoffs-score__sep" aria-hidden>
-        —
-      </span>
-      <label>
-        P2
-        <input
-          type="number"
-          min={0}
-          disabled={disabled}
-          value={draft.p2}
-          onChange={(e) => onChange({ ...draft, p2: e.target.value })}
-          aria-label={`${label} pareja 2`}
-        />
-      </label>
+    <div className="liga-playoffs-score__set-block">
+      <p className="liga-playoffs-score__set-title">{setLabel}</p>
+      <div className="liga-playoffs-score__pair-grid">
+        <label className="liga-playoffs-score__pair-field">
+          <span className="liga-playoffs-score__pair-name" title={pareja1Label}>
+            {shortPairLabel(pareja1Label)}
+          </span>
+          <input
+            type="number"
+            min={0}
+            disabled={disabled}
+            value={draft.p1}
+            onChange={(e) => onChange({ ...draft, p1: e.target.value })}
+            aria-label={`${setLabel}: games de ${pareja1Label}`}
+          />
+        </label>
+        <span className="liga-playoffs-score__vs" aria-hidden>
+          vs
+        </span>
+        <label className="liga-playoffs-score__pair-field">
+          <span className="liga-playoffs-score__pair-name" title={pareja2Label}>
+            {shortPairLabel(pareja2Label)}
+          </span>
+          <input
+            type="number"
+            min={0}
+            disabled={disabled}
+            value={draft.p2}
+            onChange={(e) => onChange({ ...draft, p2: e.target.value })}
+            aria-label={`${setLabel}: games de ${pareja2Label}`}
+          />
+        </label>
+      </div>
     </div>
   );
 }
@@ -89,13 +109,14 @@ export function getPlayoffsDraftForPartido(
     base.stb1 = String(payload.stb.p1);
     base.stb2 = String(payload.stb.p2);
   }
-  // WO no se captura en UI admin; si existiera en BD, se puede sobrescribir al corregir.
   return base;
 }
 
 export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
   partido,
   draft,
+  pareja1Label,
+  pareja2Label,
   disabled,
   busy,
   onChange,
@@ -106,6 +127,8 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
   const totals = playoffsTotalsFromDraft(draft);
   const preview = previewPlayoffsPointsFromDraft(draft);
   const isCompleted = partido.estado === "completed";
+  const left = pareja1Label.trim() || "Pareja 1";
+  const right = pareja2Label.trim() || "Pareja 2";
 
   const saved =
     isCompleted &&
@@ -121,32 +144,59 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
   return (
     <div className="liga-playoffs-score">
       {saved ? (
-        <p className="liga-hint">Resultado: {saved}</p>
+        <p className="liga-hint">Resultado guardado: {saved}</p>
       ) : null}
       <p className="liga-playoffs-score__rules">
-        Clasificación por games totales (Set 1 + Set 2). No hace falta llegar a
-        6. Diff {">"}2 → 3/0 · Diff 1–2 → 2/1 · Empate → STB a 5 (2/1).
+        Anota los games de cada pareja por set. La clasificación usa la suma
+        total (Diff {">"}2 → 3/0 · Diff 1–2 → 2/1 · Empate → STB a 5).
       </p>
-      <SetRow
-        label="Set 1"
+
+      <div className="liga-playoffs-score__matchup" aria-hidden>
+        <span title={left}>{shortPairLabel(left)}</span>
+        <span className="liga-playoffs-score__matchup-vs">vs</span>
+        <span title={right}>{shortPairLabel(right)}</span>
+      </div>
+
+      <ScoreColumnInputs
+        setLabel="Set 1"
         draft={draft.set1}
+        pareja1Label={left}
+        pareja2Label={right}
         disabled={locked}
         onChange={(set1) => onChange({ ...draft, set1, woWinner: null })}
       />
-      <SetRow
-        label="Set 2"
+      <ScoreColumnInputs
+        setLabel="Set 2"
         draft={draft.set2}
+        pareja1Label={left}
+        pareja2Label={right}
         disabled={locked}
         onChange={(set2) => onChange({ ...draft, set2, woWinner: null })}
       />
+
       {totals ? (
-        <p className="liga-playoffs-score__totals" aria-live="polite">
-          Games totales
-          <span className="liga-playoffs-score__totals-values">
-            P1 {totals.score1} — {totals.score2} P2
-          </span>
-        </p>
+        <div className="liga-playoffs-score__totals-board" aria-live="polite">
+          <p className="liga-playoffs-score__totals-title">Games totales</p>
+          <div className="liga-playoffs-score__pair-grid">
+            <div className="liga-playoffs-score__pair-field liga-playoffs-score__pair-field--readonly">
+              <span className="liga-playoffs-score__pair-name" title={left}>
+                {shortPairLabel(left)}
+              </span>
+              <strong>{totals.score1}</strong>
+            </div>
+            <span className="liga-playoffs-score__vs" aria-hidden>
+              —
+            </span>
+            <div className="liga-playoffs-score__pair-field liga-playoffs-score__pair-field--readonly">
+              <span className="liga-playoffs-score__pair-name" title={right}>
+                {shortPairLabel(right)}
+              </span>
+              <strong>{totals.score2}</strong>
+            </div>
+          </div>
+        </div>
       ) : null}
+
       {preview.kind !== "incomplete" && preview.kind !== "wo" ? (
         <p
           className={`liga-playoffs-score__preview liga-playoffs-score__preview--${preview.kind}`}
@@ -156,14 +206,20 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
           <span>{preview.line}</span>
         </p>
       ) : null}
+
       {showStb ? (
-        <>
-          <p className="liga-playoffs-score__stb-hint" role="status">
+        <div className="liga-playoffs-score__set-block liga-playoffs-score__set-block--stb">
+          <p className="liga-playoffs-score__set-title">
             Súper Tie-Break a 5
           </p>
-          <div className="liga-score-row liga-playoffs-score__stb">
-            <label>
-              P1
+          <p className="liga-playoffs-score__stb-hint" role="status">
+            Empate en games: registra quién gana el STB.
+          </p>
+          <div className="liga-playoffs-score__pair-grid">
+            <label className="liga-playoffs-score__pair-field">
+              <span className="liga-playoffs-score__pair-name" title={left}>
+                {shortPairLabel(left)}
+              </span>
               <input
                 type="number"
                 min={0}
@@ -172,14 +228,16 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
                 onChange={(e) =>
                   onChange({ ...draft, stb1: e.target.value, woWinner: null })
                 }
-                aria-label="Súper tie-break pareja 1"
+                aria-label={`Súper tie-break: ${left}`}
               />
             </label>
-            <span className="liga-playoffs-score__sep" aria-hidden>
-              —
+            <span className="liga-playoffs-score__vs" aria-hidden>
+              vs
             </span>
-            <label>
-              P2
+            <label className="liga-playoffs-score__pair-field">
+              <span className="liga-playoffs-score__pair-name" title={right}>
+                {shortPairLabel(right)}
+              </span>
               <input
                 type="number"
                 min={0}
@@ -188,12 +246,13 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
                 onChange={(e) =>
                   onChange({ ...draft, stb2: e.target.value, woWinner: null })
                 }
-                aria-label="Súper tie-break pareja 2"
+                aria-label={`Súper tie-break: ${right}`}
               />
             </label>
           </div>
-        </>
+        </div>
       ) : null}
+
       <div className="liga-actions" style={{ marginTop: 8 }}>
         <Button
           type="button"
@@ -206,8 +265,7 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
         </Button>
       </div>
       <p className="liga-hint">
-        Al corregir se recalcula el ranking al momento. El resultado usa la suma
-        de games, no sets ganados.
+        Al guardar o corregir se actualiza el ranking al momento.
       </p>
     </div>
   );
