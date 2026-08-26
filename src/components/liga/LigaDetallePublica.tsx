@@ -28,6 +28,7 @@ import { StatusBadge } from "../platform/StatusBadge";
 import { PublicHero } from "../public/peds";
 import { LigaPublicParejasStandings } from "./LigaPublicParejasStandings";
 import "./liga-public-pantalla.css";
+import "./liga-public-programa.css";
 import "../jugadores/riviera-jugadores.css";
 
 function estadoLigaBadgeVariant(
@@ -279,12 +280,19 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
             className={`liga-pantalla-ranking liga-pantalla-ranking--wide${
               esParejasFijas ? " liga-pantalla-ranking--parejas" : ""
             }`}
+            {...(esParejasFijas
+              ? { "aria-labelledby": "liga-pub-general-title" }
+              : {})}
           >
-            <h2 className="liga-pantalla-ranking__title">
-              {esParejasFijas ? "Ranking por pareja" : "Ranking acumulado"}
-            </h2>
+            {esParejasFijas ? null : (
+              <h2 className="liga-pantalla-ranking__title">Ranking acumulado</h2>
+            )}
             {esParejasFijas ? (
-              <LigaPublicParejasStandings rows={rankingParejasPublicas} />
+              <LigaPublicParejasStandings
+                rows={rankingParejasPublicas}
+                motionResetKey={detalle.id}
+                subtitle={`${detalle.equipos.length} parejas · ${detalle.jornadas.length} jornadas · ${estadoLigaLabel(detalle.estado)}`}
+              />
             ) : ranking.length === 0 ? (
               <p className="liga-pantalla__loading">Sin puntos aún.</p>
             ) : (
@@ -323,12 +331,34 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
           <section
             id="programa-juego"
             className={`liga-pantalla-jornadas${
-              esParejasFijas ? " liga-pantalla-jornadas--parejas" : ""
+              esParejasFijas
+                ? " liga-pantalla-jornadas--parejas liga-pub-programa"
+                : ""
             }`}
+            {...(esParejasFijas
+              ? { "aria-labelledby": "liga-pub-programa-title" }
+              : {})}
           >
-            <h2 className="liga-pantalla-jornadas__title">
-              {esParejasFijas ? "Programa de juego" : "Jornadas"}
-            </h2>
+            {esParejasFijas ? (
+              <header className="liga-pub-programa__head">
+                <p className="liga-pub-programa__eyebrow">Calendario</p>
+                <h2
+                  id="liga-pub-programa-title"
+                  className="liga-pub-programa__title"
+                >
+                  Programa de juego
+                </h2>
+                <p className="liga-pub-programa__subtitle">
+                  {detalle.jornadas.length} jornada
+                  {detalle.jornadas.length === 1 ? "" : "s"}
+                  {jornadaActiva
+                    ? ` · jornada ${jornadaActiva.numero} en curso`
+                    : ""}
+                </p>
+              </header>
+            ) : (
+              <h2 className="liga-pantalla-jornadas__title">Jornadas</h2>
+            )}
             {detalle.jornadas.length === 0 ? (
               <p className="liga-pantalla__loading">
                 El calendario se publicará pronto.
@@ -336,10 +366,12 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
             ) : (
               <div
                 className={`liga-pantalla-jornadas__grid${
-                  esParejasFijas ? " liga-pantalla-jornadas__grid--parejas" : ""
+                  esParejasFijas
+                    ? " liga-pantalla-jornadas__grid--parejas liga-pub-programa__grid"
+                    : ""
                 }`}
               >
-                {detalle.jornadas.map((j) => {
+                {detalle.jornadas.map((j, jornadaIndex) => {
                   const tienePantalla = (j.partidos?.length ?? 0) > 0;
                   const esActiva = jornadaActiva?.id === j.id;
                   const matchups = listJornadaPublicMatches(
@@ -347,23 +379,41 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                     detalle.equipos,
                     esParejasFijas
                   );
+                  const estadoMod =
+                    j.estado === "in_progress"
+                      ? "live"
+                      : j.estado === "completed"
+                        ? "done"
+                        : "upcoming";
                   return (
                     <article
                       key={j.id}
                       className={`liga-pantalla-jornada-card${
                         esActiva ? " liga-pantalla-jornada-card--live" : ""
+                      }${
+                        esParejasFijas
+                          ? ` liga-pub-programa__card liga-pub-programa__card--${estadoMod}`
+                          : ""
                       }`}
+                      style={
+                        esParejasFijas
+                          ? ({
+                              ["--liga-prog-i" as string]: jornadaIndex,
+                            } as React.CSSProperties)
+                          : undefined
+                      }
                     >
                       <div className="liga-pantalla-jornada-card__head">
-                        <h3 className="liga-pantalla-jornada-card__num">
-                          Jornada {j.numero}
+                        <div className="liga-pub-programa__card-titles">
+                          <h3 className="liga-pantalla-jornada-card__num">
+                            Jornada {j.numero}
+                          </h3>
                           {j.fecha ? (
-                            <span className="liga-pantalla-jornada-card__fecha">
-                              {" "}
-                              · {formatFechaLegible(dateInputValue(j.fecha))}
-                            </span>
+                            <p className="liga-pantalla-jornada-card__fecha">
+                              {formatFechaLegible(dateInputValue(j.fecha))}
+                            </p>
                           ) : null}
-                        </h3>
+                        </div>
                         <span className={jornadaBadgeClass(j.estado)}>
                           {jornadaBadgeLabel(j.estado)}
                         </span>
@@ -374,30 +424,39 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                             Partidos pendientes de iniciar
                           </p>
                         ) : esParejasFijas ? (
-                          <ul className="liga-pantalla-matchups">
+                          <ul className="liga-pantalla-matchups liga-pub-programa__matchups">
                             {matchups.map((m) => (
-                              <li key={m.id} className="liga-pantalla-matchup">
-                                <span className="liga-pantalla-matchup__team">
-                                  {m.local}
-                                </span>
-                                {m.visitante ? (
-                                  <>
-                                    <span
-                                      className="liga-pantalla-matchup__vs"
-                                      aria-hidden
-                                    >
-                                      vs
-                                    </span>
-                                    <span className="liga-pantalla-matchup__team">
-                                      {m.visitante}
-                                    </span>
-                                  </>
-                                ) : null}
+                              <li
+                                key={m.id}
+                                className="liga-pantalla-matchup liga-pub-programa__match"
+                              >
+                                <div className="liga-pub-programa__sides">
+                                  <span className="liga-pantalla-matchup__team">
+                                    {m.local}
+                                  </span>
+                                  {m.visitante ? (
+                                    <>
+                                      <span
+                                        className="liga-pantalla-matchup__vs"
+                                        aria-hidden
+                                      >
+                                        vs
+                                      </span>
+                                      <span className="liga-pantalla-matchup__team">
+                                        {m.visitante}
+                                      </span>
+                                    </>
+                                  ) : null}
+                                </div>
                                 {m.score ? (
                                   <span className="liga-pantalla-matchup__score">
                                     {m.score}
                                   </span>
-                                ) : null}
+                                ) : (
+                                  <span className="liga-pub-programa__pending">
+                                    Por jugar
+                                  </span>
+                                )}
                                 {m.programacion ? (
                                   <span className="liga-pantalla-matchup__meta">
                                     {m.programacion}
@@ -419,11 +478,12 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                       {tienePantalla ? (
                         <a
                           href={publicLigaJornadaUrl(ligaId, j.numero)}
-                          className="liga-pantalla-jornada-card__link"
+                          className="liga-pantalla-jornada-card__link liga-pub-programa__link"
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          Ver resultados →
+                          Ver resultados
+                          <span aria-hidden> →</span>
                         </a>
                       ) : null}
                     </article>
