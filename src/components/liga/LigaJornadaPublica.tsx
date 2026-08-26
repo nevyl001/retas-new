@@ -389,7 +389,11 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
           <div className="liga-pantalla-match__duel">
             <div
               className={`liga-pantalla-match__side${
-                p1Wins ? " liga-pantalla-match__side--win" : ""
+                p1Wins
+                  ? " liga-pantalla-match__side--win"
+                  : p2Wins
+                    ? " liga-pantalla-match__side--loss"
+                    : ""
               }`}
             >
               <LigaPublicParejaPlayers
@@ -407,7 +411,11 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
             </div>
             <div
               className={`liga-pantalla-match__side${
-                p2Wins ? " liga-pantalla-match__side--win" : ""
+                p2Wins
+                  ? " liga-pantalla-match__side--win"
+                  : p1Wins
+                    ? " liga-pantalla-match__side--loss"
+                    : ""
               }`}
             >
               <LigaPublicParejaPlayers
