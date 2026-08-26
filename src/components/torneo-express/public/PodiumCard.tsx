@@ -187,6 +187,8 @@ export const PodiumCard: React.FC<{
   stats?: PublicEliminatoriaPodiumStats | null;
   statsLayout?: "default" | "round-robin";
   copyOverrides?: PodiumCopyOverrides;
+  /** Contenido opcional entre stats y footer (p. ej. enfrentamientos de liga). */
+  afterStats?: React.ReactNode;
   id?: string;
   className?: string;
 }> = ({
@@ -198,6 +200,7 @@ export const PodiumCard: React.FC<{
   stats,
   statsLayout = "default",
   copyOverrides,
+  afterStats,
   id,
   className = "",
 }) => {
@@ -298,6 +301,8 @@ export const PodiumCard: React.FC<{
         {stats ? (
           <PodiumStats stats={stats} accent={variant.accent} layout={statsLayout} />
         ) : null}
+
+        {afterStats}
 
         <div className="podium-card__footer-divider" aria-hidden />
 

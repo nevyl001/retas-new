@@ -131,44 +131,48 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
         stats={stats}
         copyOverrides={copyOverrides}
         className="liga-pareja-victoria-celebrate__podium"
-      />
-
-      {matchLines.length > 0 ? (
-        <div
-          className="liga-celebrate-matches"
-          aria-label="Resultados contra rivales"
-        >
-          <p className="liga-celebrate-matches__title">Enfrentamientos</p>
-          <ul className="liga-celebrate-matches__list">
-            {matchLines.map((line) => (
-              <li key={line.partidoId} className="liga-celebrate-matches__row">
-                <div className="liga-celebrate-matches__rival">
-                  <span className="liga-celebrate-matches__vs">vs</span>
-                  <span
-                    className="liga-celebrate-matches__name"
-                    title={line.opponentLabel}
+        afterStats={
+          matchLines.length > 0 ? (
+            <div
+              className="liga-celebrate-matches"
+              aria-label="Resultados contra rivales"
+            >
+              <p className="liga-celebrate-matches__title">Enfrentamientos</p>
+              <ul className="liga-celebrate-matches__list">
+                {matchLines.map((line) => (
+                  <li
+                    key={line.partidoId}
+                    className="liga-celebrate-matches__row"
                   >
-                    {shortOpponent(line.opponentLabel ?? "Rival")}
-                  </span>
-                  {line.cancha != null ? (
-                    <span className="liga-celebrate-matches__cancha">
-                      C{line.cancha}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="liga-celebrate-matches__result">
-                  <span className="liga-celebrate-matches__score">
-                    {line.scoreLabel}
-                  </span>
-                  <span className="liga-celebrate-matches__pts">
-                    {formatSignedPoints(line.points)}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+                    <div className="liga-celebrate-matches__rival">
+                      <span className="liga-celebrate-matches__vs">vs</span>
+                      <span
+                        className="liga-celebrate-matches__name"
+                        title={line.opponentLabel}
+                      >
+                        {shortOpponent(line.opponentLabel ?? "Rival")}
+                      </span>
+                      {line.cancha != null ? (
+                        <span className="liga-celebrate-matches__cancha">
+                          C{line.cancha}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="liga-celebrate-matches__result">
+                      <span className="liga-celebrate-matches__score">
+                        {line.scoreLabel}
+                      </span>
+                      <span className="liga-celebrate-matches__pts">
+                        {formatSignedPoints(line.points)}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null
+        }
+      />
     </div>
   );
 };
