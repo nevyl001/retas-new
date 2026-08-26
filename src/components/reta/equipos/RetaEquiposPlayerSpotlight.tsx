@@ -3,10 +3,9 @@ import { useRetryableImage } from "../../../hooks/useRetryableImage";
 import { getJugadorInitials } from "../../jugadores/JugadorAvatar";
 import { JugadorPaisBadge } from "../../jugadores/JugadorPaisBadge";
 import {
-  EN_CANCHA_LABELS,
   MANO_DOMINANTE_LABELS,
 } from "../../../lib/rivieraJugadores/constants";
-import type { EnCancha, ManoDominante } from "../../../lib/rivieraJugadores/types";
+import type { ManoDominante } from "../../../lib/rivieraJugadores/types";
 import { getPaisOption } from "../../../lib/rivieraJugadores/paises";
 import type { RetaEquiposPlayerCardData } from "./RetaEquiposPlayerCard";
 
@@ -35,18 +34,9 @@ function manoLabel(mano: RetaEquiposPlayerCardData["mano"]): string | null {
   return null;
 }
 
-function ladoLabel(lado: RetaEquiposPlayerCardData["lado"]): string | null {
-  if (lado === "drive") return "Drive";
-  if (lado === "reves") return "Revés";
-  if (lado && lado in EN_CANCHA_LABELS) {
-    return EN_CANCHA_LABELS[lado as EnCancha];
-  }
-  return null;
-}
-
 /**
  * Glass spotlight + holographic 3D reveal (`.reta-eq-frame--holo`).
- * Sin edad. Atributos: país, mano, posición.
+ * Sin edad ni chip de posición en cancha.
  */
 export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProps> = ({
   player,
@@ -61,7 +51,6 @@ export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProp
   const { src, onError } = useRetryableImage(player.fotoUrl);
   const pais = getPaisOption(player.nacionalidad);
   const mano = manoLabel(player.mano);
-  const lado = ladoLabel(player.lado);
   const displayName = rest ? `${first} ${rest}` : first;
 
   return (
@@ -115,14 +104,7 @@ export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProp
           ) : null}
           {mano ? (
             <span className="reta-eq-frame__chip">
-              <span aria-hidden>🖐️</span>
               <span>{mano}</span>
-            </span>
-          ) : null}
-          {lado ? (
-            <span className="reta-eq-frame__chip">
-              <span aria-hidden>📍</span>
-              <span>{lado}</span>
             </span>
           ) : null}
         </div>
