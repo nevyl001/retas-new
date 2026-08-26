@@ -2,10 +2,8 @@ import React from "react";
 import { useRetryableImage } from "../../../hooks/useRetryableImage";
 import { getJugadorInitials } from "../../jugadores/JugadorAvatar";
 import { JugadorPaisBadge } from "../../jugadores/JugadorPaisBadge";
-import {
-  MANO_DOMINANTE_LABELS,
-} from "../../../lib/rivieraJugadores/constants";
-import type { ManoDominante } from "../../../lib/rivieraJugadores/types";
+import { EN_CANCHA_LABELS } from "../../../lib/rivieraJugadores/constants";
+import type { EnCancha } from "../../../lib/rivieraJugadores/types";
 import { getPaisOption } from "../../../lib/rivieraJugadores/paises";
 import type { RetaEquiposPlayerCardData } from "./RetaEquiposPlayerCard";
 
@@ -24,19 +22,18 @@ function splitNombre(nombre: string): { first: string; rest: string | null } {
   return { first: parts[0]!, rest: parts.slice(1).join(" ") };
 }
 
-function manoLabel(mano: RetaEquiposPlayerCardData["mano"]): string | null {
-  if (mano === "derecha") return "Derecha";
-  if (mano === "izquierda") return "Zurda";
-  if (mano === "ambidiestro") return "Ambas";
-  if (mano && mano in MANO_DOMINANTE_LABELS) {
-    return MANO_DOMINANTE_LABELS[mano as ManoDominante];
+function ladoLabel(lado: RetaEquiposPlayerCardData["lado"]): string | null {
+  if (lado === "drive") return "Drive";
+  if (lado === "reves") return "Revés";
+  if (lado && lado in EN_CANCHA_LABELS) {
+    return EN_CANCHA_LABELS[lado as EnCancha];
   }
   return null;
 }
 
 /**
  * Glass spotlight + holographic 3D reveal (`.reta-eq-frame--holo`).
- * Sin edad ni chip de posición en cancha.
+ * País + lado en cancha (Drive/Revés). Sin edad ni mano.
  */
 export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProps> = ({
   player,
@@ -50,7 +47,7 @@ export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProp
   const initials = getJugadorInitials(player.nombre);
   const { src, onError } = useRetryableImage(player.fotoUrl);
   const pais = getPaisOption(player.nacionalidad);
-  const mano = manoLabel(player.mano);
+  const lado = ladoLabel(player.lado);
   const displayName = rest ? `${first} ${rest}` : first;
 
   return (
@@ -102,9 +99,9 @@ export const RetaEquiposPlayerSpotlight: React.FC<RetaEquiposPlayerSpotlightProp
               <span>{pais.nombre}</span>
             </span>
           ) : null}
-          {mano ? (
+          {lado ? (
             <span className="reta-eq-frame__chip">
-              <span>{mano}</span>
+              <span>{lado}</span>
             </span>
           ) : null}
         </div>
