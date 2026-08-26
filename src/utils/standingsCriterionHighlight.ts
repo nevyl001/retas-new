@@ -1,9 +1,9 @@
 import { getHeadToHead, type MatchResult } from "./standings";
 
-export type StandingsCriterionKey = "fav" | "dif" | "pg";
+export type StandingsCriterionKey = "fav" | "dif" | "con" | "pg";
 
-/** Americano/Reta: FAV → DIF → PG. Torneo Express: DIF → FAV → PG. */
-export type StandingsCriterionOrder = "americano" | "express";
+/** Americano/Reta: FAV → DIF → PG. Torneo Express: DIF → FAV → PG. Duelo equipos: FAV → CON → PG. */
+export type StandingsCriterionOrder = "americano" | "express" | "dual-meet";
 
 export interface StandingsCompareRow {
   id: string;
@@ -34,6 +34,13 @@ export function getDecidingCriterionBetween(
     return "dif";
   }
 
+  if (order === "dual-meet") {
+    if (higher.fav !== lower.fav) return "fav";
+    if (higher.con !== lower.con) return "con";
+    if (higher.pg !== lower.pg) return "pg";
+    return "fav";
+  }
+
   if (higher.fav !== lower.fav) return "fav";
   if (standingsRowDiff(higher) !== standingsRowDiff(lower)) return "dif";
   if (higher.id && lower.id && h2hMatches.length > 0) {
@@ -51,6 +58,11 @@ export function criterionRank(
   if (order === "express") {
     if (column === "dif") return 1;
     if (column === "fav") return 2;
+    return 3;
+  }
+  if (order === "dual-meet") {
+    if (column === "fav") return 1;
+    if (column === "con") return 2;
     return 3;
   }
   if (column === "fav") return 1;

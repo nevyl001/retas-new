@@ -7,6 +7,10 @@ export const TEAMS_PUBLIC_FORMAT_LABEL = "Duelo";
 export const TEAMS_PUBLIC_TAGLINE = "Que gane el mejor";
 /** Título de la sección live (canchas / enfrentamientos). */
 export const TEAMS_PUBLIC_LIVE_TITLE = "Duelo en vivo";
+/** Mensaje motivacional bajo la sede (previa pública). */
+export const TEAMS_PUBLIC_MOTIVATIONAL = "Denlo todo";
+/** Firma de marca bajo el duelo. */
+export const TEAMS_PUBLIC_BRAND_LINE = "Vive Riviera Open";
 
 /** "Equipo 1 vs Equipo 2" (usa nombres reales si existen). */
 export function formatTeamsPublicFaceoff(

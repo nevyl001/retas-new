@@ -700,7 +700,7 @@ export function canGenerateNextDynamicBlock(params: {
 }
 
 // ---------------------------------------------------------------------------
-// Clasificación por equipos (comparador games > diferencia > partidos ganados)
+// Clasificación por equipos (FAV → menos CON → partidos ganados)
 // ---------------------------------------------------------------------------
 
 export interface DynamicTeamStandingRow {
@@ -720,7 +720,7 @@ export function compareDynamicTeamStandings(
 ): number {
   return (
     b.gamesFor - a.gamesFor ||
-    b.gameDifference - a.gameDifference ||
+    a.gamesAgainst - b.gamesAgainst ||
     b.matchesWon - a.matchesWon ||
     a.teamIndex - b.teamIndex
   );
@@ -728,7 +728,7 @@ export function compareDynamicTeamStandings(
 
 /**
  * Clasificación por equipos exclusiva de alineación dinámica: games a favor,
- * diferencia, partidos ganados — nunca puntos de torneo. No toca
+ * menos games en contra, partidos ganados — nunca puntos de torneo. No toca
  * `standingsUtils.computeTeamStandings` (modo equipos clásico). Suma sobre
  * TODAS las parejas reales de cada equipo (Round Robin inicial + todas las
  * rondas dinámicas), sin importar cuántas parejas tenga cada equipo.
@@ -817,7 +817,7 @@ export function resolveDynamicTeamWinner(
   const [first, second] = rows;
   const tied =
     first.gamesFor === second.gamesFor &&
-    first.gameDifference === second.gameDifference &&
+    first.gamesAgainst === second.gamesAgainst &&
     first.matchesWon === second.matchesWon;
   if (tied) return { winningTeamIndex: null, isDraw: true };
   return { winningTeamIndex: first.teamIndex, isDraw: false };

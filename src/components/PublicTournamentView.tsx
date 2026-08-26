@@ -1021,19 +1021,20 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     const a = teamStandings.find((r) => r.teamIndex === 0) ?? teamStandings[0];
     const b = teamStandings.find((r) => r.teamIndex === 1) ?? teamStandings[1];
     if (!a || !b) return null;
-    return `${a.pg} — ${b.pg}`;
+    /* Marcador principal del duelo = games a favor (FAV), no partidos ganados. */
+    return `${a.points} — ${b.points}`;
   })();
 
   const teamsLiveScoreA = (() => {
     if (!teamStandings || teamStandings.length < 2) return null;
     const a = teamStandings.find((r) => r.teamIndex === 0) ?? teamStandings[0];
-    return a?.pg ?? null;
+    return a?.points ?? null;
   })();
 
   const teamsLiveScoreB = (() => {
     if (!teamStandings || teamStandings.length < 2) return null;
     const b = teamStandings.find((r) => r.teamIndex === 1) ?? teamStandings[1];
-    return b?.pg ?? null;
+    return b?.points ?? null;
   })();
 
   const teamsLiveProgressLabel = (() => {

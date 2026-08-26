@@ -44,6 +44,9 @@ export const PublicRetaStandingsSection: React.FC<{
 }) => {
   const staggerBase = useMemo(() => 0.04, []);
 
+  const criterionOrder =
+    arena || scoringMode === "dual-meet" ? "dual-meet" : "americano";
+
   const leaderDecidingCriterion = useMemo(() => {
     if (rows.length < 2) return "fav" as const;
     return getDecidingCriterionBetween(
@@ -58,9 +61,11 @@ export const PublicRetaStandingsSection: React.FC<{
         fav: rows[1].fav,
         con: rows[1].con,
         pg: rows[1].pg,
-      }
+      },
+      [],
+      criterionOrder
     );
-  }, [rows]);
+  }, [rows, criterionOrder]);
 
   if (rows.length === 0) return null;
 
@@ -72,15 +77,45 @@ export const PublicRetaStandingsSection: React.FC<{
             <th>POS</th>
             <th>{entityHeader}</th>
             <th>PJ</th>
-            <th className={criterionHeaderClass("pg")} title="3.er criterio">
+            <th
+              className={criterionHeaderClass("pg", criterionOrder)}
+              title="3.er criterio"
+            >
               PG
             </th>
             <th>PP</th>
-            <th className={criterionHeaderClass("fav")} title="1.er criterio">
+            <th
+              className={criterionHeaderClass("fav", criterionOrder)}
+              title="1.er criterio"
+            >
               FAV
             </th>
-            <th>CON</th>
-            <th className={criterionHeaderClass("dif")} title="2.º criterio">
+            <th
+              className={
+                criterionOrder === "dual-meet"
+                  ? criterionHeaderClass("con", criterionOrder)
+                  : undefined
+              }
+              title={
+                criterionOrder === "dual-meet"
+                  ? "2.º criterio (menos en contra)"
+                  : "Games en contra"
+              }
+            >
+              CON
+            </th>
+            <th
+              className={
+                criterionOrder === "dual-meet"
+                  ? "standings-col-informative"
+                  : criterionHeaderClass("dif", criterionOrder)
+              }
+              title={
+                criterionOrder === "dual-meet"
+                  ? "Informativo (FAV − CON)"
+                  : "2.º criterio"
+              }
+            >
               DIF
             </th>
             <th className="standings-col-informative" title="Solo informativo">
@@ -141,7 +176,11 @@ export const PublicRetaStandingsSection: React.FC<{
                   className={[
                     "te-pub-standings-row__stat",
                     isLeader
-                      ? criterionCellClass("pg", leaderDecidingCriterion)
+                      ? criterionCellClass(
+                          "pg",
+                          leaderDecidingCriterion,
+                          criterionOrder
+                        )
                       : "",
                   ]
                     .filter(Boolean)
@@ -154,7 +193,11 @@ export const PublicRetaStandingsSection: React.FC<{
                   className={[
                     "te-pub-standings-row__stat",
                     isLeader
-                      ? criterionCellClass("fav", leaderDecidingCriterion)
+                      ? criterionCellClass(
+                          "fav",
+                          leaderDecidingCriterion,
+                          criterionOrder
+                        )
                       : "",
                   ]
                     .filter(Boolean)
@@ -162,12 +205,31 @@ export const PublicRetaStandingsSection: React.FC<{
                 >
                   {row.fav}
                 </td>
-                <td className="te-pub-standings-row__stat">{row.con}</td>
                 <td
                   className={[
                     "te-pub-standings-row__stat",
-                    isLeader
-                      ? criterionCellClass("dif", leaderDecidingCriterion)
+                    isLeader && criterionOrder === "dual-meet"
+                      ? criterionCellClass(
+                          "con",
+                          leaderDecidingCriterion,
+                          criterionOrder
+                        )
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  {row.con}
+                </td>
+                <td
+                  className={[
+                    "te-pub-standings-row__stat",
+                    isLeader && criterionOrder !== "dual-meet"
+                      ? criterionCellClass(
+                          "dif",
+                          leaderDecidingCriterion,
+                          criterionOrder
+                        )
                       : "",
                   ]
                     .filter(Boolean)

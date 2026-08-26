@@ -1,5 +1,9 @@
 import React, { useMemo } from "react";
-import { TEAMS_PUBLIC_FORMAT_LABEL } from "../../../lib/reta/teamsPublicCopy";
+import {
+  TEAMS_PUBLIC_BRAND_LINE,
+  TEAMS_PUBLIC_FORMAT_LABEL,
+  TEAMS_PUBLIC_MOTIVATIONAL,
+} from "../../../lib/reta/teamsPublicCopy";
 import { resolveTeamLogoUrl } from "../../../lib/reta/teamLogoDisplay";
 import type { EventSchedulePhase } from "../../../lib/public/eventScheduleStatus";
 import {
@@ -8,7 +12,7 @@ import {
 } from "../../../lib/public/eventScheduleStatus";
 import { TeamLogo } from "./TeamLogo";
 import { RetaEquiposCountdown } from "./RetaEquiposCountdown";
-import { RetaEquiposTeamColumn } from "./RetaEquiposTeamColumn";
+import { RetaEquiposTeamCylinder } from "./RetaEquiposTeamCylinder";
 import {
   RetaEquiposArenaScoreboard,
   type RetaEquiposArenaSlot,
@@ -71,26 +75,35 @@ function shortTeamLabel(name: string): string {
   return cleaned || name;
 }
 
+/** Marquesina broadcast: fecha larga en mayúsculas (es-MX). */
+function formatBroadcastMarqueeDate(iso?: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return new Intl.DateTimeFormat("es-MX", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+    .format(d)
+    .toUpperCase();
+}
+
 function TransmissionPill({
-  fecha,
   horario,
-  lugar,
   status,
 }: {
-  fecha: string | null;
   horario: string | null;
-  lugar?: string | null;
   status: string;
 }) {
   const parts: string[] = [];
-  if (fecha) parts.push(fecha);
   if (horario) parts.push(horario);
-  if (lugar?.trim()) parts.push(lugar.trim());
   if (status) parts.push(status);
   if (parts.length === 0) return null;
 
   return (
-    <p className="reta-eq-tx-pill" aria-label="Datos del duelo">
+    <p className="reta-eq-tx-pill" aria-label="Horario del duelo">
       {parts.map((text, i) => (
         <React.Fragment key={`${text}-${i}`}>
           {i > 0 ? (
@@ -144,6 +157,10 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
     () => formatPublicEventHorario(programadoEn, programadoHasta),
     [programadoEn, programadoHasta]
   );
+  const marqueeDate = useMemo(
+    () => formatBroadcastMarqueeDate(programadoEn),
+    [programadoEn]
+  );
 
   const parsedScores = useMemo(
     () => parseScorePair(liveScoreLabel),
@@ -156,6 +173,8 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   const arenaLive =
     !isFinished &&
     (schedulePhase === "in_window" || schedulePhase === "unknown");
+
+  const sedeLabel = lugar?.trim() || null;
 
   const eventTitle = eventName?.trim() || null;
   const defaultVs = `${nameA} vs ${nameB}`;
@@ -189,15 +208,22 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   return (
     <section className="reta-eq-stage reta-eq-anim-in">
       <div className="reta-eq-stage__shell">
-        <header className="reta-eq-stage__header">
+        <header className="reta-eq-stage__header reta-eq-stage__header--broadcast">
+          {marqueeDate ? (
+            <p className="reta-eq-stage__marquee-date">{marqueeDate}</p>
+          ) : null}
+          <h1 className="reta-eq-stage__battle-title">
+            {TEAMS_PUBLIC_FORMAT_LABEL}
+          </h1>
           {showEventTitle ? (
-            <h1 className="reta-eq-stage__title">{eventTitle}</h1>
+            <p className="reta-eq-stage__title reta-eq-stage__title--sub">
+              {eventTitle}
+            </p>
           ) : (
-            <h1 className="reta-eq-stage__title visually-hidden">
+            <span className="visually-hidden">
               {labelA} versus {labelB}
-            </h1>
+            </span>
           )}
-          <p className="visually-hidden">{TEAMS_PUBLIC_FORMAT_LABEL}</p>
         </header>
 
         <div
@@ -233,76 +259,79 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
           </div>
         </div>
 
-        <div className="reta-eq-grid">
-          <div className="reta-eq-grid__a">
-            <RetaEquiposTeamColumn
-              teamName={labelA}
-              logoUrl={logoA}
+        <div className="reta-eq-duel-stage">
+          <div className="reta-eq-duel-stage__side reta-eq-duel-stage__side--a">
+            <RetaEquiposTeamCylinder
               players={playersA}
+              teamName={labelA}
               side="a"
-              staggerMs={0}
-              showIdentity={false}
+              direction="left"
             />
           </div>
-
-          <div className="reta-eq-grid__b">
-            <RetaEquiposTeamColumn
-              teamName={labelB}
-              logoUrl={logoB}
+          <div className="reta-eq-duel-stage__laser" aria-hidden />
+          <div className="reta-eq-duel-stage__side reta-eq-duel-stage__side--b">
+            <RetaEquiposTeamCylinder
               players={playersB}
+              teamName={labelB}
               side="b"
-              staggerMs={500}
-              showIdentity={false}
+              direction="right"
             />
           </div>
+        </div>
 
-          <div className="reta-eq-grid__center">
-            <div
+        <div
+          className={[
+            "reta-eq-center",
+            "reta-eq-center--duel",
+            cta.live ? "reta-eq-center--hub" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <div className="reta-eq-duel-foot">
+            {sedeLabel ? (
+              <p className="reta-eq-duel-foot__sede">{sedeLabel}</p>
+            ) : null}
+            <p className="reta-eq-duel-foot__motto">
+              {TEAMS_PUBLIC_MOTIVATIONAL}
+            </p>
+            <p className="reta-eq-duel-foot__brand">
+              {TEAMS_PUBLIC_BRAND_LINE}
+            </p>
+          </div>
+          <TransmissionPill
+            horario={horarioOnly}
+            status={cta.live ? "" : statusLabel}
+          />
+          {!cta.live ? (
+            <div className="reta-eq-center__countdown">
+              <RetaEquiposCountdown
+                programadoEn={programadoEn}
+                programadoHasta={programadoHasta}
+                isFinished={isFinished}
+              />
+            </div>
+          ) : null}
+          {onGoLive ? (
+            <button
+              type="button"
               className={[
-                "reta-eq-center",
-                cta.live ? "reta-eq-center--hub" : "",
+                "reta-eq-cta",
+                cta.live ? "reta-eq-cta--hub" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
+              onClick={onGoLive}
             >
-              <TransmissionPill
-                fecha={fechaOnly}
-                horario={horarioOnly}
-                lugar={lugar}
-                status={cta.live ? "" : statusLabel}
-              />
-              {/* Countdown solo en previa; en vivo el hub CTA evita EN VIVO duplicado */}
-              {!cta.live ? (
-                <div className="reta-eq-center__countdown">
-                  <RetaEquiposCountdown
-                    programadoEn={programadoEn}
-                    programadoHasta={programadoHasta}
-                    isFinished={isFinished}
-                  />
-                </div>
+              {cta.live ? (
+                <span className="reta-eq-cta__dot" aria-hidden />
               ) : null}
-              {onGoLive ? (
-                <button
-                  type="button"
-                  className={[
-                    "reta-eq-cta",
-                    cta.live ? "reta-eq-cta--hub" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={onGoLive}
-                >
-                  {cta.live ? (
-                    <span className="reta-eq-cta__dot" aria-hidden />
-                  ) : null}
-                  <span className="reta-eq-cta__label">{cta.label}</span>
-                  <span className="reta-eq-cta__arrow" aria-hidden>
-                    →
-                  </span>
-                </button>
-              ) : null}
-            </div>
-          </div>
+              <span className="reta-eq-cta__label">{cta.label}</span>
+              <span className="reta-eq-cta__arrow" aria-hidden>
+                →
+              </span>
+            </button>
+          ) : null}
         </div>
       </div>
     </section>

@@ -337,6 +337,56 @@
   color: #f4f1eb;
 }
 
+.reta-eq-stage__header--broadcast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+
+.reta-eq-stage__marquee-date {
+  margin: 0;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(180, 184, 196, 0.72);
+}
+
+.reta-eq-stage__battle-title {
+  margin: 0;
+  font-size: clamp(1.35rem, 5.5vw, 2.35rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  line-height: 1.05;
+  color: #f4f5f7;
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #d8dbe3 48%,
+    #9aa0ae 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.35));
+}
+
+.reta-eq-stage__title--sub {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.45);
+  background: none;
+}
+
+
 /* Unique match header — presencia limpia, sin glow */
 .reta-eq-matchbar {
   display: grid;
@@ -2264,6 +2314,591 @@
   }
 }
 
+/* ── Arena duel: dual 3D cylinders (side-by-side + depth zoom) ───────────── */
+.reta-eq-duel-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  justify-items: center;
+  gap: 0.25rem;
+  min-height: 210px;
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.75rem 0.2rem 1rem;
+  border-radius: 1.35rem;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 42%,
+      rgba(22, 24, 32, 0.92) 0%,
+      rgba(9, 10, 14, 0.98) 72%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.035) 0%,
+      transparent 42%
+    );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.reta-eq-duel-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, #000 20%, transparent 75%);
+}
+
+.reta-eq-duel-stage__laser {
+  display: none;
+  pointer-events: none;
+}
+
+.reta-eq-duel-stage__side {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.reta-eq-scene {
+  position: relative;
+  width: 100%;
+  max-width: 10.5rem;
+  height: 13.5rem;
+  margin: 0 auto;
+  --reta-eq-rad: 85px;
+  --reta-eq-tambor-dur: 60s;
+  --reta-eq-scene-scale: 0.75;
+  perspective: 900px;
+  perspective-origin: 50% 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(var(--reta-eq-scene-scale, 0.75));
+  transform-origin: center center;
+}
+
+.reta-eq-scene--empty {
+  align-items: center;
+}
+
+.reta-eq-scene__empty {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.reta-eq-tambor {
+  position: relative;
+  width: 7.8rem;
+  height: 11.25rem;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.reta-eq-tambor--left {
+  animation: retaEqRotateCylinderLeft var(--reta-eq-tambor-dur, 60s) linear
+    infinite;
+}
+
+.reta-eq-tambor--right {
+  animation: retaEqRotateCylinderRight var(--reta-eq-tambor-dur, 60s) linear
+    infinite;
+}
+
+.reta-eq-scene:hover .reta-eq-tambor,
+.reta-eq-scene:focus-within .reta-eq-tambor,
+.reta-eq-scene:active .reta-eq-tambor,
+.reta-eq-tambor:hover,
+.reta-eq-tambor:active,
+.reta-eq-scene:hover .reta-eq-cara__card,
+.reta-eq-scene:focus-within .reta-eq-cara__card,
+.reta-eq-scene:active .reta-eq-cara__card {
+  animation-play-state: paused !important;
+}
+
+@keyframes retaEqRotateCylinderLeft {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(-360deg);
+  }
+}
+
+@keyframes retaEqRotateCylinderRight {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+@keyframes retaEqCaraDepth {
+  0%,
+  100% {
+    transform: scale(1.05);
+    opacity: 1;
+    filter: brightness(1.14) blur(0);
+  }
+  25%,
+  75% {
+    transform: scale(0.94);
+    opacity: 0.62;
+    filter: brightness(0.78) blur(0.4px);
+  }
+  50% {
+    transform: scale(0.86);
+    opacity: 0.3;
+    filter: brightness(0.5) blur(1px);
+  }
+}
+
+@keyframes retaEqMedalSheen {
+  0% {
+    transform: translateX(-140%) skewX(-14deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-14deg);
+  }
+}
+
+.reta-eq-cara {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7.5rem;
+  height: 11rem;
+  margin: -5.5rem 0 0 -3.75rem;
+  --rad: var(--reta-eq-rad, 85px);
+  transform: rotateY(var(--ang, 0deg)) translateZ(var(--rad));
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.reta-eq-cara__card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.55rem 0.55rem 0.6rem;
+  border-radius: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  background: rgba(18, 16, 14, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-origin: center center;
+  animation: retaEqCaraDepth var(--reta-eq-tambor-dur, 60s) linear infinite;
+  will-change: transform, opacity, filter;
+}
+
+.reta-eq-cara__sheen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 34%;
+  pointer-events: none;
+  border-radius: 1rem 1rem 0 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    transparent 100%
+  );
+}
+
+.reta-eq-cara--left .reta-eq-cara__card {
+  animation-delay: calc(var(--ang-n, 0) / -360 * var(--reta-eq-tambor-dur, 60s));
+}
+
+.reta-eq-cara--right .reta-eq-cara__card {
+  animation-delay: calc(
+    (1 - var(--ang-n, 0) / 360) * -1 * var(--reta-eq-tambor-dur, 60s)
+  );
+}
+
+.reta-eq-cara--a .reta-eq-cara__card {
+  border-color: rgba(229, 193, 88, 0.78);
+  background: rgba(24, 22, 16, 0.95);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(229, 193, 88, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.reta-eq-cara--b .reta-eq-cara__card {
+  border-color: rgba(217, 93, 57, 0.78);
+  background: rgba(24, 18, 17, 0.95);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(217, 93, 57, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.reta-eq-cara__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+  z-index: 1;
+}
+
+.reta-eq-cara__pro {
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.48);
+  text-transform: uppercase;
+}
+
+.reta-eq-cara__lado {
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.14rem 0.4rem;
+  border-radius: 0.35rem;
+  border: 1px solid transparent;
+}
+
+.reta-eq-cara--a .reta-eq-cara__lado {
+  color: #e5c158;
+  background: rgba(229, 193, 88, 0.18);
+  border-color: rgba(229, 193, 88, 0.4);
+}
+
+.reta-eq-cara--b .reta-eq-cara__lado {
+  color: #d95d39;
+  background: rgba(217, 93, 57, 0.18);
+  border-color: rgba(217, 93, 57, 0.4);
+}
+
+.reta-eq-cara__avatar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.25rem 0;
+  z-index: 1;
+}
+
+.reta-eq-cara__photo-ring {
+  display: block;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.06) 55%,
+    transparent 100%
+  );
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.reta-eq-cara__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  object-fit: cover;
+  object-position: center 18%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.reta-eq-cara__medal {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -6px 14px rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.reta-eq-cara--a .reta-eq-cara__medal {
+  color: #e5c158;
+  background: linear-gradient(145deg, #2a2312 0%, #1c1a14 50%, #12131a 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(229, 193, 88, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.reta-eq-cara--b .reta-eq-cara__medal {
+  color: #d95d39;
+  background: linear-gradient(145deg, #2d1b18 0%, #1e1412 50%, #12131a 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(217, 93, 57, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.reta-eq-cara__medal-sheen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 100%
+  );
+  animation: retaEqMedalSheen 3.6s ease-in-out infinite;
+}
+
+.reta-eq-cara__medal-ring {
+  position: absolute;
+  inset: 3px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.reta-eq-cara__medal-ini {
+  position: relative;
+  z-index: 1;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.reta-eq-cara__foot {
+  text-align: center;
+  min-width: 0;
+  z-index: 1;
+}
+
+.reta-eq-cara__name {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.reta-eq-cara__pais {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.28rem;
+  margin-top: 0.22rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: rgba(220, 220, 230, 0.78);
+  max-width: 100%;
+}
+
+.reta-eq-cara__pais > span:last-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reta-eq-center--duel {
+  margin-top: 0.15rem;
+  gap: 0.7rem;
+}
+
+.reta-eq-center--duel .reta-eq-tx-pill {
+  border-color: rgba(229, 193, 88, 0.28);
+  background: rgba(14, 15, 20, 0.82);
+}
+
+.reta-eq-duel-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+  margin: 0.15rem 0 0.25rem;
+  max-width: 22rem;
+}
+
+.reta-eq-duel-foot__sede {
+  margin: 0;
+  font-size: clamp(1.35rem, 5.2vw, 2rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  color: #f4f5f7;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+}
+
+.reta-eq-duel-foot__motto {
+  margin: 0;
+  font-size: clamp(0.85rem, 2.8vw, 1.05rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 235, 0.78);
+}
+
+.reta-eq-duel-foot__brand {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(180, 184, 196, 0.62);
+}
+
+@media (min-width: 480px) {
+  .reta-eq-duel-stage {
+    gap: 0.65rem;
+    min-height: 250px;
+    padding: 1rem 0.45rem 1.25rem;
+  }
+
+  .reta-eq-scene {
+    max-width: 12.5rem;
+    height: 15rem;
+  }
+
+  .reta-eq-tambor {
+    width: 9rem;
+    height: 12.5rem;
+  }
+
+  .reta-eq-cara {
+    width: 8.5rem;
+    height: 12.25rem;
+    margin: -6.125rem 0 0 -4.25rem;
+  }
+
+  .reta-eq-cara__photo-ring,
+  .reta-eq-cara__medal {
+    width: 4.25rem;
+    height: 4.25rem;
+  }
+
+  .reta-eq-cara__medal-ini {
+    font-size: 1.15rem;
+  }
+
+  .reta-eq-cara__name {
+    font-size: 0.78rem;
+  }
+
+  .reta-eq-stage__marquee-date {
+    font-size: 0.7rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .reta-eq-duel-stage {
+    gap: 1.25rem;
+    min-height: 320px;
+    padding: 1.4rem 0.9rem 1.7rem;
+  }
+
+  .reta-eq-duel-stage__laser {
+    display: block;
+    position: absolute;
+    top: 14%;
+    bottom: 14%;
+    left: 50%;
+    z-index: 6;
+    width: 2px;
+    transform: translateX(-50%);
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(245, 240, 230, 0.12) 12%,
+      rgba(229, 193, 88, 0.55) 50%,
+      rgba(245, 240, 230, 0.12) 88%,
+      transparent 100%
+    );
+    box-shadow: 0 0 14px rgba(229, 193, 88, 0.28);
+  }
+
+  .reta-eq-scene {
+    max-width: 16rem;
+    height: 18rem;
+    perspective: 1000px;
+  }
+
+  .reta-eq-tambor {
+    width: 11rem;
+    height: 14.5rem;
+  }
+
+  .reta-eq-cara {
+    width: 9.35rem;
+    height: 13.75rem;
+    margin: -6.875rem 0 0 -4.675rem;
+  }
+
+  .reta-eq-cara__card {
+    padding: 0.7rem 0.7rem 0.8rem;
+    border-radius: 1.15rem;
+  }
+
+  .reta-eq-cara__photo-ring,
+  .reta-eq-cara__medal {
+    width: 5rem;
+    height: 5rem;
+  }
+
+  .reta-eq-cara__medal-ini {
+    font-size: 1.35rem;
+  }
+
+  .reta-eq-cara__pro,
+  .reta-eq-cara__lado {
+    font-size: 0.62rem;
+  }
+
+  .reta-eq-cara__name {
+    font-size: 0.85rem;
+  }
+
+  .reta-eq-cara__pais {
+    font-size: 0.64rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reta-eq-anim-in,
   .reta-eq-frame--enter,
@@ -2277,8 +2912,18 @@
   .reta-eq-dock__seg-fill,
   .reta-eq-dock__av-btn .reta-eq-dock__av,
   .reta-eq-countdown__pulse,
-  .reta-eq-cta--hub .reta-eq-cta__dot {
+  .reta-eq-cta--hub .reta-eq-cta__dot,
+  .reta-eq-tambor--left,
+  .reta-eq-tambor--right,
+  .reta-eq-cara__card,
+  .reta-eq-cara__medal-sheen {
     animation: none !important;
+  }
+
+  .reta-eq-cara__card {
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
   }
 
   .reta-eq-dock__seg.is-active .reta-eq-dock__seg-fill {

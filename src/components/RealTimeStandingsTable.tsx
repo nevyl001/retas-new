@@ -315,7 +315,9 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
           fav: teamStandings[1].points,
           con: teamStandings[1].pointsReceived,
           pg: teamStandings[1].pg,
-        }
+        },
+        [],
+        "dual-meet"
       );
     }
     if (sortedPairs.length >= 2) {
@@ -523,6 +525,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       <StandingsMobileCards
         rows={mobileCardRows}
         decidingCriterion={leaderDecidingCriterion}
+        criterionOrder={teamStandings?.length ? "dual-meet" : "americano"}
       />
 
       {/* Modo equipos: tabla por equipos (suma de puntos por equipo) */}
@@ -538,7 +541,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
         >
             <table className={`new-standings-table te-pub-standings-table rv-table ${TABLA_RANKING_CLASS}`}>
             <thead>
-              <StandingsTableHeader entity="equipo" />
+              <StandingsTableHeader entity="equipo" criterionOrder="dual-meet" />
             </thead>
             <tbody>
               {teamStandings.map((row, index) => {

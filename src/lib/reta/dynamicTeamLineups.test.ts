@@ -640,16 +640,22 @@ describe("computeDynamicTeamStandings / compareDynamicTeamStandings (casos 24-29
     expect(rows[1].matchesPlayed).toBe(2);
   });
 
-  it("empate en games a favor: gana el de mejor diferencia (caso 25, comparador directo)", () => {
+  it("empate en games a favor: gana el que recibió menos en contra", () => {
     const riviera = { teamIndex: 0, name: "Riviera", gamesFor: 10, gamesAgainst: 5, gameDifference: 5, matchesPlayed: 2, matchesWon: 2, matchesLost: 0 };
     const hack = { teamIndex: 1, name: "Hack", gamesFor: 10, gamesAgainst: 8, gameDifference: 2, matchesPlayed: 2, matchesWon: 1, matchesLost: 1 };
     expect(compareDynamicTeamStandings(riviera, hack)).toBeLessThan(0);
   });
 
-  it("comparador exacto: gamesFor > gameDifference > matchesWon > teamIndex", () => {
+  it("comparador exacto: gamesFor > menos gamesAgainst > matchesWon > teamIndex", () => {
     const a = { teamIndex: 1, name: "B", gamesFor: 10, gamesAgainst: 5, gameDifference: 5, matchesPlayed: 2, matchesWon: 1, matchesLost: 1 };
     const b = { teamIndex: 0, name: "A", gamesFor: 10, gamesAgainst: 5, gameDifference: 5, matchesPlayed: 2, matchesWon: 1, matchesLost: 1 };
     expect(compareDynamicTeamStandings(a, b)).toBeGreaterThan(0);
+  });
+
+  it("mismo FAV y CON: gana más partidos ganados", () => {
+    const moreWins = { teamIndex: 0, name: "Riviera", gamesFor: 10, gamesAgainst: 8, gameDifference: 2, matchesPlayed: 3, matchesWon: 2, matchesLost: 1 };
+    const fewerWins = { teamIndex: 1, name: "Hack", gamesFor: 10, gamesAgainst: 8, gameDifference: 2, matchesPlayed: 3, matchesWon: 1, matchesLost: 2 };
+    expect(compareDynamicTeamStandings(moreWins, fewerWins)).toBeLessThan(0);
   });
 
   it("no inventa ganador: 3 criterios empatados -> empate (caso 27, 34)", () => {

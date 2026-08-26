@@ -28,6 +28,14 @@ function buildBriefOrderText(
       </>
     );
   }
+  if (mode === "dual-meet") {
+    return (
+      <>
+        Orden: <strong>FAV</strong> → <strong>CON</strong> (menos) →{" "}
+        <strong>PG</strong> · <strong>PTS</strong> = referencia
+      </>
+    );
+  }
   return (
     <>
       Orden: <strong>FAV</strong> → <strong>DIF</strong> → H2H → <strong>PG</strong>{" "}

@@ -1,6 +1,8 @@
 import {
+  TEAMS_PUBLIC_BRAND_LINE,
   TEAMS_PUBLIC_FORMAT_LABEL,
   TEAMS_PUBLIC_LIVE_TITLE,
+  TEAMS_PUBLIC_MOTIVATIONAL,
   TEAMS_PUBLIC_TAGLINE,
   formatTeamsPublicFaceoff,
   formatTeamsPublicHeroMeta,
@@ -25,5 +27,10 @@ describe("teamsPublicCopy", () => {
   it("expone título live de duelo", () => {
     expect(TEAMS_PUBLIC_LIVE_TITLE).toBe("Duelo en vivo");
     expect(TEAMS_PUBLIC_TAGLINE).toBe("Que gane el mejor");
+  });
+
+  it("expone copy motivacional y de marca", () => {
+    expect(TEAMS_PUBLIC_MOTIVATIONAL).toBe("Denlo todo");
+    expect(TEAMS_PUBLIC_BRAND_LINE).toBe("Vive Riviera Open");
   });
 });

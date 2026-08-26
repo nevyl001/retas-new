@@ -328,23 +328,17 @@ export function computeTeamStandings(
     puntosTorneo: tot.puntosTorneo,
   }));
 
-  const entities = rows.map((r, i) => ({
-    id: String(r.teamIndex),
-    label: r.name,
-    seed: i,
-    stats: {
-      pj: r.matchesPlayed,
-      pg: r.pg,
-      pe: Math.max(0, r.matchesPlayed - r.pg - r.pp),
-      pp: r.pp,
-      ptsFav: r.points,
-      ptsCon: r.pointsReceived,
-      puntos: r.puntosTorneo,
-    },
-  }));
-  const sorted = sortStandingsEntities(entities, []);
-  const byIdx = new Map(rows.map((r) => [String(r.teamIndex), r]));
-  return sorted.map((e) => byIdx.get(e.id)!);
+  /**
+   * Duelo por equipos: FAV → menos CON → más PG.
+   * (No H2H ni DIF: con mismo FAV, menos en contra equivale al mejor DIF.)
+   */
+  return [...rows].sort(
+    (a, b) =>
+      b.points - a.points ||
+      a.pointsReceived - b.pointsReceived ||
+      b.pg - a.pg ||
+      a.teamIndex - b.teamIndex
+  );
 }
 
 const TEAM_CONFIG_KEY = "rivieraapp_teams_";

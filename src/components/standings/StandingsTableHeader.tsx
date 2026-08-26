@@ -37,6 +37,7 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
 }) => {
   const entityHeader = STANDINGS_ENTITY_HEADERS[entity];
   const isExpress = criterionOrder === "express";
+  const isDualMeet = criterionOrder === "dual-meet";
 
   return (
     <tr>
@@ -52,11 +53,7 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
       </th>
       <th
         className={`${COL_PG} ${criterionHeaderClass("pg", criterionOrder)}`}
-        title={
-          isExpress
-            ? "Partidos ganados (3.er criterio de desempate)"
-            : "Partidos ganados (3.er criterio de desempate)"
-        }
+        title="Partidos ganados (3.er criterio de desempate)"
       >
         PG
       </th>
@@ -73,15 +70,30 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
       >
         FAV
       </th>
-      <th className={COL_CON} title="Juegos recibidos en contra">
+      <th
+        className={`${COL_CON}${
+          isDualMeet ? ` ${criterionHeaderClass("con", criterionOrder)}` : ""
+        }`}
+        title={
+          isDualMeet
+            ? "Juegos en contra (2.º criterio: gana quien recibió menos)"
+            : "Juegos recibidos en contra"
+        }
+      >
         CON
       </th>
       <th
-        className={`${COL_DIF} ${criterionHeaderClass("dif", criterionOrder)}`}
+        className={`${COL_DIF}${
+          isDualMeet
+            ? " standings-col-informative"
+            : ` ${criterionHeaderClass("dif", criterionOrder)}`
+        }`}
         title={
-          isExpress
-            ? "Diferencia FAV − CON (1.er criterio)"
-            : "Diferencia FAV − CON (2.º criterio)"
+          isDualMeet
+            ? "Diferencia FAV − CON (informativo)"
+            : isExpress
+              ? "Diferencia FAV − CON (1.er criterio)"
+              : "Diferencia FAV − CON (2.º criterio)"
         }
       >
         DIF
