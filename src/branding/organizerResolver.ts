@@ -41,6 +41,29 @@ export function getClubExperienceCacheIfMatches(
   return cached;
 }
 
+/** Persiste binding premium resuelto (anti-flash en la próxima visita pública). */
+export function writeClubExperienceCache(
+  organizadorId: string | null | undefined,
+  brandingKey: string | null | undefined
+): void {
+  if (typeof window === "undefined") return;
+  const org = organizadorId?.trim().toLowerCase();
+  const key = brandingKey?.trim();
+  if (!org || !key || key === RIVIERA_DEFAULT_MANIFEST.brandingKey) {
+    window.localStorage.removeItem(CLUB_EXPERIENCE_CACHE_KEY);
+    return;
+  }
+  window.localStorage.setItem(
+    CLUB_EXPERIENCE_CACHE_KEY,
+    JSON.stringify({ organizadorId: org, brandingKey: key })
+  );
+}
+
+export function clearClubExperienceCache(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(CLUB_EXPERIENCE_CACHE_KEY);
+}
+
 /** Organizador inferido solo desde la URL (ranking público). Sin sesión ni caché. */
 export function resolveBootstrapOrganizadorId(): string | null {
   return getPublicOrganizadorIdFromPath();

@@ -157,6 +157,7 @@ export {
 } from "./components/ClubIdentity";
 export { PublicEventBrandIdentity } from "./components/PublicEventBrandIdentity";
 export { PublicEventNeutralLoading } from "./components/PublicEventNeutralLoading";
+export { PublicScopedBrandGate } from "./components/PublicScopedBrandGate";
 export { PublicClubModeEyebrow } from "./components/PublicClubModeEyebrow";
 export type { ClubBrandingStatus } from "./ClubExperienceContext";
 

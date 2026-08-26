@@ -19,7 +19,7 @@ import {
   getRankingEquipos,
   publicLigaJornadaUrl,
 } from "../../services/ligaService";
-import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
+import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, PublicEventNeutralLoading, PublicScopedBrandGate, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
 import { useLigaRealtime } from "../../hooks/useLigaRealtime";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
@@ -192,12 +192,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   if (loading && !detalle) {
     return (
       <ClubExperienceScope organizadorId={null} pendingUntilOrganizador>
-        <div className="liga-pantalla App--public-full-width ro-public-view ro-surface-dark">
-          <div className="liga-pantalla__grain" aria-hidden />
-          <PublicModeShell className="liga-pantalla__inner">
-            <p className="liga-pantalla__loading rv-muted">Cargando liga…</p>
-          </PublicModeShell>
-        </div>
+        <PublicEventNeutralLoading message="Cargando liga…" />
       </ClubExperienceScope>
     );
   }
@@ -205,12 +200,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   if (!detalle) {
     return (
       <ClubExperienceScope organizadorId={null} pendingUntilOrganizador>
-        <div className="liga-pantalla App--public-full-width ro-public-view ro-surface-dark">
-          <div className="liga-pantalla__grain" aria-hidden />
-          <PublicModeShell className="liga-pantalla__inner">
-            <p className="liga-pantalla__error">{error ?? "No disponible"}</p>
-          </PublicModeShell>
-        </div>
+        <PublicEventNeutralLoading message={error ?? "No disponible"} />
       </ClubExperienceScope>
     );
   }
@@ -243,6 +233,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       organizadorId={detalle.organizador_id}
       pendingUntilOrganizador
     >
+    <PublicScopedBrandGate message="Cargando liga…">
     <div
       className={`liga-pantalla App--public-full-width ro-public-view ro-surface-dark${
         esParejasFijas ? " liga-pantalla--liga-fijas" : ""
@@ -530,6 +521,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
         </footer>
       </PublicModeShell>
     </div>
+    </PublicScopedBrandGate>
     </ClubExperienceScope>
   );
 };

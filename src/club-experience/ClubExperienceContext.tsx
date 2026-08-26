@@ -19,18 +19,20 @@ import {
   subscribeBrandingTransition,
 } from "../branding/brandingTransition";
 import type { TenantBranding } from "../branding/types";
+import { getClubExperienceCacheIfMatches } from "../branding/organizerResolver";
 import { syncRuntimeBindingForOrganizador } from "../lib/branding/organizerBrandingSettings";
 import {
   getClubExperienceScopeStyle,
   getNeutralPublicScopeStyle,
 } from "./applyClubExperienceTheme";
 import { resolveBootstrapOrganizadorId } from "./clubExperienceBootstrap";
+import { getManifestByKey } from "./manifestRegistry";
 import {
   isClubBrandedOrganizer,
   resolveClubManifest,
 } from "./manifestResolver";
 import { isPremiumBrandingEnabledForOrganizador } from "./organizerBindingResolver";
-import type { BrandManifest } from "./types";
+import type { BrandManifest, ClubBrandingKey } from "./types";
 
 export type ClubBrandingStatus = "pending" | "resolved";
 
@@ -45,6 +47,11 @@ export interface ClubExperienceContextValue {
   brandingStatus: ClubBrandingStatus;
   isScopeBrandingReady: boolean;
   isResolvingBranding: boolean;
+  /**
+   * true cuando ya se puede pintar UI con tokens del tenant (o Riviera final),
+   * sin flash Riviera→club. Incluye pending premium con cache/índice estático.
+   */
+  canPaintScopedBrand: boolean;
   /** @deprecated Usar manifest */
   brand: BrandManifest;
   /** @deprecated Usar isClubBranded */
@@ -122,6 +129,7 @@ export const ClubExperienceProvider: React.FC<ClubExperienceProviderProps> = ({
       brandingStatus,
       isScopeBrandingReady: brandingStatus === "resolved",
       isResolvingBranding: brandingStatus === "pending",
+      canPaintScopedBrand: brandingStatus === "resolved",
       brand: manifest,
       isCoBranded: isClubBranded,
     }),
@@ -207,11 +215,34 @@ export const ClubExperienceScope: React.FC<ClubExperienceScopeProps> = ({
   }, [normalizedOrgId, pendingUntilOrganizador]);
 
   const isPending = brandingStatus === "pending";
+  const cachedPremium = getClubExperienceCacheIfMatches(normalizedOrgId);
+  const premiumKnown =
+    Boolean(normalizedOrgId) &&
+    (isPremiumBrandingEnabledForOrganizador(normalizedOrgId) ||
+      Boolean(cachedPremium));
 
   const manifest = useMemo(() => {
     void bindingRevision;
+    if (
+      isPending &&
+      cachedPremium?.brandingKey &&
+      !isPremiumBrandingEnabledForOrganizador(normalizedOrgId)
+    ) {
+      try {
+        return getManifestByKey(
+          cachedPremium.brandingKey as ClubBrandingKey
+        );
+      } catch {
+        /* key desconocida → caer a resolver normal */
+      }
+    }
     return resolveClubManifest(normalizedOrgId);
-  }, [normalizedOrgId, bindingRevision]);
+  }, [
+    normalizedOrgId,
+    bindingRevision,
+    isPending,
+    cachedPremium?.brandingKey,
+  ]);
   const isClubBranded = useMemo(() => {
     void bindingRevision;
     if (isPending) return false;
@@ -221,6 +252,8 @@ export const ClubExperienceScope: React.FC<ClubExperienceScopeProps> = ({
     void bindingRevision;
     return resolveBrandingSync(normalizedOrgId);
   }, [normalizedOrgId, bindingRevision]);
+
+  const canPaintScopedBrand = !isPending || premiumKnown;
 
   const value = useMemo(
     () => ({
@@ -233,25 +266,31 @@ export const ClubExperienceScope: React.FC<ClubExperienceScopeProps> = ({
       brandingStatus,
       isScopeBrandingReady: !isPending,
       isResolvingBranding: isPending,
+      canPaintScopedBrand,
       brand: manifest,
       isCoBranded: isClubBranded,
     }),
-    [manifest, branding, isClubBranded, normalizedOrgId, brandingStatus, isPending]
+    [
+      manifest,
+      branding,
+      isClubBranded,
+      normalizedOrgId,
+      brandingStatus,
+      isPending,
+      canPaintScopedBrand,
+    ]
   );
 
   // Clubs sin upgrade: siempre Riviera Open (pending = resolved visualmente).
-  // Premium: puede pintar manifiesto estático ya en pending (inline + data-club).
-  const premiumPending =
-    Boolean(normalizedOrgId) &&
-    isPremiumBrandingEnabledForOrganizador(normalizedOrgId);
+  // Premium: puede pintar manifiesto estático/caché ya en pending (inline + data-club).
   const scopeStyleManifest =
-    isPending && !premiumPending
+    isPending && !premiumKnown
       ? getNeutralPublicScopeStyle()
       : getClubExperienceScopeStyle(manifest);
-  // Evita flash Riviera→club: CSS tenant ([data-club=valvidub-sports] …)
+  // Evita flash Riviera→club: CSS tenant ([data-club=…] …)
   // debe matchear desde el primer paint con org premium conocido.
   const scopeClubKey =
-    isPending && !premiumPending ? "pending" : manifest.brandingKey;
+    isPending && !premiumKnown ? "pending" : manifest.brandingKey;
 
   return (
     <ClubExperienceContext.Provider value={value}>
@@ -286,6 +325,7 @@ export function useClubExperience(): ClubExperienceContextValue {
       brandingStatus,
       isScopeBrandingReady: brandingStatus === "resolved",
       isResolvingBranding: brandingStatus === "pending",
+      canPaintScopedBrand: brandingStatus === "resolved",
       brand: branding.manifest,
       isCoBranded: branding.isClubBranded,
     };

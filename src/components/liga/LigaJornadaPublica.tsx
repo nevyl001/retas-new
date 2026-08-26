@@ -16,7 +16,7 @@ import { isEquiposModalidad, isParejasFijasPlayoffs } from "../../lib/liga/ligaM
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
 import { resolveLigaJugadorPublicFotos } from "../../lib/liga/publicParejaAvatars";
 import { getLigaById } from "../../services/ligaService";
-import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
+import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, PublicEventNeutralLoading, PublicScopedBrandGate, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
 import { useLigaRealtime } from "../../hooks/useLigaRealtime";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
@@ -265,12 +265,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   if (loading && !detalle) {
     return (
       <ClubExperienceScope organizadorId={null} pendingUntilOrganizador>
-        <div className="liga-pantalla App--public-full-width ro-public-view ro-surface-dark">
-          <div className="liga-pantalla__grain" aria-hidden />
-          <PublicModeShell className="liga-pantalla__inner">
-            <p className="liga-pantalla__loading">Cargando jornada…</p>
-          </PublicModeShell>
-        </div>
+        <PublicEventNeutralLoading message="Cargando jornada…" />
       </ClubExperienceScope>
     );
   }
@@ -281,12 +276,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         organizadorId={detalle?.organizador_id ?? null}
         pendingUntilOrganizador={!detalle?.organizador_id}
       >
-        <div className="liga-pantalla App--public-full-width ro-public-view ro-surface-dark">
-          <div className="liga-pantalla__grain" aria-hidden />
-          <PublicModeShell className="liga-pantalla__inner">
-            <p className="liga-pantalla__error">{error ?? "Jornada no encontrada"}</p>
-          </PublicModeShell>
-        </div>
+        <PublicEventNeutralLoading
+          message={error ?? "Jornada no encontrada"}
+        />
       </ClubExperienceScope>
     );
   }
@@ -500,6 +492,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       organizadorId={detalle.organizador_id}
       pendingUntilOrganizador
     >
+    <PublicScopedBrandGate message="Cargando jornada…">
     <div
       className={`liga-pantalla App--public-full-width ro-public-view ro-surface-dark${
         esParejasFijas ? " liga-pantalla--jornada-fijas" : ""
@@ -810,6 +803,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         </footer>
       </PublicModeShell>
     </div>
+    </PublicScopedBrandGate>
     </ClubExperienceScope>
   );
 };

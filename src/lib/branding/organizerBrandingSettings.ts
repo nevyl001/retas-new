@@ -1,8 +1,12 @@
+import { setRuntimeOrganizerClubBindings } from "../../club-experience/organizerBindingResolver";
+import type {
+  ClubBrandingKey,
+  ClubOrganizerBinding,
+} from "../../club-experience/types";
 import {
-  setRuntimeOrganizerClubBindings,
-  type ClubBrandingKey,
-  type ClubOrganizerBinding,
-} from "../../club-experience";
+  clearClubExperienceCache,
+  writeClubExperienceCache,
+} from "../../branding/organizerResolver";
 import { supabase } from "../supabaseClient";
 
 export interface OrganizerBrandingPublicSettings {
@@ -85,6 +89,7 @@ export async function syncRuntimeBindingForOrganizador(
   const binding = bindingFromBrandingSettings(id, settings);
   if (binding) {
     setRuntimeOrganizerClubBindings([binding]);
+    writeClubExperienceCache(id, binding.brandingKey);
     return;
   }
 
@@ -98,4 +103,5 @@ export async function syncRuntimeBindingForOrganizador(
       premiumBrandingEnabled: false,
     },
   ]);
+  clearClubExperienceCache();
 }
