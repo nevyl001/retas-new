@@ -258,6 +258,16 @@
   color: var(--liga-prog-ink);
 }
 
+.liga-pantalla--liga-fijas .liga-pub-programa__team--win {
+  color: var(--liga-prog-accent);
+  font-weight: 700;
+}
+
+.liga-pantalla--liga-fijas .liga-pub-programa__team--loss {
+  color: color-mix(in srgb, var(--liga-prog-ink) 58%, transparent);
+  font-weight: 500;
+}
+
 .liga-pantalla--liga-fijas .liga-pub-programa__sides .liga-pantalla-matchup__team:first-of-type {
   text-align: right;
 }

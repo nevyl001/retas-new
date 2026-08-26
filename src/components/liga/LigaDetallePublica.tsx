@@ -486,7 +486,15 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                                   className="liga-pantalla-matchup liga-pub-programa__match"
                                 >
                                   <div className="liga-pub-programa__sides">
-                                    <span className="liga-pantalla-matchup__team">
+                                    <span
+                                      className={`liga-pantalla-matchup__team${
+                                        m.winnerSide === 1
+                                          ? " liga-pub-programa__team--win"
+                                          : m.winnerSide === 2
+                                            ? " liga-pub-programa__team--loss"
+                                            : ""
+                                      }`}
+                                    >
                                       {m.local}
                                     </span>
                                     {m.visitante ? (
@@ -497,7 +505,15 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                                         >
                                           vs
                                         </span>
-                                        <span className="liga-pantalla-matchup__team">
+                                        <span
+                                          className={`liga-pantalla-matchup__team${
+                                            m.winnerSide === 2
+                                              ? " liga-pub-programa__team--win"
+                                              : m.winnerSide === 1
+                                                ? " liga-pub-programa__team--loss"
+                                                : ""
+                                          }`}
+                                        >
                                           {m.visitante}
                                         </span>
                                       </>

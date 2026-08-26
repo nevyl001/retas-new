@@ -42,6 +42,8 @@ export type JornadaPublicMatch = {
   visitante: string | null;
   score: string | null;
   programacion: string | null;
+  /** 1 = local, 2 = visitante; solo partidos completados. */
+  winnerSide: 1 | 2 | null;
 };
 
 /** Marcador para tarjeta pública (sets legacy o games playoffs). */
@@ -239,6 +241,7 @@ export function listJornadaPublicMatches(
         m.hora_inicio,
         jornada.fecha
       ) || null,
+      winnerSide: partidoMatchWinnerSide(m, esParejasFijas),
     }));
   }
 
@@ -249,7 +252,14 @@ export function listJornadaPublicMatches(
       const label = formatJornadaParejaNombre(p, equiposById);
       if (seen.has(label)) continue;
       seen.add(label);
-      rows.push({ id: p.id, local: label, visitante: null, score: null, programacion: null });
+      rows.push({
+        id: p.id,
+        local: label,
+        visitante: null,
+        score: null,
+        programacion: null,
+        winnerSide: null,
+      });
     }
     return rows;
   }
@@ -260,6 +270,7 @@ export function listJornadaPublicMatches(
     visitante: null,
     score: null,
     programacion: null,
+    winnerSide: null,
   }));
 }
 
