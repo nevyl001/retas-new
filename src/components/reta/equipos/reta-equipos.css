@@ -2169,6 +2169,68 @@
   text-transform: uppercase;
 }
 
+/* Mobile: columna por equipo para que nombres largos (p. ej. BREAKPOINT) no se corten */
+@media (max-width: 639px) {
+  .reta-eq-arena__board {
+    padding: 1rem 0.75rem 0.95rem;
+  }
+
+  .reta-eq-arena__row {
+    gap: 0.3rem 0.35rem;
+  }
+
+  .reta-eq-arena__side {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .reta-eq-arena__side--b {
+    flex-direction: column-reverse;
+  }
+
+  .reta-eq-arena__meta,
+  .reta-eq-arena__meta--b {
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  .reta-eq-arena__name {
+    font-size: 0.65rem;
+    letter-spacing: 0.07em;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    line-height: 1.2;
+    max-width: 100%;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  .reta-eq-arena__logo,
+  .reta-eq-arena .reta-eq-logo.reta-eq-arena__logo {
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  .reta-eq-arena__digit {
+    font-size: clamp(2.15rem, 9.5vw, 2.75rem);
+  }
+
+  .reta-eq-arena__vs {
+    font-size: 0.82rem;
+  }
+
+  .reta-eq-arena__progress {
+    font-size: 0.58rem;
+  }
+
+  .reta-eq-arena__center {
+    padding: 0 0.05rem;
+  }
+}
+
 @media (min-width: 640px) {
   .reta-eq-arena__board {
     padding: 1.35rem 1.35rem 1.15rem;
