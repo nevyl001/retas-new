@@ -2845,9 +2845,7 @@
   position: relative;
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  display: block;
   padding: 0;
   border-radius: 1rem;
   border: 2px solid rgba(255, 255, 255, 0.14);
@@ -2872,7 +2870,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 20%;
+  object-position: center 12%;
 }
 
 .reta-eq-cara__scrim {
@@ -2883,10 +2881,16 @@
     linear-gradient(
       180deg,
       rgba(8, 9, 13, 0.72) 0%,
-      rgba(8, 9, 13, 0.2) 22%,
-      transparent 40%,
-      rgba(8, 9, 13, 0.55) 68%,
-      rgba(8, 9, 13, 0.92) 100%
+      rgba(8, 9, 13, 0.16) 20%,
+      transparent 38%,
+      transparent 78%,
+      rgba(8, 9, 13, 0.22) 100%
+    ),
+    linear-gradient(
+      125deg,
+      transparent 52%,
+      rgba(8, 9, 13, 0.35) 78%,
+      rgba(8, 9, 13, 0.72) 100%
     );
 }
 
@@ -2915,7 +2919,10 @@
 }
 
 .reta-eq-cara__top {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 2;
   display: flex;
   align-items: center;
@@ -3032,18 +3039,28 @@
 }
 
 .reta-eq-cara__foot {
-  position: relative;
+  position: absolute;
+  left: 0;
+  bottom: 0;
   z-index: 2;
-  text-align: center;
+  text-align: left;
   min-width: 0;
-  padding: 0.45rem 0.4rem 0.5rem;
+  max-width: 74%;
+  padding: 0.32rem 0.5rem 0.38rem 0.42rem;
+  border-radius: 0 0.55rem 0 0;
+  background: linear-gradient(
+    135deg,
+    rgba(8, 9, 13, 0.9) 0%,
+    rgba(8, 9, 13, 0.62) 58%,
+    transparent 100%
+  );
 }
 
 .reta-eq-cara__name {
   margin: 0;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #fff;
   white-space: nowrap;
@@ -3055,8 +3072,8 @@
 .reta-eq-cara__pais-foot {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-top: 0.28rem;
+  justify-content: flex-start;
+  margin-top: 0.16rem;
   line-height: 0;
 }
 
