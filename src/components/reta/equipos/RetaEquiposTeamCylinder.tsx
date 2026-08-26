@@ -131,22 +131,21 @@ const CylinderCard: React.FC<{
 
         <header className="reta-eq-cara__top">
           {lado ? <span className="reta-eq-cara__lado">{lado}</span> : <span />}
-          {pais ? (
-            <span className="reta-eq-cara__pais">
-              <JugadorPaisBadge
-                codigo={player.nacionalidad}
-                size="sm"
-                showCode={false}
-              />
-              <span>{pais.codigo}</span>
-            </span>
-          ) : null}
         </header>
 
         <footer className="reta-eq-cara__foot">
           <p className="reta-eq-cara__name">{surname}</p>
           {pais ? (
-            <span className="reta-eq-cara__pais-name">{pais.nombre}</span>
+            <span
+              className="reta-eq-cara__pais-foot"
+              aria-label={pais.nombre}
+            >
+              <JugadorPaisBadge
+                codigo={player.nacionalidad}
+                size="sm"
+                showCode={false}
+              />
+            </span>
           ) : null}
         </footer>
       </article>
