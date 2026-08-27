@@ -273,6 +273,35 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
     expect(deleteLiga).toHaveBeenCalledWith("liga-1");
   });
 
+  it("liga en curso no muestra «Regenerar calendario»", async () => {
+    await renderLiga(
+      baseDetalle({
+        estado: "in_progress",
+        inscripciones: [
+          { jugador_id: "j1", puntos: 0 } as LigaDetalle["inscripciones"][number],
+          { jugador_id: "j2", puntos: 0 } as LigaDetalle["inscripciones"][number],
+          { jugador_id: "j3", puntos: 0 } as LigaDetalle["inscripciones"][number],
+          { jugador_id: "j4", puntos: 0 } as LigaDetalle["inscripciones"][number],
+        ],
+        jornadas: [
+          {
+            id: "j1",
+            liga_id: "liga-1",
+            numero: 1,
+            estado: "upcoming",
+            fecha: null,
+            puntos_aplicados: false,
+          } as LigaDetalle["jornadas"][number],
+        ],
+      })
+    );
+
+    const buttons = Array.from(container.querySelectorAll("button")).map(
+      (b) => b.textContent
+    );
+    expect(buttons).not.toContain("Regenerar calendario");
+  });
+
   it("una liga finalizada no ofrece «Iniciar liga» ni «Reiniciar liga» (misma lógica de siempre)", async () => {
     await renderLiga(
       baseDetalle({

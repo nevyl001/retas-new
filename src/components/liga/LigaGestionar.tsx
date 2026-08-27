@@ -298,6 +298,8 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
   const puedeRegenerar = useMemo(() => {
     if (!detalle || detalle.estado === "completed") return false;
+    // Calendario editable solo antes de arrancar; en curso → «Reiniciar liga».
+    if (detalle.estado === "in_progress") return false;
     if (isParejasFijasPlayoffs(detalle.modalidad)) {
       return detalle.equipos.length >= PLAYOFFS_MIN_TEAMS;
     }
@@ -705,9 +707,13 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
       {calendarioStale && ligaEditable && (
         <div className="liga-banner liga-banner--warn" role="status">
-          {esParejasFijas
-            ? "Las parejas inscritas no coinciden con el calendario actual. Usa «Regenerar calendario» para actualizar jornadas."
-            : "Los inscritos no coinciden con el calendario actual. Usa «Regenerar calendario» para actualizar jornadas y parejas."}
+          {detalle.estado === "in_progress"
+            ? esParejasFijas
+              ? "Las parejas inscritas no coinciden con el calendario actual. Con la liga en curso, usa «Reiniciar liga» si necesitas volver a generar jornadas."
+              : "Los inscritos no coinciden con el calendario actual. Con la liga en curso, usa «Reiniciar liga» si necesitas volver a generar jornadas y parejas."
+            : esParejasFijas
+              ? "Las parejas inscritas no coinciden con el calendario actual. Usa «Regenerar calendario» para actualizar jornadas."
+              : "Los inscritos no coinciden con el calendario actual. Usa «Regenerar calendario» para actualizar jornadas y parejas."}
         </div>
       )}
 
