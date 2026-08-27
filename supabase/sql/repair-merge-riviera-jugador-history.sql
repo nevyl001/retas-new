@@ -207,6 +207,26 @@ BEGIN
   DELETE FROM public.jugador_stats
   WHERE jugador_id = v_source_jugador_id;
 
+  -- Soltar FK canonical si la identidad source sigue viva con otro perfil local
+  IF to_regclass('public.riviera_official_player_identity') IS NOT NULL THEN
+    UPDATE public.riviera_official_player_identity i
+    SET canonical_riviera_jugador_id = (
+      SELECT pl.riviera_jugador_id
+      FROM public.riviera_official_player_profile_link pl
+      WHERE pl.official_player_key = i.official_player_key
+        AND pl.riviera_jugador_id IS DISTINCT FROM v_source_jugador_id
+      ORDER BY pl.created_at
+      LIMIT 1
+    )
+    WHERE i.canonical_riviera_jugador_id = v_source_jugador_id
+      AND EXISTS (
+        SELECT 1
+        FROM public.riviera_official_player_profile_link pl
+        WHERE pl.official_player_key = i.official_player_key
+          AND pl.riviera_jugador_id IS DISTINCT FROM v_source_jugador_id
+      );
+  END IF;
+
   IF to_regclass('public.riviera_jugador_import_blocklist') IS NOT NULL
      AND v_source_org IS NOT NULL THEN
     BEGIN
@@ -220,6 +240,31 @@ BEGIN
       WHEN OTHERS THEN
         NULL;
     END;
+  END IF;
+
+  -- Reasignar inscripciones abiertas y duelos (FK RESTRICT / histórico)
+  IF to_regclass('public.tournament_open_registration_entries') IS NOT NULL THEN
+    UPDATE public.tournament_open_registration_entries e
+    SET
+      riviera_jugador_id = v_target_jugador_id,
+      riviera_id = p_target_riviera_id,
+      official_player_key = v_target_key,
+      updated_at = now()
+    WHERE e.riviera_jugador_id = v_source_jugador_id;
+  END IF;
+
+  IF to_regclass('public.duelos_2v2') IS NOT NULL THEN
+    UPDATE public.duelos_2v2
+    SET
+      pareja_a_j1_id = CASE WHEN pareja_a_j1_id = v_source_jugador_id THEN v_target_jugador_id ELSE pareja_a_j1_id END,
+      pareja_a_j2_id = CASE WHEN pareja_a_j2_id = v_source_jugador_id THEN v_target_jugador_id ELSE pareja_a_j2_id END,
+      pareja_b_j1_id = CASE WHEN pareja_b_j1_id = v_source_jugador_id THEN v_target_jugador_id ELSE pareja_b_j1_id END,
+      pareja_b_j2_id = CASE WHEN pareja_b_j2_id = v_source_jugador_id THEN v_target_jugador_id ELSE pareja_b_j2_id END,
+      updated_at = now()
+    WHERE pareja_a_j1_id = v_source_jugador_id
+       OR pareja_a_j2_id = v_source_jugador_id
+       OR pareja_b_j1_id = v_source_jugador_id
+       OR pareja_b_j2_id = v_source_jugador_id;
   END IF;
 
   DELETE FROM public.riviera_jugadores
@@ -254,8 +299,7 @@ REVOKE ALL ON FUNCTION public.admin_merge_riviera_jugador_history(text, text, bo
 COMMENT ON FUNCTION public.admin_merge_riviera_jugador_history(text, text, boolean) IS
   'Fusiona historial (participaciones/rating/ledger) de un riviera_id duplicado hacia el canónico. p_dry_run=true solo preview.';
 
--- Despliegue + ejecución del caso RIV-00000289 → RIV-00000128
-SELECT public.admin_merge_riviera_jugador_history('RIV-00000289', 'RIV-00000128', true) AS preview;
-
--- Tras validar preview, descomentar y ejecutar:
--- SELECT public.admin_merge_riviera_jugador_history('RIV-00000289', 'RIV-00000128', false) AS applied;
+-- Caso RIV-00000003 → RIV-00000312 (Padelito; source tiene 2 perfiles locales → 2 pasos)
+-- SELECT public.admin_merge_riviera_jugador_history('RIV-00000003', 'RIV-00000312', true) AS preview;
+-- SELECT public.admin_merge_riviera_jugador_history('RIV-00000003', 'RIV-00000312', false) AS pass1;
+-- SELECT public.admin_merge_riviera_jugador_history('RIV-00000003', 'RIV-00000312', false) AS pass2;
