@@ -81,7 +81,9 @@ DECLARE
   v_official_key uuid;
   v_deleted_count integer := 0;
   v_jid uuid;
+  v_pid uuid;
   v_rebuilt uuid[] := ARRAY[]::uuid[];
+  v_ids_to_reverse uuid[];
 BEGIN
   IF p_organizador_id IS NULL OR p_view_jugador_id IS NULL OR p_participacion_id IS NULL THEN
     RAISE EXCEPTION 'Parámetros incompletos';
@@ -140,13 +142,23 @@ BEGIN
     )
     ON CONFLICT DO NOTHING;
 
-    DELETE FROM public.jugador_participaciones jp
+    SELECT array_agg(jp.id) INTO v_ids_to_reverse
+    FROM public.jugador_participaciones jp
     WHERE jp.tipo_evento::text = v_part.tipo_evento
       AND jp.evento_id = v_part.evento_id
       AND jp.jugador_id IN (
         SELECT linked.riviera_jugador_id
         FROM public._riviera_official_jugador_ids_for_key(v_official_key) linked
       );
+
+    IF v_ids_to_reverse IS NOT NULL THEN
+      FOREACH v_pid IN ARRAY v_ids_to_reverse LOOP
+        PERFORM public._reverse_ledger_for_participacion_safe(v_pid);
+      END LOOP;
+    END IF;
+
+    DELETE FROM public.jugador_participaciones jp
+    WHERE jp.id = ANY(coalesce(v_ids_to_reverse, ARRAY[]::uuid[]));
 
     GET DIAGNOSTICS v_deleted_count = ROW_COUNT;
 
@@ -181,6 +193,8 @@ BEGIN
       p_organizador_id
     )
     ON CONFLICT DO NOTHING;
+
+    PERFORM public._reverse_ledger_for_participacion_safe(p_participacion_id);
 
     DELETE FROM public.jugador_participaciones
     WHERE id = p_participacion_id;
@@ -217,6 +231,6 @@ COMMENT ON FUNCTION public.is_jugador_participacion_excluded(uuid, text, uuid) I
   'Comprueba tombstone de participación. Solo lectura ROMC (_resolve_official_player_key).';
 
 COMMENT ON FUNCTION public.delete_jugador_participacion_linked(uuid, uuid, uuid) IS
-  'Elimina un evento del historial en TODOS los perfiles ROMC enlazados, registra exclusión y recalcula stats.';
+  'Elimina un evento del historial en TODOS los perfiles ROMC enlazados, revierte ledger oficial, registra exclusión y recalcula stats.';
 
 NOTIFY pgrst, 'reload schema';
