@@ -1,5 +1,5 @@
 import { computeStandingDif } from "../utils/standingsDisplay";
-import type { TeamStandingRow } from "./standingsUtils";
+import type { PairWithStats, TeamStandingRow } from "./standingsUtils";
 
 export type TeamWinnerCelebrateStats = Pick<
   TeamStandingRow,
@@ -28,6 +28,29 @@ export function teamStandingRowToWinnerStats(
     pp: row.pp,
     puntosTorneo: row.puntosTorneo,
   };
+}
+
+export function pairWithStatsToWinnerStats(
+  pair: PairWithStats
+): TeamWinnerCelebrateStats {
+  return {
+    points: pair.points,
+    pointsReceived: pair.pointsReceived,
+    matchesPlayed: pair.matchesPlayed,
+    pg: pair.pg,
+    pp: pair.pp,
+    puntosTorneo: pair.puntosTorneo,
+  };
+}
+
+/** Mejor pareja del duelo: la de mayor games a favor (mismo orden que clasificación por parejas). */
+export function resolveBestPairByGamesFor(
+  sortedPairs: PairWithStats[]
+): PairWithStats | null {
+  const best = sortedPairs[0];
+  if (!best) return null;
+  if (best.matchesPlayed <= 0 && best.points <= 0) return null;
+  return best;
 }
 
 /** Tarjetas de stats para celebración (games acumulados = criterio del dual meet). */

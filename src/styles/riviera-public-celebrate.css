@@ -596,6 +596,24 @@
 
 /* —— Tarjeta equipo (dual meet) lista para compartir / screenshot móvil —— */
 .ro-pub-celebrate--team-share {
+  margin-bottom: 0;
+}
+
+.ro-pub-celebrate--best-pair {
+  margin-top: 1.25rem;
+}
+
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__badge {
+  border-color: rgba(255, 255, 255, 0.22);
+  color: rgba(244, 241, 235, 0.92);
+}
+
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__heroes {
+  justify-content: center;
+  gap: 1.35rem;
+}
+
+.ro-pub-celebrate--team-share {
   margin: 0.65rem 0 0.85rem;
 }
 

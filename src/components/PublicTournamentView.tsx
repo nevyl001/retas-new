@@ -21,6 +21,8 @@ import {
 import { resolveRetaStandingsHelpMode } from "../lib/standingsHelpMode";
 import {
   buildTeamWinnerCelebrateStatCards,
+  pairWithStatsToWinnerStats,
+  resolveBestPairByGamesFor,
   teamStandingRowToWinnerStats,
 } from "../lib/teamWinnerCelebrate";
 import {
@@ -767,6 +769,64 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     [pairsWithStats, standingsMatches, games]
   );
 
+  const bestPairRow = useMemo(() => {
+    if (!isTeamsPublicView || sortedPairs.length === 0) return null;
+    return resolveBestPairByGamesFor(sortedPairs);
+  }, [isTeamsPublicView, sortedPairs]);
+
+  const bestPairCelebrateStats = useMemo(() => {
+    if (!bestPairRow) return undefined;
+    return buildTeamWinnerCelebrateStatCards(
+      pairWithStatsToWinnerStats(bestPairRow)
+    );
+  }, [bestPairRow]);
+
+  const bestPairTeamLabel = useMemo(() => {
+    if (!bestPairRow || !teamConfig?.pairToTeam || !teamConfig.teamNames?.length) {
+      return null;
+    }
+    const teamIndex = teamConfig.pairToTeam[bestPairRow.id];
+    if (teamIndex == null) return null;
+    return teamConfig.teamNames[teamIndex]?.trim() || null;
+  }, [bestPairRow, teamConfig]);
+
+  const bestPairAvatars = useMemo((): PublicRetaWinnerAvatar[] => {
+    if (!showWinner || !bestPairRow) return [];
+    const pair = pairs.find((p) => p.id === bestPairRow.id) ?? bestPairRow;
+    const slots: Array<{ legacyId: string; fallbackName: string }> = [
+      {
+        legacyId: pair.player1_id,
+        fallbackName: pairPlayer1DisplayName(pair),
+      },
+      {
+        legacyId: pair.player2_id,
+        fallbackName: pairPlayer2DisplayName(pair),
+      },
+    ];
+    const avatars: PublicRetaWinnerAvatar[] = [];
+    for (const slot of slots) {
+      const legacyId = slot.legacyId?.trim();
+      if (!legacyId) continue;
+      const identity = playerIdentityByLegacyId[legacyId];
+      const resolvedPairPlayers = pairPlayersByPairId[pair.id] ?? [];
+      const fromPair = resolvedPairPlayers.find(
+        (pl) => pl.id === legacyId || pl.name === slot.fallbackName
+      );
+      avatars.push({
+        name: identity?.nombre || fromPair?.name || slot.fallbackName,
+        fotoUrl: identity?.fotoUrl ?? fromPair?.fotoUrl ?? null,
+        jugadorId: legacyId,
+      });
+    }
+    return avatars;
+  }, [
+    showWinner,
+    bestPairRow,
+    pairs,
+    playerIdentityByLegacyId,
+    pairPlayersByPairId,
+  ]);
+
   const standingRows = useMemo((): PublicRetaStandingRow[] => {
     if (teamStandings && teamStandings.length > 0) {
       return teamStandings.map((row) => ({
@@ -1476,6 +1536,29 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             stats={teamWinnerCelebrateStats}
             winners={teamWinnerPlayerAvatars}
             shareable
+          />
+        )}
+
+      {showWinner &&
+        showMatchesSection &&
+        isTeamsPublicView &&
+        bestPairRow &&
+        bestPairAvatars.length > 0 && (
+          <PublicRetaWinnerSection
+            id="reta-equipos-mejor-pareja"
+            className="ro-pub-celebrate--best-pair"
+            badge="Mejor pareja"
+            title={formatPairLabel(bestPairRow.id)}
+            subtitle={
+              bestPairTeamLabel
+                ? `Más games a favor del duelo · ${bestPairTeamLabel}`
+                : "Más games a favor del duelo"
+            }
+            torneoNombre={publicTournamentName ?? undefined}
+            formatKicker={TEAMS_PUBLIC_FORMAT_LABEL}
+            fraseMotivacional="La dupla más letal de la pista."
+            stats={bestPairCelebrateStats}
+            winners={bestPairAvatars}
           />
         )}
 

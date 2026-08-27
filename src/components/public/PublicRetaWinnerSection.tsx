@@ -30,6 +30,8 @@ export const PublicRetaWinnerSection: React.FC<{
   subtitle?: string;
   torneoNombre?: string;
   formatKicker?: string;
+  badge?: string;
+  headline?: string;
   fraseMotivacional?: string;
   participantesNote?: string;
   stats?: TeamWinnerCelebrateStatCard[];
@@ -37,18 +39,22 @@ export const PublicRetaWinnerSection: React.FC<{
   runnersUp?: PublicRetaRunnerUp[];
   /** Tarjeta lista para compartir: stats + redes Riviera Open */
   shareable?: boolean;
+  className?: string;
 }> = ({
   id,
   title,
   subtitle,
   torneoNombre,
   formatKicker,
+  badge = "Ganadores",
+  headline = "¡Felicidades!",
   fraseMotivacional = DEFAULT_MOTIVATIONAL,
   participantesNote,
   stats,
   winners,
   runnersUp,
   shareable = false,
+  className,
 }) => {
   const { nombre: organizerName } = useBranding();
   const hasWinners = Boolean(winners && winners.length > 0);
@@ -66,6 +72,7 @@ export const PublicRetaWinnerSection: React.FC<{
         "ro-pub-celebrate--winners",
         "te-pub-fade-in",
         isTeamShareCard ? "ro-pub-celebrate--team-share" : "",
+        className,
       ]
         .filter(Boolean)
         .join(" ")}
@@ -78,8 +85,8 @@ export const PublicRetaWinnerSection: React.FC<{
           showClubIdentity={!shareable}
         />
 
-        <p className="ro-pub-celebrate__badge">Ganadores</p>
-        <h2 className="ro-pub-celebrate__headline">¡Felicidades!</h2>
+        <p className="ro-pub-celebrate__badge">{badge}</p>
+        <h2 className="ro-pub-celebrate__headline">{headline}</h2>
 
         {isTeamShareCard ? (
           <p className="ro-pub-celebrate__names ro-pub-celebrate__names--team">
