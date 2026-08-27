@@ -53,8 +53,7 @@ DECLARE
   v_ledger record;
   v_owner uuid;
   v_part_jugador_id uuid;
-  v_official_key uuid;
-  v_can_manage boolean := false;
+  v_home_org uuid;
 BEGIN
   IF p_participacion_id IS NULL THEN
     RETURN jsonb_build_object('status', 'skipped', 'reason', 'null_participacion_id');
@@ -77,21 +76,11 @@ BEGIN
     RAISE EXCEPTION 'Sin permiso para revertir esta participación';
   END IF;
 
-  IF public.is_master_admin() OR v_owner = auth.uid() THEN
-    v_can_manage := true;
-  ELSE
-    v_official_key := public.resolve_official_player_key_for_jugador(v_part_jugador_id);
-    IF v_official_key IS NOT NULL THEN
-      SELECT EXISTS (
-        SELECT 1
-        FROM public._riviera_official_jugador_ids_for_key(v_official_key) linked
-        INNER JOIN public.riviera_jugadores rj ON rj.id = linked.riviera_jugador_id
-        WHERE rj.organizador_id = auth.uid()
-      ) INTO v_can_manage;
-    END IF;
-  END IF;
+  v_home_org := public._resolve_home_organizador_for_jugador(v_part_jugador_id);
 
-  IF NOT v_can_manage THEN
+  IF NOT public.is_master_admin()
+     AND v_owner IS DISTINCT FROM auth.uid()
+     AND (v_home_org IS NULL OR v_home_org IS DISTINCT FROM auth.uid()) THEN
     RAISE EXCEPTION 'Sin permiso para revertir esta participación';
   END IF;
 

@@ -661,7 +661,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             participaciones={historial}
             categoriaFallback={jugador?.categoria}
             variant="admin"
-            onDelete={handleDeleteParticipacion}
+            onDelete={canDelete ? handleDeleteParticipacion : undefined}
             deletingId={deletingHistId}
           />
         )}

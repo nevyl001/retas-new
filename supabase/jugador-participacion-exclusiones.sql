@@ -102,6 +102,11 @@ BEGIN
     RAISE EXCEPTION 'Jugador no encontrado o sin permiso';
   END IF;
 
+  IF NOT public.is_master_admin()
+     AND public._resolve_home_organizador_for_jugador(p_view_jugador_id) IS DISTINCT FROM p_organizador_id THEN
+    RAISE EXCEPTION 'Solo el club de registro puede eliminar eventos del historial';
+  END IF;
+
   SELECT
     jp.id,
     jp.jugador_id,
