@@ -28,6 +28,7 @@ import {
   type PlayoffsH2HMatch,
   type PlayoffsStandingRow,
 } from "../lib/liga/parejasFijasPlayoffsStandings";
+import { fireLigaInscripcionRankingSync } from "./ligaCareerInscripcionSync";
 
 function mapJugador(row: Record<string, unknown>): LigaJugador {
   return {
@@ -162,6 +163,10 @@ export async function createEquipoLiga(
     .single();
 
   if (error) throw new Error(error.message);
+
+  fireLigaInscripcionRankingSync(ligaId, input.jugador1_id, organizadorId);
+  fireLigaInscripcionRankingSync(ligaId, input.jugador2_id, organizadorId);
+
   return mapLigaEquipo({
     ...(data as Record<string, unknown>),
     jugador1: j1,

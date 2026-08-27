@@ -30,6 +30,11 @@ import {
   insertJornadasForLigaParejasFijasPlayoffs,
   recalcularPuntosLigaEquiposPlayoffs,
 } from "./ligaParejasFijasPlayoffsService";
+import {
+  collectLigaParticipantLegacyJugadorIds,
+  ensureLigaInscripcionRankingForLiga,
+  fireLigaInscripcionRankingSync,
+} from "./ligaCareerInscripcionSync";
 import { dedupeLigaJugadoresById } from "../lib/liga/dedupeJugadores";
 import {
   computeParejasFijasMatchTotals,
@@ -898,28 +903,7 @@ export async function inscribirJugador(
 
   if (error) throw new Error(error.message);
 
-  void import("../lib/rivieraJugadores/careerEventPipeline")
-    .then(({ finalizeCareerEvent }) =>
-      finalizeCareerEvent({
-        kind: "liga_inscripcion",
-        organizadorId: uid,
-        ligaId,
-        jugadorId,
-        // Perf batch-1 (2026-08-08): mismo patrón ya probado en Reta.
-        options: { telemetry: true, identityCache: true },
-      })
-    )
-    .then((result) => {
-      if (result && !result.ok) {
-        console.error(
-          "[riviera-jugadores] sync inscripción liga incompleto:",
-          { ligaId, jugadorId, organizadorId: uid, failures: result.failures }
-        );
-      }
-    })
-    .catch((err) =>
-      console.error("[riviera-jugadores] sync inscripción liga:", err)
-    );
+  fireLigaInscripcionRankingSync(ligaId, jugadorId, uid);
 }
 
 export async function desinscribirJugador(
@@ -937,7 +921,7 @@ export async function desinscribirJugador(
 }
 
 export async function startLiga(ligaId: string): Promise<void> {
-  await requireUserId();
+  const uid = await requireUserId();
 
   const detalle = await getLigaById(ligaId);
   if (detalle.estado === "completed") {
@@ -976,6 +960,9 @@ export async function startLiga(ligaId: string): Promise<void> {
     .eq("id", ligaId);
 
   if (uErr) throw new Error(uErr.message);
+
+  const participantIds = collectLigaParticipantLegacyJugadorIds(detalle);
+  void ensureLigaInscripcionRankingForLiga(ligaId, detalle.organizador_id ?? uid, participantIds);
 }
 
 type PartidoJornadaInsert = {
@@ -1369,6 +1356,9 @@ export async function updateScore(
 
   if (jornadaCompleta && jornadaRow?.liga_id) {
     await recalcularPuntosLiga(String(jornadaRow.liga_id));
+    void resyncLigaJornadaCareer(jornadaId).catch((err) =>
+      console.error("[riviera-jugadores] auto-sync jornada liga:", err)
+    );
   }
 }
 
@@ -1454,6 +1444,20 @@ export async function updateScoreParejasFijas(
 
     if (jornadaRow?.liga_id) {
       await recalcularPuntosLiga(String(jornadaRow.liga_id));
+
+      const { data: allPartidos, error: aErr } = await supabase
+        .from("liga_partidos")
+        .select("estado")
+        .eq("jornada_id", jornadaId);
+      const jornadaCompleta =
+        !aErr &&
+        (allPartidos?.length ?? 0) > 0 &&
+        (allPartidos ?? []).every((p) => p.estado === "completed");
+      if (jornadaCompleta) {
+        void resyncLigaJornadaCareer(jornadaId).catch((err) =>
+          console.error("[riviera-jugadores] auto-sync jornada liga:", err)
+        );
+      }
     }
   }
 
@@ -1825,6 +1829,14 @@ export async function resyncLigaJornadaCareer(
   }
 
   try {
+    const ligaId = String(jornada.liga_id);
+    const detalle = await getLigaById(ligaId);
+    await ensureLigaInscripcionRankingForLiga(
+      ligaId,
+      userId,
+      collectLigaParticipantLegacyJugadorIds(detalle)
+    );
+
     const { repairLigaJornadaCareerSync } = await import(
       "../lib/rivieraJugadores/repairCareerClose"
     );
@@ -1867,6 +1879,13 @@ export async function resyncLigaPodioCareer(
 ): Promise<LigaCareerCloseResult> {
   const uid = await requireUserId();
   try {
+    const detalle = await getLigaById(ligaId);
+    await ensureLigaInscripcionRankingForLiga(
+      ligaId,
+      uid,
+      collectLigaParticipantLegacyJugadorIds(detalle)
+    );
+
     const { repairLigaPodioCareerSync } = await import(
       "../lib/rivieraJugadores/repairCareerClose"
     );
