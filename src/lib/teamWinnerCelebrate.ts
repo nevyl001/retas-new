@@ -43,6 +43,6 @@ export function buildTeamWinnerCelebrateStatCards(
     { value: difLabel, label: "Diferencia" },
     { value: stats.pg, label: "Partidos ganados" },
     { value: stats.matchesPlayed, label: "Partidos jugados" },
-    { value: stats.puntosTorneo, label: "Puntos torneo" },
+    { value: stats.puntosTorneo, label: "Puntos juegos ganados" },
   ];
 }
