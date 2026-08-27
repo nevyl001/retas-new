@@ -2280,6 +2280,37 @@
   .reta-eq-arena__center {
     padding: 0 0.05rem;
   }
+
+  .reta-eq-arena__slots {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: stretch;
+    gap: 0.35rem;
+  }
+
+  .reta-eq-arena__slot {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    max-width: none;
+    padding: 0.45rem 0.2rem;
+  }
+
+  .reta-eq-arena__slot-code {
+    font-size: 0.56rem;
+    letter-spacing: 0.1em;
+  }
+
+  .reta-eq-arena__slot-title {
+    font-size: 0.58rem;
+    letter-spacing: 0.05em;
+  }
+
+  .reta-eq-arena__slot-detail {
+    font-size: 0.52rem;
+    letter-spacing: 0.03em;
+    line-height: 1.15;
+  }
 }
 
 @media (min-width: 640px) {
