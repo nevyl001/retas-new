@@ -26,6 +26,7 @@ import { useVisiblePolling } from "../../hooks/useVisiblePolling";
 import { PublicModeShell } from "../platform/PublicModeShell";
 import { StatusBadge } from "../platform/StatusBadge";
 import { PublicHero } from "../public/peds";
+import { LigaPubProgramaMatchCard } from "./LigaPubProgramaMatchCard";
 import { LigaPublicParejasStandings } from "./LigaPublicParejasStandings";
 import "./liga-public-pantalla.css";
 import "./liga-public-programa.css";
@@ -480,62 +481,15 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                             </p>
                           ) : esParejasFijas ? (
                             <ul className="liga-pantalla-matchups liga-pub-programa__matchups">
-                              {matchups.map((m) => (
-                                <li
+                              {matchups.map((m, matchIndex) => (
+                                <LigaPubProgramaMatchCard
                                   key={m.id}
-                                  className="liga-pantalla-matchup liga-pub-programa__match"
-                                >
-                                  <div className="liga-pub-programa__sides">
-                                    <span
-                                      className={`liga-pantalla-matchup__team${
-                                        m.winnerSide === 1
-                                          ? " liga-pub-programa__team--win"
-                                          : m.winnerSide === 2
-                                            ? " liga-pub-programa__team--loss"
-                                            : ""
-                                      }`}
-                                    >
-                                      {m.local}
-                                    </span>
-                                    {m.visitante ? (
-                                      <>
-                                        <span
-                                          className="liga-pantalla-matchup__vs"
-                                          aria-hidden
-                                        >
-                                          vs
-                                        </span>
-                                        <span
-                                          className={`liga-pantalla-matchup__team${
-                                            m.winnerSide === 2
-                                              ? " liga-pub-programa__team--win"
-                                              : m.winnerSide === 1
-                                                ? " liga-pub-programa__team--loss"
-                                                : ""
-                                          }`}
-                                        >
-                                          {m.visitante}
-                                        </span>
-                                      </>
-                                    ) : null}
-                                  </div>
-                                  <div className="liga-pub-programa__result-block">
-                                    {m.score ? (
-                                      <p className="liga-pantalla-matchup__score">
-                                        {m.score}
-                                      </p>
-                                    ) : (
-                                      <p className="liga-pub-programa__pending">
-                                        Por jugar
-                                      </p>
-                                    )}
-                                    {m.programacion ? (
-                                      <p className="liga-pantalla-matchup__meta">
-                                        {m.programacion}
-                                      </p>
-                                    ) : null}
-                                  </div>
-                                </li>
+                                  match={m}
+                                  partido={j.partidos?.find((p) => p.id === m.id)}
+                                  esParejasFijas={esParejasFijas}
+                                  jornadaFecha={j.fecha}
+                                  matchIndex={matchIndex}
+                                />
                               ))}
                             </ul>
                           ) : (

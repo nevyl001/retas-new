@@ -226,11 +226,294 @@
   color: var(--liga-prog-ink);
 }
 
-/* Match rows — editorial, not spreadsheet cells */
-.liga-pantalla--liga-fijas .liga-pub-programa__matchups.liga-pantalla-matchups {
-  gap: 0.55rem;
+.liga-pantalla--liga-fijas .liga-pub-programa__card .liga-pantalla-ronda__badge--done {
+  color: var(--ro-success, #34c759);
+  border-color: color-mix(in srgb, var(--ro-success, #34c759) 35%, transparent);
+  background: color-mix(in srgb, var(--ro-success, #34c759) 12%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ro-success, #34c759) 18%, transparent);
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  padding: 0.32rem 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
+.liga-pantalla--liga-fijas .liga-pub-programa__card .liga-pantalla-ronda__badge--done::before {
+  content: "";
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: var(--ro-success, #34c759);
+  flex-shrink: 0;
+}
+
+/* Match rows — broadcast scoreboard (2 filas, sin colisión de nombres) */
+.liga-pantalla--liga-fijas .liga-pub-programa__matchups.liga-pantalla-matchups {
+  gap: 0.65rem;
+}
+
+.liga-pub-programa-match {
+  list-style: none;
+  margin: 0;
+  padding: 0.85rem 0.8rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, #fff 10%, transparent);
+  background: color-mix(in srgb, var(--liga-prog-surface) 88%, rgba(14, 15, 20, 0.92));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 color-mix(in srgb, #fff 4%, transparent);
+  transition:
+    border-color var(--motion-micro, 180ms),
+    transform var(--motion-micro, 180ms),
+    box-shadow var(--motion-micro, 180ms);
+}
+
+.liga-pub-programa-match--animated {
+  opacity: 0;
+  animation: liga-prog-match-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(0.05s + var(--liga-match-i, 0) * 0.05s);
+}
+
+@keyframes liga-prog-match-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.liga-pub-programa-match__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.45rem;
+  margin-bottom: 0.55rem;
+  border-bottom: 1px solid color-mix(in srgb, #fff 6%, transparent);
+  font-size: 0.625rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--liga-prog-muted);
+}
+
+.liga-pub-programa-match__head-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.liga-pub-programa-match__live-dot {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--liga-prog-muted) 70%, transparent);
+  flex-shrink: 0;
+}
+
+.liga-pub-programa-match__live-dot--pulse {
+  background: var(--ro-success, #34c759);
+  animation: liga-prog-live-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes liga-prog-live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+.liga-pub-programa-match__cancha,
+.liga-pub-programa-match__date {
+  line-height: 1.2;
+}
+
+.liga-pub-programa-match__teams {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.liga-pub-programa-match__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, #000 22%, transparent);
+  transition:
+    background-color var(--motion-micro, 180ms),
+    border-color var(--motion-micro, 180ms),
+    opacity var(--motion-micro, 180ms);
+}
+
+.liga-pub-programa-match__row--win {
+  background: var(--ro-pub-gold-dim, rgba(201, 162, 39, 0.1));
+  border-color: var(--ro-pub-gold-border, rgba(201, 162, 39, 0.32));
+  box-shadow: 0 0 14px var(--ro-pub-gold-glow, rgba(201, 162, 39, 0.14));
+}
+
+.liga-pub-programa-match__row--loss {
+  opacity: 0.58;
+}
+
+.liga-pub-programa-match__names {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  flex: 1;
+  padding-right: 0.35rem;
+}
+
+.liga-pub-programa-match__crown {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  line-height: 1;
+  color: var(--ro-pub-gold, var(--ro-medal-gold, #c9a227));
+}
+
+.liga-pub-programa-match__name {
+  min-width: 0;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--liga-prog-ink) 78%, transparent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liga-pub-programa-match__name--win {
+  color: var(--ro-pub-gold, var(--ro-medal-gold, #c9a227));
+  font-weight: 750;
+}
+
+.liga-pub-programa-match__name-sep {
+  font-weight: 400;
+  color: color-mix(in srgb, var(--liga-prog-ink) 28%, transparent);
+}
+
+.liga-pub-programa-match__sets {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  flex-shrink: 0;
+}
+
+.liga-pub-programa-match__set {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.65rem;
+  padding: 0 0.2rem;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, #fff 8%, transparent);
+  background: color-mix(in srgb, #fff 5%, transparent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  color: color-mix(in srgb, var(--liga-prog-ink) 55%, transparent);
+}
+
+.liga-pub-programa-match__set--won {
+  background: var(--ro-pub-gold-dim, rgba(201, 162, 39, 0.18));
+  border-color: var(--ro-pub-gold-border, rgba(201, 162, 39, 0.38));
+  color: var(--ro-pub-gold, var(--ro-medal-gold, #c9a227));
+}
+
+.liga-pub-programa-match__set--pending {
+  min-width: 1.5rem;
+  color: var(--liga-prog-muted);
+  font-weight: 600;
+}
+
+.liga-pub-programa-match__wo {
+  margin: 0 0 0.45rem;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--liga-prog-muted);
+}
+
+.liga-pub-programa-match__pending {
+  margin: 0.45rem 0 0;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--liga-prog-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .liga-pub-programa-match:hover {
+    border-color: color-mix(in srgb, #fff 16%, transparent);
+    box-shadow:
+      0 14px 32px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent);
+  }
+}
+
+@media (max-width: 767px) {
+  .liga-pub-programa-match {
+    padding: 0.75rem 0.7rem;
+  }
+
+  .liga-pub-programa-match__name {
+    font-size: 0.78rem;
+  }
+
+  .liga-pub-programa-match__set {
+    min-width: 1.4rem;
+    height: 1.55rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .liga-pub-programa-match__row {
+    padding: 0.4rem 0.42rem;
+    gap: 0.4rem;
+  }
+
+  .liga-pub-programa-match__name {
+    font-size: 0.74rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liga-pub-programa-match--animated {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .liga-pub-programa-match__live-dot--pulse {
+    animation: none !important;
+  }
+}
+
+/* Legacy horizontal matchup (solo modalidad no parejas fijas) */
 .liga-pantalla--liga-fijas .liga-pub-programa__match.liga-pantalla-matchup {
   display: flex;
   flex-direction: column;
