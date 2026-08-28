@@ -47,8 +47,9 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.is_jugador_visible_sitio_oficial(uuid) TO anon, authenticated;
 
--- ── Vista sitio oficial (sin security_invoker: anon no hereda RLS del organizador) ──
-CREATE OR REPLACE VIEW public.riviera_jugadores_sitio_oficial AS
+-- ── Vista sitio oficial (security_invoker: anon usa RLS + filtros de la vista) ──
+CREATE OR REPLACE VIEW public.riviera_jugadores_sitio_oficial
+WITH (security_invoker = true) AS
 SELECT
   rj.id,
   rj.organizador_id,
@@ -80,7 +81,7 @@ WHERE rj.estado = 'activo'
   AND COALESCE(rj.suma_ranking, true) = true;
 
 COMMENT ON VIEW public.riviera_jugadores_sitio_oficial IS
-  'Jugadores con «Sitio oficial» en admin. Filtrar por organizador_id o usar riviera_ranking_sitio_oficial_global.';
+  'Ranking público sitio oficial. security_invoker=true: anon respeta RLS (visible_publico + ranking activo).';
 
 GRANT SELECT ON public.riviera_jugadores_sitio_oficial TO anon, authenticated;
 

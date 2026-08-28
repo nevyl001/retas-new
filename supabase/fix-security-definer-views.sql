@@ -2,6 +2,9 @@
 -- Corregir vistas SECURITY DEFINER (Advisor Supabase)
 --   • public.pairs_with_contact
 --   • public.notificaciones_eventos_queue_resumen
+--   • public.riviera_jugadores_sitio_oficial (pública — ver 0038)
+--   • public._career_participacion_host_audit (interna — ver 0038)
+--   • public._historical_orphan_parent_participaciones (interna — ver 0038)
 --
 -- NO afecta vistas públicas del torneo (/public/...). Esas usan tablas + RLS.
 --
