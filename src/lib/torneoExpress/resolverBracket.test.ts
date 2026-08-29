@@ -76,14 +76,14 @@ describe("resolverBracket — tabla completa", () => {
       expect(result.slots.length).toBe(caso.slotsCuadro);
       expect(result.slots.filter((s) => s.type === "team").length).toBe(total);
 
-      if (caso.byeExtraSeed != null) {
-        expect(result.byeExtra?.qualifier.seed).toBe(caso.byeExtraSeed);
-        expect(result.byeExtra?.motivo).toBe("impar_en_fase_previa");
-      } else if (caso.enFasePrevia % 2 === 1) {
-        expect(result.byeExtra).not.toBeNull();
-      } else {
-        expect(result.byeExtra).toBeNull();
-      }
+      const byeExtraOk =
+        caso.byeExtraSeed != null
+          ? result.byeExtra?.qualifier.seed === caso.byeExtraSeed &&
+            result.byeExtra?.motivo === "impar_en_fase_previa"
+          : caso.enFasePrevia % 2 === 1
+            ? result.byeExtra !== null
+            : result.byeExtra === null;
+      expect(byeExtraOk).toBe(true);
 
       expect(result.descripcion.length).toBeGreaterThan(0);
     }

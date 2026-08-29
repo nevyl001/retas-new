@@ -9,6 +9,9 @@
  * CASCADE dentro de la RPC). Este test fija que el cliente llama a esa RPC
  * con los parámetros correctos y ya no hace DELETE multi-paso.
  */
+import { supabase } from "../lib/supabaseClient";
+import { deleteTorneoExpress } from "./torneoExpressService";
+
 jest.mock("../lib/supabaseClient", () => ({
   supabase: {
     auth: {
@@ -20,9 +23,6 @@ jest.mock("../lib/supabaseClient", () => ({
   },
   supabasePublicRead: {},
 }));
-
-import { supabase } from "../lib/supabaseClient";
-import { deleteTorneoExpress } from "./torneoExpressService";
 
 const mockRpc = supabase.rpc as jest.Mock;
 const mockFrom = supabase.from as jest.Mock;

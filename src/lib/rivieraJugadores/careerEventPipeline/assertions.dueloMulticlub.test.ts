@@ -1,6 +1,17 @@
 /**
  * Assertions + contrato pipeline: rating de cedidos, severidad, ok con warnings.
  */
+import { supabase } from "../../supabaseClient";
+import { resolveJugadorIdForRating } from "../organizerPlayerAccess";
+import { ensureRivieraIdentity } from "../careerIdentity";
+import { ensureOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
+import {
+  assertCareerEventIntegrity,
+  partitionAssertionFailures,
+} from "./assertions";
+import { getAssertionSeverity } from "./types";
+import { PUNTOS_DUELO_2V2 } from "../rivieraRankingPoints";
+
 jest.mock("../../supabaseClient", () => ({
   supabase: {
     from: jest.fn(),
@@ -20,17 +31,6 @@ jest.mock("../orphanProfileLink", () => ({
   ensureOfficialProfileLinkForParticipacion: jest.fn(),
   requireOfficialProfileLinkForParticipacion: jest.fn(),
 }));
-
-import { supabase } from "../../supabaseClient";
-import { resolveJugadorIdForRating } from "../organizerPlayerAccess";
-import { ensureRivieraIdentity } from "../careerIdentity";
-import { ensureOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
-import {
-  assertCareerEventIntegrity,
-  partitionAssertionFailures,
-} from "./assertions";
-import { getAssertionSeverity } from "./types";
-import { PUNTOS_DUELO_2V2 } from "../rivieraRankingPoints";
 
 const ORG = "org-riviera";
 const LOCAL_CEDIDO = "local-iker-clone";

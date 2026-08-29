@@ -10,6 +10,10 @@ import {
   type PlayerWithOwner,
 } from "./localLegacyIdentity";
 
+import { resolveJugadorIdForOrganizer } from "./organizerPlayerAccess";
+import { linkLegacyPlayerId } from "./rivieraJugadoresService";
+import { supabase } from "../supabaseClient";
+
 jest.mock("./organizerPlayerAccess", () => ({
   resolveJugadorIdForOrganizer: jest.fn(),
 }));
@@ -28,10 +32,6 @@ jest.mock("../supabaseClient", () => ({
     rpc: jest.fn(),
   },
 }));
-
-import { resolveJugadorIdForOrganizer } from "./organizerPlayerAccess";
-import { linkLegacyPlayerId } from "./rivieraJugadoresService";
-import { supabase } from "../supabaseClient";
 
 const resolveMock = resolveJugadorIdForOrganizer as jest.MockedFunction<
   typeof resolveJugadorIdForOrganizer
@@ -72,46 +72,6 @@ function makePlayer(
     created_at: "2026-01-01T00:00:00Z",
     user_id: userId,
   };
-}
-
-type RjRow = {
-  id: string;
-  nombre: string;
-  email: string | null;
-  organizador_id: string;
-  legacy_player_id: string | null;
-};
-
-function mockFetchRj(row: RjRow | null) {
-  fromMock.mockImplementation((table: string) => {
-    if (table === "riviera_jugadores") {
-      return {
-        select: () => ({
-          eq: () => ({
-            maybeSingle: async () => ({ data: row, error: null }),
-          }),
-        }),
-      };
-    }
-    if (table === "players") {
-      return {
-        select: () => ({
-          eq: () => ({
-            maybeSingle: async () => ({ data: null, error: null }),
-          }),
-        }),
-        insert: () => ({
-          select: () => ({
-            single: async () => ({
-              data: makePlayer("new-p", row?.nombre ?? "X", "x@padel.local", "org"),
-              error: null,
-            }),
-          }),
-        }),
-      };
-    }
-    return {};
-  });
 }
 
 describe("Fase 3 — ensureLocalPlayersLegacyForRivieraJugador (Americano/TE/Liga pool)", () => {

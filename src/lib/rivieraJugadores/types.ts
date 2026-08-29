@@ -1,4 +1,9 @@
 import type { RivieraJugadorGenero } from "./genero";
+import type { PlayerPointsBreakdown } from "./playerPointsBreakdown";
+import type { RetaPartidoDetalle } from "./buildRetaPartidosDetalle";
+
+/** Detalle partido a partido en metadata.partidos_detalle (reta_cierre). */
+export type { RetaPartidoDetalle };
 
 export type RivieraJugadorNivel =
   | "iniciación"
@@ -110,11 +115,6 @@ export interface JugadorParticipacion {
   metadata: Record<string, unknown>;
   created_at: string;
 }
-
-/** Detalle partido a partido en metadata.partidos_detalle (reta_cierre). */
-export type { RetaPartidoDetalle } from "./buildRetaPartidosDetalle";
-
-import type { PlayerPointsBreakdown } from "./playerPointsBreakdown";
 
 export interface RivieraJugadorWithStats extends RivieraJugador {
   stats?: JugadorStats | null;

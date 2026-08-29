@@ -1,7 +1,6 @@
 import {
   mergePairToTeamAssignments,
   resizeTeamLogosArray,
-  resizeTeamNamesArray,
 } from "./standingsUtils";
 
 describe("mergePairToTeamAssignments", () => {

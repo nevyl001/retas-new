@@ -1,3 +1,9 @@
+import { supabase, supabasePublicRead } from "../supabaseClient";
+import {
+  fetchRivieraJugadorProfilesByIds,
+  resolvePlayerPublicProfiles,
+} from "./publicPlayerAvatars";
+
 jest.mock("../supabaseClient", () => ({
   supabase: {
     auth: {
@@ -11,12 +17,6 @@ jest.mock("../supabaseClient", () => ({
     rpc: jest.fn(),
   },
 }));
-
-import { supabase, supabasePublicRead } from "../supabaseClient";
-import {
-  fetchRivieraJugadorProfilesByIds,
-  resolvePlayerPublicProfiles,
-} from "./publicPlayerAvatars";
 
 function mockRivieraJugadoresQuery(
   client: jest.Mock,

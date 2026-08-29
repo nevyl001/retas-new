@@ -7,6 +7,9 @@
  * todo antes de borrar. Este test fija que el cliente llama a esa RPC con
  * los parámetros correctos y ya no hace DELETE multi-paso.
  */
+import { supabase } from "../lib/supabaseClient";
+import { deleteLiga } from "./ligaService";
+
 jest.mock("../lib/supabaseClient", () => ({
   supabase: {
     rpc: jest.fn(),
@@ -14,9 +17,6 @@ jest.mock("../lib/supabaseClient", () => ({
     auth: { getUser: jest.fn() },
   },
 }));
-
-import { supabase } from "../lib/supabaseClient";
-import { deleteLiga } from "./ligaService";
 
 const mockRpc = supabase.rpc as jest.Mock;
 const mockFrom = supabase.from as jest.Mock;

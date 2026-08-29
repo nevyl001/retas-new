@@ -129,9 +129,10 @@ describe("matchCourt nullable / Por asignar", () => {
       ],
     });
     expect(plan.kind).toBe("decrease");
-    if (plan.kind === "decrease") {
-      expect(plan.affectedPendingCount).toBe(2);
-      expect(plan.confirmationMessage).toMatch(/sin cancha/);
-    }
+    expect(
+      plan.kind === "decrease" &&
+        plan.affectedPendingCount === 2 &&
+        /sin cancha/.test(plan.confirmationMessage)
+    ).toBe(true);
   });
 });

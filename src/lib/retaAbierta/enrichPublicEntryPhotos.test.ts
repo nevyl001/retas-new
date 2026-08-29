@@ -1,3 +1,11 @@
+import { supabase } from "../supabaseClient";
+import { fetchRivieraJugadorProfilesByIds } from "../rivieraJugadores/publicPlayerAvatars";
+import {
+  clearPublicEntryFotoCacheForTests,
+  enrichPublicEntryPhotos,
+} from "./retaAbiertaService";
+import type { OpenRegistrationPublicDto } from "./types";
+
 jest.mock("../supabaseClient", () => ({
   supabase: {
     rpc: jest.fn(),
@@ -10,14 +18,6 @@ jest.mock("../supabaseClient", () => ({
 jest.mock("../rivieraJugadores/publicPlayerAvatars", () => ({
   fetchRivieraJugadorProfilesByIds: jest.fn().mockResolvedValue(new Map()),
 }));
-
-import { supabase } from "../supabaseClient";
-import { fetchRivieraJugadorProfilesByIds } from "../rivieraJugadores/publicPlayerAvatars";
-import {
-  clearPublicEntryFotoCacheForTests,
-  enrichPublicEntryPhotos,
-} from "./retaAbiertaService";
-import type { OpenRegistrationPublicDto } from "./types";
 
 const baseDto = (): OpenRegistrationPublicDto => ({
   ok: true,

@@ -1,12 +1,12 @@
+import { supabase } from "../supabaseClient";
+import { isOrganizadorRankingPublico } from "./accountControls";
+
 jest.mock("../supabaseClient", () => ({
   supabase: {
     from: jest.fn(),
     rpc: jest.fn(),
   },
 }));
-
-import { supabase } from "../supabaseClient";
-import { isOrganizadorRankingPublico } from "./accountControls";
 
 describe("isOrganizadorRankingPublico", () => {
   beforeEach(() => {

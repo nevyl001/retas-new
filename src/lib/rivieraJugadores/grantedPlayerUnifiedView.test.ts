@@ -1,12 +1,3 @@
-jest.mock("./organizerPlayerAccess", () => ({
-  listGrantedLocalJugadorIdsForSource: jest.fn().mockResolvedValue([]),
-  listMulticlubSiblingProfilesForSource: jest.fn().mockResolvedValue([]),
-}));
-
-jest.mock("./publicCareerLinkage", () => ({
-  fetchPublicCareerJugadorIds: jest.fn().mockResolvedValue(null),
-}));
-
 import {
   applyUnifiedRatingFieldsToJugador,
   dedupeParticipacionesById,
@@ -18,6 +9,15 @@ import type {
   RatingHistorialEntry,
   RivieraJugadorWithStats,
 } from "./types";
+
+jest.mock("./organizerPlayerAccess", () => ({
+  listGrantedLocalJugadorIdsForSource: jest.fn().mockResolvedValue([]),
+  listMulticlubSiblingProfilesForSource: jest.fn().mockResolvedValue([]),
+}));
+
+jest.mock("./publicCareerLinkage", () => ({
+  fetchPublicCareerJugadorIds: jest.fn().mockResolvedValue(null),
+}));
 
 describe("grantedPlayerUnifiedView", () => {
   it("dedupeParticipacionesById fusiona origen y clon local", () => {

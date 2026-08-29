@@ -60,11 +60,12 @@ describe("retaConfigEditRules", () => {
       matches,
     });
     expect(plan.kind).toBe("decrease");
-    if (plan.kind === "decrease") {
-      expect(plan.affectedPendingCount).toBe(1);
-      expect(plan.confirmationMessage).toMatch(/1 partido/);
-      expect(plan.confirmationMessage).not.toMatch(/Actualizar todo/i);
-    }
+    expect(
+      plan.kind === "decrease" &&
+        plan.affectedPendingCount === 1 &&
+        /1 partido/.test(plan.confirmationMessage) &&
+        !/Actualizar todo/i.test(plan.confirmationMessage)
+    ).toBe(true);
   });
 
   it("in_play bloquea championship", () => {

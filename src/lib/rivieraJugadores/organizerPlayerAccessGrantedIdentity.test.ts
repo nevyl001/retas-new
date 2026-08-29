@@ -1,10 +1,10 @@
+import { applyGrantedSourceDisplayToJugador } from "./organizerPlayerAccess";
+import { RivieraJugadorWithStats } from "./types";
+
 jest.mock("../supabaseClient", () => ({
   supabase: { auth: { getSession: jest.fn() }, rpc: jest.fn(), from: jest.fn() },
   supabasePublicRead: { from: jest.fn() },
 }));
-
-import { applyGrantedSourceDisplayToJugador } from "./organizerPlayerAccess";
-import { RivieraJugadorWithStats } from "./types";
 
 function baseJugador(
   overrides: Partial<RivieraJugadorWithStats> = {}

@@ -1,15 +1,15 @@
-jest.mock("../supabaseClient", () => ({
-  supabase: {
-    rpc: jest.fn(),
-  },
-}));
-
 import { supabase } from "../supabaseClient";
 import {
   isJugadorImportBlocked,
   isNombreBlockedLocally,
   registerJugadorImportBlocklist,
 } from "./jugadorImportBlocklist";
+
+jest.mock("../supabaseClient", () => ({
+  supabase: {
+    rpc: jest.fn(),
+  },
+}));
 
 describe("jugadorImportBlocklist", () => {
   beforeEach(() => {

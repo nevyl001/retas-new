@@ -5,17 +5,6 @@
  * finalizados) para verificar solo la invalidación, sin ejercitar la lógica
  * de sincronización de participaciones (ya cubierta en otros tests).
  */
-jest.mock("../supabaseClient", () => ({
-  supabase: {
-    from: jest.fn(),
-    rpc: jest.fn(),
-  },
-}));
-
-jest.mock("./jugadorIdResolver", () => ({
-  prepareParticipacionIdentityForOrganizer: jest.fn().mockResolvedValue(undefined),
-}));
-
 import { supabase } from "../supabaseClient";
 import { backfillHistorialJugadores } from "./syncParticipaciones";
 import {
@@ -30,6 +19,17 @@ import {
   setCachedRivieraJugadoresList,
 } from "./playersPoolCache";
 import type { RivieraJugadorWithStats } from "./types";
+
+jest.mock("../supabaseClient", () => ({
+  supabase: {
+    from: jest.fn(),
+    rpc: jest.fn(),
+  },
+}));
+
+jest.mock("./jugadorIdResolver", () => ({
+  prepareParticipacionIdentityForOrganizer: jest.fn().mockResolvedValue(undefined),
+}));
 
 const ORG = "2770b522-9064-4c7b-a729-4a0ea7e3f6e8";
 const OTHER_ORG = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";

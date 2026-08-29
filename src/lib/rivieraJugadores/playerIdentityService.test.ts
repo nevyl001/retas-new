@@ -1,3 +1,20 @@
+import { supabasePublicRead } from "../supabaseClient";
+import {
+  resolveLinkedJugadorIdsForIdentity,
+  resolvePlayerCareer,
+} from "./playerIdentityService";
+import { discoverCareerLinkedProfiles } from "./careerLinkedProfileDiscovery";
+import { mergeCareerParticipacionesForIdentity } from "./careerParticipacionesMerge";
+import { fetchPublicCareerJugadorIds } from "./publicCareerLinkage";
+import {
+  listGrantedLocalJugadorIdsForSource,
+  listMulticlubSiblingProfilesForSource,
+} from "./organizerPlayerAccess";
+import { fetchRivieraIdMapForJugadorIds } from "./rivieraIdDisplay";
+import { computeCareerPointsByClubFromParticipaciones } from "./careerPointsByClub";
+import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
+import type { ResolvedPlayerIdentity } from "./playerIdentityService";
+
 jest.mock("./careerLinkedProfileDiscovery", () => ({
   discoverCareerLinkedProfiles: jest.fn(async ({ seedJugadorIds, anchorJugadorId }) => ({
     linkedJugadorIds: seedJugadorIds?.length
@@ -75,23 +92,6 @@ jest.mock("../supabaseClient", () => ({
     })),
   },
 }));
-
-import { supabasePublicRead } from "../supabaseClient";
-import {
-  resolveLinkedJugadorIdsForIdentity,
-  resolvePlayerCareer,
-} from "./playerIdentityService";
-import { discoverCareerLinkedProfiles } from "./careerLinkedProfileDiscovery";
-import { mergeCareerParticipacionesForIdentity } from "./careerParticipacionesMerge";
-import { fetchPublicCareerJugadorIds, listCareerParticipacionesPublic } from "./publicCareerLinkage";
-import {
-  listGrantedLocalJugadorIdsForSource,
-  listMulticlubSiblingProfilesForSource,
-} from "./organizerPlayerAccess";
-import { fetchRivieraIdMapForJugadorIds } from "./rivieraIdDisplay";
-import { computeCareerPointsByClubFromParticipaciones } from "./careerPointsByClub";
-import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
-import type { ResolvedPlayerIdentity } from "./playerIdentityService";
 
 const CLUB_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1";
 const CLUB_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2";

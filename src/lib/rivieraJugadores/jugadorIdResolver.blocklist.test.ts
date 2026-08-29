@@ -1,3 +1,24 @@
+import { supabase } from "../supabaseClient";
+import { isJugadorImportBlocked } from "./jugadorImportBlocklist";
+import {
+  getOrCreateJugadorId,
+  resolveJugadorIdForParticipacion,
+} from "./jugadorIdResolver";
+import { isCareerIntegrityException } from "./careerIntegrity";
+import {
+  isRevokedGrantLocalJugador,
+  listActiveGrantedAccessForOrganizer,
+  resolveJugadorIdForOrganizer,
+} from "./organizerPlayerAccess";
+import {
+  getRivieraJugadorByLegacyPlayerId,
+  ensureRivieraJugadorVisibleEnRanking,
+  linkLegacyPlayerId,
+  listRivieraJugadoresByLegacyPlayerId,
+} from "./rivieraJugadoresService";
+import { ensureRivieraIdentity } from "./careerIdentity";
+import { requireOfficialProfileLinkForParticipacion } from "./orphanProfileLink";
+
 jest.mock("../supabaseClient", () => ({
   supabase: {
     from: jest.fn(),
@@ -33,27 +54,6 @@ jest.mock("./careerIdentity", () => ({
 jest.mock("./orphanProfileLink", () => ({
   requireOfficialProfileLinkForParticipacion: jest.fn(),
 }));
-
-import { supabase } from "../supabaseClient";
-import { isJugadorImportBlocked } from "./jugadorImportBlocklist";
-import {
-  getOrCreateJugadorId,
-  resolveJugadorIdForParticipacion,
-} from "./jugadorIdResolver";
-import { isCareerIntegrityException } from "./careerIntegrity";
-import {
-  isRevokedGrantLocalJugador,
-  listActiveGrantedAccessForOrganizer,
-  resolveJugadorIdForOrganizer,
-} from "./organizerPlayerAccess";
-import {
-  getRivieraJugadorByLegacyPlayerId,
-  ensureRivieraJugadorVisibleEnRanking,
-  linkLegacyPlayerId,
-  listRivieraJugadoresByLegacyPlayerId,
-} from "./rivieraJugadoresService";
-import { ensureRivieraIdentity } from "./careerIdentity";
-import { requireOfficialProfileLinkForParticipacion } from "./orphanProfileLink";
 
 const mockBlocked = isJugadorImportBlocked as jest.MockedFunction<
   typeof isJugadorImportBlocked
@@ -249,9 +249,8 @@ describe("resolveJugadorIdForParticipacion blocklist", () => {
     } catch (e) {
       caught = e;
     }
-    expect(isCareerIntegrityException(caught)).toBe(true);
-    if (isCareerIntegrityException(caught)) {
-      expect(caught.code).toBe("missing_riviera_id");
-    }
+    expect(isCareerIntegrityException(caught) ? caught.code : null).toBe(
+      "missing_riviera_id"
+    );
   });
 });

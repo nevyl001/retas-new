@@ -1,14 +1,14 @@
-const mockRpc = jest.fn();
-
-jest.mock("../supabaseClient", () => ({
-  supabase: { rpc: (...args: unknown[]) => mockRpc(...args) },
-}));
-
 import {
   resolveOfficialGlobalPuntos,
   resetRomcSuiteStateForTests,
   romcRpcSuiteUnavailable,
 } from "./rivieraOfficialActivity";
+
+const mockRpc = jest.fn();
+
+jest.mock("../supabaseClient", () => ({
+  supabase: { rpc: (...args: unknown[]) => mockRpc(...args) },
+}));
 
 const JUGADOR_ID = "c7440f26-3b4c-4c94-be55-3baef8e98820";
 

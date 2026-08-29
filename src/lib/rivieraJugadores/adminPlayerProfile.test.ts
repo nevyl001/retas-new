@@ -1,3 +1,28 @@
+import { readFileSync } from "fs";
+import { resolve } from "path";
+import { supabasePublicRead } from "../supabaseClient";
+import {
+  getAdminPlayerProfileData,
+  mergeLocalJugadorWithGlobalCareer,
+  resolvePlayerLocalContext,
+} from "./playerIdentityService";
+import { attachCareerPuntosToJugador } from "./careerPointsByClub";
+import { loadUnifiedRatingViewForJugador } from "./grantedPlayerUnifiedView";
+import { mergeCareerParticipacionesForIdentity } from "./careerParticipacionesMerge";
+import { fetchPublicCareerJugadorIds } from "./publicCareerLinkage";
+import {
+  getRivieraJugadorBySlug,
+  getRivieraJugadorInternalClubById,
+  getRivieraJugadorPublicById,
+  resolveRankingPosicionForPublicFicha,
+} from "./rivieraJugadoresService";
+import {
+  listGrantedLocalJugadorIdsForSource,
+  listMulticlubSiblingProfilesForSource,
+} from "./organizerPlayerAccess";
+import { discoverCareerLinkedProfiles } from "./careerLinkedProfileDiscovery";
+import { fetchRivieraIdMapForJugadorIds } from "./rivieraIdDisplay";
+
 jest.mock("./careerLinkedProfileDiscovery", () => ({
   discoverCareerLinkedProfiles: jest.fn(async ({ seedJugadorIds, anchorJugadorId }) => ({
     linkedJugadorIds: seedJugadorIds ?? [anchorJugadorId],
@@ -97,31 +122,6 @@ jest.mock("../supabaseClient", () => ({
     })),
   },
 }));
-
-import { readFileSync } from "fs";
-import { resolve } from "path";
-import { supabasePublicRead } from "../supabaseClient";
-import {
-  getAdminPlayerProfileData,
-  mergeLocalJugadorWithGlobalCareer,
-  resolvePlayerLocalContext,
-} from "./playerIdentityService";
-import { attachCareerPuntosToJugador } from "./careerPointsByClub";
-import { loadUnifiedRatingViewForJugador } from "./grantedPlayerUnifiedView";
-import { mergeCareerParticipacionesForIdentity } from "./careerParticipacionesMerge";
-import { fetchPublicCareerJugadorIds } from "./publicCareerLinkage";
-import {
-  getRivieraJugadorBySlug,
-  getRivieraJugadorInternalClubById,
-  getRivieraJugadorPublicById,
-  resolveRankingPosicionForPublicFicha,
-} from "./rivieraJugadoresService";
-import {
-  listGrantedLocalJugadorIdsForSource,
-  listMulticlubSiblingProfilesForSource,
-} from "./organizerPlayerAccess";
-import { discoverCareerLinkedProfiles } from "./careerLinkedProfileDiscovery";
-import { fetchRivieraIdMapForJugadorIds } from "./rivieraIdDisplay";
 
 const RIVIERA = "2770b522-9064-4c7b-a729-4a0ea7e3f6e8";
 const HACKPADEL = "e724de97-3552-4a01-a269-f621e6f1ed26";

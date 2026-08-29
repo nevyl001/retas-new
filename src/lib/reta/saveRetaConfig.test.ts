@@ -1,3 +1,6 @@
+import type { Match, Tournament } from "../db/types";
+import { saveRetaConfig, tournamentToFormValues } from "./updateRetaConfig";
+
 const mockRpc = jest.fn();
 const mockFrom = jest.fn();
 const mockGetSession = jest.fn();
@@ -25,9 +28,6 @@ jest.mock("../roundRobinChampionship", () => {
     saveChampionshipConfigLocalOnly: jest.fn(),
   };
 });
-
-import type { Match, Tournament } from "../db/types";
-import { saveRetaConfig, tournamentToFormValues } from "./updateRetaConfig";
 
 const baseTournament: Tournament = {
   id: "t1",
@@ -80,11 +80,12 @@ describe("saveRetaConfig — atomic courts + optimistic lock", () => {
       loadedUpdatedAt: baseTournament.updated_at,
     });
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.sessionExpired).toBe(true);
-      expect(result.error).toMatch(/sesión expiró/i);
-      expect(result.conflict).toBeFalsy();
-    }
+    expect(
+      !result.ok &&
+        result.sessionExpired === true &&
+        /sesión expiró/i.test(result.error ?? "") &&
+        !result.conflict
+    ).toBe(true);
     expect(mockFrom).not.toHaveBeenCalled();
     expect(mockRpc).not.toHaveBeenCalled();
   });
@@ -101,9 +102,7 @@ describe("saveRetaConfig — atomic courts + optimistic lock", () => {
       courtsDecreaseConfirmed: false,
     });
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.needsCourtsConfirm).toBeTruthy();
-    }
+    expect(!result.ok && Boolean(result.needsCourtsConfirm)).toBe(true);
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
@@ -128,10 +127,11 @@ describe("saveRetaConfig — atomic courts + optimistic lock", () => {
       courtsDecreaseConfirmed: true,
     });
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.conflict).toBe(true);
-      expect(result.error).toMatch(/otra sesión/);
-    }
+    expect(
+      !result.ok &&
+        result.conflict === true &&
+        /otra sesión/.test(result.error ?? "")
+    ).toBe(true);
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
@@ -149,9 +149,7 @@ describe("saveRetaConfig — atomic courts + optimistic lock", () => {
       loadedUpdatedAt: "2026-07-01T12:00:00.000Z",
     });
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.conflict).toBe(true);
-    }
+    expect(!result.ok && result.conflict === true).toBe(true);
     expect(mockRpc).not.toHaveBeenCalled();
     expect(mockFrom).not.toHaveBeenCalled();
   });
@@ -196,7 +194,7 @@ describe("saveRetaConfig — atomic courts + optimistic lock", () => {
       courtsDecreaseConfirmed: true,
     });
     expect(second.ok).toBe(false);
-    if (!second.ok) expect(second.conflict).toBe(true);
+    expect(!second.ok && second.conflict === true).toBe(true);
   });
 
   it("12. fallo conserva valores del formulario (caller no muta values)", async () => {
@@ -218,10 +216,11 @@ describe("saveRetaConfig — atomic courts + optimistic lock", () => {
     });
     expect(JSON.stringify(values)).toBe(snapshot);
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.sessionExpired).toBe(true);
-      expect(result.error).toMatch(/sesión expiró/i);
-    }
+    expect(
+      !result.ok &&
+        result.sessionExpired === true &&
+        /sesión expiró/i.test(result.error ?? "")
+    ).toBe(true);
   });
 
   it("updated_at equivalente por instante no dispara falso conflicto", async () => {
@@ -277,10 +276,11 @@ describe("saveRetaConfig — atomic courts + optimistic lock", () => {
       courtsDecreaseConfirmed: true,
     });
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.message).toMatch(/6 partido/);
-      expect(result.tournament.courts).toBe(2);
-    }
+    expect(
+      result.ok &&
+        /6 partido/.test(result.message ?? "") &&
+        result.tournament.courts === 2
+    ).toBe(true);
     expect(mockRpc).toHaveBeenCalledWith(
       "update_tournament_courts_and_unassign",
       expect.objectContaining({

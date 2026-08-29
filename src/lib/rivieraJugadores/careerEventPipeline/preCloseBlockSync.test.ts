@@ -1,6 +1,14 @@
 /**
  * Pre-close tipado + bloqueo: sync no corre si pre-close falla.
  */
+import { supabase } from "../../supabaseClient";
+import { resolveJugadorIdForParticipacion } from "../jugadorIdResolver";
+import { syncRetaParticipaciones } from "../syncParticipaciones";
+import { requireOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
+import { processCareerEvent } from "./pipeline";
+import { validateCareerEventPreClose } from "./preCloseGuards";
+import type { Pair } from "../../database";
+
 jest.mock("../../supabaseClient", () => ({
   supabase: { from: jest.fn() },
 }));
@@ -49,14 +57,6 @@ jest.mock("./assertions", () => {
 jest.mock("../../organizer/organizerDisplayName", () => ({
   clearOrganizerDisplayNameCache: jest.fn(),
 }));
-
-import { supabase } from "../../supabaseClient";
-import { resolveJugadorIdForParticipacion } from "../jugadorIdResolver";
-import { syncRetaParticipaciones } from "../syncParticipaciones";
-import { requireOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
-import { processCareerEvent } from "./pipeline";
-import { validateCareerEventPreClose } from "./preCloseGuards";
-import type { Pair } from "../../database";
 
 const ORG = "2770b522-9064-4c7b-a729-4a0ea7e3f6e8";
 const PLAYERS_A = "9a3798d5-bc2f-4b15-b17c-e35b8eedae1f";

@@ -1,3 +1,14 @@
+import { supabasePublicRead } from "../supabaseClient";
+import {
+  attachCareerPuntosToJugador,
+  computeCareerPointsByClubFromParticipaciones,
+  shouldShowCareerPointsBreakdown,
+  sortCareerClubsForDisplay,
+} from "./careerPointsByClub";
+import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
+import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
+import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
+
 jest.mock("./publicCareerLinkage", () => ({
   listCareerParticipacionesPublic: jest.fn(),
 }));
@@ -10,17 +21,6 @@ jest.mock("../supabaseClient", () => ({
   supabasePublicRead: { from: jest.fn() },
   supabase: {},
 }));
-
-import { supabasePublicRead } from "../supabaseClient";
-import {
-  attachCareerPuntosToJugador,
-  computeCareerPointsByClubFromParticipaciones,
-  shouldShowCareerPointsBreakdown,
-  sortCareerClubsForDisplay,
-} from "./careerPointsByClub";
-import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
-import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
-import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
 
 const RIVIERA_OPEN = "2770b522-0000-4000-8000-000000000001";
 const HACKPADEL = "e724de97-0000-4000-8000-000000000002";

@@ -2,6 +2,18 @@
  * E2E de carrera deportiva multi-club + pipeline canónico.
  * Valida identidad única, historial fusionado, puntos por club y pipeline.
  */
+import { supabase } from "../../supabaseClient";
+import { ensureRivieraIdentity } from "../careerIdentity";
+import { mergeCareerParticipacionesForIdentity } from "../careerParticipacionesMerge";
+import {
+  computeCareerPointsByClubFromParticipaciones,
+} from "../careerPointsByClub";
+import { finalizeCareerEvent } from "./pipeline";
+import { validateCareerEventPreClose } from "./preCloseGuards";
+import { syncDuelo2v2Participaciones } from "../syncParticipaciones";
+import { requireOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
+import type { JugadorParticipacion } from "../types";
+
 jest.mock("../../supabaseClient", () => ({
   supabase: {
     from: jest.fn(),
@@ -81,18 +93,6 @@ jest.mock("../rivieraJugadoresService", () => ({
 jest.mock("../../organizer/organizerDisplayName", () => ({
   clearOrganizerDisplayNameCache: jest.fn(),
 }));
-
-import { supabase } from "../../supabaseClient";
-import { ensureRivieraIdentity } from "../careerIdentity";
-import { mergeCareerParticipacionesForIdentity } from "../careerParticipacionesMerge";
-import {
-  computeCareerPointsByClubFromParticipaciones,
-} from "../careerPointsByClub";
-import { finalizeCareerEvent } from "./pipeline";
-import { validateCareerEventPreClose } from "./preCloseGuards";
-import { syncDuelo2v2Participaciones } from "../syncParticipaciones";
-import { requireOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
-import type { JugadorParticipacion } from "../types";
 
 jest.mock("../careerParticipacionesMerge", () => ({
   mergeCareerParticipacionesForIdentity: jest.fn(),

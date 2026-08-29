@@ -47,14 +47,15 @@ describe("reta config phase-2 — courts / remontada / validation", () => {
       matches,
     });
     expect(plan.kind).toBe("decrease");
-    if (plan.kind === "decrease") {
-      expect(plan.affectedPendingCount).toBe(2);
-      expect(plan.confirmationMessage).toMatch(/sin cancha asignada/);
-      expect(plan.confirmationMessage).not.toMatch(/reasign/i);
-      expect(plan.confirmationMessage).toMatch(
-        /iniciados, terminados y sus resultados no se modificarán/
-      );
-    }
+    expect(
+      plan.kind === "decrease" &&
+        plan.affectedPendingCount === 2 &&
+        /sin cancha asignada/.test(plan.confirmationMessage) &&
+        !/reasign/i.test(plan.confirmationMessage) &&
+        /iniciados, terminados y sus resultados no se modificarán/.test(
+          plan.confirmationMessage
+        )
+    ).toBe(true);
     expect(matchesEligibleForCourtUnassign(matches, 2)).toHaveLength(2);
   });
 

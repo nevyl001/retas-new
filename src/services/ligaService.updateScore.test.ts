@@ -1,3 +1,6 @@
+import { supabase } from "../lib/supabaseClient";
+import { updateScore, LigaScoreConflictError } from "./ligaService";
+
 jest.mock("../lib/supabaseClient", () => ({
   supabase: {
     rpc: jest.fn(),
@@ -5,9 +8,6 @@ jest.mock("../lib/supabaseClient", () => ({
     auth: { getUser: jest.fn() },
   },
 }));
-
-import { supabase } from "../lib/supabaseClient";
-import { updateScore, LigaScoreConflictError } from "./ligaService";
 
 const AUTH_USER = { id: "org-1", email: "org1@test.com" };
 

@@ -1,11 +1,3 @@
-jest.mock("../supabaseClient", () => ({
-  supabase: {
-    functions: {
-      invoke: jest.fn(),
-    },
-  },
-}));
-
 import { supabase } from "../supabaseClient";
 import {
   archiveRetaResults,
@@ -15,6 +7,14 @@ import {
   fetchRetaArchiveStatus,
   formatArchiveFailures,
 } from "./retaArchiveApi";
+
+jest.mock("../supabaseClient", () => ({
+  supabase: {
+    functions: {
+      invoke: jest.fn(),
+    },
+  },
+}));
 
 const RETA_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 

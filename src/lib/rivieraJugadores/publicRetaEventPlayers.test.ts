@@ -1,16 +1,18 @@
-jest.mock("../supabaseClient", () => ({
-  supabasePublicRead: {
-    from: jest.fn(),
-    rpc: jest.fn(),
-  },
-}));
-
 import { supabasePublicRead } from "../supabaseClient";
 import {
   assignEventPlayersToPair,
   resolvePublicRetaTournamentPairPlayers,
   type RetaEventPlayerRow,
 } from "./publicRetaEventPlayers";
+
+import { getPublicPlayersIdentityMap } from "./publicPlayersIdentity";
+
+jest.mock("../supabaseClient", () => ({
+  supabasePublicRead: {
+    from: jest.fn(),
+    rpc: jest.fn(),
+  },
+}));
 
 jest.mock("./publicPlayersIdentity", () => {
   const actual = jest.requireActual("./publicPlayersIdentity");
@@ -19,8 +21,6 @@ jest.mock("./publicPlayersIdentity", () => {
     getPublicPlayersIdentityMap: jest.fn(),
   };
 });
-
-import { getPublicPlayersIdentityMap } from "./publicPlayersIdentity";
 
 const mockIdentityMap = getPublicPlayersIdentityMap as jest.MockedFunction<
   typeof getPublicPlayersIdentityMap

@@ -1,3 +1,21 @@
+import { supabase } from "../supabaseClient";
+import {
+  adjustRankingPuntosManual,
+  registrarParticipacion,
+} from "./rivieraJugadoresService";
+import {
+  buildRivieraListCacheKey,
+  clearPlayersPoolCacheForTests,
+  getCachedRivieraJugadoresList,
+  setCachedRivieraJugadoresList,
+} from "./playersPoolCache";
+import {
+  clearCareerIdentityCache,
+  getOrLoadCareerIdentityBundle,
+  type CareerIdentityBundle,
+} from "./careerIdentityCache";
+import type { RivieraJugadorWithStats } from "./types";
+
 if (typeof globalThis.crypto === "undefined" || !globalThis.crypto.randomUUID) {
   // jsdom no expone crypto.randomUUID; solo se usa aquí para el id sintético
   // que genera adjustRankingPuntosManual, no afecta la lógica bajo prueba.
@@ -17,24 +35,6 @@ jest.mock("../supabaseClient", () => ({
     from: jest.fn(),
   },
 }));
-
-import { supabase } from "../supabaseClient";
-import {
-  adjustRankingPuntosManual,
-  registrarParticipacion,
-} from "./rivieraJugadoresService";
-import {
-  buildRivieraListCacheKey,
-  clearPlayersPoolCacheForTests,
-  getCachedRivieraJugadoresList,
-  setCachedRivieraJugadoresList,
-} from "./playersPoolCache";
-import {
-  clearCareerIdentityCache,
-  getOrLoadCareerIdentityBundle,
-  type CareerIdentityBundle,
-} from "./careerIdentityCache";
-import type { RivieraJugadorWithStats } from "./types";
 
 const mockRpc = supabase.rpc as jest.Mock;
 

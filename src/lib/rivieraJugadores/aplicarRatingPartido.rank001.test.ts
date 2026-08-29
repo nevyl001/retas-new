@@ -7,15 +7,15 @@
  * cliente jamás le daba la oportunidad de hacerlo. Este test fija que el
  * cliente SIEMPRE delega la decisión al RPC.
  */
+import { supabase } from "../supabaseClient";
+import { aplicarRatingPartido } from "./aplicarRatingPartido";
+
 jest.mock("../supabaseClient", () => ({
   supabase: {
     rpc: jest.fn(),
     from: jest.fn(),
   },
 }));
-
-import { supabase } from "../supabaseClient";
-import { aplicarRatingPartido } from "./aplicarRatingPartido";
 
 const mockRpc = supabase.rpc as jest.Mock;
 

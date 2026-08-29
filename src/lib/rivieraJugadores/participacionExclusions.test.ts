@@ -1,12 +1,12 @@
+import { supabase } from "../supabaseClient";
+import { isParticipacionExcluded } from "./participacionExclusions";
+
 jest.mock("../supabaseClient", () => ({
   supabase: {
     rpc: jest.fn(),
     from: jest.fn(),
   },
 }));
-
-import { supabase } from "../supabaseClient";
-import { isParticipacionExcluded } from "./participacionExclusions";
 
 describe("isParticipacionExcluded", () => {
   beforeEach(() => {

@@ -7,11 +7,11 @@ import {
   requireOfficialProfileLinkForParticipacion,
 } from "./orphanProfileLink";
 
+import { supabase } from "../supabaseClient";
+
 jest.mock("../supabaseClient", () => ({
   supabase: { rpc: jest.fn() },
 }));
-
-import { supabase } from "../supabaseClient";
 
 describe("career integrity strict profile link", () => {
   beforeEach(() => {

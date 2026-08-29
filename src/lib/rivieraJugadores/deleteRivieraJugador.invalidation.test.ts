@@ -1,3 +1,18 @@
+import { supabase } from "../supabaseClient";
+import { deleteRivieraJugador } from "./rivieraJugadoresService";
+import {
+  clearPlayersPoolCacheForTests,
+  buildRivieraListCacheKey,
+  getCachedRivieraJugadoresList,
+  setCachedRivieraJugadoresList,
+} from "./playersPoolCache";
+import {
+  clearCareerIdentityCache,
+  getOrLoadCareerIdentityBundle,
+  type CareerIdentityBundle,
+} from "./careerIdentityCache";
+import type { RivieraJugadorWithStats } from "./types";
+
 jest.mock("../supabaseClient", () => ({
   supabase: {
     auth: { getUser: jest.fn() },
@@ -14,21 +29,6 @@ jest.mock("./organizerPlayerAccess", () => ({
   isRevokedGrantLocalJugador: jest.fn().mockResolvedValue(false),
   findGrantedAccessMetaForJugador: jest.fn().mockResolvedValue(null),
 }));
-
-import { supabase } from "../supabaseClient";
-import { deleteRivieraJugador } from "./rivieraJugadoresService";
-import {
-  clearPlayersPoolCacheForTests,
-  buildRivieraListCacheKey,
-  getCachedRivieraJugadoresList,
-  setCachedRivieraJugadoresList,
-} from "./playersPoolCache";
-import {
-  clearCareerIdentityCache,
-  getOrLoadCareerIdentityBundle,
-  type CareerIdentityBundle,
-} from "./careerIdentityCache";
-import type { RivieraJugadorWithStats } from "./types";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const J_ORIGIN = "22222222-2222-4222-8222-222222222222";

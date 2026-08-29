@@ -1,3 +1,10 @@
+import { resolveJugadorIdForRating } from "../rivieraJugadores/organizerPlayerAccess";
+import { fetchRatingMovimientosByPartidoRef } from "../rivieraJugadores/rivieraJugadoresService";
+import {
+  fetchDuelo2v2RatingBySlot,
+  mapRatingMovimientosToDueloSlots,
+} from "./duelo2v2RatingDisplay";
+
 jest.mock("../rivieraJugadores/organizerPlayerAccess", () => ({
   resolveJugadorIdForRating: jest.fn(),
 }));
@@ -5,13 +12,6 @@ jest.mock("../rivieraJugadores/organizerPlayerAccess", () => ({
 jest.mock("../rivieraJugadores/rivieraJugadoresService", () => ({
   fetchRatingMovimientosByPartidoRef: jest.fn(),
 }));
-
-import { resolveJugadorIdForRating } from "../rivieraJugadores/organizerPlayerAccess";
-import { fetchRatingMovimientosByPartidoRef } from "../rivieraJugadores/rivieraJugadoresService";
-import {
-  fetchDuelo2v2RatingBySlot,
-  mapRatingMovimientosToDueloSlots,
-} from "./duelo2v2RatingDisplay";
 
 const mockResolveRating = resolveJugadorIdForRating as jest.MockedFunction<
   typeof resolveJugadorIdForRating

@@ -1,3 +1,11 @@
+import { supabase } from "./supabaseClient";
+import { decideSafeMatchDeletion } from "./retaArchive/retaArchiveApi";
+import {
+  deleteMatchesByTournament,
+  deleteMatchesByTournamentSafely,
+  getMatches,
+} from "./database";
+
 jest.mock("./supabaseClient", () => ({
   supabase: {
     from: jest.fn(),
@@ -8,14 +16,6 @@ jest.mock("./supabaseClient", () => ({
 jest.mock("./retaArchive/retaArchiveApi", () => ({
   decideSafeMatchDeletion: jest.fn(),
 }));
-
-import { supabase } from "./supabaseClient";
-import { decideSafeMatchDeletion } from "./retaArchive/retaArchiveApi";
-import {
-  deleteMatchesByTournament,
-  deleteMatchesByTournamentSafely,
-  getMatches,
-} from "./database";
 
 const TOURNAMENT_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 

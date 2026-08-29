@@ -2,6 +2,14 @@
  * Regresión: assertJugadorCareerIntegrity debe confiar en el RPC SECURITY DEFINER,
  * no en SELECT directo a riviera_official_player_profile_link (bloqueado por RLS).
  */
+import { supabase } from "../../supabaseClient";
+import { requireOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
+import { resolveJugadorIdForParticipacion } from "../jugadorIdResolver";
+import { syncDuelo2v2Participaciones } from "../syncParticipaciones";
+import { processCareerEvent } from "./pipeline";
+import { validateCareerEventPreClose } from "./preCloseGuards";
+import type { Duelo2v2 } from "../../duelo2v2/types";
+
 jest.mock("../../supabaseClient", () => ({
   supabase: {
     from: jest.fn(),
@@ -41,14 +49,6 @@ jest.mock("./assertions", () => {
 jest.mock("../../organizer/organizerDisplayName", () => ({
   clearOrganizerDisplayNameCache: jest.fn(),
 }));
-
-import { supabase } from "../../supabaseClient";
-import { requireOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
-import { resolveJugadorIdForParticipacion } from "../jugadorIdResolver";
-import { syncDuelo2v2Participaciones } from "../syncParticipaciones";
-import { processCareerEvent } from "./pipeline";
-import { validateCareerEventPreClose } from "./preCloseGuards";
-import type { Duelo2v2 } from "../../duelo2v2/types";
 
 const ORG = "2770b522-9064-4c7b-a729-4a0ea7e3f6e8";
 const J1 = "4ac495d2-9fa4-48fd-887c-0259d6276f53";

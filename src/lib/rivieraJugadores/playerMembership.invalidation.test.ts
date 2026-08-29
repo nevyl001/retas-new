@@ -1,11 +1,3 @@
-jest.mock("../supabaseClient", () => ({
-  supabase: {
-    auth: { getUser: jest.fn() },
-    from: jest.fn(),
-    rpc: jest.fn(),
-  },
-}));
-
 import { supabase } from "../supabaseClient";
 import {
   addOrganizerMembershipByRivieraId,
@@ -23,6 +15,14 @@ import {
   type CareerIdentityBundle,
 } from "./careerIdentityCache";
 import type { RivieraJugadorWithStats } from "./types";
+
+jest.mock("../supabaseClient", () => ({
+  supabase: {
+    auth: { getUser: jest.fn() },
+    from: jest.fn(),
+    rpc: jest.fn(),
+  },
+}));
 
 const CURRENT_ORG = "11111111-1111-4111-8111-111111111111";
 const SOURCE_ORG = "22222222-2222-4222-8222-222222222222";

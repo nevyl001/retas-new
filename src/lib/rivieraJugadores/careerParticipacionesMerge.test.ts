@@ -1,14 +1,14 @@
-jest.mock("./publicCareerLinkage", () => ({
-  listCareerParticipacionesPublic: jest.fn(),
-  listParticipacionesForJugadorIds: jest.fn(),
-}));
-
 import {
   listCareerParticipacionesPublic,
   listParticipacionesForJugadorIds,
 } from "./publicCareerLinkage";
 import { mergeCareerParticipacionesForIdentity } from "./careerParticipacionesMerge";
 import type { JugadorParticipacion } from "./types";
+
+jest.mock("./publicCareerLinkage", () => ({
+  listCareerParticipacionesPublic: jest.fn(),
+  listParticipacionesForJugadorIds: jest.fn(),
+}));
 
 const CLUB_TEST = "cd45cea7-a8ac-4596-b0ee-24959b4cbb5d";
 const HACKPADEL = "e724de97-3552-4a01-a269-f621e6f1ed26";

@@ -2,18 +2,6 @@
  * Soft-archive Mis retas: el botón de basura NO debe DELETE físico del padre
  * ni tocar carrera (participaciones / puntos / ledger / rating).
  */
-const mockFrom = jest.fn();
-const mockGetUser = jest.fn();
-
-jest.mock("../lib/supabaseClient", () => ({
-  supabase: {
-    auth: {
-      getUser: (...args: unknown[]) => mockGetUser(...args),
-    },
-    from: (...args: unknown[]) => mockFrom(...args),
-  },
-}));
-
 import {
   archiveDuelo2v2,
   deleteDuelo2v2,
@@ -26,6 +14,18 @@ import {
   getTournaments,
   restoreArchivedTournament,
 } from "../lib/database";
+
+const mockFrom = jest.fn();
+const mockGetUser = jest.fn();
+
+jest.mock("../lib/supabaseClient", () => ({
+  supabase: {
+    auth: {
+      getUser: (...args: unknown[]) => mockGetUser(...args),
+    },
+    from: (...args: unknown[]) => mockFrom(...args),
+  },
+}));
 
 const FINALIZED = {
   id: "test2-id",

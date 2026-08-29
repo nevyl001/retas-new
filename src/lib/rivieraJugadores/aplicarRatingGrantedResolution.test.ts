@@ -1,12 +1,3 @@
-jest.mock("./organizerPlayerAccess", () => ({
-  resolveJugadorIdForOrganizer: jest.fn(),
-  resolveJugadorIdForRating: jest.fn(),
-}));
-
-jest.mock("./jugadorIdResolver", () => ({
-  resolveJugadorIdForParticipacion: jest.fn(),
-}));
-
 import {
   resolveJugadorIdForOrganizer,
   resolveJugadorIdForRating,
@@ -16,6 +7,15 @@ import {
   resolverRivieraIdsDesdePair,
 } from "./aplicarRatingPartido";
 import { resolveJugadorIdForParticipacion } from "./jugadorIdResolver";
+
+jest.mock("./organizerPlayerAccess", () => ({
+  resolveJugadorIdForOrganizer: jest.fn(),
+  resolveJugadorIdForRating: jest.fn(),
+}));
+
+jest.mock("./jugadorIdResolver", () => ({
+  resolveJugadorIdForParticipacion: jest.fn(),
+}));
 
 const mockResolveOrg = resolveJugadorIdForOrganizer as jest.MockedFunction<
   typeof resolveJugadorIdForOrganizer

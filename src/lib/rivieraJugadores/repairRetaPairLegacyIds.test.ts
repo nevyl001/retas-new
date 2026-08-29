@@ -1,11 +1,11 @@
+import { supabase } from "../supabaseClient";
+import { repairRetaPairLegacyPlayerIds } from "./repairRetaPairLegacyIds";
+
 jest.mock("../supabaseClient", () => ({
   supabase: {
     from: jest.fn(),
   },
 }));
-
-import { supabase } from "../supabaseClient";
-import { repairRetaPairLegacyPlayerIds } from "./repairRetaPairLegacyIds";
 
 describe("repairRetaPairLegacyPlayerIds", () => {
   beforeEach(() => {

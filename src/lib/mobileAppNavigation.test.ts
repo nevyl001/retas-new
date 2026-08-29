@@ -186,16 +186,16 @@ describe("MobileAppNavigation component", () => {
     const { renderToStaticMarkup } = require("react-dom/server");
     const { MobileAppNavigation } = require("../components/navigation/MobileAppNavigation");
 
-    const html = renderToStaticMarkup(
+    const view = renderToStaticMarkup(
       React.createElement(MobileAppNavigation, { pathname: "/" })
     );
 
-    expect(html).toContain("Inicio");
-    expect(html).toContain("Eventos");
-    expect(html).toContain("Jugadores");
-    expect(html).toContain("Ranking");
-    expect(html).toContain("Más");
-    expect((html.match(/mobile-app-navigation__item/g) || []).length).toBe(5);
+    expect(view).toContain("Inicio");
+    expect(view).toContain("Eventos");
+    expect(view).toContain("Jugadores");
+    expect(view).toContain("Ranking");
+    expect(view).toContain("Más");
+    expect((view.match(/mobile-app-navigation__item/g) || []).length).toBe(5);
   });
 
   it("marca aria-current solo en tab activo", () => {
@@ -203,12 +203,12 @@ describe("MobileAppNavigation component", () => {
     const { renderToStaticMarkup } = require("react-dom/server");
     const { MobileAppNavigation } = require("../components/navigation/MobileAppNavigation");
 
-    const html = renderToStaticMarkup(
+    const view = renderToStaticMarkup(
       React.createElement(MobileAppNavigation, { pathname: "/jugadores/M" })
     );
 
-    expect(html).toContain('aria-current="page"');
-    expect((html.match(/aria-current="page"/g) || []).length).toBe(1);
-    expect(html).toContain("Jugadores");
+    expect(view).toContain('aria-current="page"');
+    expect((view.match(/aria-current="page"/g) || []).length).toBe(1);
+    expect(view).toContain("Jugadores");
   });
 });

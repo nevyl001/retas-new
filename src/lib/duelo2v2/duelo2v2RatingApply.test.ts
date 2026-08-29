@@ -1,3 +1,7 @@
+import { aplicarRatingDuelo2v2, resolveDuelo2v2RatingPlayerIds } from "../rivieraJugadores/aplicarRatingPartido";
+import { supabase } from "../supabaseClient";
+import { ensureDuelo2v2RatingApplied } from "./duelo2v2RatingApply";
+
 jest.mock("../supabaseClient", () => ({
   supabase: {
     from: jest.fn(),
@@ -8,10 +12,6 @@ jest.mock("../rivieraJugadores/aplicarRatingPartido", () => ({
   aplicarRatingDuelo2v2: jest.fn(),
   resolveDuelo2v2RatingPlayerIds: jest.fn(),
 }));
-
-import { aplicarRatingDuelo2v2, resolveDuelo2v2RatingPlayerIds } from "../rivieraJugadores/aplicarRatingPartido";
-import { supabase } from "../supabaseClient";
-import { ensureDuelo2v2RatingApplied } from "./duelo2v2RatingApply";
 
 const mockFrom = supabase.from as jest.Mock;
 const mockResolve = resolveDuelo2v2RatingPlayerIds as jest.MockedFunction<

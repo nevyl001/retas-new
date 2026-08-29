@@ -243,14 +243,14 @@ describe("Finalizar reta — resiliencia de UI", () => {
     await userEvent.click(await findFinishButton());
 
     await waitFor(() => expect(mockLoadRetas).toHaveBeenCalledTimes(2));
-    await waitFor(() => {
+    await waitFor(() =>
       expect(
         screen.queryByRole("button", { name: /^Finalizar$/ })
-      ).not.toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /^Reparar historial$/ })
-      ).toBeInTheDocument();
-    });
+      ).not.toBeInTheDocument()
+    );
+    expect(
+      screen.getByRole("button", { name: /^Reparar historial$/ })
+    ).toBeInTheDocument();
   });
 
   it("reta ya cerrada: Reparar historial reintenta pipeline sin update is_finished", async () => {

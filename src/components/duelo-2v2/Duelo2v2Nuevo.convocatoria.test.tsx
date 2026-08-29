@@ -4,7 +4,7 @@
 /* eslint-disable testing-library/no-unnecessary-act */
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { Duelo2v2Nuevo } from "./Duelo2v2Nuevo";
@@ -125,12 +125,8 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
     await renderNuevo();
 
     expect(container.textContent).toContain("Nuevo duelo 2 vs 2");
-    expect(
-      container.querySelector('[data-testid="convocatoria-whatsapp-panel"]')
-    ).toBeNull();
-    expect(
-      container.querySelector('[data-testid="lanzar-por-whatsapp"]')
-    ).toBeNull();
+    expect(screen.queryByTestId("convocatoria-whatsapp-panel")).toBeNull();
+    expect(screen.queryByTestId("lanzar-por-whatsapp")).toBeNull();
     expect(container.textContent).not.toMatch(/Confirmados:\s*4/);
     expect(container.textContent).not.toMatch(/4 de 4/);
     expect(container.textContent).not.toContain("Ya son los 4 jugadores");
@@ -150,18 +146,15 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
   it("limpia openDueloId de sessionStorage al montar (sin hidratar form)", async () => {
     await renderNuevo();
     expect(sessionStorage.getItem("duelo-2v2-draft:org-1")).toBeNull();
-    const nombreInput = container.querySelector(
-      "#duelo-nombre"
-    ) as HTMLInputElement | null;
-    expect(nombreInput?.value ?? "").toBe("");
+    expect(screen.getByLabelText(/^Nombre$/i)).toHaveValue("");
     expect(container.textContent).not.toContain("Hackpadel");
   });
 
   it("botón Guardar duelo visible en formulario limpio", async () => {
     await renderNuevo();
-    expect(
-      container.querySelector('[data-testid="guardar-duelo"]')
-    ).not.toBeNull();
+    expect(within(container).getAllByTestId("guardar-duelo").length).toBeGreaterThan(
+      0
+    );
     expect(container.textContent).toContain("Guardar duelo");
   });
 
@@ -176,19 +169,12 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
     ]);
     await renderNuevo();
 
-    expect(
-      container.querySelector('[data-testid="duelo-pending-draft-card"]')
-    ).not.toBeNull();
+    expect(within(container).getByTestId("duelo-pending-draft-card")).toBeInTheDocument();
     expect(container.textContent).toContain("Encontramos un duelo pendiente");
-    const nombreInput = container.querySelector(
-      "#duelo-nombre"
-    ) as HTMLInputElement;
-    expect(nombreInput.value).toBe("");
+    expect(screen.getByLabelText(/^Nombre$/i)).toHaveValue("");
 
     await act(async () => {
-      container
-        .querySelector('[data-testid="continuar-borrador"]')
-        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await userEvent.click(screen.getByTestId("continuar-borrador"));
     });
     expect(navigateDuelo2v2).toHaveBeenCalledWith(
       "/duelo-2v2/cfg-1/gestionar"
@@ -231,15 +217,11 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
     });
 
     await act(async () => {
-      container
-        .querySelector('[data-testid="descartar-borrador"]')
-        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await userEvent.click(screen.getByTestId("descartar-borrador"));
     });
 
     expect(sessionStorage.getItem("duelo-2v2-draft:org-1")).toBeNull();
-    expect(
-      container.querySelector('[data-testid="duelo-pending-draft-card"]')
-    ).toBeNull();
+    expect(screen.queryByTestId("duelo-pending-draft-card")).toBeNull();
     expect(fetchOpenGameRegistrationConfig).not.toHaveBeenCalled();
   });
 
@@ -259,9 +241,7 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
       },
     ]);
     await renderNuevo();
-    expect(
-      container.querySelector('[data-testid="duelo-pending-draft-card"]')
-    ).toBeNull();
+    expect(screen.queryByTestId("duelo-pending-draft-card")).toBeNull();
   });
 
   it("doble submit en UI bloqueado por saveLock (una sola llamada a create)", async () => {

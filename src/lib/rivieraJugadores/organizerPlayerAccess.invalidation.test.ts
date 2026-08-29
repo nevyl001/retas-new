@@ -1,18 +1,3 @@
-jest.mock("../supabaseClient", () => ({
-  supabase: {
-    from: jest.fn(),
-    rpc: jest.fn(),
-  },
-  supabasePublicRead: {
-    from: jest.fn(),
-    rpc: jest.fn(),
-  },
-}));
-
-jest.mock("../waitForSupabaseSession", () => ({
-  waitForSupabaseSession: jest.fn().mockResolvedValue(undefined),
-}));
-
 import { supabase } from "../supabaseClient";
 import {
   adminGrantOrganizerPlayerAccess,
@@ -30,6 +15,21 @@ import {
   type CareerIdentityBundle,
 } from "./careerIdentityCache";
 import type { RivieraJugadorWithStats } from "./types";
+
+jest.mock("../supabaseClient", () => ({
+  supabase: {
+    from: jest.fn(),
+    rpc: jest.fn(),
+  },
+  supabasePublicRead: {
+    from: jest.fn(),
+    rpc: jest.fn(),
+  },
+}));
+
+jest.mock("../waitForSupabaseSession", () => ({
+  waitForSupabaseSession: jest.fn().mockResolvedValue(undefined),
+}));
 
 const SOURCE_ORG = "11111111-1111-4111-8111-111111111111";
 const GRANTEE_ORG = "22222222-2222-4222-8222-222222222222";

@@ -1,15 +1,3 @@
-jest.mock("./publicCareerLinkage", () => ({
-  listCareerParticipacionesPublic: jest.fn(),
-  listParticipacionesForJugadorIds: jest.fn(),
-}));
-
-jest.mock("./rivieraJugadoresService", () => ({}));
-
-jest.mock("./orphanProfileLink", () => ({
-  ensureOfficialProfileLinkForParticipacion: jest.fn(),
-  requireOfficialProfileLinkForParticipacion: jest.fn(),
-}));
-
 import {
   listCareerParticipacionesPublic,
   listParticipacionesForJugadorIds,
@@ -23,6 +11,18 @@ import {
 } from "./playerPointsBreakdown";
 import { buildJugadorPuntosBreakdown } from "./jugadorPuntosBreakdown";
 import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
+
+jest.mock("./publicCareerLinkage", () => ({
+  listCareerParticipacionesPublic: jest.fn(),
+  listParticipacionesForJugadorIds: jest.fn(),
+}));
+
+jest.mock("./rivieraJugadoresService", () => ({}));
+
+jest.mock("./orphanProfileLink", () => ({
+  ensureOfficialProfileLinkForParticipacion: jest.fn(),
+  requireOfficialProfileLinkForParticipacion: jest.fn(),
+}));
 
 const HACKPADEL = "e724de97-3552-4a01-a269-f621e6f1ed26";
 const RIVIERA_OPEN = "2770b522-9064-4c7b-a729-4a0ea7e3f6e8";

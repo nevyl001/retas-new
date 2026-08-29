@@ -91,7 +91,16 @@ describeLive("career-event-pipeline live replay", () => {
 
       const duelo = mapDueloRow(dueloRow as Record<string, unknown>);
 
-      if (process.env.REPLAY_ASSERTIONS_ONLY === "1") {
+      const assertionsOnly = process.env.REPLAY_ASSERTIONS_ONLY === "1";
+      let result: {
+        ok: boolean;
+        processed: boolean;
+        failures: unknown[];
+        touchedJugadorIds?: string[];
+        durationMs?: number;
+      };
+
+      if (assertionsOnly) {
         const { data: participaciones } = await supabase
           .from("jugador_participaciones")
           .select("jugador_id")
@@ -115,7 +124,7 @@ describeLive("career-event-pipeline live replay", () => {
           ratingPartidoRefs: [`duelo2v2:${EVENTO_ID}`],
         });
 
-        const result = {
+        result = {
           ok: failures.length === 0,
           processed: touchedJugadorIds.length > 0,
           touchedJugadorIds,
@@ -123,27 +132,23 @@ describeLive("career-event-pipeline live replay", () => {
         };
 
         console.info("[replay-career-pipeline] assertions-only", result);
-        expect(result.processed).toBe(true);
-        expect(result.failures).toEqual([]);
-        expect(result.ok).toBe(true);
-        return;
+      } else {
+        const { finalizeCareerEvent } = await import("./pipeline");
+
+        result = await finalizeCareerEvent({
+          kind: "duelo_2v2",
+          organizadorId: duelo.organizador_id,
+          duelo,
+        });
+
+        console.info("[replay-career-pipeline] result", {
+          ok: result.ok,
+          processed: result.processed,
+          touchedJugadorIds: result.touchedJugadorIds,
+          failures: result.failures,
+          durationMs: result.durationMs,
+        });
       }
-
-      const { finalizeCareerEvent } = await import("./pipeline");
-
-      const result = await finalizeCareerEvent({
-        kind: "duelo_2v2",
-        organizadorId: duelo.organizador_id,
-        duelo,
-      });
-
-      console.info("[replay-career-pipeline] result", {
-        ok: result.ok,
-        processed: result.processed,
-        touchedJugadorIds: result.touchedJugadorIds,
-        failures: result.failures,
-        durationMs: result.durationMs,
-      });
 
       expect(result.processed).toBe(true);
       expect(result.failures).toEqual([]);

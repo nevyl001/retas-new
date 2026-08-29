@@ -1,5 +1,16 @@
 import { CareerIntegrityException } from "../careerIntegrity";
 
+import { finalizeCareerEvent } from "./pipeline";
+import { validateCareerEventPreClose } from "./preCloseGuards";
+import { syncRetaParticipaciones } from "../syncParticipaciones";
+import {
+  resolveJugadorForEventSync,
+  runParallelPlayerParticipacionSync,
+  runPlayerParticipacionSync,
+} from "./careerEventPlayerSync";
+import { resolveJugadorIdForParticipacion } from "../jugadorIdResolver";
+import type { CareerEventAssertionFailure } from "./types";
+
 jest.mock("../../supabaseClient", () => ({
   supabase: {
     from: jest.fn(),
@@ -38,17 +49,6 @@ jest.mock("./assertions", () => {
     assertCareerEventIntegrity: jest.fn().mockResolvedValue([]),
   };
 });
-
-import { finalizeCareerEvent } from "./pipeline";
-import { validateCareerEventPreClose } from "./preCloseGuards";
-import { syncRetaParticipaciones } from "../syncParticipaciones";
-import {
-  resolveJugadorForEventSync,
-  runParallelPlayerParticipacionSync,
-  runPlayerParticipacionSync,
-} from "./careerEventPlayerSync";
-import { resolveJugadorIdForParticipacion } from "../jugadorIdResolver";
-import type { CareerEventAssertionFailure } from "./types";
 
 const ORG = "2770b522-9064-4c7b-a729-4a0ea7e3f6e8";
 const GOOD_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";

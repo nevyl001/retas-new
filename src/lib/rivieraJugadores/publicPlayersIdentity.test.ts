@@ -1,3 +1,11 @@
+import { supabasePublicRead } from "../supabaseClient";
+import { resolvePlayerPublicProfiles } from "./publicPlayerAvatars";
+import {
+  getPublicPlayersIdentityMap,
+  publicIdentityToResolvedRating,
+  type PublicPlayerIdentity,
+} from "./publicPlayersIdentity";
+
 jest.mock("../supabaseClient", () => {
   const chain = {
     select: jest.fn().mockReturnThis(),
@@ -16,14 +24,6 @@ jest.mock("../supabaseClient", () => {
 jest.mock("./publicPlayerAvatars", () => ({
   resolvePlayerPublicProfiles: jest.fn(async () => ({})),
 }));
-
-import { supabasePublicRead } from "../supabaseClient";
-import { resolvePlayerPublicProfiles } from "./publicPlayerAvatars";
-import {
-  getPublicPlayersIdentityMap,
-  publicIdentityToResolvedRating,
-  type PublicPlayerIdentity,
-} from "./publicPlayersIdentity";
 
 describe("publicIdentityToResolvedRating", () => {
   const identity: PublicPlayerIdentity = {

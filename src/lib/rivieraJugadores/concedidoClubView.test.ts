@@ -1,3 +1,18 @@
+import { supabase, supabasePublicRead } from "../supabaseClient";
+import {
+  applyConcedidoClubMeta,
+  enrichJugadorConcedidoClubView,
+  enrichJugadoresConcedidoClubViewBatch,
+  fetchConcedidosRankingMetaBatch,
+} from "./concedidoClubView";
+import {
+  buildGrantsContextForRoster,
+  findGrantedAccessMetaForJugador,
+  listActiveGrantedAccessForOrganizerPublic,
+  listOrganizerPlayerAccessRowsForJugadorIds,
+} from "./organizerPlayerAccess";
+import type { RivieraJugadorWithStats } from "./types";
+
 jest.mock("../supabaseClient", () => ({
   supabase: { rpc: jest.fn() },
   supabasePublicRead: { from: jest.fn() },
@@ -15,21 +30,6 @@ jest.mock("./rivieraOfficialActivity", () => ({
   fetchOfficialDisplayPuntosForJugador: jest.fn().mockResolvedValue(null),
   resolveOfficialGlobalPuntos: jest.fn().mockResolvedValue(null),
 }));
-
-import { supabase, supabasePublicRead } from "../supabaseClient";
-import {
-  applyConcedidoClubMeta,
-  enrichJugadorConcedidoClubView,
-  enrichJugadoresConcedidoClubViewBatch,
-  fetchConcedidosRankingMetaBatch,
-} from "./concedidoClubView";
-import {
-  buildGrantsContextForRoster,
-  findGrantedAccessMetaForJugador,
-  listActiveGrantedAccessForOrganizerPublic,
-  listOrganizerPlayerAccessRowsForJugadorIds,
-} from "./organizerPlayerAccess";
-import type { RivieraJugadorWithStats } from "./types";
 
 function jugador(
   partial: Partial<RivieraJugadorWithStats> & { id: string }
