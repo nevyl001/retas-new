@@ -12,7 +12,6 @@ import {
   type PlayerParticipacionSyncResult,
 } from "../careerEventPipeline/careerEventPlayerSync";
 import type { CareerEventAssertionFailure } from "../careerEventPipeline/types";
-import type { CloseIdentityCache } from "../careerEventPipeline/closeIdentityCache";
 import {
   enrichMetadataWithPartidosDetalle,
   summarizePartidosDetalle,

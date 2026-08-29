@@ -21,7 +21,6 @@ import {
 } from "../aplicarRatingPartido";
 import {
   type CareerEventSyncOutcome,
-  hostClubMetadata,
   playerSyncFromPersist,
   registrarPuntosRanking,
   refreshJugadorStatsBatch,

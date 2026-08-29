@@ -46,7 +46,6 @@ import { aplicarRatingRetaFinishedMatches } from "../aplicarRatingPartido";
 import type { RivieraRankingFormato } from "../rivieraRankingPoints";
 import {
   type CareerEventSyncOutcome,
-  type CareerEventSyncOptions,
   type PlayerAgg,
   hostClubMetadata,
   playerSyncFromPersist,
