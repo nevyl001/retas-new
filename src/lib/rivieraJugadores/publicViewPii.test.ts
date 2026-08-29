@@ -29,15 +29,23 @@ const PII_COLUMN_NAMES = [
 ];
 
 function extractViewDefinition(sql: string, viewName: string): string {
-  const marker = `CREATE OR REPLACE VIEW public.${viewName} AS`;
-  const start = sql.indexOf(marker);
-  if (start === -1) {
+  const headerRe = new RegExp(
+    `CREATE\\s+OR\\s+REPLACE\\s+VIEW\\s+public\\.${viewName}\\b`,
+    "i"
+  );
+  const headerMatch = headerRe.exec(sql);
+  if (!headerMatch || headerMatch.index === undefined) {
     throw new Error(
       `No se encontró "CREATE OR REPLACE VIEW public.${viewName}" en ${VIEW_SQL_PATH}. ` +
         `Si la vista se movió/renombró, actualiza este test junto con el cambio.`
     );
   }
-  const end = sql.indexOf(";", start);
+  const start = headerMatch.index;
+  const asMatch = /\bAS\b/i.exec(sql.slice(start));
+  if (!asMatch || asMatch.index === undefined) {
+    throw new Error(`Definición de ${viewName} sin "AS" tras el encabezado CREATE VIEW.`);
+  }
+  const end = sql.indexOf(";", start + asMatch.index + asMatch[0].length);
   if (end === -1) throw new Error(`Definición de ${viewName} sin ";" de cierre.`);
   return sql.slice(start, end + 1);
 }
@@ -48,6 +56,10 @@ describe("public.riviera_jugadores_sitio_oficial — sin PII (regresión estáti
 
   test("el archivo fuente sigue existiendo y la vista sigue definida", () => {
     expect(viewDef.length).toBeGreaterThan(0);
+  });
+
+  test("usa security_invoker = true (endurecimiento Security Advisor)", () => {
+    expect(viewDef).toMatch(/WITH\s*\(\s*security_invoker\s*=\s*true\s*\)/i);
   });
 
   test("no usa SELECT * (evita fuga silenciosa de columnas nuevas)", () => {

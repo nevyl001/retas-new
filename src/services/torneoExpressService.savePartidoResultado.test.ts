@@ -128,9 +128,12 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
     expect(supabase.from).not.toHaveBeenCalled();
   });
 
-  it("resultado inválido (set empatado, sin ganador): se rechaza antes de llamar al RPC (validación de cliente)", async () => {
+  it("resultado inválido (1-1 en sets sin tercer set): se rechaza antes de llamar al RPC (validación de cliente)", async () => {
     await expect(
-      savePartidoResultado("partido-1", [{ local: 4, visitante: 4 }])
+      savePartidoResultado("partido-1", [
+        { local: 6, visitante: 4 },
+        { local: 4, visitante: 6 },
+      ])
     ).rejects.toThrow(/empatado/i);
     expect(supabase.rpc).not.toHaveBeenCalled();
   });
