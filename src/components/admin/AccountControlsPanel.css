@@ -154,14 +154,14 @@
 .account-controls__btn--primary {
   background: var(--admin-accent, #f5f2eb);
   border-color: var(--admin-accent, #f5f2eb);
-  color: var(--admin-ink, var(--ro-chrome-bg, #12161b));
+  color: var(--admin-ink, var(--ro-text-on-accent, #12161b));
   font-weight: 600;
 }
 
 .account-controls__btn--primary:hover:not(:disabled) {
   background: var(--admin-accent-hover, #ffffff);
   border-color: var(--admin-accent-hover, #ffffff);
-  color: var(--admin-ink, var(--ro-chrome-bg, #12161b));
+  color: var(--admin-ink, var(--ro-text-on-accent, #12161b));
 }
 
 .account-controls__btn--ghost {

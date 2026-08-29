@@ -590,9 +590,9 @@
 .te-gestion-page .te-grupos-tab--active,
 .te-gestion-page .te-grupos-tab--active:hover,
 .te-gestion-page .te-grupos-tab--active:focus {
-  border-color: var(--ro-text-primary) !important;
-  background: var(--ro-text-primary) !important;
-  color: var(--ro-bg-base, #fff) !important;
+  border-color: #14161a !important;
+  background: #14161a !important;
+  color: var(--bg-base, #fff) !important;
   box-shadow: none;
 }
 

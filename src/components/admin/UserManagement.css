@@ -86,13 +86,13 @@
 .user-management .riviera-btn-primary {
   background: #f5f2eb;
   border-color: #f5f2eb;
-  color: var(--ro-chrome-bg, #12161b);
+  color: var(--admin-ink, var(--ro-text-on-accent, #12161b));
 }
 
 .user-management .riviera-btn-primary:hover:not(:disabled) {
   background: #ffffff;
   border-color: #ffffff;
-  color: var(--ro-chrome-bg, #12161b);
+  color: var(--admin-ink, var(--ro-text-on-accent, #12161b));
 }
 
 .user-management .riviera-btn-ghost,

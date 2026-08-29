@@ -733,7 +733,7 @@
   background: color-mix(
     in srgb,
     var(--ro-chrome-deep, var(--ro-chrome-bg)) 82%,
-    var(--ro-chrome-text, var(--text-primary)) 18%
+    #ffffff 18%
   );
 }
 
@@ -1029,7 +1029,7 @@
   border-radius: var(--te-v2-radius);
   background: color-mix(
     in srgb,
-    var(--ro-chrome-text, var(--text-primary)) 3%,
+    #ffffff 3%,
     transparent
   );
 }
@@ -1127,7 +1127,7 @@
     );
   background: color-mix(
     in srgb,
-    var(--ro-chrome-text, var(--text-primary)) 2.5%,
+    #ffffff 2.5%,
     transparent
   );
 }
@@ -1689,7 +1689,7 @@
 }
 
 .te-elim-v2 .te-pb-closing-card__topline small {
-  color: var(--ro-chrome-text-dim, var(--text-muted));
+  color: var(--text-muted);
   font-size: 0.59375rem;
   font-weight: 650;
   letter-spacing: 0.09em;
@@ -1818,7 +1818,7 @@
     );
   background: color-mix(
     in srgb,
-    var(--ro-chrome-text, var(--text-primary)) 2.5%,
+    #ffffff 2.5%,
     transparent
   );
 }
@@ -1845,7 +1845,7 @@
 }
 
 .te-elim-v2 .te-pb-closing-card__stat dt {
-  color: var(--ro-chrome-text-dim, var(--text-muted));
+  color: var(--text-muted);
   font-size: 0.5625rem;
   font-weight: 750;
   letter-spacing: 0.12em;
@@ -2191,7 +2191,7 @@
 }
 
 .te-elim-v2 .te-podium-share__context small {
-  color: var(--ro-chrome-text-dim);
+  color: var(--text-muted);
   font-size: 0.5625rem;
 }
 
@@ -2365,7 +2365,7 @@
 }
 
 .te-elim-v2 .te-podium-share__stats > span {
-  color: var(--ro-chrome-text-dim);
+  color: var(--text-muted);
   font-size: 0.5rem;
   font-weight: 750;
   letter-spacing: 0.14em;
@@ -2394,7 +2394,7 @@
 }
 
 .te-elim-v2 .te-podium-share__stats dt {
-  color: var(--ro-chrome-text-dim);
+  color: var(--text-muted);
   font-size: 0.5rem;
   font-weight: 750;
   letter-spacing: 0.1em;

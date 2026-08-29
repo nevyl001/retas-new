@@ -150,13 +150,13 @@
 .grant-access-modal__btn--primary {
   border: 1px solid var(--admin-accent, #f5f2eb);
   background: var(--admin-accent, #f5f2eb);
-  color: var(--admin-ink, var(--ro-chrome-bg, #12161b));
+  color: var(--admin-ink, var(--ro-text-on-accent, #12161b));
 }
 
 .grant-access-modal__btn--primary:hover:not(:disabled) {
   background: var(--admin-accent-hover, #ffffff);
   border-color: var(--admin-accent-hover, #ffffff);
-  color: var(--admin-ink, var(--ro-chrome-bg, #12161b));
+  color: var(--admin-ink, var(--ro-text-on-accent, #12161b));
 }
 
 .grant-access-modal__btn:disabled {

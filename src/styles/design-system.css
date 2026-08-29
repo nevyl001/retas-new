@@ -213,7 +213,8 @@
   width: 48px;
   height: 2px;
   margin: 0;
-  background: var(--ro-text-primary, var(--text-primary, #14161a));
+  color: var(--ro-text-primary, var(--text-primary, #14161a));
+  background: currentColor;
   flex-shrink: 0;
   align-self: flex-start;
 }

@@ -1942,14 +1942,14 @@
   /* Sidebar ink: acento oscuro del tema claro se pierde */
   background: #f5f2eb;
   border-color: #f5f2eb;
-  color: var(--qm-ink-bg, var(--ro-chrome-bg));
+  color: var(--ro-text-on-accent, #12161b);
 }
 
 .qm-primary-cta--sidebar.is-loading .qm-primary-cta__btn:disabled {
   opacity: 1;
   background: #f5f2eb;
   border-color: #f5f2eb;
-  color: var(--qm-ink-bg, var(--ro-chrome-bg));
+  color: var(--ro-text-on-accent, #12161b);
   cursor: wait;
 }
 
@@ -1964,7 +1964,7 @@
 .qm-primary-cta--sidebar .qm-primary-cta__btn:not(:disabled):hover {
   background: #ffffff;
   border-color: #ffffff;
-  color: var(--qm-ink-bg, var(--ro-chrome-bg));
+  color: var(--ro-text-on-accent, #12161b);
 }
 
 html[data-club="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(:disabled),
@@ -2261,14 +2261,14 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   .qm-ws__sticky-cta .qm-primary-cta__btn:not(:disabled) {
     background: #f5f2eb;
     border-color: #f5f2eb;
-    color: var(--ro-chrome-bg);
+    color: var(--ro-text-on-accent, #12161b);
     opacity: 1;
   }
 
   .qm-ws__sticky-cta .qm-primary-cta__btn:not(:disabled):hover {
     background: #ffffff;
     border-color: #ffffff;
-    color: var(--ro-chrome-bg);
+    color: var(--ro-text-on-accent, #12161b);
   }
 
   .qm-ws__sticky-cta .qm-primary-cta__btn:disabled {
@@ -2280,7 +2280,7 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
     opacity: 1;
     background: #f5f2eb;
     border-color: #f5f2eb;
-    color: var(--ro-chrome-bg);
+    color: var(--ro-text-on-accent, #12161b);
   }
 
   /* Club con acento claro (p. ej. lima): sí usa branding en el sticky */

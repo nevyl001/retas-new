@@ -2121,8 +2121,8 @@
 }
 
 .duelo2v2-score-editor__save .riviera-btn-primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--ro-chrome-bg) 88%, var(--ro-chrome-text));
-  border-color: color-mix(in srgb, var(--ro-chrome-bg) 88%, var(--ro-chrome-text));
+  background: color-mix(in srgb, var(--ro-chrome-bg) 88%, #ffffff);
+  border-color: color-mix(in srgb, var(--ro-chrome-bg) 88%, #ffffff);
   color: var(--ro-chrome-text);
 }
 
