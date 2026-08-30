@@ -2575,38 +2575,6 @@
   margin-inline: auto;
 }
 
-.duelo2v2-celebrate__share-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.85rem 1.25rem;
-  margin: clamp(0.85rem, 2vw, 1.15rem) auto 0;
-  width: min(1280px, calc(100% - 48px));
-}
-
-.duelo2v2-celebrate__share-link {
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--ro-text-muted);
-  font-size: 0.68rem;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-  text-decoration: underline;
-  text-underline-offset: 0.18em;
-  cursor: pointer;
-}
-
-.duelo2v2-celebrate__share-link:hover:not(:disabled),
-.duelo2v2-celebrate__share-link:focus-visible {
-  color: var(--ro-text-secondary);
-}
-
-.duelo2v2-celebrate__share-link:disabled {
-  opacity: 0.65;
-  cursor: wait;
-}
-
 .duelo2v2-celebrate__participantes-note {
   max-width: 36rem;
   margin: clamp(0.85rem, 2vw, 1.1rem) auto 0;
@@ -2637,13 +2605,6 @@
     margin-inline: 0;
     padding-inline: 0;
     gap: 1.25rem;
-  }
-
-  .duelo2v2-celebrate__share-toolbar {
-    width: 100%;
-    max-width: 100%;
-    margin-inline: 0;
-    padding-inline: 0;
   }
 
   .duelo2v2-celebrate__participantes-note {

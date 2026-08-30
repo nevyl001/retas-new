@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   getDueloLoserCelebrateMessage,
   getDueloWinnerCelebrateMessage,
@@ -8,7 +8,6 @@ import {
 } from "../../club-experience";
 import { computeDueloScore } from "../../lib/duelo2v2/scoring";
 import { createDuelo2v2SharePresentation } from "../../lib/duelo2v2/duelo2v2SharePresentation";
-import { shareDuelo2v2Image } from "../../lib/duelo2v2/shareDuelo2v2Image";
 import type { Duelo2v2SetDetalle } from "../../lib/duelo2v2/types";
 import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import type { PublicRetaWinnerAvatar } from "../public/PublicRetaWinnerSection";
@@ -118,22 +117,6 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
     ...shareBase,
   });
 
-  const [sharingPlace, setSharingPlace] = useState<"winner" | "runner-up" | null>(
-    null
-  );
-
-  const share = async (place: "winner" | "runner-up") => {
-    if (sharingPlace) return;
-    setSharingPlace(place);
-    try {
-      await shareDuelo2v2Image(
-        place === "winner" ? winnerPresentation : runnerUpPresentation
-      );
-    } finally {
-      setSharingPlace(null);
-    }
-  };
-
   return (
     <section
       className="duelo2v2-celebrate duelo2v2-celebrate--stories te-pub-fade-in"
@@ -142,27 +125,6 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
       <div className="duelo2v2-celebrate__story-gallery">
         <Duelo2v2ShareCard presentation={winnerPresentation} />
         <Duelo2v2ShareCard presentation={runnerUpPresentation} />
-      </div>
-
-      <div className="duelo2v2-celebrate__share-toolbar" aria-label="Acciones de imagen">
-        <button
-          type="button"
-          className="duelo2v2-celebrate__share-link"
-          onClick={() => void share("winner")}
-          disabled={sharingPlace !== null}
-          aria-busy={sharingPlace === "winner"}
-        >
-          {sharingPlace === "winner" ? "Preparando imagen…" : "Descargar ganadores"}
-        </button>
-        <button
-          type="button"
-          className="duelo2v2-celebrate__share-link"
-          onClick={() => void share("runner-up")}
-          disabled={sharingPlace !== null}
-          aria-busy={sharingPlace === "runner-up"}
-        >
-          {sharingPlace === "runner-up" ? "Preparando imagen…" : "Descargar 2.º lugar"}
-        </button>
       </div>
 
       <p className="duelo2v2-celebrate__participantes-note">
