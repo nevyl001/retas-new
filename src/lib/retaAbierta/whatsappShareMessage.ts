@@ -126,6 +126,14 @@ function formatOpenSlotLines(openSlots: number): string[] {
   return Array.from({ length: openSlots }, () => "○ Disponible");
 }
 
+/** Destacado arriba del fold en WhatsApp (*negrita* nativa). */
+function formatOpenSlotsHeadline(openSlots: number): string | null {
+  if (openSlots <= 0) return null;
+  const label =
+    openSlots === 1 ? "1 LUGAR DISPONIBLE" : `${openSlots} LUGARES DISPONIBLES`;
+  return `⭕ *${label}*`;
+}
+
 function formatCupoSummaryLine(
   confirmedCount: number,
   capacity: number,
@@ -252,16 +260,17 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
 
   if (dto.rama_label?.trim()) lines.push(dto.rama_label.trim());
 
-  const detailParts: string[] = [];
   if (dto.category_label?.trim()) {
     const cat = dto.category_label.trim();
-    detailParts.push(
+    lines.push(
       cat.toLowerCase().startsWith("nivel") ? cat : `Nivel ${cat}`
     );
   }
-  if (includeCosto && costo) detailParts.push(`💵 ${costo}`);
-  if (includePremio && premio) detailParts.push(`🏆 ${premio}`);
-  if (detailParts.length) lines.push(detailParts.join(" · "));
+  if (includeCosto && costo) lines.push(`💵 Costo: ${costo}`);
+  if (includePremio && premio) lines.push(`🏆 Premio: ${premio}`);
+
+  const openSlotsHeadline = formatOpenSlotsHeadline(openSlots);
+  if (openSlotsHeadline) lines.push(openSlotsHeadline);
 
   const descLine = dto.description?.trim();
   if (descLine) lines.push(descLine);

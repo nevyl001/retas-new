@@ -162,8 +162,37 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("AMERICANO");
     expect(text).toContain("📍 Hack");
     expect(text).toContain("6 de 16 confirmados · 10 lugares disponibles");
+    expect(text).toContain("⭕ *10 LUGARES DISPONIBLES*");
     expect(text).toContain("✓ Arturo Cortes (0.73)");
     expect(text).toContain("○ 10 lugares disponibles");
+  });
+
+  it("Americano: incluye costo y premio cuando están activos", () => {
+    const text = buildRetaAbiertaWhatsAppMessage({
+      dto: {
+        name: "Americano sábado",
+        mode_type: "americano",
+        scheduled_at: "2026-07-18T10:00:00.000Z",
+        duration_minutes: null,
+        location_label: "Hack Padel",
+        category_label: "5ta Fuerza",
+        rama_label: null,
+        capacity: 8,
+        confirmed_count: 2,
+        spots_left: 6,
+        display_rating: true,
+        entries: baseEntries.slice(0, 2),
+      },
+      publicUrl: "https://app.example/jugar/ra-am-cp",
+      clubName: "Hack Pádel",
+      includeCosto: true,
+      costo: "350",
+      includePremio: true,
+      premio: "Kit Overgrips Wilson Pro",
+    });
+    expect(text).toContain("💵 Costo: 350");
+    expect(text).toContain("🏆 Premio: Kit Overgrips Wilson Pro");
+    expect(text).toContain("⭕ *6 LUGARES DISPONIBLES*");
   });
 
   it("Americano: lista huecos uno por uno cuando quedan pocos", () => {
@@ -223,6 +252,7 @@ describe("WhatsApp share message por modo", () => {
       clubName: "Hack Pádel",
     });
     expect(text).toContain("4 de 8 confirmados · 4 lugares disponibles");
+    expect(text).toContain("⭕ *4 LUGARES DISPONIBLES*");
     expect(text.match(/○ Disponible/g)?.length).toBe(4);
     expect(text.indexOf("✓ Nevyl (3.28)")).toBeLessThan(
       text.indexOf("○ Disponible")
@@ -445,7 +475,7 @@ describe("WhatsApp share message por modo", () => {
       includeCosto: true,
       includePremio: false,
     });
-    expect(withCostoOnly).toContain("💵 $200 por jugador");
+    expect(withCostoOnly).toContain("💵 Costo: $200 por jugador");
     expect(withCostoOnly).not.toContain("🏆");
 
     const withBoth = buildRetaAbiertaWhatsAppMessage({
@@ -453,11 +483,11 @@ describe("WhatsApp share message por modo", () => {
       includeCosto: true,
       includePremio: true,
     });
-    expect(withBoth).toContain("💵 $200 por jugador");
-    expect(withBoth).toContain("🏆 Trofeo + pelotas");
-    expect(withBoth).toMatch(
-      /Nivel 5ta Fuerza · 💵 \$200 por jugador · 🏆 Trofeo \+ pelotas/
-    );
+    expect(withBoth).toContain("💵 Costo: $200 por jugador");
+    expect(withBoth).toContain("🏆 Premio: Trofeo + pelotas");
+    expect(withBoth).toMatch(/Nivel 5ta Fuerza/);
+    expect(withBoth).toMatch(/💵 Costo: \$200 por jugador/);
+    expect(withBoth).toMatch(/🏆 Premio: Trofeo \+ pelotas/);
   });
 
   it("no imprime costo/premio si el flag está on pero el texto vacío", () => {

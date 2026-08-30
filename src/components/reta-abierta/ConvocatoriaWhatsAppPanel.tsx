@@ -568,6 +568,42 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     });
   };
 
+  /** Detalles del torneo (embedded / americano / gestionar) son la fuente de verdad de costo/premio. */
+  const preferDetailsCostoPremio =
+    embedded || shareOnly || context.mode === "americano";
+
+  const resolveShareCostoPremio = (overrides?: {
+    costo?: string | null;
+    includeCosto?: boolean;
+    premio?: string | null;
+    includePremio?: boolean;
+  }) => {
+    const includeCostoResolved = preferDetailsCostoPremio
+      ? context.includeCosto === true
+      : overrides?.includeCosto ?? includeCosto;
+    const includePremioResolved = preferDetailsCostoPremio
+      ? context.includePremio === true
+      : overrides?.includePremio ?? includePremio;
+    const costoResolved = !includeCostoResolved
+      ? null
+      : overrides?.costo?.trim() ||
+        context.defaultCosto?.trim() ||
+        costoLabel.trim() ||
+        null;
+    const premioResolved = !includePremioResolved
+      ? null
+      : overrides?.premio?.trim() ||
+        context.defaultPremio?.trim() ||
+        premioLabel.trim() ||
+        null;
+    return {
+      includeCosto: includeCostoResolved,
+      includePremio: includePremioResolved,
+      costo: costoResolved,
+      premio: premioResolved,
+    };
+  };
+
   const buildLocalShareText = (
     row: OpenRegistrationConfigRow,
     url: string,
@@ -594,8 +630,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       ? new Date(scheduledAt).toISOString()
       : null;
     const showLugar = overrides?.includeLugar ?? includeLugar;
-    const showCosto = overrides?.includeCosto ?? includeCosto;
-    const showPremio = overrides?.includePremio ?? includePremio;
+    const costoPremio = resolveShareCostoPremio(overrides);
+    const showCosto = costoPremio.includeCosto;
+    const showPremio = costoPremio.includePremio;
     const localLocation = locationLabel.trim() || null;
     /** En gestionar (shareOnly), el horario del duelo viene del context/editor. */
     const resolvedScheduled = shareOnly
@@ -622,20 +659,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           context.defaultLocation ??
           null
       : null;
-    const resolvedCosto = !showCosto
-      ? null
-      : overrides?.costo?.trim() ||
-        (shareOnly ? context.defaultCosto?.trim() : "") ||
-        costoLabel.trim() ||
-        context.defaultCosto?.trim() ||
-        null;
-    const resolvedPremio = !showPremio
-      ? null
-      : overrides?.premio?.trim() ||
-        (shareOnly ? context.defaultPremio?.trim() : "") ||
-        premioLabel.trim() ||
-        context.defaultPremio?.trim() ||
-        null;
+    const resolvedCosto = costoPremio.costo;
+    const resolvedPremio = costoPremio.premio;
     return buildRetaAbiertaWhatsAppMessage({
       dto: {
         ...dto,
@@ -660,9 +685,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         ? context.includeLugar !== false
         : showLugar,
       costo: resolvedCosto,
-      includeCosto: shareOnly ? context.includeCosto === true : showCosto,
+      includeCosto: showCosto,
       premio: resolvedPremio,
-      includePremio: shareOnly ? context.includePremio === true : showPremio,
+      includePremio: showPremio,
       displayFullName,
       productHeadline: context.productHeadline,
     });
@@ -697,10 +722,11 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         "";
       const launchIncludeLugar = includeLugar;
       const launchCancha = canchaLabel.trim();
-      const launchIncludeCosto = includeCosto;
-      const launchCosto = costoLabel.trim();
-      const launchIncludePremio = includePremio;
-      const launchPremio = premioLabel.trim();
+      const launchCostoPremio = resolveShareCostoPremio();
+      const launchIncludeCosto = launchCostoPremio.includeCosto;
+      const launchCosto = launchCostoPremio.costo ?? "";
+      const launchIncludePremio = launchCostoPremio.includePremio;
+      const launchPremio = launchCostoPremio.premio ?? "";
 
       if (!id) {
         if (!ensureDraftEntity) {
@@ -831,18 +857,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     const copyIncludeLugar = shareOnly
       ? context.includeLugar !== false
       : includeLugar;
-    const copyIncludeCosto = shareOnly
-      ? context.includeCosto === true
-      : includeCosto;
-    const copyIncludePremio = shareOnly
-      ? context.includePremio === true
-      : includePremio;
-    const copyCosto = shareOnly
-      ? (context.defaultCosto ?? "").trim()
-      : costoLabel.trim();
-    const copyPremio = shareOnly
-      ? (context.defaultPremio ?? "").trim()
-      : premioLabel.trim();
+    const copyCostoPremio = resolveShareCostoPremio();
 
     void (async () => {
       try {
@@ -875,10 +890,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         durationMinutes: dur,
         locationLabel: copyIncludeLugar ? loc || null : null,
         includeLugar: copyIncludeLugar,
-        costo: copyCosto || null,
-        includeCosto: copyIncludeCosto,
-        premio: copyPremio || null,
-        includePremio: copyIncludePremio,
+        costo: copyCostoPremio.costo,
+        includeCosto: copyCostoPremio.includeCosto,
+        premio: copyCostoPremio.premio,
+        includePremio: copyCostoPremio.includePremio,
       });
       const copied = await copyTextToClipboard(text);
       if (!copied) {
