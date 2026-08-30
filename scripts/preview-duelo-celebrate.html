@@ -3,140 +3,90 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Duelo 2v2 Celebrate Preview</title>
+    <title>Duelo 2v2 Story Cards Preview</title>
     <link rel="stylesheet" href="../src/styles/riviera-open-tokens.css" />
-    <link rel="stylesheet" href="../src/styles/riviera-public-tokens.css" />
-    <link rel="stylesheet" href="../src/styles/riviera-public-celebrate.css" />
-    <link rel="stylesheet" href="../src/club-experience/components/ClubIdentity.css" />
+    <link rel="stylesheet" href="../src/components/duelo-2v2/duelo2v2-share-card.css" />
     <link rel="stylesheet" href="../src/components/duelo-2v2/duelo2v2-page.css" />
     <link rel="stylesheet" href="../src/components/jugadores/riviera-jugadores.css" />
     <style>
       :root {
         --font-display: Georgia, serif;
         --font-body: system-ui, sans-serif;
-        --radius-lg: 16px;
-        --ro-chrome-bg: #070a0e;
-        --ro-text-primary: #f5f2eb;
-        --ro-text-secondary: rgba(245, 242, 235, 0.72);
-        --ro-text-muted: rgba(245, 242, 235, 0.48);
-        --ro-medal-gold: #e8c547;
-        --ro-gold-text: #e8c547;
-        --ro-gold-dim: rgba(232, 197, 71, 0.08);
-        --ro-border: rgba(255, 255, 255, 0.12);
-        --ro-border-subtle: rgba(255, 255, 255, 0.08);
-        --ro-bg-input: rgba(255, 255, 255, 0.04);
-        --ro-bg-inset: rgba(0, 0, 0, 0.2);
-        --ro-bg-elevated: rgba(255, 255, 255, 0.03);
-        --accent-gold: #e8c547;
+        --ro-text-primary: #f4f1ea;
+        --ro-text-secondary: rgba(244, 241, 234, 0.72);
+        --ro-text-muted: rgba(244, 241, 234, 0.48);
+        --ro-medal-gold: #c9a84c;
+        --ro-medal-silver: #b6bdc7;
         --ro-success: #34d399;
-        --ro-error: #f87171;
       }
       * { box-sizing: border-box; }
-      body { margin: 0; min-height: 100vh; font-family: var(--font-body); background: #05080b; color: #f5f2eb; }
-      .preview-shell {
-        position: relative;
-        min-height: 100vh;
-        padding: clamp(1rem, 3vw, 2.5rem) clamp(1rem, 4vw, 3rem);
-        background-image: url("../src/assets/cancha-riviera.jpg");
-        background-size: cover;
-        background-position: center;
-      }
-      .preview-shell::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to bottom, rgba(5,8,11,.62), rgba(5,8,11,.48) 45%, rgba(5,8,11,.72));
-      }
-      .preview-shell > * { position: relative; z-index: 1; }
-      .rj-avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #2a2a2a; color: #f5f2eb; font-weight: 700; overflow: hidden; object-fit: cover; }
-      .club-identity__logo { width: 2rem; height: 2rem; border-radius: 50%; }
+      body { margin: 0; font-family: var(--font-body); background: #070a0e; color: #f4f1ea; }
+      .preview-shell { min-height: 100vh; padding: 2rem; }
+      .rj-avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #2a3038; color: #f4f1ea; font-weight: 700; overflow: hidden; object-fit: cover; }
     </style>
   </head>
   <body>
     <div class="preview-shell">
-      <div class="duelo2v2-page ro-surface-dark duelo2v2-page--public">
-        <section class="duelo2v2-live-board" aria-label="Encuentro 2 vs 2">
-          <header class="duelo2v2-live-board__header">
-            <h1 class="duelo2v2-live-board__title">TEST2</h1>
-            <p class="duelo2v2-live-board__sub">Duelo 2 vs 2 · Riviera Open · Finalizado</p>
-          </header>
-          <div class="duelo2v2-live-board__arena">
-            <div class="duelo2v2-live-team duelo2v2-live-team--winner">
-              <p class="duelo2v2-live-team__label">Pareja 1</p>
-              <div class="duelo2v2-live-team__avatars">
-                <div class="duelo2v2-live-player"><div class="duelo2v2-live-player__ring"><span class="rj-avatar rj-avatar--xl">AR</span></div><span class="duelo2v2-live-player__name">Alain Rodríguez</span></div>
-                <div class="duelo2v2-live-player"><div class="duelo2v2-live-player__ring"><span class="rj-avatar rj-avatar--xl">AA</span></div><span class="duelo2v2-live-player__name">Alan A</span></div>
+      <section class="duelo2v2-celebrate duelo2v2-celebrate--stories">
+        <div class="duelo2v2-celebrate__story-gallery">
+          <article class="duelo2v2-share-card duelo2v2-share-card--winner" data-duelo-share-layout="story-9x16">
+            <div class="duelo2v2-share-card__art">
+              <header class="duelo2v2-share-card__top">
+                <div class="duelo2v2-share-card__top-row">
+                  <div class="duelo2v2-share-card__brand"><span class="duelo2v2-share-card__club-mark">R</span><div><strong>Riviera Open</strong></div></div>
+                  <span class="duelo2v2-share-card__place-pill">1.er LUGAR</span>
+                </div>
+                <div class="duelo2v2-share-card__context"><span>TEST2</span><small>Duelo 2 vs 2</small></div>
+              </header>
+              <div class="duelo2v2-share-card__hero">
+                <p class="duelo2v2-share-card__badge">Ganadores</p>
+                <h2 class="duelo2v2-share-card__headline">¡Felicidades!</h2>
+                <div class="duelo2v2-share-card__players">
+                  <div class="duelo2v2-share-card__player"><span class="duelo2v2-share-card__avatar-frame"><span class="rj-avatar rj-avatar--xl duelo2v2-share-card__avatar">AR</span></span><strong>Alain</strong><span class="duelo2v2-share-card__rating"><span class="duelo2v2-share-card__rating-label">Rating</span><span class="duelo2v2-share-card__rating-value">2.80</span></span></div>
+                  <span class="duelo2v2-share-card__pair-axis"></span>
+                  <div class="duelo2v2-share-card__player"><span class="duelo2v2-share-card__avatar-frame"><img class="rj-avatar rj-avatar--xl duelo2v2-share-card__avatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&h=240&fit=crop" alt="" /></span><strong>Alan</strong><span class="duelo2v2-share-card__rating"><span class="duelo2v2-share-card__rating-label">Rating</span><span class="duelo2v2-share-card__rating-value">3.00</span></span></div>
+                </div>
+                <p class="duelo2v2-share-card__team-name">Alain Rodríguez / Alan A</p>
               </div>
-              <div class="duelo2v2-live-team__score">2<span class="duelo2v2-live-team__score-label">sets</span></div>
-            </div>
-            <div class="duelo2v2-live-board__center"><span class="duelo2v2-live-board__vs">VS</span></div>
-            <div class="duelo2v2-live-team">
-              <p class="duelo2v2-live-team__label">Pareja 2</p>
-              <div class="duelo2v2-live-team__avatars">
-                <div class="duelo2v2-live-player"><div class="duelo2v2-live-player__ring"><span class="rj-avatar rj-avatar--xl">AD</span></div><span class="duelo2v2-live-player__name">Alberto D</span></div>
-                <div class="duelo2v2-live-player"><div class="duelo2v2-live-player__ring"><span class="rj-avatar rj-avatar--xl">AX</span></div><span class="duelo2v2-live-player__name">Alex ana</span></div>
+              <div class="duelo2v2-share-card__result">
+                <div class="duelo2v2-share-card__score-inline"><span>2</span><span>·</span><span>1</span></div>
+                <p class="duelo2v2-share-card__score-caption">Victoria final</p>
+                <div class="duelo2v2-share-card__sets"><div class="duelo2v2-share-card__set"><span>Set 01</span><strong>6–2</strong></div><div class="duelo2v2-share-card__set"><span>Set 02</span><strong>4–6</strong></div><div class="duelo2v2-share-card__set"><span>Set 03</span><strong>6–2</strong></div></div>
+                <p class="duelo2v2-share-card__games">16–10 juegos totales</p>
               </div>
-              <div class="duelo2v2-live-team__score">1<span class="duelo2v2-live-team__score-label">sets</span></div>
+              <p class="duelo2v2-share-card__message">¡Se llevan la victoria! Gran duelo en Riviera Open.</p>
+              <footer class="duelo2v2-share-card__social"><p class="duelo2v2-share-card__social-platforms">Instagram · Facebook · TikTok</p><p class="duelo2v2-share-card__social-handle">@RivieraOpen</p></footer>
             </div>
-          </div>
-        </section>
-        <section class="duelo2v2-celebrate ro-pub-celebrate ro-pub-celebrate--winners">
-          <div class="ro-pub-celebrate__glow" aria-hidden></div>
-          <div class="ro-pub-celebrate__inner">
-            <header class="duelo2v2-celebrate__header">
-              <div class="club-identity club-identity--mother club-identity--compact club-identity--public duelo2v2-celebrate__brand">
-                <img class="club-identity__logo" src="../public/logo192.png" alt="" width="32" height="32" />
-                <div class="club-identity__text"><span class="club-identity__organizer">Riviera Open</span></div>
+          </article>
+          <article class="duelo2v2-share-card duelo2v2-share-card--runner-up" data-duelo-share-layout="story-9x16">
+            <div class="duelo2v2-share-card__art">
+              <header class="duelo2v2-share-card__top">
+                <div class="duelo2v2-share-card__top-row">
+                  <div class="duelo2v2-share-card__brand"><span class="duelo2v2-share-card__club-mark">R</span><div><strong>Riviera Open</strong></div></div>
+                  <span class="duelo2v2-share-card__place-pill">2.º LUGAR</span>
+                </div>
+                <div class="duelo2v2-share-card__context"><span>TEST2</span><small>Duelo 2 vs 2</small></div>
+              </header>
+              <div class="duelo2v2-share-card__hero">
+                <p class="duelo2v2-share-card__badge">Finalistas</p>
+                <h2 class="duelo2v2-share-card__headline">Sigue adelante</h2>
+                <div class="duelo2v2-share-card__players">
+                  <div class="duelo2v2-share-card__player"><span class="duelo2v2-share-card__avatar-frame"><span class="rj-avatar rj-avatar--xl duelo2v2-share-card__avatar">AD</span></span><strong>Alberto</strong><span class="duelo2v2-share-card__rating"><span class="duelo2v2-share-card__rating-label">Rating</span><span class="duelo2v2-share-card__rating-value">2.81</span></span></div>
+                  <span class="duelo2v2-share-card__pair-axis"></span>
+                  <div class="duelo2v2-share-card__player"><span class="duelo2v2-share-card__avatar-frame"><span class="rj-avatar rj-avatar--xl duelo2v2-share-card__avatar">AX</span></span><strong>Alex</strong><span class="duelo2v2-share-card__rating"><span class="duelo2v2-share-card__rating-label">Rating</span><span class="duelo2v2-share-card__rating-value">3.06</span></span></div>
+                </div>
+                <p class="duelo2v2-share-card__team-name">Alberto D / Alex ana</p>
               </div>
-              <p class="duelo2v2-celebrate__event-meta"><span>TEST2</span><span class="duelo2v2-celebrate__event-meta-sep">·</span><span>Duelo 2 vs 2</span></p>
-              <div class="duelo2v2-celebrate__header-rule" aria-hidden></div>
-            </header>
-            <div class="duelo2v2-celebrate__outcome-cards">
-              <article class="duelo2v2-celebrate__team-card duelo2v2-celebrate__team-card--winner">
-                <p class="duelo2v2-celebrate__team-card-badge">Ganadores</p>
-                <h2 class="duelo2v2-celebrate__team-card-headline">¡Felicidades!</h2>
-                <p class="duelo2v2-celebrate__team-card-names">Alain Rodríguez / Alan A</p>
-                <div class="duelo2v2-celebrate__pair-players">
-                  <div class="duelo2v2-celebrate__player"><div class="duelo2v2-celebrate__player-ring duelo2v2-celebrate__player-ring--winner"><span class="rj-avatar rj-avatar--xl duelo2v2-celebrate__player-avatar">AR</span></div><span class="duelo2v2-celebrate__player-name">Alain</span></div>
-                  <div class="duelo2v2-celebrate__player"><div class="duelo2v2-celebrate__player-ring duelo2v2-celebrate__player-ring--winner"><img class="rj-avatar rj-avatar--xl duelo2v2-celebrate__player-avatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&h=240&fit=crop" alt="" /></div><span class="duelo2v2-celebrate__player-name">Alan</span></div>
-                </div>
-                <div class="duelo2v2-celebrate__team-card-score">
-                  <div class="duelo2v2-celebrate__team-card-score-main">
-                    <span class="duelo2v2-celebrate__team-card-score-winner">Alain Rodríguez / Alan A</span>
-                    <div class="duelo2v2-celebrate__score-numbers"><strong>2</strong><span class="duelo2v2-celebrate__score-dash">:</span><strong>1</strong></div>
-                    <span class="duelo2v2-celebrate__team-card-score-rival">Alberto D / Alex ana</span>
-                  </div>
-                  <p class="duelo2v2-celebrate__score-caption">Victoria final</p>
-                  <ul class="duelo2v2-celebrate__sets-list"><li>Set 01: 6–2</li><li>Set 02: 4–6</li><li>Set 03: 6–2</li></ul>
-                  <p class="duelo2v2-celebrate__games-total">16–10 juegos totales</p>
-                </div>
-                <p class="duelo2v2-celebrate__team-card-message duelo2v2-celebrate__team-card-message--winner">¡Se llevan la victoria! Gran duelo en Riviera Open.</p>
-                <button type="button" class="duelo2v2-celebrate__share-btn">↗ Compartir ganadores</button>
-              </article>
-              <article class="duelo2v2-celebrate__team-card duelo2v2-celebrate__team-card--loser">
-                <p class="duelo2v2-celebrate__team-card-badge duelo2v2-celebrate__team-card-badge--loser">Segundo lugar</p>
-                <h3 class="duelo2v2-celebrate__team-card-subheadline">Sigue adelante</h3>
-                <p class="duelo2v2-celebrate__team-card-names duelo2v2-celebrate__team-card-names--loser">Alberto D / Alex ana</p>
-                <div class="duelo2v2-celebrate__pair-players">
-                  <div class="duelo2v2-celebrate__player"><div class="duelo2v2-celebrate__player-ring"><span class="rj-avatar rj-avatar--xl duelo2v2-celebrate__player-avatar">AD</span></div><span class="duelo2v2-celebrate__player-name">Alberto</span></div>
-                  <div class="duelo2v2-celebrate__player"><div class="duelo2v2-celebrate__player-ring"><span class="rj-avatar rj-avatar--xl duelo2v2-celebrate__player-avatar">AX</span></div><span class="duelo2v2-celebrate__player-name">Alex</span></div>
-                </div>
-                <div class="duelo2v2-celebrate__team-card-score duelo2v2-celebrate__team-card-score--loser">
-                  <div class="duelo2v2-celebrate__team-card-score-main">
-                    <span class="duelo2v2-celebrate__team-card-score-rival">Alberto D / Alex ana</span>
-                    <div class="duelo2v2-celebrate__score-numbers"><strong>1</strong><span class="duelo2v2-celebrate__score-dash">:</span><strong>2</strong></div>
-                    <span class="duelo2v2-celebrate__team-card-score-winner">Alain Rodríguez / Alan A</span>
-                  </div>
-                  <p class="duelo2v2-celebrate__score-caption">Marcador final</p>
-                </div>
-                <p class="duelo2v2-celebrate__team-card-message duelo2v2-celebrate__team-card-message--loser">Gran duelo. Sigan entrenando y mejorando.</p>
-                <button type="button" class="duelo2v2-celebrate__share-btn duelo2v2-celebrate__share-btn--muted">↗ Compartir 2.º lugar</button>
-              </article>
+              <div class="duelo2v2-share-card__result">
+                <div class="duelo2v2-share-card__score-inline"><span>1</span><span>·</span><span>2</span></div>
+                <p class="duelo2v2-share-card__score-caption">Marcador final</p>
+              </div>
+              <p class="duelo2v2-share-card__message">Gran duelo. Sigan entrenando y mejorando.</p>
+              <footer class="duelo2v2-share-card__social"><p class="duelo2v2-share-card__social-platforms">Instagram · Facebook · TikTok</p><p class="duelo2v2-share-card__social-handle">@RivieraOpen</p></footer>
             </div>
-            <footer class="ro-pub-celebrate__footer"><div class="ro-divider-gold" aria-hidden></div><p class="ro-pub-celebrate__closing">Vive Riviera Open</p></footer>
-          </div>
-        </section>
-      </div>
+          </article>
+        </div>
+      </section>
     </div>
   </body>
 </html>

@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import type { Duelo2v2SharePresentation } from "../../lib/duelo2v2/duelo2v2SharePresentation";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
-import { TablerIcon } from "../ui/TablerIcon";
+import "./duelo2v2-share-card.css";
+
+const RIVIERA_SOCIAL_PLATFORMS = "Instagram · Facebook · TikTok";
+const RIVIERA_SOCIAL_HANDLE = "@RivieraOpen";
 
 function playerFirstName(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -20,22 +23,26 @@ function RatingStat({ rating }: { rating?: number | null }) {
   );
 }
 
+function RivieraSocialFooter() {
+  return (
+    <footer className="duelo2v2-share-card__social">
+      <p className="duelo2v2-share-card__social-platforms">{RIVIERA_SOCIAL_PLATFORMS}</p>
+      <p className="duelo2v2-share-card__social-handle">{RIVIERA_SOCIAL_HANDLE}</p>
+    </footer>
+  );
+}
+
 export function Duelo2v2ShareCard({
   presentation,
-  onShare,
-  isSharing = false,
 }: {
   presentation: Duelo2v2SharePresentation;
-  onShare?: () => void;
-  isSharing?: boolean;
 }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const isWinner = presentation.place === "winner";
-  const shareLabel = isWinner ? "Compartir ganadores" : "Compartir 2.º lugar";
   const [firstPlayer, secondPlayer] = presentation.players.slice(0, 2);
 
   return (
-    <section
+    <article
       className={`duelo2v2-share-card duelo2v2-share-card--${presentation.place}`}
       data-duelo-share-layout="story-9x16"
       aria-label={`${presentation.badge} · ${presentation.teamName}`}
@@ -59,10 +66,7 @@ export function Duelo2v2ShareCard({
               <div>
                 <strong>{presentation.clubName}</strong>
                 {presentation.showMotherAttribution ? (
-                  <span>
-                    <i aria-hidden />
-                    by Riviera Open
-                  </span>
+                  <span>by Riviera Open</span>
                 ) : null}
               </div>
             </div>
@@ -72,10 +76,8 @@ export function Duelo2v2ShareCard({
           </div>
 
           <div className="duelo2v2-share-card__context">
-            <div>
-              <span>{presentation.dueloNombre}</span>
-              <small>Duelo 2 vs 2</small>
-            </div>
+            <span>{presentation.dueloNombre}</span>
+            <small>Duelo 2 vs 2</small>
           </div>
         </header>
 
@@ -105,9 +107,7 @@ export function Duelo2v2ShareCard({
               ) : null}
             </div>
 
-            <span className="duelo2v2-share-card__pair-axis" aria-hidden>
-              <i />
-            </span>
+            <span className="duelo2v2-share-card__pair-axis" aria-hidden />
 
             <div className="duelo2v2-share-card__player">
               {secondPlayer ? (
@@ -135,27 +135,17 @@ export function Duelo2v2ShareCard({
         </div>
 
         <div className="duelo2v2-share-card__result">
-          {isWinner ? (
-            <div
-              className="duelo2v2-share-card__score-stack"
-              aria-label={`${presentation.setsWin} sets a ${presentation.setsLoss}`}
-            >
-              <span className="duelo2v2-share-card__score-win">{presentation.setsWin}</span>
-              <span className="duelo2v2-share-card__score-rule" aria-hidden />
-              <span className="duelo2v2-share-card__score-loss">{presentation.setsLoss}</span>
-              <span className="duelo2v2-share-card__score-caption">Victoria final</span>
-            </div>
-          ) : (
-            <div
-              className="duelo2v2-share-card__score-inline"
-              aria-label={`${presentation.setsWin} sets a ${presentation.setsLoss}`}
-            >
-              <span>{presentation.setsWin}</span>
-              <span aria-hidden>:</span>
-              <span>{presentation.setsLoss}</span>
-              <span className="duelo2v2-share-card__score-caption">Marcador final</span>
-            </div>
-          )}
+          <div
+            className="duelo2v2-share-card__score-inline"
+            aria-label={`${presentation.setsWin} sets a ${presentation.setsLoss}`}
+          >
+            <span>{presentation.setsWin}</span>
+            <span aria-hidden>·</span>
+            <span>{presentation.setsLoss}</span>
+          </div>
+          <p className="duelo2v2-share-card__score-caption">
+            {isWinner ? "Victoria final" : "Marcador final"}
+          </p>
 
           {presentation.setRows.length > 0 ? (
             <div className="duelo2v2-share-card__sets" aria-label="Detalle por set">
@@ -174,20 +164,9 @@ export function Duelo2v2ShareCard({
         </div>
 
         <p className="duelo2v2-share-card__message">{presentation.message}</p>
-      </div>
 
-      {onShare ? (
-        <button
-          className="duelo2v2-share-card__cta"
-          type="button"
-          onClick={onShare}
-          disabled={isSharing}
-          aria-busy={isSharing}
-        >
-          <TablerIcon name="share-3" size={18} />
-          {isSharing ? "Preparando imagen…" : shareLabel}
-        </button>
-      ) : null}
-    </section>
+        <RivieraSocialFooter />
+      </div>
+    </article>
   );
 }
