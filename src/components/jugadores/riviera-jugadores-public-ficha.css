@@ -180,6 +180,93 @@
   border-bottom: 1px solid var(--rjp-ficha-hairline);
 }
 
+/* ——— Social player card (first fold móvil) ——— */
+.rjp-ficha-player-card {
+  margin: 0 var(--rjp-ficha-gutter);
+  overflow: hidden;
+}
+
+.rjp-ficha-player-card__competitive {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 4px 16px;
+  align-items: start;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--rjp-ficha-hairline);
+}
+
+.rjp-ficha-player-card__score {
+  margin-bottom: 0;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.rjp-ficha-player-card__clubs {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.rjp-ficha-player-card__eyebrow {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rjp-ficha-text-3);
+}
+
+.rjp-ficha-player-card__score-val .rjp-ficha-stat__val,
+.rjp-ficha-player-card__score-val .rjp-romc-pts--na {
+  display: block;
+  font-size: clamp(34px, 9vw, 40px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--rjp-ficha-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.rjp-ficha-player-card__score-val .rjp-ficha-stat__val--empty {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--rjp-ficha-text-3);
+}
+
+.rjp-ficha-player-card__breakdown.rjp-pts-breakdown--stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rjp-ficha-text-2);
+}
+
+.rjp-ficha-player-card__breakdown .rjp-pts-breakdown__line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.rjp-ficha-player-card__breakdown .rjp-pts-breakdown__line--total,
+.rjp-ficha-player-card__breakdown .rjp-pts-breakdown__line--career-total {
+  display: none;
+}
+
+.rjp-ficha-player-card__breakdown .rjp-pts-breakdown__line--home,
+.rjp-ficha-player-card__breakdown .rjp-pts-breakdown__line--total {
+  color: var(--rjp-ficha-text);
+  font-weight: 600;
+}
+
+.rjp-ficha-player-card__breakdown .rjp-pts-breakdown__line--other {
+  color: var(--rjp-ficha-text-2);
+}
+
+.rjp-ficha-position--desktop {
+  display: none;
+}
+
 /* ——— Hero editorial ——— */
 .rjp-ficha-hero--editorial {
   margin: 0;
@@ -190,10 +277,19 @@
 .rjp-ficha-hero__media {
   position: relative;
   width: 100%;
-  aspect-ratio: 3 / 4;
-  max-height: min(72vh, 520px);
+  aspect-ratio: 4 / 5;
+  max-height: min(58vh, 460px);
   overflow: hidden;
   background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px 14px 0 0;
+}
+
+.rjp-ficha-hero--photo .rjp-ficha-hero__media {
+  margin: 0 calc(-1 * var(--rjp-ficha-gutter));
+  width: calc(100% + 2 * var(--rjp-ficha-gutter));
+  border-radius: 0;
+  max-height: min(46vh, 360px);
+  aspect-ratio: 5 / 6;
 }
 
 .rjp-ficha-hero__photo {
@@ -207,32 +303,105 @@
 .rjp-ficha-hero__media-gradient {
   position: absolute;
   inset: auto 0 0;
-  height: 42%;
+  height: 52%;
   pointer-events: none;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(8, 8, 10, 0.72) 100%
+    rgba(8, 8, 10, 0.55) 45%,
+    rgba(8, 8, 10, 0.92) 100%
   );
 }
 
-.rjp-ficha-hero__cat-badge {
+.rjp-ficha-hero__rank-seal {
   position: absolute;
   top: 12px;
   right: 12px;
-  z-index: 2;
-  min-width: 28px;
-  height: 28px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--rjp-ficha-accent);
-  border: 2px solid rgba(14, 14, 16, 0.85);
-  font-size: 10px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 52px;
+  padding: 6px 10px 8px;
+  border-radius: 12px;
+  background: rgba(8, 8, 10, 0.72);
+  border: 1px solid var(--rjp-ficha-accent-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+}
+
+.rjp-ficha-hero__rank-seal--pending {
+  opacity: 0.75;
+}
+
+.rjp-ficha-hero__rank-seal-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rjp-ficha-accent);
+  line-height: 1.2;
+}
+
+.rjp-ficha-hero__rank-seal-val {
+  margin-top: 2px;
+  font-size: 20px;
   font-weight: 800;
-  color: var(--ro-text-on-accent, #111);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--rjp-ficha-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.rjp-ficha-hero__media-footer {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.rjp-ficha-hero__media-footer .rjp-ficha-hero__riviera-id-pill {
+  pointer-events: auto;
+}
+
+.rjp-ficha-hero__riviera-id-pill {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  margin: 0;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(8, 8, 10, 0.55);
+  color: var(--rjp-ficha-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.rjp-ficha-hero__riviera-id-pill:hover,
+.rjp-ficha-hero__riviera-id-pill:focus-visible {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: rgba(8, 8, 10, 0.72);
+  outline: none;
+}
+
+.rjp-ficha-hero__riviera-id-pill.rj-riviera-id--copied {
+  border-color: var(--rjp-ficha-accent-border);
+  color: var(--rjp-ficha-accent);
+}
+
+.rjp-ficha-hero__riviera-id-pill .rj-riviera-id__text {
+  color: inherit;
 }
 
 .rjp-ficha-hero__avatar-wrap {
@@ -252,7 +421,35 @@
 }
 
 .rjp-ficha-hero__identity-block {
-  padding: 16px var(--rjp-ficha-gutter) 4px;
+  padding: 14px 0 0;
+}
+
+.rjp-ficha-hero--photo .rjp-ficha-hero__identity-block {
+  margin-top: -4px;
+  padding-top: 12px;
+}
+
+.rjp-ficha-hero__identity-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-top: 10px;
+}
+
+.rjp-ficha-hero__meta-line {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--rjp-ficha-text-2);
+}
+
+.rjp-ficha-hero__cat-pill {
+  margin: 10px 0 0;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rjp-ficha-accent);
 }
 
 .rjp-ficha-hero__title-row {
@@ -301,12 +498,6 @@
   margin-top: 8px;
 }
 
-.rjp-ficha-hero__pais-inline {
-  background: transparent;
-  border: none;
-  padding: 0;
-}
-
 .rjp-ficha-hero__cat-label {
   font-size: 12px;
   font-weight: 700;
@@ -315,11 +506,11 @@
   color: var(--rjp-ficha-text-2);
 }
 
-.rjp-ficha-hero__meta-line {
-  margin: 10px 0 0;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--rjp-ficha-text-2);
+.rjp-ficha-hero__pais-inline {
+  background: transparent;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 .rjp-ficha-hero__viewing {
@@ -776,15 +967,32 @@
 }
 
 /* Redes */
+.rjp-ficha-player-card .rjp-ficha-social {
+  margin: 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--rjp-ficha-hairline);
+}
+
+.rjp-ficha-social--share .rjp-ficha-social__links {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rjp-ficha-social--share .rjp-ficha-social__link {
+  min-height: 40px;
+  padding: 4px 14px 4px 4px;
+  border: 1px solid var(--rjp-ficha-hairline);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .rjp-ficha-social {
   margin: 0 var(--rjp-ficha-gutter);
   padding: 12px 0 0;
 }
 
 .rjp-ficha-social__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   margin: 0 0 10px;
   font-size: 11px;
   font-weight: 650;
@@ -800,6 +1008,50 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.rjp-ficha-social__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rjp-ficha-social__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 0;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+  transition: opacity 180ms ease;
+}
+
+.rjp-ficha-social__link:hover {
+  opacity: 0.88;
+}
+
+.rjp-ficha-social__link:focus-visible {
+  outline: 2px solid var(--rjp-ficha-accent);
+  outline-offset: 2px;
+}
+
+.rjp-ficha-social__handle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--rjp-ficha-text-2);
+  letter-spacing: 0.01em;
+}
+
+.rjp-ficha-social--share .rjp-ficha-social__chip {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  flex-shrink: 0;
 }
 
 .rjp-ficha-social__chip {
@@ -928,14 +1180,29 @@
     padding: 0;
   }
 
+  .rjp-ficha-player-card {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .rjp-ficha-player-card__competitive {
+    display: none;
+  }
+
+  .rjp-ficha-position--desktop {
+    display: block;
+  }
+
+  .rjp-ficha-hero--photo .rjp-ficha-hero__media {
+    margin: 0;
+    width: 100%;
+    border-radius: 14px;
+    max-height: 440px;
+  }
+
   .rjp-ficha-hero__identity-block {
     padding-left: 0;
     padding-right: 0;
-  }
-
-  .rjp-ficha-hero__riviera-id-badge {
-    font-size: 16px;
-    padding: 9px 16px;
   }
 
   .rjp-ficha-hero__media,
