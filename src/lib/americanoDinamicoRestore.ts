@@ -132,6 +132,12 @@ export function applyAmericanoSnapshotToState(
   const { baseRosterRef, totalRoundsRef, courtsRef } = refs;
 
   if (snap.rounds.length === 0) {
+    const plannedRounds =
+      snap.totalRounds && snap.totalRounds > 0 ? snap.totalRounds : 0;
+    if (plannedRounds > 0) {
+      totalRoundsRef.current = plannedRounds;
+    }
+
     if (
       snap.ranking.length > 0 &&
       snap.tournamentPhase !== "playing" &&
@@ -148,10 +154,14 @@ export function applyAmericanoSnapshotToState(
       setCurrentRoundIndex(0);
       setPhase("registration");
       baseRosterRef.current = [];
-      totalRoundsRef.current = 0;
       courtsRef.current = 1;
       return true;
     }
+
+    if (plannedRounds > 0 && snap.tournamentPhase === "registration") {
+      return true;
+    }
+
     return false;
   }
 

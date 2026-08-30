@@ -9,6 +9,14 @@ import {
   type Tournament,
 } from "../../lib/database";
 import {
+  loadAmericanoDinamicoSnapshot,
+  type AmericanoDinamicoSnapshotV1,
+} from "../../lib/americanoDinamicoStorage";
+import {
+  loadAmericanoDinamicoSnapshotMerged,
+  persistAmericanoDinamicoSnapshot,
+} from "../../lib/americanoDinamicoSync";
+import {
   fetchOpenGameRegistrationConfig,
   listOpenGameRegistrationEntries,
 } from "../../lib/retaAbierta/retaAbiertaService";
@@ -112,6 +120,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const [courtsDraft, setCourtsDraft] = useState(2);
   const [starting, setStarting] = useState(false);
   const [savingCourts, setSavingCourts] = useState(false);
+  const [savingRounds, setSavingRounds] = useState(false);
 
   useEffect(() => {
     const fromTournament = Math.max(
@@ -120,6 +129,27 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
     );
     setCourtsDraft(fromTournament);
   }, [tournament?.courts]);
+
+  useEffect(() => {
+    if (!tournament?.id) return;
+    const local = loadAmericanoDinamicoSnapshot(tournament.id);
+    if (local?.totalRounds && local.totalRounds > 0) {
+      setRoundsDraft(local.totalRounds);
+    }
+    let cancelled = false;
+    void (async () => {
+      const { snapshot } = await loadAmericanoDinamicoSnapshotMerged(
+        tournament.id
+      );
+      if (cancelled) return;
+      if (snapshot?.totalRounds && snapshot.totalRounds > 0) {
+        setRoundsDraft(snapshot.totalRounds);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tournament?.id]);
 
   const courts = Math.max(1, Math.floor(Number(courtsDraft)) || 1);
   const totalRounds =
@@ -141,6 +171,34 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       }
     },
     [tournament, onTournamentPatched]
+  );
+
+  const persistRounds = useCallback(
+    async (next: number | "") => {
+      const safe =
+        next === "" ? 3 : Math.max(1, Math.floor(Number(next)) || 1);
+      setRoundsDraft(safe);
+      if (!tournament?.id) return;
+      setSavingRounds(true);
+      try {
+        const existing = loadAmericanoDinamicoSnapshot(tournament.id);
+        const snapshot: AmericanoDinamicoSnapshotV1 = {
+          version: 1,
+          savedAt: new Date().toISOString(),
+          tournamentPhase: "registration",
+          totalRounds: safe,
+          roster: existing?.roster ?? [],
+          ranking: existing?.ranking ?? [],
+          rounds: existing?.rounds ?? [],
+        };
+        await persistAmericanoDinamicoSnapshot(tournament.id, snapshot);
+      } catch {
+        /* la UI ya muestra el draft; al iniciar se vuelve a persistir */
+      } finally {
+        setSavingRounds(false);
+      }
+    },
+    [tournament?.id]
   );
 
   const selectedPlayers = useMemo<Player[]>(() => {
@@ -309,11 +367,8 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
                 variant="secondary"
                 size="sm"
                 aria-label="Menos rondas"
-                disabled={totalRounds <= 1}
-                onClick={() => {
-                  const next = Math.max(1, totalRounds - 1);
-                  setRoundsDraft(next);
-                }}
+                disabled={totalRounds <= 1 || savingRounds}
+                onClick={() => void persistRounds(totalRounds - 1)}
               >
                 −
               </Button>
@@ -323,6 +378,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
                 min={1}
                 value={roundsDraft}
                 aria-label="Número de rondas"
+                disabled={savingRounds}
                 onChange={(e) => {
                   const raw = e.target.value;
                   if (raw.trim() === "") {
@@ -334,9 +390,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
                   setRoundsDraft(Math.max(1, Math.trunc(n)));
                 }}
                 onBlur={() => {
-                  setRoundsDraft((prev) =>
-                    prev === "" ? 3 : Math.max(1, Math.floor(Number(prev)) || 1)
-                  );
+                  void persistRounds(roundsDraft);
                 }}
               />
               <Button
@@ -344,7 +398,8 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
                 variant="secondary"
                 size="sm"
                 aria-label="Más rondas"
-                onClick={() => setRoundsDraft(totalRounds + 1)}
+                disabled={savingRounds}
+                onClick={() => void persistRounds(totalRounds + 1)}
               >
                 +
               </Button>
@@ -404,9 +459,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
             type="button"
             variant="primary"
             onClick={() => {
-              setRoundsDraft((prev) =>
-                prev === "" ? 3 : Math.max(1, Math.floor(Number(prev)) || 1)
-              );
+              void persistRounds(roundsDraft);
               void persistCourts(courts);
               setStep(jugadoresOk ? "listo" : "jugadores");
             }}
