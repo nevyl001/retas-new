@@ -8,6 +8,10 @@ import {
 } from "../../lib/rivieraJugadores/constants";
 import { getJugadorPerfilMeta } from "../../lib/rivieraJugadores/jugadorPerfilDisplay";
 import {
+  isRankingPointsBreakdownPending,
+  resolveCareerTotalAllClubsDisplay,
+} from "../../lib/rivieraJugadores/jugadorPuntosBreakdown";
+import {
   computePublicProfileStats,
 } from "../../lib/rivieraJugadores/historialDisplay";
 import { getPublicPlayerProfileData } from "../../lib/rivieraJugadores/getPublicPlayerProfileData";
@@ -392,6 +396,14 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
 
   const identityMetaLine = perfilMeta.map((item) => item.value).join(" · ");
   const ratingDisplay = (jugador.rating ?? 3).toFixed(2);
+  const careerTotalPts = resolveCareerTotalAllClubsDisplay(
+    jugador,
+    false,
+    viewingOrgId
+  );
+  const careerTotalPending = isRankingPointsBreakdownPending(jugador, {
+    hasOrgContext,
+  });
 
   return (
     <ClubExperienceScope
@@ -515,14 +527,23 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
               </div>
 
               <div className="rjp-ficha-player-card__competitive" aria-label="Puntaje y ranking">
-                {(!hasOrgContext || jugador.visible_publico) && (
-                  <div className="rjp-ficha-player-card__score">
-                    <p className="rjp-ficha-player-card__eyebrow">Puntaje Riviera</p>
-                    <div className="rjp-ficha-player-card__score-val">
-                      <JugadorOfficialRomcPuntos jugador={jugador} />
-                    </div>
+                <div className="rjp-ficha-player-card__score">
+                  <p className="rjp-ficha-player-card__eyebrow">Puntaje Riviera</p>
+                  <div className="rjp-ficha-player-card__score-val">
+                    {careerTotalPending ? (
+                      <span
+                        className="rjp-ficha-stat__val rjp-pts--na"
+                        aria-busy="true"
+                      >
+                        Cargando carrera…
+                      </span>
+                    ) : (
+                      <span className="rjp-ficha-stat__val">
+                        {careerTotalPts.toLocaleString("es-MX")} pts
+                      </span>
+                    )}
                   </div>
-                )}
+                </div>
                 <div className="rjp-ficha-player-card__clubs">
                   <p className="rjp-ficha-player-card__eyebrow">Puntos por club</p>
                   <JugadorPuntosBreakdown
