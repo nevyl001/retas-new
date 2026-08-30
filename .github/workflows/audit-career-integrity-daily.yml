@@ -1,7 +1,8 @@
 name: Auditoría diaria de integridad de carrera
 
-# Corre sola todos los días contra producción (usa la misma anon key
-# pública que ya usa la app en el navegador — no requiere service_role).
+# Corre sola todos los días contra producción.
+# - Checks públicos: anon key (misma que el navegador).
+# - Checks ops-only (_riviera_orphan_profile_audit): SUPABASE_SERVICE_ROLE_KEY.
 # También se puede disparar a mano desde la pestaña Actions de GitHub.
 on:
   schedule:
@@ -35,15 +36,16 @@ jobs:
         env:
           REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
           REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Auditoría de aislamiento RLS público (SEC-001, online, producción)
         run: npm run audit:rls-public-isolation
         env:
           REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
           REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
+          AUDIT_LIGA_PUBLIC_ID: 08d658c9-ebf5-411f-bfff-c764f3226858
+          AUDIT_LIGA_PRIVATE_ID: ${{ secrets.AUDIT_LIGA_PRIVATE_ID }}
 
       # Si alguna auditoría falla (huérfanos HIGH con puntos, metadata rota,
       # política RLS abierta reaparecida, etc.), el paso correspondiente sale
       # con exit code 1 y este job se marca en rojo.
-      # Actívalo desde GitHub: Settings → Notifications, o conecta un paso de
-      # Slack/email aquí si quieres alerta activa en vez de solo revisar el tab Actions.

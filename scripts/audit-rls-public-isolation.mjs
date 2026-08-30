@@ -14,8 +14,17 @@
  * Severidad: cualquier fallo hace exit(1) -- pensado para CI/cron, igual que
  * el resto de scripts audit-*.mjs de este directorio.
  *
+ * Variables de entorno (checks 7–8 de lectura pública Liga):
+ *   AUDIT_LIGA_PUBLIC_ID  — UUID de liga es_publica=true (CI: liga Padelito prod).
+ *   AUDIT_LIGA_PRIVATE_ID — UUID de liga es_publica=false; anon no debe leerla.
+ *                           Crear fixture en staging con
+ *                           supabase/sql/seed-audit-liga-private-fixture.sql
+ * Si AUDIT_LIGA_PRIVATE_ID no está definida, check 7 se omite y el resumen
+ * final imprime WARNING explícito (no silencioso).
+ *
  * Uso:
  *   npm run audit:rls-public-isolation
+ *   AUDIT_LIGA_PUBLIC_ID=<uuid> AUDIT_LIGA_PRIVATE_ID=<uuid> npm run audit:rls-public-isolation
  */
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync, existsSync } from "fs";
@@ -59,9 +68,19 @@ async function main() {
   );
 
   const failures = [];
+  const executed = [];
+  const skipped = [];
+
+  function markExecuted(id) {
+    executed.push(id);
+  }
+  function markSkipped(id, reason) {
+    skipped.push({ id, reason });
+  }
 
   // 1. liga_jugadores: anon NUNCA debe poder leer email/telefono.
   {
+    markExecuted("1-liga_jugadores-pii-blocked");
     const { error } = await supabase
       .from("liga_jugadores")
       .select("email,telefono")
@@ -76,6 +95,7 @@ async function main() {
   // 2. liga_jugadores: anon SÍ debe seguir viendo columnas públicas (nombre)
   //    para no romper standings públicos.
   {
+    markExecuted("2-liga_jugadores-public-columns");
     const { error } = await supabase
       .from("liga_jugadores")
       .select("id,nombre")
@@ -88,9 +108,8 @@ async function main() {
   }
 
   // 3. duelos_2v2: anon solo debe ver duelos con is_duelo_public()=true.
-  //    Verificación indirecta: cualquier fila que devuelva debe tener
-  //    estado en_juego/finalizado (nunca "configuracion").
   {
+    markExecuted("3-duelos_2v2-public-estado");
     const { data, error } = await supabase
       .from("duelos_2v2")
       .select("id,estado")
@@ -105,10 +124,8 @@ async function main() {
   }
 
   // 4. tournament_public_config: cero políticas de escritura para anon
-  //    (comprobado por ausencia de error específico de RLS al intentar un
-  //    UPDATE sobre un id inexistente -- lo relevante aquí es que la fila
-  //    afectada sea 0, nunca que se cree/edite algo real).
   {
+    markExecuted("4-tournament_public_config-no-anon-write");
     const probeId = "00000000-0000-0000-0000-000000000000";
     const { data, error } = await supabase
       .from("tournament_public_config")
@@ -128,9 +145,9 @@ async function main() {
     }
   }
 
-  // 5. career_event_host_manual_overrides: anon no debe leer nada (tabla
-  //    administrativa interna, sin política pública -- ver Fase 0).
+  // 5. career_event_host_manual_overrides: anon no debe leer nada
   {
+    markExecuted("5-career_event_host_manual_overrides-blocked");
     const { data, error } = await supabase
       .from("career_event_host_manual_overrides")
       .select("id")
@@ -142,10 +159,9 @@ async function main() {
     }
   }
 
-  // 6. admin_delete_user_completo: anon no debe poder ni siquiera invocar
-  //    la función (permission denied a nivel de GRANT, antes de que el
-  //    chequeo interno is_master_admin() se ejecute -- ver Fase 0 / 0.4).
+  // 6. admin_delete_user_completo: anon no debe poder invocar la función
   {
+    markExecuted("6-admin_delete_user_completo-revoked");
     const { error } = await supabase.rpc("admin_delete_user_completo", {
       p_target_user_id: "00000000-0000-0000-0000-000000000000",
     });
@@ -160,15 +176,130 @@ async function main() {
     }
   }
 
+  // 7. ligas privadas: anon no debe ver una liga marcada es_publica=false.
+  if (process.env.AUDIT_LIGA_PRIVATE_ID) {
+    markExecuted("7-ligas-private-not-readable");
+    const privateId = process.env.AUDIT_LIGA_PRIVATE_ID;
+    const { data, error } = await supabase
+      .from("ligas")
+      .select("id,nombre,es_publica")
+      .eq("id", privateId)
+      .maybeSingle();
+    if (!error && data) {
+      failures.push(
+        `ligas: anon pudo leer liga privada ${privateId} (es_publica=false) — filtrar con is_liga_public falló.`
+      );
+    }
+  } else {
+    markSkipped(
+      "7-ligas-private-not-readable",
+      "check 7 NO EJECUTADO — falta AUDIT_LIGA_PRIVATE_ID (ver supabase/sql/seed-audit-liga-private-fixture.sql)"
+    );
+  }
+
+  // 8. ligas públicas: anon debe leer la liga y su cadena básica.
+  if (process.env.AUDIT_LIGA_PUBLIC_ID) {
+    markExecuted("8-ligas-public-chain-readable");
+    const publicId = process.env.AUDIT_LIGA_PUBLIC_ID;
+    const { data: liga, error: ligaErr } = await supabase
+      .from("ligas")
+      .select("id,nombre")
+      .eq("id", publicId)
+      .maybeSingle();
+    if (ligaErr || !liga) {
+      failures.push(
+        `ligas: anon NO pudo leer liga pública ${publicId}: ${ligaErr?.message ?? "sin filas"}`
+      );
+    } else {
+      const { error: jornErr } = await supabase
+        .from("liga_jornadas")
+        .select("id")
+        .eq("liga_id", publicId)
+        .limit(1);
+      if (jornErr) {
+        failures.push(
+          `liga_jornadas: anon no pudo leer jornadas de liga pública ${publicId}: ${jornErr.message}`
+        );
+      }
+      const { error: insErr } = await supabase
+        .from("liga_inscripciones")
+        .select("id")
+        .eq("liga_id", publicId)
+        .limit(1);
+      if (insErr) {
+        failures.push(
+          `liga_inscripciones: anon no pudo leer inscripciones de liga pública ${publicId}: ${insErr.message}`
+        );
+      }
+    }
+  } else {
+    markSkipped(
+      "8-ligas-public-chain-readable",
+      "check 8 NO EJECUTADO — falta AUDIT_LIGA_PUBLIC_ID"
+    );
+  }
+
+  // 9. Cadena partidos: filas visibles deben colgar de jornada accesible.
+  {
+    markExecuted("9-liga_partidos-chain-integrity");
+    const { data, error } = await supabase
+      .from("liga_partidos")
+      .select("id,jornada_id")
+      .limit(25);
+    if (error) {
+      failures.push(`liga_partidos: anon no pudo leer (${error.message}).`);
+    } else if ((data ?? []).length > 0) {
+      for (const row of data) {
+        const { data: jorn, error: jErr } = await supabase
+          .from("liga_jornadas")
+          .select("id,liga_id")
+          .eq("id", row.jornada_id)
+          .maybeSingle();
+        if (jErr || !jorn) {
+          failures.push(
+            `liga_partidos: partido ${row.id} visible pero jornada ${row.jornada_id} no — posible fuga RLS.`
+          );
+          break;
+        }
+        const { data: liga, error: lErr } = await supabase
+          .from("ligas")
+          .select("id")
+          .eq("id", jorn.liga_id)
+          .maybeSingle();
+        if (lErr || !liga) {
+          failures.push(
+            `liga_partidos: jornada ${jorn.id} → liga ${jorn.liga_id} no visible para anon — posible liga privada filtrada mal.`
+          );
+          break;
+        }
+      }
+    }
+  }
+
   if (failures.length > 0) {
     console.error("[audit-rls-public-isolation] FALLÓ:");
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
 
+  console.log("\n[audit-rls-public-isolation] ── Resumen de checks ──");
+  console.log(`  Ejecutados (${executed.length}): ${executed.join(", ")}`);
+  if (skipped.length > 0) {
+    for (const s of skipped) {
+      console.warn(`  WARNING: ${s.reason}`);
+    }
+  } else {
+    console.log("  Omitidos: ninguno");
+  }
+
   console.log(
-    "[audit-rls-public-isolation] OK -- aislamiento público de Liga/Torneo Express/Duelo2v2/tournament_public_config intacto."
+    "\n[audit-rls-public-isolation] OK -- aislamiento público de Liga/Torneo Express/Duelo2v2/tournament_public_config intacto."
   );
+  if (skipped.length > 0) {
+    console.warn(
+      `[audit-rls-public-isolation] OK con ${skipped.length} check(s) NO EJECUTADO(S) — ver WARNING arriba.`
+    );
+  }
 }
 
 main().catch((e) => {

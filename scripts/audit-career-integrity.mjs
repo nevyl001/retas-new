@@ -20,16 +20,25 @@ const TARGET_PLAYERS = ["Daniel N", "Sebastian", "TestplayerCT1", "TestplaCT2", 
 
 function loadEnv() {
   const envPath = resolve(root, ".env");
-  if (!existsSync(envPath)) return false;
-  const text = readFileSync(envPath, "utf8");
-  for (const line of text.split("\n")) {
-    const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
-    if (!m) continue;
-    const val = m[2].replace(/^["']|["']$/g, "").trim();
-    if (!process.env[m[1]]) process.env[m[1]] = val;
+  if (existsSync(envPath)) {
+    const text = readFileSync(envPath, "utf8");
+    for (const line of text.split("\n")) {
+      const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
+      if (!m) continue;
+      const val = m[2].replace(/^["']|["']$/g, "").trim();
+      if (!process.env[m[1]]) process.env[m[1]] = val;
+    }
   }
   return Boolean(
     process.env.REACT_APP_SUPABASE_URL && process.env.REACT_APP_SUPABASE_ANON_KEY
+  );
+}
+
+function resolveServiceRoleKey() {
+  return (
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+    process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+    null
   );
 }
 
@@ -127,55 +136,69 @@ function groupPointsByOrg(rows, homeById) {
   return { byOrg, total };
 }
 
-async function runOnlineChecks(sb, fix) {
+async function runOnlineChecks(sbAnon, sbOps, fix) {
   console.log("\n── Checks online (Supabase) ──\n");
   let ok = true;
 
-  const { data: orphans, error: orphanErr } = await sb.rpc(
-    "_riviera_orphan_profile_audit"
-  );
-  if (orphanErr) {
-    if (orphanErr.message?.includes("does not exist")) {
-      ok = fail(
-        "RPC _riviera_orphan_profile_audit no desplegado — ejecutar career-profile-link-integrity.sql"
-      );
-    } else {
-      ok = fail(`orphan audit: ${orphanErr.message}`);
-    }
+  if (!sbOps) {
+    ok =
+      fail(
+        "orphan audit: SUPABASE_SERVICE_ROLE_KEY ausente — _riviera_orphan_profile_audit requiere service_role (migración 0021)"
+      ) && ok;
   } else {
-    const high = (orphans ?? []).filter((r) => r.confidence === "HIGH");
-    const withPts = (orphans ?? []).filter((r) => Number(r.total_puntos) > 0);
-    if (high.length > 0) {
-      ok =
-        fail(
-          `${high.length} perfiles huérfanos HIGH con puntos: ${high
-            .map((r) => r.orphan_nombre)
-            .join(", ")}`
-        ) && ok;
-      if (fix) {
-        const { data: repairResult, error: repairErr } = await sb.rpc(
-          "riviera_repair_orphan_profile_links_high"
+    const { data: orphans, error: orphanErr } = await sbOps.rpc(
+      "_riviera_orphan_profile_audit"
+    );
+    if (orphanErr) {
+      if (orphanErr.message?.includes("does not exist")) {
+        ok = fail(
+          "RPC _riviera_orphan_profile_audit no desplegado — ejecutar career-profile-link-integrity.sql"
         );
-        if (repairErr) {
-          ok = fail(`repair orphans: ${repairErr.message}`) && ok;
-        } else {
-          pass(`repair orphans: ${JSON.stringify(repairResult)}`);
-        }
+      } else {
+        ok = fail(`orphan audit: ${orphanErr.message}`);
       }
     } else {
-      ok = pass("Sin perfiles huérfanos HIGH pendientes") && ok;
-    }
-    if (withPts.length > 0 && high.length === 0) {
-      const review = withPts.filter((r) => r.confidence === "REVIEW");
-      if (review.length) {
-        console.warn(
-          `⚠ ${review.length} huérfanos en REVIEW (revisión manual):`,
-          review.map((r) => r.orphan_nombre).join(", ")
-        );
+      ok =
+        pass(
+          `orphan audit ejecutado (${(orphans ?? []).length} filas; HIGH=${
+            (orphans ?? []).filter((r) => r.confidence === "HIGH").length
+          })`
+        ) && ok;
+      const high = (orphans ?? []).filter((r) => r.confidence === "HIGH");
+      const withPts = (orphans ?? []).filter((r) => Number(r.total_puntos) > 0);
+      if (high.length > 0) {
+        ok =
+          fail(
+            `${high.length} perfiles huérfanos HIGH con puntos: ${high
+              .map((r) => r.orphan_nombre)
+              .join(", ")}`
+          ) && ok;
+        if (fix) {
+          const { data: repairResult, error: repairErr } = await sbOps.rpc(
+            "riviera_repair_orphan_profile_links_high"
+          );
+          if (repairErr) {
+            ok = fail(`repair orphans: ${repairErr.message}`) && ok;
+          } else {
+            pass(`repair orphans: ${JSON.stringify(repairResult)}`);
+          }
+        }
+      } else {
+        ok = pass("Sin perfiles huérfanos HIGH pendientes") && ok;
+      }
+      if (withPts.length > 0 && high.length === 0) {
+        const review = withPts.filter((r) => r.confidence === "REVIEW");
+        if (review.length) {
+          console.warn(
+            `⚠ ${review.length} huérfanos en REVIEW (revisión manual):`,
+            review.map((r) => r.orphan_nombre).join(", ")
+          );
+        }
       }
     }
   }
 
+  const sb = sbAnon;
   const { data: metaBad, error: metaErr } = await sb
     .from("jugador_participaciones")
     .select("id, evento_nombre, puntos_obtenidos, metadata")
@@ -331,15 +354,20 @@ async function main() {
 
   const hasEnv = !forceOffline && loadEnv();
   if (hasEnv) {
-    const sb = createClient(
-      process.env.REACT_APP_SUPABASE_URL,
-      process.env.REACT_APP_SUPABASE_ANON_KEY,
-      { auth: { persistSession: false, autoRefreshToken: false } }
-    );
-    onlineOk = await runOnlineChecks(sb, fix);
+    const url = process.env.REACT_APP_SUPABASE_URL;
+    const sbAnon = createClient(url, process.env.REACT_APP_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const serviceRoleKey = resolveServiceRoleKey();
+    const sbOps = serviceRoleKey
+      ? createClient(url, serviceRoleKey, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        })
+      : null;
+    onlineOk = await runOnlineChecks(sbAnon, sbOps, fix);
   } else {
     console.log(
-      "\n⚠ Sin .env o --offline: solo checks offline. Para prod ejecutar con credenciales.\n"
+      "\n⚠ Sin credenciales Supabase o --offline: solo checks offline. Configura REACT_APP_SUPABASE_URL/ANON_KEY (y SUPABASE_SERVICE_ROLE_KEY para orphan audit).\n"
     );
   }
 

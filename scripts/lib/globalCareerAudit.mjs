@@ -8,7 +8,10 @@ export const RIVIERA_OPEN_ORG_DEFAULT = "2770b522-9064-4c7b-a729-4a0ea7e3f6e8";
 
 export const REQUIRED_RIVIERA_IDS = [
   "RIV-00000071",
-  "RIV-00000003",
+  // RIV-00000003 (Alejandro R) fusionado intencionalmente → RIV-00000312 el 2026-08-27
+  // vía admin_merge_riviera_jugador_history (Padelito; 2 perfiles locales, 2 passes).
+  // Evidencia prod post-merge: 6 eventos, 325 pts (Remontada Final 75 + RO/HP/Padelito).
+  "RIV-00000312",
   "RIV-00000031",
   "RIV-00000011",
   "RIV-00000009",
