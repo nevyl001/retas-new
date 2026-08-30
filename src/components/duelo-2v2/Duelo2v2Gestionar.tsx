@@ -46,6 +46,7 @@ import {
   type QuickModeStep,
   type QuickModeStepStatus,
 } from "../platform/quickMode";
+import { DueloMatchCommandHeader } from "./DueloMatchCommandHeader";
 import { Duelo2v2CelebrateSection } from "./Duelo2v2CelebrateSection";
 import {
   ConvocatoriaWhatsAppPanel,
@@ -64,6 +65,7 @@ import {
 import { navigateDuelo2v2, publicDuelo2v2Url } from "./duelo2v2Nav";
 import "../../styles/riviera-public-celebrate.css";
 import "./duelo2v2-page.css";
+import "./duelo2v2-command.css";
 
 type GestionarStepId = "parejas" | "control";
 
@@ -438,6 +440,28 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     formatDueloHorarioRange(duelo.programado_en, duelo.programado_hasta) ||
     "—";
 
+  const headerTeamA =
+    duelo.pareja_a_j1_nombre?.trim() && duelo.pareja_a_j2_nombre?.trim()
+      ? teamAName
+      : "Sin asignar";
+  const headerTeamB =
+    duelo.pareja_b_j1_nombre?.trim() && duelo.pareja_b_j2_nombre?.trim()
+      ? teamBName
+      : "Sin asignar";
+  const headerScoreA = duelo.sets_pareja_a ?? 0;
+  const headerScoreB = duelo.sets_pareja_b ?? 0;
+
+  const categoriaDisplay =
+    duelo.categoria?.trim() ||
+    readDueloLugarPrefs(duelo.id)?.categoria?.trim() ||
+    "";
+  const nivelDisplay = duelo.descripcion?.trim() || "";
+  const canchaDisplay = duelo.cancha?.trim() || "—";
+  const lugarDisplay = includeLugar ? lugarConvocatoria : "Lugar oculto";
+  const eventMetaExtra = [nivelDisplay, categoriaDisplay]
+    .filter(Boolean)
+    .join(" · ");
+
   const equiposPanel = (
     <section aria-label="Jugadores del duelo">
       {finalizado ? (
@@ -608,7 +632,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           ];
 
           const workbenchTitle =
-            step === "parejas" ? "Parejas" : "Control de competencia";
+            step === "parejas" ? "Parejas" : "Marcador";
 
           const workbenchBody =
             step === "parejas" ? (
@@ -644,14 +668,17 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                   pairB={pairB}
                   onPairAChange={setPairA}
                   onPairBChange={setPairB}
+                  console
+                  scoreA={headerScoreA}
+                  scoreB={headerScoreB}
                 />
               )
             ) : (
               <>
                 <Duelo2v2ScoreEditor
                   key={editorKey}
-                  teamAName={teamAName}
-                  teamBName={teamBName}
+                  teamAName={headerTeamA}
+                  teamBName={headerTeamB}
                   initialDetalle={duelo.detalle_sets}
                   disabled={busy || !enJuego}
                   onSave={handleSaveScore}
@@ -676,6 +703,11 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                 </p>
               </>
             );
+
+          const assignedPlayers =
+            (pairA ? 2 : 0) + (pairB ? 2 : 0);
+          const parejasDone = pairsOk || draftPairsReady;
+          const marcadorDone = Boolean(duelo.ganador);
 
           const ctaProps = canFinalizar
             ? {
@@ -719,51 +751,27 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                     label: "Iniciar juego",
                     disabled: true,
                     loading: false,
-                    hint: "Selecciona 4 jugadores (2 parejas)",
+                    hint: `4 jugadores requeridos · ${assignedPlayers} / 4 seleccionados`,
                     onClick: () => undefined,
                   };
 
           return (
             <QuickModePrepWorkspace
-              className={`qm-ws--wide${mobileSummaryOpen ? " is-summary-open" : ""}`}
+              className={`qm-ws--wide qm-ws--duelo-console${
+                mobileSummaryOpen ? " is-summary-open" : ""
+              }`}
               header={
-                <QuickModeEventHeader
-                  club={modeEyebrow}
+                <DueloMatchCommandHeader
                   title={duelo.nombre}
-                  modality="Duelo 2 vs 2"
                   statusLabel={dueloStatus.label}
                   phaseLabel={phaseLabel}
-                  centerMetrics={[
-                    { label: "Equipo A", value: teamAName },
-                    { label: "Equipo B", value: teamBName },
-                    {
-                      label: "Marcador",
-                      value: `${duelo.sets_pareja_a ?? 0}–${duelo.sets_pareja_b ?? 0}`,
-                    },
-                    { label: "Día", value: diaLabel },
-                    { label: "Horario", value: horarioLabel },
-                    { label: "Cancha", value: duelo.cancha?.trim() || "—" },
-                  ]}
-                  rightMeta={[
-                    {
-                      label: "Lugar",
-                      value: includeLugar ? lugarConvocatoria : "Oculto",
-                    },
-                    {
-                      label: "Descripción",
-                      value: duelo.categoria?.trim() ||
-                        readDueloLugarPrefs(duelo.id)?.categoria?.trim() ||
-                        "—",
-                    },
-                    {
-                      label: "Nivel",
-                      value: duelo.descripcion?.trim() || "—",
-                    },
-                    {
-                      label: "Estado",
-                      value: phaseLabel,
-                    },
-                  ]}
+                  teamAName={headerTeamA}
+                  teamBName={headerTeamB}
+                  scoreA={headerScoreA}
+                  scoreB={headerScoreB}
+                  scheduleLine={`${diaLabel} · ${horarioLabel}`}
+                  venueLine={`Cancha ${canchaDisplay} · ${lugarDisplay}`}
+                  metaLine={eventMetaExtra || undefined}
                 />
               }
               details={
@@ -771,11 +779,12 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                   <section
                     id="duelo-detalles-inline"
                     className="qm-ws__details-inline"
-                    aria-label="Detalles de la reta"
+                    aria-label="Detalles del partido"
                   >
                     <Duelo2v2DetailsEditor
                       inline
                       collapsible={enJuego}
+                      toolbarTitle="Detalles del partido"
                       duelo={duelo}
                       disabled={busy}
                       onSaved={(updated) => {
@@ -826,6 +835,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
               }
               stepper={
                 <QuickModeStepper
+                  className="qm-stepper--workflow"
                   steps={steps}
                   activeId={step}
                   onChange={(id) => setStep(id as GestionarStepId)}
@@ -848,59 +858,110 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                 </>
               }
               sidebar={
-                <div className="qm-ws-panel">
-                  <section className="qm-ws-panel__block">
-                    <h3 className="qm-ws-panel__label">Progreso</h3>
-                    <ul className="qm-ws-panel__progress">
-                      <li className={detallesOk ? "is-ok" : ""}>Detalles</li>
-                      <li className={convTouched ? "is-ok" : ""}>Convocatoria</li>
-                      <li className={pairsOk ? "is-ok" : ""}>Parejas A / B</li>
-                      <li className={duelo.ganador ? "is-ok" : ""}>
-                        Listo para finalizar
-                      </li>
-                    </ul>
-                  </section>
-                  <section className="qm-ws-panel__block">
-                    <h3 className="qm-ws-panel__label">
+                <div className="duelo2v2-match-status">
+                  <h3 className="duelo2v2-match-status__title">Match status</h3>
+                  <ol className="duelo2v2-match-status__steps">
+                    <li
+                      className={`duelo2v2-match-status__step${
+                        detallesOk ? " is-done" : " is-active"
+                      }`}
+                    >
+                      <span className="duelo2v2-match-status__step-index">01</span>
+                      <span className="duelo2v2-match-status__step-label">
+                        Detalles
+                      </span>
+                      <span className="duelo2v2-match-status__step-mark">
+                        {detallesOk ? "✓" : "○"}
+                      </span>
+                    </li>
+                    <li
+                      className={`duelo2v2-match-status__step${
+                        convTouched ? " is-done" : detallesOk ? " is-active" : ""
+                      }`}
+                    >
+                      <span className="duelo2v2-match-status__step-index">02</span>
+                      <span className="duelo2v2-match-status__step-label">
+                        Convocatoria
+                      </span>
+                      <span className="duelo2v2-match-status__step-mark">
+                        {convTouched ? "✓" : "○"}
+                      </span>
+                    </li>
+                    <li
+                      className={`duelo2v2-match-status__step${
+                        parejasDone ? " is-done" : ""
+                      }${!parejasDone && detallesOk ? " is-active" : ""}`}
+                    >
+                      <span className="duelo2v2-match-status__step-index">03</span>
+                      <span className="duelo2v2-match-status__step-label">
+                        Parejas
+                      </span>
+                      <span className="duelo2v2-match-status__step-mark">
+                        {parejasDone ? "✓" : "○"}
+                      </span>
+                    </li>
+                    <li
+                      className={`duelo2v2-match-status__step${
+                        marcadorDone ? " is-done" : ""
+                      }${enJuego && step === "control" && !marcadorDone ? " is-active" : ""}`}
+                    >
+                      <span className="duelo2v2-match-status__step-index">04</span>
+                      <span className="duelo2v2-match-status__step-label">
+                        Marcador
+                      </span>
+                      <span className="duelo2v2-match-status__step-mark">
+                        {marcadorDone ? "✓" : "○"}
+                      </span>
+                    </li>
+                    <li
+                      className={`duelo2v2-match-status__step${
+                        marcadorDone ? " is-done" : ""
+                      }${canFinalizar ? " is-active" : ""}`}
+                    >
+                      <span className="duelo2v2-match-status__step-index">05</span>
+                      <span className="duelo2v2-match-status__step-label">
+                        Finalizar
+                      </span>
+                      <span className="duelo2v2-match-status__step-mark">
+                        {marcadorDone ? "✓" : "○"}
+                      </span>
+                    </li>
+                  </ol>
+                  <div className="duelo2v2-match-status__conv">
+                    <p className="duelo2v2-match-status__conv-label">
                       {enJuego ? "En juego" : "Convocatoria"}
-                    </h3>
+                    </p>
                     {enJuego ? (
                       <>
-                        <p className="qm-ws-panel__conv-line">
+                        <p className="duelo2v2-match-status__conv-line">
                           Marcador en vivo
                         </p>
                         <button
                           type="button"
-                          className="qm-ws__text-btn"
+                          className="duelo2v2-match-status__link"
                           onClick={() => setStep("control")}
                         >
                           Ir al marcador
                         </button>
-                        <button
-                          type="button"
-                          className="qm-ws__text-btn"
-                          disabled={busy}
-                          onClick={() => void handleReiniciarMarcador()}
-                        >
-                          Reiniciar marcador
-                        </button>
                       </>
                     ) : (
                       <>
-                        <p className="qm-ws-panel__conv-line">{convLine}</p>
+                        <p className="duelo2v2-match-status__conv-line">
+                          {convLine}
+                        </p>
                         <button
                           type="button"
-                          className="qm-ws__text-btn"
+                          className="duelo2v2-match-status__link"
                           onClick={goConvocatoria}
                         >
                           Ir a convocatoria
                         </button>
                       </>
                     )}
-                  </section>
-                  <section className="qm-ws-panel__block qm-ws-panel__cta-desktop">
+                  </div>
+                  <div className="duelo2v2-match-status__cta">
                     <QuickModePrimaryCta {...ctaProps} />
-                  </section>
+                  </div>
                 </div>
               }
               stickyCta={<QuickModePrimaryCta {...ctaProps} />}

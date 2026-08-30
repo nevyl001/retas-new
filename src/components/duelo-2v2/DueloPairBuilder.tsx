@@ -24,6 +24,10 @@ interface DueloPairBuilderProps {
   pairB: DueloPair | null;
   onPairAChange: (pair: DueloPair | null) => void;
   onPairBChange: (pair: DueloPair | null) => void;
+  /** Consola de gestión: arena deportiva + pool oscuro integrado. */
+  console?: boolean;
+  scoreA?: number;
+  scoreB?: number;
 }
 
 const PAGE_SIZE = 24;
@@ -51,23 +55,35 @@ function PairCard({
   pair,
   emptyHint,
   onClear,
+  consoleMode = false,
 }: {
   label: string;
   pair: DueloPair | null;
   emptyHint: string;
   onClear: () => void;
+  consoleMode?: boolean;
 }) {
+  const slotClass = [
+    "duelo2v2-pair-slot",
+    pair ? "duelo2v2-pair-slot--filled" : "duelo2v2-pair-slot--empty",
+    consoleMode ? "duelo2v2-pair-slot--console" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   if (!pair) {
     return (
-      <div className="duelo2v2-pair-slot duelo2v2-pair-slot--empty">
+      <div className={slotClass}>
         <span className="duelo2v2-pair-slot__label">{label}</span>
-        <p className="duelo2v2-pair-slot__hint">{emptyHint}</p>
+        <p className="duelo2v2-pair-slot__hint">
+          {consoleMode ? "+ Seleccionar pareja" : emptyHint}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="duelo2v2-pair-slot duelo2v2-pair-slot--filled">
+    <div className={slotClass}>
       <div className="duelo2v2-pair-slot__head">
         <span className="duelo2v2-pair-slot__label">{label}</span>
         <button
@@ -81,8 +97,23 @@ function PairCard({
       <div className="duelo2v2-pair-slot__players">
         {[pair.j1, pair.j2].map((j) => (
           <div key={j.id} className="duelo2v2-pair-slot__player">
-            <JugadorAvatar fotoUrl={j.foto_url} nombre={j.nombre} size="lg" />
-            <span>{j.nombre}</span>
+            <JugadorAvatar
+              fotoUrl={j.foto_url}
+              nombre={j.nombre}
+              size={consoleMode ? "md" : "lg"}
+            />
+            {consoleMode ? (
+              <div className="duelo2v2-pair-slot__player-meta">
+                <span className="duelo2v2-pair-slot__player-name">{j.nombre}</span>
+                {j.categoria ? (
+                  <span className="duelo2v2-pair-slot__player-cat">
+                    {JUGADOR_CATEGORIA_LABELS[j.categoria] ?? j.categoria}
+                  </span>
+                ) : null}
+              </div>
+            ) : (
+              <span>{j.nombre}</span>
+            )}
           </div>
         ))}
       </div>
@@ -100,6 +131,9 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
   pairB,
   onPairAChange,
   onPairBChange,
+  console: consoleMode = false,
+  scoreA = 0,
+  scoreB = 0,
 }) => {
   const organizerName = useOrganizerDisplayName(organizadorId);
   const [jugadores, setJugadores] = useState<RivieraJugador[]>([]);
@@ -217,42 +251,78 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
     <section
       className={`duelo2v2-pair-builder${
         pairsComplete ? " duelo2v2-pair-builder--complete" : ""
-      }`}
+      }${consoleMode ? " duelo2v2-pair-builder--console" : ""}`}
       aria-label="Seleccionar parejas"
       data-pairs-complete={pairsComplete ? "true" : "false"}
     >
-      <div className="duelo2v2-pairs-row">
-        <PairCard
-          label="Pareja 1"
-          pair={pairA}
-          emptyHint="Selecciona la primera pareja"
-          onClear={handleClearPairA}
-        />
-        <div className="duelo2v2-vs duelo2v2-vs--large">VS</div>
-        <PairCard
-          label="Pareja 2"
-          pair={pairB}
-          emptyHint="Selecciona la segunda pareja"
-          onClear={handleClearPairB}
-        />
-      </div>
+      {consoleMode ? (
+        <div className="duelo2v2-match-arena">
+          <PairCard
+            label="Pareja A"
+            pair={pairA}
+            emptyHint="Selecciona la primera pareja"
+            onClear={handleClearPairA}
+            consoleMode
+          />
+          <div className="duelo2v2-match-arena__center" aria-hidden>
+            <span className="duelo2v2-match-arena__vs">VS</span>
+            <div className="duelo2v2-match-arena__score">
+              <span>{scoreA}</span>
+              <span className="duelo2v2-match-arena__score-sep">:</span>
+              <span>{scoreB}</span>
+            </div>
+          </div>
+          <PairCard
+            label="Pareja B"
+            pair={pairB}
+            emptyHint="Selecciona la segunda pareja"
+            onClear={handleClearPairB}
+            consoleMode
+          />
+        </div>
+      ) : (
+        <div className="duelo2v2-pairs-row">
+          <PairCard
+            label="Pareja 1"
+            pair={pairA}
+            emptyHint="Selecciona la primera pareja"
+            onClear={handleClearPairA}
+          />
+          <div className="duelo2v2-vs duelo2v2-vs--large">VS</div>
+          <PairCard
+            label="Pareja 2"
+            pair={pairB}
+            emptyHint="Selecciona la segunda pareja"
+            onClear={handleClearPairB}
+          />
+        </div>
+      )}
 
       {pairsComplete ? null : (
         <div className="duelo2v2-roster">
           <div className="duelo2v2-roster__head">
             <div>
-              <h2 className="duelo2v2-roster__title">{rosterTitle}</h2>
-              <p className="duelo2v2-roster__sub">
-                {getDueloRegistryHint(organizerName)}
-              </p>
+              <h2 className="duelo2v2-roster__title">
+                {consoleMode ? "Jugadores disponibles" : rosterTitle}
+              </h2>
+              {!consoleMode ? (
+                <p className="duelo2v2-roster__sub">
+                  {getDueloRegistryHint(organizerName)}
+                </p>
+              ) : null}
             </div>
-            {selected.length > 0 && (
+            {consoleMode ? (
+              <span className="duelo2v2-roster__count">
+                {jugadores.length} jugador{jugadores.length === 1 ? "" : "es"}
+              </span>
+            ) : selected.length > 0 ? (
               <span className="duelo2v2-roster__sel">
                 {selected.length}/2 seleccionados
               </span>
-            )}
+            ) : null}
           </div>
 
+          <div className="duelo2v2-roster__pool">
           {selected.length === 1 ? (
             <div
               ref={selectionBarRef}
@@ -440,6 +510,7 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
               ) : null}
             </>
           )}
+          </div>
         </div>
       )}
     </section>

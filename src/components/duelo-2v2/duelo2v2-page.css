@@ -2558,3 +2558,161 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* —— Celebrate: overrides scoped (no contamina live-board / match-board) —— */
+.duelo2v2-celebrate.ro-pub-celebrate--winners .ro-pub-celebrate__inner {
+  width: min(1280px, calc(100% - 48px));
+  max-width: 100%;
+  margin-inline: auto;
+  padding: clamp(0.75rem, 2vw, 1.25rem) 0
+    clamp(1.25rem, 3vw, 2rem);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.duelo2v2-celebrate__header {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  margin-bottom: clamp(0.85rem, 2vw, 1.25rem);
+}
+
+.duelo2v2-celebrate__brand.club-identity {
+  justify-content: center;
+}
+
+.duelo2v2-celebrate__event-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem 0.5rem;
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted);
+}
+
+.duelo2v2-celebrate__event-meta-sep {
+  opacity: 0.55;
+}
+
+.duelo2v2-celebrate__header-rule {
+  width: min(100%, 12rem);
+  height: 1px;
+  margin-top: 0.15rem;
+  background: color-mix(in srgb, var(--ro-medal-gold) 38%, transparent);
+}
+
+.duelo2v2-celebrate .duelo2v2-celebrate__outcome-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1rem, 2vw, 1.65rem);
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.duelo2v2-celebrate .duelo2v2-celebrate__team-card {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 100%;
+  background: transparent;
+  box-shadow: none;
+}
+
+.duelo2v2-celebrate .duelo2v2-celebrate__team-card--winner {
+  border: 1px solid color-mix(in srgb, var(--ro-medal-gold) 38%, transparent);
+  background: transparent;
+}
+
+.duelo2v2-celebrate .duelo2v2-celebrate__team-card--loser {
+  border: 1px solid color-mix(in srgb, var(--ro-text-primary) 12%, transparent);
+  background: transparent;
+  opacity: 0.96;
+}
+
+.duelo2v2-celebrate .duelo2v2-celebrate__team-card-score {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--ro-border) 75%, transparent);
+}
+
+.duelo2v2-celebrate__share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: auto;
+  min-height: 2.75rem;
+  margin-top: auto;
+  padding: 0 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--ro-border) 90%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ro-text-primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.duelo2v2-celebrate__share-btn--muted {
+  color: var(--ro-text-secondary);
+}
+
+.duelo2v2-celebrate__share-btn:hover:not(:disabled),
+.duelo2v2-celebrate__share-btn:focus-visible {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-medal-gold)) 40%,
+    var(--ro-border)
+  );
+}
+
+.duelo2v2-celebrate__share-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  .duelo2v2-celebrate .duelo2v2-celebrate__outcome-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .duelo2v2-celebrate .duelo2v2-celebrate__outcome-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(20px, 2vw, 28px);
+    align-items: stretch;
+  }
+
+  .duelo2v2-celebrate .duelo2v2-celebrate__team-card--loser
+    .duelo2v2-celebrate__score-numbers {
+    font-size: clamp(2rem, 2.6vw, 2.625rem);
+  }
+
+  .duelo2v2-celebrate .duelo2v2-celebrate__team-card--winner
+    .duelo2v2-celebrate__score-numbers {
+    font-size: clamp(3.25rem, 4.2vw, 4.25rem);
+  }
+}
+
+@media (max-width: 767px) {
+  .duelo2v2-celebrate.ro-pub-celebrate--winners .ro-pub-celebrate__inner {
+    width: 100%;
+    padding-inline: clamp(0.75rem, 3vw, 1rem);
+  }
+
+  .duelo2v2-celebrate .duelo2v2-celebrate__outcome-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+

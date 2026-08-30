@@ -1,0 +1,1117 @@
+/* =============================================================================
+   Duelo 2v2 — Match Command Center (gestión / preparación)
+   Scoped: .duelo2v2-gestionar .qm-ws--duelo-console
+   Tokens: --qm-ink-* / --ro-chrome-* / --brand-accent
+   ============================================================================= */
+
+.duelo2v2-gestionar .qm-ws--duelo-console {
+  --d2-cmd-gap: 0.5rem;
+  --d2-cmd-pad: 0.65rem 0.85rem;
+  --d2-cmd-radius: 10px;
+  --d2-cmd-input-h: 2.25rem;
+  --d2-cmd-ink-bg: var(--qm-ink-bg, var(--ro-chrome-bg));
+  --d2-cmd-ink-surface: var(--qm-ink-elevated, var(--ro-chrome-elevated));
+  --d2-cmd-ink-inset: var(--qm-ink-inset, var(--ro-chrome-active));
+  --d2-cmd-ink-border: var(--qm-ink-border, var(--ro-chrome-border));
+  --d2-cmd-text: var(--qm-ink-text, var(--ro-chrome-text));
+  --d2-cmd-muted: var(--qm-ink-muted, var(--ro-chrome-text-muted));
+
+  --qm-stack-gap: var(--d2-cmd-gap);
+  --qm-main-gap: 0.35rem;
+  --qm-col-gap: 0.65rem;
+  --qm-module-pad-y: 0.45rem;
+  --qm-module-pad-x: 0.75rem;
+  --qm-module-radius: var(--d2-cmd-radius);
+}
+
+/* —— Command header (scoreboard) —— */
+.duelo2v2-command-header {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  padding: var(--d2-cmd-pad);
+  border: 1px solid var(--d2-cmd-ink-border);
+  border-radius: var(--d2-cmd-radius);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--d2-cmd-ink-surface) 88%, var(--d2-cmd-ink-bg)) 0%,
+    var(--d2-cmd-ink-bg) 100%
+  );
+  color: var(--d2-cmd-text);
+  box-sizing: border-box;
+}
+
+.duelo2v2-command-header__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.duelo2v2-command-header__title {
+  margin: 0;
+  font-family: var(--brand-font-heading, var(--ro-font-heading));
+  font-size: clamp(1.125rem, 2.5vw, 1.375rem);
+  font-weight: var(--brand-heading-weight, 700);
+  letter-spacing: var(--brand-heading-letter-spacing, -0.02em);
+  line-height: 1.15;
+}
+
+.duelo2v2-command-header__status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--ro-radius-full, 999px);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--d2-cmd-text);
+  background: color-mix(in srgb, var(--d2-cmd-text) 8%, transparent);
+  border: 1px solid var(--d2-cmd-ink-border);
+}
+
+.duelo2v2-command-header__phase {
+  margin: 0.15rem 0 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-command-header__dot {
+  margin: 0 0.3rem;
+  opacity: 0.5;
+}
+
+.duelo2v2-command-header__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin-top: 0.35rem;
+}
+
+.duelo2v2-command-header__meta span {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--d2-cmd-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duelo2v2-command-header__scoreboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid color-mix(in srgb, var(--d2-cmd-ink-border) 70%, transparent);
+}
+
+.duelo2v2-command-header__team {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.duelo2v2-command-header__team--b {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.duelo2v2-command-header__team-label {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-command-header__team-name {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.duelo2v2-command-header__score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0 0.25rem;
+}
+
+.duelo2v2-command-header__score-num {
+  font-family: var(--brand-font-heading, var(--ro-font-heading));
+  font-size: clamp(1.625rem, 4vw, 2rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.duelo2v2-command-header__score-sep {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--d2-cmd-muted);
+  opacity: 0.65;
+}
+
+/* —— Match status sidebar —— */
+.duelo2v2-match-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: var(--d2-cmd-pad);
+  border: 1px solid var(--d2-cmd-ink-border);
+  border-radius: var(--d2-cmd-radius);
+  background: var(--d2-cmd-ink-bg);
+  color: var(--d2-cmd-text);
+  box-sizing: border-box;
+}
+
+.duelo2v2-match-status__title {
+  margin: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-match-status__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 0.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-left: 1px solid var(--d2-cmd-ink-border);
+}
+
+.duelo2v2-match-status__step {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.28rem 0 0.28rem 0.55rem;
+  margin-left: -1px;
+  font-size: 0.75rem;
+  color: var(--d2-cmd-muted);
+  border-left: 2px solid transparent;
+}
+
+.duelo2v2-match-status__step-index {
+  font-size: 0.625rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.55;
+}
+
+.duelo2v2-match-status__step-label {
+  font-weight: 550;
+}
+
+.duelo2v2-match-status__step-mark {
+  font-size: 0.6875rem;
+  opacity: 0.45;
+}
+
+.duelo2v2-match-status__step.is-done {
+  color: var(--d2-cmd-text);
+  border-left-color: var(--brand-accent, var(--ro-accent));
+}
+
+.duelo2v2-match-status__step.is-done .duelo2v2-match-status__step-mark {
+  color: var(--brand-accent, var(--ro-accent));
+  opacity: 1;
+}
+
+.duelo2v2-match-status__step.is-active {
+  color: var(--d2-cmd-text);
+  border-left-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 55%,
+    transparent
+  );
+}
+
+.duelo2v2-match-status__conv {
+  padding-top: 0.55rem;
+  border-top: 1px solid color-mix(in srgb, var(--d2-cmd-ink-border) 65%, transparent);
+}
+
+.duelo2v2-match-status__conv-label {
+  margin: 0 0 0.2rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-match-status__conv-line {
+  margin: 0 0 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--d2-cmd-text);
+}
+
+.duelo2v2-match-status__link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--brand-accent, var(--ro-accent));
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.duelo2v2-match-status__cta {
+  padding-top: 0.35rem;
+  border-top: 1px solid color-mix(in srgb, var(--d2-cmd-ink-border) 65%, transparent);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-match-status__cta .qm-primary-cta {
+  gap: 0.35rem;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-match-status__cta .qm-primary-cta__btn {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  opacity: 1;
+}
+
+/* Activo: acento de marca sobre consola oscura */
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-match-status__cta .qm-primary-cta__btn:not(:disabled) {
+  background: var(--brand-accent, var(--ro-accent));
+  border: 1px solid var(--brand-accent, var(--ro-accent));
+  color: var(--ro-text-on-accent, #12161b);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-match-status__cta .qm-primary-cta__btn:not(:disabled):hover {
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 90%,
+    var(--d2-cmd-text)
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 90%,
+    var(--d2-cmd-text)
+  );
+  color: var(--ro-text-on-accent, #12161b);
+}
+
+/* Deshabilitado: superficie oscura + texto legible (no bloque blanco) */
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-match-status__cta .qm-primary-cta__btn:disabled {
+  background: var(--d2-cmd-ink-inset);
+  border: 1px solid var(--d2-cmd-ink-border);
+  color: color-mix(in srgb, var(--d2-cmd-text) 55%, var(--d2-cmd-muted));
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-match-status__cta .qm-primary-cta.is-loading .qm-primary-cta__btn:disabled {
+  background: var(--brand-accent, var(--ro-accent));
+  border-color: var(--brand-accent, var(--ro-accent));
+  color: var(--ro-text-on-accent, #12161b);
+  cursor: wait;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-match-status__cta .qm-primary-cta__hint {
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  margin-top: 0;
+  text-align: center;
+  color: var(--d2-cmd-muted);
+}
+
+/* —— Match arena (parejas) —— */
+.duelo2v2-match-arena {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--d2-cmd-ink-border);
+  border-radius: var(--d2-cmd-radius);
+  background: color-mix(in srgb, var(--d2-cmd-ink-surface) 35%, var(--d2-cmd-ink-bg));
+}
+
+.duelo2v2-match-arena__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0 0.25rem;
+}
+
+.duelo2v2-match-arena__vs {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-match-arena__score {
+  display: flex;
+  align-items: baseline;
+  gap: 0.15rem;
+  font-family: var(--brand-font-heading, var(--ro-font-heading));
+  font-size: 1.375rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.duelo2v2-match-arena__score-sep {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--d2-cmd-muted);
+  opacity: 0.6;
+}
+
+.duelo2v2-pair-slot--console {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  min-height: 0;
+}
+
+.duelo2v2-pair-slot--console.duelo2v2-pair-slot--empty {
+  border: 1px dashed color-mix(in srgb, var(--d2-cmd-ink-border) 85%, transparent);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  min-height: 4.5rem;
+  justify-content: center;
+}
+
+.duelo2v2-pair-slot--console .duelo2v2-pair-slot__label {
+  font-size: 0.5625rem;
+  letter-spacing: 0.1em;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-pair-slot--console .duelo2v2-pair-slot__hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-pair-slot--console .duelo2v2-pair-slot__head {
+  margin-bottom: 0.4rem;
+}
+
+.duelo2v2-pair-slot--console .duelo2v2-pair-slot__clear {
+  font-size: 0.6875rem;
+  opacity: 0.7;
+  transition: opacity 0.18s ease, color 0.18s ease;
+}
+
+.duelo2v2-pair-slot--console .duelo2v2-pair-slot__clear:hover {
+  opacity: 1;
+  color: var(--ro-error);
+}
+
+.duelo2v2-pair-slot--console .duelo2v2-pair-slot__players {
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.duelo2v2-pair-slot--console .duelo2v2-pair-slot__player {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  animation: duelo2v2-player-in 0.22s ease both;
+}
+
+@keyframes duelo2v2-player-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .duelo2v2-pair-slot--console .duelo2v2-pair-slot__player {
+    animation: none;
+  }
+}
+
+.duelo2v2-pair-slot--console .duelo2v2-pair-slot__player-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.duelo2v2-pair-slot--console .duelo2v2-pair-slot__player-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duelo2v2-pair-slot--console .duelo2v2-pair-slot__player-cat {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--d2-cmd-muted);
+}
+
+/* —— Player pool (dark, integrado) —— */
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-roster {
+  margin-top: 0.45rem;
+  padding: 0.55rem 0.65rem 0.65rem;
+  border: 1px solid var(--d2-cmd-ink-border);
+  border-radius: var(--d2-cmd-radius);
+  background: var(--d2-cmd-ink-inset);
+  color: var(--d2-cmd-text);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-roster__head {
+  margin-bottom: 0.45rem;
+  align-items: center;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-roster__title {
+  margin: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-roster__sub {
+  display: none;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-roster__count {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-roster__pool {
+  max-height: min(14rem, calc(100vh - 24rem));
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--d2-cmd-muted) 40%, transparent)
+    transparent;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-roster__pool::-webkit-scrollbar {
+  width: 5px;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-roster__pool::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--d2-cmd-muted) 35%, transparent);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-grid-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.45rem;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-grid-search,
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-grid-filters select,
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-grid-filters .riviera-input {
+  min-height: 2rem;
+  height: 2rem;
+  font-size: 0.8125rem;
+  border-radius: 7px;
+  background: var(--d2-cmd-ink-surface);
+  border: 1px solid var(--d2-cmd-ink-border);
+  color: var(--d2-cmd-text);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-grid-search {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-players-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 11.5rem), 1fr));
+  gap: 0.35rem;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__workbench .elegant-player-card.elegant-player-card,
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-player-card.elegant-player-card {
+  --epc-pad-y: 0.4rem;
+  --epc-pad-x: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 4rem;
+  padding: var(--epc-pad-y) var(--epc-pad-x);
+  border-radius: 8px;
+  background: var(--d2-cmd-ink-surface) !important;
+  border: 1px solid var(--d2-cmd-ink-border) !important;
+  color: var(--d2-cmd-text) !important;
+  box-shadow: none !important;
+  text-align: left;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__workbench .elegant-player-card:hover:not(:disabled),
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-player-card:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--d2-cmd-ink-surface) 85%, var(--d2-cmd-text));
+  border-color: color-mix(in srgb, var(--d2-cmd-text) 14%, var(--d2-cmd-ink-border));
+  transform: translateY(-1px);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__workbench .elegant-player-card.selected,
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-player-card.selected {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 45%,
+    var(--d2-cmd-ink-border)
+  ) !important;
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 8%,
+    var(--d2-cmd-ink-surface)
+  ) !important;
+  box-shadow: inset 2px 0 0 var(--brand-accent, var(--ro-accent)) !important;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__workbench .elegant-player-card.in-pair,
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-player-card.in-pair {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__workbench .elegant-player-name,
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-player-name {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--d2-cmd-text);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-player-card.selected .elegant-player-name {
+  color: var(--d2-cmd-text) !important;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .rj-checkbox-pill {
+  font-size: 0.75rem;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-form-hint,
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-empty-state {
+  color: var(--d2-cmd-muted);
+  font-size: 0.8125rem;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-empty-state h4 {
+  color: var(--d2-cmd-text);
+  font-size: 0.875rem;
+  margin: 0 0 0.35rem;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-player-meta {
+  font-size: 0.625rem;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-player-card__photo {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .elegant-player-card__overlay {
+  background: linear-gradient(
+    90deg,
+    var(--d2-cmd-ink-surface) 0%,
+    color-mix(in srgb, var(--d2-cmd-ink-surface) 70%, transparent) 100%
+  );
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-roster__selection-bar {
+  margin-bottom: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: var(--d2-cmd-ink-surface);
+  border: 1px solid var(--d2-cmd-ink-border);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+/* —— Setup (detalles secundarios) —— */
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__details-inline {
+  --rd-gap: 0.35rem;
+  --rd-pad: 0.45rem 0.75rem 0.5rem;
+  --rd-input-h: var(--d2-cmd-input-h);
+  border: 1px solid var(--d2-cmd-ink-border);
+  border-radius: var(--d2-cmd-radius);
+  background: color-mix(in srgb, var(--d2-cmd-ink-bg) 92%, var(--d2-cmd-ink-surface));
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .reta-config-panel__toolbar {
+  padding: 0.35rem 0.75rem 0.2rem;
+  border-bottom: none;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .reta-config-panel__title {
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .reta-config-panel__subtitle {
+  display: none;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .home-sheet__field-label {
+  font-size: 0.625rem;
+  letter-spacing: 0.07em;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .home-sheet__input,
+.duelo2v2-gestionar .qm-ws--duelo-console input:not([type="checkbox"]):not([type="radio"]),
+.duelo2v2-gestionar .qm-ws--duelo-console select {
+  min-height: var(--d2-cmd-input-h);
+  height: var(--d2-cmd-input-h);
+  font-size: 0.8125rem;
+  border-radius: 7px;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console input[type="date"],
+.duelo2v2-gestionar .qm-ws--duelo-console input[type="time"] {
+  min-height: var(--d2-cmd-input-h);
+  height: var(--d2-cmd-input-h);
+  font-size: 0.8125rem;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .reta-details-form__field {
+  gap: 0.2rem;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-details-conv-slot .qm-ws__details-conv {
+  padding: 0.35rem 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--d2-cmd-ink-border) 60%, transparent);
+  background: transparent;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-details-conv-slot .qm-ws__conv-gate {
+  gap: 0.45rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 7px;
+  background: var(--d2-cmd-ink-surface);
+  border-color: var(--d2-cmd-ink-border);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-details-conv-slot .qm-ws__conv-gate-hint {
+  display: none;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-details-conv-slot .qm-ws__conv-gate-title {
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* —— Workbench: sin caja extra —— */
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__workbench {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__workbench-head {
+  display: none;
+}
+
+/* —— Stepper → navegación segmentada —— */
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-stepper--workflow {
+  margin: 0 0 0.5rem;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-stepper--workflow .qm-stepper__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3rem;
+  padding: 0.25rem;
+  margin: 0;
+  border: 1px solid var(--d2-cmd-ink-border);
+  border-radius: 8px;
+  background: var(--d2-cmd-ink-inset);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-stepper--workflow .qm-stepper__item {
+  min-width: 0;
+  max-width: none;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-stepper--workflow .qm-stepper__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.375rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--d2-cmd-muted);
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-stepper--workflow .qm-stepper__btn.is-active {
+  border-color: var(--d2-cmd-ink-border);
+  background: var(--d2-cmd-ink-surface);
+  color: var(--d2-cmd-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-stepper--workflow .qm-stepper__btn.is-complete:not(.is-active) {
+  color: color-mix(in srgb, var(--d2-cmd-text) 72%, var(--d2-cmd-muted));
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-stepper--workflow .qm-stepper__index {
+  display: none;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-stepper--workflow .qm-stepper__copy {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-stepper--workflow .qm-stepper__label {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: inherit;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .qm-stepper--workflow .qm-stepper__count {
+  display: none;
+}
+
+/* —— Score editor en consola (tema ink unificado) —— */
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor {
+  --text-primary: var(--d2-cmd-text);
+  --text-secondary: color-mix(in srgb, var(--d2-cmd-text) 82%, var(--d2-cmd-muted));
+  --text-muted: var(--d2-cmd-muted);
+  --bg-card: var(--d2-cmd-ink-surface);
+  --bg-elevated: var(--d2-cmd-ink-elevated, var(--d2-cmd-ink-surface));
+  --bg-inset: var(--d2-cmd-ink-inset);
+  --border-default: var(--d2-cmd-ink-border);
+
+  margin: 0;
+  max-width: none;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--d2-cmd-radius);
+  border: 1px solid var(--d2-cmd-ink-border);
+  background: var(--d2-cmd-ink-surface);
+  color: var(--d2-cmd-text);
+  box-shadow: none;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__scoreboard {
+  padding-bottom: 0.65rem;
+  border-bottom-color: color-mix(in srgb, var(--d2-cmd-ink-border) 80%, transparent);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__side-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__side-name:empty::before,
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__sets-head-cell--a:empty::before,
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__sets-head-cell--b:empty::before {
+  content: "Sin asignar";
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__side-sets {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  color: var(--d2-cmd-text);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__mid-label {
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__sets-head-cell {
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__set-label {
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__set-row--a,
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__set-row--b {
+  background: color-mix(in srgb, var(--d2-cmd-text) 3%, transparent);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__set-row--a .duelo2v2-score-editor__set-label {
+  color: var(--ro-success);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__set-row--b .duelo2v2-score-editor__set-label {
+  color: color-mix(in srgb, var(--ro-info, #60a5fa) 88%, var(--d2-cmd-text));
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__input {
+  min-height: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.125rem;
+  border-radius: 8px;
+  border: 1px solid var(--d2-cmd-ink-border);
+  background: var(--d2-cmd-ink-inset);
+  color: var(--d2-cmd-text);
+  -webkit-text-fill-color: var(--d2-cmd-text);
+  caret-color: var(--brand-accent, var(--ro-accent));
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__input::placeholder {
+  color: var(--d2-cmd-muted);
+  opacity: 0.65;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__input:focus {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 55%,
+    var(--d2-cmd-ink-border)
+  );
+  background: color-mix(in srgb, var(--d2-cmd-ink-inset) 88%, var(--d2-cmd-text));
+  box-shadow: 0 0 0 2px color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 18%,
+    transparent
+  );
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__divider {
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__hint {
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__hint--ok {
+  background: color-mix(in srgb, var(--ro-success) 10%, var(--d2-cmd-ink-inset));
+  border-color: color-mix(in srgb, var(--ro-success) 28%, var(--d2-cmd-ink-border));
+  color: var(--ro-success);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-score-editor__hint--ok strong {
+  color: var(--d2-cmd-text);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-card__meta {
+  margin-top: 0.45rem !important;
+  font-size: 0.75rem;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-pair-slot--console .duelo2v2-pair-slot__player .rj-avatar--md {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+/* —— Mobile / tablet: flujo vertical conservado —— */
+@media (max-width: 1279px) {
+  .duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__workbench-head {
+    display: flex;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__workbench {
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--d2-cmd-ink-border);
+    border-radius: var(--d2-cmd-radius);
+    background: var(--d2-cmd-ink-bg);
+  }
+
+  .duelo2v2-match-arena {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .duelo2v2-match-arena__center {
+    flex-direction: row;
+    padding: 0.15rem 0;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__sticky-cta .qm-primary-cta__btn:not(:disabled) {
+    background: var(--brand-accent, var(--ro-accent));
+    border-color: var(--brand-accent, var(--ro-accent));
+    color: var(--ro-text-on-accent, #12161b);
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__sticky-cta .qm-primary-cta__btn:disabled {
+    background: var(--d2-cmd-ink-inset, var(--ro-chrome-active));
+    border-color: var(--d2-cmd-ink-border, var(--ro-chrome-border));
+    color: var(--d2-cmd-muted, var(--ro-chrome-text-muted));
+    opacity: 1;
+  }
+}
+
+/* —— Desktop layout grid —— */
+@media (min-width: 1280px) {
+  .duelo2v2-gestionar .duelo2v2-toolbar {
+    margin-bottom: 0.35rem;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
+    grid-template-areas:
+      "header header"
+      "setup status"
+      "main status";
+    gap: var(--d2-cmd-gap);
+    align-items: start;
+    padding-bottom: var(--ro-space-4, 1rem);
+    max-width: none;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console > .duelo2v2-command-header {
+    grid-area: header;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console > .qm-ws__details {
+    grid-area: setup;
+    gap: 0;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console > .qm-ws__body {
+    display: contents;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__main {
+    grid-area: main;
+    min-width: 0;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__sidebar {
+    grid-area: status;
+    grid-row: 2 / 4;
+    position: sticky;
+    top: var(--ro-space-2, 0.5rem);
+    align-self: start;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__sticky-cta {
+    display: none;
+  }
+
+  .duelo2v2-command-header {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    align-items: center;
+    gap: 1rem;
+    min-height: 5.5rem;
+    padding: 0.55rem 0.85rem;
+  }
+
+  .duelo2v2-command-header__scoreboard {
+    padding-top: 0;
+    border-top: none;
+    border-left: 1px solid color-mix(in srgb, var(--d2-cmd-ink-border) 70%, transparent);
+    padding-left: 1rem;
+  }
+
+  .duelo2v2-command-header__meta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.65rem;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .reta-details-form__row--primary {
+    grid-template-columns: 1.5fr 1fr 0.85fr 1fr 0.65fr;
+    align-items: end;
+    gap: 0.35rem;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .reta-details-form__row--primary > .reta-details-form__schedule-split {
+    display: contents;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .reta-details-form__row--meta {
+    grid-template-columns: 1.2fr 0.85fr 1fr;
+    gap: 0.35rem;
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-roster__pool {
+    max-height: min(16rem, calc(100vh - 22rem));
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .elegant-players-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr));
+  }
+}
+
+@media (min-width: 1440px) {
+  .duelo2v2-gestionar .qm-ws--duelo-console {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 280px);
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .duelo2v2-roster__pool {
+    max-height: min(18rem, calc(100vh - 20rem));
+  }
+
+  .duelo2v2-gestionar .qm-ws--duelo-console .elegant-players-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+  }
+}
+
+@media (min-width: 1600px) {
+  .duelo2v2-gestionar .qm-ws--duelo-console .elegant-players-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}

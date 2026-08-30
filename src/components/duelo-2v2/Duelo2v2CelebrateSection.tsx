@@ -1,17 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   getDueloLoserCelebrateMessage,
   getDueloWinnerCelebrateMessage,
   getOrganizerCelebrateParticipantesNote,
+  PublicEventBrandIdentity,
+  shouldShowMotherAttribution,
   useBranding,
 } from "../../club-experience";
 import { computeDueloScore } from "../../lib/duelo2v2/scoring";
+import { createDuelo2v2SharePresentation } from "../../lib/duelo2v2/duelo2v2SharePresentation";
+import { shareDuelo2v2Image } from "../../lib/duelo2v2/shareDuelo2v2Image";
 import type { Duelo2v2SetDetalle } from "../../lib/duelo2v2/types";
 import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
 import { PublicRivieraCelebrateClosing } from "../public/PublicRivieraCelebrateBrand";
 import type { PublicRetaWinnerAvatar } from "../public/PublicRetaWinnerSection";
+import { TablerIcon } from "../ui/TablerIcon";
 
 interface Duelo2v2CelebrateSectionProps {
   teamAName: string;
@@ -69,6 +74,7 @@ function TeamPlayers({
                 fotoUrl={p.fotoUrl}
                 nombre={p.name}
                 size="xl"
+                loading="lazy"
                 className="duelo2v2-celebrate__player-avatar"
               />
             </div>
@@ -101,7 +107,7 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
   finalizado,
   ratingByJugadorId,
 }) => {
-  const { nombre: organizerName } = useBranding();
+  const { nombre: organizerName, logoUrl, isClubBranded } = useBranding();
   const summary = computeDueloScore(detalle);
   const ganadorA = ganador === "a";
   const hasRating = Boolean(
@@ -129,6 +135,58 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
     organizerName
   );
 
+  const shareBase = {
+    detalle,
+    setOutcomes: summary.setOutcomes,
+    dueloNombre: torneoNombre,
+    clubName: organizerName,
+    clubLogoUrl: logoUrl,
+    showMotherAttribution: shouldShowMotherAttribution(
+      organizerName,
+      isClubBranded,
+    ),
+  };
+
+  const winnerPresentation = createDuelo2v2SharePresentation({
+    place: "winner",
+    teamName: winnersName,
+    players: winners,
+    setsWin,
+    setsLoss,
+    gamesWin,
+    gamesLoss,
+    message: winnerMessage,
+    ...shareBase,
+  });
+
+  const runnerUpPresentation = createDuelo2v2SharePresentation({
+    place: "runner-up",
+    teamName: losersName,
+    players: losers,
+    setsWin: setsLoss,
+    setsLoss: setsWin,
+    gamesWin: gamesLoss,
+    gamesLoss: gamesWin,
+    message: loserMessage,
+    ...shareBase,
+  });
+
+  const [sharingPlace, setSharingPlace] = useState<"winner" | "runner-up" | null>(
+    null
+  );
+
+  const share = async (place: "winner" | "runner-up") => {
+    if (sharingPlace) return;
+    setSharingPlace(place);
+    try {
+      await shareDuelo2v2Image(
+        place === "winner" ? winnerPresentation : runnerUpPresentation
+      );
+    } finally {
+      setSharingPlace(null);
+    }
+  };
+
   return (
     <section
       className="duelo2v2-celebrate ro-pub-celebrate ro-pub-celebrate--winners te-pub-fade-in"
@@ -136,6 +194,24 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
     >
       <div className="ro-pub-celebrate__glow" aria-hidden />
       <div className="ro-pub-celebrate__inner">
+        <header className="duelo2v2-celebrate__header">
+          <PublicEventBrandIdentity
+            className="duelo2v2-celebrate__brand"
+            showMotherAttribution={shouldShowMotherAttribution(
+              organizerName,
+              isClubBranded,
+            )}
+          />
+          <p className="duelo2v2-celebrate__event-meta">
+            <span>{torneoNombre}</span>
+            <span className="duelo2v2-celebrate__event-meta-sep" aria-hidden>
+              ·
+            </span>
+            <span>Duelo 2 vs 2</span>
+          </p>
+          <div className="duelo2v2-celebrate__header-rule" aria-hidden />
+        </header>
+
         <div className="duelo2v2-celebrate__outcome-cards">
           <article className="duelo2v2-celebrate__team-card duelo2v2-celebrate__team-card--winner">
             <p className="duelo2v2-celebrate__team-card-badge">Ganadores</p>
@@ -155,14 +231,14 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
                 </span>
                 <div className="duelo2v2-celebrate__score-numbers">
                   <strong>{setsWin}</strong>
-                  <span className="duelo2v2-celebrate__score-dash">–</span>
+                  <span className="duelo2v2-celebrate__score-dash">:</span>
                   <strong>{setsLoss}</strong>
                 </div>
                 <span className="duelo2v2-celebrate__team-card-score-rival">
                   {losersName}
                 </span>
               </div>
-              <p className="duelo2v2-celebrate__score-caption">Sets ganados</p>
+              <p className="duelo2v2-celebrate__score-caption">Victoria final</p>
 
               {detalle.length > 0 && (
                 <ul className="duelo2v2-celebrate__sets-list">
@@ -171,7 +247,7 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
                     if (outcome === "incompleto") return null;
                     return (
                       <li key={index}>
-                        Set {index + 1}: {row.a}–{row.b}
+                        Set {String(index + 1).padStart(2, "0")}: {row.a}–{row.b}
                       </li>
                     );
                   })}
@@ -186,14 +262,25 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
             <p className="duelo2v2-celebrate__team-card-message duelo2v2-celebrate__team-card-message--winner">
               {winnerMessage}
             </p>
+
+            <button
+              type="button"
+              className="duelo2v2-celebrate__share-btn"
+              onClick={() => void share("winner")}
+              disabled={sharingPlace !== null}
+              aria-busy={sharingPlace === "winner"}
+            >
+              <TablerIcon name="share-3" size={16} />
+              {sharingPlace === "winner" ? "Preparando…" : "Compartir ganadores"}
+            </button>
           </article>
 
           <article className="duelo2v2-celebrate__team-card duelo2v2-celebrate__team-card--loser">
             <p className="duelo2v2-celebrate__team-card-badge duelo2v2-celebrate__team-card-badge--loser">
-              Sigue adelante
+              Segundo lugar
             </p>
             <h3 className="duelo2v2-celebrate__team-card-subheadline">
-              Sigue entrenando, sigue mejorando
+              Sigue adelante
             </h3>
             <p className="duelo2v2-celebrate__team-card-names duelo2v2-celebrate__team-card-names--loser">
               {losersName}
@@ -208,7 +295,7 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
                 </span>
                 <div className="duelo2v2-celebrate__score-numbers">
                   <strong>{setsLoss}</strong>
-                  <span className="duelo2v2-celebrate__score-dash">–</span>
+                  <span className="duelo2v2-celebrate__score-dash">:</span>
                   <strong>{setsWin}</strong>
                 </div>
                 <span className="duelo2v2-celebrate__team-card-score-winner">
@@ -221,10 +308,21 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
             <p className="duelo2v2-celebrate__team-card-message duelo2v2-celebrate__team-card-message--loser">
               {loserMessage}
             </p>
+
+            <button
+              type="button"
+              className="duelo2v2-celebrate__share-btn duelo2v2-celebrate__share-btn--muted"
+              onClick={() => void share("runner-up")}
+              disabled={sharingPlace !== null}
+              aria-busy={sharingPlace === "runner-up"}
+            >
+              <TablerIcon name="share-3" size={16} />
+              {sharingPlace === "runner-up" ? "Preparando…" : "Compartir 2.º lugar"}
+            </button>
           </article>
         </div>
 
-        <PublicRivieraCelebrateClosing torneoNombre={torneoNombre} />
+        <PublicRivieraCelebrateClosing />
 
         <p className="ro-pub-celebrate__participantes-note">
           {getOrganizerCelebrateParticipantesNote(organizerName)}

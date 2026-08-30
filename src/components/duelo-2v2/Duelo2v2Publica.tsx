@@ -270,7 +270,7 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
           clockNow={clockNow}
         />
 
-        {tieneGanador && duelo.ganador && (
+        {tieneGanador && duelo.ganador ? (
           <Duelo2v2CelebrateSection
             teamAName={teamAName}
             teamBName={teamBName}
@@ -294,7 +294,7 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
             finalizado={finalizado}
             ratingByJugadorId={ratingByJugadorId}
           />
-        )}
+        ) : null}
 
         <footer className="duelo2v2-public-sync" aria-live="polite">
           <p className="duelo2v2-public-sync__line">

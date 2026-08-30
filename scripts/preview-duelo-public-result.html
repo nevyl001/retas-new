@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Duelo 2v2 Public Result Preview</title>
+    <link rel="stylesheet" href="../src/styles/riviera-open-tokens.css" />
+    <link rel="stylesheet" href="../src/styles/riviera-public-tokens.css" />
+    <link rel="stylesheet" href="../src/components/duelo-2v2/duelo2v2-page.css" />
+    <link rel="stylesheet" href="../src/components/jugadores/riviera-jugadores.css" />
+    <style>
+      :root {
+        --font-body: system-ui, sans-serif;
+        --ro-text-primary: #f5f2eb;
+        --ro-text-secondary: rgba(245, 242, 235, 0.72);
+        --ro-text-muted: rgba(245, 242, 235, 0.48);
+        --ro-border: rgba(255, 255, 255, 0.12);
+        --ro-border-subtle: rgba(255, 255, 255, 0.08);
+        --ro-bg-input: rgba(255, 255, 255, 0.06);
+        --ro-bg-inset: rgba(0, 0, 0, 0.25);
+        --ro-scrim-modal: rgba(0, 0, 0, 0.45);
+        --ro-success: #34d399;
+        --ro-gold-text: #e8c547;
+        --bg-canvas: #070a0e;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: var(--font-body); background: #070a0e; color: #f5f2eb; }
+      .preview-shell { padding: 2rem; max-width: 1280px; margin: 0 auto; }
+      .rj-avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #2a2a2a; color: #f5f2eb; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <div class="preview-shell">
+      <div class="duelo2v2-page ro-surface-dark duelo2v2-page--public">
+        <section class="duelo2v2-live-board" aria-label="Encuentro 2 vs 2">
+          <header class="duelo2v2-live-board__header">
+            <h1 class="duelo2v2-live-board__title">TEST2</h1>
+            <p class="duelo2v2-live-board__sub">Duelo 2 vs 2 · Riviera Open · Finalizado</p>
+          </header>
+          <div class="duelo2v2-live-board__arena">
+            <div class="duelo2v2-live-team duelo2v2-live-team--winner">
+              <p class="duelo2v2-live-team__label">Pareja 1</p>
+              <div class="duelo2v2-live-team__avatars">
+                <div class="duelo2v2-live-player">
+                  <div class="duelo2v2-live-player__ring"><span class="rj-avatar rj-avatar--xl">AR</span></div>
+                  <span class="duelo2v2-live-player__name">Alain Rodríguez</span>
+                </div>
+                <div class="duelo2v2-live-player">
+                  <div class="duelo2v2-live-player__ring"><span class="rj-avatar rj-avatar--xl">AA</span></div>
+                  <span class="duelo2v2-live-player__name">Alan A</span>
+                </div>
+              </div>
+              <div class="duelo2v2-live-team__sets">
+                <p class="duelo2v2-live-team__sets-title">Sets ganados</p>
+                <ul class="duelo2v2-live-team__sets-list">
+                  <li class="duelo2v2-live-team__set-item"><span class="duelo2v2-live-team__set-label">Set 1</span><span class="duelo2v2-live-team__set-score">6–2</span></li>
+                  <li class="duelo2v2-live-team__set-item"><span class="duelo2v2-live-team__set-label">Set 3</span><span class="duelo2v2-live-team__set-score">6–2</span></li>
+                </ul>
+              </div>
+              <div class="duelo2v2-live-team__score">2<span class="duelo2v2-live-team__score-label">sets</span></div>
+            </div>
+            <div class="duelo2v2-live-board__center"><span class="duelo2v2-live-board__vs">VS</span></div>
+            <div class="duelo2v2-live-team">
+              <p class="duelo2v2-live-team__label">Pareja 2</p>
+              <div class="duelo2v2-live-team__avatars">
+                <div class="duelo2v2-live-player">
+                  <div class="duelo2v2-live-player__ring"><span class="rj-avatar rj-avatar--xl">AD</span></div>
+                  <span class="duelo2v2-live-player__name">Alberto D</span>
+                </div>
+                <div class="duelo2v2-live-player">
+                  <div class="duelo2v2-live-player__ring"><span class="rj-avatar rj-avatar--xl">AX</span></div>
+                  <span class="duelo2v2-live-player__name">Alex ana</span>
+                </div>
+              </div>
+              <div class="duelo2v2-live-team__sets">
+                <p class="duelo2v2-live-team__sets-title">Sets ganados</p>
+                <ul class="duelo2v2-live-team__sets-list">
+                  <li class="duelo2v2-live-team__set-item"><span class="duelo2v2-live-team__set-label">Set 2</span><span class="duelo2v2-live-team__set-score">6–4</span></li>
+                </ul>
+              </div>
+              <div class="duelo2v2-live-team__score">1<span class="duelo2v2-live-team__score-label">sets</span></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>

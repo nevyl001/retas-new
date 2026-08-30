@@ -26,6 +26,8 @@ interface Duelo2v2DetailsEditorProps {
   disabled?: boolean;
   /** Siempre visible en el slot details (mismo formato que Reta / Americano). */
   inline?: boolean;
+  /** Título del panel inline (solo presentación). */
+  toolbarTitle?: string;
   /**
    * En juego: cerrado por defecto; se abre con dropdown para corregir
    * nombre/horario/sede sin ocupar la pantalla.
@@ -70,6 +72,7 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
   duelo,
   disabled = false,
   inline = false,
+  toolbarTitle = "Detalles de la reta",
   collapsible = false,
   onSaved,
   onError,
@@ -198,7 +201,7 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
       ) : inline ? (
         <header className="reta-config-panel__toolbar">
           <div className="reta-config-panel__toolbar-copy">
-            <h2 className="reta-config-panel__title">Detalles de la reta</h2>
+            <h2 className="reta-config-panel__title">{toolbarTitle}</h2>
             <p className="reta-config-panel__subtitle">
               Nombre, horario, sede y cancha.
             </p>

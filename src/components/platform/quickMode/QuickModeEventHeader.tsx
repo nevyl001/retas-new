@@ -21,9 +21,9 @@ export type QuickModeEventHeaderProps = {
    * ("26 jugadores · 2 parejas · 2 canchas · 120 min"). Si se pasa, tiene
    * prioridad sobre centerMetrics para esa zona.
    */
-  centerSummaryLine?: string;
+  centerSummaryLine?: React.ReactNode;
   /** Alternativa compacta a rightMeta, misma idea para fecha/lugar. */
-  rightSummaryLine?: string;
+  rightSummaryLine?: React.ReactNode;
   onEditDetails?: () => void;
   editDetailsLabel?: string;
   className?: string;
@@ -62,9 +62,9 @@ export function QuickModeEventHeader({
       </div>
 
       {centerSummaryLine ? (
-        <p className="qm-event-header__summary-line" aria-label="Resumen del evento">
+        <div className="qm-event-header__summary-line" aria-label="Resumen del evento">
           {centerSummaryLine}
-        </p>
+        </div>
       ) : centerMetrics.length > 0 ? (
         <ul
           className="qm-event-header__center"

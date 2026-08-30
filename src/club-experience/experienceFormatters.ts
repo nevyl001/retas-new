@@ -121,6 +121,21 @@ export function getMotherAttributionLine(manifest: BrandManifest): string {
   return RIVIERA_CO_BRAND_ATTRIBUTION;
 }
 
+/** Co-branding: solo cuentas con upgrade propio, nunca la cuenta madre Riviera Open. */
+export function shouldShowMotherAttribution(
+  organizerDisplayName: string,
+  isClubBranded: boolean,
+): boolean {
+  if (!isClubBranded) return false;
+  const trimmed = organizerDisplayName.trim();
+  if (!trimmed) return false;
+  return (
+    trimmed.localeCompare(RIVIERA_PRODUCT_NAME, undefined, {
+      sensitivity: "accent",
+    }) !== 0
+  );
+}
+
 export function getCoBrandCompactLine(manifest: BrandManifest): string {
   return `${manifest.displayName} · ${manifest.motherBrand}`;
 }

@@ -97,6 +97,7 @@ export {
   getOrganizerCelebrateParticipantesNote,
   getDueloFinalizarConfirmMessage,
   getPodiumFinalAriaLabel,
+  shouldShowMotherAttribution,
 } from "./experienceFormatters";
 
 export {
