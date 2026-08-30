@@ -161,7 +161,7 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
           disabled={sharingPlace !== null}
           aria-busy={sharingPlace === "runner-up"}
         >
-          {sharingPlace === "runner-up" ? "Preparando imagen…" : "Descargar finalistas"}
+          {sharingPlace === "runner-up" ? "Preparando imagen…" : "Descargar 2.º lugar"}
         </button>
       </div>
 

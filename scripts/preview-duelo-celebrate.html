@@ -22,6 +22,9 @@
       * { box-sizing: border-box; }
       body { margin: 0; font-family: var(--font-body); background: #070a0e; color: #f4f1ea; }
       .preview-shell { min-height: 100vh; padding: 2rem; }
+      @media (max-width: 767px) {
+        .preview-shell { padding: 0.375rem 0; }
+      }
       .rj-avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #2a3038; color: #f4f1ea; font-weight: 700; overflow: hidden; object-fit: cover; }
     </style>
   </head>
@@ -68,7 +71,7 @@
                 <div class="duelo2v2-share-card__context"><span>TEST2</span><small>Duelo 2 vs 2</small></div>
               </header>
               <div class="duelo2v2-share-card__hero">
-                <p class="duelo2v2-share-card__badge">Finalistas</p>
+                <p class="duelo2v2-share-card__badge">Segundo lugar</p>
                 <h2 class="duelo2v2-share-card__headline">Sigue adelante</h2>
                 <div class="duelo2v2-share-card__players">
                   <div class="duelo2v2-share-card__player"><span class="duelo2v2-share-card__avatar-frame"><span class="rj-avatar rj-avatar--xl duelo2v2-share-card__avatar">AD</span></span><strong>Alberto</strong><span class="duelo2v2-share-card__rating"><span class="duelo2v2-share-card__rating-label">Rating</span><span class="duelo2v2-share-card__rating-value">2.81</span></span></div>

@@ -2619,13 +2619,36 @@
 }
 
 @media (max-width: 767px) {
-  .duelo2v2-celebrate__story-gallery {
+  .duelo2v2-celebrate--stories {
     width: 100%;
-    padding-inline: clamp(0.75rem, 3vw, 1rem);
+    max-width: 100%;
+    margin-inline: 0;
+    margin-top: 1rem;
+    padding-inline: 0;
+    overflow-x: clip;
+    box-sizing: border-box;
   }
 
-  .duelo2v2-share-card {
-    width: min(100%, 20rem);
+  .duelo2v2-celebrate__story-gallery {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+    padding-inline: 0;
+    gap: 1.25rem;
+  }
+
+  .duelo2v2-celebrate__share-toolbar {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+
+  .duelo2v2-celebrate__participantes-note {
+    max-width: none;
+    padding-inline: 0;
   }
 }
 

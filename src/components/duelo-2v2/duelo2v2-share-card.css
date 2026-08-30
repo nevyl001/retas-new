@@ -398,3 +398,213 @@
   letter-spacing: 0.04em;
   color: color-mix(in srgb, var(--d2-share-accent) 82%, var(--d2-share-text));
 }
+
+/* —— Story cards: mobile compact (desktop sin cambios arriba) —— */
+@media (max-width: 767px) {
+  .duelo2v2-share-card {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+    border-radius: 20px;
+  }
+
+  .duelo2v2-share-card__art {
+    justify-content: space-between;
+    gap: 0.15rem;
+    padding: 0.58rem 0.68rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+    background:
+      linear-gradient(
+        180deg,
+        rgba(3, 5, 8, 0.93) 0%,
+        rgba(3, 5, 8, 0.86) 38%,
+        rgba(3, 5, 8, 0.96) 100%
+      ),
+      url("../../assets/cancha-riviera-vertical.jpg") center / cover no-repeat;
+  }
+
+  .duelo2v2-share-card__art::after {
+    background: radial-gradient(
+      ellipse 88% 48% at 50% 16%,
+      color-mix(in srgb, var(--d2-share-accent) 6%, transparent),
+      transparent 62%
+    );
+  }
+
+  .duelo2v2-share-card__top {
+    gap: 0.3rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .duelo2v2-share-card__club-logo,
+  .duelo2v2-share-card__club-mark {
+    width: 1.4rem;
+    height: 1.4rem;
+    font-size: 0.62rem;
+  }
+
+  .duelo2v2-share-card__brand strong {
+    font-size: 0.66rem;
+  }
+
+  .duelo2v2-share-card__brand span {
+    font-size: 0.52rem;
+  }
+
+  .duelo2v2-share-card__place-pill {
+    padding: 0.16rem 0.45rem;
+    font-size: 0.48rem;
+  }
+
+  .duelo2v2-share-card__context span {
+    font-size: 0.56rem;
+  }
+
+  .duelo2v2-share-card__context small {
+    margin-top: 0.06rem;
+    font-size: 0.52rem;
+  }
+
+  .duelo2v2-share-card__hero {
+    gap: 0.22rem;
+    margin-top: 0.1rem;
+  }
+
+  .duelo2v2-share-card__badge {
+    font-size: 0.52rem;
+  }
+
+  .duelo2v2-share-card__headline {
+    font-size: 1.32rem;
+  }
+
+  .duelo2v2-share-card--runner-up .duelo2v2-share-card__headline {
+    font-size: 1.08rem;
+  }
+
+  .duelo2v2-share-card__players {
+    gap: 0.45rem;
+    margin-top: 0.28rem;
+  }
+
+  .duelo2v2-share-card__player {
+    gap: 0.18rem;
+  }
+
+  .duelo2v2-share-card__avatar.rj-avatar--xl {
+    width: 4rem;
+    height: 4rem;
+    font-size: 0.95rem;
+  }
+
+  .duelo2v2-share-card--winner .duelo2v2-share-card__avatar.rj-avatar--xl {
+    width: 4.35rem;
+    height: 4.35rem;
+  }
+
+  .duelo2v2-share-card__player strong {
+    font-size: 0.78rem;
+    max-width: 5.75rem;
+  }
+
+  .duelo2v2-share-card__rating {
+    padding: 0.08rem 0.3rem;
+  }
+
+  .duelo2v2-share-card__rating-label {
+    font-size: 0.44rem;
+  }
+
+  .duelo2v2-share-card__rating-value {
+    font-size: 0.52rem;
+  }
+
+  .duelo2v2-share-card__pair-axis {
+    height: 2rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .duelo2v2-share-card__team-name {
+    margin-top: 0.12rem;
+    font-size: 0.6rem;
+  }
+
+  .duelo2v2-share-card__result {
+    gap: 0.22rem;
+    margin-top: 0.28rem;
+    padding-top: 0.28rem;
+  }
+
+  .duelo2v2-share-card__score-inline > span:first-child {
+    font-size: 2.15rem;
+  }
+
+  .duelo2v2-share-card__score-inline > span:nth-child(2) {
+    font-size: 1.15rem;
+  }
+
+  .duelo2v2-share-card__score-inline > span:nth-child(3) {
+    font-size: 1.45rem;
+  }
+
+  .duelo2v2-share-card--winner .duelo2v2-share-card__score-inline > span:first-child {
+    font-size: 2.35rem;
+  }
+
+  .duelo2v2-share-card__score-caption {
+    margin-top: 0.06rem;
+    font-size: 0.5rem;
+  }
+
+  .duelo2v2-share-card__sets {
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    width: 100%;
+    max-width: 16rem;
+  }
+
+  .duelo2v2-share-card__set {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .duelo2v2-share-card__set span {
+    font-size: 0.48rem;
+  }
+
+  .duelo2v2-share-card__set strong {
+    font-size: 0.72rem;
+  }
+
+  .duelo2v2-share-card__games {
+    font-size: 0.56rem;
+  }
+
+  .duelo2v2-share-card__message {
+    margin-top: 0.22rem;
+    font-size: 0.68rem;
+    line-height: 1.35;
+  }
+
+  .duelo2v2-share-card__social {
+    flex-shrink: 0;
+    margin-top: 0;
+    padding-top: 0.32rem;
+    padding-bottom: 0.08rem;
+  }
+
+  .duelo2v2-share-card__social-platforms {
+    font-size: 0.5rem;
+    letter-spacing: 0.06em;
+  }
+
+  .duelo2v2-share-card__social-handle {
+    margin-top: 0.12rem;
+    font-size: 0.66rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .duelo2v2-share-card {
+    width: min(calc(100vw - 2.5rem), 20rem);
+  }
+}
