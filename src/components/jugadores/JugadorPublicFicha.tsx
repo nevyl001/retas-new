@@ -537,7 +537,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                 </div>
               </div>
 
-              <JugadorRedesPublicas redes={redes} variant="share" />
+              <JugadorRedesPublicas redes={redes} />
             </section>
           </div>
 

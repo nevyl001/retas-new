@@ -1007,20 +1007,6 @@
   border-top: 1px solid var(--rjp-ficha-hairline);
 }
 
-.rjp-ficha-social--share .rjp-ficha-social__links {
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.rjp-ficha-social--share .rjp-ficha-social__link {
-  min-height: 40px;
-  padding: 4px 14px 4px 4px;
-  border: 1px solid var(--rjp-ficha-hairline);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-}
-
 .rjp-ficha-social {
   margin: 0 var(--rjp-ficha-gutter);
   padding: 12px 0 0;
@@ -1041,64 +1027,65 @@
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
-.rjp-ficha-social__links {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.rjp-ficha-social__link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 44px;
-  padding: 6px 0;
+.rjp-ficha-social__btn {
+  display: inline-flex;
   text-decoration: none;
   color: inherit;
-  border-radius: 8px;
-  transition: opacity 180ms ease;
+  border-radius: 12px;
+  transition: transform 180ms ease, opacity 180ms ease;
 }
 
-.rjp-ficha-social__link:hover {
-  opacity: 0.88;
+.rjp-ficha-social__btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 
-.rjp-ficha-social__link:focus-visible {
+.rjp-ficha-social__btn:focus-visible {
   outline: 2px solid var(--rjp-ficha-accent);
   outline-offset: 2px;
-}
-
-.rjp-ficha-social__handle {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--rjp-ficha-text-2);
-  letter-spacing: 0.01em;
-}
-
-.rjp-ficha-social--share .rjp-ficha-social__chip {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  flex-shrink: 0;
 }
 
 .rjp-ficha-social__chip {
   width: 44px;
   height: 44px;
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--rjp-ficha-hairline);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--rjp-ficha-text);
-  transition: background 180ms ease;
+  border: none;
+  color: #fff;
+  transition: opacity 180ms ease;
+}
+
+.rjp-ficha-social__chip--ig {
+  background: linear-gradient(
+    135deg,
+    #f58529 0%,
+    #dd2a7b 50%,
+    #8134af 100%
+  );
+}
+
+.rjp-ficha-social__chip--fb {
+  background: #1877f2;
+}
+
+.rjp-ficha-social__chip--tt {
+  background: #010101;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rjp-ficha-social__btn {
+    transition: none;
+  }
+
+  .rjp-ficha-social__btn:hover {
+    transform: none;
+  }
 }
 
 /* Footer editorial */
