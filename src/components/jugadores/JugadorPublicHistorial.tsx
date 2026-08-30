@@ -5,7 +5,6 @@ import type {
   RivieraJugadorCategoria,
 } from "../../lib/rivieraJugadores/types";
 import { filterParticipacionesHistorialVisible } from "../../lib/rivieraJugadores/historialDisplay";
-import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorHistorialList } from "./JugadorHistorialList";
 
 type HistorialTab = "todos" | "torneos" | "liga" | "americano" | "retas";
@@ -108,46 +107,46 @@ export const JugadorPublicHistorial: React.FC<JugadorPublicHistorialProps> = ({
   };
 
   return (
-    <section className="rjp-ficha-card rjp-ficha-historial">
+    <section className="rjp-ficha-historial" aria-label="Historial de carrera">
       <header className="rjp-ficha-historial__head">
-        <span className="rjp-ficha-historial__chip" aria-hidden>
-          <TablerIcon name="trophy" size={16} />
-        </span>
-        <div>
-          <h2 className="rjp-ficha-historial__title">Carrera Riviera</h2>
-          <p className="rjp-ficha-historial__sub">
-            Historial oficial de participaciones en la plataforma.
-          </p>
-        </div>
+        <h2 className="rjp-ficha-historial__title">Historial de carrera</h2>
       </header>
 
-      <label className="rjp-ficha-historial__filter">
-        <span className="sr-only">Filtrar historial por modalidad</span>
-        <select
-          className="rjp-ficha-historial__filter-select"
-          value={activeTab}
-          onChange={(e) => handleTabChange(e.target.value as HistorialTab)}
-          aria-label="Filtrar historial por modalidad"
-        >
-          {HISTORIAL_TABS.map((tab) => {
-            const count = counts[tab.id];
-            return (
-              <option key={tab.id} value={tab.id}>
-                {tab.label}
-                {count > 0 ? ` (${count})` : ""}
-              </option>
-            );
-          })}
-        </select>
-        <TablerIcon
-          name="chevron-down"
-          size={16}
-          className="rjp-ficha-historial__filter-chev"
-          aria-hidden
-        />
-      </label>
+      <div
+        className="rjp-ficha-historial__tabs"
+        role="tablist"
+        aria-label="Filtrar historial por modalidad"
+      >
+        {HISTORIAL_TABS.map((tab) => {
+          const count = counts[tab.id];
+          const selected = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              id={`rjp-hist-tab-${tab.id}`}
+              aria-selected={selected}
+              aria-controls="rjp-hist-panel"
+              className={`rjp-ficha-historial__tab${
+                selected ? " rjp-ficha-historial__tab--active" : ""
+              }`}
+              onClick={() => handleTabChange(tab.id)}
+            >
+              {tab.label}
+              {count > 0 ? ` (${count})` : ""}
+            </button>
+          );
+        })}
+      </div>
 
-      <div className="rjp-ficha-historial__body" role="region" aria-live="polite">
+      <div
+        id="rjp-hist-panel"
+        className="rjp-ficha-historial__body"
+        role="tabpanel"
+        aria-labelledby={`rjp-hist-tab-${activeTab}`}
+        aria-live="polite"
+      >
         <JugadorHistorialList
           participaciones={visible}
           categoriaFallback={categoriaFallback}
@@ -162,7 +161,6 @@ export const JugadorPublicHistorial: React.FC<JugadorPublicHistorialProps> = ({
             onClick={() => setVisibleCount((n) => n + pageSize)}
           >
             Ver más ({filtered.length - visible.length} restantes)
-            <TablerIcon name="chevron-down" size={16} />
           </button>
         ) : null}
       </div>

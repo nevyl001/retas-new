@@ -112,12 +112,29 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
         ) : null}
       </div>
 
+      <div className="rjp-rating-nivel__fiab">
+        <div className="rjp-rating-nivel__fiab-head">
+          <span className="rjp-rating-nivel__fiab-label">Fiabilidad</span>
+          <span className="rjp-rating-nivel__fiab-pct">{fiabPct}%</span>
+        </div>
+        <div
+          className="rjp-rating-nivel__fiab-track"
+          role="presentation"
+          aria-hidden
+        >
+          <div
+            className="rjp-rating-nivel__fiab-fill"
+            style={{ width: `${fiabPct}%` }}
+          />
+        </div>
+      </div>
+
       <p className="rjp-rating-nivel__meta">
         {partidosJugados === 0
           ? "Nivel base 3.00 · aún sin partidos de rating"
-          : `Fiabilidad del nivel: ${fiabPct}% · ${partidosJugados} partido${
+          : `${partidosJugados} partido${
               partidosJugados === 1 ? "" : "s"
-            }`}
+            } registrado${partidosJugados === 1 ? "" : "s"}`}
       </p>
 
       {evolutionSvg ? (
@@ -150,7 +167,9 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
 
       {visibleHistorial.length > 0 ? (
         <div className="rjp-rating-nivel__moves-wrap">
-          <p className="rjp-rating-nivel__moves-title">Últimos movimientos</p>
+          <p className="rjp-rating-nivel__moves-title">
+            {isCompactStandalone ? "Evolución reciente" : "Últimos movimientos"}
+          </p>
           <ul className="rjp-rating-nivel__moves">
             {visibleHistorial.map((item) => {
               const up = item.delta >= 0;

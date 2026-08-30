@@ -42,7 +42,9 @@ export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
   );
   const resumen = useMemo(() => groupHistorialResumen(items), [items]);
   const rootClass =
-    variant === "public" ? "rj-historial-timeline rj-historial-timeline--public" : "rj-historial-timeline";
+    variant === "public"
+      ? "rj-historial-timeline rj-historial-timeline--public rj-historial-timeline--ledger"
+      : "rj-historial-timeline";
 
   if (items.length === 0) {
     return (
@@ -79,11 +81,8 @@ export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
               {it.modalidadIcon}
             </div>
             <div className="rj-historial-timeline__body">
-              <div className="rj-historial-timeline__head">
-                <span className="rj-historial-timeline__modalidad">
-                  {it.modalidadLabel}
-                </span>
-                <div className="rj-historial-timeline__head-end">
+              {variant === "public" ? (
+                <>
                   <span
                     className={`rj-historial-timeline__lugar${
                       it.esCampeon
@@ -95,40 +94,82 @@ export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
                   >
                     {it.lugarLabel}
                   </span>
-                  {onDelete && (
-                    <button
-                      type="button"
-                      className="rj-historial-timeline__delete"
-                      title="Eliminar del historial"
-                      aria-label={`Eliminar ${it.eventoNombre} del historial`}
-                      disabled={deletingId === it.id}
-                      onClick={() => onDelete(it.id, it.eventoNombre)}
-                    >
-                      <TablerIcon
-                        name={deletingId === it.id ? "loader-2" : "trash"}
-                        size={15}
-                        className={deletingId === it.id ? "rj-spin" : undefined}
-                      />
-                    </button>
-                  )}
-                </div>
-              </div>
-              <p className="rj-historial-timeline__evento">{it.eventoNombre}</p>
-              {it.eventoDescripcion && (
-                <p className="rj-historial-timeline__desc">{it.eventoDescripcion}</p>
-              )}
-              {it.detalle && (
-                <p className="rj-historial-timeline__detalle">{it.detalle}</p>
-              )}
-              <p className="rj-historial-timeline__fecha">
-                {formatHistorialFecha(it.fecha)}
-                {it.puntos != null && it.puntos > 0 && (
-                  <span className="rj-historial-timeline__pts">
-                    {" "}
-                    · {it.puntos.toLocaleString("es-MX")} pts ranking
+                  <p className="rj-historial-timeline__evento">{it.eventoNombre}</p>
+                  <span className="rj-historial-timeline__modalidad">
+                    {it.modalidadLabel}
                   </span>
-                )}
-              </p>
+                  {it.eventoDescripcion && (
+                    <p className="rj-historial-timeline__desc">{it.eventoDescripcion}</p>
+                  )}
+                  {it.detalle && (
+                    <p className="rj-historial-timeline__detalle">{it.detalle}</p>
+                  )}
+                  <p className="rj-historial-timeline__fecha">
+                    <span className="rj-historial-timeline__fecha-text">
+                      {formatHistorialFecha(it.fecha)}
+                    </span>
+                    {it.puntos != null && it.puntos > 0 && (
+                      <span className="rj-historial-timeline__pts">
+                        +{it.puntos.toLocaleString("es-MX")} pts
+                      </span>
+                    )}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="rj-historial-timeline__head">
+                    <span className="rj-historial-timeline__modalidad">
+                      {it.modalidadLabel}
+                    </span>
+                    <div className="rj-historial-timeline__head-end">
+                      <span
+                        className={`rj-historial-timeline__lugar${
+                          it.esCampeon
+                            ? " rj-historial-timeline__lugar--gold"
+                            : it.esSubcampeon
+                              ? " rj-historial-timeline__lugar--silver"
+                              : ""
+                        }`}
+                      >
+                        {it.lugarLabel}
+                      </span>
+                      {onDelete && (
+                        <button
+                          type="button"
+                          className="rj-historial-timeline__delete"
+                          title="Eliminar del historial"
+                          aria-label={`Eliminar ${it.eventoNombre} del historial`}
+                          disabled={deletingId === it.id}
+                          onClick={() => onDelete(it.id, it.eventoNombre)}
+                        >
+                          <TablerIcon
+                            name={deletingId === it.id ? "loader-2" : "trash"}
+                            size={15}
+                            className={deletingId === it.id ? "rj-spin" : undefined}
+                          />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <p className="rj-historial-timeline__evento">{it.eventoNombre}</p>
+                  {it.eventoDescripcion && (
+                    <p className="rj-historial-timeline__desc">{it.eventoDescripcion}</p>
+                  )}
+                  {it.detalle && (
+                    <p className="rj-historial-timeline__detalle">{it.detalle}</p>
+                  )}
+                  <p className="rj-historial-timeline__fecha">
+                    <span className="rj-historial-timeline__fecha-text">
+                      {formatHistorialFecha(it.fecha)}
+                    </span>
+                    {it.puntos != null && it.puntos > 0 && (
+                      <span className="rj-historial-timeline__pts">
+                        +{it.puntos.toLocaleString("es-MX")} pts
+                      </span>
+                    )}
+                  </p>
+                </>
+              )}
             </div>
           </li>
         ))}

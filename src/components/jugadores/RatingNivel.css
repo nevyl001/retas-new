@@ -222,7 +222,63 @@
   }
 }
 
+.rjp-rating-nivel__fiab {
+  margin: 0 0 10px;
+}
+
+.rjp-rating-nivel__fiab-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.rjp-rating-nivel__fiab-label {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rjp-ficha-text-3, var(--ro-text-muted));
+}
+
+.rjp-rating-nivel__fiab-pct {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--rjp-ficha-text, var(--ro-text-primary));
+}
+
+.rjp-rating-nivel__fiab-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.rjp-rating-nivel__fiab-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand-warning, var(--ro-gold-text, rgba(255, 255, 255, 0.55)));
+  transition: width 200ms ease;
+}
+
+.rjp-rating-nivel--standalone.rjp-rating-nivel--compact .rjp-rating-nivel__value {
+  font-size: clamp(36px, 10vw, 44px);
+  letter-spacing: -0.03em;
+}
+
+.rjp-ficha-rating .rjp-rating-nivel__move {
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    "delta modo after"
+    "delta date date";
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ro-border-subtle, rgba(255, 255, 255, 0.08));
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .rjp-rating-nivel__fiab-fill,
   .rjp-rating-nivel__line {
     transition: none;
   }

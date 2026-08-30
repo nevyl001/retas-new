@@ -10,8 +10,6 @@ import {
 import { getJugadorPerfilMeta } from "../../lib/rivieraJugadores/jugadorPerfilDisplay";
 import {
   computePublicProfileStats,
-  filterParticipacionesHistorialVisible,
-  participacionToHistorialItem,
 } from "../../lib/rivieraJugadores/historialDisplay";
 import { getPublicPlayerProfileData } from "../../lib/rivieraJugadores/getPublicPlayerProfileData";
 import { withTimeout } from "../../lib/async/withTimeout";
@@ -44,7 +42,7 @@ import { JugadorPuntosBreakdown } from "./JugadorPuntosBreakdown";
 import { JugadorOfficialRomcPuntos } from "./JugadorOfficialRomcPuntos";
 import { JugadorPublicHistorial } from "./JugadorPublicHistorial";
 import { RatingNivel } from "./RatingNivel";
-import { JugadorPublicFichaAside, JugadorPublicRecentResults } from "./JugadorPublicFichaAside";
+import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import { buildMarketingOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
@@ -297,21 +295,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     [historial, historialOtrosClubes]
   );
 
-  const historialItems = useMemo(() => {
-    try {
-      return filterParticipacionesHistorialVisible(historialCompleto)
-        .map((row) =>
-          participacionToHistorialItem(row, {
-            categoriaFallback: jugador?.categoria,
-          })
-        )
-        .sort((a, b) => b.fecha.localeCompare(a.fecha));
-    } catch (e) {
-      console.warn("[JugadorPublicFicha] historialItems:", errorLogPayload(e));
-      return [];
-    }
-  }, [historialCompleto, jugador?.categoria]);
-
   const profileStats = useMemo(() => {
     try {
       const fromHist = computePublicProfileStats(historialCompleto);
@@ -349,8 +332,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       };
     }
   }, [historialCompleto, jugador?.stats]);
-
-  const recentActivity = useMemo(() => historialItems.slice(0, 3), [historialItems]);
 
   if (heroLoading && !jugador) {
     return (
@@ -411,11 +392,14 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const hasPhoto = Boolean(jugador.foto_url?.trim());
   const catBadge = JUGADOR_CATEGORIA_AVATAR_BADGE[jugador.categoria];
 
-  const metaIcon = (label: string) => {
-    if (label === "Edad") return "user";
-    if (label === "Mano dominante") return "hand-finger";
-    return "arrows-left-right";
-  };
+  const profileMetaLine = [
+    registrationOrgId
+      ? getOrganizerDisplayNameSync(registrationOrgId)
+      : null,
+    ...perfilMeta.map((item) => item.value),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <ClubExperienceScope
@@ -430,9 +414,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         <div className="rjp-ficha__layout">
           <div className="rjp-ficha__col rjp-ficha__col--profile">
             <section
-              className={`rjp-ficha-card rjp-ficha-hero${
+              className={`rjp-ficha-hero rjp-ficha-hero--editorial${
                 hasPhoto ? " rjp-ficha-hero--photo" : ""
               }`}
+              aria-label="Identidad del jugador"
             >
               {hasPhoto && jugador.foto_url ? (
                 <div className="rjp-ficha-hero__media">
@@ -441,17 +426,12 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                     src={jugador.foto_url}
                     alt={`Foto de ${jugador.nombre}`}
                     width={800}
-                    height={600}
+                    height={1067}
                     decoding="async"
                     loading="lazy"
                   />
-                  <div className="rjp-ficha-hero__media-overlay" aria-hidden />
+                  <div className="rjp-ficha-hero__media-gradient" aria-hidden />
                   <span className="rjp-ficha-hero__cat-badge">{catBadge}</span>
-                  <JugadorPaisBadge
-                    codigo={jugador.pais_codigo}
-                    size="md"
-                    className="rjp-ficha-hero__pais rjp-ficha-hero__pais--photo"
-                  />
                 </div>
               ) : (
                 <div className="rjp-ficha-hero__avatar-wrap">
@@ -463,111 +443,100 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                 </div>
               )}
 
-              <div className="rjp-ficha-hero__body">
-                <div className="rjp-ficha-hero__main">
-                  <div className="rjp-ficha-hero__identity">
-                    <div className="rjp-ficha-hero__identity-head">
-                      <h1 className="rjp-ficha-hero__name">{jugador.nombre}</h1>
-                      {rankingPos != null ? (
-                        <span className="rjp-ficha-hero__rank-badge">
-                          {rankingLabel} #{rankingPos}
-                        </span>
-                      ) : detailLoading ? (
-                        <span className="rjp-ficha-hero__rank-badge rjp-ficha-hero__rank-badge--pending">
-                          {rankingLabel} …
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <div className="rjp-ficha-hero__meta">
-                      {registrationOrgId ? (
-                        <span className="rjp-ficha-hero__meta-club">
-                          Club origen: {getOrganizerDisplayNameSync(registrationOrgId)}
-                        </span>
-                      ) : null}
-                      {hasOrgContext && viewingClubName && registrationOrgId !== viewingOrgId ? (
-                        <span className="rjp-ficha-hero__meta-club">
-                          Viendo desde: {viewingClubName}
-                        </span>
-                      ) : null}
-                      <span className="rjp-ficha-hero__meta-cat">
-                        {JUGADOR_CATEGORIA_LABELS[jugador.categoria]}
-                      </span>
-                    </div>
-
-                    {showRivieraId ? (
-                      <div className="rjp-ficha-hero__riviera">
-                        <span className="rjp-ficha-hero__riviera-lbl">Riviera ID</span>
-                        <RivieraIdBadge rivieraId={jugador.riviera_id!} size="md" />
-                      </div>
-                    ) : null}
-
-                    {!hasPhoto ? (
-                      <div className="rjp-ficha-hero__pais-row">
-                        <JugadorPaisBadge
-                          codigo={jugador.pais_codigo}
-                          size="md"
-                          className="rjp-ficha-hero__pais"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="rjp-ficha-hero__pills">
-                    {perfilMeta.map((item) => (
-                      <span key={item.label} className="rjp-ficha-pill rjp-ficha-pill--compact">
-                        <TablerIcon
-                          name={metaIcon(item.label)}
-                          size={14}
-                          className="rjp-ficha-pill__icon"
-                        />
-                        <span className="rjp-ficha-pill__val">{item.value}</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="rjp-ficha-hero__stats">
-                  <div className="rjp-ficha-stat">
-                    <span className="rjp-ficha-stat__lbl">{rankingLabel}</span>
-                    <span
-                      className={`rjp-ficha-stat__val${
-                        rankingPos == null ? " rjp-ficha-stat__val--empty" : ""
-                      }`}
-                    >
-                      {rankingVal}
+              <div className="rjp-ficha-hero__identity-block">
+                <div className="rjp-ficha-hero__title-row">
+                  <h1 className="rjp-ficha-hero__name">{jugador.nombre}</h1>
+                  {rankingPos != null ? (
+                    <span className="rjp-ficha-hero__status-badge">
+                      {rankingLabel} #{rankingPos}
                     </span>
-                  </div>
-                  <div className="rjp-ficha-stat">
-                    <span className="rjp-ficha-stat__lbl">
-                      {hasOrgContext ? "Puntos en este club" : "Total carrera"}
+                  ) : detailLoading ? (
+                    <span className="rjp-ficha-hero__status-badge rjp-ficha-hero__status-badge--pending">
+                      {rankingLabel} …
                     </span>
-                    <JugadorPuntosBreakdown
-                      key={`pts-breakdown-${clubLabelsEpoch}`}
-                      jugador={jugador}
-                      clubOrganizadorId={viewingOrgId}
-                      hasOrgContext={hasOrgContext}
-                      profileCard
-                      registrationOrganizerId={registrationOrgId}
-                    />
-                  </div>
-                  {!hasOrgContext || jugador.visible_publico ? (
-                    <div className="rjp-ficha-stat">
-                      <span className="rjp-ficha-stat__lbl">
-                        Ranking Oficial Riviera Open
-                      </span>
-                      <JugadorOfficialRomcPuntos jugador={jugador} />
-                    </div>
                   ) : null}
                 </div>
+
+                <div className="rjp-ficha-hero__chips">
+                  <JugadorPaisBadge
+                    codigo={jugador.pais_codigo}
+                    size="sm"
+                    className="rjp-ficha-hero__pais-inline"
+                  />
+                  <span className="rjp-ficha-hero__cat-label">
+                    {JUGADOR_CATEGORIA_LABELS[jugador.categoria]}
+                  </span>
+                </div>
+
+                {profileMetaLine ? (
+                  <p className="rjp-ficha-hero__meta-line">{profileMetaLine}</p>
+                ) : null}
+
+                {hasOrgContext &&
+                viewingClubName &&
+                registrationOrgId !== viewingOrgId ? (
+                  <p className="rjp-ficha-hero__viewing">
+                    Viendo desde {viewingClubName}
+                  </p>
+                ) : null}
+
+                {showRivieraId ? (
+                  <p className="rjp-ficha-hero__riviera-id">
+                    <RivieraIdBadge
+                      rivieraId={jugador.riviera_id!}
+                      size="sm"
+                      embedded
+                      className="rjp-ficha-hero__riviera-id-badge"
+                    />
+                  </p>
+                ) : null}
               </div>
             </section>
 
             <JugadorRedesPublicas redes={redes} />
           </div>
 
-          <div className="rjp-ficha__col rjp-ficha__col--rating">
-            <section className="rjp-ficha-card rjp-ficha-rating">
+          <section
+            className="rjp-ficha-position rjp-ficha-surface"
+            aria-label="Posición actual"
+          >
+            <p className="rjp-ficha-section__eyebrow">Posición actual</p>
+            <div className="rjp-ficha-position__headline">
+              <span
+                className={`rjp-ficha-position__rank${
+                  rankingPos == null ? " rjp-ficha-position__rank--empty" : ""
+                }`}
+              >
+                {rankingVal}
+              </span>
+              <span className="rjp-ficha-position__rank-label">{rankingLabel}</span>
+            </div>
+            {(!hasOrgContext || jugador.visible_publico) && (
+              <div className="rjp-ficha-position__official">
+                <JugadorOfficialRomcPuntos jugador={jugador} />
+              </div>
+            )}
+            <div className="rjp-ficha-position__breakdown">
+              <JugadorPuntosBreakdown
+                key={`pts-breakdown-${clubLabelsEpoch}`}
+                jugador={jugador}
+                clubOrganizadorId={viewingOrgId}
+                hasOrgContext={hasOrgContext}
+                profileCard
+                registrationOrganizerId={registrationOrgId}
+              />
+            </div>
+          </section>
+
+          <div className="rjp-ficha__col rjp-ficha__col--summary">
+            <JugadorPublicFichaAside
+              retas={profileStats.eventosJugados}
+              torneosExpress={profileStats.torneosExpress}
+              victorias={profileStats.victorias}
+              partidosPerdidos={profileStats.partidosPerdidos}
+              winRate={profileStats.winRate}
+            />
+            <section className="rjp-ficha-rating rjp-ficha-surface">
               {detailLoading && historialRating.length === 0 ? (
                 <div className="rjp-ficha-skel rjp-ficha-skel--secondary" aria-busy="true">
                   <div className="rjp-ficha-skel__block rjp-ficha-skel__chart" />
@@ -598,22 +567,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
               />
             )}
           </div>
-
-          <div className="rjp-ficha__col rjp-ficha__col--summary">
-            <JugadorPublicFichaAside
-              retas={profileStats.eventosJugados}
-              torneosExpress={profileStats.torneosExpress}
-              victorias={profileStats.victorias}
-              partidosPerdidos={profileStats.partidosPerdidos}
-              winRate={profileStats.winRate}
-            />
-            <div className="rjp-ficha__col--recent">
-              <JugadorPublicRecentResults recent={recentActivity} />
-            </div>
-          </div>
         </div>
 
         <footer className="rjp-ficha-footer">
+          <span className="rjp-ficha-footer__line" aria-hidden />
           {getOrganizerCelebrateTagline(
             getOrganizerDisplayNameSync(registrationOrgId)
           )}

@@ -24,7 +24,7 @@ export const JugadorRedesPublicas: React.FC<JugadorRedesPublicasProps> = ({
 
   return (
     <section
-      className={["rjp-ficha-card rjp-ficha-social", className].filter(Boolean).join(" ")}
+      className={["rjp-ficha-social", className].filter(Boolean).join(" ")}
       aria-label="Redes sociales"
     >
       <h2 className="rjp-ficha-social__title">

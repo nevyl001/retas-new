@@ -26,80 +26,69 @@ export const JugadorPublicFichaAside: React.FC<JugadorPublicFichaAsideProps> = (
   const tieneDuelos = victorias > 0 || partidosPerdidos > 0;
 
   return (
-    <aside className="rjp-ficha-aside" aria-label="Resumen deportivo">
-      <section className="rjp-ficha-aside__kpis" aria-label="Indicadores">
-        <div className="rjp-ficha-kpi">
-          <span className="rjp-ficha-kpi__lbl">Participaciones</span>
+    <section className="rjp-ficha-perf" aria-label="Rendimiento">
+      <p className="rjp-ficha-section__eyebrow">Rendimiento</p>
+      <div className="rjp-ficha-perf__bento">
+        <div className="rjp-ficha-perf__cell rjp-ficha-perf__cell--primary">
+          <span className="rjp-ficha-perf__lbl">Victorias</span>
           <span
-            className={`rjp-ficha-kpi__val${
-              retas === 0 ? " rjp-ficha-kpi__val--empty" : ""
-            }`}
-          >
-            {retas}
-          </span>
-          <span className="rjp-ficha-kpi__hint">
-            {retas === 0
-              ? "Sin actividad aún"
-              : "Retas, americanos, ligas y más"}
-          </span>
-        </div>
-        <div className="rjp-ficha-kpi">
-          <span className="rjp-ficha-kpi__lbl">Torneos</span>
-          <span
-            className={`rjp-ficha-kpi__val${
-              torneosExpress === 0 ? " rjp-ficha-kpi__val--empty" : ""
-            }`}
-          >
-            {torneosExpress}
-          </span>
-          <span className="rjp-ficha-kpi__hint">
-            {torneosExpress === 0
-              ? "Se registra al finalizar"
-              : "Participaciones TE"}
-          </span>
-        </div>
-        <div className="rjp-ficha-kpi">
-          <span className="rjp-ficha-kpi__lbl">Victorias</span>
-          <span
-            className={`rjp-ficha-kpi__val${
-              victorias === 0 ? " rjp-ficha-kpi__val--empty" : ""
+            className={`rjp-ficha-perf__val${
+              victorias === 0 ? " rjp-ficha-perf__val--empty" : ""
             }`}
           >
             {victorias}
           </span>
-          <span className="rjp-ficha-kpi__hint">
-            {!tieneDuelos
-              ? "Sin partidos registrados"
-              : `${victorias} ganados · ${partidosPerdidos} perdidos`}
+          <span className="rjp-ficha-perf__sub">
+            {tieneDuelos
+              ? `${victorias}G · ${partidosPerdidos}P`
+              : "Sin partidos registrados"}
           </span>
         </div>
-        <div className="rjp-ficha-kpi">
-          <span className="rjp-ficha-kpi__lbl">Efectividad</span>
+        <div className="rjp-ficha-perf__cell rjp-ficha-perf__cell--primary">
+          <span className="rjp-ficha-perf__lbl">Efectividad</span>
           <span
-            className={`rjp-ficha-kpi__val${
-              winRate == null ? " rjp-ficha-kpi__val--empty" : ""
+            className={`rjp-ficha-perf__val${
+              winRate == null ? " rjp-ficha-perf__val--empty" : ""
             }`}
           >
             {winRate != null ? `${winRate}%` : "—"}
           </span>
-          <span className="rjp-ficha-kpi__hint">
-            {winRate == null
-              ? "Sin duelos decididos"
-              : "% victorias en partidos"}
+          <span className="rjp-ficha-perf__sub">
+            {winRate == null ? "Sin duelos decididos" : "% victorias en partidos"}
           </span>
         </div>
-      </section>
-    </aside>
+        <div className="rjp-ficha-perf__cell rjp-ficha-perf__cell--secondary">
+          <span className="rjp-ficha-perf__lbl">Participaciones</span>
+          <span
+            className={`rjp-ficha-perf__val rjp-ficha-perf__val--sm${
+              retas === 0 ? " rjp-ficha-perf__val--empty" : ""
+            }`}
+          >
+            {retas}
+          </span>
+        </div>
+        <div className="rjp-ficha-perf__cell rjp-ficha-perf__cell--secondary">
+          <span className="rjp-ficha-perf__lbl">Torneos</span>
+          <span
+            className={`rjp-ficha-perf__val rjp-ficha-perf__val--sm${
+              torneosExpress === 0 ? " rjp-ficha-perf__val--empty" : ""
+            }`}
+          >
+            {torneosExpress}
+          </span>
+        </div>
+      </div>
+    </section>
   );
 };
 
-/** Resumen compacto — no compite con Carrera Riviera (máx. 3). */
+/** Conservado para tests — ya no se renderiza en la ficha pública (unificado en historial). */
 export const JugadorPublicRecentResults: React.FC<{
   recent: HistorialItemView[];
 }> = ({ recent }) => {
   return (
     <section
-      className="rjp-ficha-card rjp-ficha-activity rjp-ficha-activity--compact"
+      className="rjp-ficha-activity"
       aria-label="Últimos resultados"
     >
       <h2 className="rjp-ficha-activity__title">
