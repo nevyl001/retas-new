@@ -40,6 +40,10 @@
   --qm-ink-muted: var(--ro-chrome-text-muted);
   --qm-ink-input: var(--ro-chrome-elevated);
   --qm-ink-input-border: var(--ro-chrome-border);
+  /* CTA marfil en panel oscuro: tinta fija (no --ro-text-on-accent del tenant) */
+  --qm-sidebar-cta-bg: #f5f2eb;
+  --qm-sidebar-cta-bg-hover: #ffffff;
+  --qm-sidebar-cta-fg: #12161b;
 
   width: 100%;
   max-width: min(1280px, 100%);
@@ -1797,8 +1801,6 @@
   padding: 0.15rem 0;
   color: var(--qm-ink-text);
   box-sizing: border-box;
-  /* Botón crema en panel oscuro: on-accent global es blanco y no legible */
-  --ro-text-on-accent: var(--qm-ink-bg);
 }
 
 @media (min-width: 900px) {
@@ -1941,17 +1943,16 @@
   letter-spacing: -0.01em;
   line-height: 1.2;
   text-transform: none;
-  /* Sidebar ink: acento claro sobre panel oscuro */
-  background: #f5f2eb;
-  border-color: #f5f2eb;
-  color: var(--qm-ink-bg, var(--ro-chrome-bg, #12161b));
+  background: var(--qm-sidebar-cta-bg, #f5f2eb);
+  border-color: var(--qm-sidebar-cta-bg, #f5f2eb);
+  color: var(--qm-sidebar-cta-fg, #12161b);
 }
 
 .qm-primary-cta--sidebar.is-loading .qm-primary-cta__btn:disabled {
   opacity: 1;
-  background: #f5f2eb;
-  border-color: #f5f2eb;
-  color: var(--qm-ink-bg, var(--ro-chrome-bg, #12161b));
+  background: var(--qm-sidebar-cta-bg, #f5f2eb);
+  border-color: var(--qm-sidebar-cta-bg, #f5f2eb);
+  color: var(--qm-sidebar-cta-fg, #12161b);
   cursor: wait;
 }
 
@@ -1964,9 +1965,9 @@
 }
 
 .qm-primary-cta--sidebar .qm-primary-cta__btn:not(:disabled):hover {
-  background: #ffffff;
-  border-color: #ffffff;
-  color: var(--qm-ink-bg, var(--ro-chrome-bg, #12161b));
+  background: var(--qm-sidebar-cta-bg-hover, #ffffff);
+  border-color: var(--qm-sidebar-cta-bg-hover, #ffffff);
+  color: var(--qm-sidebar-cta-fg, #12161b);
 }
 
 html[data-club="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(:disabled),
@@ -1982,6 +1983,7 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   text-align: center;
   font-size: 0.8rem;
   margin: 0;
+  color: var(--qm-ink-muted, var(--ro-chrome-text-muted));
 }
 
 .qm-ws__sticky-cta {
@@ -2232,7 +2234,6 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
     border-top: 1px solid var(--ro-chrome-border);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    --ro-text-on-accent: var(--qm-ink-bg);
   }
 
   /* Con nav inferior visible: el safe-area lo absorbe la nav */
@@ -2262,16 +2263,16 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   }
 
   .qm-ws__sticky-cta .qm-primary-cta__btn:not(:disabled) {
-    background: #f5f2eb;
-    border-color: #f5f2eb;
-    color: var(--qm-ink-bg, var(--ro-chrome-bg, #12161b));
+    background: var(--qm-sidebar-cta-bg, #f5f2eb);
+    border-color: var(--qm-sidebar-cta-bg, #f5f2eb);
+    color: var(--qm-sidebar-cta-fg, #12161b);
     opacity: 1;
   }
 
   .qm-ws__sticky-cta .qm-primary-cta__btn:not(:disabled):hover {
-    background: #ffffff;
-    border-color: #ffffff;
-    color: var(--qm-ink-bg, var(--ro-chrome-bg, #12161b));
+    background: var(--qm-sidebar-cta-bg-hover, #ffffff);
+    border-color: var(--qm-sidebar-cta-bg-hover, #ffffff);
+    color: var(--qm-sidebar-cta-fg, #12161b);
   }
 
   .qm-ws__sticky-cta .qm-primary-cta__btn:disabled {
@@ -2281,9 +2282,9 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 
   .qm-ws__sticky-cta .qm-primary-cta.is-loading .qm-primary-cta__btn {
     opacity: 1;
-    background: #f5f2eb;
-    border-color: #f5f2eb;
-    color: var(--qm-ink-bg, var(--ro-chrome-bg, #12161b));
+    background: var(--qm-sidebar-cta-bg, #f5f2eb);
+    border-color: var(--qm-sidebar-cta-bg, #f5f2eb);
+    color: var(--qm-sidebar-cta-fg, #12161b);
   }
 
   /* Club con acento claro (p. ej. lima): sí usa branding en el sticky */
@@ -2378,4 +2379,24 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   .qm-ws__summary-toggle {
     display: none !important;
   }
+}
+
+/* Sidebar/sticky CTA marfil: tinta fija — gana prep.css y --ro-text-on-accent tenant */
+.qm-ws .qm-primary-cta[data-variant="sidebar"] .qm-primary-cta__btn:not(:disabled),
+.qm-ws .qm-primary-cta--sidebar .qm-primary-cta__btn:not(:disabled) {
+  background: var(--qm-sidebar-cta-bg, #f5f2eb);
+  border-color: var(--qm-sidebar-cta-bg, #f5f2eb);
+  color: var(--qm-sidebar-cta-fg, #12161b);
+}
+
+.qm-ws .qm-primary-cta[data-variant="sidebar"] .qm-primary-cta__btn:not(:disabled):hover,
+.qm-ws .qm-primary-cta--sidebar .qm-primary-cta__btn:not(:disabled):hover {
+  background: var(--qm-sidebar-cta-bg-hover, #ffffff);
+  border-color: var(--qm-sidebar-cta-bg-hover, #ffffff);
+  color: var(--qm-sidebar-cta-fg, #12161b);
+}
+
+.qm-ws .qm-primary-cta[data-variant="sidebar"] .qm-primary-cta__hint,
+.qm-ws .qm-primary-cta--sidebar .qm-primary-cta__hint {
+  color: var(--qm-ink-muted, var(--ro-chrome-text-muted));
 }

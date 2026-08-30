@@ -35,6 +35,7 @@ export function QuickModePrimaryCta({
       className={`qm-primary-cta qm-primary-cta--${variant}${
         loading ? " is-loading" : ""
       } ${className}`.trim()}
+      data-variant={variant}
     >
       {loading ? (
         <div className="qm-primary-cta__busy" role="status" aria-live="polite">
