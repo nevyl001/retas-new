@@ -61,6 +61,11 @@ export interface OpenRegistrationPublicDto {
    */
   costo?: string | null;
   /**
+   * Premio público. Solo viene cuando el organizador activó
+   * mostrar_premio y hay texto; si no, null/ausente.
+   */
+  premio?: string | null;
+  /**
    * Formato de producto cuando mode_type es `reta` (round_robin | teams).
    * Remontada Final = round_robin + championship_enabled.
    */

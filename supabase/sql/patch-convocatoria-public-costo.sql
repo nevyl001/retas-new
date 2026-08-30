@@ -1,4 +1,4 @@
--- Patch: exponer costo público en convocatoria (/jugar) cuando mostrar_costo.
+-- Patch: exponer costo y premio públicos en convocatoria (/jugar) cuando mostrar_*.
 -- Basado en patch-convocatoria-public-product-format.sql + costo/premio de tournaments.
 
 CREATE OR REPLACE FUNCTION public.get_tournament_open_registration_public(p_slug text)
@@ -24,6 +24,8 @@ DECLARE
   v_championship_enabled boolean := false;
   v_costo text := null;
   v_mostrar_costo boolean := false;
+  v_premio text := null;
+  v_mostrar_premio boolean := false;
 BEGIN
   SELECT * INTO v_cfg
   FROM public.tournament_open_registration
@@ -86,16 +88,22 @@ BEGIN
     BEGIN
       SELECT
         nullif(trim(coalesce(t.costo, '')), ''),
-        coalesce(t.mostrar_costo, false)
+        coalesce(t.mostrar_costo, false),
+        nullif(trim(coalesce(t.premio, '')), ''),
+        coalesce(t.mostrar_premio, false)
       INTO
         v_costo,
-        v_mostrar_costo
+        v_mostrar_costo,
+        v_premio,
+        v_mostrar_premio
       FROM public.tournaments t
       WHERE t.id = v_cfg.entity_id;
     EXCEPTION
       WHEN undefined_column THEN
         v_costo := NULL;
         v_mostrar_costo := false;
+        v_premio := NULL;
+        v_mostrar_premio := false;
     END;
 
     BEGIN
@@ -124,6 +132,10 @@ BEGIN
 
   IF v_mostrar_costo IS NOT TRUE THEN
     v_costo := NULL;
+  END IF;
+
+  IF v_mostrar_premio IS NOT TRUE THEN
+    v_premio := NULL;
   END IF;
 
   v_title := coalesce(v_title, 'Convocatoria');
@@ -232,6 +244,7 @@ BEGIN
     'location_label', v_location,
     'cancha_label', v_cancha,
     'costo', v_costo,
+    'premio', v_premio,
     'tournament_format', v_tournament_format,
     'championship_enabled', coalesce(v_championship_enabled, false),
     'display_rating', v_cfg.display_rating,

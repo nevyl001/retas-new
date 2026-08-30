@@ -907,6 +907,14 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                   </strong>
                 </div>
               ) : null}
+              {dto.premio?.trim() ? (
+                <div className="ra-public__fact">
+                  <span className="ra-public__fact-label">Premio</span>
+                  <strong className="ra-public__fact-value">
+                    {dto.premio.trim()}
+                  </strong>
+                </div>
+              ) : null}
             </div>
             {dto.description?.trim() ? (
               <p className="ra-public__meta ra-public__meta--desc">

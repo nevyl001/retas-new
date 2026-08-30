@@ -554,6 +554,41 @@ describe("WhatsApp share message por modo", () => {
 });
 
 describe("public DTO privacy + modos", () => {
+  it("parsea costo y premio públicos cuando vienen del RPC", () => {
+    const dto = parsePublicDto({
+      ok: true,
+      slug: "ra-cp",
+      mode_type: "americano",
+      entity_id: "t1",
+      tournament_id: "t1",
+      organizador_id: "o1",
+      name: "Americano",
+      description: null,
+      status: "open",
+      capacity: 8,
+      confirmed_count: 2,
+      waitlist_count: 0,
+      spots_left: 6,
+      waitlist_enabled: true,
+      approval_required: false,
+      registration_deadline: null,
+      scheduled_at: null,
+      duration_minutes: 120,
+      category_label: "5ta Fuerza",
+      rama_label: null,
+      location_label: "Hack Padel",
+      costo: "350",
+      premio: "Kit Overgrips Wilson Pro",
+      display_rating: true,
+      display_photo: true,
+      entries: [],
+      is_finished: false,
+      is_started: false,
+    });
+    expect(dto?.costo).toBe("350");
+    expect(dto?.premio).toBe("Kit Overgrips Wilson Pro");
+  });
+
   it("parsea DTO mínimo y no reporta leaks", () => {
     const dto = parsePublicDto({
       ok: true,

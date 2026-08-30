@@ -257,6 +257,10 @@ export function parsePublicDto(raw: unknown): OpenRegistrationPublicDto | null {
       typeof row.costo === "string" && row.costo.trim()
         ? row.costo.trim()
         : null,
+    premio:
+      typeof row.premio === "string" && row.premio.trim()
+        ? row.premio.trim()
+        : null,
     tournament_format:
       typeof row.tournament_format === "string" && row.tournament_format.trim()
         ? row.tournament_format.trim()
