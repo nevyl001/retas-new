@@ -30,13 +30,14 @@ const root = resolve(__dirname, "..");
 
 function loadEnv() {
   const envPath = resolve(root, ".env");
-  if (!existsSync(envPath)) return false;
-  const text = readFileSync(envPath, "utf8");
-  for (const line of text.split("\n")) {
-    const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
-    if (!m) continue;
-    const val = m[2].replace(/^["']|["']$/g, "").trim();
-    if (!process.env[m[1]]) process.env[m[1]] = val;
+  if (existsSync(envPath)) {
+    const text = readFileSync(envPath, "utf8");
+    for (const line of text.split("\n")) {
+      const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
+      if (!m) continue;
+      const val = m[2].replace(/^["']|["']$/g, "").trim();
+      if (!process.env[m[1]]) process.env[m[1]] = val;
+    }
   }
   return Boolean(
     process.env.REACT_APP_SUPABASE_URL && process.env.REACT_APP_SUPABASE_ANON_KEY
