@@ -481,14 +481,16 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                 ) : null}
 
                 {showRivieraId ? (
-                  <p className="rjp-ficha-hero__riviera-id">
+                  <div className="rjp-ficha-hero__riviera-id">
+                    <span className="rjp-ficha-hero__riviera-id-label">
+                      Riviera ID
+                    </span>
                     <RivieraIdBadge
                       rivieraId={jugador.riviera_id!}
-                      size="sm"
-                      embedded
+                      size="md"
                       className="rjp-ficha-hero__riviera-id-badge"
                     />
-                  </p>
+                  </div>
                 ) : null}
               </div>
             </section>
