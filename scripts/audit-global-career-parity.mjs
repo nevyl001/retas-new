@@ -24,6 +24,12 @@ import {
   auditRivieraIdentity,
   auditOrphanProfiles,
 } from "./lib/globalCareerAudit.mjs";
+import {
+  formatIssueDetails,
+  isAuditCiMode,
+  logAuditCiModeBanner,
+  redactAuditPayload,
+} from "./lib/auditCiMode.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -243,6 +249,7 @@ async function runLiveAudit({ filterRivieraId, jsonOut }) {
       RIVIERA_OPEN_ORG_DEFAULT,
   };
 
+  logAuditCiModeBanner("audit-global-career-parity");
   console.log("\n── Auditoría live — TODOS los Riviera ID ──\n");
 
   const identities = await ensureRequiredIdentities(
@@ -274,7 +281,7 @@ async function runLiveAudit({ filterRivieraId, jsonOut }) {
         `${marker} ${result.rivieraId} | perfiles=${result.profileCount} | db=${result.eventosDb} rpc=${result.eventosRpc} pts=${result.puntosDb}/${result.puntosRpc} | ${status}`
       );
       for (const issue of result.issues) {
-        console.log(`    → ${issue.code}: ${JSON.stringify(issue.details)}`);
+        console.log(`    → ${issue.code}: ${formatIssueDetails(issue.details)}`);
       }
     }
   }
@@ -286,12 +293,14 @@ async function runLiveAudit({ filterRivieraId, jsonOut }) {
   } else {
     for (const o of orphans) {
       console.log(
-        `✗ ${o.nombre} (${o.jugador_id}): ${o.participaciones} eventos, ${o.puntos} pts`
+        isAuditCiMode()
+          ? `✗ jugador_id=${o.jugador_id}: ${o.participaciones} eventos, ${o.puntos} pts`
+          : `✗ ${o.nombre} (${o.jugador_id}): ${o.participaciones} eventos, ${o.puntos} pts`
       );
       allIssues.push({
         code: "ORPHAN_PROFILE_WITH_PARTICIPACIONES",
         rivieraId: null,
-        details: o,
+        details: redactAuditPayload(o),
       });
     }
   }
@@ -339,7 +348,7 @@ async function runLiveAudit({ filterRivieraId, jsonOut }) {
   console.log("══════════════════════════════════════════\n");
 
   if (jsonOut) {
-    console.log(JSON.stringify(report, null, 2));
+    console.log(JSON.stringify(redactAuditPayload(report), null, 2));
   }
 
   if (resultadoFinal === "PASS") {

@@ -30,6 +30,7 @@ import { createClient } from "@supabase/supabase-js";
 import { readFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
+import { logAuditCiModeBanner } from "./lib/auditCiMode.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -55,6 +56,7 @@ function loadEnv() {
 }
 
 async function main() {
+  logAuditCiModeBanner("audit-rls-public-isolation");
   if (!loadEnv()) {
     console.error(
       "[audit-rls-public-isolation] Falta REACT_APP_SUPABASE_URL/ANON_KEY (.env o env vars). Abortando."

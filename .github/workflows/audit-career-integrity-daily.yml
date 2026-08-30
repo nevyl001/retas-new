@@ -46,6 +46,7 @@ jobs:
       - name: Suite de auditorías online (prod)
         run: node scripts/run-audit-suite-ci.mjs
         env:
+          AUDIT_CI_MODE: "1"
           REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
           REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

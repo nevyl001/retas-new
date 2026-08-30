@@ -11,6 +11,12 @@ import { createClient } from "@supabase/supabase-js";
 import { readFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
+import {
+  formatOrphanList,
+  formatPlayerCheckLabel,
+  logAuditCiModeBanner,
+  redactAuditPayload,
+} from "./lib/auditCiMode.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -138,6 +144,7 @@ function groupPointsByOrg(rows, homeById) {
 
 async function runOnlineChecks(sbAnon, sbOps, fix) {
   console.log("\n── Checks online (Supabase) ──\n");
+  logAuditCiModeBanner("audit-career-integrity");
   let ok = true;
 
   if (!sbOps) {
@@ -169,9 +176,7 @@ async function runOnlineChecks(sbAnon, sbOps, fix) {
       if (high.length > 0) {
         ok =
           fail(
-            `${high.length} perfiles huérfanos HIGH con puntos: ${high
-              .map((r) => r.orphan_nombre)
-              .join(", ")}`
+            `${high.length} perfiles huérfanos HIGH con puntos: ${formatOrphanList(high)}`
           ) && ok;
         if (fix) {
           const { data: repairResult, error: repairErr } = await sbOps.rpc(
@@ -180,7 +185,9 @@ async function runOnlineChecks(sbAnon, sbOps, fix) {
           if (repairErr) {
             ok = fail(`repair orphans: ${repairErr.message}`) && ok;
           } else {
-            pass(`repair orphans: ${JSON.stringify(repairResult)}`);
+            pass(
+            `repair orphans: ${JSON.stringify(redactAuditPayload(repairResult))}`
+          );
           }
         }
       } else {
@@ -191,7 +198,7 @@ async function runOnlineChecks(sbAnon, sbOps, fix) {
         if (review.length) {
           console.warn(
             `⚠ ${review.length} huérfanos en REVIEW (revisión manual):`,
-            review.map((r) => r.orphan_nombre).join(", ")
+            formatOrphanList(review)
           );
         }
       }
@@ -288,13 +295,14 @@ async function runOnlineChecks(sbAnon, sbOps, fix) {
     const linkedSet = new Set((links ?? []).map((l) => l.riviera_jugador_id));
     const anchor =
       profiles.find((p) => linkedSet.has(p.id)) ?? profiles[0];
+    const label = formatPlayerCheckLabel(nombre, anchor.id);
 
     const { data: careerIds, error: idsErr } = await sb.rpc(
       "get_public_career_jugador_ids",
       { p_jugador_id: anchor.id }
     );
     if (idsErr) {
-      ok = fail(`${nombre}: get_public_career_jugador_ids — ${idsErr.message}`) && ok;
+      ok = fail(`${label}: get_public_career_jugador_ids — ${idsErr.message}`) && ok;
       continue;
     }
 
@@ -304,7 +312,7 @@ async function runOnlineChecks(sbAnon, sbOps, fix) {
       { p_jugador_id: anchor.id, p_limit: 500 }
     );
     if (careerErr) {
-      ok = fail(`${nombre}: career RPC — ${careerErr.message}`) && ok;
+      ok = fail(`${label}: career RPC — ${careerErr.message}`) && ok;
       continue;
     }
 
@@ -321,20 +329,20 @@ async function runOnlineChecks(sbAnon, sbOps, fix) {
 
     ok =
       pass(
-        `${nombre}: career merge ${careerRows?.length ?? 0} filas, HackPadel=${hackPts}, total=${total}`
+        `${label}: career merge ${careerRows?.length ?? 0} filas, HackPadel=${hackPts}, total=${total}`
       ) && ok;
 
     if (nombre === "Daniel N" && hackPts < 75) {
-      ok = fail(`Daniel N: esperado HackPadel≥75, obtuvo ${hackPts}`) && ok;
+      ok = fail(`${label}: esperado HackPadel≥75, obtuvo ${hackPts}`) && ok;
     }
     if (nombre === "Sebastian" && hackPts < 25) {
-      ok = fail(`Sebastian: esperado HackPadel≥25, obtuvo ${hackPts}`) && ok;
+      ok = fail(`${label}: esperado HackPadel≥25, obtuvo ${hackPts}`) && ok;
     }
     if (nombre === "TestplayerCT1" && hackPts !== 50) {
-      ok = fail(`TestplayerCT1: esperado HackPadel=50, obtuvo ${hackPts}`) && ok;
+      ok = fail(`${label}: esperado HackPadel=50, obtuvo ${hackPts}`) && ok;
     }
     if (nombre === "TestplaCT2" && hackPts !== 50) {
-      ok = fail(`TestplaCT2: esperado HackPadel=50, obtuvo ${hackPts}`) && ok;
+      ok = fail(`${label}: esperado HackPadel=50, obtuvo ${hackPts}`) && ok;
     }
   }
 

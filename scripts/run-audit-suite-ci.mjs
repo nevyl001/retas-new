@@ -54,6 +54,11 @@ function runAudit(audit) {
 
 function main() {
   console.log("=== SUITE DE AUDITORÍAS (CI) ===");
+  if (process.env.AUDIT_CI_MODE === "1") {
+    console.log(
+      "AUDIT_CI_MODE=1 — suite en modo logs reducidos (sin nombres de jugadores)."
+    );
+  }
   console.log(`Proyecto Supabase: ${process.env.REACT_APP_SUPABASE_URL ?? "(sin URL)"}`);
 
   const results = AUDITS.map(runAudit);
