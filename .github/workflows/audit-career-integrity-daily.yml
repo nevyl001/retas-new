@@ -1,9 +1,9 @@
 name: Auditoría diaria de integridad de carrera
 
-# Corre sola todos los días contra producción.
+# Corre contra el proyecto Supabase de producción (secrets REACT_APP_SUPABASE_*).
 # - Checks públicos: anon key (misma que el navegador).
-# - Checks ops-only (_riviera_orphan_profile_audit): SUPABASE_SERVICE_ROLE_KEY.
-# También se puede disparar a mano desde la pestaña Actions de GitHub.
+# - Checks ops-only (_riviera_orphan_profile_audit): SUPABASE_SERVICE_ROLE_KEY
+#   (recomendado: GitHub Environment "production-audit" con secret restringido).
 on:
   schedule:
     - cron: "0 13 * * *" # 07:00 hora CDMX (UTC-6) aprox.
@@ -13,6 +13,8 @@ on:
     paths:
       - "scripts/audit-career-integrity.mjs"
       - "scripts/audit-rls-public-isolation.mjs"
+      - "scripts/audit-global-career-parity.mjs"
+      - "scripts/run-audit-suite-ci.mjs"
       - ".github/workflows/audit-career-integrity-daily.yml"
 
 concurrency:
@@ -22,7 +24,9 @@ concurrency:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    # Descomentar cuando configures el Environment en GitHub (ver docs abajo):
+    # environment: production-audit
 
     steps:
       - name: Checkout
@@ -37,21 +41,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Auditoría de integridad de carrera (online, producción)
-        run: npm run audit:career-integrity
+      # Un solo step: el orquestador ejecuta TODAS las auditorías aunque alguna
+      # falle (spawnSync secuencial). El job falla al final si cualquiera falló.
+      - name: Suite de auditorías online (prod)
+        run: node scripts/run-audit-suite-ci.mjs
         env:
           REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
           REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-
-      - name: Auditoría de aislamiento RLS público (SEC-001, online, producción)
-        run: npm run audit:rls-public-isolation
-        env:
-          REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
-          REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
           AUDIT_LIGA_PUBLIC_ID: 08d658c9-ebf5-411f-bfff-c764f3226858
           AUDIT_LIGA_PRIVATE_ID: ${{ secrets.AUDIT_LIGA_PRIVATE_ID }}
-
-      # Si alguna auditoría falla (huérfanos HIGH con puntos, metadata rota,
-      # política RLS abierta reaparecida, etc.), el paso correspondiente sale
-      # con exit code 1 y este job se marca en rojo.

@@ -1,6 +1,7 @@
--- Fixture SOLO staging / entorno de prueba — NO ejecutar en producción real.
+-- Fixture SOLO staging / entorno de prueba — NO ejecutar en producción.
 --
--- Crea una liga marcada es_publica=false para el check 7 de
+-- Producción (giswxhmjgjepoobdoljb): no sembrar aquí. Crear una liga real de prueba
+-- con es_publica=false vía SQL Editor y documentar su UUID en AUDIT_LIGA_PRIVATE_ID.
 -- scripts/audit-rls-public-isolation.mjs (anon no debe poder leerla).
 --
 -- Tras ejecutar, configurar en CI o .env:
