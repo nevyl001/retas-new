@@ -391,6 +391,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const hasPhoto = Boolean(jugador.foto_url?.trim());
 
   const identityMetaLine = perfilMeta.map((item) => item.value).join(" · ");
+  const ratingDisplay = (jugador.rating ?? 3).toFixed(2);
 
   return (
     <ClubExperienceScope
@@ -433,16 +434,23 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                         <span className="rjp-ficha-hero__rank-seal-val">…</span>
                       </div>
                     ) : null}
-                    {showRivieraId ? (
-                      <div className="rjp-ficha-hero__media-footer">
+                    <div className="rjp-ficha-hero__media-footer">
+                      {showRivieraId ? (
                         <RivieraIdBadge
                           rivieraId={jugador.riviera_id!}
                           size="md"
                           embedded
                           className="rjp-ficha-hero__riviera-id-pill"
                         />
+                      ) : null}
+                      <div
+                        className="rjp-ficha-hero__rating-pill"
+                        aria-label={`Nivel ${ratingDisplay}`}
+                      >
+                        <span className="rjp-ficha-hero__rating-pill-label">Nivel</span>
+                        <span className="rjp-ficha-hero__rating-pill-val">{ratingDisplay}</span>
                       </div>
-                    ) : null}
+                    </div>
                   </div>
                 ) : (
                   <div className="rjp-ficha-hero__avatar-wrap">
