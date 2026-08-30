@@ -8,6 +8,12 @@ on:
   schedule:
     - cron: "0 13 * * *" # 07:00 hora CDMX (UTC-6) aprox.
   workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "scripts/audit-career-integrity.mjs"
+      - "scripts/audit-rls-public-isolation.mjs"
+      - ".github/workflows/audit-career-integrity-daily.yml"
 
 concurrency:
   group: audit-career-integrity
