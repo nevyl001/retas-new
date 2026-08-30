@@ -6,11 +6,6 @@ import "./duelo2v2-share-card.css";
 const RIVIERA_SOCIAL_PLATFORMS = "Instagram · Facebook · TikTok";
 const RIVIERA_SOCIAL_HANDLE = "@RivieraOpen";
 
-function playerFirstName(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  return parts[0] ?? name;
-}
-
 function RatingStat({ rating }: { rating?: number | null }) {
   if (rating == null || !Number.isFinite(rating)) {
     return null;
@@ -99,9 +94,7 @@ export function Duelo2v2ShareCard({
                       className="duelo2v2-share-card__avatar"
                     />
                   </span>
-                  <strong title={firstPlayer.name}>
-                    {playerFirstName(firstPlayer.name)}
-                  </strong>
+                  <strong title={firstPlayer.name}>{firstPlayer.name}</strong>
                   <RatingStat rating={firstPlayer.rating} />
                 </>
               ) : null}
@@ -122,16 +115,12 @@ export function Duelo2v2ShareCard({
                       className="duelo2v2-share-card__avatar"
                     />
                   </span>
-                  <strong title={secondPlayer.name}>
-                    {playerFirstName(secondPlayer.name)}
-                  </strong>
+                  <strong title={secondPlayer.name}>{secondPlayer.name}</strong>
                   <RatingStat rating={secondPlayer.rating} />
                 </>
               ) : null}
             </div>
           </div>
-
-          <p className="duelo2v2-share-card__team-name">{presentation.teamName}</p>
         </div>
 
         <div className="duelo2v2-share-card__result">

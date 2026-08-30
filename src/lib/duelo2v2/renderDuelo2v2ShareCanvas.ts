@@ -179,8 +179,10 @@ export async function renderDuelo2v2ShareCanvas(
   const [first, second] = data.players.slice(0, 2);
   const avatarSize = data.place === "winner" ? 292 : 248;
   const avatarY = data.place === "winner" ? 760 : 780;
-  if (first) await drawAvatar(ctx, first, 320, avatarY, avatarSize, tone);
-  if (second) await drawAvatar(ctx, second, 760, avatarY, avatarSize, tone);
+  const firstAvatarX = 248;
+  const secondAvatarX = 832;
+  if (first) await drawAvatar(ctx, first, firstAvatarX, avatarY, avatarSize, tone);
+  if (second) await drawAvatar(ctx, second, secondAvatarX, avatarY, avatarSize, tone);
 
   ctx.strokeStyle = COLOR.line;
   ctx.beginPath();
@@ -188,21 +190,28 @@ export async function renderDuelo2v2ShareCanvas(
   ctx.lineTo(540, avatarY + avatarSize / 2 + 20);
   ctx.stroke();
 
-  ctx.font = font(700, 28);
+  ctx.font = font(700, 26);
   ctx.fillStyle = COLOR.text;
+  const nameMaxWidth = 220;
   if (first) {
     ctx.textAlign = "center";
-    ctx.fillText(first.name.split(/\s+/)[0] ?? first.name, 320, avatarY + avatarSize / 2 + 58);
+    let label = first.name;
+    while (label.length > 1 && ctx.measureText(`${label}…`).width > nameMaxWidth) {
+      label = label.slice(0, -1).trimEnd();
+    }
+    if (label !== first.name) label = `${label}…`;
+    ctx.fillText(label, firstAvatarX, avatarY + avatarSize / 2 + 58);
   }
   if (second) {
-    ctx.fillText(second.name.split(/\s+/)[0] ?? second.name, 760, avatarY + avatarSize / 2 + 58);
+    let label = second.name;
+    while (label.length > 1 && ctx.measureText(`${label}…`).width > nameMaxWidth) {
+      label = label.slice(0, -1).trimEnd();
+    }
+    if (label !== second.name) label = `${label}…`;
+    ctx.fillText(label, secondAvatarX, avatarY + avatarSize / 2 + 58);
   }
 
-  ctx.font = font(750, 24);
-  ctx.fillStyle = tone;
-  centered(ctx, data.teamName.toUpperCase(), avatarY + avatarSize / 2 + 110);
-
-  const scoreY = avatarY + avatarSize / 2 + 210;
+  const scoreY = avatarY + avatarSize / 2 + 168;
   if (data.place === "winner") {
     ctx.font = font(900, 132);
     ctx.fillStyle = COLOR.text;

@@ -231,10 +231,13 @@
   font-size: clamp(0.72rem, 2.8vw, 0.82rem);
   font-weight: 700;
   line-height: 1.2;
-  max-width: 6.5rem;
+  max-width: 7.25rem;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: center;
+  word-break: break-word;
 }
 
 .duelo2v2-share-card__rating {
@@ -482,50 +485,57 @@
   }
 
   .duelo2v2-share-card__players {
-    gap: 0.45rem;
-    margin-top: 0.28rem;
+    justify-content: space-between;
+    gap: 0.85rem;
+    margin-top: 0.35rem;
+    padding-inline: 0.15rem;
   }
 
   .duelo2v2-share-card__player {
-    gap: 0.18rem;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 46%;
+    gap: 0.28rem;
+  }
+
+  .duelo2v2-share-card__avatar-frame {
+    padding: 4px;
+    border-width: 2.5px;
   }
 
   .duelo2v2-share-card__avatar.rj-avatar--xl {
-    width: 4rem;
-    height: 4rem;
-    font-size: 0.95rem;
+    width: 5.25rem;
+    height: 5.25rem;
+    font-size: 1.15rem;
   }
 
   .duelo2v2-share-card--winner .duelo2v2-share-card__avatar.rj-avatar--xl {
-    width: 4.35rem;
-    height: 4.35rem;
+    width: 5.65rem;
+    height: 5.65rem;
   }
 
   .duelo2v2-share-card__player strong {
-    font-size: 0.78rem;
-    max-width: 5.75rem;
+    font-size: 0.88rem;
+    max-width: 100%;
+    -webkit-line-clamp: 2;
   }
 
   .duelo2v2-share-card__rating {
-    padding: 0.08rem 0.3rem;
+    padding: 0.1rem 0.34rem;
   }
 
   .duelo2v2-share-card__rating-label {
-    font-size: 0.44rem;
+    font-size: 0.46rem;
   }
 
   .duelo2v2-share-card__rating-value {
-    font-size: 0.52rem;
+    font-size: 0.56rem;
   }
 
   .duelo2v2-share-card__pair-axis {
-    height: 2rem;
-    margin-bottom: 1.1rem;
-  }
-
-  .duelo2v2-share-card__team-name {
-    margin-top: 0.12rem;
-    font-size: 0.6rem;
+    flex-shrink: 0;
+    height: 2.35rem;
+    margin-bottom: 1.35rem;
   }
 
   .duelo2v2-share-card__result {
