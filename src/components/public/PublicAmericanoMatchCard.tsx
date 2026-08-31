@@ -47,24 +47,22 @@ export const PublicAmericanoMatchCard: React.FC<{
     : bWins
       ? teamLabel(m.teamB)
       : null;
+  const matchState =
+    scheduleStatus ?? (played ? "played" : live ? "live" : "pending");
 
   return (
     <article
-      className={`te-pub-match te-pub-match--wide te-pub-match--americano te-pub-fade-in-up${
+      className={`te-pub-match te-pub-match--wide te-pub-match--americano am-pub-match te-pub-fade-in-up${
         isTie ? " te-pub-match--tie" : ""
       }`}
+      data-match-state={matchState}
       style={{ animationDelay: `${0.12 + index * 0.07}s` }}
     >
       <div className="te-pub-match__top">
         <div className="te-pub-match__top-left">
-          <TePubMatchStatus
-            variant={
-              scheduleStatus ??
-              (played ? "played" : live ? "live" : "pending")
-            }
-          />
+          <TePubMatchStatus variant={matchState} />
         </div>
-        <span className="te-pub-cancha" title="Cancha">
+        <span className="te-pub-cancha am-pub-match__cancha" title="Cancha">
           <span className="te-pub-cancha__icon" aria-hidden>
             🎾
           </span>
@@ -79,6 +77,7 @@ export const PublicAmericanoMatchCard: React.FC<{
             label={teamLabel(m.teamA)}
             align="left"
             variant="band"
+            joinVariant="team"
             isWinner={aWins}
             isTie={isTie}
           />
@@ -96,6 +95,7 @@ export const PublicAmericanoMatchCard: React.FC<{
             label={teamLabel(m.teamB)}
             align="right"
             variant="band"
+            joinVariant="team"
             isWinner={bWins}
             isTie={isTie}
           />
@@ -123,9 +123,12 @@ export const PublicAmericanoMatchCard: React.FC<{
               </span>
             </div>
           ) : (
-            <span className="te-pub-score te-pub-score--pending te-pub-score--pending-label">
-              Marcador pendiente
-            </span>
+            <div className="am-pub-match__score-pending">
+              <span className="te-pub-score te-pub-score--pending te-pub-score--pending-label am-pub-match__pending-label">
+                Marcador pendiente
+              </span>
+              <span className="am-pub-match__details-hint">Ver detalles</span>
+            </div>
           )}
         </div>
       </div>

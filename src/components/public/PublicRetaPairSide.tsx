@@ -24,6 +24,8 @@ export const PublicRetaPairSide: React.FC<{
    * showcase = avatares grandes lado a lado (legacy / celebrate).
    */
   variant?: "band" | "showcase";
+  /** Conector entre compañeros en variant band. */
+  joinVariant?: "slash" | "team";
 }> = ({
   players,
   label,
@@ -33,6 +35,7 @@ export const PublicRetaPairSide: React.FC<{
   teamLabel = null,
   teamIndex = null,
   variant = "showcase",
+  joinVariant = "slash",
 }) => {
   const [p1, p2] = players;
   const hasBothPlayers = Boolean(p1 && p2);
@@ -73,9 +76,20 @@ export const PublicRetaPairSide: React.FC<{
         ) : null}
         <div className="te-pub-pair__band">
           {bandPlayer(p1!)}
-          <span className="te-pub-pair__band-join" aria-hidden>
-            /
-          </span>
+          {joinVariant === "team" ? (
+            <span
+              className="te-pub-pair__band-join te-pub-pair__band-join--team"
+              aria-hidden
+            >
+              <span className="te-pub-pair__band-join-line" />
+              <span className="te-pub-pair__band-join-dot" />
+              <span className="te-pub-pair__band-join-line" />
+            </span>
+          ) : (
+            <span className="te-pub-pair__band-join" aria-hidden>
+              /
+            </span>
+          )}
           {bandPlayer(p2!)}
         </div>
       </div>

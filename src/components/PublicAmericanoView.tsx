@@ -699,32 +699,28 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                   className="te-public-section te-pub-fade-in"
                   style={{ animationDelay: `${0.05 + roundIdx * 0.06}s` }}
                 >
-                  <div className="te-public-round-head">
-                    <h2 className="te-public-round-head__title">
-                      <span className="te-public-round-head__num">
+                  <div className="te-public-round-head am-pub-round-head">
+                    <div className="am-pub-round-head__copy">
+                      <h2 className="am-pub-round-head__title">
                         Ronda {round.roundNumber}
-                      </span>
-                      {phaseCaption ? (
-                        <>
-                          <span className="te-public-round-head__sep">·</span>
-                          <span className="te-public-round-head__phase">
-                            {phaseCaption}
-                          </span>
-                        </>
-                      ) : null}
+                      </h2>
                       {eventScheduleStatus.phase === "upcoming" ? (
-                        <span className="te-public-round-head__live te-public-round-head__live--pending">
+                        <p className="am-pub-round-head__status am-pub-round-head__status--pending">
                           por comenzar
-                        </span>
+                        </p>
                       ) : roundLive ? (
-                        <span className="te-public-round-head__live">
+                        <p className="am-pub-round-head__status am-pub-round-head__status--live">
                           <span className="te-pub-status__dot" aria-hidden />
                           en curso
-                        </span>
+                        </p>
+                      ) : phaseCaption ? (
+                        <p className="am-pub-round-head__status">
+                          {phaseCaption}
+                        </p>
                       ) : null}
-                    </h2>
+                    </div>
                   </div>
-                  <div className="te-public-section__divider" aria-hidden />
+                  <div className="te-public-section__divider am-pub-round-head__divider" aria-hidden />
 
                   {round.benchPlayers.length > 0 && (
                     <p className="te-public-bench">

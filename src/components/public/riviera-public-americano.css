@@ -3078,3 +3078,368 @@
     padding: 1rem 1.4rem 0.2rem;
   }
 }
+
+/* ── Americano público — match cards premium sports-tech ── */
+.te-public--americano {
+  --am-surface-base: #0a0a0a;
+  --am-surface-card: #141414;
+  --am-surface-sub: #1c1c1c;
+  --am-border-subtle: rgba(255, 255, 255, 0.08);
+  --am-accent-live: #4ade80;
+  --am-accent-pending: #f87171;
+}
+
+.te-public--americano .te-public-section:has(.am-pub-match) {
+  background: var(--am-surface-base);
+  margin-inline: -0.15rem;
+  padding: 0.85rem 0.15rem 0.25rem;
+  border-radius: 14px;
+}
+
+/* Cabecera de ronda */
+.te-public--americano .am-pub-round-head {
+  margin-bottom: 0.85rem;
+}
+
+.te-public--americano .am-pub-round-head__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.te-public--americano .am-pub-round-head__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-primary, #fff);
+}
+
+.te-public--americano .am-pub-round-head__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.te-public--americano .am-pub-round-head__status--live {
+  color: var(--am-accent-live);
+}
+
+.te-public--americano .am-pub-round-head__status--live .te-pub-status__dot {
+  background: var(--am-accent-live);
+}
+
+.te-public--americano .am-pub-round-head__status--pending {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.te-public--americano .am-pub-round-head__divider {
+  height: 1px;
+  margin-bottom: 1rem;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 55%,
+    transparent 100%
+  );
+  opacity: 1;
+}
+
+/* Match card — elevación y hover */
+.te-public--americano .am-pub-match.te-pub-match--wide {
+  padding: 0.9rem 0.95rem 0.75rem;
+  background: var(--am-surface-card);
+  border: 1px solid var(--am-border-subtle);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.te-public--americano .am-pub-match.te-pub-match--wide:hover {
+  transform: scale(1.02);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.48);
+}
+
+.te-public--americano .am-pub-match .te-pub-match__top {
+  margin-bottom: 0.65rem;
+}
+
+.te-public--americano .am-pub-match .te-pub-status {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  padding: 0.32rem 0.72rem;
+  border-radius: 999px;
+}
+
+.te-public--americano .am-pub-match .te-pub-status--pending {
+  color: rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.te-public--americano .am-pub-match .te-pub-status--live {
+  color: var(--am-accent-live);
+  border-color: rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.1);
+  box-shadow: 0 0 18px rgba(74, 222, 128, 0.18);
+}
+
+/* Badge cancha — glow por estado */
+.te-public--americano .am-pub-match__cancha {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  padding: 0.34rem 0.72rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    rgba(248, 113, 113, 0.16) 0%,
+    rgba(248, 113, 113, 0.06) 100%
+  );
+  border: 1px solid rgba(248, 113, 113, 0.38);
+  color: #fca5a5;
+  box-shadow: 0 0 16px rgba(248, 113, 113, 0.22);
+}
+
+.te-public--americano .am-pub-match[data-match-state="live"] .am-pub-match__cancha {
+  background: linear-gradient(
+    135deg,
+    rgba(74, 222, 128, 0.18) 0%,
+    rgba(74, 222, 128, 0.06) 100%
+  );
+  border-color: rgba(74, 222, 128, 0.42);
+  color: #86efac;
+  box-shadow: 0 0 18px rgba(74, 222, 128, 0.24);
+}
+
+.te-public--americano .am-pub-match[data-match-state="played"] .am-pub-match__cancha,
+.te-public--americano .am-pub-match[data-match-state="finished"] .am-pub-match__cancha {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.62);
+  box-shadow: none;
+}
+
+/* Faceoff + sub-cards */
+.te-public--americano .am-pub-match .te-pub-match__faceoff {
+  margin-top: 0.25rem;
+  padding: 0;
+  gap: 0.55rem;
+  background: transparent;
+  border: none;
+}
+
+.te-public--americano .am-pub-match .te-pub-pair__band {
+  padding: 0.65rem 0.55rem;
+  background: var(--am-surface-sub);
+  border: 1px solid var(--am-border-subtle);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.te-public--americano .am-pub-match .te-pub-pair--win .te-pub-pair__band {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.07) 0%,
+    var(--am-surface-sub) 100%
+  );
+}
+
+/* Avatares 64px + ring gradiente */
+.te-public--americano .am-pub-match .te-pub-pair__band-player .te-pub-pair__avatar.rj-avatar {
+  width: 64px;
+  height: 64px;
+  font-size: 1.15rem;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--am-surface-sub), var(--am-surface-sub)) padding-box,
+    linear-gradient(
+      145deg,
+      rgba(74, 222, 128, 0.85) 0%,
+      rgba(74, 222, 128, 0.15) 45%,
+      rgba(255, 255, 255, 0.08) 100%
+    )
+    border-box;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 8px 22px rgba(0, 0, 0, 0.42);
+}
+
+.te-public--americano .am-pub-match .te-pub-pair__band-player .te-pub-pair__avatar .rj-avatar__img {
+  width: 100%;
+  height: 100%;
+}
+
+.te-public--americano .am-pub-match .te-pub-pair__band-name {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+/* Conector de pareja */
+.te-public--americano .am-pub-match .te-pub-pair__band-join--team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 1.25rem;
+  min-height: 3.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  opacity: 1;
+}
+
+.te-public--americano .am-pub-match .te-pub-pair__band-join-line {
+  display: block;
+  width: 1px;
+  height: 14px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(74, 222, 128, 0.55) 50%,
+    transparent 100%
+  );
+}
+
+.te-public--americano .am-pub-match .te-pub-pair__band-join-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(74, 222, 128, 0.75);
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.45);
+}
+
+/* Rating chip — chip físico */
+.te-public--americano .am-pub-match .te-pub-pair__player-rating.jugador-rating-chip {
+  font-size: 0.625rem;
+  padding: 0.12rem 0.42rem;
+  border: 1px solid rgba(163, 230, 53, 0.42);
+  background: linear-gradient(
+    180deg,
+    rgba(163, 230, 53, 0.18) 0%,
+    rgba(163, 230, 53, 0.08) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.28);
+}
+
+/* VS divisor */
+.te-public--americano .am-pub-match .te-pub-match__vs {
+  gap: 0.75rem;
+  margin: 0.15rem 0;
+}
+
+.te-public--americano .am-pub-match .te-pub-match__vs-text {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.te-public--americano .am-pub-match .te-pub-match__vs-line {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+}
+
+/* Marcador pendiente + hint */
+.te-public--americano .am-pub-match__score-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.te-public--americano .am-pub-match__pending-label {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.te-public--americano .am-pub-match__details-hint {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+  transition: color 0.2s ease;
+}
+
+.te-public--americano .am-pub-match:hover .am-pub-match__details-hint {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.te-public--americano .am-pub-match .te-pub-score--faceoff .te-pub-score__num {
+  font-size: clamp(1.5rem, 5vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.te-public--americano .am-pub-match .te-pub-match-winner--compact {
+  margin-top: 0.45rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--am-border-subtle);
+}
+
+.te-public--americano .te-pub-matches-grid--wide {
+  gap: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .te-public--americano .am-pub-round-head__title {
+    font-size: clamp(1.45rem, 6.5vw, 28px);
+  }
+
+  .te-public--americano .am-pub-match .te-pub-pair__band-player .te-pub-pair__avatar.rj-avatar {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .te-public--americano .am-pub-match.te-pub-match--wide {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .te-public--americano .am-pub-match.te-pub-match--wide:hover {
+    transform: none;
+  }
+}
