@@ -191,8 +191,7 @@ export const PublicAmericanoPlayerPerformance: React.FC<{
               <span className="am-pub-perf__sheet-handle" aria-hidden />
             ) : null}
             <p className="am-pub-perf__kicker">
-              Americano
-              {eventName?.trim() ? ` · ${eventName.trim()}` : ""}
+              {eventName?.trim() || "Americano"}
             </p>
             <h2 id="am-pub-perf-title" className="am-pub-perf__name">
               {playerName}

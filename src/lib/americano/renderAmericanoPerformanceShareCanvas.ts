@@ -233,21 +233,14 @@ export async function renderAmericanoPerformanceSharePng(
 
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = "rgba(255,255,255,0.62)";
-  ctx.font = "700 28px system-ui, -apple-system, Segoe UI, sans-serif";
-  ctx.fillText("AMERICANO", padX, y);
-
-  const eventName = payload.eventName?.trim() || "";
-  if (eventName) {
-    y += 50;
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.font = "600 34px system-ui, -apple-system, Segoe UI, sans-serif";
-    ctx.fillText(
-      truncateText(ctx, eventName.toUpperCase(), w - padX * 2),
-      padX,
-      y
-    );
-  }
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.font = "600 34px system-ui, -apple-system, Segoe UI, sans-serif";
+  const eventName = payload.eventName?.trim() || "Americano";
+  ctx.fillText(
+    truncateText(ctx, eventName.toUpperCase(), w - padX * 2),
+    padX,
+    y
+  );
 
   const clubName = payload.clubName?.trim() || "";
   if (clubName && clubName.toLowerCase() !== eventName.toLowerCase()) {
