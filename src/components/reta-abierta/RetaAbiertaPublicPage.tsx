@@ -80,10 +80,12 @@ function modeLabel(dto: OpenRegistrationPublicDto): string {
   });
 }
 
-function formatWhen(dto: OpenRegistrationPublicDto): string {
-  if (!dto.scheduled_at) return "Fecha por confirmar";
+function formatWhenParts(
+  dto: OpenRegistrationPublicDto
+): { date: string; time: string } | null {
+  if (!dto.scheduled_at) return null;
   const d = new Date(dto.scheduled_at);
-  if (Number.isNaN(d.getTime())) return "Fecha por confirmar";
+  if (Number.isNaN(d.getTime())) return null;
 
   const datePart = d.toLocaleString("es-MX", {
     weekday: "short",
@@ -103,14 +105,14 @@ function formatWhen(dto: OpenRegistrationPublicDto): string {
   }
 
   const range = formatDueloHorarioRange(dto.scheduled_at, until);
-  if (range) {
-    return `${datePart}, ${range}`;
-  }
+  const timePart =
+    range ??
+    d.toLocaleString("es-MX", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
 
-  return `${datePart}, ${d.toLocaleString("es-MX", {
-    hour: "numeric",
-    minute: "2-digit",
-  })}`;
+  return { date: datePart, time: timePart };
 }
 
 /** Nunca mostrar SQL / códigos técnicos en la UI pública. */
@@ -376,36 +378,63 @@ function FlatPlayerCard({
   entry,
   displayPhoto,
   displayRating,
+  index = 0,
 }: {
   entry: OpenRegistrationPublicEntry;
   displayPhoto: boolean;
   displayRating: boolean;
+  index?: number;
 }) {
   const cat = formatPublicCategoriaLabel(entry.categoria);
   const ratingPart =
     displayRating && entry.rating != null
       ? Number(entry.rating).toFixed(2)
       : null;
+  const showPhoto = displayPhoto && Boolean(entry.foto_url?.trim());
+
   return (
-    <li className="ra-player-card ra-player-card--filled ra-player-card--pro">
-      <div className="ra-player-card__avatar" aria-hidden>
-        {displayPhoto && entry.foto_url ? (
-          <img src={entry.foto_url} alt="" />
+    <li
+      className="ra-player-card ra-player-card--filled ra-player-card--roster"
+      style={{ "--ra-roster-i": index } as React.CSSProperties}
+    >
+      <div className="ra-player-card__portrait-wrap">
+        {showPhoto ? (
+          <>
+            <img
+              className="ra-player-card__portrait-glow"
+              src={entry.foto_url!}
+              alt=""
+              aria-hidden
+            />
+            <div className="ra-player-card__portrait">
+              <img src={entry.foto_url!} alt="" />
+            </div>
+          </>
         ) : (
-          <span>{entry.nombre.charAt(0)}</span>
+          <div className="ra-player-card__portrait ra-player-card__portrait--fallback">
+            <span>{entry.nombre.charAt(0)}</span>
+          </div>
         )}
       </div>
       <div className="ra-player-card__body">
         <strong className="ra-player-card__name" title={entry.nombre}>
           {entry.nombre}
         </strong>
+        <span className="ra-player-card__sport-accent" aria-hidden />
         <div className="ra-player-card__meta">
           {ratingPart ? (
             <span className="ra-player-card__pill">{ratingPart}</span>
           ) : null}
-          {cat ? <span className="ra-player-card__pill ra-player-card__pill--muted">{cat}</span> : null}
+          {cat ? (
+            <span className="ra-player-card__pill ra-player-card__pill--muted">
+              {cat}
+            </span>
+          ) : null}
         </div>
-        <CopyableRivieraId rivieraId={entry.riviera_id} />
+        <div className="ra-player-card__riv-block">
+          <span className="ra-player-card__riv-label">Riviera ID</span>
+          <CopyableRivieraId rivieraId={entry.riviera_id} />
+        </div>
       </div>
     </li>
   );
@@ -876,46 +905,80 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
 
         <div className="ra-public__stage">
           <aside className="ra-public__match-card" aria-label="Datos del partido">
-            <div className="ra-public__facts">
-              {(() => {
-                const { lugar, cancha } = resolveLugarYCancha({
-                  locationLabel: dto.location_label,
-                  canchaLabel: dto.cancha_label,
-                  clubName: organizerName,
-                });
-                if (!lugar && !cancha) return null;
-                return (
-                  <div className="ra-public__fact">
-                    <span className="ra-public__fact-label">Lugar</span>
-                    <strong className="ra-public__fact-value">
-                      {[lugar, cancha].filter(Boolean).join(" · ")}
-                    </strong>
+            {(() => {
+              const { lugar, cancha } = resolveLugarYCancha({
+                locationLabel: dto.location_label,
+                canchaLabel: dto.cancha_label,
+                clubName: organizerName,
+              });
+              const placeLabel = [lugar, cancha].filter(Boolean).join(" · ");
+              const whenParts = formatWhenParts(dto);
+              const costoLabel = dto.costo?.trim() ?? "";
+              const premioLabel = dto.premio?.trim() ?? "";
+              const factCols =
+                (placeLabel ? 1 : 0) + 1 + (costoLabel ? 1 : 0);
+
+              return (
+                <>
+                  <div
+                    className="ra-public__facts-row"
+                    style={
+                      {
+                        "--ra-fact-cols": factCols,
+                      } as React.CSSProperties
+                    }
+                  >
+                    {placeLabel ? (
+                      <div className="ra-public__fact">
+                        <span className="ra-public__fact-label">Lugar</span>
+                        <strong
+                          className="ra-public__fact-value"
+                          title={placeLabel}
+                        >
+                          {placeLabel}
+                        </strong>
+                      </div>
+                    ) : null}
+                    <div className="ra-public__fact">
+                      <span className="ra-public__fact-label">Horario</span>
+                      <strong className="ra-public__fact-value">
+                        {whenParts ? (
+                          <>
+                            <span className="ra-public__fact-date">
+                              {whenParts.date}
+                            </span>
+                            <span className="ra-public__fact-time">
+                              {whenParts.time}
+                            </span>
+                          </>
+                        ) : (
+                          "Por confirmar"
+                        )}
+                      </strong>
+                    </div>
+                    {costoLabel ? (
+                      <div className="ra-public__fact">
+                        <span className="ra-public__fact-label">Precio</span>
+                        <strong className="ra-public__fact-value">
+                          {costoLabel}
+                        </strong>
+                      </div>
+                    ) : null}
                   </div>
-                );
-              })()}
-              <div className="ra-public__fact">
-                <span className="ra-public__fact-label">Horario</span>
-                <strong className="ra-public__fact-value">
-                  {formatWhen(dto)}
-                </strong>
-              </div>
-              {dto.costo?.trim() ? (
-                <div className="ra-public__fact">
-                  <span className="ra-public__fact-label">Precio</span>
-                  <strong className="ra-public__fact-value">
-                    {dto.costo.trim()}
-                  </strong>
-                </div>
-              ) : null}
-              {dto.premio?.trim() ? (
-                <div className="ra-public__fact">
-                  <span className="ra-public__fact-label">Premio</span>
-                  <strong className="ra-public__fact-value">
-                    {dto.premio.trim()}
-                  </strong>
-                </div>
-              ) : null}
-            </div>
+                  {premioLabel ? (
+                    <div className="ra-public__fact ra-public__fact--premio">
+                      <span className="ra-public__fact-label">Premio</span>
+                      <strong
+                        className="ra-public__fact-value"
+                        title={premioLabel}
+                      >
+                        {premioLabel}
+                      </strong>
+                    </div>
+                  ) : null}
+                </>
+              );
+            })()}
             {dto.description?.trim() ? (
               <p className="ra-public__meta ra-public__meta--desc">
                 {dto.description.trim()}
@@ -996,12 +1059,13 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                   />
                 </div>
                 <ul className="ra-public__players">
-                  {confirmed.map((e) => (
+                  {confirmed.map((e, i) => (
                     <FlatPlayerCard
                       key={e.id}
                       entry={e}
                       displayPhoto={dto.display_photo}
                       displayRating={dto.display_rating}
+                      index={i}
                     />
                   ))}
                 </ul>
