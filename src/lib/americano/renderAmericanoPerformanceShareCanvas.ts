@@ -2,6 +2,10 @@ import {
   computeStandingDif,
   formatStandingDif,
 } from "../../utils/standingsDisplay";
+import {
+  buildAmericanoWinnerCelebration,
+  isAmericanoWinnerPlacement,
+} from "./americanoPerformanceCopy";
 
 export const AMERICANO_SHARE_WIDTH = 1080;
 export const AMERICANO_SHARE_HEIGHT = 1920;
@@ -255,6 +259,13 @@ export async function renderAmericanoPerformanceSharePng(
     position: payload.position,
     isFinished: payload.isFinished,
   });
+  const isWinner = isAmericanoWinnerPlacement({
+    position: payload.position,
+    isFinished: payload.isFinished,
+  });
+  const winnerCopy = isWinner
+    ? buildAmericanoWinnerCelebration(payload.eventName)
+    : null;
 
   // Composición inferior de abajo hacia arriba para evitar cortes con nombres largos.
   const footerY = h - safeBottom;
@@ -265,7 +276,14 @@ export async function renderAmericanoPerformanceSharePng(
   ctx.font = "800 88px system-ui, -apple-system, Segoe UI, sans-serif";
   const nameLines = wrapText(ctx, name.toUpperCase(), w - padX * 2, 2);
   const nameBlockH = nameLines.length * 92;
-  const placeBlockH = 118 + (place.badge ? 44 : 0);
+  let placeBlockH = 118 + (place.badge ? 44 : 0);
+  if (winnerCopy) {
+    ctx.font = "600 28px system-ui, -apple-system, Segoe UI, sans-serif";
+    const msgLines = winnerCopy.shareLines.flatMap((line) =>
+      wrapText(ctx, line, w - padX * 2, 2)
+    );
+    placeBlockH += 24 + msgLines.length * 36;
+  }
   let nameStartY = metricsY - 48 - placeBlockH - nameBlockH + 88;
   // No invadir el bloque superior (evento/club).
   const minNameY = y + 120;
@@ -286,8 +304,8 @@ export async function renderAmericanoPerformanceSharePng(
 
   if (place.badge) {
     blockY += 44;
-    const isWinner = place.badge === "GANADOR";
-    ctx.fillStyle = isWinner
+    const isWinnerBadge = place.badge === "GANADOR";
+    ctx.fillStyle = isWinnerBadge
       ? "rgba(201, 162, 39, 0.95)"
       : "rgba(255,255,255,0.55)";
     ctx.font = "700 26px system-ui, -apple-system, Segoe UI, sans-serif";
@@ -296,6 +314,31 @@ export async function renderAmericanoPerformanceSharePng(
       padX,
       blockY
     );
+
+    if (isWinnerBadge && winnerCopy) {
+      blockY += 28;
+      ctx.fillStyle = "rgba(201, 162, 39, 0.85)";
+      ctx.fillRect(padX, blockY, 72, 3);
+      blockY += 22;
+      ctx.textAlign = "left";
+      ctx.font = "700 32px system-ui, -apple-system, Segoe UI, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.96)";
+      ctx.fillText(
+        truncateText(ctx, winnerCopy.headline, w - padX * 2),
+        padX,
+        blockY
+      );
+      blockY += 12;
+      ctx.font = "600 28px system-ui, -apple-system, Segoe UI, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.82)";
+      for (const line of winnerCopy.shareLines.slice(1)) {
+        const wrapped = wrapText(ctx, line, w - padX * 2, 2);
+        for (const wl of wrapped) {
+          blockY += 36;
+          ctx.fillText(wl, padX, blockY);
+        }
+      }
+    }
   }
 
   const lineParts = [
@@ -325,9 +368,17 @@ export async function renderAmericanoPerformanceSharePng(
   const cardY = cardTop;
   statCards.forEach((card, i) => {
     const x = padX + i * (cardW + 14);
-    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    ctx.fillStyle = isWinner
+      ? "rgba(255,255,255,0.11)"
+      : "rgba(255,255,255,0.08)";
     roundRect(ctx, x, cardY, cardW, cardH, 18);
     ctx.fill();
+    if (isWinner) {
+      ctx.strokeStyle = "rgba(201, 162, 39, 0.35)";
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, x, cardY, cardW, cardH, 18);
+      ctx.stroke();
+    }
     ctx.fillStyle = "rgba(255,255,255,0.45)";
     ctx.font = "700 22px system-ui, -apple-system, Segoe UI, sans-serif";
     ctx.fillText(card.label, x + 22, cardY + 36);
@@ -340,10 +391,14 @@ export async function renderAmericanoPerformanceSharePng(
     );
   });
 
-  ctx.fillStyle = "rgba(255,255,255,0.38)";
-  ctx.font = "600 24px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.fillStyle = isWinner
+    ? "rgba(201, 162, 39, 0.88)"
+    : "rgba(255,255,255,0.38)";
+  ctx.font = isWinner
+    ? "700 26px system-ui, -apple-system, Segoe UI, sans-serif"
+    : "600 24px system-ui, -apple-system, Segoe UI, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("by RIVIERA OPEN", w / 2, footerY);
+  ctx.fillText("RIVIERA OPEN", w / 2, footerY);
 
   return canvasToPngBlob(canvas);
 }

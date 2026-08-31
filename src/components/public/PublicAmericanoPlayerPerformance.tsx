@@ -6,6 +6,10 @@ import {
 import type { UnifiedStandingStats } from "../../lib/unifiedStandings";
 import type { AmericanoPublicMatchHistoryEntry } from "../../lib/buildAmericanoPublicMatchHistory";
 import { initialsFromPlayerName } from "../../lib/americano/renderAmericanoPerformanceShareCanvas";
+import {
+  buildAmericanoWinnerCelebration,
+  isAmericanoWinnerPlacement,
+} from "../../lib/americano/americanoPerformanceCopy";
 import { shareAmericanoPerformanceImage } from "../../lib/americano/shareAmericanoPerformanceImage";
 import { useMobileViewport } from "../../hooks/useMobileViewport";
 import { Modal } from "../ui/Modal";
@@ -94,7 +98,11 @@ export const PublicAmericanoPlayerPerformance: React.FC<{
   const pe = stats?.pe ?? 0;
   const pts = stats?.puntos ?? 0;
   const showPe = pe > 0;
-  const showWinner = isFinished && position === 1;
+  const showWinner = isAmericanoWinnerPlacement({ position, isFinished });
+  const winnerCopy = useMemo(
+    () => (showWinner ? buildAmericanoWinnerCelebration(eventName) : null),
+    [showWinner, eventName]
+  );
 
   const metrics = [
     { key: "pj", label: "PJ", value: String(pj) },
@@ -157,11 +165,11 @@ export const PublicAmericanoPlayerPerformance: React.FC<{
       bodyClassName="am-pub-perf-modal__body"
       ariaLabelledBy="am-pub-perf-title"
     >
-      <article className="am-pub-perf">
+      <article className={`am-pub-perf${showWinner ? " am-pub-perf--winner" : ""}`}>
         <header
           className={`am-pub-perf__hero${
             hasPhoto ? "" : " am-pub-perf__hero--fallback"
-          }`}
+          }${showWinner ? " am-pub-perf__hero--winner" : ""}`}
         >
           {hasPhoto ? (
             <img
@@ -206,6 +214,16 @@ export const PublicAmericanoPlayerPerformance: React.FC<{
                     : "Clasificación en vivo"}
               </span>
             </div>
+            {winnerCopy ? (
+              <div className="am-pub-perf__winner-callout">
+                <p className="am-pub-perf__winner-headline">
+                  {winnerCopy.headline}
+                </p>
+                <p className="am-pub-perf__winner-message">
+                  {winnerCopy.message}
+                </p>
+              </div>
+            ) : null}
           </div>
         </header>
 
