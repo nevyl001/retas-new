@@ -20,9 +20,14 @@ import {
   persistAmericanoDinamicoSnapshot,
 } from "../../lib/americanoDinamicoSync";
 import {
+  buildRosterFromConvocatoriaEntries,
+  sameConvocatoriaRoster,
+} from "../../lib/retaAbierta/convocatoriaRosterSync";
+import {
   fetchOpenGameRegistrationConfig,
   listOpenGameRegistrationEntries,
 } from "../../lib/retaAbierta/retaAbiertaService";
+import { useRetaAbiertaRealtime } from "../../lib/retaAbierta/useRetaAbiertaRealtime";
 import type { ConvocatoriaLiveSnapshot } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
 import { RetaAbiertaOrganizerPanel } from "../reta-abierta/RetaAbiertaOrganizerPanel";
 import { RetaConfigPanel } from "../reta/RetaConfigPanel";
@@ -266,7 +271,8 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         "americano",
         tournament.id
       );
-      const confirmed = entries.filter((e) => e.status === "confirmed").length;
+      const confirmedEntries = entries.filter((e) => e.status === "confirmed");
+      const confirmed = confirmedEntries.length;
       const capacity = cfg.capacity ?? 8;
       const live =
         Boolean(cfg.public_slug) ||
@@ -278,33 +284,67 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         `${convStatusLabel(cfg.status)} · ${confirmed} de ${capacity} confirmados`
       );
       if (cfg.status === "open" || confirmed > 0) setConvTouched(true);
+
+      if (confirmedEntries.length > 0 && !availablePlayersLoading) {
+        const roster = await buildRosterFromConvocatoriaEntries(
+          confirmedEntries,
+          availablePlayers
+        );
+        if (
+          roster.length > 0 &&
+          !sameConvocatoriaRoster(roster, players)
+        ) {
+          onSyncPlayers(roster);
+        }
+      }
     } catch {
       setConvLine("Gestionar convocatoria");
     }
-  }, [tournament?.id]);
+  }, [
+    tournament?.id,
+    availablePlayers,
+    availablePlayersLoading,
+    players,
+    onSyncPlayers,
+  ]);
+
+  const onConvocatoriaOrFocusRefresh = useCallback(() => {
+    void onRefreshAvailablePlayers?.();
+    void refreshConvSummary();
+  }, [onRefreshAvailablePlayers, refreshConvSummary]);
+
+  useRetaAbiertaRealtime({
+    tournamentId: tournament?.id ?? null,
+    enabled: Boolean(tournament?.id),
+    onUpdate: onConvocatoriaOrFocusRefresh,
+  });
 
   useEffect(() => {
     void refreshConvSummary();
   }, [refreshConvSummary]);
 
-  const onConvLiveChange = useCallback((snap: ConvocatoriaLiveSnapshot) => {
-    if (snap.isLive || snap.confirmed > 0) setConvTouched(true);
-    if (snap.isLive) {
-      setConvIsLive(true);
-      setWantConvocatoria(true);
-    } else if (!snap.publicSlug) {
-      setConvIsLive(false);
-    }
-    if (!snap.isLive && !snap.publicSlug) {
-      setConvLine("Sin abrir · —");
-      setConvCapacity(0);
-      return;
-    }
-    setConvCapacity(snap.capacity);
-    setConvLine(
-      `${convStatusLabel(snap.status ?? undefined)} · ${snap.confirmed} de ${snap.capacity} confirmados`
-    );
-  }, []);
+  const onConvLiveChange = useCallback(
+    (snap: ConvocatoriaLiveSnapshot) => {
+      if (snap.isLive || snap.confirmed > 0) setConvTouched(true);
+      if (snap.isLive) {
+        setConvIsLive(true);
+        setWantConvocatoria(true);
+      } else if (!snap.publicSlug) {
+        setConvIsLive(false);
+      }
+      if (!snap.isLive && !snap.publicSlug) {
+        setConvLine("Sin abrir · —");
+        setConvCapacity(0);
+        return;
+      }
+      setConvCapacity(snap.capacity);
+      setConvLine(
+        `${convStatusLabel(snap.status ?? undefined)} · ${snap.confirmed} de ${snap.capacity} confirmados`
+      );
+      void refreshConvSummary();
+    },
+    [refreshConvSummary]
+  );
 
   /** Con convocatoria, el cupo planificado define partidos/descansos (no solo confirmados). */
   const layoutPlayerCount =
