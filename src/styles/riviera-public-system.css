@@ -104,6 +104,13 @@
   color: var(--ro-chrome-text-muted);
 }
 
+.ro-public-view .peds-hero__descripcion,
+.te-public .peds-hero__descripcion {
+  color: var(--ro-chrome-text-muted);
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .ro-public-view .peds-hero__categoria,
 .te-public .peds-hero__categoria,
 .ro-public-view .peds-hero__nivel,

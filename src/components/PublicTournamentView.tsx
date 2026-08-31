@@ -1265,7 +1265,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           }
           nombreEvento={publicTournamentName || "Resultados en tiempo real"}
           club={showClubBranding ? organizerName : undefined}
-          categoria={publicTournamentDescription}
+          descripcion={publicTournamentDescription || undefined}
           nivel={nivelPublico || undefined}
           fecha={fechaHorarioLine || undefined}
           lugar={lugarPublico || undefined}

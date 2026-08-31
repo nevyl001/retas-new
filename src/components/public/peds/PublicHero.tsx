@@ -8,6 +8,8 @@ export interface PublicHeroProps {
   club?: React.ReactNode;
   /** Categoría libre (ej. Reta Prueba). */
   categoria?: React.ReactNode;
+  /** Descripción / reglas del formato (texto largo, no pill). */
+  descripcion?: React.ReactNode;
   /** Nivel / fuerza (ej. 5ta Fuerza). */
   nivel?: React.ReactNode;
   fecha?: React.ReactNode;
@@ -25,6 +27,7 @@ export const PublicHero: React.FC<PublicHeroProps> = ({
   nombreEvento,
   club,
   categoria,
+  descripcion,
   nivel,
   fecha,
   lugar,
@@ -40,6 +43,9 @@ export const PublicHero: React.FC<PublicHeroProps> = ({
       {estado ? <div className="peds-hero__estado">{estado}</div> : null}
       <h1 className="peds-hero__evento">{nombreEvento}</h1>
       {club ? <p className="peds-hero__club">{club}</p> : null}
+      {descripcion ? (
+        <p className="peds-hero__descripcion">{descripcion}</p>
+      ) : null}
       {hasMetaRow ? (
         <div className="peds-hero__meta-row">
           {categoria ? (

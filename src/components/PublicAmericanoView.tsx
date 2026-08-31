@@ -471,7 +471,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
           }
           nombreEvento={tournamentName || "Torneo Americano"}
           club={isClubBranded ? organizerName : undefined}
-          categoria={tournamentDescription}
+          descripcion={tournamentDescription || undefined}
           nivel={nivelPublico || undefined}
           fecha={fechaHorarioLine || undefined}
           lugar={lugarPublico || undefined}
