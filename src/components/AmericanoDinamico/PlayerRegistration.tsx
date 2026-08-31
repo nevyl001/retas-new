@@ -11,7 +11,6 @@ import {
 } from "../../lib/database";
 import {
   buildRegistrationPrepSnapshot,
-  loadAmericanoDinamicoSnapshot,
   readRegistrationPlannedCourts,
   readRegistrationPlannedRounds,
 } from "../../lib/americanoDinamicoStorage";
