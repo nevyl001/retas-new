@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import type { AmericanoMatch, AmericanoRound } from "../../lib/db/types";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
 import { ActionBar } from "../platform/ActionBar";
-import { Button, Input } from "../ui";
+import { Button } from "../ui";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import "../jugadores/riviera-jugadores.css";
 import "./RoundView.css";
@@ -78,6 +78,10 @@ function draftsDifferFromCommitted(
   });
 }
 
+function teamPlayersLabel(players: ReadonlyArray<{ name: string }>): string {
+  return players.map((p) => p.name.trim()).filter(Boolean).join(" · ");
+}
+
 export const RoundView: React.FC<RoundViewProps> = ({
   round,
   totalRounds = 0,
@@ -90,11 +94,9 @@ export const RoundView: React.FC<RoundViewProps> = ({
   const [draftScores, setDraftScores] = useState<
     Record<string, { a?: string; b?: string }>
   >({});
-  const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
 
   useEffect(() => {
     setDraftScores({});
-    setEditingMatchId(null);
   }, [round.roundNumber]);
 
   const draftComplete = useMemo(
@@ -133,104 +135,146 @@ export const RoundView: React.FC<RoundViewProps> = ({
           </span>
         </div>
         <p className="americano-round__hint">
-          Completa los marcadores, confirma y luego usa{" "}
-          <strong>Ronda finalizada</strong> para avanzar.
+          Escribe los juegos de cada equipo y confirma. Luego pulsa{" "}
+          <strong>Ronda finalizada</strong>.
         </p>
       </header>
 
       <div className="americano-round__matches">
         {round.matches.map((match) => {
           const { a, b } = readDraft(match, draftScores);
-          const isEditing = editingMatchId === match.id;
+          const teamALabel = teamPlayersLabel(match.teamA);
+          const teamBLabel = teamPlayersLabel(match.teamB);
+          const patchScore = (side: "a" | "b", raw: string) => {
+            const sanitized = raw.replace(/\D/g, "").slice(0, 2);
+            setDraftScores((prev) => ({
+              ...prev,
+              [match.id]: { ...prev[match.id], [side]: sanitized },
+            }));
+          };
+          const bumpScore = (side: "a" | "b", delta: number) => {
+            const current = readDraft(match, draftScores)[side];
+            const next = Math.max(0, (Number(current) || 0) + delta);
+            setDraftScores((prev) => ({
+              ...prev,
+              [match.id]: { ...prev[match.id], [side]: String(next) },
+            }));
+          };
+
           return (
             <article key={match.id} className="americano-match-card rv-card rv-match-card">
               <div className="americano-match-card__top">
                 <span className="americano-match-card__court">
                   Cancha {match.court}
                 </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setEditingMatchId((prev) =>
-                      prev === match.id ? null : match.id
-                    )
-                  }
-                >
-                  {isEditing ? "Cerrar" : "Editar"}
-                </Button>
               </div>
 
-              <div className="americano-match-card__teams">
-                <div className="americano-match-card__team">
-                  <span className="americano-match-card__team-label">Equipo A</span>
-                  <div className="americano-match-card__players">
-                    {match.teamA.map((p) => (
-                      <div key={p.id} className="americano-match-card__player">
-                        <JugadorAvatar
-                          fotoUrl={playerFotos[p.id]}
-                          nombre={p.name}
-                          size="md"
-                          className="americano-match-card__avatar"
-                        />
-                        <span className="americano-match-card__player-name">
-                          {p.name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="americano-match-card__vs">vs</div>
-                <div className="americano-match-card__team">
-                  <span className="americano-match-card__team-label">Equipo B</span>
-                  <div className="americano-match-card__players">
-                    {match.teamB.map((p) => (
-                      <div key={p.id} className="americano-match-card__player">
-                        <JugadorAvatar
-                          fotoUrl={playerFotos[p.id]}
-                          nombre={p.name}
-                          size="md"
-                          className="americano-match-card__avatar"
-                        />
-                        <span className="americano-match-card__player-name">
-                          {p.name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <p className="americano-match-card__score-hint">
+                Juegos ganados por equipo
+              </p>
 
-              <div
-                className={`americano-match-card__scores${
-                  isEditing ? " americano-match-card__scores--editing" : ""
-                }`}
-              >
-                <Input
-                  label="Juegos equipo A"
-                  type="number"
-                  min={0}
-                  value={a}
-                  onChange={(e) =>
-                    setDraftScores((prev) => ({
-                      ...prev,
-                      [match.id]: { ...prev[match.id], a: e.target.value },
-                    }))
-                  }
-                />
-                <Input
-                  label="Juegos equipo B"
-                  type="number"
-                  min={0}
-                  value={b}
-                  onChange={(e) =>
-                    setDraftScores((prev) => ({
-                      ...prev,
-                      [match.id]: { ...prev[match.id], b: e.target.value },
-                    }))
-                  }
-                />
+              <div className="americano-match-card__scoreboard">
+                <div className="americano-match-card__score-row">
+                  <div className="americano-match-card__side">
+                    <span className="americano-match-card__side-tag">A</span>
+                    <div className="americano-match-card__players americano-match-card__players--compact">
+                      {match.teamA.map((p) => (
+                        <div key={p.id} className="americano-match-card__player">
+                          <JugadorAvatar
+                            fotoUrl={playerFotos[p.id]}
+                            nombre={p.name}
+                            size="sm"
+                            className="americano-match-card__avatar americano-match-card__avatar--compact"
+                          />
+                          <span className="americano-match-card__player-name">
+                            {p.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="americano-match-card__score-control">
+                    <button
+                      type="button"
+                      className="americano-match-card__score-step"
+                      aria-label={`Menos juegos ${teamALabel}`}
+                      onClick={() => bumpScore("a", -1)}
+                    >
+                      −
+                    </button>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      className="americano-match-card__score-input"
+                      value={a}
+                      placeholder="0"
+                      aria-label={`Juegos ${teamALabel}`}
+                      onChange={(e) => patchScore("a", e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="americano-match-card__score-step"
+                      aria-label={`Más juegos ${teamALabel}`}
+                      onClick={() => bumpScore("a", 1)}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="americano-match-card__score-divider" aria-hidden>
+                  vs
+                </div>
+
+                <div className="americano-match-card__score-row">
+                  <div className="americano-match-card__side">
+                    <span className="americano-match-card__side-tag">B</span>
+                    <div className="americano-match-card__players americano-match-card__players--compact">
+                      {match.teamB.map((p) => (
+                        <div key={p.id} className="americano-match-card__player">
+                          <JugadorAvatar
+                            fotoUrl={playerFotos[p.id]}
+                            nombre={p.name}
+                            size="sm"
+                            className="americano-match-card__avatar americano-match-card__avatar--compact"
+                          />
+                          <span className="americano-match-card__player-name">
+                            {p.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="americano-match-card__score-control">
+                    <button
+                      type="button"
+                      className="americano-match-card__score-step"
+                      aria-label={`Menos juegos ${teamBLabel}`}
+                      onClick={() => bumpScore("b", -1)}
+                    >
+                      −
+                    </button>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      className="americano-match-card__score-input"
+                      value={b}
+                      placeholder="0"
+                      aria-label={`Juegos ${teamBLabel}`}
+                      onChange={(e) => patchScore("b", e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="americano-match-card__score-step"
+                      aria-label={`Más juegos ${teamBLabel}`}
+                      onClick={() => bumpScore("b", 1)}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
               </div>
             </article>
           );

@@ -104,7 +104,149 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.americano-match-card__score-hint {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.americano-match-card__scoreboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--ro-bg-card, var(--bg-card));
+}
+
+.americano-match-card__score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  min-width: 0;
+}
+
+.americano-match-card__score-row + .americano-match-card__score-row {
+  border-top: 1px solid var(--ro-border-subtle, var(--border-subtle));
+}
+
+.americano-match-card__side {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.americano-match-card__side-tag {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.15rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-accent);
+  background: var(--bg-elevated);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.americano-match-card__score-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.americano-match-card__score-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-accent);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color var(--motion-micro), background var(--motion-micro);
+}
+
+.americano-match-card__score-step:hover,
+.americano-match-card__score-step:focus-visible {
+  border-color: var(--ro-border-strong, var(--border-accent));
+  background: var(--ro-bg-card-hover, var(--bg-card-hover));
+  outline: none;
+}
+
+.americano-match-card__score-input {
+  width: 3rem;
+  min-height: 2.75rem;
+  padding: 0.35rem 0.25rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-accent);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: border-color var(--motion-micro), box-shadow var(--motion-micro);
+}
+
+.americano-match-card__score-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.65;
+}
+
+.americano-match-card__score-input:focus {
+  outline: none;
+  border-color: var(--ro-border-strong, var(--border-accent));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-primary, #141414) 18%, transparent);
+}
+
+.americano-match-card__score-divider {
+  padding: 4px 0;
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--rv-bg-card-soft, var(--ro-bg-inset, var(--bg-elevated)));
+  border-top: 1px solid var(--ro-border-subtle, var(--border-subtle));
+  border-bottom: 1px solid var(--ro-border-subtle, var(--border-subtle));
+}
+
+.americano-match-card__players--compact {
+  gap: 0.35rem;
+}
+
+.americano-match-card__avatar--compact.rj-avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 0.85rem;
+  border-width: 1px;
+  box-shadow: none;
 }
 
 .americano-match-card__court {
@@ -120,11 +262,7 @@
 }
 
 .americano-match-card__teams {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 12px;
+  display: none;
 }
 
 .americano-match-card__team {
@@ -218,15 +356,7 @@
 }
 
 .americano-match-card__scores {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.americano-match-card__scores--editing {
-  outline: 1px solid var(--border-accent);
-  border-radius: 8px;
-  padding: 8px;
+  display: none;
 }
 
 .americano-round__bench.card-like {
@@ -306,13 +436,30 @@
 }
 
 @media (max-width: 480px) {
-  .americano-match-card__teams {
-    grid-template-columns: 1fr;
-    gap: 10px;
+  .americano-match-card {
+    padding: 14px 12px;
   }
 
-  .americano-match-card__vs {
-    text-align: center;
+  .americano-match-card__score-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .americano-match-card__score-control {
+    align-self: center;
+  }
+
+  .americano-match-card__score-input {
+    width: 3.25rem;
+    min-height: 3rem;
+    font-size: 1.75rem;
+  }
+
+  .americano-match-card__score-step {
+    width: 2.5rem;
+    height: 2.5rem;
   }
 
   .americano-round__header h3 {
