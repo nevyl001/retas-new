@@ -101,28 +101,29 @@ function MatchPairShowcase({
       className={`am-match-pair am-match-pair--${align}`}
       aria-label={label}
     >
-      <div className="am-match-pair__duo">
-        <div className="am-match-pair__person">
-          <JugadorAvatar
-            fotoUrl={playerFotos[first.id]}
-            nombre={first.name}
-            size="md"
-            className="am-match-pair__avatar"
-          />
-          <span className="am-match-pair__name">{first.name}</span>
-        </div>
+      <div className="am-match-pair__faces" aria-hidden>
+        <JugadorAvatar
+          fotoUrl={playerFotos[first.id]}
+          nombre={first.name}
+          size="sm"
+          className="am-match-pair__face"
+        />
         {second ? (
-          <div className="am-match-pair__person am-match-pair__person--mate">
-            <JugadorAvatar
-              fotoUrl={playerFotos[second.id]}
-              nombre={second.name}
-              size="md"
-              className="am-match-pair__avatar"
-            />
-            <span className="am-match-pair__name">{second.name}</span>
-          </div>
+          <JugadorAvatar
+            fotoUrl={playerFotos[second.id]}
+            nombre={second.name}
+            size="sm"
+            className="am-match-pair__face am-match-pair__face--mate"
+          />
         ) : null}
       </div>
+      <ul className="am-match-pair__names">
+        {players.map((p) => (
+          <li key={p.id} className="am-match-pair__name">
+            {p.name}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
