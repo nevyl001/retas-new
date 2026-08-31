@@ -692,6 +692,20 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                 round,
                 totalForPhaseLabels
               );
+              const roundAllScored = roundFullyScored(round);
+              const roundStatus =
+                roundLive ? (
+                  <p className="am-pub-round-head__status am-pub-round-head__status--live">
+                    <span className="te-pub-status__dot" aria-hidden />
+                    En curso
+                  </p>
+                ) : roundAllScored ? (
+                  <p className="am-pub-round-head__status am-pub-round-head__status--done">
+                    Completada
+                  </p>
+                ) : phaseCaption ? (
+                  <p className="am-pub-round-head__status">{phaseCaption}</p>
+                ) : null;
 
               return (
                 <section
@@ -704,20 +718,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                       <h2 className="am-pub-round-head__title">
                         Ronda {round.roundNumber}
                       </h2>
-                      {eventScheduleStatus.phase === "upcoming" ? (
-                        <p className="am-pub-round-head__status am-pub-round-head__status--pending">
-                          por comenzar
-                        </p>
-                      ) : roundLive ? (
-                        <p className="am-pub-round-head__status am-pub-round-head__status--live">
-                          <span className="te-pub-status__dot" aria-hidden />
-                          en curso
-                        </p>
-                      ) : phaseCaption ? (
-                        <p className="am-pub-round-head__status">
-                          {phaseCaption}
-                        </p>
-                      ) : null}
+                      {roundStatus}
                     </div>
                   </div>
                   <div className="te-public-section__divider am-pub-round-head__divider" aria-hidden />
@@ -734,19 +735,24 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                       const played =
                         typeof m.scoreA === "number" &&
                         typeof m.scoreB === "number";
+                      const matchScheduleStatus = played
+                        ? "played"
+                        : resolvePublicMatchStatusVariant({
+                            matchFinished: false,
+                            eventPhase: eventScheduleStatus.phase,
+                          });
+                      const showMatchStatusBadge =
+                        played ||
+                        (eventScheduleStatus.phase !== "upcoming" &&
+                          !(roundLive && !played));
+
                       return (
                       <PublicAmericanoMatchCard
                         key={m.id}
                         match={m}
                         live={roundLive && !played}
-                        scheduleStatus={
-                          played
-                            ? "played"
-                            : resolvePublicMatchStatusVariant({
-                                matchFinished: false,
-                                eventPhase: eventScheduleStatus.phase,
-                              })
-                        }
+                        scheduleStatus={matchScheduleStatus}
+                        showStatusBadge={showMatchStatusBadge}
                         index={matchIdx}
                         playerRatings={playerRatings}
                         playerFotos={playerFotos}

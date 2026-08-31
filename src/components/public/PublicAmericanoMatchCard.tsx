@@ -33,10 +33,20 @@ export const PublicAmericanoMatchCard: React.FC<{
   match: AmericanoSnapshotMatch;
   live: boolean;
   scheduleStatus?: "finished" | "live" | "upcoming" | "pending" | "played";
+  /** false cuando el estado ya aparece en hero/ronda (evita repetir "Por comenzar"). */
+  showStatusBadge?: boolean;
   index: number;
   playerRatings?: Record<string, number>;
   playerFotos?: Record<string, string | null>;
-}> = ({ match: m, live, scheduleStatus, index, playerRatings, playerFotos }) => {
+}> = ({
+  match: m,
+  live,
+  scheduleStatus,
+  showStatusBadge = true,
+  index,
+  playerRatings,
+  playerFotos,
+}) => {
   const played =
     typeof m.scoreA === "number" && typeof m.scoreB === "number";
   const aWins = played && (m.scoreA as number) > (m.scoreB as number);
@@ -58,10 +68,16 @@ export const PublicAmericanoMatchCard: React.FC<{
       data-match-state={matchState}
       style={{ animationDelay: `${0.12 + index * 0.07}s` }}
     >
-      <div className="te-pub-match__top">
-        <div className="te-pub-match__top-left">
-          <TePubMatchStatus variant={matchState} />
-        </div>
+      <div
+        className={`te-pub-match__top${
+          showStatusBadge ? "" : " am-pub-match__top--cancha-only"
+        }`}
+      >
+        {showStatusBadge ? (
+          <div className="te-pub-match__top-left">
+            <TePubMatchStatus variant={matchState} />
+          </div>
+        ) : null}
         <span className="te-pub-cancha am-pub-match__cancha" title="Cancha">
           <span className="te-pub-cancha__icon" aria-hidden>
             🎾

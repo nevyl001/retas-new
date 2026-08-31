@@ -3145,6 +3145,18 @@
   color: rgba(255, 255, 255, 0.42);
 }
 
+.te-public--americano .am-pub-round-head__status--done {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.te-public--americano .am-pub-match__top--cancha-only {
+  justify-content: flex-end;
+}
+
+.te-public--americano .am-pub-match__top--cancha-only .am-pub-match__cancha {
+  margin-left: auto;
+}
+
 .te-public--americano .am-pub-round-head__divider {
   height: 1px;
   margin-bottom: 1rem;
