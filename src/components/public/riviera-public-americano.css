@@ -3081,19 +3081,21 @@
 
 /* ── Americano público — match cards premium sports-tech ── */
 .te-public--americano {
-  --am-surface-base: #0a0a0a;
   --am-surface-card: #141414;
   --am-surface-sub: #1c1c1c;
   --am-border-subtle: rgba(255, 255, 255, 0.08);
   --am-accent-live: #4ade80;
   --am-accent-pending: #f87171;
+  --am-avatar-ring: rgba(255, 255, 255, 0.15);
+  --am-avatar-ring-win: rgba(74, 222, 128, 0.35);
 }
 
+/* Contenedor de ronda: transparente — la cancha de fondo debe verse */
 .te-public--americano .te-public-section:has(.am-pub-match) {
-  background: var(--am-surface-base);
-  margin-inline: -0.15rem;
-  padding: 0.85rem 0.15rem 0.25rem;
-  border-radius: 14px;
+  background: transparent;
+  margin-inline: 0;
+  padding: 0;
+  border-radius: 0;
 }
 
 /* Cabecera de ronda */
@@ -3261,24 +3263,30 @@
   );
 }
 
-/* Avatares 64px + ring gradiente */
+/* Avatares 64px — borde neutro; verde suave solo en equipo ganador (jugado) */
 .te-public--americano .am-pub-match .te-pub-pair__band-player .te-pub-pair__avatar.rj-avatar {
   width: 64px;
   height: 64px;
   font-size: 1.15rem;
-  border: 2px solid transparent;
-  background:
-    linear-gradient(var(--am-surface-sub), var(--am-surface-sub)) padding-box,
-    linear-gradient(
-      145deg,
-      rgba(74, 222, 128, 0.85) 0%,
-      rgba(74, 222, 128, 0.15) 45%,
-      rgba(255, 255, 255, 0.08) 100%
-    )
-    border-box;
+  border: 1.5px solid var(--am-avatar-ring);
+  background: var(--am-surface-sub);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+}
+
+.te-public--americano
+  .am-pub-match[data-match-state="played"]
+  .te-pub-pair--win
+  .te-pub-pair__band-player
+  .te-pub-pair__avatar.rj-avatar,
+.te-public--americano
+  .am-pub-match[data-match-state="finished"]
+  .te-pub-pair--win
+  .te-pub-pair__band-player
+  .te-pub-pair__avatar.rj-avatar {
+  border-color: var(--am-avatar-ring-win);
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.35),
-    0 8px 22px rgba(0, 0, 0, 0.42);
+    0 0 0 1px rgba(74, 222, 128, 0.1),
+    0 4px 14px rgba(0, 0, 0, 0.28);
 }
 
 .te-public--americano .am-pub-match .te-pub-pair__band-player .te-pub-pair__avatar .rj-avatar__img {
@@ -3426,6 +3434,10 @@
 @media (max-width: 640px) {
   .te-public--americano .am-pub-round-head__title {
     font-size: clamp(1.45rem, 6.5vw, 28px);
+  }
+
+  .te-public--americano .te-public-section:has(.am-pub-match) {
+    background: transparent;
   }
 
   .te-public--americano .am-pub-match .te-pub-pair__band-player .te-pub-pair__avatar.rj-avatar {
