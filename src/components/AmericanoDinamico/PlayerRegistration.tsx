@@ -10,9 +10,10 @@ import {
   type Tournament,
 } from "../../lib/database";
 import {
+  buildRegistrationPrepSnapshot,
   loadAmericanoDinamicoSnapshot,
+  readRegistrationPlannedCourts,
   readRegistrationPlannedRounds,
-  type AmericanoDinamicoSnapshotV1,
 } from "../../lib/americanoDinamicoStorage";
 import {
   loadAmericanoDinamicoSnapshotMerged,
@@ -130,14 +131,21 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       1,
       Math.floor(Number(tournament?.courts)) || 2
     );
-    setCourtsDraft(fromTournament);
-  }, [tournament?.courts]);
+    const fromSnapshot = tournament?.id
+      ? readRegistrationPlannedCourts(tournament.id)
+      : 0;
+    setCourtsDraft(fromSnapshot > 0 ? fromSnapshot : fromTournament);
+  }, [tournament?.courts, tournament?.id]);
 
   useEffect(() => {
     if (!tournament?.id) return;
-    const fromLocal = readRegistrationPlannedRounds(tournament.id);
-    if (fromLocal > 0) {
-      setRoundsDraft(fromLocal);
+    const fromLocalRounds = readRegistrationPlannedRounds(tournament.id);
+    if (fromLocalRounds > 0) {
+      setRoundsDraft(fromLocalRounds);
+    }
+    const fromLocalCourts = readRegistrationPlannedCourts(tournament.id);
+    if (fromLocalCourts > 0) {
+      setCourtsDraft(fromLocalCourts);
     }
     let cancelled = false;
     void (async () => {
@@ -145,18 +153,29 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         tournament.id
       );
       if (cancelled) return;
-      const fromMerged =
+      const fromMergedRounds =
         snapshot?.totalRounds && snapshot.totalRounds > 0
           ? snapshot.totalRounds
           : readRegistrationPlannedRounds(tournament.id);
-      if (fromMerged > 0) {
-        setRoundsDraft(fromMerged);
+      if (fromMergedRounds > 0) {
+        setRoundsDraft(fromMergedRounds);
+      }
+      const fromMergedCourts =
+        snapshot?.plannedCourts && snapshot.plannedCourts > 0
+          ? snapshot.plannedCourts
+          : readRegistrationPlannedCourts(tournament.id);
+      if (fromMergedCourts > 0) {
+        setCourtsDraft(fromMergedCourts);
+      } else {
+        setCourtsDraft(
+          Math.max(1, Math.floor(Number(tournament?.courts)) || 2)
+        );
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [tournament?.id]);
+  }, [tournament?.id, tournament?.courts]);
 
   const courts = Math.max(1, Math.floor(Number(courtsDraft)) || 1);
   const totalRounds =
@@ -171,13 +190,17 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       try {
         await updateTournament(tournament.id, { courts: safe });
         onTournamentPatched?.({ ...tournament, courts: safe });
+        const snapshot = buildRegistrationPrepSnapshot(tournament.id, players, {
+          plannedCourts: safe,
+        });
+        await persistAmericanoDinamicoSnapshot(tournament.id, snapshot);
       } catch {
         /* la UI ya muestra el draft; al iniciar se vuelve a persistir */
       } finally {
         setSavingCourts(false);
       }
     },
-    [tournament, onTournamentPatched]
+    [tournament, onTournamentPatched, players]
   );
 
   const persistRounds = useCallback(
@@ -188,16 +211,9 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       if (!tournament?.id) return;
       setSavingRounds(true);
       try {
-        const existing = loadAmericanoDinamicoSnapshot(tournament.id);
-        const snapshot: AmericanoDinamicoSnapshotV1 = {
-          version: 1,
-          savedAt: new Date().toISOString(),
-          tournamentPhase: "registration",
+        const snapshot = buildRegistrationPrepSnapshot(tournament.id, players, {
           totalRounds: safe,
-          roster: existing?.roster ?? [],
-          ranking: existing?.ranking ?? [],
-          rounds: existing?.rounds ?? [],
-        };
+        });
         await persistAmericanoDinamicoSnapshot(tournament.id, snapshot);
       } catch {
         /* la UI ya muestra el draft; al iniciar se vuelve a persistir */
@@ -205,7 +221,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         setSavingRounds(false);
       }
     },
-    [tournament?.id]
+    [tournament?.id, players]
   );
 
   const selectedPlayers = useMemo<Player[]>(() => {

@@ -33,8 +33,10 @@ import "../jugadores/riviera-jugadores.css";
 import { navigateToAppHome } from "../../lib/appRouting";
 import {
   buildAmericanoDinamicoSnapshot,
+  buildRegistrationPrepSnapshot,
   clearAmericanoDinamicoSnapshot,
   loadAmericanoDinamicoSnapshot,
+  readRegistrationPlannedCourts,
   readRegistrationPlannedRounds,
   markTournamentAsAmericano,
   persistAmericanoActiveTournamentId,
@@ -191,12 +193,9 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   React.useLayoutEffect(() => {
     if (!resolvedTournamentId || phase !== "registration") return;
     if (players.length === 0) return;
-    const plannedRounds = readRegistrationPlannedRounds(resolvedTournamentId);
-    const draft = buildAmericanoDinamicoSnapshot(
-      players,
-      [],
-      "registration",
-      plannedRounds
+    const draft = buildRegistrationPrepSnapshot(
+      resolvedTournamentId,
+      players
     );
     saveAmericanoDinamicoSnapshot(resolvedTournamentId, draft, {
       skipDispatch: true,
@@ -233,13 +232,9 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           return;
         }
         const plannedRounds = readRegistrationPlannedRounds(resolvedTournamentId);
-        if (plannedRounds > 0) {
-          const prepOnly = buildAmericanoDinamicoSnapshot(
-            [],
-            [],
-            "registration",
-            plannedRounds
-          );
+        const plannedCourts = readRegistrationPlannedCourts(resolvedTournamentId);
+        if (plannedRounds > 0 || plannedCourts > 0) {
+          const prepOnly = buildRegistrationPrepSnapshot(resolvedTournamentId, []);
           void persistAmericanoDinamicoSnapshot(resolvedTournamentId, prepOnly, {
             skipDispatch: true,
           });
@@ -248,12 +243,9 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         clearAmericanoDinamicoSnapshot(resolvedTournamentId);
         return;
       }
-      const plannedRounds = readRegistrationPlannedRounds(resolvedTournamentId);
-      const draft = buildAmericanoDinamicoSnapshot(
-        players,
-        [],
-        "registration",
-        plannedRounds
+      const draft = buildRegistrationPrepSnapshot(
+        resolvedTournamentId,
+        players
       );
       void persistAmericanoDinamicoSnapshot(resolvedTournamentId, draft, {
         skipDispatch: true,

@@ -170,6 +170,8 @@ export interface AmericanoDinamicoSnapshotV1 {
   tournamentPhase?: AmericanoSnapshotTournamentPhase;
   /** Total de rondas planificado (para etiqueta "Final" en la última). */
   totalRounds?: number;
+  /** Canchas planificadas en prep (antes de iniciar la reta). */
+  plannedCourts?: number;
   /** Orden de registro al iniciar (no la tabla ordenada). */
   roster?: AmericanoSnapshotRosterEntry[];
   ranking: AmericanoSnapshotPlayer[];
@@ -267,6 +269,53 @@ export function readRegistrationPlannedRounds(tournamentId: string): number {
   const snap = loadAmericanoDinamicoSnapshot(tournamentId.trim());
   if (!snap?.totalRounds || snap.totalRounds <= 0) return 0;
   return snap.totalRounds;
+}
+
+/** Canchas planificadas en prep (snapshot + respaldo local). */
+export function readRegistrationPlannedCourts(tournamentId: string): number {
+  const snap = loadAmericanoDinamicoSnapshot(tournamentId.trim());
+  if (!snap?.plannedCourts || snap.plannedCourts <= 0) return 0;
+  return snap.plannedCourts;
+}
+
+/** Borrador de registro: conserva rondas/canchas ya guardadas en prep. */
+export function buildRegistrationPrepSnapshot(
+  tournamentId: string,
+  players: AmericanoPlayer[],
+  overrides?: { totalRounds?: number; plannedCourts?: number }
+): AmericanoDinamicoSnapshotV1 {
+  const tid = tournamentId.trim();
+  const existing = loadAmericanoDinamicoSnapshot(tid);
+  const totalRounds = Math.max(
+    overrides?.totalRounds ?? 0,
+    readRegistrationPlannedRounds(tid)
+  );
+  const plannedCourts = Math.max(
+    overrides?.plannedCourts ?? 0,
+    readRegistrationPlannedCourts(tid)
+  );
+  const rosterPlayers: AmericanoPlayer[] =
+    players.length > 0
+      ? players
+      : (existing?.ranking ?? []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          stats: {
+            pointsFor: p.stats.pointsFor,
+            pointsAgainst: p.stats.pointsAgainst,
+            gamesPlayed: p.stats.gamesPlayed,
+            roundsOnBench: p.stats.roundsOnBench,
+          },
+        }));
+  return {
+    ...buildAmericanoDinamicoSnapshot(
+      rosterPlayers,
+      [],
+      "registration",
+      totalRounds
+    ),
+    plannedCourts: plannedCourts > 0 ? plannedCourts : undefined,
+  };
 }
 
 /** Serializa ranking y rondas del Americano Dinámico (incluye fase para vista pública). */

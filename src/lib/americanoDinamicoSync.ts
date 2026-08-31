@@ -41,6 +41,41 @@ export function pickNewerAmericanoSnapshot(
   return snapshotSavedAtMs(remote) >= snapshotSavedAtMs(local) ? remote : local;
 }
 
+/** En prep, combina metadata (rondas/canchas) aunque gane el snapshot más nuevo. */
+export function mergeAmericanoPrepSnapshots(
+  local: AmericanoDinamicoSnapshotV1 | null,
+  remote: AmericanoDinamicoSnapshotV1 | null
+): AmericanoDinamicoSnapshotV1 | null {
+  const base = pickNewerAmericanoSnapshot(local, remote);
+  if (!base) return null;
+
+  const inPrep =
+    base.tournamentPhase === "registration" && base.rounds.length === 0;
+  if (!inPrep) return base;
+
+  const other = base === local ? remote : local;
+  if (!other) return base;
+
+  const totalRounds = Math.max(base.totalRounds ?? 0, other.totalRounds ?? 0);
+  const plannedCourts = Math.max(
+    base.plannedCourts ?? 0,
+    other.plannedCourts ?? 0
+  );
+
+  if (
+    totalRounds === (base.totalRounds ?? 0) &&
+    plannedCourts === (base.plannedCourts ?? 0)
+  ) {
+    return base;
+  }
+
+  return {
+    ...base,
+    totalRounds: totalRounds > 0 ? totalRounds : undefined,
+    plannedCourts: plannedCourts > 0 ? plannedCourts : undefined,
+  };
+}
+
 export async function fetchAmericanoDinamicoSnapshotRemote(
   tournamentId: string
 ): Promise<AmericanoDinamicoSnapshotV1 | null> {
@@ -70,19 +105,25 @@ export async function loadAmericanoDinamicoSnapshotMerged(
   const remote =
     remoteResult.status === "ok" ? remoteResult.snapshot : null;
 
-  const chosen = pickNewerAmericanoSnapshot(local, remote);
+  const chosen = mergeAmericanoPrepSnapshots(local, remote);
   if (!chosen) {
     return { snapshot: null, source: "none", remoteAvailable };
   }
 
-  if (remote && chosen === remote) {
-    saveAmericanoDinamicoSnapshot(tid, remote, { skipDispatch: true });
-    return { snapshot: remote, source: "remote", remoteAvailable };
+  const source: "local" | "remote" | "none" =
+    remote && pickNewerAmericanoSnapshot(local, remote) === remote
+      ? "remote"
+      : local
+        ? "local"
+        : "none";
+
+  if (source === "remote" || chosen !== local) {
+    saveAmericanoDinamicoSnapshot(tid, chosen, { skipDispatch: true });
   }
 
   return {
     snapshot: chosen,
-    source: local ? "local" : "none",
+    source,
     remoteAvailable,
   };
 }
