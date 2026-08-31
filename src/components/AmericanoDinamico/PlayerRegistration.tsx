@@ -3,6 +3,7 @@ import {
   useClubModeEyebrow,
 } from "../../club-experience";
 import type { AmericanoPlayer } from "../../lib/db/types";
+import { computeAmericanoLayoutMetrics } from "../../lib/americanoGenerator";
 import {
   updateTournament,
   type Player,
@@ -115,6 +116,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const [convTouched, setConvTouched] = useState(false);
   const [wantConvocatoria, setWantConvocatoria] = useState(false);
   const [convIsLive, setConvIsLive] = useState(false);
+  const [convCapacity, setConvCapacity] = useState(0);
   const [convLine, setConvLine] = useState("Sin abrir · —");
   const [roundsDraft, setRoundsDraft] = useState<number | "">(3);
   const [courtsDraft, setCourtsDraft] = useState(2);
@@ -225,6 +227,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
     if (!tournament?.id) {
       setConvLine("Sin abrir · —");
       setConvIsLive(false);
+      setConvCapacity(0);
       return;
     }
     try {
@@ -235,6 +238,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       if (!cfg) {
         setConvLine("Sin abrir · —");
         setConvIsLive(false);
+        setConvCapacity(0);
         return;
       }
       const entries = await listOpenGameRegistrationEntries(
@@ -246,6 +250,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       const live =
         Boolean(cfg.public_slug) ||
         (Boolean(cfg.enabled) && cfg.status !== "draft");
+      setConvCapacity(capacity);
       setConvIsLive(live);
       if (live) setWantConvocatoria(true);
       setConvLine(
@@ -271,15 +276,22 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
     }
     if (!snap.isLive && !snap.publicSlug) {
       setConvLine("Sin abrir · —");
+      setConvCapacity(0);
       return;
     }
+    setConvCapacity(snap.capacity);
     setConvLine(
       `${convStatusLabel(snap.status ?? undefined)} · ${snap.confirmed} de ${snap.capacity} confirmados`
     );
   }, []);
 
-  const maxMatches = Math.min(Math.floor(players.length / 4), courts);
-  const benchPerRound = Math.max(0, players.length - maxMatches * 4);
+  /** Con convocatoria, el cupo planificado define partidos/descansos (no solo confirmados). */
+  const layoutPlayerCount =
+    convCapacity >= 4 ? convCapacity : players.length;
+  const { maxMatches, benchPerRound } = computeAmericanoLayoutMetrics(
+    layoutPlayerCount,
+    courts
+  );
 
   const jugadoresOk = players.length >= 4;
   const configOk = totalRounds >= 1 && courts >= 1;

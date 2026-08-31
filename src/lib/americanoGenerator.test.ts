@@ -3,6 +3,7 @@
 import type { AmericanoPlayer, AmericanoRound } from "./db/types";
 import {
   buildMatricesFromScoredRounds,
+  computeAmericanoLayoutMetrics,
   generateAmericanoRound,
   initializeMatrix,
   selectBenchPlayers,
@@ -439,5 +440,21 @@ describe("validateAmericanoRound", () => {
     };
     const result = validateAmericanoRound(round, ps, pm, rm);
     expect(result.ok).toBe(false);
+  });
+});
+
+describe("computeAmericanoLayoutMetrics", () => {
+  it("8 jugadores en 2 canchas: 2 partidos, nadie descansa", () => {
+    expect(computeAmericanoLayoutMetrics(8, 2)).toEqual({
+      maxMatches: 2,
+      benchPerRound: 0,
+    });
+  });
+
+  it("3 confirmados sin cupo completo: 0 partidos, 3 descansan", () => {
+    expect(computeAmericanoLayoutMetrics(3, 2)).toEqual({
+      maxMatches: 0,
+      benchPerRound: 3,
+    });
   });
 });

@@ -17,6 +17,18 @@ const COST = {
 const MAX_EXACT_ACTIVE = 12;
 const MONTE_CARLO_TRIALS = 600;
 
+/** Partidos simultáneos y descansos por ronda según jugadores y canchas. */
+export function computeAmericanoLayoutMetrics(
+  playerCount: number,
+  courts: number
+): { maxMatches: number; benchPerRound: number } {
+  const safeCourts = Math.max(1, Math.floor(courts) || 1);
+  const safePlayers = Math.max(0, Math.floor(playerCount) || 0);
+  const maxMatches = Math.min(Math.floor(safePlayers / 4), safeCourts);
+  const benchPerRound = Math.max(0, safePlayers - maxMatches * 4);
+  return { maxMatches, benchPerRound };
+}
+
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i -= 1) {
