@@ -16,6 +16,20 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.is_master_admin() TO authenticated;
 
+-- ── Diagnóstico REST: 42501 vs P0001 en funciones admin_* (2026-08-30) ──
+-- verify-revoke-anon-admin-functions-20260729.sql solo inspecciona grants DIRECTOS
+-- en proacl (roles anon/authenticated). No detecta EXECUTE heredado vía PUBLIC
+-- (default al CREATE FUNCTION). Por eso puede mostrar granted_to={authenticated}
+-- mientras has_function_privilege('anon', oid, 'EXECUTE') sigue true.
+--
+--   • 42501 permission denied for function → anon bloqueado en capa GRANT
+--     (patrón admin_delete_user_completo: REVOKE FROM PUBLIC + anon).
+--   • P0001 "Solo Admin Principal…" → la RPC SÍ entró; falló is_master_admin()
+--     interno. Indica drift: falta REVOKE FROM PUBLIC, no basta REVOKE FROM anon.
+--
+-- Verificación completa: supabase/sql/verify-grant-revoke-admin-functions-parity.sql
+-- Fix de paridad: supabase/sql/fix-revoke-public-anon-admin-functions-parity.sql
+
 -- ── Modos habilitados por organizador (cuenta/club) ──
 CREATE TABLE IF NOT EXISTS public.organizador_game_modes (
   organizador_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
