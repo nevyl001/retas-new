@@ -82,6 +82,97 @@ function teamPlayersLabel(players: ReadonlyArray<{ name: string }>): string {
   return players.map((p) => p.name.trim()).filter(Boolean).join(" · ");
 }
 
+function MatchPairShowcase({
+  players,
+  playerFotos,
+  align,
+}: {
+  players: ReadonlyArray<{ id: string; name: string }>;
+  playerFotos: Record<string, string | null>;
+  align: "left" | "right";
+}) {
+  const label = teamPlayersLabel(players);
+  const [first, second] = players;
+
+  if (!first) return null;
+
+  return (
+    <div
+      className={`am-match-pair am-match-pair--${align}`}
+      aria-label={label}
+    >
+      <div className="am-match-pair__duo">
+        <div className="am-match-pair__person">
+          <JugadorAvatar
+            fotoUrl={playerFotos[first.id]}
+            nombre={first.name}
+            size="md"
+            className="am-match-pair__avatar"
+          />
+          <span className="am-match-pair__name">{first.name}</span>
+        </div>
+        {second ? (
+          <div className="am-match-pair__person am-match-pair__person--mate">
+            <JugadorAvatar
+              fotoUrl={playerFotos[second.id]}
+              nombre={second.name}
+              size="md"
+              className="am-match-pair__avatar"
+            />
+            <span className="am-match-pair__name">{second.name}</span>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ScoreDial({
+  value,
+  label,
+  onChange,
+  onBump,
+}: {
+  value: string;
+  label: string;
+  onChange: (raw: string) => void;
+  onBump: (delta: number) => void;
+}) {
+  return (
+    <div className="am-match-score-dial">
+      <span className="am-match-score-dial__label">{label}</span>
+      <div className="am-match-score-dial__control">
+        <button
+          type="button"
+          className="am-match-score-dial__step"
+          aria-label={`Menos juegos ${label}`}
+          onClick={() => onBump(-1)}
+        >
+          −
+        </button>
+        <input
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          className="am-match-score-dial__input"
+          value={value}
+          placeholder="0"
+          aria-label={`Juegos ${label}`}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <button
+          type="button"
+          className="am-match-score-dial__step"
+          aria-label={`Más juegos ${label}`}
+          onClick={() => onBump(1)}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export const RoundView: React.FC<RoundViewProps> = ({
   round,
   totalRounds = 0,
@@ -135,7 +226,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
           </span>
         </div>
         <p className="americano-round__hint">
-          Escribe los juegos de cada equipo y confirma. Luego pulsa{" "}
+          Captura los juegos de cada pareja y confirma. Luego pulsa{" "}
           <strong>Ronda finalizada</strong>.
         </p>
       </header>
@@ -169,112 +260,40 @@ export const RoundView: React.FC<RoundViewProps> = ({
                 </span>
               </div>
 
-              <p className="americano-match-card__score-hint">
-                Juegos ganados por equipo
-              </p>
-
-              <div className="americano-match-card__scoreboard">
-                <div className="americano-match-card__score-row">
-                  <div className="americano-match-card__side">
-                    <span className="americano-match-card__side-tag">A</span>
-                    <div className="americano-match-card__players americano-match-card__players--compact">
-                      {match.teamA.map((p) => (
-                        <div key={p.id} className="americano-match-card__player">
-                          <JugadorAvatar
-                            fotoUrl={playerFotos[p.id]}
-                            nombre={p.name}
-                            size="sm"
-                            className="americano-match-card__avatar americano-match-card__avatar--compact"
-                          />
-                          <span className="americano-match-card__player-name">
-                            {p.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="americano-match-card__score-control">
-                    <button
-                      type="button"
-                      className="americano-match-card__score-step"
-                      aria-label={`Menos juegos ${teamALabel}`}
-                      onClick={() => bumpScore("a", -1)}
-                    >
-                      −
-                    </button>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      className="americano-match-card__score-input"
-                      value={a}
-                      placeholder="0"
-                      aria-label={`Juegos ${teamALabel}`}
-                      onChange={(e) => patchScore("a", e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      className="americano-match-card__score-step"
-                      aria-label={`Más juegos ${teamALabel}`}
-                      onClick={() => bumpScore("a", 1)}
-                    >
-                      +
-                    </button>
-                  </div>
+              <div className="am-match-faceoff">
+                <MatchPairShowcase
+                  players={match.teamA}
+                  playerFotos={playerFotos}
+                  align="left"
+                />
+                <div className="am-match-faceoff__vs" aria-hidden>
+                  <span className="am-match-faceoff__vs-line" />
+                  <span className="am-match-faceoff__vs-text">VS</span>
+                  <span className="am-match-faceoff__vs-line" />
                 </div>
+                <MatchPairShowcase
+                  players={match.teamB}
+                  playerFotos={playerFotos}
+                  align="right"
+                />
+              </div>
 
-                <div className="americano-match-card__score-divider" aria-hidden>
-                  vs
-                </div>
-
-                <div className="americano-match-card__score-row">
-                  <div className="americano-match-card__side">
-                    <span className="americano-match-card__side-tag">B</span>
-                    <div className="americano-match-card__players americano-match-card__players--compact">
-                      {match.teamB.map((p) => (
-                        <div key={p.id} className="americano-match-card__player">
-                          <JugadorAvatar
-                            fotoUrl={playerFotos[p.id]}
-                            nombre={p.name}
-                            size="sm"
-                            className="americano-match-card__avatar americano-match-card__avatar--compact"
-                          />
-                          <span className="americano-match-card__player-name">
-                            {p.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="americano-match-card__score-control">
-                    <button
-                      type="button"
-                      className="americano-match-card__score-step"
-                      aria-label={`Menos juegos ${teamBLabel}`}
-                      onClick={() => bumpScore("b", -1)}
-                    >
-                      −
-                    </button>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      className="americano-match-card__score-input"
-                      value={b}
-                      placeholder="0"
-                      aria-label={`Juegos ${teamBLabel}`}
-                      onChange={(e) => patchScore("b", e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      className="americano-match-card__score-step"
-                      aria-label={`Más juegos ${teamBLabel}`}
-                      onClick={() => bumpScore("b", 1)}
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
+              <div className="am-match-score-strip">
+                <ScoreDial
+                  value={a}
+                  label={teamALabel}
+                  onChange={(raw) => patchScore("a", raw)}
+                  onBump={(delta) => bumpScore("a", delta)}
+                />
+                <span className="am-match-score-strip__sep" aria-hidden>
+                  —
+                </span>
+                <ScoreDial
+                  value={b}
+                  label={teamBLabel}
+                  onChange={(raw) => patchScore("b", raw)}
+                  onBump={(delta) => bumpScore("b", delta)}
+                />
               </div>
             </article>
           );
