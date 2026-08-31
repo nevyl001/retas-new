@@ -25,10 +25,13 @@ import { AMERICANO_PUBLIC_POLL_INTERVAL_MS } from "../lib/americano/publicPoll";
 import {
   formatTenantDocumentTitle,
   getPodiumFinalAriaLabel,
+  PublicEventNeutralLoading,
+  PublicScopedBrandGate,
   useClubExperience,
   useOrganizerDisplayName,
 } from "../club-experience";
 import { isPubDsV2Enabled } from "../config/peds";
+import { isAmericanoPublicInitialLoadPending } from "../lib/americano/americanoPublicLoadState";
 import { useAmericanoLiveRealtime } from "../hooks/useAmericanoLiveRealtime";
 import { useVisiblePolling } from "../hooks/useVisiblePolling";
 import {
@@ -151,8 +154,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   const lastMergedFetchRef =
     useRef<FetchAmericanoLivePublicResult | null>(null);
   const cancelledRef = useRef(false);
-  const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
-  const { isClubBranded } = useClubExperience();
+  const organizerNameForTitle = useOrganizerDisplayName(organizadorId ?? undefined);
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -173,18 +175,18 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   useEffect(() => {
     const defaultTitle = formatTenantDocumentTitle(
       null,
-      organizerName,
+      organizerNameForTitle,
       "Americano en vivo"
     );
     document.title = formatTenantDocumentTitle(
       tournamentName,
-      organizerName,
+      organizerNameForTitle,
       "Americano en vivo"
     );
     return () => {
       document.title = defaultTitle;
     };
-  }, [tournamentName, organizerName]);
+  }, [tournamentName, organizerNameForTitle]);
 
   // Metadatos del torneo (nombre, descripción, flags, org): una sola vez por id.
   // Los polls posteriores solo recargan americano_live.
@@ -468,6 +470,111 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
       className="te-public--americano te-public--americano-wide"
       organizadorId={organizadorId}
     >
+      <AmericanoPublicBody
+        organizadorId={organizadorId}
+        fetchStatus={fetchStatus}
+        snapshot={snapshot}
+        loadError={loadError}
+        tournamentName={tournamentName}
+        tournamentDescription={tournamentDescription}
+        tournamentFinished={tournamentFinished}
+        tournamentStarted={tournamentStarted}
+        nivelPublico={nivelPublico}
+        lugarPublico={lugarPublico}
+        eventScheduleStatus={eventScheduleStatus}
+        fechaHorarioLine={fechaHorarioLine}
+        heroMeta={heroMeta}
+        rankedRows={rankedRows}
+        showFinishedPodium={showFinishedPodium}
+        podiumCelebration={podiumCelebration}
+        podiumAvatars={podiumAvatars}
+        playerRatings={playerRatings}
+        playerFotos={playerFotos}
+        liveStatsMap={liveStatsMap}
+        matchHistoryByPlayerId={matchHistoryByPlayerId}
+        selectedStanding={selectedStanding}
+        onPlayerSelect={setSelectedPlayerId}
+        totalForPhaseLabels={totalForPhaseLabels}
+        roundMatchesSorted={roundMatchesSorted}
+        roundFullyScored={roundFullyScored}
+      />
+    </PublicTorneoExpressShell>
+  );
+};
+
+type AmericanoRankedRow = ReturnType<
+  typeof resolveAmericanoRankingFromSnapshot
+>[number];
+
+type AmericanoPublicBodyProps = {
+  organizadorId: string | null;
+  fetchStatus: FetchAmericanoLivePublicResult | null;
+  snapshot: AmericanoDinamicoSnapshotV1 | null;
+  loadError: string | null;
+  tournamentName: string | null;
+  tournamentDescription: string | null;
+  tournamentFinished: boolean;
+  tournamentStarted: boolean;
+  nivelPublico: string | null;
+  lugarPublico: string | null;
+  eventScheduleStatus: ReturnType<typeof getPublicEventScheduleStatus>;
+  fechaHorarioLine: string | null;
+  heroMeta: string;
+  rankedRows: ReturnType<typeof resolveAmericanoRankingFromSnapshot>;
+  showFinishedPodium: boolean;
+  podiumCelebration: ReturnType<typeof buildAmericanoPodiumCelebration>;
+  podiumAvatars: Record<string, string | null>;
+  playerRatings: Record<string, number>;
+  playerFotos: Record<string, string | null>;
+  liveStatsMap: Map<string, UnifiedStandingStats>;
+  matchHistoryByPlayerId: Map<string, AmericanoPublicMatchHistoryEntry[]>;
+  selectedStanding: { row: AmericanoRankedRow; position: number } | null;
+  onPlayerSelect: (playerId: string | null) => void;
+  totalForPhaseLabels: number;
+  roundMatchesSorted: (round: AmericanoSnapshotRound) => AmericanoSnapshotRound["matches"];
+  roundFullyScored: (round: AmericanoSnapshotRound) => boolean;
+};
+
+const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
+  organizadorId,
+  fetchStatus,
+  snapshot,
+  loadError,
+  tournamentName,
+  tournamentDescription,
+  tournamentStarted,
+  nivelPublico,
+  lugarPublico,
+  eventScheduleStatus,
+  fechaHorarioLine,
+  heroMeta,
+  rankedRows,
+  showFinishedPodium,
+  podiumCelebration,
+  podiumAvatars,
+  playerRatings,
+  playerFotos,
+  liveStatsMap,
+  matchHistoryByPlayerId,
+  selectedStanding,
+  onPlayerSelect,
+  totalForPhaseLabels,
+  roundMatchesSorted,
+  roundFullyScored,
+}) => {
+  const { isClubBranded } = useClubExperience();
+  const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
+  const initialLoadPending = isAmericanoPublicInitialLoadPending(
+    fetchStatus,
+    snapshot
+  );
+
+  return (
+    <PublicScopedBrandGate message="Cargando Americano…">
+      {initialLoadPending ? (
+        <PublicEventNeutralLoading message="Cargando marcador en vivo…" />
+      ) : (
+        <>
       {isPubDsV2Enabled ? (
         <PublicHero
           estado={
@@ -713,7 +820,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
             <PublicAmericanoStandingsSection
               rows={rankedRows}
               isFinished={showFinishedPodium}
-              onPlayerSelect={setSelectedPlayerId}
+              onPlayerSelect={onPlayerSelect}
             />
           )}
         </>
@@ -722,7 +829,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
       {selectedStanding ? (
         <PublicAmericanoPlayerPerformance
           open
-          onClose={() => setSelectedPlayerId(null)}
+          onClose={() => onPlayerSelect(null)}
           playerName={selectedStanding.row.name}
           position={selectedStanding.position}
           fotoUrl={playerFotos[selectedStanding.row.id]}
@@ -749,7 +856,9 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
           )}
         </p>
       </footer>
-    </PublicTorneoExpressShell>
+        </>
+      )}
+    </PublicScopedBrandGate>
   );
 };
 

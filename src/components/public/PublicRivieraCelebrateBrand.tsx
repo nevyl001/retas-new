@@ -27,16 +27,10 @@ export const PublicRivieraCelebrateBrand: React.FC<{
   logoOnly = false,
   tagline,
 }) => {
-  const { isScopeBrandingReady, brandingStatus, manifest } =
-    useClubExperience();
+  const { canPaintScopedBrand, manifest } = useClubExperience();
 
-  if (!isScopeBrandingReady || brandingStatus === "pending") {
-    return (
-      <header className="ro-pub-celebrate__brand">
-        <div className="ro-divider-gold ro-divider-gold--wide" aria-hidden />
-        <div className="ro-divider-gold ro-divider-gold--wide" aria-hidden />
-      </header>
-    );
+  if (!canPaintScopedBrand) {
+    return null;
   }
 
   return (
@@ -68,12 +62,9 @@ export const PublicRivieraCelebrateBrand: React.FC<{
 export const PublicRivieraCelebrateClosing: React.FC<{
   torneoNombre?: string;
 }> = ({ torneoNombre }) => {
-  const { isScopeBrandingReady, brandingStatus } = useClubExperience();
+  const { canPaintScopedBrand } = useClubExperience();
 
-  const closing =
-    !isScopeBrandingReady || brandingStatus === "pending"
-      ? ""
-      : `Vive ${RIVIERA_PRODUCT_NAME}`;
+  const closing = !canPaintScopedBrand ? "" : `Vive ${RIVIERA_PRODUCT_NAME}`;
 
   return (
     <footer className="ro-pub-celebrate__footer">
