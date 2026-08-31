@@ -292,12 +292,8 @@
 .ra-public__meta--desc {
   margin: 0;
   font-size: 0.8125rem;
-  line-height: 1.35;
+  line-height: 1.45;
   color: var(--ra-muted);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
 }
 
 .ra-public__badge {
@@ -1210,12 +1206,6 @@
 
   .ra-public__fact-value {
     font-size: clamp(0.82rem, 1.6vw, 0.95rem);
-  }
-
-  .ra-public__meta--desc {
-    display: block;
-    -webkit-line-clamp: unset;
-    overflow: visible;
   }
 
   .ra-public__slots {
