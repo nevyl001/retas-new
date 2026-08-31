@@ -19,7 +19,14 @@ export const PublicRivieraCelebrateBrand: React.FC<{
   showClubIdentity?: boolean;
   /** Solo logo Riviera Open (sin nombre de cuenta). */
   logoOnly?: boolean;
-}> = ({ showTagline = true, showClubIdentity = true, logoOnly = false }) => {
+  /** Sustituye el slogan del manifest (p. ej. podio Americano). */
+  tagline?: string;
+}> = ({
+  showTagline = true,
+  showClubIdentity = true,
+  logoOnly = false,
+  tagline,
+}) => {
   const { isScopeBrandingReady, brandingStatus, manifest } =
     useClubExperience();
 
@@ -50,7 +57,7 @@ export const PublicRivieraCelebrateBrand: React.FC<{
       </p>
       {showTagline ? (
         <p className="ro-pub-celebrate__brand-tagline">
-          {manifest.slogans.primary}
+          {tagline ?? manifest.slogans.primary}
         </p>
       ) : null}
       <div className="ro-divider-gold ro-divider-gold--wide" aria-hidden />

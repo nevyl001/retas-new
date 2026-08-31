@@ -49,6 +49,7 @@ import {
   PublicRivieraCelebrateBrand,
   PublicRivieraCelebrateClosing,
 } from "./public/PublicRivieraCelebrateBrand";
+import { buildAmericanoPodiumCelebration } from "../lib/americano/americanoPodiumCopy";
 import "./public/riviera-public-americano.css";
 
 interface PublicAmericanoViewProps {
@@ -362,6 +363,11 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     [rankedRows]
   );
 
+  const podiumCelebration = React.useMemo(
+    () => buildAmericanoPodiumCelebration(tournamentName),
+    [tournamentName]
+  );
+
   const snapshotPlayerEntries = React.useMemo(() => {
     if (!snapshot) return [];
     const seen = new Set<string>();
@@ -651,21 +657,27 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
 
           {showFinishedPodium && (
             <section
-              className="te-public-section ro-pub-celebrate ro-pub-celebrate--podium te-pub-fade-in"
+              className="te-public-section ro-pub-celebrate ro-pub-celebrate--podium am-pub-podium te-pub-fade-in"
               aria-label={getPodiumFinalAriaLabel(organizerName)}
             >
-              <div className="ro-pub-celebrate__inner">
-                <PublicRivieraCelebrateBrand logoOnly />
-                <div className="ro-divider-gold" aria-hidden />
-                <h2 className="ro-pub-celebrate__headline">¡Felicidades!</h2>
-                <p className="te-public-podium__badge">Americano finalizado</p>
-                <h3 className="te-public-podium__title">
-                  Los 3 primeros lugares
+              <div className="ro-pub-celebrate__inner am-pub-podium__inner">
+                <PublicRivieraCelebrateBrand
+                  logoOnly
+                  tagline={podiumCelebration.tagline}
+                />
+                <span className="ro-pub-celebrate__badge am-pub-podium__badge">
+                  {podiumCelebration.statusBadge}
+                </span>
+                <h2 className="ro-pub-celebrate__headline am-pub-podium__headline">
+                  {podiumCelebration.headline}
+                </h2>
+                <h3 className="te-public-podium__title am-pub-podium__title">
+                  {podiumCelebration.title}
                 </h3>
-                <p className="ro-pub-celebrate__motivational">
-                  Así se juega en Riviera.
+                <p className="ro-pub-celebrate__motivational am-pub-podium__message">
+                  {podiumCelebration.message}
                 </p>
-                <div className="te-public-podium__grid">
+                <div className="te-public-podium__grid am-pub-podium__grid">
                   {rankedRows[0] && (
                     <PublicAmericanoPodiumCard
                       rank={1}
