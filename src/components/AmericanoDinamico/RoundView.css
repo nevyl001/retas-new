@@ -94,29 +94,46 @@
   background: var(--bg-elevated);
 }
 
-/* ── Faceoff: parejas premium (avatar arriba, nombre abajo, duo superpuesto) ── */
-.am-match-faceoff {
+/* ── Tablero: pareja + marcador en la misma columna ── */
+.am-match-board {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
+  align-items: stretch;
   gap: 10px 12px;
-  margin-bottom: 14px;
-  padding: 14px 10px 12px;
+  padding: 14px 12px 16px;
   border-radius: var(--radius-md);
   background: var(--ro-bg-card, var(--bg-card));
   border: 1px solid var(--ro-border-subtle, var(--border-subtle));
 }
 
-.am-match-faceoff__vs {
+.am-match-board__col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.am-match-board__col--a {
+  justify-self: start;
+}
+
+.am-match-board__col--b {
+  justify-self: end;
+}
+
+.am-match-board__vs {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  align-self: center;
   min-width: 2rem;
+  padding-top: 0.5rem;
 }
 
-.am-match-faceoff__vs-line {
+.am-match-board__vs-line {
   display: block;
   width: 1px;
   height: 14px;
@@ -124,11 +141,44 @@
   opacity: 0.65;
 }
 
-.am-match-faceoff__vs-text {
+.am-match-board__vs-text {
   font-size: 0.625rem;
   font-weight: 750;
   letter-spacing: 0.16em;
   color: var(--text-muted);
+}
+
+.am-match-board__score {
+  width: 3.25rem;
+  min-height: 3rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-accent);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: border-color var(--motion-micro), box-shadow var(--motion-micro);
+}
+
+.am-match-board__score::placeholder {
+  color: var(--text-muted);
+  opacity: 0.55;
+}
+
+.am-match-board__score:focus {
+  outline: none;
+  border-color: var(--ro-border-strong, var(--border-accent));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-primary, #141414) 14%, transparent);
+}
+
+.am-match-faceoff,
+.am-match-score-strip {
+  display: none;
 }
 
 .am-match-pair {
@@ -200,107 +250,9 @@
   text-align: center;
 }
 
-/* ── Tira de marcador: una fila, dial por pareja ── */
-.am-match-score-strip {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: end;
-  gap: 10px 12px;
-  padding: 12px 14px 14px;
-  border-radius: var(--radius-md);
-  background: var(--bg-elevated);
-  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
-}
-
+.am-match-score-dial,
 .am-match-score-strip__sep {
-  align-self: center;
-  padding-bottom: 1.35rem;
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--text-muted);
-}
-
-.am-match-score-dial {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.am-match-score-dial__label {
-  display: block;
-  width: 100%;
-  font-size: 0.625rem;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.am-match-score-dial__control {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.am-match-score-dial__step {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.125rem;
-  height: 2.125rem;
-  padding: 0;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-accent);
-  background: var(--ro-bg-card, var(--bg-card));
-  color: var(--text-primary);
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-  transition: border-color var(--motion-micro), background var(--motion-micro);
-}
-
-.am-match-score-dial__step:hover,
-.am-match-score-dial__step:focus-visible {
-  border-color: var(--ro-border-strong, var(--border-accent));
-  background: var(--ro-bg-card-hover, var(--bg-card-hover));
-  outline: none;
-}
-
-.am-match-score-dial__input {
-  width: 2.75rem;
-  min-height: 2.75rem;
-  padding: 0.25rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-accent);
-  background: var(--ro-bg-card, var(--bg-card));
-  color: var(--text-primary);
-  font-family: var(--font-display);
-  font-size: 1.625rem;
-  font-weight: 700;
-  line-height: 1;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  transition: border-color var(--motion-micro), box-shadow var(--motion-micro);
-}
-
-.am-match-score-dial__input::placeholder {
-  color: var(--text-muted);
-  opacity: 0.55;
-}
-
-.am-match-score-dial__input:focus {
-  outline: none;
-  border-color: var(--ro-border-strong, var(--border-accent));
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-primary, #141414) 14%, transparent);
+  display: none;
 }
 
 .americano-round__bench.card-like {
@@ -374,34 +326,23 @@
     padding: 14px 12px 16px;
   }
 
-  .am-match-faceoff {
-    padding: 12px 8px 10px;
+  .am-match-board {
+    padding: 12px 8px 14px;
     gap: 8px 10px;
+  }
+
+  .am-match-board__col {
+    gap: 10px;
   }
 
   .am-match-pair__person {
     max-width: clamp(4rem, 24vw, 5.25rem);
   }
 
-  .am-match-score-strip {
-    padding: 10px 10px 12px;
-    gap: 8px 10px;
-  }
-
-  .am-match-score-dial__input {
-    width: 2.5rem;
-    min-height: 2.625rem;
-    font-size: 1.5rem;
-  }
-
-  .am-match-score-dial__step {
-    width: 2rem;
-    height: 2rem;
-  }
-
-  .am-match-score-strip__sep {
-    font-size: 1.2rem;
-    padding-bottom: 1.2rem;
+  .am-match-board__score {
+    width: 3rem;
+    min-height: 2.875rem;
+    font-size: 1.625rem;
   }
 
   .americano-round__header h3 {
@@ -410,14 +351,9 @@
 }
 
 @media (min-width: 640px) {
-  .am-match-score-dial__input {
-    width: 3rem;
-    min-height: 3rem;
-    font-size: 1.875rem;
-  }
-
-  .am-match-score-dial__step {
-    width: 2.375rem;
-    height: 2.375rem;
+  .am-match-board__score {
+    width: 3.5rem;
+    min-height: 3.25rem;
+    font-size: 2rem;
   }
 }

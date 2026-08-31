@@ -127,49 +127,27 @@ function MatchPairShowcase({
   );
 }
 
-function ScoreDial({
+function ScoreField({
   value,
-  label,
+  ariaLabel,
   onChange,
-  onBump,
 }: {
   value: string;
-  label: string;
+  ariaLabel: string;
   onChange: (raw: string) => void;
-  onBump: (delta: number) => void;
 }) {
   return (
-    <div className="am-match-score-dial">
-      <span className="am-match-score-dial__label">{label}</span>
-      <div className="am-match-score-dial__control">
-        <button
-          type="button"
-          className="am-match-score-dial__step"
-          aria-label={`Menos juegos ${label}`}
-          onClick={() => onBump(-1)}
-        >
-          −
-        </button>
-        <input
-          type="text"
-          inputMode="numeric"
-          autoComplete="off"
-          className="am-match-score-dial__input"
-          value={value}
-          placeholder="0"
-          aria-label={`Juegos ${label}`}
-          onChange={(e) => onChange(e.target.value)}
-        />
-        <button
-          type="button"
-          className="am-match-score-dial__step"
-          aria-label={`Más juegos ${label}`}
-          onClick={() => onBump(1)}
-        >
-          +
-        </button>
-      </div>
-    </div>
+    <input
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      autoComplete="off"
+      className="am-match-board__score"
+      value={value}
+      placeholder="0"
+      aria-label={ariaLabel}
+      onChange={(e) => onChange(e.target.value)}
+    />
   );
 }
 
@@ -243,14 +221,6 @@ export const RoundView: React.FC<RoundViewProps> = ({
               [match.id]: { ...prev[match.id], [side]: sanitized },
             }));
           };
-          const bumpScore = (side: "a" | "b", delta: number) => {
-            const current = readDraft(match, draftScores)[side];
-            const next = Math.max(0, (Number(current) || 0) + delta);
-            setDraftScores((prev) => ({
-              ...prev,
-              [match.id]: { ...prev[match.id], [side]: String(next) },
-            }));
-          };
 
           return (
             <article key={match.id} className="americano-match-card rv-card rv-match-card">
@@ -260,40 +230,38 @@ export const RoundView: React.FC<RoundViewProps> = ({
                 </span>
               </div>
 
-              <div className="am-match-faceoff">
-                <MatchPairShowcase
-                  players={match.teamA}
-                  playerFotos={playerFotos}
-                  align="left"
-                />
-                <div className="am-match-faceoff__vs" aria-hidden>
-                  <span className="am-match-faceoff__vs-line" />
-                  <span className="am-match-faceoff__vs-text">VS</span>
-                  <span className="am-match-faceoff__vs-line" />
+              <div className="am-match-board">
+                <div className="am-match-board__col am-match-board__col--a">
+                  <MatchPairShowcase
+                    players={match.teamA}
+                    playerFotos={playerFotos}
+                    align="left"
+                  />
+                  <ScoreField
+                    value={a}
+                    ariaLabel={`Juegos ${teamALabel}`}
+                    onChange={(raw) => patchScore("a", raw)}
+                  />
                 </div>
-                <MatchPairShowcase
-                  players={match.teamB}
-                  playerFotos={playerFotos}
-                  align="right"
-                />
-              </div>
 
-              <div className="am-match-score-strip">
-                <ScoreDial
-                  value={a}
-                  label={teamALabel}
-                  onChange={(raw) => patchScore("a", raw)}
-                  onBump={(delta) => bumpScore("a", delta)}
-                />
-                <span className="am-match-score-strip__sep" aria-hidden>
-                  —
-                </span>
-                <ScoreDial
-                  value={b}
-                  label={teamBLabel}
-                  onChange={(raw) => patchScore("b", raw)}
-                  onBump={(delta) => bumpScore("b", delta)}
-                />
+                <div className="am-match-board__vs" aria-hidden>
+                  <span className="am-match-board__vs-line" />
+                  <span className="am-match-board__vs-text">VS</span>
+                  <span className="am-match-board__vs-line" />
+                </div>
+
+                <div className="am-match-board__col am-match-board__col--b">
+                  <MatchPairShowcase
+                    players={match.teamB}
+                    playerFotos={playerFotos}
+                    align="right"
+                  />
+                  <ScoreField
+                    value={b}
+                    ariaLabel={`Juegos ${teamBLabel}`}
+                    onChange={(raw) => patchScore("b", raw)}
+                  />
+                </div>
               </div>
             </article>
           );
