@@ -11,6 +11,7 @@ import {
 } from "../../lib/database";
 import {
   loadAmericanoDinamicoSnapshot,
+  readRegistrationPlannedRounds,
   type AmericanoDinamicoSnapshotV1,
 } from "../../lib/americanoDinamicoStorage";
 import {
@@ -134,9 +135,9 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
 
   useEffect(() => {
     if (!tournament?.id) return;
-    const local = loadAmericanoDinamicoSnapshot(tournament.id);
-    if (local?.totalRounds && local.totalRounds > 0) {
-      setRoundsDraft(local.totalRounds);
+    const fromLocal = readRegistrationPlannedRounds(tournament.id);
+    if (fromLocal > 0) {
+      setRoundsDraft(fromLocal);
     }
     let cancelled = false;
     void (async () => {
@@ -144,8 +145,12 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         tournament.id
       );
       if (cancelled) return;
-      if (snapshot?.totalRounds && snapshot.totalRounds > 0) {
-        setRoundsDraft(snapshot.totalRounds);
+      const fromMerged =
+        snapshot?.totalRounds && snapshot.totalRounds > 0
+          ? snapshot.totalRounds
+          : readRegistrationPlannedRounds(tournament.id);
+      if (fromMerged > 0) {
+        setRoundsDraft(fromMerged);
       }
     })();
     return () => {

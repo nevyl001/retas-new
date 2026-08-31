@@ -35,6 +35,7 @@ import {
   buildAmericanoDinamicoSnapshot,
   clearAmericanoDinamicoSnapshot,
   loadAmericanoDinamicoSnapshot,
+  readRegistrationPlannedRounds,
   markTournamentAsAmericano,
   persistAmericanoActiveTournamentId,
   resolveAmericanoTournamentId,
@@ -190,11 +191,12 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   React.useLayoutEffect(() => {
     if (!resolvedTournamentId || phase !== "registration") return;
     if (players.length === 0) return;
+    const plannedRounds = readRegistrationPlannedRounds(resolvedTournamentId);
     const draft = buildAmericanoDinamicoSnapshot(
       players,
       [],
       "registration",
-      0
+      plannedRounds
     );
     saveAmericanoDinamicoSnapshot(resolvedTournamentId, draft, {
       skipDispatch: true,
@@ -230,14 +232,28 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         ) {
           return;
         }
+        const plannedRounds = readRegistrationPlannedRounds(resolvedTournamentId);
+        if (plannedRounds > 0) {
+          const prepOnly = buildAmericanoDinamicoSnapshot(
+            [],
+            [],
+            "registration",
+            plannedRounds
+          );
+          void persistAmericanoDinamicoSnapshot(resolvedTournamentId, prepOnly, {
+            skipDispatch: true,
+          });
+          return;
+        }
         clearAmericanoDinamicoSnapshot(resolvedTournamentId);
         return;
       }
+      const plannedRounds = readRegistrationPlannedRounds(resolvedTournamentId);
       const draft = buildAmericanoDinamicoSnapshot(
         players,
         [],
         "registration",
-        0
+        plannedRounds
       );
       void persistAmericanoDinamicoSnapshot(resolvedTournamentId, draft, {
         skipDispatch: true,

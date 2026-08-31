@@ -262,6 +262,13 @@ export function buildAmericanoSnapshotRound(r: AmericanoRound): AmericanoSnapsho
   };
 }
 
+/** Rondas planificadas en prep (persistidas en snapshot antes de iniciar). */
+export function readRegistrationPlannedRounds(tournamentId: string): number {
+  const snap = loadAmericanoDinamicoSnapshot(tournamentId.trim());
+  if (!snap?.totalRounds || snap.totalRounds <= 0) return 0;
+  return snap.totalRounds;
+}
+
 /** Serializa ranking y rondas del Americano Dinámico (incluye fase para vista pública). */
 export function buildAmericanoDinamicoSnapshot(
   ranking: AmericanoPlayer[],
