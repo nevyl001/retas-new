@@ -88,6 +88,7 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
       mostrar_costo: false,
       premio: "",
       mostrar_premio: false,
+      rama: "",
       cancha: "",
       ...defaultScheduleLocal(),
       duration_minutes: 90,

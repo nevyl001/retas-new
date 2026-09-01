@@ -655,6 +655,47 @@
   width: 100%;
 }
 
+.qm-ws__details-inline .reta-details-form__field--rama {
+  min-width: min(100%, 11.5rem);
+}
+
+.qm-ws__details-inline .reta-details-form__rama-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+}
+
+.qm-ws__details-inline .reta-details-form__rama-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid var(--qm-ink-border);
+  border-radius: 999px;
+  background: var(--qm-ink-inset);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--qm-ink-text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.qm-ws__details-inline .reta-details-form__rama-option--active {
+  border-color: color-mix(in srgb, var(--ro-success, #2f7d53) 55%, var(--qm-ink-border));
+  color: var(--qm-ink-text);
+  background: color-mix(in srgb, var(--ro-success, #2f7d53) 12%, var(--qm-ink-inset));
+}
+
+.qm-ws__details-inline .reta-details-form__rama-option input[type="checkbox"] {
+  width: 0.85rem;
+  height: 0.85rem;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--ro-success, #2f7d53);
+}
+
 .qm-ws__details-inline .home-sheet__field--champ:not(.reta-details-form__field--champ-compact) {
   padding: 0.45rem 0.65rem;
   border: 1px solid var(--qm-ink-border) !important;

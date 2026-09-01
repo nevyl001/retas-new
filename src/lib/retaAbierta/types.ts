@@ -162,6 +162,10 @@ export interface ConvocatoriaAdapterContext {
   defaultPremio?: string;
   /** Si true, incluir premio en WhatsApp. Default false. */
   includePremio?: boolean;
+  /** Etiqueta pública de rama (Varonil / Femenil / Mixta). */
+  defaultRamaLabel?: string;
+  /** Si true, incluir rama en WhatsApp. Default false. */
+  includeRama?: boolean;
   /** Breve descripción de la reta (Detalles). Si hay texto, va en WhatsApp. */
   defaultDescription?: string;
   /** Número o etiqueta de cancha (separado del lugar). */

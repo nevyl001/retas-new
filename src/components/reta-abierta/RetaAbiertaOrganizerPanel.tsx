@@ -56,6 +56,7 @@ export const RetaAbiertaOrganizerPanel: React.FC<Props> = ({
         includeCosto: tournament.mostrar_costo === true,
         premio: tournament.premio ?? null,
         includePremio: tournament.mostrar_premio === true,
+        rama: tournament.rama ?? null,
         description: tournament.description ?? null,
         scheduledAt: tournament.programado_en ?? null,
         scheduledUntil: tournament.programado_hasta ?? null,

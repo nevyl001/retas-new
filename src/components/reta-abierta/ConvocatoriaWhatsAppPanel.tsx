@@ -208,6 +208,12 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   }, [context.includePremio]);
 
   useEffect(() => {
+    if (context.defaultRamaLabel != null) {
+      setRamaLabel(context.defaultRamaLabel);
+    }
+  }, [context.defaultRamaLabel]);
+
+  useEffect(() => {
     setEntityId(context.entityId.trim());
   }, [context.entityId]);
 
@@ -517,6 +523,22 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     };
   };
 
+  const resolveShareRama = (overrides?: { ramaLabel?: string | null }) => {
+    const includeRamaResolved = preferDetailsCostoPremio
+      ? context.includeRama === true
+      : true;
+    if (!includeRamaResolved) return null;
+    if (preferDetailsCostoPremio) {
+      return context.defaultRamaLabel?.trim() || null;
+    }
+    return (
+      overrides?.ramaLabel?.trim() ||
+      ramaLabel.trim() ||
+      context.defaultRamaLabel?.trim() ||
+      null
+    );
+  };
+
   const savePayload = (
     id: string,
     overrides?: {
@@ -569,7 +591,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         typeof category === "string" ? category.trim() || null : null,
       locationLabel: loc.trim() || null,
       titlePublic: title,
-      ramaLabel: ramaLabel.trim() || null,
+      ramaLabel: resolveShareRama(),
       displayRating,
       displayPhoto: true,
       displayFullName,
@@ -624,6 +646,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       includeCosto?: boolean;
       premio?: string | null;
       includePremio?: boolean;
+      ramaLabel?: string | null;
     }
   ) => {
     const dto = buildShareDtoFromOrganizerState(row, entries, context);
@@ -668,12 +691,16 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       : null;
     const resolvedCosto = costoPremio.costo;
     const resolvedPremio = costoPremio.premio;
+    const resolvedRama = resolveShareRama({
+      ramaLabel: overrides?.ramaLabel,
+    });
     return buildRetaAbiertaWhatsAppMessage({
       dto: {
         ...dto,
         scheduled_at: resolvedScheduled,
         duration_minutes: resolvedDuration,
         location_label: resolvedLocation,
+        rama_label: resolvedRama,
         category_label:
           overrides?.categoryLabel?.trim() ||
           categoryLabel.trim() ||

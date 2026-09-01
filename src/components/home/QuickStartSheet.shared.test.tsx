@@ -67,6 +67,7 @@ describe("QuickStartSheet shared form", () => {
       mostrar_costo: false,
       premio: "",
       mostrar_premio: false,
+      rama: "",
       cancha: "1-2",
       programado_en: "2026-07-20T18:00",
       duration_minutes: 120,

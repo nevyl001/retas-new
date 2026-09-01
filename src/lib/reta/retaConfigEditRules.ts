@@ -21,6 +21,7 @@ export type RetaConfigFieldKey =
   | "mostrar_costo"
   | "premio"
   | "mostrar_premio"
+  | "rama"
   | "cancha"
   | "programado_en"
   | "programado_hasta"
@@ -67,6 +68,7 @@ export function fieldEditability(
       "mostrar_costo",
       "premio",
       "mostrar_premio",
+      "rama",
       "cancha",
       "programado_en",
       "programado_hasta",

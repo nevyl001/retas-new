@@ -490,6 +490,30 @@ describe("WhatsApp share message por modo", () => {
     expect(withBoth).toMatch(/🏆 Premio: Trofeo \+ pelotas/);
   });
 
+  it("incluye rama en el mensaje cuando está definida", () => {
+    const text = buildRetaAbiertaWhatsAppMessage({
+      dto: {
+        name: "Reta mixta",
+        mode_type: "reta",
+        scheduled_at: "2026-08-10T22:00:00.000Z",
+        duration_minutes: 90,
+        location_label: "Club Norte",
+        category_label: "5ta Fuerza",
+        rama_label: "Mixta",
+        spots_left: 8,
+        display_rating: false,
+        entries: [],
+        capacity: 8,
+        confirmed_count: 0,
+      },
+      publicUrl: "https://app.example/jugar/ra-rama",
+      clubName: "Riviera Open",
+      includeLugar: true,
+    });
+    expect(text).toContain("Mixta");
+    expect(text).toContain("Nivel 5ta Fuerza");
+  });
+
   it("no imprime costo/premio si el flag está on pero el texto vacío", () => {
     const text = buildRetaAbiertaWhatsAppMessage({
       dto: {

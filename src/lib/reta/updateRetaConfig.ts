@@ -24,6 +24,7 @@ import {
   type RetaConfigFieldKey,
 } from "./retaConfigEditRules";
 import { clampRetaCourts, clampRetaDurationMinutes } from "./retaConfigValidation";
+import { parseRetaRama, type RetaRama } from "./retaRama";
 
 export type RetaConfigFormValues = {
   name: string;
@@ -39,6 +40,7 @@ export type RetaConfigFormValues = {
   mostrar_costo: boolean;
   premio: string;
   mostrar_premio: boolean;
+  rama: RetaRama;
   cancha: string;
   programado_en: string;
   duration_minutes: number;
@@ -194,6 +196,7 @@ export function tournamentToFormValues(
     mostrar_costo: t.mostrar_costo === true,
     premio: t.premio || "",
     mostrar_premio: t.mostrar_premio === true,
+    rama: parseRetaRama(t.rama),
     cancha: t.cancha || "",
     programado_en: isoToDatetimeLocal(t.programado_en),
     duration_minutes: duration,
@@ -297,6 +300,13 @@ function pickAllowedUpdates(
     values.mostrar_premio !== (current.mostrar_premio === true)
   ) {
     updates.mostrar_premio = values.mostrar_premio;
+  }
+  if (allow("rama")) {
+    const next = values.rama || null;
+    const currentRama = parseRetaRama(current.rama);
+    if (next !== (currentRama || null)) {
+      updates.rama = next;
+    }
   }
   if (allow("cancha")) {
     const next = values.cancha.trim() || null;

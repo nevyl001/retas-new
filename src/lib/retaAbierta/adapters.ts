@@ -1,5 +1,6 @@
 import type { ConvocatoriaAdapterContext, OpenGameModeType } from "./types";
 import { convocatoriaProductHeadline } from "./modeWhitelist";
+import { parseRetaRama, retaRamaPublicLabel } from "../reta/retaRama";
 
 export function defaultCapacityForMode(mode: OpenGameModeType): number {
   switch (mode) {
@@ -27,6 +28,8 @@ export function buildTournamentConvocatoriaContext(opts: {
   includeCosto?: boolean;
   premio?: string | null;
   includePremio?: boolean;
+  /** Rama: varonil | femenil | mixta. */
+  rama?: string | null;
   /** Breve descripción desde Detalles de la reta. */
   description?: string | null;
   /** Inicio del encuentro (ISO). */
@@ -52,6 +55,8 @@ export function buildTournamentConvocatoriaContext(opts: {
   const includeLugar = opts.includeLugar !== false;
   const includeCosto = opts.includeCosto === true;
   const includePremio = opts.includePremio === true;
+  const ramaParsed = parseRetaRama(opts.rama);
+  const ramaLabel = retaRamaPublicLabel(ramaParsed);
   const duration = durationMinutesBetween(
     opts.scheduledAt,
     opts.scheduledUntil,
@@ -71,6 +76,8 @@ export function buildTournamentConvocatoriaContext(opts: {
     includeCosto,
     defaultPremio: opts.premio?.trim() || undefined,
     includePremio,
+    defaultRamaLabel: ramaLabel ?? undefined,
+    includeRama: Boolean(ramaLabel),
     defaultDescription: opts.description?.trim() || undefined,
     defaultCancha: opts.canchaLabel?.trim() || undefined,
     defaultCategory: opts.categoryLabel?.trim() || undefined,

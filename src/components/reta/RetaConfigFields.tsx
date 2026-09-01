@@ -6,6 +6,10 @@ import {
   type RetaConfigFieldKey,
 } from "../../lib/reta/retaConfigEditRules";
 import {
+  RETA_RAMA_OPTIONS,
+  type RetaRama,
+} from "../../lib/reta/retaRama";
+import {
   RETA_COURTS_MAX,
   RETA_COURTS_MIN,
   RETA_DURATION_MAX,
@@ -78,6 +82,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   const lugarEd = ed("lugar");
   const costoEd = ed("costo");
   const premioEd = ed("premio");
+  const ramaEd = ed("rama");
   const schedEd = ed("programado_en");
   const durEd = ed("duration_minutes");
 
@@ -489,6 +494,45 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       )
     ) : null;
 
+  const ramaField =
+    showScheduleMeta ? (
+      <div className="home-sheet__field reta-details-form__field reta-details-form__field--rama">
+        <span className="home-sheet__field-label">Rama</span>
+        <div
+          className="reta-details-form__rama-options"
+          role="group"
+          aria-label="Rama del encuentro"
+        >
+          {RETA_RAMA_OPTIONS.map((opt) => (
+            <label
+              key={opt.value}
+              className={`reta-details-form__rama-option${
+                values.rama === opt.value
+                  ? " reta-details-form__rama-option--active"
+                  : ""
+              }`}
+            >
+              <input
+                id={retaConfigFieldId(`rama-${opt.value}`)}
+                name={retaConfigFieldId("rama")}
+                type="checkbox"
+                checked={values.rama === opt.value}
+                disabled={ramaEd.locked}
+                onChange={() =>
+                  patch({
+                    rama: (values.rama === opt.value ? "" : opt.value) as RetaRama,
+                  })
+                }
+                aria-label={opt.label}
+              />
+              <span>{opt.label}</span>
+            </label>
+          ))}
+        </div>
+        {ramaEd.locked ? <FieldLock reason={ramaEd.reason} /> : null}
+      </div>
+    ) : null;
+
   const editAdvancedFields =
     mode === "edit" && !essentials ? (
       <>
@@ -604,6 +648,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         <div className="reta-details-form__row reta-details-form__row--meta">
           {descriptionField}
           {nivelField}
+          {ramaField}
           {lugarField}
           {costoField}
           {premioField}
@@ -618,6 +663,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       {nameField}
       {descriptionField}
       {nivelField}
+      {ramaField}
       {courtsField}
       {mode === "edit" ? (
         <>
