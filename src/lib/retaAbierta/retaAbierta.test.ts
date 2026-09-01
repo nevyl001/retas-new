@@ -514,6 +514,32 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("Nivel 5ta Fuerza");
   });
 
+  it("incluye costo del DTO público sin flags explícitos (copiar en /jugar)", () => {
+    const text = buildRetaAbiertaWhatsAppMessage({
+      dto: {
+        name: "Reta Mixta",
+        mode_type: "reta",
+        scheduled_at: "2026-09-02T01:00:00.000Z",
+        duration_minutes: 120,
+        location_label: "Padelito Warehouse",
+        category_label: "5ta Fuerza",
+        rama_label: "Mixta",
+        capacity: 8,
+        confirmed_count: 6,
+        spots_left: 2,
+        display_rating: true,
+        entries: [],
+        costo: "300",
+        premio: "Overgrips",
+      },
+      publicUrl: "https://app.example/jugar/ra-public",
+      clubName: "Padelito Warehouse",
+    });
+    expect(text).toContain("💵 Costo: 300");
+    expect(text).toContain("🏆 Premio: Overgrips");
+    expect(text).toContain("Mixta");
+  });
+
   it("no imprime costo/premio si el flag está on pero el texto vacío", () => {
     const text = buildRetaAbiertaWhatsAppMessage({
       dto: {

@@ -191,6 +191,10 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   > & {
     /** Breve descripción de la reta (Detalles). Opcional. */
     description?: string | null;
+    /** Costo público (solo si mostrar_costo en entidad). */
+    costo?: string | null;
+    /** Premio público (solo si mostrar_premio en entidad). */
+    premio?: string | null;
   };
   publicUrl: string;
   clubName: string;
@@ -211,10 +215,14 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   const { dto, publicUrl } = opts;
   const displayFullName = opts.displayFullName !== false;
   const includeLugar = opts.includeLugar !== false;
-  const includeCosto = opts.includeCosto === true;
-  const includePremio = opts.includePremio === true;
-  const costo = opts.costo?.trim() || "";
-  const premio = opts.premio?.trim() || "";
+  const costo = opts.costo?.trim() || dto.costo?.trim() || "";
+  const premio = opts.premio?.trim() || dto.premio?.trim() || "";
+  const includeCosto =
+    opts.includeCosto === true ||
+    (opts.includeCosto !== false && Boolean(costo));
+  const includePremio =
+    opts.includePremio === true ||
+    (opts.includePremio !== false && Boolean(premio));
   const mode = dto.mode_type || "reta";
   const headline = resolveHeadline(mode, opts.productHeadline);
   const confirmed = dto.entries.filter((e) => e.status === "confirmed");

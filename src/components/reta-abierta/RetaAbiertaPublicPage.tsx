@@ -725,6 +725,10 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
       dto,
       publicUrl: buildShareRetaOgUrl(slug),
       clubName: organizerName?.trim() || "",
+      includeCosto: Boolean(dto.costo?.trim()),
+      costo: dto.costo,
+      includePremio: Boolean(dto.premio?.trim()),
+      premio: dto.premio,
     });
     const ok = await copyTextToClipboard(message);
     if (ok) {
