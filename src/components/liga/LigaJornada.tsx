@@ -694,6 +694,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     (p) => p.estado === "completed"
   ).length;
   const captureTotal = partidosParaCaptura.length;
+  const courtFilterActive = canchaFilter !== "all";
   const publicPlayUrl = publicLigaJornadaUrl(ligaId, numero);
   const jornadaTitulo = ligaJornadaTitulo(
     numero,
@@ -800,7 +801,11 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
   return (
     <LigaPageShell className="liga-jornada-admin-page">
-      <div className="jornada-admin">
+      <div
+        className={`jornada-admin${
+          courtFilterActive ? " jornada-admin--court-filter" : ""
+        }`}
+      >
         <JornadaAdminHeader
           ligaNombre={detalle.nombre}
           jornadaTitulo={jornadaTitulo}
@@ -871,6 +876,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               onCanchaFilterChange={setCanchaFilter}
             />
 
+            <div className="jornada-rounds">
             {partidosByRondaFiltered.map(([ronda, partidos]) => {
               const completa = rondaCompleta(partidos);
               const enCurso = rondaEnCurso(partidos);
@@ -949,6 +955,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                 </RoundSection>
               );
             })}
+            </div>
           </>
         ) : null}
 
