@@ -166,6 +166,15 @@ export function ligaModalidadLabel(modalidad: LigaModalidad): string {
   return "Liga individual con parejas rotativas";
 }
 
+/** Etiqueta corta para vistas públicas (sin repetir «Liga»). */
+export function ligaModalidadPublicLabel(modalidad: LigaModalidad): string {
+  if (modalidad === "parejas_fijas") return "Parejas fijas";
+  if (modalidad === "parejas_fijas_playoffs") {
+    return "Parejas fijas · semifinales y final";
+  }
+  return "Parejas rotativas";
+}
+
 export function ligaJornadaTitulo(
   numero: number,
   modalidad: LigaModalidad,

@@ -6,7 +6,7 @@ import type {
   RankingItem,
 } from "../../lib/liga/types";
 import { isEquiposModalidad } from "../../lib/liga/ligaModalidad";
-import { ligaModalidadLabel } from "../../lib/liga/types";
+import { ligaModalidadPublicLabel } from "../../lib/liga/types";
 import {
   listJornadaPublicMatches,
 } from "../../lib/liga/publicDisplay";
@@ -19,7 +19,7 @@ import {
   getRankingEquipos,
   publicLigaJornadaUrl,
 } from "../../services/ligaService";
-import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, PublicEventNeutralLoading, PublicScopedBrandGate, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
+import { ClubExperienceScope, PublicEventBrandIdentity, PublicEventNeutralLoading, PublicScopedBrandGate, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
 import { useLigaRealtime } from "../../hooks/useLigaRealtime";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
@@ -250,6 +250,10 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
         (row): row is RankingItem => row != null
       );
 
+  const ligaHeroMeta = esParejasFijas
+    ? `${detalle.equipos.length} parejas · ${detalle.jornadas.length} jornadas`
+    : `${detalle.inscripciones.length} jugadores · ${detalle.jornadas.length} jornadas`;
+
   return (
     <ClubExperienceScope
       organizadorId={detalle.organizador_id}
@@ -275,19 +279,15 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
             }
             nombreEvento={detalle.nombre}
             club={isClubBranded ? organizerName : undefined}
-            categoria={ligaModalidadLabel(detalle.modalidad)}
-            meta="Liga"
+            categoria={ligaModalidadPublicLabel(detalle.modalidad)}
+            meta={ligaHeroMeta}
           />
         ) : (
           <header className="liga-pantalla__header">
-            <PublicClubModeEyebrow modeLabel="Liga" />
             <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
             <p className="liga-pantalla__subtitle">
-              {ligaModalidadLabel(detalle.modalidad)} · {estadoLigaLabel(detalle.estado)} ·{" "}
-              {esParejasFijas
-                ? `${detalle.equipos.length} parejas`
-                : `${detalle.inscripciones.length} jugadores`}{" "}
-              · {detalle.jornadas.length} jornadas
+              {ligaModalidadPublicLabel(detalle.modalidad)} · {estadoLigaLabel(detalle.estado)} ·{" "}
+              {ligaHeroMeta}
             </p>
           </header>
         )}

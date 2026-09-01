@@ -18,7 +18,7 @@ import { isEquiposModalidad, isParejasFijasPlayoffs } from "../../lib/liga/ligaM
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
 import { resolveLigaJugadorPublicFotos } from "../../lib/liga/publicParejaAvatars";
 import { getLigaById } from "../../services/ligaService";
-import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, PublicEventNeutralLoading, PublicScopedBrandGate, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
+import { ClubExperienceScope, PublicEventBrandIdentity, PublicEventNeutralLoading, PublicScopedBrandGate, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
 import { useLigaRealtime } from "../../hooks/useLigaRealtime";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
@@ -590,7 +590,6 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
           />
         ) : (
           <header className="liga-pantalla__header">
-            <PublicClubModeEyebrow modeLabel="Liga" />
             <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
             <p className="liga-pantalla__subtitle">
               Jornada {numero}
