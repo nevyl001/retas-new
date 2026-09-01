@@ -150,6 +150,8 @@ function equipoNombre(e: LigaEquipo): string {
   );
 }
 
+const LIGA_DELETE_CONFIRM_PHRASE = "ELIMINAR";
+
 export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const modeEyebrow = useClubModeEyebrow();
   const isMobile = useMobileViewport(767);
@@ -168,6 +170,8 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteConfirmDraft, setDeleteConfirmDraft] = useState("");
   const toolsRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
   // Generación de carga: si un load() más nuevo arrancó mientras uno viejo
@@ -490,9 +494,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const handleDeleteLiga = async () => {
     if (!detalle) return;
     if (
-      !window.confirm(
-        "¿Seguro que quieres eliminar esta liga? Esta acción no se puede deshacer."
-      )
+      deleteConfirmDraft.trim().toUpperCase() !== LIGA_DELETE_CONFIRM_PHRASE
     ) {
       return;
     }
@@ -500,11 +502,26 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     setError(null);
     try {
       await deleteLiga(ligaId);
+      setDeleteConfirmOpen(false);
+      setDeleteConfirmDraft("");
       navigateLiga("/liga");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
       setBusy(false);
     }
+  };
+
+  const openDeleteConfirm = () => {
+    setOptionsOpen(false);
+    setShareOpen(false);
+    setDeleteConfirmDraft("");
+    setDeleteConfirmOpen(true);
+  };
+
+  const closeDeleteConfirm = () => {
+    if (busy) return;
+    setDeleteConfirmOpen(false);
+    setDeleteConfirmDraft("");
   };
 
   const handleResetLiga = async () => {
@@ -718,8 +735,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
                 role="menuitem"
                 disabled={busy}
                 onClick={() => {
-                  setOptionsOpen(false);
-                  void handleDeleteLiga();
+                  openDeleteConfirm();
                 }}
               >
                 <TablerIcon name="trash" size={18} aria-hidden={false} />
@@ -866,6 +882,91 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
               >
                 Ver vista pública
               </a>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {deleteConfirmOpen ? (
+        <div
+          id="liga-gestionar-delete-panel"
+          className="liga-gestionar-modal-backdrop"
+          role="presentation"
+          onClick={closeDeleteConfirm}
+        >
+          <div
+            className="liga-gestionar-share-modal liga-gestionar-danger-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="liga-gestionar-delete-title"
+            aria-describedby="liga-gestionar-delete-lead"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="liga-gestionar-share-modal__close"
+              aria-label="Cerrar"
+              disabled={busy}
+              onClick={closeDeleteConfirm}
+            >
+              ×
+            </button>
+            <div className="liga-gestionar-danger-modal__lock" aria-hidden>
+              <TablerIcon name="lock" size={22} />
+            </div>
+            <h2
+              id="liga-gestionar-delete-title"
+              className="liga-gestionar-share-modal__title"
+            >
+              Eliminar liga
+            </h2>
+            <p
+              id="liga-gestionar-delete-lead"
+              className="liga-gestionar-share-modal__lead"
+            >
+              Se borrarán jornadas, partidos, parejas y ranking de{" "}
+              <strong>{detalle.nombre}</strong>. Esta acción no se puede deshacer.
+            </p>
+            <label
+              className="liga-gestionar-danger-modal__label"
+              htmlFor="liga-delete-confirm-input"
+            >
+              Escribe <strong>{LIGA_DELETE_CONFIRM_PHRASE}</strong> para confirmar
+            </label>
+            <input
+              id="liga-delete-confirm-input"
+              name="liga-delete-confirm"
+              className="liga-gestionar-danger-modal__input"
+              type="text"
+              value={deleteConfirmDraft}
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              disabled={busy}
+              aria-label={`Confirmar escribiendo ${LIGA_DELETE_CONFIRM_PHRASE}`}
+              onChange={(event) => setDeleteConfirmDraft(event.target.value)}
+            />
+            <div className="liga-gestionar-share-modal__actions liga-gestionar-danger-modal__actions">
+              <button
+                type="button"
+                className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--secondary"
+                disabled={busy}
+                onClick={closeDeleteConfirm}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="liga-gestionar-share-modal__btn liga-gestionar-danger-modal__confirm"
+                disabled={
+                  busy ||
+                  deleteConfirmDraft.trim().toUpperCase() !==
+                    LIGA_DELETE_CONFIRM_PHRASE
+                }
+                onClick={() => void handleDeleteLiga()}
+              >
+                {busy ? "Eliminando…" : "Eliminar liga"}
+              </button>
             </div>
           </div>
         </div>

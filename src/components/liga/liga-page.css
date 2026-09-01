@@ -1878,6 +1878,68 @@
   filter: brightness(1.05);
 }
 
+.liga-gestionar-danger-modal {
+  border-color: color-mix(in srgb, var(--loss, var(--ro-error)) 35%, var(--liga-border));
+}
+
+.liga-gestionar-danger-modal__lock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 0.65rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--loss, var(--ro-error)) 35%, var(--liga-border));
+  background: color-mix(in srgb, var(--loss, var(--ro-error)) 12%, transparent);
+  color: color-mix(in srgb, var(--loss, var(--ro-error)) 85%, #ffffff);
+}
+
+.liga-gestionar-danger-modal__label {
+  display: block;
+  margin: 0 0 0.45rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.liga-gestionar-danger-modal__input {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 1rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-btn, 8px);
+  background: #09090b;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-sizing: border-box;
+}
+
+.liga-gestionar-danger-modal__input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--loss, var(--ro-error)) 55%, var(--liga-border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--loss, var(--ro-error)) 18%, transparent);
+}
+
+.liga-gestionar-danger-modal__actions {
+  justify-content: flex-end;
+}
+
+.liga-gestionar-danger-modal__confirm {
+  border-color: color-mix(in srgb, var(--loss, var(--ro-error)) 45%, transparent);
+  background: color-mix(in srgb, var(--loss, var(--ro-error)) 82%, #000000);
+  color: #ffffff;
+}
+
+.liga-gestionar-danger-modal__confirm:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .liga-gestionar-progress {
   margin-bottom: var(--liga-space-lg);
   padding: var(--liga-space-md);

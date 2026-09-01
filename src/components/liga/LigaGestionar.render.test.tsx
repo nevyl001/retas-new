@@ -261,7 +261,6 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
   });
 
   it("los callbacks destructivos siguen siendo los mismos (llaman al servicio real)", async () => {
-    window.confirm = jest.fn().mockReturnValue(true);
     const { deleteLiga } = jest.requireMock("../../services/ligaService") as {
       deleteLiga: jest.Mock;
     };
@@ -283,6 +282,33 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
 
     await act(async () => {
       eliminarBtn.click();
+      await Promise.resolve();
+    });
+
+    expect(deleteLiga).not.toHaveBeenCalled();
+
+    const confirmInput = container.querySelector(
+      "#liga-delete-confirm-input"
+    ) as HTMLInputElement;
+    expect(confirmInput).not.toBeNull();
+
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value"
+      )?.set;
+      setter?.call(confirmInput, "ELIMINAR");
+      confirmInput.dispatchEvent(new Event("input", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const confirmDeleteBtn = container.querySelector(
+      ".liga-gestionar-danger-modal__confirm"
+    ) as HTMLButtonElement;
+    expect(confirmDeleteBtn.disabled).toBe(false);
+
+    await act(async () => {
+      confirmDeleteBtn.click();
       await Promise.resolve();
     });
 
