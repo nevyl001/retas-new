@@ -373,7 +373,6 @@
 /* LigaGestionar — header y bloques superiores más densos (premium, sin aire muerto) */
 .liga-page.liga-gestionar-a11y .liga-event-header.mode-event-header {
   padding: 0.7rem 0.85rem 0.75rem;
-  padding-right: min(10.5rem, 38vw);
   margin-bottom: 0.65rem;
 }
 
@@ -384,6 +383,20 @@
 
 .liga-page.liga-gestionar-a11y .liga-gestionar-header {
   margin-bottom: 0.5rem;
+}
+
+.liga-page.liga-gestionar-a11y .liga-event-header.mode-event-header {
+  margin-bottom: 0;
+}
+
+.liga-page.liga-gestionar-a11y .liga-gestionar-header .mode-event-header__top {
+  align-items: flex-start;
+  gap: 0.65rem 0.75rem;
+}
+
+.liga-page.liga-gestionar-a11y .liga-gestionar-header .mode-event-header__top .rv-pill {
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .liga-page.liga-gestionar-a11y .liga-gestionar-progress {
@@ -1636,19 +1649,22 @@
 }
 
 .liga-gestionar-header {
-  position: relative;
-  margin-bottom: var(--liga-space-md);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .liga-gestionar-header__tools {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  z-index: 3;
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-self: flex-end;
   gap: 0.5rem;
+  max-width: 100%;
 }
 
 .liga-gestionar-tool-btn {
@@ -2057,8 +2073,9 @@
 
 @media (max-width: 767px) {
   .liga-gestionar-header__tools {
-    position: static;
-    margin-bottom: var(--liga-space-sm);
+    align-self: stretch;
+    justify-content: flex-end;
+    margin-bottom: 0;
   }
 
   .liga-gestionar-options {
