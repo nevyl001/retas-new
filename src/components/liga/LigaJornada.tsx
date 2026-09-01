@@ -12,11 +12,9 @@ import type {
 import {
   actualizarPuntosInscripcion,
   finishJornada,
-  resyncLigaJornadaCareer,
   getLigaById,
   getRanking,
   getRankingEquipos,
-  recalcularPuntosLiga,
   startJornada,
   updateScore,
   updateScoreParejasFijas,
@@ -543,44 +541,9 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
   const handleFinalizarJornada = async () => {
     if (!jornada) return;
-    const msg = jornada.puntos_aplicados
-      ? "¿Recalcular el ranking de toda la liga según los resultados guardados? Esto sobrescribe ajustes manuales."
-      : "¿Finalizar la jornada y sumar los puntos al ranking acumulado?";
-    if (!window.confirm(msg)) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const outcome = await finishJornada(jornada.id);
-      if (outcome.careerSyncOk === false) {
-        setError(
-          outcome.careerSyncMessage ||
-            "La jornada se cerró en la liga, pero no se registró el historial Riviera. Usa «Sincronizar historial» para reintentar."
-        );
-        setMessage(
-          jornada.puntos_aplicados
-            ? "Ranking recalculado; historial Riviera pendiente."
-            : "Jornada finalizada; historial Riviera pendiente."
-        );
-      } else {
-        setMessage(
-          jornada.puntos_aplicados
-            ? "Ranking recalculado desde la base de datos."
-            : "Jornada finalizada. Puntos aplicados al ranking."
-        );
-      }
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleResyncJornadaCareer = async () => {
-    if (!jornada) return;
     if (
       !window.confirm(
-        "¿Sincronizar el historial Riviera de esta jornada?\n\nLa jornada no se reabre. Solo se completan escrituras faltantes."
+        "¿Finalizar la jornada? El ranking se actualizará con los resultados guardados."
       )
     ) {
       return;
@@ -588,37 +551,8 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     setBusy(true);
     setError(null);
     try {
-      const outcome = await resyncLigaJornadaCareer(jornada.id);
-      if (outcome.careerSyncOk === false) {
-        setError(
-          outcome.careerSyncMessage ||
-            "No se pudo sincronizar el historial Riviera."
-        );
-        setMessage("Historial Riviera pendiente.");
-      } else {
-        setMessage("Historial Riviera sincronizado.");
-      }
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleRecalcularLiga = async () => {
-    if (
-      !window.confirm(
-        "¿Recalcular todo el ranking de la liga desde los partidos completados?"
-      )
-    ) {
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await recalcularPuntosLiga(ligaId);
-      setMessage("Ranking de la liga recalculado.");
+      await finishJornada(jornada.id);
+      setMessage("Jornada finalizada. Ranking actualizado.");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -680,8 +614,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
   const puntosPendientes =
     todosPartidosCompletos && !jornada.puntos_aplicados;
-
-  const puedeFinalizar = todosPartidosCompletos;
 
   const totalPartidos = jornada.partidos?.length ?? 0;
   const nParejas = jornada.parejas?.length ?? 0;
@@ -961,12 +893,12 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
         {puntosPendientes ? (
           <div className="jornada-admin-banner" role="status">
-            Todos los partidos tienen resultado. Pulsa Finalizar jornada para
-            aplicar los puntos al ranking acumulado.
+            Todos los partidos tienen resultado. Al guardar el último, el ranking
+            se actualiza solo; si no se reflejó, puedes finalizar la jornada.
           </div>
         ) : null}
 
-        {puedeFinalizar ? (
+        {puntosPendientes ? (
           <div className="jornada-admin-actions">
             <Button
               type="button"
@@ -974,31 +906,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               disabled={busy}
               onClick={handleFinalizarJornada}
             >
-              {jornada.puntos_aplicados
-                ? "Recalcular puntos y ranking"
-                : "Finalizar jornada"}
-            </Button>
-            {jornada.puntos_aplicados ? (
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={busy}
-                title="Completa historial Riviera faltante sin recalcular ranking local"
-                onClick={() => {
-                  void handleResyncJornadaCareer();
-                }}
-              >
-                Sincronizar historial
-              </Button>
-            ) : null}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={busy}
-              onClick={handleRecalcularLiga}
-            >
-              Recalcular toda la liga
+              Finalizar jornada
             </Button>
           </div>
         ) : null}
