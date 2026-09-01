@@ -370,6 +370,73 @@
   flex-direction: column;
 }
 
+/* LigaGestionar — header y bloques superiores más densos (premium, sin aire muerto) */
+.liga-page.liga-gestionar-a11y .liga-event-header.mode-event-header {
+  padding: 0.7rem 0.85rem 0.75rem;
+  padding-right: min(10.5rem, 38vw);
+  margin-bottom: 0.65rem;
+}
+
+.liga-page.liga-gestionar-a11y .mode-event-header__modality,
+.liga-page.liga-gestionar-a11y .mode-event-header__summary {
+  margin: 0.2rem 0 0;
+}
+
+.liga-page.liga-gestionar-a11y .liga-gestionar-header {
+  margin-bottom: 0.5rem;
+}
+
+.liga-page.liga-gestionar-a11y .liga-gestionar-progress {
+  margin-bottom: 0.75rem;
+  padding: 0.65rem 0.85rem;
+}
+
+.liga-page.liga-gestionar-a11y .liga-gestionar-progress__text {
+  margin: 0 0 0.45rem;
+  font-size: 0.9375rem;
+}
+
+.liga-page.liga-gestionar-a11y .liga-gestionar-actions {
+  margin-bottom: 0.75rem;
+}
+
+/* Legacy: si queda el bloque public-link-section en gestionar, compactarlo al mínimo */
+.liga-page.liga-gestionar-a11y .public-link-section {
+  padding: 0.75rem 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.liga-page.liga-gestionar-a11y .public-link-section h3 {
+  margin: 0 0 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.25;
+}
+
+.liga-page.liga-gestionar-a11y .public-link-info {
+  margin-bottom: 0.55rem;
+  padding: 0.45rem 0.55rem;
+}
+
+.liga-page.liga-gestionar-a11y .public-link-info p {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  padding-left: 0.85rem;
+}
+
+.liga-page.liga-gestionar-a11y .public-link-actions {
+  gap: 0.45rem;
+}
+
+.liga-page.liga-gestionar-a11y .public-link-button,
+.liga-page.liga-gestionar-a11y .public-link-preview {
+  min-height: 40px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8125rem;
+}
+
 /* Fase 2A — revisión de robustez responsive. La regla compartida
  * `.has-mobile-sticky-action .liga-page` (mode-mobile-shell.css) usa
  * combinador descendiente, pero has-mobile-sticky-action se aplica al MISMO
@@ -1589,8 +1656,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--liga-space-xs);
-  min-height: 48px;
-  padding: var(--liga-space-sm) var(--liga-space-md);
+  min-height: 44px;
+  padding: 0.45rem 0.75rem;
   border: 1px solid var(--liga-border);
   border-radius: var(--liga-gestionar-radius-btn, 8px);
   background: var(--liga-surface);
@@ -1602,6 +1669,10 @@
   cursor: pointer;
   box-shadow: var(--ro-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
   -webkit-tap-highlight-color: transparent;
+}
+
+.liga-gestionar-tool-btn span {
+  font-size: 0.875rem;
 }
 
 .liga-gestionar-tool-btn:hover {
@@ -1823,9 +1894,9 @@
 }
 
 .liga-page.liga-gestionar-a11y .liga-section-tabs.mode-section-tabs {
-  gap: 0.65rem;
-  padding-bottom: 1rem;
-  margin-bottom: 1rem;
+  gap: 0.5rem;
+  padding-bottom: 0.65rem;
+  margin-bottom: 0.65rem;
 }
 
 .liga-page.liga-gestionar-a11y .liga-section-tabs .mode-section-tabs__btn {
