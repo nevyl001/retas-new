@@ -1546,8 +1546,11 @@ export async function updateRondaProgramacion(
   }
 }
 
-/** Aplica el mismo horario a todos los partidos de la jornada (parejas fijas). */
-export async function updateJornadaHorarioPartidos(
+/**
+ * Guarda la hora de inicio de la jornada (solo ronda 1).
+ * Las rondas siguientes se programan aparte; no se propagan desde aquí.
+ */
+export async function updateJornadaHoraInicio(
   jornadaId: string,
   hora_inicio: string | null,
   canchasDisponibles: number
@@ -1556,8 +1559,9 @@ export async function updateJornadaHorarioPartidos(
 
   const { data: partidos, error: pErr } = await supabase
     .from("liga_partidos")
-    .select("id, cancha")
-    .eq("jornada_id", jornadaId);
+    .select("id, cancha, ronda")
+    .eq("jornada_id", jornadaId)
+    .eq("ronda", 1);
 
   if (pErr) throw new Error(pErr.message);
   if (!partidos?.length) return;
@@ -1575,6 +1579,15 @@ export async function updateJornadaHorarioPartidos(
       canchasDisponibles
     );
   }
+}
+
+/** @deprecated Usar updateJornadaHoraInicio (solo ronda 1). */
+export async function updateJornadaHorarioPartidos(
+  jornadaId: string,
+  hora_inicio: string | null,
+  canchasDisponibles: number
+): Promise<void> {
+  return updateJornadaHoraInicio(jornadaId, hora_inicio, canchasDisponibles);
 }
 
 type PartidoPuntosRow = {

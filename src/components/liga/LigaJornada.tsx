@@ -22,7 +22,7 @@ import {
   updateScoreParejasFijas,
   updateScoreParejasFijasPlayoffs,
   updateJornadaFecha,
-  updateJornadaHorarioPartidos,
+  updateJornadaHoraInicio,
   updateRondaProgramacion,
 } from "../../services/ligaService";
 import {
@@ -56,7 +56,9 @@ import { MatchScoreCard } from "./jornada-admin/MatchScoreCard";
 import { JornadaStandings } from "./jornada-admin/JornadaStandings";
 import {
   filterPartidosByCancha,
+  groupPartidosByRonda,
   parejaLabel,
+  rondaHoraLabel,
 } from "./jornada-admin/jornadaAdminUtils";
 import { ligaGestionarPath, navigateLiga, publicLigaJornadaUrl } from "./ligaNav";
 import type { SimpleRankingPresentationRow } from "../../lib/modePresentation/standingsRowAdapters";
@@ -187,6 +189,23 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     () => detalle?.jornadas.find((j) => j.numero === numero),
     [detalle, numero]
   );
+
+  useEffect(() => {
+    if (!jornada?.partidos?.length) {
+      setJornadaHoraDraft("");
+      setRondaHoraDrafts({});
+      return;
+    }
+    const rounds = groupPartidosByRonda(jornada.partidos);
+    const ronda1 = rounds.find(([ronda]) => ronda === 1)?.[1] ?? [];
+    setJornadaHoraDraft(rondaHoraLabel(ronda1) ?? "");
+    const drafts: Record<number, string> = {};
+    for (const [ronda, partidos] of rounds) {
+      const hora = rondaHoraLabel(partidos);
+      if (hora) drafts[ronda] = hora;
+    }
+    setRondaHoraDrafts(drafts);
+  }, [jornada?.id, jornada?.partidos]);
 
   const esParejasFijas = detalle ? isEquiposModalidad(detalle.modalidad) : false;
   const esPlayoffs = detalle
@@ -493,12 +512,12 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     setBusy(true);
     setError(null);
     try {
-      await updateJornadaHorarioPartidos(
+      await updateJornadaHoraInicio(
         jornada.id,
         jornadaHoraDraft || null,
         detalle?.canchas_disponibles ?? 1
       );
-      setMessage("Horario aplicado a todos los partidos.");
+      setMessage("Hora de inicio guardada (ronda 1).");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -801,7 +820,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               jornada.id
             )}
             hora={jornadaHoraDraft}
-            showBulkHorario={esParejasFijas}
+            showBulkHorario
             disabled={busy}
             busy={busy}
             onFechaChange={(fecha) =>
