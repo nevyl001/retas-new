@@ -1233,9 +1233,10 @@
     var(--brand-surface-alt, #0d1118) 82%,
     rgba(0, 0, 0, 0.55)
   );
-  max-width: min(1520px, 100%);
-  margin: 0 auto;
-  gap: 2rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  gap: clamp(1.35rem, 2.8vw, 2.75rem);
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla__rondas {
@@ -1286,9 +1287,13 @@
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-ronda__matches--courts {
+  --liga-court-card-min: clamp(15.5rem, 22vw, 19.5rem);
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, var(--liga-court-card-min)), 1fr)
+  );
+  gap: clamp(0.75rem, 1.4vw, 1.35rem);
   width: 100%;
   max-width: none;
 }
@@ -1596,15 +1601,6 @@
 }
 
 @media (max-width: 1280px) {
-  .liga-pantalla--jornada-fijas .liga-pantalla__layout--parejas {
-    max-width: min(1100px, 100%);
-  }
-
-  .liga-pantalla--jornada-fijas .liga-pantalla-ronda__matches--courts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-  }
-
   .liga-pantalla--jornada-fijas .liga-pantalla-match--duel .liga-pub-pair-players--lg .liga-pub-pair-players__avatar.rj-avatar,
   .liga-pantalla--jornada-fijas .liga-pantalla-match--duel .liga-pub-pair-players--md .liga-pub-pair-players__avatar.rj-avatar {
     width: 50px;
@@ -1612,11 +1608,13 @@
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 599px) {
   .liga-pantalla--jornada-fijas .liga-pantalla-ronda__matches--courts {
     grid-template-columns: 1fr;
-    gap: 0.9rem;
   }
+}
+
+@media (max-width: 767px) {
 
   .liga-pantalla--jornada-fijas .liga-pantalla-match--duel .liga-pantalla-match__duel {
     padding: 0.9rem 0.85rem 1rem;
