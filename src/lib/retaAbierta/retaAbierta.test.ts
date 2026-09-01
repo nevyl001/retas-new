@@ -510,7 +510,7 @@ describe("WhatsApp share message por modo", () => {
       clubName: "Riviera Open",
       includeLugar: true,
     });
-    expect(text).toContain("Mixta");
+    expect(text).toMatch(/^ROUND ROBIN · MIXTA\n/);
     expect(text).toContain("Nivel 5ta Fuerza");
   });
 
@@ -537,7 +537,7 @@ describe("WhatsApp share message por modo", () => {
     });
     expect(text).toContain("💵 Costo: 300");
     expect(text).toContain("🏆 Premio: Overgrips");
-    expect(text).toContain("Mixta");
+    expect(text).toMatch(/^ROUND ROBIN · MIXTA\n/);
   });
 
   it("no imprime costo/premio si el flag está on pero el texto vacío", () => {

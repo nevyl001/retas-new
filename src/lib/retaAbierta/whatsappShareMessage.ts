@@ -112,11 +112,16 @@ function displayNameForShare(nombre: string, displayFullName: boolean): string {
 
 function resolveHeadline(
   mode: OpenGameModeType,
-  productHeadline?: string
+  productHeadline?: string,
+  ramaLabel?: string | null
 ): string {
   const custom = productHeadline?.trim();
-  if (custom) return custom.toUpperCase();
-  return convocatoriaProductHeadline({ mode });
+  const base = custom
+    ? custom.toUpperCase()
+    : convocatoriaProductHeadline({ mode });
+  const rama = ramaLabel?.trim();
+  if (!rama) return base;
+  return `${base} · ${rama.toUpperCase()}`;
 }
 
 function formatOpenSlotLines(openSlots: number): string[] {
@@ -224,7 +229,7 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     opts.includePremio === true ||
     (opts.includePremio !== false && Boolean(premio));
   const mode = dto.mode_type || "reta";
-  const headline = resolveHeadline(mode, opts.productHeadline);
+  const headline = resolveHeadline(mode, opts.productHeadline, dto.rama_label);
   const confirmed = dto.entries.filter((e) => e.status === "confirmed");
   const confirmedCount = Math.max(
     confirmed.length,
@@ -265,8 +270,6 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   if (lugarParts.length) lines.push(lugarParts.join(" · "));
 
   lines.push(RIVIERA_WHATSAPP_MOTTO);
-
-  if (dto.rama_label?.trim()) lines.push(dto.rama_label.trim());
 
   if (dto.category_label?.trim()) {
     const cat = dto.category_label.trim();
