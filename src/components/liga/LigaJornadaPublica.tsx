@@ -12,7 +12,7 @@ import {
   getPartidoPublicScoreboard,
   partidoMatchWinnerSide,
 } from "../../lib/liga/publicDisplay";
-import { timeInputValue } from "../../lib/liga/programacion";
+import { jornadaHoraInicioLabel } from "../../lib/liga/programacion";
 import type { LigaDetalle, LigaJornada, LigaJornadaPareja, LigaPartido } from "../../lib/liga/types";
 import { isEquiposModalidad, isParejasFijasPlayoffs } from "../../lib/liga/ligaModalidad";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
@@ -344,6 +344,10 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
 
   const jornadaEstadoText = jornadaEstadoLabel(jornada.estado);
   const jornadaFechaText = formatJornadaFechaPublica(jornada.fecha);
+  const jornadaHoraText = jornadaHoraInicioLabel(jornada.partidos ?? []);
+  const jornadaFechaHorarioText = [jornadaFechaText, jornadaHoraText]
+    .filter(Boolean)
+    .join(" · ");
   const canchasDisponibles = Math.max(1, detalle.canchas_disponibles ?? 4);
   const totalPartidos = jornada.partidos?.length ?? 0;
 
@@ -360,7 +364,6 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     const side1 = resolveParejaFace(partido.pareja1_id);
     const side2 = resolveParejaFace(partido.pareja2_id);
     const canchaNum = partido.cancha ?? "?";
-    const horario = timeInputValue(partido.hora_inicio) || null;
     const estadoMod = partidoPublicEstadoMod(partido.estado);
     const estadoText = partidoPublicEstadoLabel(partido.estado);
     const board = getPartidoPublicScoreboard(partido, esParejasFijas);
@@ -435,9 +438,6 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
               <span className="liga-pantalla-match__cancha">
                 Cancha {canchaNum}
               </span>
-              {horario ? (
-                <span className="liga-pantalla-match__hora">{horario}</span>
-              ) : null}
             </div>
             <span
               className={`liga-pantalla-match__status liga-pantalla-match__status--${estadoMod}`}
@@ -500,9 +500,6 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       >
         <header className="liga-pantalla-match__head">
           <span className="liga-pantalla-match__cancha">Cancha {canchaNum}</span>
-          {horario ? (
-            <span className="liga-pantalla-match__hora">{horario}</span>
-          ) : null}
         </header>
         <div className="liga-pantalla-match__board">
           <div
@@ -582,7 +579,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
             nombreEvento={detalle.nombre}
             club={isClubBranded ? organizerName : undefined}
             categoria={`Jornada ${numero}`}
-            fecha={jornadaFechaText}
+            fecha={jornadaFechaHorarioText || undefined}
             meta={
               totalPartidos > 0
                 ? `${partidosByRonda.length} ronda${
@@ -597,9 +594,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
             <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
             <p className="liga-pantalla__subtitle">
               Jornada {numero}
-              {jornada.fecha
-                ? ` · ${jornada.fecha.slice(8, 10)}/${jornada.fecha.slice(5, 7)}/${jornada.fecha.slice(0, 4)}`
-                : ""}
+              {jornadaFechaHorarioText ? ` · ${jornadaFechaHorarioText}` : ""}
               {" · "}
               {jornadaEstadoText}
             </p>

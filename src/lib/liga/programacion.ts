@@ -68,12 +68,21 @@ export function validateCancha(
 
 export function formatPartidoCanchaHorarioLabel(
   cancha: number | null | undefined,
-  horaInicio: string | null | undefined,
-  fechaJornada?: string | null
+  _horaInicio?: string | null | undefined,
+  _fechaJornada?: string | null
 ): string {
-  const parts: string[] = [];
-  const horario = formatPartidoHorarioLabel(fechaJornada, horaInicio);
-  if (cancha != null) parts.push(`Cancha ${cancha}`);
-  if (horario) parts.push(horario);
-  return parts.join(" · ");
+  if (cancha != null) return `Cancha ${cancha}`;
+  return "";
+}
+
+/** Hora de inicio de la jornada (solo ronda 1; no horarios por partido). */
+export function jornadaHoraInicioLabel(
+  partidos: Array<{ ronda?: number; hora_inicio?: string | null }>
+): string | null {
+  for (const partido of partidos) {
+    if ((partido.ronda ?? 1) !== 1) continue;
+    const hora = timeInputValue(partido.hora_inicio);
+    if (hora) return hora;
+  }
+  return null;
 }

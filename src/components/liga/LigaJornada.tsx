@@ -515,7 +515,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         jornadaHoraDraft || null,
         detalle?.canchas_disponibles ?? 1
       );
-      setMessage("Hora de inicio guardada (ronda 1).");
+      setMessage("Hora de inicio guardada.");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");

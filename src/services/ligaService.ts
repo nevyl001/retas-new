@@ -1547,8 +1547,8 @@ export async function updateRondaProgramacion(
 }
 
 /**
- * Guarda la hora de inicio de la jornada (solo ronda 1).
- * Las rondas siguientes se programan aparte; no se propagan desde aquí.
+ * Guarda la hora de inicio de la jornada (referencia interna en ronda 1).
+ * No hay horarios por partido en UI: rondas 2+ se limpian siempre.
  */
 export async function updateJornadaHoraInicio(
   jornadaId: string,
@@ -1579,6 +1579,14 @@ export async function updateJornadaHoraInicio(
       canchasDisponibles
     );
   }
+
+  const { error: clearErr } = await supabase
+    .from("liga_partidos")
+    .update({ hora_inicio: null })
+    .eq("jornada_id", jornadaId)
+    .gt("ronda", 1);
+
+  if (clearErr) throw new Error(clearErr.message);
 }
 
 /** @deprecated Usar updateJornadaHoraInicio (solo ronda 1). */

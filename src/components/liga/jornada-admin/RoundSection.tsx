@@ -1,7 +1,5 @@
 import React from "react";
 import type { LigaPartido } from "../../../lib/liga/types";
-import { rondaHoraLabel } from "./jornadaAdminUtils";
-
 export interface RoundSectionProps {
   ronda: number;
   partidos: LigaPartido[];
@@ -19,12 +17,9 @@ export const RoundSection: React.FC<RoundSectionProps> = ({
   footerActions,
   children,
 }) => {
-  const hora = rondaHoraLabel(partidos);
-  const metaParts: string[] = [];
-  if (hora) metaParts.push(hora);
-  metaParts.push(
-    `${partidos.length} partido${partidos.length === 1 ? "" : "s"}`
-  );
+  const metaParts = [
+    `${partidos.length} partido${partidos.length === 1 ? "" : "s"}`,
+  ];
 
   return (
     <section className="jornada-round" aria-labelledby={`jornada-ronda-${ronda}`}>

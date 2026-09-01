@@ -14,7 +14,7 @@ import {
   type PlayoffsScoreDraft,
 } from "../../../lib/liga/parejasFijasPlayoffsMatchScore";
 import { LigaScoreInput } from "../LigaScoreInput";
-import { parejaPlayerNames, partidoHora } from "./jornadaAdminUtils";
+import { parejaPlayerNames } from "./jornadaAdminUtils";
 
 export type MatchScoreCardMode = "sets" | "playoffs" | "rotativo";
 
@@ -95,7 +95,6 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
 }) => {
   const team1 = parejaPlayerNames(partido.pareja1_id, jornada);
   const team2 = parejaPlayerNames(partido.pareja2_id, jornada);
-  const hora = partidoHora(partido);
   const cancha = partido.cancha != null ? partido.cancha : null;
   const isSaved = partido.estado === "completed";
   const savedLine = savedScoreLine(partido, mode, mode === "playoffs");
@@ -122,12 +121,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
     rotativoDraft.s2.trim() !== "" &&
     !disabled;
 
-  const headerMeta = [
-    cancha != null ? `Cancha ${cancha}` : null,
-    hora || null,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const headerMeta = cancha != null ? `Cancha ${cancha}` : "";
 
   const scoreFieldId = (suffix: string) =>
     `liga-partido-${partido.id}-${suffix}`;

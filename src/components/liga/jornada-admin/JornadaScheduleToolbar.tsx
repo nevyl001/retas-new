@@ -47,7 +47,7 @@ export const JornadaScheduleToolbar: React.FC<JornadaScheduleToolbarProps> = ({
           value={hora}
           disabled={disabled || busy}
           onChange={(event) => onHoraChange(event.target.value)}
-          aria-label="Hora de inicio de la jornada (ronda 1)"
+          aria-label="Hora de inicio de la jornada"
         />
       </label>
     ) : null}
