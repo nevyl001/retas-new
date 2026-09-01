@@ -608,16 +608,9 @@
 .liga-jornada-partidos-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
+  gap: var(--liga-space-md);
+  margin-top: var(--liga-space-md);
   min-width: 0;
-}
-
-@media (min-width: 900px) {
-  .liga-jornada-partidos-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem 1rem;
-  }
 }
 
 .liga-partido-row--card {
@@ -1540,5 +1533,1106 @@
   .liga-jornada-toolbar__tv-link {
     width: auto;
     min-width: 280px;
+  }
+}
+
+/* ─── LigaGestionar — accesibilidad (personas mayores) ─── */
+
+.liga-page.liga-gestionar-a11y {
+  --liga-gestionar-accent: var(--brand-primary, var(--ro-accent));
+  --liga-gestionar-accent-text: var(--ro-text-on-accent, #ffffff);
+  --liga-gestionar-radius-card: 12px;
+  --liga-gestionar-radius-btn: 8px;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.liga-page.liga-gestionar-a11y .mode-event-header__title {
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
+  line-height: 1.35;
+  color: #ffffff;
+}
+
+.liga-page.liga-gestionar-a11y .mode-event-header__modality,
+.liga-page.liga-gestionar-a11y .mode-event-header__summary {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.liga-page.liga-gestionar-a11y .liga-list-item__meta,
+.liga-page.liga-gestionar-a11y .liga-hint,
+.liga-page.liga-gestionar-a11y .liga-empty {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.liga-gestionar-header {
+  position: relative;
+  margin-bottom: var(--liga-space-md);
+}
+
+.liga-gestionar-header__tools {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.liga-gestionar-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--liga-space-xs);
+  min-height: 48px;
+  padding: var(--liga-space-sm) var(--liga-space-md);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-btn, 8px);
+  background: var(--liga-surface);
+  color: #ffffff;
+  font-family: var(--liga-font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  box-shadow: var(--ro-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+  -webkit-tap-highlight-color: transparent;
+}
+
+.liga-gestionar-tool-btn:hover {
+  background: var(--liga-surface-hover);
+  border-color: color-mix(in srgb, var(--liga-gestionar-accent) 45%, var(--liga-border));
+}
+
+.liga-gestionar-tool-btn:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.liga-gestionar-options {
+  position: absolute;
+  top: calc(100% + var(--liga-space-xs));
+  right: 0;
+  min-width: min(280px, calc(100vw - var(--liga-space-lg)));
+  padding: var(--liga-space-xs);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-card, 12px);
+  background: var(--liga-surface-deep);
+  box-shadow: var(--ro-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+}
+
+.liga-gestionar-options__item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  border-radius: calc(var(--liga-radius-md) - 2px);
+  background: transparent;
+  color: #ffffff;
+  font-family: var(--liga-font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.liga-gestionar-options__item:hover:not(:disabled) {
+  background: var(--liga-surface-hover);
+}
+
+.liga-gestionar-options__item--danger {
+  color: #fecaca;
+}
+
+.liga-gestionar-options__item--danger:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.12);
+}
+
+.liga-gestionar-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--liga-space-md);
+  background: var(--ro-scrim-modal, rgba(0, 0, 0, 0.55));
+  box-sizing: border-box;
+}
+
+.liga-gestionar-share-modal {
+  position: relative;
+  width: min(100%, 480px);
+  max-height: min(92dvh, 640px);
+  overflow-y: auto;
+  padding: var(--liga-space-lg);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-card, 12px);
+  background: var(--liga-surface-deep);
+  box-shadow: var(--ro-shadow-md, 0 8px 24px rgba(0, 0, 0, 0.2));
+  color: #ffffff;
+  box-sizing: border-box;
+}
+
+.liga-gestionar-share-modal__close {
+  position: absolute;
+  top: var(--liga-space-md);
+  right: var(--liga-space-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-btn, 8px);
+  background: var(--liga-surface);
+  color: #ffffff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.liga-gestionar-share-modal__close:hover {
+  background: var(--liga-surface-hover);
+}
+
+.liga-gestionar-share-modal__title {
+  margin: 0 var(--liga-space-xl) var(--liga-space-sm) 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #ffffff;
+}
+
+.liga-gestionar-share-modal__lead {
+  margin: 0 0 var(--liga-space-md);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.liga-gestionar-share-modal__url-label {
+  display: block;
+  margin-bottom: var(--liga-space-xs);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.liga-gestionar-share-modal__url {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  margin-bottom: var(--liga-space-md);
+  padding: var(--liga-space-sm) var(--liga-space-md);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-btn, 8px);
+  background: var(--liga-surface);
+  color: #ffffff;
+  font-family: var(--liga-font-body);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.liga-gestionar-share-modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--liga-space-sm);
+}
+
+.liga-gestionar-share-modal__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: var(--liga-space-sm) var(--liga-space-md);
+  border-radius: var(--liga-gestionar-radius-btn, 8px);
+  font-family: var(--liga-font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.liga-gestionar-share-modal__btn--primary {
+  border: 1px solid transparent;
+  background: var(--liga-gestionar-accent);
+  color: var(--liga-gestionar-accent-text);
+}
+
+.liga-gestionar-share-modal__btn--whatsapp {
+  border: 1px solid var(--liga-border);
+  background: var(--liga-surface);
+  color: #ffffff;
+}
+
+.liga-gestionar-share-modal__btn--secondary {
+  border: 1px solid var(--liga-border);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.liga-gestionar-share-modal__btn:hover {
+  filter: brightness(1.05);
+}
+
+.liga-gestionar-progress {
+  margin-bottom: var(--liga-space-lg);
+  padding: var(--liga-space-md);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-card, 12px);
+  background: var(--liga-surface);
+  box-shadow: var(--ro-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+}
+
+.liga-gestionar-progress__text {
+  margin: 0 0 0.65rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #ffffff;
+}
+
+.liga-gestionar-progress__track {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.liga-gestionar-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--liga-gestionar-accent);
+  transition: width 250ms ease;
+}
+
+.liga-page.liga-gestionar-a11y .liga-section-tabs.mode-section-tabs {
+  gap: 0.65rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.liga-page.liga-gestionar-a11y .liga-section-tabs .mode-section-tabs__btn {
+  min-height: 48px;
+  padding: 0.65rem 1.15rem;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.liga-page.liga-gestionar-a11y .liga-gestionar-actions .riviera-btn {
+  min-height: 48px;
+  font-size: 1rem;
+}
+
+.liga-jornadas-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--liga-space-md);
+}
+
+@media (min-width: 768px) {
+  .liga-jornadas-list {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+
+.liga-jornadas-list__item {
+  margin: 0;
+  min-width: 0;
+}
+
+.liga-jornada-row {
+  display: flex;
+  align-items: center;
+  gap: var(--liga-space-md);
+  width: 100%;
+  min-height: 64px;
+  padding: var(--liga-space-md);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-card, 12px);
+  background: var(--liga-surface);
+  color: #ffffff;
+  font-family: var(--liga-font-body);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--ro-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.liga-jornada-row:hover:not(:disabled) {
+  background: var(--liga-surface-hover);
+  border-color: color-mix(in srgb, var(--liga-gestionar-accent) 35%, var(--liga-border));
+  transform: translateY(-1px);
+  box-shadow: var(--ro-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.12));
+}
+
+.liga-jornada-row:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.liga-jornada-row:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.liga-jornada-row__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.liga-jornada-row__icon--completed {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.liga-jornada-row__icon--upcoming {
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.liga-jornada-row__icon--in_progress {
+  background: rgba(74, 222, 128, 0.12);
+}
+
+.liga-jornada-row__icon--pareja {
+  background: rgba(148, 163, 184, 0.18);
+  font-size: 1.15rem;
+}
+
+.liga-jornada-row--pareja {
+  cursor: default;
+}
+
+.liga-jornada-row--pareja:hover {
+  transform: none;
+}
+
+.liga-jornada-row__cta--danger {
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.1);
+  color: #fecaca;
+}
+
+.liga-jornada-row__cta--danger:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.18);
+  filter: none;
+}
+
+.liga-jornada-row__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.liga-jornada-row__title {
+  display: block;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #ffffff;
+}
+
+.liga-jornada-row__meta {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.liga-jornada-row__cta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--liga-space-xs);
+  min-height: 48px;
+  padding: var(--liga-space-sm) var(--liga-space-md);
+  border-radius: var(--liga-gestionar-radius-btn, 8px);
+  background: var(--liga-gestionar-accent);
+  color: var(--liga-gestionar-accent-text);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .liga-gestionar-header__tools {
+    position: static;
+    margin-bottom: var(--liga-space-sm);
+  }
+
+  .liga-gestionar-options {
+    right: auto;
+    left: 0;
+  }
+
+  .liga-jornada-row {
+    flex-wrap: wrap;
+  }
+
+  .liga-jornada-row__cta {
+    width: 100%;
+    justify-content: center;
+    margin-top: var(--liga-space-xs);
+  }
+}
+
+@media (min-width: 768px) {
+  .liga-jornada-row {
+    flex-wrap: wrap;
+    align-content: flex-start;
+  }
+
+  .liga-jornada-row__main {
+    flex: 1 1 140px;
+  }
+
+  .liga-jornada-row__cta {
+    flex: 1 1 100%;
+    justify-content: center;
+    margin-top: var(--liga-space-xs);
+  }
+}
+
+/* ─── LigaJornada — captura de resultados (accesibilidad) ─── */
+
+.liga-page.liga-jornada-capture-a11y {
+  --liga-gestionar-accent: var(--brand-primary, var(--ro-accent));
+  --liga-gestionar-accent-text: var(--ro-text-on-accent, #ffffff);
+  --liga-gestionar-radius-card: 12px;
+  --liga-gestionar-radius-btn: 8px;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.liga-jornada-section {
+  margin-bottom: var(--liga-space-lg);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-card, 12px);
+  background: var(--liga-surface);
+  box-shadow: var(--ro-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+  overflow: hidden;
+}
+
+.liga-jornada-section--config {
+  background: color-mix(in srgb, var(--liga-surface) 92%, var(--liga-surface-deep));
+}
+
+.liga-jornada-section--results {
+  border-color: color-mix(
+    in srgb,
+    var(--liga-gestionar-accent) 35%,
+    var(--liga-border)
+  );
+}
+
+.liga-jornada-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--liga-space-md);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--liga-space-md) var(--liga-space-lg);
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-family: var(--liga-font-body);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.liga-jornada-section__head--static {
+  cursor: default;
+}
+
+.liga-jornada-section__title {
+  line-height: 1.35;
+}
+
+.liga-jornada-section__body {
+  padding: 0 var(--liga-space-lg) var(--liga-space-lg);
+}
+
+.liga-jornada-section__body > * + * {
+  margin-top: var(--liga-space-md);
+}
+
+.liga-jornada-start-block {
+  margin-bottom: var(--liga-space-lg);
+  padding: var(--liga-space-lg);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-card, 12px);
+  background: var(--liga-surface);
+  box-shadow: var(--ro-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+}
+
+.liga-jornada-start-block__lead {
+  margin: 0 0 var(--liga-space-md);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #ffffff;
+}
+
+.liga-jornada-start-block__btn.riviera-btn {
+  min-height: 52px;
+  width: 100%;
+  max-width: 420px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.liga-partido-capture-card {
+  padding: var(--liga-space-lg);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-card, 12px);
+  background: var(--liga-surface-deep);
+  box-shadow: var(--ro-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+}
+
+.liga-partido-capture-card--done {
+  background: color-mix(in srgb, var(--liga-green-dim) 35%, var(--liga-surface-deep));
+  border-color: color-mix(in srgb, var(--liga-green) 35%, var(--liga-border));
+}
+
+.liga-partido-capture-card--locked {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.liga-partido-capture-card__index {
+  margin: 0 0 var(--liga-space-md);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.liga-partido-capture-card__matchup {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--liga-space-md);
+  align-items: center;
+  margin-bottom: var(--liga-space-md);
+}
+
+.liga-partido-capture-card__team {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #ffffff;
+  word-break: break-word;
+}
+
+.liga-partido-capture-card__team--right {
+  text-align: right;
+}
+
+.liga-partido-capture-card__vs {
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.liga-programacion-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--liga-space-md);
+  margin-bottom: var(--liga-space-md);
+  padding: var(--liga-space-sm) var(--liga-space-md);
+  border-radius: var(--liga-gestionar-radius-btn, 8px);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.liga-programacion-summary__text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.liga-set-capture {
+  margin-bottom: var(--liga-space-md);
+}
+
+.liga-set-capture__head {
+  margin-bottom: var(--liga-space-sm);
+}
+
+.liga-set-capture__label {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #ffffff;
+}
+
+.liga-set-capture__hint {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.liga-set-capture__board {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--liga-space-sm);
+  align-items: center;
+}
+
+.liga-set-capture__inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--liga-space-sm);
+}
+
+.liga-set-capture__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--liga-space-sm);
+  min-width: 0;
+}
+
+.liga-set-capture__team {
+  width: 100%;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.88);
+  word-break: break-word;
+}
+
+.liga-set-capture__vs {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.liga-score-input {
+  box-sizing: border-box;
+  width: 60px;
+  min-width: 60px;
+  height: 56px;
+  padding: 0;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--liga-gestionar-accent) 45%,
+    var(--liga-border)
+  );
+  border-radius: var(--liga-gestionar-radius-btn, 8px);
+  background: color-mix(in srgb, var(--liga-surface) 88%, var(--liga-surface-deep));
+  color: #ffffff;
+  font-family: var(--liga-font-body);
+  font-size: 1.625rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.liga-score-input:focus {
+  outline: none;
+  border-color: var(--liga-gestionar-accent);
+  box-shadow: 0 0 0 2px color-mix(
+    in srgb,
+    var(--liga-gestionar-accent) 35%,
+    transparent
+  );
+}
+
+.liga-score-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.liga-sets-form__set3 {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    max-height 0.25s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    margin 0.2s ease;
+  margin-top: 0;
+}
+
+.liga-sets-form__set3--visible {
+  max-height: 160px;
+  opacity: 1;
+  transform: translateY(0);
+  margin-top: var(--liga-space-sm);
+}
+
+.liga-partido-save-btn.riviera-btn {
+  width: 100%;
+  min-height: 52px;
+  margin-top: var(--liga-space-sm);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.liga-partido-saved-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--liga-space-sm);
+}
+
+.liga-partido-saved-summary__text {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #ffffff;
+}
+
+.liga-sets-form__rules-details {
+  margin-bottom: var(--liga-space-md);
+}
+
+.liga-sets-form__rules-toggle {
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.liga-sets-form__rules {
+  margin: var(--liga-space-sm) 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.liga-page.liga-jornada-capture-a11y .liga-gestionar-progress {
+  margin-bottom: var(--liga-space-lg);
+}
+
+.liga-jornada-capture-progress {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: var(--liga-space-sm) 0 var(--liga-space-md);
+  background: color-mix(in srgb, var(--liga-surface) 94%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.liga-jornada-cancha-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--liga-space-xs);
+  margin-bottom: var(--liga-space-md);
+}
+
+.liga-jornada-cancha-filters__chip {
+  min-height: 40px;
+  padding: 0 var(--liga-space-md);
+  border: 1px solid var(--liga-border);
+  border-radius: 999px;
+  background: var(--liga-surface-deep);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--liga-font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.liga-jornada-cancha-filters__chip--active {
+  border-color: color-mix(
+    in srgb,
+    var(--liga-gestionar-accent) 55%,
+    var(--liga-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--liga-gestionar-accent) 18%,
+    var(--liga-surface-deep)
+  );
+  color: #ffffff;
+}
+
+.liga-jornada-partidos-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--liga-space-xs);
+}
+
+.liga-partido-accordion {
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-card, 12px);
+  background: var(--liga-surface-deep);
+  overflow: hidden;
+}
+
+.liga-partido-accordion--done {
+  background: color-mix(in srgb, var(--liga-green-dim) 28%, var(--liga-surface-deep));
+  border-color: color-mix(in srgb, var(--liga-green) 30%, var(--liga-border));
+}
+
+.liga-partido-accordion--open {
+  border-color: color-mix(
+    in srgb,
+    var(--liga-gestionar-accent) 40%,
+    var(--liga-border)
+  );
+}
+
+.liga-partido-accordion--locked {
+  opacity: 0.55;
+}
+
+.liga-partido-accordion--locked .liga-partido-accordion__head {
+  pointer-events: none;
+}
+
+.liga-partido-accordion__head {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--liga-space-sm);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--liga-space-sm) var(--liga-space-md);
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-family: var(--liga-font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.liga-partido-accordion--done .liga-partido-accordion__head {
+  min-height: 40px;
+  padding-block: 0.45rem;
+}
+
+.liga-partido-accordion__status {
+  flex-shrink: 0;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.liga-partido-accordion__summary {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.liga-partido-accordion__rules {
+  position: relative;
+}
+
+.liga-partido-accordion__rules summary {
+  list-style: none;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+}
+
+.liga-partido-accordion__rules summary::-webkit-details-marker {
+  display: none;
+}
+
+.liga-partido-accordion__rules p {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 2;
+  width: min(280px, 70vw);
+  margin: 0;
+  padding: var(--liga-space-sm) var(--liga-space-md);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-gestionar-radius-btn, 8px);
+  background: var(--liga-surface);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--ro-shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.2));
+}
+
+.liga-partido-accordion__body {
+  padding: 0 var(--liga-space-md) var(--liga-space-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.liga-partido-accordion__form-inner {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-top: var(--liga-space-sm);
+}
+
+.liga-partido-accordion__matchup {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--liga-space-md);
+  align-items: center;
+  margin: 0 0 var(--liga-space-sm);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #ffffff;
+}
+
+.liga-partido-accordion__team {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.liga-partido-accordion__team--right {
+  text-align: right;
+}
+
+.liga-partido-accordion__matchup-vs {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.liga-programacion-summary--compact {
+  margin-bottom: var(--liga-space-sm);
+  padding: 0.35rem var(--liga-space-sm);
+}
+
+.liga-sets-form--compact {
+  margin-top: 0;
+}
+
+.liga-sets-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--liga-space-sm);
+}
+
+.liga-set-capture--compact {
+  margin-bottom: 0;
+}
+
+.liga-set-capture--compact .liga-set-capture__head {
+  margin-bottom: 0.25rem;
+}
+
+.liga-set-capture--compact .liga-set-capture__label {
+  font-size: 0.875rem;
+}
+
+.liga-set-capture--compact .liga-set-capture__board {
+  gap: 0.35rem;
+}
+
+.liga-set-capture--compact .liga-score-input {
+  width: 56px;
+  min-width: 56px;
+  height: 52px;
+  font-size: 1.5rem;
+}
+
+.liga-sets-form--compact .liga-partido-save-btn.riviera-btn {
+  min-height: 52px;
+  margin-top: var(--liga-space-sm);
+}
+
+.liga-page.liga-jornada-capture-a11y .liga-ranking-table {
+  font-size: 0.9375rem;
+}
+
+.liga-page.liga-jornada-capture-a11y .liga-ranking-table th {
+  font-size: 0.9375rem;
+  letter-spacing: 0.03em;
+}
+
+.liga-page.liga-jornada-capture-a11y .liga-jornada-ranking-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 640px) {
+  .liga-sets-form__grid {
+    grid-template-columns: 1fr;
+    gap: var(--liga-space-xs);
+  }
+
+  .liga-partido-accordion__matchup {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .liga-partido-accordion__team--right {
+    text-align: center;
+  }
+
+  .liga-partido-capture-card__matchup,
+  .liga-set-capture__board {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .liga-partido-capture-card__vs,
+  .liga-set-capture__vs {
+    justify-self: center;
+  }
+
+  .liga-partido-capture-card__team--right {
+    text-align: left;
   }
 }

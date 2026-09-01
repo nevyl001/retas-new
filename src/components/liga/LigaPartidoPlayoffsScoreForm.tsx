@@ -4,32 +4,23 @@ import {
   emptyPlayoffsScoreDraft,
   needsPlayoffsStbDraft,
   parsePlayoffsSetScoresJson,
-  playoffsMatchDisplay,
-  playoffsSetsFromDraft,
-  playoffsTotalsFromDraft,
-  previewPlayoffsPointsFromDraft,
   type PlayoffsScoreDraft,
 } from "../../lib/liga/parejasFijasPlayoffsMatchScore";
 import { Button } from "../ui";
+import { LigaScoreInput } from "./LigaScoreInput";
 
 type Props = {
   partido: LigaPartido;
   draft: PlayoffsScoreDraft;
-  /** Nombre visible de la pareja local (izquierda / games p1). */
   pareja1Label: string;
-  /** Nombre visible de la pareja visitante (derecha / games p2). */
   pareja2Label: string;
   disabled?: boolean;
   busy?: boolean;
+  justSaved?: boolean;
+  compact?: boolean;
   onChange: (next: PlayoffsScoreDraft) => void;
   onSave: () => void;
 };
-
-function shortPairLabel(label: string): string {
-  const trimmed = label.trim();
-  if (trimmed.length <= 22) return trimmed;
-  return `${trimmed.slice(0, 20)}…`;
-}
 
 export function getPlayoffsDraftForPartido(
   partido: LigaPartido,
@@ -59,187 +50,129 @@ export function getPlayoffsDraftForPartido(
   return base;
 }
 
+function PlayoffsSetRow({
+  label,
+  p1,
+  p2,
+  disabled,
+  compact,
+  onChangeP1,
+  onChangeP2,
+  ariaLeft,
+  ariaRight,
+}: {
+  label: string;
+  p1: string;
+  p2: string;
+  disabled?: boolean;
+  compact?: boolean;
+  onChangeP1: (v: string) => void;
+  onChangeP2: (v: string) => void;
+  ariaLeft: string;
+  ariaRight: string;
+}) {
+  return (
+    <div className={`liga-set-capture${compact ? " liga-set-capture--compact" : ""}`}>
+      <div className="liga-set-capture__head">
+        <span className="liga-set-capture__label">{label}</span>
+      </div>
+      <div className="liga-set-capture__inputs">
+        <LigaScoreInput
+          value={p1}
+          onChange={onChangeP1}
+          disabled={disabled}
+          ariaLabel={ariaLeft}
+        />
+        <span className="liga-set-capture__vs" aria-hidden>
+          vs
+        </span>
+        <LigaScoreInput
+          value={p2}
+          onChange={onChangeP2}
+          disabled={disabled}
+          ariaLabel={ariaRight}
+        />
+      </div>
+    </div>
+  );
+}
+
 export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
-  partido,
   draft,
   pareja1Label,
   pareja2Label,
   disabled,
   busy,
+  justSaved,
+  compact = false,
   onChange,
   onSave,
 }) => {
   const locked = Boolean(disabled || busy);
   const showStb = needsPlayoffsStbDraft(draft);
-  const sets = playoffsSetsFromDraft(draft);
-  const totals = playoffsTotalsFromDraft(draft);
-  const preview = previewPlayoffsPointsFromDraft(draft);
-  const isCompleted = partido.estado === "completed";
   const left = pareja1Label.trim() || "Pareja 1";
   const right = pareja2Label.trim() || "Pareja 2";
 
-  const saved =
-    isCompleted &&
-    partido.score_pareja1 != null &&
-    partido.score_pareja2 != null
-      ? playoffsMatchDisplay(
-          partido.score_pareja1,
-          partido.score_pareja2,
-          parsePlayoffsSetScoresJson(partido.set_scores)
-        )
-      : null;
-
   return (
-    <div className="liga-playoffs-score">
-      {saved ? (
-        <p className="liga-playoffs-score__saved">
-          Resultado guardado: {saved}
-        </p>
-      ) : null}
-
-      <div className="liga-playoffs-score__board" role="group" aria-label="Marcador">
-        <div className="liga-playoffs-score__board-head">
-          <span className="liga-playoffs-score__board-label" aria-hidden>
-            {" "}
-          </span>
-          <span className="liga-playoffs-score__board-pair" title={left}>
-            {shortPairLabel(left)}
-          </span>
-          <span className="liga-playoffs-score__board-pair" title={right}>
-            {shortPairLabel(right)}
-          </span>
-        </div>
-
-        <div className="liga-playoffs-score__board-row">
-          <span className="liga-playoffs-score__board-label">Set 1</span>
-          <input
-            type="number"
-            min={0}
-            disabled={locked}
-            value={draft.set1.p1}
-            onChange={(e) =>
-              onChange({
-                ...draft,
-                set1: { ...draft.set1, p1: e.target.value },
-                woWinner: null,
-              })
-            }
-            aria-label={`Set 1: games de ${left}`}
-          />
-          <input
-            type="number"
-            min={0}
-            disabled={locked}
-            value={draft.set1.p2}
-            onChange={(e) =>
-              onChange({
-                ...draft,
-                set1: { ...draft.set1, p2: e.target.value },
-                woWinner: null,
-              })
-            }
-            aria-label={`Set 1: games de ${right}`}
-          />
-        </div>
-
-        <div className="liga-playoffs-score__board-row">
-          <span className="liga-playoffs-score__board-label">Set 2</span>
-          <input
-            type="number"
-            min={0}
-            disabled={locked}
-            value={draft.set2.p1}
-            onChange={(e) =>
-              onChange({
-                ...draft,
-                set2: { ...draft.set2, p1: e.target.value },
-                woWinner: null,
-              })
-            }
-            aria-label={`Set 2: games de ${left}`}
-          />
-          <input
-            type="number"
-            min={0}
-            disabled={locked}
-            value={draft.set2.p2}
-            onChange={(e) =>
-              onChange({
-                ...draft,
-                set2: { ...draft.set2, p2: e.target.value },
-                woWinner: null,
-              })
-            }
-            aria-label={`Set 2: games de ${right}`}
-          />
-        </div>
-
-        <div
-          className="liga-playoffs-score__board-row liga-playoffs-score__board-row--totals"
-          aria-live="polite"
-        >
-          <span className="liga-playoffs-score__board-label">Sets</span>
-          <strong>{sets ? sets.setsP1 : "—"}</strong>
-          <strong>{sets ? sets.setsP2 : "—"}</strong>
-        </div>
-
-        {showStb ? (
-          <div className="liga-playoffs-score__board-row liga-playoffs-score__board-row--stb">
-            <span className="liga-playoffs-score__board-label">STB a 5</span>
-            <input
-              type="number"
-              min={0}
-              disabled={locked}
-              value={draft.stb1}
-              onChange={(e) =>
-                onChange({ ...draft, stb1: e.target.value, woWinner: null })
-              }
-              aria-label={`Súper tie-break: ${left}`}
-            />
-            <input
-              type="number"
-              min={0}
-              disabled={locked}
-              value={draft.stb2}
-              onChange={(e) =>
-                onChange({ ...draft, stb2: e.target.value, woWinner: null })
-              }
-              aria-label={`Súper tie-break: ${right}`}
-            />
-          </div>
-        ) : null}
-      </div>
-
-      {preview.kind !== "incomplete" && preview.kind !== "wo" ? (
-        <p
-          className={`liga-playoffs-score__preview liga-playoffs-score__preview--${preview.kind}`}
-          role="status"
-        >
-          <strong>{preview.title}</strong>
-          <span>{preview.line}</span>
-          {totals && preview.kind !== "needs_stb" ? (
-            <span className="liga-playoffs-score__preview-games">
-              Games {totals.score1}–{totals.score2}
-            </span>
-          ) : null}
-        </p>
-      ) : showStb ? (
-        <p className="liga-playoffs-score__stb-hint" role="status">
-          Empate 1-1 en sets: registra el Súper Tie-Break a 5.
-        </p>
-      ) : null}
-
-      <div className="liga-playoffs-score__actions">
-        <Button
-          type="button"
-          variant="primary"
-          size="sm"
+    <div className={`liga-playoffs-score liga-playoffs-score--capture${compact ? " liga-playoffs-score--compact" : ""}`}>
+      <div className={compact ? "liga-sets-form__grid" : undefined}>
+        <PlayoffsSetRow
+          label="Set 1"
+          p1={draft.set1.p1}
+          p2={draft.set1.p2}
           disabled={locked}
-          onClick={onSave}
-        >
-          {isCompleted ? "Corregir" : "Guardar"}
-        </Button>
+          compact={compact}
+          ariaLeft={`Set 1: games de ${left}`}
+          ariaRight={`Set 1: games de ${right}`}
+          onChangeP1={(p1) =>
+            onChange({ ...draft, set1: { ...draft.set1, p1 }, woWinner: null })
+          }
+          onChangeP2={(p2) =>
+            onChange({ ...draft, set1: { ...draft.set1, p2 }, woWinner: null })
+          }
+        />
+        <PlayoffsSetRow
+          label="Set 2"
+          p1={draft.set2.p1}
+          p2={draft.set2.p2}
+          disabled={locked}
+          compact={compact}
+          ariaLeft={`Set 2: games de ${left}`}
+          ariaRight={`Set 2: games de ${right}`}
+          onChangeP1={(p1) =>
+            onChange({ ...draft, set2: { ...draft.set2, p1 }, woWinner: null })
+          }
+          onChangeP2={(p2) =>
+            onChange({ ...draft, set2: { ...draft.set2, p2 }, woWinner: null })
+          }
+        />
       </div>
+
+      {showStb ? (
+        <div className="liga-sets-form__set3 liga-sets-form__set3--visible">
+          <PlayoffsSetRow
+            label="Súper tie-break (a 5)"
+            p1={draft.stb1}
+            p2={draft.stb2}
+            disabled={locked}
+            compact={compact}
+            ariaLeft={`Súper tie-break: ${left}`}
+            ariaRight={`Súper tie-break: ${right}`}
+            onChangeP1={(stb1) => onChange({ ...draft, stb1, woWinner: null })}
+            onChangeP2={(stb2) => onChange({ ...draft, stb2, woWinner: null })}
+          />
+        </div>
+      ) : null}
+
+      <Button
+        type="button"
+        variant="primary"
+        className="liga-partido-save-btn"
+        disabled={locked}
+        onClick={onSave}
+      >
+        {justSaved ? "¡Guardado! ✅" : "Guardar resultado"}
+      </Button>
     </div>
   );
 };

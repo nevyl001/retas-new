@@ -1,4 +1,3 @@
-import { useClubModeEyebrow } from "../../club-experience";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { computeJornadaPublicStats } from "../../lib/liga/jornadaStats";
@@ -43,49 +42,35 @@ import {
   isParejasFijasPlayoffs,
 } from "../../lib/liga/ligaModalidad";
 import { ligaJornadaTitulo } from "../../lib/liga/types";
-import {
-  getSetsDraftForPartido,
-  LigaPartidoSetsScoreForm,
-} from "./LigaPartidoSetsScoreForm";
-import {
-  getPlayoffsDraftForPartido,
-  LigaPartidoPlayoffsScoreForm,
-} from "./LigaPartidoPlayoffsScoreForm";
+import { getSetsDraftForPartido } from "./LigaPartidoSetsScoreForm";
+import { getPlayoffsDraftForPartido } from "./LigaPartidoPlayoffsScoreForm";
 import {
   getProgramacionDraftForPartido,
   jornadaFechaDraft,
-  LigaJornadaFechaCard,
-  LigaPartidoProgramacionFields,
   type PartidoProgramacionDraft,
 } from "./LigaPartidoProgramacionFields";
-import { resolveLigaJugadorPublicFotos } from "../../lib/liga/publicParejaAvatars";
 import { Button } from "../ui";
-import { JugadorAvatar } from "../jugadores/JugadorAvatar";
-import { ActionBar } from "../platform/ActionBar";
-import { ModeEventHeader } from "../platform";
-import { ModeHeader } from "../platform/ModeHeader";
-import { PublicShareSection } from "../platform/PublicShareSection";
-import { ligaGestionarPath, navigateLiga, publicLigaJornadaUrl } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
-import { LigaSimpleRankingDual } from "./LigaSimpleRankingDual";
+import { uniqueCanchas } from "./ligaPartidoCaptureUi";
+import { JornadaAdminHeader } from "./jornada-admin/JornadaAdminHeader";
+import { JornadaScheduleToolbar } from "./jornada-admin/JornadaScheduleToolbar";
+import { JornadaStartBar } from "./jornada-admin/JornadaStartBar";
+import { ResultsToolbar } from "./jornada-admin/ResultsToolbar";
+import { RoundSection } from "./jornada-admin/RoundSection";
+import { MatchScoreCard } from "./jornada-admin/MatchScoreCard";
+import { JornadaStandings } from "./jornada-admin/JornadaStandings";
+import {
+  filterPartidosByCancha,
+  parejaLabel,
+} from "./jornada-admin/jornadaAdminUtils";
+import { ligaGestionarPath, navigateLiga, publicLigaJornadaUrl } from "./ligaNav";
 import type { SimpleRankingPresentationRow } from "../../lib/modePresentation/standingsRowAdapters";
 import "./liga-page.css";
-import "../jugadores/riviera-jugadores.css";
+import "./jornada-admin/liga-jornada-admin.css";
 
 interface LigaJornadaProps {
   ligaId: string;
   numero: number;
-}
-
-function parejaLabel(
-  parejaId: string,
-  jornada: LigaJornada | undefined
-): string {
-  const p = jornada?.parejas?.find((x) => x.id === parejaId);
-  if (!p) return "Pareja";
-  const n1 = p.jugador1?.nombre ?? "?";
-  const n2 = p.jugador2?.nombre ?? "?";
-  return `${n1} / ${n2}`;
 }
 
 function rondaCompleta(partidos: LigaPartido[]): boolean {
@@ -105,7 +90,7 @@ function jornadaEstadoLabel(estado: LigaJornada["estado"]): string {
     case "in_progress":
       return "En curso";
     case "completed":
-      return "Finalizada";
+      return "Completada";
     default:
       return estado;
   }
@@ -142,7 +127,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   ligaId,
   numero,
 }) => {
-  const modeEyebrow = useClubModeEyebrow();
   const [detalle, setDetalle] = useState<LigaDetalle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -167,15 +151,15 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     {}
   );
   const [jornadaHoraDraft, setJornadaHoraDraft] = useState("");
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [savedPartidoFlash, setSavedPartidoFlash] = useState<string | null>(null);
   const [ranking, setRanking] = useState<RankingItem[]>([]);
   const [rankingEquipos, setRankingEquipos] = useState<LigaEquipoRankingItem[]>(
     []
   );
   const [manualPuntos, setManualPuntos] = useState<Record<string, string>>({});
   const [showManualEdit, setShowManualEdit] = useState(false);
-  const [parejaFotos, setParejaFotos] = useState<Record<string, string | null>>(
-    {}
-  );
+  const [canchaFilter, setCanchaFilter] = useState<number | "all">("all");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -248,36 +232,14 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     [jornadaStats.rankingParejas]
   );
 
-  useEffect(() => {
-    const organizadorId = detalle?.organizador_id;
-    const parejas = jornada?.parejas ?? [];
-    if (!organizadorId || parejas.length === 0) {
-      setParejaFotos({});
-      return;
-    }
-
-    const entries = parejas.flatMap((p) => {
-      const list: { id: string; name: string }[] = [];
-      if (p.jugador1_id) {
-        list.push({ id: p.jugador1_id, name: p.jugador1?.nombre ?? "" });
-      }
-      if (p.jugador2_id) {
-        list.push({ id: p.jugador2_id, name: p.jugador2?.nombre ?? "" });
-      }
-      return list;
-    });
-
-    let cancelled = false;
-    void resolveLigaJugadorPublicFotos(organizadorId, entries, {
-      publicOnly: false,
-    }).then((fotos) => {
-      if (!cancelled) setParejaFotos(fotos);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [detalle?.organizador_id, jornada?.parejas]);
+  const flashPartidoSaved = (partidoId: string) => {
+    setSavedPartidoFlash(partidoId);
+    window.setTimeout(() => {
+      setSavedPartidoFlash((current) =>
+        current === partidoId ? null : current
+      );
+    }, 2000);
+  };
 
   const rankingEquiposRows = useMemo<SimpleRankingPresentationRow[]>(
     () =>
@@ -348,6 +310,25 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     [jornada]
   );
 
+  const canchasEnJornada = useMemo(
+    () => uniqueCanchas(partidosJornadaOrdenados),
+    [partidosJornadaOrdenados]
+  );
+
+  const partidosByRondaFiltered = useMemo(
+    () =>
+      partidosByRonda
+        .map(
+          ([ronda, partidos]) =>
+            [ronda, filterPartidosByCancha(partidos, canchaFilter)] as [
+              number,
+              LigaPartido[],
+            ]
+        )
+        .filter(([, list]) => list.length > 0),
+    [partidosByRonda, canchaFilter]
+  );
+
   const handleStartJornada = async () => {
     if (!jornada) return;
     setBusy(true);
@@ -383,6 +364,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     try {
       await updateScore(partido.id, s1, s2, force);
       setMessage("Resultado guardado.");
+      flashPartidoSaved(partido.id);
       await load();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error";
@@ -442,6 +424,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
           ? "Resultado corregido. Ranking actualizado."
           : "Resultado guardado. Ranking actualizado."
       );
+      flashPartidoSaved(partido.id);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -472,6 +455,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
       setMessage(
         partido.estado === "completed" ? "Resultado corregido." : "Resultado guardado."
       );
+      flashPartidoSaved(partido.id);
       await load();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error";
@@ -728,663 +712,437 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const nParejas = jornada.parejas?.length ?? 0;
   const partidosEsperados = (nParejas * (nParejas - 1)) / 2;
 
-  return (
-    <LigaPageShell>
-      <ActionBar className="liga-toolbar riviera-back-toolbar">
-        <Button
-          type="button"
-          variant="back"
-          onClick={() => navigateLiga(ligaGestionarPath(ligaId))}
-        >
-          ← {detalle.nombre}
-        </Button>
-      </ActionBar>
+  const partidosParaCaptura = esParejasFijas
+    ? partidosJornadaOrdenados
+    : jornada.partidos ?? [];
+  const partidosCapturados = partidosParaCaptura.filter(
+    (p) => p.estado === "completed"
+  ).length;
+  const captureTotal = partidosParaCaptura.length;
+  const publicPlayUrl = publicLigaJornadaUrl(ligaId, numero);
+  const jornadaTitulo = ligaJornadaTitulo(
+    numero,
+    detalle.modalidad,
+    detalle.equipos?.length
+  );
 
-      {/* Desktop: header actual sin cambios, oculto solo en móvil (≤767px)
-       * para no duplicar con ModeEventHeader — ver docs/GAME-MODES-UI-ARCHITECTURE.md
-       * Fase 2A punto 2 ("LigaJornadaView en su vista móvil"). */}
-      <ModeHeader
-        className="liga-header rv-mode-header liga-jornada-header-desktop"
-        eyebrow={modeEyebrow}
-        title={`Liga: ${detalle.nombre} — ${ligaJornadaTitulo(
-          numero,
-          detalle.modalidad,
-          detalle.equipos?.length
-        )}`}
-        subtitle={`Estado: ${jornadaEstadoLabel(jornada.estado)}${
-          totalPartidos > 0
-            ? esParejasFijas
-              ? ` · ${totalPartidos} partidos programados`
-              : ` · ${totalPartidos} partidos (${nParejas} parejas, todos vs todos)`
-            : ""
-        }`}
-      />
+  const handleCopyPublicLink = async () => {
+    try {
+      const { buildSharePublicOgUrlFromPlayUrl } = await import(
+        "../../lib/retaAbierta/shareOgUrl"
+      );
+      await navigator.clipboard.writeText(
+        buildSharePublicOgUrlFromPlayUrl(publicPlayUrl) || publicPlayUrl
+      );
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      setError("No se pudo copiar el enlace.");
+    }
+  };
 
-      {/* Móvil (≤767px): mismo contenido (nombre de la liga, jornada, estado,
-       * info de partidos), reorganizado en las mismas piezas de ModeEventHeader.
-       * Usa su propia visibilidad móvil-only por defecto (mode-mobile-shell.css),
-       * sin overrides — nunca coexiste visualmente con el header de arriba. */}
-      <ModeEventHeader
-        eyebrow={modeEyebrow}
-        title={ligaJornadaTitulo(
-          numero,
-          detalle.modalidad,
-          detalle.equipos?.length
-        )}
-        modality={detalle.nombre}
-        statusLabel={jornadaEstadoLabel(jornada.estado)}
-        statusVariant={jornadaEstadoStatusVariant(jornada.estado)}
-        summary={
-          totalPartidos > 0
-            ? esParejasFijas
-              ? `${totalPartidos} partidos programados`
-              : `${totalPartidos} partidos (${nParejas} parejas, todos vs todos)`
-            : undefined
-        }
-      />
+  const renderParejasFijasCard = (partido: LigaPartido) => {
+    const bloqueado = jornada.estado === "upcoming";
+    const label1 = parejaLabel(partido.pareja1_id, jornada);
+    const label2 = parejaLabel(partido.pareja2_id, jornada);
+    const setsDraft = getSetsDraftForPartido(partido, setsDrafts);
+    const playoffsDraft = getPlayoffsDraftForPartido(partido, playoffsDrafts);
 
-      <PublicShareSection
-        className="liga-jornada-share"
-        publicUrl={publicLigaJornadaUrl(ligaId, numero)}
-        title="Enlace vista pública"
-        infoLines={["Proyecta esta jornada en vista pública (TV o tablet)."]}
-        copyButtonLabel="Copiar enlace"
-        previewLabel="Abrir vista pública"
-        onCopy={async () => {
-          try {
-            const { buildSharePublicOgUrlFromPlayUrl } = await import(
-              "../../lib/retaAbierta/shareOgUrl"
-            );
-            const play = publicLigaJornadaUrl(ligaId, numero);
-            await navigator.clipboard.writeText(
-              buildSharePublicOgUrlFromPlayUrl(play) || play
-            );
-            setMessage("Enlace copiado. También puedes abrir la vista pública.");
-          } catch {
-            setError("No se pudo copiar el enlace.");
-          }
-        }}
-      />
-
-      {message ? <p className="liga-success">{message}</p> : null}
-      {error ? <p className="liga-error">{error}</p> : null}
-
-      {(jornada.partidos?.length ?? 0) > 0 && (
-        <LigaJornadaFechaCard
-          fecha={jornadaFechaDraft(
-            jornada.fecha,
-            jornadaFechaDrafts,
-            jornada.id
-          )}
-          disabled={busy}
+    if (esPlayoffs) {
+      return (
+        <MatchScoreCard
+          key={partido.id}
+          partido={partido}
+          jornada={jornada}
+          mode="playoffs"
+          locked={bloqueado}
           busy={busy}
-          onChange={(fecha) =>
-            setJornadaFechaDrafts((prev) => ({
-              ...prev,
-              [jornada.id]: fecha,
-            }))
+          pareja1Label={label1}
+          pareja2Label={label2}
+          playoffsDraft={playoffsDraft}
+          justSaved={savedPartidoFlash === partido.id}
+          onPlayoffsChange={(next) =>
+            setPlayoffsDrafts((prev) => ({ ...prev, [partido.id]: next }))
           }
-          onSave={saveJornadaFecha}
+          onSave={() => saveScoreParejasFijasPlayoffs(partido)}
         />
-      )}
+      );
+    }
 
-      <div className="liga-card rv-card">
-        <div className="liga-jornada-parejas-head">
-          <h2 className="liga-card__title">Parejas de la jornada</h2>
-          {nParejas > 0 ? (
-            <span className="liga-jornada-parejas-count">{nParejas}</span>
-          ) : null}
-        </div>
-        {nParejas === 0 ? (
-          <p className="liga-hint">Aún no hay parejas en esta jornada.</p>
-        ) : (
-          <ul className="liga-jornada-parejas" aria-label="Parejas de la jornada">
-            {(jornada.parejas ?? []).map((p) => {
-              const name1 = p.jugador1?.nombre?.trim() || "?";
-              const name2 = p.jugador2?.nombre?.trim() || "?";
+    if (esFijasLegacy) {
+      return (
+        <MatchScoreCard
+          key={partido.id}
+          partido={partido}
+          jornada={jornada}
+          mode="sets"
+          locked={bloqueado}
+          busy={busy}
+          pareja1Label={label1}
+          pareja2Label={label2}
+          setsDraft={setsDraft}
+          justSaved={savedPartidoFlash === partido.id}
+          onSetsChange={(next) =>
+            setSetsDrafts((prev) => ({ ...prev, [partido.id]: next }))
+          }
+          onSave={() => saveScoreParejasFijas(partido)}
+        />
+      );
+    }
+
+    return null;
+  };
+
+  const renderRotativoCard = (partido: LigaPartido, ronda: number) => {
+    const draft = scores[partido.id] ?? {
+      s1: String(partido.score_pareja1 ?? ""),
+      s2: String(partido.score_pareja2 ?? ""),
+    };
+    const bloqueado =
+      partido.estado === "upcoming" && rondaActiva !== ronda;
+    const label1 = parejaLabel(partido.pareja1_id, jornada);
+    const label2 = parejaLabel(partido.pareja2_id, jornada);
+
+    return (
+      <MatchScoreCard
+        key={partido.id}
+        partido={partido}
+        jornada={jornada}
+        mode="rotativo"
+        locked={bloqueado}
+        busy={busy}
+        pareja1Label={label1}
+        pareja2Label={label2}
+        rotativoDraft={draft}
+        justSaved={savedPartidoFlash === partido.id}
+        onRotativoChange={(next) =>
+          setScores((prev) => ({ ...prev, [partido.id]: next }))
+        }
+        onSave={() => saveScore(partido)}
+      />
+    );
+  };
+
+  return (
+    <LigaPageShell className="liga-jornada-admin-page">
+      <div className="jornada-admin">
+        <JornadaAdminHeader
+          ligaNombre={detalle.nombre}
+          jornadaTitulo={jornadaTitulo}
+          estadoLabel={jornadaEstadoLabel(jornada.estado)}
+          partidosCount={totalPartidos}
+          publicUrl={publicPlayUrl}
+          copyFeedback={linkCopied}
+          onCopyLink={() => void handleCopyPublicLink()}
+          onBack={() => navigateLiga(ligaGestionarPath(ligaId))}
+        />
+
+        {(jornada.partidos?.length ?? 0) > 0 ? (
+          <JornadaScheduleToolbar
+            fecha={jornadaFechaDraft(
+              jornada.fecha,
+              jornadaFechaDrafts,
+              jornada.id
+            )}
+            hora={jornadaHoraDraft}
+            showBulkHorario={esParejasFijas}
+            disabled={busy}
+            busy={busy}
+            onFechaChange={(fecha) =>
+              setJornadaFechaDrafts((prev) => ({
+                ...prev,
+                [jornada.id]: fecha,
+              }))
+            }
+            onHoraChange={setJornadaHoraDraft}
+            onSaveFecha={saveJornadaFecha}
+            onApplyHorario={saveJornadaHorario}
+          />
+        ) : null}
+
+        {message ? (
+          <p className="jornada-admin-feedback jornada-admin-feedback--ok">
+            {message}
+          </p>
+        ) : null}
+        {error ? (
+          <p className="jornada-admin-feedback jornada-admin-feedback--err">
+            {error}
+          </p>
+        ) : null}
+
+        {jornada.estado === "upcoming" ? (
+          <JornadaStartBar
+            puedeIniciar={puedeIniciar}
+            busy={busy}
+            hint={
+              esParejasFijas
+                ? "Cada pareja juega un partido esta jornada."
+                : nParejas >= 3
+                  ? `Se generarán ${partidosEsperados} partidos en varias rondas (máx. ${detalle.canchas_disponibles} canchas por ronda).`
+                  : undefined
+            }
+            onStart={handleStartJornada}
+          />
+        ) : null}
+
+        {captureTotal > 0 ? (
+          <>
+            <ResultsToolbar
+              capturados={partidosCapturados}
+              total={captureTotal}
+              canchas={canchasEnJornada}
+              canchaFilter={canchaFilter}
+              onCanchaFilterChange={setCanchaFilter}
+            />
+
+            {partidosByRondaFiltered.map(([ronda, partidos]) => {
+              const completa = rondaCompleta(partidos);
+              const enCurso = rondaEnCurso(partidos);
+              const statusLabel = completa
+                ? "Completada"
+                : enCurso
+                  ? "En curso"
+                  : "Pendiente";
+
+              const siguienteRonda = partidosByRonda.find(
+                ([r]) => r === ronda + 1
+              );
+              const haySiguiente = Boolean(siguienteRonda);
+              const siguienteSoloUpcoming =
+                haySiguiente &&
+                siguienteRonda![1].every((p) => p.estado === "upcoming");
+              const puedeActivarSiguiente =
+                !esParejasFijas &&
+                completa &&
+                haySiguiente &&
+                siguienteSoloUpcoming;
+
               return (
-                <li key={p.id} className="liga-jornada-pareja">
-                  <div className="liga-jornada-pareja__players">
-                    <div className="liga-jornada-pareja__person">
-                      <JugadorAvatar
-                        fotoUrl={parejaFotos[p.jugador1_id] ?? null}
-                        nombre={name1}
+                <RoundSection
+                  key={ronda}
+                  ronda={ronda}
+                  partidos={partidos}
+                  statusLabel={!esParejasFijas ? statusLabel : undefined}
+                  rondaHorario={
+                    !esParejasFijas ? (
+                      <div className="jornada-round__schedule">
+                        <input
+                          type="time"
+                          value={rondaHoraDrafts[ronda] ?? ""}
+                          disabled={busy}
+                          onChange={(event) =>
+                            setRondaHoraDrafts((prev) => ({
+                              ...prev,
+                              [ronda]: timeInputValue(event.target.value),
+                            }))
+                          }
+                          aria-label={`Horario ronda ${ronda}`}
+                        />
+                        <button
+                          type="button"
+                          className="jornada-round__schedule-btn"
+                          disabled={busy}
+                          onClick={() => saveRondaHorario(ronda)}
+                        >
+                          Aplicar
+                        </button>
+                      </div>
+                    ) : null
+                  }
+                  footerActions={
+                    puedeActivarSiguiente ? (
+                      <Button
+                        type="button"
+                        variant="primary"
                         size="sm"
-                        className="liga-jornada-pareja__avatar"
-                      />
-                      <span className="liga-jornada-pareja__name">{name1}</span>
-                    </div>
-                    <div className="liga-jornada-pareja__person">
-                      <JugadorAvatar
-                        fotoUrl={parejaFotos[p.jugador2_id] ?? null}
-                        nombre={name2}
-                        size="sm"
-                        className="liga-jornada-pareja__avatar"
-                      />
-                      <span className="liga-jornada-pareja__name">{name2}</span>
-                    </div>
-                  </div>
-                </li>
+                        disabled={busy}
+                        onClick={() => handleActivarSiguienteRonda(ronda)}
+                      >
+                        Activar ronda {ronda + 1}
+                      </Button>
+                    ) : null
+                  }
+                >
+                  {partidos.map((partido) =>
+                    esParejasFijas
+                      ? renderParejasFijasCard(partido)
+                      : renderRotativoCard(partido, ronda)
+                  )}
+                </RoundSection>
               );
             })}
-          </ul>
-        )}
-        {jornada.estado === "upcoming" && (
-          <div className="liga-actions liga-jornada-parejas-actions">
+          </>
+        ) : null}
+
+        {puntosPendientes ? (
+          <div className="jornada-admin-banner" role="status">
+            Todos los partidos tienen resultado. Pulsa Finalizar jornada para
+            aplicar los puntos al ranking acumulado.
+          </div>
+        ) : null}
+
+        {puedeFinalizar ? (
+          <div className="jornada-admin-actions">
             <Button
               type="button"
               variant="primary"
-              disabled={!puedeIniciar || busy}
-              onClick={handleStartJornada}
+              disabled={busy}
+              onClick={handleFinalizarJornada}
             >
-              Iniciar jornada
+              {jornada.puntos_aplicados
+                ? "Recalcular puntos y ranking"
+                : "Finalizar jornada"}
             </Button>
-            {!puedeIniciar && (
-              <p className="liga-error">Se requieren al menos 3 parejas.</p>
-            )}
-            {puedeIniciar && esParejasFijas && (
-              <p className="liga-hint">
-                Cada pareja juega un partido esta jornada (en paralelo en distintas
-                canchas).
-              </p>
-            )}
-            {puedeIniciar && !esParejasFijas && nParejas >= 3 && (
-              <p className="liga-hint">
-                Se generarán {partidosEsperados} partidos en varias rondas (máx.{" "}
-                {detalle.canchas_disponibles} canchas por ronda).
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="liga-jornada-admin">
-        <div className="liga-jornada-admin__main">
-      {esParejasFijas && partidosJornadaOrdenados.length > 0 && (
-        <div className="liga-card rv-card">
-          <h2 className="liga-card__title">Partidos de la jornada</h2>
-          <p className="liga-hint">
-            Cada pareja juega un enfrentamiento distinto. Ajusta cancha y horario
-            para rotar entre canchas.
-          </p>
-          {esPlayoffs ? (
-            <p className="liga-hint liga-jornada-score-rules">
-              Anota los games por set. Diff {">"}2 → 3/0 · Diff 1–2 → 2/1 · Empate
-              → STB a 5. Al guardar se actualiza el ranking.
-            </p>
-          ) : null}
-          <div className="liga-ronda-programacion liga-jornada-horario-bulk">
-            <label className="liga-programacion-field">
-              <span className="liga-programacion-field__label">
-                Horario jornada
-              </span>
-              <input
-                type="time"
-                value={jornadaHoraDraft}
+            {jornada.puntos_aplicados ? (
+              <Button
+                type="button"
+                variant="secondary"
                 disabled={busy}
-                onChange={(e) => setJornadaHoraDraft(timeInputValue(e.target.value))}
-                aria-label="Horario de la jornada"
-              />
-            </label>
+                title="Completa historial Riviera faltante sin recalcular ranking local"
+                onClick={() => {
+                  void handleResyncJornadaCareer();
+                }}
+              >
+                Sincronizar historial
+              </Button>
+            ) : null}
             <Button
               type="button"
               variant="ghost"
               size="sm"
               disabled={busy}
-              onClick={saveJornadaHorario}
+              onClick={handleRecalcularLiga}
             >
-              Aplicar a todos
+              Recalcular toda la liga
             </Button>
           </div>
-          <div className="liga-jornada-partidos-grid">
-          {partidosJornadaOrdenados.map((partido) => {
-            const setsDraft = getSetsDraftForPartido(partido, setsDrafts);
-            const playoffsDraft = getPlayoffsDraftForPartido(
-              partido,
-              playoffsDrafts
-            );
-            const progDraft = getProgramacionDraftForPartido(
-              partido,
-              programacionDrafts
-            );
-            const bloqueado = jornada.estado === "upcoming";
+        ) : null}
 
-            return (
-              <div
-                key={partido.id}
-                className={`liga-partido-row liga-partido-row--card${
-                  bloqueado ? " liga-partido-row--locked" : ""
-                }`}
-              >
-                <p className="liga-partido-row__teams">
-                  {partido.cancha != null ? (
-                    <span className="liga-partido-row__cancha">
-                      Cancha {partido.cancha}
-                      {" · "}
-                    </span>
-                  ) : null}
-                  {parejaLabel(partido.pareja1_id, jornada)} vs{" "}
-                  {parejaLabel(partido.pareja2_id, jornada)}
-                  {partido.bracket_slot ? (
-                    <span className="liga-hint"> · {partido.bracket_slot}</span>
-                  ) : null}
-                </p>
-                <LigaPartidoProgramacionFields
-                  partido={partido}
-                  draft={progDraft}
-                  canchasDisponibles={detalle.canchas_disponibles}
-                  disabled={bloqueado}
-                  busy={busy}
-                  onChange={(next) =>
-                    setProgramacionDrafts((prev) => ({
-                      ...prev,
-                      [partido.id]: next,
-                    }))
-                  }
-                  onSave={() => savePartidoProgramacion(partido)}
-                />
-                {esPlayoffs ? (
-                  <LigaPartidoPlayoffsScoreForm
-                    partido={partido}
-                    draft={playoffsDraft}
-                    pareja1Label={parejaLabel(partido.pareja1_id, jornada)}
-                    pareja2Label={parejaLabel(partido.pareja2_id, jornada)}
-                    disabled={bloqueado}
-                    busy={busy}
-                    onChange={(next) =>
-                      setPlayoffsDrafts((prev) => ({
-                        ...prev,
-                        [partido.id]: next,
-                      }))
-                    }
-                    onSave={() => saveScoreParejasFijasPlayoffs(partido)}
-                  />
-                ) : esFijasLegacy ? (
-                  <LigaPartidoSetsScoreForm
-                    partido={partido}
-                    draft={setsDraft}
-                    disabled={bloqueado}
-                    busy={busy}
-                    onChange={(next) =>
-                      setSetsDrafts((prev) => ({
-                        ...prev,
-                        [partido.id]: next,
-                      }))
-                    }
-                    onSave={() => saveScoreParejasFijas(partido)}
-                  />
-                ) : null}
-              </div>
-            );
-          })}
-          </div>
-        </div>
-      )}
+        {!esParejasFijas && jornadaJugadoresRows.length > 0 ? (
+          <JornadaStandings
+            title="Puntos de esta jornada"
+            hint="Calculado desde los partidos guardados (games por jugador)."
+            rows={jornadaJugadoresRows}
+            columns={[
+              { key: "pos", header: "POS", align: "center", render: (r) => r.position },
+              { key: "nombre", header: "Jugador", render: (r) => r.label },
+              {
+                key: "pts",
+                header: "PTS",
+                align: "right",
+                emphasis: true,
+                render: (r) => r.points,
+              },
+            ]}
+          />
+        ) : null}
 
-      {!esParejasFijas && partidosByRonda.length > 0 && (
-        <div className="liga-card rv-card">
-          <h2 className="liga-card__title">Partidos por ronda</h2>
-          {partidosByRonda.map(([ronda, partidos]) => {
-            const completa = rondaCompleta(partidos);
-            const enCurso = rondaEnCurso(partidos);
-            const siguienteRonda = partidosByRonda.find(([r]) => r === ronda + 1);
-            const haySiguiente = Boolean(siguienteRonda);
-            const siguienteSoloUpcoming =
-              haySiguiente &&
-              siguienteRonda![1].every((p) => p.estado === "upcoming");
-            const puedeActivarSiguiente =
-              completa && haySiguiente && siguienteSoloUpcoming;
+        {esParejasFijas ? (
+          <JornadaStandings
+            title="Ranking por pareja"
+            hint="Puntos: 3 victoria en 2 sets, 2 con super tie-break. Se recalcula al guardar resultados."
+            rows={rankingEquiposRows}
+            columns={[
+              { key: "pos", header: "POS", align: "center", render: (r) => r.position },
+              { key: "nombre", header: "Pareja", render: (r) => r.label },
+              { key: "pj", header: "PJ", align: "center", render: (r) => r.matchesPlayed ?? 0 },
+              { key: "pg", header: "PG", align: "center", render: (r) => r.pg ?? 0 },
+              { key: "pp", header: "PP", align: "center", render: (r) => r.pp ?? 0 },
+              { key: "gf", header: "GF", align: "center", render: (r) => r.pointsFav ?? 0 },
+              { key: "gc", header: "GC", align: "center", render: (r) => r.pointsCon ?? 0 },
+              {
+                key: "dif",
+                header: "DIF",
+                align: "center",
+                render: (r) => (r.pointsFav ?? 0) - (r.pointsCon ?? 0),
+              },
+              {
+                key: "pts",
+                header: "PTS",
+                align: "right",
+                emphasis: true,
+                render: (r) => r.points,
+              },
+            ]}
+          />
+        ) : (
+          <JornadaStandings
+            title="Ranking acumulado"
+            hint="Puntos en base de datos de la liga. Al guardar resultados o finalizar, se recalcula automáticamente."
+            rows={rankingJugadoresRows}
+            columns={[
+              { key: "pos", header: "POS", align: "center", render: (r) => r.position },
+              { key: "nombre", header: "Jugador", render: (r) => r.label },
+              {
+                key: "pts",
+                header: "PTS",
+                align: "right",
+                emphasis: true,
+                render: (r) => r.points,
+              },
+              {
+                key: "jorn",
+                header: "Jorn.",
+                align: "center",
+                render: (r) => r.matchesPlayed ?? 0,
+              },
+            ]}
+          />
+        )}
 
-            return (
-              <section
-                key={ronda}
-                className={`liga-ronda-block${
-                  rondaActiva === ronda ? " liga-ronda-block--active" : ""
-                }`}
-              >
-                <div className="liga-ronda-block__head">
-                  <h3 className="liga-ronda-label">Ronda {ronda}</h3>
-                  <span className="liga-badge">
-                    {completa
-                      ? "Completada"
-                      : enCurso
-                        ? "En curso"
-                        : "Pendiente"}
-                  </span>
-                </div>
-
-                <div className="liga-ronda-programacion">
-                  <label className="liga-programacion-field">
-                    <span className="liga-programacion-field__label">
-                      Horario ronda
-                    </span>
-                    <input
-                      type="time"
-                      value={rondaHoraDrafts[ronda] ?? ""}
-                      disabled={busy}
-                      onChange={(e) =>
-                        setRondaHoraDrafts((prev) => ({
-                          ...prev,
-                          [ronda]: timeInputValue(e.target.value),
-                        }))
-                      }
-                      aria-label={`Horario ronda ${ronda}`}
-                    />
-                  </label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => saveRondaHorario(ronda)}
-                  >
-                    Aplicar a ronda
-                  </Button>
-                </div>
-
-                {partidos.map((partido) => {
-                  const draft = scores[partido.id] ?? {
-                    s1: String(partido.score_pareja1 ?? ""),
-                    s2: String(partido.score_pareja2 ?? ""),
-                  };
-                  const progDraft = getProgramacionDraftForPartido(
-                    partido,
-                    programacionDrafts
-                  );
-                  const bloqueado =
-                    partido.estado === "upcoming" && rondaActiva !== ronda;
-
-                  return (
-                    <div
-                      key={partido.id}
-                      className={`liga-partido-row${
-                        bloqueado ? " liga-partido-row--locked" : ""
-                      }`}
-                    >
-                      <p className="liga-partido-row__teams">
-                        {parejaLabel(partido.pareja1_id, jornada)} vs{" "}
-                        {parejaLabel(partido.pareja2_id, jornada)}
-                      </p>
-                      <LigaPartidoProgramacionFields
-                        partido={partido}
-                        draft={progDraft}
-                        canchasDisponibles={detalle.canchas_disponibles}
-                        disabled={bloqueado}
-                        busy={busy}
-                        onChange={(next) =>
-                          setProgramacionDrafts((prev) => ({
-                            ...prev,
-                            [partido.id]: next,
-                          }))
-                        }
-                        onSave={() => savePartidoProgramacion(partido)}
-                      />
-                      <div className="liga-score-row">
-                        <input
-                          type="number"
-                          min={0}
-                          value={draft.s1}
-                          disabled={bloqueado || busy}
-                          onChange={(e) =>
-                            setScores((prev) => ({
-                              ...prev,
-                              [partido.id]: { ...draft, s1: e.target.value },
-                            }))
-                          }
-                          aria-label="Puntos pareja 1"
-                        />
-                        <span>—</span>
-                        <input
-                          type="number"
-                          min={0}
-                          value={draft.s2}
-                          disabled={bloqueado || busy}
-                          onChange={(e) =>
-                            setScores((prev) => ({
-                              ...prev,
-                              [partido.id]: { ...draft, s2: e.target.value },
-                            }))
-                          }
-                          aria-label="Puntos pareja 2"
-                        />
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          disabled={bloqueado || busy}
-                          onClick={() => saveScore(partido)}
-                        >
-                          Guardar
-                        </Button>
-                        {partido.estado === "completed" && (
-                          <span className="liga-badge liga-badge--done">✓</span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {puedeActivarSiguiente && (
-                  <div className="liga-actions liga-ronda-block__footer">
-                    <Button
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => handleActivarSiguienteRonda(ronda)}
-                    >
-                      Activar ronda {ronda + 1}
-                    </Button>
-                  </div>
-                )}
-              </section>
-            );
-          })}
-        </div>
-      )}
-
-      {puntosPendientes && (
-        <div className="liga-banner liga-banner--warn" role="status">
-          Todos los partidos tienen resultado. Pulsa &quot;Finalizar jornada&quot;
-          para aplicar los puntos al ranking acumulado.
-        </div>
-      )}
-
-      {puedeFinalizar && (
-        <div className="liga-actions liga-jornada-admin__finish">
-          <Button
-            type="button"
-            variant="primary"
-            disabled={busy}
-            onClick={handleFinalizarJornada}
-          >
-            {jornada.puntos_aplicados
-              ? "Recalcular puntos y ranking"
-              : "Finalizar jornada"}
-          </Button>
-          {jornada.puntos_aplicados ? (
+        {!esParejasFijas && (
+          <div className="liga-jornada-manual">
             <Button
               type="button"
-              variant="secondary"
-              disabled={busy}
-              title="Completa historial Riviera faltante sin recalcular ranking local"
-              onClick={() => {
-                void handleResyncJornadaCareer();
-              }}
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowManualEdit((v) => !v)}
             >
-              Sincronizar historial
+              {showManualEdit
+                ? "Ocultar ajuste manual"
+                : "Corregir puntos manualmente"}
             </Button>
-          ) : null}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={busy}
-            onClick={handleRecalcularLiga}
-          >
-            Recalcular toda la liga
-          </Button>
-        </div>
-      )}
-        </div>
-
-        <aside className="liga-jornada-admin__aside">
-          {!esParejasFijas && (
-          <>
-            <LigaSimpleRankingDual
-              title="Puntos de esta jornada"
-              hint="Calculado desde los partidos guardados (games por jugador)."
-              rows={jornadaJugadoresRows}
-              columns={[
-                { key: "pos", header: "#", render: (r) => r.position },
-                { key: "nombre", header: "Jugador", render: (r) => r.label },
-                { key: "pts", header: "Pts", render: (r) => r.points },
-              ]}
-              topRowClassName={(r) =>
-                r.position <= 3 ? "liga-ranking-top" : undefined
-              }
-            />
-
-            {jornadaParejasRows.length > 0 && (
-              <LigaSimpleRankingDual
-                title="Parejas"
-                rows={jornadaParejasRows}
-                columns={[
-                  { key: "pos", header: "#", render: (r) => r.position },
-                  { key: "nombre", header: "Pareja", render: (r) => r.label },
-                  { key: "v", header: "V", render: (r) => r.pg ?? 0 },
-                  { key: "pts", header: "Pts", render: (r) => r.points },
-                ]}
-                topRowClassName={(r) =>
-                  r.key === jornadaStats.ganadorPareja?.parejaId
-                    ? "liga-ranking-top"
-                    : undefined
-                }
-              />
-            )}
-
-            {jornadaStats.ganadorPareja && todosPartidosCompletos && (
-              <p className="liga-jornada-winner" role="status">
-                Ganadora: {jornadaStats.ganadorPareja.nombre} (
-                {jornadaStats.ganadorPareja.victorias} victorias)
-              </p>
-            )}
-          </>
-          )}
-
-          <div className="liga-card liga-jornada-ranking-card">
-            <h2 className="liga-card__title">
-              {esParejasFijas ? "Ranking por pareja" : "Ranking acumulado"}
-            </h2>
-            <p className="liga-hint">
-              {esPlayoffs
-                ? "PUNTAJE POR PARTIDO: Victoria 2-0 en sets → Diff games >2 = 3/0 · Diff 1–2 = 2/1. Empate 1-1 en sets → STB a 5 = 2/1. WO = 3/−1. DESEMPATES TABLA: 1. Puntos 2. DIF (GF−GC) 3. Enfrentamiento directo. Se recalcula al guardar."
-                : esParejasFijas
-                ? "Puntos: 3 victoria en 2 sets, 2 con super tie-break. Se recalcula al guardar resultados."
-                : "Puntos en base de datos de la liga. Al guardar resultados o finalizar, se recalcula automáticamente."}
-            </p>
-            {esParejasFijas ? (
-              <LigaSimpleRankingDual
-                title=""
-                rows={rankingEquiposRows}
-                embedded
-                emptyMessage="Sin puntos en la liga aún."
-                columns={[
-                  { key: "pos", header: "#", render: (r) => r.position },
-                  { key: "nombre", header: "Pareja", render: (r) => r.label },
-                  { key: "pj", header: "PJ", render: (r) => r.matchesPlayed ?? 0 },
-                  { key: "pg", header: "PG", render: (r) => r.pg ?? 0 },
-                  { key: "pp", header: "PP", render: (r) => r.pp ?? 0 },
-                  { key: "gf", header: "GF", render: (r) => r.pointsFav ?? 0 },
-                  { key: "gc", header: "GC", render: (r) => r.pointsCon ?? 0 },
-                  {
-                    key: "dif",
-                    header: "DIF",
-                    render: (r) =>
-                      (r.pointsFav ?? 0) - (r.pointsCon ?? 0),
-                  },
-                  { key: "pts", header: "PTS", render: (r) => r.points },
-                ]}
-                topRowClassName={(r) =>
-                  r.position <= 3 ? "liga-ranking-top" : undefined
-                }
-              />
-            ) : (
-              <LigaSimpleRankingDual
-                title=""
-                rows={rankingJugadoresRows}
-                embedded
-                emptyMessage="Sin puntos en la liga aún."
-                columns={[
-                  { key: "pos", header: "#", render: (r) => r.position },
-                  { key: "nombre", header: "Jugador", render: (r) => r.label },
-                  { key: "pts", header: "Pts", render: (r) => r.points },
-                  {
-                    key: "jorn",
-                    header: "Jorn.",
-                    render: (r) => r.matchesPlayed ?? 0,
-                  },
-                ]}
-                topRowClassName={(r) =>
-                  r.position <= 3 ? "liga-ranking-top" : undefined
-                }
-              />
-            )}
-
-            {!esParejasFijas && (
-            <div className="liga-jornada-manual">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowManualEdit((v) => !v)}
-              >
-                {showManualEdit
-                  ? "Ocultar ajuste manual"
-                  : "Corregir puntos manualmente"}
-              </Button>
-              {showManualEdit && (
-                <div className="liga-jornada-manual__list">
-                  <p className="liga-hint">
-                    Solo para correcciones excepcionales. &quot;Recalcular&quot;
-                    volverá a calcular desde los partidos.
-                  </p>
-                  {ranking.map((row) => (
-                    <div key={row.jugador_id} className="liga-jornada-manual__row">
-                      <span className="liga-jornada-manual__name">
-                        {row.nombre}
-                      </span>
-                      <input
-                        type="number"
-                        min={0}
-                        className="liga-jornada-manual__input"
-                        value={manualPuntos[row.jugador_id] ?? String(row.puntos)}
-                        disabled={busy}
-                        onChange={(e) =>
-                          setManualPuntos((prev) => ({
-                            ...prev,
-                            [row.jugador_id]: e.target.value,
-                          }))
-                        }
-                        aria-label={`Puntos ${row.nombre}`}
-                      />
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        disabled={busy}
-                        onClick={() => handleGuardarPuntosManual(row.jugador_id)}
-                      >
-                        Guardar
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {showManualEdit && (
+              <div className="liga-jornada-manual__list">
+                <p className="liga-hint">
+                  Solo para correcciones excepcionales. Recalcular volverá a
+                  calcular desde los partidos.
+                </p>
+                {ranking.map((row) => (
+                  <div key={row.jugador_id} className="liga-jornada-manual__row">
+                    <span className="liga-jornada-manual__name">
+                      {row.nombre}
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      className="liga-jornada-manual__input"
+                      value={manualPuntos[row.jugador_id] ?? String(row.puntos)}
+                      disabled={busy}
+                      onChange={(event) =>
+                        setManualPuntos((prev) => ({
+                          ...prev,
+                          [row.jugador_id]: event.target.value,
+                        }))
+                      }
+                      aria-label={`Puntos ${row.nombre}`}
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => handleGuardarPuntosManual(row.jugador_id)}
+                    >
+                      Guardar
+                    </Button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-        </aside>
+        )}
       </div>
     </LigaPageShell>
   );

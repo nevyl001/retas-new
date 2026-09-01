@@ -1,0 +1,722 @@
+/* ─── Liga Jornada Admin — dashboard de captura ─── */
+
+.liga-page.liga-jornada-admin-page {
+  --jornada-admin-max: 1600px;
+  --jornada-admin-surface: color-mix(in srgb, var(--liga-surface-deep) 92%, #09090b);
+  --jornada-admin-border: color-mix(in srgb, var(--liga-border) 80%, transparent);
+  --jornada-admin-accent: var(--brand-primary, var(--ro-accent));
+  --jornada-admin-lime: var(--ro-mode-americano, #84cc16);
+  font-family: var(--font-body, var(--liga-font-body));
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.jornada-admin {
+  max-width: var(--jornada-admin-max);
+  margin: 0 auto;
+  padding: 0 16px 32px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .jornada-admin {
+    padding-inline: 24px;
+  }
+}
+
+/* Header */
+.jornada-admin-header {
+  margin-bottom: 16px;
+}
+
+.jornada-admin-header__nav {
+  margin-bottom: 12px;
+}
+
+.jornada-admin-header__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.jornada-admin-header__liga {
+  margin: 0;
+  font-family: var(--font-display, var(--liga-font-body));
+  font-size: clamp(1.5rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  color: #fafafa;
+  text-transform: uppercase;
+}
+
+.jornada-admin-header__meta {
+  margin: 6px 0 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(250, 250, 250, 0.82);
+}
+
+.jornada-admin-header__jornada {
+  font-weight: 700;
+}
+
+.jornada-admin-header__dot {
+  margin: 0 0.35rem;
+  opacity: 0.5;
+}
+
+.jornada-admin-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.jornada-admin-header__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--jornada-admin-border);
+  border-radius: 8px;
+  background: var(--jornada-admin-surface);
+  color: rgba(250, 250, 250, 0.9);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.jornada-admin-header__action:hover {
+  border-color: color-mix(in srgb, var(--jornada-admin-accent) 40%, var(--jornada-admin-border));
+}
+
+.jornada-admin-header__action--primary {
+  border-color: color-mix(in srgb, var(--jornada-admin-accent) 35%, var(--jornada-admin-border));
+}
+
+/* Schedule toolbar */
+.jornada-schedule-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--jornada-admin-border);
+  border-radius: 12px;
+  background: var(--jornada-admin-surface);
+}
+
+.jornada-schedule-toolbar__label {
+  flex: 1 1 100%;
+  font-family: var(--font-display, var(--liga-font-body));
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(250, 250, 250, 0.65);
+}
+
+.jornada-schedule-toolbar__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.jornada-schedule-toolbar__field-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(250, 250, 250, 0.65);
+}
+
+.jornada-schedule-toolbar__field input {
+  min-height: 44px;
+  min-width: 148px;
+  padding: 0 12px;
+  border: 1px solid var(--jornada-admin-border);
+  border-radius: 8px;
+  background: #09090b;
+  color: #fafafa;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.jornada-schedule-toolbar__btn {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--jornada-admin-border);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(250, 250, 250, 0.88);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.jornada-schedule-toolbar__btn--accent {
+  border-color: color-mix(in srgb, var(--jornada-admin-accent) 35%, var(--jornada-admin-border));
+  color: #fafafa;
+}
+
+.jornada-schedule-toolbar__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Start bar */
+.jornada-start-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--jornada-admin-lime) 25%, var(--jornada-admin-border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--jornada-admin-lime) 8%, var(--jornada-admin-surface));
+}
+
+.jornada-start-bar__lead {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fafafa;
+}
+
+.jornada-start-bar__hint,
+.jornada-start-bar__warn {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: rgba(250, 250, 250, 0.7);
+}
+
+.jornada-start-bar__warn {
+  color: var(--liga-red, #f87171);
+}
+
+.jornada-start-bar__btn {
+  min-height: 48px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 8px;
+  background: var(--jornada-admin-lime);
+  color: #09090b;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.jornada-start-bar__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Results toolbar */
+.jornada-results-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-bottom: 16px;
+  padding: 12px 0;
+  background: color-mix(in srgb, #09090b 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.jornada-results-toolbar__progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.jornada-results-toolbar__title {
+  font-family: var(--font-display, var(--liga-font-body));
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fafafa;
+}
+
+.jornada-results-toolbar__count {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: rgba(250, 250, 250, 0.75);
+}
+
+.jornada-results-toolbar__track {
+  flex: 1 1 120px;
+  min-width: 100px;
+  max-width: 220px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.jornada-results-toolbar__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--jornada-admin-accent);
+}
+
+/* Court filter */
+.jornada-court-filter {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--jornada-admin-border);
+  border-radius: 10px;
+  background: var(--jornada-admin-surface);
+}
+
+.jornada-court-filter__seg {
+  min-height: 40px;
+  min-width: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(250, 250, 250, 0.75);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.jornada-court-filter__seg--active {
+  background: color-mix(in srgb, var(--jornada-admin-accent) 18%, #18181b);
+  color: #fafafa;
+}
+
+/* Round section */
+.jornada-round {
+  margin-bottom: 20px;
+}
+
+.jornada-round__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+
+.jornada-round__title {
+  margin: 0;
+  font-family: var(--font-display, var(--liga-font-body));
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fafafa;
+}
+
+.jornada-round__meta {
+  margin: 2px 0 0;
+  font-size: 0.9375rem;
+  color: rgba(250, 250, 250, 0.65);
+}
+
+.jornada-round__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.jornada-round__status {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--jornada-admin-border);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: rgba(250, 250, 250, 0.8);
+}
+
+.jornada-round__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .jornada-round__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .jornada-round__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.jornada-round__footer {
+  margin-top: 12px;
+}
+
+.jornada-round__schedule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.jornada-round__schedule input {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--jornada-admin-border);
+  border-radius: 8px;
+  background: #09090b;
+  color: #fafafa;
+  font-family: inherit;
+  font-size: 0.9375rem;
+}
+
+.jornada-round__schedule-btn {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--jornada-admin-border);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(250, 250, 250, 0.85);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Match card */
+.jornada-match-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 12px;
+  border: 1px solid var(--jornada-admin-border);
+  border-radius: 12px;
+  background: var(--jornada-admin-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.jornada-match-card--saved {
+  border-color: color-mix(in srgb, var(--jornada-admin-lime) 22%, var(--jornada-admin-border));
+}
+
+.jornada-match-card--locked {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.jornada-match-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.jornada-match-card__meta {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(250, 250, 250, 0.6);
+}
+
+.jornada-match-card__badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--jornada-admin-lime) 15%, transparent);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--jornada-admin-lime);
+}
+
+.jornada-match-card__teams {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.jornada-match-card__team {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #fafafa;
+  word-break: break-word;
+}
+
+.jornada-match-card__team--right {
+  text-align: right;
+}
+
+.jornada-match-card__vs {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(250, 250, 250, 0.45);
+}
+
+.jornada-match-card__saved-line {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgba(250, 250, 250, 0.85);
+  text-align: center;
+}
+
+.jornada-match-card__scoreboard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.jornada-match-card__sets-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.jornada-match-card__set-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.jornada-match-card__set-label {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(250, 250, 250, 0.55);
+}
+
+.jornada-match-card__set-inputs {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.jornada-match-card__set-inputs--center {
+  justify-content: center;
+}
+
+.jornada-match-card__set3 {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  animation: jornada-set3-in 0.2s ease;
+}
+
+@keyframes jornada-set3-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.jornada-match-card .liga-score-input {
+  width: 52px;
+  min-width: 52px;
+  height: 44px;
+  font-size: 1.25rem;
+  border-color: color-mix(in srgb, var(--jornada-admin-accent) 30%, var(--jornada-admin-border));
+  background: #09090b;
+}
+
+.jornada-match-card__error {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--liga-red, #f87171);
+  text-align: center;
+}
+
+.jornada-match-card__save {
+  width: 100%;
+  min-height: 44px;
+  margin-top: auto;
+  border: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--jornada-admin-lime) 88%, #3f6212);
+  color: #09090b;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.jornada-match-card__save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Standings */
+.jornada-standings {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--jornada-admin-border);
+}
+
+.jornada-standings__title {
+  margin: 0;
+  font-family: var(--font-display, var(--liga-font-body));
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fafafa;
+}
+
+.jornada-standings__hint {
+  margin: 6px 0 0;
+  font-size: 0.875rem;
+  color: rgba(250, 250, 250, 0.6);
+}
+
+.jornada-standings__empty {
+  margin: 12px 0 0;
+  font-size: 0.9375rem;
+  color: rgba(250, 250, 250, 0.65);
+}
+
+.jornada-standings__wrap {
+  margin-top: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.jornada-standings__table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.jornada-standings__table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.jornada-standings__table th {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--jornada-admin-border);
+  background: #09090b;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: left;
+  color: rgba(250, 250, 250, 0.55);
+}
+
+.jornada-standings__table td {
+  height: 46px;
+  padding: 0 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--jornada-admin-border) 70%, transparent);
+  color: rgba(250, 250, 250, 0.9);
+}
+
+.jornada-standings__cell--center {
+  text-align: center;
+}
+
+.jornada-standings__cell--right {
+  text-align: right;
+}
+
+.jornada-standings__cell--pts-head,
+.jornada-standings__cell--pts {
+  font-weight: 800;
+  color: #fafafa;
+}
+
+.jornada-standings__row--top td:first-child {
+  color: color-mix(in srgb, var(--jornada-admin-lime) 80%, #fafafa);
+}
+
+/* Finish actions + alerts */
+.jornada-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.jornada-admin-banner {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--ro-warning, #fbbf24) 35%, var(--jornada-admin-border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ro-warning, #fbbf24) 8%, var(--jornada-admin-surface));
+  font-size: 0.9375rem;
+  color: rgba(250, 250, 250, 0.88);
+}
+
+.jornada-admin-feedback {
+  margin: 8px 0;
+  font-size: 0.9375rem;
+}
+
+.jornada-admin-feedback--ok {
+  color: var(--jornada-admin-lime);
+}
+
+.jornada-admin-feedback--err {
+  color: var(--liga-red, #f87171);
+}
+
+@media (max-width: 640px) {
+  .jornada-match-card__sets-row {
+    grid-template-columns: 1fr;
+  }
+
+  .jornada-admin-header__actions {
+    width: 100%;
+  }
+
+  .jornada-admin-header__action {
+    flex: 1 1 calc(50% - 4px);
+  }
+}

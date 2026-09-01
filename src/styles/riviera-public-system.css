@@ -99,6 +99,11 @@
   color: var(--ro-chrome-text);
 }
 
+.liga-pantalla.ro-public-view .peds-hero__evento {
+  max-width: 100%;
+  text-wrap: pretty;
+}
+
 .ro-public-view .peds-hero__club,
 .te-public .peds-hero__club {
   color: var(--ro-chrome-text-muted);

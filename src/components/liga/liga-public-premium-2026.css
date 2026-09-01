@@ -58,9 +58,10 @@
 
 .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__evento {
   font-size: clamp(1.2rem, 5.2vw, 1.85rem);
-  max-width: 26ch;
+  max-width: 100%;
   line-height: 1.18;
   letter-spacing: -0.025em;
+  text-wrap: pretty;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__club {

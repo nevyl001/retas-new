@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   dateInputValue,
   timeInputValue,
@@ -29,6 +29,10 @@ interface LigaPartidoProgramacionFieldsProps {
   canchasDisponibles: number;
   disabled?: boolean;
   busy?: boolean;
+  /** Resumen legible + botón Editar; formulario solo al editar. */
+  summaryMode?: boolean;
+  /** Oculta "Sin horario" y reduce padding en captura. */
+  compactSummary?: boolean;
   onChange: (next: PartidoProgramacionDraft) => void;
   onSave: () => void;
 }
@@ -41,13 +45,54 @@ export const LigaPartidoProgramacionFields: React.FC<
   canchasDisponibles,
   disabled,
   busy,
+  summaryMode = false,
+  compactSummary = false,
   onChange,
   onSave,
 }) => {
+  const [editing, setEditing] = useState(!summaryMode);
   const canchaOptions = Array.from(
     { length: Math.max(1, canchasDisponibles) },
     (_, i) => i + 1
   );
+
+  const canchaText =
+    draft.cancha.trim() !== ""
+      ? `Cancha ${draft.cancha}`
+      : partido.cancha != null
+        ? `Cancha ${partido.cancha}`
+        : "Cancha sin asignar";
+  const horaText =
+    draft.hora.trim() !== ""
+      ? draft.hora
+      : partido.hora_inicio
+        ? timeInputValue(partido.hora_inicio)
+        : "";
+
+  if (summaryMode && !editing) {
+    const summaryParts = [canchaText];
+    if (horaText) summaryParts.push(horaText);
+    return (
+      <div
+        className={`liga-programacion-summary${
+          compactSummary ? " liga-programacion-summary--compact" : ""
+        }`}
+      >
+        <p className="liga-programacion-summary__text">
+          {summaryParts.join(" · ")}
+        </p>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={disabled || busy}
+          onClick={() => setEditing(true)}
+        >
+          Editar
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="liga-programacion-row">
@@ -82,10 +127,24 @@ export const LigaPartidoProgramacionFields: React.FC<
         variant="ghost"
         size="sm"
         disabled={disabled || busy}
-        onClick={onSave}
+        onClick={() => {
+          onSave();
+          if (summaryMode) setEditing(false);
+        }}
       >
         Guardar cancha/hora
       </Button>
+      {summaryMode ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={disabled || busy}
+          onClick={() => setEditing(false)}
+        >
+          Cancelar
+        </Button>
+      ) : null}
     </div>
   );
 };

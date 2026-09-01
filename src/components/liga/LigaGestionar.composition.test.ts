@@ -9,6 +9,7 @@ import {
   buildLigaGestionarTabs,
   estadoLigaLabel,
   estadoLigaStatusVariant,
+  jornadaEstadoLabel,
 } from "./LigaGestionar";
 import { jornadaEstadoStatusVariant } from "./LigaJornada";
 
@@ -57,6 +58,14 @@ describe("estadoLigaLabel / estadoLigaStatusVariant — mismo texto e info que a
     expect(estadoLigaStatusVariant("upcoming")).toBe("pending");
     expect(estadoLigaStatusVariant("in_progress")).toBe("live");
     expect(estadoLigaStatusVariant("completed")).toBe("gold");
+  });
+});
+
+describe("jornadaEstadoLabel — textos en español para la lista de jornadas", () => {
+  it("mapea estados de jornada a etiquetas legibles", () => {
+    expect(jornadaEstadoLabel("upcoming")).toBe("Próxima");
+    expect(jornadaEstadoLabel("in_progress")).toBe("En curso");
+    expect(jornadaEstadoLabel("completed")).toBe("Completada");
   });
 });
 

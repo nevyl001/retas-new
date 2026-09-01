@@ -5,14 +5,21 @@ import {
   calendarioDesactualizado,
   tieneJornadasEnCurso,
 } from "../../lib/liga/calendario";
-import type { LigaDetalle, LigaEquipo, LigaJugadorPoolItem } from "../../lib/liga/types";
+import type {
+  LigaDetalle,
+  LigaEquipo,
+  LigaJornadaEstado,
+  LigaJugadorPoolItem,
+} from "../../lib/liga/types";
 import { ligaModalidadLabel } from "../../lib/liga/types";
 import {
   isEquiposModalidad,
   isParejasFijasPlayoffs,
 } from "../../lib/liga/ligaModalidad";
 import { PLAYOFFS_MIN_TEAMS } from "../../lib/liga/parejasFijasPlayoffsFixture";
+import { copyTextToClipboard } from "../../lib/clipboard/copyTextToClipboard";
 import { formatFechaLegible, dateInputValue } from "../../lib/liga/programacion";
+import { buildSharePublicOgUrlFromPlayUrl } from "../../lib/retaAbierta/shareOgUrl";
 import { JugadorCategoriaBadge } from "../jugadores/JugadorCategoriaBadge";
 import { RivieraIdBadge } from "../jugadores/RivieraIdBadge";
 import { navigateJugadoresLista } from "../jugadores/jugadoresGeneroNav";
@@ -42,13 +49,11 @@ import { Button } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
 import { ActionBar } from "../platform/ActionBar";
 import {
-  ModeDangerZone,
   ModeEventHeader,
   ModeSectionPanel,
   ModeSectionTabs,
   MobileStickyActionFooter,
 } from "../platform";
-import { PublicShareSection } from "../platform/PublicShareSection";
 import {
   ligaJornadaPath,
   navigateLiga,
@@ -107,6 +112,37 @@ export function buildLigaGestionarTabs(
       ];
 }
 
+export function jornadaEstadoLabel(estado: LigaJornadaEstado): string {
+  switch (estado) {
+    case "upcoming":
+      return "Próxima";
+    case "in_progress":
+      return "En curso";
+    case "completed":
+      return "Completada";
+    default:
+      return estado;
+  }
+}
+
+export function ligaEstadoStatusDisplayLabel(
+  estado: LigaDetalle["estado"]
+): string {
+  const label = estadoLigaLabel(estado);
+  return estado === "in_progress" ? `▶ ${label}` : label;
+}
+
+function jornadaEstadoIcon(estado: LigaJornadaEstado): string {
+  switch (estado) {
+    case "completed":
+      return "✅";
+    case "in_progress":
+      return "▶";
+    default:
+      return "🕒";
+  }
+}
+
 function equipoNombre(e: LigaEquipo): string {
   return (
     e.nombre?.trim() ||
@@ -129,6 +165,10 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const [busy, setBusy] = useState(false);
   const [editingNombre, setEditingNombre] = useState(false);
   const [nombreDraft, setNombreDraft] = useState("");
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
   // Generación de carga: si un load() más nuevo arrancó mientras uno viejo
   // seguía en vuelo (incluido el callback de sync en segundo plano de uno
@@ -182,6 +222,25 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!optionsOpen) return;
+    const closeMenus = (event: MouseEvent) => {
+      if (toolsRef.current?.contains(event.target as Node)) return;
+      setOptionsOpen(false);
+    };
+    document.addEventListener("mousedown", closeMenus);
+    return () => document.removeEventListener("mousedown", closeMenus);
+  }, [optionsOpen]);
+
+  useEffect(() => {
+    if (!shareOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShareOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [shareOpen]);
 
   const inscritosIds = useMemo(
     () => new Set(detalle?.inscripciones.map((i) => i.jugador_id) ?? []),
@@ -320,6 +379,24 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
   const ligaEditable = detalle?.estado !== "completed";
 
+  const ligaPublicUrl = useMemo(() => publicLigaUrl(ligaId), [ligaId]);
+  const ligaShareUrl = useMemo(
+    () => buildSharePublicOgUrlFromPlayUrl(ligaPublicUrl) || ligaPublicUrl,
+    [ligaPublicUrl]
+  );
+
+  const jornadaProgress = useMemo(() => {
+    const jornadas = detalle?.jornadas ?? [];
+    if (jornadas.length === 0) return null;
+    const total = jornadas.length;
+    const completadas = jornadas.filter((j) => j.estado === "completed").length;
+    return {
+      total,
+      completadas,
+      percent: Math.round((completadas / total) * 100),
+    };
+  }, [detalle?.jornadas]);
+
   const toggleInscripcion = async (jugadorId: string, inscrito: boolean) => {
     setBusy(true);
     setError(null);
@@ -414,7 +491,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     if (!detalle) return;
     if (
       !window.confirm(
-        `¿Eliminar «${detalle.nombre}»? Se borrarán inscripciones, jornadas y resultados. Esta acción no se puede deshacer.`
+        "¿Seguro que quieres eliminar esta liga? Esta acción no se puede deshacer."
       )
     ) {
       return;
@@ -539,103 +616,280 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     detalle.estado !== "completed" && detalle.jornadas.length === 0;
   const stickyLabel = isMobile && ctaIniciarVisible ? "Iniciar liga" : null;
 
+  const handleCopyShareLink = async () => {
+    const ok = await copyTextToClipboard(ligaShareUrl);
+    if (!ok) {
+      setError("No se pudo copiar el enlace.");
+      return;
+    }
+    setShareCopied(true);
+    window.setTimeout(() => setShareCopied(false), 2000);
+  };
+
+  const whatsAppShareHref = `https://wa.me/?text=${encodeURIComponent(ligaShareUrl)}`;
+
   return (
-    <LigaPageShell className={stickyLabel ? "has-mobile-sticky-action" : ""}>
+    <LigaPageShell
+      className={[
+        "liga-gestionar-a11y",
+        stickyLabel ? "has-mobile-sticky-action" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <ActionBar className="liga-toolbar riviera-back-toolbar">
         <Button type="button" variant="back" onClick={() => navigateLiga("/liga")}>
           ← Ligas
         </Button>
       </ActionBar>
 
-      <ModeEventHeader
-        className="liga-event-header"
-        eyebrow={modeEyebrow}
-        title={`Liga: ${detalle.nombre}`}
-        titleContent={
-          editingNombre ? (
-            <form className="liga-nombre-edit" onSubmit={handleSaveNombre}>
-              <span className="liga-nombre-edit__prefix">Liga:</span>
-              <input
-                id="liga-edit-nombre"
-                className="liga-nombre-edit__input"
-                value={nombreDraft}
-                onChange={(ev) => setNombreDraft(ev.target.value)}
-                aria-label="Nombre de la liga"
-                autoFocus
-                disabled={busy}
-                maxLength={120}
-              />
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-                disabled={busy || !nombreDraft.trim()}
-              >
-                Guardar
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={busy}
-                onClick={handleCancelNombre}
-              >
-                Cancelar
-              </Button>
-            </form>
-          ) : (
-            <div className="liga-nombre-edit liga-nombre-edit--view">
-              <h2 className="mode-event-header__title">Liga: {detalle.nombre}</h2>
+      <div className="liga-gestionar-header">
+        <div className="liga-gestionar-header__tools" ref={toolsRef}>
+          <button
+            type="button"
+            className="liga-gestionar-tool-btn"
+            aria-expanded={shareOpen}
+            aria-controls="liga-gestionar-share-panel"
+            aria-label="Compartir enlace público"
+            title="Compartir enlace público"
+            onClick={() => {
+              setShareOpen(true);
+              setOptionsOpen(false);
+            }}
+          >
+            <TablerIcon name="share" size={20} aria-hidden={false} />
+            <span>Compartir</span>
+          </button>
+          <button
+            type="button"
+            className="liga-gestionar-tool-btn"
+            aria-expanded={optionsOpen}
+            aria-controls="liga-gestionar-options-menu"
+            aria-haspopup="menu"
+            aria-label="Configuración de la liga"
+            title="Configuración de la liga"
+            onClick={() => {
+              setOptionsOpen((open) => !open);
+              setShareOpen(false);
+            }}
+          >
+            <TablerIcon name="dots-vertical" size={20} aria-hidden={false} />
+            <span>Opciones</span>
+          </button>
+          {optionsOpen ? (
+            <div
+              id="liga-gestionar-options-menu"
+              className="liga-gestionar-options"
+              role="menu"
+              aria-label="Configuración de la liga"
+            >
               <button
                 type="button"
-                className="liga-nombre-edit__pencil"
-                aria-label="Editar nombre de la liga"
-                title="Editar nombre"
+                className="liga-gestionar-options__item"
+                role="menuitem"
                 disabled={busy}
                 onClick={() => {
                   setNombreDraft(detalle.nombre);
                   setEditingNombre(true);
+                  setOptionsOpen(false);
                 }}
               >
-                <TablerIcon name="pencil" size={14} aria-hidden={false} />
+                <TablerIcon name="pencil" size={18} aria-hidden={false} />
+                Renombrar liga
+              </button>
+              {ligaEditable ? (
+                <button
+                  type="button"
+                  className="liga-gestionar-options__item"
+                  role="menuitem"
+                  disabled={busy}
+                  onClick={() => {
+                    setOptionsOpen(false);
+                    void handleResetLiga();
+                  }}
+                >
+                  <TablerIcon name="refresh" size={18} aria-hidden={false} />
+                  Reiniciar liga
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className="liga-gestionar-options__item liga-gestionar-options__item--danger"
+                role="menuitem"
+                disabled={busy}
+                onClick={() => {
+                  setOptionsOpen(false);
+                  void handleDeleteLiga();
+                }}
+              >
+                <TablerIcon name="trash" size={18} aria-hidden={false} />
+                Eliminar liga
               </button>
             </div>
-          )
-        }
-        modality={ligaModalidadLabel(detalle.modalidad)}
-        statusLabel={estadoLigaLabel(detalle.estado)}
-        statusVariant={estadoLigaStatusVariant(detalle.estado)}
-        summary={`${
-          esParejasFijas
-            ? `${detalle.equipos.length} parejas`
-            : `${detalle.inscripciones.length} inscritos`
-        }${
-          esParejasFijas
-            ? ` · ${detalle.vueltas} vuelta${detalle.vueltas > 1 ? "s" : ""}`
-            : ""
-        }`}
-      />
+          ) : null}
+        </div>
 
-      <PublicShareSection
-        publicUrl={publicLigaUrl(ligaId)}
-        title="Enlace público"
-        infoLines={["Comparte el enlace para ver ranking y jornadas (solo lectura)."]}
-        onCopy={async () => {
-          try {
-            const { buildSharePublicOgUrlFromPlayUrl } = await import(
-              "../../lib/retaAbierta/shareOgUrl"
-            );
-            const url =
-              buildSharePublicOgUrlFromPlayUrl(publicLigaUrl(ligaId)) ||
-              publicLigaUrl(ligaId);
-            await navigator.clipboard.writeText(url);
-            setMessage("Enlace público copiado.");
-          } catch {
-            setError("No se pudo copiar el enlace.");
+        <ModeEventHeader
+          className="liga-event-header"
+          eyebrow={modeEyebrow}
+          title={`Liga: ${detalle.nombre}`}
+          titleContent={
+            editingNombre ? (
+              <form className="liga-nombre-edit" onSubmit={handleSaveNombre}>
+                <span className="liga-nombre-edit__prefix">Liga:</span>
+                <input
+                  id="liga-edit-nombre"
+                  className="liga-nombre-edit__input"
+                  value={nombreDraft}
+                  onChange={(ev) => setNombreDraft(ev.target.value)}
+                  aria-label="Nombre de la liga"
+                  autoFocus
+                  disabled={busy}
+                  maxLength={120}
+                />
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={busy || !nombreDraft.trim()}
+                >
+                  Guardar
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={busy}
+                  onClick={handleCancelNombre}
+                >
+                  Cancelar
+                </Button>
+              </form>
+            ) : (
+              <div className="liga-nombre-edit liga-nombre-edit--view">
+                <h2 className="mode-event-header__title">Liga: {detalle.nombre}</h2>
+                <button
+                  type="button"
+                  className="liga-nombre-edit__pencil"
+                  aria-label="Editar nombre de la liga"
+                  title="Editar nombre"
+                  disabled={busy}
+                  onClick={() => {
+                    setNombreDraft(detalle.nombre);
+                    setEditingNombre(true);
+                  }}
+                >
+                  <TablerIcon name="pencil" size={14} aria-hidden={false} />
+                </button>
+              </div>
+            )
           }
-        }}
-      />
-      <ActionBar className="liga-actions">
+          modality={ligaModalidadLabel(detalle.modalidad)}
+          statusLabel={ligaEstadoStatusDisplayLabel(detalle.estado)}
+          statusVariant={estadoLigaStatusVariant(detalle.estado)}
+          summary={`${
+            esParejasFijas
+              ? `${detalle.equipos.length} parejas`
+              : `${detalle.inscripciones.length} inscritos`
+          }${
+            esParejasFijas
+              ? ` · ${detalle.vueltas} vuelta${detalle.vueltas > 1 ? "s" : ""}`
+              : ""
+          }`}
+        />
+      </div>
+
+      {shareOpen ? (
+        <div
+          id="liga-gestionar-share-panel"
+          className="liga-gestionar-modal-backdrop"
+          role="presentation"
+          onClick={() => setShareOpen(false)}
+        >
+          <div
+            className="liga-gestionar-share-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="liga-gestionar-share-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="liga-gestionar-share-modal__close"
+              aria-label="Cerrar"
+              onClick={() => setShareOpen(false)}
+            >
+              ×
+            </button>
+            <h2
+              id="liga-gestionar-share-title"
+              className="liga-gestionar-share-modal__title"
+            >
+              Comparte esta liga
+            </h2>
+            <p className="liga-gestionar-share-modal__lead">
+              Envía este enlace para que cualquiera pueda ver el ranking y las
+              jornadas (sin poder editar).
+            </p>
+            <label className="liga-gestionar-share-modal__url-label" htmlFor="liga-share-url">
+              Enlace público
+            </label>
+            <input
+              id="liga-share-url"
+              className="liga-gestionar-share-modal__url"
+              type="text"
+              readOnly
+              value={ligaShareUrl}
+              onFocus={(event) => event.currentTarget.select()}
+            />
+            <div className="liga-gestionar-share-modal__actions">
+              <button
+                type="button"
+                className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--primary"
+                onClick={() => void handleCopyShareLink()}
+              >
+                {shareCopied ? "¡Enlace copiado! ✅" : "Copiar enlace"}
+              </button>
+              <a
+                className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--whatsapp"
+                href={whatsAppShareHref}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Enviar por WhatsApp
+              </a>
+              <a
+                className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--secondary"
+                href={ligaPublicUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ver vista pública
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {jornadaProgress ? (
+        <div className="liga-gestionar-progress" role="status">
+          <p className="liga-gestionar-progress__text">
+            {jornadaProgress.completadas} de {jornadaProgress.total} jornadas
+            completadas
+          </p>
+          <div
+            className="liga-gestionar-progress__track"
+            aria-hidden="true"
+          >
+            <div
+              className="liga-gestionar-progress__fill"
+              style={{ width: `${jornadaProgress.percent}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      <ActionBar className="liga-actions liga-gestionar-actions">
         {ctaIniciarVisible && !isMobile && (
           <Button
             type="button"
@@ -681,29 +935,6 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
           </Button>
         )}
       </ActionBar>
-
-      <ModeDangerZone title="Zona de peligro">
-        {ligaEditable && (
-          <Button
-            type="button"
-            variant="danger"
-            size="sm"
-            disabled={busy}
-            onClick={handleResetLiga}
-          >
-            Reiniciar liga
-          </Button>
-        )}
-        <Button
-          type="button"
-          variant="danger"
-          size="sm"
-          disabled={busy}
-          onClick={() => void handleDeleteLiga()}
-        >
-          Eliminar liga
-        </Button>
-      </ModeDangerZone>
 
       {calendarioStale && ligaEditable && (
         <div className="liga-banner liga-banner--warn" role="status">
@@ -824,30 +1055,37 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
             {detalle.equipos.length === 0 ? (
               <p className="liga-empty">Aún no hay parejas registradas.</p>
             ) : (
-              <ul className="liga-list">
+              <ul className="liga-list liga-jornadas-list">
                 {detalle.equipos.map((eq) => (
-                  <li key={eq.id} className="liga-list-item">
-                    <div className="liga-list-item__main">
-                      <p className="liga-list-item__title">{equipoNombre(eq)}</p>
-                      <p className="liga-list-item__meta">
-                        {eq.partidos_jugados > 0
-                          ? `${eq.puntos} pts · ${eq.partidos_jugados} PJ`
-                          : "Sin partidos jugados"}
-                      </p>
-                    </div>
-                    {ligaEditable && detalle.jornadas.length === 0 && (
-                      <div className="liga-list-item__actions">
-                        <Button
+                  <li key={eq.id} className="liga-jornadas-list__item">
+                    <div className="liga-jornada-row liga-jornada-row--pareja">
+                      <span
+                        className="liga-jornada-row__icon liga-jornada-row__icon--pareja"
+                        aria-hidden="true"
+                      >
+                        👥
+                      </span>
+                      <span className="liga-jornada-row__main">
+                        <span className="liga-jornada-row__title">
+                          {equipoNombre(eq)}
+                        </span>
+                        <span className="liga-jornada-row__meta">
+                          {eq.partidos_jugados > 0
+                            ? `${eq.puntos} pts · ${eq.partidos_jugados} PJ`
+                            : "Sin partidos jugados"}
+                        </span>
+                      </span>
+                      {ligaEditable && detalle.jornadas.length === 0 ? (
+                        <button
                           type="button"
-                          variant="danger"
-                          size="sm"
+                          className="liga-jornada-row__cta liga-jornada-row__cta--danger"
                           disabled={busy}
                           onClick={() => void handleDeleteEquipo(eq.id)}
                         >
                           Borrar pareja
-                        </Button>
-                      </div>
-                    )}
+                        </button>
+                      ) : null}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -1063,30 +1301,39 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
                 : "Sin jornadas."}
             </p>
           ) : (
-            <ul className="liga-list">
+            <ul className="liga-list liga-jornadas-list">
               {detalle.jornadas.map((j) => (
-                <li key={j.id} className="liga-list-item">
-                  <div className="liga-list-item__main">
-                    <p className="liga-list-item__title">Jornada {j.numero}</p>
-                    <p className="liga-list-item__meta">
-                      {j.estado}
-                      {j.fecha
-                        ? ` · ${formatFechaLegible(dateInputValue(j.fecha))}`
-                        : ""}
-                    </p>
-                  </div>
-                  <div className="liga-list-item__actions">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() =>
-                        navigateLiga(ligaJornadaPath(ligaId, j.numero))
-                      }
+                <li key={j.id} className="liga-jornadas-list__item">
+                  <button
+                    type="button"
+                    className="liga-jornada-row"
+                    disabled={busy}
+                    onClick={() =>
+                      navigateLiga(ligaJornadaPath(ligaId, j.numero))
+                    }
+                  >
+                    <span
+                      className={`liga-jornada-row__icon liga-jornada-row__icon--${j.estado}`}
+                      aria-hidden="true"
                     >
-                      Ir a jornada
-                    </Button>
-                  </div>
+                      {jornadaEstadoIcon(j.estado)}
+                    </span>
+                    <span className="liga-jornada-row__main">
+                      <span className="liga-jornada-row__title">
+                        Jornada {j.numero}
+                      </span>
+                      <span className="liga-jornada-row__meta">
+                        {jornadaEstadoLabel(j.estado)}
+                        {j.fecha
+                          ? ` · ${formatFechaLegible(dateInputValue(j.fecha))}`
+                          : ""}
+                      </span>
+                    </span>
+                    <span className="liga-jornada-row__cta">
+                      Ver jornada {j.numero}
+                      <TablerIcon name="chevron-right" size={18} />
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>

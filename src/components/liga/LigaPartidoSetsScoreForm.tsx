@@ -9,45 +9,47 @@ import {
 } from "../../lib/liga/parejasFijasMatchScore";
 import type { LigaPartido } from "../../lib/liga/types";
 import { Button } from "../ui";
+import { LigaScoreInput } from "./LigaScoreInput";
 
-function SetInputs({
+function SetInputRow({
   label,
   draft,
   onChange,
   disabled,
-  hint,
+  compact,
+  pareja1Label,
+  pareja2Label,
 }: {
   label: string;
   draft: SetScoreDraft;
   onChange: (next: SetScoreDraft) => void;
   disabled?: boolean;
-  hint?: string;
+  compact?: boolean;
+  pareja1Label: string;
+  pareja2Label: string;
 }) {
   return (
-    <div className="liga-sets-row">
-      <span className="liga-sets-row__label">
-        {label}
-        {hint ? <span className="liga-sets-row__hint">{hint}</span> : null}
-      </span>
-      <input
-        type="number"
-        min={0}
-        className="liga-score-input"
-        value={draft.p1}
-        disabled={disabled}
-        onChange={(e) => onChange({ ...draft, p1: e.target.value })}
-        aria-label={`${label} pareja 1`}
-      />
-      <span>—</span>
-      <input
-        type="number"
-        min={0}
-        className="liga-score-input"
-        value={draft.p2}
-        disabled={disabled}
-        onChange={(e) => onChange({ ...draft, p2: e.target.value })}
-        aria-label={`${label} pareja 2`}
-      />
+    <div className={`liga-set-capture${compact ? " liga-set-capture--compact" : ""}`}>
+      <div className="liga-set-capture__head">
+        <span className="liga-set-capture__label">{label}</span>
+      </div>
+      <div className="liga-set-capture__inputs">
+        <LigaScoreInput
+          value={draft.p1}
+          onChange={(p1) => onChange({ ...draft, p1 })}
+          disabled={disabled}
+          ariaLabel={`${label} games ${pareja1Label}`}
+        />
+        <span className="liga-set-capture__vs" aria-hidden>
+          vs
+        </span>
+        <LigaScoreInput
+          value={draft.p2}
+          onChange={(p2) => onChange({ ...draft, p2 })}
+          disabled={disabled}
+          ariaLabel={`${label} games ${pareja2Label}`}
+        />
+      </div>
     </div>
   );
 }
@@ -69,80 +71,86 @@ export function getSetsDraftForPartido(
 interface LigaPartidoSetsScoreFormProps {
   partido: LigaPartido;
   draft: ParejasFijasSetsDraft;
+  pareja1Label: string;
+  pareja2Label: string;
   disabled?: boolean;
   busy?: boolean;
+  justSaved?: boolean;
+  compact?: boolean;
   onChange: (next: ParejasFijasSetsDraft) => void;
   onSave: () => void;
 }
 
 export const LigaPartidoSetsScoreForm: React.FC<LigaPartidoSetsScoreFormProps> = ({
-  partido,
   draft,
+  pareja1Label,
+  pareja2Label,
   disabled,
   busy,
+  justSaved,
+  compact = false,
   onChange,
   onSave,
 }) => {
   const showSet3 = needsSuperTiebreakDraft(draft);
   const validationError = useMemo(() => validateParejasFijasDraft(draft), [draft]);
   const canSave = !validationError && !disabled && !busy;
-  const isCorrection = partido.estado === "completed";
 
   const handleDraftChange = (next: ParejasFijasSetsDraft) => {
     onChange(normalizeParejasFijasDraft(next));
   };
 
   return (
-    <div className="liga-sets-form">
-      <p className="liga-sets-form__rules">
-        Al mejor de 3 sets · sets 1-2 con punto de oro · set 3 super tie-break a 10
-      </p>
-      <SetInputs
-        label="Set 1"
-        draft={draft.set1}
-        disabled={disabled || busy}
-        onChange={(set1) => handleDraftChange({ ...draft, set1 })}
-      />
-      <SetInputs
-        label="Set 2"
-        draft={draft.set2}
-        disabled={disabled || busy}
-        onChange={(set2) => handleDraftChange({ ...draft, set2 })}
-      />
-      {showSet3 ? (
-        <SetInputs
-          label="Set 3"
-          hint="STB a 10"
-          draft={draft.set3}
+    <div className={`liga-sets-form liga-sets-form--capture${compact ? " liga-sets-form--compact" : ""}`}>
+      <div className={compact ? "liga-sets-form__grid" : undefined}>
+        <SetInputRow
+          label="Set 1"
+          pareja1Label={pareja1Label}
+          pareja2Label={pareja2Label}
+          draft={draft.set1}
           disabled={disabled || busy}
-          onChange={(set3) => handleDraftChange({ ...draft, set3 })}
+          compact={compact}
+          onChange={(set1) => handleDraftChange({ ...draft, set1 })}
         />
+        <SetInputRow
+          label="Set 2"
+          pareja1Label={pareja1Label}
+          pareja2Label={pareja2Label}
+          draft={draft.set2}
+          disabled={disabled || busy}
+          compact={compact}
+          onChange={(set2) => handleDraftChange({ ...draft, set2 })}
+        />
+      </div>
+      {showSet3 ? (
+        <div className="liga-sets-form__set3 liga-sets-form__set3--visible">
+          <SetInputRow
+            label="Set 3 (súper tie-break)"
+            pareja1Label={pareja1Label}
+            pareja2Label={pareja2Label}
+            draft={draft.set3}
+            disabled={disabled || busy}
+            compact={compact}
+            onChange={(set3) => handleDraftChange({ ...draft, set3 })}
+          />
+        </div>
       ) : null}
+
       {validationError ? (
         <p className="liga-sets-form__error" role="alert">
           {validationError}
         </p>
-      ) : showSet3 ? (
-        <p className="liga-sets-form__hint">
-          Van 1-1 en sets: el tercero es super tie-break a 10 (gana por 2 puntos).
-        </p>
       ) : null}
-      <div className="liga-sets-form__actions">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          disabled={!canSave}
-          onClick={onSave}
-        >
-          {isCorrection ? "Corregir resultado" : "Guardar"}
-        </Button>
-        {isCorrection && !validationError ? (
-          <span className="liga-sets-form__saved-hint">
-            Puedes corregir en cualquier momento
-          </span>
-        ) : null}
-      </div>
+
+      <Button
+        type="button"
+        variant="primary"
+        className="liga-partido-save-btn"
+        disabled={!canSave}
+        onClick={onSave}
+      >
+        {justSaved ? "¡Guardado! ✅" : "Guardar resultado"}
+      </Button>
     </div>
   );
 };

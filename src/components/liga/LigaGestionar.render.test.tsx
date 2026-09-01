@@ -241,14 +241,23 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
     ).toBe("Iniciar liga");
   });
 
-  it("Reiniciar liga y Eliminar liga están dentro de ModeDangerZone; Iniciar liga nunca lo está", async () => {
+  it("Reiniciar liga y Eliminar liga están en el menú de opciones; Iniciar liga nunca lo está", async () => {
     await renderLiga(baseDetalle());
 
-    const dangerZone = container.querySelector(".mode-danger-zone");
-    expect(dangerZone).not.toBeNull();
-    expect(dangerZone?.textContent).toContain("Reiniciar liga");
-    expect(dangerZone?.textContent).toContain("Eliminar liga");
-    expect(dangerZone?.textContent).not.toContain("Iniciar liga");
+    const optionsBtn = container.querySelector(
+      '[aria-label="Configuración de la liga"]'
+    ) as HTMLButtonElement;
+    expect(optionsBtn).not.toBeNull();
+
+    await act(async () => {
+      optionsBtn.click();
+    });
+
+    const optionsMenu = container.querySelector(".liga-gestionar-options");
+    expect(optionsMenu).not.toBeNull();
+    expect(optionsMenu?.textContent).toContain("Reiniciar liga");
+    expect(optionsMenu?.textContent).toContain("Eliminar liga");
+    expect(optionsMenu?.textContent).not.toContain("Iniciar liga");
   });
 
   it("los callbacks destructivos siguen siendo los mismos (llaman al servicio real)", async () => {
@@ -260,9 +269,16 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
 
     await renderLiga(baseDetalle());
 
+    const optionsBtn = container.querySelector(
+      '[aria-label="Configuración de la liga"]'
+    ) as HTMLButtonElement;
+    await act(async () => {
+      optionsBtn.click();
+    });
+
     const eliminarBtn = Array.from(
-      container.querySelectorAll(".mode-danger-zone button")
-    ).find((b) => b.textContent === "Eliminar liga") as HTMLButtonElement;
+      container.querySelectorAll(".liga-gestionar-options button")
+    ).find((b) => b.textContent?.includes("Eliminar liga")) as HTMLButtonElement;
     expect(eliminarBtn).toBeDefined();
 
     await act(async () => {
@@ -325,6 +341,14 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
     expect(buttons).not.toContain("Iniciar liga");
     expect(buttons).not.toContain("Reiniciar liga");
     // Eliminar liga sigue disponible incluso finalizada (misma lógica previa).
-    expect(buttons).toContain("Eliminar liga");
+    const optionsBtn = container.querySelector(
+      '[aria-label="Configuración de la liga"]'
+    ) as HTMLButtonElement;
+    await act(async () => {
+      optionsBtn.click();
+    });
+    expect(container.querySelector(".liga-gestionar-options")?.textContent).toContain(
+      "Eliminar liga"
+    );
   });
 });
