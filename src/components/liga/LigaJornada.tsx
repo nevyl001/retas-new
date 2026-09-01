@@ -23,7 +23,6 @@ import {
   updateScoreParejasFijasPlayoffs,
   updateJornadaFecha,
   updateJornadaHorarioPartidos,
-  updatePartidoProgramacion,
   updateRondaProgramacion,
 } from "../../services/ligaService";
 import {
@@ -44,11 +43,7 @@ import {
 import { ligaJornadaTitulo } from "../../lib/liga/types";
 import { getSetsDraftForPartido } from "./LigaPartidoSetsScoreForm";
 import { getPlayoffsDraftForPartido } from "./LigaPartidoPlayoffsScoreForm";
-import {
-  getProgramacionDraftForPartido,
-  jornadaFechaDraft,
-  type PartidoProgramacionDraft,
-} from "./LigaPartidoProgramacionFields";
+import { jornadaFechaDraft } from "./LigaPartidoProgramacionFields";
 import { Button } from "../ui";
 import { LigaPageShell } from "./LigaPageShell";
 import { uniqueCanchas } from "./ligaPartidoCaptureUi";
@@ -144,9 +139,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const [jornadaFechaDrafts, setJornadaFechaDrafts] = useState<
     Record<string, string>
   >({});
-  const [programacionDrafts, setProgramacionDrafts] = useState<
-    Record<string, PartidoProgramacionDraft>
-  >({});
   const [rondaHoraDrafts, setRondaHoraDrafts] = useState<Record<number, string>>(
     {}
   );
@@ -218,18 +210,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         points: row.puntos,
       })),
     [jornadaStats.rankingJugadores]
-  );
-
-  const jornadaParejasRows = useMemo<SimpleRankingPresentationRow[]>(
-    () =>
-      jornadaStats.rankingParejas.map((row) => ({
-        key: row.parejaId,
-        position: row.posicion,
-        label: row.nombre,
-        points: row.puntos,
-        pg: row.victorias,
-      })),
-    [jornadaStats.rankingParejas]
   );
 
   const flashPartidoSaved = (partidoId: string) => {
@@ -479,30 +459,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     try {
       await updateJornadaFecha(jornada.id, fecha || null);
       setMessage("Día de jornada guardado.");
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const savePartidoProgramacion = async (partido: LigaPartido) => {
-    const draft = getProgramacionDraftForPartido(partido, programacionDrafts);
-    const cancha = Number(draft.cancha);
-    if (!draft.cancha || Number.isNaN(cancha)) {
-      setError("Selecciona una cancha.");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await updatePartidoProgramacion(
-        partido.id,
-        { cancha, hora_inicio: draft.hora || null },
-        detalle?.canchas_disponibles ?? 1
-      );
-      setMessage("Cancha y horario guardados.");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -928,6 +884,8 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                     !esParejasFijas ? (
                       <div className="jornada-round__schedule">
                         <input
+                          id={`jornada-ronda-${ronda}-hora`}
+                          name={`jornada-ronda-${ronda}-hora`}
                           type="time"
                           value={rondaHoraDrafts[ronda] ?? ""}
                           disabled={busy}
@@ -1115,6 +1073,8 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                       {row.nombre}
                     </span>
                     <input
+                      id={`jornada-manual-puntos-${row.jugador_id}`}
+                      name={`jornada-manual-puntos-${row.jugador_id}`}
                       type="number"
                       min={0}
                       className="liga-jornada-manual__input"

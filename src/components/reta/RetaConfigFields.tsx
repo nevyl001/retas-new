@@ -43,6 +43,10 @@ function FieldLock({ reason }: { reason?: string }) {
   );
 }
 
+function retaConfigFieldId(key: string): string {
+  return `reta-config-${key}`;
+}
+
 export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   values,
   onChange,
@@ -78,9 +82,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   const durEd = ed("duration_minutes");
 
   const nameField = (
-    <label className="home-sheet__field reta-details-form__field reta-details-form__field--name">
+    <label
+      className="home-sheet__field reta-details-form__field reta-details-form__field--name"
+      htmlFor={retaConfigFieldId("name")}
+    >
       <span className="home-sheet__field-label">Nombre</span>
       <input
+        id={retaConfigFieldId("name")}
+        name={retaConfigFieldId("name")}
         type="text"
         className="home-sheet__input riviera-input"
         placeholder="Reta del domingo…"
@@ -151,9 +160,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         role="group"
         aria-label="Día, hora y duración"
       >
-        <label className="home-sheet__field reta-details-form__field reta-details-form__field--date">
+        <label
+          className="home-sheet__field reta-details-form__field reta-details-form__field--date"
+          htmlFor={retaConfigFieldId("programado-date")}
+        >
           <span className="home-sheet__field-label">Día</span>
           <input
+            id={retaConfigFieldId("programado-date")}
+            name={retaConfigFieldId("programado-date")}
             type="date"
             className="home-sheet__input riviera-input reta-details-form__date"
             value={scheduleParts.date}
@@ -162,9 +176,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           />
           {schedEd.locked ? <FieldLock reason={schedEd.reason} /> : null}
         </label>
-        <label className="home-sheet__field reta-details-form__field reta-details-form__field--time">
+        <label
+          className="home-sheet__field reta-details-form__field reta-details-form__field--time"
+          htmlFor={retaConfigFieldId("programado-time")}
+        >
           <span className="home-sheet__field-label">Hora</span>
           <input
+            id={retaConfigFieldId("programado-time")}
+            name={retaConfigFieldId("programado-time")}
             type="time"
             className="home-sheet__input riviera-input reta-details-form__time"
             value={scheduleParts.time}
@@ -220,9 +239,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
     ) : null;
 
   const descriptionField = essentials ? (
-    <label className="home-sheet__field reta-details-form__field reta-details-form__field--desc">
+    <label
+      className="home-sheet__field reta-details-form__field reta-details-form__field--desc"
+      htmlFor={retaConfigFieldId("description")}
+    >
       <span className="home-sheet__field-label">Descripción</span>
       <input
+        id={retaConfigFieldId("description")}
+        name={retaConfigFieldId("description")}
         type="text"
         className="home-sheet__input riviera-input"
         placeholder="Ej. mixta, verano, amigos…"
@@ -234,10 +258,15 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       {descEd.locked ? <FieldLock reason={descEd.reason} /> : null}
     </label>
   ) : (
-    <label className="home-sheet__field home-sheet__field--desc">
+    <label
+      className="home-sheet__field home-sheet__field--desc"
+      htmlFor={retaConfigFieldId("description")}
+    >
       <span className="home-sheet__field-label">Descripción</span>
       <span className="home-sheet__field-optional">Opcional</span>
       <input
+        id={retaConfigFieldId("description")}
+        name={retaConfigFieldId("description")}
         type="text"
         className="home-sheet__input riviera-input"
         placeholder="Ej. mixta, verano, amigos…"
@@ -251,9 +280,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   );
 
   const nivelField = (
-    <label className="home-sheet__field reta-details-form__field reta-details-form__field--nivel">
+    <label
+      className="home-sheet__field reta-details-form__field reta-details-form__field--nivel"
+      htmlFor={retaConfigFieldId("nivel")}
+    >
       <span className="home-sheet__field-label">Nivel</span>
       <input
+        id={retaConfigFieldId("nivel")}
+        name={retaConfigFieldId("nivel")}
         type="text"
         className="home-sheet__input riviera-input"
         placeholder="Fuerza: 5ta Fuerza, Open…"
@@ -282,6 +316,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         <div className="home-sheet__field reta-details-form__field reta-details-form__field--lugar">
           <span className="reta-details-form__lugar-label">
             <input
+              id={retaConfigFieldId("mostrar-lugar")}
+              name={retaConfigFieldId("mostrar-lugar")}
               type="checkbox"
               checked={values.mostrar_lugar}
               disabled={lugarEd.locked}
@@ -291,6 +327,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             <span className="home-sheet__field-label">Lugar</span>
           </span>
           <input
+            id={retaConfigFieldId("lugar")}
+            name={retaConfigFieldId("lugar")}
             type="text"
             className="home-sheet__input riviera-input"
             placeholder="Club, sede…"
@@ -303,6 +341,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         <>
           <label className="home-sheet__field home-sheet__field--check">
             <input
+              id={retaConfigFieldId("mostrar-lugar")}
+              name={retaConfigFieldId("mostrar-lugar")}
               type="checkbox"
               checked={values.mostrar_lugar}
               disabled={lugarEd.locked}
@@ -310,9 +350,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             />
             <span className="home-sheet__field-label">Incluir lugar</span>
           </label>
-          <label className="home-sheet__field">
+          <label
+            className="home-sheet__field"
+            htmlFor={retaConfigFieldId("lugar")}
+          >
             <span className="home-sheet__field-label">Lugar</span>
             <input
+              id={retaConfigFieldId("lugar")}
+              name={retaConfigFieldId("lugar")}
               type="text"
               className="home-sheet__input riviera-input"
               value={values.lugar}
@@ -330,6 +375,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         <div className="home-sheet__field reta-details-form__field reta-details-form__field--costo">
           <span className="reta-details-form__lugar-label">
             <input
+              id={retaConfigFieldId("mostrar-costo")}
+              name={retaConfigFieldId("mostrar-costo")}
               type="checkbox"
               checked={values.mostrar_costo}
               disabled={costoEd.locked}
@@ -339,6 +386,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             <span className="home-sheet__field-label">Costo</span>
           </span>
           <input
+            id={retaConfigFieldId("costo")}
+            name={retaConfigFieldId("costo")}
             type="text"
             className="home-sheet__input riviera-input"
             placeholder="$200 por jugador"
@@ -351,6 +400,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         <>
           <label className="home-sheet__field home-sheet__field--check">
             <input
+              id={retaConfigFieldId("mostrar-costo")}
+              name={retaConfigFieldId("mostrar-costo")}
               type="checkbox"
               checked={values.mostrar_costo}
               disabled={costoEd.locked}
@@ -358,9 +409,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             />
             <span className="home-sheet__field-label">Incluir costo</span>
           </label>
-          <label className="home-sheet__field">
+          <label
+            className="home-sheet__field"
+            htmlFor={retaConfigFieldId("costo")}
+          >
             <span className="home-sheet__field-label">Costo</span>
             <input
+              id={retaConfigFieldId("costo")}
+              name={retaConfigFieldId("costo")}
               type="text"
               className="home-sheet__input riviera-input"
               placeholder="$200 por jugador"
@@ -379,6 +435,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         <div className="home-sheet__field reta-details-form__field reta-details-form__field--premio">
           <span className="reta-details-form__lugar-label">
             <input
+              id={retaConfigFieldId("mostrar-premio")}
+              name={retaConfigFieldId("mostrar-premio")}
               type="checkbox"
               checked={values.mostrar_premio}
               disabled={premioEd.locked}
@@ -388,6 +446,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             <span className="home-sheet__field-label">Premio</span>
           </span>
           <input
+            id={retaConfigFieldId("premio")}
+            name={retaConfigFieldId("premio")}
             type="text"
             className="home-sheet__input riviera-input"
             placeholder="Trofeo + pelotas"
@@ -400,6 +460,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         <>
           <label className="home-sheet__field home-sheet__field--check">
             <input
+              id={retaConfigFieldId("mostrar-premio")}
+              name={retaConfigFieldId("mostrar-premio")}
               type="checkbox"
               checked={values.mostrar_premio}
               disabled={premioEd.locked}
@@ -407,9 +469,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             />
             <span className="home-sheet__field-label">Incluir premio</span>
           </label>
-          <label className="home-sheet__field">
+          <label
+            className="home-sheet__field"
+            htmlFor={retaConfigFieldId("premio")}
+          >
             <span className="home-sheet__field-label">Premio</span>
             <input
+              id={retaConfigFieldId("premio")}
+              name={retaConfigFieldId("premio")}
               type="text"
               className="home-sheet__input riviera-input"
               placeholder="Trofeo + pelotas"
@@ -442,6 +509,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         <>
           <label className="reta-details-form__champ-control">
             <input
+              id={retaConfigFieldId("championship-enabled")}
+              name={retaConfigFieldId("championship-enabled")}
               type="checkbox"
               checked={values.championshipEnabled}
               disabled={champEd.locked}
@@ -453,9 +522,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           </label>
           {champEd.locked ? <FieldLock reason={champEd.reason} /> : null}
           {values.championshipEnabled && !champEd.locked ? (
-            <label className="home-sheet__field home-sheet__field--inline reta-details-form__champ-rounds">
+            <label
+              className="home-sheet__field home-sheet__field--inline reta-details-form__champ-rounds"
+              htmlFor={retaConfigFieldId("championship-rounds")}
+            >
               <span className="home-sheet__field-label">Rondas</span>
               <input
+                id={retaConfigFieldId("championship-rounds")}
+                name={retaConfigFieldId("championship-rounds")}
                 type="number"
                 min={1}
                 max={10}
@@ -476,6 +550,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         <>
           <div className="home-sheet__champ-row">
             <input
+              id={retaConfigFieldId("championship-enabled")}
+              name={retaConfigFieldId("championship-enabled")}
               type="checkbox"
               checked={values.championshipEnabled}
               disabled={champEd.locked}
@@ -485,9 +561,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           </div>
           {champEd.locked ? <FieldLock reason={champEd.reason} /> : null}
           {values.championshipEnabled && !champEd.locked ? (
-            <label className="home-sheet__field home-sheet__field--inline">
+            <label
+              className="home-sheet__field home-sheet__field--inline"
+              htmlFor={retaConfigFieldId("championship-rounds")}
+            >
               <span className="home-sheet__field-label">Rondas</span>
               <input
+                id={retaConfigFieldId("championship-rounds")}
+                name={retaConfigFieldId("championship-rounds")}
                 type="number"
                 min={1}
                 max={10}

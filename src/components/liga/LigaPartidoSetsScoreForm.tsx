@@ -19,6 +19,8 @@ function SetInputRow({
   compact,
   pareja1Label,
   pareja2Label,
+  partidoId,
+  fieldKey,
 }: {
   label: string;
   draft: SetScoreDraft;
@@ -27,6 +29,8 @@ function SetInputRow({
   compact?: boolean;
   pareja1Label: string;
   pareja2Label: string;
+  partidoId: string;
+  fieldKey: string;
 }) {
   return (
     <div className={`liga-set-capture${compact ? " liga-set-capture--compact" : ""}`}>
@@ -35,6 +39,7 @@ function SetInputRow({
       </div>
       <div className="liga-set-capture__inputs">
         <LigaScoreInput
+          id={`liga-partido-${partidoId}-${fieldKey}-p1`}
           value={draft.p1}
           onChange={(p1) => onChange({ ...draft, p1 })}
           disabled={disabled}
@@ -44,6 +49,7 @@ function SetInputRow({
           vs
         </span>
         <LigaScoreInput
+          id={`liga-partido-${partidoId}-${fieldKey}-p2`}
           value={draft.p2}
           onChange={(p2) => onChange({ ...draft, p2 })}
           disabled={disabled}
@@ -82,6 +88,7 @@ interface LigaPartidoSetsScoreFormProps {
 }
 
 export const LigaPartidoSetsScoreForm: React.FC<LigaPartidoSetsScoreFormProps> = ({
+  partido,
   draft,
   pareja1Label,
   pareja2Label,
@@ -105,6 +112,8 @@ export const LigaPartidoSetsScoreForm: React.FC<LigaPartidoSetsScoreFormProps> =
       <div className={compact ? "liga-sets-form__grid" : undefined}>
         <SetInputRow
           label="Set 1"
+          partidoId={partido.id}
+          fieldKey="set1"
           pareja1Label={pareja1Label}
           pareja2Label={pareja2Label}
           draft={draft.set1}
@@ -114,6 +123,8 @@ export const LigaPartidoSetsScoreForm: React.FC<LigaPartidoSetsScoreFormProps> =
         />
         <SetInputRow
           label="Set 2"
+          partidoId={partido.id}
+          fieldKey="set2"
           pareja1Label={pareja1Label}
           pareja2Label={pareja2Label}
           draft={draft.set2}
@@ -126,6 +137,8 @@ export const LigaPartidoSetsScoreForm: React.FC<LigaPartidoSetsScoreFormProps> =
         <div className="liga-sets-form__set3 liga-sets-form__set3--visible">
           <SetInputRow
             label="Set 3 (súper tie-break)"
+            partidoId={partido.id}
+            fieldKey="set3"
             pareja1Label={pareja1Label}
             pareja2Label={pareja2Label}
             draft={draft.set3}

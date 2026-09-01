@@ -60,6 +60,8 @@ function PlayoffsSetRow({
   onChangeP2,
   ariaLeft,
   ariaRight,
+  partidoId,
+  fieldKey,
 }: {
   label: string;
   p1: string;
@@ -70,6 +72,8 @@ function PlayoffsSetRow({
   onChangeP2: (v: string) => void;
   ariaLeft: string;
   ariaRight: string;
+  partidoId: string;
+  fieldKey: string;
 }) {
   return (
     <div className={`liga-set-capture${compact ? " liga-set-capture--compact" : ""}`}>
@@ -78,6 +82,7 @@ function PlayoffsSetRow({
       </div>
       <div className="liga-set-capture__inputs">
         <LigaScoreInput
+          id={`liga-partido-${partidoId}-${fieldKey}-p1`}
           value={p1}
           onChange={onChangeP1}
           disabled={disabled}
@@ -87,6 +92,7 @@ function PlayoffsSetRow({
           vs
         </span>
         <LigaScoreInput
+          id={`liga-partido-${partidoId}-${fieldKey}-p2`}
           value={p2}
           onChange={onChangeP2}
           disabled={disabled}
@@ -98,6 +104,7 @@ function PlayoffsSetRow({
 }
 
 export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
+  partido,
   draft,
   pareja1Label,
   pareja2Label,
@@ -118,6 +125,8 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
       <div className={compact ? "liga-sets-form__grid" : undefined}>
         <PlayoffsSetRow
           label="Set 1"
+          partidoId={partido.id}
+          fieldKey="playoffs-set1"
           p1={draft.set1.p1}
           p2={draft.set1.p2}
           disabled={locked}
@@ -133,6 +142,8 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
         />
         <PlayoffsSetRow
           label="Set 2"
+          partidoId={partido.id}
+          fieldKey="playoffs-set2"
           p1={draft.set2.p1}
           p2={draft.set2.p2}
           disabled={locked}
@@ -152,6 +163,8 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
         <div className="liga-sets-form__set3 liga-sets-form__set3--visible">
           <PlayoffsSetRow
             label="Súper tie-break (a 5)"
+            partidoId={partido.id}
+            fieldKey="playoffs-stb"
             p1={draft.stb1}
             p2={draft.stb2}
             disabled={locked}

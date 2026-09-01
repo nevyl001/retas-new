@@ -99,6 +99,8 @@ export const LigaPartidoProgramacionFields: React.FC<
       <label className="liga-programacion-field">
         <span className="liga-programacion-field__label">Cancha</span>
         <select
+          id={`liga-partido-${partido.id}-cancha`}
+          name={`liga-partido-${partido.id}-cancha`}
           value={draft.cancha}
           disabled={disabled || busy}
           onChange={(e) => onChange({ ...draft, cancha: e.target.value })}
@@ -115,6 +117,8 @@ export const LigaPartidoProgramacionFields: React.FC<
       <label className="liga-programacion-field">
         <span className="liga-programacion-field__label">Horario</span>
         <input
+          id={`liga-partido-${partido.id}-hora`}
+          name={`liga-partido-${partido.id}-hora`}
           type="time"
           value={draft.hora}
           disabled={disabled || busy}
@@ -174,6 +178,8 @@ export const LigaJornadaFechaCard: React.FC<LigaJornadaFechaCardProps> = ({
       <label className="liga-programacion-field">
         <span className="liga-programacion-field__label">Día</span>
         <input
+          id="liga-jornada-fecha"
+          name="liga-jornada-fecha"
           type="date"
           value={fecha}
           disabled={disabled || busy}

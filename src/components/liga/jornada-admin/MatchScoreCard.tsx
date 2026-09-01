@@ -129,6 +129,9 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
     .filter(Boolean)
     .join(" ");
 
+  const scoreFieldId = (suffix: string) =>
+    `liga-partido-${partido.id}-${suffix}`;
+
   return (
     <article
       className={`jornada-match-card${
@@ -167,6 +170,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               <span className="jornada-match-card__set-label">Set 1</span>
               <div className="jornada-match-card__set-inputs">
                 <LigaScoreInput
+                  id={scoreFieldId("set1-p1")}
                   value={setsDraft.set1.p1}
                   onChange={(p1) =>
                     onSetsChange(
@@ -180,6 +184,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                   ariaLabel={`Set 1 ${pareja1Label}`}
                 />
                 <LigaScoreInput
+                  id={scoreFieldId("set1-p2")}
                   value={setsDraft.set1.p2}
                   onChange={(p2) =>
                     onSetsChange(
@@ -198,6 +203,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               <span className="jornada-match-card__set-label">Set 2</span>
               <div className="jornada-match-card__set-inputs">
                 <LigaScoreInput
+                  id={scoreFieldId("set2-p1")}
                   value={setsDraft.set2.p1}
                   onChange={(p1) =>
                     onSetsChange(
@@ -211,6 +217,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                   ariaLabel={`Set 2 ${pareja1Label}`}
                 />
                 <LigaScoreInput
+                  id={scoreFieldId("set2-p2")}
                   value={setsDraft.set2.p2}
                   onChange={(p2) =>
                     onSetsChange(
@@ -233,6 +240,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               </span>
               <div className="jornada-match-card__set-inputs jornada-match-card__set-inputs--center">
                 <LigaScoreInput
+                  id={scoreFieldId("set3-p1")}
                   value={setsDraft.set3.p1}
                   onChange={(p1) =>
                     onSetsChange(
@@ -246,6 +254,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                   ariaLabel={`Set 3 ${pareja1Label}`}
                 />
                 <LigaScoreInput
+                  id={scoreFieldId("set3-p2")}
                   value={setsDraft.set3.p2}
                   onChange={(p2) =>
                     onSetsChange(
@@ -276,6 +285,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               <span className="jornada-match-card__set-label">Set 1</span>
               <div className="jornada-match-card__set-inputs">
                 <LigaScoreInput
+                  id={scoreFieldId("playoffs-set1-p1")}
                   value={playoffsDraft.set1.p1}
                   onChange={(p1) =>
                     onPlayoffsChange({
@@ -288,6 +298,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                   ariaLabel={`Set 1 ${pareja1Label}`}
                 />
                 <LigaScoreInput
+                  id={scoreFieldId("playoffs-set1-p2")}
                   value={playoffsDraft.set1.p2}
                   onChange={(p2) =>
                     onPlayoffsChange({
@@ -305,6 +316,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               <span className="jornada-match-card__set-label">Set 2</span>
               <div className="jornada-match-card__set-inputs">
                 <LigaScoreInput
+                  id={scoreFieldId("playoffs-set2-p1")}
                   value={playoffsDraft.set2.p1}
                   onChange={(p1) =>
                     onPlayoffsChange({
@@ -317,6 +329,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                   ariaLabel={`Set 2 ${pareja1Label}`}
                 />
                 <LigaScoreInput
+                  id={scoreFieldId("playoffs-set2-p2")}
                   value={playoffsDraft.set2.p2}
                   onChange={(p2) =>
                     onPlayoffsChange({
@@ -338,6 +351,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               </span>
               <div className="jornada-match-card__set-inputs jornada-match-card__set-inputs--center">
                 <LigaScoreInput
+                  id={scoreFieldId("playoffs-stb-p1")}
                   value={playoffsDraft.stb1}
                   onChange={(stb1) =>
                     onPlayoffsChange({ ...playoffsDraft, stb1, woWinner: null })
@@ -346,6 +360,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                   ariaLabel={`STB ${pareja1Label}`}
                 />
                 <LigaScoreInput
+                  id={scoreFieldId("playoffs-stb-p2")}
                   value={playoffsDraft.stb2}
                   onChange={(stb2) =>
                     onPlayoffsChange({ ...playoffsDraft, stb2, woWinner: null })
@@ -364,12 +379,14 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
           <span className="jornada-match-card__set-label">Marcador</span>
           <div className="jornada-match-card__set-inputs jornada-match-card__set-inputs--center">
             <LigaScoreInput
+              id={scoreFieldId("rotativo-s1")}
               value={rotativoDraft.s1}
               onChange={(s1) => onRotativoChange({ ...rotativoDraft, s1 })}
               disabled={disabled}
               ariaLabel={`Puntos ${pareja1Label}`}
             />
             <LigaScoreInput
+              id={scoreFieldId("rotativo-s2")}
               value={rotativoDraft.s2}
               onChange={(s2) => onRotativoChange({ ...rotativoDraft, s2 })}
               disabled={disabled}

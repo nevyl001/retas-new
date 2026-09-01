@@ -5,6 +5,9 @@ export interface LigaScoreInputProps {
   onChange: (next: string) => void;
   disabled?: boolean;
   ariaLabel: string;
+  /** Identificador único del campo (también se usa como name si no se pasa name). */
+  id: string;
+  name?: string;
   maxLength?: number;
 }
 
@@ -14,10 +17,14 @@ export const LigaScoreInput: React.FC<LigaScoreInputProps> = ({
   onChange,
   disabled,
   ariaLabel,
+  id,
+  name,
   maxLength = 2,
 }) => {
   return (
     <input
+      id={id}
+      name={name ?? id}
       type="text"
       inputMode="numeric"
       pattern="[0-9]*"

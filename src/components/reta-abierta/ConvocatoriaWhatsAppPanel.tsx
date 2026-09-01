@@ -97,6 +97,10 @@ function statusLabel(s: OpenRegistrationStatus): string {
   }
 }
 
+function convocatoriaFieldId(key: string): string {
+  return `ra-org-${key}`;
+}
+
 /**
  * Panel administrativo unificado: Convocatoria Riviera / Lanzar por WhatsApp.
  * No montar en Liga / Torneo Express / Torneos.
@@ -1032,6 +1036,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                     −
                   </button>
                   <input
+                    id={convocatoriaFieldId("cupo-pre")}
+                    name={convocatoriaFieldId("cupo-pre")}
                     className="ra-org__capacity-input"
                     type="number"
                     min={OPEN_REG_CAPACITY_MIN}
@@ -1124,6 +1130,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                     −
                   </button>
                   <input
+                    id={convocatoriaFieldId("cupo-live")}
+                    name={convocatoriaFieldId("cupo-live")}
                     className="ra-org__capacity-input"
                     type="number"
                     min={capacityMin}
@@ -1182,17 +1190,21 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         <div className="ra-org__meetup" data-testid="convocatoria-meetup-fields">
           <p className="ra-org__meetup-title">Datos del encuentro</p>
           <div className="ra-org__meetup-grid">
-            <label>
+            <label htmlFor={convocatoriaFieldId("scheduled-at")}>
               <span className="ra-org__field-label">Día y hora</span>
               <input
+                id={convocatoriaFieldId("scheduled-at")}
+                name={convocatoriaFieldId("scheduled-at")}
                 type="datetime-local"
                 value={scheduledAt}
                 onChange={(e) => setScheduledAt(e.target.value)}
               />
             </label>
-            <label>
+            <label htmlFor={convocatoriaFieldId("duration-minutes")}>
               <span className="ra-org__field-label">Duración (min)</span>
               <input
+                id={convocatoriaFieldId("duration-minutes")}
+                name={convocatoriaFieldId("duration-minutes")}
                 type="number"
                 min={30}
                 max={360}
@@ -1203,9 +1215,11 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 }
               />
             </label>
-            <label>
+            <label htmlFor={convocatoriaFieldId("cancha-label")}>
               <span className="ra-org__field-label">Cancha</span>
               <input
+                id={convocatoriaFieldId("cancha-label")}
+                name={convocatoriaFieldId("cancha-label")}
                 value={canchaLabel}
                 onChange={(e) => setCanchaLabel(e.target.value)}
                 placeholder="Ej. 1"
@@ -1214,6 +1228,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           </div>
           <label className="ra-org__toggle">
             <input
+              id={convocatoriaFieldId("include-lugar")}
+              name={convocatoriaFieldId("include-lugar")}
               type="checkbox"
               checked={includeLugar}
               onChange={(e) => setIncludeLugar(e.target.checked)}
@@ -1225,9 +1241,14 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             aria-hidden={!includeLugar}
           >
             <div className="ra-org__collapse-inner">
-              <label className="ra-org__meetup-lugar">
+              <label
+                className="ra-org__meetup-lugar"
+                htmlFor={convocatoriaFieldId("location-label")}
+              >
                 <span className="ra-org__field-label">Lugar</span>
                 <input
+                  id={convocatoriaFieldId("location-label")}
+                  name={convocatoriaFieldId("location-label")}
                   value={locationLabel}
                   onChange={(e) => setLocationLabel(e.target.value)}
                   placeholder="Ej. Hack Pádel, Padelito…"
@@ -1245,6 +1266,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             <>
               <label className="ra-org__toggle">
                 <input
+                  id={convocatoriaFieldId("include-costo")}
+                  name={convocatoriaFieldId("include-costo")}
                   type="checkbox"
                   checked={includeCosto}
                   onChange={(e) => setIncludeCosto(e.target.checked)}
@@ -1256,9 +1279,14 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 aria-hidden={!includeCosto}
               >
                 <div className="ra-org__collapse-inner">
-                  <label className="ra-org__meetup-lugar">
+                  <label
+                    className="ra-org__meetup-lugar"
+                    htmlFor={convocatoriaFieldId("costo-label")}
+                  >
                     <span className="ra-org__field-label">Costo</span>
                     <input
+                      id={convocatoriaFieldId("costo-label")}
+                      name={convocatoriaFieldId("costo-label")}
                       value={costoLabel}
                       onChange={(e) => setCostoLabel(e.target.value)}
                       placeholder="$200 por jugador"
@@ -1269,6 +1297,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
               </div>
               <label className="ra-org__toggle">
                 <input
+                  id={convocatoriaFieldId("include-premio")}
+                  name={convocatoriaFieldId("include-premio")}
                   type="checkbox"
                   checked={includePremio}
                   onChange={(e) => setIncludePremio(e.target.checked)}
@@ -1280,9 +1310,14 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 aria-hidden={!includePremio}
               >
                 <div className="ra-org__collapse-inner">
-                  <label className="ra-org__meetup-lugar">
+                  <label
+                    className="ra-org__meetup-lugar"
+                    htmlFor={convocatoriaFieldId("premio-label")}
+                  >
                     <span className="ra-org__field-label">Premio</span>
                     <input
+                      id={convocatoriaFieldId("premio-label")}
+                      name={convocatoriaFieldId("premio-label")}
                       value={premioLabel}
                       onChange={(e) => setPremioLabel(e.target.value)}
                       placeholder="Trofeo + pelotas"
@@ -1299,17 +1334,21 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       {showConfigForm ? (
         <>
           <div className="ra-org__grid">
-            <label>
+            <label htmlFor={convocatoriaFieldId("title-public")}>
               Título público
               <input
+                id={convocatoriaFieldId("title-public")}
+                name={convocatoriaFieldId("title-public")}
                 value={titlePublic}
                 onChange={(e) => setTitlePublic(e.target.value)}
               />
             </label>
             {!context.lockCapacity ? (
-              <label>
+              <label htmlFor={convocatoriaFieldId("capacity-max")}>
                 Cupo máximo
                 <input
+                  id={convocatoriaFieldId("capacity-max")}
+                  name={convocatoriaFieldId("capacity-max")}
                   type="number"
                   min={OPEN_REG_CAPACITY_MIN}
                   max={OPEN_REG_CAPACITY_MAX}
@@ -1328,14 +1367,22 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 />
               </label>
             ) : (
-              <label>
+              <label htmlFor={convocatoriaFieldId("capacity-fixed")}>
                 Cupo
-                <input type="text" value="4 jugadores" readOnly />
+                <input
+                  id={convocatoriaFieldId("capacity-fixed")}
+                  name={convocatoriaFieldId("capacity-fixed")}
+                  type="text"
+                  value="4 jugadores"
+                  readOnly
+                />
               </label>
             )}
-            <label>
+            <label htmlFor={convocatoriaFieldId("display-rating")}>
               Mostrar rating
               <select
+                id={convocatoriaFieldId("display-rating")}
+                name={convocatoriaFieldId("display-rating")}
                 value={displayRating ? "1" : "0"}
                 onChange={(e) => setDisplayRating(e.target.value === "1")}
               >

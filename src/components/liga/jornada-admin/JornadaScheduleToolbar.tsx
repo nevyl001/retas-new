@@ -25,9 +25,11 @@ export const JornadaScheduleToolbar: React.FC<JornadaScheduleToolbarProps> = ({
 }) => (
   <section className="jornada-schedule-toolbar" aria-label="Programación de la jornada">
     <span className="jornada-schedule-toolbar__label">Programación</span>
-    <label className="jornada-schedule-toolbar__field">
+    <label className="jornada-schedule-toolbar__field" htmlFor="jornada-schedule-fecha">
       <span className="jornada-schedule-toolbar__field-label">Fecha</span>
       <input
+        id="jornada-schedule-fecha"
+        name="jornada-schedule-fecha"
         type="date"
         value={fecha}
         disabled={disabled || busy}
@@ -36,9 +38,11 @@ export const JornadaScheduleToolbar: React.FC<JornadaScheduleToolbarProps> = ({
       />
     </label>
     {showBulkHorario ? (
-      <label className="jornada-schedule-toolbar__field">
+      <label className="jornada-schedule-toolbar__field" htmlFor="jornada-schedule-hora">
         <span className="jornada-schedule-toolbar__field-label">Hora</span>
         <input
+          id="jornada-schedule-hora"
+          name="jornada-schedule-hora"
           type="time"
           value={hora}
           disabled={disabled || busy}
