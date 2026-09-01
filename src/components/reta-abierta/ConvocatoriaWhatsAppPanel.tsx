@@ -479,6 +479,44 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     ]
   );
 
+  /** Detalles de la reta / americano son la fuente de verdad de costo y premio. */
+  const preferDetailsCostoPremio =
+    context.mode === "reta" ||
+    context.mode === "americano" ||
+    shareOnly;
+
+  const resolveShareCostoPremio = (overrides?: {
+    costo?: string | null;
+    includeCosto?: boolean;
+    premio?: string | null;
+    includePremio?: boolean;
+  }) => {
+    const includeCostoResolved = preferDetailsCostoPremio
+      ? context.includeCosto === true
+      : overrides?.includeCosto ?? includeCosto;
+    const includePremioResolved = preferDetailsCostoPremio
+      ? context.includePremio === true
+      : overrides?.includePremio ?? includePremio;
+    const costoResolved = !includeCostoResolved
+      ? null
+      : overrides?.costo?.trim() ||
+        context.defaultCosto?.trim() ||
+        costoLabel.trim() ||
+        null;
+    const premioResolved = !includePremioResolved
+      ? null
+      : overrides?.premio?.trim() ||
+        context.defaultPremio?.trim() ||
+        premioLabel.trim() ||
+        null;
+    return {
+      includeCosto: includeCostoResolved,
+      includePremio: includePremioResolved,
+      costo: costoResolved,
+      premio: premioResolved,
+    };
+  };
+
   const savePayload = (
     id: string,
     overrides?: {
@@ -536,6 +574,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       displayPhoto: true,
       displayFullName,
     }).then(async (row) => {
+      const costoPremio = resolveShareCostoPremio();
       await syncConvocatoriaMetaToEntity({
         mode: context.mode,
         entityId: id,
@@ -543,10 +582,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         locationLabel: loc.trim() || null,
         canchaLabel: canchaLabel.trim() || null,
         includeLugar,
-        costo: costoLabel.trim() || null,
-        includeCosto,
-        premio: premioLabel.trim() || null,
-        includePremio,
+        costo: costoPremio.costo,
+        includeCosto: costoPremio.includeCosto,
+        premio: costoPremio.premio,
+        includePremio: costoPremio.includePremio,
         scheduledAt: schedLocal,
         durationMinutes: dur,
       });
@@ -570,42 +609,6 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       }
       return row;
     });
-  };
-
-  /** Detalles del torneo (embedded / americano / gestionar) son la fuente de verdad de costo/premio. */
-  const preferDetailsCostoPremio =
-    embedded || shareOnly || context.mode === "americano";
-
-  const resolveShareCostoPremio = (overrides?: {
-    costo?: string | null;
-    includeCosto?: boolean;
-    premio?: string | null;
-    includePremio?: boolean;
-  }) => {
-    const includeCostoResolved = preferDetailsCostoPremio
-      ? context.includeCosto === true
-      : overrides?.includeCosto ?? includeCosto;
-    const includePremioResolved = preferDetailsCostoPremio
-      ? context.includePremio === true
-      : overrides?.includePremio ?? includePremio;
-    const costoResolved = !includeCostoResolved
-      ? null
-      : overrides?.costo?.trim() ||
-        context.defaultCosto?.trim() ||
-        costoLabel.trim() ||
-        null;
-    const premioResolved = !includePremioResolved
-      ? null
-      : overrides?.premio?.trim() ||
-        context.defaultPremio?.trim() ||
-        premioLabel.trim() ||
-        null;
-    return {
-      includeCosto: includeCostoResolved,
-      includePremio: includePremioResolved,
-      costo: costoResolved,
-      premio: premioResolved,
-    };
   };
 
   const buildLocalShareText = (
@@ -1261,72 +1264,6 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             <p className="ra-org__hint">
               Ideal si tu club siempre juega en la misma sede.
             </p>
-          ) : null}
-          {context.mode === "reta" ? (
-            <>
-              <label className="ra-org__toggle">
-                <input
-                  id={convocatoriaFieldId("include-costo")}
-                  name={convocatoriaFieldId("include-costo")}
-                  type="checkbox"
-                  checked={includeCosto}
-                  onChange={(e) => setIncludeCosto(e.target.checked)}
-                />
-                <span>Incluir costo en la convocatoria</span>
-              </label>
-              <div
-                className={`ra-org__collapse${includeCosto ? " is-open" : ""}`}
-                aria-hidden={!includeCosto}
-              >
-                <div className="ra-org__collapse-inner">
-                  <label
-                    className="ra-org__meetup-lugar"
-                    htmlFor={convocatoriaFieldId("costo-label")}
-                  >
-                    <span className="ra-org__field-label">Costo</span>
-                    <input
-                      id={convocatoriaFieldId("costo-label")}
-                      name={convocatoriaFieldId("costo-label")}
-                      value={costoLabel}
-                      onChange={(e) => setCostoLabel(e.target.value)}
-                      placeholder="$200 por jugador"
-                      tabIndex={includeCosto ? 0 : -1}
-                    />
-                  </label>
-                </div>
-              </div>
-              <label className="ra-org__toggle">
-                <input
-                  id={convocatoriaFieldId("include-premio")}
-                  name={convocatoriaFieldId("include-premio")}
-                  type="checkbox"
-                  checked={includePremio}
-                  onChange={(e) => setIncludePremio(e.target.checked)}
-                />
-                <span>Incluir premio en la convocatoria</span>
-              </label>
-              <div
-                className={`ra-org__collapse${includePremio ? " is-open" : ""}`}
-                aria-hidden={!includePremio}
-              >
-                <div className="ra-org__collapse-inner">
-                  <label
-                    className="ra-org__meetup-lugar"
-                    htmlFor={convocatoriaFieldId("premio-label")}
-                  >
-                    <span className="ra-org__field-label">Premio</span>
-                    <input
-                      id={convocatoriaFieldId("premio-label")}
-                      name={convocatoriaFieldId("premio-label")}
-                      value={premioLabel}
-                      onChange={(e) => setPremioLabel(e.target.value)}
-                      placeholder="Trofeo + pelotas"
-                      tabIndex={includePremio ? 0 : -1}
-                    />
-                  </label>
-                </div>
-              </div>
-            </>
           ) : null}
         </div>
       ) : null}
