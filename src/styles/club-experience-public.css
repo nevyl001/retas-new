@@ -9,6 +9,29 @@
   color: color-mix(in srgb, var(--brand-accent) 65%, #ffffff);
 }
 
+/* Hackpadel — "by Riviera Open" legible y con acento de marca (sin eclipsar al club) */
+[data-club="hack-padel"].club-experience-scope .club-identity--public .club-identity__attribution,
+[data-brand="hack-padel"].club-experience-scope .club-identity--public .club-identity__attribution {
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+}
+
+[data-club="hack-padel"].club-experience-scope .club-identity--public .club-identity__attribution-by,
+[data-brand="hack-padel"].club-experience-scope .club-identity--public .club-identity__attribution-by {
+  color: color-mix(in srgb, var(--brand-accent) 55%, #ffffff);
+  font-weight: 500;
+  opacity: 1;
+}
+
+[data-club="hack-padel"].club-experience-scope .club-identity--public .club-identity__attribution-brand,
+[data-brand="hack-padel"].club-experience-scope .club-identity--public .club-identity__attribution-brand {
+  color: var(--brand-accent);
+  font-weight: 700;
+  font-size: 1.08em;
+  letter-spacing: 0.14em;
+}
+
 [data-club="hack-padel"].club-experience-scope .te-public-header__club-identity,
 [data-club="hack-padel"].club-experience-scope .te-public-brand-bar .te-public-header__club-identity,
 [data-club="hack-padel"].club-experience-scope .liga-pantalla__club-identity,
