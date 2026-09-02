@@ -6,8 +6,10 @@
   --jornada-admin-border: var(--liga-border);
   --jornada-admin-accent: var(--brand-primary, var(--ro-accent));
   --jornada-admin-lime: var(--ro-mode-americano, #84cc16);
-  --jornada-admin-input-bg: #09090b;
-  --jornada-admin-input-text: #fafafa;
+  --jornada-admin-field-bg: var(--ro-bg-elevated);
+  --jornada-admin-field-text: var(--liga-text);
+  --jornada-admin-score-bg: var(--ro-bg-input);
+  --jornada-admin-score-text: var(--liga-text);
   font-family: var(--font-body, var(--liga-font-body));
   font-size: 17px;
   line-height: 1.5;
@@ -144,10 +146,25 @@
   padding: 0 12px;
   border: 1px solid var(--jornada-admin-border);
   border-radius: 8px;
-  background: var(--jornada-admin-input-bg);
-  color: var(--jornada-admin-input-text);
+  background: var(--jornada-admin-field-bg);
+  color: var(--jornada-admin-field-text);
   font-family: inherit;
   font-size: 1rem;
+}
+
+.jornada-schedule-toolbar__field input[type="date"],
+.jornada-schedule-toolbar__field input[type="time"],
+.jornada-round__schedule input[type="date"],
+.jornada-round__schedule input[type="time"] {
+  color-scheme: light;
+}
+
+.jornada-schedule-toolbar__field input[type="date"]::-webkit-calendar-picker-indicator,
+.jornada-schedule-toolbar__field input[type="time"]::-webkit-calendar-picker-indicator,
+.jornada-round__schedule input[type="date"]::-webkit-calendar-picker-indicator,
+.jornada-round__schedule input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.72;
 }
 
 .jornada-schedule-toolbar__btn {
@@ -430,8 +447,8 @@
   padding: 0 10px;
   border: 1px solid var(--jornada-admin-border);
   border-radius: 8px;
-  background: var(--jornada-admin-input-bg);
-  color: var(--jornada-admin-input-text);
+  background: var(--jornada-admin-field-bg);
+  color: var(--jornada-admin-field-text);
   font-family: inherit;
   font-size: 0.9375rem;
 }
@@ -745,8 +762,8 @@
   height: 44px;
   font-size: 1.25rem;
   border-color: color-mix(in srgb, var(--jornada-admin-accent) 30%, var(--jornada-admin-border));
-  background: var(--jornada-admin-input-bg);
-  color: var(--jornada-admin-input-text);
+  background: var(--jornada-admin-score-bg);
+  color: var(--jornada-admin-score-text);
 }
 
 .jornada-match-card__error {
@@ -913,13 +930,13 @@
 .jornada-standings__table th {
   padding: 10px 8px;
   border-bottom: 1px solid var(--jornada-admin-border);
-  background: var(--jornada-admin-input-bg);
+  background: var(--liga-surface-deep);
   font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   text-align: left;
-  color: var(--liga-text-soft);
+  color: var(--liga-text-muted);
 }
 
 .jornada-standings__table td {
