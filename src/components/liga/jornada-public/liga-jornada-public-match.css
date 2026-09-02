@@ -1,18 +1,12 @@
 /* ─── Jornada pública — match cards (pending / final), solo presentación ─── */
 
-/* Shell neutro solo para pending; final reutiliza .liga-pantalla-match--duel (premium). */
-.liga-pantalla--jornada-fijas .liga-jornada-match-card--pending {
+/* Shell compartido pending + final (premium duel). */
+.liga-pantalla--jornada-fijas .liga-jornada-match-card--pending,
+.liga-pantalla--jornada-fijas .liga-jornada-match-card--final {
   display: flex;
   flex-direction: column;
-  min-height: 182px;
+  min-height: auto;
   padding: 0;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: color-mix(in srgb, rgba(8, 10, 14, 0.88) 92%, transparent);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
-  overflow: clip;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .liga-pantalla--jornada-fijas .liga-jornada-match-card .liga-pantalla-match__head {
@@ -22,11 +16,13 @@
   border-bottom: none;
 }
 
-.liga-pantalla--jornada-fijas .liga-jornada-match-card--pending .liga-pantalla-match__head {
-  padding: 0.85rem 1.125rem 0;
+.liga-pantalla--jornada-fijas .liga-jornada-match-card--pending .liga-pantalla-match__head,
+.liga-pantalla--jornada-fijas .liga-jornada-match-card--final .liga-pantalla-match__head {
+  padding: 0.75rem 0.85rem 0;
 }
 
-.liga-pantalla--jornada-fijas .liga-jornada-match-card--pending .liga-pantalla-match__cancha {
+.liga-pantalla--jornada-fijas .liga-jornada-match-card--pending .liga-pantalla-match__cancha,
+.liga-pantalla--jornada-fijas .liga-jornada-match-card--final .liga-pantalla-match__cancha {
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -34,7 +30,8 @@
   color: color-mix(in srgb, var(--liga-pub-text) 55%, transparent);
 }
 
-.liga-pantalla--jornada-fijas .liga-jornada-match-card--pending .liga-pantalla-match__status {
+.liga-pantalla--jornada-fijas .liga-jornada-match-card--pending .liga-pantalla-match__status,
+.liga-pantalla--jornada-fijas .liga-jornada-match-card--final .liga-pantalla-match__status {
   font-size: 0.625rem;
   font-weight: 650;
   letter-spacing: 0.1em;
@@ -46,16 +43,58 @@
   color: color-mix(in srgb, var(--ro-success, #6db392) 85%, transparent);
 }
 
-/* ── PENDING: grid pareja | VS | pareja ── */
+/* ── Matchup compartido: pareja | VS | pareja (pending + final) ── */
 
-.liga-jornada-match-card--pending .liga-jornada-match-card__matchup {
+.liga-jornada-match-card--hero-players .liga-jornada-match-card__matchup {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr);
   align-items: center;
-  gap: 0.35rem 0.25rem;
-  flex: 1;
-  padding: 1.25rem 1.125rem 1.125rem;
+  gap: 0.35rem 0.2rem;
+  padding: 0.75rem 0.7rem 0.65rem;
   min-height: 0;
+}
+
+.liga-jornada-match-card--hero-players .liga-jornada-match-pair-stack {
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.liga-jornada-match-card--hero-players .liga-jornada-match-player-row {
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Avatares compactos — caben en grid de 4 canchas */
+.liga-jornada-match-card--hero-players
+  .liga-jornada-match-player-row__avatar.rj-avatar:not(:has(.rj-avatar__img)) {
+  width: 44px;
+  height: 44px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  border: 1px solid
+    color-mix(in srgb, var(--liga-prem-hairline, rgba(255, 255, 255, 0.14)) 75%, transparent);
+  background: color-mix(
+    in srgb,
+    rgba(6, 8, 12, 0.94) 90%,
+    rgba(255, 255, 255, 0.04)
+  );
+  color: color-mix(in srgb, var(--liga-prem-ink, var(--liga-pub-text)) 68%, transparent);
+  box-shadow: none;
+}
+
+.liga-jornada-match-card--hero-players
+  .liga-jornada-match-player-row__avatar.rj-avatar:has(.rj-avatar__img) {
+  width: 48px;
+  height: 48px;
+  border: 1px solid color-mix(in srgb, #fff 14%, transparent);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.26);
+  background: rgba(8, 10, 14, 0.55);
+}
+
+.liga-jornada-match-card--hero-players .liga-jornada-match-player-row__name {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--liga-prem-ink, var(--liga-pub-text, #f4f4f5));
 }
 
 .liga-jornada-match-pair-stack {
@@ -114,61 +153,45 @@
   overflow-wrap: normal;
 }
 
-/* ── Hero avatars — presencia editorial (pending + final) ── */
-
-.liga-jornada-match-card--hero-players .liga-jornada-match-pair-stack {
-  gap: 0.65rem;
-  width: 100%;
-}
-
-.liga-jornada-match-card--hero-players .liga-jornada-match-player-row {
-  gap: 0.625rem;
-  align-items: center;
-}
-
-/* Fallback iniciales — desktop */
-.liga-jornada-match-card--hero-players
-  .liga-jornada-match-player-row__avatar.rj-avatar:not(:has(.rj-avatar__img)) {
-  width: 62px;
-  height: 62px;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  border: 1px solid
-    color-mix(in srgb, var(--liga-prem-hairline, rgba(255, 255, 255, 0.14)) 75%, transparent);
-  background: color-mix(
-    in srgb,
-    rgba(6, 8, 12, 0.94) 90%,
-    rgba(255, 255, 255, 0.04)
-  );
-  color: color-mix(in srgb, var(--liga-prem-ink, var(--liga-pub-text)) 68%, transparent);
-  box-shadow: none;
-}
-
-/* Foto real — desktop */
-.liga-jornada-match-card--hero-players
-  .liga-jornada-match-player-row__avatar.rj-avatar:has(.rj-avatar__img) {
-  width: 70px;
-  height: 70px;
-  border: 1px solid color-mix(in srgb, #fff 14%, transparent);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.26);
-  background: rgba(8, 10, 14, 0.55);
-}
-
-.liga-jornada-match-card--hero-players .liga-jornada-match-player-row__name {
-  font-size: 0.9375rem;
-  font-weight: 650;
-  color: var(--liga-prem-ink, var(--liga-pub-text, #f4f4f5));
-}
-
-.liga-jornada-match-card--final .liga-pantalla-match__side--loss
-  .liga-jornada-match-player-row__avatar.rj-avatar:has(.rj-avatar__img) {
-  opacity: 0.9;
-  filter: saturate(0.88);
-}
-
 .liga-jornada-match-pair-stack--win .liga-jornada-match-player-row__name {
   font-weight: 700;
   color: var(--liga-prem-ink, var(--liga-pub-text));
+}
+
+/* Pareja ganadora — halo premium sutil (accent de liga/club) */
+.liga-jornada-match-card--hero-players .liga-jornada-match-pair-stack--win {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.4rem 0.45rem;
+  border-radius: 10px;
+  border: 1px solid
+    color-mix(in srgb, var(--liga-prem-accent, var(--liga-jornada-accent)) 30%, transparent);
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--liga-prem-accent, var(--liga-jornada-accent)) 10%, transparent) 0%,
+    color-mix(in srgb, var(--liga-prem-accent, var(--liga-jornada-accent)) 3%, transparent) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 5%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--liga-prem-accent, var(--liga-jornada-accent)) 7%, transparent),
+    0 0 22px color-mix(in srgb, var(--liga-prem-accent, var(--liga-jornada-accent)) 11%, transparent);
+}
+
+.liga-jornada-match-card--hero-players
+  .liga-jornada-match-pair-stack--win
+  .liga-jornada-match-player-row__avatar.rj-avatar:has(.rj-avatar__img) {
+  border-color: color-mix(in srgb, var(--liga-prem-accent, var(--liga-jornada-accent)) 40%, transparent);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.22),
+    0 0 14px color-mix(in srgb, var(--liga-prem-accent, var(--liga-jornada-accent)) 15%, transparent);
+}
+
+.liga-jornada-match-card--hero-players
+  .liga-jornada-match-pair-stack--win
+  .liga-jornada-match-player-row__avatar.rj-avatar:not(:has(.rj-avatar__img)) {
+  border-color: color-mix(in srgb, var(--liga-prem-accent, var(--liga-jornada-accent)) 30%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--liga-prem-accent, var(--liga-jornada-accent)) 9%, transparent);
 }
 
 .liga-jornada-match-pair-stack--loss .liga-jornada-match-player-row__name {
@@ -222,42 +245,12 @@
   color: rgba(255, 255, 255, 0.45);
 }
 
-/* ── FINAL: pareja | VS | pareja + marcador (igual que pending) ── */
-
-.liga-jornada-match-card--final {
-  min-height: auto;
-}
+/* ── FINAL: marcador bajo el duelo ── */
 
 .liga-jornada-match-card__final-body {
   display: flex;
   flex-direction: column;
   gap: 0;
-}
-
-.liga-jornada-match-card--final .liga-jornada-match-card__matchup {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr);
-  align-items: center;
-  gap: 0.35rem 0.2rem;
-  padding: 0.75rem 0.7rem 0.55rem;
-}
-
-.liga-jornada-match-card--final.liga-jornada-match-card--hero-players
-  .liga-jornada-match-player-row__avatar.rj-avatar:not(:has(.rj-avatar__img)) {
-  width: 44px;
-  height: 44px;
-  font-size: 0.625rem;
-}
-
-.liga-jornada-match-card--final.liga-jornada-match-card--hero-players
-  .liga-jornada-match-player-row__avatar.rj-avatar:has(.rj-avatar__img) {
-  width: 48px;
-  height: 48px;
-}
-
-.liga-jornada-match-card--final.liga-jornada-match-card--hero-players
-  .liga-jornada-match-player-row__name {
-  font-size: 0.8125rem;
 }
 
 .liga-jornada-match-card__final-score {
@@ -295,46 +288,24 @@
   );
 }
 
-@media (min-width: 1024px) {
-  .liga-pantalla--jornada-fijas .liga-jornada-match-card--pending {
-    min-height: 188px;
-  }
-
-  .liga-jornada-match-card--pending .liga-jornada-match-card__matchup {
-    padding: 1.25rem 1.125rem 1.125rem;
-  }
-}
-
 @media (max-width: 430px) {
-  .liga-jornada-match-card--pending .liga-jornada-match-card__matchup {
-    grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr);
-    padding-inline: 0.85rem;
+  .liga-jornada-match-card--hero-players .liga-jornada-match-card__matchup {
+    grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr);
+    padding-inline: 0.6rem;
   }
 
   .liga-jornada-match-card--hero-players .liga-jornada-match-player-row__name {
-    font-size: 0.8125rem;
-  }
-
-  .liga-jornada-match-card--hero-players
-    .liga-jornada-match-player-row__avatar.rj-avatar:not(:has(.rj-avatar__img)) {
-    width: 56px;
-    height: 56px;
     font-size: 0.75rem;
   }
 
   .liga-jornada-match-card--hero-players
-    .liga-jornada-match-player-row__avatar.rj-avatar:has(.rj-avatar__img) {
-    width: 61px;
-    height: 61px;
-  }
-
-  .liga-jornada-match-card--final.liga-jornada-match-card--hero-players
     .liga-jornada-match-player-row__avatar.rj-avatar:not(:has(.rj-avatar__img)) {
     width: 40px;
     height: 40px;
+    font-size: 0.5625rem;
   }
 
-  .liga-jornada-match-card--final.liga-jornada-match-card--hero-players
+  .liga-jornada-match-card--hero-players
     .liga-jornada-match-player-row__avatar.rj-avatar:has(.rj-avatar__img) {
     width: 44px;
     height: 44px;
@@ -412,11 +383,49 @@
 }
 
 [data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-jornada-match-card--pending .liga-pantalla-match__cancha,
-[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-jornada-match-card--pending .liga-pantalla-match__cancha {
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-jornada-match-card--pending .liga-pantalla-match__cancha,
+[data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-jornada-match-card--final .liga-pantalla-match__cancha,
+[data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-jornada-match-card--final .liga-pantalla-match__cancha {
   color: color-mix(in srgb, var(--brand-accent, #d6ef3a) 78%, transparent);
 }
 
 [data-brand="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-jornada-match-card--final .liga-jornada-match-score__cell--win::after,
 [data-club="padelito-warehouse"] .liga-pantalla--jornada-fijas .liga-jornada-match-card--final .liga-jornada-match-score__cell--win::after {
   background: color-mix(in srgb, var(--brand-accent, #d6ef3a) 55%, transparent);
+}
+
+[data-brand="padelito-warehouse"]
+  .liga-pantalla--jornada-fijas
+  .liga-jornada-match-card--hero-players
+  .liga-jornada-match-pair-stack--win,
+[data-club="padelito-warehouse"]
+  .liga-pantalla--jornada-fijas
+  .liga-jornada-match-card--hero-players
+  .liga-jornada-match-pair-stack--win {
+  border-color: color-mix(in srgb, var(--brand-accent, #d6ef3a) 32%, transparent);
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--brand-accent, #d6ef3a) 11%, transparent) 0%,
+    color-mix(in srgb, var(--brand-accent, #d6ef3a) 3%, transparent) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 5%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--brand-accent, #d6ef3a) 8%, transparent),
+    0 0 22px color-mix(in srgb, var(--brand-accent, #d6ef3a) 13%, transparent);
+}
+
+[data-brand="padelito-warehouse"]
+  .liga-pantalla--jornada-fijas
+  .liga-jornada-match-card--hero-players
+  .liga-jornada-match-pair-stack--win
+  .liga-jornada-match-player-row__avatar.rj-avatar:has(.rj-avatar__img),
+[data-club="padelito-warehouse"]
+  .liga-pantalla--jornada-fijas
+  .liga-jornada-match-card--hero-players
+  .liga-jornada-match-pair-stack--win
+  .liga-jornada-match-player-row__avatar.rj-avatar:has(.rj-avatar__img) {
+  border-color: color-mix(in srgb, var(--brand-accent, #d6ef3a) 42%, transparent);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.22),
+    0 0 14px color-mix(in srgb, var(--brand-accent, #d6ef3a) 16%, transparent);
 }

@@ -24,7 +24,7 @@ export const LigaJornadaMatchCardPending: React.FC<
   matchStyle,
 }) => (
   <article
-    className="liga-pantalla-match liga-jornada-match-card liga-jornada-match-card--pending liga-jornada-match-card--hero-players"
+    className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--pending liga-jornada-match-card--hero-players"
     style={matchStyle}
   >
     <LigaJornadaMatchCardHeader
