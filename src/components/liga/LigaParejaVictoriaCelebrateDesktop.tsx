@@ -74,34 +74,26 @@ export const LigaParejaVictoriaCelebrateDesktop: React.FC<
       </header>
 
       <div className="liga-celebrate-desktop__hero">
-        <div className="liga-celebrate-desktop__players-col">
-          <p className="liga-celebrate-desktop__section-label">Jugadores ganadores</p>
+        <div className="liga-celebrate-desktop__center-stage">
+          <p className="liga-celebrate-desktop__badge">{copy.badge ?? "1.ER LUGAR"}</p>
+          {copy.title ? (
+            <h2 className="liga-celebrate-desktop__title">{copy.title}</h2>
+          ) : null}
           <div className="liga-celebrate-desktop__pair" aria-label="Pareja ganadora">
             <div className="liga-celebrate-desktop__player">
               <DesktopPlayerAvatar player={playerA} />
               <p className="liga-celebrate-desktop__player-name">{playerA.name}</p>
             </div>
             <div className="liga-celebrate-desktop__trophy-wrap" aria-hidden>
-              <TablerIcon name="trophy" size={18} className="liga-celebrate-desktop__trophy" />
+              <TablerIcon name="trophy" size={20} className="liga-celebrate-desktop__trophy" />
             </div>
             <div className="liga-celebrate-desktop__player">
               <DesktopPlayerAvatar player={playerB} />
               <p className="liga-celebrate-desktop__player-name">{playerB.name}</p>
             </div>
           </div>
-          <p className="liga-celebrate-desktop__pair-tag">Pareja ganadora</p>
           {copy.message ? (
             <p className="liga-celebrate-desktop__quote">{copy.message}</p>
-          ) : null}
-        </div>
-
-        <div className="liga-celebrate-desktop__summary-col">
-          <p className="liga-celebrate-desktop__badge">{copy.badge ?? "1.ER LUGAR"}</p>
-          {copy.title ? (
-            <h2 className="liga-celebrate-desktop__title">{copy.title}</h2>
-          ) : null}
-          {copy.rank ? (
-            <p className="liga-celebrate-desktop__rank-line">{copy.rank}</p>
           ) : null}
         </div>
       </div>

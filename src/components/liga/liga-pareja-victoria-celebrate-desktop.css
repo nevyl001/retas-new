@@ -127,50 +127,65 @@
 }
 
 .liga-celebrate-desktop__hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.8fr);
-  gap: 1.75rem 2rem;
-  align-items: center;
+  display: flex;
+  justify-content: center;
+  padding-block: 0.25rem 0.5rem;
 }
 
-.liga-celebrate-desktop__players-col {
+.liga-celebrate-desktop__center-stage {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  min-width: 0;
+  width: 100%;
+  max-width: 36rem;
+  margin-inline: auto;
 }
 
-.liga-celebrate-desktop__section-label {
-  margin: 0 0 0.75rem;
-  font-size: 0.58rem;
+.liga-celebrate-desktop__badge {
+  margin: 0;
+  font-size: 0.62rem;
   font-weight: 650;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--brand-muted, #a8b8d8);
+  color: color-mix(in srgb, var(--brand-text, #f2efe8) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand-primary, #2a4ba7) 35%, transparent);
+  background: color-mix(in srgb, var(--brand-primary, #2a4ba7) 12%, transparent);
+  border-radius: 999px;
+  padding: 0.32rem 0.85rem;
+}
+
+.liga-celebrate-desktop__title {
+  margin: 0.65rem 0 0;
+  font-size: clamp(1.75rem, 3.2vw, 2.15rem);
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--brand-text, #f7f4ee);
 }
 
 .liga-celebrate-desktop__pair {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: 1.75rem;
+  gap: 2.25rem;
   width: 100%;
+  margin-top: 1.1rem;
 }
 
 .liga-celebrate-desktop__player {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.65rem;
   min-width: 0;
   flex: 0 1 auto;
-  max-width: 9.5rem;
+  max-width: 11rem;
 }
 
 .liga-celebrate-desktop__avatar-shell {
-  width: 5.75rem;
-  height: 5.75rem;
+  width: 7.25rem;
+  height: 7.25rem;
   border-radius: 9999px;
   overflow: hidden;
   flex-shrink: 0;
@@ -178,9 +193,9 @@
   align-items: center;
   justify-content: center;
   background: color-mix(in srgb, var(--brand-primary, #2a4ba7) 22%, #0a0e14);
-  outline: 1.5px solid color-mix(in srgb, var(--brand-accent, #d6ef3a) 32%, transparent);
-  outline-offset: 2px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  outline: 2px solid color-mix(in srgb, var(--brand-accent, #d6ef3a) 34%, transparent);
+  outline-offset: 3px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
 }
 
 .liga-celebrate-desktop__avatar-img {
@@ -193,7 +208,7 @@
 }
 
 .liga-celebrate-desktop__avatar-initial {
-  font-size: 1.45rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--brand-accent, #d6ef3a);
   letter-spacing: 0.02em;
@@ -201,7 +216,7 @@
 
 .liga-celebrate-desktop__player-name {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 650;
   letter-spacing: -0.01em;
   line-height: 1.25;
@@ -213,70 +228,20 @@
 
 .liga-celebrate-desktop__trophy-wrap {
   align-self: center;
-  padding-top: 1.85rem;
-  opacity: 0.8;
+  padding-top: 2.35rem;
+  opacity: 0.85;
 }
 
 .liga-celebrate-desktop__trophy {
   color: var(--brand-accent, #d6ef3a);
 }
 
-.liga-celebrate-desktop__pair-tag {
-  margin: 0.75rem 0 0;
-  font-size: 0.6rem;
-  font-weight: 650;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--brand-accent, #d6ef3a) 72%, var(--brand-muted, #a8b8d8));
-}
-
 .liga-celebrate-desktop__quote {
-  margin: 0.5rem auto 0;
-  max-width: 40ch;
-  font-size: 0.82rem;
+  margin: 0.85rem auto 0;
+  max-width: 44ch;
+  font-size: 0.84rem;
   font-weight: 450;
   line-height: 1.55;
-  color: var(--brand-muted, #a8b8d8);
-}
-
-.liga-celebrate-desktop__summary-col {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0.35rem;
-  min-width: 0;
-  padding-left: 1.5rem;
-  border-left: 1px solid color-mix(in srgb, var(--brand-primary, #2a4ba7) 26%, transparent);
-}
-
-.liga-celebrate-desktop__badge {
-  margin: 0;
-  font-size: 0.65rem;
-  font-weight: 650;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--brand-text, #f2efe8) 88%, transparent);
-  border: 1px solid color-mix(in srgb, var(--brand-primary, #2a4ba7) 35%, transparent);
-  background: color-mix(in srgb, var(--brand-primary, #2a4ba7) 12%, transparent);
-  border-radius: 999px;
-  padding: 0.32rem 0.85rem;
-}
-
-.liga-celebrate-desktop__title {
-  margin: 0.2rem 0 0;
-  font-size: 1.2rem;
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  color: color-mix(in srgb, var(--brand-text, #f7f4ee) 88%, transparent);
-}
-
-.liga-celebrate-desktop__rank-line {
-  margin: 0;
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-  line-height: 1.45;
   color: var(--brand-muted, #a8b8d8);
 }
 
@@ -470,12 +435,24 @@
     padding: 1.65rem 2rem 1.45rem;
   }
 
-  .liga-celebrate-desktop__hero {
-    gap: 2rem 2.5rem;
+  .liga-celebrate-desktop__center-stage {
+    max-width: 40rem;
+  }
+
+  .liga-celebrate-desktop__pair {
+    gap: 2.75rem;
   }
 
   .liga-celebrate-desktop__avatar-shell {
-    width: 6.25rem;
-    height: 6.25rem;
+    width: 7.75rem;
+    height: 7.75rem;
+  }
+
+  .liga-celebrate-desktop__avatar-initial {
+    font-size: 1.9rem;
+  }
+
+  .liga-celebrate-desktop__player-name {
+    font-size: 1.1rem;
   }
 }
