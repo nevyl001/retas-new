@@ -15,7 +15,8 @@ export const LigaJornadaMatchPlayerRow: React.FC<LigaJornadaMatchPlayerRowProps>
     <JugadorAvatar
       fotoUrl={foto}
       nombre={name}
-      size="sm"
+      size="md"
+      loading="eager"
       className="liga-jornada-match-player-row__avatar"
       alt={name !== "?" ? name : ""}
     />
