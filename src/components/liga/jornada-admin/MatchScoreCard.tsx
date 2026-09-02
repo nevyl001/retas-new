@@ -76,6 +76,92 @@ function savedScoreLine(
   return null;
 }
 
+function scoreFieldId(partidoId: string, suffix: string): string {
+  return `liga-partido-${partidoId}-${suffix}`;
+}
+
+function pairMarkerLabel(label: string): string {
+  const trimmed = label.replace(/\s+/g, " ").trim();
+  if (trimmed.length <= 24) return trimmed;
+  const slash = trimmed.indexOf(" / ");
+  if (slash > 0) {
+    const left = trimmed.slice(0, slash).trim();
+    const right = trimmed.slice(slash + 3).trim();
+    const initials = (name: string) =>
+      name
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((part) => `${part.charAt(0).toUpperCase()}.`)
+        .join(" ");
+    return `${initials(left)} / ${initials(right)}`;
+  }
+  return `${trimmed.slice(0, 22)}…`;
+}
+
+interface PairSetsRowProps {
+  pairLabel: string;
+  fullLabel: string;
+  set1Value: string;
+  set2Value: string;
+  set3Value?: string;
+  showSet3: boolean;
+  disabled: boolean;
+  fieldPrefix: string;
+  onSet1Change: (value: string) => void;
+  onSet2Change: (value: string) => void;
+  onSet3Change?: (value: string) => void;
+}
+
+const PairSetsRow: React.FC<PairSetsRowProps> = ({
+  pairLabel,
+  fullLabel,
+  set1Value,
+  set2Value,
+  set3Value = "",
+  showSet3,
+  disabled,
+  fieldPrefix,
+  onSet1Change,
+  onSet2Change,
+  onSet3Change,
+}) => (
+  <div
+    className={`jornada-match-card__sets-pair-row${
+      showSet3 ? " jornada-match-card__sets-pair-row--stb" : ""
+    }`}
+  >
+    <span
+      className="jornada-match-card__pair-side-label"
+      title={fullLabel}
+    >
+      {pairMarkerLabel(pairLabel)}
+    </span>
+    <LigaScoreInput
+      id={`${fieldPrefix}-set1`}
+      value={set1Value}
+      onChange={onSet1Change}
+      disabled={disabled}
+      ariaLabel={`Set 1 ${fullLabel}`}
+    />
+    <LigaScoreInput
+      id={`${fieldPrefix}-set2`}
+      value={set2Value}
+      onChange={onSet2Change}
+      disabled={disabled}
+      ariaLabel={`Set 2 ${fullLabel}`}
+    />
+    {showSet3 && onSet3Change ? (
+      <LigaScoreInput
+        id={`${fieldPrefix}-set3`}
+        value={set3Value}
+        onChange={onSet3Change}
+        disabled={disabled}
+        ariaLabel={`Set 3 ${fullLabel}`}
+      />
+    ) : null}
+  </div>
+);
+
 export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
   partido,
   jornada,
@@ -122,9 +208,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
     !disabled;
 
   const headerMeta = cancha != null ? `Cancha ${cancha}` : "";
-
-  const scoreFieldId = (suffix: string) =>
-    `liga-partido-${partido.id}-${suffix}`;
+  const fieldPrefix = scoreFieldId(partido.id, "pair");
 
   return (
     <article
@@ -159,111 +243,95 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
 
       {mode === "sets" && setsDraft && onSetsChange ? (
         <div className="jornada-match-card__scoreboard">
-          <div className="jornada-match-card__sets-row">
-            <div className="jornada-match-card__set-col">
+          <div
+            className={`jornada-match-card__sets-grid${
+              showSet3 ? " jornada-match-card__sets-grid--stb" : ""
+            }`}
+          >
+            <div
+              className={`jornada-match-card__sets-head${
+                showSet3 ? " jornada-match-card__sets-head--stb" : ""
+              }`}
+              aria-hidden
+            >
+              <span className="jornada-match-card__sets-pair-spacer">Pareja</span>
               <span className="jornada-match-card__set-label">Set 1</span>
-              <div className="jornada-match-card__set-inputs">
-                <LigaScoreInput
-                  id={scoreFieldId("set1-p1")}
-                  value={setsDraft.set1.p1}
-                  onChange={(p1) =>
-                    onSetsChange(
-                      normalizeParejasFijasDraft({
-                        ...setsDraft,
-                        set1: { ...setsDraft.set1, p1 },
-                      })
-                    )
-                  }
-                  disabled={disabled}
-                  ariaLabel={`Set 1 ${pareja1Label}`}
-                />
-                <LigaScoreInput
-                  id={scoreFieldId("set1-p2")}
-                  value={setsDraft.set1.p2}
-                  onChange={(p2) =>
-                    onSetsChange(
-                      normalizeParejasFijasDraft({
-                        ...setsDraft,
-                        set1: { ...setsDraft.set1, p2 },
-                      })
-                    )
-                  }
-                  disabled={disabled}
-                  ariaLabel={`Set 1 ${pareja2Label}`}
-                />
-              </div>
-            </div>
-            <div className="jornada-match-card__set-col">
               <span className="jornada-match-card__set-label">Set 2</span>
-              <div className="jornada-match-card__set-inputs">
-                <LigaScoreInput
-                  id={scoreFieldId("set2-p1")}
-                  value={setsDraft.set2.p1}
-                  onChange={(p1) =>
-                    onSetsChange(
-                      normalizeParejasFijasDraft({
-                        ...setsDraft,
-                        set2: { ...setsDraft.set2, p1 },
-                      })
-                    )
-                  }
-                  disabled={disabled}
-                  ariaLabel={`Set 2 ${pareja1Label}`}
-                />
-                <LigaScoreInput
-                  id={scoreFieldId("set2-p2")}
-                  value={setsDraft.set2.p2}
-                  onChange={(p2) =>
-                    onSetsChange(
-                      normalizeParejasFijasDraft({
-                        ...setsDraft,
-                        set2: { ...setsDraft.set2, p2 },
-                      })
-                    )
-                  }
-                  disabled={disabled}
-                  ariaLabel={`Set 2 ${pareja2Label}`}
-                />
-              </div>
+              {showSet3 ? (
+                <span className="jornada-match-card__set-label">
+                  Set 3 (STB)
+                </span>
+              ) : null}
             </div>
+            <PairSetsRow
+              pairLabel={pareja1Label}
+              fullLabel={pareja1Label}
+              set1Value={setsDraft.set1.p1}
+              set2Value={setsDraft.set2.p1}
+              set3Value={setsDraft.set3.p1}
+              showSet3={showSet3}
+              disabled={disabled}
+              fieldPrefix={`${fieldPrefix}-p1`}
+              onSet1Change={(p1) =>
+                onSetsChange(
+                  normalizeParejasFijasDraft({
+                    ...setsDraft,
+                    set1: { ...setsDraft.set1, p1 },
+                  })
+                )
+              }
+              onSet2Change={(p1) =>
+                onSetsChange(
+                  normalizeParejasFijasDraft({
+                    ...setsDraft,
+                    set2: { ...setsDraft.set2, p1 },
+                  })
+                )
+              }
+              onSet3Change={(p1) =>
+                onSetsChange(
+                  normalizeParejasFijasDraft({
+                    ...setsDraft,
+                    set3: { ...setsDraft.set3, p1 },
+                  })
+                )
+              }
+            />
+            <PairSetsRow
+              pairLabel={pareja2Label}
+              fullLabel={pareja2Label}
+              set1Value={setsDraft.set1.p2}
+              set2Value={setsDraft.set2.p2}
+              set3Value={setsDraft.set3.p2}
+              showSet3={showSet3}
+              disabled={disabled}
+              fieldPrefix={`${fieldPrefix}-p2`}
+              onSet1Change={(p2) =>
+                onSetsChange(
+                  normalizeParejasFijasDraft({
+                    ...setsDraft,
+                    set1: { ...setsDraft.set1, p2 },
+                  })
+                )
+              }
+              onSet2Change={(p2) =>
+                onSetsChange(
+                  normalizeParejasFijasDraft({
+                    ...setsDraft,
+                    set2: { ...setsDraft.set2, p2 },
+                  })
+                )
+              }
+              onSet3Change={(p2) =>
+                onSetsChange(
+                  normalizeParejasFijasDraft({
+                    ...setsDraft,
+                    set3: { ...setsDraft.set3, p2 },
+                  })
+                )
+              }
+            />
           </div>
-          {showSet3 ? (
-            <div className="jornada-match-card__set3">
-              <span className="jornada-match-card__set-label">
-                Set 3 (súper tie-break)
-              </span>
-              <div className="jornada-match-card__set-inputs jornada-match-card__set-inputs--center">
-                <LigaScoreInput
-                  id={scoreFieldId("set3-p1")}
-                  value={setsDraft.set3.p1}
-                  onChange={(p1) =>
-                    onSetsChange(
-                      normalizeParejasFijasDraft({
-                        ...setsDraft,
-                        set3: { ...setsDraft.set3, p1 },
-                      })
-                    )
-                  }
-                  disabled={disabled}
-                  ariaLabel={`Set 3 ${pareja1Label}`}
-                />
-                <LigaScoreInput
-                  id={scoreFieldId("set3-p2")}
-                  value={setsDraft.set3.p2}
-                  onChange={(p2) =>
-                    onSetsChange(
-                      normalizeParejasFijasDraft({
-                        ...setsDraft,
-                        set3: { ...setsDraft.set3, p2 },
-                      })
-                    )
-                  }
-                  disabled={disabled}
-                  ariaLabel={`Set 3 ${pareja2Label}`}
-                />
-              </div>
-            </div>
-          ) : null}
           {setsValidation ? (
             <p className="jornada-match-card__error" role="alert">
               {setsValidation}
@@ -274,118 +342,116 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
 
       {mode === "playoffs" && playoffsDraft && onPlayoffsChange ? (
         <div className="jornada-match-card__scoreboard">
-          <div className="jornada-match-card__sets-row">
-            <div className="jornada-match-card__set-col">
+          <div
+            className={`jornada-match-card__sets-grid${
+              showStb ? " jornada-match-card__sets-grid--stb" : ""
+            }`}
+          >
+            <div
+              className={`jornada-match-card__sets-head${
+                showStb ? " jornada-match-card__sets-head--stb" : ""
+              }`}
+              aria-hidden
+            >
+              <span className="jornada-match-card__sets-pair-spacer">Pareja</span>
               <span className="jornada-match-card__set-label">Set 1</span>
-              <div className="jornada-match-card__set-inputs">
-                <LigaScoreInput
-                  id={scoreFieldId("playoffs-set1-p1")}
-                  value={playoffsDraft.set1.p1}
-                  onChange={(p1) =>
-                    onPlayoffsChange({
-                      ...playoffsDraft,
-                      set1: { ...playoffsDraft.set1, p1 },
-                      woWinner: null,
-                    })
-                  }
-                  disabled={disabled}
-                  ariaLabel={`Set 1 ${pareja1Label}`}
-                />
-                <LigaScoreInput
-                  id={scoreFieldId("playoffs-set1-p2")}
-                  value={playoffsDraft.set1.p2}
-                  onChange={(p2) =>
-                    onPlayoffsChange({
-                      ...playoffsDraft,
-                      set1: { ...playoffsDraft.set1, p2 },
-                      woWinner: null,
-                    })
-                  }
-                  disabled={disabled}
-                  ariaLabel={`Set 1 ${pareja2Label}`}
-                />
-              </div>
-            </div>
-            <div className="jornada-match-card__set-col">
               <span className="jornada-match-card__set-label">Set 2</span>
-              <div className="jornada-match-card__set-inputs">
-                <LigaScoreInput
-                  id={scoreFieldId("playoffs-set2-p1")}
-                  value={playoffsDraft.set2.p1}
-                  onChange={(p1) =>
-                    onPlayoffsChange({
-                      ...playoffsDraft,
-                      set2: { ...playoffsDraft.set2, p1 },
-                      woWinner: null,
-                    })
-                  }
-                  disabled={disabled}
-                  ariaLabel={`Set 2 ${pareja1Label}`}
-                />
-                <LigaScoreInput
-                  id={scoreFieldId("playoffs-set2-p2")}
-                  value={playoffsDraft.set2.p2}
-                  onChange={(p2) =>
-                    onPlayoffsChange({
-                      ...playoffsDraft,
-                      set2: { ...playoffsDraft.set2, p2 },
-                      woWinner: null,
-                    })
-                  }
-                  disabled={disabled}
-                  ariaLabel={`Set 2 ${pareja2Label}`}
-                />
-              </div>
+              {showStb ? (
+                <span className="jornada-match-card__set-label">STB (5)</span>
+              ) : null}
             </div>
+            <PairSetsRow
+              pairLabel={pareja1Label}
+              fullLabel={pareja1Label}
+              set1Value={playoffsDraft.set1.p1}
+              set2Value={playoffsDraft.set2.p1}
+              set3Value={playoffsDraft.stb1}
+              showSet3={showStb}
+              disabled={disabled}
+              fieldPrefix={`${fieldPrefix}-playoffs-p1`}
+              onSet1Change={(p1) =>
+                onPlayoffsChange({
+                  ...playoffsDraft,
+                  set1: { ...playoffsDraft.set1, p1 },
+                  woWinner: null,
+                })
+              }
+              onSet2Change={(p1) =>
+                onPlayoffsChange({
+                  ...playoffsDraft,
+                  set2: { ...playoffsDraft.set2, p1 },
+                  woWinner: null,
+                })
+              }
+              onSet3Change={(stb1) =>
+                onPlayoffsChange({ ...playoffsDraft, stb1, woWinner: null })
+              }
+            />
+            <PairSetsRow
+              pairLabel={pareja2Label}
+              fullLabel={pareja2Label}
+              set1Value={playoffsDraft.set1.p2}
+              set2Value={playoffsDraft.set2.p2}
+              set3Value={playoffsDraft.stb2}
+              showSet3={showStb}
+              disabled={disabled}
+              fieldPrefix={`${fieldPrefix}-playoffs-p2`}
+              onSet1Change={(p2) =>
+                onPlayoffsChange({
+                  ...playoffsDraft,
+                  set1: { ...playoffsDraft.set1, p2 },
+                  woWinner: null,
+                })
+              }
+              onSet2Change={(p2) =>
+                onPlayoffsChange({
+                  ...playoffsDraft,
+                  set2: { ...playoffsDraft.set2, p2 },
+                  woWinner: null,
+                })
+              }
+              onSet3Change={(stb2) =>
+                onPlayoffsChange({ ...playoffsDraft, stb2, woWinner: null })
+              }
+            />
           </div>
-          {showStb ? (
-            <div className="jornada-match-card__set3">
-              <span className="jornada-match-card__set-label">
-                Súper tie-break (a 5)
-              </span>
-              <div className="jornada-match-card__set-inputs jornada-match-card__set-inputs--center">
-                <LigaScoreInput
-                  id={scoreFieldId("playoffs-stb-p1")}
-                  value={playoffsDraft.stb1}
-                  onChange={(stb1) =>
-                    onPlayoffsChange({ ...playoffsDraft, stb1, woWinner: null })
-                  }
-                  disabled={disabled}
-                  ariaLabel={`STB ${pareja1Label}`}
-                />
-                <LigaScoreInput
-                  id={scoreFieldId("playoffs-stb-p2")}
-                  value={playoffsDraft.stb2}
-                  onChange={(stb2) =>
-                    onPlayoffsChange({ ...playoffsDraft, stb2, woWinner: null })
-                  }
-                  disabled={disabled}
-                  ariaLabel={`STB ${pareja2Label}`}
-                />
-              </div>
-            </div>
-          ) : null}
         </div>
       ) : null}
 
       {mode === "rotativo" && rotativoDraft && onRotativoChange ? (
         <div className="jornada-match-card__scoreboard">
           <span className="jornada-match-card__set-label">Marcador</span>
-          <div className="jornada-match-card__set-inputs jornada-match-card__set-inputs--center">
-            <LigaScoreInput
-              id={scoreFieldId("rotativo-s1")}
-              value={rotativoDraft.s1}
-              onChange={(s1) => onRotativoChange({ ...rotativoDraft, s1 })}
-              disabled={disabled}
-              ariaLabel={`Puntos ${pareja1Label}`}
-            />
-            <LigaScoreInput
-              id={scoreFieldId("rotativo-s2")}
-              value={rotativoDraft.s2}
-              onChange={(s2) => onRotativoChange({ ...rotativoDraft, s2 })}
-              disabled={disabled}
-              ariaLabel={`Puntos ${pareja2Label}`}
-            />
+          <div className="jornada-match-card__rotativo-scores">
+            <div className="jornada-match-card__rotativo-side">
+              <span
+                className="jornada-match-card__pair-side-label"
+                title={pareja1Label}
+              >
+                {pairMarkerLabel(pareja1Label)}
+              </span>
+              <LigaScoreInput
+                id={scoreFieldId(partido.id, "rotativo-s1")}
+                value={rotativoDraft.s1}
+                onChange={(s1) => onRotativoChange({ ...rotativoDraft, s1 })}
+                disabled={disabled}
+                ariaLabel={`Puntos ${pareja1Label}`}
+              />
+            </div>
+            <div className="jornada-match-card__rotativo-side">
+              <span
+                className="jornada-match-card__pair-side-label"
+                title={pareja2Label}
+              >
+                {pairMarkerLabel(pareja2Label)}
+              </span>
+              <LigaScoreInput
+                id={scoreFieldId(partido.id, "rotativo-s2")}
+                value={rotativoDraft.s2}
+                onChange={(s2) => onRotativoChange({ ...rotativoDraft, s2 })}
+                disabled={disabled}
+                ariaLabel={`Puntos ${pareja2Label}`}
+              />
+            </div>
           </div>
         </div>
       ) : null}
