@@ -628,6 +628,26 @@
 }
 
 /* Standings */
+.jornada-standings-dual {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--jornada-admin-border);
+}
+
+.jornada-standings-dual .jornada-standings {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.jornada-standings-dual .jornada-standings + .jornada-standings {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--jornada-admin-border);
+}
+
 .jornada-standings {
   margin-top: 24px;
   padding-top: 20px;

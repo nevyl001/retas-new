@@ -51,7 +51,7 @@ import { JornadaStartBar } from "./jornada-admin/JornadaStartBar";
 import { ResultsToolbar } from "./jornada-admin/ResultsToolbar";
 import { RoundSection } from "./jornada-admin/RoundSection";
 import { MatchScoreCard } from "./jornada-admin/MatchScoreCard";
-import { JornadaStandings } from "./jornada-admin/JornadaStandings";
+import { JornadaStandings, type JornadaStandingsColumn } from "./jornada-admin/JornadaStandings";
 import {
   filterPartidosByCancha,
   groupPartidosByRonda,
@@ -117,6 +117,29 @@ async function activarSiguienteRonda(
 
   if (error) throw new Error(error.message);
 }
+
+const PAREJAS_JORNADA_RANKING_COLUMNS: JornadaStandingsColumn[] = [
+  { key: "pos", header: "POS", align: "center", render: (r) => r.position },
+  { key: "nombre", header: "Pareja", render: (r) => r.label },
+  { key: "pj", header: "PJ", align: "center", render: (r) => r.matchesPlayed ?? 0 },
+  { key: "pg", header: "PG", align: "center", render: (r) => r.pg ?? 0 },
+  { key: "pp", header: "PP", align: "center", render: (r) => r.pp ?? 0 },
+  { key: "gf", header: "GF", align: "center", render: (r) => r.pointsFav ?? 0 },
+  { key: "gc", header: "GC", align: "center", render: (r) => r.pointsCon ?? 0 },
+  {
+    key: "dif",
+    header: "DIF",
+    align: "center",
+    render: (r) => (r.pointsFav ?? 0) - (r.pointsCon ?? 0),
+  },
+  {
+    key: "pts",
+    header: "PTS",
+    align: "right",
+    emphasis: true,
+    render: (r) => r.points,
+  },
+];
 
 export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   ligaId,
@@ -252,6 +275,22 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         pointsCon: row.games_contra,
       })),
     [rankingEquipos]
+  );
+
+  const jornadaParejasRows = useMemo<SimpleRankingPresentationRow[]>(
+    () =>
+      jornadaStats.rankingParejas.map((row) => ({
+        key: row.parejaId,
+        position: row.posicion,
+        label: row.nombre,
+        points: row.puntos,
+        matchesPlayed: row.victorias + row.derrotas + row.empates,
+        pg: row.victorias,
+        pp: row.derrotas,
+        pointsFav: row.games_favor,
+        pointsCon: row.games_contra,
+      })),
+    [jornadaStats.rankingParejas]
   );
 
   const rankingJugadoresRows = useMemo<SimpleRankingPresentationRow[]>(
@@ -913,7 +952,8 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
         {!esParejasFijas && jornadaJugadoresRows.length > 0 ? (
           <JornadaStandings
-            title="Puntos de esta jornada"
+            sectionId="jornada-ranking-jornada"
+            title="Ranking de la jornada"
             hint="Calculado desde los partidos guardados (games por jugador)."
             rows={jornadaJugadoresRows}
             columns={[
@@ -931,36 +971,27 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         ) : null}
 
         {esParejasFijas ? (
-          <JornadaStandings
-            title="Ranking por pareja"
-            hint="Puntos: 3 victoria en 2 sets, 2 con super tie-break. Se recalcula al guardar resultados."
-            rows={rankingEquiposRows}
-            columns={[
-              { key: "pos", header: "POS", align: "center", render: (r) => r.position },
-              { key: "nombre", header: "Pareja", render: (r) => r.label },
-              { key: "pj", header: "PJ", align: "center", render: (r) => r.matchesPlayed ?? 0 },
-              { key: "pg", header: "PG", align: "center", render: (r) => r.pg ?? 0 },
-              { key: "pp", header: "PP", align: "center", render: (r) => r.pp ?? 0 },
-              { key: "gf", header: "GF", align: "center", render: (r) => r.pointsFav ?? 0 },
-              { key: "gc", header: "GC", align: "center", render: (r) => r.pointsCon ?? 0 },
-              {
-                key: "dif",
-                header: "DIF",
-                align: "center",
-                render: (r) => (r.pointsFav ?? 0) - (r.pointsCon ?? 0),
-              },
-              {
-                key: "pts",
-                header: "PTS",
-                align: "right",
-                emphasis: true,
-                render: (r) => r.points,
-              },
-            ]}
-          />
+          <div className="jornada-standings-dual">
+            <JornadaStandings
+              sectionId="jornada-ranking-jornada"
+              title="Ranking de la jornada"
+              hint="Resultados solo de esta jornada. Se recalcula al guardar resultados."
+              rows={jornadaParejasRows}
+              columns={PAREJAS_JORNADA_RANKING_COLUMNS}
+              emptyMessage="Sin resultados en esta jornada aún."
+            />
+            <JornadaStandings
+              sectionId="jornada-ranking-general"
+              title="Ranking general"
+              hint="Acumulado de toda la liga. Se actualiza al guardar resultados o finalizar la jornada."
+              rows={rankingEquiposRows}
+              columns={PAREJAS_JORNADA_RANKING_COLUMNS}
+            />
+          </div>
         ) : (
           <JornadaStandings
-            title="Ranking acumulado"
+            sectionId="jornada-ranking-general"
+            title="Ranking general"
             hint="Puntos en base de datos de la liga. Al guardar resultados o finalizar, se recalcula automáticamente."
             rows={rankingJugadoresRows}
             columns={[

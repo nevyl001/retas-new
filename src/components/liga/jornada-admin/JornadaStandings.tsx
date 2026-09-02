@@ -15,6 +15,7 @@ export interface JornadaStandingsProps {
   rows: SimpleRankingPresentationRow[];
   columns: JornadaStandingsColumn[];
   emptyMessage?: string;
+  sectionId?: string;
 }
 
 export const JornadaStandings: React.FC<JornadaStandingsProps> = ({
@@ -23,10 +24,16 @@ export const JornadaStandings: React.FC<JornadaStandingsProps> = ({
   rows,
   columns,
   emptyMessage = "Sin puntos en la liga aún.",
-}) => (
-  <section className="jornada-standings" aria-labelledby="jornada-standings-title">
+  sectionId,
+}) => {
+  const headingId =
+    sectionId ??
+    `jornada-standings-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+
+  return (
+  <section className="jornada-standings" aria-labelledby={headingId}>
     <header className="jornada-standings__head">
-      <h2 id="jornada-standings-title" className="jornada-standings__title">
+      <h2 id={headingId} className="jornada-standings__title">
         {title}
       </h2>
       {hint ? <p className="jornada-standings__hint">{hint}</p> : null}
@@ -81,4 +88,5 @@ export const JornadaStandings: React.FC<JornadaStandingsProps> = ({
       </div>
     )}
   </section>
-);
+  );
+};
