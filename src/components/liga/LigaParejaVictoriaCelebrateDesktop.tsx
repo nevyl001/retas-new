@@ -82,7 +82,7 @@ export const LigaParejaVictoriaCelebrateDesktop: React.FC<
               <p className="liga-celebrate-desktop__player-name">{playerA.name}</p>
             </div>
             <div className="liga-celebrate-desktop__trophy-wrap" aria-hidden>
-              <TablerIcon name="trophy" size={22} className="liga-celebrate-desktop__trophy" />
+              <TablerIcon name="trophy" size={18} className="liga-celebrate-desktop__trophy" />
             </div>
             <div className="liga-celebrate-desktop__player">
               <DesktopPlayerAvatar player={playerB} />
