@@ -46,7 +46,12 @@ export interface LigaParejaVictoriaCelebrateDesktopProps {
 /** Presentación desktop/tablet grande — composición horizontal editorial. */
 export const LigaParejaVictoriaCelebrateDesktop: React.FC<
   LigaParejaVictoriaCelebrateDesktopProps
-> = ({ headline, copy, players, stats, matchLines, ambient }) => (
+> = ({ headline, copy, players, stats, matchLines, ambient }) => {
+  const playerA = players[0];
+  const playerB = players[1];
+  if (!playerA || !playerB) return null;
+
+  return (
   <section
     className="liga-celebrate-desktop"
     aria-label={`${copy.badge ?? "Ganadores"} — ${copy.rank ?? "1.er lugar"}`}
@@ -73,15 +78,15 @@ export const LigaParejaVictoriaCelebrateDesktop: React.FC<
           <p className="liga-celebrate-desktop__section-label">Jugadores ganadores</p>
           <div className="liga-celebrate-desktop__pair" aria-label="Pareja ganadora">
             <div className="liga-celebrate-desktop__player">
-              <DesktopPlayerAvatar player={players[0]!} />
-              <p className="liga-celebrate-desktop__player-name">{players[0]?.name}</p>
+              <DesktopPlayerAvatar player={playerA} />
+              <p className="liga-celebrate-desktop__player-name">{playerA.name}</p>
             </div>
             <div className="liga-celebrate-desktop__trophy-wrap" aria-hidden>
               <TablerIcon name="trophy" size={22} className="liga-celebrate-desktop__trophy" />
             </div>
             <div className="liga-celebrate-desktop__player">
-              <DesktopPlayerAvatar player={players[1]!} />
-              <p className="liga-celebrate-desktop__player-name">{players[1]?.name}</p>
+              <DesktopPlayerAvatar player={playerB} />
+              <p className="liga-celebrate-desktop__player-name">{playerB.name}</p>
             </div>
           </div>
           <p className="liga-celebrate-desktop__pair-tag">Pareja ganadora</p>
@@ -169,4 +174,5 @@ export const LigaParejaVictoriaCelebrateDesktop: React.FC<
       </footer>
     </div>
   </section>
-);
+  );
+};

@@ -2006,7 +2006,7 @@ export async function confirmarFaseEliminatoria(
         es_bye: esBye,
       };
     })
-    .filter(Boolean);
+    .filter((row): row is NonNullable<typeof row> => row != null);
 
   // Transición atómica de fase (BLK-06): evita que dos clics/llamadas
   // concurrentes generen la fase eliminatoria dos veces — solo transiciona
