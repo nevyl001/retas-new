@@ -2,10 +2,12 @@
 
 .liga-page.liga-jornada-admin-page {
   --jornada-admin-max: 1600px;
-  --jornada-admin-surface: color-mix(in srgb, var(--liga-surface-deep) 92%, #09090b);
-  --jornada-admin-border: color-mix(in srgb, var(--liga-border) 80%, transparent);
+  --jornada-admin-surface: var(--liga-surface-deep);
+  --jornada-admin-border: var(--liga-border);
   --jornada-admin-accent: var(--brand-primary, var(--ro-accent));
   --jornada-admin-lime: var(--ro-mode-americano, #84cc16);
+  --jornada-admin-input-bg: #09090b;
+  --jornada-admin-input-text: #fafafa;
   font-family: var(--font-body, var(--liga-font-body));
   font-size: 17px;
   line-height: 1.5;
@@ -48,7 +50,7 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.15;
-  color: #fafafa;
+  color: var(--liga-text);
   text-transform: uppercase;
 }
 
@@ -56,7 +58,7 @@
   margin: 6px 0 0;
   font-size: 1rem;
   font-weight: 500;
-  color: rgba(250, 250, 250, 0.82);
+  color: var(--liga-text-muted);
 }
 
 .jornada-admin-header__jornada {
@@ -83,7 +85,7 @@
   border: 1px solid var(--jornada-admin-border);
   border-radius: 8px;
   background: var(--jornada-admin-surface);
-  color: rgba(250, 250, 250, 0.9);
+  color: var(--liga-text);
   font-family: inherit;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -121,7 +123,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(250, 250, 250, 0.65);
+  color: var(--liga-text-muted);
 }
 
 .jornada-schedule-toolbar__field {
@@ -133,7 +135,7 @@
 .jornada-schedule-toolbar__field-label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: rgba(250, 250, 250, 0.65);
+  color: var(--liga-text-muted);
 }
 
 .jornada-schedule-toolbar__field input {
@@ -142,8 +144,8 @@
   padding: 0 12px;
   border: 1px solid var(--jornada-admin-border);
   border-radius: 8px;
-  background: #09090b;
-  color: #fafafa;
+  background: var(--jornada-admin-input-bg);
+  color: var(--jornada-admin-input-text);
   font-family: inherit;
   font-size: 1rem;
 }
@@ -154,7 +156,7 @@
   border: 1px solid var(--jornada-admin-border);
   border-radius: 8px;
   background: transparent;
-  color: rgba(250, 250, 250, 0.88);
+  color: var(--liga-text-muted);
   font-family: inherit;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -163,7 +165,7 @@
 
 .jornada-schedule-toolbar__btn--accent {
   border-color: color-mix(in srgb, var(--jornada-admin-accent) 35%, var(--jornada-admin-border));
-  color: #fafafa;
+  color: var(--liga-text);
 }
 
 .jornada-schedule-toolbar__btn:disabled {
@@ -189,14 +191,14 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: #fafafa;
+  color: var(--liga-text);
 }
 
 .jornada-start-bar__hint,
 .jornada-start-bar__warn {
   margin: 4px 0 0;
   font-size: 0.875rem;
-  color: rgba(250, 250, 250, 0.7);
+  color: var(--liga-text-soft);
 }
 
 .jornada-start-bar__warn {
@@ -235,7 +237,7 @@
   gap: 12px 16px;
   margin-bottom: 16px;
   padding: 12px 0;
-  background: color-mix(in srgb, #09090b 92%, transparent);
+  background: color-mix(in srgb, var(--liga-surface) 94%, transparent);
   backdrop-filter: blur(8px);
 }
 
@@ -253,13 +255,13 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #fafafa;
+  color: var(--liga-text);
 }
 
 .jornada-results-toolbar__count {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: rgba(250, 250, 250, 0.75);
+  color: var(--liga-text-soft);
 }
 
 .jornada-results-toolbar__track {
@@ -268,7 +270,7 @@
   max-width: 220px;
   height: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--liga-border-subtle);
   overflow: hidden;
 }
 
@@ -296,7 +298,7 @@
   border: none;
   border-radius: 7px;
   background: transparent;
-  color: rgba(250, 250, 250, 0.75);
+  color: var(--liga-text-soft);
   font-family: inherit;
   font-size: 1rem;
   font-weight: 600;
@@ -304,8 +306,8 @@
 }
 
 .jornada-court-filter__seg--active {
-  background: color-mix(in srgb, var(--jornada-admin-accent) 18%, #18181b);
-  color: #fafafa;
+  background: color-mix(in srgb, var(--jornada-admin-accent) 18%, var(--liga-surface-deep));
+  color: var(--liga-text);
 }
 
 /* Round section */
@@ -329,13 +331,13 @@
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #fafafa;
+  color: var(--liga-text);
 }
 
 .jornada-round__meta {
   margin: 2px 0 0;
   font-size: 0.9375rem;
-  color: rgba(250, 250, 250, 0.65);
+  color: var(--liga-text-muted);
 }
 
 .jornada-round__tools {
@@ -353,7 +355,7 @@
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: rgba(250, 250, 250, 0.8);
+  color: var(--liga-text-soft);
 }
 
 .jornada-round__grid {
@@ -428,8 +430,8 @@
   padding: 0 10px;
   border: 1px solid var(--jornada-admin-border);
   border-radius: 8px;
-  background: #09090b;
-  color: #fafafa;
+  background: var(--jornada-admin-input-bg);
+  color: var(--jornada-admin-input-text);
   font-family: inherit;
   font-size: 0.9375rem;
 }
@@ -440,7 +442,7 @@
   border: 1px solid var(--jornada-admin-border);
   border-radius: 8px;
   background: transparent;
-  color: rgba(250, 250, 250, 0.85);
+  color: var(--liga-text-muted);
   font-family: inherit;
   font-size: 0.875rem;
   font-weight: 600;
@@ -481,7 +483,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(250, 250, 250, 0.6);
+  color: var(--liga-text-muted);
 }
 
 .jornada-match-card__badge {
@@ -509,7 +511,7 @@
   font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.3;
-  color: #fafafa;
+  color: var(--liga-text);
   word-break: break-word;
 }
 
@@ -521,7 +523,7 @@
   font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: rgba(250, 250, 250, 0.45);
+  color: var(--liga-text-soft);
 }
 
 .jornada-match-card__saved-line {
@@ -533,7 +535,7 @@
   font-size: 0.875rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: rgba(250, 250, 250, 0.85);
+  color: var(--liga-text-muted);
   text-align: center;
 }
 
@@ -542,7 +544,7 @@
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(250, 250, 250, 0.5);
+  color: var(--liga-text-soft);
 }
 
 .jornada-match-card__saved-summary {
@@ -553,7 +555,7 @@
 
 .jornada-match-card__saved-summary .jornada-match-card__saved-line strong {
   font-size: 1rem;
-  color: #fafafa;
+  color: var(--liga-text);
 }
 
 .jornada-match-card__scoreboard {
@@ -574,8 +576,8 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--liga-border);
+  background: var(--liga-surface);
 }
 
 .jornada-match-card__pair-block--a {
@@ -594,7 +596,7 @@
   font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.3;
-  color: #fafafa;
+  color: var(--liga-text);
   word-break: break-word;
 }
 
@@ -618,7 +620,7 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(250, 250, 250, 0.58);
+  color: var(--liga-text-soft);
   text-align: center;
   line-height: 1.2;
 }
@@ -660,7 +662,7 @@
   font-size: 0.6875rem;
   font-weight: 700;
   line-height: 1.25;
-  color: rgba(250, 250, 250, 0.78);
+  color: var(--liga-text-muted);
   word-break: break-word;
 }
 
@@ -668,7 +670,7 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(250, 250, 250, 0.45);
+  color: var(--liga-text-soft);
 }
 
 .jornada-match-card__sets-head .jornada-match-card__set-label {
@@ -705,7 +707,7 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(250, 250, 250, 0.55);
+  color: var(--liga-text-soft);
 }
 
 .jornada-match-card__set-inputs {
@@ -743,7 +745,8 @@
   height: 44px;
   font-size: 1.25rem;
   border-color: color-mix(in srgb, var(--jornada-admin-accent) 30%, var(--jornada-admin-border));
-  background: #09090b;
+  background: var(--jornada-admin-input-bg);
+  color: var(--jornada-admin-input-text);
 }
 
 .jornada-match-card__error {
@@ -776,7 +779,7 @@
 .jornada-match-card__cancel {
   border: none;
   background: transparent;
-  color: rgba(250, 250, 250, 0.72);
+  color: var(--liga-text-muted);
   font-family: inherit;
   font-size: 0.8125rem;
   font-weight: 650;
@@ -787,7 +790,7 @@
 }
 
 .jornada-match-card__cancel:hover:not(:disabled) {
-  color: #fafafa;
+  color: var(--liga-text);
 }
 
 .jornada-match-card__cancel:disabled {
@@ -872,19 +875,19 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #fafafa;
+  color: var(--liga-text);
 }
 
 .jornada-standings__hint {
   margin: 6px 0 0;
   font-size: 0.875rem;
-  color: rgba(250, 250, 250, 0.6);
+  color: var(--liga-text-muted);
 }
 
 .jornada-standings__empty {
   margin: 12px 0 0;
   font-size: 0.9375rem;
-  color: rgba(250, 250, 250, 0.65);
+  color: var(--liga-text-muted);
 }
 
 .jornada-standings__wrap {
@@ -910,20 +913,20 @@
 .jornada-standings__table th {
   padding: 10px 8px;
   border-bottom: 1px solid var(--jornada-admin-border);
-  background: #09090b;
+  background: var(--jornada-admin-input-bg);
   font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   text-align: left;
-  color: rgba(250, 250, 250, 0.55);
+  color: var(--liga-text-soft);
 }
 
 .jornada-standings__table td {
   height: 46px;
   padding: 0 8px;
   border-bottom: 1px solid color-mix(in srgb, var(--jornada-admin-border) 70%, transparent);
-  color: rgba(250, 250, 250, 0.9);
+  color: var(--liga-text);
 }
 
 .jornada-standings__cell--center {
@@ -937,11 +940,11 @@
 .jornada-standings__cell--pts-head,
 .jornada-standings__cell--pts {
   font-weight: 800;
-  color: #fafafa;
+  color: var(--liga-text);
 }
 
 .jornada-standings__row--top td:first-child {
-  color: color-mix(in srgb, var(--jornada-admin-lime) 80%, #fafafa);
+  color: color-mix(in srgb, var(--jornada-admin-lime) 80%, var(--liga-text));
 }
 
 /* Finish actions + alerts */
@@ -959,7 +962,7 @@
   border-radius: 10px;
   background: color-mix(in srgb, var(--ro-warning, #fbbf24) 8%, var(--jornada-admin-surface));
   font-size: 0.9375rem;
-  color: rgba(250, 250, 250, 0.88);
+  color: var(--liga-text-muted);
 }
 
 .jornada-admin-feedback {
