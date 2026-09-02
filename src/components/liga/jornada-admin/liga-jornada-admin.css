@@ -539,6 +539,72 @@
   gap: 8px;
 }
 
+.jornada-match-card__matchup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.jornada-match-card__pair-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.jornada-match-card__pair-block--a {
+  border-left: 3px solid rgba(229, 193, 88, 0.55);
+}
+
+.jornada-match-card__pair-block--b {
+  border-left: 3px solid rgba(217, 93, 57, 0.55);
+}
+
+.jornada-match-card__pair-names {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #fafafa;
+  word-break: break-word;
+}
+
+.jornada-match-card__pair-sets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.jornada-match-card__pair-set-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 3.5rem;
+}
+
+.jornada-match-card__field-label {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(250, 250, 250, 0.58);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.jornada-match-card__vs--between {
+  align-self: center;
+  margin: -2px 0;
+}
+
 .jornada-match-card__sets-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
