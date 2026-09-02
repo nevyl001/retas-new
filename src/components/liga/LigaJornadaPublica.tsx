@@ -32,6 +32,8 @@ import {
   LigaPublicParejaPlayers,
   parejaPlayerNames,
 } from "./LigaPublicParejaFaces";
+import { LigaJornadaMatchCardFinal } from "./jornada-public/LigaJornadaMatchCardFinal";
+import { LigaJornadaMatchCardPending } from "./jornada-public/LigaJornadaMatchCardPending";
 import {
   useFlipReorder,
   useInViewOnce,
@@ -41,6 +43,7 @@ import "./liga-pareja-victoria-celebrate.css";
 import "./liga-public-pantalla.css";
 import "./liga-public-premium-2026.css";
 import "./liga-public-motion.css";
+import "./jornada-public/liga-jornada-public-match.css";
 import "../jugadores/riviera-jugadores.css";
 
 function jornadaEstadoLabel(estado: LigaJornada["estado"]): string {
@@ -371,128 +374,47 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       ["--liga-match-i" as string]: matchIndex,
     } as React.CSSProperties;
 
-    const renderDuelSeparator = () => {
-      if (board.kind === "wo") {
-        return (
-          <p className="liga-pantalla-match__wo-pill" role="status">
-            WO
-          </p>
-        );
-      }
-      if (board.kind === "board") {
-        return (
-          <div className="liga-pantalla-match__setboard" aria-label="Marcador">
-            {board.columns.map((col) => {
-              const topWin = col.p1 > col.p2;
-              const botWin = col.p2 > col.p1;
-              return (
-                <div key={col.label} className="liga-pantalla-match__setboard-col">
-                  <span className="liga-pantalla-match__setboard-label">
-                    {col.label}
-                  </span>
-                  <span
-                    className={`liga-pantalla-match__setboard-cell${
-                      topWin ? " liga-pantalla-match__setboard-cell--win" : ""
-                    }`}
-                  >
-                    <LigaMotionValue morphKey={col.p1} value={col.p1} />
-                  </span>
-                  <span
-                    className={`liga-pantalla-match__setboard-cell${
-                      botWin ? " liga-pantalla-match__setboard-cell--win" : ""
-                    }`}
-                  >
-                    <LigaMotionValue morphKey={col.p2} value={col.p2} />
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        );
-      }
-      if (board.kind === "simple") {
-        return (
-          <p className="liga-pantalla-match__scoreline">
-            <span className={p1Wins ? "liga-pantalla-match__scoreline-win" : undefined}>
-              {board.s1}
-            </span>
-            <span className="liga-pantalla-match__vs-pill">VS</span>
-            <span className={p2Wins ? "liga-pantalla-match__scoreline-win" : undefined}>
-              {board.s2}
-            </span>
-          </p>
-        );
-      }
-      return <p className="liga-pantalla-match__vs-pill">VS</p>;
-    };
-
     if (duelLayout) {
+      const pairSide1 = {
+        name1: side1.name1,
+        name2: side1.name2,
+        foto1: side1.foto1,
+        foto2: side1.foto2,
+      };
+      const pairSide2 = {
+        name1: side2.name1,
+        name2: side2.name2,
+        foto1: side2.foto1,
+        foto2: side2.foto2,
+      };
+      const cardProps = {
+        canchaNum,
+        estadoMod,
+        estadoText,
+        side1: pairSide1,
+        side2: pairSide2,
+        board,
+        p1Wins,
+        p2Wins,
+        matchStyle,
+      };
+
+      if (partido.estado === "completed") {
+        return (
+          <LigaJornadaMatchCardFinal key={partido.id} {...cardProps} />
+        );
+      }
+
       return (
-        <article
+        <LigaJornadaMatchCardPending
           key={partido.id}
-          className="liga-pantalla-match liga-pantalla-match--duel"
-          style={matchStyle}
-        >
-          <header className="liga-pantalla-match__head">
-            <div className="liga-pantalla-match__head-left">
-              <span className="liga-pantalla-match__cancha">
-                Cancha {canchaNum}
-              </span>
-            </div>
-            <span
-              className={`liga-pantalla-match__status liga-pantalla-match__status--${estadoMod}`}
-            >
-              {estadoText}
-            </span>
-          </header>
-          <div className="liga-pantalla-match__duel">
-            <div
-              className={`liga-pantalla-match__side${
-                p1Wins
-                  ? " liga-pantalla-match__side--win"
-                  : p2Wins
-                    ? " liga-pantalla-match__side--loss"
-                    : ""
-              }`}
-              aria-label={`Pareja: ${side1.name1} y ${side1.name2}`}
-            >
-              <LigaPublicParejaPlayers
-                name1={side1.name1}
-                name2={side1.name2}
-                foto1={side1.foto1}
-                foto2={side1.foto2}
-                size="lg"
-                orientation="stack"
-                showPairBond
-                win={p1Wins}
-              />
-            </div>
-            <div className="liga-pantalla-match__separator">
-              {renderDuelSeparator()}
-            </div>
-            <div
-              className={`liga-pantalla-match__side${
-                p2Wins
-                  ? " liga-pantalla-match__side--win"
-                  : p1Wins
-                    ? " liga-pantalla-match__side--loss"
-                    : ""
-              }`}
-              aria-label={`Pareja: ${side2.name1} y ${side2.name2}`}
-            >
-              <LigaPublicParejaPlayers
-                name1={side2.name1}
-                name2={side2.name2}
-                foto1={side2.foto1}
-                foto2={side2.foto2}
-                size="lg"
-                orientation="stack"
-                showPairBond
-                win={p2Wins}
-              />
-            </div>
-          </div>
-        </article>
+          canchaNum={cardProps.canchaNum}
+          estadoMod={cardProps.estadoMod}
+          estadoText={cardProps.estadoText}
+          side1={cardProps.side1}
+          side2={cardProps.side2}
+          matchStyle={cardProps.matchStyle}
+        />
       );
     }
 
@@ -643,17 +565,19 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                           </p>
                         ) : null}
                       </div>
-                      <span
-                        className={`liga-pantalla-ronda__badge${
-                          estado === "live"
-                            ? " liga-pantalla-ronda__badge--live"
-                            : estado === "done"
-                              ? " liga-pantalla-ronda__badge--done"
-                              : ""
-                        }`}
-                      >
-                        {rondaLabel(estado)}
-                      </span>
+                      {estado !== "pending" ? (
+                        <span
+                          className={`liga-pantalla-ronda__badge${
+                            estado === "live"
+                              ? " liga-pantalla-ronda__badge--live"
+                              : estado === "done"
+                                ? " liga-pantalla-ronda__badge--done"
+                                : ""
+                          }`}
+                        >
+                          {rondaLabel(estado)}
+                        </span>
+                      ) : null}
                     </div>
                     <div
                       className={`liga-pantalla-ronda__matches${

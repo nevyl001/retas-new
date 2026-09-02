@@ -585,20 +585,6 @@
   max-width: 100%;
 }
 
-.liga-pub-pair-players__bond {
-  flex-shrink: 0;
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: var(--liga-pub-text-muted);
-  opacity: 0.75;
-}
-
-.liga-pub-pair-players--bonded.liga-pub-pair-players--stack .liga-pub-pair-players__bond {
-  align-self: flex-start;
-  margin-top: 1.05rem;
-}
-
 .liga-pub-jornada-roster {
   margin: 0 0 1.75rem;
 }

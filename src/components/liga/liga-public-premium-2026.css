@@ -197,22 +197,6 @@
   max-width: 100%;
 }
 
-.liga-pantalla--jornada-fijas .liga-pantalla-match--duel .liga-pub-pair-players--bonded {
-  gap: 0.15rem;
-}
-
-.liga-pantalla--jornada-fijas .liga-pantalla-match--duel .liga-pub-pair-players__bond {
-  flex: 0 0 auto;
-  align-self: flex-start;
-  margin-top: 0.95rem;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  color: color-mix(in srgb, var(--liga-prem-muted) 88%, transparent);
-  opacity: 0.85;
-}
-
 .liga-pantalla--jornada-fijas .liga-pantalla-match--duel .liga-pub-pair-players--stack .liga-pub-pair-players__person {
   gap: 0.32rem;
   max-width: 5.5rem;

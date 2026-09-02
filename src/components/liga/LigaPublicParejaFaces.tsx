@@ -50,8 +50,6 @@ interface LigaPublicParejaPlayersProps {
   size?: "sm" | "md" | "lg";
   /** inline = avatar al lado del nombre (default). stack = nombre debajo. */
   orientation?: "inline" | "stack";
-  /** Muestra unión visual entre compañeros (duelo público). */
-  showPairBond?: boolean;
   className?: string;
   win?: boolean;
 }
@@ -64,14 +62,13 @@ export const LigaPublicParejaPlayers: React.FC<LigaPublicParejaPlayersProps> = (
   foto2,
   size = "sm",
   orientation = "inline",
-  showPairBond = false,
   className = "",
   win = false,
 }) => (
   <div
     className={`liga-pub-pair-players liga-pub-pair-players--${size} liga-pub-pair-players--${orientation}${
-      showPairBond ? " liga-pub-pair-players--bonded" : ""
-    }${win ? " liga-pub-pair-players--win" : ""}${className ? ` ${className}` : ""}`}
+      win ? " liga-pub-pair-players--win" : ""
+    }${className ? ` ${className}` : ""}`}
   >
     <div className="liga-pub-pair-players__person">
       <JugadorAvatar
@@ -83,11 +80,6 @@ export const LigaPublicParejaPlayers: React.FC<LigaPublicParejaPlayersProps> = (
       />
       <span className="liga-pub-pair-players__name">{name1}</span>
     </div>
-    {showPairBond && orientation === "stack" ? (
-      <span className="liga-pub-pair-players__bond" aria-hidden="true">
-        &
-      </span>
-    ) : null}
     <div className="liga-pub-pair-players__person">
       <JugadorAvatar
         fotoUrl={foto2}
