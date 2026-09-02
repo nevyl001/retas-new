@@ -18,11 +18,11 @@
 .te-public--reta.te-public--reta-wide .te-public__inner,
 .te-public--reta .te-public__inner {
   width: 100% !important;
-  max-width: 1440px !important;
+  max-width: none !important;
   margin-left: auto !important;
   margin-right: auto !important;
-  padding-left: 0.75rem !important;
-  padding-right: 0.75rem !important;
+  padding-left: clamp(0.75rem, 3vw, 1.5rem) !important;
+  padding-right: clamp(0.75rem, 3vw, 1.5rem) !important;
   box-sizing: border-box;
   background: transparent !important;
 }
@@ -641,30 +641,17 @@
 .te-public--reta .te-pub-matches-grid--wide {
   display: grid !important;
   grid-template-columns: 1fr !important;
-  gap: 0.85rem !important;
+  gap: clamp(0.85rem, 2vw, 1.25rem) !important;
   width: 100%;
+  min-width: 0;
   align-items: stretch;
-  justify-content: center;
+  justify-content: stretch;
 }
 
 @media (min-width: 768px) {
   .te-public--reta .te-pub-matches-grid--wide,
   .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 1.15rem !important;
-  }
-
-  .te-public--reta .te-pub-matches-grid--wide:has(> :only-child),
-  .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide:has(> :only-child) {
-    grid-template-columns: minmax(min(100%, 360px), 480px) !important;
-    justify-content: center;
-  }
-
-  .te-public--reta .te-pub-matches-grid--wide:has(> :nth-child(2):last-child),
-  .te-public--reta.te-public--reta-wide
-    .te-pub-matches-grid--wide:has(> :nth-child(2):last-child) {
-    grid-template-columns: repeat(2, minmax(min(100%, 280px), 420px)) !important;
-    justify-content: center;
   }
 }
 
@@ -672,7 +659,11 @@
   .te-public--reta .te-pub-matches-grid--wide:has(> :nth-child(3)),
   .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide:has(> :nth-child(3)) {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 1.25rem !important;
+  }
+
+  .te-public--reta .te-pub-matches-grid--wide:has(> :nth-child(4)),
+  .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide:has(> :nth-child(4)) {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 }
 
