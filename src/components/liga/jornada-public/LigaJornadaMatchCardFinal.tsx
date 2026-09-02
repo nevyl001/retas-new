@@ -3,6 +3,7 @@ import type { PartidoPublicScoreboard } from "../../../lib/liga/publicDisplay";
 import { LigaJornadaMatchCardHeader } from "./LigaJornadaMatchCardHeader";
 import type { LigaJornadaMatchPairSide } from "./ligaJornadaMatchTypes";
 import { LigaJornadaMatchPairStack } from "./LigaJornadaMatchPairStack";
+import { LigaJornadaMatchPlayerRow } from "./LigaJornadaMatchPlayerRow";
 import { LigaJornadaMatchScoreGrid } from "./LigaJornadaMatchScoreGrid";
 
 interface LigaJornadaMatchCardFinalProps {
@@ -17,7 +18,7 @@ interface LigaJornadaMatchCardFinalProps {
   matchStyle?: React.CSSProperties;
 }
 
-/** Card final — filas jugador con avatar + marcador central + ganador. */
+/** Card final — parejas arriba, marcador abajo, ganadores en fila. */
 export const LigaJornadaMatchCardFinal: React.FC<LigaJornadaMatchCardFinalProps> = ({
   canchaNum,
   estadoMod,
@@ -41,55 +42,50 @@ export const LigaJornadaMatchCardFinal: React.FC<LigaJornadaMatchCardFinalProps>
         estadoMod={estadoMod}
         estadoText={estadoText}
       />
-      <div className="liga-pantalla-match__duel liga-jornada-match-card__final-duel">
-        <div
-          className={`liga-pantalla-match__side${
-            p1Wins
-              ? " liga-pantalla-match__side--win"
-              : p2Wins
-                ? " liga-pantalla-match__side--loss"
-                : ""
-          }`}
-        >
+      <div className="liga-jornada-match-card__final-body">
+        <div className="liga-jornada-match-card__matchup liga-jornada-match-card__matchup--final">
           <LigaJornadaMatchPairStack
             side={side1}
             align="left"
+            tone={p1Wins ? "win" : p2Wins ? "loss" : undefined}
             label={`Pareja: ${side1.name1} y ${side1.name2}`}
+          />
+          <div className="liga-jornada-match-card__vs" aria-hidden="true">
+            <span className="liga-jornada-match-card__vs-line" />
+            <span className="liga-jornada-match-card__vs-text">VS</span>
+            <span className="liga-jornada-match-card__vs-line" />
+          </div>
+          <LigaJornadaMatchPairStack
+            side={side2}
+            align="right"
+            tone={p2Wins ? "win" : p1Wins ? "loss" : undefined}
+            label={`Pareja: ${side2.name1} y ${side2.name2}`}
           />
         </div>
         <div className="liga-jornada-match-card__final-score">
           <LigaJornadaMatchScoreGrid board={board} />
         </div>
-        <div
-          className={`liga-pantalla-match__side${
-            p2Wins
-              ? " liga-pantalla-match__side--win"
-              : p1Wins
-                ? " liga-pantalla-match__side--loss"
-                : ""
-          }`}
-        >
-          <LigaJornadaMatchPairStack
-            side={side2}
-            align="right"
-            label={`Pareja: ${side2.name1} y ${side2.name2}`}
-          />
-        </div>
-      </div>
-      {winnerSide ? (
-        <div className="liga-jornada-match-card__final-winner">
-          <span className="liga-jornada-match-card__final-winner-label">
-            Ganadores
-          </span>
-          <div className="liga-jornada-match-card__final-winner-players">
-            <LigaJornadaMatchPairStack
-              side={winnerSide}
-              align="left"
-              label={`Ganadores: ${winnerSide.name1} y ${winnerSide.name2}`}
-            />
+        {winnerSide ? (
+          <div className="liga-jornada-match-card__final-winner">
+            <span className="liga-jornada-match-card__final-winner-label">
+              Ganadores
+            </span>
+            <div
+              className="liga-jornada-match-card__final-winner-row"
+              aria-label={`Ganadores: ${winnerSide.name1} y ${winnerSide.name2}`}
+            >
+              <LigaJornadaMatchPlayerRow
+                name={winnerSide.name1}
+                foto={winnerSide.foto1}
+              />
+              <LigaJornadaMatchPlayerRow
+                name={winnerSide.name2}
+                foto={winnerSide.foto2}
+              />
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </article>
   );
 };

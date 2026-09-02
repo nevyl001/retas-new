@@ -6,6 +6,7 @@ interface LigaJornadaMatchPairStackProps {
   side: LigaJornadaMatchPairSide;
   /** Pareja B: avatares a la derecha del nombre. */
   align?: "left" | "right";
+  tone?: "win" | "loss";
   label?: string;
 }
 
@@ -13,10 +14,13 @@ interface LigaJornadaMatchPairStackProps {
 export const LigaJornadaMatchPairStack: React.FC<LigaJornadaMatchPairStackProps> = ({
   side,
   align = "left",
+  tone,
   label,
 }) => (
   <div
-    className={`liga-jornada-match-pair-stack liga-jornada-match-pair-stack--${align}`}
+    className={`liga-jornada-match-pair-stack liga-jornada-match-pair-stack--${align}${
+      tone ? ` liga-jornada-match-pair-stack--${tone}` : ""
+    }`}
     aria-label={label ?? `Pareja: ${side.name1} y ${side.name2}`}
   >
     <LigaJornadaMatchPlayerRow name={side.name1} foto={side.foto1} />
