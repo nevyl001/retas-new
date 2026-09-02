@@ -9,6 +9,7 @@ export interface LigaScoreInputProps {
   id: string;
   name?: string;
   maxLength?: number;
+  placeholder?: string;
 }
 
 /** Casilla numérica directa para captura de games/puntos (draft string). */
@@ -20,6 +21,7 @@ export const LigaScoreInput: React.FC<LigaScoreInputProps> = ({
   id,
   name,
   maxLength = 2,
+  placeholder = "–",
 }) => {
   return (
     <input
@@ -30,9 +32,15 @@ export const LigaScoreInput: React.FC<LigaScoreInputProps> = ({
       pattern="[0-9]*"
       className="liga-score-input"
       value={value}
+      placeholder={placeholder}
       disabled={disabled}
       aria-label={ariaLabel}
       autoComplete="off"
+      autoCorrect="off"
+      autoCapitalize="off"
+      spellCheck={false}
+      data-lpignore="true"
+      data-1p-ignore
       onChange={(event) => {
         const digits = event.target.value.replace(/\D/g, "").slice(0, maxLength);
         onChange(digits);
