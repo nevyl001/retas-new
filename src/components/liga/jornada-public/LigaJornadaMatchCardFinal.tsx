@@ -17,7 +17,7 @@ interface LigaJornadaMatchCardFinalProps {
   matchStyle?: React.CSSProperties;
 }
 
-/** Card final — pareja arriba, pareja abajo, marcador y ganadores. */
+/** Card final — mismo duelo que pending + marcador abajo. */
 export const LigaJornadaMatchCardFinal: React.FC<LigaJornadaMatchCardFinalProps> = ({
   canchaNum,
   estadoMod,
@@ -28,76 +28,39 @@ export const LigaJornadaMatchCardFinal: React.FC<LigaJornadaMatchCardFinalProps>
   p1Wins,
   p2Wins,
   matchStyle,
-}) => {
-  const winnerSide = p1Wins ? side1 : p2Wins ? side2 : null;
-
-  return (
-    <article
-      className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--final liga-jornada-match-card--hero-players"
-      style={matchStyle}
-    >
-      <LigaJornadaMatchCardHeader
-        canchaNum={canchaNum}
-        estadoMod={estadoMod}
-        estadoText={estadoText}
-      />
-      <div className="liga-jornada-match-card__final-body">
-        <div className="liga-jornada-match-card__final-teams">
-          <div
-            className={`liga-jornada-match-card__pair-unit${
-              p1Wins
-                ? " liga-jornada-match-card__pair-unit--win"
-                : p2Wins
-                  ? " liga-jornada-match-card__pair-unit--loss"
-                  : ""
-            }`}
-          >
-            <LigaJornadaMatchPairStack
-              side={side1}
-              align="left"
-              tone={p1Wins ? "win" : p2Wins ? "loss" : undefined}
-              label={`Pareja: ${side1.name1} y ${side1.name2}`}
-            />
-          </div>
-          <span className="liga-jornada-match-card__vs-badge" aria-hidden="true">
-            VS
-          </span>
-          <div
-            className={`liga-jornada-match-card__pair-unit${
-              p2Wins
-                ? " liga-jornada-match-card__pair-unit--win"
-                : p1Wins
-                  ? " liga-jornada-match-card__pair-unit--loss"
-                  : ""
-            }`}
-          >
-            <LigaJornadaMatchPairStack
-              side={side2}
-              align="left"
-              tone={p2Wins ? "win" : p1Wins ? "loss" : undefined}
-              label={`Pareja: ${side2.name1} y ${side2.name2}`}
-            />
-          </div>
+}) => (
+  <article
+    className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--final liga-jornada-match-card--hero-players"
+    style={matchStyle}
+  >
+    <LigaJornadaMatchCardHeader
+      canchaNum={canchaNum}
+      estadoMod={estadoMod}
+      estadoText={estadoText}
+    />
+    <div className="liga-jornada-match-card__final-body">
+      <div className="liga-jornada-match-card__matchup">
+        <LigaJornadaMatchPairStack
+          side={side1}
+          align="left"
+          tone={p1Wins ? "win" : p2Wins ? "loss" : undefined}
+          label={`Pareja: ${side1.name1} y ${side1.name2}`}
+        />
+        <div className="liga-jornada-match-card__vs" aria-hidden="true">
+          <span className="liga-jornada-match-card__vs-line" />
+          <span className="liga-jornada-match-card__vs-text">VS</span>
+          <span className="liga-jornada-match-card__vs-line" />
         </div>
-        <div className="liga-jornada-match-card__final-score">
-          <LigaJornadaMatchScoreGrid board={board} />
-        </div>
-        {winnerSide ? (
-          <div className="liga-jornada-match-card__final-winner">
-            <span className="liga-jornada-match-card__final-winner-label">
-              Ganadores
-            </span>
-            <div className="liga-jornada-match-card__pair-unit liga-jornada-match-card__pair-unit--win liga-jornada-match-card__pair-unit--winner">
-              <LigaJornadaMatchPairStack
-                side={winnerSide}
-                align="left"
-                tone="win"
-                label={`Ganadores: ${winnerSide.name1} y ${winnerSide.name2}`}
-              />
-            </div>
-          </div>
-        ) : null}
+        <LigaJornadaMatchPairStack
+          side={side2}
+          align="right"
+          tone={p2Wins ? "win" : p1Wins ? "loss" : undefined}
+          label={`Pareja: ${side2.name1} y ${side2.name2}`}
+        />
       </div>
-    </article>
-  );
-};
+      <div className="liga-jornada-match-card__final-score">
+        <LigaJornadaMatchScoreGrid board={board} />
+      </div>
+    </div>
+  </article>
+);
