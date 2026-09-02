@@ -1947,6 +1947,67 @@ export async function finishJornada(
   return resyncLigaJornadaCareer(jornadaId);
 }
 
+/** Borra el resultado de un partido para volver a capturarlo y recalcula ranking. */
+export async function resetPartidoResult(
+  partidoId: string,
+  ligaId: string
+): Promise<void> {
+  await requireUserId();
+
+  const { data: partido, error: fetchErr } = await supabase
+    .from("liga_partidos")
+    .select("id, jornada_id, estado")
+    .eq("id", partidoId)
+    .maybeSingle();
+
+  if (fetchErr) throw new Error(fetchErr.message);
+  if (!partido) throw new Error("Partido no encontrado.");
+  if (partido.estado !== "completed") return;
+
+  const jornadaId = String(partido.jornada_id);
+
+  const { error: updateErr } = await supabase
+    .from("liga_partidos")
+    .update({
+      score_pareja1: null,
+      score_pareja2: null,
+      set_scores: null,
+      estado: "in_progress",
+    })
+    .eq("id", partidoId);
+
+  if (updateErr) throw new Error(updateErr.message);
+
+  await recalcularPuntosLiga(ligaId);
+
+  const { error: jornadaErr } = await supabase
+    .from("liga_jornadas")
+    .update({ estado: "in_progress", puntos_aplicados: false })
+    .eq("id", jornadaId)
+    .eq("estado", "completed");
+
+  if (jornadaErr?.message?.includes("puntos_aplicados")) {
+    const { error: fallback } = await supabase
+      .from("liga_jornadas")
+      .update({ estado: "in_progress" })
+      .eq("id", jornadaId)
+      .eq("estado", "completed");
+    if (fallback) throw new Error(fallback.message);
+  } else if (
+    jornadaErr &&
+    !jornadaErr.message.includes("puntos_aplicados") &&
+    !jornadaErr.message.includes("column")
+  ) {
+    throw new Error(jornadaErr.message);
+  }
+
+  await supabase
+    .from("ligas")
+    .update({ estado: "in_progress", fecha_fin: null })
+    .eq("id", ligaId)
+    .eq("estado", "completed");
+}
+
 export async function actualizarPuntosInscripcion(
   ligaId: string,
   jugadorId: string,

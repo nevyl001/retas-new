@@ -34,6 +34,7 @@ export interface MatchScoreCardProps {
   onPlayoffsChange?: (next: PlayoffsScoreDraft) => void;
   onRotativoChange?: (next: { s1: string; s2: string }) => void;
   onSave: () => void;
+  onReset?: () => void;
 }
 
 function savedScoreLine(
@@ -149,6 +150,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
   onPlayoffsChange,
   onRotativoChange,
   onSave,
+  onReset,
 }) => {
   const team1 = parejaPlayerNames(partido.pareja1_id, jornada);
   const team2 = parejaPlayerNames(partido.pareja2_id, jornada);
@@ -180,7 +182,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
 
   const headerMeta = cancha != null ? `Cancha ${cancha}` : "";
   const showScoreEntry =
-    !isSaved &&
+    !locked &&
     ((mode === "sets" && setsDraft && onSetsChange) ||
       (mode === "playoffs" && playoffsDraft && onPlayoffsChange) ||
       (mode === "rotativo" && rotativoDraft && onRotativoChange));
@@ -475,7 +477,9 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
       )}
 
       {isSaved && savedLine ? (
-        <p className="jornada-match-card__saved-line">{savedLine}</p>
+        <p className="jornada-match-card__saved-line">
+          Resultado actual: <strong>{savedLine}</strong>
+        </p>
       ) : null}
 
       {mode === "sets" && setsValidation ? (
@@ -484,18 +488,34 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
         </p>
       ) : null}
 
-      <button
-        type="button"
-        className="jornada-match-card__save"
-        disabled={
-          disabled ||
-          (mode === "sets" && !canSaveSets) ||
-          (mode === "rotativo" && !canSaveRotativo)
-        }
-        onClick={onSave}
-      >
-        {justSaved ? "Guardado" : "Guardar resultado"}
-      </button>
+      <div className="jornada-match-card__actions">
+        {isSaved && onReset ? (
+          <button
+            type="button"
+            className="jornada-match-card__reset"
+            disabled={disabled}
+            onClick={onReset}
+          >
+            Resetear partido
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className="jornada-match-card__save"
+          disabled={
+            disabled ||
+            (mode === "sets" && !canSaveSets) ||
+            (mode === "rotativo" && !canSaveRotativo)
+          }
+          onClick={onSave}
+        >
+          {justSaved
+            ? "Guardado"
+            : isSaved
+              ? "Guardar corrección"
+              : "Guardar resultado"}
+        </button>
+      </div>
     </article>
   );
 };

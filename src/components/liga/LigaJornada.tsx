@@ -15,6 +15,7 @@ import {
   getLigaById,
   getRanking,
   getRankingEquipos,
+  resetPartidoResult,
   startJornada,
   updateScore,
   updateScoreParejasFijas,
@@ -398,8 +399,12 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     setBusy(true);
     setError(null);
     try {
-      await updateScore(partido.id, s1, s2, force);
-      setMessage("Resultado guardado.");
+      await updateScore(partido.id, s1, s2, force || partido.estado === "completed");
+      setMessage(
+        partido.estado === "completed"
+          ? "Resultado corregido."
+          : "Resultado guardado."
+      );
       flashPartidoSaved(partido.id);
       await load();
     } catch (err) {
@@ -482,7 +487,11 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     setError(null);
     try {
       const sets = buildSetsFromDraft(draft);
-      await updateScoreParejasFijas(partido.id, sets, force);
+      await updateScoreParejasFijas(
+        partido.id,
+        sets,
+        force || partido.estado === "completed"
+      );
       setSetsDrafts((prev) => {
         const next = { ...prev };
         delete next[partido.id];
@@ -502,6 +511,43 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         }
       }
       setError(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resetPartido = async (partido: LigaPartido) => {
+    if (partido.estado !== "completed") return;
+    if (
+      !window.confirm(
+        "¿Resetear este partido? Se borrará el resultado y podrás capturarlo de nuevo. El ranking se recalcula."
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await resetPartidoResult(partido.id, ligaId);
+      setSetsDrafts((prev) => {
+        const next = { ...prev };
+        delete next[partido.id];
+        return next;
+      });
+      setPlayoffsDrafts((prev) => {
+        const next = { ...prev };
+        delete next[partido.id];
+        return next;
+      });
+      setScores((prev) => {
+        const next = { ...prev };
+        delete next[partido.id];
+        return next;
+      });
+      setMessage("Partido reseteado. Puedes capturar el resultado otra vez.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
     } finally {
       setBusy(false);
     }
@@ -712,6 +758,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
             setPlayoffsDrafts((prev) => ({ ...prev, [partido.id]: next }))
           }
           onSave={() => saveScoreParejasFijasPlayoffs(partido)}
+          onReset={() => resetPartido(partido)}
         />
       );
     }
@@ -733,6 +780,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
             setSetsDrafts((prev) => ({ ...prev, [partido.id]: next }))
           }
           onSave={() => saveScoreParejasFijas(partido)}
+          onReset={() => resetPartido(partido)}
         />
       );
     }
@@ -766,6 +814,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
           setScores((prev) => ({ ...prev, [partido.id]: next }))
         }
         onSave={() => saveScore(partido)}
+        onReset={() => resetPartido(partido)}
       />
     );
   };
