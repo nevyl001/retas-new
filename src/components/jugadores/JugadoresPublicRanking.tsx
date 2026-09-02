@@ -367,12 +367,12 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   }, [load]);
 
   useEffect(() => {
-    if (!orgId) return;
+    if (!orgId || view !== "ranking") return;
 
     return subscribeRivieraRanking(orgId, () => {
       void loadRef.current({ silent: true });
     });
-  }, [orgId]);
+  }, [orgId, view]);
 
   useVisiblePolling({
     callback: () => loadRef.current({ silent: true }),
