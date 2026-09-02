@@ -16,7 +16,7 @@ function ScoreboardPlayerLine({ player }: { player: PublicRetaPairPlayer }) {
       <JugadorAvatar
         fotoUrl={player.fotoUrl}
         nombre={player.name}
-        size="sm"
+        size="lg"
         className="reta-sb-player__av"
       />
       <span className="reta-sb-player__name">{player.name}</span>
