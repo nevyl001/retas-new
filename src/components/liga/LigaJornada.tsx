@@ -734,6 +734,24 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     }
   };
 
+  const cancelPartidoEdit = (partidoId: string) => {
+    setSetsDrafts((prev) => {
+      const next = { ...prev };
+      delete next[partidoId];
+      return next;
+    });
+    setPlayoffsDrafts((prev) => {
+      const next = { ...prev };
+      delete next[partidoId];
+      return next;
+    });
+    setScores((prev) => {
+      const next = { ...prev };
+      delete next[partidoId];
+      return next;
+    });
+  };
+
   const renderParejasFijasCard = (partido: LigaPartido) => {
     const bloqueado = jornada.estado === "upcoming";
     const label1 = parejaLabel(partido.pareja1_id, jornada);
@@ -759,6 +777,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
           }
           onSave={() => saveScoreParejasFijasPlayoffs(partido)}
           onReset={() => resetPartido(partido)}
+          onCancelEdit={() => cancelPartidoEdit(partido.id)}
         />
       );
     }
@@ -781,6 +800,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
           }
           onSave={() => saveScoreParejasFijas(partido)}
           onReset={() => resetPartido(partido)}
+          onCancelEdit={() => cancelPartidoEdit(partido.id)}
         />
       );
     }
@@ -815,6 +835,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         }
         onSave={() => saveScore(partido)}
         onReset={() => resetPartido(partido)}
+        onCancelEdit={() => cancelPartidoEdit(partido.id)}
       />
     );
   };

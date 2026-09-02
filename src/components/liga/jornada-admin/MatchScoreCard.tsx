@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { LigaJornada, LigaPartido } from "../../../lib/liga/types";
 import {
   formatSetScoresDisplay,
@@ -35,6 +35,7 @@ export interface MatchScoreCardProps {
   onRotativoChange?: (next: { s1: string; s2: string }) => void;
   onSave: () => void;
   onReset?: () => void;
+  onCancelEdit?: () => void;
 }
 
 function savedScoreLine(
@@ -151,12 +152,26 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
   onRotativoChange,
   onSave,
   onReset,
+  onCancelEdit,
 }) => {
   const team1 = parejaPlayerNames(partido.pareja1_id, jornada);
   const team2 = parejaPlayerNames(partido.pareja2_id, jornada);
   const cancha = partido.cancha != null ? partido.cancha : null;
   const isSaved = partido.estado === "completed";
   const savedLine = savedScoreLine(partido, mode, mode === "playoffs");
+  const [editing, setEditing] = useState(!isSaved);
+
+  useEffect(() => {
+    if (!isSaved) {
+      setEditing(true);
+    }
+  }, [isSaved, partido.id]);
+
+  useEffect(() => {
+    if (justSaved && isSaved) {
+      setEditing(false);
+    }
+  }, [justSaved, isSaved]);
 
   const setsValidation = useMemo(() => {
     if (mode !== "sets" || !setsDraft) return null;
@@ -181,28 +196,58 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
     !disabled;
 
   const headerMeta = cancha != null ? `Cancha ${cancha}` : "";
-  const showScoreEntry =
-    !locked &&
+  const canEdit = !locked;
+  const showForm =
+    canEdit &&
+    editing &&
     ((mode === "sets" && setsDraft && onSetsChange) ||
       (mode === "playoffs" && playoffsDraft && onPlayoffsChange) ||
       (mode === "rotativo" && rotativoDraft && onRotativoChange));
+  const showSavedSummary = isSaved && !editing;
+
+  const handleCancelEdit = () => {
+    onCancelEdit?.();
+    setEditing(false);
+  };
 
   return (
     <article
       className={`jornada-match-card${
         isSaved ? " jornada-match-card--saved" : ""
-      }${locked ? " jornada-match-card--locked" : ""}`}
+      }${locked ? " jornada-match-card--locked" : ""}${
+        editing ? " jornada-match-card--editing" : ""
+      }`}
     >
       <header className="jornada-match-card__head">
         <span className="jornada-match-card__meta">
           {headerMeta || "Sin programar"}
         </span>
-        {isSaved ? (
+        {isSaved && !editing ? (
           <span className="jornada-match-card__badge">Guardado</span>
         ) : null}
       </header>
 
-      {showScoreEntry ? (
+      {showSavedSummary ? (
+        <div className="jornada-match-card__saved-summary">
+          <div className="jornada-match-card__teams">
+            <div className="jornada-match-card__team">
+              <span>{team1.name1}</span>
+              <span>{team1.name2}</span>
+            </div>
+            <span className="jornada-match-card__vs">VS</span>
+            <div className="jornada-match-card__team jornada-match-card__team--right">
+              <span>{team2.name1}</span>
+              <span>{team2.name2}</span>
+            </div>
+          </div>
+          {savedLine ? (
+            <p className="jornada-match-card__saved-line">
+              <span className="jornada-match-card__saved-label">Resultado</span>
+              <strong>{savedLine}</strong>
+            </p>
+          ) : null}
+        </div>
+      ) : showForm ? (
         <div className="jornada-match-card__matchup">
           {mode === "sets" && setsDraft && onSetsChange ? (
             <>
@@ -476,45 +521,62 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
         </div>
       )}
 
-      {isSaved && savedLine ? (
-        <p className="jornada-match-card__saved-line">
-          Resultado actual: <strong>{savedLine}</strong>
-        </p>
-      ) : null}
-
-      {mode === "sets" && setsValidation ? (
+      {mode === "sets" && setsValidation && editing ? (
         <p className="jornada-match-card__error" role="alert">
           {setsValidation}
         </p>
       ) : null}
 
       <div className="jornada-match-card__actions">
-        {isSaved && onReset ? (
+        {showSavedSummary && canEdit ? (
           <button
             type="button"
-            className="jornada-match-card__reset"
+            className="jornada-match-card__save"
             disabled={disabled}
-            onClick={onReset}
+            onClick={() => setEditing(true)}
           >
-            Resetear partido
+            Corregir resultado
           </button>
         ) : null}
-        <button
-          type="button"
-          className="jornada-match-card__save"
-          disabled={
-            disabled ||
-            (mode === "sets" && !canSaveSets) ||
-            (mode === "rotativo" && !canSaveRotativo)
-          }
-          onClick={onSave}
-        >
-          {justSaved
-            ? "Guardado"
-            : isSaved
-              ? "Guardar corrección"
-              : "Guardar resultado"}
-        </button>
+
+        {showForm ? (
+          <>
+            <button
+              type="button"
+              className="jornada-match-card__save"
+              disabled={
+                disabled ||
+                (mode === "sets" && !canSaveSets) ||
+                (mode === "rotativo" && !canSaveRotativo)
+              }
+              onClick={onSave}
+            >
+              {justSaved ? "Guardado" : "Guardar resultado"}
+            </button>
+            {isSaved ? (
+              <div className="jornada-match-card__edit-secondary">
+                <button
+                  type="button"
+                  className="jornada-match-card__cancel"
+                  disabled={disabled}
+                  onClick={handleCancelEdit}
+                >
+                  Cancelar
+                </button>
+                {onReset ? (
+                  <button
+                    type="button"
+                    className="jornada-match-card__delete-link"
+                    disabled={disabled}
+                    onClick={onReset}
+                  >
+                    Borrar resultado
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </>
+        ) : null}
       </div>
     </article>
   );
