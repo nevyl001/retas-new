@@ -14,6 +14,8 @@
     "typescript": "^4.9.0"
   },
   "scripts": {
+    "prestart": "node -e \"try{require('fs').rmSync('node_modules/.cache',{recursive:true,force:true})}catch(e){}\"",
+    "prebuild": "node -e \"try{require('fs').rmSync('node_modules/.cache',{recursive:true,force:true})}catch(e){}\"",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
