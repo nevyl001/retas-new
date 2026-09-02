@@ -103,28 +103,29 @@ export const LigaParejaVictoriaCelebrateDesktop: React.FC<
           {copy.rank ? (
             <p className="liga-celebrate-desktop__rank-line">{copy.rank}</p>
           ) : null}
-          <div className="liga-celebrate-desktop__stats" aria-label="Resumen de jornada">
-            <div className="liga-celebrate-desktop__stat">
-              <span className="liga-celebrate-desktop__stat-label">Victorias</span>
-              <span className="liga-celebrate-desktop__stat-value">{stats.victorias}</span>
-            </div>
-            <div className="liga-celebrate-desktop__stat">
-              <span className="liga-celebrate-desktop__stat-label">Derrotas</span>
-              <span className="liga-celebrate-desktop__stat-value liga-celebrate-desktop__stat-value--muted">
-                {stats.derrotas}
-              </span>
-            </div>
-            <div className="liga-celebrate-desktop__stat">
-              <span className="liga-celebrate-desktop__stat-label">Partidos</span>
-              <span className="liga-celebrate-desktop__stat-value">{stats.partidos}</span>
-            </div>
-            <div className="liga-celebrate-desktop__stat">
-              <span className="liga-celebrate-desktop__stat-label">Dif. juegos</span>
-              <span className="liga-celebrate-desktop__stat-value">
-                {formatPublicPodiumDif(stats.dif)}
-              </span>
-            </div>
-          </div>
+        </div>
+      </div>
+
+      <div className="liga-celebrate-desktop__stats-band" aria-label="Resumen de jornada">
+        <div className="liga-celebrate-desktop__stat">
+          <span className="liga-celebrate-desktop__stat-label">Victorias</span>
+          <span className="liga-celebrate-desktop__stat-value">{stats.victorias}</span>
+        </div>
+        <div className="liga-celebrate-desktop__stat">
+          <span className="liga-celebrate-desktop__stat-label">Derrotas</span>
+          <span className="liga-celebrate-desktop__stat-value liga-celebrate-desktop__stat-value--muted">
+            {stats.derrotas}
+          </span>
+        </div>
+        <div className="liga-celebrate-desktop__stat">
+          <span className="liga-celebrate-desktop__stat-label">Partidos</span>
+          <span className="liga-celebrate-desktop__stat-value">{stats.partidos}</span>
+        </div>
+        <div className="liga-celebrate-desktop__stat">
+          <span className="liga-celebrate-desktop__stat-label">Dif. juegos</span>
+          <span className="liga-celebrate-desktop__stat-value">
+            {formatPublicPodiumDif(stats.dif)}
+          </span>
         </div>
       </div>
 
