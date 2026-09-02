@@ -454,6 +454,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                     ? " liga-pantalla-match__side--loss"
                     : ""
               }`}
+              aria-label={`Pareja: ${side1.name1} y ${side1.name2}`}
             >
               <LigaPublicParejaPlayers
                 name1={side1.name1}
@@ -462,6 +463,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 foto2={side1.foto2}
                 size="lg"
                 orientation="stack"
+                showPairBond
                 win={p1Wins}
               />
             </div>
@@ -476,6 +478,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                     ? " liga-pantalla-match__side--loss"
                     : ""
               }`}
+              aria-label={`Pareja: ${side2.name1} y ${side2.name2}`}
             >
               <LigaPublicParejaPlayers
                 name1={side2.name1}
@@ -484,6 +487,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 foto2={side2.foto2}
                 size="lg"
                 orientation="stack"
+                showPairBond
                 win={p2Wins}
               />
             </div>
