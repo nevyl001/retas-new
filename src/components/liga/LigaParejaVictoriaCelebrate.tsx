@@ -8,7 +8,9 @@ import { PodiumCard } from "../torneo-express/public/PodiumCard";
 import type { PublicRetaPairPlayer } from "../public/PublicRetaPairSide";
 import type { PublicRetaWinnerAvatar } from "../public/PublicRetaWinnerSection";
 import type { PublicEliminatoriaPodiumStats } from "../../lib/torneoExpress/publicEliminatoriaPodiumStats";
+import { LigaParejaVictoriaCelebrateDesktop } from "./LigaParejaVictoriaCelebrateDesktop";
 import "./liga-pareja-victoria-celebrate.css";
+import "./liga-pareja-victoria-celebrate-desktop.css";
 
 function parsePairLabel(label: string): [string, string] {
   const parts = label.split(/\s*\/\s*/).map((s) => s.trim()).filter(Boolean);
@@ -113,66 +115,83 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
     };
   }, [organizerName, matchLines.length, stats.victorias, stats.dif]);
 
+  const players = useMemo(
+    () => pairPlayersById[pairId] ?? [],
+    [pairPlayersById, pairId]
+  );
+
+  const ambient = (
+    <div className="liga-celebrate-ambient">
+      <span className="liga-celebrate-ball liga-celebrate-ball--a" />
+      <span className="liga-celebrate-ball liga-celebrate-ball--b" />
+      <span className="liga-celebrate-ball liga-celebrate-ball--c" />
+    </div>
+  );
+
+  const matchesBlock =
+    matchLines.length > 0 ? (
+      <div
+        className="liga-celebrate-matches"
+        aria-label="Resultados contra rivales"
+      >
+        <p className="liga-celebrate-matches__title">Enfrentamientos</p>
+        <ul className="liga-celebrate-matches__list">
+          {matchLines.map((line) => (
+            <li key={line.partidoId} className="liga-celebrate-matches__row">
+              <div className="liga-celebrate-matches__rival">
+                <span className="liga-celebrate-matches__vs">vs</span>
+                <span
+                  className="liga-celebrate-matches__name"
+                  title={line.opponentLabel}
+                >
+                  {shortOpponent(line.opponentLabel ?? "Rival")}
+                </span>
+                {line.cancha != null ? (
+                  <span className="liga-celebrate-matches__cancha">
+                    C{line.cancha}
+                  </span>
+                ) : null}
+              </div>
+              <div className="liga-celebrate-matches__result">
+                <span className="liga-celebrate-matches__score">
+                  {line.scoreLabel}
+                </span>
+                <span className="liga-celebrate-matches__pts">
+                  {formatSignedPoints(line.points)}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : null;
+
   return (
     <div className="liga-celebrate-shell">
-      <PodiumCard
-        position={1}
-        entry={{ label: pairLabel, parejaId: pairId }}
-        categoria={null}
-        torneoNombre={headline || torneoNombre}
-        pairPlayersById={pairPlayersById}
-        stats={stats}
-        copyOverrides={copyOverrides}
-        className="liga-pareja-victoria-celebrate__podium"
-        ambient={
-          <div className="liga-celebrate-ambient">
-            <span className="liga-celebrate-ball liga-celebrate-ball--a" />
-            <span className="liga-celebrate-ball liga-celebrate-ball--b" />
-            <span className="liga-celebrate-ball liga-celebrate-ball--c" />
-          </div>
-        }
-        afterStats={
-          matchLines.length > 0 ? (
-            <div
-              className="liga-celebrate-matches"
-              aria-label="Resultados contra rivales"
-            >
-              <p className="liga-celebrate-matches__title">Enfrentamientos</p>
-              <ul className="liga-celebrate-matches__list">
-                {matchLines.map((line) => (
-                  <li
-                    key={line.partidoId}
-                    className="liga-celebrate-matches__row"
-                  >
-                    <div className="liga-celebrate-matches__rival">
-                      <span className="liga-celebrate-matches__vs">vs</span>
-                      <span
-                        className="liga-celebrate-matches__name"
-                        title={line.opponentLabel}
-                      >
-                        {shortOpponent(line.opponentLabel ?? "Rival")}
-                      </span>
-                      {line.cancha != null ? (
-                        <span className="liga-celebrate-matches__cancha">
-                          C{line.cancha}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="liga-celebrate-matches__result">
-                      <span className="liga-celebrate-matches__score">
-                        {line.scoreLabel}
-                      </span>
-                      <span className="liga-celebrate-matches__pts">
-                        {formatSignedPoints(line.points)}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null
-        }
-      />
+      <div className="liga-celebrate-shell__mobile">
+        <PodiumCard
+          position={1}
+          entry={{ label: pairLabel, parejaId: pairId }}
+          categoria={null}
+          torneoNombre={headline || torneoNombre}
+          pairPlayersById={pairPlayersById}
+          stats={stats}
+          copyOverrides={copyOverrides}
+          className="liga-pareja-victoria-celebrate__podium"
+          ambient={ambient}
+          afterStats={matchesBlock}
+        />
+      </div>
+      <div className="liga-celebrate-shell__desktop">
+        <LigaParejaVictoriaCelebrateDesktop
+          headline={headline || torneoNombre}
+          copy={copyOverrides}
+          players={players as PublicRetaPairPlayer[]}
+          stats={stats}
+          matchLines={matchLines}
+          ambient={ambient}
+        />
+      </div>
     </div>
   );
 };
