@@ -1889,39 +1889,79 @@ export async function resyncLigaJornadaCareer(
           failures: outcome.pipeline.failures,
         }
       );
+    }
+
+    // Verificación durable SIEMPRE: aunque el pipeline reporte fallos
+    // parciales, si ya hay “GANADOR JORNADA” (+ puntos) en BD → OK.
+    const { count, error: countErr } = await supabase
+      .from("jugador_participaciones")
+      .select("id", { count: "exact", head: true })
+      .eq("evento_id", jornadaId)
+      .eq("tipo_evento", "liga")
+      .filter("metadata->>subtipo", "eq", "liga_jornada");
+
+    if (countErr) {
+      console.error(
+        "[riviera-jugadores] verify jornada participaciones:",
+        countErr
+      );
+    }
+
+    const { count: winnerCount, error: winnerErr } = await supabase
+      .from("jugador_participaciones")
+      .select("id", { count: "exact", head: true })
+      .eq("evento_id", jornadaId)
+      .eq("tipo_evento", "liga")
+      .filter("metadata->>subtipo", "eq", "liga_jornada")
+      .filter("metadata->>jornada_ganada", "eq", "true");
+
+    if (winnerErr) {
+      console.error(
+        "[riviera-jugadores] verify jornada ganadores:",
+        winnerErr
+      );
+    }
+
+    if ((winnerCount ?? 0) > 0) {
       return {
-        careerSyncOk: false,
-        careerSyncMessage: outcome.careerSyncMessage,
+        careerSyncOk: true,
+        careerSyncMessage:
+          outcome.careerSyncMessage ||
+          `Historial Riviera OK: ganadores de jornada ${jornada.numero} registrados.`,
       };
     }
 
-    // Verificación durable: no confiar solo en pipeline.ok.
     const jornadaDetalle = detalle.jornadas.find(
       (j) => j.id === jornadaId || j.numero === Number(jornada.numero)
     );
     const completedMatches =
       jornadaDetalle?.partidos?.filter((p) => p.estado === "completed")
         .length ?? 0;
-    if (completedMatches > 0) {
-      const { count, error: countErr } = await supabase
-        .from("jugador_participaciones")
-        .select("id", { count: "exact", head: true })
-        .eq("evento_id", jornadaId)
-        .eq("tipo_evento", "liga")
-        .filter("metadata->>subtipo", "eq", "liga_jornada");
-      if (countErr) {
-        console.error(
-          "[riviera-jugadores] verify jornada participaciones:",
-          countErr
-        );
-      } else if ((count ?? 0) === 0) {
-        return {
-          careerSyncOk: false,
-          careerSyncMessage:
-            `La jornada ${jornada.numero} tiene ${completedMatches} partidos completados, ` +
+
+    if (completedMatches > 0 && (count ?? 0) === 0) {
+      return {
+        careerSyncOk: false,
+        careerSyncMessage:
+          outcome.careerSyncMessage ||
+          `La jornada ${jornada.numero} tiene ${completedMatches} partidos completados, ` +
             "pero aún no hay historial Riviera. Reintenta sincronizar.",
-        };
-      }
+      };
+    }
+
+    if (completedMatches > 0 && (winnerCount ?? 0) === 0) {
+      return {
+        careerSyncOk: false,
+        careerSyncMessage:
+          outcome.careerSyncMessage ||
+          `La jornada ${jornada.numero} tiene historial, pero falta marcar ganadores (+50). Reintenta sincronizar.`,
+      };
+    }
+
+    if (!outcome.careerSyncOk) {
+      return {
+        careerSyncOk: false,
+        careerSyncMessage: outcome.careerSyncMessage,
+      };
     }
 
     return {
@@ -1938,6 +1978,55 @@ export async function resyncLigaJornadaCareer(
           : "No se pudo sincronizar el historial Riviera de la jornada.",
     };
   }
+}
+
+/** Repara historial de todas las jornadas completed de una liga. */
+export async function resyncAllCompletedLigaJornadasCareer(
+  ligaId: string
+): Promise<LigaCareerCloseResult & { repaired: number; failed: number }> {
+  const detalle = await getLigaById(ligaId);
+  const completed = detalle.jornadas.filter(
+    (j) =>
+      j.estado === "completed" ||
+      (j.puntos_aplicados &&
+        (j.partidos?.length ?? 0) > 0 &&
+        j.partidos!.every((p) => p.estado === "completed"))
+  );
+
+  let repaired = 0;
+  let failed = 0;
+  const messages: string[] = [];
+
+  for (const j of completed) {
+    const outcome = await resyncLigaJornadaCareer(j.id);
+    if (outcome.careerSyncOk) {
+      repaired += 1;
+    } else {
+      failed += 1;
+      if (outcome.careerSyncMessage) {
+        messages.push(`J${j.numero}: ${outcome.careerSyncMessage}`);
+      }
+    }
+  }
+
+  if (completed.length === 0) {
+    return {
+      careerSyncOk: true,
+      careerSyncMessage: "No hay jornadas completadas para sincronizar.",
+      repaired: 0,
+      failed: 0,
+    };
+  }
+
+  return {
+    careerSyncOk: failed === 0,
+    careerSyncMessage:
+      failed === 0
+        ? `Historial Riviera sincronizado (${repaired} jornada${repaired === 1 ? "" : "s"}).`
+        : `Sincronización incompleta (${repaired} ok, ${failed} con error). ${messages.join(" · ")}`,
+    repaired,
+    failed,
+  };
 }
 
 /** Repara podio/carrera de una liga ya completed sin reabrir. */

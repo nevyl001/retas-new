@@ -35,6 +35,7 @@ import {
   deleteLiga,
   desinscribirJugador,
   finishLiga,
+  resyncAllCompletedLigaJornadasCareer,
   resyncLigaPodioCareer,
   getJugadoresOrganizador,
   getLigaById,
@@ -226,6 +227,43 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   useEffect(() => {
     load();
   }, [load]);
+
+  const autoJornadasResyncRef = useRef<string | null>(null);
+
+  // Al abrir la liga, reparar historial de jornadas completed (Cuadra/César +50).
+  useEffect(() => {
+    if (!detalle?.id) return;
+    const completed = detalle.jornadas.filter((j) => j.estado === "completed");
+    if (completed.length === 0) return;
+    if (autoJornadasResyncRef.current === detalle.id) return;
+
+    const ligaKey = detalle.id;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const outcome = await resyncAllCompletedLigaJornadasCareer(ligaKey);
+        if (cancelled) return;
+        if (outcome.careerSyncOk) {
+          autoJornadasResyncRef.current = ligaKey;
+          if (outcome.repaired > 0) {
+            setMessage(
+              outcome.careerSyncMessage ||
+                "Historial Riviera de jornadas sincronizado."
+            );
+          }
+        } else if (outcome.careerSyncMessage) {
+          setError(outcome.careerSyncMessage);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[liga] auto-resync jornadas career:", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detalle]);
 
   useEffect(() => {
     if (!optionsOpen) return;
@@ -571,7 +609,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const handleResyncLigaCareer = async () => {
     if (
       !window.confirm(
-        "¿Sincronizar el historial Riviera de esta liga?\n\nLa liga ya está cerrada. Solo se completan escrituras faltantes."
+        "¿Sincronizar el historial Riviera?\n\nSe registrarán ganadores de jornadas (+50) y podio faltantes sin reabrir la liga."
       )
     ) {
       return;
@@ -579,15 +617,28 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     setBusy(true);
     setError(null);
     try {
-      const outcome = await resyncLigaPodioCareer(ligaId);
-      if (outcome.careerSyncOk === false) {
+      const jornadasOutcome = await resyncAllCompletedLigaJornadasCareer(ligaId);
+      let podioOk = true;
+      let podioMsg = "";
+      if (detalle?.estado === "completed") {
+        const podio = await resyncLigaPodioCareer(ligaId);
+        podioOk = podio.careerSyncOk !== false;
+        podioMsg = podio.careerSyncMessage || "";
+      }
+      if (!jornadasOutcome.careerSyncOk || !podioOk) {
         setError(
-          outcome.careerSyncMessage ||
+          [jornadasOutcome.careerSyncMessage, podioMsg]
+            .filter(Boolean)
+            .join(" · ") ||
             "No se pudo sincronizar el historial Riviera."
         );
         setMessage("Historial Riviera pendiente.");
       } else {
-        setMessage("Historial Riviera sincronizado.");
+        autoJornadasResyncRef.current = ligaId;
+        setMessage(
+          jornadasOutcome.careerSyncMessage ||
+            "Historial Riviera sincronizado (jornadas y puntos)."
+        );
       }
       await load();
     } catch (err) {
@@ -1022,12 +1073,13 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
             Finalizar liga
           </Button>
         )}
-        {detalle?.estado === "completed" && (
+        {(detalle?.estado === "completed" ||
+          (jornadaProgress?.completadas ?? 0) > 0) && (
           <Button
             type="button"
             variant="secondary"
             disabled={busy}
-            title="Completa historial Riviera faltante sin reabrir la liga"
+            title="Registra GANADOR JORNADA (+50) en el historial de cada jugador"
             onClick={() => {
               void handleResyncLigaCareer();
             }}
