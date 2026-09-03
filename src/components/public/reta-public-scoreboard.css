@@ -298,22 +298,6 @@
   flex: 1;
 }
 
-.reta-sb-team__titles {
-  display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
-  min-width: 0;
-}
-
-.reta-sb-team__kicker {
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(244, 241, 235, 0.48);
-  line-height: 1;
-}
-
 .reta-sb-team__logo,
 .reta-sb-team .reta-eq-logo.reta-sb-team__logo {
   width: 2.65rem !important;
@@ -1485,10 +1469,6 @@
   height: 3rem !important;
   min-width: 3rem !important;
   background: rgba(6, 7, 12, 0.82) !important;
-}
-
-.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team__kicker {
-  color: rgba(244, 241, 235, 0.42);
 }
 
 .te-public--reta-equipos .reta-sb-card--teams .reta-sb-team__name {

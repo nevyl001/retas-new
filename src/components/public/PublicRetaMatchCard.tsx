@@ -97,10 +97,7 @@ function TeamPairBlock({
                   loading="lazy"
                   className="reta-sb-team__logo"
                 />
-                <div className="reta-sb-team__titles">
-                  <span className="reta-sb-team__kicker">Equipo</span>
-                  <span className="reta-sb-team__name">{displayTeam}</span>
-                </div>
+                <span className="reta-sb-team__name">{displayTeam}</span>
               </>
             ) : (
               <span className="reta-sb-team__name reta-sb-team__name--pair">
