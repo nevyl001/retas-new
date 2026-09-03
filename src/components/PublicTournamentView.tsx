@@ -1415,7 +1415,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                     .sort((a, b) => compareMatchCourt(a.court, b.court))
                     .map((match, matchIdx) =>
                       renderPublicMatchCard(match, matchIdx, {
-                        encounterLabel: `Encuentro ${matchIdx + 1}`,
+                        // En equipos el nombre de la reta va en el hero;
+                        // aquí basta la cancha (sin "Encuentro N").
+                        encounterLabel: isTeamsPublicView
+                          ? undefined
+                          : `Encuentro ${matchIdx + 1}`,
                       })
                     )}
                 </div>

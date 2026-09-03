@@ -1447,32 +1447,29 @@
 .te-public--reta-equipos
   .reta-sb-card--teams
   .reta-eq-logo.reta-sb-team__watermark-logo {
-  width: clamp(6.5rem, 40vw, 9.5rem) !important;
-  height: clamp(6.5rem, 40vw, 9.5rem) !important;
-  right: -0.65rem;
-  opacity: 0.16;
+  width: clamp(7.25rem, 44vw, 10.5rem) !important;
+  height: clamp(7.25rem, 44vw, 10.5rem) !important;
+  right: -0.85rem;
+  opacity: 0.22;
 }
 
-.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--a .reta-sb-team__watermark-logo {
-  opacity: 0.18;
-}
-
+.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--a .reta-sb-team__watermark-logo,
 .te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--b .reta-sb-team__watermark-logo {
-  opacity: 0.18;
+  opacity: 0.24;
 }
 
 .te-public--reta-equipos .reta-sb-card--teams .reta-sb-team__logo,
 .te-public--reta-equipos
   .reta-sb-card--teams
   .reta-eq-logo.reta-sb-team__logo {
-  width: 3rem !important;
-  height: 3rem !important;
-  min-width: 3rem !important;
+  width: 3.35rem !important;
+  height: 3.35rem !important;
+  min-width: 3.35rem !important;
   background: rgba(6, 7, 12, 0.82) !important;
 }
 
 .te-public--reta-equipos .reta-sb-card--teams .reta-sb-team__name {
-  font-size: 1rem !important;
+  font-size: 1.05rem !important;
   font-weight: 800 !important;
   letter-spacing: 0.1em;
 }
@@ -1493,6 +1490,20 @@
     #ffffff
   ) !important;
   text-shadow: 0 0 18px rgba(var(--reta-eq-b-rgb, 217, 93, 57), 0.22);
+}
+
+/* Marcador vacío: tipografía suave, no caja tipo botón "−" */
+.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team__score--empty {
+  min-width: 2.35rem !important;
+  min-height: 2.35rem !important;
+  padding: 0.2rem 0.35rem !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(244, 241, 235, 0.28) !important;
+  font-size: 1.35rem !important;
+  font-weight: 500 !important;
+  font-family: var(--font-display, var(--ro-font-heading), sans-serif) !important;
 }
 
 .te-public--reta-equipos .reta-sb-card--teams .reta-sb-player__av,

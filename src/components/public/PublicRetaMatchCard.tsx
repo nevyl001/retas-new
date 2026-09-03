@@ -107,13 +107,19 @@ function TeamPairBlock({
           </div>
           <div
             key={`${hasResult ? "r" : "p"}-${score}`}
-            className={`reta-sb-team__score${tePubScoreNumModifier({
-              isWin: isWinner,
-              isTie,
-            })}`}
+            className={[
+              "reta-sb-team__score",
+              !hasResult ? "reta-sb-team__score--empty" : "",
+              tePubScoreNumModifier({
+                isWin: isWinner,
+                isTie,
+              }).trim(),
+            ]
+              .filter(Boolean)
+              .join(" ")}
             aria-label={hasResult ? `Marcador ${score}` : "Sin marcador"}
           >
-            {hasResult ? score : "—"}
+            {hasResult ? score : "–"}
           </div>
         </div>
 
