@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from "react";
-import { Pair, Player } from "../lib/database";
+import { Pair } from "../lib/database";
 import { TeamBadge } from "./teams/TeamBadge";
 import { TablerIcon } from "./ui/TablerIcon";
 import {
