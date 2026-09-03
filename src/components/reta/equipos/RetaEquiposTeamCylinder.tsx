@@ -63,7 +63,12 @@ function useCylinderMetrics(overridePx?: number): CylinderMetrics {
         setMetrics({ radius: 152, scale: 0.94 });
         return;
       }
-      setMetrics({ radius: 168, scale: 1 });
+      if (w < 1280) {
+        /* Desktop: más separación entre cards del tambor. */
+        setMetrics({ radius: 215, scale: 1 });
+        return;
+      }
+      setMetrics({ radius: 245, scale: 1 });
     };
 
     handleResize();

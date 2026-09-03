@@ -3339,6 +3339,31 @@
   }
 }
 
+/* Desktop: escena más ancha para el radio mayor del cilindro */
+@media (min-width: 1024px) {
+  .reta-eq-stage--broadcast .reta-eq-scene {
+    max-width: 24rem;
+    height: 20.5rem;
+    perspective: 1400px;
+  }
+
+  .reta-eq-stage--broadcast .reta-eq-duel-stage {
+    min-height: 360px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .reta-eq-stage--broadcast .reta-eq-scene {
+    max-width: 27rem;
+    height: 22rem;
+    perspective: 1500px;
+  }
+
+  .reta-eq-stage--broadcast .reta-eq-duel-stage {
+    min-height: 400px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reta-eq-anim-in,
   .reta-eq-frame--enter,
