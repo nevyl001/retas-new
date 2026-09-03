@@ -1356,9 +1356,17 @@ export async function updateScore(
 
   if (jornadaCompleta && jornadaRow?.liga_id) {
     await recalcularPuntosLiga(String(jornadaRow.liga_id));
-    void resyncLigaJornadaCareer(jornadaId).catch((err) =>
-      console.error("[riviera-jugadores] auto-sync jornada liga:", err)
-    );
+    // Await (no void): si el sync falla, el organizador ve el error al
+    // guardar el último partido y puede reintentar con finishJornada /
+    // resyncLigaJornadaCareer. El fire-and-forget anterior dejaba la
+    // jornada completed + puntos_aplicados sin historial Riviera.
+    const career = await resyncLigaJornadaCareer(jornadaId);
+    if (!career.careerSyncOk) {
+      console.error(
+        "[riviera-jugadores] auto-sync jornada liga incompleto:",
+        career.careerSyncMessage
+      );
+    }
   }
 }
 
@@ -1454,9 +1462,13 @@ export async function updateScoreParejasFijas(
         (allPartidos?.length ?? 0) > 0 &&
         (allPartidos ?? []).every((p) => p.estado === "completed");
       if (jornadaCompleta) {
-        void resyncLigaJornadaCareer(jornadaId).catch((err) =>
-          console.error("[riviera-jugadores] auto-sync jornada liga:", err)
-        );
+        const career = await resyncLigaJornadaCareer(jornadaId);
+        if (!career.careerSyncOk) {
+          console.error(
+            "[riviera-jugadores] auto-sync jornada liga incompleto:",
+            career.careerSyncMessage
+          );
+        }
       }
     }
   }

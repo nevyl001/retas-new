@@ -16,6 +16,7 @@ import {
   getRanking,
   getRankingEquipos,
   resetPartidoResult,
+  resyncLigaJornadaCareer,
   startJornada,
   updateScore,
   updateScoreParejasFijas,
@@ -636,8 +637,46 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     setBusy(true);
     setError(null);
     try {
-      await finishJornada(jornada.id);
-      setMessage("Jornada finalizada. Ranking actualizado.");
+      const outcome = await finishJornada(jornada.id);
+      if (outcome.careerSyncOk === false) {
+        setError(
+          outcome.careerSyncMessage ||
+            "La jornada se cerró, pero no se registró el historial Riviera. Usa «Sincronizar ranking» para reintentar."
+        );
+        setMessage("Jornada finalizada; historial Riviera pendiente.");
+      } else {
+        setMessage("Jornada finalizada. Ranking actualizado.");
+      }
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleResyncJornadaCareer = async () => {
+    if (!jornada) return;
+    if (
+      !window.confirm(
+        "¿Sincronizar el ranking Riviera de esta jornada?\n\nLa jornada ya está cerrada. Solo se completan escrituras faltantes (p. ej. +50 al ganador)."
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const outcome = await resyncLigaJornadaCareer(jornada.id);
+      if (outcome.careerSyncOk === false) {
+        setError(
+          outcome.careerSyncMessage ||
+            "No se pudo sincronizar el historial Riviera de la jornada."
+        );
+        setMessage("Historial Riviera pendiente.");
+      } else {
+        setMessage("Ranking Riviera sincronizado para esta jornada.");
+      }
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -699,6 +738,11 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
   const puntosPendientes =
     todosPartidosCompletos && !jornada.puntos_aplicados;
+
+  /** Jornada ya cerrada localmente: permitir reparar historial Riviera. */
+  const puedeResyncCareer =
+    todosPartidosCompletos &&
+    (jornada.estado === "completed" || jornada.puntos_aplicados);
 
   const totalPartidos = jornada.partidos?.length ?? 0;
   const nParejas = jornada.parejas?.length ?? 0;
@@ -1016,6 +1060,19 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               onClick={handleFinalizarJornada}
             >
               Finalizar jornada
+            </Button>
+          </div>
+        ) : null}
+
+        {!puntosPendientes && puedeResyncCareer ? (
+          <div className="jornada-admin-actions">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={busy}
+              onClick={handleResyncJornadaCareer}
+            >
+              Sincronizar ranking Riviera
             </Button>
           </div>
         ) : null}
