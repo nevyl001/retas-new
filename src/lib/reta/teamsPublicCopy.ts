@@ -67,18 +67,34 @@ export function isRedundantTeamsFaceoffTitle(
 }
 
 /**
- * Título de marquesina broadcast: solo el nombre propio del encuentro
- * (p. ej. "Duelo 40+"). Nunca repite "Equipo A vs Equipo B" — eso ya va
- * en logos. Si el nombre es redundante o vacío → null (ocultar).
+ * Título de marquesina broadcast: nombre propio del encuentro
+ * (p. ej. "Duelo 40+"). Nunca repite "Equipo A vs Equipo B".
+ * Si el nombre es solo el faceoff, intenta descripción corta; si no, fallback.
  */
 export function formatBroadcastBattleTitle(
   eventName: string | null | undefined,
-  teamNames: string[] | null | undefined
-): string | null {
-  const title = eventName?.trim();
-  if (!title) return null;
-  if (isRedundantTeamsFaceoffTitle(title, teamNames)) return null;
-  return title;
+  teamNames: string[] | null | undefined,
+  eventDescription?: string | null
+): string {
+  const title = eventName?.trim() || "";
+  if (title && !isRedundantTeamsFaceoffTitle(title, teamNames)) {
+    return title;
+  }
+
+  const descLine =
+    eventDescription
+      ?.split(/\n/)
+      .map((line) => line.trim())
+      .find(Boolean) || "";
+  if (
+    descLine &&
+    descLine.length <= 56 &&
+    !isRedundantTeamsFaceoffTitle(descLine, teamNames)
+  ) {
+    return descLine;
+  }
+
+  return TEAMS_PUBLIC_EVENT_FALLBACK;
 }
 
 /**

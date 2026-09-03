@@ -1248,6 +1248,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {isTeamsPublicView ? (
         <RetaEquiposPublicHero
           eventName={publicTournamentName}
+          eventDescription={publicTournamentDescription}
           clubName={showClubBranding ? organizerName : undefined}
           teamNames={teamConfig!.teamNames}
           teamLogos={teamConfig?.teamLogos}

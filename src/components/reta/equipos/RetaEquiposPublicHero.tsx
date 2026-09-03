@@ -29,6 +29,8 @@ export type RetaEquiposRosterTeam = {
 
 type RetaEquiposPublicHeroProps = {
   eventName?: string | null;
+  /** Descripción corta del encuentro (fallback de título si el name es el VS). */
+  eventDescription?: string | null;
   /** Nombre del club / organizador (subtítulo). */
   clubName?: string | null;
   teamNames: string[];
@@ -125,6 +127,7 @@ function TransmissionPill({
 
 export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   eventName,
+  eventDescription = null,
   clubName,
   teamNames,
   teamLogos,
@@ -184,7 +187,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
 
   const sedeLabel = lugar?.trim() || null;
   const eventTitle = eventName?.trim() || null;
-  const headline = formatBroadcastBattleTitle(eventTitle, [nameA, nameB]);
+  const headline = formatBroadcastBattleTitle(eventTitle, [nameA, nameB], eventDescription);
   const clubLine = clubName?.trim() || TEAMS_PUBLIC_CLUB_FALLBACK;
 
   if (compact) {
@@ -227,13 +230,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
           {marqueeDate ? (
             <p className="reta-eq-stage__marquee-date">{marqueeDate}</p>
           ) : null}
-          {headline ? (
-            <h1 className="reta-eq-stage__battle-title">{headline}</h1>
-          ) : (
-            <h1 className="visually-hidden">
-              {labelA} versus {labelB}
-            </h1>
-          )}
+          <h1 className="reta-eq-stage__battle-title">{headline}</h1>
           <p className="reta-eq-stage__club">{clubLine}</p>
         </header>
 

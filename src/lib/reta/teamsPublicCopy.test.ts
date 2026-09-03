@@ -47,20 +47,29 @@ describe("teamsPublicCopy", () => {
     expect(isRedundantTeamsFaceoffTitle(null, ["Oasis", "Break"])).toBe(false);
   });
 
-  it("formatea título broadcast: nombre propio, nunca el VS de equipos", () => {
+  it("formatea título broadcast: nombre propio, descripción o fallback", () => {
     expect(
       formatBroadcastBattleTitle("TEAM BREAKPOINT VS TEAM OASIS", [
         "Break Point",
         "Oasis",
       ])
-    ).toBeNull();
+    ).toBe(TEAMS_PUBLIC_EVENT_FALLBACK);
+    expect(
+      formatBroadcastBattleTitle(
+        "TEAM BREAKPOINT VS TEAM OASIS",
+        ["Break Point", "Oasis"],
+        "Duelo 40+"
+      )
+    ).toBe("Duelo 40+");
     expect(
       formatBroadcastBattleTitle("Duelo 40+", ["Break Point", "Oasis"])
     ).toBe("Duelo 40+");
     expect(
       formatBroadcastBattleTitle("Copa Verano 2026", ["Norte", "Sur"])
     ).toBe("Copa Verano 2026");
-    expect(formatBroadcastBattleTitle(null, ["Alvas", "Hacks"])).toBeNull();
+    expect(formatBroadcastBattleTitle(null, ["Alvas", "Hacks"])).toBe(
+      TEAMS_PUBLIC_EVENT_FALLBACK
+    );
   });
 
   it("expone título live de duelo", () => {
