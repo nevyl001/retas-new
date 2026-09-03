@@ -2,9 +2,8 @@ import React, { useMemo } from "react";
 import {
   TEAMS_PUBLIC_BRAND_LINE,
   TEAMS_PUBLIC_CLUB_FALLBACK,
-  TEAMS_PUBLIC_EVENT_FALLBACK,
   TEAMS_PUBLIC_MOTIVATIONAL,
-  isRedundantTeamsFaceoffTitle,
+  formatBroadcastBattleTitle,
 } from "../../../lib/reta/teamsPublicCopy";
 import { resolveTeamLogoUrl } from "../../../lib/reta/teamLogoDisplay";
 import type { EventSchedulePhase } from "../../../lib/public/eventScheduleStatus";
@@ -185,13 +184,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
 
   const sedeLabel = lugar?.trim() || null;
   const eventTitle = eventName?.trim() || null;
-  const hideFaceoffTitle = isRedundantTeamsFaceoffTitle(eventTitle, [
-    nameA,
-    nameB,
-  ]);
-  const headline = hideFaceoffTitle
-    ? null
-    : eventTitle || TEAMS_PUBLIC_EVENT_FALLBACK;
+  const headline = formatBroadcastBattleTitle(eventTitle, [nameA, nameB]);
   const clubLine = clubName?.trim() || TEAMS_PUBLIC_CLUB_FALLBACK;
 
   if (compact) {

@@ -6,6 +6,7 @@ import {
   TEAMS_PUBLIC_LIVE_TITLE,
   TEAMS_PUBLIC_MOTIVATIONAL,
   TEAMS_PUBLIC_TAGLINE,
+  formatBroadcastBattleTitle,
   formatTeamsPublicFaceoff,
   formatTeamsPublicHeroMeta,
   isRedundantTeamsFaceoffTitle,
@@ -35,9 +36,30 @@ describe("teamsPublicCopy", () => {
       ])
     ).toBe(true);
     expect(
+      isRedundantTeamsFaceoffTitle("TEAM BREAKPOINT VS TEAM OASIS", [
+        "Break Point",
+        "Oasis",
+      ])
+    ).toBe(true);
+    expect(
       isRedundantTeamsFaceoffTitle("Copa Verano 2026", ["Oasis", "Break"])
     ).toBe(false);
     expect(isRedundantTeamsFaceoffTitle(null, ["Oasis", "Break"])).toBe(false);
+  });
+
+  it("formatea título broadcast en un renglón", () => {
+    expect(
+      formatBroadcastBattleTitle("TEAM BREAKPOINT VS TEAM OASIS", [
+        "Break Point",
+        "Oasis",
+      ])
+    ).toBe("Break Point vs Oasis");
+    expect(
+      formatBroadcastBattleTitle("Copa Verano 2026", ["Norte", "Sur"])
+    ).toBe("Copa Verano 2026");
+    expect(formatBroadcastBattleTitle(null, ["Alvas", "Hacks"])).toBe(
+      "Alvas vs Hacks"
+    );
   });
 
   it("expone título live de duelo", () => {

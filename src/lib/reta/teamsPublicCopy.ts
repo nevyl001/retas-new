@@ -35,6 +35,11 @@ function normalizeFaceoffToken(value: string): string {
     .trim();
 }
 
+/** Comparación sin espacios: "Break Point" ≈ "Breakpoint". */
+function compactFaceoffToken(value: string): string {
+  return normalizeFaceoffToken(value).replace(/\s+/g, "");
+}
+
 /**
  * True cuando el nombre del evento solo repite el faceoff
  * (p. ej. "Team A vs Team B") y no aporta un título propio.
@@ -53,11 +58,32 @@ export function isRedundantTeamsFaceoffTitle(
   const nTitle = normalizeFaceoffToken(title);
   if (!/\bvs\b/.test(nTitle)) return false;
 
-  const nA = normalizeFaceoffToken(a);
-  const nB = normalizeFaceoffToken(b);
-  if (!nA || !nB) return false;
+  const cTitle = compactFaceoffToken(title);
+  const cA = compactFaceoffToken(a);
+  const cB = compactFaceoffToken(b);
+  if (!cA || !cB) return false;
 
-  return nTitle.includes(nA) && nTitle.includes(nB);
+  return cTitle.includes(cA) && cTitle.includes(cB);
+}
+
+/**
+ * Título de marquesina broadcast en un renglón.
+ * Si el evento solo repite el VS, usa "Equipo A vs Equipo B" (sin "Team").
+ */
+export function formatBroadcastBattleTitle(
+  eventName: string | null | undefined,
+  teamNames: string[] | null | undefined
+): string {
+  const aRaw = teamNames?.[0]?.trim() || "Equipo 1";
+  const bRaw = teamNames?.[1]?.trim() || "Equipo 2";
+  const a = aRaw.replace(/^team\s+/i, "").trim() || aRaw;
+  const b = bRaw.replace(/^team\s+/i, "").trim() || bRaw;
+  const faceoff = `${a} vs ${b}`;
+
+  const title = eventName?.trim();
+  if (!title) return faceoff;
+  if (isRedundantTeamsFaceoffTitle(title, [aRaw, bRaw])) return faceoff;
+  return title;
 }
 
 /**
