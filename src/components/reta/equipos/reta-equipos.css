@@ -2,6 +2,17 @@
    Scoped: .reta-eq-* / .reta-eq-org / .reta-eq-hero
    Tokens existentes; sin neón; prefers-reduced-motion. */
 
+/* Acentos de equipo (override vía JS desde logos; fallback legacy amarillo/coral) */
+.reta-eq-stage,
+.reta-eq-live-header,
+.reta-eq-arena,
+.reta-eq-duel-stage,
+.reta-eq-matchbar,
+.reta-eq-org {
+  --reta-eq-a-rgb: 229, 193, 88;
+  --reta-eq-b-rgb: 217, 93, 57;
+}
+
 /* ——— Logo ——— */
 .reta-eq-logo {
   display: inline-flex;
@@ -325,7 +336,7 @@
   left: -18%;
   background: radial-gradient(
     circle,
-    rgba(229, 193, 88, 0.16) 0%,
+    rgba(var(--reta-eq-a-rgb), 0.16) 0%,
     transparent 70%
   );
 }
@@ -335,7 +346,7 @@
   right: -18%;
   background: radial-gradient(
     circle,
-    rgba(217, 93, 57, 0.14) 0%,
+    rgba(var(--reta-eq-b-rgb), 0.14) 0%,
     transparent 70%
   );
 }
@@ -484,14 +495,14 @@
 
 .reta-eq-faceoff__logo--a,
 .reta-eq-faceoff .reta-eq-logo.reta-eq-faceoff__logo--a {
-  border: 2px solid rgba(229, 193, 88, 0.85);
-  box-shadow: 0 0 22px rgba(229, 193, 88, 0.28);
+  border: 2px solid rgba(var(--reta-eq-a-rgb), 0.85);
+  box-shadow: 0 0 22px rgba(var(--reta-eq-a-rgb), 0.28);
 }
 
 .reta-eq-faceoff__logo--b,
 .reta-eq-faceoff .reta-eq-logo.reta-eq-faceoff__logo--b {
-  border: 2px solid rgba(217, 93, 57, 0.85);
-  box-shadow: 0 0 22px rgba(217, 93, 57, 0.28);
+  border: 2px solid rgba(var(--reta-eq-b-rgb), 0.85);
+  box-shadow: 0 0 22px rgba(var(--reta-eq-b-rgb), 0.28);
 }
 
 .reta-eq-faceoff__logo .reta-eq-logo__img,
@@ -520,13 +531,13 @@
 }
 
 .reta-eq-faceoff__name--a {
-  color: #e5c158;
-  text-shadow: 0 0 12px rgba(229, 193, 88, 0.28);
+  color: rgb(var(--reta-eq-a-rgb));
+  text-shadow: 0 0 12px rgba(var(--reta-eq-a-rgb), 0.28);
 }
 
 .reta-eq-faceoff__name--b {
-  color: #d95d39;
-  text-shadow: 0 0 12px rgba(217, 93, 57, 0.28);
+  color: rgb(var(--reta-eq-b-rgb));
+  text-shadow: 0 0 12px rgba(var(--reta-eq-b-rgb), 0.28);
 }
 
 .reta-eq-faceoff__vs {
@@ -537,7 +548,7 @@
   font-weight: 800;
   font-style: italic;
   letter-spacing: 0.04em;
-  background: linear-gradient(120deg, #f0d78a 0%, #f4f1eb 45%, #e08a6a 100%);
+  background: linear-gradient(120deg, color-mix(in srgb, rgb(var(--reta-eq-a-rgb)) 70%, #ffffff) 0%, #f4f1eb 45%, color-mix(in srgb, rgb(var(--reta-eq-b-rgb)) 70%, #ffffff) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -672,7 +683,7 @@
   left: 0;
   background: radial-gradient(
     ellipse 80% 70% at 12% 50%,
-    rgba(229, 193, 88, 0.08) 0%,
+    rgba(var(--reta-eq-a-rgb), 0.08) 0%,
     transparent 72%
   );
 }
@@ -681,7 +692,7 @@
   right: 0;
   background: radial-gradient(
     ellipse 80% 70% at 88% 50%,
-    rgba(217, 93, 57, 0.07) 0%,
+    rgba(var(--reta-eq-b-rgb), 0.07) 0%,
     transparent 72%
   );
 }
@@ -736,37 +747,37 @@
 .reta-eq-matchbar__logo--a,
 .reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo--a,
 .reta-eq-live-header .reta-eq-matchbar__logo--a {
-  border-color: rgba(229, 193, 88, 0.7) !important;
-  box-shadow: 0 0 0 1px rgba(229, 193, 88, 0.2) !important;
+  border-color: rgba(var(--reta-eq-a-rgb), 0.7) !important;
+  box-shadow: 0 0 0 1px rgba(var(--reta-eq-a-rgb), 0.2) !important;
 }
 
 .reta-eq-matchbar--arena .reta-eq-matchbar__logo--a {
-  border-color: rgba(229, 193, 88, 0.75) !important;
+  border-color: rgba(var(--reta-eq-a-rgb), 0.75) !important;
   box-shadow: none !important;
 }
 
 .reta-eq-matchbar__logo--b,
 .reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo--b,
 .reta-eq-live-header .reta-eq-matchbar__logo--b {
-  border-color: rgba(224, 86, 56, 0.7) !important;
-  box-shadow: 0 0 0 1px rgba(224, 86, 56, 0.2) !important;
+  border-color: rgba(var(--reta-eq-b-rgb), 0.7) !important;
+  box-shadow: 0 0 0 1px rgba(var(--reta-eq-b-rgb), 0.2) !important;
 }
 
 .reta-eq-matchbar--arena .reta-eq-matchbar__logo--b {
-  border-color: rgba(217, 93, 57, 0.75) !important;
+  border-color: rgba(var(--reta-eq-b-rgb), 0.75) !important;
   box-shadow: none !important;
 }
 
 /* Fallback sin imagen: gradiente de equipo + iniciales legibles */
 .reta-eq-matchbar__logo--a.reta-eq-logo--fallback,
 .reta-eq-live-header .reta-eq-matchbar__logo--a.reta-eq-logo--fallback {
-  background: linear-gradient(145deg, #e5c158, #997a23) !important;
+  background: linear-gradient(145deg, rgb(var(--reta-eq-a-rgb)), color-mix(in srgb, rgb(var(--reta-eq-a-rgb)) 55%, #000000)) !important;
   color: #0b0c10;
 }
 
 .reta-eq-matchbar__logo--b.reta-eq-logo--fallback,
 .reta-eq-live-header .reta-eq-matchbar__logo--b.reta-eq-logo--fallback {
-  background: linear-gradient(145deg, #e05638, #8c2c19) !important;
+  background: linear-gradient(145deg, rgb(var(--reta-eq-b-rgb)), color-mix(in srgb, rgb(var(--reta-eq-b-rgb)) 55%, #000000)) !important;
   color: #fff8f5;
 }
 
@@ -1014,7 +1025,7 @@
 }
 
 .reta-eq-frame--a {
-  border-color: rgba(229, 193, 88, 0.4);
+  border-color: rgba(var(--reta-eq-a-rgb), 0.4);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
   background: radial-gradient(
       ellipse 90% 55% at 50% 0%,
@@ -1025,7 +1036,7 @@
 }
 
 .reta-eq-frame--b {
-  border-color: rgba(217, 93, 57, 0.4);
+  border-color: rgba(var(--reta-eq-b-rgb), 0.4);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
   background: radial-gradient(
       ellipse 90% 55% at 50% 0%,
@@ -1201,7 +1212,7 @@
   background:
     radial-gradient(
       ellipse 65% 50% at 50% 40%,
-      rgba(229, 193, 88, 0.12) 0%,
+      rgba(var(--reta-eq-a-rgb), 0.12) 0%,
       transparent 72%
     ),
     linear-gradient(180deg, #1c1a14 0%, #12131a 50%, #0a0a0e 100%);
@@ -1211,7 +1222,7 @@
   background:
     radial-gradient(
       ellipse 65% 50% at 50% 40%,
-      rgba(217, 93, 57, 0.1) 0%,
+      rgba(var(--reta-eq-b-rgb), 0.1) 0%,
       transparent 72%
     ),
     linear-gradient(180deg, #1e1412 0%, #12131a 50%, #0a0a0e 100%);
@@ -1254,11 +1265,11 @@
 }
 
 .reta-eq-frame__crest--a .reta-eq-frame__crest-glow {
-  background: rgba(229, 193, 88, 0.16);
+  background: rgba(var(--reta-eq-a-rgb), 0.16);
 }
 
 .reta-eq-frame__crest--b .reta-eq-frame__crest-glow {
-  background: rgba(217, 93, 57, 0.14);
+  background: rgba(var(--reta-eq-b-rgb), 0.14);
 }
 
 .reta-eq-frame__crest-shell {
@@ -1280,12 +1291,12 @@
 }
 
 .reta-eq-frame__crest--a .reta-eq-frame__crest-shell {
-  background: linear-gradient(180deg, #f3e2a8 0%, #e5c158 45%, #8a6a1e 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--reta-eq-a-rgb)) 55%, #ffffff) 0%, rgb(var(--reta-eq-a-rgb)) 45%, color-mix(in srgb, rgb(var(--reta-eq-a-rgb)) 45%, #000000) 100%);
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
 }
 
 .reta-eq-frame__crest--b .reta-eq-frame__crest-shell {
-  background: linear-gradient(180deg, #f0a288 0%, #d95d39 45%, #7a2818 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--reta-eq-b-rgb)) 55%, #ffffff) 0%, rgb(var(--reta-eq-b-rgb)) 45%, color-mix(in srgb, rgb(var(--reta-eq-b-rgb)) 45%, #000000) 100%);
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
 }
 
@@ -1317,14 +1328,14 @@
   font-weight: 900;
   letter-spacing: -0.04em;
   line-height: 1;
-  background: linear-gradient(180deg, #ffffff 0%, #f5e6b8 45%, #c9a84a 100%);
+  background: linear-gradient(180deg, #ffffff 0%, color-mix(in srgb, rgb(var(--reta-eq-a-rgb)) 55%, #ffffff) 45%, rgb(var(--reta-eq-a-rgb)) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 .reta-eq-frame__crest--b .reta-eq-frame__crest-mark {
-  background: linear-gradient(180deg, #ffffff 0%, #ffd0c0 45%, #c24a2a 100%);
+  background: linear-gradient(180deg, #ffffff 0%, color-mix(in srgb, rgb(var(--reta-eq-b-rgb)) 55%, #ffffff) 45%, rgb(var(--reta-eq-b-rgb)) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -1335,11 +1346,11 @@
   font-weight: 900;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: #e5c158;
+  color: rgb(var(--reta-eq-a-rgb));
 }
 
 .reta-eq-frame__crest--b .reta-eq-frame__crest-tag {
-  color: #f0a288;
+  color: color-mix(in srgb, rgb(var(--reta-eq-b-rgb)) 72%, #ffffff);
 }
 
 /* Legacy emblem / squircle — oculto */
@@ -1515,12 +1526,12 @@
 }
 
 .reta-eq-dock__seg--a.is-active .reta-eq-dock__seg-fill {
-  background: #e5c158;
+  background: rgb(var(--reta-eq-a-rgb));
   animation: reta-eq-seg-fill var(--reta-eq-seg-ms, 5000ms) linear forwards;
 }
 
 .reta-eq-dock__seg--b.is-active .reta-eq-dock__seg-fill {
-  background: #d95d39;
+  background: rgb(var(--reta-eq-b-rgb));
   animation: reta-eq-seg-fill var(--reta-eq-seg-ms, 5000ms) linear forwards;
 }
 
@@ -1616,15 +1627,15 @@
 }
 
 .reta-eq-frame__chip--lado-a {
-  background: rgba(229, 193, 88, 0.14);
-  border-color: rgba(229, 193, 88, 0.32);
-  color: #f0d56a;
+  background: rgba(var(--reta-eq-a-rgb), 0.14);
+  border-color: rgba(var(--reta-eq-a-rgb), 0.32);
+  color: color-mix(in srgb, rgb(var(--reta-eq-a-rgb)) 75%, #ffffff);
 }
 
 .reta-eq-frame__chip--lado-b {
-  background: rgba(217, 93, 57, 0.14);
-  border-color: rgba(217, 93, 57, 0.32);
-  color: #f0a288;
+  background: rgba(var(--reta-eq-b-rgb), 0.14);
+  border-color: rgba(var(--reta-eq-b-rgb), 0.32);
+  color: color-mix(in srgb, rgb(var(--reta-eq-b-rgb)) 72%, #ffffff);
 }
 
 .reta-eq-frame__chip span {
@@ -1788,15 +1799,15 @@
 }
 
 .reta-eq-cta--live {
-  background: rgba(229, 193, 88, 0.14);
-  color: #e5c158;
-  border: 1px solid rgba(229, 193, 88, 0.45);
-  box-shadow: 0 0 20px rgba(229, 193, 88, 0.2);
+  background: rgba(244, 241, 235, 0.1);
+  color: #f4f1eb;
+  border: 1px solid rgba(244, 241, 235, 0.4);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
 }
 
 .reta-eq-cta--live:hover {
-  background: rgba(229, 193, 88, 0.2);
-  color: #f0d56a;
+  background: rgba(244, 241, 235, 0.16);
+  color: #ffffff;
 }
 
 /* Hub directo de transmisión (único CTA en vivo) */
@@ -1880,7 +1891,7 @@
   left: 0;
   background: radial-gradient(
     ellipse 75% 65% at 18% 45%,
-    rgba(229, 193, 88, 0.08) 0%,
+    rgba(var(--reta-eq-a-rgb), 0.08) 0%,
     transparent 70%
   );
 }
@@ -1889,7 +1900,7 @@
   right: 0;
   background: radial-gradient(
     ellipse 75% 65% at 82% 45%,
-    rgba(217, 93, 57, 0.07) 0%,
+    rgba(var(--reta-eq-b-rgb), 0.07) 0%,
     transparent 70%
   );
 }
@@ -1954,12 +1965,12 @@
 }
 
 .reta-eq-arena__digit--a {
-  color: #e5c158;
+  color: rgb(var(--reta-eq-a-rgb));
   text-shadow: none;
 }
 
 .reta-eq-arena__digit--b {
-  color: #d95d39;
+  color: rgb(var(--reta-eq-b-rgb));
   text-shadow: none;
 }
 
@@ -1977,23 +1988,23 @@
 
 .reta-eq-arena__logo--a,
 .reta-eq-arena .reta-eq-logo.reta-eq-arena__logo--a {
-  border-color: rgba(229, 193, 88, 0.7) !important;
+  border-color: rgba(var(--reta-eq-a-rgb), 0.7) !important;
   box-shadow: none !important;
 }
 
 .reta-eq-arena__logo--b,
 .reta-eq-arena .reta-eq-logo.reta-eq-arena__logo--b {
-  border-color: rgba(217, 93, 57, 0.7) !important;
+  border-color: rgba(var(--reta-eq-b-rgb), 0.7) !important;
   box-shadow: none !important;
 }
 
 .reta-eq-arena__logo--a.reta-eq-logo--fallback {
-  background: linear-gradient(145deg, #e5c158, #997a23) !important;
+  background: linear-gradient(145deg, rgb(var(--reta-eq-a-rgb)), color-mix(in srgb, rgb(var(--reta-eq-a-rgb)) 55%, #000000)) !important;
   color: #0b0c10;
 }
 
 .reta-eq-arena__logo--b.reta-eq-logo--fallback {
-  background: linear-gradient(145deg, #d95d39, #8c2c19) !important;
+  background: linear-gradient(145deg, rgb(var(--reta-eq-b-rgb)), color-mix(in srgb, rgb(var(--reta-eq-b-rgb)) 55%, #000000)) !important;
   color: #fff8f5;
 }
 
@@ -2084,7 +2095,7 @@
   font-weight: 900;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #e5c158;
+  color: rgb(var(--reta-eq-a-rgb));
 }
 
 .reta-eq-arena__slot-title {
@@ -2137,7 +2148,7 @@
 }
 
 .reta-eq-arena__pill-fecha {
-  color: #e5c158;
+  color: rgb(var(--reta-eq-a-rgb));
 }
 
 .reta-eq-arena__pill-lugar {
@@ -2737,11 +2748,11 @@
 }
 
 .reta-eq-duel-stage__team-label--a {
-  color: #e5c158;
+  color: rgb(var(--reta-eq-a-rgb));
 }
 
 .reta-eq-duel-stage__team-label--b {
-  color: #d95d39;
+  color: rgb(var(--reta-eq-b-rgb));
 }
 
 @media (min-width: 640px) {
@@ -2936,17 +2947,17 @@
 }
 
 .reta-eq-cara--a .reta-eq-cara__card {
-  border-color: rgba(229, 193, 88, 0.78);
+  border-color: rgba(var(--reta-eq-a-rgb), 0.78);
   box-shadow:
     0 12px 30px rgba(0, 0, 0, 0.55),
-    0 0 18px rgba(229, 193, 88, 0.22);
+    0 0 18px rgba(var(--reta-eq-a-rgb), 0.22);
 }
 
 .reta-eq-cara--b .reta-eq-cara__card {
-  border-color: rgba(217, 93, 57, 0.78);
+  border-color: rgba(var(--reta-eq-b-rgb), 0.78);
   box-shadow:
     0 12px 30px rgba(0, 0, 0, 0.55),
-    0 0 18px rgba(217, 93, 57, 0.22);
+    0 0 18px rgba(var(--reta-eq-b-rgb), 0.22);
 }
 
 .reta-eq-cara__top {
@@ -2980,14 +2991,14 @@
 
 .reta-eq-cara--a .reta-eq-cara__lado {
   color: #1a1408;
-  background: rgba(229, 193, 88, 0.95);
-  border-color: rgba(229, 193, 88, 0.9);
+  background: rgba(var(--reta-eq-a-rgb), 0.95);
+  border-color: rgba(var(--reta-eq-a-rgb), 0.9);
 }
 
 .reta-eq-cara--b .reta-eq-cara__lado {
   color: #1a0c08;
-  background: rgba(217, 93, 57, 0.95);
-  border-color: rgba(217, 93, 57, 0.9);
+  background: rgba(var(--reta-eq-b-rgb), 0.95);
+  border-color: rgba(var(--reta-eq-b-rgb), 0.9);
 }
 
 .reta-eq-cara__pais {
@@ -3040,12 +3051,12 @@
 }
 
 .reta-eq-cara--a .reta-eq-cara__medal {
-  color: #e5c158;
+  color: rgb(var(--reta-eq-a-rgb));
   background: linear-gradient(145deg, #2a2312 0%, #1c1a14 50%, #12131a 100%);
 }
 
 .reta-eq-cara--b .reta-eq-cara__medal {
-  color: #d95d39;
+  color: rgb(var(--reta-eq-b-rgb));
   background: linear-gradient(145deg, #2d1b18 0%, #1e1412 50%, #12131a 100%);
 }
 
@@ -3124,7 +3135,7 @@
 }
 
 .reta-eq-center--duel .reta-eq-tx-pill {
-  border-color: rgba(229, 193, 88, 0.28);
+  border-color: rgba(var(--reta-eq-a-rgb), 0.28);
   background: rgba(14, 15, 20, 0.82);
 }
 
@@ -3241,11 +3252,11 @@
       to bottom,
       transparent 0%,
       rgba(245, 240, 230, 0.12) 12%,
-      rgba(229, 193, 88, 0.55) 50%,
+      rgba(var(--reta-eq-a-rgb), 0.55) 50%,
       rgba(245, 240, 230, 0.12) 88%,
       transparent 100%
     );
-    box-shadow: 0 0 14px rgba(229, 193, 88, 0.28);
+    box-shadow: 0 0 14px rgba(var(--reta-eq-a-rgb), 0.28);
   }
 
   .reta-eq-scene {

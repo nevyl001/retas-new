@@ -12,6 +12,7 @@ import {
   formatPublicEventFecha,
   formatPublicEventHorario,
 } from "../../../lib/public/eventScheduleStatus";
+import { useTeamLogoAccentColors } from "../../../hooks/useTeamLogoAccentColors";
 import { TeamLogo } from "./TeamLogo";
 import { RetaEquiposCountdown } from "./RetaEquiposCountdown";
 import { RetaEquiposTeamCylinder } from "./RetaEquiposTeamCylinder";
@@ -152,6 +153,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   const labelB = shortTeamLabel(nameB);
   const logoA = resolveTeamLogoUrl(teamLogos, 0);
   const logoB = resolveTeamLogoUrl(teamLogos, 1);
+  const { style: teamAccentStyle } = useTeamLogoAccentColors(logoA, logoB);
   const playersA = teamA?.players ?? [];
   const playersB = teamB?.players ?? [];
   const cta = resolveCtaLabel(schedulePhase, isFinished);
@@ -194,7 +196,10 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
 
   if (compact) {
     return (
-      <header className="reta-eq-live-header reta-eq-anim-in">
+      <header
+        className="reta-eq-live-header reta-eq-anim-in"
+        style={teamAccentStyle}
+      >
         <RetaEquiposArenaScoreboard
           teamAName={nameA}
           teamBName={nameB}
@@ -216,7 +221,10 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   }
 
   return (
-    <section className="reta-eq-stage reta-eq-stage--broadcast reta-eq-anim-in">
+    <section
+      className="reta-eq-stage reta-eq-stage--broadcast reta-eq-anim-in"
+      style={teamAccentStyle}
+    >
       <div className="reta-eq-stage__grid" aria-hidden />
       <div className="reta-eq-stage__glow reta-eq-stage__glow--a" aria-hidden />
       <div className="reta-eq-stage__glow reta-eq-stage__glow--b" aria-hidden />
