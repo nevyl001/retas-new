@@ -202,6 +202,7 @@
 
 /* Explicit team blocks — each pair belongs to a labeled team */
 .reta-sb-team {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
@@ -211,26 +212,74 @@
   border: none;
   border-left: 2px solid rgba(255, 255, 255, 0.2);
   box-shadow: none !important;
+  overflow: hidden;
+  isolation: isolate;
 }
 
 .reta-sb-team--a {
-  border-left-color: var(--reta-sb-gold);
+  border-left-color: rgb(var(--reta-eq-a-rgb, 229, 193, 88));
 }
 
 .reta-sb-team--b {
-  border-left-color: var(--reta-sb-terra);
+  border-left-color: rgb(var(--reta-eq-b-rgb, 217, 93, 57));
 }
 
 .reta-sb-team--win.reta-sb-team--a {
-  border-color: rgba(229, 193, 88, 0.35);
-  border-left-color: var(--reta-sb-gold);
-  background: rgba(229, 193, 88, 0.08);
+  border-color: rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.35);
+  border-left-color: rgb(var(--reta-eq-a-rgb, 229, 193, 88));
+  background: rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.08);
 }
 
 .reta-sb-team--win.reta-sb-team--b {
-  border-color: rgba(217, 93, 57, 0.35);
-  border-left-color: var(--reta-sb-terra);
-  background: rgba(217, 93, 57, 0.08);
+  border-color: rgba(var(--reta-eq-b-rgb, 217, 93, 57), 0.35);
+  border-left-color: rgb(var(--reta-eq-b-rgb, 217, 93, 57));
+  background: rgba(var(--reta-eq-b-rgb, 217, 93, 57), 0.08);
+}
+
+.reta-sb-team__watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.reta-sb-team__watermark-logo,
+.reta-sb-team .reta-eq-logo.reta-sb-team__watermark-logo {
+  position: absolute;
+  top: 50%;
+  right: -0.35rem;
+  width: clamp(5.5rem, 34vw, 8.5rem) !important;
+  height: clamp(5.5rem, 34vw, 8.5rem) !important;
+  min-width: 0 !important;
+  transform: translateY(-50%);
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: 0.14;
+  filter: saturate(1.05);
+}
+
+.reta-sb-team__watermark-logo .reta-eq-logo__img,
+.reta-sb-team .reta-eq-logo.reta-sb-team__watermark-logo .reta-eq-logo__img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  padding: 0 !important;
+}
+
+.reta-sb-team__watermark-logo .reta-eq-logo__initials {
+  font-size: 2rem;
+  opacity: 0.55;
+}
+
+.reta-sb-team__body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
 }
 
 .reta-sb-team__head {
@@ -244,45 +293,70 @@
 .reta-sb-team__identity {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.65rem;
   min-width: 0;
   flex: 1;
 }
 
+.reta-sb-team__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.reta-sb-team__kicker {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 235, 0.48);
+  line-height: 1;
+}
+
 .reta-sb-team__logo,
 .reta-sb-team .reta-eq-logo.reta-sb-team__logo {
-  width: 2rem !important;
-  height: 2rem !important;
-  min-width: 2rem !important;
+  width: 2.65rem !important;
+  height: 2.65rem !important;
+  min-width: 2.65rem !important;
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  background: rgba(0, 0, 0, 0.35) !important;
-  box-shadow: none !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+  background: rgba(8, 9, 14, 0.72) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35) !important;
 }
 
 .reta-sb-team--a .reta-sb-team__logo {
-  border-color: rgba(229, 193, 88, 0.45) !important;
+  border-color: rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.65) !important;
+  box-shadow:
+    0 0 0 1px rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.18),
+    0 8px 18px rgba(0, 0, 0, 0.35) !important;
 }
 
 .reta-sb-team--b .reta-sb-team__logo {
-  border-color: rgba(217, 93, 57, 0.45) !important;
+  border-color: rgba(var(--reta-eq-b-rgb, 217, 93, 57), 0.65) !important;
+  box-shadow:
+    0 0 0 1px rgba(var(--reta-eq-b-rgb, 217, 93, 57), 0.18),
+    0 8px 18px rgba(0, 0, 0, 0.35) !important;
 }
 
 .reta-sb-team__name {
-  font-size: 0.78rem !important;
+  font-size: 0.92rem !important;
   font-weight: 800 !important;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #ffffff !important;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
-.reta-sb-team--a .reta-sb-team__name,
+.reta-sb-team--a .reta-sb-team__name {
+  color: color-mix(in srgb, rgb(var(--reta-eq-a-rgb, 229, 193, 88)) 72%, #ffffff) !important;
+}
+
 .reta-sb-team--b .reta-sb-team__name {
-  color: #ffffff !important;
+  color: color-mix(in srgb, rgb(var(--reta-eq-b-rgb, 217, 93, 57)) 72%, #ffffff) !important;
 }
 
 .reta-sb-team__name--pair {
@@ -1327,43 +1401,118 @@
   }
 }
 
-/* Match cards — duel glass */
+/* Match cards — duel glass + branded team panels */
 .te-public--reta-equipos .reta-sb-card--teams,
 .te-public--reta-equipos .te-pub-match.reta-sb-card--teams {
-  background: rgba(18, 19, 26, 0.9) !important;
+  background: rgba(14, 15, 22, 0.88) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 1rem !important;
-  padding: 0.95rem !important;
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 1.15rem !important;
+  padding: 0.85rem !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.42) !important;
   filter: none !important;
   transition: border-color 200ms ease, background 200ms ease !important;
 }
 
 .te-public--reta-equipos .reta-sb-card--teams:hover,
 .te-public--reta-equipos .te-pub-match.reta-sb-card--teams:hover {
-  border-color: rgba(255, 255, 255, 0.28) !important;
-  background: rgba(22, 24, 32, 0.95) !important;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.48) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  background: rgba(18, 20, 28, 0.94) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5) !important;
   transform: none !important;
 }
 
+.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team {
+  border-left: none;
+  border-radius: 0.95rem;
+  padding: 0.85rem 0.9rem;
+  gap: 0;
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      transparent 42%
+    ),
+    rgba(10, 11, 16, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
 .te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--a {
-  border-left-width: 2px;
-  border-left-color: #e5c158;
-  padding-left: 0.75rem;
+  background:
+    radial-gradient(
+      ellipse 90% 120% at 100% 10%,
+      rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.2) 0%,
+      transparent 58%
+    ),
+    linear-gradient(145deg, rgba(22, 24, 34, 0.92) 0%, rgba(10, 11, 16, 0.88) 100%);
+  border-color: rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.28);
 }
 
 .te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--b {
-  border-left-width: 2px;
-  border-left-color: #d95d39;
-  padding-left: 0.75rem;
+  background:
+    radial-gradient(
+      ellipse 90% 120% at 100% 10%,
+      rgba(var(--reta-eq-b-rgb, 217, 93, 57), 0.2) 0%,
+      transparent 58%
+    ),
+    linear-gradient(145deg, rgba(22, 24, 34, 0.92) 0%, rgba(10, 11, 16, 0.88) 100%);
+  border-color: rgba(var(--reta-eq-b-rgb, 217, 93, 57), 0.28);
+}
+
+.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team__watermark-logo,
+.te-public--reta-equipos
+  .reta-sb-card--teams
+  .reta-eq-logo.reta-sb-team__watermark-logo {
+  width: clamp(6.5rem, 40vw, 9.5rem) !important;
+  height: clamp(6.5rem, 40vw, 9.5rem) !important;
+  right: -0.65rem;
+  opacity: 0.16;
+}
+
+.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--a .reta-sb-team__watermark-logo {
+  opacity: 0.18;
+}
+
+.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--b .reta-sb-team__watermark-logo {
+  opacity: 0.18;
+}
+
+.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team__logo,
+.te-public--reta-equipos
+  .reta-sb-card--teams
+  .reta-eq-logo.reta-sb-team__logo {
+  width: 3rem !important;
+  height: 3rem !important;
+  min-width: 3rem !important;
+  background: rgba(6, 7, 12, 0.82) !important;
+}
+
+.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team__kicker {
+  color: rgba(244, 241, 235, 0.42);
 }
 
 .te-public--reta-equipos .reta-sb-card--teams .reta-sb-team__name {
-  font-size: 0.68rem !important;
-  font-weight: 900 !important;
-  letter-spacing: 0.12em;
-  color: #a3a3a3 !important;
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.1em;
+}
+
+.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--a .reta-sb-team__name {
+  color: color-mix(
+    in srgb,
+    rgb(var(--reta-eq-a-rgb, 229, 193, 88)) 78%,
+    #ffffff
+  ) !important;
+  text-shadow: 0 0 18px rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.22);
+}
+
+.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--b .reta-sb-team__name {
+  color: color-mix(
+    in srgb,
+    rgb(var(--reta-eq-b-rgb, 217, 93, 57)) 78%,
+    #ffffff
+  ) !important;
+  text-shadow: 0 0 18px rgba(var(--reta-eq-b-rgb, 217, 93, 57), 0.22);
 }
 
 .te-public--reta-equipos .reta-sb-card--teams .reta-sb-player__av,
@@ -1390,10 +1539,10 @@
   font-size: 0.58rem !important;
   font-weight: 900 !important;
   letter-spacing: 0.12em;
-  color: #737373 !important;
-  background: #12131a !important;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.2rem 0.45rem;
+  color: rgba(244, 241, 235, 0.62) !important;
+  background: rgba(12, 13, 18, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.22rem 0.5rem;
   border-radius: 999px;
 }
 

@@ -10,6 +10,11 @@ import { TeamLogo } from "../reta/equipos/TeamLogo";
 import { formatMatchCourtLabel } from "../../lib/matchCourt";
 import "./reta-public-scoreboard.css";
 
+function shortTeamLabel(name: string): string {
+  const cleaned = name.replace(/^team\s+/i, "").trim();
+  return cleaned || name;
+}
+
 function ScoreboardPlayerLine({ player }: { player: PublicRetaPairPlayer }) {
   return (
     <div className="reta-sb-player">
@@ -49,12 +54,14 @@ function TeamPairBlock({
   const [p1, p2] = players;
   const hasPlayers = Boolean(p1 || p2);
   const hasTeam = Boolean(teamName?.trim());
+  const displayTeam = hasTeam ? shortTeamLabel(teamName!.trim()) : "";
 
   return (
     <section
       className={[
         "reta-sb-team",
         `reta-sb-team--${side}`,
+        hasTeam ? "reta-sb-team--branded" : "",
         isWinner ? "reta-sb-team--win" : "",
         isTie ? "reta-sb-team--tie" : "",
       ]
@@ -62,57 +69,75 @@ function TeamPairBlock({
         .join(" ")}
       aria-label={
         hasTeam
-          ? `Equipo ${teamName}`
+          ? `Equipo ${displayTeam}`
           : `Pareja ${pairLabel}`
       }
     >
-      <div className="reta-sb-team__head">
-        <div className="reta-sb-team__identity">
-          {hasTeam ? (
+      {hasTeam ? (
+        <div className="reta-sb-team__watermark" aria-hidden>
+          <TeamLogo
+            logoUrl={logoUrl}
+            teamName={teamName!}
+            size="hero"
+            loading="lazy"
+            className="reta-sb-team__watermark-logo"
+          />
+        </div>
+      ) : null}
+
+      <div className="reta-sb-team__body">
+        <div className="reta-sb-team__head">
+          <div className="reta-sb-team__identity">
+            {hasTeam ? (
+              <>
+                <TeamLogo
+                  logoUrl={logoUrl}
+                  teamName={teamName!}
+                  size="md"
+                  loading="lazy"
+                  className="reta-sb-team__logo"
+                />
+                <div className="reta-sb-team__titles">
+                  <span className="reta-sb-team__kicker">Equipo</span>
+                  <span className="reta-sb-team__name">{displayTeam}</span>
+                </div>
+              </>
+            ) : (
+              <span className="reta-sb-team__name reta-sb-team__name--pair">
+                {pairLabel}
+              </span>
+            )}
+          </div>
+          <div
+            key={`${hasResult ? "r" : "p"}-${score}`}
+            className={`reta-sb-team__score${tePubScoreNumModifier({
+              isWin: isWinner,
+              isTie,
+            })}`}
+            aria-label={hasResult ? `Marcador ${score}` : "Sin marcador"}
+          >
+            {hasResult ? score : "—"}
+          </div>
+        </div>
+
+        <div className="reta-sb-team__players">
+          {hasPlayers ? (
             <>
-              <TeamLogo
-                logoUrl={logoUrl}
-                teamName={teamName!}
-                size="sm"
-                className="reta-sb-team__logo"
-              />
-              <span className="reta-sb-team__name">{teamName}</span>
+              {p1 ? <ScoreboardPlayerLine player={p1} /> : null}
+              {p2 ? <ScoreboardPlayerLine player={p2} /> : null}
             </>
           ) : (
-            <span className="reta-sb-team__name reta-sb-team__name--pair">
-              {pairLabel}
-            </span>
+            <div className="reta-sb-player">
+              <span
+                className="reta-sb-player__av reta-sb-player__av--fallback"
+                aria-hidden
+              >
+                ?
+              </span>
+              <span className="reta-sb-player__name">{pairLabel}</span>
+            </div>
           )}
         </div>
-        <div
-          key={`${hasResult ? "r" : "p"}-${score}`}
-          className={`reta-sb-team__score${tePubScoreNumModifier({
-            isWin: isWinner,
-            isTie,
-          })}`}
-          aria-label={hasResult ? `Marcador ${score}` : "Sin marcador"}
-        >
-          {hasResult ? score : "—"}
-        </div>
-      </div>
-
-      <div className="reta-sb-team__players">
-        {hasPlayers ? (
-          <>
-            {p1 ? <ScoreboardPlayerLine player={p1} /> : null}
-            {p2 ? <ScoreboardPlayerLine player={p2} /> : null}
-          </>
-        ) : (
-          <div className="reta-sb-player">
-            <span
-              className="reta-sb-player__av reta-sb-player__av--fallback"
-              aria-hidden
-            >
-              ?
-            </span>
-            <span className="reta-sb-player__name">{pairLabel}</span>
-          </div>
-        )}
       </div>
     </section>
   );

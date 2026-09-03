@@ -11,6 +11,13 @@
   --reta-eq-b-rgb: 180, 184, 196;
 }
 
+/* Scope público equipos: acentos disponibles también en match cards */
+.reta-eq-public-scope {
+  --reta-eq-a-rgb: 180, 184, 196;
+  --reta-eq-b-rgb: 180, 184, 196;
+  min-width: 0;
+}
+
 .reta-eq-faceoff__logo--a,
 .reta-eq-faceoff__logo--b,
 .reta-eq-faceoff__name--a,

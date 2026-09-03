@@ -11,6 +11,7 @@ import { Match, Pair, Game, Tournament } from "../lib/database";
 import { repairMatchCourtRotation } from "../lib/circleRoundRobinSchedule";
 import { compareMatchCourt, maxAssignedCourt } from "../lib/matchCourt";
 import { resolveTeamLogoUrl } from "../lib/reta/teamLogoDisplay";
+import { useTeamLogoAccentColors } from "../hooks/useTeamLogoAccentColors";
 import { isTeamsTournament } from "../lib/gameModeMapping";
 import { PUBLIC_TOURNAMENT_POLL_INTERVAL_MS } from "../lib/publicTournament/publicPoll";
 import {
@@ -717,6 +718,13 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       Object.keys(teamConfig.pairToTeam).length > 0
   );
 
+  const equiposLogoA = resolveTeamLogoUrl(teamConfig?.teamLogos, 0);
+  const equiposLogoB = resolveTeamLogoUrl(teamConfig?.teamLogos, 1);
+  const { style: equiposAccentStyle } = useTeamLogoAccentColors(
+    isTeamsPublicView ? equiposLogoA : null,
+    isTeamsPublicView ? equiposLogoB : null
+  );
+
   const teamWinnerPlayerAvatars = useMemo((): PublicRetaWinnerAvatar[] => {
     if (!showWinner || !winningTeamRow || !isTeamsPublicView || !teamConfig) {
       return [];
@@ -1233,6 +1241,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       }`}
       organizadorId={organizadorId}
     >
+      <div
+        className={isTeamsPublicView ? "reta-eq-public-scope" : undefined}
+        style={isTeamsPublicView ? equiposAccentStyle : undefined}
+      >
       {isTeamsPublicView ? (
         <RetaEquiposPublicHero
           eventName={publicTournamentName}
@@ -1611,6 +1623,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           Vista pública de resultados · solo lectura
         </p>
       </footer>
+      </div>
     </PublicTorneoExpressShell>
   );
 };
