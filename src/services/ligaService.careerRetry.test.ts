@@ -67,6 +67,27 @@ describe("Liga — failure → retry reparable", () => {
     );
   });
 
+  it("jornada: ok sin escritura (processed=false) NO reporta careerSyncOk", async () => {
+    finalizeMock.mockResolvedValue({
+      ok: true,
+      processed: false,
+      resultSaved: true,
+      careerSynced: false,
+      warnings: [],
+      criticalFailures: [],
+      failures: [],
+      touchedJugadorIds: [],
+    });
+
+    const empty = await repairLigaJornadaCareerSync({
+      organizadorId: "org-1",
+      ligaId: "liga-1",
+      jornadaNumero: 2,
+    });
+    expect(empty.careerSyncOk).toBe(false);
+    expect(empty.careerSyncMessage).toMatch(/historial Riviera/i);
+  });
+
   it("podio/final: fail → repair ok → segundo repair idempotente", async () => {
     finalizeMock
       .mockResolvedValueOnce({

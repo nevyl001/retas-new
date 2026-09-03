@@ -14,8 +14,18 @@ export type CareerRepairOutcome = {
 };
 
 function toOutcome(pipeline: CareerEventPipelineResult): CareerRepairOutcome {
-  if (pipeline.ok) {
+  // ok ≠ escritura real. Antes: careerSyncOk=true con 0 participaciones
+  // (jornadas cerradas sin “GANADOR JORNADA N” en historial).
+  if (pipeline.ok && pipeline.careerSynced) {
     return { careerSyncOk: true, pipeline };
+  }
+  if (pipeline.ok && !pipeline.processed) {
+    return {
+      careerSyncOk: false,
+      careerSyncMessage:
+        "El cierre no escribió historial Riviera (0 participaciones). Reintenta sincronizar.",
+      pipeline,
+    };
   }
   return {
     careerSyncOk: false,

@@ -1889,9 +1889,43 @@ export async function resyncLigaJornadaCareer(
           failures: outcome.pipeline.failures,
         }
       );
+      return {
+        careerSyncOk: false,
+        careerSyncMessage: outcome.careerSyncMessage,
+      };
     }
+
+    // Verificación durable: no confiar solo en pipeline.ok.
+    const jornadaDetalle = detalle.jornadas.find(
+      (j) => j.id === jornadaId || j.numero === Number(jornada.numero)
+    );
+    const completedMatches =
+      jornadaDetalle?.partidos?.filter((p) => p.estado === "completed")
+        .length ?? 0;
+    if (completedMatches > 0) {
+      const { count, error: countErr } = await supabase
+        .from("jugador_participaciones")
+        .select("id", { count: "exact", head: true })
+        .eq("evento_id", jornadaId)
+        .eq("tipo_evento", "liga")
+        .filter("metadata->>subtipo", "eq", "liga_jornada");
+      if (countErr) {
+        console.error(
+          "[riviera-jugadores] verify jornada participaciones:",
+          countErr
+        );
+      } else if ((count ?? 0) === 0) {
+        return {
+          careerSyncOk: false,
+          careerSyncMessage:
+            `La jornada ${jornada.numero} tiene ${completedMatches} partidos completados, ` +
+            "pero aún no hay historial Riviera. Reintenta sincronizar.",
+        };
+      }
+    }
+
     return {
-      careerSyncOk: outcome.careerSyncOk,
+      careerSyncOk: true,
       careerSyncMessage: outcome.careerSyncMessage,
     };
   } catch (err) {

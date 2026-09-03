@@ -159,11 +159,19 @@ export async function runCareerEventSync(
   }
 
   if (touchedJugadorIds.length === 0 && eventoId) {
-    const lookupId = participacionEventoId ?? eventoId;
-    touchedJugadorIds = await collectJugadorIdsForCareerEvent(
-      CAREER_EVENT_KIND_TO_TIPO[kind],
-      lookupId
-    );
+    // liga_jornada: eventoId del switch es ligaId; las participaciones viven
+    // en jornada.id. No hacer fallback con ligaId (inscripción) — fingiría
+    // touched sin haber escrito la jornada.
+    const lookupId =
+      kind === "liga_jornada" || kind === "liga_podio"
+        ? participacionEventoId
+        : (participacionEventoId ?? eventoId);
+    if (lookupId) {
+      touchedJugadorIds = await collectJugadorIdsForCareerEvent(
+        CAREER_EVENT_KIND_TO_TIPO[kind],
+        lookupId
+      );
+    }
   }
 
   const context: CareerEventContext = {

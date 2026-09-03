@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { computeJornadaPublicStats } from "../../lib/liga/jornadaStats";
 import { timeInputValue } from "../../lib/liga/programacion";
@@ -177,6 +177,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const [manualPuntos, setManualPuntos] = useState<Record<string, string>>({});
   const [showManualEdit, setShowManualEdit] = useState(false);
   const [canchaFilter, setCanchaFilter] = useState<number | "all">("all");
+  const autoCareerResyncRef = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -212,6 +213,46 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     () => detalle?.jornadas.find((j) => j.numero === numero),
     [detalle, numero]
   );
+
+  // Al abrir una jornada ya cerrada, reparar historial Riviera automáticamente
+  // (idempotente). Cubre el caso “Completada” sin GANADOR JORNADA N.
+  useEffect(() => {
+    if (!jornada?.id) return;
+    const partidos = jornada.partidos ?? [];
+    const completa =
+      partidos.length > 0 && partidos.every((p) => p.estado === "completed");
+    if (!completa) return;
+    if (!(jornada.estado === "completed" || jornada.puntos_aplicados)) return;
+    if (autoCareerResyncRef.current === jornada.id) return;
+    autoCareerResyncRef.current = jornada.id;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const outcome = await resyncLigaJornadaCareer(jornada.id);
+        if (cancelled) return;
+        if (outcome.careerSyncOk) {
+          setMessage(
+            "Historial Riviera sincronizado: ganadores y puntos de la jornada."
+          );
+        } else if (outcome.careerSyncMessage) {
+          setError(outcome.careerSyncMessage);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[liga] auto-resync jornada career:", err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "No se pudo sincronizar el historial Riviera de la jornada."
+        );
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [jornada]);
 
   useEffect(() => {
     if (!jornada?.partidos?.length) {

@@ -45,14 +45,57 @@ export async function syncLigaJornada(
         "[riviera-jugadores] syncLigaJornada: jornada no encontrada",
         jornadaNumero
       );
-      return { touchedJugadorIds: [] };
+      return {
+        touchedJugadorIds: [],
+        syncFailures: [
+          {
+            code: "sync_failed",
+            message: `Jornada ${jornadaNumero} no encontrada en la liga.`,
+            severity: "critical",
+          },
+        ],
+      };
     }
+
+    const jugadoresById = new Map(
+      detalle.jugadores.map((j) => [j.id, j] as const)
+    );
+    for (const eq of detalle.equipos ?? []) {
+      if (eq.jugador1) jugadoresById.set(eq.jugador1.id, eq.jugador1);
+      if (eq.jugador2) jugadoresById.set(eq.jugador2.id, eq.jugador2);
+    }
+
+    const resolveJugador = (
+      pareja: { jugador1_id: string; jugador2_id: string; jugador1?: { id: string; nombre: string } | null; jugador2?: { id: string; nombre: string } | null; equipo_id?: string | null },
+      slot: 1 | 2
+    ): { id: string; nombre: string } | null => {
+      const nested = slot === 1 ? pareja.jugador1 : pareja.jugador2;
+      if (nested?.id) {
+        return { id: nested.id, nombre: nested.nombre || "Jugador" };
+      }
+      const legacyId = slot === 1 ? pareja.jugador1_id : pareja.jugador2_id;
+      const fromMap = jugadoresById.get(legacyId);
+      if (fromMap) return { id: fromMap.id, nombre: fromMap.nombre };
+      if (pareja.equipo_id) {
+        const eq = (detalle.equipos ?? []).find((e) => e.id === pareja.equipo_id);
+        const fromEq = slot === 1 ? eq?.jugador1 : eq?.jugador2;
+        if (fromEq) return { id: fromEq.id, nombre: fromEq.nombre };
+      }
+      if (legacyId) return { id: legacyId, nombre: "Jugador" };
+      return null;
+    };
 
     const parejas = jornada.parejas ?? [];
     const partidos = (jornada.partidos ?? []).filter(
       (p) => p.estado === "completed"
     );
-    const parejaMap = new Map(parejas.map((p) => [p.id, p]));
+    // Incluye parejas de otras jornadas por id (por si un partido apunta a
+    // un UUID huérfano) — no inventa jugadores.
+    const parejaMap = new Map(
+      detalle.jornadas.flatMap((j) => j.parejas ?? []).map((p) => [p.id, p])
+    );
+    for (const p of parejas) parejaMap.set(p.id, p);
+
     const agg = new Map<string, PlayerAgg>();
 
     const bumpLigaPlayer = (
@@ -89,25 +132,33 @@ export async function syncLigaJornada(
       }
     };
 
+    let skippedUnresolved = 0;
     for (const m of partidos) {
-      const s1 = Number(m.score_pareja1 ?? 0);
-      const s2 = Number(m.score_pareja2 ?? 0);
       const par1 = parejaMap.get(m.pareja1_id);
       const par2 = parejaMap.get(m.pareja2_id);
-      if (!par1 || !par2) continue;
+      if (!par1 || !par2) {
+        skippedUnresolved += 1;
+        continue;
+      }
 
-      const j1 = par1.jugador1;
-      const j2 = par1.jugador2;
-      const j3 = par2.jugador1;
-      const j4 = par2.jugador2;
-      if (!j1 || !j2 || !j3 || !j4) continue;
+      const j1 = resolveJugador(par1, 1);
+      const j2 = resolveJugador(par1, 2);
+      const j3 = resolveJugador(par2, 1);
+      const j4 = resolveJugador(par2, 2);
+      if (!j1 || !j2 || !j3 || !j4) {
+        skippedUnresolved += 1;
+        continue;
+      }
+
+      const s1 = Number(m.score_pareja1 ?? 0);
+      const s2 = Number(m.score_pareja2 ?? 0);
+
+      const pareja2Label = `${j3.nombre} / ${j4.nombre}`;
+      const pareja1Label = `${j1.nombre} / ${j2.nombre}`;
 
       const localWins = s1 > s2;
       const visitWins = s2 > s1;
       const draw = s1 === s2;
-
-      const pareja2Label = `${j3.nombre} / ${j4.nombre}`;
-      const pareja1Label = `${j1.nombre} / ${j2.nombre}`;
 
       if (draw) {
         for (const j of [j1, j2]) {
@@ -133,6 +184,37 @@ export async function syncLigaJornada(
       }
     }
 
+    // Fallback: partidos completed pero sin poder armar agg desde marcadores
+    // (parejas huérfanas / jugadores sin join). Sembrar desde roster de la
+    // jornada para no cerrar en silencio con 0 historial.
+    if (agg.size === 0 && partidos.length > 0 && parejas.length > 0) {
+      for (const p of parejas) {
+        const a = resolveJugador(p, 1);
+        const b = resolveJugador(p, 2);
+        if (a) bumpLigaPlayer(a.id, a.nombre, false, false, 0, 0, 0);
+        if (b) bumpLigaPlayer(b.id, b.nombre, false, false, 0, 0, 0);
+      }
+    }
+
+    if (partidos.length > 0 && agg.size === 0) {
+      return {
+        touchedJugadorIds: [],
+        participacionEventoId: jornada.id,
+        syncFailures: [
+          {
+            code: "sync_failed",
+            message:
+              `Jornada ${jornadaNumero}: ${partidos.length} partidos completados ` +
+              `pero no se resolvieron jugadores` +
+              (skippedUnresolved > 0
+                ? ` (${skippedUnresolved} partidos sin pareja/jugador).`
+                : "."),
+            severity: "critical",
+          },
+        ],
+      };
+    }
+
     const eventoNombre = `Liga ${detalle.nombre} - Jornada ${jornada.numero}`;
     const eventoEn = latestIsoTimestamp(
       jornada.created_at,
@@ -147,14 +229,22 @@ export async function syncLigaJornada(
     const posByJugador = new Map(
       jornadaStats.rankingJugadores.map((j) => [j.jugadorId, j.posicion])
     );
-    const totalJugadores = jornadaStats.rankingJugadores.length;
+    const totalJugadores = Math.max(
+      jornadaStats.rankingJugadores.length,
+      agg.size
+    );
 
     const ganadorPareja = jornadaStats.ganadorPareja;
     const jornadaWinnerIds = new Set<string>();
     if (ganadorPareja) {
-      const gp = parejaMap.get(ganadorPareja.parejaId);
-      if (gp?.jugador1_id) jornadaWinnerIds.add(gp.jugador1_id);
-      if (gp?.jugador2_id) jornadaWinnerIds.add(gp.jugador2_id);
+      const gp = parejaMap.get(ganadorPareja.parejaId) ??
+        parejas.find((p) => p.id === ganadorPareja.parejaId);
+      if (gp) {
+        const w1 = resolveJugador(gp, 1);
+        const w2 = resolveJugador(gp, 2);
+        if (w1) jornadaWinnerIds.add(w1.id);
+        if (w2) jornadaWinnerIds.add(w2.id);
+      }
     }
 
     const excluded = toExcludedJugadorIdSet(options?.excludeJugadorIds);
@@ -178,7 +268,17 @@ export async function syncLigaJornada(
             return { failure };
           }
           if (!jugadorId) {
-            return {};
+            return {
+              failure: {
+                code: "sync_failed",
+                message: `No se pudo resolver a «${st.nombre}» para la jornada ${jornada.numero}.`,
+                severity: "critical",
+                details: {
+                  legacyLigaJugadorId: st.legacyLigaJugadorId,
+                  jornada_id: jornada.id,
+                },
+              },
+            };
           }
 
           const posicion = st.legacyLigaJugadorId
@@ -248,10 +348,42 @@ export async function syncLigaJornada(
             eventoEn,
           });
 
+          if (!persisted) {
+            return {
+              failure: {
+                code: "sync_failed",
+                message: `No se persistió historial para «${st.nombre}» (jornada ${jornada.numero}).`,
+                severity: "critical",
+                jugadorId,
+              },
+            };
+          }
+
           return playerSyncFromPersist(persisted);
         },
       }))
     );
+
+    if (
+      partidos.length > 0 &&
+      parallelOutcome.touchedJugadorIds.length === 0
+    ) {
+      return {
+        touchedJugadorIds: [],
+        participacionEventoId: jornada.id,
+        syncFailures: [
+          ...(parallelOutcome.syncFailures.length > 0
+            ? parallelOutcome.syncFailures
+            : [
+                {
+                  code: "sync_failed" as const,
+                  message: `Jornada ${jornadaNumero}: no se escribió ninguna participación Riviera.`,
+                  severity: "critical" as const,
+                },
+              ]),
+        ],
+      };
+    }
 
     return {
       touchedJugadorIds: parallelOutcome.touchedJugadorIds,
@@ -263,7 +395,19 @@ export async function syncLigaJornada(
     };
   } catch (e) {
     console.error("[riviera-jugadores] syncLigaJornada:", e);
-    return { touchedJugadorIds: [] };
+    return {
+      touchedJugadorIds: [],
+      syncFailures: [
+        {
+          code: "sync_failed",
+          message:
+            e instanceof Error
+              ? e.message
+              : "Error sincronizando jornada de liga.",
+          severity: "critical",
+        },
+      ],
+    };
   }
 }
 
