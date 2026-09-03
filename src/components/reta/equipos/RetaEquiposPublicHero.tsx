@@ -190,9 +190,6 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   const headline = formatBroadcastBattleTitle(eventTitle, [nameA, nameB], eventDescription);
   const clubLine = clubName?.trim() || TEAMS_PUBLIC_CLUB_FALLBACK;
 
-  /* Meta discreta bajo el matchup; sede completa vive en la event bar. */
-  const metaBits = [headline, horarioOnly].filter(Boolean) as string[];
-
   if (compact) {
     return (
       <header
@@ -270,21 +267,6 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
               </span>
             </div>
           </div>
-
-          {metaBits.length > 0 ? (
-            <p className="reta-eq-match-hero__meta" aria-label="Resumen del duelo">
-              {metaBits.map((bit, i) => (
-                <React.Fragment key={`${bit}-${i}`}>
-                  {i > 0 ? (
-                    <span className="reta-eq-match-hero__meta-sep" aria-hidden>
-                      ·
-                    </span>
-                  ) : null}
-                  <span>{bit}</span>
-                </React.Fragment>
-              ))}
-            </p>
-          ) : null}
         </div>
 
         <div className="reta-eq-duel-stage reta-eq-rosters">

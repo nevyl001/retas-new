@@ -3421,23 +3421,6 @@
   z-index: 2;
 }
 
-.reta-eq-match-hero__meta {
-  display: none;
-  margin: 0;
-  text-align: center;
-  font-family: var(--font-body, var(--ro-font-body), system-ui, sans-serif);
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  line-height: 1.35;
-  color: rgba(180, 184, 196, 0.72);
-}
-
-.reta-eq-match-hero__meta-sep {
-  margin: 0 0.45em;
-  opacity: 0.55;
-}
-
 /* Event-bar cols: en mobile participan del flex vertical del center */
 .reta-eq-event-bar__col {
   display: contents;
@@ -3657,11 +3640,6 @@
       rgba(255, 255, 255, 0.18),
       transparent
     );
-  }
-
-  .reta-eq-stage--broadcast .reta-eq-match-hero__meta {
-    display: block;
-    margin-top: 0.15rem;
   }
 
   /* ── 2. TEAM ROSTERS — composición abierta ─────────────────────────────── */
