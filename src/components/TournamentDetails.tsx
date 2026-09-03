@@ -44,6 +44,7 @@ interface TournamentDetailsProps {
   isCreatingPair?: boolean;
   updatePairPlayers: (pairId: string, player1: Player, player2: Player) => void;
   deletePair: (pairId: string) => void;
+  swapPlayers?: (pairAId: string, slotA: "player1" | "player2", pairBId: string, slotB: "player1" | "player2") => Promise<void>;
   userId?: string;
   onReset: () => Promise<void>;
   loadTournamentData: () => void;
@@ -91,6 +92,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   isCreatingPair = false,
   updatePairPlayers,
   deletePair,
+  swapPlayers,
   userId,
   onReset,
   loadTournamentData,
@@ -191,6 +193,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       isCreatingPair={isCreatingPair}
       updatePairPlayers={updatePairPlayers}
       deletePair={deletePair}
+      swapPlayers={swapPlayers}
       userId={userId}
       onReset={onReset}
       loadTournamentData={loadTournamentData}
@@ -294,7 +297,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       {selectedTournament.is_started &&
         !americanoSnapshot &&
         !(isAmericanoShell && americanoRemoteLoading) && (
-        <PairsDisplay pairs={pairs} pairStats={pairStats} teamConfig={teamConfig} />
+        <PairsDisplay pairs={pairs} pairStats={pairStats} teamConfig={teamConfig} onSwapPlayers={swapPlayers} />
       )}
 
       {isAmericanoShell && americanoRemoteLoading && (

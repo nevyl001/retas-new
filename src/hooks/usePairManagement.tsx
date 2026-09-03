@@ -127,10 +127,74 @@ export const usePairManagement = (
     ]
   );
 
+  /**
+   * Intercambia un jugador de una pareja por un jugador de otra.
+   * Solo toca la tabla `pairs`; matches siguen referenciando el mismo pair.id.
+   */
+  const swapPlayers = useCallback(
+    async (
+      pairAId: string,
+      slotA: "player1" | "player2",
+      pairBId: string,
+      slotB: "player1" | "player2"
+    ) => {
+      const pairA = pairs.find((p) => p.id === pairAId);
+      const pairB = pairs.find((p) => p.id === pairBId);
+      if (!pairA || !pairB) return;
+
+      const playerA = slotA === "player1" ? pairA.player1 : pairA.player2;
+      const playerB = slotB === "player1" ? pairB.player1 : pairB.player2;
+      if (!playerA || !playerB) return;
+
+      const updateA: Record<string, string> = {
+        [`${slotA}_id`]: playerB.id,
+      };
+      const updateB: Record<string, string> = {
+        [`${slotB}_id`]: playerA.id,
+      };
+
+      try {
+        await Promise.all([
+          updatePair(pairAId, updateA),
+          updatePair(pairBId, updateB),
+        ]);
+
+        setPairs(
+          pairs.map((p) => {
+            if (p.id === pairAId) {
+              return {
+                ...p,
+                [`${slotA}_id`]: playerB.id,
+                [slotA]: playerB,
+              };
+            }
+            if (p.id === pairBId) {
+              return {
+                ...p,
+                [`${slotB}_id`]: playerA.id,
+                [slotB]: playerA,
+              };
+            }
+            return p;
+          })
+        );
+        showToast(
+          `${playerA.name} ↔ ${playerB.name} intercambiados`,
+          "success"
+        );
+      } catch (err) {
+        console.error("Error swapping players:", err);
+        showToast("Error al intercambiar jugadores", "error");
+      }
+    },
+    [pairs, setPairs, showToast]
+  );
+
   return {
     deletePair,
     updatePairPlayers,
     addPair,
     isCreatingPair,
+    swapPlayers,
   };
 };

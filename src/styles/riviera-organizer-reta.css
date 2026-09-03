@@ -238,11 +238,75 @@
 }
 
 .riviera-organizer-reta .compact-pair-names {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0;
   font-family: var(--font-body) !important;
   font-size: 0.95rem !important;
   font-weight: 600 !important;
   color: var(--text-primary) !important;
   line-height: 1.35;
+}
+
+.riviera-organizer-reta .compact-pair-sep {
+  margin: 0 0.25em;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.riviera-organizer-reta .compact-pairs-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+/* Draggable player chips */
+.riviera-organizer-reta .compact-pair-player {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.riviera-organizer-reta .compact-pair-player--draggable {
+  cursor: grab;
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid transparent;
+  transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.riviera-organizer-reta .compact-pair-player--draggable:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-accent);
+}
+
+.riviera-organizer-reta .compact-pair-player--draggable:active {
+  cursor: grabbing;
+}
+
+.riviera-organizer-reta .compact-pair-player--drag-over {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border-color: rgba(16, 185, 129, 0.55) !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.18);
+}
+
+.riviera-organizer-reta .compact-pair-player__grip {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  opacity: 0.55;
+  line-height: 1;
+}
+
+.riviera-organizer-reta .compact-pair-card--drag-source {
+  opacity: 0.55;
+}
+
+.riviera-organizer-reta .compact-pairs-manager--swapping {
+  pointer-events: none;
+  opacity: 0.7;
 }
 
 .riviera-organizer-reta .compact-stats {

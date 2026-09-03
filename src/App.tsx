@@ -518,7 +518,7 @@ function AppContent() {
   } = useWinnerCalculation();
 
   // Pair management
-  const { deletePair, updatePairPlayers, addPair, isCreatingPair } =
+  const { deletePair, updatePairPlayers, addPair, isCreatingPair, swapPlayers } =
     usePairManagement(
     pairs,
     setPairs,
@@ -978,6 +978,7 @@ function AppContent() {
               isCreatingPair={isCreatingPair}
               updatePairPlayers={updatePairPlayers}
               deletePair={deletePair}
+              swapPlayers={swapPlayers}
               onReset={handleReset}
               loadTournamentData={() =>
                 selectedTournament && loadTournamentData(selectedTournament)

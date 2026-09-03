@@ -49,6 +49,7 @@ interface MainLayoutProps {
   isCreatingPair?: boolean;
   updatePairPlayers: (pairId: string, player1: Player, player2: Player) => void;
   deletePair: (pairId: string) => void;
+  swapPlayers?: (pairAId: string, slotA: "player1" | "player2", pairBId: string, slotB: "player1" | "player2") => Promise<void>;
   onReset: () => Promise<void>;
   loadTournamentData: () => void;
   setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
@@ -100,6 +101,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   isCreatingPair = false,
   updatePairPlayers,
   deletePair,
+  swapPlayers,
   onReset,
   loadTournamentData,
   setForceRefresh,
@@ -232,6 +234,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               isCreatingPair={isCreatingPair}
               updatePairPlayers={updatePairPlayers}
               deletePair={deletePair}
+              swapPlayers={swapPlayers}
               userId={userId}
               onReset={onReset}
               loadTournamentData={loadTournamentData}

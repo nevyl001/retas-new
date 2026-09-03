@@ -62,6 +62,7 @@ export interface RetaMobileOrganizerLayoutProps {
   isCreatingPair?: boolean;
   updatePairPlayers: (pairId: string, player1: Player, player2: Player) => void;
   deletePair: (pairId: string) => void;
+  swapPlayers?: (pairAId: string, slotA: "player1" | "player2", pairBId: string, slotB: "player1" | "player2") => Promise<void>;
   userId?: string;
   onReset: () => Promise<void>;
   loadTournamentData: () => void;
@@ -110,6 +111,7 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
   isCreatingPair = false,
   updatePairPlayers,
   deletePair,
+  swapPlayers,
   userId,
   onReset,
   loadTournamentData,
@@ -256,7 +258,7 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
           generatePublicLink={generatePublicLink}
         />
         {showMatchesPanels && (
-          <PairsDisplay pairs={pairs} pairStats={pairStats} teamConfig={teamConfig} />
+          <PairsDisplay pairs={pairs} pairStats={pairStats} teamConfig={teamConfig} onSwapPlayers={swapPlayers} />
         )}
         {isAmericanoShell && americanoRemoteLoading && (
           <p className="home-muted">Cargando resultados del Americano…</p>
