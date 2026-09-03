@@ -148,9 +148,11 @@ export const usePairManagement = (
 
       const updateA: Record<string, string> = {
         [`${slotA}_id`]: playerB.id,
+        [`${slotA}_name`]: playerB.name,
       };
       const updateB: Record<string, string> = {
         [`${slotB}_id`]: playerA.id,
+        [`${slotB}_name`]: playerA.name,
       };
 
       try {
