@@ -2,12 +2,11 @@
    Scoped: .reta-eq-* / .reta-eq-org / .reta-eq-hero
    Tokens existentes; sin neón; prefers-reduced-motion. */
 
-/* Acentos de equipo (override vía JS desde logos; fallback legacy amarillo/coral) */
+/* Acentos de equipo: defaults solo en raíces que reciben el style JS.
+   No incluir hijos (.reta-eq-duel-stage, .reta-eq-arena, .reta-eq-matchbar)
+   o reinician el amarillo/coral y pisan el color extraído del logo. */
 .reta-eq-stage,
 .reta-eq-live-header,
-.reta-eq-arena,
-.reta-eq-duel-stage,
-.reta-eq-matchbar,
 .reta-eq-org {
   --reta-eq-a-rgb: 229, 193, 88;
   --reta-eq-b-rgb: 217, 93, 57;
@@ -3252,11 +3251,14 @@
       to bottom,
       transparent 0%,
       rgba(245, 240, 230, 0.12) 12%,
-      rgba(var(--reta-eq-a-rgb), 0.55) 50%,
+      rgba(var(--reta-eq-a-rgb), 0.5) 42%,
+      rgba(var(--reta-eq-b-rgb), 0.5) 58%,
       rgba(245, 240, 230, 0.12) 88%,
       transparent 100%
     );
-    box-shadow: 0 0 14px rgba(var(--reta-eq-a-rgb), 0.28);
+    box-shadow:
+      0 0 12px rgba(var(--reta-eq-a-rgb), 0.22),
+      0 0 12px rgba(var(--reta-eq-b-rgb), 0.18);
   }
 
   .reta-eq-scene {
