@@ -427,17 +427,17 @@
 .reta-eq-stage__battle-title {
   margin: 0;
   width: 100%;
-  max-width: min(100%, 42rem);
-  padding: 0 0.65rem;
+  max-width: min(100%, 36rem);
+  padding: 0 0.85rem;
   box-sizing: border-box;
   font-family: var(--font-display, var(--ro-font-heading), sans-serif);
-  font-size: clamp(0.8125rem, 0.55rem + 2.2vw, 1.45rem);
+  font-size: clamp(1.15rem, 0.7rem + 2.8vw, 1.85rem);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   line-height: 1.2;
-  color: var(--text-primary, #f4f5f7);
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  color: #f4f5f7;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.4);
   text-align: center;
   white-space: nowrap;
   overflow: hidden;

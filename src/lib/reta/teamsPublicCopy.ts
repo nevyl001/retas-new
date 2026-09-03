@@ -67,22 +67,17 @@ export function isRedundantTeamsFaceoffTitle(
 }
 
 /**
- * Título de marquesina broadcast en un renglón.
- * Si el evento solo repite el VS, usa "Equipo A vs Equipo B" (sin "Team").
+ * Título de marquesina broadcast: solo el nombre propio del encuentro
+ * (p. ej. "Duelo 40+"). Nunca repite "Equipo A vs Equipo B" — eso ya va
+ * en logos. Si el nombre es redundante o vacío → null (ocultar).
  */
 export function formatBroadcastBattleTitle(
   eventName: string | null | undefined,
   teamNames: string[] | null | undefined
-): string {
-  const aRaw = teamNames?.[0]?.trim() || "Equipo 1";
-  const bRaw = teamNames?.[1]?.trim() || "Equipo 2";
-  const a = aRaw.replace(/^team\s+/i, "").trim() || aRaw;
-  const b = bRaw.replace(/^team\s+/i, "").trim() || bRaw;
-  const faceoff = `${a} vs ${b}`;
-
+): string | null {
   const title = eventName?.trim();
-  if (!title) return faceoff;
-  if (isRedundantTeamsFaceoffTitle(title, [aRaw, bRaw])) return faceoff;
+  if (!title) return null;
+  if (isRedundantTeamsFaceoffTitle(title, teamNames)) return null;
   return title;
 }
 
