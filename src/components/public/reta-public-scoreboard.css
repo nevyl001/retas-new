@@ -1217,6 +1217,18 @@
   background: none;
 }
 
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--leader td,
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-table tbody tr:first-child td {
+  background: transparent !important;
+}
+
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--leader td:first-child,
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--leader .te-pub-standings-row__pos-num,
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-table tbody tr:first-child td:first-child,
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__pos-num {
+  border-left: none !important;
+}
+
 .te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--side-a td:first-child {
   box-shadow: inset 4px 0 0 rgb(var(--reta-eq-a-rgb));
 }
