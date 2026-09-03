@@ -8,8 +8,8 @@ import {
 } from "../lib/reta/extractTeamLogoAccent";
 
 export type TeamLogoAccentStyle = CSSProperties & {
-  ["--reta-eq-a-rgb"]?: string;
-  ["--reta-eq-b-rgb"]?: string;
+  "--reta-eq-a-rgb"?: string;
+  "--reta-eq-b-rgb"?: string;
 };
 
 /**
@@ -46,8 +46,8 @@ export function useTeamLogoAccentColors(
 
   const style = useMemo<TeamLogoAccentStyle>(
     () => ({
-      ["--reta-eq-a-rgb"]: rgbToCssTriplet(accentA),
-      ["--reta-eq-b-rgb"]: rgbToCssTriplet(accentB),
+      "--reta-eq-a-rgb": rgbToCssTriplet(accentA),
+      "--reta-eq-b-rgb": rgbToCssTriplet(accentB),
     }),
     [accentA, accentB]
   );
