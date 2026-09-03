@@ -3750,32 +3750,7 @@
     box-shadow: 0 0 12px rgba(255, 255, 255, 0.04);
   }
 
-  /* Cards protagonistas: escala del cilindro, sin rediseñar cara */
-  .reta-eq-stage--broadcast .reta-eq-scene {
-    max-width: 19.5rem;
-    height: 19.5rem;
-    --reta-eq-scene-scale: 1.08;
-    --reta-eq-rad: 175px;
-  }
-
-  .reta-eq-stage--broadcast .reta-eq-tambor {
-    width: 11rem;
-    height: 15rem;
-  }
-
-  .reta-eq-stage--broadcast .reta-eq-cara {
-    width: 10.25rem; /* ~164px */
-    height: 15.25rem;
-    margin: -7.625rem 0 0 -5.125rem;
-  }
-
-  .reta-eq-stage--broadcast .reta-eq-cara__card {
-    transition: transform 200ms ease, box-shadow 200ms ease;
-  }
-
-  .reta-eq-stage--broadcast .reta-eq-cara__card:hover {
-    transform: translateY(-4px) scale(1.01);
-  }
+  /* Cards: conservar tamaño/radio del cilindro existente (no reescalar). */
 
   /* ── 3. EVENT BAR — una sola composición horizontal ────────────────────── */
   .reta-eq-stage--broadcast .reta-eq-event-bar.reta-eq-center,
@@ -3966,24 +3941,6 @@
     gap: clamp(3.5rem, 5.5vw, 6.5rem);
   }
 
-  .reta-eq-stage--broadcast .reta-eq-scene {
-    max-width: 22rem;
-    height: 21.5rem;
-    --reta-eq-scene-scale: 1.16;
-    --reta-eq-rad: 188px;
-  }
-
-  .reta-eq-stage--broadcast .reta-eq-tambor {
-    width: 12rem;
-    height: 16.25rem;
-  }
-
-  .reta-eq-stage--broadcast .reta-eq-cara {
-    width: 11.5rem; /* ~184px, dentro de 170–200 */
-    height: 17rem;
-    margin: -8.5rem 0 0 -5.75rem;
-  }
-
   .reta-eq-stage--broadcast .reta-eq-event-bar.reta-eq-center,
   .reta-eq-stage--broadcast .reta-eq-center.reta-eq-event-bar {
     padding: 1.15rem 1.5rem;
@@ -4012,12 +3969,6 @@
     font-size: clamp(1.65rem, 1.2rem + 1vw, 2.1rem);
   }
 
-  .reta-eq-stage--broadcast .reta-eq-scene {
-    --reta-eq-scene-scale: 0.95;
-    max-width: 17rem;
-    height: 17rem;
-  }
-
   .reta-eq-stage--broadcast .reta-eq-event-bar.reta-eq-center,
   .reta-eq-stage--broadcast .reta-eq-center.reta-eq-event-bar {
     padding: 0.75rem 1rem;
@@ -4036,7 +3987,4 @@
     animation: none !important;
   }
 
-  .reta-eq-stage--broadcast .reta-eq-cara__card:hover {
-    transform: none;
-  }
 }
