@@ -29,7 +29,7 @@ function ScoreboardPlayerLine({ player }: { player: PublicRetaPairPlayer }) {
   );
 }
 
-/** Bloque explícito: equipo (logo+nombre) + pareja + marcador. */
+/** Bloque explícito: pareja + marcador; con equipo, el watermark identifica. */
 function TeamPairBlock({
   teamName,
   logoUrl,
@@ -86,25 +86,21 @@ function TeamPairBlock({
       ) : null}
 
       <div className="reta-sb-team__body">
-        <div className="reta-sb-team__head">
-          <div className="reta-sb-team__identity">
-            {hasTeam ? (
-              <>
-                <TeamLogo
-                  logoUrl={logoUrl}
-                  teamName={teamName!}
-                  size="md"
-                  loading="lazy"
-                  className="reta-sb-team__logo"
-                />
-                <span className="reta-sb-team__name">{displayTeam}</span>
-              </>
-            ) : (
+        <div
+          className={[
+            "reta-sb-team__head",
+            hasTeam ? "reta-sb-team__head--score-only" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          {!hasTeam ? (
+            <div className="reta-sb-team__identity">
               <span className="reta-sb-team__name reta-sb-team__name--pair">
                 {pairLabel}
               </span>
-            )}
-          </div>
+            </div>
+          ) : null}
           <div
             key={`${hasResult ? "r" : "p"}-${score}`}
             className={[

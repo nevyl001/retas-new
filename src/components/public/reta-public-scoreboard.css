@@ -290,6 +290,10 @@
   min-width: 0;
 }
 
+.reta-sb-team__head--score-only {
+  justify-content: flex-end;
+}
+
 .reta-sb-team__identity {
   display: flex;
   align-items: center;
