@@ -2,14 +2,46 @@
    Scoped: .reta-eq-* / .reta-eq-org / .reta-eq-hero
    Tokens existentes; sin neón; prefers-reduced-motion. */
 
-/* Acentos de equipo: defaults solo en raíces que reciben el style JS.
-   No incluir hijos (.reta-eq-duel-stage, .reta-eq-arena, .reta-eq-matchbar)
-   o reinician el amarillo/coral y pisan el color extraído del logo. */
+/* Acentos de equipo: neutro hasta que JS inyecta color del logo
+   (evita flasheo amarillo/coral en el primer paint móvil). */
 .reta-eq-stage,
 .reta-eq-live-header,
 .reta-eq-org {
-  --reta-eq-a-rgb: 229, 193, 88;
-  --reta-eq-b-rgb: 217, 93, 57;
+  --reta-eq-a-rgb: 180, 184, 196;
+  --reta-eq-b-rgb: 180, 184, 196;
+}
+
+.reta-eq-faceoff__logo--a,
+.reta-eq-faceoff__logo--b,
+.reta-eq-faceoff__name--a,
+.reta-eq-faceoff__name--b,
+.reta-eq-duel-stage__team-label--a,
+.reta-eq-duel-stage__team-label--b,
+.reta-eq-cara--a .reta-eq-cara__card,
+.reta-eq-cara--b .reta-eq-cara__card,
+.reta-eq-cara--a .reta-eq-cara__lado,
+.reta-eq-cara--b .reta-eq-cara__lado {
+  transition:
+    color 0.35s ease,
+    border-color 0.35s ease,
+    background-color 0.35s ease,
+    box-shadow 0.35s ease,
+    text-shadow 0.35s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reta-eq-faceoff__logo--a,
+  .reta-eq-faceoff__logo--b,
+  .reta-eq-faceoff__name--a,
+  .reta-eq-faceoff__name--b,
+  .reta-eq-duel-stage__team-label--a,
+  .reta-eq-duel-stage__team-label--b,
+  .reta-eq-cara--a .reta-eq-cara__card,
+  .reta-eq-cara--b .reta-eq-cara__card,
+  .reta-eq-cara--a .reta-eq-cara__lado,
+  .reta-eq-cara--b .reta-eq-cara__lado {
+    transition: none;
+  }
 }
 
 /* ——— Logo ——— */

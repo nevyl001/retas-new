@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
-  DEFAULT_TEAM_A_ACCENT,
-  DEFAULT_TEAM_B_ACCENT,
+  PENDING_TEAM_ACCENT,
   extractAccentFromLogoUrl,
+  resolveAccentForPaint,
   rgbToCssTriplet,
   type Rgb,
 } from "../lib/reta/extractTeamLogoAccent";
@@ -13,21 +13,26 @@ export type TeamLogoAccentStyle = CSSProperties & {
 };
 
 /**
- * Resuelve colores de acento A/B desde logos (con fallback legacy).
- * Expone CSS vars `--reta-eq-a-rgb` / `--reta-eq-b-rgb` (triplet "r, g, b").
+ * Resuelve colores de acento A/B desde logos.
+ * Arranca desde cache/session (sin amarillo/rojo) para evitar flasheo en móvil.
  */
 export function useTeamLogoAccentColors(
   logoA?: string | null,
   logoB?: string | null
 ): { style: TeamLogoAccentStyle; accentA: Rgb; accentB: Rgb } {
-  const [accentA, setAccentA] = useState<Rgb>(DEFAULT_TEAM_A_ACCENT);
-  const [accentB, setAccentB] = useState<Rgb>(DEFAULT_TEAM_B_ACCENT);
+  const [accentA, setAccentA] = useState<Rgb>(() =>
+    resolveAccentForPaint(logoA)
+  );
+  const [accentB, setAccentB] = useState<Rgb>(() =>
+    resolveAccentForPaint(logoB)
+  );
 
   useEffect(() => {
     let cancelled = false;
 
-    setAccentA(DEFAULT_TEAM_A_ACCENT);
-    setAccentB(DEFAULT_TEAM_B_ACCENT);
+    // Sync paint desde cache; neutro si aún no hay color (nunca amarillo/rojo).
+    setAccentA(resolveAccentForPaint(logoA));
+    setAccentB(resolveAccentForPaint(logoB));
 
     void (async () => {
       const [a, b] = await Promise.all([
@@ -35,8 +40,8 @@ export function useTeamLogoAccentColors(
         extractAccentFromLogoUrl(logoB),
       ]);
       if (cancelled) return;
-      if (a) setAccentA(a);
-      if (b) setAccentB(b);
+      setAccentA(a ?? PENDING_TEAM_ACCENT);
+      setAccentB(b ?? PENDING_TEAM_ACCENT);
     })();
 
     return () => {

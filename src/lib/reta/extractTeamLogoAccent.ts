@@ -1,15 +1,21 @@
 /**
  * Extrae un acento de UI a partir del logo de un equipo (color dominante
- * cromático). Fallbacks = amarillo/coral legacy del faceoff broadcast.
+ * cromático). Mientras carga / sin logo: neutro (evita flasheo amarillo/rojo).
  */
 
 export type Rgb = { r: number; g: number; b: number };
 
-export const DEFAULT_TEAM_A_ACCENT: Rgb = { r: 229, g: 193, b: 88 };
-export const DEFAULT_TEAM_B_ACCENT: Rgb = { r: 217, g: 93, b: 57 };
+/** Neutro de espera — no usar amarillo/coral legacy (causaba flash en móvil). */
+export const PENDING_TEAM_ACCENT: Rgb = { r: 180, g: 184, b: 196 };
+
+/** @deprecated Preferir PENDING_TEAM_ACCENT; se mantiene por compat. */
+export const DEFAULT_TEAM_A_ACCENT: Rgb = PENDING_TEAM_ACCENT;
+/** @deprecated Preferir PENDING_TEAM_ACCENT; se mantiene por compat. */
+export const DEFAULT_TEAM_B_ACCENT: Rgb = PENDING_TEAM_ACCENT;
 
 const SAMPLE_SIZE = 48;
 const BUCKET = 24;
+const STORAGE_KEY = "reta-eq-logo-accent-v1";
 
 const accentCache = new Map<string, Rgb | null>();
 
@@ -19,6 +25,82 @@ export function rgbToCssTriplet(rgb: Rgb): string {
 
 export function clampByte(n: number): number {
   return Math.max(0, Math.min(255, Math.round(n)));
+}
+
+function isRgb(value: unknown): value is Rgb {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Rgb;
+  return (
+    typeof v.r === "number" &&
+    typeof v.g === "number" &&
+    typeof v.b === "number"
+  );
+}
+
+function readSessionAccent(url: string): Rgb | null | undefined {
+  if (typeof sessionStorage === "undefined") return undefined;
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return undefined;
+    const map = JSON.parse(raw) as Record<string, Rgb | null>;
+    if (!Object.prototype.hasOwnProperty.call(map, url)) return undefined;
+    const entry = map[url];
+    if (entry === null) return null;
+    if (isRgb(entry)) {
+      return {
+        r: clampByte(entry.r),
+        g: clampByte(entry.g),
+        b: clampByte(entry.b),
+      };
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeSessionAccent(url: string, accent: Rgb | null): void {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const map = (raw ? JSON.parse(raw) : {}) as Record<string, Rgb | null>;
+    map[url] = accent;
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+function rememberAccent(url: string, accent: Rgb | null): void {
+  accentCache.set(url, accent);
+  writeSessionAccent(url, accent);
+}
+
+/**
+ * Lectura síncrona (memoria + sessionStorage) para pintar sin flash.
+ * `undefined` = aún no conocido.
+ */
+export function peekCachedAccentFromLogoUrl(
+  url: string | null | undefined
+): Rgb | null | undefined {
+  const trimmed = typeof url === "string" ? url.trim() : "";
+  if (!trimmed) return null;
+  if (accentCache.has(trimmed)) return accentCache.get(trimmed);
+  const fromSession = readSessionAccent(trimmed);
+  if (fromSession !== undefined) {
+    accentCache.set(trimmed, fromSession);
+    return fromSession;
+  }
+  return undefined;
+}
+
+/** Resuelve acento inmediato para UI: cache → neutro. */
+export function resolveAccentForPaint(
+  url: string | null | undefined
+): Rgb {
+  const peeked = peekCachedAccentFromLogoUrl(url);
+  if (peeked) return peeked;
+  return PENDING_TEAM_ACCENT;
 }
 
 /** RGB → HSL (h 0–360, s/l 0–1). */
@@ -92,7 +174,13 @@ function isUsablePixel(r: number, g: number, b: number, a: number): boolean {
   return true;
 }
 
-type Bucket = { sumR: number; sumG: number; sumB: number; count: number; score: number };
+type Bucket = {
+  sumR: number;
+  sumG: number;
+  sumB: number;
+  count: number;
+  score: number;
+};
 
 /**
  * Elige el color cromático más representativo de ImageData (RGBA).
@@ -168,7 +256,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Extrae acento desde URL del logo. Cachea por URL.
+ * Extrae acento desde URL del logo. Cachea por URL (memoria + sessionStorage).
  * Devuelve null si falla (CORS, imagen inválida, sin color útil).
  */
 export async function extractAccentFromLogoUrl(
@@ -176,7 +264,9 @@ export async function extractAccentFromLogoUrl(
 ): Promise<Rgb | null> {
   const trimmed = typeof url === "string" ? url.trim() : "";
   if (!trimmed) return null;
-  if (accentCache.has(trimmed)) return accentCache.get(trimmed) ?? null;
+
+  const peeked = peekCachedAccentFromLogoUrl(trimmed);
+  if (peeked !== undefined) return peeked;
 
   try {
     const img = await loadImage(trimmed);
@@ -185,17 +275,17 @@ export async function extractAccentFromLogoUrl(
     canvas.height = SAMPLE_SIZE;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) {
-      accentCache.set(trimmed, null);
+      rememberAccent(trimmed, null);
       return null;
     }
     ctx.clearRect(0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
     ctx.drawImage(img, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
     const { data } = ctx.getImageData(0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
     const accent = pickDominantFromImageData(data);
-    accentCache.set(trimmed, accent);
+    rememberAccent(trimmed, accent);
     return accent;
   } catch {
-    accentCache.set(trimmed, null);
+    rememberAccent(trimmed, null);
     return null;
   }
 }
@@ -203,4 +293,10 @@ export async function extractAccentFromLogoUrl(
 /** Solo tests / hot reload. */
 export function clearTeamLogoAccentCache(): void {
   accentCache.clear();
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
 }

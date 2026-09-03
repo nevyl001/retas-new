@@ -1,6 +1,9 @@
 import {
+  PENDING_TEAM_ACCENT,
   boostAccentForUi,
+  clearTeamLogoAccentCache,
   pickDominantFromImageData,
+  resolveAccentForPaint,
   rgbToCssTriplet,
   rgbToHsl,
 } from "./extractTeamLogoAccent";
@@ -69,8 +72,9 @@ describe("extractTeamLogoAccent", () => {
     expect(rgbToHsl(boosted).s).toBeGreaterThan(rgbToHsl(muted).s);
   });
 
-  it("sin píxeles útiles retorna null", () => {
-    expect(pickDominantFromImageData(fillSolid(0, 0, 0))).toBeNull();
-    expect(pickDominantFromImageData(fillSolid(250, 250, 250))).toBeNull();
+  it("resolveAccentForPaint usa neutro sin cache", () => {
+    clearTeamLogoAccentCache();
+    expect(resolveAccentForPaint(null)).toEqual(PENDING_TEAM_ACCENT);
+    expect(resolveAccentForPaint("")).toEqual(PENDING_TEAM_ACCENT);
   });
 });
