@@ -1178,12 +1178,12 @@
 }
 
 .te-public--reta-equipos .te-pub-standings-row--side-a .te-pub-standings-row__logo {
-  border-color: rgba(229, 193, 88, 0.55) !important;
+  border-color: rgba(var(--reta-eq-a-rgb), 0.55) !important;
   box-shadow: none !important;
 }
 
 .te-public--reta-equipos .te-pub-standings-row--side-b .te-pub-standings-row__logo {
-  border-color: rgba(217, 93, 57, 0.55) !important;
+  border-color: rgba(var(--reta-eq-b-rgb), 0.55) !important;
   box-shadow: none !important;
 }
 
@@ -1211,55 +1211,54 @@
   color: #d4d4d8;
 }
 
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-1 {
+/* Acentos por club (logo), no por medalla/posición */
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--side-a,
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--side-b {
   background: none;
 }
 
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-1 td:first-child {
-  box-shadow: inset 4px 0 0 #e5c158;
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--side-a td:first-child {
+  box-shadow: inset 4px 0 0 rgb(var(--reta-eq-a-rgb));
 }
 
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-1 .te-pub-standings-row__pos-num {
-  background: rgba(229, 193, 88, 0.15) !important;
-  color: #e5c158 !important;
-  border-color: rgba(229, 193, 88, 0.4) !important;
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--side-b td:first-child {
+  box-shadow: inset 4px 0 0 rgb(var(--reta-eq-b-rgb));
+}
+
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--side-a .te-pub-standings-row__pos-num {
+  background: rgba(var(--reta-eq-a-rgb), 0.16) !important;
+  color: rgb(var(--reta-eq-a-rgb)) !important;
+  border-color: rgba(var(--reta-eq-a-rgb), 0.42) !important;
   box-shadow: none !important;
 }
 
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-1 .te-pub-standings-row__pts {
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--side-b .te-pub-standings-row__pos-num {
+  background: rgba(var(--reta-eq-b-rgb), 0.16) !important;
+  color: rgb(var(--reta-eq-b-rgb)) !important;
+  border-color: rgba(var(--reta-eq-b-rgb), 0.42) !important;
+  box-shadow: none !important;
+}
+
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--side-a .te-pub-standings-row__pts {
   font-size: 0.875rem !important;
   font-weight: 900 !important;
-  color: #e5c158 !important;
+  color: rgb(var(--reta-eq-a-rgb)) !important;
   text-shadow: none;
 }
 
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-2 {
-  background: none;
-}
-
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-2 td:first-child {
-  box-shadow: inset 4px 0 0 #d95d39;
-}
-
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-2 .te-pub-standings-row__pos-num {
-  background: rgba(217, 93, 57, 0.15) !important;
-  color: #d95d39 !important;
-  border-color: rgba(217, 93, 57, 0.4) !important;
-  box-shadow: none !important;
-}
-
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-2 .te-pub-standings-row__pts {
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--side-b .te-pub-standings-row__pts {
   font-size: 0.875rem !important;
   font-weight: 900 !important;
-  color: #d95d39 !important;
+  color: rgb(var(--reta-eq-b-rgb)) !important;
+  text-shadow: none;
 }
 
 .te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-table tbody tr:hover td {
   background: #141620 !important;
 }
 
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-1:hover,
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-2:hover {
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--side-a:hover,
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--side-b:hover {
   filter: none;
 }
 
@@ -1271,13 +1270,13 @@
   box-shadow: none !important;
 }
 
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--medal-1 {
-  border-left: 4px solid #e5c158 !important;
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--side-a {
+  border-left: 4px solid rgb(var(--reta-eq-a-rgb)) !important;
   background: #0e0f15 !important;
 }
 
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--medal-2 {
-  border-left: 4px solid #d95d39 !important;
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--side-b {
+  border-left: 4px solid rgb(var(--reta-eq-b-rgb)) !important;
   background: #0e0f15 !important;
 }
 
@@ -1293,6 +1292,14 @@
   width: 1.6rem !important;
   height: 1.6rem !important;
   min-width: 1.6rem !important;
+}
+
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--side-a .te-pub-standing-card__logo {
+  border-color: rgba(var(--reta-eq-a-rgb), 0.55) !important;
+}
+
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--side-b .te-pub-standing-card__logo {
+  border-color: rgba(var(--reta-eq-b-rgb), 0.55) !important;
 }
 
 .te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card__head {
@@ -1319,8 +1326,12 @@
   color: rgba(244, 241, 235, 0.88);
 }
 
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--medal-1 .te-pub-standing-card__criterion-fav {
-  color: #e5c158;
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--side-a .te-pub-standing-card__criterion-fav {
+  color: rgb(var(--reta-eq-a-rgb));
+}
+
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--side-b .te-pub-standing-card__criterion-fav {
+  color: rgb(var(--reta-eq-b-rgb));
 }
 
 .te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card__pts {
@@ -1329,12 +1340,12 @@
   white-space: nowrap;
 }
 
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--medal-1 .te-pub-standing-card__pts {
-  color: #e5c158 !important;
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--side-a .te-pub-standing-card__pts {
+  color: rgb(var(--reta-eq-a-rgb)) !important;
 }
 
-.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--medal-2 .te-pub-standing-card__pts {
-  color: #d95d39 !important;
+.te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card--side-b .te-pub-standing-card__pts {
+  color: rgb(var(--reta-eq-b-rgb)) !important;
 }
 
 .te-public--reta-equipos .te-pub-standings--arena .te-pub-standing-card__stats {
@@ -1550,7 +1561,7 @@
     font-size: 1.05rem !important;
   }
 
-  .te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--medal-1 .te-pub-standings-row__pts {
+  .te-public--reta-equipos .te-pub-standings--arena .te-pub-standings-row--leader .te-pub-standings-row__pts {
     font-size: 1.35rem !important;
   }
 }
