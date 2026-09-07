@@ -124,14 +124,7 @@ function resolveHeadline(
   return `${base} · ${rama.toUpperCase()}`;
 }
 
-function formatOpenSlotLines(openSlots: number): string[] {
-  if (openSlots <= 0) return [];
-  // Pocos huecos → lista clásica; muchos → 1 línea (evita inflar el mensaje).
-  if (openSlots > 4) return [`○ ${openSlots} lugares disponibles`];
-  return Array.from({ length: openSlots }, () => "○ Disponible");
-}
-
-/** Destacado arriba del fold en WhatsApp (*negrita* nativa). */
+/** Destacado único de cupo (*negrita* nativa WhatsApp). */
 function formatOpenSlotsHeadline(openSlots: number): string | null {
   if (openSlots <= 0) return null;
   const label =
@@ -147,7 +140,8 @@ function formatCupoSummaryLine(
   if (openSlots <= 0 && capacity > 0) {
     return `Completo · ${confirmedCount} de ${capacity} confirmados`;
   }
-  return `${confirmedCount} de ${capacity} confirmados · ${openSlots} lugares disponibles`;
+  // Sin repetir «lugares disponibles» — ya va en el destacado ⭕.
+  return `${confirmedCount} de ${capacity} confirmados`;
 }
 
 /** Roster: un jugador por línea (lista clásica de convocatoria). */
@@ -174,7 +168,7 @@ function formatConfirmedRosterLines(
 
 /**
  * Mensaje WhatsApp Riviera: compacto para reducir «Leer más».
- * Huecos en lista (○ Disponible) antes del enlace · roster 2 por línea.
+ * Cupo en una sola línea destacada (debajo de premio) · roster 1 por línea.
  */
 export function buildRetaAbiertaWhatsAppMessage(opts: {
   dto: Pick<
@@ -236,7 +230,6 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     Number(dto.confirmed_count) || 0
   );
   const openSlots = Math.max(dto.capacity - confirmedCount, 0);
-  const openLines = formatOpenSlotLines(openSlots);
   const { lugar, cancha } = resolveLugarYCancha({
     locationLabel: dto.location_label,
     canchaLabel: opts.canchaLabel ?? dto.cancha_label,
@@ -280,8 +273,15 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   if (includeCosto && costo) lines.push(`💵 Costo: ${costo}`);
   if (includePremio && premio) lines.push(`🏆 Premio: ${premio}`);
 
+  // Una sola línea de cupo (debajo de premio), con aire para que se lea grande.
   const openSlotsHeadline = formatOpenSlotsHeadline(openSlots);
-  if (openSlotsHeadline) lines.push(openSlotsHeadline);
+  if (openSlotsHeadline) {
+    lines.push("");
+    lines.push(openSlotsHeadline);
+    lines.push("");
+  } else if (confirmed.length > 0 && dto.capacity > 0) {
+    lines.push("Completo");
+  }
 
   const descLine = dto.description?.trim();
   if (descLine) lines.push(descLine);
@@ -299,16 +299,7 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
         )
       );
     }
-    if (openLines.length > 0) {
-      lines.push(...openLines);
-    }
   } else {
-    // Huecos en lista ANTES del enlace/roster: visibles aunque WhatsApp truncque.
-    if (openLines.length > 0) {
-      lines.push(...openLines);
-    } else if (confirmed.length > 0 && dto.capacity > 0) {
-      lines.push("Completo");
-    }
     lines.push(publicUrl);
     lines.push(
       ...formatConfirmedRosterLines(

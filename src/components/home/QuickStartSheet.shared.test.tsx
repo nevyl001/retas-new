@@ -46,11 +46,13 @@ describe("QuickStartSheet shared form", () => {
     expect(scope.querySelector(".qm-ws")).toBeTruthy();
     expect(scope.querySelector(".qm-ws__details-inline")).toBeTruthy();
     expect(scope.querySelector(".reta-details-form")).toBeTruthy();
-    expect(scope.textContent).toMatch(/Detalles de la reta/);
-    expect(scope.textContent).toMatch(/Listo para guardar/);
-    expect(scope.textContent).toMatch(/Remontada/);
+    expect(scope.textContent).toMatch(/Nueva reta/i);
+    expect(scope.textContent).toMatch(/Configura lo esencial/);
+    expect(scope.textContent).toMatch(/Resumen/);
     expect(scope.textContent).toMatch(/Nivel/);
     expect(scope.querySelector('[data-testid="guardar-reta"]')).toBeTruthy();
+    // Remontada vive en Detalles opcionales (colapsado al inicio).
+    expect(scope.textContent).toMatch(/Detalles opcionales/);
   });
 
   it("18. edit mode carga valores actuales en RetaConfigFields", () => {
@@ -92,14 +94,33 @@ describe("QuickStartSheet shared form", () => {
     expect(container.textContent).toMatch(/Hora/);
     expect(container.querySelector('input[type="date"]')).toBeTruthy();
     expect(container.querySelector('input[type="time"]')).toBeTruthy();
-    const costoCb = container.querySelector(
-      'input[aria-label="Incluir costo en la convocatoria"]'
-    ) as HTMLInputElement | null;
-    const premioCb = container.querySelector(
-      'input[aria-label="Incluir premio en la convocatoria"]'
-    ) as HTMLInputElement | null;
-    expect(costoCb?.checked).toBe(false);
-    expect(premioCb?.checked).toBe(false);
+    const optionalBtn = Array.from(container.querySelectorAll("button")).find(
+      (el) => /Detalles opcionales/i.test(el.textContent || "")
+    );
+    expect(optionalBtn).toBeTruthy();
+    act(() => {
+      optionalBtn?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    const costoToggle = Array.from(
+      container.querySelectorAll('input[type="checkbox"]')
+    ).find((el) =>
+      /mostrar-costo|mostrar precio/i.test(
+        (el as HTMLInputElement).id +
+          " " +
+          ((el as HTMLInputElement).nextElementSibling?.textContent || "")
+      )
+    ) as HTMLInputElement | undefined;
+    const premioToggle = Array.from(
+      container.querySelectorAll('input[type="checkbox"]')
+    ).find((el) =>
+      /mostrar-premio|mostrar premio/i.test(
+        (el as HTMLInputElement).id +
+          " " +
+          ((el as HTMLInputElement).nextElementSibling?.textContent || "")
+      )
+    ) as HTMLInputElement | undefined;
+    expect(costoToggle?.checked).toBe(false);
+    expect(premioToggle?.checked).toBe(false);
     const costoInput = container.querySelector(
       'input[placeholder="$200 por jugador"]'
     ) as HTMLInputElement | null;
@@ -108,8 +129,9 @@ describe("QuickStartSheet shared form", () => {
     ).find(
       (el) => (el as HTMLInputElement).placeholder === "Trofeo + pelotas"
     ) as HTMLInputElement | undefined;
-    expect(costoInput?.disabled).toBe(true);
-    expect(premioInput?.disabled).toBe(true);
+    // Inputs siguen editables (dato oculto ≠ disabled).
+    expect(costoInput?.disabled).toBe(false);
+    expect(premioInput?.disabled).toBe(false);
     const errors = validateRetaConfigForm({
       ...values,
       mode: "edit",

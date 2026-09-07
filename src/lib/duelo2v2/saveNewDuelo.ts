@@ -14,6 +14,10 @@ export type SaveNewDueloFormInput = {
   categoria?: string;
   lugar?: string;
   mostrarLugar?: boolean;
+  costo?: string;
+  mostrarCosto?: boolean;
+  premio?: string;
+  mostrarPremio?: boolean;
   draftDate: string;
   draftTimeStart: string;
   draftTimeEnd: string;
@@ -65,6 +69,10 @@ export async function saveNewDuelo2v2(
     cancha: normalizeCanchaForSave(form.cancha),
     lugar: form.lugar?.trim() || undefined,
     mostrar_lugar: form.mostrarLugar !== false,
+    costo: form.costo?.trim() || undefined,
+    mostrar_costo: form.mostrarCosto === true,
+    premio: form.premio?.trim() || undefined,
+    mostrar_premio: form.mostrarPremio === true,
     programado_en: schedule.programado_en,
     programado_hasta: schedule.programado_hasta,
   });

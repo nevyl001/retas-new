@@ -20,6 +20,14 @@ export interface Duelo2v2 {
   lugar?: string | null;
   /** Si false, la convocatoria omite la línea de lugar. */
   mostrar_lugar?: boolean | null;
+  /** Precio / inscripción (texto libre). */
+  costo?: string | null;
+  /** Si true, incluir precio en convocatoria WhatsApp. */
+  mostrar_costo?: boolean | null;
+  /** Premio (texto libre). */
+  premio?: string | null;
+  /** Si true, incluir premio en convocatoria WhatsApp. */
+  mostrar_premio?: boolean | null;
   programado_en: string | null;
   programado_hasta: string | null;
   estado: Duelo2v2Estado;
@@ -51,6 +59,10 @@ export interface CreateDuelo2v2DraftInput {
   cancha?: string;
   lugar?: string;
   mostrar_lugar?: boolean;
+  costo?: string;
+  mostrar_costo?: boolean;
+  premio?: string;
+  mostrar_premio?: boolean;
   programado_en?: string | null;
   programado_hasta?: string | null;
 }
@@ -84,6 +96,10 @@ export interface UpdateDuelo2v2DetailsInput {
   cancha?: string;
   lugar?: string | null;
   mostrar_lugar?: boolean;
+  costo?: string | null;
+  mostrar_costo?: boolean;
+  premio?: string | null;
+  mostrar_premio?: boolean;
   programado_en?: string | null;
   programado_hasta?: string | null;
 }

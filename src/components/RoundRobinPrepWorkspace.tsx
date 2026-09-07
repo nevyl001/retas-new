@@ -781,12 +781,15 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
             centerSummaryLine={[
               `${playerPool.length} jugadores`,
               `${pairs.length} parejas`,
-              `${tournament.courts ?? "—"} canchas`,
+            ].join(" · ")}
+            rightSummaryLine={[
+              scheduleLabel,
+              lugarLabel,
+              tournament.courts != null
+                ? `${tournament.courts} cancha${tournament.courts === 1 ? "" : "s"}`
+                : null,
               duration != null ? `${duration} min` : null,
             ]
-              .filter(Boolean)
-              .join(" · ")}
-            rightSummaryLine={[scheduleLabel, lugarLabel]
               .filter((v) => v && v !== "—")
               .join(" · ")}
           />
@@ -809,31 +812,53 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
                   setForceRefresh((prev) => prev + 1);
                 });
               }}
+              publicSlot={
+                <div id="reta-convocatoria-inline" className="reta-config-panel__conv">
+                  <div className="reta-config-panel__conv-head">
+                    <h3 className="reta-config-panel__conv-title">Convocatoria pública</h3>
+                    <p className="reta-config-panel__conv-desc">
+                      Permite inscripciones mediante enlace.
+                    </p>
+                    <p
+                      className={`reta-config-panel__conv-status${
+                        convIsLive ? " is-live" : ""
+                      }`}
+                    >
+                      <span aria-hidden>●</span> Estado:{" "}
+                      {convIsLive ? "Activa" : "Inactiva"}
+                    </p>
+                  </div>
+                  <QuickModeConvocatoriaGate
+                    open={wantConvocatoria}
+                    live={convIsLive}
+                    panelId="reta-convocatoria-panel"
+                    titleOn="Ocultar panel"
+                    titleOff={
+                      convIsLive ? "Ver panel de convocatoria" : "Gestionar convocatoria"
+                    }
+                    hintOn="Cierra el panel de gestión; la convocatoria no cambia."
+                    hintOff="Abre el panel para publicar o copiar el enlace."
+                    hintLive="Convocatoria activa — pulsa para ocultar el panel."
+                    hintLiveClosed="Convocatoria activa — pulsa para ver el panel."
+                    onToggle={() => {
+                      setWantConvocatoria((v) => {
+                        const next = !v;
+                        if (next) setConvTouched(true);
+                        return next;
+                      });
+                    }}
+                  >
+                    {wantConvocatoria ? (
+                      <RetaAbiertaOrganizerPanel
+                        tournament={tournament}
+                        embedded
+                        onLiveChange={onConvLiveChange}
+                      />
+                    ) : null}
+                  </QuickModeConvocatoriaGate>
+                </div>
+              }
             />
-            <div
-              id="reta-convocatoria-inline"
-            >
-              <QuickModeConvocatoriaGate
-                open={wantConvocatoria}
-                live={convIsLive}
-                panelId="reta-convocatoria-panel"
-                onToggle={() => {
-                  setWantConvocatoria((v) => {
-                    const next = !v;
-                    if (next) setConvTouched(true);
-                    return next;
-                  });
-                }}
-              >
-                {wantConvocatoria ? (
-                  <RetaAbiertaOrganizerPanel
-                    tournament={tournament}
-                    embedded
-                    onLiveChange={onConvLiveChange}
-                  />
-                ) : null}
-              </QuickModeConvocatoriaGate>
-            </div>
           </section>
         }
         stepper={

@@ -10,6 +10,7 @@ import {
   tournamentToFormValues,
   type RetaConfigFormValues,
 } from "../../lib/reta/updateRetaConfig";
+import { retaRamaPublicLabel } from "../../lib/reta/retaRama";
 import { RetaConfigFields } from "./RetaConfigFields";
 import { Button } from "../ui";
 
@@ -23,6 +24,13 @@ type Props = {
   /** Remontada Final — ocultar en Americano. */
   showChampionship?: boolean;
   subtitle?: string;
+  /**
+   * Slot de convocatoria (prep): solo visible en modo edición.
+   * No altera la lógica del gate; solo el layout.
+   */
+  publicSlot?: React.ReactNode;
+  /** Arranca expandido (p. ej. flujos que no usan resumen colapsado). */
+  defaultEditing?: boolean;
 };
 
 function formSnapshot(values: RetaConfigFormValues): string {
@@ -36,7 +44,9 @@ export const RetaConfigPanel: React.FC<Props> = ({
   onSaved,
   onCancel,
   showChampionship,
-  subtitle = "Nombre, horario y canchas.",
+  subtitle = "Edita la configuración principal del evento.",
+  publicSlot,
+  defaultEditing = false,
 }) => {
   const phase = useMemo(
     () =>
@@ -68,18 +78,43 @@ export const RetaConfigPanel: React.FC<Props> = ({
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [champReady, setChampReady] = useState(false);
+  const [editing, setEditing] = useState(defaultEditing);
+  const [discardOpen, setDiscardOpen] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<"name", string>>
+  >({});
   const saveGen = useRef(0);
   const valuesRef = useRef(values);
   const baselineRef = useRef(baseline);
   const dirtyRef = useRef(false);
   const skipNextHydrateRef = useRef(0);
   const tournamentRef = useRef(tournament);
+  const savedFlashTimer = useRef<number | null>(null);
 
   valuesRef.current = values;
   baselineRef.current = baseline;
   tournamentRef.current = tournament;
   const dirty = formSnapshot(values) !== baseline;
   dirtyRef.current = dirty;
+
+  useEffect(() => {
+    return () => {
+      if (savedFlashTimer.current != null) {
+        window.clearTimeout(savedFlashTimer.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!fieldErrors.name) return;
+    if (values.name.trim()) {
+      setFieldErrors((errs) => {
+        if (!errs.name) return errs;
+        const { name: _removed, ...rest } = errs;
+        return rest;
+      });
+    }
+  }, [values.name, fieldErrors.name]);
 
   useEffect(() => {
     let cancelled = false;
@@ -130,7 +165,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- loadedUpdatedAt leído a propósito en el gate
   }, [tournament.id, tournament.updated_at]);
 
-  const handleCancel = async () => {
+  const resetFromTournament = async () => {
     const c = await resolveCanonicalChampionshipConfig(tournament.id);
     const next = tournamentToFormValues(tournament, {
       championshipEnabled: c.championshipEnabled,
@@ -140,7 +175,36 @@ export const RetaConfigPanel: React.FC<Props> = ({
     setBaseline(formSnapshot(next));
     setError(null);
     setStatus(null);
+    setFieldErrors({});
+  };
+
+  const closeEditor = () => {
+    setEditing(false);
+    setDiscardOpen(false);
     onCancel?.();
+  };
+
+  const handleCancel = async () => {
+    if (dirty) {
+      setDiscardOpen(true);
+      return;
+    }
+    await resetFromTournament();
+    closeEditor();
+  };
+
+  const handleDiscardConfirm = async () => {
+    await resetFromTournament();
+    closeEditor();
+  };
+
+  const validateInline = (latest: RetaConfigFormValues): boolean => {
+    const next: Partial<Record<"name", string>> = {};
+    if (!latest.name.trim()) {
+      next.name = "Nombre requerido.";
+    }
+    setFieldErrors(next);
+    return Object.keys(next).length === 0;
   };
 
   const handleSave = async (
@@ -150,6 +214,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
     const latest = valuesOverride ?? valuesRef.current;
     const isDirty = formSnapshot(latest) !== baselineRef.current;
     if (saving || !isDirty) return;
+    if (!validateInline(latest)) return;
 
     const gen = ++saveGen.current;
     setSaving(true);
@@ -191,10 +256,20 @@ export const RetaConfigPanel: React.FC<Props> = ({
       valuesRef.current = latest;
       dirtyRef.current = false;
       setLoadedUpdatedAt(result.tournament.updated_at || loadedUpdatedAt);
-      setStatus(result.message);
+      setFieldErrors({});
+      setStatus("✓ Cambios guardados");
       // Absorbe onTournamentPatched + loadTournamentData sin rehidratar.
       skipNextHydrateRef.current = 2;
       onSaved(result.tournament);
+      if (savedFlashTimer.current != null) {
+        window.clearTimeout(savedFlashTimer.current);
+      }
+      savedFlashTimer.current = window.setTimeout(() => {
+        setStatus(null);
+        setEditing(false);
+        setDiscardOpen(false);
+        savedFlashTimer.current = null;
+      }, 1600);
     } catch (e) {
       if (gen !== saveGen.current) return;
       setError(e instanceof Error ? e.message : "Error al guardar");
@@ -219,64 +294,178 @@ export const RetaConfigPanel: React.FC<Props> = ({
     }, 0);
   };
 
+  const ramaLabel = retaRamaPublicLabel(values.rama);
+  /** Solo datos que el header del prep no muestra (evitar duplicar nombre/fecha/lugar). */
+  const stripExtras = [values.nivel.trim(), ramaLabel].filter(Boolean);
+
+  if (!editing) {
+    return (
+      <div className="reta-config-panel reta-config-panel--inline reta-config-panel--collapsed">
+        <div
+          className="reta-config-panel__summary reta-config-panel__summary--strip"
+          aria-label="Detalles de la reta"
+        >
+          <div className="reta-config-panel__summary-copy">
+            <p className="reta-config-panel__summary-kicker">Detalles</p>
+            {stripExtras.length > 0 ? (
+              <p className="reta-config-panel__summary-extras">
+                {stripExtras.join(" · ")}
+              </p>
+            ) : (
+              <p className="reta-config-panel__summary-extras reta-config-panel__summary-extras--muted">
+                Configuración guardada
+              </p>
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="reta-config-panel__edit-btn"
+            onClick={() => {
+              if (savedFlashTimer.current != null) {
+                window.clearTimeout(savedFlashTimer.current);
+                savedFlashTimer.current = null;
+              }
+              setDiscardOpen(false);
+              setError(null);
+              setStatus(null);
+              setEditing(true);
+            }}
+          >
+            Editar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="reta-config-panel reta-config-panel--inline">
+    <div className="reta-config-panel reta-config-panel--inline reta-config-panel--editing">
       <header className="reta-config-panel__toolbar">
         <div className="reta-config-panel__toolbar-copy">
           <h2 className="reta-config-panel__title">Detalles de la reta</h2>
           <p className="reta-config-panel__subtitle">{subtitle}</p>
         </div>
-        <div className="reta-config-panel__actions">
-          {onCancel != null || dirty ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={saving || !dirty}
-              onClick={() => void handleCancel()}
-            >
-              Descartar
-            </Button>
-          ) : null}
-          <Button
-            type="button"
-            variant="primary"
-            size="sm"
-            disabled={saving || !dirty || !champReady}
-            loading={saving}
-            onMouseDown={(e) => {
-              // Safari/iOS: sin esto el primer tap no dispara click (solo blur).
-              e.preventDefault();
-            }}
-            onClick={commitAndSave}
-          >
-            Guardar
-          </Button>
-        </div>
+        {!dirty ? (
+          <span className="reta-config-panel__saved-pill" aria-live="polite">
+            {status === "✓ Cambios guardados" ? status : "Guardado"}
+          </span>
+        ) : null}
       </header>
 
       <RetaConfigFields
         mode="edit"
         phase={phase}
         values={values}
-        onChange={setValues}
+        onChange={(next) => {
+          setValues((prev) => {
+            const resolved = typeof next === "function" ? next(prev) : next;
+            return resolved;
+          });
+        }}
         disabled={saving || !champReady}
         showChampionship={
           showChampionship ?? tournament.format !== "teams"
         }
         layout="essentials"
+        fieldErrors={fieldErrors}
       />
+
+      {publicSlot ? (
+        <div className="reta-config-panel__public-slot">{publicSlot}</div>
+      ) : null}
 
       {error ? (
         <p className="reta-config-panel__feedback reta-config-panel__feedback--error" role="alert">
           {error}
         </p>
       ) : null}
-      {status ? (
+      {status && dirty === false ? (
         <p className="reta-config-panel__feedback" role="status">
           {status}
         </p>
       ) : null}
+
+      {discardOpen ? (
+        <div
+          className="reta-config-panel__discard"
+          role="alertdialog"
+          aria-labelledby="reta-config-discard-title"
+          aria-describedby="reta-config-discard-desc"
+        >
+          <p id="reta-config-discard-title" className="reta-config-panel__discard-title">
+            Tienes cambios sin guardar.
+          </p>
+          <p id="reta-config-discard-desc" className="reta-config-panel__discard-desc">
+            Si descartas, se perderán los cambios de este editor.
+          </p>
+          <div className="reta-config-panel__discard-actions">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setDiscardOpen(false)}
+            >
+              Seguir editando
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => void handleDiscardConfirm()}
+            >
+              Descartar cambios
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {dirty ? (
+        <div className="reta-config-panel__sticky-bar" role="status">
+          <span className="reta-config-panel__sticky-dot" aria-hidden>
+            ●
+          </span>
+          <span className="reta-config-panel__sticky-label">Cambios sin guardar</span>
+          <div className="reta-config-panel__sticky-actions">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={saving}
+              onClick={() => void handleCancel()}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              disabled={saving || !champReady}
+              loading={saving}
+              onMouseDown={(e) => {
+                // Safari/iOS: sin esto el primer tap no dispara click (solo blur).
+                e.preventDefault();
+              }}
+              onClick={commitAndSave}
+            >
+              Guardar cambios
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="reta-config-panel__close-row">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={saving}
+            onClick={() => void handleCancel()}
+          >
+            Cerrar
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

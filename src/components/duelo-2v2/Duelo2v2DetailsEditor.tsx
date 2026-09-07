@@ -65,6 +65,10 @@ function valuesFromDuelo(
       convocatoriaOrigin ||
       ""
     ).trim(),
+    mostrarCosto: duelo.mostrar_costo === true,
+    costo: duelo.costo?.trim() || "",
+    mostrarPremio: duelo.mostrar_premio === true,
+    premio: duelo.premio?.trim() || "",
   };
 }
 
@@ -151,6 +155,10 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
         cancha: normalizeCanchaForSave(values.cancha),
         lugar: lugarTrim || null,
         mostrar_lugar: values.mostrarLugar,
+        costo: values.costo.trim() || null,
+        mostrar_costo: values.mostrarCosto,
+        premio: values.premio.trim() || null,
+        mostrar_premio: values.mostrarPremio,
         programado_en: schedule.programado_en,
         programado_hasta: schedule.programado_hasta,
       });
@@ -190,7 +198,7 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
             </span>
             <span className="duelo2v2-details-editor__toggle-subtitle">
               {open
-                ? "Nombre, horario, sede y cancha"
+                ? "Edita la configuración principal del evento"
                 : "Editar si te equivocaste en algo"}
             </span>
           </span>
@@ -203,7 +211,7 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
           <div className="reta-config-panel__toolbar-copy">
             <h2 className="reta-config-panel__title">{toolbarTitle}</h2>
             <p className="reta-config-panel__subtitle">
-              Nombre, horario, sede y cancha.
+              Edita la configuración principal del evento.
             </p>
           </div>
           <div className="reta-config-panel__actions">

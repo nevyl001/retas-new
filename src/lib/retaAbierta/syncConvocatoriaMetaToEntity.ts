@@ -80,7 +80,6 @@ export async function syncConvocatoriaMetaToEntity(
     input.durationMinutes
   );
   const mostrar_lugar = input.includeLugar !== false;
-  const syncCostoPremio = input.mode === "reta";
   const costo = input.costo?.trim() || null;
   const premio = input.premio?.trim() || null;
   const mostrar_costo = input.includeCosto === true;
@@ -92,14 +91,36 @@ export async function syncConvocatoriaMetaToEntity(
       // updateDuelo2v2Details exige nombre; el caller debe pasar el de la entidad.
       return;
     }
-    await updateDuelo2v2Details(id, {
-      nombre,
-      lugar: mostrar_lugar ? lugar ?? "" : "",
-      mostrar_lugar,
-      ...(cancha != null ? { cancha } : {}),
-      programado_en,
-      programado_hasta,
-    });
+    try {
+      await updateDuelo2v2Details(id, {
+        nombre,
+        lugar: mostrar_lugar ? lugar ?? "" : "",
+        mostrar_lugar,
+        costo,
+        mostrar_costo,
+        premio,
+        mostrar_premio,
+        ...(cancha != null ? { cancha } : {}),
+        programado_en,
+        programado_hasta,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (
+        /costo|premio|column .* does not exist|42703/i.test(msg)
+      ) {
+        await updateDuelo2v2Details(id, {
+          nombre,
+          lugar: mostrar_lugar ? lugar ?? "" : "",
+          mostrar_lugar,
+          ...(cancha != null ? { cancha } : {}),
+          programado_en,
+          programado_hasta,
+        });
+        return;
+      }
+      throw e;
+    }
     return;
   }
 
@@ -111,14 +132,10 @@ export async function syncConvocatoriaMetaToEntity(
       cancha,
       programado_en,
       programado_hasta,
-      ...(syncCostoPremio
-        ? {
-            costo,
-            mostrar_costo,
-            premio,
-            mostrar_premio,
-          }
-        : {}),
+      costo,
+      mostrar_costo,
+      premio,
+      mostrar_premio,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

@@ -21,6 +21,18 @@ function isLugarColumnMissing(error: {
   return /lugar|mostrar_lugar/i.test(msg) && /does not exist|42703/i.test(msg);
 }
 
+function isCostoPremioColumnMissing(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  if (!error) return false;
+  const msg = error.message ?? "";
+  return (
+    /costo|mostrar_costo|premio|mostrar_premio/i.test(msg) &&
+    /does not exist|42703/i.test(msg)
+  );
+}
+
 function isCategoriaColumnMissing(error: {
   code?: string;
   message?: string;
@@ -91,6 +103,10 @@ function mapDuelo(row: Record<string, unknown>): Duelo2v2 {
     lugar: row.lugar != null ? String(row.lugar) : null,
     mostrar_lugar:
       row.mostrar_lugar == null ? true : Boolean(row.mostrar_lugar),
+    costo: row.costo != null ? String(row.costo) : null,
+    mostrar_costo: row.mostrar_costo === true,
+    premio: row.premio != null ? String(row.premio) : null,
+    mostrar_premio: row.mostrar_premio === true,
     programado_en: row.programado_en ? String(row.programado_en) : null,
     programado_hasta: row.programado_hasta ? String(row.programado_hasta) : null,
     estado: row.estado as Duelo2v2["estado"],
@@ -210,11 +226,21 @@ export async function createDuelo2v2OpenDraft(
       : undefined;
   const lugarTrim = input.lugar?.trim() || null;
   const mostrarLugar = input.mostrar_lugar !== false;
+  const costoTrim =
+    input.costo !== undefined ? input.costo?.trim() || null : undefined;
+  const mostrarCosto = input.mostrar_costo === true;
+  const premioTrim =
+    input.premio !== undefined ? input.premio?.trim() || null : undefined;
+  const mostrarPremio = input.mostrar_premio === true;
   const insertFull = {
     ...insertBase,
     ...(categoriaTrim !== undefined ? { categoria: categoriaTrim } : {}),
     ...(lugarTrim != null ? { lugar: lugarTrim } : {}),
     mostrar_lugar: mostrarLugar,
+    ...(costoTrim !== undefined ? { costo: costoTrim } : {}),
+    mostrar_costo: mostrarCosto,
+    ...(premioTrim !== undefined ? { premio: premioTrim } : {}),
+    mostrar_premio: mostrarPremio,
   };
 
   let { data, error } = await supabase
@@ -244,6 +270,10 @@ export async function createDuelo2v2OpenDraft(
       .insert({
         ...insertBase,
         ...(categoriaTrim !== undefined ? { categoria: categoriaTrim } : {}),
+        ...(costoTrim !== undefined ? { costo: costoTrim } : {}),
+        mostrar_costo: mostrarCosto,
+        ...(premioTrim !== undefined ? { premio: premioTrim } : {}),
+        mostrar_premio: mostrarPremio,
       })
       .select()
       .single();
@@ -252,11 +282,66 @@ export async function createDuelo2v2OpenDraft(
     if (error && isCategoriaColumnMissing(error)) {
       const fallback2 = await supabase
         .from("duelos_2v2")
-        .insert(insertBase)
+        .insert({
+          ...insertBase,
+          ...(costoTrim !== undefined ? { costo: costoTrim } : {}),
+          mostrar_costo: mostrarCosto,
+          ...(premioTrim !== undefined ? { premio: premioTrim } : {}),
+          mostrar_premio: mostrarPremio,
+        })
         .select()
         .single();
       data = fallback2.data;
       error = fallback2.error;
+    }
+  }
+
+  if (error && isCostoPremioColumnMissing(error)) {
+    const {
+      costo: _co,
+      mostrar_costo: _mc,
+      premio: _pr,
+      mostrar_premio: _mp,
+      ...withoutCostoPremio
+    } = insertFull as Record<string, unknown> & {
+      costo?: unknown;
+      mostrar_costo?: unknown;
+      premio?: unknown;
+      mostrar_premio?: unknown;
+    };
+    void _co;
+    void _mc;
+    void _pr;
+    void _mp;
+    const fallback = await supabase
+      .from("duelos_2v2")
+      .insert(withoutCostoPremio)
+      .select()
+      .single();
+    data = fallback.data;
+    error = fallback.error;
+    if (error && isCategoriaColumnMissing(error)) {
+      const { categoria: _c, ...rest } = withoutCostoPremio as Record<
+        string,
+        unknown
+      > & { categoria?: unknown };
+      void _c;
+      const fallback2 = await supabase
+        .from("duelos_2v2")
+        .insert(rest)
+        .select()
+        .single();
+      data = fallback2.data;
+      error = fallback2.error;
+    }
+    if (error && isLugarColumnMissing(error)) {
+      const fallback3 = await supabase
+        .from("duelos_2v2")
+        .insert(insertBase)
+        .select()
+        .single();
+      data = fallback3.data;
+      error = fallback3.error;
     }
   }
 
@@ -273,6 +358,10 @@ export async function createDuelo2v2OpenDraft(
     mostrar_lugar: mostrarLugar,
     categoria:
       categoriaTrim !== undefined ? categoriaTrim : mapped.categoria,
+    costo: costoTrim !== undefined ? costoTrim : mapped.costo,
+    mostrar_costo: mostrarCosto,
+    premio: premioTrim !== undefined ? premioTrim : mapped.premio,
+    mostrar_premio: mostrarPremio,
   };
 }
 
@@ -302,6 +391,10 @@ export async function ensureDuelo2v2OpenDraft(opts: {
         cancha: opts.input.cancha,
         lugar: opts.input.lugar,
         mostrar_lugar: opts.input.mostrar_lugar,
+        costo: opts.input.costo,
+        mostrar_costo: opts.input.mostrar_costo,
+        premio: opts.input.premio,
+        mostrar_premio: opts.input.mostrar_premio,
         programado_en: opts.input.programado_en ?? null,
         programado_hasta: opts.input.programado_hasta ?? null,
       });
@@ -455,6 +548,11 @@ export async function updateDuelo2v2Details(
   const wantsLugar =
     input.lugar !== undefined || input.mostrar_lugar !== undefined;
   const wantsCategoria = input.categoria !== undefined;
+  const wantsCostoPremio =
+    input.costo !== undefined ||
+    input.mostrar_costo !== undefined ||
+    input.premio !== undefined ||
+    input.mostrar_premio !== undefined;
   const lugarValue =
     input.lugar !== undefined ? input.lugar?.trim() || null : undefined;
   const mostrarLugarValue =
@@ -462,6 +560,16 @@ export async function updateDuelo2v2Details(
   const categoriaValue = wantsCategoria
     ? input.categoria?.trim() || null
     : undefined;
+  const costoValue =
+    input.costo !== undefined ? input.costo?.trim() || null : undefined;
+  const mostrarCostoValue =
+    input.mostrar_costo !== undefined ? input.mostrar_costo === true : undefined;
+  const premioValue =
+    input.premio !== undefined ? input.premio?.trim() || null : undefined;
+  const mostrarPremioValue =
+    input.mostrar_premio !== undefined
+      ? input.mostrar_premio === true
+      : undefined;
 
   const fullPayload: Record<string, unknown> = {
     ...basePayload,
@@ -470,6 +578,14 @@ export async function updateDuelo2v2Details(
       ? { mostrar_lugar: mostrarLugarValue }
       : {}),
     ...(categoriaValue !== undefined ? { categoria: categoriaValue } : {}),
+    ...(costoValue !== undefined ? { costo: costoValue } : {}),
+    ...(mostrarCostoValue !== undefined
+      ? { mostrar_costo: mostrarCostoValue }
+      : {}),
+    ...(premioValue !== undefined ? { premio: premioValue } : {}),
+    ...(mostrarPremioValue !== undefined
+      ? { mostrar_premio: mostrarPremioValue }
+      : {}),
   };
 
   let { data, error } = await supabase
@@ -497,6 +613,14 @@ export async function updateDuelo2v2Details(
     if (categoriaValue !== undefined) {
       withoutLugar.categoria = categoriaValue;
     }
+    if (costoValue !== undefined) withoutLugar.costo = costoValue;
+    if (mostrarCostoValue !== undefined) {
+      withoutLugar.mostrar_costo = mostrarCostoValue;
+    }
+    if (premioValue !== undefined) withoutLugar.premio = premioValue;
+    if (mostrarPremioValue !== undefined) {
+      withoutLugar.mostrar_premio = mostrarPremioValue;
+    }
     const fallback = await supabase
       .from("duelos_2v2")
       .update(withoutLugar)
@@ -506,15 +630,39 @@ export async function updateDuelo2v2Details(
     data = fallback.data;
     error = fallback.error;
     if (error && isCategoriaColumnMissing(error)) {
+      const { categoria: _c, ...rest } = withoutLugar;
+      void _c;
       const fallback2 = await supabase
         .from("duelos_2v2")
-        .update(basePayload)
+        .update(rest)
         .eq("id", id)
         .select()
         .single();
       data = fallback2.data;
       error = fallback2.error;
     }
+  }
+
+  if (error && wantsCostoPremio && isCostoPremioColumnMissing(error)) {
+    const {
+      costo: _co,
+      mostrar_costo: _mc,
+      premio: _pr,
+      mostrar_premio: _mp,
+      ...withoutCostoPremio
+    } = fullPayload;
+    void _co;
+    void _mc;
+    void _pr;
+    void _mp;
+    const fallback = await supabase
+      .from("duelos_2v2")
+      .update(withoutCostoPremio)
+      .eq("id", id)
+      .select()
+      .single();
+    data = fallback.data;
+    error = fallback.error;
   }
 
   if (error) throw new Error(formatDueloDbError(error));
@@ -539,6 +687,16 @@ export async function updateDuelo2v2Details(
         ? mostrarLugarValue
         : mapped.mostrar_lugar,
     categoria: resolvedCategoria,
+    costo: costoValue !== undefined ? costoValue : mapped.costo,
+    mostrar_costo:
+      mostrarCostoValue !== undefined
+        ? mostrarCostoValue
+        : mapped.mostrar_costo,
+    premio: premioValue !== undefined ? premioValue : mapped.premio,
+    mostrar_premio:
+      mostrarPremioValue !== undefined
+        ? mostrarPremioValue
+        : mapped.mostrar_premio,
   };
 }
 

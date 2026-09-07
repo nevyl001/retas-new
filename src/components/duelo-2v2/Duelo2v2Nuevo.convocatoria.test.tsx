@@ -124,17 +124,16 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
   it("no renderiza ConvocatoriaWhatsAppPanel ni 4/4 al montar", async () => {
     await renderNuevo();
 
-    expect(container.textContent).toContain("Nuevo duelo 2 vs 2");
+    expect(container.textContent).toContain("Nueva reta");
+    expect(container.textContent).toContain("Duelo 2 vs 2");
     expect(screen.queryByTestId("convocatoria-whatsapp-panel")).toBeNull();
     expect(screen.queryByTestId("lanzar-por-whatsapp")).toBeNull();
     expect(container.textContent).not.toMatch(/Confirmados:\s*4/);
     expect(container.textContent).not.toMatch(/4 de 4/);
     expect(container.textContent).not.toContain("Ya son los 4 jugadores");
-    // Convocatoria aún no activa: panel CTA ausente; copy solo anticipa el
-    // flujo post-guardar (copy actual del panel «Siguiente»).
-    expect(container.textContent).toContain(
-      "Al guardar eliges parejas y lanzas la convocatoria por WhatsApp."
-    );
+    // Convocatoria aún no activa: solo el gate; sin panel WhatsApp ni copy de cupo.
+    expect(container.textContent).toContain("Convocatoria pública");
+    expect(container.textContent).toContain("Guardar y continuar");
     expect(container.textContent).not.toMatch(/Lanzar por WhatsApp/);
   });
 
@@ -150,12 +149,12 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
     expect(container.textContent).not.toContain("Hackpadel");
   });
 
-  it("botón Guardar duelo visible en formulario limpio", async () => {
+  it("botón Guardar y continuar visible en formulario limpio", async () => {
     await renderNuevo();
     expect(within(container).getAllByTestId("guardar-duelo").length).toBeGreaterThan(
       0
     );
-    expect(container.textContent).toContain("Guardar duelo");
+    expect(container.textContent).toContain("Guardar y continuar");
   });
 
   it("muestra Continuar borrador solo si hay duelo en configuración (sin hidratar)", async () => {

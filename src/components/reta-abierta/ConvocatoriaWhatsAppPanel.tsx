@@ -125,9 +125,14 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const [shareNote, setShareNote] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
 
-  const [titlePublic, setTitlePublic] = useState(context.defaultTitle);
+  const [titlePublic, setTitlePublic] = useState(context.defaultTitle ?? "");
   const [status, setStatus] = useState<OpenRegistrationStatus>("draft");
-  const [capacity, setCapacity] = useState(context.defaultCapacity);
+  const [capacity, setCapacity] = useState(
+    () =>
+      Number(context.defaultCapacity) > 0
+        ? Number(context.defaultCapacity)
+        : OPEN_REG_CAPACITY_MIN
+  );
   const [capacityBusy, setCapacityBusy] = useState(false);
   const [capacityHint, setCapacityHint] = useState<string | null>(null);
   const capacitySaveTimer = useRef<number | null>(null);
@@ -218,7 +223,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   }, [context.entityId]);
 
   useEffect(() => {
-    setTitlePublic(context.defaultTitle);
+    setTitlePublic(context.defaultTitle ?? "");
   }, [context.defaultTitle]);
 
   useEffect(() => {
@@ -269,9 +274,17 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       setCfg(row);
       if (row) {
         // Display desde entidad (context), no cache title_public / location_label.
-        setTitlePublic(context.defaultTitle);
+        setTitlePublic(context.defaultTitle ?? "");
         setStatus(row.status);
-        setCapacity(context.lockCapacity ? context.defaultCapacity : row.capacity);
+        setCapacity(
+          context.lockCapacity
+            ? Number(context.defaultCapacity) > 0
+              ? Number(context.defaultCapacity)
+              : OPEN_REG_CAPACITY_MIN
+            : Number(row.capacity) > 0
+              ? Number(row.capacity)
+              : OPEN_REG_CAPACITY_MIN
+        );
         setWaitlistEnabled(row.waitlist_enabled);
         setApprovalRequired(row.approval_required);
         setDeadline(
@@ -361,9 +374,14 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   /** Live real = enlace o registro abierto. shareOnly es solo modo UI (duelo), no implica live. */
   const isLive =
     hasShareLink || (Boolean(cfg?.enabled) && cfg?.status !== "draft");
-  const effectiveCapacity = context.lockCapacity
-    ? context.defaultCapacity
-    : cfg?.capacity ?? capacity;
+  const effectiveCapacity = Math.max(
+    OPEN_REG_CAPACITY_MIN,
+    Number(
+      context.lockCapacity
+        ? context.defaultCapacity
+        : cfg?.capacity ?? capacity
+    ) || OPEN_REG_CAPACITY_MIN
+  );
 
   useEffect(() => {
     if (!onLiveChange) return;
@@ -485,10 +503,11 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     ]
   );
 
-  /** Detalles de la reta / americano son la fuente de verdad de costo y premio. */
+  /** Detalles de la reta / americano / duelo son la fuente de verdad de costo y premio. */
   const preferDetailsCostoPremio =
     context.mode === "reta" ||
     context.mode === "americano" ||
+    context.mode === "duelo_2v2" ||
     shareOnly;
 
   const resolveShareCostoPremio = (overrides?: {

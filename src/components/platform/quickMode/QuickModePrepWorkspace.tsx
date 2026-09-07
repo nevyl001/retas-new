@@ -4,8 +4,8 @@ export type QuickModePrepWorkspaceProps = {
   header: React.ReactNode;
   /** Panel opcional entre cabecera y body (p. ej. editar detalles inline). */
   details?: React.ReactNode;
-  stepper: React.ReactNode;
-  workbench: React.ReactNode;
+  stepper?: React.ReactNode | null;
+  workbench?: React.ReactNode | null;
   sidebar: React.ReactNode;
   stickyCta?: React.ReactNode;
   className?: string;
@@ -18,12 +18,13 @@ export type QuickModePrepWorkspaceProps = {
 export function QuickModePrepWorkspace({
   header,
   details,
-  stepper,
-  workbench,
+  stepper = null,
+  workbench = null,
   sidebar,
   stickyCta,
   className = "",
 }: QuickModePrepWorkspaceProps) {
+  const hasMain = Boolean(stepper) || Boolean(workbench);
   return (
     <div className={`qm-ws ${className}`.trim()}>
       {header}
@@ -31,11 +32,14 @@ export function QuickModePrepWorkspace({
         <div className="qm-ws__details">{details}</div>
       ) : null}
       <div className="qm-ws__body">
-        {/* Mismo canvas claro que el resto del organizador (tokens --ro-* L0/L1). */}
-        <div className="qm-ws__main">
-          {stepper}
-          <section className="qm-ws__workbench">{workbench}</section>
-        </div>
+        {hasMain ? (
+          <div className="qm-ws__main">
+            {stepper}
+            {workbench ? (
+              <section className="qm-ws__workbench">{workbench}</section>
+            ) : null}
+          </div>
+        ) : null}
         <aside className="qm-ws__sidebar">{sidebar}</aside>
       </div>
       {stickyCta ? (

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type { RetaConfigFormValues } from "../../lib/reta/updateRetaConfig";
 import {
   fieldEditability,
@@ -36,6 +36,8 @@ export type RetaConfigFieldsProps = {
    * full = layout legacy (todos los campos a la vista).
    */
   layout?: "full" | "essentials";
+  /** Errores inline por campo (solo UX; no cambia validación de guardado). */
+  fieldErrors?: Partial<Record<"name", string>>;
 };
 
 function FieldLock({ reason }: { reason?: string }) {
@@ -59,6 +61,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   showChampionship = true,
   disabled = false,
   layout = "full",
+  fieldErrors,
 }) => {
   const essentials = layout === "essentials";
   /** En Detalles (essentials) o edición: día/hora, duración y lugar. */
@@ -96,12 +99,20 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         id={retaConfigFieldId("name")}
         name={retaConfigFieldId("name")}
         type="text"
-        className="home-sheet__input riviera-input"
+        className={`home-sheet__input riviera-input${
+          fieldErrors?.name ? " reta-details-form__input--invalid" : ""
+        }`}
         placeholder="Reta del domingo…"
         value={values.name}
         disabled={nameEd.locked}
+        aria-invalid={Boolean(fieldErrors?.name)}
         onChange={(e) => patch({ name: e.target.value })}
       />
+      {fieldErrors?.name ? (
+        <p className="reta-details-form__field-error" role="alert">
+          {fieldErrors.name}
+        </p>
+      ) : null}
       {nameEd.locked ? <FieldLock reason={nameEd.reason} /> : null}
     </label>
   );
@@ -243,23 +254,34 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       </div>
     ) : null;
 
+  const DESC_MAX = 500;
   const descriptionField = essentials ? (
     <label
       className="home-sheet__field reta-details-form__field reta-details-form__field--desc"
       htmlFor={retaConfigFieldId("description")}
     >
       <span className="home-sheet__field-label">Descripción</span>
-      <input
+      <textarea
         id={retaConfigFieldId("description")}
         name={retaConfigFieldId("description")}
-        type="text"
-        className="home-sheet__input riviera-input"
-        placeholder="Ej. mixta, verano, amigos…"
+        className="home-sheet__input riviera-input reta-details-form__textarea"
+        placeholder="Juega, compite y disfruta una reta diferente…"
         value={values.description}
         disabled={descEd.locked}
-        onChange={(e) => patch({ description: e.target.value })}
+        rows={3}
+        maxLength={DESC_MAX}
+        onChange={(e) => {
+          const v = e.target.value.slice(0, DESC_MAX);
+          patch({ description: v });
+          const el = e.target;
+          el.style.height = "auto";
+          el.style.height = `${Math.min(el.scrollHeight, 9 * 16)}px`;
+        }}
         autoComplete="off"
       />
+      <span className="reta-details-form__char-count" aria-live="polite">
+        {values.description.length}/{DESC_MAX}
+      </span>
       {descEd.locked ? <FieldLock reason={descEd.reason} /> : null}
     </label>
   ) : (
@@ -269,17 +291,27 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
     >
       <span className="home-sheet__field-label">Descripción</span>
       <span className="home-sheet__field-optional">Opcional</span>
-      <input
+      <textarea
         id={retaConfigFieldId("description")}
         name={retaConfigFieldId("description")}
-        type="text"
-        className="home-sheet__input riviera-input"
+        className="home-sheet__input riviera-input reta-details-form__textarea"
         placeholder="Ej. mixta, verano, amigos…"
         value={values.description}
         disabled={descEd.locked}
-        onChange={(e) => patch({ description: e.target.value })}
+        rows={3}
+        maxLength={DESC_MAX}
+        onChange={(e) => {
+          const v = e.target.value.slice(0, DESC_MAX);
+          patch({ description: v });
+          const el = e.target;
+          el.style.height = "auto";
+          el.style.height = `${Math.min(el.scrollHeight, 9 * 16)}px`;
+        }}
         autoComplete="off"
       />
+      <span className="reta-details-form__char-count" aria-live="polite">
+        {values.description.length}/{DESC_MAX}
+      </span>
       {descEd.locked ? <FieldLock reason={descEd.reason} /> : null}
     </label>
   );
@@ -318,8 +350,12 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   const lugarField =
     showScheduleMeta ? (
       essentials ? (
-        <div className="home-sheet__field reta-details-form__field reta-details-form__field--lugar">
-          <span className="reta-details-form__lugar-label">
+        <div
+          className={`home-sheet__field reta-details-form__field reta-details-form__field--lugar reta-details-form__visibility${
+            values.mostrar_lugar ? " is-shown" : " is-hidden-public"
+          }`}
+        >
+          <label className="reta-details-form__visibility-toggle" htmlFor={retaConfigFieldId("mostrar-lugar")}>
             <input
               id={retaConfigFieldId("mostrar-lugar")}
               name={retaConfigFieldId("mostrar-lugar")}
@@ -327,20 +363,29 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
               checked={values.mostrar_lugar}
               disabled={lugarEd.locked}
               onChange={(e) => patch({ mostrar_lugar: e.target.checked })}
-              aria-label="Mostrar lugar"
             />
-            <span className="home-sheet__field-label">Lugar</span>
-          </span>
+            <span className="reta-details-form__visibility-title">Mostrar lugar</span>
+          </label>
           <input
             id={retaConfigFieldId("lugar")}
             name={retaConfigFieldId("lugar")}
             type="text"
-            className="home-sheet__input riviera-input"
+            className="home-sheet__input riviera-input reta-details-form__visibility-value"
             placeholder="Club, sede…"
             value={values.lugar}
-            disabled={lugarEd.locked || !values.mostrar_lugar}
+            disabled={lugarEd.locked}
             onChange={(e) => patch({ lugar: e.target.value })}
           />
+          {values.mostrar_lugar ? (
+            <span className="reta-details-form__visibility-hint">
+              Visible.
+            </span>
+          ) : (
+            <span className="reta-details-form__visibility-hint reta-details-form__visibility-hint--muted">
+              Oculto.
+            </span>
+          )}
+          {lugarEd.locked ? <FieldLock reason={lugarEd.reason} /> : null}
         </div>
       ) : (
         <>
@@ -377,8 +422,12 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   const costoField =
     showScheduleMeta ? (
       essentials ? (
-        <div className="home-sheet__field reta-details-form__field reta-details-form__field--costo">
-          <span className="reta-details-form__lugar-label">
+        <div
+          className={`home-sheet__field reta-details-form__field reta-details-form__field--costo reta-details-form__visibility${
+            values.mostrar_costo ? " is-shown" : " is-hidden-public"
+          }`}
+        >
+          <label className="reta-details-form__visibility-toggle" htmlFor={retaConfigFieldId("mostrar-costo")}>
             <input
               id={retaConfigFieldId("mostrar-costo")}
               name={retaConfigFieldId("mostrar-costo")}
@@ -386,20 +435,29 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
               checked={values.mostrar_costo}
               disabled={costoEd.locked}
               onChange={(e) => patch({ mostrar_costo: e.target.checked })}
-              aria-label="Incluir costo en la convocatoria"
             />
-            <span className="home-sheet__field-label">Costo</span>
-          </span>
+            <span className="reta-details-form__visibility-title">Mostrar costo</span>
+          </label>
           <input
             id={retaConfigFieldId("costo")}
             name={retaConfigFieldId("costo")}
             type="text"
-            className="home-sheet__input riviera-input"
+            className="home-sheet__input riviera-input reta-details-form__visibility-value"
             placeholder="$200 por jugador"
             value={values.costo}
-            disabled={costoEd.locked || !values.mostrar_costo}
+            disabled={costoEd.locked}
             onChange={(e) => patch({ costo: e.target.value })}
           />
+          {values.mostrar_costo ? (
+            <span className="reta-details-form__visibility-hint">
+              Visible.
+            </span>
+          ) : (
+            <span className="reta-details-form__visibility-hint reta-details-form__visibility-hint--muted">
+              Oculto.
+            </span>
+          )}
+          {costoEd.locked ? <FieldLock reason={costoEd.reason} /> : null}
         </div>
       ) : (
         <>
@@ -437,8 +495,12 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   const premioField =
     showScheduleMeta ? (
       essentials ? (
-        <div className="home-sheet__field reta-details-form__field reta-details-form__field--premio">
-          <span className="reta-details-form__lugar-label">
+        <div
+          className={`home-sheet__field reta-details-form__field reta-details-form__field--premio reta-details-form__visibility${
+            values.mostrar_premio ? " is-shown" : " is-hidden-public"
+          }`}
+        >
+          <label className="reta-details-form__visibility-toggle" htmlFor={retaConfigFieldId("mostrar-premio")}>
             <input
               id={retaConfigFieldId("mostrar-premio")}
               name={retaConfigFieldId("mostrar-premio")}
@@ -446,20 +508,29 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
               checked={values.mostrar_premio}
               disabled={premioEd.locked}
               onChange={(e) => patch({ mostrar_premio: e.target.checked })}
-              aria-label="Incluir premio en la convocatoria"
             />
-            <span className="home-sheet__field-label">Premio</span>
-          </span>
+            <span className="reta-details-form__visibility-title">Mostrar premio</span>
+          </label>
           <input
             id={retaConfigFieldId("premio")}
             name={retaConfigFieldId("premio")}
             type="text"
-            className="home-sheet__input riviera-input"
+            className="home-sheet__input riviera-input reta-details-form__visibility-value"
             placeholder="Trofeo + pelotas"
             value={values.premio}
-            disabled={premioEd.locked || !values.mostrar_premio}
+            disabled={premioEd.locked}
             onChange={(e) => patch({ premio: e.target.value })}
           />
+          {values.mostrar_premio ? (
+            <span className="reta-details-form__visibility-hint">
+              Visible.
+            </span>
+          ) : (
+            <span className="reta-details-form__visibility-hint reta-details-form__visibility-hint--muted">
+              Oculto.
+            </span>
+          )}
+          {premioEd.locked ? <FieldLock reason={premioEd.reason} /> : null}
         </div>
       ) : (
         <>
@@ -633,26 +704,70 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
     </div>
   ) : null;
 
+  const [optionalOpen, setOptionalOpen] = useState(false);
+
   if (essentials) {
     return (
       <div
-        className="reta-details-form"
+        className="reta-details-form reta-details-form--sections reta-details-form--compose"
         role="group"
         aria-label="Campos de la reta"
       >
-        <div className="reta-details-form__row reta-details-form__row--primary">
-          {nameField}
-          {scheduleField}
-          {courtsField}
-        </div>
-        <div className="reta-details-form__row reta-details-form__row--meta">
-          {descriptionField}
-          {nivelField}
-          {ramaField}
-          {lugarField}
-          {costoField}
-          {premioField}
-          {championshipField}
+        <section
+          className="reta-details-form__section reta-details-form__section--essential"
+          aria-labelledby="reta-details-sec-essential"
+        >
+          <h3
+            id="reta-details-sec-essential"
+            className="reta-details-form__section-title"
+          >
+            Información principal
+          </h3>
+          <div className="reta-details-form__row reta-details-form__row--name">
+            {nameField}
+          </div>
+          <div className="reta-details-form__row reta-details-form__row--primary">
+            {scheduleField}
+            {courtsField}
+          </div>
+          <div className="reta-details-form__row reta-details-form__row--game">
+            {nivelField}
+            {ramaField}
+          </div>
+        </section>
+
+        <div className="reta-details-form__optional">
+          <button
+            type="button"
+            className={`reta-details-form__optional-toggle${
+              optionalOpen ? " is-open" : ""
+            }`}
+            aria-expanded={optionalOpen}
+            onClick={() => setOptionalOpen((v) => !v)}
+          >
+            <span aria-hidden>{optionalOpen ? "−" : "+"}</span>
+            Detalles opcionales
+          </button>
+          {optionalOpen ? (
+            <div className="reta-details-form__optional-body">
+              <div className="reta-details-form__row reta-details-form__row--public">
+                {descriptionField}
+                {lugarField}
+                {costoField}
+                {premioField}
+              </div>
+              {championshipField ? (
+                <details className="reta-details-form__advanced">
+                  <summary className="reta-details-form__advanced-summary">
+                    Configuración avanzada
+                  </summary>
+                  <div className="reta-details-form__advanced-body">
+                    {championshipField}
+                  </div>
+                </details>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
     );

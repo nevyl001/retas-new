@@ -66,7 +66,7 @@ export function buildTournamentConvocatoriaContext(opts: {
   return {
     mode: opts.mode,
     entityId: opts.tournamentId,
-    defaultTitle: opts.name,
+    defaultTitle: opts.name?.trim() || "Reta",
     defaultCapacity: defaultCapacityForMode(opts.mode),
     defaultLocation: includeLugar
       ? opts.locationLabel?.trim() || club
@@ -125,6 +125,10 @@ export function buildDueloConvocatoriaContext(opts: {
   durationMinutes?: number | null;
   clubName?: string;
   categoryLabel?: string;
+  costo?: string | null;
+  includeCosto?: boolean;
+  premio?: string | null;
+  includePremio?: boolean;
 }): ConvocatoriaAdapterContext {
   const duration =
     opts.durationMinutes != null &&
@@ -135,11 +139,13 @@ export function buildDueloConvocatoriaContext(opts: {
 
   const club = opts.clubName?.trim() || undefined;
   const includeLugar = opts.includeLugar !== false;
+  const includeCosto = opts.includeCosto === true;
+  const includePremio = opts.includePremio === true;
 
   return {
     mode: "duelo_2v2",
     entityId: opts.dueloId,
-    defaultTitle: opts.name,
+    defaultTitle: opts.name?.trim() || "Duelo 2 vs 2",
     defaultCapacity: 4,
     defaultLocation: includeLugar
       ? opts.locationLabel?.trim() || club
@@ -152,6 +158,10 @@ export function buildDueloConvocatoriaContext(opts: {
     clubName: club,
     lockCapacity: true,
     productHeadline: convocatoriaProductHeadline({ mode: "duelo_2v2" }),
+    defaultCosto: includeCosto ? opts.costo?.trim() || undefined : undefined,
+    includeCosto,
+    defaultPremio: includePremio ? opts.premio?.trim() || undefined : undefined,
+    includePremio,
   };
 }
 

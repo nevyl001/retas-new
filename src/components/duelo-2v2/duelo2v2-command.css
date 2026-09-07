@@ -678,17 +678,17 @@
 
 /* —— Setup (detalles secundarios) —— */
 .duelo2v2-gestionar .qm-ws--duelo-console .qm-ws__details-inline {
-  --rd-gap: 0.35rem;
-  --rd-pad: 0.45rem 0.75rem 0.5rem;
-  --rd-input-h: var(--d2-cmd-input-h);
+  --rd-gap: 0.65rem;
+  --rd-pad: 0.75rem 0.85rem;
+  --rd-input-h: 2.375rem;
   border: 1px solid var(--d2-cmd-ink-border);
   border-radius: var(--d2-cmd-radius);
   background: color-mix(in srgb, var(--d2-cmd-ink-bg) 92%, var(--d2-cmd-ink-surface));
 }
 
 .duelo2v2-gestionar .qm-ws--duelo-console .reta-config-panel__toolbar {
-  padding: 0.35rem 0.75rem 0.2rem;
-  border-bottom: none;
+  padding: 0.35rem 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--d2-cmd-ink-border) 70%, transparent);
 }
 
 .duelo2v2-gestionar .qm-ws--duelo-console .reta-config-panel__title {
@@ -699,7 +699,19 @@
 }
 
 .duelo2v2-gestionar .qm-ws--duelo-console .reta-config-panel__subtitle {
-  display: none;
+  margin: 0.1rem 0 0;
+  font-size: 0.6875rem;
+  color: var(--d2-cmd-muted);
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .reta-details-form__section {
+  padding: 0.65rem 0.75rem;
+}
+
+.duelo2v2-gestionar .qm-ws--duelo-console .reta-details-form__section-title {
+  font-size: 0.75rem;
+  margin-bottom: 0.45rem;
+  padding-bottom: 0.25rem;
 }
 
 .duelo2v2-gestionar .qm-ws--duelo-console .home-sheet__field-label {

@@ -11,9 +11,6 @@ import {
   QuickModeEventHeader,
   QuickModePrepWorkspace,
   QuickModePrimaryCta,
-  QuickModeStepper,
-  type QuickModeStep,
-  type QuickModeStepStatus,
 } from "../platform/quickMode";
 
 export interface QuickStartPayload {
@@ -34,18 +31,6 @@ interface QuickStartSheetProps {
   submitting?: boolean;
 }
 
-type NuevoStepId = "listo";
-
-function stepStatus(
-  id: NuevoStepId,
-  active: NuevoStepId,
-  complete: boolean
-): QuickModeStepStatus {
-  if (active === id) return "active";
-  if (complete) return "complete";
-  return "pending";
-}
-
 function defaultScheduleLocal(): { programado_en: string } {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -60,6 +45,30 @@ function splitProgramado(programado_en: string): { date: string; time: string } 
   if (!raw) return { date: "", time: "" };
   const [date = "", timePart = ""] = raw.split("T");
   return { date, time: timePart.slice(0, 5) };
+}
+
+const MONTHS_SHORT = [
+  "ENE",
+  "FEB",
+  "MAR",
+  "ABR",
+  "MAY",
+  "JUN",
+  "JUL",
+  "AGO",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DIC",
+] as const;
+
+function formatSidebarWhen(date: string, time: string): string {
+  if (!date) return "Sin fecha";
+  const [y, m, d] = date.split("-").map((x) => Number(x));
+  if (!y || !m || !d) return date;
+  const month = MONTHS_SHORT[m - 1] ?? "";
+  const day = String(d).padStart(2, "0");
+  return time ? `${day} ${month} · ${time}` : `${day} ${month}`;
 }
 
 /**
@@ -96,8 +105,6 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
     [lugarDefault]
   );
   const [values, setValues] = useState<RetaConfigFormValues>(initialValues);
-  const [step] = useState<NuevoStepId>("listo");
-  const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [wantConvocatoria, setWantConvocatoria] = useState(false);
 
   if (!modeId) return null;
@@ -116,6 +123,18 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
     schedule.time.length > 0 &&
     (!values.mostrar_lugar || values.lugar.trim().length > 0);
   const canSubmit = encuentroOk && horarioOk;
+
+  const blockReason = !values.name.trim()
+    ? "Agrega un nombre para continuar."
+    : values.courts < 1
+      ? "Indica las canchas para continuar."
+      : !schedule.date
+        ? "Agrega la fecha para continuar."
+        : !schedule.time
+          ? "Agrega la hora para continuar."
+          : values.mostrar_lugar && !values.lugar.trim()
+            ? "Agrega el lugar para continuar."
+            : null;
 
   const buildPayload = (): QuickStartPayload => {
     const name = values.name.trim() || `Reta ${mode.title}`;
@@ -139,20 +158,7 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
     onSubmit(buildPayload());
   };
 
-  const steps: QuickModeStep[] = [
-    {
-      id: "listo",
-      label: "Listo",
-      status: stepStatus("listo", step, canSubmit),
-      count: canSubmit ? "OK" : "Pendiente",
-    },
-  ];
-
-  const ctaHint = !encuentroOk
-    ? "Completa nombre y canchas"
-    : !horarioOk
-      ? "Completa lugar y horario"
-      : "Al guardar entras a preparar jugadores y convocatoria";
+  const ctaHint = blockReason ?? "Al guardar entras a preparar jugadores y convocatoria";
 
   const ctaProps = {
     variant: "sidebar" as const,
@@ -160,33 +166,26 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
       ? "Guardando…"
       : canSubmit
         ? "Guardar y continuar"
-        : "Guardar reta",
+        : "Guardar y continuar",
     disabled: !canSubmit || submitting,
     loading: submitting,
-    hint: ctaHint,
+    hint: canSubmit ? undefined : ctaHint,
     testId: "guardar-reta",
     onClick: handleSave,
-  };
-
-  const scrollToDetails = () => {
-    document
-      .getElementById("reta-nuevo-detalles-inline")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const detailsPanel = (
     <section
       id="reta-nuevo-detalles-inline"
-      className="qm-ws__details-inline"
+      className="qm-ws__details-inline qm-ws__details-inline--compose"
       aria-label="Detalles de la reta"
     >
-      <div className="reta-config-panel reta-config-panel--inline">
+      <div className="reta-config-panel reta-config-panel--inline reta-config-panel--compose">
         <header className="reta-config-panel__toolbar">
           <div className="reta-config-panel__toolbar-copy">
-            <h2 className="reta-config-panel__title">Detalles de la reta</h2>
+            <h2 className="reta-config-panel__title">Nueva reta</h2>
             <p className="reta-config-panel__subtitle">
-              Nombre, horario, sede y canchas. Si sales sin guardar, no se crea
-              nada.
+              Configura lo esencial para empezar.
             </p>
           </div>
         </header>
@@ -206,14 +205,25 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
           </p>
         ) : null}
       </div>
-      <div id="reta-nuevo-convocatoria-inline">
+      <div
+        id="reta-nuevo-convocatoria-inline"
+        className="reta-config-panel__conv reta-config-panel__conv--compose"
+      >
+        <div className="reta-config-panel__conv-head">
+          <h3 className="reta-config-panel__conv-title">Convocatoria pública</h3>
+          <p className="reta-config-panel__conv-desc">
+            Permite que jugadores se registren mediante enlace.
+          </p>
+        </div>
         <QuickModeConvocatoriaGate
           open={wantConvocatoria}
           live={false}
           panelId="reta-nuevo-convocatoria-panel"
+          titleOn="Activa"
+          titleOff="Inactiva"
+          hintOn="Panel abierto — guarda la reta para configurar cupo."
+          hintOff="Opcional"
           onToggle={() => setWantConvocatoria((v) => !v)}
-          hintOn="Guarda la reta para configurar cupo y WhatsApp"
-          hintOff="Opcional · Inscripciones con enlace público"
         >
           <div className="qm-ws__conv-prelaunch-note" role="note">
             <p>
@@ -226,79 +236,41 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
     </section>
   );
 
-  const workbenchBody = (
-    <ul className="qm-ws__ready-check">
-      <li className={encuentroOk ? "is-ok" : "is-miss"}>
-        <span className="qm-ws__ready-mark" aria-hidden>
-          {encuentroOk ? "OK" : "!"}
-        </span>
-        <span className="qm-ws__ready-copy">
-          {encuentroOk
-            ? `${values.name.trim()} · ${values.courts} cancha${
-                values.courts === 1 ? "" : "s"
-              }`
-            : "Falta nombre o canchas"}
-        </span>
-        {!encuentroOk ? (
-          <button
-            type="button"
-            className="qm-ws__text-btn"
-            onClick={scrollToDetails}
-          >
-            Completar
-          </button>
-        ) : null}
-      </li>
-      <li className={horarioOk ? "is-ok" : "is-miss"}>
-        <span className="qm-ws__ready-mark" aria-hidden>
-          {horarioOk ? "OK" : "!"}
-        </span>
-        <span className="qm-ws__ready-copy">
-          {horarioOk
-            ? `${schedule.date} · ${schedule.time}${
-                values.mostrar_lugar && values.lugar.trim()
-                  ? ` · ${values.lugar.trim()}`
-                  : ""
-              }`
-            : "Falta lugar u horario"}
-        </span>
-        {!horarioOk ? (
-          <button
-            type="button"
-            className="qm-ws__text-btn"
-            onClick={scrollToDetails}
-          >
-            Completar
-          </button>
-        ) : null}
-      </li>
-      <li className="is-soft">
-        <span className="qm-ws__ready-mark" aria-hidden>
-          ·
-        </span>
-        <span className="qm-ws__ready-copy">
-          Al guardar entras a preparar jugadores, parejas y convocatoria.
-        </span>
-      </li>
-    </ul>
-  );
-
   const sidebarPanel = (
-    <div className="qm-ws-panel">
-      <section className="qm-ws-panel__block">
-        <h3 className="qm-ws-panel__label">Progreso</h3>
-        <ul className="qm-ws-panel__progress">
-          <li className={encuentroOk ? "is-ok" : ""}>Nombre y canchas</li>
-          <li className={horarioOk ? "is-ok" : ""}>Lugar y horario</li>
-          <li className={canSubmit ? "is-ok" : ""}>Listo para guardar</li>
-        </ul>
-      </section>
-      <section className="qm-ws-panel__block">
-        <h3 className="qm-ws-panel__label">Siguiente</h3>
-        <p className="qm-ws-panel__conv-line">
-          Al guardar preparas el evento y lanzas la convocatoria por WhatsApp.
+    <div className="qm-ws-panel qm-ws-panel--compose">
+      <section className="qm-ws-panel__compose-summary" aria-label="Resumen">
+        <p className="qm-ws-panel__compose-kicker">Resumen</p>
+        <p className="qm-ws-panel__compose-format">{mode.title}</p>
+        <p className="qm-ws-panel__compose-when">
+          {formatSidebarWhen(schedule.date, schedule.time)}
+        </p>
+        <p className="qm-ws-panel__compose-meta">
+          {values.duration_minutes} MIN · {values.courts} CANCHA
+          {values.courts === 1 ? "" : "S"}
+        </p>
+        {values.mostrar_lugar && values.lugar.trim() ? (
+          <p className="qm-ws-panel__compose-lugar">{values.lugar.trim()}</p>
+        ) : null}
+        <p className="qm-ws-panel__compose-nivel">
+          {values.nivel.trim() || "Sin definir"}
         </p>
       </section>
+
+      <div className="qm-ws-panel__compose-rule" aria-hidden />
+
+      <section className="qm-ws-panel__compose-status" aria-live="polite">
+        {canSubmit ? (
+          <p className="qm-ws-panel__compose-ready">✓ Todo listo para continuar</p>
+        ) : (
+          <>
+            <p className="qm-ws-panel__compose-blocked">● Faltan datos</p>
+            <p className="qm-ws-panel__compose-reason">
+              {blockReason?.replace(/\.$/, "") || "Completa lo esencial"}
+            </p>
+          </>
+        )}
+      </section>
+
       <section className="qm-ws-panel__block qm-ws-panel__cta-desktop">
         <QuickModePrimaryCta {...ctaProps} />
       </section>
@@ -319,69 +291,31 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
       </ActionBar>
 
       <QuickModePrepWorkspace
-        className={`qm-ws--wide${mobileSummaryOpen ? " is-summary-open" : ""}`}
+        className="qm-ws--wide qm-ws--create-compose"
         header={
           <QuickModeEventHeader
+            className="qm-event-header--create-min"
             club={modeEyebrow}
-            title={`Nuevo · ${mode.title}`}
+            title="Nueva reta"
             modality={mode.title}
             statusLabel="Pendiente"
-            centerMetrics={[
-              { label: "Formato", value: mode.title },
-              {
-                label: "Canchas",
-                value: String(values.courts || "—"),
-              },
-              { label: "Día", value: schedule.date || "—" },
-              {
-                label: "Horario",
-                value: schedule.time || "—",
-              },
-            ]}
-            rightMeta={[
-              {
-                label: "Lugar",
-                value: values.mostrar_lugar
-                  ? values.lugar.trim() || "—"
-                  : "Oculto",
-              },
-              {
-                label: "Descripción",
-                value: values.description.trim() || "—",
-              },
-              {
-                label: "Nivel",
-                value: values.nivel.trim() || "—",
-              },
-            ]}
+            phaseLabel=""
           />
         }
         details={detailsPanel}
-        stepper={
-          <QuickModeStepper
-            steps={steps}
-            activeId={step}
-            onChange={() => undefined}
-          />
-        }
-        workbench={
-          <>
-            <div className="qm-ws__workbench-head">
-              <h2 className="qm-ws__workbench-title">Listo para guardar</h2>
-              <button
-                type="button"
-                className="qm-ws__text-btn qm-ws__summary-toggle"
-                onClick={() => setMobileSummaryOpen((v) => !v)}
-                aria-expanded={mobileSummaryOpen}
-              >
-                {mobileSummaryOpen ? "Ocultar resumen" : "Resumen"}
-              </button>
-            </div>
-            <div className="qm-ws__workbench-body">{workbenchBody}</div>
-          </>
-        }
+        stepper={null}
+        workbench={null}
         sidebar={sidebarPanel}
-        stickyCta={<QuickModePrimaryCta {...ctaProps} />}
+        stickyCta={
+          <div className="qm-ws__compose-mobile-bar">
+            <span className="qm-ws__compose-mobile-status">
+              {canSubmit
+                ? "✓ Lista"
+                : blockReason?.replace(/\.$/, "") || "Faltan datos"}
+            </span>
+            <QuickModePrimaryCta {...ctaProps} />
+          </div>
+        }
       />
     </div>
   );

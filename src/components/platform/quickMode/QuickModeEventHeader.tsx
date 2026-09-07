@@ -54,10 +54,14 @@ export function QuickModeEventHeader({
         </div>
         <p className="qm-event-header__modality">
           {modality}
-          <span className="qm-event-header__dot" aria-hidden>
-            ·
-          </span>
-          {phaseLabel}
+          {phaseLabel ? (
+            <>
+              <span className="qm-event-header__dot" aria-hidden>
+                ·
+              </span>
+              {phaseLabel}
+            </>
+          ) : null}
         </p>
       </div>
 

@@ -99,8 +99,9 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("🎾 Cancha 3");
     expect(text).toContain("Nivel 5ta Fuerza");
     expect(text).toContain("✓ Arturo Cortes (0.73)");
-    expect(text).toContain("○ Disponible");
-    expect(text.match(/○ Disponible/g)?.length).toBe(3);
+    expect(text).toContain("⭕ *3 LUGARES DISPONIBLES*");
+    expect(text).not.toContain("○ Disponible");
+    expect(text).not.toMatch(/○ \d+ lugares disponibles/);
     expect(text).toContain("https://app.example/jugar/ra-1");
     expect(text).toContain("🎾 Juega en Riviera Open — sube tu ranking y rating.");
     expect(text).not.toContain("Riviera ID · todos los juegos cuentan.");
@@ -108,8 +109,8 @@ describe("WhatsApp share message por modo", () => {
     expect(text).not.toContain("⚪");
     expect(text).not.toContain("¿Quieres jugar?");
     expect(text).not.toContain("○ 3 disponibles");
-    // Huecos y enlace antes del roster: no quedan detrás de «Leer más».
-    expect(text.indexOf("○ Disponible")).toBeLessThan(
+    // Destacado de cupo antes del enlace/roster.
+    expect(text.indexOf("⭕ *3 LUGARES DISPONIBLES*")).toBeLessThan(
       text.indexOf("https://app.example/jugar/ra-1")
     );
     expect(text.indexOf("https://app.example/jugar/ra-1")).toBeLessThan(
@@ -161,10 +162,11 @@ describe("WhatsApp share message por modo", () => {
     });
     expect(text).toContain("AMERICANO");
     expect(text).toContain("📍 Hack");
-    expect(text).toContain("6 de 16 confirmados · 10 lugares disponibles");
+    expect(text).toContain("6 de 16 confirmados");
     expect(text).toContain("⭕ *10 LUGARES DISPONIBLES*");
     expect(text).toContain("✓ Arturo Cortes (0.73)");
-    expect(text).toContain("○ 10 lugares disponibles");
+    expect(text).not.toContain("○ 10 lugares disponibles");
+    expect(text).not.toContain("lugares disponibles");
   });
 
   it("Americano: incluye costo y premio cuando están activos", () => {
@@ -251,11 +253,11 @@ describe("WhatsApp share message por modo", () => {
       publicUrl: "https://app.example/jugar/ra-am",
       clubName: "Hack Pádel",
     });
-    expect(text).toContain("4 de 8 confirmados · 4 lugares disponibles");
+    expect(text).toContain("4 de 8 confirmados");
     expect(text).toContain("⭕ *4 LUGARES DISPONIBLES*");
-    expect(text.match(/○ Disponible/g)?.length).toBe(4);
-    expect(text.indexOf("✓ Nevyl (3.28)")).toBeLessThan(
-      text.indexOf("○ Disponible")
+    expect(text).not.toContain("○ Disponible");
+    expect(text.indexOf("⭕ *4 LUGARES DISPONIBLES*")).toBeLessThan(
+      text.indexOf("✓ Nevyl (3.28)")
     );
   });
 
@@ -315,9 +317,9 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("📍 Hack Pádel");
     expect(text).toContain("🎾 Cancha 1");
     expect(text).toContain("Nivel 5ta Fuerza");
-    expect(text).toContain("○ Disponible");
-    expect(text.match(/○ Disponible/g)?.length).toBe(3);
-    expect(text.indexOf("○ Disponible")).toBeLessThan(
+    expect(text).toContain("⭕ *3 LUGARES DISPONIBLES*");
+    expect(text).not.toContain("○ Disponible");
+    expect(text.indexOf("⭕ *3 LUGARES DISPONIBLES*")).toBeLessThan(
       text.indexOf("https://app.example/jugar/ra-3")
     );
     expect(text.indexOf("📍 Hack Pádel")).toBeLessThan(
@@ -372,13 +374,13 @@ describe("WhatsApp share message por modo", () => {
       publicUrl: "https://app.example/jugar/ra-pack",
       clubName: "Club",
     });
-    expect(text).toContain("○ Disponible");
-    expect(text.match(/○ Disponible/g)?.length).toBe(1);
+    expect(text).toContain("⭕ *1 LUGAR DISPONIBLE*");
+    expect(text).not.toContain("○ Disponible");
     expect(text).toContain("✓ Ana");
     expect(text).toContain("✓ Beto");
     expect(text).toContain("✓ Cata");
     expect(text).not.toContain("✓ Ana · ✓ Beto");
-    expect(text.indexOf("○ Disponible")).toBeLessThan(
+    expect(text.indexOf("⭕ *1 LUGAR DISPONIBLE*")).toBeLessThan(
       text.indexOf("✓ Ana")
     );
     expect(text.indexOf("✓ Ana")).toBeLessThan(text.indexOf("✓ Beto"));
@@ -434,7 +436,8 @@ describe("WhatsApp share message por modo", () => {
     expect(text).not.toContain("📍");
     expect(text).not.toContain("Hack Pádel");
     expect(text).toContain("🎾 Cancha 1");
-    expect(text).toContain("○ Disponible");
+    expect(text).toContain("⭕ *4 LUGARES DISPONIBLES*");
+    expect(text).not.toContain("○ Disponible");
   });
 
   it("incluye costo y premio solo cuando los flags están activos", () => {
