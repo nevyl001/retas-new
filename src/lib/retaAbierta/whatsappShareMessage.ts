@@ -132,6 +132,21 @@ function formatOpenSlotsHeadline(openSlots: number): string | null {
   return `⭕ *${label}*`;
 }
 
+/**
+ * Huecos numerados del roster (ej. confirmados=2, cupo=8 → "3-"…"8-").
+ * El número sigue la posición en la lista; no repite el copy de «lugares disponibles».
+ */
+function formatOpenSlotPlaceholders(
+  confirmedCount: number,
+  capacity: number
+): string[] {
+  const cap = Math.max(0, Math.floor(Number(capacity) || 0));
+  const filled = Math.max(0, Math.min(cap, Math.floor(Number(confirmedCount) || 0)));
+  const openSlots = cap - filled;
+  if (openSlots <= 0) return [];
+  return Array.from({ length: openSlots }, (_, i) => `${filled + 1 + i}-`);
+}
+
 function formatCupoSummaryLine(
   confirmedCount: number,
   capacity: number,
@@ -168,7 +183,7 @@ function formatConfirmedRosterLines(
 
 /**
  * Mensaje WhatsApp Riviera: compacto para reducir «Leer más».
- * Cupo en una sola línea destacada (debajo de premio) · roster 1 por línea.
+ * Cupo destacado (debajo de premio) + roster con huecos numerados automáticos.
  */
 export function buildRetaAbiertaWhatsAppMessage(opts: {
   dto: Pick<
@@ -286,29 +301,26 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   const descLine = dto.description?.trim();
   if (descLine) lines.push(descLine);
 
+  const rosterLines = formatConfirmedRosterLines(
+    confirmed,
+    displayFullName,
+    Boolean(dto.display_rating),
+    1
+  );
+  const openPlaceholders = formatOpenSlotPlaceholders(
+    confirmedCount,
+    dto.capacity
+  );
+
   if (mode === "americano") {
     lines.push(publicUrl);
     lines.push(formatCupoSummaryLine(confirmedCount, dto.capacity, openSlots));
-    if (confirmed.length > 0) {
-      lines.push(
-        ...formatConfirmedRosterLines(
-          confirmed,
-          displayFullName,
-          Boolean(dto.display_rating),
-          1
-        )
-      );
-    }
+    if (rosterLines.length > 0) lines.push(...rosterLines);
+    if (openPlaceholders.length > 0) lines.push(...openPlaceholders);
   } else {
     lines.push(publicUrl);
-    lines.push(
-      ...formatConfirmedRosterLines(
-        confirmed,
-        displayFullName,
-        Boolean(dto.display_rating),
-        1
-      )
-    );
+    if (rosterLines.length > 0) lines.push(...rosterLines);
+    if (openPlaceholders.length > 0) lines.push(...openPlaceholders);
   }
 
   return lines.join("\n");

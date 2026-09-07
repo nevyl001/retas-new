@@ -100,6 +100,9 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("Nivel 5ta Fuerza");
     expect(text).toContain("✓ Arturo Cortes (0.73)");
     expect(text).toContain("⭕ *3 LUGARES DISPONIBLES*");
+    expect(text).toContain("2-");
+    expect(text).toContain("3-");
+    expect(text).toContain("4-");
     expect(text).not.toContain("○ Disponible");
     expect(text).not.toMatch(/○ \d+ lugares disponibles/);
     expect(text).toContain("https://app.example/jugar/ra-1");
@@ -109,13 +112,14 @@ describe("WhatsApp share message por modo", () => {
     expect(text).not.toContain("⚪");
     expect(text).not.toContain("¿Quieres jugar?");
     expect(text).not.toContain("○ 3 disponibles");
-    // Destacado de cupo antes del enlace/roster.
+    // Destacado de cupo antes del enlace; huecos numerados tras el roster.
     expect(text.indexOf("⭕ *3 LUGARES DISPONIBLES*")).toBeLessThan(
       text.indexOf("https://app.example/jugar/ra-1")
     );
     expect(text.indexOf("https://app.example/jugar/ra-1")).toBeLessThan(
       text.indexOf("✓ Arturo Cortes")
     );
+    expect(text.indexOf("✓ Arturo Cortes")).toBeLessThan(text.indexOf("2-"));
   });
 
   it("Remontada Final: mismo mode_type reta, headline de producto", () => {
@@ -165,8 +169,10 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("6 de 16 confirmados");
     expect(text).toContain("⭕ *10 LUGARES DISPONIBLES*");
     expect(text).toContain("✓ Arturo Cortes (0.73)");
+    expect(text).toContain("7-");
+    expect(text).toContain("16-");
     expect(text).not.toContain("○ 10 lugares disponibles");
-    expect(text).not.toContain("lugares disponibles");
+    expect(text).not.toMatch(/○ \d+ lugares disponibles/i);
   });
 
   it("Americano: incluye costo y premio cuando están activos", () => {
@@ -256,9 +262,12 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("4 de 8 confirmados");
     expect(text).toContain("⭕ *4 LUGARES DISPONIBLES*");
     expect(text).not.toContain("○ Disponible");
+    expect(text).toContain("5-");
+    expect(text).toContain("8-");
     expect(text.indexOf("⭕ *4 LUGARES DISPONIBLES*")).toBeLessThan(
       text.indexOf("✓ Nevyl (3.28)")
     );
+    expect(text.indexOf("✓ Nevyl (3.28)")).toBeLessThan(text.indexOf("5-"));
   });
 
   it("incluye la descripción breve de la reta cuando existe", () => {
@@ -318,6 +327,8 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("🎾 Cancha 1");
     expect(text).toContain("Nivel 5ta Fuerza");
     expect(text).toContain("⭕ *3 LUGARES DISPONIBLES*");
+    expect(text).toContain("2-");
+    expect(text).toContain("4-");
     expect(text).not.toContain("○ Disponible");
     expect(text.indexOf("⭕ *3 LUGARES DISPONIBLES*")).toBeLessThan(
       text.indexOf("https://app.example/jugar/ra-3")
@@ -375,6 +386,7 @@ describe("WhatsApp share message por modo", () => {
       clubName: "Club",
     });
     expect(text).toContain("⭕ *1 LUGAR DISPONIBLE*");
+    expect(text).toContain("4-");
     expect(text).not.toContain("○ Disponible");
     expect(text).toContain("✓ Ana");
     expect(text).toContain("✓ Beto");
@@ -385,6 +397,7 @@ describe("WhatsApp share message por modo", () => {
     );
     expect(text.indexOf("✓ Ana")).toBeLessThan(text.indexOf("✓ Beto"));
     expect(text.indexOf("✓ Beto")).toBeLessThan(text.indexOf("✓ Cata"));
+    expect(text.indexOf("✓ Cata")).toBeLessThan(text.indexOf("4-"));
   });
 
   it("muestra Lugar y Cancha explícitos cuando vienen separados", () => {
@@ -437,6 +450,8 @@ describe("WhatsApp share message por modo", () => {
     expect(text).not.toContain("Hack Pádel");
     expect(text).toContain("🎾 Cancha 1");
     expect(text).toContain("⭕ *4 LUGARES DISPONIBLES*");
+    expect(text).toContain("1-");
+    expect(text).toContain("4-");
     expect(text).not.toContain("○ Disponible");
   });
 
