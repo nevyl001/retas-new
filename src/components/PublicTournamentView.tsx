@@ -77,6 +77,12 @@ import {
 import { RetaEquiposPublicHero } from "./reta/equipos/RetaEquiposPublicHero";
 import type { RetaEquiposPlayerCardData } from "./reta/equipos/RetaEquiposPlayerCard";
 import "./reta/equipos/reta-equipos.css";
+import { RoundTimerPublic } from "./reta/RoundTimerPublic";
+import {
+  EMPTY_ROUND_TIMERS,
+  parseRoundTimers,
+  type RoundTimersState,
+} from "../lib/reta/roundTimers";
 import {
   collectPublicPlayerRefsFromPairs,
   getPublicPlayersIdentityMap,
@@ -212,6 +218,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [clockNow, setClockNow] = useState(() => new Date());
   const [championshipConfig, setChampionshipConfig] =
     useState<RoundRobinChampionshipConfig | null>(null);
+  const [roundTimers, setRoundTimers] = useState<RoundTimersState>(() => ({
+    ...EMPTY_ROUND_TIMERS,
+    rounds: {},
+  }));
   const [organizadorId, setOrganizadorId] = useState<string | null>(null);
   const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
   const showClubBranding = isClubBrandedOrganizer(organizadorId);
@@ -385,6 +395,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             regularRoundsMax: localChamp?.regularRoundsMax,
           };
       setChampionshipConfig(champCfg);
+
+      setRoundTimers(parseRoundTimers(publicConfig?.round_timers));
 
       const tournamentComplete = isRoundRobinTournamentComplete(
         matchesData,
@@ -1408,6 +1420,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                       </span>
                     ) : null}
                   </h3>
+                  <div className="te-public-round-head__timer">
+                    <RoundTimerPublic round={roundNum} timers={roundTimers} />
+                  </div>
                 </div>
 
                 <div className="te-pub-matches-grid te-pub-matches-grid--wide">
@@ -1503,6 +1518,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                           </span>
                         ) : null}
                       </h3>
+                      <div className="te-public-round-head__timer">
+                        <RoundTimerPublic round={idx} timers={roundTimers} />
+                      </div>
                     </div>
                     <div className="te-pub-matches-grid te-pub-matches-grid--wide">
                       {sortedRoundMatches.map((match, matchIdx) =>

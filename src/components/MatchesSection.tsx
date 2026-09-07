@@ -27,6 +27,12 @@ import {
 import { generateNextDynamicBlock } from "../lib/reta/generateNextDynamicBlock";
 import { resolveTotalDynamicBlocks } from "../lib/reta/dynamicTeamLineups";
 import { pairsAppearingInMatches } from "../lib/teamConfigDisplay";
+import {
+  EMPTY_ROUND_TIMERS,
+  type RoundTimersState,
+} from "../lib/reta/roundTimers";
+import { fetchRoundTimers } from "../lib/reta/roundTimersApi";
+import { RoundTimerControl } from "./reta/RoundTimerControl";
 
 interface MatchesSectionProps {
   tournament: Tournament;
@@ -58,6 +64,8 @@ function renderRoundBlock(
     /** Si se pasa, "parejas que descansan" solo considera este set (p.ej. parejas del bloque). */
     restingCandidatePairs?: Pair[];
     hideRestingPairs?: boolean;
+    roundTimers?: RoundTimersState;
+    onRoundTimersChange?: (next: RoundTimersState) => void;
   }
 ) {
   const {
@@ -72,7 +80,11 @@ function renderRoundBlock(
     teamConfig,
     restingCandidatePairs,
     hideRestingPairs,
+    roundTimers,
+    onRoundTimersChange,
   } = opts;
+
+  const roundNum = roundMatches[0]?.round ?? parseInt(round, 10);
 
   return (
     <div key={round} className="round-section-simplified">
@@ -86,9 +98,19 @@ function renderRoundBlock(
           )}
           <div className="round-header-simplified__line" aria-hidden />
         </div>
-        <span className="round-header-simplified__count">
-          {roundMatches.length} partidos
-        </span>
+        <div className="round-header-simplified__right">
+          {Number.isFinite(roundNum) && roundTimers && onRoundTimersChange ? (
+            <RoundTimerControl
+              tournamentId={tournament.id}
+              round={roundNum}
+              timers={roundTimers}
+              onTimersChange={onRoundTimersChange}
+            />
+          ) : null}
+          <span className="round-header-simplified__count">
+            {roundMatches.length} partidos
+          </span>
+        </div>
       </div>
       <div className="matches-grid-simplified">
         {[...roundMatches]
@@ -146,6 +168,10 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   const teamConfig = useResolvedTeamConfig(tournament, pairs);
 
   const [configTick, setConfigTick] = useState(0);
+  const [roundTimers, setRoundTimers] = useState<RoundTimersState>(() => ({
+    ...EMPTY_ROUND_TIMERS,
+    rounds: {},
+  }));
   const championshipActive = isRoundRobinChampionshipActive(tournament);
   const champConfig = useMemo(() => {
     void configTick;
@@ -157,6 +183,22 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       setConfigTick((n) => n + 1);
     });
   }, [tournament.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchRoundTimers(tournament.id).then((state) => {
+      if (!cancelled) setRoundTimers(state);
+    });
+    const poll = window.setInterval(() => {
+      void fetchRoundTimers(tournament.id).then((state) => {
+        if (!cancelled) setRoundTimers(state);
+      });
+    }, 15_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(poll);
+    };
+  }, [tournament.id, forceRefresh]);
 
   useEffect(() => {
     const cfg = loadChampionshipConfig(tournament.id);
@@ -310,6 +352,8 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       teamConfig?.pairToTeam && !isDynamicLineups
         ? pairs.filter((p) => Object.prototype.hasOwnProperty.call(teamConfig.pairToTeam, p.id))
         : undefined,
+    roundTimers,
+    onRoundTimersChange: setRoundTimers,
   };
 
   return (

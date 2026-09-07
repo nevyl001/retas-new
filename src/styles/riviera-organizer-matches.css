@@ -113,6 +113,162 @@
   border-radius: var(--radius-full);
 }
 
+.riviera-organizer-reta .round-header-simplified__right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+/* —— Timer por ronda (organizer) —— */
+.round-timer {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.round-timer__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.28rem 0.65rem;
+  margin: 0;
+  border: 1px solid var(--ro-chrome-border, var(--border-subtle, #2e343d));
+  border-radius: 999px;
+  background: var(--ro-bg-inset, rgba(255, 255, 255, 0.04));
+  color: var(--ro-chrome-text-muted, #a8a89e);
+  font-family: var(--font-body, inherit);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.round-timer__trigger:hover,
+.round-timer__trigger.is-open {
+  color: var(--ro-chrome-text, #f5f2eb);
+  border-color: color-mix(in srgb, var(--ro-chrome-text, #f5f2eb) 28%, transparent);
+}
+
+.round-timer__trigger.is-live {
+  color: var(--ro-chrome-text, #f5f2eb);
+  border-color: color-mix(in srgb, var(--ro-success, #2f7d53) 40%, transparent);
+  background: color-mix(in srgb, var(--ro-success, #2f7d53) 10%, transparent);
+}
+
+.round-timer__trigger.is-expired {
+  color: #fecaca;
+  border-color: color-mix(in srgb, #ef4444 50%, transparent);
+  background: color-mix(in srgb, #ef4444 16%, transparent);
+}
+
+.round-timer__icon {
+  font-size: 0.85rem;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.round-timer__label {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+.round-timer__panel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 40;
+  width: min(16.5rem, 78vw);
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--ro-chrome-border, #2e343d);
+  background: var(--ro-chrome-elevated, #15191f);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.round-timer__panel-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ro-chrome-text-muted, #a8a89e);
+}
+
+.round-timer__presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin-bottom: 0.55rem;
+}
+
+.round-timer__preset {
+  min-height: 2.25rem;
+  margin: 0;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--ro-chrome-border, #2e343d);
+  background: transparent;
+  color: var(--ro-chrome-text, #f5f2eb);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.round-timer__preset:hover {
+  background: color-mix(in srgb, var(--ro-chrome-text, #fff) 8%, transparent);
+}
+
+.round-timer__custom {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.45rem;
+}
+
+.round-timer__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 2.25rem;
+  padding: 0 0.55rem;
+  border-radius: 8px;
+  border: 1px solid var(--ro-chrome-border, #2e343d);
+  background: var(--ro-bg-inset, #0f1217);
+  color: var(--ro-chrome-text, #f5f2eb);
+  font-size: 0.875rem;
+}
+
+.round-timer__start {
+  flex: 0 0 auto;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: #f5f2eb;
+  color: #12161b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.round-timer__stop {
+  width: 100%;
+  min-height: 2rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ro-chrome-text-muted, #a8a89e);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.round-timer__stop:hover {
+  color: var(--ro-chrome-text, #f5f2eb);
+}
+
 /* —— Grid: auto-fit + centrado cuando hay 1–2 partidos (sin hueco vacío a la derecha) —— */
 .riviera-organizer-reta .matches-grid-simplified {
   display: grid;

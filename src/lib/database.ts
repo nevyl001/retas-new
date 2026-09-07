@@ -310,6 +310,7 @@ export const getTournamentPublicConfigExtended = async (
   format?: string;
   team_config?: TournamentTeamConfig | null;
   championship_config?: unknown;
+  round_timers?: unknown;
 } | null> => {
   try {
     const { data, error } = await supabasePublicRead
@@ -322,6 +323,7 @@ export const getTournamentPublicConfigExtended = async (
       format?: string;
       team_config?: TournamentTeamConfig | null;
       championship_config?: unknown;
+      round_timers?: unknown;
     };
   } catch {
     return null;
