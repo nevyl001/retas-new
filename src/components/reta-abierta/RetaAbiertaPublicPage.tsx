@@ -871,12 +871,23 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
           <div className="ra-public__hero-top">
             <div className="ra-public__chip-row" aria-label="Tipo y nivel">
               <span className="ra-public__chip">{modeLabel(dto)}</span>
-              {dto.category_label ? (
-                <span className="ra-public__chip ra-public__chip--soft">
-                  {formatPublicCategoriaLabel(dto.category_label) ||
-                    dto.category_label}
-                </span>
-              ) : null}
+              {(() => {
+                const categoryRaw = (
+                  formatPublicCategoriaLabel(dto.category_label) ||
+                  dto.category_label ||
+                  ""
+                ).trim();
+                // Solo chips cortos (ej. "5ta Fuerza"). Textos largos van al blurb.
+                const chipOk =
+                  categoryRaw.length > 0 &&
+                  categoryRaw.length <= 28 &&
+                  !/\n/.test(categoryRaw);
+                return chipOk ? (
+                  <span className="ra-public__chip ra-public__chip--soft">
+                    {categoryRaw}
+                  </span>
+                ) : null;
+              })()}
             </div>
             {dto.status === "open" && dto.spots_left > 0 ? (
               <span
@@ -983,11 +994,30 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 </>
               );
             })()}
-            {dto.description?.trim() ? (
-              <p className="ra-public__meta ra-public__meta--desc">
-                {dto.description.trim()}
-              </p>
-            ) : null}
+            {(() => {
+              const descriptionText = dto.description?.trim() || "";
+              const categoryRaw = (
+                formatPublicCategoriaLabel(dto.category_label) ||
+                dto.category_label ||
+                ""
+              ).trim();
+              const categoryIsLong =
+                categoryRaw.length > 28 || /\n/.test(categoryRaw);
+              const blurbParts = [
+                descriptionText,
+                categoryIsLong ? categoryRaw : "",
+              ].filter((part, idx, arr) => part && arr.indexOf(part) === idx);
+              if (blurbParts.length === 0) return null;
+              return (
+                <div className="ra-public__blurb" aria-label="Descripción">
+                  {blurbParts.map((part) => (
+                    <p key={part.slice(0, 48)} className="ra-public__blurb-text">
+                      {part}
+                    </p>
+                  ))}
+                </div>
+              );
+            })()}
           </aside>
 
           <div className="ra-public__panel">
