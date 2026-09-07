@@ -773,9 +773,9 @@
 
 .te-public--reta .round-timer-pub.is-expired {
   gap: 0.55rem;
-  min-width: 11.5rem;
-  min-height: 3.15rem;
-  padding: 0.55rem 1.15rem;
+  min-width: 12.5rem;
+  min-height: 2.55rem;
+  padding: 0.55rem 1.25rem;
   border-color: rgba(248, 113, 113, 0.65);
   background: linear-gradient(
     180deg,
@@ -811,31 +811,15 @@
   letter-spacing: 0.1em;
 }
 
-.te-public--reta .round-timer-pub.is-expired .round-timer-pub__clock {
-  min-width: 0;
-  font-size: 1.05rem;
-  letter-spacing: 0.12em;
-  color: #fecaca;
-  line-height: 1;
-}
-
-.te-public--reta .round-timer-pub__ended {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0.2rem;
-  min-width: 0;
-}
-
 .te-public--reta .round-timer-pub__msg {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #fda4af;
+  color: #fecaca;
   line-height: 1.15;
   white-space: nowrap;
+  text-align: center;
 }
 
 @media (max-width: 640px) {
@@ -866,11 +850,13 @@
   }
 
   .te-public--reta .round-timer-pub.is-expired {
-    min-width: 12rem;
+    min-width: 11.5rem;
+    padding-inline: 1rem;
   }
 
   .te-public--reta .round-timer-pub__msg {
-    white-space: normal;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
   }
 }
 
