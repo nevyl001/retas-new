@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import type { RetaConfigFormValues } from "../../lib/reta/updateRetaConfig";
 import {
   fieldEditability,
@@ -704,8 +704,6 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
     </div>
   ) : null;
 
-  const [optionalOpen, setOptionalOpen] = useState(false);
-
   if (essentials) {
     return (
       <div
@@ -730,45 +728,38 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             {scheduleField}
             {courtsField}
           </div>
-          <div className="reta-details-form__row reta-details-form__row--game">
+          <div className="reta-details-form__row reta-details-form__row--nivel">
             {nivelField}
-            {ramaField}
           </div>
-        </section>
-
-        <div className="reta-details-form__optional">
-          <button
-            type="button"
-            className={`reta-details-form__optional-toggle${
-              optionalOpen ? " is-open" : ""
-            }`}
-            aria-expanded={optionalOpen}
-            onClick={() => setOptionalOpen((v) => !v)}
-          >
-            <span aria-hidden>{optionalOpen ? "−" : "+"}</span>
-            Detalles opcionales
-          </button>
-          {optionalOpen ? (
-            <div className="reta-details-form__optional-body">
-              <div className="reta-details-form__row reta-details-form__row--public">
-                {descriptionField}
-                {lugarField}
-                {costoField}
-                {premioField}
-              </div>
-              {championshipField ? (
-                <details className="reta-details-form__advanced">
-                  <summary className="reta-details-form__advanced-summary">
-                    Configuración avanzada
-                  </summary>
-                  <div className="reta-details-form__advanced-body">
-                    {championshipField}
-                  </div>
-                </details>
-              ) : null}
+          {ramaField ? (
+            <div className="reta-details-form__row reta-details-form__row--rama">
+              {ramaField}
             </div>
           ) : null}
-        </div>
+        </section>
+
+        <section
+          className="reta-details-form__section reta-details-form__section--optional"
+          aria-labelledby="reta-details-sec-optional"
+        >
+          <h3
+            id="reta-details-sec-optional"
+            className="reta-details-form__section-title"
+          >
+            Detalles opcionales
+          </h3>
+          <div className="reta-details-form__row reta-details-form__row--public">
+            {descriptionField}
+            {lugarField}
+            {costoField}
+            {premioField}
+          </div>
+          {championshipField ? (
+            <div className="reta-details-form__row reta-details-form__row--champ">
+              {championshipField}
+            </div>
+          ) : null}
+        </section>
       </div>
     );
   }

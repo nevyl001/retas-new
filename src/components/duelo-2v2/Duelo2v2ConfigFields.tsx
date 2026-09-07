@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   RETA_DURATION_MAX,
   RETA_DURATION_MIN,
@@ -79,8 +79,6 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
     values.draftTimeStart.trim() && values.draftTimeEnd.trim()
       ? values.draftTimeEnd
       : null;
-
-  const [optionalOpen, setOptionalOpen] = useState(false);
 
   return (
     <div
@@ -249,20 +247,16 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
         </div>
       </section>
 
-      <div className="reta-details-form__optional">
-        <button
-          type="button"
-          className={`reta-details-form__optional-toggle${
-            optionalOpen ? " is-open" : ""
-          }`}
-          aria-expanded={optionalOpen}
-          onClick={() => setOptionalOpen((v) => !v)}
+      <section
+        className="reta-details-form__section reta-details-form__section--optional"
+        aria-labelledby={`${idPrefix}-details-sec-optional`}
+      >
+        <h3
+          id={`${idPrefix}-details-sec-optional`}
+          className="reta-details-form__section-title"
         >
-          <span aria-hidden>{optionalOpen ? "−" : "+"}</span>
           Detalles opcionales
-        </button>
-        {optionalOpen ? (
-          <div className="reta-details-form__optional-body">
+        </h3>
         <div className="reta-details-form__row reta-details-form__row--public">
           <label className="home-sheet__field reta-details-form__field reta-details-form__field--desc">
             <span className="home-sheet__field-label">Descripción</span>
@@ -405,9 +399,7 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
             )}
           </div>
         </div>
-          </div>
-        ) : null}
-      </div>
+      </section>
     </div>
   );
 };

@@ -261,7 +261,10 @@
 }
 
 .qm-ws__details-inline .reta-details-form__row--game,
-.qm-ws__details-inline .reta-details-form__row--public {
+.qm-ws__details-inline .reta-details-form__row--public,
+.qm-ws__details-inline .reta-details-form__row--nivel,
+.qm-ws__details-inline .reta-details-form__row--rama,
+.qm-ws__details-inline .reta-details-form__row--champ {
   display: grid;
   gap: var(--rd-gap);
   grid-template-columns: 1fr;
@@ -1189,32 +1192,39 @@
 }
 
 .qm-ws__details-inline .reta-details-form__field--rama {
-  min-width: min(100%, 11.5rem);
+  min-width: 0;
+  width: 100%;
 }
 
 .qm-ws__details-inline .reta-details-form__rama-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
   margin-top: 0;
+  width: 100%;
 }
 
 .qm-ws__details-inline .reta-details-form__rama-option {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.22rem 0.5rem;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.75rem;
   border: 1px solid var(--qm-ink-border);
-  border-radius: 999px;
+  border-radius: 10px;
   background: var(--qm-ink-inset);
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--qm-ink-text-muted);
   cursor: pointer;
   user-select: none;
-  min-height: var(--rd-input-h);
+  min-height: 2.5rem;
   box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .qm-ws__details-inline .reta-details-form__rama-option--active {
@@ -1224,8 +1234,8 @@
 }
 
 .qm-ws__details-inline .reta-details-form__rama-option input[type="checkbox"] {
-  width: 0.85rem;
-  height: 0.85rem;
+  width: 0.95rem;
+  height: 0.95rem;
   margin: 0;
   flex-shrink: 0;
   accent-color: var(--ro-success, #2f7d53);
@@ -1279,9 +1289,20 @@
   }
 
   .qm-ws__details-inline .reta-details-form__row--game {
-    grid-template-columns: minmax(10rem, 1.2fr) minmax(12rem, 1fr);
+    grid-template-columns: 1fr;
     align-items: start;
     gap: var(--rd-gap);
+  }
+
+  .qm-ws__details-inline .reta-details-form__row--nivel,
+  .qm-ws__details-inline .reta-details-form__row--rama {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--rd-gap);
+  }
+
+  .qm-ws__details-inline .reta-details-form__row--rama {
+    margin-top: 0.15rem;
   }
 
   .qm-ws__details-inline .reta-details-form__row--public {
@@ -3184,26 +3205,29 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 }
 
 .reta-details-form__optional-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 0;
-  padding: 0.35rem 0;
-  border: none;
-  background: transparent;
-  color: var(--qm-ink-muted, #a8a89e);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-}
-
-.reta-details-form__optional-toggle.is-open {
-  color: var(--qm-ink-text, #f5f2eb);
+  display: none;
 }
 
 .reta-details-form__optional-body {
-  margin-top: 0.65rem;
+  margin-top: 0;
+}
+
+.qm-ws--create-compose .reta-details-form--compose .reta-details-form__section--optional {
+  margin-top: 0.15rem;
+  padding-top: 0.95rem;
+  border-top: 1px solid color-mix(in srgb, var(--qm-ink-border) 45%, transparent);
+}
+
+.qm-ws--create-compose .reta-details-form__row--nivel {
+  margin-bottom: 0.85rem;
+}
+
+.qm-ws--create-compose .reta-details-form__row--rama {
+  margin-bottom: 0.15rem;
+}
+
+.qm-ws--create-compose .reta-details-form__row--champ {
+  margin-top: 0.85rem;
 }
 
 .qm-ws--create-compose .reta-config-panel__conv--compose {

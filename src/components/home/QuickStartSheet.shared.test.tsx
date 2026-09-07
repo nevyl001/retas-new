@@ -51,8 +51,9 @@ describe("QuickStartSheet shared form", () => {
     expect(scope.textContent).toMatch(/Resumen/);
     expect(scope.textContent).toMatch(/Nivel/);
     expect(scope.querySelector('[data-testid="guardar-reta"]')).toBeTruthy();
-    // Remontada vive en Detalles opcionales (colapsado al inicio).
+    // Remontada vive en Detalles opcionales (siempre visibles).
     expect(scope.textContent).toMatch(/Detalles opcionales/);
+    expect(scope.textContent).toMatch(/Remontada/);
   });
 
   it("18. edit mode carga valores actuales en RetaConfigFields", () => {
@@ -94,13 +95,7 @@ describe("QuickStartSheet shared form", () => {
     expect(container.textContent).toMatch(/Hora/);
     expect(container.querySelector('input[type="date"]')).toBeTruthy();
     expect(container.querySelector('input[type="time"]')).toBeTruthy();
-    const optionalBtn = Array.from(container.querySelectorAll("button")).find(
-      (el) => /Detalles opcionales/i.test(el.textContent || "")
-    );
-    expect(optionalBtn).toBeTruthy();
-    act(() => {
-      optionalBtn?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
+    expect(container.textContent).toMatch(/Detalles opcionales/);
     const costoToggle = Array.from(
       container.querySelectorAll('input[type="checkbox"]')
     ).find((el) =>
