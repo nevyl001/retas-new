@@ -408,22 +408,29 @@
 }
 
 .qm-ws__details-inline .reta-config-panel__conv {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: 0.75rem;
-  row-gap: 0.35rem;
-  min-height: 3.5rem; /* 56px */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+  min-height: 0;
+  padding-top: 0.15rem;
 }
 
 .qm-ws__details-inline .reta-config-panel__conv-head {
   margin: 0;
-  grid-column: 1;
-  grid-row: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "title status"
+    "desc status";
+  column-gap: 0.75rem;
+  row-gap: 0.15rem;
+  align-items: center;
   min-width: 0;
 }
 
 .qm-ws__details-inline .reta-config-panel__conv-title {
+  grid-area: title;
   margin: 0;
   font-size: 0.75rem;
   font-weight: 700;
@@ -434,26 +441,38 @@
 }
 
 .qm-ws__details-inline .reta-config-panel__conv-desc {
-  margin: 0.1rem 0 0;
+  grid-area: desc;
+  margin: 0;
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--qm-ink-muted);
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .qm-ws__details-inline .reta-config-panel__conv-status {
-  margin: 0.15rem 0 0;
+  grid-area: status;
+  margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.35rem;
+  justify-self: end;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--qm-ink-border) 80%, transparent);
+  background: color-mix(in srgb, var(--qm-ink-elevated) 70%, transparent);
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--qm-ink-muted);
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .qm-ws__details-inline .reta-config-panel__conv-status.is-live {
   color: var(--qm-ink-text);
+  border-color: color-mix(in srgb, var(--ro-success, #2f7d53) 45%, transparent);
+  background: color-mix(in srgb, var(--ro-success, #2f7d53) 12%, transparent);
 }
 
 .qm-ws__details-inline .reta-config-panel__conv-status.is-live span {
@@ -463,36 +482,31 @@
 .qm-ws__details-inline .reta-config-panel__conv > .qm-ws__details-conv,
 .qm-ws__details-inline .reta-config-panel__conv > #reta-convocatoria-inline,
 .qm-ws__details-inline .reta-config-panel__conv > [id="reta-convocatoria-inline"] {
-  grid-column: 1 / -1;
+  width: 100%;
 }
 
-/* Gate a la derecha del head cuando conv está en layout compacto */
+/* Gate a ancho completo debajo del head — sin truncar copy */
 .qm-ws__details-inline .reta-config-panel__conv > .qm-ws__details-conv,
 .qm-ws__details-inline .reta-config-panel__conv .qm-ws__details-conv {
-  grid-column: 2;
-  grid-row: 1;
   padding: 0;
   border: none;
   background: transparent;
-  align-self: center;
+  align-self: stretch;
 }
 
 .qm-ws__details-inline .reta-config-panel__conv .qm-ws__details-conv.is-open {
-  grid-column: 1 / -1;
-  grid-row: 2;
   background: transparent;
 }
 
 .qm-ws__details-inline .reta-config-panel__conv .qm-ws__conv-gate {
-  min-height: 2.75rem;
-  max-height: 3.5rem;
-  padding: 0.35rem 0.5rem;
-  border-radius: 8px;
+  min-height: 3rem;
+  max-height: none;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
 }
 
 .qm-ws__details-inline .reta-config-panel__conv .qm-ws__details-conv.is-closed .qm-ws__conv-gate-copy {
-  /* El head ya comunica título/estado; el gate aporta el toggle */
-  max-width: 9.5rem;
+  max-width: none;
 }
 
 .qm-ws__details-inline .reta-config-panel__sticky-bar {
@@ -958,13 +972,11 @@
   }
 
   .qm-ws__details-inline .reta-config-panel__conv {
-    grid-template-columns: 1fr;
     min-height: 0;
   }
 
   .qm-ws__details-inline .reta-config-panel__conv .qm-ws__details-conv {
-    grid-column: 1;
-    grid-row: auto;
+    width: 100%;
   }
 
   .qm-ws__details-inline .reta-details-form__row--primary .reta-details-form__field--cancha .home-sheet__input,
@@ -1370,15 +1382,15 @@
 .qm-ws__conv-gate {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.75rem;
   width: 100%;
   margin: 0;
   min-height: 3.25rem; /* ~52px */
-  max-height: 3.75rem; /* ~60px */
-  padding: 0.4rem 0.65rem;
-  border: 1px solid var(--qm-ink-border);
-  border-radius: 8px;
-  background: var(--qm-ink-elevated);
+  max-height: none;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--qm-ink-border) 75%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--qm-ink-elevated) 88%, transparent);
   color: var(--qm-ink-text);
   text-align: left;
   cursor: pointer;
@@ -1391,9 +1403,10 @@
 .qm-ws__conv-gate:hover {
   border-color: color-mix(
     in srgb,
-    var(--brand-accent, var(--ro-accent, #c8f542)) 45%,
-    transparent
+    var(--qm-ink-text) 28%,
+    var(--qm-ink-border)
   );
+  background: var(--qm-ink-elevated);
 }
 
 .qm-ws__conv-gate:focus-visible {
@@ -1404,14 +1417,14 @@
 .qm-ws__conv-gate.is-on {
   border-color: color-mix(
     in srgb,
-    var(--brand-accent, var(--ro-accent, #c8f542)) 55%,
-    transparent
+    var(--qm-ink-text) 22%,
+    var(--qm-ink-border)
   );
-  background: color-mix(
-    in srgb,
-    var(--brand-accent, var(--ro-accent, #c8f542)) 10%,
-    var(--qm-ink-elevated)
-  );
+  background: var(--qm-ink-elevated);
+}
+
+.qm-ws__conv-gate.is-live:not(.is-on) {
+  border-color: color-mix(in srgb, var(--ro-success, #2f7d53) 35%, transparent);
 }
 
 .qm-ws__conv-gate-switch {
@@ -1420,12 +1433,12 @@
   width: 2.5rem;
   height: 1.4rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.14);
   transition: background 0.15s ease;
 }
 
 .qm-ws__conv-gate.is-on .qm-ws__conv-gate-switch {
-  background: var(--brand-accent, var(--ro-accent, #c8f542));
+  background: color-mix(in srgb, var(--qm-ink-text) 72%, transparent);
 }
 
 .qm-ws__conv-gate-knob {
@@ -1447,29 +1460,42 @@
 .qm-ws__conv-gate-copy {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.15rem;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .qm-ws__conv-gate-title {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-size: 0.875rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
   color: var(--qm-ink-text);
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .qm-ws__conv-gate-hint {
-  font-size: 0.6875rem;
-  line-height: 1.25;
+  font-size: 0.75rem;
+  line-height: 1.35;
   color: var(--qm-ink-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.qm-ws__conv-gate-chevron {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--qm-ink-muted);
 }
 
 .qm-ws__details-conv.is-open .qm-ws__conv-gate {
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.55rem;
 }
 
 .qm-ws__conv-prelaunch-note {
@@ -2647,16 +2673,16 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   }
 
   .qm-ws__conv-gate {
-    padding: 0.4rem 0.5rem;
-    gap: 0.55rem;
+    padding: 0.55rem 0.7rem;
+    gap: 0.65rem;
   }
 
   .qm-ws__conv-gate-title {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
   }
 
   .qm-ws__conv-gate-hint {
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
   }
 
   /* Convocatoria: acciones densas en 2 columnas */
@@ -3207,8 +3233,16 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 
 .qm-ws--create-compose .reta-config-panel__conv--compose .qm-ws__conv-gate {
   min-height: 2.75rem;
-  max-height: 3.5rem;
+  max-height: none;
   padding: 0.35rem 0.55rem;
+}
+
+.qm-ws--create-compose .reta-config-panel__conv--compose .qm-ws__conv-gate-chevron {
+  display: none;
+}
+
+.qm-ws--create-compose .reta-config-panel__conv--compose .qm-ws__conv-gate-hint {
+  white-space: nowrap;
 }
 
 .qm-ws-panel--compose {

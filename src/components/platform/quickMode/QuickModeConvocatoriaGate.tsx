@@ -29,14 +29,23 @@ export function QuickModeConvocatoriaGate({
   onToggle,
   live = false,
   panelId = "qm-convocatoria-panel",
-  titleOn = "Ocultar convocatoria",
-  titleOff = "Lanzar convocatoria",
-  hintOn = "Pulsa para cerrar este panel",
-  hintOff = "Opcional · Inscripciones con enlace público",
-  hintLive = "Convocatoria activa · pulsa para ocultar el panel",
-  hintLiveClosed = "Convocatoria activa · pulsa para ver el panel",
+  titleOn = "Ocultar panel",
+  titleOff = "Ver panel",
+  hintOn = "Cierra sin cambiar el estado",
+  hintOff = "Enlace público y WhatsApp",
+  hintLive = "Panel abierto",
+  hintLiveClosed = "Activa · enlace y WhatsApp",
   children,
 }: QuickModeConvocatoriaGateProps) {
+  const title = open ? titleOn : titleOff;
+  const hint = open
+    ? live
+      ? hintLive
+      : hintOn
+    : live
+      ? hintLiveClosed
+      : hintOff;
+
   return (
     <div
       className={`qm-ws__details-conv${open ? " is-open" : " is-closed"}${
@@ -45,7 +54,9 @@ export function QuickModeConvocatoriaGate({
     >
       <button
         type="button"
-        className={`qm-ws__conv-gate${open ? " is-on" : ""}`}
+        className={`qm-ws__conv-gate${open ? " is-on" : ""}${
+          live ? " is-live" : ""
+        }`}
         aria-pressed={open}
         aria-controls={panelId}
         aria-expanded={open}
@@ -55,18 +66,13 @@ export function QuickModeConvocatoriaGate({
           <span className="qm-ws__conv-gate-knob" />
         </span>
         <span className="qm-ws__conv-gate-copy">
-          <span className="qm-ws__conv-gate-title">
-            {open ? titleOn : titleOff}
-          </span>
-          <span className="qm-ws__conv-gate-hint">
-            {open
-              ? live
-                ? hintLive
-                : hintOn
-              : live
-                ? hintLiveClosed
-                : hintOff}
-          </span>
+          <span className="qm-ws__conv-gate-title">{title}</span>
+          {hint ? (
+            <span className="qm-ws__conv-gate-hint">{hint}</span>
+          ) : null}
+        </span>
+        <span className="qm-ws__conv-gate-chevron" aria-hidden>
+          {open ? "−" : "+"}
         </span>
       </button>
 

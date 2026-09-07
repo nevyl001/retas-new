@@ -824,7 +824,7 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
                         convIsLive ? " is-live" : ""
                       }`}
                     >
-                      <span aria-hidden>●</span> Estado:{" "}
+                      <span aria-hidden>●</span>{" "}
                       {convIsLive ? "Activa" : "Inactiva"}
                     </p>
                   </div>
@@ -833,13 +833,11 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
                     live={convIsLive}
                     panelId="reta-convocatoria-panel"
                     titleOn="Ocultar panel"
-                    titleOff={
-                      convIsLive ? "Ver panel de convocatoria" : "Gestionar convocatoria"
-                    }
-                    hintOn="Cierra el panel de gestión; la convocatoria no cambia."
-                    hintOff="Abre el panel para publicar o copiar el enlace."
-                    hintLive="Convocatoria activa — pulsa para ocultar el panel."
-                    hintLiveClosed="Convocatoria activa — pulsa para ver el panel."
+                    titleOff="Ver panel"
+                    hintOn="Cierra sin cambiar el estado"
+                    hintOff="Enlace público y WhatsApp"
+                    hintLive="Panel abierto"
+                    hintLiveClosed="Enlace y WhatsApp listos"
                     onToggle={() => {
                       setWantConvocatoria((v) => {
                         const next = !v;
