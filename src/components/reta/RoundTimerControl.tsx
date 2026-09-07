@@ -11,6 +11,11 @@ import {
   clearRoundTimer,
   startRoundTimer,
 } from "../../lib/reta/roundTimersApi";
+import {
+  bindRoundTimerAudioUnlock,
+  playRoundTimerEndedSound,
+  unlockRoundTimerAudio,
+} from "../../lib/reta/roundTimerSound";
 
 type RoundTimerControlProps = {
   tournamentId: string;
@@ -41,12 +46,42 @@ export const RoundTimerControl: React.FC<RoundTimerControlProps> = ({
   const active = isRoundTimerActive(entry, nowMs);
   const clock = formatRemainingClock(entry, nowMs);
   const expired = Boolean(entry?.endsAt) && !active;
+  const soundedForEndsAtRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    bindRoundTimerAudioUnlock();
+  }, []);
 
   useEffect(() => {
     if (!entry?.endsAt) return;
-    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
+    const id = window.setInterval(() => setNowMs(Date.now()), 250);
     return () => window.clearInterval(id);
   }, [entry?.endsAt]);
+
+  useEffect(() => {
+    if (!entry?.endsAt) return;
+    const end = Date.parse(entry.endsAt);
+    if (!Number.isFinite(end)) return;
+    const msLeft = end - Date.now();
+    if (msLeft <= 0) return;
+
+    const id = window.setTimeout(() => {
+      if (soundedForEndsAtRef.current === entry.endsAt) return;
+      soundedForEndsAtRef.current = entry.endsAt;
+      playRoundTimerEndedSound();
+      setNowMs(Date.now());
+    }, msLeft + 40);
+    return () => window.clearTimeout(id);
+  }, [entry?.endsAt]);
+
+  useEffect(() => {
+    if (!expired || !entry?.endsAt) return;
+    if (soundedForEndsAtRef.current === entry.endsAt) return;
+    const end = Date.parse(entry.endsAt);
+    if (!Number.isFinite(end) || Date.now() - end > 2_500) return;
+    soundedForEndsAtRef.current = entry.endsAt;
+    playRoundTimerEndedSound();
+  }, [expired, entry?.endsAt]);
 
   useEffect(() => {
     if (!open) return;
@@ -59,6 +94,7 @@ export const RoundTimerControl: React.FC<RoundTimerControlProps> = ({
 
   const start = async (mins: number) => {
     if (busy || mins < 1) return;
+    unlockRoundTimerAudio();
     setBusy(true);
     try {
       const next = await startRoundTimer(tournamentId, round, mins, timers);
