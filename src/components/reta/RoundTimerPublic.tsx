@@ -61,11 +61,11 @@ export const RoundTimerPublic: React.FC<RoundTimerPublicProps> = ({
       className={`round-timer-pub${expired ? " is-expired" : " is-live"} ${className}`.trim()}
       role="status"
       aria-live="polite"
-      aria-label={expired ? "Juego ha terminado" : `${clock} restantes`}
+      aria-label={expired ? "El juego ha terminado" : `${clock} restantes`}
     >
       <span className="round-timer-pub__dot" aria-hidden />
       {expired ? (
-        <span className="round-timer-pub__msg">Juego ha terminado</span>
+        <span className="round-timer-pub__msg">El juego ha terminado</span>
       ) : (
         <span className="round-timer-pub__clock">{clock}</span>
       )}

@@ -773,7 +773,7 @@
 
 .te-public--reta .round-timer-pub.is-expired {
   gap: 0.55rem;
-  min-width: 12.5rem;
+  min-width: 14rem;
   min-height: 2.55rem;
   padding: 0.55rem 1.25rem;
   border-color: rgba(248, 113, 113, 0.65);
@@ -850,7 +850,7 @@
   }
 
   .te-public--reta .round-timer-pub.is-expired {
-    min-width: 11.5rem;
+    min-width: 13rem;
     padding-inline: 1rem;
   }
 
