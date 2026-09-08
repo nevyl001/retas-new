@@ -15,33 +15,21 @@ function shortTeamLabel(name: string): string {
   return cleaned || name;
 }
 
-function ScoreboardPlayerLine({
-  player,
-  showName,
-}: {
-  player: PublicRetaPairPlayer;
-  showName: boolean;
-}) {
+function ScoreboardPlayerLine({ player }: { player: PublicRetaPairPlayer }) {
   return (
-    <div
-      className={`reta-sb-player${showName ? "" : " reta-sb-player--avatar-only"}`}
-    >
+    <div className="reta-sb-player">
       <JugadorAvatar
         fotoUrl={player.fotoUrl}
         nombre={player.name}
         size="lg"
         className="reta-sb-player__av"
       />
-      {showName ? (
-        <span className="reta-sb-player__name">{player.name}</span>
-      ) : (
-        <span className="sr-only">{player.name}</span>
-      )}
+      <span className="reta-sb-player__name">{player.name}</span>
     </div>
   );
 }
 
-/** Bloque explícito: pareja + marcador; con equipo, el watermark identifica. */
+/** Pareja: avatares + nombres; marcador a la derecha, centrado en el dúo. */
 function TeamPairBlock({
   teamName,
   logoUrl,
@@ -67,56 +55,6 @@ function TeamPairBlock({
   const hasPlayers = Boolean(p1 || p2);
   const hasTeam = Boolean(teamName?.trim());
   const displayTeam = hasTeam ? shortTeamLabel(teamName!.trim()) : "";
-  // Sin equipo el nombre de pareja ya está arriba; no repetir junto al avatar.
-  const showPlayerNames = hasTeam;
-
-  const scoreEl = (
-    <div
-      key={`${hasResult ? "r" : "p"}-${score}`}
-      className={[
-        "reta-sb-team__score",
-        !hasResult ? "reta-sb-team__score--empty" : "",
-        tePubScoreNumModifier({
-          isWin: isWinner,
-          isTie,
-        }).trim(),
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      aria-label={hasResult ? `Marcador ${score}` : "Sin marcador"}
-    >
-      {hasResult ? score : "–"}
-    </div>
-  );
-
-  const playersEl = (
-    <div
-      className={`reta-sb-team__players${
-        showPlayerNames ? "" : " reta-sb-team__players--avatars"
-      }`}
-    >
-      {hasPlayers ? (
-        <>
-          {p1 ? (
-            <ScoreboardPlayerLine player={p1} showName={showPlayerNames} />
-          ) : null}
-          {p2 ? (
-            <ScoreboardPlayerLine player={p2} showName={showPlayerNames} />
-          ) : null}
-        </>
-      ) : (
-        <div className="reta-sb-player">
-          <span
-            className="reta-sb-player__av reta-sb-player__av--fallback"
-            aria-hidden
-          >
-            ?
-          </span>
-          <span className="reta-sb-player__name">{pairLabel}</span>
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <section
@@ -124,7 +62,6 @@ function TeamPairBlock({
         "reta-sb-team",
         `reta-sb-team--${side}`,
         hasTeam ? "reta-sb-team--branded" : "",
-        !hasTeam ? "reta-sb-team--pair" : "",
         isWinner ? "reta-sb-team--win" : "",
         isTie ? "reta-sb-team--tie" : "",
       ]
@@ -146,27 +83,49 @@ function TeamPairBlock({
         </div>
       ) : null}
 
-      <div className="reta-sb-team__body">
-        {hasTeam ? (
-          <>
-            <div className="reta-sb-team__head reta-sb-team__head--score-only">
-              {scoreEl}
-            </div>
-            {playersEl}
-          </>
-        ) : (
-          <>
+      <div className="reta-sb-team__body reta-sb-team__body--score-row">
+        <div className="reta-sb-team__main">
+          {hasTeam ? (
             <div className="reta-sb-team__identity">
-              <span className="reta-sb-team__name reta-sb-team__name--pair">
-                {pairLabel}
-              </span>
+              <span className="reta-sb-team__name">{displayTeam}</span>
             </div>
-            <div className="reta-sb-team__couple">
-              {playersEl}
-              {scoreEl}
-            </div>
-          </>
-        )}
+          ) : null}
+          <div className="reta-sb-team__players">
+            {hasPlayers ? (
+              <>
+                {p1 ? <ScoreboardPlayerLine player={p1} /> : null}
+                {p2 ? <ScoreboardPlayerLine player={p2} /> : null}
+              </>
+            ) : (
+              <div className="reta-sb-player">
+                <span
+                  className="reta-sb-player__av reta-sb-player__av--fallback"
+                  aria-hidden
+                >
+                  ?
+                </span>
+                <span className="reta-sb-player__name">{pairLabel}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div
+          key={`${hasResult ? "r" : "p"}-${score}`}
+          className={[
+            "reta-sb-team__score",
+            !hasResult ? "reta-sb-team__score--empty" : "",
+            tePubScoreNumModifier({
+              isWin: isWinner,
+              isTie,
+            }).trim(),
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          aria-label={hasResult ? `Marcador ${score}` : "Sin marcador"}
+        >
+          {hasResult ? score : "–"}
+        </div>
       </div>
     </section>
   );
