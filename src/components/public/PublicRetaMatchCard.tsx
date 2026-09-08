@@ -256,12 +256,8 @@ export const PublicRetaMatchCard: React.FC<{
 
       <TePubMatchOutcome winnerLabel={winnerLabel} isTie={isTie} />
 
-      {games && games.length > 0 && (
-        <div
-          className={`te-pub-games${
-            games.length === 1 ? " te-pub-games--solo" : ""
-          }`}
-        >
+      {games && games.length > 1 ? (
+        <div className="te-pub-games">
           <p className="te-pub-games__title">Juegos</p>
           <div className="te-pub-games__list">
             {games.map((g, i) => (
@@ -271,7 +267,7 @@ export const PublicRetaMatchCard: React.FC<{
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </article>
   );
 };
