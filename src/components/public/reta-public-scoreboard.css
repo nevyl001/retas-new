@@ -354,6 +354,27 @@
   color: #ffffff !important;
 }
 
+.reta-sb-team--pair .reta-sb-team__identity {
+  flex: none;
+  width: 100%;
+}
+
+.reta-sb-team--pair .reta-sb-team__name--pair {
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em;
+  text-align: left;
+}
+
+.reta-sb-team__couple {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  min-width: 0;
+  width: 100%;
+}
+
 .reta-sb-team__score {
   flex-shrink: 0;
   display: inline-flex;
@@ -391,6 +412,52 @@
   gap: 0.55rem;
   min-width: 0;
   padding-left: 0.1rem;
+}
+
+.reta-sb-team__players--avatars {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+  padding-left: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.reta-sb-player--avatar-only {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 0;
+  gap: 0;
+}
+
+.reta-sb-player--avatar-only .reta-sb-player__av,
+.reta-sb-player--avatar-only .rj-avatar.reta-sb-player__av {
+  width: clamp(42px, 9vw, 52px) !important;
+  height: clamp(42px, 9vw, 52px) !important;
+  min-width: clamp(42px, 9vw, 52px) !important;
+  min-height: clamp(42px, 9vw, 52px) !important;
+  max-width: clamp(42px, 9vw, 52px) !important;
+  max-height: clamp(42px, 9vw, 52px) !important;
+  border-width: 1.5px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  font-size: 0.72rem !important;
+}
+
+@media (min-width: 768px) {
+  .reta-sb-player--avatar-only .reta-sb-player__av,
+  .reta-sb-player--avatar-only .rj-avatar.reta-sb-player__av {
+    width: clamp(48px, 4.2vw, 60px) !important;
+    height: clamp(48px, 4.2vw, 60px) !important;
+    min-width: clamp(48px, 4.2vw, 60px) !important;
+    min-height: clamp(48px, 4.2vw, 60px) !important;
+    max-width: clamp(48px, 4.2vw, 60px) !important;
+    max-height: clamp(48px, 4.2vw, 60px) !important;
+    font-size: 0.82rem !important;
+  }
+}
+
+.reta-sb-team--pair .reta-sb-team__couple .reta-sb-team__score {
+  align-self: center;
 }
 
 .reta-sb-vs {

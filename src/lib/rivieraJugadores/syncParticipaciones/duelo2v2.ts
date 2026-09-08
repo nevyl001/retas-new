@@ -192,7 +192,7 @@ export async function syncDuelo2v2Participaciones(params: {
           ...resolvedIds,
         });
         if (ratingApplied) {
-          console.warn(`[rating] duelo 2v2 ${duelo.id}: rating actualizado`);
+          console.info(`[rating] duelo 2v2 ${duelo.id}: rating actualizado`);
         }
       }
     } catch (e) {

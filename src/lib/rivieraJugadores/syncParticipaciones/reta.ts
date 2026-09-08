@@ -513,7 +513,7 @@ async function syncRetaParticipacionesInner(params: {
         identityCache,
       });
       if (ratingApplied > 0) {
-        console.warn(`[rating] reta ${tournament.id}: ${ratingApplied} partido(s)`);
+        console.info(`[rating] reta ${tournament.id}: ${ratingApplied} partido(s)`);
       }
     }
   } catch (e) {
