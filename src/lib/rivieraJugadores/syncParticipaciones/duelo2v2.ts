@@ -185,15 +185,12 @@ export async function syncDuelo2v2Participaciones(params: {
     try {
       const resolvedIds = await resolveDuelo2v2RatingPlayerIds(organizadorId, duelo);
       if (resolvedIds) {
-        const ratingApplied = await aplicarRatingDuelo2v2({
+        await aplicarRatingDuelo2v2({
           id: duelo.id,
           nombre: duelo.nombre,
           ganador: duelo.ganador,
           ...resolvedIds,
         });
-        if (ratingApplied) {
-          console.info(`[rating] duelo 2v2 ${duelo.id}: rating actualizado`);
-        }
       }
     } catch (e) {
       console.warn("[rating] duelo 2v2 sync:", e);

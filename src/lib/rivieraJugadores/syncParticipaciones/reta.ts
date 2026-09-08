@@ -499,7 +499,7 @@ async function syncRetaParticipacionesInner(params: {
         );
       }
     } else {
-      const ratingApplied = await aplicarRatingRetaFinishedMatches({
+      await aplicarRatingRetaFinishedMatches({
         organizadorId,
         pairs,
         matches,
@@ -512,9 +512,6 @@ async function syncRetaParticipacionesInner(params: {
         // identidad de un jugador que ya se resolvió en registrarPuntosRanking.
         identityCache,
       });
-      if (ratingApplied > 0) {
-        console.info(`[rating] reta ${tournament.id}: ${ratingApplied} partido(s)`);
-      }
     }
   } catch (e) {
     console.warn("[rating] sync reta:", e);
