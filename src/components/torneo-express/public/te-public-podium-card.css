@@ -41,6 +41,27 @@
   text-align: center;
 }
 
+.podium-card__head,
+.podium-card__body,
+.podium-card__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.podium-card__head {
+  gap: 0;
+}
+
+.podium-card__body {
+  gap: 0;
+}
+
+.podium-card__aside {
+  gap: 0;
+}
+
 .podium-card__corner {
   position: absolute;
   width: 28px;

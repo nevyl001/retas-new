@@ -998,13 +998,20 @@
 }
 
 .te-public--reta .te-pub-standings-table-wrap {
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(8, 10, 14, 0.45);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18, 20, 28, 0.72) 0%,
+      rgba(8, 10, 14, 0.55) 100%
+    );
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .te-public--reta .te-pub-standings-table {
@@ -1018,15 +1025,15 @@
 }
 
 .te-public--reta .te-pub-standings-table thead th {
-  height: 44px;
+  height: 46px;
   padding: 0 0.85rem !important;
-  font-size: 11px !important;
+  font-size: 10px !important;
   font-weight: 700 !important;
   letter-spacing: 0.14em !important;
   text-transform: uppercase;
-  color: #9ca3af !important;
-  background: var(--reta-sb-panel) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.42) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
   text-align: center;
   vertical-align: middle;
 }
@@ -1037,17 +1044,17 @@
 }
 
 .te-public--reta .te-pub-standings-table tbody td {
-  min-height: 48px;
-  height: 52px;
+  min-height: 52px;
+  height: 56px;
   padding: 0 0.85rem !important;
   font-size: 0.9rem !important;
   font-variant-numeric: tabular-nums;
-  color: #ffffff !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-  background: var(--reta-sb-glass) !important;
+  color: rgba(255, 255, 255, 0.62) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.045) !important;
+  background: transparent !important;
   vertical-align: middle;
   text-align: center;
-  transition: background-color 180ms ease;
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
 .te-public--reta .te-pub-standings-table tbody td:nth-child(1),
@@ -1055,37 +1062,45 @@
   text-align: left;
 }
 
+/* FAV + DIF: criterios de orden — acento sutil */
+.te-public--reta .te-pub-standings-table tbody td:nth-child(6),
+.te-public--reta .te-pub-standings-table tbody td:nth-child(8) {
+  color: rgba(229, 193, 88, 0.92) !important;
+  font-weight: 750 !important;
+}
+
 .te-public--reta .te-pub-standings-table tbody tr:hover td {
-  background: var(--reta-sb-panel) !important;
+  background: rgba(255, 255, 255, 0.035) !important;
 }
 
 .te-public--reta .te-pub-standings-table tbody tr:nth-child(even) td {
-  background: #15161e !important;
+  background: rgba(255, 255, 255, 0.018) !important;
 }
 
 .te-public--reta .te-pub-standings-table tbody tr:nth-child(even):hover td {
-  background: var(--reta-sb-panel) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
 }
 
 .te-public--reta .te-pub-standings-row__name {
-  font-weight: 700 !important;
-  font-size: 0.9rem !important;
-  color: #ffffff !important;
+  font-weight: 750 !important;
+  font-size: 0.98rem !important;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.94) !important;
 }
 
 .te-public--reta .te-pub-standings-row__pos-num {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.75rem;
-  height: 1.75rem;
+  min-width: 1.8rem;
+  height: 1.8rem;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 800;
-  color: #ffffff;
-  background: var(--reta-sb-panel);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .te-public--reta .te-pub-standings-row--medal-1 .te-pub-standings-row__pos-num {
@@ -1109,23 +1124,33 @@
 
 .te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__name,
 .te-public--reta .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__name {
-  color: #ffffff !important;
-  font-weight: 700 !important;
+  color: rgb(229, 193, 88) !important;
+  font-weight: 800 !important;
 }
 
 .te-public--reta .te-pub-standings-row--leader td,
 .te-public--reta .te-pub-standings-table tbody tr:first-child td {
-  background: rgba(229, 193, 88, 0.08) !important;
+  background: linear-gradient(
+    90deg,
+    rgba(229, 193, 88, 0.14) 0%,
+    rgba(229, 193, 88, 0.05) 42%,
+    transparent 100%
+  ) !important;
 }
 
 .te-public--reta .te-pub-standings-row--leader:hover td,
 .te-public--reta .te-pub-standings-table tbody tr:first-child:hover td {
-  background: rgba(229, 193, 88, 0.12) !important;
+  background: linear-gradient(
+    90deg,
+    rgba(229, 193, 88, 0.18) 0%,
+    rgba(229, 193, 88, 0.07) 42%,
+    rgba(255, 255, 255, 0.02) 100%
+  ) !important;
 }
 
 .te-public--reta .te-pub-standings-row__pts {
   font-weight: 800 !important;
-  color: #ffffff !important;
+  color: rgba(255, 255, 255, 0.88) !important;
 }
 
 .te-public--reta .te-pub-standing-card--medal-1 .te-pub-standing-card__pos {

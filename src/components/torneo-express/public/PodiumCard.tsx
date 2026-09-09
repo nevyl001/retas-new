@@ -267,51 +267,61 @@ export const PodiumCard: React.FC<{
       ) : null}
 
       <div className="podium-card__inner">
-        <p className="podium-card__torneo-name">{torneoNombre}</p>
-        <div className="podium-card__gold-line" aria-hidden />
-        <p className="podium-card__badge">{badge}</p>
-        <h2 className="podium-card__title">{title}</h2>
-        {subtitle ? <p className="podium-card__subtitle">{subtitle}</p> : null}
+        <header className="podium-card__head">
+          <p className="podium-card__torneo-name">{torneoNombre}</p>
+          <div className="podium-card__gold-line" aria-hidden />
+          <p className="podium-card__badge">{badge}</p>
+          <h2 className="podium-card__title">{title}</h2>
+          {subtitle ? <p className="podium-card__subtitle">{subtitle}</p> : null}
+        </header>
 
-        <div className="podium-card__players" aria-label={badge}>
-          <div className="podium-card__player">
-            <PodiumAvatar player={players[0]} />
-            <p className="podium-card__player-name">{players[0].name}</p>
-            {players[0].rating != null ? (
-              <JugadorRatingChip
-                rating={players[0].rating}
-                className="podium-card__player-rating"
+        <div className="podium-card__body">
+          <div className="podium-card__players" aria-label={badge}>
+            <div className="podium-card__player">
+              <PodiumAvatar player={players[0]} />
+              <p className="podium-card__player-name">{players[0].name}</p>
+              {players[0].rating != null ? (
+                <JugadorRatingChip
+                  rating={players[0].rating}
+                  className="podium-card__player-rating"
+                />
+              ) : null}
+            </div>
+
+            <div className="podium-card__trophy-wrap" aria-hidden>
+              <TablerIcon
+                name="trophy"
+                size={20}
+                className="podium-card__trophy"
               />
-            ) : null}
+            </div>
+
+            <div className="podium-card__player">
+              <PodiumAvatar player={players[1]} />
+              <p className="podium-card__player-name">{players[1].name}</p>
+              {players[1].rating != null ? (
+                <JugadorRatingChip
+                  rating={players[1].rating}
+                  className="podium-card__player-rating"
+                />
+              ) : null}
+            </div>
           </div>
 
-          <div className="podium-card__trophy-wrap" aria-hidden>
-            <TablerIcon
-              name="trophy"
-              size={20}
-              className="podium-card__trophy"
-            />
-          </div>
+          <div className="podium-card__aside">
+            <p className="podium-card__quote">{message}</p>
 
-          <div className="podium-card__player">
-            <PodiumAvatar player={players[1]} />
-            <p className="podium-card__player-name">{players[1].name}</p>
-            {players[1].rating != null ? (
-              <JugadorRatingChip
-                rating={players[1].rating}
-                className="podium-card__player-rating"
+            {stats ? (
+              <PodiumStats
+                stats={stats}
+                accent={variant.accent}
+                layout={statsLayout}
               />
             ) : null}
+
+            {afterStats}
           </div>
         </div>
-
-        <p className="podium-card__quote">{message}</p>
-
-        {stats ? (
-          <PodiumStats stats={stats} accent={variant.accent} layout={statsLayout} />
-        ) : null}
-
-        {afterStats}
 
         <div className="podium-card__footer-divider" aria-hidden />
 
