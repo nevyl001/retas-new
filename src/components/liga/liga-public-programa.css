@@ -285,16 +285,6 @@
   gap: 0.4rem;
 }
 
-.liga-pub-programa-match__ronda {
-  color: color-mix(in srgb, var(--liga-prog-accent) 70%, var(--liga-prog-muted));
-}
-
-.liga-pub-programa-match__ronda::after {
-  content: "·";
-  margin-left: 0.35rem;
-  color: color-mix(in srgb, var(--liga-prog-muted) 70%, transparent);
-}
-
 .liga-pantalla--liga-fijas .liga-pub-programa__card.liga-pantalla-jornada-card {
   padding: 0.85rem 0.85rem 0.9rem;
   gap: 0.65rem;

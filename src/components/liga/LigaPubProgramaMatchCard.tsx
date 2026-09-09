@@ -125,8 +125,6 @@ export const LigaPubProgramaMatchCard: React.FC<LigaPubProgramaMatchCardProps> =
       : match.cancha != null
         ? `Cancha ${match.cancha}`
         : "Cancha";
-  const rondaLabel =
-    match.ronda > 0 ? `Ronda ${match.ronda}` : null;
   const dateLabel =
     formatJornadaFecha(jornadaFecha) ??
     (match.programacion?.includes("·")
@@ -146,9 +144,6 @@ export const LigaPubProgramaMatchCard: React.FC<LigaPubProgramaMatchCardProps> =
             }`}
             aria-hidden
           />
-          {rondaLabel ? (
-            <span className="liga-pub-programa-match__ronda">{rondaLabel}</span>
-          ) : null}
           <span className="liga-pub-programa-match__cancha">{canchaLabel}</span>
         </div>
         {dateLabel ? (
