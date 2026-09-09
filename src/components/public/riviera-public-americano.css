@@ -3505,3 +3505,89 @@
 .am-pub-match--split-vs .te-pub-match-winner {
   display: none;
 }
+
+/*
+  Americano público desktop: densidad profesional.
+  Sin paneles murales (1:1 a ancho de columna); ratio vertical + ancho acotado.
+*/
+.te-public--americano .am-pub-match--split-vs .pub-split-vs-pair,
+.te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact {
+  width: 100%;
+  max-width: min(100%, 17.5rem);
+  margin-inline: auto;
+}
+
+.te-public--americano .am-pub-match--split-vs .pub-split-vs-panel,
+.te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel {
+  aspect-ratio: 4 / 5;
+  max-height: none;
+  height: auto;
+  border-radius: 8px;
+}
+
+.te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given,
+.te-public--americano .am-pub-match--split-vs .pub-split-vs-panel__given {
+  font-size: clamp(0.78rem, 4.2cqi, 0.98rem);
+  font-weight: 750;
+  color: #f7f4ee;
+  letter-spacing: -0.02em;
+}
+
+.te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family,
+.te-public--americano .am-pub-match--split-vs .pub-split-vs-panel__family {
+  font-size: clamp(0.58rem, 3.2cqi, 0.72rem);
+  color: rgba(247, 244, 238, 0.78);
+}
+
+.te-public--americano .am-pub-match--split-vs .te-pub-match__faceoff--split-vs {
+  gap: 0.4rem;
+}
+
+.te-public--americano .am-pub-match--split-vs .te-pub-match__vs {
+  margin: 0;
+}
+
+@media (min-width: 769px) {
+  .te-public--americano.te-public--americano-wide .te-public-round-head__title {
+    font-size: 1.05rem !important;
+    padding-bottom: 0.35rem;
+    letter-spacing: 0.08em;
+  }
+
+  .te-public--americano.te-public--americano-wide .te-public-round-head {
+    margin-bottom: 0.55rem;
+  }
+
+  .te-public--americano.te-public--americano-wide .te-pub-matches-grid--wide {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 0.75rem;
+  }
+
+  .te-public--americano.te-public--americano-wide .te-pub-match--wide,
+  .te-public--americano .am-pub-match.te-pub-match--wide {
+    padding: 0.65rem 0.7rem 0.6rem;
+  }
+
+  .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair,
+  .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact {
+    max-width: min(100%, 15.5rem);
+  }
+
+  .te-public--americano
+    .am-pub-match--split-vs
+    .te-pub-score--faceoff
+    .te-pub-score__num {
+    font-size: clamp(1.15rem, 1.6vw, 1.4rem);
+  }
+}
+
+@media (min-width: 1100px) {
+  .te-public--americano.te-public--americano-wide .te-pub-matches-grid--wide {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  }
+
+  .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair,
+  .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact {
+    max-width: min(100%, 14.5rem);
+  }
+}
