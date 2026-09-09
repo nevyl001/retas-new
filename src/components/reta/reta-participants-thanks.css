@@ -87,13 +87,15 @@
   gap: 0.45rem;
   min-width: 0;
   width: 100%;
+  max-width: 18rem;
 }
 
 .reta-thanks__avatar {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
-  max-height: 5.5rem;
+  aspect-ratio: 4 / 5;
+  height: auto;
+  max-height: none;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -112,7 +114,7 @@
   height: 100%;
   display: block;
   object-fit: cover;
-  object-position: center top;
+  object-position: center 12%;
 }
 
 .reta-thanks__avatar-initial {
@@ -185,9 +187,9 @@
   white-space: nowrap;
 }
 
-/* Densidad: compactar un poco con muchos participantes */
-.reta-thanks[data-density="dense"] .reta-thanks__avatar {
-  max-height: 4.75rem;
+/* Densidad: tipografía más compacta; el ratio de foto no se aplana */
+.reta-thanks[data-density="dense"] .reta-thanks__avatars {
+  max-width: 16rem;
 }
 
 .reta-thanks[data-density="dense"] .reta-thanks__avatar-given {
@@ -199,8 +201,11 @@
   gap: 0.55rem 0.65rem;
 }
 
+.reta-thanks[data-density="xdense"] .reta-thanks__avatars {
+  max-width: 14.5rem;
+}
+
 .reta-thanks[data-density="xdense"] .reta-thanks__avatar {
-  max-height: 4.25rem;
   border-radius: 10px;
 }
 
@@ -229,10 +234,10 @@
 
   .reta-thanks__avatars {
     gap: 0.35rem;
+    max-width: 100%;
   }
 
   .reta-thanks__avatar {
-    max-height: 4.75rem;
     border-radius: 10px;
   }
 
@@ -255,8 +260,8 @@
     padding: 2rem 2rem 1.5rem;
   }
 
-  .reta-thanks__avatar {
-    max-height: 6.25rem;
+  .reta-thanks__avatars {
+    max-width: 20rem;
   }
 
   .reta-thanks__avatar-given {
@@ -306,7 +311,6 @@
   }
 
   .reta-thanks__avatar {
-    max-height: 7rem;
     border-radius: 14px;
   }
 

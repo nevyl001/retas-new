@@ -1996,18 +1996,45 @@
   width: 100%;
 }
 
-/* Fotos contenidas: no mural enorme aunque la card sea ancha */
+/* Fotos en ratio vertical. Nunca max-height + width:100% (aplana el panel y corta caras). */
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel,
 .reta-sb-card--split-vs .pub-split-vs-panel {
-  aspect-ratio: 1 / 1;
-  max-height: clamp(7.25rem, 17vw, 11.5rem);
+  aspect-ratio: 4 / 5;
   width: 100%;
+  max-height: none;
+  height: auto;
   margin-inline: auto;
   border-radius: 10px;
 }
 
-.te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-panel {
-  max-height: clamp(8rem, 15vw, 11rem);
+.reta-sb-card--split-vs .pub-split-vs-pair,
+.reta-sb-card--split-vs .reta-sb-team__players--split-vs {
+  max-width: min(100%, 22rem);
+  margin-inline: auto;
+  width: 100%;
+}
+
+.te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-pair,
+.te-pub-matches-grid--few .reta-sb-card--split-vs .reta-sb-team__players--split-vs {
+  max-width: min(100%, 26rem);
+}
+
+.reta-sb-card--split-vs .pub-split-vs-panel__photo {
+  object-position: center 12%;
+  transform: none;
+  transform-origin: center top;
+}
+
+@media (min-width: 640px) {
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel,
+  .reta-sb-card--split-vs .pub-split-vs-panel {
+    aspect-ratio: 4 / 5;
+  }
+
+  .reta-sb-card--split-vs .pub-split-vs-pair,
+  .reta-sb-card--split-vs .reta-sb-team__players--split-vs {
+    max-width: min(100%, 28rem);
+  }
 }
 
 .reta-sb-card--split-vs .pub-split-vs-pair__grid {
