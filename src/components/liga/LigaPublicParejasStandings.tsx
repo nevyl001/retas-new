@@ -14,8 +14,9 @@ import "./liga-public-motion.css";
 export type LigaPublicParejaStandingRow = {
   ranking: LigaEquipoRankingItem;
   equipo?: LigaEquipo;
-  foto1: string | null;
-  foto2: string | null;
+  /** `undefined` = fotos aún resolviendo (sin jersey de placeholder). */
+  foto1: string | null | undefined;
+  foto2: string | null | undefined;
 };
 
 interface LigaPublicParejasStandingsProps {

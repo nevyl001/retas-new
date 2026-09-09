@@ -159,6 +159,14 @@
   opacity: 0;
 }
 
+.pub-split-vs-panel--pending-photo {
+  background: #0c1016;
+}
+
+.pub-split-vs-panel--pending-photo .pub-split-vs-panel__texture {
+  opacity: 0.03;
+}
+
 .pub-split-vs-panel__photo {
   position: absolute;
   inset: 0;
@@ -175,6 +183,7 @@
 
 .pub-split-vs-panel__photo.is-visible {
   opacity: 1;
+  transition: opacity 160ms ease-out;
 }
 
 .pub-split-vs-panel__scrim {

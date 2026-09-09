@@ -86,6 +86,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const [parejaFotos, setParejaFotos] = useState<Record<string, string | null>>(
     {}
   );
+  const [parejaFotosReady, setParejaFotosReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
@@ -152,6 +153,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     const equipos = detalle?.equipos ?? [];
     if (!organizadorId || !isEquiposModalidad(detalle?.modalidad) || !equipos.length) {
       setParejaFotos({});
+      setParejaFotosReady(true);
       return;
     }
 
@@ -173,8 +175,11 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     });
 
     let cancelled = false;
+    setParejaFotosReady(false);
     void resolveLigaJugadorPublicFotos(organizadorId, entries).then((fotos) => {
-      if (!cancelled) setParejaFotos(fotos);
+      if (cancelled) return;
+      setParejaFotos(fotos);
+      setParejaFotosReady(true);
     });
 
     return () => {
@@ -214,11 +219,19 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       return {
         ranking,
         equipo,
-        foto1: equipo ? parejaFotos[equipo.jugador1_id] ?? null : null,
-        foto2: equipo ? parejaFotos[equipo.jugador2_id] ?? null : null,
+        foto1: !parejaFotosReady
+          ? undefined
+          : equipo
+            ? parejaFotos[equipo.jugador1_id] ?? null
+            : null,
+        foto2: !parejaFotosReady
+          ? undefined
+          : equipo
+            ? parejaFotos[equipo.jugador2_id] ?? null
+            : null,
       };
     });
-  }, [detalle, rankingEquiposOrdered, parejaFotos]);
+  }, [detalle, rankingEquiposOrdered, parejaFotos, parejaFotosReady]);
 
   useEffect(() => {
     if (!detalle?.jornadas.length) {

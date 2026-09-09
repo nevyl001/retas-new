@@ -8,6 +8,7 @@ import "./public-split-vs.css";
 
 export interface PublicSplitVsPlayerPanelProps {
   name: string;
+  /** URL de foto; `undefined` = aún resolviendo (fondo neutro, sin jersey). */
   foto?: string | null;
   className?: string;
 }
@@ -64,20 +65,30 @@ export const PublicSplitVsPlayerPanel: React.FC<
   const initials = `${primary.charAt(0)}${
     secondary?.charAt(0) ?? primary.charAt(1) ?? ""
   }`.toUpperCase();
-  const candidateFoto = isPhotographicSplitVsFoto(foto) ? foto!.trim() : null;
+  const photosStillResolving = foto === undefined;
+  const candidateFoto =
+    !photosStillResolving && isPhotographicSplitVsFoto(foto)
+      ? foto!.trim()
+      : null;
   const [photoFailed, setPhotoFailed] = useState(false);
+  const [photoLoaded, setPhotoLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
-  const showPhoto = Boolean(candidateFoto) && !photoFailed;
+  const showPhoto = Boolean(candidateFoto) && !photoFailed && photoLoaded;
+  const awaitingPhoto =
+    photosStillResolving ||
+    (Boolean(candidateFoto) && !photoFailed && !photoLoaded);
 
   useEffect(() => {
     setPhotoFailed(false);
+    setPhotoLoaded(false);
   }, [candidateFoto]);
 
   useEffect(() => {
     const img = imgRef.current;
     if (!img || !candidateFoto) return;
-    if (img.complete && img.naturalWidth === 0) {
-      setPhotoFailed(true);
+    if (img.complete) {
+      if (img.naturalWidth === 0) setPhotoFailed(true);
+      else setPhotoLoaded(true);
     }
   }, [candidateFoto]);
 
@@ -85,31 +96,42 @@ export const PublicSplitVsPlayerPanel: React.FC<
     <div
       className={[
         "pub-split-vs-panel",
-        showPhoto ? "pub-split-vs-panel--has-photo" : "pub-split-vs-panel--fallback",
+        showPhoto
+          ? "pub-split-vs-panel--has-photo"
+          : awaitingPhoto
+            ? "pub-split-vs-panel--pending-photo"
+            : "pub-split-vs-panel--fallback",
         className,
       ]
         .filter(Boolean)
         .join(" ")}
       style={
-        {
-          ["--pub-split-vs-bg" as string]: tone.background,
-          ["--pub-split-vs-fg" as string]: tone.color,
-        } as React.CSSProperties
+        awaitingPhoto || showPhoto
+          ? undefined
+          : ({
+              ["--pub-split-vs-bg" as string]: tone.background,
+              ["--pub-split-vs-fg" as string]: tone.color,
+            } as React.CSSProperties)
       }
     >
       <span className="pub-split-vs-panel__texture" aria-hidden />
-      <PadelPlayerSilhouette />
-      <span className="pub-split-vs-panel__watermark" aria-hidden>
-        {initials}
-      </span>
+      {!awaitingPhoto && !showPhoto ? <PadelPlayerSilhouette /> : null}
+      {!awaitingPhoto && !showPhoto ? (
+        <span className="pub-split-vs-panel__watermark" aria-hidden>
+          {initials}
+        </span>
+      ) : null}
       {candidateFoto && !photoFailed ? (
         <img
           ref={imgRef}
-          className="pub-split-vs-panel__photo is-visible"
+          className={`pub-split-vs-panel__photo${
+            photoLoaded ? " is-visible" : ""
+          }`}
           src={candidateFoto}
           alt=""
           loading="eager"
           decoding="async"
+          onLoad={() => setPhotoLoaded(true)}
           onError={() => setPhotoFailed(true)}
         />
       ) : null}
