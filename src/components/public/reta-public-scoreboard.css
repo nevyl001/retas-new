@@ -397,7 +397,10 @@
 }
 
 .reta-sb-team__score.te-pub-score__num--tie {
-  color: #ffffff !important;
+  color: var(--reta-sb-gold) !important;
+  border-color: rgba(229, 193, 88, 0.5) !important;
+  background: rgba(229, 193, 88, 0.12) !important;
+  box-shadow: none !important;
 }
 
 .reta-sb-team__players {
@@ -594,7 +597,10 @@
 }
 
 .reta-sb-row__score.te-pub-score__num--tie {
-  color: #ffffff !important;
+  color: #e5c158 !important;
+  border-color: rgba(229, 193, 88, 0.45) !important;
+  background: rgba(229, 193, 88, 0.1) !important;
+  box-shadow: 0 0 0 1px rgba(229, 193, 88, 0.12);
 }
 
 @keyframes reta-sb-score-in {
@@ -2092,11 +2098,28 @@
   transform: none;
 }
 
+.te-public--reta
+  .reta-sb-card--split-vs
+  .reta-sb-card__score-faceoff
+  .te-pub-score__num.te-pub-score__num--tie,
+.reta-sb-card--split-vs
+  .reta-sb-card__score-faceoff
+  .te-pub-score__num.te-pub-score__num--tie {
+  color: var(--reta-sb-gold, #e5c158);
+  text-shadow: 0 0 16px rgba(229, 193, 88, 0.28);
+  transform: none;
+}
+
 .reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__sep {
   font-size: 1rem;
   font-weight: 600;
   opacity: 0.3;
   color: #fff;
+}
+
+.reta-sb-card--split-vs.te-pub-match--tie .reta-sb-card__score-faceoff .te-pub-score__sep {
+  color: var(--reta-sb-gold, #e5c158);
+  opacity: 0.7;
 }
 
 .reta-sb-card--split-vs .pub-split-vs-pair--win {
