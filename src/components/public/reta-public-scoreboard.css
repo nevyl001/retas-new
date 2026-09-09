@@ -891,6 +891,25 @@
   .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
+
+  /* 1–2 partidos: cards contenidas, centradas — no mural a pantalla completa */
+  .te-public--reta .te-pub-matches-grid--wide.te-pub-matches-grid--few,
+  .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide.te-pub-matches-grid--few {
+    grid-template-columns: repeat(2, minmax(0, 22.5rem)) !important;
+    justify-content: center;
+    justify-items: stretch;
+    gap: 1.15rem !important;
+    width: 100%;
+    max-width: min(100%, 48rem);
+    margin-inline: auto;
+  }
+
+  .te-public--reta
+    .te-pub-matches-grid--wide.te-pub-matches-grid--few:has(> :only-child),
+  .te-public--reta.te-public--reta-wide
+    .te-pub-matches-grid--wide.te-pub-matches-grid--few:has(> :only-child) {
+    grid-template-columns: minmax(0, 26rem) !important;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -903,12 +922,35 @@
   .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide:has(> :nth-child(4)) {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
+
+  /* few/three ganan a las reglas :has genéricas */
+  .te-public--reta .te-pub-matches-grid--wide.te-pub-matches-grid--few,
+  .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide.te-pub-matches-grid--few {
+    grid-template-columns: repeat(2, minmax(0, 24rem)) !important;
+    max-width: min(100%, 52rem);
+    gap: 1.35rem !important;
+  }
+
+  .te-public--reta .te-pub-matches-grid--wide.te-pub-matches-grid--three,
+  .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide.te-pub-matches-grid--three {
+    grid-template-columns: repeat(3, minmax(0, 20rem)) !important;
+    justify-content: center;
+    max-width: min(100%, 64rem);
+    margin-inline: auto;
+    gap: 1.1rem !important;
+  }
 }
 
 .te-public--reta .te-pub-matches-grid--wide > .reta-sb-card,
 .te-public--reta .te-pub-matches-grid--wide > .te-pub-match.reta-sb-card {
   width: 100%;
   max-width: none;
+}
+
+.te-public--reta .te-pub-matches-grid--few > .reta-sb-card,
+.te-public--reta .te-pub-matches-grid--few > .te-pub-match.reta-sb-card {
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .reta-round-tabs {
@@ -1862,6 +1904,72 @@
   flex: 1 1 auto;
   min-width: 0;
   width: 100%;
+}
+
+/* Fotos contenidas: no mural enorme aunque la card sea ancha */
+.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel,
+.reta-sb-card--split-vs .pub-split-vs-panel {
+  aspect-ratio: 1 / 1;
+  max-height: clamp(7.25rem, 17vw, 11.5rem);
+  width: 100%;
+  margin-inline: auto;
+  border-radius: 10px;
+}
+
+.te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-panel {
+  max-height: clamp(8rem, 15vw, 11rem);
+}
+
+.reta-sb-card--split-vs .pub-split-vs-pair__grid {
+  gap: 0.32rem;
+}
+
+.reta-sb-card--split-vs .pub-split-vs-panel__scrim {
+  height: 52%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(6, 8, 12, 0.35) 36%,
+    rgba(6, 8, 12, 0.92) 100%
+  );
+}
+
+.reta-sb-card--split-vs .pub-split-vs-panel__identity {
+  left: 0.4rem;
+  right: 0.4rem;
+  bottom: 0.55rem;
+  gap: 0.08rem;
+}
+
+/* Nombres con presencia: anulan el shrink de --compact */
+.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given,
+.reta-sb-card--split-vs .pub-split-vs-panel__given {
+  font-family: var(--font-display, var(--ro-font-heading), "Segoe UI", sans-serif);
+  font-size: clamp(1.05rem, 5.8cqi, 1.45rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  color: #f7f4ee;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.95),
+    0 6px 18px rgba(0, 0, 0, 0.55);
+}
+
+.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family,
+.reta-sb-card--split-vs .pub-split-vs-panel__family {
+  font-size: clamp(0.72rem, 3.6cqi, 0.92rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(247, 244, 238, 0.82);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-panel__given {
+  font-size: clamp(1.15rem, 6.2cqi, 1.55rem);
+}
+
+.te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-panel__family {
+  font-size: clamp(0.78rem, 3.8cqi, 0.98rem);
 }
 
 .reta-sb-card--split-vs .reta-sb-card__scoreboard {

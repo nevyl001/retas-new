@@ -1425,7 +1425,15 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                   </div>
                 </div>
 
-                <div className="te-pub-matches-grid te-pub-matches-grid--wide">
+                <div
+                  className={`te-pub-matches-grid te-pub-matches-grid--wide${
+                    roundMatches.length <= 2
+                      ? " te-pub-matches-grid--few"
+                      : roundMatches.length === 3
+                        ? " te-pub-matches-grid--three"
+                        : ""
+                  }`}
+                >
                   {[...roundMatches]
                     .sort((a, b) => compareMatchCourt(a.court, b.court))
                     .map((match, matchIdx) =>

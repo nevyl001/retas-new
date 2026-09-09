@@ -3198,7 +3198,7 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 .qm-ws--create-compose .reta-details-form--duelo .reta-details-form__row--primary > .reta-details-form__schedule-split {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.65rem;
+  gap: 0.85rem;
   width: 100%;
   min-width: 0;
 }
@@ -3216,6 +3216,17 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   position: relative;
   z-index: 0;
   isolation: isolate;
+  overflow: hidden;
+}
+
+.qm-ws--create-compose .reta-details-form--compose .reta-details-form__field--date .riviera-input,
+.qm-ws--create-compose .reta-details-form--compose .reta-details-form__field--time .riviera-input,
+.qm-ws--create-compose .reta-details-form--duelo .reta-details-form__field--date .riviera-input,
+.qm-ws--create-compose .reta-details-form--duelo .reta-details-form__field--time .riviera-input {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .qm-ws--create-compose .reta-details-form--compose .reta-details-form__row--name {
@@ -3256,13 +3267,27 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 @media (min-width: 900px) {
   .qm-ws--create-compose .reta-details-form--compose .reta-details-form__row--primary,
   .qm-ws--create-compose .reta-details-form--duelo .reta-details-form__row--primary {
-    grid-template-columns: minmax(0, 1fr) minmax(7.25rem, 8.5rem);
-    gap: 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem;
+    align-items: start;
   }
 
   .qm-ws--create-compose .reta-details-form--compose .reta-details-form__row--primary > .reta-details-form__schedule-split,
   .qm-ws--create-compose .reta-details-form--duelo .reta-details-form__row--primary > .reta-details-form__schedule-split {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(7.5rem, 1.05fr);
+    display: contents !important;
+  }
+
+  .qm-ws--create-compose .reta-details-form--compose .reta-details-form__field--date,
+  .qm-ws--create-compose .reta-details-form--compose .reta-details-form__field--time,
+  .qm-ws--create-compose .reta-details-form--compose .reta-details-form__field--duration,
+  .qm-ws--create-compose .reta-details-form--compose .reta-details-form__field--courts,
+  .qm-ws--create-compose .reta-details-form--duelo .reta-details-form__field--date,
+  .qm-ws--create-compose .reta-details-form--duelo .reta-details-form__field--time,
+  .qm-ws--create-compose .reta-details-form--duelo .reta-details-form__field--duration,
+  .qm-ws--create-compose .reta-details-form--duelo .reta-details-form__field--cancha {
+    min-width: 0;
+    max-width: none;
   }
 }
 
@@ -3270,12 +3295,13 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   /* Anula el grid de 5 cols genérico (pensaba Nombre dentro de primary). */
   .qm-ws--create-compose .reta-details-form--compose .reta-details-form__row--primary,
   .qm-ws--create-compose .reta-details-form--duelo .reta-details-form__row--primary {
-    grid-template-columns: minmax(0, 1fr) minmax(7.5rem, 8.75rem);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.9rem;
   }
 
   .qm-ws--create-compose .reta-details-form--compose .reta-details-form__row--primary > .reta-details-form__schedule-split,
   .qm-ws--create-compose .reta-details-form--duelo .reta-details-form__row--primary > .reta-details-form__schedule-split {
-    display: grid !important;
+    display: contents !important;
   }
 }
 
