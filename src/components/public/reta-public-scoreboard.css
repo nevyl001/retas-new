@@ -1040,23 +1040,23 @@
 }
 
 .te-public--reta .te-pub-standings-table-wrap {
-  max-width: min(100%, 52rem);
+  max-width: min(100%, 44rem);
   margin-left: auto;
   margin-right: auto;
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background:
     linear-gradient(
-      180deg,
-      rgba(22, 24, 32, 0.88) 0%,
-      rgba(10, 12, 16, 0.78) 100%
+      165deg,
+      rgba(18, 20, 28, 0.94) 0%,
+      rgba(8, 10, 14, 0.9) 100%
     );
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    0 18px 44px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
 }
 
 .te-public--reta .te-pub-standings-table {
@@ -1071,176 +1071,189 @@
 }
 
 .te-public--reta .te-pub-standings-table thead th {
-  height: 48px;
-  padding: 0 0.55rem !important;
-  font-size: 0.6875rem !important;
-  font-weight: 750 !important;
-  letter-spacing: 0.12em !important;
+  height: 2.35rem;
+  padding: 0 0.4rem !important;
+  font-size: 0.58rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55) !important;
-  background: rgba(255, 255, 255, 0.04) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.42) !important;
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
   text-align: center;
   vertical-align: middle;
 }
 
 .te-public--reta .te-pub-standings-table thead th:nth-child(1) {
-  width: 3.75rem;
+  width: 2.85rem;
   text-align: left;
-  padding-left: 1rem !important;
+  padding-left: 0.85rem !important;
 }
 
 .te-public--reta .te-pub-standings-table thead th:nth-child(2) {
   width: auto;
   text-align: left;
-  padding-left: 0.35rem !important;
+  padding-left: 0.25rem !important;
 }
 
 .te-public--reta .te-pub-standings-table thead th:nth-child(n + 3) {
-  width: 3.65rem;
+  width: 2.85rem;
 }
 
 .te-public--reta .te-pub-standings-table thead th:last-child {
-  padding-right: 1rem !important;
+  width: 3.15rem;
+  padding-right: 0.85rem !important;
 }
 
 .te-public--reta .te-pub-standings-table tbody td {
-  min-height: 64px;
-  height: 64px;
-  padding: 0 0.55rem !important;
-  font-size: 0.95rem !important;
-  font-weight: 650;
+  height: 3.15rem;
+  min-height: 3.15rem;
+  padding: 0 0.4rem !important;
+  font-size: 0.8rem !important;
+  font-weight: 550;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.68) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.62) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.045) !important;
   background: transparent !important;
   vertical-align: middle;
   text-align: center;
   transition: background-color 180ms ease, color 180ms ease;
 }
 
+.te-public--reta .te-pub-standings-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
 .te-public--reta .te-pub-standings-table tbody td:nth-child(1) {
   text-align: left;
-  padding-left: 1rem !important;
+  padding-left: 0.85rem !important;
 }
 
 .te-public--reta .te-pub-standings-table tbody td:nth-child(2) {
   text-align: left;
-  padding-left: 0.35rem !important;
-  padding-right: 0.75rem !important;
+  padding-left: 0.25rem !important;
+  padding-right: 0.55rem !important;
 }
 
 .te-public--reta .te-pub-standings-table tbody td:last-child {
-  padding-right: 1rem !important;
+  padding-right: 0.85rem !important;
 }
 
-/* FAV + DIF: criterios de orden — acento sutil */
+/* FAV + DIF: criterios — acento fino, sin “columnas a rayas” */
 .te-public--reta .te-pub-standings-table tbody td:nth-child(6),
 .te-public--reta .te-pub-standings-table tbody td:nth-child(8) {
-  color: rgba(229, 193, 88, 0.95) !important;
-  font-weight: 800 !important;
-  font-size: 1rem !important;
+  color: rgba(229, 193, 88, 0.92) !important;
+  font-weight: 700 !important;
+  font-size: 0.84rem !important;
 }
 
 .te-public--reta .te-pub-standings-table tbody tr:hover td {
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: rgba(255, 255, 255, 0.035) !important;
 }
 
 .te-public--reta .te-pub-standings-table tbody tr:nth-child(even) td {
-  background: rgba(255, 255, 255, 0.02) !important;
+  background: transparent !important;
 }
 
 .te-public--reta .te-pub-standings-table tbody tr:nth-child(even):hover td {
-  background: rgba(255, 255, 255, 0.045) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
 }
 
 .te-public--reta .te-pub-standings-row__name {
-  font-family: var(--font-display, inherit) !important;
-  font-weight: 800 !important;
-  font-size: 1.05rem !important;
-  letter-spacing: -0.015em;
-  line-height: 1.2;
-  color: rgba(255, 255, 255, 0.96) !important;
+  font-family: var(--font-display, var(--ro-font-heading), inherit) !important;
+  font-weight: 700 !important;
+  font-size: clamp(1.05rem, 2.4vw, 1.28rem) !important;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: rgba(247, 244, 238, 0.96) !important;
 }
 
 .te-public--reta .te-pub-standings-row__pos-num {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2rem;
-  height: 2rem;
+  min-width: 1.55rem;
+  height: 1.55rem;
   border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  font-size: 0.68rem;
+  font-weight: 750;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: none;
 }
 
 .te-public--reta .te-pub-standings-row--medal-1 .te-pub-standings-row__pos-num {
-  background: linear-gradient(145deg, #f0d56a, var(--reta-sb-gold));
+  background: linear-gradient(145deg, #f0d56a, var(--reta-sb-gold, #e5c158));
   color: #0b0c10;
-  border-color: rgba(240, 213, 106, 0.55);
-  box-shadow: 0 2px 8px rgba(229, 193, 88, 0.35);
+  border-color: rgba(240, 213, 106, 0.5);
+  box-shadow: 0 2px 10px rgba(229, 193, 88, 0.28);
 }
 
 .te-public--reta .te-pub-standings-row--medal-2 .te-pub-standings-row__pos-num {
-  background: linear-gradient(145deg, #e8e8e8, #b8b8b8);
+  background: linear-gradient(145deg, #ececec, #b4b4b4);
   color: #0b0c10;
-  border-color: rgba(232, 232, 232, 0.45);
+  border-color: rgba(232, 232, 232, 0.4);
 }
 
 .te-public--reta .te-pub-standings-row--medal-3 .te-pub-standings-row__pos-num {
-  background: linear-gradient(145deg, #e08a5a, var(--reta-sb-terra));
+  background: linear-gradient(145deg, #d99268, var(--reta-sb-terra, #d95d39));
   color: #0b0c10;
-  border-color: rgba(217, 93, 57, 0.4);
+  border-color: rgba(217, 93, 57, 0.35);
 }
 
 .te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__name,
 .te-public--reta .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__name {
-  color: rgb(229, 193, 88) !important;
-  font-weight: 850 !important;
-  font-size: 1.12rem !important;
+  color: #f0d56a !important;
+  font-weight: 750 !important;
+  font-size: clamp(1.12rem, 2.6vw, 1.38rem) !important;
+  letter-spacing: -0.035em;
 }
 
 .te-public--reta .te-pub-standings-row--leader td,
 .te-public--reta .te-pub-standings-table tbody tr:first-child td {
   background: linear-gradient(
     90deg,
-    rgba(229, 193, 88, 0.16) 0%,
-    rgba(229, 193, 88, 0.06) 48%,
+    rgba(229, 193, 88, 0.14) 0%,
+    rgba(229, 193, 88, 0.045) 42%,
     transparent 100%
   ) !important;
+  box-shadow: inset 3px 0 0 rgba(229, 193, 88, 0.85);
 }
 
 .te-public--reta .te-pub-standings-row--leader:hover td,
 .te-public--reta .te-pub-standings-table tbody tr:first-child:hover td {
   background: linear-gradient(
     90deg,
-    rgba(229, 193, 88, 0.2) 0%,
-    rgba(229, 193, 88, 0.08) 48%,
-    rgba(255, 255, 255, 0.03) 100%
+    rgba(229, 193, 88, 0.18) 0%,
+    rgba(229, 193, 88, 0.06) 42%,
+    rgba(255, 255, 255, 0.025) 100%
   ) !important;
 }
 
 .te-public--reta .te-pub-standings-row__pts {
-  font-weight: 800 !important;
-  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 750 !important;
+  font-size: 0.92rem !important;
+  color: rgba(247, 244, 238, 0.92) !important;
 }
 
 @media (min-width: 900px) {
   .te-public--reta .te-pub-standings-table-wrap {
-    max-width: min(100%, 58rem);
+    max-width: min(100%, 48rem);
   }
 
   .te-public--reta .te-pub-standings-row__name {
-    font-size: 1.12rem !important;
+    font-size: 1.22rem !important;
+  }
+
+  .te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__name,
+  .te-public--reta .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__name {
+    font-size: 1.32rem !important;
   }
 
   .te-public--reta .te-pub-standings-table tbody td {
-    height: 68px;
-    min-height: 68px;
+    height: 3.35rem;
+    min-height: 3.35rem;
   }
 }
 
