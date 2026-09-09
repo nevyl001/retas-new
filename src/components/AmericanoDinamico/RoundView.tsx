@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { AmericanoMatch, AmericanoRound } from "../../lib/db/types";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
+import { formatMatchCourtLabel } from "../../lib/matchCourt";
 import { ActionBar } from "../platform/ActionBar";
 import { Button } from "../ui";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
+import { PublicSplitVsPairHalf } from "../public/split-vs";
 import "../jugadores/riviera-jugadores.css";
 import "./RoundView.css";
 
@@ -82,52 +84,6 @@ function draftsDifferFromCommitted(
 
 function teamPlayersLabel(players: ReadonlyArray<{ name: string }>): string {
   return players.map((p) => p.name.trim()).filter(Boolean).join(" · ");
-}
-
-function MatchPairShowcase({
-  players,
-  playerFotos,
-  align,
-}: {
-  players: ReadonlyArray<{ id: string; name: string }>;
-  playerFotos: Record<string, string | null>;
-  align: "left" | "right";
-}) {
-  const label = teamPlayersLabel(players);
-  const [first, second] = players;
-
-  if (!first) return null;
-
-  return (
-    <div
-      className={`am-match-pair am-match-pair--${align}`}
-      aria-label={label}
-    >
-      <div className="am-match-pair__faces" aria-hidden>
-        <JugadorAvatar
-          fotoUrl={playerFotos[first.id]}
-          nombre={first.name}
-          size="sm"
-          className="am-match-pair__face"
-        />
-        {second ? (
-          <JugadorAvatar
-            fotoUrl={playerFotos[second.id]}
-            nombre={second.name}
-            size="sm"
-            className="am-match-pair__face am-match-pair__face--mate"
-          />
-        ) : null}
-      </div>
-      <ul className="am-match-pair__names">
-        {players.map((p) => (
-          <li key={p.id} className="am-match-pair__name">
-            {p.name}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
 }
 
 function ScoreField({
@@ -252,6 +208,8 @@ export const RoundView: React.FC<RoundViewProps> = ({
           const { a, b } = readDraft(match, draftScores);
           const teamALabel = teamPlayersLabel(match.teamA);
           const teamBLabel = teamPlayersLabel(match.teamB);
+          const [a1, a2] = match.teamA;
+          const [b1, b2] = match.teamB;
           const patchScore = (side: "a" | "b", raw: string) => {
             const sanitized = raw.replace(/\D/g, "").slice(0, 2);
             const nextA = side === "a" ? sanitized : a;
@@ -262,47 +220,78 @@ export const RoundView: React.FC<RoundViewProps> = ({
             }));
             tryPersistMatch(match, nextA, nextB);
           };
+          const persistFromDraft = () => {
+            const { a: curA, b: curB } = readDraft(match, draftScores);
+            tryPersistMatch(match, curA, curB);
+          };
 
           return (
-            <article key={match.id} className="americano-match-card rv-card rv-match-card">
+            <article
+              key={match.id}
+              className="americano-match-card americano-match-card--split-vs rv-card rv-match-card"
+            >
               <div className="americano-match-card__top">
                 <span className="americano-match-card__court">
-                  Cancha {match.court}
+                  {formatMatchCourtLabel(match.court)}
                 </span>
               </div>
 
-              <div className="am-match-board">
-                <div className="am-match-board__col am-match-board__col--a">
-                  <MatchPairShowcase
-                    players={match.teamA}
-                    playerFotos={playerFotos}
-                    align="left"
-                  />
-                  <ScoreField
-                    value={a}
-                    ariaLabel={`Juegos ${teamALabel}`}
-                    onChange={(raw) => patchScore("a", raw)}
-                    onBlur={() => tryPersistMatch(match, a, b)}
-                  />
-                </div>
+              <div className="am-match-board am-match-board--split-vs">
+                <PublicSplitVsPairHalf
+                  player1={{
+                    name: a1?.name ?? "",
+                    foto: a1 ? playerFotos[a1.id] ?? null : null,
+                  }}
+                  player2={
+                    a2
+                      ? {
+                          name: a2.name,
+                          foto: playerFotos[a2.id] ?? null,
+                        }
+                      : null
+                  }
+                  label={teamALabel}
+                  className="pub-split-vs-pair--compact am-match-board__pair"
+                />
 
-                <div className="am-match-board__vs" aria-hidden>
+                <div className="am-match-board__vs" role="separator" aria-label="versus">
                   <span className="am-match-board__vs-line" />
                   <span className="am-match-board__vs-text">VS</span>
                   <span className="am-match-board__vs-line" />
                 </div>
 
-                <div className="am-match-board__col am-match-board__col--b">
-                  <MatchPairShowcase
-                    players={match.teamB}
-                    playerFotos={playerFotos}
-                    align="right"
+                <PublicSplitVsPairHalf
+                  player1={{
+                    name: b1?.name ?? "",
+                    foto: b1 ? playerFotos[b1.id] ?? null : null,
+                  }}
+                  player2={
+                    b2
+                      ? {
+                          name: b2.name,
+                          foto: playerFotos[b2.id] ?? null,
+                        }
+                      : null
+                  }
+                  label={teamBLabel}
+                  className="pub-split-vs-pair--compact am-match-board__pair"
+                />
+
+                <div className="am-match-board__scoreboard">
+                  <ScoreField
+                    value={a}
+                    ariaLabel={`Juegos ${teamALabel}`}
+                    onChange={(raw) => patchScore("a", raw)}
+                    onBlur={persistFromDraft}
                   />
+                  <span className="am-match-board__score-sep" aria-hidden>
+                    —
+                  </span>
                   <ScoreField
                     value={b}
                     ariaLabel={`Juegos ${teamBLabel}`}
                     onChange={(raw) => patchScore("b", raw)}
-                    onBlur={() => tryPersistMatch(match, a, b)}
+                    onBlur={persistFromDraft}
                   />
                 </div>
               </div>
