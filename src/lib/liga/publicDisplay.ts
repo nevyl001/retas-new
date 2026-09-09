@@ -12,6 +12,7 @@ import {
   parsePlayoffsSetScoresJson,
   playoffsMatchDisplay,
 } from "./parejasFijasPlayoffsMatchScore";
+import { packPlayoffsJornadaMatches } from "./parejasFijasPlayoffsSchedule";
 import { formatPartidoCanchaHorarioLabel } from "./programacion";
 
 export function formatEquipoNombre(
@@ -214,6 +215,90 @@ export function partidoMatchWinnerSide(
   const s2 = Number(partido.score_pareja2 ?? 0);
   if (s1 === s2) return null;
   return s1 > s2 ? 1 : 2;
+}
+
+/**
+ * Agrupa partidos del programa público por ronda de pantalla.
+ * Si en BD todos quedaron en ronda 1 pero hay ≥4 partidos, re-empaqueta en
+ * olas (Ronda 1 / Ronda 2) para la TV — sin tocar datos ni admin.
+ */
+export function groupJornadaPublicMatchesByRonda(
+  matches: JornadaPublicMatch[],
+  jornada: LigaJornada,
+  canchasDisponibles: number
+): Array<{ ronda: number; matches: JornadaPublicMatch[] }> {
+  if (matches.length === 0) return [];
+
+  const byDbRonda = new Map<number, JornadaPublicMatch[]>();
+  for (const m of matches) {
+    const r = m.ronda || 1;
+    const list = byDbRonda.get(r) ?? [];
+    list.push(m);
+    byDbRonda.set(r, list);
+  }
+
+  if (byDbRonda.size > 1) {
+    return Array.from(byDbRonda.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([ronda, roundMatches]) => ({ ronda, matches: roundMatches }));
+  }
+
+  if (matches.length < 4) {
+    return [{ ronda: 1, matches }];
+  }
+
+  const parejaById = new Map((jornada.parejas ?? []).map((p) => [p.id, p]));
+  const partidoById = new Map((jornada.partidos ?? []).map((p) => [p.id, p]));
+  const schedulable: Array<{
+    id: string;
+    equipo1_id: string;
+    equipo2_id: string;
+  }> = [];
+
+  for (const m of matches) {
+    const partido = partidoById.get(m.id);
+    if (!partido) continue;
+    const e1 =
+      parejaById.get(partido.pareja1_id)?.equipo_id?.trim() ||
+      partido.pareja1_id;
+    const e2 =
+      parejaById.get(partido.pareja2_id)?.equipo_id?.trim() ||
+      partido.pareja2_id;
+    schedulable.push({ id: m.id, equipo1_id: e1, equipo2_id: e2 });
+  }
+
+  if (schedulable.length < 4) {
+    return [{ ronda: 1, matches }];
+  }
+
+  const courtsCap = Math.max(1, Math.floor(canchasDisponibles) || 1);
+  // Con todos en la misma ronda BD: limitar canchas a n/2 para forzar ≥2 olas
+  // (p.ej. 4 partidos / 4 canchas → 2+2 en pantalla).
+  const courts = Math.min(courtsCap, Math.floor(schedulable.length / 2));
+  const packed = packPlayoffsJornadaMatches(schedulable, Math.max(1, courts));
+  const matchById = new Map(matches.map((m) => [m.id, m]));
+  const byPacked = new Map<number, JornadaPublicMatch[]>();
+
+  for (const row of packed) {
+    const base = matchById.get(row.id);
+    if (!base) continue;
+    const display: JornadaPublicMatch = {
+      ...base,
+      ronda: row.ronda,
+      cancha: row.cancha,
+    };
+    const list = byPacked.get(row.ronda) ?? [];
+    list.push(display);
+    byPacked.set(row.ronda, list);
+  }
+
+  if (byPacked.size <= 1) {
+    return [{ ronda: 1, matches }];
+  }
+
+  return Array.from(byPacked.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([ronda, roundMatches]) => ({ ronda, matches: roundMatches }));
 }
 
 /** Partidos de la jornada (parejas fijas) o parejas rotativas para la tarjeta pública. */

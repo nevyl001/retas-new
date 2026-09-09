@@ -9,6 +9,7 @@ import { isEquiposModalidad } from "../../lib/liga/ligaModalidad";
 import { compareEquiposRanking } from "../../lib/liga/equiposRanking";
 import { ligaModalidadPublicLabel } from "../../lib/liga/types";
 import {
+  groupJornadaPublicMatchesByRonda,
   listJornadaPublicMatches,
 } from "../../lib/liga/publicDisplay";
 import { formatFechaLegible, dateInputValue } from "../../lib/liga/programacion";
@@ -506,17 +507,11 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                             </p>
                           ) : esParejasFijas ? (
                             <div className="liga-pub-programa__rounds">
-                              {Array.from(
-                                matchups.reduce((map, m) => {
-                                  const ronda = m.ronda || 1;
-                                  const list = map.get(ronda) ?? [];
-                                  list.push(m);
-                                  map.set(ronda, list);
-                                  return map;
-                                }, new Map<number, typeof matchups>())
-                              )
-                                .sort(([a], [b]) => a - b)
-                                .map(([ronda, roundMatches]) => (
+                              {groupJornadaPublicMatchesByRonda(
+                                matchups,
+                                j,
+                                detalle.canchas_disponibles
+                              ).map(({ ronda, matches: roundMatches }) => (
                                   <section
                                     key={`${j.id}-ronda-${ronda}`}
                                     className="liga-pub-programa__round"

@@ -2,6 +2,7 @@ import type { LigaEquipo, LigaJornada, LigaJornadaPareja } from "./types";
 import {
   formatEquipoNombre,
   formatJornadaParejaNombre,
+  groupJornadaPublicMatchesByRonda,
   listJornadaPublicMatches,
   listLigaProgramaCompleto,
 } from "./publicDisplay";
@@ -191,5 +192,97 @@ describe("publicDisplay", () => {
       jugador2: { id: "j2", nombre: "Bea", email: null, telefono: null, genero: null, nivel: null, estado: "activo", organizador_id: null, created_at: "" },
     };
     expect(formatJornadaParejaNombre(pareja)).toBe("Ana / Bea");
+  });
+
+  it("reparte en Ronda 1 y 2 cuando 4 partidos vienen todos como ronda 1", () => {
+    const parejas: LigaJornadaPareja[] = Array.from({ length: 8 }, (_, i) => ({
+      id: `p${i + 1}`,
+      jornada_id: "j4",
+      jugador1_id: `j${i * 2 + 1}`,
+      jugador2_id: `j${i * 2 + 2}`,
+      equipo_id: `eq${i + 1}`,
+    }));
+    const partidos = [
+      { a: 1, b: 2, cancha: 1 },
+      { a: 3, b: 4, cancha: 2 },
+      { a: 5, b: 6, cancha: 3 },
+      { a: 7, b: 8, cancha: 4 },
+    ].map((row, idx) => ({
+      id: `m${idx + 1}`,
+      jornada_id: "j4",
+      pareja1_id: `p${row.a}`,
+      pareja2_id: `p${row.b}`,
+      score_pareja1: null,
+      score_pareja2: null,
+      cancha: row.cancha,
+      ronda: 1,
+      estado: "upcoming" as const,
+      created_at: "",
+    }));
+    const jornada: LigaJornada = {
+      id: "j4",
+      liga_id: "l1",
+      numero: 4,
+      estado: "upcoming",
+      fecha: null,
+      created_at: "",
+      puntos_aplicados: false,
+      parejas,
+      partidos,
+    };
+    const rows = listJornadaPublicMatches(jornada, [], true);
+    const groups = groupJornadaPublicMatchesByRonda(rows, jornada, 4);
+    expect(groups).toHaveLength(2);
+    expect(groups[0].ronda).toBe(1);
+    expect(groups[1].ronda).toBe(2);
+    expect(groups[0].matches).toHaveLength(2);
+    expect(groups[1].matches).toHaveLength(2);
+  });
+
+  it("respeta rondas distintas ya guardadas en BD", () => {
+    const parejas: LigaJornadaPareja[] = Array.from({ length: 8 }, (_, i) => ({
+      id: `p${i + 1}`,
+      jornada_id: "j1",
+      jugador1_id: `j${i * 2 + 1}`,
+      jugador2_id: `j${i * 2 + 2}`,
+      equipo_id: `eq${i + 1}`,
+    }));
+    const partidos = [
+      { a: 1, b: 2, ronda: 1, cancha: 1 },
+      { a: 3, b: 4, ronda: 1, cancha: 2 },
+      { a: 5, b: 6, ronda: 1, cancha: 3 },
+      { a: 7, b: 8, ronda: 1, cancha: 4 },
+      { a: 1, b: 3, ronda: 2, cancha: 1 },
+      { a: 2, b: 4, ronda: 2, cancha: 2 },
+      { a: 5, b: 7, ronda: 2, cancha: 3 },
+      { a: 6, b: 8, ronda: 2, cancha: 4 },
+    ].map((row, idx) => ({
+      id: `m${idx + 1}`,
+      jornada_id: "j1",
+      pareja1_id: `p${row.a}`,
+      pareja2_id: `p${row.b}`,
+      score_pareja1: null,
+      score_pareja2: null,
+      cancha: row.cancha,
+      ronda: row.ronda,
+      estado: "upcoming" as const,
+      created_at: "",
+    }));
+    const jornada: LigaJornada = {
+      id: "j1",
+      liga_id: "l1",
+      numero: 1,
+      estado: "upcoming",
+      fecha: null,
+      created_at: "",
+      puntos_aplicados: false,
+      parejas,
+      partidos,
+    };
+    const rows = listJornadaPublicMatches(jornada, [], true);
+    const groups = groupJornadaPublicMatchesByRonda(rows, jornada, 4);
+    expect(groups.map((g) => g.ronda)).toEqual([1, 2]);
+    expect(groups[0].matches).toHaveLength(4);
+    expect(groups[1].matches).toHaveLength(4);
   });
 });
