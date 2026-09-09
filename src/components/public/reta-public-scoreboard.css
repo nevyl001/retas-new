@@ -1039,29 +1039,27 @@
   line-height: 1.35;
 }
 
+/* Clasificación TV: densa, columnas juntas, dorado solo en medalla #1 */
 .te-public--reta .te-pub-standings-table-wrap {
-  max-width: min(100%, 44rem);
+  width: fit-content;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    linear-gradient(
-      165deg,
-      rgba(18, 20, 28, 0.94) 0%,
-      rgba(8, 10, 14, 0.9) 100%
-    );
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: rgba(10, 12, 16, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   box-shadow:
-    0 18px 44px rgba(0, 0, 0, 0.42),
+    0 14px 36px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
 }
 
 .te-public--reta .te-pub-standings-table {
-  width: 100%;
-  table-layout: fixed;
+  width: auto;
+  min-width: min(100%, 36rem);
+  table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
   background: transparent !important;
@@ -1070,54 +1068,63 @@
   overflow: visible;
 }
 
+/* Sin superíndices ¹ ² ³ en cabecera TV — la leyenda abajo basta */
+.te-public--reta .te-pub-standings-table .standings-criterion-col::after {
+  display: none !important;
+  content: none !important;
+}
+
 .te-public--reta .te-pub-standings-table thead th {
-  height: 2.35rem;
-  padding: 0 0.4rem !important;
-  font-size: 0.58rem !important;
+  height: 2.1rem;
+  padding: 0 0.55rem !important;
+  font-size: 0.62rem !important;
   font-weight: 700 !important;
-  letter-spacing: 0.14em !important;
+  letter-spacing: 0.1em !important;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.42) !important;
-  background: transparent !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+  color: rgba(255, 255, 255, 0.38) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   text-align: center;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .te-public--reta .te-pub-standings-table thead th:nth-child(1) {
-  width: 2.85rem;
   text-align: left;
-  padding-left: 0.85rem !important;
+  padding-left: 0.95rem !important;
+  padding-right: 0.35rem !important;
 }
 
 .te-public--reta .te-pub-standings-table thead th:nth-child(2) {
-  width: auto;
   text-align: left;
-  padding-left: 0.25rem !important;
+  padding-left: 0.2rem !important;
+  padding-right: 1.25rem !important;
 }
 
 .te-public--reta .te-pub-standings-table thead th:nth-child(n + 3) {
-  width: 2.85rem;
+  padding-left: 0.45rem !important;
+  padding-right: 0.45rem !important;
 }
 
 .te-public--reta .te-pub-standings-table thead th:last-child {
-  width: 3.15rem;
-  padding-right: 0.85rem !important;
+  padding-right: 0.95rem !important;
 }
 
 .te-public--reta .te-pub-standings-table tbody td {
-  height: 3.15rem;
-  min-height: 3.15rem;
-  padding: 0 0.4rem !important;
-  font-size: 0.8rem !important;
+  height: 2.85rem;
+  min-height: 2.85rem;
+  padding: 0 0.55rem !important;
+  font-size: 0.88rem !important;
   font-weight: 550;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.62) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.045) !important;
+  color: rgba(255, 255, 255, 0.68) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
   background: transparent !important;
+  box-shadow: none !important;
   vertical-align: middle;
   text-align: center;
-  transition: background-color 180ms ease, color 180ms ease;
+  white-space: nowrap;
+  transition: background-color 160ms ease;
 }
 
 .te-public--reta .te-pub-standings-table tbody tr:last-child td {
@@ -1126,54 +1133,63 @@
 
 .te-public--reta .te-pub-standings-table tbody td:nth-child(1) {
   text-align: left;
-  padding-left: 0.85rem !important;
+  padding-left: 0.95rem !important;
+  padding-right: 0.35rem !important;
 }
 
 .te-public--reta .te-pub-standings-table tbody td:nth-child(2) {
   text-align: left;
-  padding-left: 0.25rem !important;
-  padding-right: 0.55rem !important;
+  padding-left: 0.2rem !important;
+  padding-right: 1.25rem !important;
+}
+
+.te-public--reta .te-pub-standings-table tbody td:nth-child(n + 3) {
+  padding-left: 0.45rem !important;
+  padding-right: 0.45rem !important;
 }
 
 .te-public--reta .te-pub-standings-table tbody td:last-child {
-  padding-right: 0.85rem !important;
-}
-
-/* FAV + DIF: criterios — acento fino, sin “columnas a rayas” */
-.te-public--reta .te-pub-standings-table tbody td:nth-child(6),
-.te-public--reta .te-pub-standings-table tbody td:nth-child(8) {
-  color: rgba(229, 193, 88, 0.92) !important;
-  font-weight: 700 !important;
-  font-size: 0.84rem !important;
+  padding-right: 0.95rem !important;
 }
 
 .te-public--reta .te-pub-standings-table tbody tr:hover td {
-  background: rgba(255, 255, 255, 0.035) !important;
-}
-
-.te-public--reta .te-pub-standings-table tbody tr:nth-child(even) td {
-  background: transparent !important;
-}
-
-.te-public--reta .te-pub-standings-table tbody tr:nth-child(even):hover td {
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
 }
 
 .te-public--reta .te-pub-standings-row__name {
   font-family: var(--font-display, var(--ro-font-heading), inherit) !important;
-  font-weight: 700 !important;
-  font-size: clamp(1.05rem, 2.4vw, 1.28rem) !important;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  font-weight: 650 !important;
+  font-size: clamp(1rem, 1.8vw, 1.12rem) !important;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   color: rgba(247, 244, 238, 0.96) !important;
+}
+
+/* Nombres uniformes — sin saltos de tamaño ni nombre dorado/bronce */
+.te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__name,
+.te-public--reta .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__name,
+.te-public--reta .te-pub-standings-row--medal-1 .te-pub-standings-row__name,
+.te-public--reta .te-pub-standings-row--medal-2 .te-pub-standings-row__name,
+.te-public--reta .te-pub-standings-row--medal-3 .te-pub-standings-row__name {
+  color: rgba(247, 244, 238, 0.96) !important;
+  font-weight: 650 !important;
+  font-size: clamp(1rem, 1.8vw, 1.12rem) !important;
+  letter-spacing: -0.02em;
+  text-shadow: none !important;
+}
+
+.te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__name,
+.te-public--reta .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__name {
+  font-weight: 700 !important;
+  color: #ffffff !important;
 }
 
 .te-public--reta .te-pub-standings-row__pos-num {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.55rem;
-  height: 1.55rem;
+  min-width: 1.45rem;
+  height: 1.45rem;
   border-radius: 999px;
   font-size: 0.68rem;
   font-weight: 750;
@@ -1184,76 +1200,119 @@
 }
 
 .te-public--reta .te-pub-standings-row--medal-1 .te-pub-standings-row__pos-num {
-  background: linear-gradient(145deg, #f0d56a, var(--reta-sb-gold, #e5c158));
+  background: linear-gradient(
+    145deg,
+    var(--ro-medal-gold, #f0d56a),
+    var(--reta-sb-gold, #e5c158)
+  );
   color: #0b0c10;
-  border-color: rgba(240, 213, 106, 0.5);
-  box-shadow: 0 2px 10px rgba(229, 193, 88, 0.28);
+  border-color: rgba(240, 213, 106, 0.45);
+  box-shadow: 0 1px 6px rgba(229, 193, 88, 0.22);
 }
 
 .te-public--reta .te-pub-standings-row--medal-2 .te-pub-standings-row__pos-num {
-  background: linear-gradient(145deg, #ececec, #b4b4b4);
+  background: linear-gradient(
+    145deg,
+    var(--ro-medal-silver, #ececec),
+    #b8b8b8
+  );
   color: #0b0c10;
-  border-color: rgba(232, 232, 232, 0.4);
+  border-color: rgba(232, 232, 232, 0.35);
 }
 
 .te-public--reta .te-pub-standings-row--medal-3 .te-pub-standings-row__pos-num {
-  background: linear-gradient(145deg, #d99268, var(--reta-sb-terra, #d95d39));
+  background: linear-gradient(
+    145deg,
+    var(--ro-medal-bronze, #c48a5c),
+    #9a6540
+  );
   color: #0b0c10;
-  border-color: rgba(217, 93, 57, 0.35);
+  border-color: rgba(196, 138, 92, 0.4);
 }
 
-.te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__name,
-.te-public--reta .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__name {
-  color: #f0d56a !important;
-  font-weight: 750 !important;
-  font-size: clamp(1.12rem, 2.6vw, 1.38rem) !important;
-  letter-spacing: -0.035em;
-}
-
+/* Líder: una sola barra izquierda + fondo suave — NUNCA box-shadow/borde en cada td */
 .te-public--reta .te-pub-standings-row--leader td,
 .te-public--reta .te-pub-standings-table tbody tr:first-child td {
-  background: linear-gradient(
-    90deg,
-    rgba(229, 193, 88, 0.14) 0%,
-    rgba(229, 193, 88, 0.045) 42%,
-    transparent 100%
-  ) !important;
-  box-shadow: inset 3px 0 0 rgba(229, 193, 88, 0.85);
+  background: rgba(255, 255, 255, 0.035) !important;
+  box-shadow: none !important;
+  border-left: none !important;
+}
+
+.te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__pos-num,
+.te-public--reta .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__pos-num {
+  border-left: none !important;
+}
+
+.te-public--reta .te-pub-standings-row--leader td:first-child,
+.te-public--reta .te-pub-standings-table tbody tr:first-child td:first-child {
+  box-shadow: inset 3px 0 0 var(--ro-medal-gold, #e5c158) !important;
 }
 
 .te-public--reta .te-pub-standings-row--leader:hover td,
 .te-public--reta .te-pub-standings-table tbody tr:first-child:hover td {
-  background: linear-gradient(
-    90deg,
-    rgba(229, 193, 88, 0.18) 0%,
-    rgba(229, 193, 88, 0.06) 42%,
-    rgba(255, 255, 255, 0.025) 100%
-  ) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Stats neutros; FAV/DIF ya no van dorados en todas las filas */
+.te-public--reta .te-pub-standings-table tbody td:nth-child(6),
+.te-public--reta .te-pub-standings-table tbody td:nth-child(8),
+.te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--rank-1,
+.te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--rank-2,
+.te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--rank-3,
+.te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--deciding {
+  color: rgba(255, 255, 255, 0.78) !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  text-shadow: none !important;
 }
 
 .te-public--reta .te-pub-standings-row__pts {
-  font-weight: 750 !important;
-  font-size: 0.92rem !important;
-  color: rgba(247, 244, 238, 0.92) !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  color: rgba(247, 244, 238, 0.95) !important;
+}
+
+.te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__pts,
+.te-public--reta .te-pub-standings-row--leader .standings-col-informative {
+  color: rgba(247, 244, 238, 0.95) !important;
+  font-weight: 700 !important;
+}
+
+.te-public--reta .te-pub-standings-table .te-pub-dif {
+  font-weight: 650;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  min-width: 0;
+  font-size: inherit;
+}
+
+.te-public--reta .te-pub-standings-table .te-pub-dif--pos {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.te-public--reta .te-pub-standings-table .te-pub-dif--neg {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.te-public--reta .te-pub-standings-table .te-pub-dif--zero {
+  color: rgba(255, 255, 255, 0.45) !important;
 }
 
 @media (min-width: 900px) {
-  .te-public--reta .te-pub-standings-table-wrap {
-    max-width: min(100%, 48rem);
+  .te-public--reta .te-pub-standings-table {
+    min-width: 38rem;
   }
 
-  .te-public--reta .te-pub-standings-row__name {
-    font-size: 1.22rem !important;
-  }
-
+  .te-public--reta .te-pub-standings-row__name,
   .te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__name,
   .te-public--reta .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__name {
-    font-size: 1.32rem !important;
+    font-size: 1.14rem !important;
   }
 
   .te-public--reta .te-pub-standings-table tbody td {
-    height: 3.35rem;
-    min-height: 3.35rem;
+    height: 3rem;
+    min-height: 3rem;
   }
 }
 

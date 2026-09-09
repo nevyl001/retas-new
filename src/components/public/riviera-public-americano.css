@@ -2197,20 +2197,8 @@
   color: var(--text-muted);
 }
 
-.te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__name {
-  color: var(--ro-gold-light);
-  font-weight: 600;
-}
-
-.te-public--reta .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__name {
-  color: var(--ro-gold-light);
-  font-weight: 600;
-}
-
-.te-public--reta .te-pub-standings-row--leader td,
-.te-public--reta .te-pub-standings-table tbody tr:first-child td {
-  background: var(--ro-gold-dim);
-}
+/* Leaderboard TV: estilos canónicos en reta-public-scoreboard.css
+   (sin nombre dorado ni fondo gold-dim — rompían la tabla). */
 
 .te-pub-match-winner {
   display: flex;
