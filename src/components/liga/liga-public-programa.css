@@ -60,9 +60,9 @@
   color: var(--liga-prog-muted);
 }
 
-/* Mobile jornada picker — one jornada at a time */
+/* Selector de jornada — una a la vez (evita scroll enorme) */
 .liga-pantalla--liga-fijas .liga-pub-programa__picker {
-  display: none;
+  display: flex;
   width: 100%;
   max-width: 28rem;
   margin: 0 auto;
@@ -136,6 +136,17 @@
 .liga-pantalla--liga-fijas .liga-pub-programa__select option {
   background: #0c1016;
   color: var(--liga-prog-ink);
+}
+
+.liga-pantalla--liga-fijas
+  .liga-pub-programa__card:not(.liga-pub-programa__card--selected) {
+  display: none !important;
+}
+
+.liga-pantalla--liga-fijas .liga-pub-programa__grid.liga-pantalla-jornadas__grid--parejas {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 36rem;
+  margin-inline: auto;
 }
 
 .liga-pantalla--liga-fijas .liga-pub-programa__grid.liga-pantalla-jornadas__grid--parejas {
@@ -676,14 +687,6 @@
 }
 
 @media (max-width: 767px) {
-  .liga-pantalla--liga-fijas .liga-pub-programa__picker {
-    display: flex;
-  }
-
-  .liga-pantalla--liga-fijas .liga-pub-programa__card:not(.liga-pub-programa__card--selected) {
-    display: none !important;
-  }
-
   .liga-pantalla--liga-fijas .liga-pub-programa__card.liga-pantalla-jornada-card {
     padding: 0.85rem 0.8rem 0.95rem;
     gap: 0.7rem;
@@ -728,11 +731,12 @@
 
 @media (min-width: 768px) {
   .liga-pantalla--liga-fijas .liga-pub-programa__picker {
-    display: none !important;
+    max-width: 32rem;
   }
 
   .liga-pantalla--liga-fijas .liga-pub-programa__grid.liga-pantalla-jornadas__grid--parejas {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 42rem;
     gap: 1rem;
   }
 
@@ -751,27 +755,25 @@
 
 @media (min-width: 1200px) {
   .liga-pantalla--liga-fijas .liga-pub-programa__grid.liga-pantalla-jornadas__grid--parejas {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.15rem;
+    max-width: 46rem;
   }
 
   .liga-pantalla--liga-fijas .liga-pub-programa__card.liga-pantalla-jornada-card {
-    min-height: 100%;
+    min-height: 0;
   }
 }
 
 @media (min-width: 1440px) {
   .liga-pantalla--liga-fijas .liga-pub-programa__grid.liga-pantalla-jornadas__grid--parejas {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1.15rem;
+    max-width: 48rem;
   }
 
   .liga-pantalla--liga-fijas .liga-pub-programa__match .liga-pantalla-matchup__team {
-    font-size: 0.78rem;
+    font-size: 0.9rem;
   }
 
   .liga-pantalla--liga-fijas .liga-pub-programa__match .liga-pantalla-matchup__score {
-    font-size: 1.05rem;
+    font-size: 1.15rem;
   }
 }
 
