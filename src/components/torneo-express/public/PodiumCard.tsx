@@ -61,11 +61,30 @@ function parsePairLabel(label: string): [string, string] {
   return [parts[0] ?? "?", parts[1] ?? "?"];
 }
 
-function PodiumAvatar({ player }: { player: PublicRetaPairPlayer }) {
-  const initial = (player.name.trim()[0] ?? "?").toUpperCase();
+function splitPlayerName(name: string): { given: string; family?: string } {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return { given: "?" };
+  if (parts.length === 1) return { given: parts[0] };
+  return { given: parts[0], family: parts.slice(1).join(" ") };
+}
+
+function PodiumAvatar({
+  player,
+  format = "circle",
+}: {
+  player: PublicRetaPairPlayer;
+  format?: "circle" | "panel";
+}) {
+  const { given, family } = splitPlayerName(player.name);
+  const initial = (given[0] ?? "?").toUpperCase();
+  const isPanel = format === "panel";
 
   return (
-    <div className="podium-card__avatar-shell">
+    <div
+      className={`podium-card__avatar-shell${
+        isPanel ? " podium-card__avatar-shell--panel" : ""
+      }`}
+    >
       {player.fotoUrl ? (
         <img
           className="podium-card__avatar-img"
@@ -79,6 +98,17 @@ function PodiumAvatar({ player }: { player: PublicRetaPairPlayer }) {
           {initial}
         </span>
       )}
+      {isPanel ? (
+        <>
+          <span className="podium-card__avatar-scrim" aria-hidden />
+          <span className="podium-card__avatar-name">
+            <span className="podium-card__avatar-given">{given}</span>
+            {family ? (
+              <span className="podium-card__avatar-family">{family}</span>
+            ) : null}
+          </span>
+        </>
+      ) : null}
     </div>
   );
 }
@@ -191,6 +221,8 @@ export const PodiumCard: React.FC<{
   afterStats?: React.ReactNode;
   /** Capa decorativa detrás del contenido (p. ej. pelotas ambient). */
   ambient?: React.ReactNode;
+  /** circle = legado TE; panel = foto 4:5 con nombre encima (Reta ganadores). */
+  photoFormat?: "circle" | "panel";
   id?: string;
   className?: string;
 }> = ({
@@ -204,6 +236,7 @@ export const PodiumCard: React.FC<{
   copyOverrides,
   afterStats,
   ambient,
+  photoFormat = "circle",
   id,
   className = "",
 }) => {
@@ -244,6 +277,7 @@ export const PodiumCard: React.FC<{
         "podium-card",
         "te-pub-fade-in",
         `podium-card--${variant.modifier}`,
+        photoFormat === "panel" ? "podium-card--panel-photos" : "",
         className,
       ]
         .filter(Boolean)
@@ -278,8 +312,12 @@ export const PodiumCard: React.FC<{
         <div className="podium-card__body">
           <div className="podium-card__players" aria-label={badge}>
             <div className="podium-card__player">
-              <PodiumAvatar player={players[0]} />
-              <p className="podium-card__player-name">{players[0].name}</p>
+              <PodiumAvatar player={players[0]} format={photoFormat} />
+              {photoFormat === "circle" ? (
+                <p className="podium-card__player-name">{players[0].name}</p>
+              ) : (
+                <span className="sr-only">{players[0].name}</span>
+              )}
               {players[0].rating != null ? (
                 <JugadorRatingChip
                   rating={players[0].rating}
@@ -297,8 +335,12 @@ export const PodiumCard: React.FC<{
             </div>
 
             <div className="podium-card__player">
-              <PodiumAvatar player={players[1]} />
-              <p className="podium-card__player-name">{players[1].name}</p>
+              <PodiumAvatar player={players[1]} format={photoFormat} />
+              {photoFormat === "circle" ? (
+                <p className="podium-card__player-name">{players[1].name}</p>
+              ) : (
+                <span className="sr-only">{players[1].name}</span>
+              )}
               {players[1].rating != null ? (
                 <JugadorRatingChip
                   rating={players[1].rating}

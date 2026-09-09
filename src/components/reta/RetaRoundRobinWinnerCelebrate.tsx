@@ -121,6 +121,7 @@ export const RetaRoundRobinWinnerCelebrate: React.FC<{
         stats={stats}
         statsLayout={statsLayout}
         copyOverrides={copyOverrides}
+        photoFormat="panel"
         className="reta-rr-celebrate__podium"
       />
     </div>
