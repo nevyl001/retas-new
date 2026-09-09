@@ -53,9 +53,8 @@ function pairNames(participant: RetaThanksParticipant): string {
 
 /**
  * Tarjeta compartible que agrupa a TODOS los participantes no ganadores de una
- * reta (Round Robin / Remontada Final, solo parejas). Reutiliza el lenguaje
- * visual de la tarjeta de ganadores (marco de esquinas, dorado/negro, branding
- * y redes). Mobile-first: el roster se adapta a 4, 6, 8+ parejas.
+ * reta (Round Robin / Remontada Final, solo parejas). Mismo marco, ancho y
+ * presencia tipográfica que la card de ganadores; roster en filas horizontales.
  */
 export const RetaParticipantsThanksSection: React.FC<{
   participants: RetaThanksParticipant[];
@@ -98,9 +97,9 @@ export const RetaParticipantsThanksSection: React.FC<{
             {THANKS_COPY.message}
           </p>
 
-          <ul className="reta-thanks__grid" aria-label="Clasificación final">
+          <ul className="reta-thanks__roster" aria-label="Clasificación final">
             {participants.map((participant) => (
-              <li key={participant.pairId} className="reta-thanks__item">
+              <li key={participant.pairId} className="reta-thanks__row">
                 <span className="reta-thanks__pos">#{participant.position}</span>
                 <span className="reta-thanks__avatars">
                   {participant.players.slice(0, 2).map((player, idx) => (
