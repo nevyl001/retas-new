@@ -816,11 +816,11 @@
     gap: 0.5rem;
   }
 
-  /* Columnas según partidos (4 → fila completa; 2 no deja hueco vacío a la derecha) */
+  /* Hasta 4 columnas; con 2 partidos por ronda ocupan mitad y mitad (sin hueco vacío) */
   .liga-pantalla--liga-fijas
     .liga-pub-programa__round
     .liga-pub-programa__matchups.liga-pantalla-matchups {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11.5rem), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   }
 
   .liga-pub-programa-match__name {

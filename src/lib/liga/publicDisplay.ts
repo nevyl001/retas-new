@@ -219,9 +219,8 @@ export function partidoMatchWinnerSide(
 
 /**
  * Agrupa partidos del programa público por ronda de pantalla.
- * Si en BD todos quedaron en la misma ronda pero hay más partidos que canchas,
- * re-empaqueta en olas reales (p.ej. 8 partidos / 4 canchas → Ronda 1 y 2).
- * No inventa una segunda ronda cuando todos caben en paralelo.
+ * Producto: 2 rondas por jornada. Si en BD todos quedaron en una sola ronda,
+ * re-empaqueta en dos olas (p.ej. 4→2+2, 8→4+4) para la TV.
  */
 export function groupJornadaPublicMatchesByRonda(
   matches: JornadaPublicMatch[],
@@ -244,8 +243,7 @@ export function groupJornadaPublicMatchesByRonda(
       .map(([ronda, roundMatches]) => ({ ronda, matches: roundMatches }));
   }
 
-  const courtsCap = Math.max(1, Math.floor(canchasDisponibles) || 1);
-  if (matches.length <= courtsCap) {
+  if (matches.length < 4) {
     return [{ ronda: 1, matches }];
   }
 
@@ -269,11 +267,14 @@ export function groupJornadaPublicMatchesByRonda(
     schedulable.push({ id: m.id, equipo1_id: e1, equipo2_id: e2 });
   }
 
-  if (schedulable.length <= courtsCap) {
+  if (schedulable.length < 4) {
     return [{ ronda: 1, matches }];
   }
 
-  const packed = packPlayoffsJornadaMatches(schedulable, courtsCap);
+  const courtsCap = Math.max(1, Math.floor(canchasDisponibles) || 1);
+  // Una sola ronda en BD → partir en 2 olas (mitad de partidos por ola).
+  const courts = Math.min(courtsCap, Math.floor(schedulable.length / 2));
+  const packed = packPlayoffsJornadaMatches(schedulable, Math.max(1, courts));
   const matchById = new Map(matches.map((m) => [m.id, m]));
   const byPacked = new Map<number, JornadaPublicMatch[]>();
 

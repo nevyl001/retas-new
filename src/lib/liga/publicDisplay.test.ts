@@ -194,7 +194,7 @@ describe("publicDisplay", () => {
     expect(formatJornadaParejaNombre(pareja)).toBe("Ana / Bea");
   });
 
-  it("con 4 partidos y 4 canchas no inventa una segunda ronda", () => {
+  it("parte 4 partidos (una sola ronda BD) en Ronda 1 y 2", () => {
     const parejas: LigaJornadaPareja[] = Array.from({ length: 8 }, (_, i) => ({
       id: `p${i + 1}`,
       jornada_id: "j4",
@@ -232,9 +232,11 @@ describe("publicDisplay", () => {
     };
     const rows = listJornadaPublicMatches(jornada, [], true);
     const groups = groupJornadaPublicMatchesByRonda(rows, jornada, 4);
-    expect(groups).toHaveLength(1);
+    expect(groups).toHaveLength(2);
     expect(groups[0].ronda).toBe(1);
-    expect(groups[0].matches).toHaveLength(4);
+    expect(groups[1].ronda).toBe(2);
+    expect(groups[0].matches).toHaveLength(2);
+    expect(groups[1].matches).toHaveLength(2);
   });
 
   it("reparte 8 partidos en ronda 1 en dos olas cuando hay 4 canchas", () => {
