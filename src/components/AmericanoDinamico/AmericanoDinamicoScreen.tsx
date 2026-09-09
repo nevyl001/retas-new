@@ -525,19 +525,26 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
 
     const jugadoresPanel = (
       <div className="americano-screen__jugadores-compact">
-        <p className="americano-screen__jugadores-count">
-          {players.length} jugadores en el torneo
-        </p>
-        <ul className="americano-screen__jugadores-list">
-          {rosterForUi.map((p) => (
+        <div className="americano-screen__jugadores-head">
+          <h3 className="americano-screen__jugadores-title">Inscritos</h3>
+          <p className="americano-screen__jugadores-count">
+            {players.length} jugador{players.length === 1 ? "" : "es"} en el
+            torneo
+          </p>
+        </div>
+        <ul className="americano-screen__jugadores-list" aria-label="Inscritos">
+          {rosterForUi.map((p, index) => (
             <li key={p.id} className="americano-screen__jugadores-item">
+              <span className="americano-screen__jugadores-pos" aria-hidden>
+                {index + 1}
+              </span>
               <JugadorAvatar
                 fotoUrl={playerFotos[p.id]}
                 nombre={p.name}
                 size="md"
                 className="americano-screen__jugadores-avatar"
               />
-              <span>{p.name}</span>
+              <span className="americano-screen__jugadores-name">{p.name}</span>
             </li>
           ))}
         </ul>
@@ -615,6 +622,9 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             playerFotos={playerFotos}
           />
         )}
+        <div className="americano-screen__block americano-screen__block--inscritos">
+          {jugadoresPanel}
+        </div>
         <div className="americano-screen__block">
           <LiveRanking
             ranked={ranking}
@@ -730,6 +740,36 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           </div>
         </section>
       )}
+      <div className="americano-screen__block americano-screen__block--inscritos">
+        <div className="americano-screen__jugadores-compact">
+          <div className="americano-screen__jugadores-head">
+            <h3 className="americano-screen__jugadores-title">Inscritos</h3>
+            <p className="americano-screen__jugadores-count">
+              {players.length} jugador{players.length === 1 ? "" : "es"} en el
+              torneo
+            </p>
+          </div>
+          <ul
+            className="americano-screen__jugadores-list"
+            aria-label="Inscritos"
+          >
+            {rosterForUi.map((p, index) => (
+              <li key={p.id} className="americano-screen__jugadores-item">
+                <span className="americano-screen__jugadores-pos" aria-hidden>
+                  {index + 1}
+                </span>
+                <JugadorAvatar
+                  fotoUrl={playerFotos[p.id]}
+                  nombre={p.name}
+                  size="md"
+                  className="americano-screen__jugadores-avatar"
+                />
+                <span className="americano-screen__jugadores-name">{p.name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
       <LiveRanking ranked={ranking} roster={rosterForUi} rounds={rounds} />
       <div className="americano-screen__block">
         <RoundHistory
