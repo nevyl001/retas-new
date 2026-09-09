@@ -4,6 +4,7 @@ import {
   useFlipReorder,
   useInViewOnce,
 } from "../../lib/liga/ligaPublicMotion";
+import { compareEquiposRanking } from "../../lib/liga/equiposRanking";
 import { LigaMotionValue } from "./LigaMotionValue";
 import { PublicSplitVsPairHalf } from "../public/split-vs";
 import "../public/split-vs/public-split-vs.css";
@@ -205,19 +206,40 @@ function RestRow({
 export const LigaPublicParejasStandings: React.FC<
   LigaPublicParejasStandingsProps
 > = ({ rows, subtitle, motionResetKey = "" }) => {
+  const rankedRows = useMemo(() => {
+    const sorted = [...rows].sort((a, b) =>
+      compareEquiposRanking(
+        {
+          puntos: a.ranking.puntos,
+          diferencia_games: a.ranking.diferencia_games,
+          games_favor: a.ranking.games_favor,
+          partidos_ganados: a.ranking.partidos_ganados,
+          partidos_jugados: a.ranking.partidos_jugados,
+          nombre: a.ranking.nombre,
+        },
+        {
+          puntos: b.ranking.puntos,
+          diferencia_games: b.ranking.diferencia_games,
+          games_favor: b.ranking.games_favor,
+          partidos_ganados: b.ranking.partidos_ganados,
+          partidos_jugados: b.ranking.partidos_jugados,
+          nombre: b.ranking.nombre,
+        }
+      )
+    );
+    return sorted.map((row, index) => ({
+      ...row,
+      ranking: { ...row.ranking, posicion: index + 1 },
+    }));
+  }, [rows]);
+
   const top3 = useMemo(
-    () =>
-      rows
-        .filter((r) => r.ranking.posicion >= 1 && r.ranking.posicion <= 3)
-        .sort((a, b) => a.ranking.posicion - b.ranking.posicion),
-    [rows]
+    () => rankedRows.filter((r) => r.ranking.posicion <= 3),
+    [rankedRows]
   );
   const rest = useMemo(
-    () =>
-      rows
-        .filter((r) => r.ranking.posicion > 3)
-        .sort((a, b) => a.ranking.posicion - b.ranking.posicion),
-    [rows]
+    () => rankedRows.filter((r) => r.ranking.posicion > 3),
+    [rankedRows]
   );
 
   const flipKeys = useMemo(

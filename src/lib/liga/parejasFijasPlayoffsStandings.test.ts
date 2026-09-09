@@ -34,29 +34,37 @@ describe("compareParejasFijasPlayoffsStandings", () => {
     expect(compareParejasFijasPlayoffsStandings(a, b, emptyCtx)).toBeLessThan(0);
   });
 
-  it("Caso B — DIF decide con mismos puntos", () => {
-    const a = row("A", 15, 9);
-    const b = row("B", 15, 6);
+  it("Caso B — con mismos puntos, PG manda sobre DIF", () => {
+    const moreWins = row("A", 14, 29, { partidos_ganados: 5 });
+    const fewerWins = row("B", 14, 33, { partidos_ganados: 4 });
+    expect(
+      compareParejasFijasPlayoffsStandings(moreWins, fewerWins, emptyCtx)
+    ).toBeLessThan(0);
+  });
+
+  it("Caso B2 — DIF decide con mismos puntos y PG", () => {
+    const a = row("A", 15, 9, { partidos_ganados: 5 });
+    const b = row("B", 15, 6, { partidos_ganados: 5 });
     expect(compareParejasFijasPlayoffsStandings(a, b, emptyCtx)).toBeLessThan(0);
   });
 
-  it("Caso C — H2H decide con mismos PTS y DIF", () => {
+  it("Caso C — H2H decide con mismos PTS, PG y DIF", () => {
     const matches: PlayoffsH2HMatch[] = [
       { equipo1Id: "A", equipo2Id: "B", points1: 3, points2: 0 },
       { equipo1Id: "B", equipo2Id: "A", points1: 1, points2: 2 },
     ];
     // A: 3+2=5 · B: 0+1=1
     expect(headToHeadClassificationPointsDiff("A", "B", matches)).toBe(4);
-    const a = row("A", 15, 9);
-    const b = row("B", 15, 9);
+    const a = row("A", 15, 9, { partidos_ganados: 5 });
+    const b = row("B", 15, 9, { partidos_ganados: 5 });
     expect(
       compareParejasFijasPlayoffsStandings(a, b, { headToHeadMatches: matches })
     ).toBeLessThan(0);
   });
 
   it("no usa GF aislado antes de H2H", () => {
-    const a = row("A", 15, 9, { games_favor: 10 });
-    const b = row("B", 15, 9, { games_favor: 99 });
+    const a = row("A", 15, 9, { games_favor: 10, partidos_ganados: 5 });
+    const b = row("B", 15, 9, { games_favor: 99, partidos_ganados: 5 });
     const matches: PlayoffsH2HMatch[] = [
       { equipo1Id: "A", equipo2Id: "B", points1: 2, points2: 1 },
     ];
@@ -70,7 +78,12 @@ describe("compareParejasFijasPlayoffsStandings", () => {
       { equipo1Id: "A", equipo2Id: "B", points1: 3, points2: 0 },
     ];
     const ranked = sortParejasFijasPlayoffsStandings(
-      [row("B", 15, 9), row("A", 15, 9), row("C", 10, 0), row("D", 8, 0)],
+      [
+        row("B", 15, 9, { partidos_ganados: 5 }),
+        row("A", 15, 9, { partidos_ganados: 5 }),
+        row("C", 10, 0),
+        row("D", 8, 0),
+      ],
       { headToHeadMatches: matches }
     );
     expect(ranked.map((r) => r.equipo_id)).toEqual(["A", "B", "C", "D"]);
@@ -92,8 +105,8 @@ describe("compareParejasFijasPlayoffsStandings", () => {
   });
 
   it("empate absoluto tras H2H → comparator 0 y findUnresolved lo reporta", () => {
-    const a = row("A", 15, 9);
-    const b = row("B", 15, 9);
+    const a = row("A", 15, 9, { partidos_ganados: 5 });
+    const b = row("B", 15, 9, { partidos_ganados: 5 });
     const ctx = { headToHeadMatches: [] as PlayoffsH2HMatch[] };
     expect(compareParejasFijasPlayoffsStandings(a, b, ctx)).toBe(0);
     const ties = findUnresolvedPlayoffsStandingTies([a, b], ctx);

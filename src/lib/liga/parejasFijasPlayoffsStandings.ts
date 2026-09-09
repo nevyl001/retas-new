@@ -3,11 +3,11 @@
  *
  * Orden EXACTO:
  * 1. puntos DESC
- * 2. diferencia de games (GF − GC) DESC
- * 3. enfrentamiento directo (puntos de clasificación solo en cruces mutuos)
+ * 2. partidos ganados (PG) DESC
+ * 3. diferencia de games (GF − GC) DESC
+ * 4. enfrentamiento directo (puntos de clasificación solo en cruces mutuos)
  *
- * NO usa GF aislado, PG, PJ, nombre ni seed como criterio deportivo.
- * Si tras H2H sigue empate absoluto: el comparator devuelve 0 (sin 4.º criterio
+ * Si tras H2H sigue empate absoluto: el comparator devuelve 0 (sin 5.º criterio
  * deportivo aprobado). El freeze debe detectar empates irresolubles; no inventar
  * posición arbitraria.
  *
@@ -66,7 +66,7 @@ export function headToHeadClassificationPointsDiff(
 }
 
 /**
- * Comparator: puntos → DIF → H2H.
+ * Comparator: puntos → PG → DIF → H2H.
  * Negativo ⇒ A queda arriba.
  */
 export function compareParejasFijasPlayoffsStandings(
@@ -75,6 +75,9 @@ export function compareParejasFijasPlayoffsStandings(
   context: PlayoffsStandingsContext
 ): number {
   if (b.puntos !== a.puntos) return b.puntos - a.puntos;
+  if (b.partidos_ganados !== a.partidos_ganados) {
+    return b.partidos_ganados - a.partidos_ganados;
+  }
   if (b.diferencia_games !== a.diferencia_games) {
     return b.diferencia_games - a.diferencia_games;
   }

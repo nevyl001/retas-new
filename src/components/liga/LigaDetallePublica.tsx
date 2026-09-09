@@ -6,6 +6,7 @@ import type {
   RankingItem,
 } from "../../lib/liga/types";
 import { isEquiposModalidad } from "../../lib/liga/ligaModalidad";
+import { compareEquiposRanking } from "../../lib/liga/equiposRanking";
 import { ligaModalidadPublicLabel } from "../../lib/liga/types";
 import {
   listJornadaPublicMatches,
@@ -180,10 +181,34 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     };
   }, [detalle?.organizador_id, detalle?.modalidad, detalle?.equipos]);
 
+  const rankingEquiposOrdered = useMemo(() => {
+    const sorted = [...rankingEquipos].sort((a, b) =>
+      compareEquiposRanking(
+        {
+          puntos: a.puntos,
+          diferencia_games: a.diferencia_games,
+          games_favor: a.games_favor,
+          partidos_ganados: a.partidos_ganados,
+          partidos_jugados: a.partidos_jugados,
+          nombre: a.nombre,
+        },
+        {
+          puntos: b.puntos,
+          diferencia_games: b.diferencia_games,
+          games_favor: b.games_favor,
+          partidos_ganados: b.partidos_ganados,
+          partidos_jugados: b.partidos_jugados,
+          nombre: b.nombre,
+        }
+      )
+    );
+    return sorted.map((row, index) => ({ ...row, posicion: index + 1 }));
+  }, [rankingEquipos]);
+
   const rankingParejasPublicas = useMemo(() => {
     if (!detalle || !isEquiposModalidad(detalle.modalidad)) return [];
     const byId = new Map(detalle.equipos.map((e) => [e.id, e]));
-    return rankingEquipos.map((ranking) => {
+    return rankingEquiposOrdered.map((ranking) => {
       const equipo = byId.get(ranking.equipo_id);
       return {
         ranking,
@@ -192,7 +217,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
         foto2: equipo ? parejaFotos[equipo.jugador2_id] ?? null : null,
       };
     });
-  }, [detalle, rankingEquipos, parejaFotos]);
+  }, [detalle, rankingEquiposOrdered, parejaFotos]);
 
   useEffect(() => {
     if (!detalle?.jornadas.length) {
@@ -239,7 +264,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const esParejasFijas = isEquiposModalidad(detalle.modalidad);
 
   const podio = esParejasFijas
-    ? rankingEquipos.slice(0, 3)
+    ? rankingEquiposOrdered.slice(0, 3)
     : ranking.slice(0, 3);
 
   const podioOrdenVisual = esParejasFijas
