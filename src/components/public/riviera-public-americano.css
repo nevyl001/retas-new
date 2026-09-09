@@ -3591,3 +3591,34 @@
     max-width: min(100%, 14.5rem);
   }
 }
+
+/* Paridad con Reta Split VS: cards Americano usan reta-sb-card */
+.te-public--americano .am-pub-match.reta-sb-card.te-pub-match--wide,
+.te-public--americano.te-public--americano-wide
+  .am-pub-match.reta-sb-card.te-pub-match--wide {
+  padding: 0.95rem 1rem 0.85rem;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card.te-pub-match--wide:hover {
+  transform: none;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card .te-pub-status--pending {
+  background: rgba(229, 193, 88, 0.1) !important;
+  color: #e5c158 !important;
+  border: 1px solid rgba(229, 193, 88, 0.3) !important;
+}
+
+@media (min-width: 769px) {
+  .te-public--americano.te-public--americano-wide
+    .am-pub-match.reta-sb-card.te-pub-match--wide,
+  .te-public--americano .am-pub-match.reta-sb-card.te-pub-match--wide {
+    padding: 1rem 1.05rem 0.9rem;
+  }
+
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide:has(.reta-sb-card--split-vs) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+    gap: 1rem;
+  }
+}

@@ -104,12 +104,20 @@ export const JugadorAvatarCropModal: React.FC<JugadorAvatarCropModalProps> = ({
     };
   }, [open, file]);
 
+  // Revocar cada blob por separado: si ambos viven en el mismo effect,
+  // un cambio de previewUrl revoca también imageSrc y "Usar recorte" falla
+  // con "No se pudo leer la imagen".
   useEffect(() => {
     return () => {
       if (imageSrc?.startsWith("blob:")) URL.revokeObjectURL(imageSrc);
+    };
+  }, [imageSrc]);
+
+  useEffect(() => {
+    return () => {
       if (previewUrl?.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
     };
-  }, [imageSrc, previewUrl]);
+  }, [previewUrl]);
 
   const onCropComplete = useCallback((_area: Area, pixels: Area) => {
     setCroppedAreaPixels(pixels);
@@ -172,7 +180,7 @@ export const JugadorAvatarCropModal: React.FC<JugadorAvatarCropModalProps> = ({
             type="button"
             variant="primary"
             onClick={() => void handleConfirm()}
-            disabled={!imageSrc || !croppedAreaPixels || Boolean(error) || processing}
+            disabled={!imageSrc || !croppedAreaPixels || processing}
           >
             {processing ? "Guardando…" : "Usar recorte"}
           </Button>
@@ -180,7 +188,7 @@ export const JugadorAvatarCropModal: React.FC<JugadorAvatarCropModalProps> = ({
       }
     >
       {error ? <p className="rj-avatar-crop__error">{error}</p> : null}
-      {imageSrc && !error ? (
+      {imageSrc ? (
         <>
           <div className="rj-avatar-crop__cropper-wrap">
             <Cropper

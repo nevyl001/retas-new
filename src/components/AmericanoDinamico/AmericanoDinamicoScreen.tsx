@@ -100,6 +100,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     syncRegistrationPlayers,
     startTournament,
     commitRoundScores,
+    submitScore,
     editScore,
     nextRound,
     resetTournament,
@@ -580,6 +581,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
               round={currentRound}
               totalRounds={totalRounds}
               onCommitRound={commitRoundScores}
+              onSubmitScore={submitScore}
               onRoundFinalized={nextRound}
               roundSyncPending={roundSyncPending}
               roundSyncError={roundSyncError}
@@ -616,6 +618,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             round={currentRound}
             totalRounds={totalRounds}
             onCommitRound={commitRoundScores}
+            onSubmitScore={submitScore}
             onRoundFinalized={nextRound}
             roundSyncPending={roundSyncPending}
             roundSyncError={roundSyncError}

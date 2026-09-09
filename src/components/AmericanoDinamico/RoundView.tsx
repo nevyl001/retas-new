@@ -18,6 +18,8 @@ interface RoundViewProps {
   /** Total de rondas del torneo (para mostrar "Final" en la última). */
   totalRounds?: number;
   onCommitRound: (scores: RoundScorePayload[]) => void;
+  /** Persiste un partido en cuanto ambos lados tienen marcador válido (sobrevive hard refresh). */
+  onSubmitScore?: (matchId: string, scoreA: number, scoreB: number) => void;
   onRoundFinalized: () => void;
   /** FC-01 (Fase C1): true mientras la ronda siguiente se confirma con el servidor. */
   roundSyncPending?: boolean;
@@ -132,10 +134,12 @@ function ScoreField({
   value,
   ariaLabel,
   onChange,
+  onBlur,
 }: {
   value: string;
   ariaLabel: string;
   onChange: (raw: string) => void;
+  onBlur?: () => void;
 }) {
   return (
     <input
@@ -145,17 +149,37 @@ function ScoreField({
       autoComplete="off"
       className="am-match-board__score"
       value={value}
-      placeholder="0"
+      placeholder="—"
       aria-label={ariaLabel}
       onChange={(e) => onChange(e.target.value)}
+      onBlur={onBlur}
     />
   );
+}
+
+function parseValidScorePair(
+  a: string,
+  b: string
+): { scoreA: number; scoreB: number } | null {
+  if (a === "" || b === "") return null;
+  const scoreA = Number(a);
+  const scoreB = Number(b);
+  if (
+    Number.isNaN(scoreA) ||
+    Number.isNaN(scoreB) ||
+    scoreA < 0 ||
+    scoreB < 0
+  ) {
+    return null;
+  }
+  return { scoreA, scoreB };
 }
 
 export const RoundView: React.FC<RoundViewProps> = ({
   round,
   totalRounds = 0,
   onCommitRound,
+  onSubmitScore,
   onRoundFinalized,
   roundSyncPending = false,
   roundSyncError = null,
@@ -182,6 +206,19 @@ export const RoundView: React.FC<RoundViewProps> = ({
 
   const canFinalizeRound = committed && !dirty && !roundSyncPending;
 
+  const tryPersistMatch = (match: AmericanoMatch, a: string, b: string) => {
+    if (!onSubmitScore) return;
+    const parsed = parseValidScorePair(a, b);
+    if (!parsed) return;
+    if (
+      match.scoreA === parsed.scoreA &&
+      match.scoreB === parsed.scoreB
+    ) {
+      return;
+    }
+    onSubmitScore(match.id, parsed.scoreA, parsed.scoreB);
+  };
+
   const handleConfirm = () => {
     if (!draftComplete) return;
     const scores: RoundScorePayload[] = round.matches.map((m) => {
@@ -205,8 +242,8 @@ export const RoundView: React.FC<RoundViewProps> = ({
           </span>
         </div>
         <p className="americano-round__hint">
-          Captura los juegos de cada pareja y confirma. Luego pulsa{" "}
-          <strong>Ronda finalizada</strong>.
+          Captura los juegos de cada pareja; se guardan al completar ambos
+          lados. Luego confirma y pulsa <strong>Ronda finalizada</strong>.
         </p>
       </header>
 
@@ -217,10 +254,13 @@ export const RoundView: React.FC<RoundViewProps> = ({
           const teamBLabel = teamPlayersLabel(match.teamB);
           const patchScore = (side: "a" | "b", raw: string) => {
             const sanitized = raw.replace(/\D/g, "").slice(0, 2);
+            const nextA = side === "a" ? sanitized : a;
+            const nextB = side === "b" ? sanitized : b;
             setDraftScores((prev) => ({
               ...prev,
               [match.id]: { ...prev[match.id], [side]: sanitized },
             }));
+            tryPersistMatch(match, nextA, nextB);
           };
 
           return (
@@ -242,6 +282,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
                     value={a}
                     ariaLabel={`Juegos ${teamALabel}`}
                     onChange={(raw) => patchScore("a", raw)}
+                    onBlur={() => tryPersistMatch(match, a, b)}
                   />
                 </div>
 
@@ -261,6 +302,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
                     value={b}
                     ariaLabel={`Juegos ${teamBLabel}`}
                     onChange={(raw) => patchScore("b", raw)}
+                    onBlur={() => tryPersistMatch(match, a, b)}
                   />
                 </div>
               </div>
@@ -313,7 +355,8 @@ export const RoundView: React.FC<RoundViewProps> = ({
       </ActionBar>
       {!draftComplete && (
         <p className="americano-round__footer-hint">
-          Completa todos los marcadores (≥ 0) para poder confirmar.
+          Completa todos los marcadores (≥ 0). Cada partido se guarda al
+          llenar ambos lados.
         </p>
       )}
       {dirty && (

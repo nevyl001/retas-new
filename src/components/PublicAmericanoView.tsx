@@ -741,10 +741,6 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                             matchFinished: false,
                             eventPhase: eventScheduleStatus.phase,
                           });
-                      const showMatchStatusBadge =
-                        played ||
-                        (eventScheduleStatus.phase !== "upcoming" &&
-                          !(roundLive && !played));
 
                       return (
                       <PublicAmericanoMatchCard
@@ -752,7 +748,6 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                         match={m}
                         live={roundLive && !played}
                         scheduleStatus={matchScheduleStatus}
-                        showStatusBadge={showMatchStatusBadge}
                         index={matchIdx}
                         playerRatings={playerRatings}
                         playerFotos={playerFotos}
