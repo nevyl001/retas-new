@@ -1397,14 +1397,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                     <span className="te-public-round-head__num">
                       {`Ronda ${String(roundNum).padStart(2, "0")}`}
                     </span>
-                    {!isTeamsPublicView && publicTournamentDescription ? (
-                      <>
-                        <span className="te-public-round-head__sep">·</span>
-                        <span className="te-public-round-head__phase">
-                          {publicTournamentDescription}
-                        </span>
-                      </>
-                    ) : null}
                     {eventScheduleStatus.phase === "upcoming" ? (
                       <span className="te-public-round-head__live te-public-round-head__live--pending">
                         Por jugar
@@ -1438,11 +1430,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                     .sort((a, b) => compareMatchCourt(a.court, b.court))
                     .map((match, matchIdx) =>
                       renderPublicMatchCard(match, matchIdx, {
-                        // En equipos el nombre de la reta va en el hero;
-                        // aquí basta la cancha (sin "Encuentro N").
-                        encounterLabel: isTeamsPublicView
-                          ? undefined
-                          : `Encuentro ${matchIdx + 1}`,
+                        // Basta la cancha; el número de encuentro no aporta.
+                        encounterLabel: undefined,
                       })
                     )}
                 </div>
