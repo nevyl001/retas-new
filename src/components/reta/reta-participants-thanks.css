@@ -166,30 +166,56 @@
 }
 
 @media (max-width: 479px) {
+  .reta-thanks__inner {
+    padding: 22px 12px 18px;
+  }
+
+  /* Tres columnas reales: el override anterior metía avatares en 2.25rem
+     (ancho del #) y se desbordaban encima del nombre. */
   .reta-thanks__row {
-    grid-template-columns: 2.25rem minmax(0, 1fr);
-    grid-template-areas:
-      "pos names"
-      "avatars names";
-    gap: 0.45rem 0.75rem;
+    grid-template-columns: 2.1rem auto minmax(0, 1fr);
+    grid-template-areas: none;
+    gap: 0.55rem 0.65rem;
+    padding: 0.75rem 0.7rem;
+    align-items: center;
+  }
+
+  .reta-thanks__pos,
+  .reta-thanks__avatars,
+  .reta-thanks__names {
+    grid-area: auto;
   }
 
   .reta-thanks__pos {
-    grid-area: pos;
+    font-size: 0.85rem;
   }
 
   .reta-thanks__avatars {
-    grid-area: avatars;
+    flex-shrink: 0;
   }
 
-  .reta-thanks__names {
-    grid-area: names;
-    align-self: center;
+  .reta-thanks__avatars > .reta-thanks__avatar + .reta-thanks__avatar {
+    margin-left: -0.65rem;
   }
 
   .reta-thanks__avatar {
-    width: 3.25rem;
-    height: 3.25rem;
+    width: 2.65rem;
+    height: 2.65rem;
+  }
+
+  .reta-thanks__avatar-initial {
+    font-size: 1.05rem;
+  }
+
+  .reta-thanks__names {
+    font-size: clamp(0.92rem, 3.8vw, 1.08rem);
+    line-height: 1.25;
+  }
+
+  .reta-thanks[data-density="dense"] .reta-thanks__avatar,
+  .reta-thanks[data-density="xdense"] .reta-thanks__avatar {
+    width: 2.45rem;
+    height: 2.45rem;
   }
 }
 
