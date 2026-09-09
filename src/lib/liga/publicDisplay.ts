@@ -44,6 +44,9 @@ export type JornadaPublicMatch = {
   programacion: string | null;
   /** 1 = local, 2 = visitante; solo partidos completados. */
   winnerSide: 1 | 2 | null;
+  /** Ronda horaria dentro de la jornada (1, 2, …). */
+  ronda: number;
+  cancha: number | null;
 };
 
 /** Marcador para tarjeta pública (sets legacy o games playoffs). */
@@ -231,18 +234,26 @@ export function listJornadaPublicMatches(
   const partidos = jornada.partidos ?? [];
 
   if (esParejasFijas && partidos.length > 0) {
-    return partidos.map((m) => ({
-      id: m.id,
-      local: nameForPareja(m.pareja1_id),
-      visitante: nameForPareja(m.pareja2_id),
-      score: formatPartidoPublicScore(m, esParejasFijas),
-      programacion: formatPartidoCanchaHorarioLabel(
-        m.cancha,
-        m.hora_inicio,
-        jornada.fecha
-      ) || null,
-      winnerSide: partidoMatchWinnerSide(m, esParejasFijas),
-    }));
+    return [...partidos]
+      .sort((a, b) => {
+        const byRonda = (a.ronda ?? 1) - (b.ronda ?? 1);
+        if (byRonda !== 0) return byRonda;
+        return (a.cancha ?? 0) - (b.cancha ?? 0);
+      })
+      .map((m) => ({
+        id: m.id,
+        local: nameForPareja(m.pareja1_id),
+        visitante: nameForPareja(m.pareja2_id),
+        score: formatPartidoPublicScore(m, esParejasFijas),
+        programacion: formatPartidoCanchaHorarioLabel(
+          m.cancha,
+          m.hora_inicio,
+          jornada.fecha
+        ) || null,
+        winnerSide: partidoMatchWinnerSide(m, esParejasFijas),
+        ronda: Number(m.ronda ?? 1) || 1,
+        cancha: m.cancha != null ? Number(m.cancha) : null,
+      }));
   }
 
   if (esParejasFijas) {
@@ -259,6 +270,8 @@ export function listJornadaPublicMatches(
         score: null,
         programacion: null,
         winnerSide: null,
+        ronda: 1,
+        cancha: null,
       });
     }
     return rows;
@@ -271,6 +284,8 @@ export function listJornadaPublicMatches(
     score: null,
     programacion: null,
     winnerSide: null,
+    ronda: 1,
+    cancha: null,
   }));
 }
 

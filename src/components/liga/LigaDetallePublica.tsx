@@ -505,18 +505,43 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                               Partidos pendientes de iniciar
                             </p>
                           ) : esParejasFijas ? (
-                            <ul className="liga-pantalla-matchups liga-pub-programa__matchups">
-                              {matchups.map((m, matchIndex) => (
-                                <LigaPubProgramaMatchCard
-                                  key={m.id}
-                                  match={m}
-                                  partido={j.partidos?.find((p) => p.id === m.id)}
-                                  esParejasFijas={esParejasFijas}
-                                  jornadaFecha={j.fecha}
-                                  matchIndex={matchIndex}
-                                />
-                              ))}
-                            </ul>
+                            <div className="liga-pub-programa__rounds">
+                              {Array.from(
+                                matchups.reduce((map, m) => {
+                                  const ronda = m.ronda || 1;
+                                  const list = map.get(ronda) ?? [];
+                                  list.push(m);
+                                  map.set(ronda, list);
+                                  return map;
+                                }, new Map<number, typeof matchups>())
+                              )
+                                .sort(([a], [b]) => a - b)
+                                .map(([ronda, roundMatches]) => (
+                                  <section
+                                    key={`${j.id}-ronda-${ronda}`}
+                                    className="liga-pub-programa__round"
+                                    aria-label={`Ronda ${ronda}`}
+                                  >
+                                    <h4 className="liga-pub-programa__round-title">
+                                      Ronda {ronda}
+                                    </h4>
+                                    <ul className="liga-pantalla-matchups liga-pub-programa__matchups">
+                                      {roundMatches.map((m, matchIndex) => (
+                                        <LigaPubProgramaMatchCard
+                                          key={m.id}
+                                          match={m}
+                                          partido={j.partidos?.find(
+                                            (p) => p.id === m.id
+                                          )}
+                                          esParejasFijas={esParejasFijas}
+                                          jornadaFecha={j.fecha}
+                                          matchIndex={matchIndex}
+                                        />
+                                      ))}
+                                    </ul>
+                                  </section>
+                                ))}
+                            </div>
                           ) : (
                             <div className="liga-pantalla-parejas liga-pantalla-parejas--card">
                               {matchups.map((m) => (
