@@ -175,46 +175,57 @@
   justify-content: center;
 }
 
-.liga-pub-podium__card .liga-pub-pair-players--stack {
-  gap: 0.75rem;
+.liga-pub-podium__faces {
+  width: 100%;
+  max-width: 22rem;
 }
 
-.liga-pub-podium__card--1 .liga-pub-pair-players--stack {
-  gap: 1rem;
+.liga-pub-podium__faces .pub-split-vs-pair__grid {
+  gap: 0.4rem;
 }
 
-.liga-pub-podium__card .liga-pub-pair-players--stack .liga-pub-pair-players__person {
-  max-width: 7.5rem;
-  gap: 0.3rem;
+.liga-pub-podium__faces .pub-split-vs-panel {
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  min-height: 9.5rem;
 }
 
-.liga-pub-podium__card .liga-pub-pair-players--stack .liga-pub-pair-players__name {
-  font-size: 0.78rem;
-  font-weight: 600;
-  white-space: normal;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.liga-pub-podium__faces .pub-split-vs-panel__given {
+  font-size: clamp(0.82rem, 3.2cqi, 1.05rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
-.liga-pub-podium__card--1 .liga-pub-pair-players--stack .liga-pub-pair-players__name {
-  font-size: 0.92rem;
+.liga-pub-podium__faces .pub-split-vs-panel__family {
+  font-size: clamp(0.62rem, 2.6cqi, 0.78rem);
   font-weight: 650;
 }
 
-.liga-pub-podium__card--1 .liga-pub-pair-players--lg .liga-pub-pair-players__avatar.rj-avatar {
-  width: 56px;
-  height: 56px;
-  border: 1.5px solid color-mix(in srgb, var(--liga-gen-accent) 45%, transparent);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+.liga-pub-podium__faces--1 {
+  max-width: 26rem;
 }
 
-.liga-pub-podium__card--2 .liga-pub-pair-players--md .liga-pub-pair-players__avatar.rj-avatar,
-.liga-pub-podium__card--3 .liga-pub-pair-players--md .liga-pub-pair-players__avatar.rj-avatar {
-  width: 40px;
-  height: 40px;
-  font-size: 0.65rem;
+.liga-pub-podium__faces--1 .pub-split-vs-panel {
+  min-height: 11.5rem;
+  border-radius: 14px;
+}
+
+.liga-pub-podium__faces--1 .pub-split-vs-panel__given {
+  font-size: clamp(0.95rem, 3.6cqi, 1.2rem);
+}
+
+.liga-pub-podium__faces--2 .pub-split-vs-panel,
+.liga-pub-podium__faces--3 .pub-split-vs-panel {
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--liga-gen-primary) 28%, transparent);
+}
+
+.liga-pub-podium__faces--2 {
+  max-width: 18rem;
+}
+
+.liga-pub-podium__faces--3 {
+  max-width: 18rem;
 }
 
 .liga-pub-podium__pts-block {
@@ -360,12 +371,12 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.65rem 0.75rem;
-  padding: 0.8rem 0.85rem;
-  border-radius: 12px;
+  gap: 0.75rem 0.9rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--liga-gen-hairline) 75%, transparent);
   background: color-mix(in srgb, var(--liga-gen-surface) 88%, transparent);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .liga-pub-general__pos {
@@ -383,44 +394,38 @@
 
 .liga-pub-general__body {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  display: grid;
+  grid-template-columns: minmax(7.5rem, 11rem) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem 0.85rem;
 }
 
-.liga-pub-general__row .liga-pub-pair-players--stack {
-  justify-content: flex-start;
-  gap: 0.65rem;
+.liga-pub-general__faces {
+  min-width: 0;
+  width: 100%;
 }
 
-.liga-pub-general__row .liga-pub-pair-players--stack .liga-pub-pair-players__person {
-  max-width: 6.25rem;
-  gap: 0.25rem;
+.liga-pub-general__faces-pair .pub-split-vs-panel {
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  min-height: 0;
 }
 
-.liga-pub-general__row .liga-pub-pair-players--md .liga-pub-pair-players__avatar.rj-avatar {
-  width: 34px;
-  height: 34px;
-  font-size: 0.62rem;
+.liga-pub-general__faces-pair .pub-split-vs-panel__given {
+  font-size: clamp(0.7rem, 3.2cqi, 0.88rem);
+  font-weight: 800;
 }
 
-.liga-pub-general__row .liga-pub-pair-players--stack .liga-pub-pair-players__name {
-  font-size: 0.72rem;
-  font-weight: 600;
-  white-space: normal;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-align: center;
+.liga-pub-general__faces-pair .pub-split-vs-panel__family {
+  font-size: clamp(0.55rem, 2.6cqi, 0.68rem);
 }
 
 .liga-pub-general__metrics--compact {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
-  font-size: 0.62rem;
+  gap: 0.2rem;
+  font-size: 0.72rem;
   line-height: 1.35;
   color: var(--liga-gen-muted);
   font-variant-numeric: tabular-nums;
@@ -506,8 +511,33 @@
     gap: 1rem;
   }
 
+  .liga-pub-podium__card {
+    padding: 1.15rem 1rem 1.2rem;
+    gap: 0.75rem;
+  }
+
   .liga-pub-podium__card--1 {
-    padding: 1.5rem 1.25rem 1.55rem;
+    padding: 1.35rem 1.15rem 1.45rem;
+  }
+
+  .liga-pub-podium__faces {
+    max-width: none;
+  }
+
+  .liga-pub-podium__faces .pub-split-vs-panel {
+    min-height: 12rem;
+  }
+
+  .liga-pub-podium__faces--1 .pub-split-vs-panel {
+    min-height: 15rem;
+  }
+
+  .liga-pub-podium__faces .pub-split-vs-panel__given {
+    font-size: clamp(0.9rem, 1.5cqi + 0.55rem, 1.15rem);
+  }
+
+  .liga-pub-podium__faces--1 .pub-split-vs-panel__given {
+    font-size: clamp(1.05rem, 1.7cqi + 0.6rem, 1.35rem);
   }
 
   .liga-pub-podium__card--2 .liga-pub-general__metrics--grid,
@@ -523,8 +553,17 @@
   }
 
   .liga-pub-general__row {
-    padding: 0.95rem 1.1rem;
+    padding: 0.9rem 1.05rem;
     gap: 0.85rem 1rem;
+  }
+
+  .liga-pub-general__body {
+    grid-template-columns: minmax(9rem, 13rem) minmax(0, 1fr);
+    gap: 0.9rem 1rem;
+  }
+
+  .liga-pub-general__faces-pair .pub-split-vs-panel__given {
+    font-size: clamp(0.78rem, 2.8cqi, 0.95rem);
   }
 
   .liga-pub-general__pos-num {
@@ -539,13 +578,13 @@
     flex-direction: row;
     flex-wrap: wrap;
     gap: 0.35rem 0.85rem;
-    font-size: 0.68rem;
+    font-size: 0.78rem;
   }
 
   .liga-pub-general__list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.65rem 0.85rem;
+    gap: 0.75rem 0.95rem;
   }
 }
 
@@ -559,9 +598,12 @@
     max-width: none;
   }
 
-  .liga-pub-podium__card--1 .liga-pub-pair-players--lg .liga-pub-pair-players__avatar.rj-avatar {
-    width: 64px;
-    height: 64px;
+  .liga-pub-podium__faces .pub-split-vs-panel {
+    min-height: 14rem;
+  }
+
+  .liga-pub-podium__faces--1 .pub-split-vs-panel {
+    min-height: 17.5rem;
   }
 
   .liga-pub-podium__card--1 .liga-pub-podium__pts {
@@ -569,11 +611,15 @@
   }
 
   .liga-pub-general__list {
-    gap: 0.75rem 1rem;
+    gap: 0.85rem 1.1rem;
   }
 
   .liga-pub-general__row {
-    padding: 1.05rem 1.2rem;
+    padding: 1rem 1.15rem;
+  }
+
+  .liga-pub-general__body {
+    grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
   }
 }
 
@@ -582,21 +628,21 @@
     gap: 1.5rem;
   }
 
+  .liga-pub-podium__faces .pub-split-vs-panel {
+    min-height: 15.5rem;
+  }
+
+  .liga-pub-podium__faces--1 .pub-split-vs-panel {
+    min-height: 19rem;
+  }
+
   .liga-pub-general__list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem 1.15rem;
-  }
-
-  .liga-pub-general__row .liga-pub-pair-players--stack .liga-pub-pair-players__person {
-    max-width: 8rem;
-  }
-
-  .liga-pub-general__row .liga-pub-pair-players--stack .liga-pub-pair-players__name {
-    font-size: 0.8rem;
+    gap: 0.95rem 1.25rem;
   }
 
   .liga-pub-general__metrics--compact {
-    font-size: 0.72rem;
+    font-size: 0.82rem;
   }
 
   .liga-pub-general__pts {

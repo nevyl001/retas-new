@@ -68,20 +68,20 @@ export type EquipoRankingSortRow = {
   nombre?: string | null;
 };
 
-/** Orden: puntos → DIF → GF → PG → PJ asc → nombre. */
+/** Orden: puntos → PG → DIF → GF → PJ asc → nombre. */
 export function compareEquiposRanking(
   a: EquipoRankingSortRow,
   b: EquipoRankingSortRow
 ): number {
   if (b.puntos !== a.puntos) return b.puntos - a.puntos;
+  if (b.partidos_ganados !== a.partidos_ganados) {
+    return b.partidos_ganados - a.partidos_ganados;
+  }
   if (b.diferencia_games !== a.diferencia_games) {
     return b.diferencia_games - a.diferencia_games;
   }
   if (b.games_favor !== a.games_favor) {
     return b.games_favor - a.games_favor;
-  }
-  if (b.partidos_ganados !== a.partidos_ganados) {
-    return b.partidos_ganados - a.partidos_ganados;
   }
   if (a.partidos_jugados !== b.partidos_jugados) {
     return a.partidos_jugados - b.partidos_jugados;

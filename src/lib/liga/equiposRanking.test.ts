@@ -72,7 +72,27 @@ describe("compareEquiposRanking", () => {
     expect(compareEquiposRanking(high, low)).toBeLessThan(0);
   });
 
-  it("en empate de puntos, desempata por diferencia de games", () => {
+  it("en empate de puntos, desempata por partidos ganados", () => {
+    const moreWins = {
+      puntos: 14,
+      diferencia_games: 29,
+      games_favor: 62,
+      partidos_ganados: 5,
+      partidos_jugados: 6,
+      nombre: "Arturo / Javier",
+    };
+    const fewerWins = {
+      puntos: 14,
+      diferencia_games: 33,
+      games_favor: 66,
+      partidos_ganados: 4,
+      partidos_jugados: 6,
+      nombre: "Kevin / Brandon",
+    };
+    expect(compareEquiposRanking(moreWins, fewerWins)).toBeLessThan(0);
+  });
+
+  it("con mismos puntos y PG, desempata por diferencia de games", () => {
     const betterDif = {
       puntos: 6,
       diferencia_games: 6,
@@ -85,7 +105,7 @@ describe("compareEquiposRanking", () => {
       puntos: 6,
       diferencia_games: 2,
       games_favor: 22,
-      partidos_ganados: 3,
+      partidos_ganados: 2,
       partidos_jugados: 3,
       nombre: "B",
     };

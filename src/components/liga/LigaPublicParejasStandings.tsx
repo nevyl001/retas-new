@@ -5,7 +5,8 @@ import {
   useInViewOnce,
 } from "../../lib/liga/ligaPublicMotion";
 import { LigaMotionValue } from "./LigaMotionValue";
-import { LigaPublicParejaPlayers } from "./LigaPublicParejaFaces";
+import { PublicSplitVsPairHalf } from "../public/split-vs";
+import "../public/split-vs/public-split-vs.css";
 import "./liga-public-general-standings.css";
 import "./liga-public-motion.css";
 
@@ -131,14 +132,12 @@ function PodiumCard({
       </p>
 
       <div className="liga-pub-podium__pair">
-        <LigaPublicParejaPlayers
-          name1={name1}
-          name2={name2}
-          foto1={foto1}
-          foto2={foto2}
-          size={place === 1 ? "lg" : "md"}
-          orientation="stack"
-          win={place === 1}
+        <PublicSplitVsPairHalf
+          player1={{ name: name1, foto: foto1 }}
+          player2={{ name: name2, foto: foto2 }}
+          tone={place === 1 ? "win" : "neutral"}
+          showWinnerBadge={place === 1}
+          className={`liga-pub-podium__faces liga-pub-podium__faces--${place}`}
         />
       </div>
 
@@ -183,14 +182,13 @@ function RestRow({
       </div>
 
       <div className="liga-pub-general__body">
-        <LigaPublicParejaPlayers
-          name1={name1}
-          name2={name2}
-          foto1={foto1}
-          foto2={foto2}
-          size="md"
-          orientation="stack"
-        />
+        <div className="liga-pub-general__faces">
+          <PublicSplitVsPairHalf
+            player1={{ name: name1, foto: foto1 }}
+            player2={{ name: name2, foto: foto2 }}
+            className="liga-pub-general__faces-pair pub-split-vs-pair--compact"
+          />
+        </div>
         <StandingMetrics ranking={ranking} compact />
       </div>
 
