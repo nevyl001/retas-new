@@ -1,0 +1,134 @@
+/* Recorte de avatar + preview Split VS (solo ficha admin) */
+
+.rj-avatar-crop__cropper-wrap {
+  position: relative;
+  width: 100%;
+  height: min(52vh, 22rem);
+  background: #0a0c10;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.rj-avatar-crop__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+.rj-avatar-crop__zoom-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--ro-text-muted, #a1a1aa);
+}
+
+.rj-avatar-crop__zoom-label input[type="range"] {
+  flex: 1;
+  accent-color: var(--brand-accent, var(--ro-accent, #d6ef3a));
+}
+
+.rj-avatar-crop__error {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--ro-danger, #f87171);
+}
+
+.rj-avatar-crop__preview-block {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid color-mix(in srgb, var(--ro-border, #fff) 12%, transparent);
+}
+
+.rj-avatar-crop__preview-kicker {
+  margin: 0 0 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted, #a1a1aa);
+}
+
+.rj-avatar-crop__split-preview {
+  position: relative;
+  height: 7.5rem;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, #fff 10%, transparent);
+  background: #0a0c10;
+}
+
+.rj-avatar-crop__split-preview-panel {
+  position: absolute;
+  inset: 0;
+  background: var(--liga-panel-bg, linear-gradient(145deg, #2a3340, #12161c));
+}
+
+.rj-avatar-crop__split-preview-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.rj-avatar-crop__split-preview-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.88) 0%,
+    rgba(0, 0, 0, 0.35) 45%,
+    transparent 100%
+  );
+}
+
+.rj-avatar-crop__split-preview-name {
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.55rem;
+  text-align: center;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
+}
+
+/* Welcome / CTA sin foto */
+.rj-avatar-photo-welcome__lead {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--ro-text-muted, #a1a1aa);
+}
+
+.rj-avatar-photo-welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.rj-ficha-photo-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--brand-accent, var(--ro-accent, #d6ef3a)) 35%, transparent);
+  background: color-mix(in srgb, var(--brand-accent, var(--ro-accent, #d6ef3a)) 8%, transparent);
+}
+
+.rj-ficha-photo-cta__text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--ro-text, #f4f4f5);
+}

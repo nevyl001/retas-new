@@ -11,8 +11,12 @@ export function buildJugadorPath(slug: string): string {
 
 export function navigateJugadorFicha(
   slug: string,
-  opts?: { edit?: boolean }
+  opts?: { edit?: boolean; welcomePhoto?: boolean }
 ): void {
   const path = buildJugadorPath(slug);
-  navigateAppTo(opts?.edit ? `${path}?edit=1` : path);
+  const params = new URLSearchParams();
+  if (opts?.edit) params.set("edit", "1");
+  if (opts?.welcomePhoto) params.set("welcomePhoto", "1");
+  const qs = params.toString();
+  navigateAppTo(qs ? `${path}?${qs}` : path);
 }

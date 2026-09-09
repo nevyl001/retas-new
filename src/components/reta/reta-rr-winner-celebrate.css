@@ -7,6 +7,22 @@
   width: 100%;
 }
 
+/* Nombre con presencia de héroe en la card de ganadores Reta */
+.reta-rr-celebrate .podium-card__player-name {
+  font-size: clamp(1.35rem, 3.2vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: 0.015em;
+  max-width: min(100%, 14rem);
+  line-height: 1.1;
+}
+
+@media (max-width: 767px) {
+  .reta-rr-celebrate .podium-card__player-name {
+    font-size: clamp(1.15rem, 5.2vw, 1.4rem);
+    max-width: 11rem;
+  }
+}
+
 .riviera-organizer-reta .reta-rr-celebrate {
   scroll-margin-top: 5rem;
 }

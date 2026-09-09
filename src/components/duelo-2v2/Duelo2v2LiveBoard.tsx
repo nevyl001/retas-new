@@ -1,8 +1,7 @@
 import React from "react";
 import { useOrganizerDisplayName } from "../../club-experience";
-import { JugadorAvatar } from "../jugadores/JugadorAvatar";
-import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
 import { PublicRivieraCelebrateBrand } from "../public/PublicRivieraCelebrateBrand";
+import { PublicSplitVsPairHalf } from "../public/split-vs";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
 import { getDueloPublicStatus } from "../../lib/duelo2v2/schedule";
 import { Duelo2v2TeamSetResults } from "./Duelo2v2TeamSetResults";
@@ -51,10 +50,12 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
   const status = getDueloPublicStatus(duelo, clockNow);
   const organizerName = useOrganizerDisplayName();
   const brandLine = organizerName;
+  const toneA = ganadorA ? "win" : tieneGanador ? "loss" : "neutral";
+  const toneB = ganadorB ? "win" : tieneGanador ? "loss" : "neutral";
 
   return (
     <section
-      className={`duelo2v2-live-board${className ? ` ${className}` : ""}`}
+      className={`duelo2v2-live-board duelo2v2-live-board--split-vs${className ? ` ${className}` : ""}`}
       aria-label="Encuentro 2 vs 2"
     >
       {!hidePublicHeader && showBrand ? (
@@ -80,30 +81,18 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
         </header>
       ) : null}
 
-      <div className="duelo2v2-live-board__arena">
+      <div className="duelo2v2-live-board__arena duelo2v2-live-board__arena--split-vs">
         <div
-          className={`duelo2v2-live-team${ganadorA ? " duelo2v2-live-team--winner" : ""}`}
+          className={`duelo2v2-live-team duelo2v2-live-team--split-vs${ganadorA ? " duelo2v2-live-team--winner" : ""}`}
         >
           <p className="duelo2v2-live-team__label">Pareja 1</p>
-          <div className="duelo2v2-live-team__avatars">
-            {teamA.map((p) => (
-              <div key={p.nombre} className="duelo2v2-live-player">
-                <div className="duelo2v2-live-player__ring">
-                  <JugadorAvatar
-                    fotoUrl={p.fotoUrl}
-                    nombre={p.nombre}
-                    size="xl"
-                    className="duelo2v2-live-player__avatar"
-                  />
-                </div>
-                <span className="duelo2v2-live-player__name">{p.nombre}</span>
-                <JugadorRatingChip
-                  rating={p.rating}
-                  className="duelo2v2-live-player__rating"
-                />
-              </div>
-            ))}
-          </div>
+          <PublicSplitVsPairHalf
+            player1={{ name: teamA[0].nombre, foto: teamA[0].fotoUrl }}
+            player2={{ name: teamA[1].nombre, foto: teamA[1].fotoUrl }}
+            label={`${teamA[0].nombre} / ${teamA[1].nombre}`}
+            tone={toneA}
+            showWinnerBadge={ganadorA}
+          />
 
           <Duelo2v2TeamSetResults detalle={duelo.detalle_sets} side="a" />
 
@@ -123,28 +112,16 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
         </div>
 
         <div
-          className={`duelo2v2-live-team${ganadorB ? " duelo2v2-live-team--winner" : ""}`}
+          className={`duelo2v2-live-team duelo2v2-live-team--split-vs${ganadorB ? " duelo2v2-live-team--winner" : ""}`}
         >
           <p className="duelo2v2-live-team__label">Pareja 2</p>
-          <div className="duelo2v2-live-team__avatars">
-            {teamB.map((p) => (
-              <div key={p.nombre} className="duelo2v2-live-player">
-                <div className="duelo2v2-live-player__ring">
-                  <JugadorAvatar
-                    fotoUrl={p.fotoUrl}
-                    nombre={p.nombre}
-                    size="xl"
-                    className="duelo2v2-live-player__avatar"
-                  />
-                </div>
-                <span className="duelo2v2-live-player__name">{p.nombre}</span>
-                <JugadorRatingChip
-                  rating={p.rating}
-                  className="duelo2v2-live-player__rating"
-                />
-              </div>
-            ))}
-          </div>
+          <PublicSplitVsPairHalf
+            player1={{ name: teamB[0].nombre, foto: teamB[0].fotoUrl }}
+            player2={{ name: teamB[1].nombre, foto: teamB[1].fotoUrl }}
+            label={`${teamB[0].nombre} / ${teamB[1].nombre}`}
+            tone={toneB}
+            showWinnerBadge={ganadorB}
+          />
 
           <Duelo2v2TeamSetResults detalle={duelo.detalle_sets} side="b" />
 

@@ -1743,3 +1743,103 @@
     animation: none !important;
   }
 }
+
+/* Split VS panels in Reta public match cards */
+.reta-sb-card--split-vs .reta-sb-team--split-vs {
+  padding: 0.35rem 0;
+  overflow: visible;
+  border: none;
+  border-left: none;
+  background: transparent;
+  box-shadow: none !important;
+}
+
+.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--a,
+.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--b,
+.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--win,
+.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--win.reta-sb-team--a,
+.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--win.reta-sb-team--b {
+  border: none;
+  border-left: none;
+  background: transparent;
+  box-shadow: none !important;
+}
+
+.reta-sb-card--split-vs .reta-sb-team--split-vs:not(.reta-sb-team--win):not(.reta-sb-team--tie) {
+  opacity: 1;
+}
+
+.reta-sb-card--split-vs .reta-sb-team--split-vs .reta-sb-team__watermark {
+  display: none;
+}
+
+.reta-sb-card--split-vs .reta-sb-team__players--split-vs {
+  width: 100%;
+  min-width: 0;
+}
+
+.reta-sb-card--split-vs .reta-sb-team__body {
+  display: block;
+}
+
+.reta-sb-card--split-vs .reta-sb-team__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.reta-sb-card--split-vs .reta-sb-card__scoreboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.45rem 0 0.25rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.reta-sb-card--split-vs .reta-sb-card__score-faceoff {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.te-public--reta .reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__num,
+.reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__num {
+  font-size: clamp(1.7rem, 4.5vw, 2.2rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs
+  .reta-sb-card__score-faceoff
+  .te-pub-score__num.te-pub-score__num--win,
+.reta-sb-card--split-vs
+  .reta-sb-card__score-faceoff
+  .te-pub-score__num.te-pub-score__num--win {
+  color: rgb(var(--reta-eq-a-rgb, 229, 193, 88));
+  text-shadow: 0 0 16px rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.28);
+  transform: none;
+}
+
+.reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__sep {
+  font-size: 1rem;
+  font-weight: 600;
+  opacity: 0.3;
+  color: #fff;
+}
+
+.reta-sb-card--split-vs .pub-split-vs-pair--win {
+  box-shadow: 0 0 0 1px rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.55);
+}
+
+.reta-sb-card--split-vs .te-pub-outcome {
+  display: none;
+}
+
+.reta-sb-card--split-vs .reta-sb-card__score-pending {
+  font-size: 1.35rem;
+  opacity: 0.5;
+}

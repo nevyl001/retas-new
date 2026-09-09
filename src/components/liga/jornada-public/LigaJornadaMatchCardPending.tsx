@@ -12,7 +12,7 @@ interface LigaJornadaMatchCardPendingProps {
   matchStyle?: React.CSSProperties;
 }
 
-/** Card pendiente — parejas en filas verticales, VS editorial. */
+/** Card pendiente/live — layout vertical (pareja 1 arriba) sin marcador. */
 export const LigaJornadaMatchCardPending: React.FC<
   LigaJornadaMatchCardPendingProps
 > = ({
@@ -24,7 +24,7 @@ export const LigaJornadaMatchCardPending: React.FC<
   matchStyle,
 }) => (
   <article
-    className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--pending liga-jornada-match-card--hero-players"
+    className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--pending liga-jornada-match-card--hero-players liga-jornada-match-card--broadcast liga-jornada-match-card--split-vs liga-jornada-match-card--stack-vs"
     style={matchStyle}
   >
     <LigaJornadaMatchCardHeader
@@ -32,20 +32,19 @@ export const LigaJornadaMatchCardPending: React.FC<
       estadoMod={estadoMod}
       estadoText={estadoText}
     />
-    <div className="liga-jornada-match-card__matchup">
+    <div className="liga-jornada-match-card__split">
       <LigaJornadaMatchPairStack
         side={side1}
-        align="left"
+        align="top"
         label={`Pareja: ${side1.name1} y ${side1.name2}`}
       />
-      <div className="liga-jornada-match-card__vs" aria-hidden="true">
-        <span className="liga-jornada-match-card__vs-line" />
-        <span className="liga-jornada-match-card__vs-text">VS</span>
-        <span className="liga-jornada-match-card__vs-line" />
+      <div className="liga-jornada-match-card__split-vs" aria-hidden="true">
+        <span className="liga-jornada-match-card__split-vs-line" />
+        <span className="liga-jornada-match-card__split-vs-badge">VS</span>
       </div>
       <LigaJornadaMatchPairStack
         side={side2}
-        align="right"
+        align="bottom"
         label={`Pareja: ${side2.name1} y ${side2.name2}`}
       />
     </div>

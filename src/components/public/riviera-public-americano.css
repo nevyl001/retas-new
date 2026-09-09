@@ -3467,3 +3467,53 @@
     transform: none;
   }
 }
+
+/* Split VS panels in Americano public match cards */
+.am-pub-match--split-vs .te-pub-match__faceoff--split-vs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  align-items: stretch;
+}
+
+.am-pub-match--split-vs .te-pub-match__slot--pair1,
+.am-pub-match--split-vs .te-pub-match__slot--pair2 {
+  width: 100%;
+  min-width: 0;
+}
+
+.am-pub-match--split-vs .te-pub-match__slot--score {
+  order: 3;
+  width: 100%;
+  justify-content: center;
+  padding-top: 0.15rem;
+}
+
+.am-pub-match--split-vs .te-pub-match__vs {
+  order: 2;
+  margin: 0.1rem 0;
+}
+
+.te-public--americano
+  .am-pub-match--split-vs
+  .te-pub-score--faceoff
+  .te-pub-score__num {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.te-public--americano
+  .am-pub-match--split-vs
+  .te-pub-score--faceoff
+  .te-pub-score__num.te-pub-score__num--win {
+  color: rgb(var(--reta-eq-a-rgb, 229, 193, 88));
+  text-shadow: 0 0 16px rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.28);
+}
+
+.am-pub-match--split-vs .pub-split-vs-pair--win {
+  box-shadow: 0 0 0 1px rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.55);
+}
+
+.am-pub-match--split-vs .te-pub-outcome,
+.am-pub-match--split-vs .te-pub-match-winner {
+  display: none;
+}

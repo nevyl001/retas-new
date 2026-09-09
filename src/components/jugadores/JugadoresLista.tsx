@@ -38,6 +38,7 @@ import { LoadingProgressHint } from "../ui/LoadingProgressHint";
 import { Button } from "../ui";
 import { JugadorCard } from "./JugadorCard";
 import { NuevoJugadorModal } from "./NuevoJugadorModal";
+import { navigateJugadorFicha } from "./jugadoresNav";
 import { AgregarJugadorExistenteModal } from "./AgregarJugadorExistenteModal";
 import {
   canDeleteGlobalPlayer,
@@ -452,7 +453,9 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
           } catch (e) {
             console.warn("[jugadores] ensure legacy fail-closed:", e);
           }
+          setModalOpen(false);
           await load();
+          navigateJugadorFicha(created.slug, { welcomePhoto: true });
         }}
       />
 

@@ -1287,13 +1287,15 @@
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-ronda__matches--courts {
-  --liga-court-card-min: clamp(15.5rem, 22vw, 19.5rem);
+  /* Split VS: 4 columnas de foto por card → necesita más ancho mínimo */
+  --liga-court-card-min: clamp(20rem, 30vw, 26rem);
   display: grid;
   grid-template-columns: repeat(
     auto-fit,
     minmax(min(100%, var(--liga-court-card-min)), 1fr)
   );
-  gap: clamp(0.75rem, 1.4vw, 1.35rem);
+  gap: clamp(0.85rem, 1.6vw, 1.45rem);
+  align-items: stretch;
   width: 100%;
   max-width: none;
 }
@@ -1652,8 +1654,8 @@
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
-  margin: 0 auto;
-  max-width: min(980px, 100%);
+  margin: 0;
+  max-width: none;
   width: 100%;
   text-align: center;
   position: static;
@@ -1667,16 +1669,16 @@
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-ranking__hint {
-  margin-bottom: 1.35rem;
-  font-size: 0.72rem;
+  margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
+  font-size: clamp(0.78rem, 1.15vw, 0.9rem);
   color: var(--liga-pub-text-hint);
 }
 
 .liga-pantalla--jornada-fijas .liga-pub-standings--jornada {
   text-align: left;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.65rem 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.55rem, 1vw, 0.85rem) clamp(0.6rem, 1.1vw, 0.95rem);
   width: 100%;
 }
 
@@ -1747,12 +1749,12 @@
 }
 
 .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__meta {
-  margin-top: 0.28rem;
-  font-size: 0.65rem;
+  margin-top: 0.2rem;
+  font-size: 0.6rem;
 }
 
 .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__meta--games {
-  margin-top: 0.12rem;
+  margin-top: 0.1rem;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
@@ -1761,27 +1763,10 @@
   gap: 0.65rem;
 }
 
-.liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-pair-players--md .liga-pub-pair-players__avatar.rj-avatar {
-  width: 34px;
-  height: 34px;
-  font-size: 0.62rem;
-  border: 1px solid
-    color-mix(
-      in srgb,
-      var(--brand-primary, rgba(255, 255, 255, 0.2)) 55%,
-      transparent
-    );
-}
-
-.liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-pair-players__name {
-  font-size: 0.72rem;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-pair-players__person {
-  max-width: 6.5rem;
-  min-width: 0;
+@media (max-width: 1100px) {
+  .liga-pantalla--jornada-fijas .liga-pub-standings--jornada {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 700px) {
@@ -2004,4 +1989,22 @@
   .liga-pub-standings__pts {
     font-size: 1.35rem;
   }
+}
+
+/* Liga match cards (non-fijas) — Split VS panels */
+.liga-pantalla-match--split-vs .liga-pantalla-match__board--split-vs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.liga-pantalla-match--split-vs .liga-pantalla-match__row--split-vs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.liga-pantalla-match--split-vs .liga-pantalla-match__row--split-vs .pub-split-vs-pair {
+  min-width: 0;
 }

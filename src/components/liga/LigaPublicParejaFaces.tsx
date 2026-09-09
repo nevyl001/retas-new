@@ -1,6 +1,7 @@
 import React from "react";
 import type { LigaEquipo, LigaJornadaPareja } from "../../lib/liga/types";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
+import { playerAvatarHashTone } from "./jornada-public/ligaJornadaMatchNames";
 
 export function parejaPlayerNames(
   pareja: LigaJornadaPareja | undefined,
@@ -48,10 +49,25 @@ interface LigaPublicParejaPlayersProps {
   foto1?: string | null;
   foto2?: string | null;
   size?: "sm" | "md" | "lg";
-  /** inline = avatar al lado del nombre (default). stack = nombre debajo. */
-  orientation?: "inline" | "stack";
+  /** inline | stack | overlap (avatares apilados + nombres debajo). */
+  orientation?: "inline" | "stack" | "overlap";
   className?: string;
   win?: boolean;
+  /** 1 | 2 | 3 para borde medalla en avatares. */
+  podium?: 1 | 2 | 3;
+}
+
+function avatarToneStyle(
+  name: string,
+  foto?: string | null
+): React.CSSProperties | undefined {
+  if (foto?.trim()) return undefined;
+  const tone = playerAvatarHashTone(name);
+  return {
+    background: tone.background,
+    color: tone.color,
+    borderColor: "transparent",
+  };
 }
 
 /** Pareja pública: dos jugadores con avatar + nombre. */
@@ -64,31 +80,75 @@ export const LigaPublicParejaPlayers: React.FC<LigaPublicParejaPlayersProps> = (
   orientation = "inline",
   className = "",
   win = false,
-}) => (
-  <div
-    className={`liga-pub-pair-players liga-pub-pair-players--${size} liga-pub-pair-players--${orientation}${
-      win ? " liga-pub-pair-players--win" : ""
-    }${className ? ` ${className}` : ""}`}
-  >
-    <div className="liga-pub-pair-players__person">
-      <JugadorAvatar
-        fotoUrl={foto1}
-        nombre={name1}
-        size={size === "lg" ? "lg" : size}
-        className="liga-pub-pair-players__avatar"
-        alt={name1 !== "?" ? name1 : ""}
-      />
-      <span className="liga-pub-pair-players__name">{name1}</span>
+  podium,
+}) => {
+  const avatarSize = size === "lg" ? "lg" : size;
+  const podiumClass = podium ? ` liga-pub-pair-players--podium-${podium}` : "";
+
+  if (orientation === "overlap") {
+    return (
+      <div
+        className={`liga-pub-pair-players liga-pub-pair-players--${size} liga-pub-pair-players--overlap${
+          win ? " liga-pub-pair-players--win" : ""
+        }${podiumClass}${className ? ` ${className}` : ""}`}
+      >
+        <div className="liga-pub-pair-players__stack-avatars">
+          <JugadorAvatar
+            fotoUrl={foto1}
+            nombre={name1}
+            size={avatarSize}
+            className="liga-pub-pair-players__avatar liga-pub-pair-players__avatar--front"
+            alt={name1 !== "?" ? name1 : ""}
+            style={avatarToneStyle(name1, foto1)}
+          />
+          <JugadorAvatar
+            fotoUrl={foto2}
+            nombre={name2}
+            size={avatarSize}
+            className="liga-pub-pair-players__avatar liga-pub-pair-players__avatar--back"
+            alt={name2 !== "?" ? name2 : ""}
+            style={avatarToneStyle(name2, foto2)}
+          />
+        </div>
+        <div className="liga-pub-pair-players__stack-names">
+          <span className="liga-pub-pair-players__name">{name1}</span>
+          <span className="liga-pub-pair-players__name-sep" aria-hidden>
+            /
+          </span>
+          <span className="liga-pub-pair-players__name">{name2}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`liga-pub-pair-players liga-pub-pair-players--${size} liga-pub-pair-players--${orientation}${
+        win ? " liga-pub-pair-players--win" : ""
+      }${podiumClass}${className ? ` ${className}` : ""}`}
+    >
+      <div className="liga-pub-pair-players__person">
+        <JugadorAvatar
+          fotoUrl={foto1}
+          nombre={name1}
+          size={avatarSize}
+          className="liga-pub-pair-players__avatar"
+          alt={name1 !== "?" ? name1 : ""}
+          style={avatarToneStyle(name1, foto1)}
+        />
+        <span className="liga-pub-pair-players__name">{name1}</span>
+      </div>
+      <div className="liga-pub-pair-players__person">
+        <JugadorAvatar
+          fotoUrl={foto2}
+          nombre={name2}
+          size={avatarSize}
+          className="liga-pub-pair-players__avatar"
+          alt={name2 !== "?" ? name2 : ""}
+          style={avatarToneStyle(name2, foto2)}
+        />
+        <span className="liga-pub-pair-players__name">{name2}</span>
+      </div>
     </div>
-    <div className="liga-pub-pair-players__person">
-      <JugadorAvatar
-        fotoUrl={foto2}
-        nombre={name2}
-        size={size === "lg" ? "lg" : size}
-        className="liga-pub-pair-players__avatar"
-        alt={name2 !== "?" ? name2 : ""}
-      />
-      <span className="liga-pub-pair-players__name">{name2}</span>
-    </div>
-  </div>
-);
+  );
+};

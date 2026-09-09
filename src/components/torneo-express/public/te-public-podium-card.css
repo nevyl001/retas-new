@@ -196,13 +196,15 @@
 
 .podium-card__player-name {
   margin: 0;
-  max-width: 140px;
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.25;
+  max-width: min(100%, 12.5rem);
+  font-family: var(--font-display, inherit);
+  font-size: clamp(1.2rem, 2.6vw, 1.65rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.12;
   color: var(--accent-gold);
   text-wrap: balance;
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.4);
 }
 
 .podium-card__player-rating {
@@ -391,8 +393,9 @@
   }
 
   .podium-card__player-name {
-    font-size: 14px;
-    max-width: 110px;
+    font-size: clamp(1.05rem, 4.8vw, 1.3rem);
+    max-width: 10rem;
+    font-weight: 800;
   }
 
   .podium-card__quote {

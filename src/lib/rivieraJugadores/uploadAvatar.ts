@@ -110,12 +110,12 @@ export async function resizeAvatarFile(file: File): Promise<Blob> {
   }
 }
 
-export async function uploadJugadorAvatar(
+/** Sube JPEG ya recortado (p. ej. desde cropper interactivo). */
+export async function uploadJugadorAvatarBlob(
   organizadorId: string,
   jugadorId: string,
-  file: File
+  blob: Blob
 ): Promise<string> {
-  const blob = await resizeAvatarFile(file);
   const path = `${organizadorId}/${jugadorId}.jpg`;
   const { error } = await supabase.storage
     .from(AVATAR_BUCKET)
@@ -127,4 +127,23 @@ export async function uploadJugadorAvatar(
   if (error) throw error;
   const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path);
   return `${data.publicUrl}?v=${Date.now()}`;
+}
+
+export async function uploadJugadorAvatar(
+  organizadorId: string,
+  jugadorId: string,
+  file: File
+): Promise<string> {
+  const blob = await resizeAvatarFile(file);
+  return uploadJugadorAvatarBlob(organizadorId, jugadorId, blob);
+}
+
+/** Sube archivo ya recortado 1:1 desde el cropper interactivo. */
+export async function uploadJugadorAvatarCroppedFile(
+  organizadorId: string,
+  jugadorId: string,
+  croppedFile: File
+): Promise<string> {
+  const blob = await resizeAvatarFile(croppedFile);
+  return uploadJugadorAvatarBlob(organizadorId, jugadorId, blob);
 }

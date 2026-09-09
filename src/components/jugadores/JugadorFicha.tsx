@@ -25,7 +25,10 @@ import {
   getRivieraJugadorBySlug,
   updateRivieraJugador,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
-import { uploadJugadorAvatar } from "../../lib/rivieraJugadores/uploadAvatar";
+import { uploadJugadorAvatarCroppedFile } from "../../lib/rivieraJugadores/uploadAvatar";
+import { JugadorAvatarCropModal } from "./JugadorAvatarCropModal";
+import { JugadorAvatarPhotoWelcomeModal } from "./JugadorAvatarPhotoWelcomeModal";
+import "./jugador-avatar-crop.css";
 import type {
   EnCancha,
   JugadorParticipacion,
@@ -79,6 +82,9 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const [deleting, setDeleting] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [deletingHistId, setDeletingHistId] = useState<string | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [welcomePhotoOpen, setWelcomePhotoOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -242,19 +248,51 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
     }
   };
 
-  const handlePhoto = async (file: File) => {
+  const clearWelcomePhotoParam = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("welcomePhoto")) return;
+    params.delete("welcomePhoto");
+    const qs = params.toString();
+    const next = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`;
+    window.history.replaceState(null, "", next);
+  }, []);
+
+  const openCropForFile = useCallback((file: File) => {
+    setCropFile(file);
+    setCropOpen(true);
+  }, []);
+
+  const handleCroppedPhoto = async (file: File) => {
     if (!user?.id || !jugador) return;
     setUploading(true);
     try {
-      const url = await uploadJugadorAvatar(user.id, jugador.id, file);
+      const url = await uploadJugadorAvatarCroppedFile(
+        user.id,
+        jugador.id,
+        file
+      );
       const updated = await updateRivieraJugador(jugador.id, { foto_url: url });
       setJugador({ ...jugador, ...updated, stats: jugador.stats });
+      setWelcomePhotoOpen(false);
+      clearWelcomePhotoParam();
     } catch (e) {
       alert(e instanceof Error ? e.message : "Error al subir foto");
     } finally {
       setUploading(false);
+      setCropFile(null);
+      setCropOpen(false);
     }
   };
+
+  useEffect(() => {
+    if (loading || !jugador || !activeOrgId) return;
+    const readOnly = canRemovePlayerFromCurrentClub(jugador, activeOrgId);
+    const wantsWelcome =
+      new URLSearchParams(window.location.search).get("welcomePhoto") === "1";
+    if (wantsWelcome && !jugador.foto_url?.trim() && !readOnly) {
+      setWelcomePhotoOpen(true);
+    }
+  }, [loading, jugador, activeOrgId]);
 
   const histStats = useMemo(
     () => computePublicProfileStats(historial),
@@ -314,6 +352,23 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           </Button>
         </nav>
 
+        {!isGrantedReadOnly && !jugador.foto_url?.trim() ? (
+          <div className="rj-ficha-photo-cta" role="status">
+            <p className="rj-ficha-photo-cta__text">
+              Agrega tu foto para verte en los resultados publicados.
+            </p>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+            >
+              Subir foto
+            </Button>
+          </div>
+        ) : null}
+
         <header className="rj-ficha-header">
           <div className="rj-ficha-header__avatar-wrap">
             <JugadorAvatar fotoUrl={jugador.foto_url} nombre={jugador.nombre} size="lg" />
@@ -335,7 +390,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
                   hidden
                   onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f) void handlePhoto(f);
+                    if (f) openCropForFile(f);
                     e.target.value = "";
                   }}
                 />
@@ -694,6 +749,29 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             </p>
           </div>
         )}
+
+        <JugadorAvatarPhotoWelcomeModal
+          open={welcomePhotoOpen}
+          playerName={jugador.nombre}
+          onSkip={() => {
+            setWelcomePhotoOpen(false);
+            clearWelcomePhotoParam();
+          }}
+          onPickFile={(file) => {
+            setWelcomePhotoOpen(false);
+            openCropForFile(file);
+          }}
+        />
+        <JugadorAvatarCropModal
+          open={cropOpen}
+          file={cropFile}
+          playerName={jugador.nombre}
+          onClose={() => {
+            setCropOpen(false);
+            setCropFile(null);
+          }}
+          onConfirm={(file) => void handleCroppedPhoto(file)}
+        />
       </div>
     </div>
   );

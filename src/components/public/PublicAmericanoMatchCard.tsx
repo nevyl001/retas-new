@@ -1,11 +1,8 @@
 import React from "react";
 import type { AmericanoSnapshotMatch } from "../../lib/americanoDinamicoStorage";
+import type { PublicRetaPairPlayer } from "./PublicRetaPairSide";
+import { PublicSplitVsPairHalf } from "./split-vs";
 import {
-  PublicRetaPairSide,
-  type PublicRetaPairPlayer,
-} from "./PublicRetaPairSide";
-import {
-  TePubMatchOutcome,
   TePubMatchStatus,
   tePubScoreNumModifier,
 } from "./tePubShared";
@@ -52,17 +49,17 @@ export const PublicAmericanoMatchCard: React.FC<{
   const aWins = played && (m.scoreA as number) > (m.scoreB as number);
   const bWins = played && (m.scoreB as number) > (m.scoreA as number);
   const isTie = played && (m.scoreA as number) === (m.scoreB as number);
-  const winnerLabel = aWins
-    ? teamLabel(m.teamA)
-    : bWins
-      ? teamLabel(m.teamB)
-      : null;
   const matchState =
     scheduleStatus ?? (played ? "played" : live ? "live" : "pending");
 
+  const playersA = teamPlayers(m.teamA, playerRatings, playerFotos);
+  const playersB = teamPlayers(m.teamB, playerRatings, playerFotos);
+  const toneA = isTie ? "neutral" : aWins ? "win" : played ? "loss" : "neutral";
+  const toneB = isTie ? "neutral" : bWins ? "win" : played ? "loss" : "neutral";
+
   return (
     <article
-      className={`te-pub-match te-pub-match--wide te-pub-match--americano am-pub-match te-pub-fade-in-up${
+      className={`te-pub-match te-pub-match--wide te-pub-match--americano am-pub-match am-pub-match--split-vs te-pub-fade-in-up${
         isTie ? " te-pub-match--tie" : ""
       }`}
       data-match-state={matchState}
@@ -86,16 +83,15 @@ export const PublicAmericanoMatchCard: React.FC<{
         </span>
       </div>
 
-      <div className="te-pub-match__faceoff">
+      <div className="te-pub-match__faceoff te-pub-match__faceoff--split-vs">
         <div className="te-pub-match__slot te-pub-match__slot--pair1">
-          <PublicRetaPairSide
-            players={teamPlayers(m.teamA, playerRatings, playerFotos)}
+          <PublicSplitVsPairHalf
+            player1={{ name: playersA[0].name, foto: playersA[0].fotoUrl }}
+            player2={{ name: playersA[1].name, foto: playersA[1].fotoUrl }}
             label={teamLabel(m.teamA)}
-            align="left"
-            variant="band"
-            joinVariant="team"
-            isWinner={aWins}
-            isTie={isTie}
+            tone={toneA}
+            showWinnerBadge={aWins && !isTie}
+            className="pub-split-vs-pair--compact"
           />
         </div>
 
@@ -106,14 +102,13 @@ export const PublicAmericanoMatchCard: React.FC<{
         </div>
 
         <div className="te-pub-match__slot te-pub-match__slot--pair2">
-          <PublicRetaPairSide
-            players={teamPlayers(m.teamB, playerRatings, playerFotos)}
+          <PublicSplitVsPairHalf
+            player1={{ name: playersB[0].name, foto: playersB[0].fotoUrl }}
+            player2={{ name: playersB[1].name, foto: playersB[1].fotoUrl }}
             label={teamLabel(m.teamB)}
-            align="right"
-            variant="band"
-            joinVariant="team"
-            isWinner={bWins}
-            isTie={isTie}
+            tone={toneB}
+            showWinnerBadge={bWins && !isTie}
+            className="pub-split-vs-pair--compact"
           />
         </div>
 
@@ -148,8 +143,6 @@ export const PublicAmericanoMatchCard: React.FC<{
           )}
         </div>
       </div>
-
-      <TePubMatchOutcome winnerLabel={winnerLabel} isTie={isTie} />
 
       {played && (
         <div className="te-pub-games te-pub-games--solo">

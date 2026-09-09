@@ -1,0 +1,250 @@
+/* Split VS panels — vistas públicas multi-modo (Reta / Americano / Duelo / Liga) */
+
+.pub-split-vs-pair {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.pub-split-vs-pair__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.pub-split-vs-pair__grid--solo {
+  grid-template-columns: 1fr;
+}
+
+.pub-split-vs-pair__badge {
+  position: absolute;
+  z-index: 5;
+  top: 0.35rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 1.7rem;
+  height: 1.55rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ro-medal-gold, #c9a227) 55%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ro-medal-gold, #c9a227) 92%, #fff) 0%,
+    color-mix(in srgb, var(--ro-medal-gold, #c9a227) 78%, #1a1408) 100%
+  );
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.4),
+    0 0 12px color-mix(in srgb, var(--ro-medal-gold, #c9a227) 35%, transparent);
+  pointer-events: none;
+}
+
+.pub-split-vs-pair__badge-icon {
+  font-size: 0.8rem;
+  line-height: 1;
+  color: #0a0c10;
+}
+
+.pub-split-vs-pair--win {
+  border-radius: 10px;
+  padding: 0.15rem;
+  background: transparent;
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--brand-accent, #e5c158) 55%, transparent);
+}
+
+.pub-split-vs-pair--win .pub-split-vs-pair__grid {
+  gap: 0.28rem;
+}
+
+.pub-split-vs-pair--win .pub-split-vs-panel {
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--brand-accent, #e5c158) 22%, transparent);
+}
+
+.pub-split-vs-pair--win .pub-split-vs-panel__photo.is-visible {
+  filter: none;
+}
+
+.pub-split-vs-pair--win .pub-split-vs-panel__given {
+  color: color-mix(in srgb, var(--brand-accent, #e5c158) 55%, #fff);
+}
+
+.pub-split-vs-pair--loss {
+  opacity: 0.78;
+}
+
+.pub-split-vs-pair--loss .pub-split-vs-panel {
+  filter: grayscale(0.22) brightness(0.82);
+}
+
+.pub-split-vs-pair--loss .pub-split-vs-panel__identity {
+  color: color-mix(in srgb, #fff 78%, transparent);
+}
+
+.pub-split-vs-panel {
+  position: relative;
+  container-type: inline-size;
+  min-width: 0;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(
+    --pub-split-vs-bg,
+    linear-gradient(145deg, #2a3340, #12161c)
+  );
+}
+
+@media (min-width: 640px) {
+  .pub-split-vs-panel {
+    aspect-ratio: 1 / 1;
+  }
+}
+
+.pub-split-vs-panel__texture {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.055;
+  background-image: repeating-linear-gradient(
+    -32deg,
+    transparent 0,
+    transparent 7px,
+    rgba(255, 255, 255, 0.35) 7px,
+    rgba(255, 255, 255, 0.35) 8px
+  );
+}
+
+.pub-split-vs-panel__silhouette {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  width: clamp(2.75rem, 36cqi, 4.25rem);
+  height: auto;
+  transform: translate(-50%, -58%);
+  color: var(--pub-split-vs-fg, #fff);
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+.pub-split-vs-panel__watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  font-size: clamp(2.4rem, 42cqi, 3.75rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--pub-split-vs-fg, #fff);
+  opacity: 0.12;
+  transform: rotate(-6deg);
+  user-select: none;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+.pub-split-vs-panel--has-photo .pub-split-vs-panel__watermark,
+.pub-split-vs-panel--has-photo .pub-split-vs-panel__texture,
+.pub-split-vs-panel--has-photo .pub-split-vs-panel__silhouette {
+  opacity: 0;
+}
+
+.pub-split-vs-panel__photo {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(1.04);
+  transform-origin: center 18%;
+}
+
+.pub-split-vs-panel__photo.is-visible {
+  opacity: 1;
+}
+
+.pub-split-vs-panel__scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  height: 42%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(8, 10, 14, 0.45) 48%,
+    rgba(8, 10, 14, 0.88) 100%
+  );
+  pointer-events: none;
+}
+
+.pub-split-vs-panel__identity {
+  position: absolute;
+  left: 0.35rem;
+  right: 0.35rem;
+  bottom: 0.4rem;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.pub-split-vs-panel__given {
+  font-size: clamp(0.72rem, 3.8cqi, 0.95rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pub-split-vs-panel__family {
+  font-size: clamp(0.58rem, 3cqi, 0.72rem);
+  font-weight: 650;
+  line-height: 1.1;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Compacto para cards densas (Americano / Reta grid) */
+.pub-split-vs-pair--compact .pub-split-vs-panel {
+  aspect-ratio: 1 / 1;
+  border-radius: 7px;
+}
+
+.pub-split-vs-pair--compact .pub-split-vs-pair__grid {
+  gap: 0.28rem;
+}
+
+.pub-split-vs-pair--compact .pub-split-vs-panel__given {
+  font-size: clamp(0.65rem, 3.4cqi, 0.8rem);
+}
+
+.pub-split-vs-pair--compact .pub-split-vs-panel__family {
+  font-size: clamp(0.52rem, 2.8cqi, 0.62rem);
+}

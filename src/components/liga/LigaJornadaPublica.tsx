@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   buildJornadaParejaMatchBreakdowns,
   computeJornadaPublicStats,
-  formatSignedPoints,
 } from "../../lib/liga/jornadaStats";
 import {
   statsParejaJornadaVictoria,
@@ -29,11 +28,12 @@ import { PublicHero } from "../public/peds";
 import { LigaParejaVictoriaCelebrate } from "./LigaParejaVictoriaCelebrate";
 import { LigaMotionValue } from "./LigaMotionValue";
 import {
-  LigaPublicParejaPlayers,
   parejaPlayerNames,
 } from "./LigaPublicParejaFaces";
 import { LigaJornadaMatchCardFinal } from "./jornada-public/LigaJornadaMatchCardFinal";
 import { LigaJornadaMatchCardPending } from "./jornada-public/LigaJornadaMatchCardPending";
+import { LigaJornadaStandingsRow } from "./jornada-public/LigaJornadaStandingsRow";
+import { PublicSplitVsPairHalf } from "../public/split-vs";
 import {
   useFlipReorder,
   useInViewOnce,
@@ -421,25 +421,24 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     return (
       <article
         key={partido.id}
-        className="liga-pantalla-match liga-pantalla-match--faces"
+        className="liga-pantalla-match liga-pantalla-match--faces liga-pantalla-match--split-vs"
         style={matchStyle}
       >
         <header className="liga-pantalla-match__head">
           <span className="liga-pantalla-match__cancha">Cancha {canchaNum}</span>
         </header>
-        <div className="liga-pantalla-match__board">
+        <div className="liga-pantalla-match__board liga-pantalla-match__board--split-vs">
           <div
-            className={`liga-pantalla-match__row liga-pantalla-match__row--face${
+            className={`liga-pantalla-match__row liga-pantalla-match__row--face liga-pantalla-match__row--split-vs${
               p1Wins ? " liga-pantalla-match__row--win" : ""
             }`}
           >
-            <LigaPublicParejaPlayers
-              name1={side1.name1}
-              name2={side1.name2}
-              foto1={side1.foto1}
-              foto2={side1.foto2}
-              size="sm"
-              win={p1Wins}
+            <PublicSplitVsPairHalf
+              player1={{ name: side1.name1, foto: side1.foto1 }}
+              player2={{ name: side1.name2, foto: side1.foto2 }}
+              tone={p1Wins ? "win" : partido.estado === "completed" ? "loss" : "neutral"}
+              showWinnerBadge={p1Wins}
+              className="pub-split-vs-pair--compact"
             />
             <span
               className={`liga-pantalla-match__pts${
@@ -453,17 +452,16 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
             <p className="liga-pantalla-match__vs">vs</p>
           </div>
           <div
-            className={`liga-pantalla-match__row liga-pantalla-match__row--face${
+            className={`liga-pantalla-match__row liga-pantalla-match__row--face liga-pantalla-match__row--split-vs${
               p2Wins ? " liga-pantalla-match__row--win" : ""
             }`}
           >
-            <LigaPublicParejaPlayers
-              name1={side2.name1}
-              name2={side2.name2}
-              foto1={side2.foto1}
-              foto2={side2.foto2}
-              size="sm"
-              win={p2Wins}
+            <PublicSplitVsPairHalf
+              player1={{ name: side2.name1, foto: side2.foto1 }}
+              player2={{ name: side2.name2, foto: side2.foto2 }}
+              tone={p2Wins ? "win" : partido.estado === "completed" ? "loss" : "neutral"}
+              showWinnerBadge={p2Wins}
+              className="pub-split-vs-pair--compact"
             />
             <span
               className={`liga-pantalla-match__pts${
@@ -634,113 +632,24 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                       const face = resolveParejaFace(row.parejaId);
                       const matchLines =
                         jornadaMatchBreakdowns.get(row.parejaId) ?? [];
-                      const gamesDif = row.games_favor - row.games_contra;
-                      const gamesDifLabel =
-                        gamesDif >= 0 ? `+${gamesDif}` : String(gamesDif);
-                      const topClass =
-                        row.posicion === 1
-                          ? " liga-pub-standings__row--1"
-                          : row.posicion === 2
-                            ? " liga-pub-standings__row--2"
-                            : row.posicion === 3
-                              ? " liga-pub-standings__row--3"
-                              : "";
                       return (
-                        <li
+                        <LigaJornadaStandingsRow
                           key={row.parejaId}
-                          data-flip-key={row.parejaId}
-                          className={`liga-pub-standings__row${topClass}${
-                            rankingInView ? " is-revealing" : ""
-                          }`}
-                          style={
-                            {
-                              ["--liga-rank-i" as string]: rankIndex,
-                            } as React.CSSProperties
-                          }
-                        >
-                          <div
-                            className="liga-pub-standings__pos"
-                            aria-label={`Posición ${row.posicion}`}
-                          >
-                            <span className="liga-pub-standings__pos-num">
-                              <LigaMotionValue
-                                morphKey={row.posicion}
-                                value={row.posicion}
-                              />
-                            </span>
-                            <span className="liga-pub-standings__pos-suffix">
-                              °
-                            </span>
-                          </div>
-                          <div className="liga-pub-standings__players">
-                            <LigaPublicParejaPlayers
-                              name1={face.name1}
-                              name2={face.name2}
-                              foto1={face.foto1}
-                              foto2={face.foto2}
-                              size="md"
-                              orientation="stack"
-                              win={row.posicion === 1}
-                            />
-                            <p className="liga-pub-standings__meta">
-                              <LigaMotionValue
-                                morphKey={`${row.victorias}-${row.derrotas}`}
-                                value={`${row.victorias} PG · ${row.derrotas} PP`}
-                              />
-                            </p>
-                            <p className="liga-pub-standings__meta liga-pub-standings__meta--games">
-                              <LigaMotionValue
-                                morphKey={`${row.games_favor}-${row.games_contra}`}
-                                value={`${row.games_favor} GF · ${row.games_contra} GC · DIF ${gamesDifLabel}`}
-                              />
-                            </p>
-                            {matchLines.length > 0 ? (
-                              <ul
-                                className="liga-pub-standings__breakdown"
-                                aria-label="Puntos por partido"
-                              >
-                                {matchLines.map((line, lineIndex) => (
-                                  <li
-                                    key={line.partidoId}
-                                    className="liga-pub-standings__breakdown-line"
-                                    style={
-                                      {
-                                        ["--liga-line-i" as string]: lineIndex,
-                                      } as React.CSSProperties
-                                    }
-                                  >
-                                    <span className="liga-pub-standings__breakdown-score">
-                                      {line.scoreLabel}
-                                    </span>
-                                    <span
-                                      className="liga-pub-standings__breakdown-arrow"
-                                      aria-hidden="true"
-                                    >
-                                      →
-                                    </span>
-                                    <span
-                                      className="liga-pub-standings__breakdown-pts"
-                                      aria-label={`${formatSignedPoints(line.points)} puntos`}
-                                    >
-                                      {formatSignedPoints(line.points)}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : null}
-                          </div>
-                          <div className="liga-pub-standings__pts-block">
-                            <span className="liga-pub-standings__pts">
-                              <LigaMotionValue
-                                morphKey={row.puntos}
-                                value={row.puntos}
-                              />
-                            </span>
-                            <span className="liga-pub-standings__pts-label">
-                              pts
-                            </span>
-                          </div>
-                        </li>
+                          rankIndex={rankIndex}
+                          posicion={row.posicion}
+                          parejaId={row.parejaId}
+                          name1={face.name1}
+                          name2={face.name2}
+                          foto1={face.foto1}
+                          foto2={face.foto2}
+                          puntos={row.puntos}
+                          victorias={row.victorias}
+                          derrotas={row.derrotas}
+                          gamesFavor={row.games_favor}
+                          gamesContra={row.games_contra}
+                          matchLines={matchLines}
+                          rankingInView={rankingInView}
+                        />
                       );
                     })}
                   </ol>

@@ -2654,3 +2654,29 @@
   }
 }
 
+
+/* Split VS panels in Duelo 2v2 public live board */
+.duelo2v2-live-board--split-vs .duelo2v2-live-board__arena--split-vs {
+  gap: clamp(0.85rem, 2.2vw, 1.25rem);
+}
+
+.duelo2v2-live-team--split-vs {
+  align-items: stretch;
+  width: 100%;
+}
+
+.duelo2v2-live-team--split-vs .pub-split-vs-pair {
+  width: 100%;
+  margin-bottom: 0.85rem;
+}
+
+.duelo2v2-live-team--split-vs .duelo2v2-live-team__score {
+  align-self: center;
+}
+
+@media (min-width: 900px) {
+  .duelo2v2-live-board--split-vs .duelo2v2-live-board__arena--split-vs {
+    grid-template-columns: 1fr auto 1fr;
+    align-items: start;
+  }
+}
