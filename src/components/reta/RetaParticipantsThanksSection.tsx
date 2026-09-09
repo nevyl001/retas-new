@@ -18,11 +18,19 @@ const THANKS_COPY = {
   message: "Sigan jugando, sigan sumando puntos a su ranking Riviera Open.",
 };
 
+function splitPlayerName(name: string): { given: string; family?: string } {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return { given: "?" };
+  if (parts.length === 1) return { given: parts[0] };
+  return { given: parts[0], family: parts.slice(1).join(" ") };
+}
+
 function ThanksAvatar({ player }: { player: PublicRetaPairPlayer }) {
-  const initial = (player.name.trim()[0] ?? "?").toUpperCase();
+  const { given, family } = splitPlayerName(player.name);
+  const initial = (given[0] ?? "?").toUpperCase();
   const { src, onError } = useRetryableImage(player.fotoUrl);
   return (
-    <span className="reta-thanks__avatar">
+    <span className="reta-thanks__avatar" title={player.name}>
       {src ? (
         // Carga eager: esta tarjeta está pensada para capturarse/compartirse,
         // así que todos los avatares deben estar presentes al renderizar.
@@ -38,6 +46,13 @@ function ThanksAvatar({ player }: { player: PublicRetaPairPlayer }) {
           {initial}
         </span>
       )}
+      <span className="reta-thanks__avatar-scrim" aria-hidden />
+      <span className="reta-thanks__avatar-name">
+        <span className="reta-thanks__avatar-given">{given}</span>
+        {family ? (
+          <span className="reta-thanks__avatar-family">{family}</span>
+        ) : null}
+      </span>
     </span>
   );
 }
@@ -99,7 +114,11 @@ export const RetaParticipantsThanksSection: React.FC<{
 
           <ul className="reta-thanks__roster" aria-label="Clasificación final">
             {participants.map((participant) => (
-              <li key={participant.pairId} className="reta-thanks__row">
+              <li
+                key={participant.pairId}
+                className="reta-thanks__row"
+                aria-label={`Puesto ${participant.position}: ${pairNames(participant)}`}
+              >
                 <span className="reta-thanks__pos">#{participant.position}</span>
                 <span className="reta-thanks__avatars">
                   {participant.players.slice(0, 2).map((player, idx) => (
@@ -109,7 +128,6 @@ export const RetaParticipantsThanksSection: React.FC<{
                     />
                   ))}
                 </span>
-                <p className="reta-thanks__names">{pairNames(participant)}</p>
               </li>
             ))}
           </ul>
