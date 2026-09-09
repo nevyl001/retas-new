@@ -51,19 +51,20 @@
 
 .pub-split-vs-pair--win {
   border-radius: 10px;
-  padding: 0.15rem;
+  padding: 0;
+  overflow: hidden;
   background: transparent;
   box-shadow: 0 0 0 1px
     color-mix(in srgb, var(--brand-accent, #e5c158) 55%, transparent);
 }
 
 .pub-split-vs-pair--win .pub-split-vs-pair__grid {
-  gap: 0.28rem;
+  gap: 2px;
 }
 
 .pub-split-vs-pair--win .pub-split-vs-panel {
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--brand-accent, #e5c158) 22%, transparent);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .pub-split-vs-pair--win .pub-split-vs-panel__photo.is-visible {
