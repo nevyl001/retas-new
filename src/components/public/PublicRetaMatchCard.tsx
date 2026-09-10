@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   TePubMatchStatus,
   tePubScoreNumModifier,
@@ -7,6 +7,11 @@ import type { PublicRetaPairPlayer } from "./PublicRetaPairSide";
 import { PublicSplitVsPairHalf } from "./split-vs";
 import { formatMatchCourtLabel } from "../../lib/matchCourt";
 import { useRetryableImage } from "../../hooks/useRetryableImage";
+import {
+  isPhotographicSplitVsFoto,
+  playerAvatarHashTone,
+  splitPlayerDisplayName,
+} from "../liga/jornada-public/ligaJornadaMatchNames";
 import "./reta-public-scoreboard.css";
 
 function shortTeamLabel(name: string): string {
@@ -14,29 +19,161 @@ function shortTeamLabel(name: string): string {
   return cleaned || name;
 }
 
-/** Logo plano detrás de la pareja (sin recorte circular de TeamLogo). */
-function TeamPairWatermark({ logoUrl }: { logoUrl?: string | null }) {
-  const { src, onError } = useRetryableImage(logoUrl);
-  if (!src) return null;
+/** Retrato grande para el duelo por equipos. */
+function EqDuelPortrait({ player }: { player: PublicRetaPairPlayer }) {
+  const { primary, secondary } = splitPlayerDisplayName(player.name);
+  const tone = playerAvatarHashTone(player.name);
+  const initials = `${primary.charAt(0)}${
+    secondary?.charAt(0) ?? primary.charAt(1) ?? ""
+  }`.toUpperCase();
+  const candidate =
+    isPhotographicSplitVsFoto(player.fotoUrl) && player.fotoUrl
+      ? player.fotoUrl.trim()
+      : null;
+  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const showPhoto = Boolean(candidate) && !failed && loaded;
+
+  useEffect(() => {
+    setFailed(false);
+    setLoaded(false);
+  }, [candidate]);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img || !candidate) return;
+    if (img.complete) {
+      if (img.naturalWidth === 0) setFailed(true);
+      else setLoaded(true);
+    }
+  }, [candidate]);
 
   return (
-    <div className="reta-sb-team__watermark" aria-hidden>
-      <img
-        className="reta-sb-team__watermark-img"
-        src={src}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        onError={onError}
-      />
+    <div
+      className={`reta-eq-duel__portrait${
+        showPhoto ? " reta-eq-duel__portrait--photo" : " reta-eq-duel__portrait--fallback"
+      }`}
+      style={
+        showPhoto
+          ? undefined
+          : ({
+              ["--eq-duel-fallback-bg" as string]: tone.background,
+              ["--eq-duel-fallback-fg" as string]: tone.color,
+            } as React.CSSProperties)
+      }
+      aria-label={player.name}
+    >
+      {!showPhoto ? (
+        <span className="reta-eq-duel__initials" aria-hidden>
+          {initials}
+        </span>
+      ) : null}
+      {candidate && !failed ? (
+        <img
+          ref={imgRef}
+          className={`reta-eq-duel__photo${loaded ? " is-visible" : ""}`}
+          src={candidate}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+        />
+      ) : null}
     </div>
   );
 }
 
-/** Pareja: solo paneles Split VS (el marcador va debajo del board). */
-function TeamPairBlock({
+/** Lado de equipo: fotos con presencia + crest del club. */
+function EqDuelSide({
   teamName,
   logoUrl,
+  players,
+  pairLabel,
+  isWinner,
+  isTie,
+  hasResult,
+  side,
+}: {
+  teamName?: string | null;
+  logoUrl?: string | null;
+  players: PublicRetaPairPlayer[];
+  pairLabel: string;
+  isWinner: boolean;
+  isTie: boolean;
+  hasResult: boolean;
+  side: "a" | "b";
+}) {
+  const [p1, p2] = players;
+  const hasTeam = Boolean(teamName?.trim());
+  const displayTeam = hasTeam ? shortTeamLabel(teamName!.trim()) : pairLabel;
+  const { src: logoSrc, onError: onLogoError } = useRetryableImage(logoUrl);
+
+  return (
+    <section
+      className={[
+        "reta-eq-duel__side",
+        `reta-eq-duel__side--${side}`,
+        isWinner ? "reta-eq-duel__side--win" : "",
+        isTie ? "reta-eq-duel__side--tie" : "",
+        hasResult && !isWinner && !isTie ? "reta-eq-duel__side--loss" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-label={`Equipo ${displayTeam}`}
+    >
+      <div className="reta-eq-duel__aura" aria-hidden />
+
+      {logoSrc ? (
+        <div className="reta-eq-duel__mark" aria-hidden>
+          <img
+            className="reta-eq-duel__mark-img"
+            src={logoSrc}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            onError={onLogoError}
+          />
+        </div>
+      ) : null}
+
+      <div className="reta-eq-duel__portraits">
+        {p1 ? <EqDuelPortrait player={p1} /> : null}
+        {p2 ? <EqDuelPortrait player={p2} /> : null}
+        {!p1 && !p2 ? (
+          <div className="reta-eq-duel__portrait reta-eq-duel__portrait--fallback">
+            <span className="reta-eq-duel__initials">?</span>
+          </div>
+        ) : null}
+      </div>
+
+      {logoSrc ? (
+        <div className="reta-eq-duel__crest" aria-hidden>
+          <img
+            className="reta-eq-duel__crest-img"
+            src={logoSrc}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            onError={onLogoError}
+          />
+        </div>
+      ) : (
+        <div className="reta-eq-duel__crest reta-eq-duel__crest--text" aria-hidden>
+          <span>{displayTeam.slice(0, 2).toUpperCase()}</span>
+        </div>
+      )}
+
+      {isWinner && !isTie ? (
+        <span className="reta-eq-duel__win-pip" aria-label="Ganador" />
+      ) : null}
+    </section>
+  );
+}
+
+/** Pareja clásica Split VS (Reta no-equipos). */
+function ClassicTeamPairBlock({
   players,
   pairLabel,
   hasResult,
@@ -44,8 +181,6 @@ function TeamPairBlock({
   isTie,
   side,
 }: {
-  teamName?: string | null;
-  logoUrl?: string | null;
   players: PublicRetaPairPlayer[];
   pairLabel: string;
   hasResult: boolean;
@@ -55,8 +190,6 @@ function TeamPairBlock({
 }) {
   const [p1, p2] = players;
   const hasPlayers = Boolean(p1 || p2);
-  const hasTeam = Boolean(teamName?.trim());
-  const displayTeam = hasTeam ? shortTeamLabel(teamName!.trim()) : "";
   const tone = isTie
     ? "neutral"
     : isWinner
@@ -71,18 +204,15 @@ function TeamPairBlock({
         "reta-sb-team",
         `reta-sb-team--${side}`,
         "reta-sb-team--split-vs",
-        hasTeam ? "reta-sb-team--branded" : "",
         isWinner ? "reta-sb-team--win" : "",
         isTie ? "reta-sb-team--tie" : "",
       ]
         .filter(Boolean)
         .join(" ")}
-      aria-label={hasTeam ? `Equipo ${displayTeam}` : `Pareja ${pairLabel}`}
+      aria-label={`Pareja ${pairLabel}`}
     >
-      {hasTeam ? <TeamPairWatermark logoUrl={logoUrl} /> : null}
       <div className="reta-sb-team__body">
         <div className="reta-sb-team__main">
-          {/* Nombre de equipo omitido: el logo de fondo identifica el club */}
           <div className="reta-sb-team__players reta-sb-team__players--split-vs">
             {hasPlayers && p1 ? (
               <PublicSplitVsPairHalf
@@ -91,13 +221,13 @@ function TeamPairBlock({
                 label={pairLabel}
                 tone={tone}
                 showWinnerBadge={isWinner && !isTie}
-                className="pub-split-vs-pair--compact pub-split-vs-pair--logo-only"
+                className="pub-split-vs-pair--compact"
               />
             ) : (
               <PublicSplitVsPairHalf
                 player1={{ name: pairLabel, foto: null }}
                 tone={tone}
-                className="pub-split-vs-pair--compact pub-split-vs-pair--logo-only"
+                className="pub-split-vs-pair--compact"
               />
             )}
           </div>
@@ -171,7 +301,7 @@ export const PublicRetaMatchCard: React.FC<{
         remontadaRound != null ? " te-pub-match--remontada" : ""
       }${isTie ? " te-pub-match--tie" : ""}${
         statusVariant === "live" ? " reta-sb-card--live" : ""
-      }${hasTeams ? " reta-sb-card--teams" : ""}`}
+      }${hasTeams ? " reta-sb-card--teams reta-eq-duel-card" : ""}`}
       style={{ animationDelay: `${0.08 + index * 0.05}s` }}
     >
       <header className="reta-sb-card__meta">
@@ -191,38 +321,66 @@ export const PublicRetaMatchCard: React.FC<{
         </div>
       </header>
 
-      <div className="reta-sb-card__board">
-        <TeamPairBlock
-          teamName={pair1TeamLabel}
-          logoUrl={pair1LogoUrl}
-          players={pair1Players}
-          pairLabel={pair1Label}
-          hasResult={hasResult}
-          isWinner={pair1Wins}
-          isTie={isTie}
-          side="a"
-        />
+      {hasTeams ? (
+        <div className="reta-eq-duel">
+          <EqDuelSide
+            teamName={pair1TeamLabel}
+            logoUrl={pair1LogoUrl}
+            players={pair1Players}
+            pairLabel={pair1Label}
+            hasResult={hasResult}
+            isWinner={pair1Wins}
+            isTie={isTie}
+            side="a"
+          />
 
-        <div className="reta-sb-vs" aria-hidden>
-          <span className="reta-sb-vs__line" />
-          <span className="reta-sb-vs__badge">VS</span>
-          <span className="reta-sb-vs__line" />
+          <div className="reta-eq-duel__vs" aria-hidden>
+            <span className="reta-eq-duel__vs-ring">vs</span>
+          </div>
+
+          <EqDuelSide
+            teamName={pair2TeamLabel}
+            logoUrl={pair2LogoUrl}
+            players={pair2Players}
+            pairLabel={pair2Label}
+            hasResult={hasResult}
+            isWinner={pair2Wins}
+            isTie={isTie}
+            side="b"
+          />
         </div>
+      ) : (
+        <div className="reta-sb-card__board">
+          <ClassicTeamPairBlock
+            players={pair1Players}
+            pairLabel={pair1Label}
+            hasResult={hasResult}
+            isWinner={pair1Wins}
+            isTie={isTie}
+            side="a"
+          />
 
-        <TeamPairBlock
-          teamName={pair2TeamLabel}
-          logoUrl={pair2LogoUrl}
-          players={pair2Players}
-          pairLabel={pair2Label}
-          hasResult={hasResult}
-          isWinner={pair2Wins}
-          isTie={isTie}
-          side="b"
-        />
-      </div>
+          <div className="reta-sb-vs" aria-hidden>
+            <span className="reta-sb-vs__line" />
+            <span className="reta-sb-vs__badge">VS</span>
+            <span className="reta-sb-vs__line" />
+          </div>
+
+          <ClassicTeamPairBlock
+            players={pair2Players}
+            pairLabel={pair2Label}
+            hasResult={hasResult}
+            isWinner={pair2Wins}
+            isTie={isTie}
+            side="b"
+          />
+        </div>
+      )}
 
       <div
-        className="reta-sb-card__scoreboard"
+        className={`reta-sb-card__scoreboard${
+          hasTeams ? " reta-eq-duel__scoreboard" : ""
+        }`}
         aria-label={
           hasResult ? `Marcador ${score1} a ${score2}` : "Sin marcador"
         }
