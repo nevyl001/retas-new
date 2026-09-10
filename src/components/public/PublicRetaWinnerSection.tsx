@@ -146,6 +146,10 @@ export const PublicRetaWinnerSection: React.FC<{
   const hasRunnersUp = Boolean(runnersUp && runnersUp.length > 0);
   const hasStats = Boolean(stats && stats.length > 0);
   const isTeamShareCard = Boolean(shareable);
+  const isBestPairCard = Boolean(
+    className?.split(/\s+/).includes("ro-pub-celebrate--best-pair")
+  );
+  const usePortraitHeroes = isTeamShareCard || isBestPairCard;
   const teamTitle = title.replace(/\s*\/\s*/g, " · ");
 
   return (
@@ -184,13 +188,14 @@ export const PublicRetaWinnerSection: React.FC<{
             className={[
               "ro-pub-celebrate__heroes",
               isTeamShareCard ? "ro-pub-celebrate__heroes--team" : "",
+              isBestPairCard ? "ro-pub-celebrate__heroes--pair" : "",
             ]
               .filter(Boolean)
               .join(" ")}
             aria-label={`Jugadores de ${teamTitle}`}
           >
             {winners!.map((w) =>
-              isTeamShareCard ? (
+              usePortraitHeroes ? (
                 <CelebrateTeamPortrait
                   key={w.jugadorId || w.name}
                   player={w}

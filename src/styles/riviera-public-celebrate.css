@@ -608,18 +608,76 @@
   color: rgba(244, 241, 235, 0.92);
 }
 
-.ro-pub-celebrate--best-pair .ro-pub-celebrate__heroes {
-  justify-content: center;
-  gap: 1.35rem;
-  max-width: 22rem;
-  margin-left: auto;
-  margin-right: auto;
+.ro-pub-celebrate__heroes--pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-items: stretch;
+  align-items: stretch;
+  width: 100%;
+  max-width: min(100%, 28rem);
+  gap: 0.55rem;
+  margin: 0.35rem auto 0.95rem;
 }
 
-.ro-pub-celebrate--best-pair .ro-pub-celebrate__stats {
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__portrait {
+  aspect-ratio: 3 / 4;
+  min-height: clamp(14rem, 58vw, 22rem);
+  border-radius: 0.75rem;
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__portrait-given {
+  font-size: clamp(0.85rem, 4.2vw, 1.15rem);
+}
+
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__portrait-family {
+  font-size: clamp(0.62rem, 3vw, 0.82rem);
+}
+
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__portrait-rating.jugador-rating-chip {
+  margin-top: 0.22rem;
+  font-size: 0.62rem;
+  padding: 0.1rem 0.38rem;
+}
+
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__motivational {
+  margin: 0 0 0.12rem;
+  font-size: 0.78rem;
+}
+
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__rank {
+  margin: 0 0 0.4rem;
+  font-size: 0.55rem;
+}
+
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__stats,
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__stats--team {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   max-width: min(100%, 34rem);
-  gap: 0.45rem;
+  gap: 0.32rem;
+  margin-top: 0.25rem;
+}
+
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__stat {
+  min-height: 0;
+  gap: 0.08rem;
+  padding: 0.32rem 0.22rem 0.28rem;
+}
+
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__stat-value {
+  font-size: 0.92rem;
+}
+
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__stat--highlight .ro-pub-celebrate__stat-value {
+  font-size: 1rem;
+}
+
+.ro-pub-celebrate--best-pair .ro-pub-celebrate__stat-label {
+  margin-top: 0.04rem;
+  font-size: 0.44rem;
+  letter-spacing: 0.05em;
 }
 
 .ro-pub-celebrate--best-pair .ro-pub-celebrate__motivational,
@@ -641,30 +699,33 @@
     margin-bottom: 1rem;
   }
 
-  .ro-pub-celebrate--best-pair .ro-pub-celebrate__heroes {
-    gap: 2rem;
-    max-width: 26rem;
-    margin-bottom: 1.1rem;
+  .ro-pub-celebrate__heroes--pair {
+    max-width: 34rem;
+    gap: 0.75rem;
+    margin-bottom: 1.15rem;
   }
 
-  .ro-pub-celebrate--best-pair .ro-pub-celebrate__stats {
+  .ro-pub-celebrate--best-pair .ro-pub-celebrate__portrait {
+    min-height: clamp(16rem, 28vw, 22rem);
+  }
+
+  .ro-pub-celebrate--best-pair .ro-pub-celebrate__stats,
+  .ro-pub-celebrate--best-pair .ro-pub-celebrate__stats--team {
     max-width: 36rem;
-    gap: 0.6rem;
-    margin-top: 1.35rem;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
   }
 
   .ro-pub-celebrate--best-pair .ro-pub-celebrate__stat {
-    min-height: 4.6rem;
-    padding: 0.6rem 0.45rem 0.55rem;
+    padding: 0.4rem 0.3rem 0.35rem;
   }
 
   .ro-pub-celebrate--best-pair .ro-pub-celebrate__stat-value {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
   }
 
   .ro-pub-celebrate--best-pair .ro-pub-celebrate__stat-label {
-    font-size: 0.58rem;
-    letter-spacing: 0.07em;
+    font-size: 0.5rem;
   }
 }
 

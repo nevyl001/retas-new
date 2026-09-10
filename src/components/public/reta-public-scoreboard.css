@@ -1985,15 +1985,76 @@
 .reta-eq-duel__portrait {
   position: relative;
   container-type: inline-size;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 3 / 4;
   width: 100%;
-  max-height: 8.5rem;
-  border-radius: 0.5rem;
+  max-height: none;
+  min-height: clamp(9.5rem, 46vw, 13.5rem);
+  border-radius: 0.55rem;
   overflow: hidden;
   background: var(--eq-duel-fallback-bg, linear-gradient(145deg, #2a3340, #12161c));
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.55),
     0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Móvil: un equipo debajo del otro → fotos a casi ancho completo (compartir) */
+@media (max-width: 639px) {
+  .te-public--reta-equipos .reta-sb-card--teams.reta-eq-duel-card,
+  .te-public--reta-equipos .te-pub-match.reta-sb-card--teams.reta-eq-duel-card {
+    padding: 0.5rem 0.45rem 0.4rem !important;
+  }
+
+  .reta-eq-duel {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 0.45rem;
+  }
+
+  .reta-eq-duel__side--a {
+    order: 1;
+  }
+
+  .reta-eq-duel__vs {
+    order: 2;
+    min-height: 1.35rem;
+  }
+
+  .reta-eq-duel__side--b {
+    order: 3;
+  }
+
+  .reta-eq-duel__portraits {
+    gap: 0.28rem;
+  }
+
+  .reta-eq-duel__portrait {
+    aspect-ratio: 3 / 4;
+    min-height: clamp(11rem, 52vw, 15rem);
+    max-height: none;
+    border-radius: 0.6rem;
+  }
+
+  .reta-eq-duel__given {
+    font-size: 0.78rem;
+  }
+
+  .reta-eq-duel__family {
+    font-size: 0.58rem;
+  }
+
+  .reta-eq-duel__rating.jugador-rating-chip {
+    font-size: 0.55rem;
+    padding: 0.08rem 0.32rem;
+  }
+
+  .reta-eq-duel__float-logo {
+    width: 3.15rem;
+    height: 3.15rem;
+  }
+
+  .reta-eq-duel-card .reta-sb-card__score-faceoff .te-pub-score__num {
+    font-size: clamp(1.7rem, 7vw, 2.2rem);
+  }
 }
 
 .reta-eq-duel__photo {
@@ -2215,9 +2276,10 @@
   }
 
   .reta-eq-duel__portrait {
-    aspect-ratio: 1 / 1;
-    max-height: 9.5rem;
-    border-radius: 0.55rem;
+    aspect-ratio: 3 / 4;
+    min-height: clamp(10rem, 22vw, 14rem);
+    max-height: none;
+    border-radius: 0.6rem;
   }
 
   .reta-eq-duel__vs-ring {
@@ -2255,8 +2317,9 @@
   }
 
   .reta-eq-duel__portrait {
-    aspect-ratio: 1 / 1;
-    max-height: 10.5rem;
+    aspect-ratio: 3 / 4;
+    min-height: clamp(11rem, 16vw, 16rem);
+    max-height: none;
   }
 
   .reta-eq-duel__given {
@@ -2291,7 +2354,8 @@
   }
 
   .reta-eq-duel__portrait {
-    max-height: 11.5rem;
+    min-height: clamp(12rem, 14vw, 17rem);
+    max-height: none;
   }
 
   .reta-eq-duel__float-logo {
