@@ -178,7 +178,9 @@ export const PublicAmericanoMatchCard: React.FC<{
             >
               {m.scoreA}
             </span>
-            <span className="te-pub-score__sep">—</span>
+            <span className="te-pub-score__sep" aria-hidden>
+              -
+            </span>
             <span
               className={`te-pub-score__num${tePubScoreNumModifier({
                 isWin: bWins,

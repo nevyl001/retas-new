@@ -285,7 +285,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
                     onBlur={persistFromDraft}
                   />
                   <span className="am-match-board__score-sep" aria-hidden>
-                    —
+                    -
                   </span>
                   <ScoreField
                     value={b}

@@ -2153,8 +2153,8 @@
 
 .reta-sb-card--split-vs .reta-sb-card__score-faceoff {
   display: inline-flex;
-  align-items: baseline;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.55rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -2192,10 +2192,18 @@
 }
 
 .reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__sep {
-  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  font-size: clamp(1.15rem, 2.8vw, 1.65rem);
   font-weight: 600;
-  opacity: 0.3;
+  line-height: 1;
+  opacity: 0.45;
   color: #fff;
+  transform: none;
+  position: relative;
+  top: 0;
 }
 
 .reta-sb-card--split-vs.te-pub-match--tie .reta-sb-card__score-faceoff .te-pub-score__sep {
