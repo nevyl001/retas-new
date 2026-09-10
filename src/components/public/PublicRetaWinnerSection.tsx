@@ -4,6 +4,7 @@ import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
 import "../jugadores/riviera-jugadores.css";
 import type { TeamWinnerCelebrateStatCard } from "../../lib/teamWinnerCelebrate";
+import { useRetryableImage } from "../../hooks/useRetryableImage";
 import {
   isPhotographicSplitVsFoto,
   playerAvatarHashTone,
@@ -29,6 +30,39 @@ export type PublicRetaRunnerUp = {
   title: string;
   avatars: PublicRetaWinnerAvatar[];
 };
+
+function CelebrateFloatLogo({
+  logoUrl,
+  fallbackLabel,
+}: {
+  logoUrl?: string | null;
+  fallbackLabel: string;
+}) {
+  const { src: logoSrc, onError: onLogoError } = useRetryableImage(logoUrl);
+  const initials = fallbackLabel.replace(/^team\s+/i, "").trim().slice(0, 2).toUpperCase() || "★";
+
+  return (
+    <div
+      className={`ro-pub-celebrate__float-logo${
+        logoSrc ? "" : " ro-pub-celebrate__float-logo--text"
+      }`}
+      aria-hidden
+    >
+      {logoSrc ? (
+        <img
+          className="ro-pub-celebrate__float-logo-img"
+          src={logoSrc}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={onLogoError}
+        />
+      ) : (
+        <span>{initials}</span>
+      )}
+    </div>
+  );
+}
 
 /** Retrato rectangular tipo card de partido (equipos / share). */
 function CelebrateTeamPortrait({ player }: { player: PublicRetaWinnerAvatar }) {
@@ -122,6 +156,10 @@ export const PublicRetaWinnerSection: React.FC<{
   stats?: TeamWinnerCelebrateStatCard[];
   winners?: PublicRetaWinnerAvatar[];
   runnersUp?: PublicRetaRunnerUp[];
+  /** Logo del club/equipo (flotante al centro de las fotos) */
+  teamLogoUrl?: string | null;
+  /** Etiqueta corta para fallback del logo (ej. OASIS) */
+  teamLogoLabel?: string | null;
   /** Tarjeta lista para compartir: stats + redes Riviera Open */
   shareable?: boolean;
   className?: string;
@@ -138,6 +176,8 @@ export const PublicRetaWinnerSection: React.FC<{
   stats,
   winners,
   runnersUp,
+  teamLogoUrl = null,
+  teamLogoLabel = null,
   shareable = false,
   className,
 }) => {
@@ -151,6 +191,7 @@ export const PublicRetaWinnerSection: React.FC<{
   );
   const usePortraitHeroes = isTeamShareCard || isBestPairCard;
   const teamTitle = title.replace(/\s*\/\s*/g, " · ");
+  const showFloatLogo = usePortraitHeroes && hasWinners;
 
   return (
     <section
@@ -189,6 +230,7 @@ export const PublicRetaWinnerSection: React.FC<{
               "ro-pub-celebrate__heroes",
               isTeamShareCard ? "ro-pub-celebrate__heroes--team" : "",
               isBestPairCard ? "ro-pub-celebrate__heroes--pair" : "",
+              showFloatLogo ? "ro-pub-celebrate__heroes--has-logo" : "",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -218,6 +260,12 @@ export const PublicRetaWinnerSection: React.FC<{
                 </div>
               )
             )}
+            {showFloatLogo ? (
+              <CelebrateFloatLogo
+                logoUrl={teamLogoUrl}
+                fallbackLabel={teamLogoLabel?.trim() || teamTitle}
+              />
+            ) : null}
           </div>
         ) : !isTeamShareCard ? (
           <p className="ro-pub-celebrate__names">{teamTitle}</p>

@@ -811,6 +811,18 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     return teamConfig.teamNames[teamIndex]?.trim() || null;
   }, [bestPairRow, teamConfig]);
 
+  const winningTeamLogoUrl = useMemo(() => {
+    if (winningTeamRow?.teamIndex == null) return null;
+    return resolveTeamLogoUrl(teamConfig?.teamLogos, winningTeamRow.teamIndex);
+  }, [winningTeamRow, teamConfig?.teamLogos]);
+
+  const bestPairLogoUrl = useMemo(() => {
+    if (!bestPairRow || !teamConfig?.pairToTeam) return null;
+    const teamIndex = teamConfig.pairToTeam[bestPairRow.id];
+    if (teamIndex == null) return null;
+    return resolveTeamLogoUrl(teamConfig?.teamLogos, teamIndex);
+  }, [bestPairRow, teamConfig?.pairToTeam, teamConfig?.teamLogos]);
+
   const bestPairAvatars = useMemo((): PublicRetaWinnerAvatar[] => {
     if (!showWinner || !bestPairRow) return [];
     const pair = pairs.find((p) => p.id === bestPairRow.id) ?? bestPairRow;
@@ -1572,6 +1584,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             formatKicker={TEAMS_PUBLIC_FORMAT_LABEL}
             stats={teamWinnerCelebrateStats}
             winners={teamWinnerPlayerAvatars}
+            teamLogoUrl={winningTeamLogoUrl}
+            teamLogoLabel={winningTeamName || teamStandings[0]?.name}
             shareable
           />
         )}
@@ -1596,6 +1610,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             fraseMotivacional="La dupla más letal de la pista."
             stats={bestPairCelebrateStats}
             winners={bestPairAvatars}
+            teamLogoUrl={bestPairLogoUrl}
+            teamLogoLabel={bestPairTeamLabel}
           />
         )}
 
