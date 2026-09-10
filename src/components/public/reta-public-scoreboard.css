@@ -2035,16 +2035,16 @@
   }
 
   .reta-eq-duel__given {
-    font-size: 0.78rem;
+    font-size: clamp(1.05rem, 5.2vw, 1.35rem);
   }
 
   .reta-eq-duel__family {
-    font-size: 0.58rem;
+    font-size: clamp(0.78rem, 3.8vw, 0.98rem);
   }
 
   .reta-eq-duel__rating.jugador-rating-chip {
-    font-size: 0.55rem;
-    padding: 0.08rem 0.32rem;
+    font-size: 0.68rem;
+    padding: 0.12rem 0.4rem;
   }
 
   .reta-eq-duel__float-logo {
@@ -2095,13 +2095,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: 42%;
+  height: 48%;
   pointer-events: none;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(6, 8, 12, 0.35) 38%,
-    rgba(6, 8, 12, 0.9) 100%
+    rgba(6, 8, 12, 0.4) 35%,
+    rgba(6, 8, 12, 0.94) 100%
   );
 }
 
@@ -2110,13 +2110,13 @@
   z-index: 3;
   left: 0.28rem;
   right: 0.28rem;
-  bottom: 0.28rem;
+  bottom: 0.35rem;
   top: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.02rem;
+  gap: 0.06rem;
   padding: 0;
   min-width: 0;
   text-align: center;
@@ -2133,8 +2133,8 @@
 
 .reta-eq-duel__given {
   font-family: var(--font-display, var(--ro-font-heading), "Segoe UI", sans-serif);
-  font-size: 0.68rem;
-  font-weight: 750;
+  font-size: clamp(0.95rem, 11cqi, 1.25rem);
+  font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.05;
   color: #f7f4ee;
@@ -2148,10 +2148,10 @@
 }
 
 .reta-eq-duel__family {
-  font-size: 0.52rem;
-  font-weight: 550;
+  font-size: clamp(0.72rem, 7.5cqi, 0.92rem);
+  font-weight: 600;
   line-height: 1.05;
-  color: rgba(247, 244, 238, 0.86);
+  color: rgba(247, 244, 238, 0.9);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2160,13 +2160,28 @@
 }
 
 .reta-eq-duel__rating.jugador-rating-chip {
-  margin-top: 0.14rem;
-  font-size: 0.5rem;
-  padding: 0.06rem 0.28rem;
+  margin-top: 0.18rem;
+  font-size: 0.64rem;
+  padding: 0.1rem 0.38rem;
   line-height: 1.15;
   border-color: rgba(163, 230, 53, 0.45);
   background: rgba(8, 12, 8, 0.72);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 639px) {
+  .reta-eq-duel__given {
+    font-size: clamp(1.1rem, 5.5vw, 1.4rem);
+  }
+
+  .reta-eq-duel__family {
+    font-size: clamp(0.82rem, 4vw, 1.05rem);
+  }
+
+  .reta-eq-duel__rating.jugador-rating-chip {
+    font-size: 0.7rem;
+    padding: 0.12rem 0.42rem;
+  }
 }
 
 /* Logo centrado entre la pareja */
@@ -2289,11 +2304,11 @@
   }
 
   .reta-eq-duel__given {
-    font-size: 0.74rem;
+    font-size: clamp(0.95rem, 4.5cqi, 1.2rem);
   }
 
   .reta-eq-duel__family {
-    font-size: 0.56rem;
+    font-size: clamp(0.72rem, 3.4cqi, 0.9rem);
   }
 
   .reta-eq-duel__portraits {
@@ -2323,11 +2338,11 @@
   }
 
   .reta-eq-duel__given {
-    font-size: 0.78rem;
+    font-size: clamp(1rem, 4.2cqi, 1.25rem);
   }
 
   .reta-eq-duel__family {
-    font-size: 0.58rem;
+    font-size: clamp(0.75rem, 3.2cqi, 0.95rem);
   }
 
   .reta-eq-duel__portraits {
