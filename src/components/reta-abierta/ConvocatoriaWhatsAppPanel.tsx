@@ -514,34 +514,50 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     ]
   );
 
-  const onCapacityTextChange = useCallback(
-    (raw: string) => {
-      // Solo dígitos; vacío permitido mientras escribes.
-      setCapacityText(raw.replace(/[^\d]/g, "").slice(0, 2));
+  const onCapacityTextChange = useCallback((raw: string) => {
+    const digits = raw.replace(/[^\d]/g, "").slice(0, 2);
+    setCapacityText(digits);
+    if (digits === "") return;
+    const n = Number(digits);
+    if (!Number.isFinite(n)) return;
+    const next = Math.max(
+      OPEN_REG_CAPACITY_MIN,
+      Math.min(OPEN_REG_CAPACITY_MAX, Math.round(n))
+    );
+    setCapacity(next);
+    setCfg((prev) => (prev ? { ...prev, capacity: next } : prev));
+  }, []);
+
+  const resolveCapacityForSave = useCallback(
+    (min = OPEN_REG_CAPACITY_MIN) => {
+      const parsed = Number(capacityText);
+      if (Number.isFinite(parsed) && capacityText.trim() !== "") {
+        return Math.max(
+          min,
+          Math.min(OPEN_REG_CAPACITY_MAX, Math.round(parsed))
+        );
+      }
+      return Math.max(
+        min,
+        Math.min(OPEN_REG_CAPACITY_MAX, Math.round(capacity))
+      );
     },
-    []
+    [capacity, capacityText]
   );
 
   const commitCapacityText = useCallback(
     (opts?: { persist?: boolean; min?: number }) => {
       const min = opts?.min ?? OPEN_REG_CAPACITY_MIN;
-      const parsed = Number(capacityText);
-      if (!Number.isFinite(parsed) || capacityText.trim() === "") {
-        setCapacityText(String(capacity));
-        return;
-      }
-      const next = Math.max(
-        min,
-        Math.min(OPEN_REG_CAPACITY_MAX, Math.round(parsed))
-      );
+      const next = resolveCapacityForSave(min);
+      setCapacityText(String(next));
       if (opts?.persist) {
         queueCapacityChange(next);
         return;
       }
       setCapacity(next);
-      setCapacityText(String(next));
+      setCfg((prev) => (prev ? { ...prev, capacity: next } : prev));
     },
-    [capacity, capacityText, queueCapacityChange]
+    [queueCapacityChange, resolveCapacityForSave]
   );
 
   /** Detalles de la reta / americano / duelo son la fuente de verdad de costo y premio. */
@@ -641,7 +657,11 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       tournamentId: context.mode === "duelo_2v2" ? undefined : id,
       enabled: overrides?.enabled ?? true,
       status: overrides?.status ?? status,
-      capacity: context.lockCapacity ? context.defaultCapacity : capacity,
+      capacity: context.lockCapacity
+        ? context.defaultCapacity
+        : resolveCapacityForSave(
+            Math.max(OPEN_REG_CAPACITY_MIN, confirmed.length)
+          ),
       waitlistEnabled,
       approvalRequired,
       registrationDeadline: deadline ? new Date(deadline).toISOString() : null,
@@ -1108,60 +1128,33 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 >
                   Cupo
                 </span>
-                <div
-                  className="ra-org__capacity-stepper"
-                  title={`Entre ${OPEN_REG_CAPACITY_MIN} y ${OPEN_REG_CAPACITY_MAX}. Escribe el número o usa ±.`}
-                >
-                  <button
-                    type="button"
-                    className="ra-org__capacity-btn"
-                    aria-label="Bajar cupo"
-                    disabled={capacity <= OPEN_REG_CAPACITY_MIN}
-                    onClick={() => {
-                      const next = Math.max(OPEN_REG_CAPACITY_MIN, capacity - 1);
-                      setCapacity(next);
-                      setCapacityText(String(next));
-                    }}
-                  >
-                    −
-                  </button>
-                  <input
-                    id={convocatoriaFieldId("cupo-pre")}
-                    name={convocatoriaFieldId("cupo-pre")}
-                    className="ra-org__capacity-input"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    autoComplete="off"
-                    value={capacityText}
-                    aria-labelledby="ra-org-cupo-pre-label"
-                    aria-describedby="ra-org-cupo-pre-hint"
-                    onChange={(e) => onCapacityTextChange(e.target.value)}
-                    onBlur={() => commitCapacityText()}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        (e.target as HTMLInputElement).blur();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="ra-org__capacity-btn"
-                    aria-label="Subir cupo"
-                    disabled={capacity >= OPEN_REG_CAPACITY_MAX}
-                    onClick={() => {
-                      const next = Math.min(OPEN_REG_CAPACITY_MAX, capacity + 1);
-                      setCapacity(next);
-                      setCapacityText(String(next));
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
+                <input
+                  id={convocatoriaFieldId("cupo-pre")}
+                  name={convocatoriaFieldId("cupo-pre")}
+                  className="ra-org__capacity-input ra-org__capacity-input--solo"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="off"
+                  value={capacityText}
+                  aria-labelledby="ra-org-cupo-pre-label"
+                  aria-describedby="ra-org-cupo-pre-hint"
+                  placeholder="Ej. 12"
+                  onChange={(e) => onCapacityTextChange(e.target.value)}
+                  onBlur={() => commitCapacityText()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      (e.target as HTMLInputElement).blur();
+                    }
+                  }}
+                />
               </div>
-              <p className="ra-org__capacity-hint ra-org__capacity-hint--muted" id="ra-org-cupo-pre-hint">
-                Escribe el cupo (1–{OPEN_REG_CAPACITY_MAX})
+              <p
+                className="ra-org__capacity-hint ra-org__capacity-hint--muted"
+                id="ra-org-cupo-pre-hint"
+              >
+                Escribe cuántos jugadores (1–{OPEN_REG_CAPACITY_MAX})
               </p>
             </div>
           </div>
@@ -1209,50 +1202,29 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 <span className="ra-org__capacity-label" id="ra-org-cupo-label">
                   Cupo
                 </span>
-                <div
-                  className="ra-org__capacity-stepper"
+                <input
+                  id={convocatoriaFieldId("cupo-live")}
+                  name={convocatoriaFieldId("cupo-live")}
+                  className="ra-org__capacity-input ra-org__capacity-input--solo"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="off"
+                  value={capacityText}
+                  aria-labelledby="ra-org-cupo-label"
                   title={capacityHintText}
-                >
-                  <button
-                    type="button"
-                    className="ra-org__capacity-btn"
-                    aria-label="Bajar cupo"
-                    disabled={effectiveCapacity <= capacityMin}
-                    onClick={() => queueCapacityChange(effectiveCapacity - 1)}
-                  >
-                    −
-                  </button>
-                  <input
-                    id={convocatoriaFieldId("cupo-live")}
-                    name={convocatoriaFieldId("cupo-live")}
-                    className="ra-org__capacity-input"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    autoComplete="off"
-                    value={capacityText}
-                    aria-labelledby="ra-org-cupo-label"
-                    onChange={(e) => onCapacityTextChange(e.target.value)}
-                    onBlur={() =>
-                      commitCapacityText({ persist: true, min: capacityMin })
+                  placeholder="Ej. 12"
+                  onChange={(e) => onCapacityTextChange(e.target.value)}
+                  onBlur={() =>
+                    commitCapacityText({ persist: true, min: capacityMin })
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      (e.target as HTMLInputElement).blur();
                     }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        (e.target as HTMLInputElement).blur();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="ra-org__capacity-btn"
-                    aria-label="Subir cupo"
-                    disabled={effectiveCapacity >= OPEN_REG_CAPACITY_MAX}
-                    onClick={() => queueCapacityChange(effectiveCapacity + 1)}
-                  >
-                    +
-                  </button>
-                </div>
+                  }}
+                />
               </div>
               {capacityHint ? (
                 <p className="ra-org__capacity-hint" role="status">

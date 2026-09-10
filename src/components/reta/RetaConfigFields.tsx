@@ -11,9 +11,7 @@ import {
 } from "../../lib/reta/retaRama";
 import {
   RETA_COURTS_MAX,
-  RETA_COURTS_MIN,
   RETA_DURATION_MAX,
-  RETA_DURATION_MIN,
   clampChampionshipRoundsShared,
   clampRetaCourts,
   clampRetaDurationMinutes,
@@ -118,33 +116,33 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   );
 
   const courtsField = (
-    <div className="home-sheet__field reta-details-form__field reta-details-form__field--courts">
+    <label
+      className="home-sheet__field reta-details-form__field reta-details-form__field--courts"
+      htmlFor={retaConfigFieldId("courts")}
+    >
       <span className="home-sheet__field-label">Canchas</span>
-      <div className="home-sheet__stepper reta-details-form__stepper">
-        <button
-          type="button"
-          className="home-sheet__stepper-btn"
-          disabled={courtsEd.locked || values.courts <= RETA_COURTS_MIN}
-          onClick={() => patch({ courts: clampRetaCourts(values.courts - 1) })}
-          aria-label="Menos canchas"
-        >
-          −
-        </button>
-        <span className="home-sheet__stepper-value" aria-live="polite">
-          {values.courts}
-        </span>
-        <button
-          type="button"
-          className="home-sheet__stepper-btn"
-          disabled={courtsEd.locked || values.courts >= RETA_COURTS_MAX}
-          onClick={() => patch({ courts: clampRetaCourts(values.courts + 1) })}
-          aria-label="Más canchas"
-        >
-          +
-        </button>
-      </div>
+      <input
+        id={retaConfigFieldId("courts")}
+        name={retaConfigFieldId("courts")}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        autoComplete="off"
+        className="home-sheet__input riviera-input"
+        value={String(values.courts)}
+        disabled={courtsEd.locked}
+        aria-label="Número de canchas"
+        onChange={(e) => {
+          const digits = e.target.value.replace(/[^\d]/g, "").slice(0, 2);
+          if (digits === "") return;
+          const n = Number(digits);
+          if (!Number.isFinite(n)) return;
+          patch({ courts: Math.min(RETA_COURTS_MAX, Math.max(0, n)) });
+        }}
+        onBlur={() => patch({ courts: clampRetaCourts(values.courts) })}
+      />
       {courtsEd.reason ? <FieldLock reason={courtsEd.reason} /> : null}
-    </div>
+    </label>
   );
 
   const scheduleParts = (() => {
@@ -207,50 +205,44 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             onChange={(e) => patchSchedule({ time: e.target.value })}
           />
         </label>
-        <div className="home-sheet__field reta-details-form__field reta-details-form__field--duration">
-          <span className="home-sheet__field-label">Duración</span>
-          <div className="home-sheet__stepper reta-details-form__stepper">
-            <button
-              type="button"
-              className="home-sheet__stepper-btn"
-              disabled={
-                durEd.locked || values.duration_minutes <= RETA_DURATION_MIN
-              }
-              onClick={() =>
-                patch({
-                  duration_minutes: clampRetaDurationMinutes(
-                    values.duration_minutes - 15
-                  ),
-                })
-              }
-              aria-label="Menos duración"
-            >
-              −
-            </button>
-            <span className="home-sheet__stepper-value" aria-live="polite">
-              {values.duration_minutes}
-              <span className="reta-details-form__duration-unit"> min</span>
-            </span>
-            <button
-              type="button"
-              className="home-sheet__stepper-btn"
-              disabled={
-                durEd.locked || values.duration_minutes >= RETA_DURATION_MAX
-              }
-              onClick={() =>
-                patch({
-                  duration_minutes: clampRetaDurationMinutes(
-                    values.duration_minutes + 15
-                  ),
-                })
-              }
-              aria-label="Más duración"
-            >
-              +
-            </button>
-          </div>
+        <label
+          className="home-sheet__field reta-details-form__field reta-details-form__field--duration"
+          htmlFor={retaConfigFieldId("duration")}
+        >
+          <span className="home-sheet__field-label">
+            Duración
+            <span className="reta-details-form__duration-unit"> (min)</span>
+          </span>
+          <input
+            id={retaConfigFieldId("duration")}
+            name={retaConfigFieldId("duration")}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            className="home-sheet__input riviera-input"
+            value={String(values.duration_minutes)}
+            disabled={durEd.locked}
+            aria-label="Duración en minutos"
+            onChange={(e) => {
+              const digits = e.target.value.replace(/[^\d]/g, "").slice(0, 3);
+              if (digits === "") return;
+              const n = Number(digits);
+              if (!Number.isFinite(n)) return;
+              patch({
+                duration_minutes: Math.min(RETA_DURATION_MAX, Math.max(0, n)),
+              });
+            }}
+            onBlur={() =>
+              patch({
+                duration_minutes: clampRetaDurationMinutes(
+                  values.duration_minutes
+                ),
+              })
+            }
+          />
           {durEd.locked ? <FieldLock reason={durEd.reason} /> : null}
-        </div>
+        </label>
       </div>
     ) : null;
 

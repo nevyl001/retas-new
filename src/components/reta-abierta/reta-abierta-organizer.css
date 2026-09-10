@@ -166,20 +166,25 @@
 }
 
 .ra-org__capacity-input {
-  width: 4.25rem;
-  height: 36px;
-  min-height: 36px;
+  width: 5.5rem;
+  height: 40px;
+  min-height: 40px;
   text-align: center;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 750;
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
   background: color-mix(in srgb, currentColor 6%, transparent);
   color: inherit;
-  padding: 0 0.35rem;
+  padding: 0 0.5rem;
   -moz-appearance: textfield;
   user-select: text;
   pointer-events: auto;
+}
+
+.ra-org__capacity-input--solo {
+  width: 6.5rem;
+  flex: 0 0 auto;
 }
 
 .ra-org__capacity-hint--muted {
