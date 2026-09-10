@@ -85,7 +85,7 @@ function EqDuelPortrait({ player }: { player: PublicRetaPairPlayer }) {
   );
 }
 
-/** Lado de equipo: fotos con presencia + crest del club. */
+/** Lado de equipo: fotos grandes + un solo logo suave de fondo. */
 function EqDuelSide({
   teamName,
   logoUrl,
@@ -147,23 +147,6 @@ function EqDuelSide({
           </div>
         ) : null}
       </div>
-
-      {logoSrc ? (
-        <div className="reta-eq-duel__crest" aria-hidden>
-          <img
-            className="reta-eq-duel__crest-img"
-            src={logoSrc}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            onError={onLogoError}
-          />
-        </div>
-      ) : (
-        <div className="reta-eq-duel__crest reta-eq-duel__crest--text" aria-hidden>
-          <span>{displayTeam.slice(0, 2).toUpperCase()}</span>
-        </div>
-      )}
 
       {isWinner && !isTie ? (
         <span className="reta-eq-duel__win-pip" aria-label="Ganador" />
