@@ -81,6 +81,13 @@ function EqDuelPortrait({ player }: { player: PublicRetaPairPlayer }) {
           onError={() => setFailed(true)}
         />
       ) : null}
+      <span className="reta-eq-duel__scrim" aria-hidden />
+      <span className="reta-eq-duel__identity">
+        <span className="reta-eq-duel__given">{primary}</span>
+        {secondary ? (
+          <span className="reta-eq-duel__family">{secondary}</span>
+        ) : null}
+      </span>
     </div>
   );
 }
