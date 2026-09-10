@@ -1,8 +1,13 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getWinnersSectionAriaLabel, useBranding } from "../../club-experience";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import "../jugadores/riviera-jugadores.css";
 import type { TeamWinnerCelebrateStatCard } from "../../lib/teamWinnerCelebrate";
+import {
+  isPhotographicSplitVsFoto,
+  playerAvatarHashTone,
+  splitPlayerDisplayName,
+} from "../liga/jornada-public/ligaJornadaMatchNames";
 import {
   PublicRivieraCelebrateBrand,
   PublicRivieraCelebrateClosing,
@@ -23,6 +28,81 @@ export type PublicRetaRunnerUp = {
   title: string;
   avatars: PublicRetaWinnerAvatar[];
 };
+
+/** Retrato rectangular tipo card de partido (equipos / share). */
+function CelebrateTeamPortrait({ player }: { player: PublicRetaWinnerAvatar }) {
+  const { primary, secondary } = splitPlayerDisplayName(player.name);
+  const tone = playerAvatarHashTone(player.name);
+  const initials = `${primary.charAt(0)}${
+    secondary?.charAt(0) ?? primary.charAt(1) ?? ""
+  }`.toUpperCase();
+  const candidate =
+    isPhotographicSplitVsFoto(player.fotoUrl) && player.fotoUrl
+      ? player.fotoUrl.trim()
+      : null;
+  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const showPhoto = Boolean(candidate) && !failed && loaded;
+
+  useEffect(() => {
+    setFailed(false);
+    setLoaded(false);
+  }, [candidate]);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img || !candidate) return;
+    if (img.complete) {
+      if (img.naturalWidth === 0) setFailed(true);
+      else setLoaded(true);
+    }
+  }, [candidate]);
+
+  return (
+    <div
+      className={`ro-pub-celebrate__portrait${
+        showPhoto
+          ? " ro-pub-celebrate__portrait--photo"
+          : " ro-pub-celebrate__portrait--fallback"
+      }`}
+      style={
+        showPhoto
+          ? undefined
+          : ({
+              ["--celebrate-portrait-bg" as string]: tone.background,
+              ["--celebrate-portrait-fg" as string]: tone.color,
+            } as React.CSSProperties)
+      }
+      aria-label={player.name}
+    >
+      {!showPhoto ? (
+        <span className="ro-pub-celebrate__portrait-initials" aria-hidden>
+          {initials}
+        </span>
+      ) : null}
+      {candidate && !failed ? (
+        <img
+          ref={imgRef}
+          className={`ro-pub-celebrate__portrait-photo${loaded ? " is-visible" : ""}`}
+          src={candidate}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+        />
+      ) : null}
+      <span className="ro-pub-celebrate__portrait-scrim" aria-hidden />
+      <span className="ro-pub-celebrate__portrait-identity">
+        <span className="ro-pub-celebrate__portrait-given">{primary}</span>
+        {secondary ? (
+          <span className="ro-pub-celebrate__portrait-family">{secondary}</span>
+        ) : null}
+      </span>
+    </div>
+  );
+}
 
 export const PublicRetaWinnerSection: React.FC<{
   id?: string;
@@ -104,19 +184,26 @@ export const PublicRetaWinnerSection: React.FC<{
               .join(" ")}
             aria-label={`Jugadores de ${teamTitle}`}
           >
-            {winners!.map((w) => (
-              <div key={w.jugadorId || w.name} className="ro-pub-celebrate__hero">
-                <div className="ro-pub-celebrate__hero-ring">
-                  <JugadorAvatar
-                    fotoUrl={w.fotoUrl}
-                    nombre={w.name}
-                    size="xl"
-                    className="ro-pub-celebrate__hero-avatar"
-                  />
+            {winners!.map((w) =>
+              isTeamShareCard ? (
+                <CelebrateTeamPortrait
+                  key={w.jugadorId || w.name}
+                  player={w}
+                />
+              ) : (
+                <div key={w.jugadorId || w.name} className="ro-pub-celebrate__hero">
+                  <div className="ro-pub-celebrate__hero-ring">
+                    <JugadorAvatar
+                      fotoUrl={w.fotoUrl}
+                      nombre={w.name}
+                      size="xl"
+                      className="ro-pub-celebrate__hero-avatar"
+                    />
+                  </div>
+                  <span className="ro-pub-celebrate__hero-name">{w.name}</span>
                 </div>
-                <span className="ro-pub-celebrate__hero-name">{w.name}</span>
-              </div>
-            ))}
+              )
+            )}
           </div>
         ) : !isTeamShareCard ? (
           <p className="ro-pub-celebrate__names">{teamTitle}</p>
