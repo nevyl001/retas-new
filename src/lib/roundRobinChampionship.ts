@@ -426,7 +426,8 @@ export function championshipMatchEncounterLabel(
   roundIndex: number,
   totalRounds: number,
   semiMatches: Match[] = [],
-  allGames: Game[] = []
+  allGames: Game[] = [],
+  finalRoundMatches: Match[] = []
 ): string {
   if (totalRounds >= 2 && roundIndex === totalRounds && semiMatches.length >= 2) {
     if (isChampionshipFinalMatch(match, semiMatches, allGames)) return "FINAL";
@@ -434,6 +435,21 @@ export function championshipMatchEncounterLabel(
       return "3ER LUGAR";
     }
   }
+
+  // Fallback: en la ronda FINAL con 2 partidos, cancha menor = FINAL
+  // (createChampionshipMatches asigna cancha 1 a ganadores y 2 a perdedores).
+  if (
+    totalRounds >= 2 &&
+    roundIndex === totalRounds &&
+    finalRoundMatches.length >= 2
+  ) {
+    const ordered = [...finalRoundMatches].sort(
+      (a, b) => compareMatchCourt(a.court, b.court)
+    );
+    if (ordered[0]?.id === match.id) return "FINAL";
+    if (ordered[1]?.id === match.id) return "3ER LUGAR";
+  }
+
   const orderedSemi = [...semiMatches].sort(
     (a, b) => compareMatchCourt(a.court, b.court)
   );
@@ -501,13 +517,26 @@ export function sortChampionshipRoundMatches(
     roundMatches.length >= 2 &&
     semiMatches.length >= 2
   ) {
-    return [...roundMatches].sort((a, b) => {
+    const ranked = [...roundMatches].sort((a, b) => {
       const aFinal = isChampionshipFinalMatch(a, semiMatches, allGames);
       const bFinal = isChampionshipFinalMatch(b, semiMatches, allGames);
       if (aFinal && !bFinal) return -1;
       if (!aFinal && bFinal) return 1;
       return compareMatchCourt(a.court, b.court);
     });
+    const hasDetectedFinal = ranked.some((m) =>
+      isChampionshipFinalMatch(m, semiMatches, allGames)
+    );
+    if (hasDetectedFinal) return ranked;
+  }
+  // Sin semis resueltas: en ronda final con 2 partidos, orden por cancha
+  // (1 = FINAL, 2 = 3ER LUGAR) coincide con la generación del fixture.
+  if (
+    totalRounds >= 2 &&
+    roundIndex === totalRounds &&
+    roundMatches.length >= 2
+  ) {
+    return byCourt;
   }
   return byCourt;
 }

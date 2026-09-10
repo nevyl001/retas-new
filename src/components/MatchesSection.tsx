@@ -528,7 +528,9 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                           match,
                           idx,
                           totalRounds,
-                          semiMatches
+                          semiMatches,
+                          [],
+                          roundMatches
                         ),
                     }
                   );

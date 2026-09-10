@@ -213,6 +213,54 @@ describe("Remontada Final matchups", () => {
     ).toEqual([finalMatch, thirdMatch]);
   });
 
+  it("en FINAL con 2 partidos etiqueta FINAL/3ER LUGAR aunque no resuelva semis", () => {
+    const finalMatch: Match = {
+      id: "f1",
+      tournament_id: "t1",
+      pair1_id: "p1",
+      pair2_id: "p2",
+      pair1_name: "A",
+      pair2_name: "B",
+      court: 1,
+      round: 5,
+      status: "pending",
+      created_at: "",
+    };
+    const thirdMatch: Match = {
+      id: "t1m",
+      tournament_id: "t1",
+      pair1_id: "p4",
+      pair2_id: "p3",
+      pair1_name: "D",
+      pair2_name: "C",
+      court: 2,
+      round: 5,
+      status: "pending",
+      created_at: "",
+    };
+    const finalRound = [thirdMatch, finalMatch];
+    expect(
+      championshipMatchEncounterLabel(
+        finalMatch,
+        2,
+        2,
+        [],
+        [],
+        finalRound
+      )
+    ).toBe("FINAL");
+    expect(
+      championshipMatchEncounterLabel(
+        thirdMatch,
+        2,
+        2,
+        [],
+        [],
+        finalRound
+      )
+    ).toBe("3ER LUGAR");
+  });
+
   it("resuelve podio: campeón, subcampeón y 3er lugar", async () => {
     const pairs: Pair[] = [
       {

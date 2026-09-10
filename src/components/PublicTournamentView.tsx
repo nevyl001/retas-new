@@ -1488,7 +1488,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                   roundMatches,
                   idx,
                   totalRounds,
-                  semiMatches
+                  semiMatches,
+                  games
                 );
                 const roundInProgress =
                   eventScheduleStatus.phase === "in_window" &&
@@ -1527,7 +1528,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                             match,
                             idx,
                             totalRounds,
-                            semiMatches
+                            semiMatches,
+                            games,
+                            roundMatches
                           ),
                         })
                       )}
