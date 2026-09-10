@@ -1,10 +1,15 @@
 .reta-rr-celebrate {
   margin-top: clamp(1rem, 2.5vw, 1.75rem);
   width: 100%;
+  max-width: min(100%, 52rem);
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
 }
 
 .reta-rr-celebrate__podium {
   width: 100%;
+  box-sizing: border-box;
 }
 
 /* Inner a todo el ancho: sin caja estrecha que encoge las fotos */
