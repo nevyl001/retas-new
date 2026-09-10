@@ -1808,7 +1808,7 @@
   transform: none !important;
 }
 
-.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team {
+.te-public--reta-equipos .reta-sb-card--teams:not(.reta-sb-card--split-vs) .reta-sb-team {
   border-left: none;
   border-radius: 0.95rem;
   padding: 0.85rem 0.9rem;
@@ -1824,7 +1824,7 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
 }
 
-.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--a {
+.te-public--reta-equipos .reta-sb-card--teams:not(.reta-sb-card--split-vs) .reta-sb-team--a {
   background:
     radial-gradient(
       ellipse 90% 120% at 100% 10%,
@@ -1835,7 +1835,7 @@
   border-color: rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.28);
 }
 
-.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--b {
+.te-public--reta-equipos .reta-sb-card--teams:not(.reta-sb-card--split-vs) .reta-sb-team--b {
   background:
     radial-gradient(
       ellipse 90% 120% at 100% 10%,
@@ -1846,9 +1846,9 @@
   border-color: rgba(var(--reta-eq-b-rgb, 217, 93, 57), 0.28);
 }
 
-.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team__watermark-logo,
+.te-public--reta-equipos .reta-sb-card--teams:not(.reta-sb-card--split-vs) .reta-sb-team__watermark-logo,
 .te-public--reta-equipos
-  .reta-sb-card--teams
+  .reta-sb-card--teams:not(.reta-sb-card--split-vs)
   .reta-eq-logo.reta-sb-team__watermark-logo {
   width: clamp(7.25rem, 44vw, 10.5rem) !important;
   height: clamp(7.25rem, 44vw, 10.5rem) !important;
@@ -1856,8 +1856,8 @@
   opacity: 0.22;
 }
 
-.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--a .reta-sb-team__watermark-logo,
-.te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--b .reta-sb-team__watermark-logo {
+.te-public--reta-equipos .reta-sb-card--teams:not(.reta-sb-card--split-vs) .reta-sb-team--a .reta-sb-team__watermark-logo,
+.te-public--reta-equipos .reta-sb-card--teams:not(.reta-sb-card--split-vs) .reta-sb-team--b .reta-sb-team__watermark-logo {
   opacity: 0.24;
 }
 
@@ -1875,6 +1875,172 @@
   font-size: 1.05rem !important;
   font-weight: 800 !important;
   letter-spacing: 0.1em;
+}
+
+/*
+ * Reta por equipos + Split VS:
+ * el logo cubre TODO el lado del equipo (fondo completo).
+ */
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--split-vs {
+  position: relative;
+  align-self: stretch;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 0.7rem;
+  min-height: 100%;
+  background: rgba(8, 9, 14, 0.55);
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--a {
+  background:
+    radial-gradient(
+      ellipse 90% 80% at 50% 40%,
+      rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.14) 0%,
+      transparent 70%
+    ),
+    rgba(8, 9, 14, 0.62);
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--b {
+  background:
+    radial-gradient(
+      ellipse 90% 80% at 50% 40%,
+      rgba(var(--reta-eq-b-rgb, 217, 93, 57), 0.14) 0%,
+      transparent 70%
+    ),
+    rgba(8, 9, 14, 0.62);
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__watermark {
+  display: block !important;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__watermark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 8, 12, 0.55) 0%,
+    rgba(6, 8, 12, 0.28) 42%,
+    rgba(6, 8, 12, 0.62) 100%
+  );
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__watermark-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.72;
+  filter:
+    drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45))
+    saturate(1.05);
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 0;
+  padding: 0.55rem 0.45rem;
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__main {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__players--split-vs {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  overflow: visible;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  width: 100%;
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__players--split-vs .pub-split-vs-pair {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__players--split-vs .pub-split-vs-pair--win {
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__players--split-vs .pub-split-vs-pair__grid {
+  width: 100%;
+  margin-inline: 0;
+  gap: 0.35rem;
+  align-items: center;
+  justify-items: center;
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__players--split-vs .pub-split-vs-panel {
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Solo logo + fotos: sin nombre de equipo ni de jugador */
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__identity {
+  display: none !important;
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-pair--logo-only .pub-split-vs-panel__identity,
+.reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-pair--logo-only .pub-split-vs-panel__scrim {
+  display: none !important;
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-pair--logo-only .pub-split-vs-panel__photo {
+  object-position: center 20%;
+  transform: none;
+}
+
+.te-public--reta-equipos .reta-sb-card--teams.reta-sb-card--split-vs,
+.te-public--reta-equipos .te-pub-match.reta-sb-card--teams.reta-sb-card--split-vs {
+  padding: 0.7rem 0.65rem 0.55rem !important;
+}
+
+.te-public--reta-equipos .reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-card__board {
+  gap: 0.35rem 0.35rem;
+}
+
+@media (min-width: 640px) {
+  .te-public--reta-equipos .reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-card__board {
+    gap: 0.4rem 0.5rem;
+  }
+}
+
+.te-public--reta-equipos .reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__name {
+  font-size: clamp(0.62rem, 1vw + 0.32rem, 0.78rem) !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.12em;
+  text-align: center;
+  width: 100%;
 }
 
 .te-public--reta-equipos .reta-sb-card--teams .reta-sb-team--a .reta-sb-team__name {
@@ -1954,6 +2120,51 @@
   }
 }
 
+@media (min-width: 1100px) {
+  .reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-panel__given,
+  .reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given,
+  .te-pub-matches-grid--few .reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-panel__given {
+    font-size: 0.78rem !important;
+  }
+
+  .reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-panel__family,
+  .reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family,
+  .te-pub-matches-grid--few .reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-panel__family {
+    font-size: 0.58rem !important;
+  }
+
+  .reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__players--split-vs {
+    padding: 0;
+  }
+
+  .reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__players--split-vs .pub-split-vs-pair__grid {
+    width: 100%;
+    gap: 0.4rem;
+  }
+
+  .reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__watermark-img {
+    opacity: 0.78;
+  }
+}
+
+@media (min-width: 1500px) {
+  .reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-panel__given,
+  .reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given,
+  .te-pub-matches-grid--few .reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-panel__given {
+    font-size: 0.88rem !important;
+  }
+
+  .reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-panel__family,
+  .reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family,
+  .te-pub-matches-grid--few .reta-sb-card--teams.reta-sb-card--split-vs .pub-split-vs-panel__family {
+    font-size: 0.64rem !important;
+  }
+
+  .reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team__watermark-img {
+    opacity: 0.82;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .te-public--reta-equipos .te-public-round-head__live:not(.te-public-round-head__live--pending) {
     animation: none !important;
@@ -2010,15 +2221,68 @@
   box-shadow: none !important;
 }
 
+/* Equipos: logo a pantalla completa del lado (anula transparent de Split VS) */
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--split-vs,
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--a,
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--b,
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--win,
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--win.reta-sb-team--a,
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--win.reta-sb-team--b {
+  overflow: hidden;
+  border-radius: 0.7rem;
+  background: rgba(8, 9, 14, 0.55);
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--a,
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--win.reta-sb-team--a {
+  background:
+    radial-gradient(
+      ellipse 90% 80% at 50% 40%,
+      rgba(var(--reta-eq-a-rgb, 229, 193, 88), 0.14) 0%,
+      transparent 70%
+    ),
+    rgba(8, 9, 14, 0.55);
+}
+
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--b,
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--win.reta-sb-team--b {
+  background:
+    radial-gradient(
+      ellipse 90% 80% at 50% 40%,
+      rgba(var(--reta-eq-b-rgb, 217, 93, 57), 0.14) 0%,
+      transparent 70%
+    ),
+    rgba(8, 9, 14, 0.55);
+}
+
 .reta-sb-card--split-vs .reta-sb-team--split-vs:not(.reta-sb-team--win):not(.reta-sb-team--tie) {
   opacity: 1;
 }
 
+/* Watermark oculto en Split VS genérico; cards --teams lo reactivan arriba */
 .reta-sb-card--split-vs .reta-sb-team--split-vs .reta-sb-team__watermark {
   display: none;
 }
 
+.reta-sb-card--teams.reta-sb-card--split-vs .reta-sb-team--split-vs .reta-sb-team__watermark {
+  display: flex !important;
+}
+
+.reta-sb-card--split-vs .reta-sb-team__identity {
+  justify-content: center;
+  margin-bottom: 0.3rem;
+  min-height: 0;
+}
+
+.reta-sb-card--split-vs .reta-sb-team__name {
+  font-size: clamp(0.62rem, 4.5cqi, 0.78rem);
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+}
+
 .reta-sb-card--split-vs .reta-sb-team__players--split-vs {
+  position: relative;
+  z-index: 1;
   width: 100%;
   min-width: 0;
 }

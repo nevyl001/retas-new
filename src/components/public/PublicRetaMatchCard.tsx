@@ -5,13 +5,32 @@ import {
 } from "./tePubShared";
 import type { PublicRetaPairPlayer } from "./PublicRetaPairSide";
 import { PublicSplitVsPairHalf } from "./split-vs";
-import { TeamLogo } from "../reta/equipos/TeamLogo";
 import { formatMatchCourtLabel } from "../../lib/matchCourt";
+import { useRetryableImage } from "../../hooks/useRetryableImage";
 import "./reta-public-scoreboard.css";
 
 function shortTeamLabel(name: string): string {
   const cleaned = name.replace(/^team\s+/i, "").trim();
   return cleaned || name;
+}
+
+/** Logo plano detrás de la pareja (sin recorte circular de TeamLogo). */
+function TeamPairWatermark({ logoUrl }: { logoUrl?: string | null }) {
+  const { src, onError } = useRetryableImage(logoUrl);
+  if (!src) return null;
+
+  return (
+    <div className="reta-sb-team__watermark" aria-hidden>
+      <img
+        className="reta-sb-team__watermark-img"
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        onError={onError}
+      />
+    </div>
+  );
 }
 
 /** Pareja: solo paneles Split VS (el marcador va debajo del board). */
@@ -60,25 +79,10 @@ function TeamPairBlock({
         .join(" ")}
       aria-label={hasTeam ? `Equipo ${displayTeam}` : `Pareja ${pairLabel}`}
     >
-      {hasTeam ? (
-        <div className="reta-sb-team__watermark" aria-hidden>
-          <TeamLogo
-            logoUrl={logoUrl}
-            teamName={teamName!}
-            size="hero"
-            loading="lazy"
-            className="reta-sb-team__watermark-logo"
-          />
-        </div>
-      ) : null}
-
+      {hasTeam ? <TeamPairWatermark logoUrl={logoUrl} /> : null}
       <div className="reta-sb-team__body">
         <div className="reta-sb-team__main">
-          {hasTeam ? (
-            <div className="reta-sb-team__identity">
-              <span className="reta-sb-team__name">{displayTeam}</span>
-            </div>
-          ) : null}
+          {/* Nombre de equipo omitido: el logo de fondo identifica el club */}
           <div className="reta-sb-team__players reta-sb-team__players--split-vs">
             {hasPlayers && p1 ? (
               <PublicSplitVsPairHalf
@@ -87,13 +91,13 @@ function TeamPairBlock({
                 label={pairLabel}
                 tone={tone}
                 showWinnerBadge={isWinner && !isTie}
-                className="pub-split-vs-pair--compact"
+                className="pub-split-vs-pair--compact pub-split-vs-pair--logo-only"
               />
             ) : (
               <PublicSplitVsPairHalf
                 player1={{ name: pairLabel, foto: null }}
                 tone={tone}
-                className="pub-split-vs-pair--compact"
+                className="pub-split-vs-pair--compact pub-split-vs-pair--logo-only"
               />
             )}
           </div>
