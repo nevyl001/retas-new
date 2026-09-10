@@ -109,6 +109,11 @@ const JugadoresRouter = lazy(() =>
     default: module.JugadoresRouter,
   }))
 );
+const CoachingRouter = lazy(() =>
+  import("./components/coaching/CoachingRouter").then((module) => ({
+    default: module.CoachingRouter,
+  }))
+);
 const AmericanoDinamicoScreen = lazy(() =>
   import("./components/AmericanoDinamico/AmericanoDinamicoScreen").then(
     (module) => ({
@@ -928,6 +933,14 @@ function AppContent() {
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <JugadoresRouter key={appPathname} pathname={appPathname} />
+            </Suspense>
+          </ErrorBoundary>
+        )}
+
+        {currentView === "coaching" && (
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <CoachingRouter key={appPathname} pathname={appPathname} />
             </Suspense>
           </ErrorBoundary>
         )}

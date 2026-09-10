@@ -133,6 +133,14 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         ? Number(context.defaultCapacity)
         : OPEN_REG_CAPACITY_MIN
   );
+  /** Texto libre mientras escribes el cupo (evita que el clamp mate dígitos a media escritura). */
+  const [capacityText, setCapacityText] = useState(() =>
+    String(
+      Number(context.defaultCapacity) > 0
+        ? Number(context.defaultCapacity)
+        : OPEN_REG_CAPACITY_MIN
+    )
+  );
   const [capacityBusy, setCapacityBusy] = useState(false);
   const [capacityHint, setCapacityHint] = useState<string | null>(null);
   const capacitySaveTimer = useRef<number | null>(null);
@@ -276,15 +284,15 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         // Display desde entidad (context), no cache title_public / location_label.
         setTitlePublic(context.defaultTitle ?? "");
         setStatus(row.status);
-        setCapacity(
-          context.lockCapacity
-            ? Number(context.defaultCapacity) > 0
-              ? Number(context.defaultCapacity)
-              : OPEN_REG_CAPACITY_MIN
-            : Number(row.capacity) > 0
-              ? Number(row.capacity)
-              : OPEN_REG_CAPACITY_MIN
-        );
+        const nextCap = context.lockCapacity
+          ? Number(context.defaultCapacity) > 0
+            ? Number(context.defaultCapacity)
+            : OPEN_REG_CAPACITY_MIN
+          : Number(row.capacity) > 0
+            ? Number(row.capacity)
+            : OPEN_REG_CAPACITY_MIN;
+        setCapacity(nextCap);
+        setCapacityText(String(nextCap));
         setWaitlistEnabled(row.waitlist_enabled);
         setApprovalRequired(row.approval_required);
         setDeadline(
@@ -437,11 +445,13 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           if (gen !== capacitySaveGen.current) return;
           if (row) {
             setCapacity(row.capacity);
+            setCapacityText(String(row.capacity));
             setCfg(row);
           }
           return;
         }
         setCapacity(res.capacity);
+        setCapacityText(String(res.capacity));
         setCfg((prev) =>
           prev ? { ...prev, capacity: res.capacity } : prev
         );
@@ -485,6 +495,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         Math.min(OPEN_REG_CAPACITY_MAX, Math.round(nextRaw))
       );
       setCapacity(next);
+      setCapacityText(String(next));
       setCfg((prev) => (prev ? { ...prev, capacity: next } : prev));
       setCapacityHint(null);
       if (capacitySaveTimer.current != null) {
@@ -501,6 +512,36 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       entityId,
       persistCapacity,
     ]
+  );
+
+  const onCapacityTextChange = useCallback(
+    (raw: string) => {
+      // Solo dígitos; vacío permitido mientras escribes.
+      setCapacityText(raw.replace(/[^\d]/g, "").slice(0, 2));
+    },
+    []
+  );
+
+  const commitCapacityText = useCallback(
+    (opts?: { persist?: boolean; min?: number }) => {
+      const min = opts?.min ?? OPEN_REG_CAPACITY_MIN;
+      const parsed = Number(capacityText);
+      if (!Number.isFinite(parsed) || capacityText.trim() === "") {
+        setCapacityText(String(capacity));
+        return;
+      }
+      const next = Math.max(
+        min,
+        Math.min(OPEN_REG_CAPACITY_MAX, Math.round(parsed))
+      );
+      if (opts?.persist) {
+        queueCapacityChange(next);
+        return;
+      }
+      setCapacity(next);
+      setCapacityText(String(next));
+    },
+    [capacity, capacityText, queueCapacityChange]
   );
 
   /** Detalles de la reta / americano / duelo son la fuente de verdad de costo y premio. */
@@ -1069,18 +1110,18 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 </span>
                 <div
                   className="ra-org__capacity-stepper"
-                  title={`Entre ${OPEN_REG_CAPACITY_MIN} y ${OPEN_REG_CAPACITY_MAX}`}
+                  title={`Entre ${OPEN_REG_CAPACITY_MIN} y ${OPEN_REG_CAPACITY_MAX}. Escribe el número o usa ±.`}
                 >
                   <button
                     type="button"
                     className="ra-org__capacity-btn"
                     aria-label="Bajar cupo"
                     disabled={capacity <= OPEN_REG_CAPACITY_MIN}
-                    onClick={() =>
-                      setCapacity((c) =>
-                        Math.max(OPEN_REG_CAPACITY_MIN, c - 1)
-                      )
-                    }
+                    onClick={() => {
+                      const next = Math.max(OPEN_REG_CAPACITY_MIN, capacity - 1);
+                      setCapacity(next);
+                      setCapacityText(String(next));
+                    }}
                   >
                     −
                   </button>
@@ -1088,20 +1129,20 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                     id={convocatoriaFieldId("cupo-pre")}
                     name={convocatoriaFieldId("cupo-pre")}
                     className="ra-org__capacity-input"
-                    type="number"
-                    min={OPEN_REG_CAPACITY_MIN}
-                    max={OPEN_REG_CAPACITY_MAX}
-                    value={capacity}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
+                    value={capacityText}
                     aria-labelledby="ra-org-cupo-pre-label"
-                    onChange={(e) => {
-                      const n = Number(e.target.value);
-                      if (!Number.isFinite(n)) return;
-                      setCapacity(
-                        Math.min(
-                          OPEN_REG_CAPACITY_MAX,
-                          Math.max(OPEN_REG_CAPACITY_MIN, Math.round(n))
-                        )
-                      );
+                    aria-describedby="ra-org-cupo-pre-hint"
+                    onChange={(e) => onCapacityTextChange(e.target.value)}
+                    onBlur={() => commitCapacityText()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        (e.target as HTMLInputElement).blur();
+                      }
                     }}
                   />
                   <button
@@ -1109,16 +1150,19 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                     className="ra-org__capacity-btn"
                     aria-label="Subir cupo"
                     disabled={capacity >= OPEN_REG_CAPACITY_MAX}
-                    onClick={() =>
-                      setCapacity((c) =>
-                        Math.min(OPEN_REG_CAPACITY_MAX, c + 1)
-                      )
-                    }
+                    onClick={() => {
+                      const next = Math.min(OPEN_REG_CAPACITY_MAX, capacity + 1);
+                      setCapacity(next);
+                      setCapacityText(String(next));
+                    }}
                   >
                     +
                   </button>
                 </div>
               </div>
+              <p className="ra-org__capacity-hint ra-org__capacity-hint--muted" id="ra-org-cupo-pre-hint">
+                Escribe el cupo (1–{OPEN_REG_CAPACITY_MAX})
+              </p>
             </div>
           </div>
         </div>
@@ -1182,23 +1226,21 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                     id={convocatoriaFieldId("cupo-live")}
                     name={convocatoriaFieldId("cupo-live")}
                     className="ra-org__capacity-input"
-                    type="number"
-                    min={capacityMin}
-                    max={OPEN_REG_CAPACITY_MAX}
-                    value={effectiveCapacity}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
+                    value={capacityText}
                     aria-labelledby="ra-org-cupo-label"
-                    onChange={(e) => {
-                      const n = Number(e.target.value);
-                      if (!Number.isFinite(n)) return;
-                      setCapacity(n);
-                      setCfg((prev) =>
-                        prev ? { ...prev, capacity: n } : prev
-                      );
-                    }}
-                    onBlur={(e) => {
-                      const n = Number(e.target.value);
-                      if (!Number.isFinite(n)) return;
-                      queueCapacityChange(n);
+                    onChange={(e) => onCapacityTextChange(e.target.value)}
+                    onBlur={() =>
+                      commitCapacityText({ persist: true, min: capacityMin })
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        (e.target as HTMLInputElement).blur();
+                      }
                     }}
                   />
                   <button
@@ -1332,21 +1374,19 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 <input
                   id={convocatoriaFieldId("capacity-max")}
                   name={convocatoriaFieldId("capacity-max")}
-                  type="number"
-                  min={OPEN_REG_CAPACITY_MIN}
-                  max={OPEN_REG_CAPACITY_MAX}
-                  value={capacity}
-                  onChange={(e) =>
-                    setCapacity(
-                      Math.min(
-                        OPEN_REG_CAPACITY_MAX,
-                        Math.max(
-                          OPEN_REG_CAPACITY_MIN,
-                          Number(e.target.value) || OPEN_REG_CAPACITY_MIN
-                        )
-                      )
-                    )
-                  }
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="off"
+                  value={capacityText}
+                  onChange={(e) => onCapacityTextChange(e.target.value)}
+                  onBlur={() => commitCapacityText()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      (e.target as HTMLInputElement).blur();
+                    }
+                  }}
                 />
               </label>
             ) : (

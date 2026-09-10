@@ -16,6 +16,7 @@ import { navigateTorneoExpress } from "../torneo-express/torneoExpressNav";
 import { navigateAppTo } from "../../lib/appRouting";
 import { buildRankingComoFuncionaPath } from "../jugadores/jugadoresPublicNav";
 import { navigateJugadores } from "../jugadores/jugadoresNav";
+import { navigateCoaching } from "../coaching/coachingNav";
 import { TablerIcon } from "../ui/TablerIcon";
 import { type GameModeId } from "./gameModesConfig";
 import {
@@ -234,6 +235,23 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           <button
             type="button"
             className="home-access-card home-access-card--primary"
+            onClick={() => navigateCoaching("/coaching")}
+          >
+            <span className="home-access-card__icon" aria-hidden>
+              <TablerIcon name="user-star" size={26} />
+            </span>
+            <span className="home-access-card__body">
+              <span className="home-access-card__title">Riviera Coaching</span>
+              <span className="home-access-card__desc">
+                Coaches, jugadores y agenda del club.
+              </span>
+            </span>
+            <TablerIcon name="chevron-right" size={20} className="home-access-card__go" />
+          </button>
+
+          <button
+            type="button"
+            className="home-access-card"
             onClick={() => navigateJugadores()}
           >
             <span className="home-access-card__icon" aria-hidden>

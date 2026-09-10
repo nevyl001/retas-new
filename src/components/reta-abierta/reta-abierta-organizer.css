@@ -166,18 +166,26 @@
 }
 
 .ra-org__capacity-input {
-  width: 48px;
-  height: 32px;
-  min-height: 32px;
+  width: 4.25rem;
+  height: 36px;
+  min-height: 36px;
   text-align: center;
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 750;
   border-radius: 10px;
-  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
-  background: color-mix(in srgb, currentColor 4%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  background: color-mix(in srgb, currentColor 6%, transparent);
   color: inherit;
-  padding: 0;
+  padding: 0 0.35rem;
   -moz-appearance: textfield;
+  user-select: text;
+  pointer-events: auto;
+}
+
+.ra-org__capacity-hint--muted {
+  color: inherit;
+  opacity: 0.55;
+  font-size: 0.72rem;
 }
 
 .ra-org__capacity-input::-webkit-outer-spin-button,
