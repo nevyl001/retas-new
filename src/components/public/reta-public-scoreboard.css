@@ -1953,13 +1953,42 @@
 }
 
 /* Split VS panels in Reta public match cards */
+.reta-sb-card--split-vs .reta-sb-card__board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.4rem 0.45rem;
+}
+
+.reta-sb-card--split-vs .reta-sb-vs {
+  flex-direction: column;
+  align-self: stretch;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0;
+  min-width: 1.75rem;
+}
+
+.reta-sb-card--split-vs .reta-sb-vs__line {
+  flex: 0 0 auto;
+  width: 1px;
+  height: clamp(0.65rem, 2.5vw, 1.1rem);
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(229, 193, 88, 0.35),
+    transparent
+  );
+}
+
 .reta-sb-card--split-vs .reta-sb-team--split-vs {
-  padding: 0.35rem 0;
+  padding: 0;
   overflow: visible;
   border: none;
   border-left: none;
   background: transparent;
   box-shadow: none !important;
+  min-width: 0;
 }
 
 .reta-sb-card--split-vs .reta-sb-team--split-vs.reta-sb-team--a,
@@ -1996,27 +2025,27 @@
   width: 100%;
 }
 
-/* Fotos en ratio vertical. Nunca max-height + width:100% (aplana el panel y corta caras). */
+/* Paneles más bajos: ratio cercano a cuadrado para no alargar la card */
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel,
 .reta-sb-card--split-vs .pub-split-vs-panel {
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 3 / 4;
   width: 100%;
   max-height: none;
   height: auto;
   margin-inline: auto;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .reta-sb-card--split-vs .pub-split-vs-pair,
 .reta-sb-card--split-vs .reta-sb-team__players--split-vs {
-  max-width: min(100%, 22rem);
-  margin-inline: auto;
+  max-width: none;
+  margin-inline: 0;
   width: 100%;
 }
 
 .te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-pair,
 .te-pub-matches-grid--few .reta-sb-card--split-vs .reta-sb-team__players--split-vs {
-  max-width: min(100%, 26rem);
+  max-width: none;
 }
 
 .reta-sb-card--split-vs .pub-split-vs-panel__photo {
@@ -2028,17 +2057,33 @@
 @media (min-width: 640px) {
   .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel,
   .reta-sb-card--split-vs .pub-split-vs-panel {
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 1 / 1;
   }
 
-  .reta-sb-card--split-vs .pub-split-vs-pair,
-  .reta-sb-card--split-vs .reta-sb-team__players--split-vs {
-    max-width: min(100%, 28rem);
+  .reta-sb-card--split-vs .reta-sb-card__board {
+    gap: 0.45rem 0.65rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .reta-sb-card--split-vs .reta-sb-card__board {
+    gap: 0.3rem 0.28rem;
+  }
+
+  .reta-sb-card--split-vs .reta-sb-vs {
+    min-width: 1.35rem;
+  }
+
+  .reta-sb-card--split-vs .reta-sb-vs__badge {
+    min-width: 1.45rem;
+    height: 1.45rem;
+    font-size: 0.5rem;
+    padding: 0 0.2rem;
   }
 }
 
 .reta-sb-card--split-vs .pub-split-vs-pair__grid {
-  gap: 0.32rem;
+  gap: 0.28rem;
 }
 
 .reta-sb-card--split-vs .pub-split-vs-panel__scrim {
@@ -2052,17 +2097,17 @@
 }
 
 .reta-sb-card--split-vs .pub-split-vs-panel__identity {
-  left: 0.4rem;
-  right: 0.4rem;
-  bottom: 0.55rem;
-  gap: 0.08rem;
+  left: 0.28rem;
+  right: 0.28rem;
+  bottom: 0.4rem;
+  gap: 0.06rem;
 }
 
 /* Nombres con presencia: anulan el shrink de --compact */
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given,
 .reta-sb-card--split-vs .pub-split-vs-panel__given {
   font-family: var(--font-display, var(--ro-font-heading), "Segoe UI", sans-serif);
-  font-size: clamp(1.05rem, 5.8cqi, 1.45rem);
+  font-size: clamp(0.78rem, 7.2cqi, 1.15rem);
   font-weight: 750;
   letter-spacing: -0.035em;
   line-height: 1.05;
@@ -2074,7 +2119,7 @@
 
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family,
 .reta-sb-card--split-vs .pub-split-vs-panel__family {
-  font-size: clamp(0.72rem, 3.6cqi, 0.92rem);
+  font-size: clamp(0.58rem, 4.6cqi, 0.78rem);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: rgba(247, 244, 238, 0.82);
@@ -2082,19 +2127,20 @@
 }
 
 .te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-panel__given {
-  font-size: clamp(1.15rem, 6.2cqi, 1.55rem);
+  font-size: clamp(0.88rem, 6.8cqi, 1.28rem);
 }
 
 .te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-panel__family {
-  font-size: clamp(0.78rem, 3.8cqi, 0.98rem);
+  font-size: clamp(0.62rem, 4.4cqi, 0.85rem);
 }
 
 .reta-sb-card--split-vs .reta-sb-card__scoreboard {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0.45rem 0 0.25rem;
-  padding: 0.25rem 0.5rem;
+  margin: 0.55rem 0 0.15rem;
+  padding: 0.35rem 0.5rem 0.1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .reta-sb-card--split-vs .reta-sb-card__score-faceoff {
@@ -2106,7 +2152,7 @@
 
 .te-public--reta .reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__num,
 .reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__num {
-  font-size: clamp(1.7rem, 4.5vw, 2.2rem);
+  font-size: clamp(1.45rem, 4vw, 2rem);
   font-weight: 750;
   letter-spacing: -0.03em;
   line-height: 1;
