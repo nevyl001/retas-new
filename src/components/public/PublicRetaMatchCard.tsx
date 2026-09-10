@@ -85,7 +85,7 @@ function EqDuelPortrait({ player }: { player: PublicRetaPairPlayer }) {
   );
 }
 
-/** Lado de equipo: fotos grandes + un solo logo suave de fondo. */
+/** Lado de equipo: fotos a sangre + logo flotante delante. */
 function EqDuelSide({
   teamName,
   logoUrl,
@@ -125,19 +125,6 @@ function EqDuelSide({
     >
       <div className="reta-eq-duel__aura" aria-hidden />
 
-      {logoSrc ? (
-        <div className="reta-eq-duel__mark" aria-hidden>
-          <img
-            className="reta-eq-duel__mark-img"
-            src={logoSrc}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            onError={onLogoError}
-          />
-        </div>
-      ) : null}
-
       <div className="reta-eq-duel__portraits">
         {p1 ? <EqDuelPortrait player={p1} /> : null}
         {p2 ? <EqDuelPortrait player={p2} /> : null}
@@ -146,6 +133,23 @@ function EqDuelSide({
             <span className="reta-eq-duel__initials">?</span>
           </div>
         ) : null}
+
+        {logoSrc ? (
+          <div className="reta-eq-duel__float-logo" aria-hidden>
+            <img
+              className="reta-eq-duel__float-logo-img"
+              src={logoSrc}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              onError={onLogoError}
+            />
+          </div>
+        ) : (
+          <div className="reta-eq-duel__float-logo reta-eq-duel__float-logo--text" aria-hidden>
+            <span>{displayTeam.slice(0, 2).toUpperCase()}</span>
+          </div>
+        )}
       </div>
 
       {isWinner && !isTie ? (
