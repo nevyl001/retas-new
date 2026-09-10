@@ -241,6 +241,22 @@
   white-space: nowrap;
 }
 
+.pub-split-vs-panel__rating.jugador-rating-chip {
+  margin-top: 0.18rem;
+  font-size: 0.58rem;
+  padding: 0.08rem 0.32rem;
+  line-height: 1.15;
+  border-color: rgba(163, 230, 53, 0.45);
+  background: rgba(8, 12, 8, 0.72);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.pub-split-vs-pair--compact .pub-split-vs-panel__rating.jugador-rating-chip {
+  margin-top: 0.12rem;
+  font-size: 0.52rem;
+  padding: 0.06rem 0.28rem;
+}
+
 /* Compacto para cards densas (Americano / Reta grid) */
 .pub-split-vs-pair--compact .pub-split-vs-panel {
   aspect-ratio: 1 / 1;

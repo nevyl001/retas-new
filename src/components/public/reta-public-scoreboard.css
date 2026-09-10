@@ -2098,6 +2098,16 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
+.reta-eq-duel__rating.jugador-rating-chip {
+  margin-top: 0.14rem;
+  font-size: 0.5rem;
+  padding: 0.06rem 0.28rem;
+  line-height: 1.15;
+  border-color: rgba(163, 230, 53, 0.45);
+  background: rgba(8, 12, 8, 0.72);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
 /* Logo centrado entre la pareja */
 .reta-eq-duel__float-logo {
   position: absolute;

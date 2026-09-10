@@ -770,6 +770,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           name: identity?.nombre || fromPair?.name || slot.fallbackName,
           fotoUrl: identity?.fotoUrl ?? fromPair?.fotoUrl ?? null,
           jugadorId: legacyId,
+          rating: fromPair?.rating ?? identity?.rating ?? null,
         });
       }
     }
@@ -836,6 +837,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         name: identity?.nombre || fromPair?.name || slot.fallbackName,
         fotoUrl: identity?.fotoUrl ?? fromPair?.fotoUrl ?? null,
         jugadorId: legacyId,
+        rating: fromPair?.rating ?? identity?.rating ?? null,
       });
     }
     return avatars;

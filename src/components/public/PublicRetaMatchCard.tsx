@@ -12,6 +12,8 @@ import {
   playerAvatarHashTone,
   splitPlayerDisplayName,
 } from "../liga/jornada-public/ligaJornadaMatchNames";
+import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
+import "../jugadores/riviera-jugadores.css";
 import "./reta-public-scoreboard.css";
 
 function shortTeamLabel(name: string): string {
@@ -87,6 +89,10 @@ function EqDuelPortrait({ player }: { player: PublicRetaPairPlayer }) {
         {secondary ? (
           <span className="reta-eq-duel__family">{secondary}</span>
         ) : null}
+        <JugadorRatingChip
+          rating={player.rating}
+          className="reta-eq-duel__rating"
+        />
       </span>
     </div>
   );
@@ -210,8 +216,12 @@ function ClassicTeamPairBlock({
           <div className="reta-sb-team__players reta-sb-team__players--split-vs">
             {hasPlayers && p1 ? (
               <PublicSplitVsPairHalf
-                player1={{ name: p1.name, foto: p1.fotoUrl }}
-                player2={p2 ? { name: p2.name, foto: p2.fotoUrl } : null}
+                player1={{ name: p1.name, foto: p1.fotoUrl, rating: p1.rating }}
+                player2={
+                  p2
+                    ? { name: p2.name, foto: p2.fotoUrl, rating: p2.rating }
+                    : null
+                }
                 label={pairLabel}
                 tone={tone}
                 showWinnerBadge={isWinner && !isTie}
@@ -219,7 +229,7 @@ function ClassicTeamPairBlock({
               />
             ) : (
               <PublicSplitVsPairHalf
-                player1={{ name: pairLabel, foto: null }}
+                player1={{ name: pairLabel, foto: null, rating: null }}
                 tone={tone}
                 className="pub-split-vs-pair--compact"
               />

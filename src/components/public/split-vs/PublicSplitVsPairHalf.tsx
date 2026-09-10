@@ -4,6 +4,7 @@ import { PublicSplitVsPlayerPanel } from "./PublicSplitVsPlayerPanel";
 export type PublicSplitVsPairPlayer = {
   name: string;
   foto?: string | null;
+  rating?: number | null;
 };
 
 export interface PublicSplitVsPairHalfProps {
@@ -51,9 +52,17 @@ export const PublicSplitVsPairHalf: React.FC<PublicSplitVsPairHalfProps> = ({
           player2 ? "" : " pub-split-vs-pair__grid--solo"
         }`}
       >
-        <PublicSplitVsPlayerPanel name={player1.name} foto={player1.foto} />
+        <PublicSplitVsPlayerPanel
+          name={player1.name}
+          foto={player1.foto}
+          rating={player1.rating}
+        />
         {player2 ? (
-          <PublicSplitVsPlayerPanel name={player2.name} foto={player2.foto} />
+          <PublicSplitVsPlayerPanel
+            name={player2.name}
+            foto={player2.foto}
+            rating={player2.rating}
+          />
         ) : null}
       </div>
     </div>

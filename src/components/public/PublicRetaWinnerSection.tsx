@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { getWinnersSectionAriaLabel, useBranding } from "../../club-experience";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
+import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
 import "../jugadores/riviera-jugadores.css";
 import type { TeamWinnerCelebrateStatCard } from "../../lib/teamWinnerCelebrate";
 import {
@@ -99,6 +100,10 @@ function CelebrateTeamPortrait({ player }: { player: PublicRetaWinnerAvatar }) {
         {secondary ? (
           <span className="ro-pub-celebrate__portrait-family">{secondary}</span>
         ) : null}
+        <JugadorRatingChip
+          rating={player.rating}
+          className="ro-pub-celebrate__portrait-rating"
+        />
       </span>
     </div>
   );
@@ -201,6 +206,10 @@ export const PublicRetaWinnerSection: React.FC<{
                     />
                   </div>
                   <span className="ro-pub-celebrate__hero-name">{w.name}</span>
+                  <JugadorRatingChip
+                    rating={w.rating}
+                    className="ro-pub-celebrate__hero-rating"
+                  />
                 </div>
               )
             )}
@@ -275,6 +284,10 @@ export const PublicRetaWinnerSection: React.FC<{
                         <span className="ro-pub-celebrate__hero-name ro-pub-celebrate__hero-name--sub">
                           {w.name}
                         </span>
+                        <JugadorRatingChip
+                          rating={w.rating}
+                          className="ro-pub-celebrate__hero-rating ro-pub-celebrate__hero-rating--sub"
+                        />
                       </div>
                     ))}
                   </div>

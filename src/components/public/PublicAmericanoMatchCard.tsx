@@ -70,8 +70,12 @@ function TeamPairBlock({
           <div className="reta-sb-team__players reta-sb-team__players--split-vs">
             {p1 ? (
               <PublicSplitVsPairHalf
-                player1={{ name: p1.name, foto: p1.fotoUrl }}
-                player2={p2 ? { name: p2.name, foto: p2.fotoUrl } : null}
+                player1={{ name: p1.name, foto: p1.fotoUrl, rating: p1.rating }}
+                player2={
+                  p2
+                    ? { name: p2.name, foto: p2.fotoUrl, rating: p2.rating }
+                    : null
+                }
                 label={pairLabel}
                 tone={tone}
                 showWinnerBadge={isWinner && !isTie}
@@ -79,7 +83,7 @@ function TeamPairBlock({
               />
             ) : (
               <PublicSplitVsPairHalf
-                player1={{ name: pairLabel, foto: null }}
+                player1={{ name: pairLabel, foto: null, rating: null }}
                 tone={tone}
                 className="pub-split-vs-pair--compact"
               />

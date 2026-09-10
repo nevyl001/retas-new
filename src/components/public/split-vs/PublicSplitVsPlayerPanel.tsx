@@ -4,12 +4,14 @@ import {
   playerAvatarHashTone,
   splitPlayerDisplayName,
 } from "../../liga/jornada-public/ligaJornadaMatchNames";
+import { JugadorRatingChip } from "../../jugadores/JugadorRatingChip";
 import "./public-split-vs.css";
 
 export interface PublicSplitVsPlayerPanelProps {
   name: string;
   /** URL de foto; `undefined` = aún resolviendo (fondo neutro, sin jersey). */
   foto?: string | null;
+  rating?: number | null;
   className?: string;
 }
 
@@ -59,7 +61,7 @@ function PadelPlayerSilhouette() {
  */
 export const PublicSplitVsPlayerPanel: React.FC<
   PublicSplitVsPlayerPanelProps
-> = ({ name, foto, className }) => {
+> = ({ name, foto, rating, className }) => {
   const { primary, secondary } = splitPlayerDisplayName(name);
   const tone = playerAvatarHashTone(name);
   const initials = `${primary.charAt(0)}${
@@ -141,6 +143,10 @@ export const PublicSplitVsPlayerPanel: React.FC<
         {secondary ? (
           <span className="pub-split-vs-panel__family">{secondary}</span>
         ) : null}
+        <JugadorRatingChip
+          rating={rating}
+          className="pub-split-vs-panel__rating"
+        />
       </span>
     </div>
   );

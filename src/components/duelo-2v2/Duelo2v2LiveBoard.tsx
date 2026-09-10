@@ -87,8 +87,16 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
         >
           <p className="duelo2v2-live-team__label">Pareja 1</p>
           <PublicSplitVsPairHalf
-            player1={{ name: teamA[0].nombre, foto: teamA[0].fotoUrl }}
-            player2={{ name: teamA[1].nombre, foto: teamA[1].fotoUrl }}
+            player1={{
+              name: teamA[0].nombre,
+              foto: teamA[0].fotoUrl,
+              rating: teamA[0].rating,
+            }}
+            player2={{
+              name: teamA[1].nombre,
+              foto: teamA[1].fotoUrl,
+              rating: teamA[1].rating,
+            }}
             label={`${teamA[0].nombre} / ${teamA[1].nombre}`}
             tone={toneA}
             showWinnerBadge={ganadorA}
@@ -116,8 +124,16 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
         >
           <p className="duelo2v2-live-team__label">Pareja 2</p>
           <PublicSplitVsPairHalf
-            player1={{ name: teamB[0].nombre, foto: teamB[0].fotoUrl }}
-            player2={{ name: teamB[1].nombre, foto: teamB[1].fotoUrl }}
+            player1={{
+              name: teamB[0].nombre,
+              foto: teamB[0].fotoUrl,
+              rating: teamB[0].rating,
+            }}
+            player2={{
+              name: teamB[1].nombre,
+              foto: teamB[1].fotoUrl,
+              rating: teamB[1].rating,
+            }}
             label={`${teamB[0].nombre} / ${teamB[1].nombre}`}
             tone={toneB}
             showWinnerBadge={ganadorB}
