@@ -68,8 +68,9 @@ function StandingMetrics({
           {ranking.partidos_ganados} PG · {ranking.partidos_perdidos} PP
         </span>
         <span>
-          {ranking.games_favor} GF · {ranking.games_contra} GC · DIF {dif}
+          {ranking.games_favor} GF · {ranking.games_contra} GC
         </span>
+        <span>DIF {dif}</span>
       </p>
     );
   }
