@@ -159,6 +159,24 @@ function formatCupoSummaryLine(
   return `${confirmedCount} de ${capacity} confirmados`;
 }
 
+/**
+ * WhatsApp no agranda tipografía: mayúsculas + *negrita* leen como “grande”.
+ * Se usa cuando el cupo ya está lleno.
+ */
+function formatCompletedThanksLines(waitlistCount: number): string[] {
+  const status =
+    waitlistCount > 0
+      ? `Completo · ${waitlistCount} en espera`
+      : "Completo";
+  return [
+    "",
+    `*🔥 ¡CONVOCATORIA COMPLETA!*`,
+    `*🙏 Gracias por sumarte — ¡vamos con todo a la cancha!*`,
+    status,
+    "",
+  ];
+}
+
 /** Roster: un jugador por línea (lista clásica de convocatoria). */
 function formatConfirmedRosterLines(
   confirmed: { nombre: string; rating?: number | null }[],
@@ -322,12 +340,8 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     lines.push("");
     lines.push(openSlotsHeadline);
     lines.push("");
-  } else if (confirmed.length > 0 && dto.capacity > 0) {
-    lines.push(
-      waitlist.length > 0
-        ? `Completo · ${waitlist.length} en espera`
-        : "Completo"
-    );
+  } else if (confirmed.length > 0 && dto.capacity > 0 && openSlots <= 0) {
+    lines.push(...formatCompletedThanksLines(waitlist.length));
   }
 
   const descLine = dto.description?.trim();

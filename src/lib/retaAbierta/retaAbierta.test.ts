@@ -170,6 +170,10 @@ describe("WhatsApp share message por modo", () => {
       clubName: "Padelito",
     });
     expect(text).toContain("Completo · 1 en espera");
+    expect(text).toContain("*🔥 ¡CONVOCATORIA COMPLETA!*");
+    expect(text).toContain(
+      "*🙏 Gracias por sumarte — ¡vamos con todo a la cancha!*"
+    );
     expect(text).toContain("✓ Nevyl (3.34)");
     expect(text).toContain("✓ Fernando Q (3.00)");
     expect(text).toContain("Lista de espera (1)");
