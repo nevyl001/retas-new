@@ -63,15 +63,49 @@ function StandingMetrics({
   const dif = formatDif(ranking.diferencia_games);
   if (compact) {
     return (
-      <p className="liga-pub-general__metrics liga-pub-general__metrics--compact">
-        <span>
-          {ranking.partidos_ganados} PG · {ranking.partidos_perdidos} PP
-        </span>
-        <span>
-          {ranking.games_favor} GF · {ranking.games_contra} GC
-        </span>
-        <span>DIF {dif}</span>
-      </p>
+      <ul
+        className="liga-pub-general__metrics liga-pub-general__metrics--compact"
+        aria-label="Métricas"
+      >
+        <li>
+          <span className="liga-pub-general__metric-label" title="Partidos ganados">
+            PG
+          </span>
+          <span className="liga-pub-general__metric-value">
+            {ranking.partidos_ganados}
+          </span>
+        </li>
+        <li>
+          <span className="liga-pub-general__metric-label" title="Partidos perdidos">
+            PP
+          </span>
+          <span className="liga-pub-general__metric-value">
+            {ranking.partidos_perdidos}
+          </span>
+        </li>
+        <li>
+          <span className="liga-pub-general__metric-label" title="Games a favor">
+            GF
+          </span>
+          <span className="liga-pub-general__metric-value">
+            {ranking.games_favor}
+          </span>
+        </li>
+        <li>
+          <span className="liga-pub-general__metric-label" title="Games en contra">
+            GC
+          </span>
+          <span className="liga-pub-general__metric-value">
+            {ranking.games_contra}
+          </span>
+        </li>
+        <li>
+          <span className="liga-pub-general__metric-label" title="Diferencia de games">
+            DIF
+          </span>
+          <span className="liga-pub-general__metric-value">{dif}</span>
+        </li>
+      </ul>
     );
   }
   return (
