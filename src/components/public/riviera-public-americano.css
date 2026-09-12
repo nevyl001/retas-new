@@ -3518,7 +3518,7 @@
 
 .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel,
 .te-public--americano .am-pub-match--split-vs .pub-split-vs-panel.pub-split-vs-panel {
-  aspect-ratio: auto;
+  aspect-ratio: 2.15 / 1;
   max-height: none;
   height: auto;
   border-radius: 10px;
