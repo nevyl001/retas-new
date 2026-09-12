@@ -34,29 +34,63 @@ export const PublicHero: React.FC<PublicHeroProps> = ({
   meta,
   className = "",
 }) => {
-  const hasMetaRow =
-    Boolean(categoria) || Boolean(nivel) || Boolean(fecha) || Boolean(lugar);
+  const facts = [
+    categoria ? (
+      <span key="categoria" className="peds-hero__categoria">
+        {categoria}
+      </span>
+    ) : null,
+    nivel ? (
+      <span key="nivel" className="peds-hero__nivel">
+        {nivel}
+      </span>
+    ) : null,
+    fecha ? (
+      <span key="fecha" className="peds-hero__fecha">
+        {fecha}
+      </span>
+    ) : null,
+    lugar ? (
+      <span key="lugar" className="peds-hero__lugar">
+        {lugar}
+      </span>
+    ) : null,
+  ].filter(Boolean);
 
   return (
     <header className={`peds-hero te-pub-fade-in ${className}`.trim()}>
       {logoClub ? <div className="peds-hero__logo">{logoClub}</div> : null}
-      {estado ? <div className="peds-hero__estado">{estado}</div> : null}
+
+      {estado || meta ? (
+        <div className="peds-hero__topline">
+          {estado ? <div className="peds-hero__estado">{estado}</div> : null}
+          {meta ? <p className="peds-hero__meta">{meta}</p> : null}
+        </div>
+      ) : null}
+
       <h1 className="peds-hero__evento">{nombreEvento}</h1>
+
       {club ? <p className="peds-hero__club">{club}</p> : null}
+
       {descripcion ? (
         <p className="peds-hero__descripcion">{descripcion}</p>
       ) : null}
-      {hasMetaRow ? (
+
+      {facts.length > 0 ? (
         <div className="peds-hero__meta-row">
-          {categoria ? (
-            <span className="peds-hero__categoria">{categoria}</span>
-          ) : null}
-          {nivel ? <span className="peds-hero__nivel">{nivel}</span> : null}
-          {fecha ? <span className="peds-hero__fecha">{fecha}</span> : null}
-          {lugar ? <span className="peds-hero__lugar">{lugar}</span> : null}
+          {facts.map((fact, index) => (
+            <React.Fragment key={index}>
+              {index > 0 ? (
+                <span className="peds-hero__fact-sep" aria-hidden>
+                  ·
+                </span>
+              ) : null}
+              {fact}
+            </React.Fragment>
+          ))}
         </div>
       ) : null}
-      {meta ? <p className="peds-hero__meta">{meta}</p> : null}
+
       <div className="peds-hero__divider" aria-hidden />
     </header>
   );

@@ -105,15 +105,29 @@
 }
 
 .ro-public-view .peds-hero__club,
-.te-public .peds-hero__club {
+.te-public .peds-hero__club,
+.ro-public-view .peds-hero__meta,
+.te-public .peds-hero__meta {
   color: var(--ro-chrome-text-muted);
 }
 
 .ro-public-view .peds-hero__descripcion,
 .te-public .peds-hero__descripcion {
-  color: var(--ro-chrome-text-muted);
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  color: color-mix(in srgb, var(--ro-chrome-text-muted) 92%, #fff);
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.ro-public-view .peds-hero__meta-row,
+.te-public .peds-hero__meta-row {
+  border-color: rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.025) 100%
+    );
 }
 
 .ro-public-view .peds-hero__categoria,
@@ -125,13 +139,13 @@
 .ro-public-view .peds-hero__lugar,
 .te-public .peds-hero__lugar {
   color: var(--ro-chrome-text);
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: transparent;
+  border: none;
 }
 
-.ro-public-view .peds-hero__meta,
-.te-public .peds-hero__meta {
-  color: var(--ro-chrome-text-muted);
+.ro-public-view .peds-hero__fact-sep,
+.te-public .peds-hero__fact-sep {
+  color: rgba(255, 255, 255, 0.28);
 }
 
 /* Estados del hero: neutro / verde / muted — sin dorado decorativo. */
@@ -157,8 +171,8 @@
 .te-public .peds-hero__divider {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    rgba(255, 255, 255, 0.14) 55%,
+    color-mix(in srgb, var(--brand-accent, #fff) 65%, transparent) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
     transparent 100%
   );
 }

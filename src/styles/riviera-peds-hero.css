@@ -1,25 +1,35 @@
 /* =============================================================================
-   PEDS v1 — PublicHero (Sprint 3)
-   Solo estructura y tipografía. Colores → ClubExperience (--brand-accent, --text-*).
-   Requiere ancestro .peds-scope para tokens --pub-* (Sprint 2).
+   PEDS — PublicHero
+   Cabecera pública premium: jerarquía tipográfica + hechos del evento.
+   Colores → ClubExperience / chrome tokens (overrides en riviera-public-system).
    ============================================================================= */
 
 .peds-hero {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--pub-space-2, 0.5rem);
+  gap: 0.55rem;
   margin-block-end: var(--pub-space-section, 1.5rem);
   width: 100%;
   min-width: 0;
+  padding: 0.15rem 0 0.25rem;
 }
 
 .peds-hero__logo {
-  margin-block-end: var(--pub-space-1, 0.25rem);
+  margin-block-end: 0.15rem;
 }
 
 .peds-hero__logo .club-identity--wordmark {
   align-items: flex-start;
+}
+
+.peds-hero__topline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.85rem;
+  width: 100%;
 }
 
 .peds-hero__estado {
@@ -27,49 +37,76 @@
   align-items: center;
 }
 
-.peds-hero__evento {
+.peds-hero__meta {
   margin: 0;
-  font-family: var(--pub-font-body, var(--font-body, inherit));
-  font-size: var(--pub-font-size-h1, clamp(1.5rem, 7vw, 2.25rem));
-  font-weight: var(--pub-font-weight-bold, 700);
-  line-height: var(--pub-line-height-tight, 1.15);
-  letter-spacing: var(--pub-letter-spacing-tight, -0.02em);
+  font-family: var(--pub-font-display, var(--font-display, inherit));
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--text-secondary);
+}
+
+.peds-hero__evento {
+  margin: 0.1rem 0 0;
+  font-family: var(--pub-font-display, var(--font-display, inherit));
+  font-size: clamp(1.75rem, 7.5vw, 2.65rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
   color: var(--text-primary);
-  max-width: 22ch;
+  max-width: 18ch;
+  text-wrap: balance;
 }
 
 .peds-hero__club {
   margin: 0;
   font-family: var(--pub-font-body, var(--font-body, inherit));
-  font-size: var(--pub-font-size-meta, 0.8125rem);
-  font-weight: var(--pub-font-weight-medium, 500);
-  line-height: var(--pub-line-height-normal, 1.45);
+  font-size: 0.8125rem;
+  font-weight: 550;
+  line-height: 1.4;
   color: var(--text-secondary);
-  letter-spacing: var(--pub-letter-spacing-normal, 0);
+  letter-spacing: 0.01em;
 }
 
+/* Lead: sin caja tipo input — subtítulo editorial */
 .peds-hero__descripcion {
-  margin: 0;
+  margin: 0.15rem 0 0;
   width: 100%;
-  padding: 0.7rem 0.85rem;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  max-width: 38rem;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   font-family: var(--pub-font-body, var(--font-body, inherit));
-  font-size: clamp(0.8125rem, 3.4vw, 0.875rem);
-  font-weight: 400;
-  line-height: 1.5;
-  letter-spacing: normal;
+  font-size: clamp(0.875rem, 3.2vw, 0.975rem);
+  font-weight: 450;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
   text-transform: none;
   color: var(--text-secondary);
 }
 
+/* Hechos del evento: fila editorial, no chips genéricos */
 .peds-hero__meta-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--pub-space-2, 0.5rem);
-  margin-block-start: var(--pub-space-1, 0.25rem);
+  gap: 0.35rem 0;
+  margin-block-start: 0.55rem;
+  width: 100%;
+  max-width: 42rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.055) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .peds-hero__categoria,
@@ -78,40 +115,39 @@
 .peds-hero__lugar {
   display: inline-flex;
   align-items: center;
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--pub-radius-full, 9999px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   font-family: var(--pub-font-body, var(--font-body, inherit));
-  font-size: var(--pub-font-size-badge, 0.6875rem);
-  font-weight: var(--pub-font-weight-semibold, 600);
-  letter-spacing: var(--pub-letter-spacing-wide, 0.08em);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  line-height: 1.2;
+  line-height: 1.25;
   color: var(--text-secondary);
 }
 
-.peds-hero__meta {
-  margin: var(--pub-space-1, 0.25rem) 0 0;
-  font-family: var(--pub-font-display, var(--font-display, inherit));
-  font-size: var(--pub-font-size-display, 0.625rem);
-  font-weight: var(--pub-font-weight-semibold, 600);
-  letter-spacing: var(--pub-letter-spacing-section, 0.18em);
-  text-transform: uppercase;
-  line-height: var(--pub-line-height-snug, 1.25);
-  color: var(--text-secondary);
+.peds-hero__fact-sep {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0.55rem;
+  color: rgba(255, 255, 255, 0.28);
+  font-weight: 400;
+  line-height: 1;
+  user-select: none;
 }
 
 .peds-hero__divider {
   width: 100%;
-  max-width: min(280px, 72vw);
+  max-width: min(220px, 56vw);
   height: 2px;
-  margin-block: var(--pub-space-4, 1rem) var(--pub-space-2, 0.5rem);
-  border-radius: var(--pub-radius-full, 9999px);
+  margin-block: 1.05rem 0.35rem;
+  border-radius: 9999px;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(255, 255, 255, 0.18) 55%,
+    color-mix(in srgb, var(--brand-accent, #fff) 72%, transparent) 0%,
+    rgba(255, 255, 255, 0.22) 48%,
     transparent 100%
   );
   transform-origin: left center;
@@ -120,6 +156,20 @@
 
 @media (min-width: 430px) {
   .peds-hero__evento {
-    max-width: 26ch;
+    max-width: 24ch;
+  }
+
+  .peds-hero__meta-row {
+    padding: 0.78rem 1rem;
+  }
+}
+
+@media (min-width: 720px) {
+  .peds-hero {
+    gap: 0.6rem;
+  }
+
+  .peds-hero__evento {
+    font-size: clamp(2.1rem, 4vw, 2.85rem);
   }
 }
