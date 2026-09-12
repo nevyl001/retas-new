@@ -271,9 +271,11 @@
 
 .pub-split-vs-pair--compact .pub-split-vs-panel {
   container-type: inline-size;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 5 / 4;
   display: block;
   width: 100%;
+  max-width: 10.75rem;
+  margin-inline: auto;
   min-height: 0;
   height: auto;
   border-radius: 12px;
@@ -427,30 +429,76 @@
 
 @media (min-width: 640px) {
   .pub-split-vs-pair--compact .pub-split-vs-panel {
+    aspect-ratio: 5 / 4;
+    max-width: 11.5rem;
+  }
+}
+
+/* Móvil: pareja en 2 columnas compactas (fotos más chicas, nombres visibles) */
+@media (max-width: 639px) {
+  .pub-split-vs-pair--compact .pub-split-vs-pair__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.3rem;
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-pair__grid--solo {
+    grid-template-columns: minmax(0, 8.5rem);
+    justify-content: center;
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-panel {
     aspect-ratio: 1 / 1;
+    max-width: none;
+    margin-inline: 0;
+    border-radius: 10px;
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-panel__given {
+    left: 0.3rem;
+    right: 2.35rem;
+    bottom: 0.78rem;
+    font-size: clamp(0.68rem, 6.5cqi, 0.86rem);
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-panel__family {
+    left: 0.3rem;
+    right: 2.35rem;
+    bottom: 0.26rem;
+    font-size: clamp(0.52rem, 4.4cqi, 0.64rem);
+  }
+
+  .pub-split-vs-pair--compact
+    .pub-split-vs-panel__given:not(:has(+ .pub-split-vs-panel__family)) {
+    bottom: 0.3rem;
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-panel__rating.jugador-rating-chip {
+    right: 0.26rem;
+    bottom: 0.26rem;
+    font-size: 0.52rem;
+    padding: 0.08rem 0.28rem;
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-panel__scrim {
+    height: 42%;
   }
 }
 
 @media (max-width: 379px) {
-  .pub-split-vs-pair--compact .pub-split-vs-panel {
-    aspect-ratio: 1 / 1;
-  }
-
   .pub-split-vs-pair--compact .pub-split-vs-panel__given {
-    left: 0.32rem;
-    right: 2.6rem;
-    bottom: 0.82rem;
+    left: 0.26rem;
+    right: 2.2rem;
+    bottom: 0.72rem;
   }
 
   .pub-split-vs-pair--compact .pub-split-vs-panel__family {
-    left: 0.32rem;
-    right: 2.6rem;
-    bottom: 0.28rem;
+    left: 0.26rem;
+    right: 2.2rem;
+    bottom: 0.22rem;
   }
 
   .pub-split-vs-pair--compact .pub-split-vs-panel__rating.jugador-rating-chip {
-    top: auto;
-    right: 0.3rem;
-    bottom: 0.28rem;
+    right: 0.22rem;
+    bottom: 0.22rem;
   }
 }

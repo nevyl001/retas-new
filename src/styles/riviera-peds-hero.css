@@ -173,3 +173,47 @@
     font-size: clamp(2.1rem, 4vw, 2.85rem);
   }
 }
+
+/* Móvil: hero más denso y legible */
+@media (max-width: 639px) {
+  .peds-hero {
+    gap: 0.45rem;
+    margin-block-end: 1.15rem;
+  }
+
+  .peds-hero__evento {
+    font-size: clamp(1.55rem, 7vw, 1.95rem);
+    max-width: 100%;
+  }
+
+  .peds-hero__descripcion {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .peds-hero__meta-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    margin-block-start: 0.4rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 12px;
+  }
+
+  .peds-hero__fact-sep {
+    display: none;
+  }
+
+  .peds-hero__categoria,
+  .peds-hero__nivel,
+  .peds-hero__fecha,
+  .peds-hero__lugar {
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+  }
+
+  .peds-hero__divider {
+    margin-block: 0.85rem 0.2rem;
+    max-width: min(160px, 48vw);
+  }
+}
