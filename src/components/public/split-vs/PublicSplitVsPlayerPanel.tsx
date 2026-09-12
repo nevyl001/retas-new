@@ -56,8 +56,9 @@ function PadelPlayerSilhouette() {
 }
 
 /**
- * Panel a sangre para vistas públicas: foto real o jersey + iniciales.
+ * Panel Split VS: foto o jersey + nombre.
  * Compartido entre Reta, Americano, Duelo y Liga.
+ * En modo compacto el CSS lo convierte en franja horizontal (avatar + texto).
  */
 export const PublicSplitVsPlayerPanel: React.FC<
   PublicSplitVsPlayerPanelProps
@@ -116,28 +117,28 @@ export const PublicSplitVsPlayerPanel: React.FC<
             } as React.CSSProperties)
       }
     >
-      <span className="pub-split-vs-panel__texture" aria-hidden />
-      {!awaitingPhoto && !showPhoto ? <PadelPlayerSilhouette /> : null}
-      {!awaitingPhoto && !showPhoto ? (
-        <span className="pub-split-vs-panel__watermark" aria-hidden>
-          {initials}
-        </span>
-      ) : null}
-      {candidateFoto && !photoFailed ? (
-        <img
-          ref={imgRef}
-          className={`pub-split-vs-panel__photo${
-            photoLoaded ? " is-visible" : ""
-          }`}
-          src={candidateFoto}
-          alt=""
-          loading="eager"
-          decoding="async"
-          onLoad={() => setPhotoLoaded(true)}
-          onError={() => setPhotoFailed(true)}
-        />
-      ) : null}
-      <span className="pub-split-vs-panel__scrim" aria-hidden />
+      <div className="pub-split-vs-panel__media" aria-hidden>
+        <span className="pub-split-vs-panel__texture" />
+        {!awaitingPhoto && !showPhoto ? <PadelPlayerSilhouette /> : null}
+        {!awaitingPhoto && !showPhoto ? (
+          <span className="pub-split-vs-panel__watermark">{initials}</span>
+        ) : null}
+        {candidateFoto && !photoFailed ? (
+          <img
+            ref={imgRef}
+            className={`pub-split-vs-panel__photo${
+              photoLoaded ? " is-visible" : ""
+            }`}
+            src={candidateFoto}
+            alt=""
+            loading="eager"
+            decoding="async"
+            onLoad={() => setPhotoLoaded(true)}
+            onError={() => setPhotoFailed(true)}
+          />
+        ) : null}
+        <span className="pub-split-vs-panel__scrim" />
+      </div>
       <span className="pub-split-vs-panel__identity">
         <span className="pub-split-vs-panel__given">{primary}</span>
         {secondary ? (

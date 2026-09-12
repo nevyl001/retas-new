@@ -2540,17 +2540,7 @@
   width: 100%;
 }
 
-/* Paneles más bajos: ratio cercano a cuadrado para no alargar la card */
-.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel,
-.reta-sb-card--split-vs .pub-split-vs-panel {
-  aspect-ratio: 3 / 4;
-  width: 100%;
-  max-height: none;
-  height: auto;
-  margin-inline: auto;
-  border-radius: 8px;
-}
-
+/* Pareja compacta: franjas apiladas (altura controlada, nombres legibles) */
 .reta-sb-card--split-vs .pub-split-vs-pair,
 .reta-sb-card--split-vs .reta-sb-team__players--split-vs {
   max-width: none;
@@ -2563,20 +2553,39 @@
   max-width: none;
 }
 
-.reta-sb-card--split-vs .pub-split-vs-panel__photo {
-  object-position: center 12%;
+.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel {
+  aspect-ratio: auto !important;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  margin-inline: 0;
+  border-radius: 10px;
+}
+
+.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__media {
+  min-height: 3.25rem;
+}
+
+.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__photo {
+  object-position: center 18%;
   transform: none;
-  transform-origin: center top;
 }
 
 @media (min-width: 640px) {
-  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel,
-  .reta-sb-card--split-vs .pub-split-vs-panel {
-    aspect-ratio: 1 / 1;
-  }
-
   .reta-sb-card--split-vs .reta-sb-card__board {
     gap: 0.45rem 0.65rem;
+  }
+
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel {
+    grid-template-columns: 3.4rem minmax(0, 1fr);
+  }
+
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__media {
+    min-height: 3.4rem;
+  }
+
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
+    font-size: 0.9375rem;
   }
 }
 
@@ -2595,58 +2604,61 @@
     font-size: 0.5rem;
     padding: 0 0.2rem;
   }
+
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel {
+    grid-template-columns: 2.85rem minmax(0, 1fr);
+  }
+
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__media {
+    min-height: 2.85rem;
+  }
 }
 
 .reta-sb-card--split-vs .pub-split-vs-pair__grid {
-  gap: 0.28rem;
+  gap: 0.32rem;
 }
 
-.reta-sb-card--split-vs .pub-split-vs-panel__scrim {
-  height: 52%;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(6, 8, 12, 0.35) 36%,
-    rgba(6, 8, 12, 0.92) 100%
-  );
+/* Nombres en franja: legibles, sin ellipsis agresivo del mural */
+.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__identity {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  align-items: flex-start;
+  text-align: left;
+  gap: 0.08rem;
+  padding: 0.32rem 0.55rem 0.32rem 0.48rem;
 }
 
-.reta-sb-card--split-vs .pub-split-vs-panel__identity {
-  left: 0.28rem;
-  right: 0.28rem;
-  bottom: 0.4rem;
-  gap: 0.06rem;
-}
-
-/* Nombres con presencia: anulan el shrink de --compact */
-.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given,
-.reta-sb-card--split-vs .pub-split-vs-panel__given {
+.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
   font-family: var(--font-display, var(--ro-font-heading), "Segoe UI", sans-serif);
-  font-size: clamp(0.78rem, 7.2cqi, 1.15rem);
+  font-size: 0.875rem;
   font-weight: 750;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
   color: #f7f4ee;
-  text-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.95),
-    0 6px 18px rgba(0, 0, 0, 0.55);
+  text-shadow: none;
+  white-space: normal;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
-.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family,
-.reta-sb-card--split-vs .pub-split-vs-panel__family {
-  font-size: clamp(0.58rem, 4.6cqi, 0.78rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: rgba(247, 244, 238, 0.82);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family {
+  font-size: 0.7rem;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  color: rgba(247, 244, 238, 0.72);
+  text-shadow: none;
 }
 
-.te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-panel__given {
-  font-size: clamp(0.88rem, 6.8cqi, 1.28rem);
+.te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
+  font-size: 0.95rem;
 }
 
-.te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-panel__family {
-  font-size: clamp(0.62rem, 4.4cqi, 0.85rem);
+.te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family {
+  font-size: 0.75rem;
 }
 
 .reta-sb-card--split-vs .reta-sb-card__scoreboard {
@@ -2750,22 +2762,24 @@
   }
 
   .reta-sb-card--split-vs .pub-split-vs-pair__grid {
-    gap: clamp(0.32rem, 0.55vw, 0.5rem);
+    gap: clamp(0.28rem, 0.45vw, 0.4rem);
   }
 
-  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel,
-  .reta-sb-card--split-vs .pub-split-vs-panel {
-    border-radius: clamp(8px, 0.7vw, 12px);
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel {
+    border-radius: 11px;
+    grid-template-columns: clamp(3.4rem, 3.2vw, 3.85rem) minmax(0, 1fr);
   }
 
-  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given,
-  .reta-sb-card--split-vs .pub-split-vs-panel__given {
-    font-size: clamp(1rem, 1.35vw + 0.35rem, 1.55rem);
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__media {
+    min-height: clamp(3.4rem, 3.2vw, 3.85rem);
   }
 
-  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family,
-  .reta-sb-card--split-vs .pub-split-vs-panel__family {
-    font-size: clamp(0.7rem, 0.85vw + 0.25rem, 1rem);
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
+    font-size: clamp(0.9rem, 0.55vw + 0.7rem, 1.1rem);
+  }
+
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family {
+    font-size: clamp(0.7rem, 0.35vw + 0.55rem, 0.82rem);
   }
 
   .te-public--reta .reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__num,
@@ -2781,14 +2795,12 @@
 }
 
 @media (min-width: 1500px) {
-  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given,
-  .reta-sb-card--split-vs .pub-split-vs-panel__given {
-    font-size: clamp(1.25rem, 1.15vw + 0.4rem, 1.85rem);
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
+    font-size: clamp(1rem, 0.45vw + 0.75rem, 1.2rem);
   }
 
-  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family,
-  .reta-sb-card--split-vs .pub-split-vs-panel__family {
-    font-size: clamp(0.82rem, 0.7vw + 0.3rem, 1.15rem);
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family {
+    font-size: clamp(0.75rem, 0.3vw + 0.55rem, 0.9rem);
   }
 
   .te-public--reta .reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__num,
@@ -2800,10 +2812,8 @@
     font-size: clamp(12px, 0.7vw, 15px) !important;
   }
 
-  .reta-sb-card--split-vs .pub-split-vs-panel__identity {
-    left: 0.45rem;
-    right: 0.45rem;
-    bottom: 0.55rem;
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__identity {
+    padding: 0.4rem 0.65rem 0.4rem 0.55rem;
   }
 }
 
@@ -2813,9 +2823,8 @@
     gap: clamp(1.25rem, 1.5vw, 2.25rem) !important;
   }
 
-  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given,
-  .reta-sb-card--split-vs .pub-split-vs-panel__given {
-    font-size: clamp(1.4rem, 1vw + 0.55rem, 2.1rem);
+  .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
+    font-size: clamp(1.05rem, 0.4vw + 0.8rem, 1.3rem);
   }
 
   .te-public--reta .reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__num,

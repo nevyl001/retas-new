@@ -115,8 +115,8 @@
 }
 
 .am-match-board--split-vs .am-match-board__pair .pub-split-vs-panel {
-  aspect-ratio: 3 / 4;
-  border-radius: 8px;
+  aspect-ratio: auto;
+  border-radius: 10px;
 }
 
 .am-match-board--split-vs .am-match-board__vs {
@@ -164,10 +164,6 @@
 }
 
 @media (min-width: 640px) {
-  .am-match-board--split-vs .am-match-board__pair .pub-split-vs-panel {
-    aspect-ratio: 1 / 1;
-  }
-
   .am-match-board--split-vs {
     gap: 0.45rem 0.65rem;
   }

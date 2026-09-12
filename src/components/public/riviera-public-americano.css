@@ -3507,36 +3507,37 @@
 }
 
 /*
-  Americano público desktop: densidad profesional.
-  Sin paneles murales (1:1 a ancho de columna); ratio vertical + ancho acotado.
+  Americano público: misma franja compacta apilada (nombres legibles).
 */
 .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair,
 .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact {
   width: 100%;
-  max-width: min(100%, 17.5rem);
+  max-width: min(100%, 18rem);
   margin-inline: auto;
 }
 
-.te-public--americano .am-pub-match--split-vs .pub-split-vs-panel,
-.te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel {
-  aspect-ratio: 4 / 5;
+.te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel,
+.te-public--americano .am-pub-match--split-vs .pub-split-vs-panel.pub-split-vs-panel {
+  aspect-ratio: auto;
   max-height: none;
   height: auto;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given,
 .te-public--americano .am-pub-match--split-vs .pub-split-vs-panel__given {
-  font-size: clamp(0.78rem, 4.2cqi, 0.98rem);
+  font-size: 0.875rem;
   font-weight: 750;
   color: #f7f4ee;
   letter-spacing: -0.02em;
+  text-shadow: none;
 }
 
 .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family,
 .te-public--americano .am-pub-match--split-vs .pub-split-vs-panel__family {
-  font-size: clamp(0.58rem, 3.2cqi, 0.72rem);
-  color: rgba(247, 244, 238, 0.78);
+  font-size: 0.7rem;
+  color: rgba(247, 244, 238, 0.72);
+  text-shadow: none;
 }
 
 .te-public--americano .am-pub-match--split-vs .te-pub-match__faceoff--split-vs {
@@ -3626,8 +3627,8 @@
 }
 
 @media (min-width: 1100px) {
-  .te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__given {
-    font-size: clamp(1rem, 1.35vw + 0.35rem, 1.55rem);
+  .te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
+    font-size: clamp(0.9rem, 0.55vw + 0.7rem, 1.1rem);
   }
 
   .te-public--americano

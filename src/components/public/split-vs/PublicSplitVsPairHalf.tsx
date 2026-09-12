@@ -16,7 +16,7 @@ export interface PublicSplitVsPairHalfProps {
   className?: string;
 }
 
-/** Mitad de pareja: 1–2 paneles Split VS lado a lado. */
+/** Mitad de pareja: 1–2 paneles Split VS (compacto = uno arriba del otro). */
 export const PublicSplitVsPairHalf: React.FC<PublicSplitVsPairHalfProps> = ({
   player1,
   player2,

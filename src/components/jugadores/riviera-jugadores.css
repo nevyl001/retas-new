@@ -1149,6 +1149,254 @@
   }
 }
 
+/* —— Alta premium: Nuevo jugador / Nueva jugadora —— */
+.rj-modal.rj-modal--new-player {
+  --rj-np-accent: var(--brand-accent, var(--ro-accent, #1a1a1a));
+  --rj-np-ink: var(--ro-text-primary, #111827);
+  --rj-np-muted: var(--ro-text-secondary, #6b7280);
+  --rj-np-surface: #fafaf9;
+  --rj-np-line: rgba(17, 24, 39, 0.1);
+  --rj-np-kicker: var(--rj-np-muted);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: 28rem;
+  max-height: min(92dvh, 720px);
+  padding: 0;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--rj-np-line);
+  background: #fff;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 24px 48px rgba(15, 18, 24, 0.18);
+}
+
+.rj-modal.rj-modal--new-player::before {
+  content: "";
+  flex-shrink: 0;
+  display: block;
+  height: 3px;
+  background: var(--rj-np-accent);
+}
+
+.rj-modal--new-player-m {
+  --rj-np-surface: #f4f6f8;
+  --rj-np-line: rgba(15, 23, 42, 0.12);
+  --rj-np-kicker: #475569;
+}
+
+.rj-modal--new-player-f {
+  --rj-np-surface: #faf6f7;
+  --rj-np-line: rgba(55, 30, 40, 0.12);
+  --rj-np-kicker: #7a5460;
+}
+
+.rj-new-player__header {
+  flex-shrink: 0;
+  padding: 1.15rem 1.2rem 0.95rem;
+  background:
+    linear-gradient(180deg, var(--rj-np-surface) 0%, #fff 100%);
+  border-bottom: 1px solid var(--rj-np-line);
+}
+
+.rj-new-player__kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rj-np-kicker);
+}
+
+.rj-new-player__title {
+  margin: 0 0 0.35rem !important;
+  font-size: clamp(1.35rem, 4.2vw, 1.6rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.15 !important;
+  color: var(--rj-np-ink) !important;
+}
+
+.rj-new-player__lead {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--rj-np-muted);
+}
+
+.rj-new-player__form {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1.2rem 1.15rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+}
+
+.rj-new-player__section {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.rj-new-player__row {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.rj-new-player__row--2 {
+  grid-template-columns: 1fr;
+}
+
+/* Edad + Mano / Cancha: evita truncar "Derecha" en móvil */
+.rj-new-player__row--meta {
+  grid-template-columns: minmax(5rem, 5.75rem) minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 0.55rem;
+}
+
+.rj-modal--new-player .riviera-field,
+.rj-modal--new-player .rj-new-player__form .riviera-field {
+  margin: 0;
+  min-width: 0;
+}
+
+.rj-modal--new-player .riviera-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rj-np-muted);
+  white-space: nowrap;
+}
+
+.rj-modal--new-player .riviera-input,
+.rj-modal--new-player select.riviera-input,
+.rj-modal--new-player .riviera-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 11px;
+  border: 1px solid var(--rj-np-line);
+  background: var(--rj-np-surface);
+  color: var(--rj-np-ink);
+  font-size: 0.9375rem;
+  font-weight: 550;
+  box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.rj-new-player__row--meta .riviera-input,
+.rj-new-player__row--meta select.riviera-input,
+.rj-new-player__row--meta .riviera-field input {
+  padding-left: 0.65rem;
+  padding-right: 0.65rem;
+  font-size: 0.875rem;
+}
+
+.rj-modal--new-player .riviera-input:hover,
+.rj-modal--new-player select.riviera-input:hover,
+.rj-modal--new-player .riviera-field input:hover {
+  border-color: color-mix(in srgb, var(--rj-np-ink) 28%, transparent);
+}
+
+.rj-modal--new-player .riviera-input:focus,
+.rj-modal--new-player select.riviera-input:focus,
+.rj-modal--new-player .riviera-field input:focus {
+  outline: none;
+  border-color: var(--rj-np-accent);
+  background: #fff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rj-np-accent) 22%, transparent);
+}
+
+.rj-modal--new-player select.riviera-input {
+  appearance: none;
+  background-color: var(--rj-np-surface);
+  background-image: linear-gradient(45deg, transparent 50%, var(--rj-np-muted) 50%),
+    linear-gradient(135deg, var(--rj-np-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) calc(50% - 2px),
+    calc(100% - 9px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 1.75rem;
+}
+
+.rj-new-player__error {
+  margin: 0;
+}
+
+.rj-new-player__actions {
+  margin-top: 0.15rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--rj-np-line);
+  background: #fff;
+  gap: 0.65rem;
+  position: sticky;
+  bottom: 0;
+}
+
+.rj-modal--new-player .rj-new-player__actions .riviera-btn,
+.rj-modal--new-player .rj-new-player__actions .riviera-btn-primary,
+.rj-modal--new-player .rj-new-player__actions .riviera-btn-ghost,
+.rj-modal--new-player .rj-new-player__actions button {
+  flex: 1;
+  min-height: 2.75rem;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.rj-modal--new-player .rj-new-player__actions .riviera-btn-primary,
+.rj-modal--new-player .rj-new-player__actions button[type="submit"] {
+  background: #111;
+  border-color: #111;
+  color: #fff;
+}
+
+.rj-modal--new-player .rj-new-player__actions .riviera-btn-primary:hover:not(:disabled),
+.rj-modal--new-player .rj-new-player__actions button[type="submit"]:hover:not(:disabled) {
+  background: #000;
+  border-color: #000;
+}
+
+@media (min-width: 480px) {
+  .rj-new-player__row--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rj-new-player__header {
+    padding: 1.35rem 1.35rem 1.05rem;
+  }
+
+  .rj-new-player__form {
+    padding: 1.15rem 1.35rem 1.25rem;
+    gap: 1.15rem;
+  }
+
+  .rj-new-player__row--meta {
+    gap: 0.7rem;
+  }
+}
+
+@media (max-width: 379px) {
+  .rj-new-player__row--meta {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rj-new-player__row--meta > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
 .rj-membership-preview {
   margin-top: 1rem;
   padding: 0.85rem 0.9rem;
