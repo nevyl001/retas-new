@@ -262,7 +262,7 @@
 
 /*
   Compacto (Reta / Americano / Liga):
-  pareja apilada; foto con presencia (casi cuadrada) y nombre abajo dentro.
+  foto con presencia; rating arriba a la derecha; nombre abajo sin tapar la cara.
 */
 .pub-split-vs-pair--compact .pub-split-vs-pair__grid {
   grid-template-columns: 1fr;
@@ -298,24 +298,24 @@
   background: inherit;
 }
 
-/* Scrim solo abajo: deja ver la cara con presencia */
+/* Scrim bajo: cara libre arriba */
 .pub-split-vs-pair--compact .pub-split-vs-panel__scrim {
   display: block;
-  height: 46%;
+  height: 38%;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(6, 8, 12, 0.35) 38%,
-    rgba(6, 8, 12, 0.88) 78%,
-    rgba(6, 8, 12, 0.96) 100%
+    rgba(6, 8, 12, 0.2) 22%,
+    rgba(6, 8, 12, 0.78) 68%,
+    rgba(6, 8, 12, 0.94) 100%
   );
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__photo {
-  transform: scale(1.06);
-  transform-origin: center 18%;
+  transform: scale(1.08);
+  transform-origin: center 12%;
   object-fit: cover;
-  object-position: center 14%;
+  object-position: center 12%;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__watermark {
@@ -330,30 +330,27 @@
   transform: translate(-50%, -58%);
 }
 
+/* Capa full: rating top-right + nombre bottom-left */
 .pub-split-vs-pair--compact .pub-split-vs-panel__identity {
   position: absolute;
-  left: 0.35rem;
-  right: 0.35rem;
-  bottom: 0.34rem;
+  inset: 0;
   z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.05rem;
+  display: block;
   min-width: 0;
   max-width: none;
   padding: 0;
-  text-align: center;
+  text-align: left;
   pointer-events: none;
   overflow: hidden;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__given {
-  grid-column: auto;
-  grid-row: auto;
+  position: absolute;
+  left: 0.42rem;
+  right: 0.42rem;
+  bottom: 0.92rem;
   font-family: var(--font-display, var(--ro-font-heading), "Segoe UI", sans-serif);
-  font-size: clamp(0.82rem, 8.2cqi, 1.12rem);
+  font-size: clamp(0.8rem, 7.8cqi, 1.08rem);
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.05;
@@ -367,35 +364,53 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
+  text-align: left;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__family {
-  grid-column: auto;
-  grid-row: auto;
-  font-size: clamp(0.58rem, 5cqi, 0.74rem);
+  position: absolute;
+  left: 0.42rem;
+  right: 0.42rem;
+  bottom: 0.34rem;
+  font-size: clamp(0.56rem, 4.8cqi, 0.72rem);
   font-weight: 600;
   line-height: 1.05;
-  color: rgba(255, 255, 255, 0.84);
+  color: rgba(255, 255, 255, 0.86);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   min-width: 0;
   max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left;
+}
+
+/* Sin apellido: nombre más abajo */
+.pub-split-vs-pair--compact
+  .pub-split-vs-panel__given:not(:has(+ .pub-split-vs-panel__family)) {
+  bottom: 0.4rem;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__rating.jugador-rating-chip {
-  grid-column: auto;
-  grid-row: auto;
-  align-self: center;
-  justify-self: auto;
-  margin-top: 0.1rem;
+  position: absolute;
+  top: 0.38rem;
+  right: 0.38rem;
+  left: auto;
+  bottom: auto;
+  z-index: 4;
+  margin: 0;
   flex-shrink: 0;
-  font-size: 0.55rem;
-  padding: 0.08rem 0.32rem;
-  border-color: rgba(163, 230, 53, 0.45);
-  background: rgba(8, 12, 8, 0.72);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 0.12rem 0.38rem;
+  border-radius: 999px;
+  border-color: rgba(163, 230, 53, 0.5);
+  background: rgba(8, 12, 8, 0.78);
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .pub-split-vs-pair--compact.pub-split-vs-pair--win .pub-split-vs-panel {
@@ -421,9 +436,20 @@
     aspect-ratio: 1 / 1;
   }
 
-  .pub-split-vs-pair--compact .pub-split-vs-panel__identity {
-    left: 0.28rem;
-    right: 0.28rem;
-    bottom: 0.26rem;
+  .pub-split-vs-pair--compact .pub-split-vs-panel__given {
+    left: 0.32rem;
+    right: 0.32rem;
+    bottom: 0.82rem;
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-panel__family {
+    left: 0.32rem;
+    right: 0.32rem;
+    bottom: 0.28rem;
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-panel__rating.jugador-rating-chip {
+    top: 0.3rem;
+    right: 0.3rem;
   }
 }

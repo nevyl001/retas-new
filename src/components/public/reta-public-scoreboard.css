@@ -2580,13 +2580,13 @@
 
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__scrim {
   display: block;
-  height: 44%;
+  height: 38%;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(6, 8, 12, 0.28) 34%,
-    rgba(6, 8, 12, 0.9) 78%,
-    rgba(6, 8, 12, 0.97) 100%
+    rgba(6, 8, 12, 0.18) 24%,
+    rgba(6, 8, 12, 0.82) 72%,
+    rgba(6, 8, 12, 0.96) 100%
   );
 }
 
@@ -2627,22 +2627,26 @@
 
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__identity {
   position: absolute;
-  left: 0.35rem;
-  right: 0.35rem;
-  bottom: 0.34rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 0.05rem;
+  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  display: block;
+  text-align: left;
+  gap: 0;
   padding: 0;
   min-width: 0;
   overflow: hidden;
 }
 
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
+  position: absolute;
+  left: 0.42rem;
+  right: 0.42rem;
+  bottom: 0.92rem;
   font-family: var(--font-display, var(--ro-font-heading), "Segoe UI", sans-serif);
-  font-size: clamp(0.84rem, 8cqi, 1.15rem);
+  font-size: clamp(0.84rem, 7.8cqi, 1.12rem);
   font-weight: 800;
   letter-spacing: -0.025em;
   line-height: 1.05;
@@ -2656,25 +2660,41 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
+  text-align: left;
 }
 
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family {
-  font-size: clamp(0.58rem, 4.8cqi, 0.76rem);
+  position: absolute;
+  left: 0.42rem;
+  right: 0.42rem;
+  bottom: 0.34rem;
+  font-size: clamp(0.58rem, 4.8cqi, 0.74rem);
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: rgba(255, 255, 255, 0.84);
+  color: rgba(255, 255, 255, 0.86);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   min-width: 0;
   max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left;
+}
+
+.reta-sb-card--split-vs
+  .pub-split-vs-pair--compact
+  .pub-split-vs-panel__given:not(:has(+ .pub-split-vs-panel__family)) {
+  bottom: 0.4rem;
 }
 
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__rating.jugador-rating-chip {
-  grid-column: auto;
-  grid-row: auto;
-  margin-top: 0.08rem;
+  position: absolute;
+  top: 0.38rem;
+  right: 0.38rem;
+  left: auto;
+  bottom: auto;
+  margin: 0;
+  z-index: 4;
 }
 
 .te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel {
