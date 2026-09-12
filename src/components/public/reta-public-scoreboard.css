@@ -2643,7 +2643,7 @@
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
   position: absolute;
   left: 0.42rem;
-  right: 0.42rem;
+  right: 2.75rem;
   bottom: 0.92rem;
   font-family: var(--font-display, var(--ro-font-heading), "Segoe UI", sans-serif);
   font-size: clamp(0.84rem, 7.8cqi, 1.12rem);
@@ -2666,7 +2666,7 @@
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family {
   position: absolute;
   left: 0.42rem;
-  right: 0.42rem;
+  right: 2.75rem;
   bottom: 0.34rem;
   font-size: clamp(0.58rem, 4.8cqi, 0.74rem);
   font-weight: 600;
@@ -2689,10 +2689,10 @@
 
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__rating.jugador-rating-chip {
   position: absolute;
-  top: 0.38rem;
+  top: auto;
   right: 0.38rem;
   left: auto;
-  bottom: auto;
+  bottom: 0.34rem;
   margin: 0;
   z-index: 4;
 }
