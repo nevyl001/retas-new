@@ -262,27 +262,29 @@
 
 /*
   Compacto (Reta / Americano / Liga):
-  pareja apilada; cada jugador = una sola card foto a sangre con nombre encima.
+  pareja apilada; foto con presencia (casi cuadrada) y nombre abajo dentro.
 */
 .pub-split-vs-pair--compact .pub-split-vs-pair__grid {
   grid-template-columns: 1fr;
-  gap: 0.3rem;
+  gap: 0.28rem;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel {
   container-type: inline-size;
-  aspect-ratio: 2.15 / 1;
+  aspect-ratio: 1 / 1;
   display: block;
   width: 100%;
   min-height: 0;
   height: auto;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background: var(
     --pub-split-vs-bg,
     linear-gradient(145deg, #2a3340, #12161c)
   );
-  box-shadow: none;
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
 
@@ -296,47 +298,49 @@
   background: inherit;
 }
 
+/* Scrim solo abajo: deja ver la cara con presencia */
 .pub-split-vs-pair--compact .pub-split-vs-panel__scrim {
   display: block;
-  height: 68%;
+  height: 46%;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(6, 8, 12, 0.25) 28%,
-    rgba(6, 8, 12, 0.82) 72%,
-    rgba(6, 8, 12, 0.94) 100%
+    rgba(6, 8, 12, 0.35) 38%,
+    rgba(6, 8, 12, 0.88) 78%,
+    rgba(6, 8, 12, 0.96) 100%
   );
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__photo {
-  transform: none;
+  transform: scale(1.06);
+  transform-origin: center 18%;
   object-fit: cover;
-  object-position: center 22%;
+  object-position: center 14%;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__watermark {
-  font-size: clamp(1.6rem, 28cqi, 2.4rem);
-  opacity: 0.16;
+  font-size: clamp(2rem, 36cqi, 3.1rem);
+  opacity: 0.14;
   transform: rotate(-6deg);
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__silhouette {
-  width: clamp(2rem, 28cqi, 2.8rem);
+  width: clamp(2.4rem, 34cqi, 3.4rem);
   opacity: 0.08;
   transform: translate(-50%, -58%);
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__identity {
   position: absolute;
-  left: 0.4rem;
-  right: 0.4rem;
-  bottom: 0.32rem;
+  left: 0.35rem;
+  right: 0.35rem;
+  bottom: 0.34rem;
   z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.06rem;
+  gap: 0.05rem;
   min-width: 0;
   max-width: none;
   padding: 0;
@@ -349,7 +353,7 @@
   grid-column: auto;
   grid-row: auto;
   font-family: var(--font-display, var(--ro-font-heading), "Segoe UI", sans-serif);
-  font-size: clamp(0.78rem, 7.5cqi, 1.05rem);
+  font-size: clamp(0.82rem, 8.2cqi, 1.12rem);
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.05;
@@ -368,10 +372,10 @@
 .pub-split-vs-pair--compact .pub-split-vs-panel__family {
   grid-column: auto;
   grid-row: auto;
-  font-size: clamp(0.58rem, 4.8cqi, 0.72rem);
+  font-size: clamp(0.58rem, 5cqi, 0.74rem);
   font-weight: 600;
   line-height: 1.05;
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 255, 255, 0.84);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   min-width: 0;
   max-width: 100%;
@@ -395,7 +399,7 @@
 }
 
 .pub-split-vs-pair--compact.pub-split-vs-pair--win .pub-split-vs-panel {
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .pub-split-vs-pair--compact.pub-split-vs-pair--win .pub-split-vs-panel__media {
@@ -408,18 +412,18 @@
 
 @media (min-width: 640px) {
   .pub-split-vs-pair--compact .pub-split-vs-panel {
-    aspect-ratio: 2.05 / 1;
+    aspect-ratio: 1 / 1;
   }
 }
 
 @media (max-width: 379px) {
   .pub-split-vs-pair--compact .pub-split-vs-panel {
-    aspect-ratio: 2.35 / 1;
+    aspect-ratio: 1 / 1;
   }
 
   .pub-split-vs-pair--compact .pub-split-vs-panel__identity {
     left: 0.28rem;
     right: 0.28rem;
-    bottom: 0.24rem;
+    bottom: 0.26rem;
   }
 }
