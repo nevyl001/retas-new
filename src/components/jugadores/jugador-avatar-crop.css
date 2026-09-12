@@ -122,13 +122,15 @@
   margin: 0 0 1rem;
   padding: 0.75rem 0.9rem;
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--brand-accent, var(--ro-accent, #d6ef3a)) 35%, transparent);
-  background: color-mix(in srgb, var(--brand-accent, var(--ro-accent, #d6ef3a)) 8%, transparent);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #f3f4f6;
 }
 
 .rj-ficha-photo-cta__text {
   margin: 0;
+  flex: 1 1 12rem;
   font-size: 0.875rem;
+  font-weight: 600;
   line-height: 1.4;
-  color: var(--ro-text, #f4f4f5);
+  color: var(--ro-text-primary, #111827);
 }

@@ -1130,16 +1130,14 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               <section className="ra-public__section">
                 <h2>Lista de espera ({waitlist.length})</h2>
                 <ul className="ra-public__players">
-                  {waitlist.map((e) => (
-                    <li
+                  {waitlist.map((e, i) => (
+                    <FlatPlayerCard
                       key={e.id}
-                      className="ra-player-card ra-player-card--wait ra-player-card--filled"
-                    >
-                      <div className="ra-player-card__body">
-                        <strong className="ra-player-card__name">{e.nombre}</strong>
-                        <CopyableRivieraId rivieraId={e.riviera_id} />
-                      </div>
-                    </li>
+                      entry={e}
+                      displayPhoto={dto.display_photo}
+                      displayRating={dto.display_rating}
+                      index={i}
+                    />
                   ))}
                 </ul>
               </section>

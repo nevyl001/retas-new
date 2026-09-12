@@ -28,6 +28,7 @@ export function buildShareDtoFromOrganizerState(
   spots_left: number;
 } {
   const confirmed = entries.filter((e) => e.status === "confirmed");
+  const waitlist = entries.filter((e) => e.status === "waitlist");
   const capacity = context.lockCapacity ? context.defaultCapacity : cfg.capacity;
 
   const scheduled_at =
@@ -44,6 +45,18 @@ export function buildShareDtoFromOrganizerState(
     }
   }
 
+  const toPublicEntry = (
+    e: OpenRegistrationOrganizerEntry
+  ): OpenRegistrationPublicEntry => ({
+    id: e.id,
+    status: e.status,
+    riviera_id: e.riviera_id,
+    nombre: e.nombre,
+    foto_url: e.foto_url,
+    rating: e.rating,
+    categoria: e.categoria,
+  });
+
   return {
     // Nombre siempre desde entidad (context), no title_public stale.
     name: context.defaultTitle,
@@ -58,15 +71,7 @@ export function buildShareDtoFromOrganizerState(
     description: context.defaultDescription?.trim() || null,
     capacity,
     confirmed_count: confirmed.length,
-    entries: confirmed.map((e) => ({
-      id: e.id,
-      status: e.status,
-      riviera_id: e.riviera_id,
-      nombre: e.nombre,
-      foto_url: e.foto_url,
-      rating: e.rating,
-      categoria: e.categoria,
-    })),
+    entries: [...confirmed, ...waitlist].map(toPublicEntry),
     display_rating: cfg.display_rating,
     mode_type: context.mode,
     spots_left: Math.max(capacity - confirmed.length, 0),

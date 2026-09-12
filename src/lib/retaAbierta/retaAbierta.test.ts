@@ -122,6 +122,66 @@ describe("WhatsApp share message por modo", () => {
     expect(text.indexOf("✓ Arturo Cortes")).toBeLessThan(text.indexOf("2-"));
   });
 
+  it("incluye lista de espera debajo de confirmados cuando el cupo está lleno", () => {
+    const text = buildRetaAbiertaWhatsAppMessage({
+      dto: {
+        name: "Reta domingo",
+        mode_type: "reta",
+        scheduled_at: "2026-09-13T17:00:00.000Z",
+        duration_minutes: 120,
+        location_label: "Padelito",
+        category_label: "5ta Fuerza",
+        rama_label: "Varonil",
+        capacity: 2,
+        confirmed_count: 2,
+        spots_left: 0,
+        display_rating: true,
+        entries: [
+          {
+            id: "1",
+            status: "confirmed",
+            riviera_id: "RIV-00000001",
+            nombre: "Nevyl",
+            foto_url: null,
+            rating: 3.34,
+            categoria: "5ta_fuerza",
+          },
+          {
+            id: "2",
+            status: "confirmed",
+            riviera_id: "RIV-00000002",
+            nombre: "Fernando Q",
+            foto_url: null,
+            rating: 3.0,
+            categoria: "5ta_fuerza",
+          },
+          {
+            id: "3",
+            status: "waitlist",
+            riviera_id: "RIV-00000119",
+            nombre: "Lalo B",
+            foto_url: null,
+            rating: 2.9,
+            categoria: "5ta_fuerza",
+          },
+        ],
+      },
+      publicUrl: "https://app.example/jugar/ra-full",
+      clubName: "Padelito",
+    });
+    expect(text).toContain("Completo · 1 en espera");
+    expect(text).toContain("✓ Nevyl (3.34)");
+    expect(text).toContain("✓ Fernando Q (3.00)");
+    expect(text).toContain("Lista de espera (1)");
+    expect(text).toContain("⏳ Lalo B (2.90)");
+    expect(text.indexOf("✓ Fernando Q")).toBeLessThan(
+      text.indexOf("Lista de espera")
+    );
+    expect(text.indexOf("Lista de espera")).toBeLessThan(
+      text.indexOf("⏳ Lalo B")
+    );
+  });
+
   it("Remontada Final: mismo mode_type reta, headline de producto", () => {
     const text = buildRetaAbiertaWhatsAppMessage({
       dto: {

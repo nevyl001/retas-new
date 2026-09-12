@@ -181,6 +181,29 @@ function formatConfirmedRosterLines(
   return lines;
 }
 
+/** Lista de espera debajo de confirmados (mismo estilo, marca distinta). */
+function formatWaitlistRosterLines(
+  waitlist: { nombre: string; rating?: number | null }[],
+  displayFullName: boolean,
+  displayRating: boolean
+): string[] {
+  if (waitlist.length === 0) return [];
+  const header =
+    waitlist.length === 1
+      ? "Lista de espera (1)"
+      : `Lista de espera (${waitlist.length})`;
+  const lines = [header];
+  for (const e of waitlist) {
+    const name = displayNameForShare(e.nombre, displayFullName);
+    const rating =
+      displayRating && e.rating != null
+        ? ` (${Number(e.rating).toFixed(2)})`
+        : "";
+    lines.push(`⏳ ${name}${rating}`);
+  }
+  return lines;
+}
+
 /**
  * Mensaje WhatsApp Riviera: compacto para reducir «Leer más».
  * Cupo destacado (debajo de premio) + roster con huecos numerados automáticos.
@@ -240,6 +263,7 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   const mode = dto.mode_type || "reta";
   const headline = resolveHeadline(mode, opts.productHeadline, dto.rama_label);
   const confirmed = dto.entries.filter((e) => e.status === "confirmed");
+  const waitlist = dto.entries.filter((e) => e.status === "waitlist");
   const confirmedCount = Math.max(
     confirmed.length,
     Number(dto.confirmed_count) || 0
@@ -295,7 +319,11 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     lines.push(openSlotsHeadline);
     lines.push("");
   } else if (confirmed.length > 0 && dto.capacity > 0) {
-    lines.push("Completo");
+    lines.push(
+      waitlist.length > 0
+        ? `Completo · ${waitlist.length} en espera`
+        : "Completo"
+    );
   }
 
   const descLine = dto.description?.trim();
@@ -307,6 +335,11 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     Boolean(dto.display_rating),
     1
   );
+  const waitlistLines = formatWaitlistRosterLines(
+    waitlist,
+    displayFullName,
+    Boolean(dto.display_rating)
+  );
   const openPlaceholders = formatOpenSlotPlaceholders(
     confirmedCount,
     dto.capacity
@@ -317,10 +350,18 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     lines.push(formatCupoSummaryLine(confirmedCount, dto.capacity, openSlots));
     if (rosterLines.length > 0) lines.push(...rosterLines);
     if (openPlaceholders.length > 0) lines.push(...openPlaceholders);
+    if (waitlistLines.length > 0) {
+      lines.push("");
+      lines.push(...waitlistLines);
+    }
   } else {
     lines.push(publicUrl);
     if (rosterLines.length > 0) lines.push(...rosterLines);
     if (openPlaceholders.length > 0) lines.push(...openPlaceholders);
+    if (waitlistLines.length > 0) {
+      lines.push("");
+      lines.push(...waitlistLines);
+    }
   }
 
   return lines.join("\n");
