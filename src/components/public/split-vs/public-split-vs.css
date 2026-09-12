@@ -262,34 +262,36 @@
 
 /*
   Compacto (Reta / Americano / Liga cards densas):
-  pareja apilada, cada jugador en franja horizontal — nombres legibles sin
-  alargar la card.
+  pareja apilada, foto grande + nombre/rating sin desbordar.
 */
 .pub-split-vs-pair--compact .pub-split-vs-pair__grid {
   grid-template-columns: 1fr;
-  gap: 0.32rem;
+  gap: 0.28rem;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel {
+  --pub-split-vs-photo: 4.35rem;
   container-type: normal;
   aspect-ratio: auto;
   display: grid;
-  grid-template-columns: 3.15rem minmax(0, 1fr);
+  grid-template-columns: var(--pub-split-vs-photo) minmax(0, 1fr);
   align-items: stretch;
-  min-height: 3.15rem;
+  min-height: var(--pub-split-vs-photo);
   height: auto;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.035);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__media {
   position: relative;
   inset: auto;
   width: 100%;
-  min-height: 3.15rem;
-  border-radius: 9px 0 0 9px;
+  min-height: var(--pub-split-vs-photo);
+  height: 100%;
+  border-radius: 11px 0 0 11px;
   background: var(
     --pub-split-vs-bg,
     linear-gradient(145deg, #2a3340, #12161c)
@@ -302,18 +304,19 @@
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__photo {
   transform: none;
-  object-position: center 20%;
+  object-fit: cover;
+  object-position: center 18%;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__watermark {
-  font-size: 1.05rem;
-  opacity: 0.22;
+  font-size: 1.35rem;
+  opacity: 0.28;
   transform: none;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__silhouette {
-  width: 1.65rem;
-  opacity: 0.08;
+  width: 2.1rem;
+  opacity: 0.1;
   transform: translate(-50%, -52%);
 }
 
@@ -323,41 +326,50 @@
   right: auto;
   bottom: auto;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0.1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-content: center;
+  align-items: center;
+  column-gap: 0.35rem;
+  row-gap: 0.08rem;
   min-width: 0;
-  padding: 0.35rem 0.55rem 0.35rem 0.5rem;
+  max-width: 100%;
+  padding: 0.28rem 0.45rem 0.28rem 0.42rem;
   text-align: left;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__given {
+  grid-column: 1;
+  grid-row: 1;
   font-family: var(--font-display, var(--ro-font-heading), "Segoe UI", sans-serif);
-  font-size: 0.875rem;
+  font-size: 0.84rem;
   font-weight: 750;
   letter-spacing: -0.02em;
-  line-height: 1.15;
+  line-height: 1.12;
   color: #f7f4ee;
   text-shadow: none;
+  min-width: 0;
   max-width: 100%;
-  white-space: normal;
+  white-space: nowrap;
   overflow: hidden;
-  text-overflow: unset;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  word-break: break-word;
+  text-overflow: ellipsis;
+  display: block;
+  -webkit-line-clamp: unset;
+  word-break: normal;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__family {
-  font-size: 0.7rem;
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 0.68rem;
   font-weight: 550;
-  line-height: 1.15;
+  line-height: 1.12;
   color: rgba(247, 244, 238, 0.72);
   text-shadow: none;
+  min-width: 0;
   max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
@@ -365,22 +377,60 @@
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-panel__rating.jugador-rating-chip {
-  margin-top: 0.12rem;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  justify-self: end;
+  margin-top: 0;
+  flex-shrink: 0;
   font-size: 0.58rem;
-  padding: 0.08rem 0.34rem;
+  padding: 0.1rem 0.34rem;
   border-color: rgba(163, 230, 53, 0.4);
   background: rgba(8, 12, 8, 0.55);
   box-shadow: none;
 }
 
 .pub-split-vs-pair--compact.pub-split-vs-pair--win .pub-split-vs-panel {
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .pub-split-vs-pair--compact.pub-split-vs-pair--win .pub-split-vs-panel__media {
-  border-radius: 9px 0 0 9px;
+  border-radius: 11px 0 0 11px;
 }
 
 .pub-split-vs-pair--compact .pub-split-vs-pair__badge {
   top: -0.35rem;
+}
+
+@media (min-width: 640px) {
+  .pub-split-vs-pair--compact .pub-split-vs-panel {
+    --pub-split-vs-photo: 4.75rem;
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-panel__given {
+    font-size: 0.9rem;
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-panel__family {
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 379px) {
+  .pub-split-vs-pair--compact .pub-split-vs-panel {
+    --pub-split-vs-photo: 3.85rem;
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-panel__identity {
+    padding: 0.22rem 0.35rem 0.22rem 0.32rem;
+    column-gap: 0.25rem;
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-panel__given {
+    font-size: 0.78rem;
+  }
+
+  .pub-split-vs-pair--compact .pub-split-vs-panel__family {
+    font-size: 0.62rem;
+  }
 }
