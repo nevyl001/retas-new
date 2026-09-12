@@ -475,10 +475,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     if (!res.ok) {
       setLoadError(res.error);
       setDto(null);
-      return;
+      return null;
     }
     setLoadError(null);
     setDto(res.dto);
+    return res.dto;
   }, [slug]);
 
   useEffect(() => {
@@ -721,14 +722,17 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     if (!dto) return;
     setActionError(null);
     setCopyFeedback(null);
+    // Refresca el DTO para no copiar un roster viejo (sin lista de espera).
+    const fresh = await refresh().catch(() => null);
+    const shareDto = fresh ?? dto;
     const message = buildRetaAbiertaWhatsAppMessage({
-      dto,
+      dto: shareDto,
       publicUrl: buildShareRetaOgUrl(slug),
       clubName: organizerName?.trim() || "",
-      includeCosto: Boolean(dto.costo?.trim()),
-      costo: dto.costo,
-      includePremio: Boolean(dto.premio?.trim()),
-      premio: dto.premio,
+      includeCosto: Boolean(shareDto.costo?.trim()),
+      costo: shareDto.costo,
+      includePremio: Boolean(shareDto.premio?.trim()),
+      premio: shareDto.premio,
     });
     const ok = await copyTextToClipboard(message);
     if (ok) {

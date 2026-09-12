@@ -727,9 +727,11 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       premio?: string | null;
       includePremio?: boolean;
       ramaLabel?: string | null;
-    }
+    },
+    /** Roster fresco (confirmados + espera). Si no viene, usa estado local. */
+    rosterEntries: OpenRegistrationOrganizerEntry[] = entries
   ) => {
-    const dto = buildShareDtoFromOrganizerState(row, entries, context);
+    const dto = buildShareDtoFromOrganizerState(row, rosterEntries, context);
     const resolvedDuration =
       overrides?.durationMinutes ??
       (durationMinutes ||
@@ -806,6 +808,20 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       productHeadline: context.productHeadline,
     });
   };
+
+  const refreshRosterForShare = useCallback(
+    async (id: string): Promise<OpenRegistrationOrganizerEntry[]> => {
+      try {
+        const list = await listOpenGameRegistrationEntries(context.mode, id);
+        setEntries(list);
+        return list;
+      } catch (e) {
+        console.warn("[convocatoria] refresh roster for share", e);
+        return entries;
+      }
+    },
+    [context.mode, entries]
+  );
 
   const onLaunchWhatsApp = async () => {
     setSaving(true);
@@ -915,17 +931,23 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         setCategoryLabel(launchCategory);
       }
       const url = buildShareRetaOgUrl(row.public_slug);
-      const text = buildLocalShareText(row, url, {
-        scheduledAtIso: launchScheduledIso,
-        durationMinutes: launchDuration,
-        locationLabel: launchIncludeLugar ? launchLocation : null,
-        categoryLabel: launchCategory.trim() || null,
-        includeLugar: launchIncludeLugar,
-        costo: launchCosto || null,
-        includeCosto: launchIncludeCosto,
-        premio: launchPremio || null,
-        includePremio: launchIncludePremio,
-      });
+      const roster = await refreshRosterForShare(id);
+      const text = buildLocalShareText(
+        row,
+        url,
+        {
+          scheduledAtIso: launchScheduledIso,
+          durationMinutes: launchDuration,
+          locationLabel: launchIncludeLugar ? launchLocation : null,
+          categoryLabel: launchCategory.trim() || null,
+          includeLugar: launchIncludeLugar,
+          costo: launchCosto || null,
+          includeCosto: launchIncludeCosto,
+          premio: launchPremio || null,
+          includePremio: launchIncludePremio,
+        },
+        roster
+      );
       const copied = await copyTextToClipboard(text);
       if (!copied) {
         setError(
@@ -999,16 +1021,24 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         /* no bloquear la copia */
       }
 
-      const text = buildLocalShareText(cfg, shareOgUrl, {
-        scheduledAtIso: scheduledIso,
-        durationMinutes: dur,
-        locationLabel: copyIncludeLugar ? loc || null : null,
-        includeLugar: copyIncludeLugar,
-        costo: copyCostoPremio.costo,
-        includeCosto: copyCostoPremio.includeCosto,
-        premio: copyCostoPremio.premio,
-        includePremio: copyCostoPremio.includePremio,
-      });
+      const roster = entityId
+        ? await refreshRosterForShare(entityId)
+        : entries;
+      const text = buildLocalShareText(
+        cfg,
+        shareOgUrl,
+        {
+          scheduledAtIso: scheduledIso,
+          durationMinutes: dur,
+          locationLabel: copyIncludeLugar ? loc || null : null,
+          includeLugar: copyIncludeLugar,
+          costo: copyCostoPremio.costo,
+          includeCosto: copyCostoPremio.includeCosto,
+          premio: copyCostoPremio.premio,
+          includePremio: copyCostoPremio.includePremio,
+        },
+        roster
+      );
       const copied = await copyTextToClipboard(text);
       if (!copied) {
         setError("No se pudo copiar el mensaje");

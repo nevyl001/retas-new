@@ -27,8 +27,12 @@ export function buildShareDtoFromOrganizerState(
   mode_type: ConvocatoriaAdapterContext["mode"];
   spots_left: number;
 } {
-  const confirmed = entries.filter((e) => e.status === "confirmed");
-  const waitlist = entries.filter((e) => e.status === "waitlist");
+  const confirmed = entries.filter(
+    (e) => String(e.status).toLowerCase() === "confirmed"
+  );
+  const waitlist = entries.filter(
+    (e) => String(e.status).toLowerCase() === "waitlist"
+  );
   const capacity = context.lockCapacity ? context.defaultCapacity : cfg.capacity;
 
   const scheduled_at =

@@ -262,8 +262,12 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     (opts.includePremio !== false && Boolean(premio));
   const mode = dto.mode_type || "reta";
   const headline = resolveHeadline(mode, opts.productHeadline, dto.rama_label);
-  const confirmed = dto.entries.filter((e) => e.status === "confirmed");
-  const waitlist = dto.entries.filter((e) => e.status === "waitlist");
+  const confirmed = dto.entries.filter(
+    (e) => String(e.status).toLowerCase() === "confirmed"
+  );
+  const waitlist = dto.entries.filter(
+    (e) => String(e.status).toLowerCase() === "waitlist"
+  );
   const confirmedCount = Math.max(
     confirmed.length,
     Number(dto.confirmed_count) || 0
