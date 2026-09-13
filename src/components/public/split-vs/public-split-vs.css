@@ -430,7 +430,19 @@
 @media (min-width: 640px) {
   .pub-split-vs-pair--compact .pub-split-vs-panel {
     aspect-ratio: 5 / 4;
-    max-width: 11.5rem;
+    max-width: 13rem;
+  }
+}
+
+@media (min-width: 1100px) {
+  .pub-split-vs-pair--compact .pub-split-vs-panel {
+    max-width: clamp(13rem, 14vw, 15.5rem);
+  }
+}
+
+@media (min-width: 1500px) {
+  .pub-split-vs-pair--compact .pub-split-vs-panel {
+    max-width: clamp(14rem, 12vw, 17rem);
   }
 }
 

@@ -2556,7 +2556,7 @@
 .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel {
   aspect-ratio: 5 / 4 !important;
   width: 100%;
-  max-width: 10.75rem;
+  max-width: 12rem;
   height: auto;
   max-height: none;
   margin-inline: auto;
@@ -2598,7 +2598,7 @@
 
   .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel {
     aspect-ratio: 5 / 4 !important;
-    max-width: 11.5rem;
+    max-width: 13rem;
   }
 }
 
@@ -2795,7 +2795,7 @@
 
 .te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel {
   aspect-ratio: 5 / 4 !important;
-  max-width: 12.25rem;
+  max-width: 14rem;
 }
 
 .te-pub-matches-grid--few .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
@@ -2912,16 +2912,16 @@
 
   .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel {
     aspect-ratio: 5 / 4 !important;
-    max-width: clamp(10.5rem, 12vw, 12.5rem);
-    border-radius: 12px;
+    max-width: clamp(13rem, 14vw, 15.5rem);
+    border-radius: 13px;
   }
 
   .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
-    font-size: clamp(0.92rem, 6.5cqi, 1.22rem);
+    font-size: clamp(0.98rem, 6.8cqi, 1.28rem);
   }
 
   .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family {
-    font-size: clamp(0.62rem, 4.2cqi, 0.84rem);
+    font-size: clamp(0.66rem, 4.4cqi, 0.9rem);
   }
 
   .te-public--reta .reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__num,
@@ -2939,15 +2939,15 @@
 @media (min-width: 1500px) {
   .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel {
     aspect-ratio: 5 / 4 !important;
-    max-width: clamp(11rem, 10vw, 13rem);
+    max-width: clamp(14rem, 12vw, 17rem);
   }
 
   .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
-    font-size: clamp(1rem, 6cqi, 1.32rem);
+    font-size: clamp(1.05rem, 6.2cqi, 1.4rem);
   }
 
   .reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__family {
-    font-size: clamp(0.68rem, 4cqi, 0.9rem);
+    font-size: clamp(0.72rem, 4.2cqi, 0.96rem);
   }
 
   .te-public--reta .reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__num,
