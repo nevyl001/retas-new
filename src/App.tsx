@@ -998,6 +998,13 @@ function AppContent() {
               }
               setForceRefresh={setForceRefresh}
               forceRefresh={forceRefresh}
+              onMatchUpdated={(updated) => {
+                setMatches((prev) =>
+                  prev.map((m) =>
+                    m.id === updated.id ? { ...m, ...updated } : m
+                  )
+                );
+              }}
               onStartTournament={handleStartTournament}
               onCopyPublicLink={copyPublicLink}
               generatePublicLink={generatePublicLink}

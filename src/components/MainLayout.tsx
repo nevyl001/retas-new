@@ -54,6 +54,7 @@ interface MainLayoutProps {
   loadTournamentData: () => void;
   setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
   forceRefresh: number;
+  onMatchUpdated?: (match: Match) => void;
   onStartTournament: (opts: {
     format: "roundRobin" | "teams";
     teamsCount?: number;
@@ -106,6 +107,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   loadTournamentData,
   setForceRefresh,
   forceRefresh,
+  onMatchUpdated,
   onStartTournament,
   onCopyPublicLink,
   generatePublicLink,
@@ -240,6 +242,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               loadTournamentData={loadTournamentData}
               setForceRefresh={setForceRefresh}
               forceRefresh={forceRefresh}
+              onMatchUpdated={onMatchUpdated}
               onStartTournament={onStartTournament}
               onCopyPublicLink={onCopyPublicLink}
               generatePublicLink={generatePublicLink}

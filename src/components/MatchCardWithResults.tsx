@@ -59,6 +59,8 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   const [isEditingMeta, setIsEditingMeta] = useState(false);
   const isUpdatingRef = useRef(false);
   const gamesLoadedRef = useRef(false);
+  /** Cancha/ronda ya guardadas en BD; evita que el prop stale las pise antes del reload. */
+  const pendingMetaRef = useRef<{ court: number; round: number } | null>(null);
 
   /** Tope al editar cancha en el partido: no limitar solo a `tournament.courts` (a menudo 1) o el guardado siempre queda en 1. */
   const courtEditCap = Math.max(1, maxCourts, 32);
@@ -151,6 +153,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         return;
       }
       const updated: Match = { ...currentMatch, court, round };
+      pendingMetaRef.current = { court, round };
       setCurrentMatch(updated);
       setCourtInput(String(court));
       setRoundInput(String(round));
@@ -165,30 +168,34 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   };
 
   const openMetaEditor = useCallback(() => {
+    const sourceCourt = currentMatch?.court ?? match.court;
+    const sourceRound = currentMatch?.round ?? match.round;
     setCourtInput(
       String(
-        match.court == null || match.court <= 0
+        sourceCourt == null || sourceCourt <= 0
           ? ""
-          : Math.min(courtEditCap, Math.max(1, match.court))
+          : Math.min(courtEditCap, Math.max(1, sourceCourt))
       )
     );
-    setRoundInput(String(Math.max(1, match.round ?? 1)));
+    setRoundInput(String(Math.max(1, sourceRound ?? 1)));
     setError(null);
     setIsEditingMeta(true);
-  }, [match.court, match.round, courtEditCap]);
+  }, [currentMatch?.court, currentMatch?.round, match.court, match.round, courtEditCap]);
 
   const cancelMetaEdit = useCallback(() => {
+    const sourceCourt = currentMatch?.court ?? match.court;
+    const sourceRound = currentMatch?.round ?? match.round;
     setCourtInput(
       String(
-        match.court == null || match.court <= 0
+        sourceCourt == null || sourceCourt <= 0
           ? ""
-          : Math.min(courtEditCap, Math.max(1, match.court))
+          : Math.min(courtEditCap, Math.max(1, sourceCourt))
       )
     );
-    setRoundInput(String(Math.max(1, match.round ?? 1)));
+    setRoundInput(String(Math.max(1, sourceRound ?? 1)));
     setIsEditingMeta(false);
     setError(null);
-  }, [match.court, match.round, courtEditCap]);
+  }, [currentMatch?.court, currentMatch?.round, match.court, match.round, courtEditCap]);
 
   const parseGameError = (err: unknown): string => {
     const code =
@@ -469,54 +476,86 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
   // Actualizar estado cuando el prop match cambia (sin recargar de BD)
   useEffect(() => {
-    // Actualizar match desde prop (viene actualizado del padre)
-    if (match && (!currentMatch || 
-        match.id !== currentMatch.id || 
-        match.status !== currentMatch.status ||
-        match.pair1_score !== currentMatch.pair1_score ||
-        match.pair2_score !== currentMatch.pair2_score ||
-        match.court !== currentMatch.court ||
-        (match.round ?? 1) !== (currentMatch.round ?? 1))) {
-      setCurrentMatch(match);
-      
-      // Si el status cambió a finished, cerrar el editor
-      if (match.status === 'finished' && isEditing) {
+    if (!match) return;
+
+    const pending = pendingMetaRef.current;
+    if (
+      pending &&
+      match.court === pending.court &&
+      (match.round ?? 1) === pending.round
+    ) {
+      pendingMetaRef.current = null;
+    }
+
+    const nextMatch: Match =
+      pendingMetaRef.current && match.id === (currentMatch?.id ?? match.id)
+        ? {
+            ...match,
+            court: pendingMetaRef.current.court,
+            round: pendingMetaRef.current.round,
+          }
+        : match;
+
+    if (
+      !currentMatch ||
+      nextMatch.id !== currentMatch.id ||
+      nextMatch.status !== currentMatch.status ||
+      nextMatch.pair1_score !== currentMatch.pair1_score ||
+      nextMatch.pair2_score !== currentMatch.pair2_score ||
+      nextMatch.court !== currentMatch.court ||
+      (nextMatch.round ?? 1) !== (currentMatch.round ?? 1)
+    ) {
+      setCurrentMatch(nextMatch);
+
+      if (nextMatch.status === "finished" && isEditing) {
         setIsEditing(false);
       }
-      
-      // Actualizar pairs desde prop (vienen actualizados del padre)
-      if (match.pair1_id && match.pair2_id) {
-        const p1 = pairs.find((p) => p.id === match.pair1_id);
-        const p2 = pairs.find((p) => p.id === match.pair2_id);
+
+      if (nextMatch.pair1_id && nextMatch.pair2_id) {
+        const p1 = pairs.find((p) => p.id === nextMatch.pair1_id);
+        const p2 = pairs.find((p) => p.id === nextMatch.pair2_id);
         setPair1(p1 || null);
         setPair2(p2 || null);
       }
-      
-      // Solo recargar juegos si cambió el status o scores (puede haber nuevos juegos)
-      if (match.id === currentMatch?.id && 
-          (match.status !== currentMatch.status || 
-           match.pair1_score !== currentMatch.pair1_score ||
-           match.pair2_score !== currentMatch.pair2_score)) {
-        getGames(match.id).then((matchGames) => {
-          setGames(matchGames);
-        }).catch((err) => {
-          console.error("❌ Error recargando juegos:", err);
-        });
+
+      if (
+        match.id === currentMatch?.id &&
+        (match.status !== currentMatch.status ||
+          match.pair1_score !== currentMatch.pair1_score ||
+          match.pair2_score !== currentMatch.pair2_score)
+      ) {
+        getGames(match.id)
+          .then((matchGames) => {
+            setGames(matchGames);
+          })
+          .catch((err) => {
+            console.error("❌ Error recargando juegos:", err);
+          });
       }
     }
-  }, [match, pairs, currentMatch, isEditing]); // Incluir todas las dependencias
+  }, [match, pairs, currentMatch, isEditing]);
 
   useEffect(() => {
     if (isEditingMeta) return;
+    const sourceCourt = currentMatch?.court ?? match.court;
+    const sourceRound = currentMatch?.round ?? match.round;
     setCourtInput(
       String(
-        match.court == null || match.court <= 0
+        sourceCourt == null || sourceCourt <= 0
           ? ""
-          : Math.min(courtEditCap, Math.max(1, match.court))
+          : Math.min(courtEditCap, Math.max(1, sourceCourt))
       )
     );
-    setRoundInput(String(Math.max(1, match.round ?? 1)));
-  }, [match.id, match.court, match.round, courtEditCap, isEditingMeta]);
+    setRoundInput(String(Math.max(1, sourceRound ?? 1)));
+  }, [
+    match.id,
+    match.court,
+    match.round,
+    currentMatch?.court,
+    currentMatch?.round,
+    courtEditCap,
+    isEditingMeta,
+  ]);
 
   if (loading) {
     return (

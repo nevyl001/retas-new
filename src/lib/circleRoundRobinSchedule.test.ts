@@ -73,7 +73,7 @@ describe("circleRoundRobinSchedule court rotation", () => {
     expect(fixedCourts).toEqual([1, 2, 1]);
   });
 
-  test("detects stale court assignment from old algorithm", () => {
+  test("does not rewrite in-range courts that differ from ideal (manual save)", () => {
     const pairs = [
       makePair("1", "Devyl", "Duran"),
       makePair("2", "Nevyl", "Marlon"),
@@ -82,27 +82,42 @@ describe("circleRoundRobinSchedule court rotation", () => {
     ];
 
     const ideal = generateCircleRoundRobinSchedule(pairs, 2);
-    const staleMatches: Match[] = [];
-    const byRound = new Map<number, typeof ideal>();
-    ideal.forEach((m) => {
-      if (!byRound.has(m.round)) {
-        byRound.set(m.round, []);
-      }
-      byRound.get(m.round)!.push(m);
-    });
+    const first = ideal[0];
+    const swappedCourt = first.court === 1 ? 2 : 1;
+    const manual: Match = makeMatch(
+      "manual",
+      first.round,
+      swappedCourt,
+      first.pair1,
+      first.pair2
+    );
 
-    let idx = 0;
-    byRound.forEach((roundMatches) => {
-      roundMatches.forEach((m, k) => {
-        staleMatches.push(
-          makeMatch(`m${idx++}`, m.round, k + 1, m.pair1, m.pair2)
-        );
-      });
-    });
+    expect(findCourtRotationRepairs(pairs, 2, [manual])).toEqual([]);
+  });
 
-    const repairs = findCourtRotationRepairs(pairs, 2, staleMatches);
-    expect(repairs.length).toBeGreaterThan(0);
-    expect(repairs.some((r) => r.court === 2)).toBe(true);
+  test("repairs courts outside configured range (e.g. Cancha 4 with 3 courts)", () => {
+    const pairs = [
+      makePair("1", "Devyl", "Duran"),
+      makePair("2", "Nevyl", "Marlon"),
+      makePair("3", "Ferro", "Panchito"),
+      makePair("4", "pepito", "Ricar"),
+    ];
+
+    const ideal = generateCircleRoundRobinSchedule(pairs, 3);
+    const sample = ideal.find((m) => m.round === 2) ?? ideal[0];
+    const outOfRange: Match = makeMatch(
+      "oor",
+      sample.round,
+      4,
+      sample.pair1,
+      sample.pair2
+    );
+
+    const repairs = findCourtRotationRepairs(pairs, 3, [outOfRange]);
+    expect(repairs).toHaveLength(1);
+    expect(repairs[0].id).toBe("oor");
+    expect(repairs[0].court).toBeGreaterThanOrEqual(1);
+    expect(repairs[0].court).toBeLessThanOrEqual(3);
   });
 
   test("null court (Por asignar) is never repaired / reassigned", () => {

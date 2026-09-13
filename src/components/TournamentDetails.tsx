@@ -50,6 +50,7 @@ interface TournamentDetailsProps {
   loadTournamentData: () => void;
   setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
   forceRefresh: number;
+  onMatchUpdated?: (match: Match) => void;
   onStartTournament: (opts: {
     format: "roundRobin" | "teams";
     teamsCount?: number;
@@ -98,6 +99,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   loadTournamentData,
   setForceRefresh,
   forceRefresh,
+  onMatchUpdated,
   onStartTournament,
   onCopyPublicLink,
   generatePublicLink,
@@ -199,6 +201,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       loadTournamentData={loadTournamentData}
       setForceRefresh={setForceRefresh}
       forceRefresh={forceRefresh}
+      onMatchUpdated={onMatchUpdated}
       onStartTournament={onStartTournament}
       onCopyPublicLink={onCopyPublicLink}
       generatePublicLink={generatePublicLink}
@@ -352,6 +355,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           setForceRefresh={setForceRefresh}
           onBackToHome={onBackToHome}
           onReloadMatches={loadTournamentData}
+          onMatchUpdated={onMatchUpdated}
           userId={userId}
         />
       )}

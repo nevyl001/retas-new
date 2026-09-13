@@ -43,6 +43,8 @@ interface MatchesSectionProps {
   setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
   onBackToHome: () => void;
   onReloadMatches?: () => void;
+  /** Actualiza un partido en memoria (cancha/ronda/marcador) sin esperar el reload. */
+  onMatchUpdated?: (match: Match) => void;
   userId?: string;
   hideStandings?: boolean;
   hideBackButton?: boolean;
@@ -60,6 +62,7 @@ function renderRoundBlock(
     roundTitle?: React.ReactNode;
     matchEncounterLabel?: (match: Match) => string | undefined;
     onAfterScoreSaved?: () => void | Promise<void>;
+    onMatchUpdated?: (match: Match) => void;
     teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null;
     /** Si se pasa, "parejas que descansan" solo considera este set (p.ej. parejas del bloque). */
     restingCandidatePairs?: Pair[];
@@ -77,6 +80,7 @@ function renderRoundBlock(
     roundTitle,
     matchEncounterLabel,
     onAfterScoreSaved,
+    onMatchUpdated,
     teamConfig,
     restingCandidatePairs,
     hideRestingPairs,
@@ -129,7 +133,8 @@ function renderRoundBlock(
               roundLabelOverride={encounterLabel ?? undefined}
               isSelected={false}
               onSelect={() => {}}
-              onCorrectScore={async () => {
+              onCorrectScore={async (updatedMatch) => {
+                onMatchUpdated?.(updatedMatch);
                 await onAfterScoreSaved?.();
                 setForceRefresh((prev) => prev + 1);
               }}
@@ -161,6 +166,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   setForceRefresh,
   onBackToHome,
   onReloadMatches,
+  onMatchUpdated,
   userId,
   hideStandings = false,
   hideBackButton = false,
@@ -347,6 +353,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
     setForceRefresh,
     userId,
     onAfterScoreSaved: tryGenerateChampionship,
+    onMatchUpdated,
     teamConfig,
     restingCandidatePairs:
       teamConfig?.pairToTeam && !isDynamicLineups

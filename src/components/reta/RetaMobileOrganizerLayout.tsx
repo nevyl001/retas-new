@@ -68,6 +68,7 @@ export interface RetaMobileOrganizerLayoutProps {
   loadTournamentData: () => void;
   setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
   forceRefresh: number;
+  onMatchUpdated?: (match: Match) => void;
   onStartTournament: (opts: {
     format: "roundRobin" | "teams";
     teamsCount?: number;
@@ -117,6 +118,7 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
   loadTournamentData,
   setForceRefresh,
   forceRefresh,
+  onMatchUpdated,
   onStartTournament,
   onCopyPublicLink,
   generatePublicLink,
@@ -284,6 +286,7 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
                 setForceRefresh={setForceRefresh}
                 onBackToHome={onBackToHome}
                 onReloadMatches={loadTournamentData}
+                onMatchUpdated={onMatchUpdated}
                 userId={userId}
                 hideStandings
                 hideBackButton

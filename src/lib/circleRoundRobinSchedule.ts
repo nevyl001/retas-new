@@ -203,28 +203,37 @@ export function findCourtRotationRepairs(
     // NULL = Por asignar a propósito (p.ej. reducción de canchas). No reasignar.
     if (m.court == null) continue;
 
+    // Cancha ya válida (1..N): respetar asignación generada o edición manual.
+    // Antes se reescribía a la "ideal" en cada reload y deshacía Guardar cancha.
+    if (m.court >= 1 && m.court <= safeCourts) continue;
+
     const round = Number(m.round ?? 1);
     const key = matchPairingKey(round, m.pair1_id, m.pair2_id);
     const idealCourt = idealCourts.get(key);
     if (idealCourt == null) {
       missingIdeal += 1;
+      repairs.push({
+        id: m.id,
+        court: ((Math.max(1, m.court) - 1) % safeCourts) + 1,
+      });
       continue;
     }
-    if (m.court !== idealCourt) {
-      repairs.push({ id: m.id, court: idealCourt });
-    }
+    repairs.push({ id: m.id, court: idealCourt });
   }
 
   if (missingIdeal > 0) {
     console.warn(
-      `⚠️ Rotación de canchas: ${missingIdeal} partido(s) no coinciden con el calendario ideal; se reparan ${repairs.length} cancha(s) coincidentes.`
+      `⚠️ Rotación de canchas: ${missingIdeal} partido(s) fuera de rango sin pareja en el calendario ideal; se acotan ${repairs.length} cancha(s).`
     );
   }
 
   return repairs;
 }
 
-/** Corrige canchas de partidos RR generados con el algoritmo viejo (sin rotación). */
+/**
+ * Corrige solo canchas fuera de rango (p.ej. Cancha 4 con 3 canchas configuradas).
+ * No pisa ediciones manuales ni la rotación ya válida.
+ */
 export async function repairMatchCourtRotation(
   pairs: Pair[],
   courts: number,
