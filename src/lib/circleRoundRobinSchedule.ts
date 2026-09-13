@@ -15,7 +15,8 @@ export function assignCourtsInChunk(
   courts: number,
   anchorPairId?: string
 ): number[] {
-  const safeCourts = Math.max(1, courts);
+  // Nunca más canchas que partidos simultáneos (evita Cancha 4 con 3 partidos).
+  const safeCourts = Math.max(1, Math.min(Math.max(1, courts), chunk.length || 1));
   if (chunk.length === 0) {
     return [];
   }
@@ -185,8 +186,8 @@ export function findCourtRotationRepairs(
   courts: number,
   matches: Match[]
 ): Array<{ id: string; court: number }> {
-  const safeCourts = Math.max(1, courts);
-  if (safeCourts < 2 || pairs.length < 2 || matches.length === 0) {
+  const configuredCourts = Math.max(1, courts);
+  if (configuredCourts < 2 || pairs.length < 2 || matches.length === 0) {
     return [];
   }
 
@@ -195,36 +196,42 @@ export function findCourtRotationRepairs(
     return [];
   }
 
-  const idealCourts = buildIdealCourtMap(pairs, safeCourts);
-  const repairs: Array<{ id: string; court: number }> = [];
-  let missingIdeal = 0;
-
+  const byRound = new Map<number, Match[]>();
   for (const m of regular) {
-    // NULL = Por asignar a propósito (p.ej. reducción de canchas). No reasignar.
-    if (m.court == null) continue;
-
-    // Cancha ya válida (1..N): respetar asignación generada o edición manual.
-    // Antes se reescribía a la "ideal" en cada reload y deshacía Guardar cancha.
-    if (m.court >= 1 && m.court <= safeCourts) continue;
-
     const round = Number(m.round ?? 1);
-    const key = matchPairingKey(round, m.pair1_id, m.pair2_id);
-    const idealCourt = idealCourts.get(key);
-    if (idealCourt == null) {
-      missingIdeal += 1;
-      repairs.push({
-        id: m.id,
-        court: ((Math.max(1, m.court) - 1) % safeCourts) + 1,
-      });
-      continue;
-    }
-    repairs.push({ id: m.id, court: idealCourt });
+    const list = byRound.get(round);
+    if (list) list.push(m);
+    else byRound.set(round, [m]);
   }
 
-  if (missingIdeal > 0) {
-    console.warn(
-      `⚠️ Rotación de canchas: ${missingIdeal} partido(s) fuera de rango sin pareja en el calendario ideal; se acotan ${repairs.length} cancha(s).`
+  const repairs: Array<{ id: string; court: number }> = [];
+
+  for (const roundMatches of Array.from(byRound.values())) {
+    // Tope por ronda: min(canchas config, partidos simultáneos).
+    const effectiveCourts = Math.max(
+      1,
+      Math.min(configuredCourts, roundMatches.length)
     );
+    const used = new Set<number>();
+    for (const m of roundMatches) {
+      if (m.court != null && m.court >= 1 && m.court <= effectiveCourts) {
+        used.add(m.court);
+      }
+    }
+
+    for (const m of roundMatches) {
+      // NULL = Por asignar a propósito. No reasignar.
+      if (m.court == null) continue;
+      if (m.court >= 1 && m.court <= effectiveCourts) continue;
+
+      let next = 1;
+      while (next <= effectiveCourts && used.has(next)) next += 1;
+      if (next > effectiveCourts) {
+        next = ((Math.max(1, m.court) - 1) % effectiveCourts) + 1;
+      }
+      used.add(next);
+      repairs.push({ id: m.id, court: next });
+    }
   }
 
   return repairs;

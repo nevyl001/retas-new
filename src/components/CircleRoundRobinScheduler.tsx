@@ -152,11 +152,16 @@ export class CircleRoundRobinScheduler {
         roundMatches.push({ pair1: pair0, pair2: pair1 });
       }
       // Asignar cancha rotando por ronda: así ambas parejas del partido (equipo0 y equipo1) cambian de cancha cada ronda.
+      // Nunca más canchas que partidos simultáneos.
+      const effectiveCourts = Math.min(
+        Math.max(1, courts),
+        Math.max(1, matchesPerRound)
+      );
       const roundOffset = (r - 1) % Math.max(1, matchesPerRound);
       for (let slotIndex = 0; slotIndex < roundMatches.length; slotIndex++) {
         const m = roundMatches[slotIndex];
         const rotatedSlot = (slotIndex + roundOffset) % matchesPerRound;
-        const court = ((r - 1) + rotatedSlot) % courts + 1;
+        const court = ((r - 1) + rotatedSlot) % effectiveCourts + 1;
         scheduled.push({
           pair1: m.pair1,
           pair2: m.pair2,

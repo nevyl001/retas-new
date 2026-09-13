@@ -3,6 +3,7 @@ import { Match, Pair, Game } from "../lib/database";
 import {
   getGames,
   applyRetaMatchUpdate,
+  updateMatch,
   type RetaMatchSetInput,
 } from "../lib/database";
 import { aplicarRatingDesdePairs } from "../lib/rivieraJugadores/aplicarRatingPartido";
@@ -137,21 +138,36 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         setMetaSaving(false);
         return;
       }
-      const court = Math.min(courtEditCap, Math.max(1, parsedCourt));
+      // Tope real: canchas de la reta (no el techo 32 de edición de emergencia).
+      const courtCap = Math.max(1, maxCourts);
+      const court = Math.min(courtCap, Math.max(1, parsedCourt));
       const round = Math.min(999, Math.max(1, parsedRound));
-      const result = await applyRetaMatchUpdate({
+
+      let saved = false;
+      const rpcResult = await applyRetaMatchUpdate({
         matchId: currentMatch.id,
         court,
         round,
       });
-      if (result.status === "tournament_closed") {
+      if (rpcResult.status === "tournament_closed") {
         setError("La reta ya está cerrada. No se puede reasignar cancha/ronda.");
         return;
       }
-      if (result.status !== "updated_metadata") {
-        setError("No se pudo guardar cancha ni ronda");
-        return;
+      // Algunas instalaciones del RPC no reportan `updated_metadata` aunque sí escriben.
+      if (
+        rpcResult.status === "updated_metadata" ||
+        rpcResult.status === "updated" ||
+        rpcResult.status === "unchanged"
+      ) {
+        saved = true;
       }
+
+      // Fallback directo a la tabla: fiable para cancha/ronda en reta en vivo.
+      if (!saved) {
+        await updateMatch(currentMatch.id, { court, round });
+        saved = true;
+      }
+
       const updated: Match = { ...currentMatch, court, round };
       pendingMetaRef.current = { court, round };
       setCurrentMatch(updated);
@@ -688,7 +704,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               label="Cancha"
               type="number"
               min={1}
-              max={courtEditCap}
+              max={Math.max(1, maxCourts)}
               value={courtInput}
               onChange={(e) => setCourtInput(e.target.value)}
               aria-label="Número de cancha"

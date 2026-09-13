@@ -73,6 +73,23 @@ describe("circleRoundRobinSchedule court rotation", () => {
     expect(fixedCourts).toEqual([1, 2, 1]);
   });
 
+  test("caps courts to simultaneous matches (3 matches never get Cancha 4)", () => {
+    const a = makePair("a", "A1", "A2");
+    const b = makePair("b", "B1", "B2");
+    const c = makePair("c", "C1", "C2");
+    const d = makePair("d", "D1", "D2");
+    const e = makePair("e", "E1", "E2");
+    const f = makePair("f", "F1", "F2");
+    const chunk = [
+      { pair1: a, pair2: b },
+      { pair1: c, pair2: d },
+      { pair1: e, pair2: f },
+    ];
+    // courts=4 but only 3 partidos → R2 debe ser 2,3,1 (no 2,3,4)
+    expect(assignCourtsInChunk(chunk, 2, 4)).toEqual([2, 3, 1]);
+    expect(Math.max(...assignCourtsInChunk(chunk, 3, 4))).toBeLessThanOrEqual(3);
+  });
+
   test("does not rewrite in-range courts that differ from ideal (manual save)", () => {
     const pairs = [
       makePair("1", "Devyl", "Duran"),
@@ -82,42 +99,37 @@ describe("circleRoundRobinSchedule court rotation", () => {
     ];
 
     const ideal = generateCircleRoundRobinSchedule(pairs, 2);
-    const first = ideal[0];
-    const swappedCourt = first.court === 1 ? 2 : 1;
-    const manual: Match = makeMatch(
-      "manual",
-      first.round,
-      swappedCourt,
-      first.pair1,
-      first.pair2
-    );
+    const round1 = ideal.filter((m) => m.round === 1);
+    expect(round1.length).toBe(2);
+    const [a, b] = round1;
+    // Intercambiar canchas a mano dentro del rango 1..2
+    const manual: Match[] = [
+      makeMatch("m1", a.round, b.court, a.pair1, a.pair2),
+      makeMatch("m2", b.round, a.court, b.pair1, b.pair2),
+    ];
 
-    expect(findCourtRotationRepairs(pairs, 2, [manual])).toEqual([]);
+    expect(findCourtRotationRepairs(pairs, 2, manual)).toEqual([]);
   });
 
-  test("repairs courts outside configured range (e.g. Cancha 4 with 3 courts)", () => {
+  test("repairs courts outside simultaneous match count (Cancha 4 with 3 partidos)", () => {
     const pairs = [
       makePair("1", "Devyl", "Duran"),
       makePair("2", "Nevyl", "Marlon"),
       makePair("3", "Ferro", "Panchito"),
       makePair("4", "pepito", "Ricar"),
+      makePair("5", "G1", "G2"),
+      makePair("6", "H1", "H2"),
     ];
-
-    const ideal = generateCircleRoundRobinSchedule(pairs, 3);
-    const sample = ideal.find((m) => m.round === 2) ?? ideal[0];
-    const outOfRange: Match = makeMatch(
-      "oor",
-      sample.round,
-      4,
-      sample.pair1,
-      sample.pair2
-    );
-
-    const repairs = findCourtRotationRepairs(pairs, 3, [outOfRange]);
+    const roundMatches: Match[] = [
+      makeMatch("m1", 3, 1, pairs[0], pairs[1]),
+      makeMatch("m2", 3, 3, pairs[2], pairs[3]),
+      makeMatch("m3", 3, 4, pairs[4], pairs[5]),
+    ];
+    // Config 4 canchas pero solo 3 partidos → Cancha 4 es inválida en esa ronda.
+    const repairs = findCourtRotationRepairs(pairs, 4, roundMatches);
     expect(repairs).toHaveLength(1);
-    expect(repairs[0].id).toBe("oor");
-    expect(repairs[0].court).toBeGreaterThanOrEqual(1);
-    expect(repairs[0].court).toBeLessThanOrEqual(3);
+    expect(repairs[0].id).toBe("m3");
+    expect(repairs[0].court).toBe(2);
   });
 
   test("null court (Por asignar) is never repaired / reassigned", () => {
