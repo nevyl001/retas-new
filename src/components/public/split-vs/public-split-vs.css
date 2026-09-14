@@ -20,9 +20,9 @@
 .pub-split-vs-pair__badge {
   position: absolute;
   z-index: 5;
-  top: 0.35rem;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -59,7 +59,11 @@
 }
 
 .pub-split-vs-pair--win .pub-split-vs-pair__grid {
-  gap: 2px;
+  gap: 0.45rem;
+}
+
+.pub-split-vs-pair--compact.pub-split-vs-pair--win .pub-split-vs-pair__grid {
+  gap: 0.55rem;
 }
 
 .pub-split-vs-pair--win .pub-split-vs-panel {
@@ -423,8 +427,12 @@
   border-radius: 0;
 }
 
+/* Corona entre las dos cards de la pareja (no arriba de la primera). */
 .pub-split-vs-pair--compact .pub-split-vs-pair__badge {
-  top: -0.35rem;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 6;
 }
 
 @media (min-width: 640px) {

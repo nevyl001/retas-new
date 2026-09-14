@@ -3503,3 +3503,65 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
     min-height: 2.75rem;
   }
 }
+
+/*
+ * Compose (alta + edición Detalles): el nombre vive en row--name aparte.
+ * Evita la fila de 5 cols (pensada cuando nombre iba dentro de primary),
+ * que hacía “chocar” Día/Hora/Duración/Cancha con el ancho del nombre.
+ */
+.qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--name,
+.qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--name {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 0.65rem;
+}
+
+.qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--name > .reta-details-form__field--name,
+.qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--name > .reta-details-form__field--name {
+  width: 100%;
+  max-width: none;
+}
+
+.qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--name .home-sheet__input,
+.qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--name .home-sheet__input {
+  width: 100%;
+  max-width: none;
+}
+
+@media (min-width: 640px) {
+  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary,
+  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-template-areas: none !important;
+    gap: var(--rd-gap, 0.75rem) !important;
+    width: 100%;
+    max-width: 100%;
+    align-items: start;
+  }
+
+  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary > .reta-details-form__schedule-split,
+  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary > .reta-details-form__schedule-split {
+    display: contents !important;
+  }
+
+  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary .reta-details-form__field--date,
+  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary .reta-details-form__field--time,
+  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary .reta-details-form__field--duration,
+  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary > .reta-details-form__field--courts,
+  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary > .reta-details-form__field--cancha,
+  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary .reta-details-form__field--date,
+  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary .reta-details-form__field--time,
+  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary .reta-details-form__field--duration,
+  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary > .reta-details-form__field--courts,
+  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary > .reta-details-form__field--cancha {
+    grid-area: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    width: 100%;
+  }
+}
+
+/* En móvil se mantiene el 2×2 del bloque max-width:768 (date/time | duration/courts). */
