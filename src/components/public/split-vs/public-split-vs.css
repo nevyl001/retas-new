@@ -50,25 +50,34 @@
 }
 
 .pub-split-vs-pair--win {
-  border-radius: 10px;
-  padding: 0;
-  overflow: hidden;
-  background: transparent;
-  box-shadow: 0 0 0 1px
-    color-mix(in srgb, var(--brand-accent, #e5c158) 55%, transparent);
+  border-radius: 14px;
+  padding: 0.4rem;
+  overflow: visible;
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, #e5c158) 8%,
+    rgba(10, 12, 16, 0.72)
+  );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ro-medal-gold, #c9a227) 70%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--brand-accent, #e5c158) 28%, transparent) inset,
+    0 10px 28px rgba(0, 0, 0, 0.38),
+    0 0 22px color-mix(in srgb, var(--ro-medal-gold, #c9a227) 22%, transparent);
 }
 
 .pub-split-vs-pair--win .pub-split-vs-pair__grid {
-  gap: 0.45rem;
+  gap: 0.7rem;
 }
 
 .pub-split-vs-pair--compact.pub-split-vs-pair--win .pub-split-vs-pair__grid {
-  gap: 0.55rem;
+  gap: 0.85rem;
 }
 
 .pub-split-vs-pair--win .pub-split-vs-panel {
-  border-radius: 0;
-  box-shadow: none;
+  border-radius: 11px;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .pub-split-vs-pair--win .pub-split-vs-panel__photo.is-visible {
@@ -76,11 +85,11 @@
 }
 
 .pub-split-vs-pair--win .pub-split-vs-panel__given {
-  color: color-mix(in srgb, var(--brand-accent, #e5c158) 55%, #fff);
+  color: color-mix(in srgb, var(--brand-accent, #e5c158) 42%, #fff);
 }
 
 .pub-split-vs-pair--loss {
-  opacity: 0.78;
+  opacity: 0.68;
 }
 
 .pub-split-vs-pair--loss .pub-split-vs-panel {
@@ -421,13 +430,14 @@
 
 .pub-split-vs-pair--compact.pub-split-vs-pair--win .pub-split-vs-panel {
   border-radius: 12px;
+  overflow: hidden;
 }
 
 .pub-split-vs-pair--compact.pub-split-vs-pair--win .pub-split-vs-panel__media {
-  border-radius: 0;
+  border-radius: inherit;
 }
 
-/* Corona entre las dos cards de la pareja (no arriba de la primera). */
+/* Corona entre las dos cards, con aire por el gap de la pareja. */
 .pub-split-vs-pair--compact .pub-split-vs-pair__badge {
   top: 50%;
   left: 50%;
