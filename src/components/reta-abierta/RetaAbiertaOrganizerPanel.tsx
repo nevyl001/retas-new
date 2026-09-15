@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import type { Tournament } from "../../lib/database";
 import { isAmericanoTournament } from "../../lib/gameModeMapping";
 import { loadChampionshipConfig } from "../../lib/roundRobinChampionship";
@@ -40,12 +40,9 @@ export const RetaAbiertaOrganizerPanel: React.FC<Props> = ({
     loadChampionshipConfig(tournament.id)?.championshipEnabled
   );
 
-  return (
-    <ConvocatoriaWhatsAppPanel
-      compact={compact}
-      embedded={embedded}
-      onLiveChange={onLiveChange}
-      context={buildTournamentConvocatoriaContext({
+  const context = useMemo(
+    () =>
+      buildTournamentConvocatoriaContext({
         mode,
         tournamentId: tournament.id,
         name: tournament.name,
@@ -64,7 +61,35 @@ export const RetaAbiertaOrganizerPanel: React.FC<Props> = ({
         championshipEnabled,
         clubName,
         categoryLabel: tournament.nivel?.trim() || undefined,
-      })}
+      }),
+    [
+      mode,
+      tournament.id,
+      tournament.name,
+      tournament.lugar,
+      tournament.mostrar_lugar,
+      tournament.cancha,
+      tournament.costo,
+      tournament.mostrar_costo,
+      tournament.premio,
+      tournament.mostrar_premio,
+      tournament.rama,
+      tournament.description,
+      tournament.programado_en,
+      tournament.programado_hasta,
+      tournament.format,
+      tournament.nivel,
+      championshipEnabled,
+      clubName,
+    ]
+  );
+
+  return (
+    <ConvocatoriaWhatsAppPanel
+      compact={compact}
+      embedded={embedded}
+      onLiveChange={onLiveChange}
+      context={context}
     />
   );
 };

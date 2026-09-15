@@ -145,6 +145,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const [capacityHint, setCapacityHint] = useState<string | null>(null);
   const capacitySaveTimer = useRef<number | null>(null);
   const capacitySaveGen = useRef(0);
+  const capacityBusyRef = useRef(false);
+  const capacityInputFocusedRef = useRef(false);
   const [waitlistEnabled, setWaitlistEnabled] = useState(
     context.mode !== "duelo_2v2"
   );
@@ -291,8 +293,15 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           : Number(row.capacity) > 0
             ? Number(row.capacity)
             : OPEN_REG_CAPACITY_MIN;
-        setCapacity(nextCap);
-        setCapacityText(String(nextCap));
+        // No pisar el cupo mientras el organizador escribe o hay guardado en curso.
+        const preserveCapacity =
+          capacityBusyRef.current ||
+          capacityInputFocusedRef.current ||
+          capacitySaveTimer.current != null;
+        if (!preserveCapacity) {
+          setCapacity(nextCap);
+          setCapacityText(String(nextCap));
+        }
         setWaitlistEnabled(row.waitlist_enabled);
         setApprovalRequired(row.approval_required);
         setDeadline(
@@ -358,7 +367,18 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     } finally {
       setLoading(false);
     }
-  }, [context]);
+  }, [
+    context.mode,
+    context.lockCapacity,
+    context.defaultCapacity,
+    context.defaultTitle,
+    context.defaultScheduledAt,
+    context.defaultDurationMinutes,
+    context.defaultCategory,
+    context.includeLugar,
+    context.defaultLocation,
+    context.defaultCancha,
+  ]);
 
   useEffect(() => {
     void load(entityId);
@@ -426,6 +446,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         Math.min(OPEN_REG_CAPACITY_MAX, Math.round(nextRaw))
       );
       const gen = ++capacitySaveGen.current;
+      capacityBusyRef.current = true;
       setCapacityBusy(true);
       setError(null);
       try {
@@ -475,7 +496,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         if (gen !== capacitySaveGen.current) return;
         setError(mapConvocatoriaUserError(e, "action"));
       } finally {
-        if (gen === capacitySaveGen.current) setCapacityBusy(false);
+        if (gen === capacitySaveGen.current) {
+          capacityBusyRef.current = false;
+          setCapacityBusy(false);
+        }
       }
     },
     [context.lockCapacity, context.mode, entityId]
@@ -515,17 +539,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   );
 
   const onCapacityTextChange = useCallback((raw: string) => {
+    // Solo texto mientras escribes: no tocar cfg/capacity (evita reload loop).
     const digits = raw.replace(/[^\d]/g, "").slice(0, 2);
     setCapacityText(digits);
-    if (digits === "") return;
-    const n = Number(digits);
-    if (!Number.isFinite(n)) return;
-    const next = Math.max(
-      OPEN_REG_CAPACITY_MIN,
-      Math.min(OPEN_REG_CAPACITY_MAX, Math.round(n))
-    );
-    setCapacity(next);
-    setCfg((prev) => (prev ? { ...prev, capacity: next } : prev));
   }, []);
 
   const resolveCapacityForSave = useCallback(
@@ -1244,10 +1260,14 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                   aria-labelledby="ra-org-cupo-label"
                   title={capacityHintText}
                   placeholder="Ej. 12"
+                  onFocus={() => {
+                    capacityInputFocusedRef.current = true;
+                  }}
                   onChange={(e) => onCapacityTextChange(e.target.value)}
-                  onBlur={() =>
-                    commitCapacityText({ persist: true, min: capacityMin })
-                  }
+                  onBlur={() => {
+                    capacityInputFocusedRef.current = false;
+                    commitCapacityText({ persist: true, min: capacityMin });
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();

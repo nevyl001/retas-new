@@ -858,32 +858,41 @@
   min-width: 0;
 }
 
-/* Contenedor relativo para anclar el picker */
+/* Contenedor relativo para anclar el picker al INPUT, no a la label (evita tapar Nombre). */
+.qm-ws__details-inline .reta-details-form__field--date .home-sheet__input,
+.qm-ws__details-inline .reta-details-form__field--time .home-sheet__input,
+.qm-ws__details-inline .reta-details-form__field--date .riviera-input,
+.qm-ws__details-inline .reta-details-form__field--time .riviera-input,
+.qm-ws__details-inline .reta-details-form__field--schedule .home-sheet__input,
+.qm-ws__details-inline label:has(> input[type="date"]) > input[type="date"],
+.qm-ws__details-inline label:has(> input[type="time"]) > input[type="time"] {
+  position: relative;
+}
+
 .qm-ws__details-inline .reta-details-form__field--date,
 .qm-ws__details-inline .reta-details-form__field--time,
 .qm-ws__details-inline .reta-details-form__field--schedule,
 .qm-ws__details-inline label:has(> input[type="date"]),
 .qm-ws__details-inline label:has(> input[type="time"]) {
-  position: relative;
+  position: static;
 }
 
 /*
- * Hit-area solo en el icono derecho (no inset:0).
- * Con display:contents el overlay a pantalla completa podía
- * tapar Nombre y otros campos vecinos.
+ * Hit-area solo en el icono derecho del input (altura del control).
  */
 .qm-ws__details-inline input[type="date"]::-webkit-calendar-picker-indicator,
 .qm-ws__details-inline input[type="time"]::-webkit-calendar-picker-indicator,
 .qm-ws__details-inline input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  top: 50%;
+  right: 0.35rem;
+  bottom: auto;
   left: auto;
-  width: 2.35rem;
-  height: auto;
+  width: 1.75rem;
+  height: 1.75rem;
   margin: 0;
   padding: 0;
+  transform: translateY(-50%);
   cursor: pointer;
   opacity: 0.001;
   z-index: 2;
@@ -3515,7 +3524,9 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   grid-template-columns: minmax(0, 1fr);
   width: 100%;
   max-width: 100%;
-  margin-bottom: 0.65rem;
+  margin-bottom: 1.1rem;
+  position: relative;
+  z-index: 2;
 }
 
 .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--name > .reta-details-form__field--name,
@@ -3528,6 +3539,15 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--name .home-sheet__input {
   width: 100%;
   max-width: none;
+}
+
+.qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary,
+.qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary {
+  margin-top: 0.15rem;
+  padding-top: 0.15rem;
+  position: relative;
+  z-index: 1;
+  clear: both;
 }
 
 @media (min-width: 640px) {
