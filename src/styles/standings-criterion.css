@@ -97,13 +97,19 @@ td.standings-criterion-cell--rank-3,
   font-weight: 600;
 }
 
-.te-pub-standing-card--leader .te-pub-standing-card__pts {
-  color: var(--text-muted, var(--ro-text-muted)) !important;
-  font-size: 0.82rem;
-  font-weight: 500;
+.te-pub-standing-card__criterion-fav {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: clamp(1.05rem, 4.2vw, 1.35rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text-primary, #fff);
+  white-space: nowrap;
 }
 
 .te-pub-standing-card--leader .te-pub-standing-card__criterion-fav {
-  color: var(--ro-gold-light);
-  font-weight: 700;
+  color: var(--ro-gold-light, #e5c158);
+  font-weight: 800;
 }

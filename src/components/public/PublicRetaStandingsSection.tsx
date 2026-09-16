@@ -296,7 +296,6 @@ export const PublicRetaStandingsSection: React.FC<{
               <span className="te-pub-standing-card__criterion-fav">
                 {row.fav} FAV
               </span>
-              <span className="te-pub-standing-card__pts">{row.pts} pts</span>
             </div>
             <div className="te-pub-standing-card__stats">
               <span>

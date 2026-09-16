@@ -93,6 +93,14 @@ export const StandingsMobileCards: React.FC<{
                 {positionIcon(row.position) || row.position}
               </span>
               <h3 className="standings-mobile-card__name">{row.label}</h3>
+              <span
+                className={`standings-mobile-card__fav-hero${
+                  isLeader ? " standings-mobile-card__fav-hero--leader" : ""
+                }`}
+                title="Games a favor (1.er criterio)"
+              >
+                {row.points} FAV
+              </span>
             </header>
 
             <div className="standings-mobile-card__stats">
@@ -159,12 +167,6 @@ export const StandingsMobileCards: React.FC<{
                 <span className="standings-mobile-card__stat-label">PP</span>
                 <span className="standings-mobile-card__stat-value">
                   {row.pp}
-                </span>
-              </div>
-              <div className="standings-mobile-card__stat standings-mobile-card__stat--informative">
-                <span className="standings-mobile-card__stat-label">PTS</span>
-                <span className="standings-mobile-card__stat-value standings-mobile-card__stat-value--pts">
-                  {row.puntosTorneo}
                 </span>
               </div>
             </div>

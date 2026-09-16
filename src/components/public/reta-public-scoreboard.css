@@ -1386,9 +1386,15 @@
   color: #9ca3af !important;
 }
 
-.te-public--reta .te-pub-standing-card__pts {
+.te-public--reta .te-pub-standing-card__criterion-fav {
   color: #ffffff !important;
   font-weight: 800 !important;
+  font-size: clamp(1.1rem, 4.5vw, 1.4rem) !important;
+}
+
+.te-public--reta .te-pub-standing-card--leader .te-pub-standing-card__criterion-fav,
+.te-public--reta .te-pub-standing-card--medal-1 .te-pub-standing-card__criterion-fav {
+  color: var(--ro-medal-gold, #e5c158) !important;
 }
 
 .te-public--reta .te-public-section__divider {

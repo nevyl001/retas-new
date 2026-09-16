@@ -45,8 +45,7 @@ function buildBriefOrderText(
   }
   return (
     <>
-      Orden: <strong>FAV</strong> → <strong>DIF</strong> → <strong>PG</strong>{" "}
-      · <strong>PTS</strong> = referencia
+      Orden: <strong>FAV</strong> → <strong>DIF</strong> → <strong>PG</strong>
     </>
   );
 }

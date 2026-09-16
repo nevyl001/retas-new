@@ -69,6 +69,23 @@
   text-wrap: balance;
 }
 
+.standings-mobile-card__fav-hero {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: clamp(1.05rem, 4.2vw, 1.3rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--color-text-primary, var(--ro-text-primary));
+  white-space: nowrap;
+}
+
+.standings-mobile-card__fav-hero--leader,
+.standings-mobile-card--leader .standings-mobile-card__fav-hero {
+  color: var(--ro-gold-text, #8a6524);
+}
+
 .standings-mobile-card--leader .standings-mobile-card__name {
   /* Dorado claro sobre cream = ilegible; tinta oscura + medalla bastan */
   color: var(--ro-gold-text, #8a6524);
