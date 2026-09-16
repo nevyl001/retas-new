@@ -24,6 +24,25 @@
 
 .standings-criterion-col--rank-3::after {
   content: "3";
+  opacity: 0.75;
+}
+
+/* PG = último criterio: tipografía más pequeña en cabecera y celdas */
+.standings-criterion-col--rank-3,
+th.col-pg.standings-criterion-col--rank-3 {
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.88;
+}
+
+td.col-pg,
+td.standings-criterion-cell--rank-3,
+.te-pub-standings-table td.col-pg,
+.new-standings-table td.col-pg {
+  font-size: 0.78em;
+  font-weight: 500;
+  opacity: 0.82;
 }
 
 .te-pub-standings-row--leader .standings-criterion-cell--rank-1 {
@@ -37,8 +56,9 @@
 }
 
 .te-pub-standings-row--leader .standings-criterion-cell--rank-3 {
-  color: rgba(232, 197, 71, 0.88);
-  font-weight: 600;
+  color: rgba(232, 197, 71, 0.72);
+  font-weight: 550;
+  font-size: 0.78em;
 }
 
 .te-pub-standings-row--leader .standings-criterion-cell--deciding {

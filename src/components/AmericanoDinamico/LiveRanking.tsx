@@ -25,7 +25,7 @@ import "./LiveRanking.css";
 import "../../styles/standings-mobile-cards.css";
 
 interface LiveRankingProps {
-  /** Clasificación ya calculada (FAV → DIF → H2H → PG). */
+  /** Clasificación ya calculada (FAV → DIF → PG). */
   ranked: AmericanoPlayer[];
   /** Plantilla en orden de registro (desempate estable). */
   roster: AmericanoPlayer[];

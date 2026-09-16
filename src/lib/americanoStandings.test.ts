@@ -14,7 +14,7 @@ function makePlayers(n: number): AmericanoPlayer[] {
   }));
 }
 
-describe("getAmericanoRanking — tabla FAV → DIF → H2H → PG", () => {
+describe("getAmericanoRanking — tabla FAV → DIF → PG", () => {
   it("empate 1-1 IsraBe/Chaparro: gana quien ganó la ronda 3", () => {
     const ps = makePlayers(8);
     ps[2].name = "Chaparro";

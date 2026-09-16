@@ -43,10 +43,6 @@ export function getDecidingCriterionBetween(
 
   if (higher.fav !== lower.fav) return "fav";
   if (standingsRowDiff(higher) !== standingsRowDiff(lower)) return "dif";
-  if (higher.id && lower.id && h2hMatches.length > 0) {
-    const h2h = getHeadToHead(higher.id, lower.id, h2hMatches);
-    if (h2h !== 0) return "pg";
-  }
   if (higher.pg !== lower.pg) return "pg";
   return "fav";
 }

@@ -141,7 +141,7 @@ export function rosterFromAmericanoSnapshot(
   return collectAmericanoPlayersFromSnapshot(snap);
 }
 
-/** Clasificación recalculada desde rondas (FAV → DIF → H2H → PG), no el array guardado. */
+/** Clasificación recalculada desde rondas (FAV → DIF → PG), no el array guardado. */
 export function resolveAmericanoRankingFromSnapshot(
   snap: AmericanoDinamicoSnapshotV1
 ): AmericanoSnapshotPlayer[] {

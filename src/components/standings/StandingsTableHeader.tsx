@@ -53,7 +53,7 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
       </th>
       <th
         className={`${COL_PG} ${criterionHeaderClass("pg", criterionOrder)}`}
-        title="Partidos ganados (3.er criterio de desempate)"
+        title="Partidos ganados (último criterio de desempate)"
       >
         PG
       </th>
