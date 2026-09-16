@@ -82,7 +82,14 @@ td.standings-criterion-cell--rank-3,
 }
 
 .standings-mobile-card--leader .standings-mobile-card__stat--criterion-3 .standings-mobile-card__stat-value {
-  color: rgba(232, 197, 71, 0.9);
+  color: rgba(232, 197, 71, 0.72);
+  font-size: 0.85em;
+}
+
+.standings-mobile-card__stat--criterion-3 .standings-mobile-card__stat-value,
+.standings-mobile-card__stat--criterion-3 .standings-mobile-card__stat-label {
+  font-size: 0.85em;
+  opacity: 0.85;
 }
 
 .standings-mobile-card--leader .standings-mobile-card__stat--informative .standings-mobile-card__stat-value {
