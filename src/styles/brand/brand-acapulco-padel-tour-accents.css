@@ -122,3 +122,39 @@
 [data-club="acapulco-padel-tour"] .club-identity__name {
   color: var(--brand-accent, #a7d800);
 }
+
+/* Modal Nuevo jugador: superficie clara legible (navy/turquesa/lima APT) */
+[data-brand="acapulco-padel-tour"] .rj-modal.rj-modal--new-player,
+[data-club="acapulco-padel-tour"] .rj-modal.rj-modal--new-player {
+  --rj-np-accent: #a7d800;
+  --rj-np-ink: #002b6b;
+  --rj-np-muted: #3d5f82;
+  --rj-np-surface: #f3f7fb;
+  --rj-np-line: rgba(0, 43, 107, 0.14);
+  --rj-np-kicker: #00afc4;
+  color: #002b6b;
+}
+
+[data-brand="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions .riviera-btn-ghost,
+[data-club="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions .riviera-btn-ghost,
+[data-brand="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions button[type="button"],
+[data-club="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions button[type="button"] {
+  color: #00afc4;
+}
+
+[data-brand="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions .riviera-btn-primary,
+[data-club="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions .riviera-btn-primary,
+[data-brand="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions button[type="submit"],
+[data-club="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions button[type="submit"] {
+  background: #002b6b;
+  border-color: #002b6b;
+  color: #ffffff;
+}
+
+[data-brand="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions .riviera-btn-primary:hover:not(:disabled),
+[data-club="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions .riviera-btn-primary:hover:not(:disabled),
+[data-brand="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions button[type="submit"]:hover:not(:disabled),
+[data-club="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions button[type="submit"]:hover:not(:disabled) {
+  background: #003a7a;
+  border-color: #003a7a;
+}

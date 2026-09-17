@@ -1150,13 +1150,15 @@
 }
 
 /* —— Alta premium: Nuevo jugador / Nueva jugadora —— */
+/* Modal siempre claro: tinta oscura fija (no heredar --ro-text-* de tenants dark). */
 .rj-modal.rj-modal--new-player {
   --rj-np-accent: var(--brand-accent, var(--ro-accent, #1a1a1a));
-  --rj-np-ink: var(--ro-text-primary, #111827);
-  --rj-np-muted: var(--ro-text-secondary, #6b7280);
+  --rj-np-ink: #111827;
+  --rj-np-muted: #4b5563;
   --rj-np-surface: #fafaf9;
   --rj-np-line: rgba(17, 24, 39, 0.1);
-  --rj-np-kicker: var(--rj-np-muted);
+  --rj-np-kicker: #475569;
+  color: var(--rj-np-ink);
   position: relative;
   display: flex;
   flex-direction: column;
