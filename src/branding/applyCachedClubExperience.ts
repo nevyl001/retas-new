@@ -8,6 +8,7 @@ const PREMIUM_KEYS = new Set([
   "hack-padel",
   "valvidub-sports",
   "padelito-warehouse",
+  "acapulco-padel-tour",
 ]);
 
 function isMotherBrandOnlyPath(pathname: string): boolean {

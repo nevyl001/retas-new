@@ -20,6 +20,7 @@
 @import "./styles/brand/brand-tokens.css";
 @import "./styles/brand/brand-effective.css";
 @import "./styles/brand/brand-padelito-warehouse-accents.css";
+@import "./styles/brand/brand-acapulco-padel-tour-accents.css";
 @import "./styles/riviera-app-shell.css";
 @import "./styles/mode-mobile-shell.css";
 @import "./styles/riviera-public-court.css";
@@ -52,7 +53,9 @@ html:not([data-brand="hack-padel"]):not([data-club="hack-padel"]):not(
     [data-brand="padel-court-series"]
   ):not([data-club="padel-court-series"]):not(
     [data-brand="valvidub-sports"]
-  ):not([data-club="valvidub-sports"])
+  ):not([data-club="valvidub-sports"]):not(
+    [data-brand="acapulco-padel-tour"]
+  ):not([data-club="acapulco-padel-tour"])
   body {
   transition: background-color var(--transition-base), color var(--transition-base);
 }
@@ -99,5 +102,20 @@ html[data-brand="valvidub-sports"] #root,
 html[data-club="valvidub-sports"] #root {
   background-color: #f4ede4;
   color: #2a1c16;
+  transition: none !important;
+}
+
+html[data-brand="acapulco-padel-tour"],
+html[data-club="acapulco-padel-tour"] {
+  background-color: #001f4d;
+  color-scheme: dark;
+}
+
+html[data-brand="acapulco-padel-tour"] body,
+html[data-club="acapulco-padel-tour"] body,
+html[data-brand="acapulco-padel-tour"] #root,
+html[data-club="acapulco-padel-tour"] #root {
+  background-color: #001f4d;
+  color: #ffffff;
   transition: none !important;
 }

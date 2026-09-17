@@ -250,7 +250,11 @@ html[data-club="padel-court-series"],
 html[data-brand="padelito-warehouse"],
 html[data-club="padelito-warehouse"],
 .club-experience-scope[data-brand="padelito-warehouse"],
-.club-experience-scope[data-club="padelito-warehouse"] {
+.club-experience-scope[data-club="padelito-warehouse"],
+html[data-brand="acapulco-padel-tour"],
+html[data-club="acapulco-padel-tour"],
+.club-experience-scope[data-brand="acapulco-padel-tour"],
+.club-experience-scope[data-club="acapulco-padel-tour"] {
   /* Además de redefinir los tokens, fija el color heredado: sin esto, el texto
      que no declara color explícito (labels, hints, valores de inputs) heredaba
      el color oscuro del body (tema claro) y quedaba invisible sobre el negro. */
@@ -368,6 +372,44 @@ html[data-club="padelito-warehouse"] .ro-surface-dark,
     "Arial Narrow", "Stack Sans Headline", system-ui, sans-serif;
   --ro-font-body: "Abadi MT Condensed", "Arial Narrow", "Inter", system-ui,
     sans-serif;
+}
+
+/* =============================================
+   ACAPULCO PADEL TOUR — tenant premium
+   Navy + turquesa + lima (manifiesto acapulco-padel-tour.ts).
+============================================= */
+html[data-brand="acapulco-padel-tour"],
+html[data-club="acapulco-padel-tour"],
+.club-experience-scope[data-brand="acapulco-padel-tour"],
+.club-experience-scope[data-club="acapulco-padel-tour"],
+html[data-brand="acapulco-padel-tour"] .ro-surface-dark,
+html[data-club="acapulco-padel-tour"] .ro-surface-dark,
+.club-experience-scope[data-brand="acapulco-padel-tour"] .ro-surface-dark,
+.club-experience-scope[data-club="acapulco-padel-tour"] .ro-surface-dark {
+  --ro-accent: #a7d800;
+  --ro-accent-hover: #bce62a;
+  --ro-accent-dim: rgba(167, 216, 0, 0.14);
+  --ro-text-on-accent: #001f4d;
+
+  --ro-bg-base: #001f4d;
+  --ro-bg-deep: #001536;
+  --ro-bg-surface: #001f4d;
+  --ro-bg-card: #002b6b;
+  --ro-bg-elevated: #003a7a;
+  --ro-bg-inset: #003a7a;
+
+  --ro-border: #00afc4;
+  --ro-border-subtle: rgba(0, 175, 196, 0.35);
+  --ro-border-strong: #33c2d3;
+  --ro-border-accent: rgba(167, 216, 0, 0.45);
+
+  --ro-success: #a7d800;
+  --ro-text-primary: #ffffff;
+  --ro-text-secondary: #b8d0e8;
+  --ro-text-muted: #7ba3c9;
+
+  --ro-font-heading: Montserrat, "Stack Sans Headline", system-ui, sans-serif;
+  --ro-font-body: Montserrat, "Inter", system-ui, sans-serif;
 }
 
 /* =============================================

@@ -119,6 +119,37 @@ html[data-club="padelito-warehouse"] .ro-surface-dark,
   --border-accent: color-mix(in srgb, var(--brand-accent) 35%, transparent);
 }
 
+html[data-brand="acapulco-padel-tour"],
+html[data-club="acapulco-padel-tour"],
+.club-experience-scope[data-brand="acapulco-padel-tour"],
+.club-experience-scope[data-club="acapulco-padel-tour"],
+html[data-brand="acapulco-padel-tour"] .ro-surface-dark,
+html[data-club="acapulco-padel-tour"] .ro-surface-dark,
+.club-experience-scope[data-brand="acapulco-padel-tour"] .ro-surface-dark,
+.club-experience-scope[data-club="acapulco-padel-tour"] .ro-surface-dark {
+  --brand-primary: #002b6b;
+  --brand-secondary: #00afc4;
+  --brand-accent: #a7d800;
+  --brand-surface: #001f4d;
+  --brand-surface-alt: #002b6b;
+  --brand-border: #00afc4;
+  --brand-text: #ffffff;
+  --brand-muted: #7ba3c9;
+  --brand-success: #a7d800;
+  --brand-warning: #fbbf24;
+  --brand-danger: #f87171;
+  --brand-font-heading: Montserrat, var(--ro-font-heading, system-ui, sans-serif);
+  --brand-font-body: Montserrat, var(--ro-font-body, system-ui, sans-serif);
+  --brand-heading-weight: 700;
+  --brand-heading-letter-spacing: 0.04em;
+  --bg-canvas: var(--brand-surface);
+  --bg-base: var(--brand-surface);
+  --accent-gold: var(--brand-accent);
+  --accent-gold-light: var(--brand-accent);
+  --accent-gold-dim: color-mix(in srgb, var(--brand-accent) 14%, transparent);
+  --border-accent: color-mix(in srgb, var(--brand-accent) 35%, transparent);
+}
+
 html[data-brand="valvidub-sports"],
 html[data-club="valvidub-sports"],
 .club-experience-scope[data-brand="valvidub-sports"],

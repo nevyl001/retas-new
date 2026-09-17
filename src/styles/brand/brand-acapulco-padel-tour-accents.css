@@ -1,0 +1,94 @@
+/* Acapulco Padel Tour — acentos premium (navy + turquesa + lima). */
+
+[data-brand="acapulco-padel-tour"] .user-header,
+[data-club="acapulco-padel-tour"] .user-header {
+  background: var(--brand-surface, #001f4d);
+  border-bottom-color: color-mix(in srgb, var(--brand-border) 55%, transparent);
+}
+
+[data-brand="acapulco-padel-tour"] .user-profile-btn:hover,
+[data-club="acapulco-padel-tour"] .user-profile-btn:hover,
+[data-brand="acapulco-padel-tour"] .user-header-mobile-btn:hover,
+[data-club="acapulco-padel-tour"] .user-header-mobile-btn:hover {
+  background: var(--ro-accent-dim);
+}
+
+[data-brand="acapulco-padel-tour"] .rv-button-primary,
+[data-club="acapulco-padel-tour"] .rv-button-primary {
+  background: var(--brand-accent, #a7d800);
+  color: var(--ro-text-on-accent, #001f4d);
+  border-color: transparent;
+}
+
+[data-brand="acapulco-padel-tour"] .rv-button-primary:hover:not(:disabled),
+[data-club="acapulco-padel-tour"] .rv-button-primary:hover:not(:disabled) {
+  background: var(--ro-accent-hover, #bce62a);
+}
+
+[data-brand="acapulco-padel-tour"] .home-mode-card:hover,
+[data-club="acapulco-padel-tour"] .home-mode-card:hover,
+[data-brand="acapulco-padel-tour"] .home-mode-card:focus-visible,
+[data-club="acapulco-padel-tour"] .home-mode-card:focus-visible {
+  border-color: color-mix(in srgb, var(--brand-accent) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-accent) 25%, transparent);
+}
+
+[data-brand="acapulco-padel-tour"] .rv-mode-header__eyebrow,
+[data-club="acapulco-padel-tour"] .rv-mode-header__eyebrow {
+  color: var(--brand-accent, #a7d800);
+}
+
+[data-brand="acapulco-padel-tour"] a:focus-visible,
+[data-club="acapulco-padel-tour"] a:focus-visible,
+[data-brand="acapulco-padel-tour"] button:focus-visible,
+[data-club="acapulco-padel-tour"] button:focus-visible,
+[data-brand="acapulco-padel-tour"] input:focus-visible,
+[data-club="acapulco-padel-tour"] input:focus-visible {
+  outline-color: var(--brand-accent, #a7d800);
+}
+
+[data-brand="acapulco-padel-tour"] .club-identity__attribution-brand,
+[data-club="acapulco-padel-tour"] .club-identity__attribution-brand {
+  color: var(--brand-text, #ffffff);
+}
+
+[data-brand="acapulco-padel-tour"] .club-identity__attribution-by,
+[data-club="acapulco-padel-tour"] .club-identity__attribution-by {
+  color: var(--brand-muted, #7ba3c9);
+}
+
+[data-brand="acapulco-padel-tour"] .main-layout .game-mode-card:hover:not(:disabled),
+[data-club="acapulco-padel-tour"] .main-layout .game-mode-card:hover:not(:disabled),
+[data-brand="acapulco-padel-tour"] .main-layout .game-mode-card:focus-visible,
+[data-club="acapulco-padel-tour"] .main-layout .game-mode-card:focus-visible {
+  border-color: color-mix(in srgb, var(--brand-accent) 45%, transparent);
+}
+
+[data-brand="acapulco-padel-tour"] .main-layout .rv-button-primary,
+[data-club="acapulco-padel-tour"] .main-layout .rv-button-primary,
+[data-brand="acapulco-padel-tour"] .liga-page .rv-button-primary,
+[data-club="acapulco-padel-tour"] .liga-page .rv-button-primary {
+  background: var(--brand-accent, #a7d800);
+  color: var(--ro-text-on-accent, #001f4d);
+}
+
+[data-brand="acapulco-padel-tour"] .liga-page .liga-tab--active,
+[data-club="acapulco-padel-tour"] .liga-page .liga-tab--active {
+  border-color: var(--brand-accent, #a7d800);
+  color: var(--brand-accent, #a7d800);
+}
+
+[data-brand="acapulco-padel-tour"] .liga-page .liga-badge--live,
+[data-club="acapulco-padel-tour"] .liga-page .liga-badge--live,
+[data-brand="acapulco-padel-tour"] .liga-page .liga-badge--in_progress,
+[data-club="acapulco-padel-tour"] .liga-page .liga-badge--in_progress {
+  background: color-mix(in srgb, var(--brand-accent) 18%, transparent);
+  color: var(--brand-accent, #a7d800);
+  border-color: color-mix(in srgb, var(--brand-accent) 35%, transparent);
+}
+
+/* Links / acentos secundarios en turquesa */
+[data-brand="acapulco-padel-tour"] .main-layout a:not(.rv-button-primary),
+[data-club="acapulco-padel-tour"] .main-layout a:not(.rv-button-primary) {
+  color: var(--brand-secondary, #00afc4);
+}

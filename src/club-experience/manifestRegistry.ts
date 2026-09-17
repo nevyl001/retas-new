@@ -1,3 +1,4 @@
+import { ACAPULCO_PADEL_TOUR_MANIFEST } from "./manifests/acapulco-padel-tour";
 import { HACK_PADEL_MANIFEST } from "./manifests/hack-padel";
 import { PADEL_COURT_SERIES_MANIFEST } from "./manifests/padel-court-series";
 import { PADELITO_WAREHOUSE_MANIFEST } from "./manifests/padelito-warehouse";
@@ -12,6 +13,7 @@ const MANIFESTS_BY_KEY: Record<string, BrandManifest> = {
   "padel-court-series": PADEL_COURT_SERIES_MANIFEST,
   "padelito-warehouse": PADELITO_WAREHOUSE_MANIFEST,
   "valvidub-sports": VALVIDUB_SPORTS_MANIFEST,
+  "acapulco-padel-tour": ACAPULCO_PADEL_TOUR_MANIFEST,
 };
 
 export function getManifestByKey(key: ClubBrandingKey): BrandManifest {

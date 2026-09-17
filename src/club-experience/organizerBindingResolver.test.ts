@@ -122,6 +122,7 @@ describe("organizerBindingResolver", () => {
     expect(options.some((o) => o.key === "padel-court-series")).toBe(true);
     expect(options.some((o) => o.key === "valvidub-sports")).toBe(true);
     expect(options.some((o) => o.key === "padelito-warehouse")).toBe(true);
+    expect(options.some((o) => o.key === "acapulco-padel-tour")).toBe(true);
     expect(options.some((o) => o.key === "riviera")).toBe(false);
   });
 });

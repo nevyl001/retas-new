@@ -30,6 +30,11 @@ import type { ClubOrganizerBinding } from "./types";
  *   Email (referencia humana): padelitopadel@gmail.com
  *   Binding SOLO por UUID real (env) — NUNCA el UUID de Club Test.
  *   Sin env, el upgrade llega por runtime sync desde organizador_game_modes.
+ *
+ * Acapulco Padel Tour (upgrade premium):
+ *   Nombre visible: Acapulco Padel Tour
+ *   Email (referencia humana): apt001@gmail.com
+ *   Binding SOLO por UUID real (env) — sin env, runtime sync desde DB.
  */
 
 const HACK_PADEL_ORGANIZADOR_ID = (
@@ -50,6 +55,11 @@ export const VALVIDUB_SPORTS_ORGANIZADOR_ID = (
 /** UUID real de padelitopadel@gmail.com — vacío si no está en env (no usar Club Test). */
 export const PADELITO_WAREHOUSE_ORGANIZADOR_ID = (
   process.env.REACT_APP_PADELITO_WAREHOUSE_ORGANIZADOR_ID?.trim() || ""
+).toLowerCase();
+
+/** UUID real de apt001@gmail.com — vacío si no está en env. */
+export const ACAPULCO_PADEL_TOUR_ORGANIZADOR_ID = (
+  process.env.REACT_APP_ACAPULCO_PADEL_TOUR_ORGANIZADOR_ID?.trim() || ""
 ).toLowerCase();
 
 const CLUB_TEST_ORGANIZADOR_ID = "cd45cea7-a8ac-4596-b0ee-24959b4cbb5d";
@@ -79,6 +89,17 @@ export const ORGANIZADOR_CLUB_BINDINGS: readonly ClubOrganizerBinding[] = [
         {
           organizadorId: PADELITO_WAREHOUSE_ORGANIZADOR_ID,
           brandingKey: "padelito-warehouse" as const,
+          active: true,
+          premiumBrandingEnabled: true,
+        },
+      ]
+    : []),
+  ...(ACAPULCO_PADEL_TOUR_ORGANIZADOR_ID &&
+  ACAPULCO_PADEL_TOUR_ORGANIZADOR_ID !== CLUB_TEST_ORGANIZADOR_ID
+    ? [
+        {
+          organizadorId: ACAPULCO_PADEL_TOUR_ORGANIZADOR_ID,
+          brandingKey: "acapulco-padel-tour" as const,
           active: true,
           premiumBrandingEnabled: true,
         },
