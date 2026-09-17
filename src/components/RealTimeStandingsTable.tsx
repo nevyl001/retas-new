@@ -566,9 +566,10 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                   </td>
                   <td className={COL_PP}>{row.pp}</td>
                   <td
-                    className={`${COL_FAV} ${
-                      isLeader ? criterionCellClass("fav", leaderDecidingCriterion) : ""
-                    }`}
+                    className={`${COL_FAV} te-pub-standings-row__fav ${criterionCellClass(
+                      "fav",
+                      leaderDecidingCriterion
+                    )}`}
                   >
                     {row.points}
                   </td>
@@ -629,9 +630,10 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                 </td>
                 <td className={COL_PP}>{pair.pp}</td>
                 <td
-                  className={`${COL_FAV} ${
-                    isLeader ? criterionCellClass("fav", leaderDecidingCriterion) : ""
-                  }`}
+                  className={`${COL_FAV} te-pub-standings-row__fav ${criterionCellClass(
+                    "fav",
+                    leaderDecidingCriterion
+                  )}`}
                 >
                   {pair.points}
                 </td>

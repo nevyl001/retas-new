@@ -45,9 +45,21 @@ td.standings-criterion-cell--rank-3,
   opacity: 0.82;
 }
 
+/* FAV (rank-1) visible en todas las filas, no solo el líder */
+.te-pub-standings-table td.standings-criterion-cell--rank-1,
+.new-standings-table td.standings-criterion-cell--rank-1,
+.te-pub-standings-table td.col-fav,
+.new-standings-table td.col-fav {
+  font-weight: 800;
+  font-size: 1.15em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary, var(--ro-text-primary));
+}
+
 .te-pub-standings-row--leader .standings-criterion-cell--rank-1 {
   color: var(--ro-gold-light);
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .te-pub-standings-row--leader .standings-criterion-cell--rank-2 {

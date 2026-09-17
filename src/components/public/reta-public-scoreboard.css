@@ -1265,29 +1265,61 @@
   background: rgba(255, 255, 255, 0.055) !important;
 }
 
-/* Stats neutros; FAV/DIF sin dorado en masa */
-.te-public--reta .te-pub-standings-table tbody td:nth-child(6),
+/* DIF / criterios secundarios: neutros */
 .te-public--reta .te-pub-standings-table tbody td:nth-child(8),
-.te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--rank-1,
 .te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--rank-2,
-.te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--rank-3,
-.te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--deciding {
-  color: rgba(255, 255, 255, 0.88) !important;
-  font-weight: 650 !important;
-  font-size: 1.05rem !important;
+.te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--rank-3 {
+  color: rgba(255, 255, 255, 0.82) !important;
+  font-weight: 600 !important;
+  font-size: 1.02rem !important;
   text-shadow: none !important;
 }
 
-.te-public--reta .te-pub-standings-row__pts {
-  font-weight: 750 !important;
-  font-size: 1.15rem !important;
+/* FAV = 1.er criterio: presencia clara en todas las filas */
+.te-public--reta .te-pub-standings-table thead th.standings-criterion-col--rank-1,
+.te-public--reta .te-pub-standings-table thead th:nth-child(6) {
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-weight: 800 !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.06em;
+}
+
+.te-public--reta .te-pub-standings-table tbody td:nth-child(6),
+.te-public--reta .te-pub-standings-table tbody .te-pub-standings-row__fav,
+.te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--rank-1,
+.te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--deciding {
   color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 1.28rem !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  text-shadow: none !important;
+}
+
+.te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__fav,
+.te-public--reta .te-pub-standings-row--leader .standings-criterion-cell--rank-1,
+.te-public--reta .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__fav {
+  color: var(--ro-pub-gold, #e5c158) !important;
+}
+
+/* PTS solo referencia: no compite visualmente con FAV */
+.te-public--reta .te-pub-standings-table thead th.standings-col-informative,
+.te-public--reta .te-pub-standings-table thead th:last-child {
+  color: rgba(255, 255, 255, 0.42) !important;
+  font-weight: 500 !important;
+}
+
+.te-public--reta .te-pub-standings-row__pts,
+.te-public--reta .te-pub-standings-table tbody td.standings-col-informative {
+  font-weight: 500 !important;
+  font-size: 0.92rem !important;
+  color: rgba(255, 255, 255, 0.45) !important;
 }
 
 .te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__pts,
 .te-public--reta .te-pub-standings-row--leader .standings-col-informative {
-  color: #ffffff !important;
-  font-weight: 750 !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  font-weight: 500 !important;
 }
 
 .te-public--reta .te-pub-standings-table .te-pub-dif {
@@ -1321,8 +1353,12 @@
     width: 5rem;
   }
 
+  .te-public--reta .te-pub-standings-table thead th:nth-child(6) {
+    width: 6rem;
+  }
+
   .te-public--reta .te-pub-standings-table thead th:last-child {
-    width: 5.5rem;
+    width: 4.25rem;
   }
 
   .te-public--reta .te-pub-standings-row__name,
@@ -1337,8 +1373,14 @@
     font-size: 1.12rem !important;
   }
 
+  .te-public--reta .te-pub-standings-table tbody td:nth-child(6),
+  .te-public--reta .te-pub-standings-table tbody .te-pub-standings-row__fav,
+  .te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--rank-1 {
+    font-size: 1.42rem !important;
+  }
+
   .te-public--reta .te-pub-standings-row__pts {
-    font-size: 1.22rem !important;
+    font-size: 0.95rem !important;
   }
 }
 

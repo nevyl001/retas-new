@@ -192,16 +192,13 @@ export const PublicRetaStandingsSection: React.FC<{
                 <td
                   className={[
                     "te-pub-standings-row__stat",
-                    isLeader
-                      ? criterionCellClass(
-                          "fav",
-                          leaderDecidingCriterion,
-                          criterionOrder
-                        )
-                      : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
+                    "te-pub-standings-row__fav",
+                    criterionCellClass(
+                      "fav",
+                      leaderDecidingCriterion,
+                      criterionOrder
+                    ),
+                  ].join(" ")}
                 >
                   {row.fav}
                 </td>
