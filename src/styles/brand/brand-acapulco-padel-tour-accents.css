@@ -47,16 +47,6 @@
   outline-color: var(--brand-accent, #a7d800);
 }
 
-[data-brand="acapulco-padel-tour"] .club-identity__attribution-brand,
-[data-club="acapulco-padel-tour"] .club-identity__attribution-brand {
-  color: var(--brand-text, #ffffff);
-}
-
-[data-brand="acapulco-padel-tour"] .club-identity__attribution-by,
-[data-club="acapulco-padel-tour"] .club-identity__attribution-by {
-  color: var(--brand-muted, #7ba3c9);
-}
-
 [data-brand="acapulco-padel-tour"] .main-layout .game-mode-card:hover:not(:disabled),
 [data-club="acapulco-padel-tour"] .main-layout .game-mode-card:hover:not(:disabled),
 [data-brand="acapulco-padel-tour"] .main-layout .game-mode-card:focus-visible,
@@ -91,4 +81,44 @@
 [data-brand="acapulco-padel-tour"] .main-layout a:not(.rv-button-primary),
 [data-club="acapulco-padel-tour"] .main-layout a:not(.rv-button-primary) {
   color: var(--brand-secondary, #00afc4);
+}
+
+/* Banner blanco: el logo APT (fondo blanco) se lee limpio sobre el header navy.
+   No altera el asset del logo — solo el contenedor. */
+[data-brand="acapulco-padel-tour"] .user-header-logo .club-identity--premium > .club-identity__logo,
+[data-club="acapulco-padel-tour"] .user-header-logo .club-identity--premium > .club-identity__logo,
+[data-brand="acapulco-padel-tour"] .club-identity--premium.club-identity--logo-only > .club-identity__logo,
+[data-club="acapulco-padel-tour"] .club-identity--premium.club-identity--logo-only > .club-identity__logo,
+[data-brand="acapulco-padel-tour"] .club-identity--premium.club-identity--stacked > .club-identity__logo,
+[data-club="acapulco-padel-tour"] .club-identity--premium.club-identity--stacked > .club-identity__logo,
+[data-brand="acapulco-padel-tour"] .club-identity--premium.club-identity--header > .club-identity__logo,
+[data-club="acapulco-padel-tour"] .club-identity--premium.club-identity--header > .club-identity__logo {
+  background: #ffffff !important;
+  border-radius: 0.55rem;
+  padding: 0.2rem 0.35rem;
+  box-sizing: content-box;
+  max-height: 3.1rem;
+  max-width: min(13.5rem, 56vw);
+  object-fit: contain;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+/* "by Riviera Open" — se distingue del navy y del banner blanco */
+[data-brand="acapulco-padel-tour"] .club-identity__attribution-by,
+[data-club="acapulco-padel-tour"] .club-identity__attribution-by {
+  color: var(--brand-secondary, #00afc4);
+  font-style: italic;
+  font-weight: 500;
+}
+
+[data-brand="acapulco-padel-tour"] .club-identity__attribution-brand,
+[data-club="acapulco-padel-tour"] .club-identity__attribution-brand {
+  color: var(--brand-accent, #a7d800);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+[data-brand="acapulco-padel-tour"] .club-identity__name,
+[data-club="acapulco-padel-tour"] .club-identity__name {
+  color: var(--brand-accent, #a7d800);
 }
