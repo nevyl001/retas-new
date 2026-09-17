@@ -1,5 +1,22 @@
-/* Acapulco Padel Tour — acentos premium (navy + turquesa + lima). */
+/* Acapulco Padel Tour — acentos + contraste integral
+   Tenant dark (navy). Las islas con fondo blanco/crema hardcoded
+   remapean tinta a navy APT para no heredar --ro-text-primary blanco.
+*/
 
+/* ── Tokens locales de isla clara ── */
+[data-brand="acapulco-padel-tour"],
+[data-club="acapulco-padel-tour"] {
+  --apt-ink: #002b6b;
+  --apt-ink-muted: #3d5f82;
+  --apt-ink-dim: #5a7a9a;
+  --apt-lime: #a7d800;
+  --apt-turquoise: #00afc4;
+  --apt-navy: #002b6b;
+  --apt-navy-deep: #001f4d;
+  --apt-on-lime: #001f4d;
+}
+
+/* ── Chrome / header ── */
 [data-brand="acapulco-padel-tour"] .user-header,
 [data-club="acapulco-padel-tour"] .user-header {
   background: var(--brand-surface, #001f4d);
@@ -13,78 +30,7 @@
   background: var(--ro-accent-dim);
 }
 
-[data-brand="acapulco-padel-tour"] .rv-button-primary,
-[data-club="acapulco-padel-tour"] .rv-button-primary {
-  background: var(--brand-accent, #a7d800);
-  color: var(--ro-text-on-accent, #001f4d);
-  border-color: transparent;
-}
-
-[data-brand="acapulco-padel-tour"] .rv-button-primary:hover:not(:disabled),
-[data-club="acapulco-padel-tour"] .rv-button-primary:hover:not(:disabled) {
-  background: var(--ro-accent-hover, #bce62a);
-}
-
-[data-brand="acapulco-padel-tour"] .home-mode-card:hover,
-[data-club="acapulco-padel-tour"] .home-mode-card:hover,
-[data-brand="acapulco-padel-tour"] .home-mode-card:focus-visible,
-[data-club="acapulco-padel-tour"] .home-mode-card:focus-visible {
-  border-color: color-mix(in srgb, var(--brand-accent) 55%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-accent) 25%, transparent);
-}
-
-[data-brand="acapulco-padel-tour"] .rv-mode-header__eyebrow,
-[data-club="acapulco-padel-tour"] .rv-mode-header__eyebrow {
-  color: var(--brand-accent, #a7d800);
-}
-
-[data-brand="acapulco-padel-tour"] a:focus-visible,
-[data-club="acapulco-padel-tour"] a:focus-visible,
-[data-brand="acapulco-padel-tour"] button:focus-visible,
-[data-club="acapulco-padel-tour"] button:focus-visible,
-[data-brand="acapulco-padel-tour"] input:focus-visible,
-[data-club="acapulco-padel-tour"] input:focus-visible {
-  outline-color: var(--brand-accent, #a7d800);
-}
-
-[data-brand="acapulco-padel-tour"] .main-layout .game-mode-card:hover:not(:disabled),
-[data-club="acapulco-padel-tour"] .main-layout .game-mode-card:hover:not(:disabled),
-[data-brand="acapulco-padel-tour"] .main-layout .game-mode-card:focus-visible,
-[data-club="acapulco-padel-tour"] .main-layout .game-mode-card:focus-visible {
-  border-color: color-mix(in srgb, var(--brand-accent) 45%, transparent);
-}
-
-[data-brand="acapulco-padel-tour"] .main-layout .rv-button-primary,
-[data-club="acapulco-padel-tour"] .main-layout .rv-button-primary,
-[data-brand="acapulco-padel-tour"] .liga-page .rv-button-primary,
-[data-club="acapulco-padel-tour"] .liga-page .rv-button-primary {
-  background: var(--brand-accent, #a7d800);
-  color: var(--ro-text-on-accent, #001f4d);
-}
-
-[data-brand="acapulco-padel-tour"] .liga-page .liga-tab--active,
-[data-club="acapulco-padel-tour"] .liga-page .liga-tab--active {
-  border-color: var(--brand-accent, #a7d800);
-  color: var(--brand-accent, #a7d800);
-}
-
-[data-brand="acapulco-padel-tour"] .liga-page .liga-badge--live,
-[data-club="acapulco-padel-tour"] .liga-page .liga-badge--live,
-[data-brand="acapulco-padel-tour"] .liga-page .liga-badge--in_progress,
-[data-club="acapulco-padel-tour"] .liga-page .liga-badge--in_progress {
-  background: color-mix(in srgb, var(--brand-accent) 18%, transparent);
-  color: var(--brand-accent, #a7d800);
-  border-color: color-mix(in srgb, var(--brand-accent) 35%, transparent);
-}
-
-/* Links / acentos secundarios en turquesa */
-[data-brand="acapulco-padel-tour"] .main-layout a:not(.rv-button-primary),
-[data-club="acapulco-padel-tour"] .main-layout a:not(.rv-button-primary) {
-  color: var(--brand-secondary, #00afc4);
-}
-
-/* Banner blanco: el logo APT (fondo blanco) se lee limpio sobre el header navy.
-   No altera el asset del logo — solo el contenedor. */
+/* Banner blanco: logo APT intacto, enmarcado limpio sobre navy */
 [data-brand="acapulco-padel-tour"] .user-header-logo .club-identity--premium > .club-identity__logo,
 [data-club="acapulco-padel-tour"] .user-header-logo .club-identity--premium > .club-identity__logo,
 [data-brand="acapulco-padel-tour"] .club-identity--premium.club-identity--logo-only > .club-identity__logo,
@@ -103,52 +49,168 @@
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
 }
 
-/* "by Riviera Open" — se distingue del navy y del banner blanco */
 [data-brand="acapulco-padel-tour"] .club-identity__attribution-by,
 [data-club="acapulco-padel-tour"] .club-identity__attribution-by {
-  color: var(--brand-secondary, #00afc4);
+  color: var(--apt-turquoise);
   font-style: italic;
   font-weight: 500;
 }
 
 [data-brand="acapulco-padel-tour"] .club-identity__attribution-brand,
-[data-club="acapulco-padel-tour"] .club-identity__attribution-brand {
-  color: var(--brand-accent, #a7d800);
+[data-club="acapulco-padel-tour"] .club-identity__attribution-brand,
+[data-brand="acapulco-padel-tour"] .club-identity__name,
+[data-club="acapulco-padel-tour"] .club-identity__name {
+  color: var(--apt-lime);
   font-weight: 800;
   letter-spacing: 0.04em;
 }
 
-[data-brand="acapulco-padel-tour"] .club-identity__name,
-[data-club="acapulco-padel-tour"] .club-identity__name {
-  color: var(--brand-accent, #a7d800);
+/* ── CTAs lima: texto navy (legible) ── */
+[data-brand="acapulco-padel-tour"] .rv-button-primary,
+[data-club="acapulco-padel-tour"] .rv-button-primary,
+[data-brand="acapulco-padel-tour"] .riviera-btn-primary,
+[data-club="acapulco-padel-tour"] .riviera-btn-primary,
+[data-brand="acapulco-padel-tour"] .main-layout .rv-button-primary,
+[data-club="acapulco-padel-tour"] .main-layout .rv-button-primary,
+[data-brand="acapulco-padel-tour"] .liga-page .rv-button-primary,
+[data-club="acapulco-padel-tour"] .liga-page .rv-button-primary {
+  background: var(--apt-lime);
+  color: var(--apt-on-lime) !important;
+  border-color: transparent;
+  -webkit-text-fill-color: var(--apt-on-lime);
 }
 
-/* Modal Nuevo jugador: superficie clara legible (navy/turquesa/lima APT) */
+[data-brand="acapulco-padel-tour"] .rv-button-primary:hover:not(:disabled),
+[data-club="acapulco-padel-tour"] .rv-button-primary:hover:not(:disabled),
+[data-brand="acapulco-padel-tour"] .riviera-btn-primary:hover:not(:disabled),
+[data-club="acapulco-padel-tour"] .riviera-btn-primary:hover:not(:disabled) {
+  background: var(--ro-accent-hover, #bce62a);
+  color: var(--apt-on-lime) !important;
+  -webkit-text-fill-color: var(--apt-on-lime);
+}
+
+[data-brand="acapulco-padel-tour"] .home-mode-card:hover,
+[data-club="acapulco-padel-tour"] .home-mode-card:hover,
+[data-brand="acapulco-padel-tour"] .home-mode-card:focus-visible,
+[data-club="acapulco-padel-tour"] .home-mode-card:focus-visible,
+[data-brand="acapulco-padel-tour"] .main-layout .game-mode-card:hover:not(:disabled),
+[data-club="acapulco-padel-tour"] .main-layout .game-mode-card:hover:not(:disabled),
+[data-brand="acapulco-padel-tour"] .main-layout .game-mode-card:focus-visible,
+[data-club="acapulco-padel-tour"] .main-layout .game-mode-card:focus-visible {
+  border-color: color-mix(in srgb, var(--apt-lime) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--apt-lime) 25%, transparent);
+}
+
+[data-brand="acapulco-padel-tour"] .rv-mode-header__eyebrow,
+[data-club="acapulco-padel-tour"] .rv-mode-header__eyebrow {
+  color: var(--apt-lime);
+}
+
+[data-brand="acapulco-padel-tour"] a:focus-visible,
+[data-club="acapulco-padel-tour"] a:focus-visible,
+[data-brand="acapulco-padel-tour"] button:focus-visible,
+[data-club="acapulco-padel-tour"] button:focus-visible,
+[data-brand="acapulco-padel-tour"] input:focus-visible,
+[data-club="acapulco-padel-tour"] input:focus-visible {
+  outline-color: var(--apt-lime);
+}
+
+[data-brand="acapulco-padel-tour"] .liga-page .liga-tab--active,
+[data-club="acapulco-padel-tour"] .liga-page .liga-tab--active {
+  border-color: var(--apt-lime);
+  color: var(--apt-lime);
+}
+
+[data-brand="acapulco-padel-tour"] .liga-page .liga-badge--live,
+[data-club="acapulco-padel-tour"] .liga-page .liga-badge--live,
+[data-brand="acapulco-padel-tour"] .liga-page .liga-badge--in_progress,
+[data-club="acapulco-padel-tour"] .liga-page .liga-badge--in_progress {
+  background: color-mix(in srgb, var(--apt-lime) 18%, transparent);
+  color: var(--apt-lime);
+  border-color: color-mix(in srgb, var(--apt-lime) 35%, transparent);
+}
+
+/* ============================================================
+   ISLAS CLARAS — remap de tinta (una sola capa para toda la cuenta)
+   ============================================================ */
+[data-brand="acapulco-padel-tour"] .rj-ficha-photo-cta,
+[data-club="acapulco-padel-tour"] .rj-ficha-photo-cta,
+[data-brand="acapulco-padel-tour"] .rj-modal.rj-modal--new-player,
+[data-club="acapulco-padel-tour"] .rj-modal.rj-modal--new-player,
+[data-brand="acapulco-padel-tour"] .coaching-hero,
+[data-club="acapulco-padel-tour"] .coaching-hero,
+[data-brand="acapulco-padel-tour"] .coaching-card,
+[data-club="acapulco-padel-tour"] .coaching-card,
+[data-brand="acapulco-padel-tour"] .coaching-panel,
+[data-club="acapulco-padel-tour"] .coaching-panel,
+[data-brand="acapulco-padel-tour"] .coaching-back,
+[data-club="acapulco-padel-tour"] .coaching-back,
+[data-brand="acapulco-padel-tour"] .mode-section-tabs__btn:not(.mode-section-tabs__btn--active),
+[data-club="acapulco-padel-tour"] .mode-section-tabs__btn:not(.mode-section-tabs__btn--active),
+[data-brand="acapulco-padel-tour"] .reta-eq-logo-uploader__btn,
+[data-club="acapulco-padel-tour"] .reta-eq-logo-uploader__btn,
+[data-brand="acapulco-padel-tour"] .reta-eq-cta,
+[data-club="acapulco-padel-tour"] .reta-eq-cta,
+[data-brand="acapulco-padel-tour"] .duelo2v2-public-share .public-link-button,
+[data-club="acapulco-padel-tour"] .duelo2v2-public-share .public-link-button {
+  --ro-text-primary: var(--apt-ink);
+  --ro-text-secondary: var(--apt-ink-muted);
+  --ro-text-muted: var(--apt-ink-dim);
+  --text-primary: var(--apt-ink);
+  --text-secondary: var(--apt-ink-muted);
+  --text-muted: var(--apt-ink-dim);
+  --effective-text: var(--apt-ink);
+  --effective-muted: var(--apt-ink-muted);
+  color: var(--apt-ink);
+}
+
+/* Photo CTA ficha */
+[data-brand="acapulco-padel-tour"] .rj-ficha-photo-cta,
+[data-club="acapulco-padel-tour"] .rj-ficha-photo-cta {
+  background: #f3f7fb;
+  border-color: rgba(0, 43, 107, 0.14);
+}
+
+[data-brand="acapulco-padel-tour"] .rj-ficha-photo-cta__text,
+[data-club="acapulco-padel-tour"] .rj-ficha-photo-cta__text {
+  color: var(--apt-ink) !important;
+}
+
+[data-brand="acapulco-padel-tour"] .rj-ficha-photo-cta .riviera-btn-primary,
+[data-club="acapulco-padel-tour"] .rj-ficha-photo-cta .riviera-btn-primary {
+  background: var(--apt-lime);
+  color: var(--apt-on-lime) !important;
+  -webkit-text-fill-color: var(--apt-on-lime);
+  border-color: transparent;
+}
+
+/* Modal Nuevo jugador */
 [data-brand="acapulco-padel-tour"] .rj-modal.rj-modal--new-player,
 [data-club="acapulco-padel-tour"] .rj-modal.rj-modal--new-player {
-  --rj-np-accent: #a7d800;
-  --rj-np-ink: #002b6b;
-  --rj-np-muted: #3d5f82;
+  --rj-np-accent: var(--apt-lime);
+  --rj-np-ink: var(--apt-ink);
+  --rj-np-muted: var(--apt-ink-muted);
   --rj-np-surface: #f3f7fb;
   --rj-np-line: rgba(0, 43, 107, 0.14);
-  --rj-np-kicker: #00afc4;
-  color: #002b6b;
+  --rj-np-kicker: var(--apt-turquoise);
+  color: var(--apt-ink);
 }
 
 [data-brand="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions .riviera-btn-ghost,
 [data-club="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions .riviera-btn-ghost,
 [data-brand="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions button[type="button"],
 [data-club="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions button[type="button"] {
-  color: #00afc4;
+  color: var(--apt-turquoise);
 }
 
 [data-brand="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions .riviera-btn-primary,
 [data-club="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions .riviera-btn-primary,
 [data-brand="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions button[type="submit"],
 [data-club="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions button[type="submit"] {
-  background: #002b6b;
-  border-color: #002b6b;
-  color: #ffffff;
+  background: var(--apt-navy);
+  border-color: var(--apt-navy);
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff;
 }
 
 [data-brand="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions .riviera-btn-primary:hover:not(:disabled),
@@ -157,4 +219,35 @@
 [data-club="acapulco-padel-tour"] .rj-modal--new-player .rj-new-player__actions button[type="submit"]:hover:not(:disabled) {
   background: #003a7a;
   border-color: #003a7a;
+}
+
+/* Tabs móviles blancos */
+[data-brand="acapulco-padel-tour"] .mode-section-tabs__btn:not(.mode-section-tabs__btn--active),
+[data-club="acapulco-padel-tour"] .mode-section-tabs__btn:not(.mode-section-tabs__btn--active) {
+  color: var(--apt-ink-muted);
+  border-color: rgba(0, 43, 107, 0.2);
+}
+
+[data-brand="acapulco-padel-tour"] .mode-section-tabs__btn--active,
+[data-club="acapulco-padel-tour"] .mode-section-tabs__btn--active,
+[data-brand="acapulco-padel-tour"] .mode-section-tabs__btn[aria-selected="true"],
+[data-club="acapulco-padel-tour"] .mode-section-tabs__btn[aria-selected="true"] {
+  background: var(--apt-navy);
+  border-color: var(--apt-navy);
+  color: #ffffff;
+}
+
+/* Coaching (paneles blancos) */
+[data-brand="acapulco-padel-tour"] .coaching-title,
+[data-club="acapulco-padel-tour"] .coaching-title,
+[data-brand="acapulco-padel-tour"] .coaching-back,
+[data-club="acapulco-padel-tour"] .coaching-back {
+  color: var(--apt-ink);
+}
+
+[data-brand="acapulco-padel-tour"] .coaching-kicker,
+[data-club="acapulco-padel-tour"] .coaching-kicker,
+[data-brand="acapulco-padel-tour"] .coaching-lead,
+[data-club="acapulco-padel-tour"] .coaching-lead {
+  color: var(--apt-ink-muted);
 }

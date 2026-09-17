@@ -124,6 +124,8 @@
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: #f3f4f6;
+  /* Isla clara: no heredar --ro-text-primary de tenants dark (quedaría blanco). */
+  color: #111827;
 }
 
 .rj-ficha-photo-cta__text {
@@ -132,5 +134,5 @@
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.4;
-  color: var(--ro-text-primary, #111827);
+  color: #111827;
 }
