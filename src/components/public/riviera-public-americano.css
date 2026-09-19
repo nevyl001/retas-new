@@ -2177,11 +2177,21 @@
 
 /* Leyenda criterios de clasificación — vista pública reta */
 .te-public--reta .te-pub-standings-scoring-help {
-  margin: 0 0 1rem;
-  padding: 0.85rem 1rem;
+  margin: 0 0 1.1rem;
+  padding: 1rem 1.15rem;
   border-radius: var(--radius-md, 10px);
   border: 0.5px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
-  background: rgba(0, 0, 0, 0.22);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.te-public--reta .te-pub-standings-scoring-help .standings-scoring-help__lead {
+  color: #ffffff;
+  font-size: clamp(1.05rem, 3vw, 1.25rem);
+}
+
+.te-public--reta .te-pub-standings-scoring-help .standings-scoring-help__lead strong {
+  color: #ffffff;
+  font-weight: 800;
 }
 
 .te-public--reta .te-pub-standings-scoring-help .standings-scoring-help__title {
@@ -2189,8 +2199,14 @@
   letter-spacing: 0.1em;
 }
 
+.te-public--reta .te-pub-standings-scoring-help .standings-scoring-help__text {
+  font-size: clamp(0.9375rem, 2.6vw, 1.0625rem);
+  color: rgba(255, 255, 255, 0.82);
+}
+
 .te-public--reta .te-pub-standings-scoring-help .standings-scoring-help__text strong {
-  color: var(--text-secondary);
+  color: #ffffff;
+  font-weight: 800;
 }
 
 .te-public--reta .te-pub-standings-scoring-help .standings-scoring-help__legend {

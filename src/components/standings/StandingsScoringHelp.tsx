@@ -15,7 +15,58 @@ interface StandingsScoringHelpProps {
   mode?: StandingsHelpMode;
 }
 
-function buildBriefOrderText(
+function buildHelpCopy(
+  variant: "default" | "express",
+  mode: StandingsHelpMode
+): { lead: React.ReactNode; order: React.ReactNode } {
+  const isExpress = variant === "express" || mode === "express";
+  if (isExpress) {
+    return {
+      lead: (
+        <>
+          Gana quien tenga mejor <strong>diferencia (DIF)</strong>.
+        </>
+      ),
+      order: (
+        <>
+          Orden: <strong>DIF</strong> → <strong>FAV</strong> → <strong>PG</strong> →
+          H2H · <strong>PTS</strong> = referencia
+        </>
+      ),
+    };
+  }
+  if (mode === "dual-meet") {
+    return {
+      lead: (
+        <>
+          Gana el equipo con más <strong>games acumulados (FAV)</strong>.
+        </>
+      ),
+      order: (
+        <>
+          Orden: <strong>FAV</strong> → <strong>CON</strong> (menos) →{" "}
+          <strong>PG</strong> · <strong>PTS</strong> referencia
+        </>
+      ),
+    };
+  }
+  return {
+    lead: (
+      <>
+        Gana la pareja con más <strong>games acumulados (FAV)</strong>.
+      </>
+    ),
+    order: (
+      <>
+        Luego <strong>DIF</strong> (diferencia) y por último <strong>PG</strong>{" "}
+        (partidos ganados). Orden: <strong>FAV</strong> → <strong>DIF</strong> →{" "}
+        <strong>PG</strong>
+      </>
+    ),
+  };
+}
+
+function buildCompactLine(
   variant: "default" | "express",
   mode: StandingsHelpMode
 ): React.ReactNode {
@@ -31,21 +82,15 @@ function buildBriefOrderText(
   if (mode === "dual-meet") {
     return (
       <>
-        Orden: <strong>FAV</strong>
-        {" → "}
-        <strong>CON</strong> (menos)
-        {" → "}
-        <strong>PG</strong>
-        {" · "}
-        <strong>PTS</strong> referencia
-        {" · "}
-        Duelo por equipo
+        Gana con más <strong>FAV</strong> · Orden: <strong>FAV</strong> →{" "}
+        <strong>CON</strong> → <strong>PG</strong>
       </>
     );
   }
   return (
     <>
-      Orden: <strong>FAV</strong> → <strong>DIF</strong> → <strong>PG</strong>
+      Gana con más <strong>FAV</strong> (games) · Orden: <strong>FAV</strong> →{" "}
+      <strong>DIF</strong> → <strong>PG</strong>
     </>
   );
 }
@@ -60,7 +105,6 @@ export const StandingsScoringHelp: React.FC<StandingsScoringHelpProps> = ({
   const mode: StandingsHelpMode =
     modeProp ?? (variant === "express" ? "express" : "round-robin");
 
-  const briefText = buildBriefOrderText(variant, mode);
   const schedulingHint = getStandingsCompactSchedulingHint(mode);
 
   if (compact) {
@@ -69,18 +113,21 @@ export const StandingsScoringHelp: React.FC<StandingsScoringHelpProps> = ({
         className={`standings-scoring-help standings-scoring-help--compact ${className}`.trim()}
         aria-label="Cómo se calcula la clasificación"
       >
-        {briefText}
+        {buildCompactLine(variant, mode)}
         {schedulingHint ? <> · {schedulingHint}</> : null}
       </p>
     );
   }
+
+  const { lead, order } = buildHelpCopy(variant, mode);
 
   return (
     <aside
       className={`standings-scoring-help standings-scoring-help--brief ${className}`.trim()}
       aria-label="Cómo se calcula la clasificación"
     >
-      <p className="standings-scoring-help__text">{briefText}</p>
+      <p className="standings-scoring-help__lead">{lead}</p>
+      <p className="standings-scoring-help__text">{order}</p>
     </aside>
   );
 };

@@ -1,28 +1,42 @@
 .standings-scoring-help {
-  margin: 0 0 0.75rem;
-  padding: 0.5rem 0.65rem;
-  border-radius: 8px;
+  margin: 0 0 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
   border: 1px solid var(--border-default, var(--ro-border-subtle));
   background: var(--ro-bg-inset);
-  font-size: 0.75rem;
-  line-height: 1.4;
+  font-size: 0.9375rem;
+  line-height: 1.45;
   color: var(--color-text-secondary, var(--ro-text-muted));
 }
 
 .standings-scoring-help--brief {
-  padding: 0.45rem 0.6rem;
+  padding: 0.85rem 1rem;
+}
+
+.standings-scoring-help__lead {
+  margin: 0 0 0.35rem;
+  font-size: clamp(0.95rem, 2.8vw, 1.125rem);
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--color-text-primary, var(--ro-text-primary, #f3f4f6));
+}
+
+.standings-scoring-help__lead strong {
+  color: inherit;
+  font-weight: 800;
 }
 
 .standings-scoring-help--brief .standings-scoring-help__text {
   margin: 0;
-  font-size: 0.75rem;
-  line-height: 1.35;
+  font-size: clamp(0.875rem, 2.4vw, 1rem);
+  line-height: 1.45;
+  color: var(--color-text-secondary, var(--ro-text-secondary));
 }
 
 .standings-scoring-help__title {
   margin: 0 0 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-text-primary, #f3f4f6);
@@ -33,13 +47,13 @@
 }
 
 .standings-scoring-help__text strong {
-  color: var(--text-muted);
-  font-weight: 600;
+  color: var(--color-text-primary, var(--ro-text-primary, #f3f4f6));
+  font-weight: 800;
 }
 
 .standings-scoring-help__legend {
   margin: 0.45rem 0 0;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--color-text-muted, #6b7280);
 }
 
@@ -49,29 +63,37 @@
 }
 
 .americano-ranking .standings-scoring-help {
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.75rem;
 }
 
 .standings-scoring-help--compact {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.55rem;
   padding: 0;
   border: none;
   background: transparent;
-  font-size: 0.75rem;
+  font-size: clamp(0.8125rem, 2.2vw, 0.9375rem);
   line-height: 1.4;
+  color: var(--color-text-secondary, var(--ro-text-secondary));
 }
 
 .standings-scoring-help--compact strong {
-  color: var(--text-muted);
+  color: var(--color-text-primary, var(--ro-text-primary, #f3f4f6));
+  font-weight: 800;
 }
 
 @media (max-width: 768px) {
   .standings-scoring-help,
   .standings-scoring-help--brief {
-    margin-bottom: 0.55rem;
-    padding: 0.4rem 0.55rem;
-    font-size: 0.7rem;
-    line-height: 1.32;
+    margin-bottom: 0.7rem;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .standings-scoring-help__lead {
+    font-size: 1.05rem;
+  }
+
+  .standings-scoring-help--brief .standings-scoring-help__text {
+    font-size: 0.9375rem;
   }
 
   .standings-scoring-help__title {
@@ -79,6 +101,6 @@
   }
 
   .standings-scoring-help--compact {
-    font-size: 0.68rem;
+    font-size: 0.875rem;
   }
 }

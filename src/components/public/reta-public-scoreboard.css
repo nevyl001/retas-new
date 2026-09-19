@@ -1524,15 +1524,15 @@
   width: 100%;
   max-width: 100%;
   margin: 0 !important;
-  padding: 0.55rem 0.85rem !important;
+  padding: 0.75rem 1rem !important;
   border-radius: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.05);
   font-family: var(--font-body, var(--ro-font-body), system-ui, sans-serif);
-  font-size: 0.72rem !important;
+  font-size: 0.9375rem !important;
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: rgba(212, 212, 216, 0.88) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
   line-height: 1.45;
   text-align: left;
   white-space: normal;

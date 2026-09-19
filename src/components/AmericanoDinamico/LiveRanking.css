@@ -81,14 +81,14 @@
 }
 
 .americano-ranking .standings-scoring-help {
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.75rem;
 }
 
 .americano-ranking .standings-scoring-help--compact {
-  margin-bottom: 0.5rem;
-  padding: 0.45rem 0.6rem;
-  font-size: 0.72rem;
-  line-height: 1.4;
+  margin-bottom: 0.55rem;
+  padding: 0.65rem 0.8rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
   color: var(--text-secondary);
   background: var(--ro-bg-inset);
   border: 1px solid var(--border-subtle);
@@ -96,26 +96,31 @@
 }
 
 .americano-ranking .standings-scoring-help--compact strong {
-  color: var(--ro-gold-text);
-  font-weight: 600;
+  color: var(--color-text-primary, var(--ro-text-primary));
+  font-weight: 800;
 }
 
 .americano-ranking .standings-scoring-help {
   background: var(--ro-bg-elevated);
   border-color: var(--border-subtle);
   color: var(--text-secondary);
-  font-size: 0.8125rem;
-  line-height: 1.4;
+  font-size: 0.9375rem;
+  line-height: 1.45;
 }
 
 .americano-ranking .standings-scoring-help__title {
   color: var(--text-primary);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
+}
+
+.americano-ranking .standings-scoring-help__lead {
+  color: var(--text-primary);
+  font-size: 1.05rem;
 }
 
 .americano-ranking .standings-scoring-help__text {
-  font-size: 0.75rem;
-  line-height: 1.4;
+  font-size: 0.9375rem;
+  line-height: 1.45;
 }
 
 .americano-ranking .standings-scoring-help__text strong {
@@ -142,8 +147,8 @@
   }
 
   .americano-ranking .standings-scoring-help--compact {
-    font-size: 0.68rem;
-    padding: 0.4rem 0.55rem;
+    font-size: 0.9rem;
+    padding: 0.6rem 0.75rem;
   }
 }
 
