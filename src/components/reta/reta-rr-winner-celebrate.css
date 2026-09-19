@@ -1,7 +1,9 @@
 .reta-rr-celebrate {
+  /* Ancho compartido con .reta-thanks-wrap — ambas cards alineadas */
+  --reta-share-card-max: 52rem;
   margin-top: clamp(1rem, 2.5vw, 1.75rem);
   width: 100%;
-  max-width: min(100%, 52rem);
+  max-width: min(100%, var(--reta-share-card-max));
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
@@ -246,7 +248,8 @@
 
 @media (min-width: 640px) {
   .reta-rr-celebrate {
-    max-width: min(100%, 52rem);
+    --reta-share-card-max: 52rem;
+    max-width: min(100%, var(--reta-share-card-max));
     margin-left: auto;
     margin-right: auto;
   }
@@ -288,7 +291,8 @@
 
 @media (min-width: 900px) {
   .reta-rr-celebrate {
-    max-width: min(100%, 58rem);
+    --reta-share-card-max: 60rem;
+    max-width: min(100%, var(--reta-share-card-max));
   }
 
   .reta-rr-celebrate .podium-card__inner {
