@@ -124,8 +124,8 @@ function PodiumStats({
 }) {
   if (layout === "round-robin") {
     return (
-      <div className="podium-card__stats" aria-label="Resumen Round Robin">
-        <div className="podium-card__stat">
+      <div className="podium-card__stats" aria-label="Resumen de la reta">
+        <div className="podium-card__stat podium-card__stat--lead">
           <span className="podium-card__stat-label">Juegos a favor</span>
           <span
             className="podium-card__stat-value"
@@ -133,11 +133,15 @@ function PodiumStats({
           >
             {stats.juegosFavor}
           </span>
+          <span className="podium-card__stat-hint">1.er criterio</span>
         </div>
         <div className="podium-card__stat">
-          <span className="podium-card__stat-label">Juegos en contra</span>
-          <span className="podium-card__stat-value podium-card__stat-value--losses">
-            {stats.juegosContra}
+          <span className="podium-card__stat-label">Dif. juegos</span>
+          <span
+            className="podium-card__stat-value"
+            style={{ color: accent }}
+          >
+            {formatPublicPodiumDif(stats.dif)}
           </span>
         </div>
         <div className="podium-card__stat">
@@ -150,12 +154,9 @@ function PodiumStats({
           </span>
         </div>
         <div className="podium-card__stat">
-          <span className="podium-card__stat-label">Dif. juegos</span>
-          <span
-            className="podium-card__stat-value"
-            style={{ color: accent }}
-          >
-            {formatPublicPodiumDif(stats.dif)}
+          <span className="podium-card__stat-label">Juegos en contra</span>
+          <span className="podium-card__stat-value podium-card__stat-value--losses">
+            {stats.juegosContra}
           </span>
         </div>
       </div>
@@ -354,11 +355,21 @@ export const PodiumCard: React.FC<{
             <p className="podium-card__quote">{message}</p>
 
             {stats ? (
-              <PodiumStats
-                stats={stats}
-                accent={variant.accent}
-                layout={statsLayout}
-              />
+              <>
+                {statsLayout === "round-robin" ? (
+                  <p className="podium-card__summary-kicker">
+                    Resumen de la reta
+                    <span className="podium-card__summary-kicker-sub">
+                      Ganan por games acumulados (FAV)
+                    </span>
+                  </p>
+                ) : null}
+                <PodiumStats
+                  stats={stats}
+                  accent={variant.accent}
+                  layout={statsLayout}
+                />
+              </>
             ) : null}
 
             {afterStats}
