@@ -169,6 +169,151 @@ export function matchPairingKey(
   return `${round}:${a}:${b}`;
 }
 
+/**
+ * Elige qué parejas de un equipo juegan esta ronda.
+ * Si hay menos cupos que parejas, rota quién descansa para que no
+ * descanse siempre la misma pareja.
+ */
+export function selectPlayingPairsForRound(
+  teamPairs: Pair[],
+  playCount: number,
+  roundZeroBased: number
+): Pair[] {
+  const n = teamPairs.length;
+  if (playCount <= 0 || n === 0) return [];
+  if (playCount >= n) return teamPairs.slice();
+
+  const restCount = n - playCount;
+  const resting = new Set<number>();
+  for (let j = 0; j < restCount; j += 1) {
+    resting.add((roundZeroBased * restCount + j) % n);
+  }
+  return teamPairs.filter((_, idx) => !resting.has(idx));
+}
+
+type TeamEdge = { i: number; j: number };
+
+/**
+ * Empaqueta aristas pendientes en una ronda de hasta `capacity` partidos,
+ * sin repetir pareja. Prioriza aristas que involucran a quienes descansaron
+ * la ronda anterior (evita el mismo descanso seguido).
+ */
+function packRoundEdges(
+  pending: TeamEdge[],
+  capacity: number,
+  preferPlay0: Set<number>,
+  preferPlay1: Set<number>
+): { round: TeamEdge[]; remaining: TeamEdge[] } {
+  const scored = pending
+    .map((e, idx) => ({
+      e,
+      idx,
+      score:
+        (preferPlay0.has(e.i) ? 2 : 0) +
+        (preferPlay1.has(e.j) ? 2 : 0),
+    }))
+    .sort((a, b) => b.score - a.score || a.idx - b.idx);
+
+  const used0 = new Set<number>();
+  const used1 = new Set<number>();
+  const round: TeamEdge[] = [];
+  const remaining: TeamEdge[] = [];
+
+  for (const { e } of scored) {
+    if (
+      round.length < capacity &&
+      !used0.has(e.i) &&
+      !used1.has(e.j)
+    ) {
+      round.push(e);
+      used0.add(e.i);
+      used1.add(e.j);
+    } else {
+      remaining.push(e);
+    }
+  }
+
+  return { round, remaining };
+}
+
+/**
+ * Calendario cruzado equipo0 × equipo1: todas las parejas de un equipo
+ * contra todas las del otro (sin partidos intra-equipo). Cuando hay menos
+ * canchas que parejas, rota los descansos entre rondas.
+ */
+export function generateTeamsCrossSchedule(
+  team0Pairs: Pair[],
+  team1Pairs: Pair[],
+  courts: number
+): ScheduledRoundRobinMatch[] {
+  const n0 = team0Pairs.length;
+  const n1 = team1Pairs.length;
+  if (n0 === 0 || n1 === 0) return [];
+
+  const matchesPerRound = Math.min(n0, n1, Math.max(1, courts));
+  const effectiveCourts = Math.min(
+    Math.max(1, courts),
+    Math.max(1, matchesPerRound)
+  );
+
+  // Todas las aristas únicas en orden circular (cobertura completa).
+  const pending: TeamEdge[] = [];
+  const seen = new Set<string>();
+  for (let offset = 0; offset < n1; offset += 1) {
+    for (let i = 0; i < n0; i += 1) {
+      const j = (i + offset) % n1;
+      const key = `${i}:${j}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      pending.push({ i, j });
+    }
+  }
+
+  const scheduled: ScheduledRoundRobinMatch[] = [];
+  let queue = pending;
+  let roundNum = 1;
+  let preferPlay0 = new Set<number>();
+  let preferPlay1 = new Set<number>();
+
+  while (queue.length > 0) {
+    const { round, remaining } = packRoundEdges(
+      queue,
+      matchesPerRound,
+      preferPlay0,
+      preferPlay1
+    );
+    if (round.length === 0) break;
+
+    const playing0 = new Set(round.map((e) => e.i));
+    const playing1 = new Set(round.map((e) => e.j));
+    preferPlay0 = new Set(
+      [...Array(n0).keys()].filter((i) => !playing0.has(i))
+    );
+    preferPlay1 = new Set(
+      [...Array(n1).keys()].filter((j) => !playing1.has(j))
+    );
+
+    const roundOffset = (roundNum - 1) % Math.max(1, round.length);
+    for (let slotIndex = 0; slotIndex < round.length; slotIndex += 1) {
+      const edge = round[slotIndex];
+      const rotatedSlot = (slotIndex + roundOffset) % round.length;
+      const court =
+        ((roundNum - 1) + rotatedSlot) % effectiveCourts + 1;
+      scheduled.push({
+        pair1: team0Pairs[edge.i],
+        pair2: team1Pairs[edge.j],
+        round: roundNum,
+        court,
+      });
+    }
+
+    queue = remaining;
+    roundNum += 1;
+  }
+
+  return scheduled;
+}
+
 export function buildIdealCourtMap(
   pairs: Pair[],
   courts: number

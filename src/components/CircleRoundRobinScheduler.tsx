@@ -4,7 +4,10 @@ import {
   deleteMatchesByTournamentSafely,
   getMatches,
 } from "../lib/database";
-import { generateCircleRoundRobinSchedule } from "../lib/circleRoundRobinSchedule";
+import {
+  generateCircleRoundRobinSchedule,
+  generateTeamsCrossSchedule,
+} from "../lib/circleRoundRobinSchedule";
 import { debugLog } from "../lib/debug/debugLog";
 
 function pairMatchLabel(pair: Pair): string {
@@ -86,10 +89,9 @@ export class CircleRoundRobinScheduler {
   }
 
   /**
-   * Genera calendario por equipos: cada ronda con partidos simultáneos en todas las canchas,
-   * todas las parejas de un equipo contra las del otro, sin que nadie descanse (cuando equipos iguales).
-   * Round-robin entre dos grupos. Rotación de canchas para AMBOS equipos: en cada ronda la asignación
-   * slot → cancha rota para que todas las parejas (equipo0 y equipo1) jueguen en canchas distintas.
+   * Genera calendario por equipos: partidos solo entre equipos distintos.
+   * Si hay menos canchas que parejas por equipo, ambos equipos rotan quién
+   * descansa cada ronda (no se queda sentada la misma pareja dos rondas seguidas).
    */
   private static generateTeamsSchedule(
     pairs: Pair[],
@@ -118,58 +120,21 @@ export class CircleRoundRobinScheduler {
       return [];
     }
 
-    const n = Math.min(n0, n1);
-    const matchesPerRound = Math.min(n, courts);
-    const totalRounds = Math.ceil((n0 * n1) / matchesPerRound);
-    const team0First = n0 <= n1;
+    const matchesPerRound = Math.min(n0, n1, Math.max(1, courts));
+
+    // Ambos equipos: cobertura completa (todas vs todas) + rotación de descansos.
+    const scheduled = generateTeamsCrossSchedule(team0Pairs, team1Pairs, courts);
+    const totalRounds =
+      scheduled.length > 0 ? Math.max(...scheduled.map((m) => m.round)) : 0;
 
     debugLog("[circle-rr-teams] generando calendario:", {
       equipo0: n0,
       equipo1: n1,
       partidosPorRonda: matchesPerRound,
       totalRondas: totalRounds,
+      partidos: scheduled.length,
+      crucesEsperados: n0 * n1,
     });
-
-    const scheduled: Array<{
-      pair1: Pair;
-      pair2: Pair;
-      round: number;
-      court: number;
-    }> = [];
-
-    // Round-robin: ambos equipos rotan de rival y de cancha.
-    // Ronda r: equipo0[i] vs equipo1[(i+r-1)%n1] (si n0<=n1), o equipo0[(i+r-1)%n0] vs equipo1[i].
-    // Cancha: rotamos la asignación (slot → cancha) por ronda para que las parejas de ambos equipos cambien de cancha.
-    for (let r = 1; r <= totalRounds; r++) {
-      const roundMatches: Array<{ pair1: Pair; pair2: Pair }> = [];
-      for (let i = 0; i < matchesPerRound; i++) {
-        const pair0 = team0First
-          ? team0Pairs[i]
-          : team0Pairs[(i + (r - 1)) % n0];
-        const pair1 = team0First
-          ? team1Pairs[(i + (r - 1)) % n1]
-          : team1Pairs[i];
-        roundMatches.push({ pair1: pair0, pair2: pair1 });
-      }
-      // Asignar cancha rotando por ronda: así ambas parejas del partido (equipo0 y equipo1) cambian de cancha cada ronda.
-      // Nunca más canchas que partidos simultáneos.
-      const effectiveCourts = Math.min(
-        Math.max(1, courts),
-        Math.max(1, matchesPerRound)
-      );
-      const roundOffset = (r - 1) % Math.max(1, matchesPerRound);
-      for (let slotIndex = 0; slotIndex < roundMatches.length; slotIndex++) {
-        const m = roundMatches[slotIndex];
-        const rotatedSlot = (slotIndex + roundOffset) % matchesPerRound;
-        const court = ((r - 1) + rotatedSlot) % effectiveCourts + 1;
-        scheduled.push({
-          pair1: m.pair1,
-          pair2: m.pair2,
-          round: r,
-          court,
-        });
-      }
-    }
 
     const bad = scheduled.filter((m) => {
       const t1 = teamByPairId.get(m.pair1.id);
