@@ -16,6 +16,12 @@ import { formatFechaLegible, dateInputValue } from "../../lib/liga/programacion"
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
 import { resolveLigaJugadorPublicFotos } from "../../lib/liga/publicParejaAvatars";
 import {
+  aggregateJugadorSeasonSupportStats,
+  formatSupportDif,
+  hasMeaningfulSupportStats,
+  type JugadorSeasonSupportStats,
+} from "../../lib/liga/jugadorSeasonSupportStats";
+import {
   getLigaById,
   getRanking,
   getRankingEquipos,
@@ -77,6 +83,16 @@ function jornadaBadgeLabel(estado: LigaJornada["estado"]): string {
   if (estado === "in_progress") return "En curso";
   if (estado === "completed") return "Completada";
   return "Próxima";
+}
+
+/** Jornada expandida por defecto: en curso, o la completed más reciente. */
+function jornadaFeaturedOpenId(jornadas: LigaJornada[]): string | null {
+  const live = jornadas.find((j) => j.estado === "in_progress");
+  if (live) return live.id;
+  const completed = jornadas
+    .filter((j) => j.estado === "completed")
+    .sort((a, b) => b.numero - a.numero);
+  return completed[0]?.id ?? null;
 }
 
 interface LigaDetallePublicaProps {
@@ -241,6 +257,37 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     });
   }, [detalle, rankingEquiposOrdered, parejaFotos, parejaFotosReady]);
 
+  const supportStatsByJugador = useMemo((): Map<
+    string,
+    JugadorSeasonSupportStats
+  > => {
+    if (!detalle || isEquiposModalidad(detalle.modalidad)) {
+      return new Map();
+    }
+    return aggregateJugadorSeasonSupportStats(detalle.jornadas);
+  }, [detalle]);
+
+  const [expandedJornadaIds, setExpandedJornadaIds] = useState<Set<string>>(
+    () => new Set()
+  );
+
+  useEffect(() => {
+    if (!detalle?.jornadas.length || isEquiposModalidad(detalle.modalidad)) {
+      return;
+    }
+    const featured = jornadaFeaturedOpenId(detalle.jornadas);
+    setExpandedJornadaIds((prev) => {
+      // Solo inicializar si aún no hay selección (evita pisar toggles del usuario).
+      if (prev.size > 0) {
+        const stillValid = Array.from(prev).some((id) =>
+          detalle.jornadas.some((j) => j.id === id)
+        );
+        if (stillValid) return prev;
+      }
+      return featured ? new Set([featured]) : new Set();
+    });
+  }, [detalle]);
+
   useEffect(() => {
     if (!detalle?.jornadas.length) {
       setProgramaJornadaId(null);
@@ -344,19 +391,28 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
 
         <div
           className={`liga-pantalla__layout liga-pantalla__layout--liga${
-            esParejasFijas ? " liga-pantalla__layout--parejas" : ""
+            esParejasFijas
+              ? " liga-pantalla__layout--parejas"
+              : " liga-pantalla__layout--individual"
           }`}
         >
           <section
             className={`liga-pantalla-ranking liga-pantalla-ranking--wide${
-              esParejasFijas ? " liga-pantalla-ranking--parejas" : ""
+              esParejasFijas
+                ? " liga-pantalla-ranking--parejas"
+                : " liga-pantalla-ranking--individual-primary"
             }`}
             {...(esParejasFijas
               ? { "aria-labelledby": "liga-pub-general-title" }
-              : {})}
+              : { "aria-labelledby": "liga-ind-ranking-title" })}
           >
             {esParejasFijas ? null : (
-              <h2 className="liga-pantalla-ranking__title">Ranking acumulado</h2>
+              <h2
+                id="liga-ind-ranking-title"
+                className="liga-pantalla-ranking__title"
+              >
+                Ranking acumulado
+              </h2>
             )}
             {esParejasFijas ? (
               <LigaPublicParejasStandings
@@ -367,35 +423,84 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
             ) : ranking.length === 0 ? (
               <p className="liga-pantalla__loading">Sin puntos aún.</p>
             ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Jugador</th>
-                    <th>Pts</th>
-                    <th>Jorn.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ranking.map((row) => (
-                    <tr
-                      key={row.jugador_id}
-                      className={
-                        row.posicion === 1
-                          ? "liga-pantalla-ranking-top"
-                          : undefined
-                      }
-                    >
-                      <td className="liga-pantalla-ranking__rank">{row.posicion}</td>
-                      <td className="liga-pantalla-ranking__name">{row.nombre}</td>
-                      <td className="liga-pantalla-ranking__pts">{row.puntos}</td>
-                      <td className="liga-pantalla-ranking__meta">
-                        {row.jornadas_jugadas}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <>
+                <div className="liga-ind-top3" role="list">
+                  {ranking.slice(0, 3).map((row) => {
+                    const support = supportStatsByJugador.get(row.jugador_id);
+                    const showSupport = hasMeaningfulSupportStats(support);
+                    return (
+                      <article
+                        key={row.jugador_id}
+                        role="listitem"
+                        className={`liga-ind-top3__card liga-ind-top3__card--${row.posicion}`}
+                      >
+                        <span className="liga-ind-top3__pos" aria-hidden>
+                          {row.posicion}
+                        </span>
+                        <div className="liga-ind-top3__body">
+                          <p className="liga-ind-top3__name">{row.nombre}</p>
+                          <p className="liga-ind-top3__pts">
+                            <span className="liga-ind-top3__pts-value">
+                              {row.puntos}
+                            </span>
+                            <span className="liga-ind-top3__pts-label">pts</span>
+                          </p>
+                          {showSupport ? (
+                            <p className="liga-ind-top3__support">
+                              <span className="liga-ind-top3__vd">
+                                {support.victorias}V – {support.derrotas}D
+                              </span>
+                              <span className="liga-ind-top3__dif">
+                                DIF {formatSupportDif(support.diferencia_games)}
+                              </span>
+                            </p>
+                          ) : (
+                            <p className="liga-ind-top3__support liga-ind-top3__support--muted">
+                              {row.jornadas_jugadas}{" "}
+                              {row.jornadas_jugadas === 1
+                                ? "jornada"
+                                : "jornadas"}
+                            </p>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+
+                {ranking.length > 3 ? (
+                  <div className="liga-ind-rest">
+                    <table className="liga-ind-rest__table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Jugador</th>
+                          <th>Pts</th>
+                          <th>Jorn.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ranking.slice(3).map((row) => (
+                          <tr key={row.jugador_id}>
+                            <td className="liga-pantalla-ranking__rank">
+                              {row.posicion}
+                            </td>
+                            <td className="liga-pantalla-ranking__name">
+                              {row.nombre}
+                            </td>
+                            <td className="liga-pantalla-ranking__pts">
+                              {row.puntos}
+                            </td>
+                            <td className="liga-pantalla-ranking__meta">
+                              {row.jornadas_jugadas}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
+              </>
             )}
           </section>
 
@@ -404,11 +509,11 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
             className={`liga-pantalla-jornadas${
               esParejasFijas
                 ? " liga-pantalla-jornadas--parejas liga-pub-programa"
-                : ""
+                : " liga-pantalla-jornadas--individual-secondary"
             }`}
             {...(esParejasFijas
               ? { "aria-labelledby": "liga-pub-programa-title" }
-              : {})}
+              : { "aria-labelledby": "liga-ind-jornadas-title" })}
           >
             {esParejasFijas ? (
               <header className="liga-pub-programa__head">
@@ -428,7 +533,12 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                 </p>
               </header>
             ) : (
-              <h2 className="liga-pantalla-jornadas__title">Jornadas</h2>
+              <h2
+                id="liga-ind-jornadas-title"
+                className="liga-pantalla-jornadas__title"
+              >
+                Jornadas
+              </h2>
             )}
             {detalle.jornadas.length === 0 ? (
               <p className="liga-pantalla__loading">
@@ -468,7 +578,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                   className={`liga-pantalla-jornadas__grid${
                     esParejasFijas
                       ? " liga-pantalla-jornadas__grid--parejas liga-pub-programa__grid"
-                      : ""
+                      : " liga-pantalla-jornadas__grid--individual"
                   }`}
                 >
                   {detalle.jornadas.map((j, jornadaIndex) => {
@@ -487,26 +597,111 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                           : "upcoming";
                     const isSelected =
                       !esParejasFijas || j.id === programaJornadaId;
+                    const defaultOpen = expandedJornadaIds.has(j.id);
+
+                    if (!esParejasFijas) {
+                      return (
+                        <details
+                          key={j.id}
+                          className={`liga-pantalla-jornada-card liga-ind-jornada${
+                            esActiva ? " liga-pantalla-jornada-card--live" : ""
+                          } liga-pantalla-jornada-card--${estadoMod}`}
+                          open={defaultOpen}
+                          onToggle={(e) => {
+                            const isOpen = (e.currentTarget as HTMLDetailsElement)
+                              .open;
+                            setExpandedJornadaIds((prev) => {
+                              const next = new Set(prev);
+                              if (isOpen) next.add(j.id);
+                              else next.delete(j.id);
+                              return next;
+                            });
+                          }}
+                        >
+                          <summary className="liga-ind-jornada__summary">
+                            <div className="liga-pantalla-jornada-card__head">
+                              <div className="liga-pub-programa__card-titles">
+                                <h3 className="liga-pantalla-jornada-card__num">
+                                  Jornada {j.numero}
+                                </h3>
+                                {j.fecha ? (
+                                  <p className="liga-pantalla-jornada-card__fecha">
+                                    {formatFechaLegible(
+                                      dateInputValue(j.fecha)
+                                    )}
+                                  </p>
+                                ) : null}
+                              </div>
+                              <span className={jornadaBadgeClass(j.estado)}>
+                                {jornadaBadgeLabel(j.estado)}
+                              </span>
+                            </div>
+                          </summary>
+                          <div className="liga-pantalla-jornada-card__body">
+                            {matchups.length === 0 ? (
+                              <p className="liga-pantalla-jornada-card__hint">
+                                Partidos pendientes de iniciar
+                              </p>
+                            ) : (
+                              <div className="liga-pantalla-parejas liga-pantalla-parejas--card">
+                                {matchups.map((m) => {
+                                  const { a, b } = splitParejaLabel(m.local);
+                                  return (
+                                    <span
+                                      key={m.id}
+                                      className="liga-pantalla-pareja"
+                                    >
+                                      <span className="liga-pantalla-pareja__a">
+                                        {a}
+                                      </span>
+                                      {b ? (
+                                        <>
+                                          <span
+                                            className="liga-pantalla-pareja__sep"
+                                            aria-hidden
+                                          >
+                                            /
+                                          </span>
+                                          <span className="liga-pantalla-pareja__b">
+                                            {b}
+                                          </span>
+                                        </>
+                                      ) : null}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                          {tienePantalla ? (
+                            <a
+                              href={publicLigaJornadaUrl(ligaId, j.numero)}
+                              className="liga-pantalla-jornada-card__link liga-pub-programa__link"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Ver resultados
+                              <span aria-hidden> →</span>
+                            </a>
+                          ) : null}
+                        </details>
+                      );
+                    }
+
                     return (
                       <article
                         key={j.id}
                         className={`liga-pantalla-jornada-card${
                           esActiva ? " liga-pantalla-jornada-card--live" : ""
-                        }${
-                          esParejasFijas
-                            ? ` liga-pub-programa__card liga-pub-programa__card--${estadoMod}${
-                                isSelected
-                                  ? " liga-pub-programa__card--selected"
-                                  : ""
-                              }`
-                            : ` liga-pantalla-jornada-card--${estadoMod}`
+                        } liga-pub-programa__card liga-pub-programa__card--${estadoMod}${
+                          isSelected
+                            ? " liga-pub-programa__card--selected"
+                            : ""
                         }`}
                         style={
-                          esParejasFijas
-                            ? ({
-                                ["--liga-prog-i" as string]: jornadaIndex,
-                              } as React.CSSProperties)
-                            : undefined
+                          {
+                            ["--liga-prog-i" as string]: jornadaIndex,
+                          } as React.CSSProperties
                         }
                       >
                         <div className="liga-pantalla-jornada-card__head">
@@ -529,61 +724,37 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                             <p className="liga-pantalla-jornada-card__hint">
                               Partidos pendientes de iniciar
                             </p>
-                          ) : esParejasFijas ? (
+                          ) : (
                             <div className="liga-pub-programa__rounds">
                               {groupJornadaPublicMatchesByRonda(
                                 matchups,
                                 j,
                                 detalle.canchas_disponibles
                               ).map(({ ronda, matches: roundMatches }) => (
-                                  <section
-                                    key={`${j.id}-ronda-${ronda}`}
-                                    className="liga-pub-programa__round"
-                                    aria-label={`Ronda ${ronda}`}
-                                  >
-                                    <h4 className="liga-pub-programa__round-title">
-                                      Ronda {ronda}
-                                    </h4>
-                                    <ul className="liga-pantalla-matchups liga-pub-programa__matchups">
-                                      {roundMatches.map((m, matchIndex) => (
-                                        <LigaPubProgramaMatchCard
-                                          key={m.id}
-                                          match={m}
-                                          partido={j.partidos?.find(
-                                            (p) => p.id === m.id
-                                          )}
-                                          esParejasFijas={esParejasFijas}
-                                          jornadaFecha={j.fecha}
-                                          matchIndex={matchIndex}
-                                        />
-                                      ))}
-                                    </ul>
-                                  </section>
-                                ))}
-                            </div>
-                          ) : (
-                            <div className="liga-pantalla-parejas liga-pantalla-parejas--card">
-                              {matchups.map((m) => {
-                                const { a, b } = splitParejaLabel(m.local);
-                                return (
-                                  <span key={m.id} className="liga-pantalla-pareja">
-                                    <span className="liga-pantalla-pareja__a">{a}</span>
-                                    {b ? (
-                                      <>
-                                        <span
-                                          className="liga-pantalla-pareja__sep"
-                                          aria-hidden
-                                        >
-                                          /
-                                        </span>
-                                        <span className="liga-pantalla-pareja__b">
-                                          {b}
-                                        </span>
-                                      </>
-                                    ) : null}
-                                  </span>
-                                );
-                              })}
+                                <section
+                                  key={`${j.id}-ronda-${ronda}`}
+                                  className="liga-pub-programa__round"
+                                  aria-label={`Ronda ${ronda}`}
+                                >
+                                  <h4 className="liga-pub-programa__round-title">
+                                    Ronda {ronda}
+                                  </h4>
+                                  <ul className="liga-pantalla-matchups liga-pub-programa__matchups">
+                                    {roundMatches.map((m, matchIndex) => (
+                                      <LigaPubProgramaMatchCard
+                                        key={m.id}
+                                        match={m}
+                                        partido={j.partidos?.find(
+                                          (p) => p.id === m.id
+                                        )}
+                                        esParejasFijas={esParejasFijas}
+                                        jornadaFecha={j.fecha}
+                                        matchIndex={matchIndex}
+                                      />
+                                    ))}
+                                  </ul>
+                                </section>
+                              ))}
                             </div>
                           )}
                         </div>
