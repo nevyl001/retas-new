@@ -1197,14 +1197,24 @@
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__meta-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  width: auto;
+  max-width: 100%;
   margin-block-start: 0.15rem;
-  gap: 0.4rem;
+  gap: 0.35rem 0.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__categoria,
 .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__fecha {
-  padding: 0.28rem 0.65rem;
-  font-size: 0.65rem;
+  padding: 0.2rem 0.62rem;
+  font-size: 0.6rem;
+  box-shadow: none;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__meta {

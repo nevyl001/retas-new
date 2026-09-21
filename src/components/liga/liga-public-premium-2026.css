@@ -70,18 +70,29 @@
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__meta-row {
-  margin-block-start: 0.35rem;
-  gap: 0.35rem;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  width: auto;
+  max-width: 100%;
+  margin-block-start: 0.28rem;
+  gap: 0.35rem 0.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__categoria,
 .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__fecha {
-  padding: 0.22rem 0.55rem;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
+  padding: 0.2rem 0.62rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
   border-radius: 999px;
-  border: 1px solid var(--liga-prem-hairline);
-  background: color-mix(in srgb, var(--brand-primary, #2a4ba7) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand-accent, #fff) 28%, transparent);
+  background: color-mix(in srgb, var(--brand-primary, #2a4ba7) 14%, transparent);
+  box-shadow: none;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__meta {
@@ -1024,6 +1035,20 @@
 
   .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__logo {
     transform: scale(0.88);
+  }
+
+  .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__meta-row {
+    display: inline-flex;
+    grid-template-columns: none;
+    width: auto;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .liga-pantalla--jornada-fijas .liga-pantalla-jornada-hero .peds-hero__fact-sep {
+    display: inline-flex;
   }
 }
 
