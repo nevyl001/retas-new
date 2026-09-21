@@ -380,34 +380,39 @@
   }
 }
 
-/* Nombre abajo-izquierda, rating abajo-derecha */
+/* Nombre abajo-izquierda, rating abajo-derecha (identity llena el panel) */
 .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel .pub-split-vs-panel__identity,
 .liga-pantalla--jornada-fijas .liga-jornada-match-player-panel .pub-split-vs-panel__identity {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 5;
   display: block;
-  left: auto;
-  right: auto;
-  bottom: auto;
+  margin: 0;
+  padding: 0;
   min-width: 0;
   max-width: none;
-  padding: 0;
+  width: auto;
+  height: auto;
   text-align: left;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
+  color: #fff;
 }
 
 .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel .pub-split-vs-panel__given,
 .liga-pantalla--jornada-fijas .liga-jornada-match-player-panel .pub-split-vs-panel__given {
   position: absolute;
-  left: 0.35rem;
-  right: 2.55rem;
-  bottom: 0.34rem;
-  font-size: clamp(0.7rem, 8.5cqi, 0.92rem);
+  left: 0.4rem;
+  right: 2.6rem;
+  bottom: 0.36rem;
+  z-index: 1;
+  margin: 0;
+  font-size: clamp(0.72rem, 9cqi, 0.95rem);
   font-weight: 800;
-  line-height: 1.05;
+  line-height: 1.1;
+  color: #fff;
   text-align: left;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -416,13 +421,17 @@
 .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel .pub-split-vs-panel__family,
 .liga-pantalla--jornada-fijas .liga-jornada-match-player-panel .pub-split-vs-panel__family {
   position: absolute;
-  left: 0.35rem;
-  right: 2.55rem;
-  bottom: 0.34rem;
-  font-size: clamp(0.55rem, 6.5cqi, 0.72rem);
+  left: 0.4rem;
+  right: 2.6rem;
+  bottom: 0.36rem;
+  z-index: 1;
+  margin: 0;
+  font-size: clamp(0.58rem, 7cqi, 0.75rem);
   font-weight: 600;
-  line-height: 1.05;
+  line-height: 1.1;
+  color: rgba(255, 255, 255, 0.88);
   text-align: left;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -434,7 +443,7 @@
 .liga-pantalla--jornada-fijas
   .liga-jornada-match-player-panel
   .pub-split-vs-panel__given:has(+ .pub-split-vs-panel__family) {
-  bottom: 0.88rem;
+  bottom: 0.9rem;
 }
 
 .liga-jornada-match-pair-half__grid
@@ -445,15 +454,19 @@
   .pub-split-vs-panel__rating.jugador-rating-chip {
   position: absolute;
   left: auto;
-  right: 0.28rem;
-  bottom: 0.28rem;
+  right: 0.32rem;
+  bottom: 0.3rem;
   top: auto;
-  z-index: 4;
+  z-index: 2;
+  display: inline-flex;
   margin: 0;
-  font-size: 0.55rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  padding: 0.08rem 0.3rem;
+  padding: 0.1rem 0.34rem;
   line-height: 1.15;
+  color: #fff;
+  opacity: 1;
+  visibility: visible;
 }
 
 .liga-pantalla--jornada-fijas .liga-jornada-match-player-panel .pub-split-vs-panel__watermark {
