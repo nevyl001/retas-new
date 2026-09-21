@@ -14,7 +14,7 @@ import {
   type PlayoffsScoreDraft,
 } from "../../../lib/liga/parejasFijasPlayoffsMatchScore";
 import { LigaScoreInput } from "../LigaScoreInput";
-import { parejaPlayerNames } from "./jornadaAdminUtils";
+import { parejaPlayerNames, playerInitials } from "./jornadaAdminUtils";
 
 export type MatchScoreCardMode = "sets" | "playoffs" | "rotativo";
 
@@ -114,23 +114,70 @@ const ScoreField: React.FC<ScoreFieldProps> = ({
 interface PairScoreBlockProps {
   name1: string;
   name2: string;
+  rating1?: number | null;
+  rating2?: number | null;
   side: "a" | "b";
   children: React.ReactNode;
 }
 
+const PairLineup: React.FC<{
+  name1: string;
+  name2: string;
+  rating1?: number | null;
+  rating2?: number | null;
+  align?: "left" | "right";
+}> = ({ name1, name2, rating1, rating2, align = "left" }) => (
+  <div
+    className={`jornada-match-card__lineup${
+      align === "right" ? " jornada-match-card__lineup--right" : ""
+    }`}
+  >
+    <div className="jornada-match-card__player">
+      <span className="jornada-match-card__avatar" aria-hidden>
+        {playerInitials(name1)}
+      </span>
+      <span className="jornada-match-card__player-text">
+        <span className="jornada-match-card__player-name">{name1}</span>
+        {rating1 != null ? (
+          <span className="jornada-match-card__player-rating">
+            {rating1.toFixed(2)}
+          </span>
+        ) : null}
+      </span>
+    </div>
+    <div className="jornada-match-card__player">
+      <span className="jornada-match-card__avatar" aria-hidden>
+        {playerInitials(name2)}
+      </span>
+      <span className="jornada-match-card__player-text">
+        <span className="jornada-match-card__player-name">{name2}</span>
+        {rating2 != null ? (
+          <span className="jornada-match-card__player-rating">
+            {rating2.toFixed(2)}
+          </span>
+        ) : null}
+      </span>
+    </div>
+  </div>
+);
+
 const PairScoreBlock: React.FC<PairScoreBlockProps> = ({
   name1,
   name2,
+  rating1,
+  rating2,
   side,
   children,
 }) => (
   <div
     className={`jornada-match-card__pair-block jornada-match-card__pair-block--${side}`}
   >
-    <div className="jornada-match-card__pair-names">
-      <span>{name1}</span>
-      <span>{name2}</span>
-    </div>
+    <PairLineup
+      name1={name1}
+      name2={name2}
+      rating1={rating1}
+      rating2={rating2}
+    />
     <div className="jornada-match-card__pair-sets">{children}</div>
   </div>
 );
@@ -230,15 +277,20 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
       {showSavedSummary ? (
         <div className="jornada-match-card__saved-summary">
           <div className="jornada-match-card__teams">
-            <div className="jornada-match-card__team">
-              <span>{team1.name1}</span>
-              <span>{team1.name2}</span>
-            </div>
+            <PairLineup
+              name1={team1.name1}
+              name2={team1.name2}
+              rating1={team1.rating1}
+              rating2={team1.rating2}
+            />
             <span className="jornada-match-card__vs">VS</span>
-            <div className="jornada-match-card__team jornada-match-card__team--right">
-              <span>{team2.name1}</span>
-              <span>{team2.name2}</span>
-            </div>
+            <PairLineup
+              name1={team2.name1}
+              name2={team2.name2}
+              rating1={team2.rating1}
+              rating2={team2.rating2}
+              align="right"
+            />
           </div>
           {savedLine ? (
             <p className="jornada-match-card__saved-line">
@@ -254,6 +306,8 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               <PairScoreBlock
                 name1={team1.name1}
                 name2={team1.name2}
+                rating1={team1.rating1}
+                rating2={team1.rating2}
                 side="a"
               >
                 <ScoreField
@@ -313,6 +367,8 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               <PairScoreBlock
                 name1={team2.name1}
                 name2={team2.name2}
+                rating1={team2.rating1}
+                rating2={team2.rating2}
                 side="b"
               >
                 <ScoreField
@@ -372,6 +428,8 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               <PairScoreBlock
                 name1={team1.name1}
                 name2={team1.name2}
+                rating1={team1.rating1}
+                rating2={team1.rating2}
                 side="a"
               >
                 <ScoreField
@@ -423,6 +481,8 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               <PairScoreBlock
                 name1={team2.name1}
                 name2={team2.name2}
+                rating1={team2.rating1}
+                rating2={team2.rating2}
                 side="b"
               >
                 <ScoreField
@@ -474,6 +534,8 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               <PairScoreBlock
                 name1={team1.name1}
                 name2={team1.name2}
+                rating1={team1.rating1}
+                rating2={team1.rating2}
                 side="a"
               >
                 <ScoreField
@@ -493,6 +555,8 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               <PairScoreBlock
                 name1={team2.name1}
                 name2={team2.name2}
+                rating1={team2.rating1}
+                rating2={team2.rating2}
                 side="b"
               >
                 <ScoreField
@@ -509,15 +573,20 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
         </div>
       ) : (
         <div className="jornada-match-card__teams">
-          <div className="jornada-match-card__team">
-            <span>{team1.name1}</span>
-            <span>{team1.name2}</span>
-          </div>
+          <PairLineup
+            name1={team1.name1}
+            name2={team1.name2}
+            rating1={team1.rating1}
+            rating2={team1.rating2}
+          />
           <span className="jornada-match-card__vs">VS</span>
-          <div className="jornada-match-card__team jornada-match-card__team--right">
-            <span>{team2.name1}</span>
-            <span>{team2.name2}</span>
-          </div>
+          <PairLineup
+            name1={team2.name1}
+            name2={team2.name2}
+            rating1={team2.rating1}
+            rating2={team2.rating2}
+            align="right"
+          />
         </div>
       )}
 

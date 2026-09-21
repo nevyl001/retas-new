@@ -15,14 +15,45 @@ export function parejaLabel(
 export function parejaPlayerNames(
   parejaId: string,
   jornada: LigaJornada | undefined
-): { name1: string; name2: string } {
+): {
+  name1: string;
+  name2: string;
+  rating1: number | null;
+  rating2: number | null;
+} {
   const p = jornada?.parejas?.find((x) => x.id === parejaId);
-  if (!p) return { name1: "Jugador 1", name2: "Jugador 2" };
+  if (!p) {
+    return {
+      name1: "Jugador 1",
+      name2: "Jugador 2",
+      rating1: null,
+      rating2: null,
+    };
+  }
   return {
     name1: p.jugador1?.nombre?.trim() || "?",
     name2: p.jugador2?.nombre?.trim() || "?",
+    rating1:
+      p.jugador1?.nivel != null && Number.isFinite(p.jugador1.nivel)
+        ? Number(p.jugador1.nivel)
+        : null,
+    rating2:
+      p.jugador2?.nivel != null && Number.isFinite(p.jugador2.nivel)
+        ? Number(p.jugador2.nivel)
+        : null,
   };
 }
+
+function playerInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+  }
+  const compact = (parts[0] ?? "?").replace(/[^a-zA-Z0-9]/g, "");
+  return compact.slice(0, 2).toUpperCase() || "?";
+}
+
+export { playerInitials };
 
 export function partidoHora(partido: LigaPartido): string {
   return partido.hora_inicio ? timeInputValue(partido.hora_inicio) : "";
