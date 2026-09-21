@@ -423,10 +423,14 @@
 }
 
 /* Live / en curso — lima APT (semántica live) */
+[data-brand="acapulco-padel-tour"] .liga-pantalla .rv-pill--live,
+[data-club="acapulco-padel-tour"] .liga-pantalla .rv-pill--live,
 [data-brand="acapulco-padel-tour"] .liga-pantalla .status-badge--live,
 [data-club="acapulco-padel-tour"] .liga-pantalla .status-badge--live,
 [data-brand="acapulco-padel-tour"] .liga-pantalla .liga-pantalla-ronda__badge--live,
 [data-club="acapulco-padel-tour"] .liga-pantalla .liga-pantalla-ronda__badge--live,
+.club-experience-scope[data-brand="acapulco-padel-tour"] .liga-pantalla .rv-pill--live,
+.club-experience-scope[data-club="acapulco-padel-tour"] .liga-pantalla .rv-pill--live,
 .club-experience-scope[data-brand="acapulco-padel-tour"] .liga-pantalla .status-badge--live,
 .club-experience-scope[data-club="acapulco-padel-tour"] .liga-pantalla .status-badge--live,
 .club-experience-scope[data-brand="acapulco-padel-tour"] .liga-pantalla .liga-pantalla-ronda__badge--live,
