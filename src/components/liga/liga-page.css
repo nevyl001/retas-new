@@ -1688,7 +1688,7 @@
 /* ─── LigaGestionar — accesibilidad (personas mayores) ─── */
 
 .liga-page.liga-gestionar-a11y {
-  --liga-gestionar-accent: var(--brand-primary, var(--ro-accent));
+  --liga-gestionar-accent: var(--brand-accent, var(--ro-accent));
   --liga-gestionar-accent-text: var(--ro-text-on-accent, #ffffff);
   --liga-gestionar-radius-card: 12px;
   --liga-gestionar-radius-btn: 8px;
@@ -2245,7 +2245,7 @@
 /* ─── LigaJornada — captura de resultados (accesibilidad) ─── */
 
 .liga-page.liga-jornada-capture-a11y {
-  --liga-gestionar-accent: var(--brand-primary, var(--ro-accent));
+  --liga-gestionar-accent: var(--brand-accent, var(--ro-accent));
   --liga-gestionar-accent-text: var(--ro-text-on-accent, #ffffff);
   --liga-gestionar-radius-card: 12px;
   --liga-gestionar-radius-btn: 8px;

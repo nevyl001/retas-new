@@ -130,6 +130,27 @@
   border-color: color-mix(in srgb, var(--apt-lime) 35%, transparent);
 }
 
+/* CTAs de liga: lima + navy (brand-primary es navy de superficie → CTA invisible) */
+[data-brand="acapulco-padel-tour"] .liga-page,
+[data-club="acapulco-padel-tour"] .liga-page {
+  --liga-gestionar-accent: var(--apt-lime);
+  --liga-gestionar-accent-text: var(--apt-on-lime);
+}
+
+[data-brand="acapulco-padel-tour"] .liga-page .liga-jornada-row__cta,
+[data-club="acapulco-padel-tour"] .liga-page .liga-jornada-row__cta {
+  background: var(--apt-lime) !important;
+  color: var(--apt-on-lime) !important;
+  -webkit-text-fill-color: var(--apt-on-lime);
+}
+
+[data-brand="acapulco-padel-tour"] .liga-page .jornada-start-bar__btn,
+[data-club="acapulco-padel-tour"] .liga-page .jornada-start-bar__btn {
+  background: var(--apt-lime) !important;
+  color: var(--apt-on-lime) !important;
+  -webkit-text-fill-color: var(--apt-on-lime);
+}
+
 /* ============================================================
    ISLAS CLARAS — remap de tinta (una sola capa para toda la cuenta)
    ============================================================ */
