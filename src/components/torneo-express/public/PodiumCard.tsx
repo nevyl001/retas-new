@@ -166,7 +166,7 @@ function PodiumStats({
   if (layout === "liga-jornada") {
     return (
       <div className="podium-card__stats" aria-label="Resumen de la jornada">
-        <div className="podium-card__stat podium-card__stat--lead">
+        <div className="podium-card__stat">
           <span className="podium-card__stat-label">Games acum.</span>
           <span
             className="podium-card__stat-value"
@@ -174,7 +174,6 @@ function PodiumStats({
           >
             {stats.juegosFavor}
           </span>
-          <span className="podium-card__stat-hint">1.er criterio</span>
         </div>
         <div className="podium-card__stat">
           <span className="podium-card__stat-label">Dif. juegos</span>
