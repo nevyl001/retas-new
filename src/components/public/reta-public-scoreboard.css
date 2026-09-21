@@ -2526,26 +2526,44 @@
   text-shadow: 0 0 16px color-mix(in srgb, var(--ro-medal-gold, #c9a227) 28%, transparent);
 }
 
+/* Con 3+ canchas en hilera: retratos y logos más compactos */
 @media (min-width: 640px) {
   .te-public--reta-equipos
     .te-pub-matches-grid--wide:has(> :nth-child(3))
-    .reta-sb-card--split-vs.reta-sb-card--teams
-    .pub-split-vs-pair,
-  .te-public--reta-equipos
-    .te-pub-matches-grid--wide:has(> :nth-child(3))
-    .reta-sb-card--split-vs.reta-sb-card--teams
-    .reta-sb-team__players--split-vs {
-    max-width: min(100%, 9.5rem);
+    .reta-eq-duel__portrait {
+    height: clamp(3.85rem, 9vh, 5.35rem);
+    max-height: clamp(3.85rem, 9vh, 5.35rem);
   }
 
   .te-public--reta-equipos
     .te-pub-matches-grid--wide:has(> :nth-child(3))
-    .reta-sb-card--split-vs.reta-sb-card--teams
-    .pub-split-vs-pair--compact
-    .pub-split-vs-panel {
-    max-width: 7.5rem;
+    .reta-eq-duel__float-logo {
+    width: 1.85rem;
+    height: 1.85rem;
+    padding: 0.14rem;
+  }
+
+  .te-public--reta-equipos
+    .te-pub-matches-grid--wide:has(> :nth-child(3))
+    .reta-eq-duel__given {
+    font-size: clamp(0.62rem, 8cqi, 0.78rem);
+  }
+
+  .te-public--reta-equipos
+    .te-pub-matches-grid--wide:has(> :nth-child(3))
+    .reta-eq-duel__family {
+    font-size: clamp(0.48rem, 6cqi, 0.62rem);
+  }
+
+  .te-public--reta-equipos
+    .te-pub-matches-grid--wide:has(> :nth-child(3))
+    .reta-eq-duel__vs-ring {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 0.42rem;
   }
 }
+
 
 /* Marcador vacío: tipografía suave, no caja tipo botón "−" */
 .te-public--reta-equipos .reta-sb-card--teams .reta-sb-team__score--empty {
