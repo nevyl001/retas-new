@@ -120,7 +120,7 @@ function PodiumStats({
 }: {
   stats: PublicEliminatoriaPodiumStats;
   accent: string;
-  layout?: "default" | "round-robin";
+  layout?: "default" | "round-robin" | "liga-jornada";
 }) {
   if (layout === "round-robin") {
     return (
@@ -157,6 +157,47 @@ function PodiumStats({
           <span className="podium-card__stat-label">Juegos en contra</span>
           <span className="podium-card__stat-value podium-card__stat-value--losses">
             {stats.juegosContra}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === "liga-jornada") {
+    return (
+      <div className="podium-card__stats" aria-label="Resumen de la jornada">
+        <div className="podium-card__stat podium-card__stat--lead">
+          <span className="podium-card__stat-label">Games acum.</span>
+          <span
+            className="podium-card__stat-value"
+            style={{ color: accent }}
+          >
+            {stats.juegosFavor}
+          </span>
+          <span className="podium-card__stat-hint">1.er criterio</span>
+        </div>
+        <div className="podium-card__stat">
+          <span className="podium-card__stat-label">Dif. juegos</span>
+          <span
+            className="podium-card__stat-value"
+            style={{ color: accent }}
+          >
+            {formatPublicPodiumDif(stats.dif)}
+          </span>
+        </div>
+        <div className="podium-card__stat">
+          <span className="podium-card__stat-label">Partidos ganados</span>
+          <span
+            className="podium-card__stat-value"
+            style={{ color: accent }}
+          >
+            {stats.victorias}
+          </span>
+        </div>
+        <div className="podium-card__stat">
+          <span className="podium-card__stat-label">Derrotas</span>
+          <span className="podium-card__stat-value podium-card__stat-value--losses">
+            {stats.derrotas}
           </span>
         </div>
       </div>
@@ -216,7 +257,7 @@ export const PodiumCard: React.FC<{
   torneoNombre: string;
   pairPlayersById: Record<string, PublicRetaPairPlayer[]>;
   stats?: PublicEliminatoriaPodiumStats | null;
-  statsLayout?: "default" | "round-robin";
+  statsLayout?: "default" | "round-robin" | "liga-jornada";
   copyOverrides?: PodiumCopyOverrides;
   /** Contenido opcional entre stats y footer (p. ej. enfrentamientos de liga). */
   afterStats?: React.ReactNode;
@@ -361,6 +402,14 @@ export const PodiumCard: React.FC<{
                     Resumen de la reta
                     <span className="podium-card__summary-kicker-sub">
                       Ganan por games acumulados (FAV)
+                    </span>
+                  </p>
+                ) : null}
+                {statsLayout === "liga-jornada" ? (
+                  <p className="podium-card__summary-kicker">
+                    Resumen de la jornada
+                    <span className="podium-card__summary-kicker-sub">
+                      Ganan por games acum. → dif. → partidos ganados
                     </span>
                   </p>
                 ) : null}

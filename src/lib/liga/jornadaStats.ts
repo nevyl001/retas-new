@@ -433,8 +433,11 @@ export function computeJornadaPublicStats(
         }
       );
     }
+    if (b.games_favor !== a.games_favor) return b.games_favor - a.games_favor;
+    const difA = a.games_favor - a.games_contra;
+    const difB = b.games_favor - b.games_contra;
+    if (difB !== difA) return difB - difA;
     if (b.victorias !== a.victorias) return b.victorias - a.victorias;
-    if (b.puntos !== a.puntos) return b.puntos - a.puntos;
     return a.nombre.localeCompare(b.nombre);
   });
 

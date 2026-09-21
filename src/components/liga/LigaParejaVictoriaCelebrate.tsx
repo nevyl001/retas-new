@@ -17,22 +17,6 @@ function parsePairLabel(label: string): [string, string] {
   return [parts[0] ?? "?", parts[1] ?? "?"];
 }
 
-function jornadaOrdinalLabel(numero: number): string {
-  const labels: Record<number, string> = {
-    1: "Primera jornada",
-    2: "Segunda jornada",
-    3: "Tercera jornada",
-    4: "Cuarta jornada",
-    5: "Quinta jornada",
-    6: "Sexta jornada",
-    7: "Séptima jornada",
-    8: "Octava jornada",
-    9: "Novena jornada",
-    10: "Décima jornada",
-  };
-  return labels[numero] ?? `Jornada ${numero}`;
-}
-
 function shortOpponent(label: string): string {
   const trimmed = label.trim();
   if (trimmed.length <= 34) return trimmed;
@@ -90,13 +74,12 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
   );
 
   const headline = useMemo(() => {
-    const jornadaPart =
-      jornadaNumero != null
-        ? jornadaOrdinalLabel(jornadaNumero)
-        : "Jornada";
-    const club = (organizerName || "").trim() || "Riviera Open";
-    return `Ganadores · ${jornadaPart} · ${club} by Riviera Open`;
-  }, [jornadaNumero, organizerName]);
+    const liga = (torneoNombre || "").trim() || (organizerName || "").trim() || "Riviera Open";
+    if (jornadaNumero != null && Number.isFinite(jornadaNumero)) {
+      return `Ganadores · Jornada ${jornadaNumero} · ${liga}`;
+    }
+    return `Ganadores · ${liga}`;
+  }, [jornadaNumero, torneoNombre, organizerName]);
 
   const copyOverrides = useMemo(() => {
     const rankLine =
@@ -107,13 +90,21 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
             stats.dif >= 0 ? `+${stats.dif}` : String(stats.dif)
           }`
         : undefined;
+    const celebrateName =
+      (torneoNombre || "").trim() || (organizerName || "").trim() || "Riviera Open";
     return {
       badge: "1.ER LUGAR",
       title: "¡Felicidades!",
-      message: getLigaVictoriaCelebrateMessage(organizerName),
+      message: getLigaVictoriaCelebrateMessage(celebrateName),
       ...(rankLine ? { rank: rankLine } : {}),
     };
-  }, [organizerName, matchLines.length, stats.victorias, stats.dif]);
+  }, [
+    organizerName,
+    torneoNombre,
+    matchLines.length,
+    stats.victorias,
+    stats.dif,
+  ]);
 
   const players = useMemo(
     () => pairPlayersById[pairId] ?? [],
@@ -176,6 +167,7 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
           torneoNombre={headline || torneoNombre}
           pairPlayersById={pairPlayersById}
           stats={stats}
+          statsLayout="liga-jornada"
           copyOverrides={copyOverrides}
           className="liga-pareja-victoria-celebrate__podium"
           ambient={ambient}
