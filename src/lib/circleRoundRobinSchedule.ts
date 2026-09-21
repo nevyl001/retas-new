@@ -287,10 +287,10 @@ export function generateTeamsCrossSchedule(
     const playing0 = new Set(round.map((e) => e.i));
     const playing1 = new Set(round.map((e) => e.j));
     preferPlay0 = new Set(
-      [...Array(n0).keys()].filter((i) => !playing0.has(i))
+      Array.from({ length: n0 }, (_, i) => i).filter((i) => !playing0.has(i))
     );
     preferPlay1 = new Set(
-      [...Array(n1).keys()].filter((j) => !playing1.has(j))
+      Array.from({ length: n1 }, (_, j) => j).filter((j) => !playing1.has(j))
     );
 
     const roundOffset = (roundNum - 1) % Math.max(1, round.length);
