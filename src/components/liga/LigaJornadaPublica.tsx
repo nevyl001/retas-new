@@ -483,9 +483,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     >
     <PublicScopedBrandGate message="Cargando jornada…">
     <div
-      className={`liga-pantalla App--public-full-width ro-public-view ro-surface-dark${
-        esParejasFijas ? " liga-pantalla--jornada-fijas" : ""
-      }${enterActive ? " liga-pantalla--enter" : ""}`}
+      className={`liga-pantalla App--public-full-width ro-public-view ro-surface-dark liga-pantalla--jornada-fijas${
+        enterActive ? " liga-pantalla--enter" : ""
+      }`}
     >
       <div className="liga-pantalla__grain" aria-hidden />
       <PublicModeShell className="liga-pantalla__inner">
@@ -527,11 +527,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         {/* Roster de parejas solo en el link completo de la liga (LigaDetallePublica).
             En jornada pública: solo partidos + tabla. */}
 
-        <div
-          className={`liga-pantalla__layout${
-            esParejasFijas ? " liga-pantalla__layout--parejas" : ""
-          }`}
-        >
+        <div className="liga-pantalla__layout liga-pantalla__layout--parejas">
           <div className="liga-pantalla__rondas">
             {totalPartidos === 0 ? (
               <p className="liga-pantalla__loading">
@@ -544,24 +540,22 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 return (
                   <section
                     key={ronda}
-                    className={`liga-pantalla-ronda${
-                      esParejasFijas ? " liga-pantalla-ronda--courts" : ""
-                    }${estado === "live" ? " liga-pantalla-ronda--live" : ""}`}
+                    className={`liga-pantalla-ronda liga-pantalla-ronda--courts${
+                      estado === "live" ? " liga-pantalla-ronda--live" : ""
+                    }`}
                   >
                     <div className="liga-pantalla-ronda__head">
                       <div className="liga-pantalla-ronda__heading">
                         <h2 className="liga-pantalla-ronda__title">
                           Ronda {ronda}
                         </h2>
-                        {esParejasFijas ? (
-                          <p className="liga-pantalla-ronda__meta">
-                            {partidos.length} partido
-                            {partidos.length === 1 ? "" : "s"}
-                            {" · "}
-                            {partidos.length} cancha
-                            {partidos.length === 1 ? "" : "s"}
-                          </p>
-                        ) : null}
+                        <p className="liga-pantalla-ronda__meta">
+                          {partidos.length} partido
+                          {partidos.length === 1 ? "" : "s"}
+                          {" · "}
+                          {partidos.length} cancha
+                          {partidos.length === 1 ? "" : "s"}
+                        </p>
                       </div>
                       {estado !== "pending" ? (
                         <span
@@ -578,24 +572,16 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                       ) : null}
                     </div>
                     <div
-                      className={`liga-pantalla-ronda__matches${
-                        esParejasFijas
-                          ? " liga-pantalla-ronda__matches--courts"
-                          : ""
-                      }`}
-                      {...(esParejasFijas
-                        ? {
-                            "data-cols": String(
-                              Math.max(
-                                1,
-                                Math.min(canchasDisponibles, partidos.length)
-                              )
-                            ),
-                          }
-                        : {})}
+                      className="liga-pantalla-ronda__matches liga-pantalla-ronda__matches--courts"
+                      data-cols={String(
+                        Math.max(
+                          1,
+                          Math.min(canchasDisponibles, partidos.length)
+                        )
+                      )}
                     >
                       {partidos.map((partido, matchIndex) =>
-                        renderMatchCard(partido, esParejasFijas, matchIndex)
+                        renderMatchCard(partido, true, matchIndex)
                       )}
                     </div>
                   </section>
@@ -604,13 +590,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
             )}
           </div>
 
-          <aside
-            className={`liga-pantalla-ranking${
-              esParejasFijas
-                ? " liga-pantalla-ranking--parejas liga-pantalla-ranking--jornada-fijas"
-                : ""
-            }`}
-          >
+          <aside className="liga-pantalla-ranking liga-pantalla-ranking--parejas liga-pantalla-ranking--jornada-fijas">
             {esParejasFijas ? (
               <>
                 <h2 className="liga-pantalla-ranking__title">

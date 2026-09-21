@@ -179,6 +179,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const [showManualEdit, setShowManualEdit] = useState(false);
   const [canchaFilter, setCanchaFilter] = useState<number | "all">("all");
   const autoCareerResyncRef = useRef<string | null>(null);
+  const autoRepairScheduleRef = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -430,23 +431,34 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     }
   };
 
-  const handleRegenerarPartidos = async () => {
-    if (!jornada || esParejasFijas) return;
+  const handleRegenerarPartidos = async (opts?: { silent?: boolean }) => {
+    if (!jornada || esParejasFijas || !detalle) return;
+    const nP = jornada.parejas?.length ?? 0;
+    const maxPorRonda = Math.min(
+      Math.max(1, detalle.canchas_disponibles ?? 1),
+      Math.floor(nP / 2)
+    );
+    const esperadas =
+      maxPorRonda > 0 ? Math.ceil((nP * (nP - 1)) / 2 / maxPorRonda) : 0;
     const tieneResultados = (jornada.partidos ?? []).some(
       (p) => p.estado === "completed"
     );
-    const ok = window.confirm(
-      tieneResultados
-        ? "Hay resultados guardados. ¿Borrar partidos y regenerar el calendario con todas las canchas? Se perderán los marcadores de esta jornada."
-        : "¿Regenerar el calendario de esta jornada para llenar todas las canchas disponibles?"
-    );
-    if (!ok) return;
+    if (!opts?.silent) {
+      const ok = window.confirm(
+        tieneResultados
+          ? "Hay resultados guardados. ¿Borrar partidos y regenerar el calendario con todas las canchas? Se perderán los marcadores de esta jornada."
+          : `¿Regenerar el calendario? Con ${nP} parejas y ${detalle.canchas_disponibles} canchas deben ser ${esperadas} rondas (máx. ${maxPorRonda} partidos por ronda).`
+      );
+      if (!ok) return;
+    } else if (tieneResultados) {
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       const result = await regenerarPartidosJornadaRotativo(jornada.id);
       setMessage(
-        `Calendario regenerado: ${result.partidos} partidos en ${result.rondas} rondas.`
+        `Calendario corregido: ${result.partidos} partidos en ${result.rondas} rondas (llena las canchas).`
       );
       await load();
     } catch (err) {
@@ -455,6 +467,47 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
       setBusy(false);
     }
   };
+
+  // Auto-repara calendarios greedy (6 parejas / 3 canchas → 5 rondas, no 7).
+  useEffect(() => {
+    if (!jornada?.id || !detalle || esParejasFijas || busy || loading) return;
+    if (jornada.estado === "completed") return;
+    const partidos = jornada.partidos ?? [];
+    if (partidos.length === 0) return;
+    if (partidos.some((p) => p.estado === "completed")) return;
+    if (autoRepairScheduleRef.current === jornada.id) return;
+
+    const nP = jornada.parejas?.length ?? 0;
+    if (nP < 3) return;
+    const maxPorRonda = Math.min(
+      Math.max(1, detalle.canchas_disponibles ?? 1),
+      Math.floor(nP / 2)
+    );
+    const esperadas = Math.ceil((nP * (nP - 1)) / 2 / maxPorRonda);
+    const byRonda = new Map<number, number>();
+    for (const p of partidos) {
+      byRonda.set(p.ronda, (byRonda.get(p.ronda) ?? 0) + 1);
+    }
+    const rondas = byRonda.size;
+    const incompletas = Array.from(byRonda.values()).filter(
+      (n) => n < maxPorRonda
+    ).length;
+    const tieneHuecos = rondas > esperadas || incompletas >= 2;
+    if (!tieneHuecos) return;
+
+    autoRepairScheduleRef.current = jornada.id;
+    void handleRegenerarPartidos({ silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    jornada?.id,
+    jornada?.estado,
+    jornada?.partidos,
+    jornada?.parejas,
+    detalle,
+    esParejasFijas,
+    busy,
+    loading,
+  ]);
 
   const saveScore = async (partido: LigaPartido, force = false) => {
     const draft = scores[partido.id] ?? {
@@ -821,17 +874,16 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     Math.max(1, detalle.canchas_disponibles ?? 1),
     Math.floor(nParejas / 2)
   );
+  const rondasEsperadas =
+    maxPartidosPorRonda > 0
+      ? Math.ceil(partidosEsperados / maxPartidosPorRonda)
+      : 0;
   const calendarioConHuecos =
     !esParejasFijas &&
     totalPartidos > 0 &&
-    partidosByRonda.some(
-      ([, list]) =>
-        list.length < maxPartidosPorRonda &&
-        // Solo flag si no es la última ronda incompleta por resto inevitable
-        partidosByRonda.length > 1
-    ) &&
-    partidosByRonda.filter(([, list]) => list.length < maxPartidosPorRonda)
-      .length >= 2;
+    (partidosByRonda.length > rondasEsperadas ||
+      partidosByRonda.filter(([, list]) => list.length < maxPartidosPorRonda)
+        .length >= 2);
 
   const partidosParaCaptura = esParejasFijas
     ? partidosJornadaOrdenados
@@ -1044,9 +1096,10 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
           >
             {calendarioConHuecos ? (
               <p>
-                Este calendario deja canchas vacías en varias rondas (generación
-                antigua). Regenera para usar las {detalle.canchas_disponibles}{" "}
-                canchas en cada ronda.
+                Calendario mal armado: con {nParejas} parejas y{" "}
+                {detalle.canchas_disponibles} canchas deben ser {rondasEsperadas}{" "}
+                rondas (máx. {maxPartidosPorRonda} partidos por ronda). Ahora hay{" "}
+                {partidosByRonda.length}. Regenera para llenar las canchas.
               </p>
             ) : (
               <p>
@@ -1059,7 +1112,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               variant={calendarioConHuecos ? "primary" : "secondary"}
               size="sm"
               disabled={busy}
-              onClick={handleRegenerarPartidos}
+              onClick={() => void handleRegenerarPartidos()}
             >
               Regenerar partidos
             </Button>

@@ -9,7 +9,7 @@ interface LigaJornadaMatchPairStackProps {
   label?: string;
 }
 
-/** Fila de pareja: 2 paneles siempre lado a lado. */
+/** Fila de pareja: 2 jugadores siempre lado a lado. */
 export const LigaJornadaMatchPairStack: React.FC<
   LigaJornadaMatchPairStackProps
 > = ({ side, align = "top", tone, label }) => (
@@ -32,7 +32,12 @@ export const LigaJornadaMatchPairStack: React.FC<
     ) : null}
     <div
       className="liga-jornada-match-pair-half__grid"
-      style={{ display: "flex", flexDirection: "row", width: "100%" }}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 4,
+        width: "100%",
+      }}
     >
       <LigaJornadaMatchPlayerPanel name={side.name1} foto={side.foto1} />
       <LigaJornadaMatchPlayerPanel name={side.name2} foto={side.foto2} />
