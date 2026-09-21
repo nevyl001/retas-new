@@ -1144,11 +1144,16 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
         <ModeSectionPanel id="jugadores" activeId={tab}>
           <div className="liga-card rv-card">
             <h2 className="liga-card__title">Inscripciones en esta liga</h2>
-            <ul className="liga-list">
+            <ul className="liga-list liga-list--roster">
               {jugadoresPool.map((j) => {
                 const inscrito = inscritosIds.has(j.id);
                 return (
-                  <li key={j.id} className="liga-list-item">
+                  <li
+                    key={j.id}
+                    className={`liga-list-item liga-list-item--roster${
+                      inscrito ? " is-inscrito" : ""
+                    }`}
+                  >
                     <div className="liga-list-item__main">
                       <div className="liga-list-item__head">
                         <p className="liga-list-item__title">{j.nombre}</p>
@@ -1164,7 +1169,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
                         )}
                       </div>
                       <p className="liga-list-item__meta">
-                        {inscrito ? "Inscrito en esta liga" : "Sin inscribir"}
+                        {inscrito ? "Inscrito" : "Sin inscribir"}
                       </p>
                     </div>
                     {ligaEditable && (

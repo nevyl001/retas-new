@@ -277,6 +277,75 @@
   align-items: stretch;
 }
 
+/* Roster de inscripciones: grilla compacta (muchos jugadores) */
+.liga-list--roster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.25rem), 1fr));
+  gap: 0.65rem;
+}
+
+.liga-list--roster > .liga-list-item--roster {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0.55rem;
+  margin-bottom: 0;
+  padding: 0.7rem 0.8rem;
+  min-height: 100%;
+}
+
+.liga-list--roster > .liga-list-item--roster.is-inscrito {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--liga-gold, #c9a227)) 45%,
+    var(--liga-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, var(--liga-gold, #c9a227)) 8%,
+    var(--liga-surface)
+  );
+}
+
+.liga-list--roster .liga-list-item__head {
+  gap: 6px;
+}
+
+.liga-list--roster .liga-list-item__title {
+  font-size: 0.9rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.liga-list--roster .liga-list-item__meta {
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.liga-list--roster .liga-list-item__actions {
+  width: 100%;
+  justify-content: stretch;
+}
+
+.liga-list--roster .liga-list-item__actions > * {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .liga-list--roster {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 14.5rem), 1fr));
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .liga-list--roster {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 13.75rem), 1fr));
+  }
+}
+
 .liga-edit-form {
   width: 100%;
 }
