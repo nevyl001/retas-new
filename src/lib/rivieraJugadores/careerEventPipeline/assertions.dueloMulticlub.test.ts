@@ -394,4 +394,92 @@ describe("career assertions — duelo multiclub", () => {
     expect(PUNTOS_DUELO_2V2.GANADOR).toBe(50);
     expect(PUNTOS_DUELO_2V2.PERDEDOR).toBe(20);
   });
+
+  it("liga_jornada: 0 pts en no-ganador no es missing_local_points", async () => {
+    const winnerId = "j-winner";
+    const loserIds = Array.from({ length: 10 }, (_, i) => `j-loser-${i}`);
+    mockTables({
+      participaciones: [
+        {
+          id: "pw",
+          jugador_id: winnerId,
+          puntos_obtenidos: 50,
+          metadata: {
+            subtipo: "liga_jornada",
+            jornada_ganada: true,
+            puntos_aplicados: true,
+            organizador_id: ORG,
+            club_name: "APT",
+          },
+        },
+        ...loserIds.map((id, i) => ({
+          id: `pl-${i}`,
+          jugador_id: id,
+          puntos_obtenidos: 0,
+          metadata: {
+            subtipo: "liga_jornada",
+            jornada_ganada: false,
+            puntos_aplicados: true,
+            organizador_id: ORG,
+            club_name: "APT",
+          },
+        })),
+      ],
+      withStats: true,
+    });
+
+    const failures = await assertCareerEventIntegrity({
+      context: {
+        kind: "liga_jornada",
+        organizadorId: ORG,
+        hostOrganizadorId: ORG,
+        eventoId: EVENTO,
+        tipoEvento: "liga",
+      },
+      touchedJugadorIds: [winnerId, ...loserIds],
+      requireRating: false,
+    });
+
+    expect(failures.filter((f) => f.code === "missing_local_points")).toEqual(
+      []
+    );
+    expect(failures.filter((f) => f.code === "missing_global_points")).toEqual(
+      []
+    );
+    expect(failures.filter((f) => f.severity === "critical")).toEqual([]);
+  });
+
+  it("liga_jornada: 0 pts con jornada_ganada true sí es critical", async () => {
+    mockTables({
+      participaciones: [
+        {
+          id: "p-bad",
+          jugador_id: LOCAL_CEDIDO,
+          puntos_obtenidos: 0,
+          metadata: {
+            subtipo: "liga_jornada",
+            jornada_ganada: true,
+            puntos_aplicados: true,
+            organizador_id: ORG,
+            club_name: "APT",
+          },
+        },
+      ],
+      withStats: true,
+    });
+
+    const failures = await assertCareerEventIntegrity({
+      context: {
+        kind: "liga_jornada",
+        organizadorId: ORG,
+        hostOrganizadorId: ORG,
+        eventoId: EVENTO,
+        tipoEvento: "liga",
+      },
+      touchedJugadorIds: [LOCAL_CEDIDO],
+      requireRating: false,
+    });
+
+    expect(failures.some((f) => f.code === "missing_local_points")).toBe(true);
+  });
 });

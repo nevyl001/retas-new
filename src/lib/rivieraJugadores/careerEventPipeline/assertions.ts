@@ -190,6 +190,17 @@ function withSeverity(
 }
 
 /**
+ * Liga jornada: solo el ganador recibe +50 (PUNTOS_LIGA.GANAR_JORNADA).
+ * El resto escribe participación con 0 pts y puntos_aplicados=true a propósito.
+ * No es corrupción de ledger — no debe fallar integrity.
+ */
+function isIntentionalZeroPuntosLigaJornada(
+  meta: Record<string, unknown>
+): boolean {
+  return meta.subtipo === "liga_jornada" && meta.jornada_ganada === false;
+}
+
+/**
  * Validaciones post-finalización del pipeline canónico.
  * Clasifica fallas críticas vs diagnósticas (warnings).
  */
@@ -267,7 +278,11 @@ export async function assertCareerEventIntegrity(
       }
 
       const puntos = row.puntos_obtenidos ?? 0;
-      if (puntos <= 0 && meta.puntos_aplicados === true) {
+      if (
+        puntos <= 0 &&
+        meta.puntos_aplicados === true &&
+        !isIntentionalZeroPuntosLigaJornada(meta)
+      ) {
         failures.push(
           withSeverity({
             code: "missing_local_points",
@@ -284,10 +299,14 @@ export async function assertCareerEventIntegrity(
       0
     );
     if (totalPuntos <= 0 && context.kind !== "liga_inscripcion") {
+      const intentionalZeroOnly = rowsForJugador.every((r) =>
+        isIntentionalZeroPuntosLigaJornada(r.metadata ?? {})
+      );
       const anyApplied = rowsForJugador.some(
         (r) => r.metadata?.puntos_aplicados === true
       );
-      if (!anyApplied) {
+      // liga_jornada no-ganador: 0 pts con puntos_aplicados es válido.
+      if (!intentionalZeroOnly && !anyApplied) {
         failures.push(
           withSeverity({
             code: "missing_global_points",
