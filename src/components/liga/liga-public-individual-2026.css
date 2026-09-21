@@ -384,7 +384,7 @@
   }
 }
 
-/* ── Jornadas: secundarias, lista compacta (máx. 3 visibles + Ver todas) ── */
+/* ── Jornadas: índice horizontal + panel de la jornada seleccionada ── */
 
 .liga-pantalla--individual .liga-pantalla-jornadas--individual-secondary {
   opacity: 1;
@@ -398,150 +398,160 @@
   color: var(--liga-pub-text-muted);
 }
 
-.liga-pantalla--individual .liga-pantalla-jornadas--individual-secondary .liga-pantalla-jornadas__grid--individual,
-.liga-pantalla--individual .liga-pantalla-jornadas__grid--individual {
+.liga-pantalla--individual .liga-ind-jornadas {
   display: flex;
   flex-direction: column;
+  gap: 0.85rem;
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__index {
+  display: flex;
+  flex-wrap: nowrap;
   gap: 0.45rem;
-  align-items: stretch;
-  justify-items: stretch;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding: 0.15rem 0.1rem 0.35rem;
 }
 
-.liga-pantalla--individual .liga-ind-jornada {
-  border-radius: 10px;
-  padding: 0;
-  gap: 0;
-  height: fit-content;
-  max-height: none;
-  min-height: 0;
-  align-self: stretch;
-  list-style: none;
-  display: block;
-  border: 1px solid color-mix(in srgb, var(--liga-pub-border-card) 50%, transparent);
-  background: color-mix(in srgb, var(--liga-pub-surface) 68%, rgba(0, 0, 0, 0.28));
-  box-shadow: none;
-  transition:
-    border-color 180ms ease,
-    background 180ms ease,
-    opacity 180ms ease;
-}
-
-.liga-pantalla--individual .liga-ind-jornada.liga-pantalla-jornada-card {
-  display: block;
-  height: fit-content;
-  align-self: stretch;
-}
-
-.liga-pantalla--individual .liga-ind-jornada:not([open]) {
-  max-height: 3.15rem;
-  overflow: hidden;
-}
-
-.liga-pantalla--individual .liga-ind-jornada:not([open]) .liga-pantalla-jornada-card__fecha {
-  display: none;
-}
-
-.liga-pantalla--individual .liga-ind-jornada[open] {
-  max-height: none;
-  overflow: visible;
-}
-
-.liga-pantalla--individual .liga-ind-jornada__summary {
-  list-style: none;
-  cursor: pointer;
-  padding: 0.7rem 1rem;
-  display: block;
-  position: relative;
-  padding-right: 1.85rem;
-}
-
-.liga-pantalla--individual .liga-ind-jornada__summary::-webkit-details-marker {
-  display: none;
-}
-
-.liga-pantalla--individual .liga-ind-jornada__summary::after {
-  content: "";
-  position: absolute;
-  right: 0.95rem;
-  top: 50%;
-  width: 0.35rem;
-  height: 0.35rem;
-  border-right: 1.5px solid var(--liga-pub-text-muted);
-  border-bottom: 1.5px solid var(--liga-pub-text-muted);
-  transform: translateY(-70%) rotate(45deg);
-  transition: transform 160ms ease;
-  opacity: 0.7;
-}
-
-.liga-pantalla--individual .liga-ind-jornada[open] > .liga-ind-jornada__summary::after {
-  transform: translateY(-30%) rotate(225deg);
-}
-
-.liga-pantalla--individual .liga-ind-jornada:not([open]) .liga-pantalla-jornada-card__body,
-.liga-pantalla--individual .liga-ind-jornada:not([open]) .liga-pantalla-jornada-card__link {
-  display: none;
-}
-
-.liga-pantalla--individual .liga-ind-jornada__summary .liga-pantalla-jornada-card__head {
-  margin: 0;
+.liga-pantalla--individual .liga-ind-jornadas__tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.65rem;
+  justify-content: center;
+  gap: 0.15rem;
+  min-width: 3.25rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--liga-pub-border-card) 55%, transparent);
+  background: color-mix(in srgb, var(--liga-pub-surface) 70%, rgba(0, 0, 0, 0.25));
+  color: var(--liga-pub-text);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
 }
 
-.liga-pantalla--individual .liga-ind-jornada .liga-pantalla-jornada-card__num {
-  font-size: 0.8125rem;
+.liga-pantalla--individual .liga-ind-jornadas__tab-num {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__tab-label {
+  font-size: 0.5625rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--liga-pub-text-muted);
+  line-height: 1;
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__tab.is-selected {
+  border-color: color-mix(in srgb, var(--liga-pub-gold, #00afc4) 55%, transparent);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--liga-pub-gold, #00afc4) 12%, var(--liga-pub-surface)) 0%,
+      color-mix(in srgb, var(--liga-pub-surface) 82%, transparent) 100%
+    );
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__tab.is-selected .liga-ind-jornadas__tab-label {
+  color: color-mix(in srgb, var(--liga-pub-gold, #00afc4) 80%, var(--liga-pub-text));
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__tab:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--liga-pub-gold, #00afc4) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__tab--live:not(.is-selected) {
+  border-color: color-mix(in srgb, var(--liga-pub-gold, #00afc4) 35%, transparent);
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__panel {
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--liga-pub-border-card) 55%, transparent);
+  background: color-mix(in srgb, var(--liga-pub-surface) 72%, rgba(0, 0, 0, 0.22));
+  padding: 1rem 1.15rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__panel--live {
+  border-color: color-mix(in srgb, var(--liga-pub-gold, #00afc4) 45%, transparent);
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__panel-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
   letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.liga-pantalla--individual .liga-ind-jornada .liga-pantalla-jornada-card__fecha {
-  font-size: 0.6875rem;
-  margin-top: 0.1rem;
-}
-
-.liga-pantalla--individual .liga-ind-jornada .liga-pantalla-jornada-card__body {
-  padding: 0 1rem 0.65rem;
-}
-
-.liga-pantalla--individual .liga-ind-jornada .liga-pantalla-jornada-card__link {
-  margin: 0 1rem 0.85rem;
-}
-
-.liga-pantalla--individual .liga-ind-jornada__more {
-  display: block;
-  margin-top: 0.35rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+.liga-pantalla--individual .liga-ind-jornadas__panel-fecha {
+  margin: 0.2rem 0 0;
+  font-size: 0.72rem;
   color: var(--liga-pub-text-muted);
 }
 
-.liga-pantalla--individual .liga-ind-jornadas-more {
-  display: block;
-  width: 100%;
-  margin-top: 0.85rem;
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--liga-pub-border-card) 60%, transparent);
-  background: transparent;
-  color: var(--liga-pub-text);
+.liga-pantalla--individual .liga-ind-jornadas__matches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__match {
+  padding: 0.55rem 0;
+  border-top: 1px solid color-mix(in srgb, #fff 8%, transparent);
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__match:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__pair {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__sep {
+  opacity: 0.45;
+  font-weight: 500;
+}
+
+.liga-pantalla--individual .liga-ind-jornadas__link {
+  align-self: flex-start;
   font-size: 0.75rem;
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  cursor: pointer;
-  transition:
-    border-color 160ms ease,
-    background 160ms ease;
+  text-decoration: none;
+  color: var(--liga-pub-gold, #00afc4);
 }
 
-.liga-pantalla--individual .liga-ind-jornadas-more:hover {
-  border-color: color-mix(in srgb, var(--liga-pub-gold, #00afc4) 45%, transparent);
-  background: color-mix(in srgb, var(--liga-pub-surface) 80%, transparent);
-}
-
-.liga-pantalla--individual .liga-ind-jornadas-more:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--liga-pub-gold, #00afc4) 55%, transparent);
-  outline-offset: 2px;
+.liga-pantalla--individual .liga-ind-jornadas__link:hover {
+  text-decoration: underline;
 }
 
 .liga-pantalla--individual .liga-pantalla-jornada-card {

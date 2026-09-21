@@ -85,7 +85,7 @@ function jornadaBadgeLabel(estado: LigaJornada["estado"]): string {
   return "Próxima";
 }
 
-/** Jornada expandida por defecto: en curso, o la completed más reciente. */
+/** Jornada destacada: en curso, o la completed más reciente. */
 function jornadaFeaturedOpenId(jornadas: LigaJornada[]): string | null {
   const live = jornadas.find((j) => j.estado === "in_progress");
   if (live) return live.id;
@@ -93,35 +93,6 @@ function jornadaFeaturedOpenId(jornadas: LigaJornada[]): string | null {
     .filter((j) => j.estado === "completed")
     .sort((a, b) => b.numero - a.numero);
   return completed[0]?.id ?? null;
-}
-
-/** Cuántas jornadas se listan antes de «Ver todas» (evita scroll infinito). */
-const IND_JORNADAS_VISIBLE = 3;
-/** Preview de partidos dentro de una jornada abierta. */
-const IND_MATCHUPS_PREVIEW = 3;
-
-/** Ventana corta centrada en la jornada relevante (en curso / última completada). */
-function pickVisibleJornadas(
-  jornadas: LigaJornada[],
-  showAll: boolean,
-  limit = IND_JORNADAS_VISIBLE
-): LigaJornada[] {
-  if (showAll || jornadas.length <= limit) return jornadas;
-  const featuredId = jornadaFeaturedOpenId(jornadas);
-  const focus = Math.max(
-    0,
-    featuredId
-      ? jornadas.findIndex((j) => j.id === featuredId)
-      : 0
-  );
-  const picked = new Set<number>([focus]);
-  for (let i = focus + 1; i < jornadas.length && picked.size < limit; i += 1) {
-    picked.add(i);
-  }
-  for (let i = focus - 1; i >= 0 && picked.size < limit; i -= 1) {
-    picked.add(i);
-  }
-  return jornadas.filter((_, i) => picked.has(i));
 }
 
 interface LigaDetallePublicaProps {
@@ -296,37 +267,20 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     return aggregateJugadorSeasonSupportStats(detalle.jornadas);
   }, [detalle]);
 
-  const [expandedJornadaIds, setExpandedJornadaIds] = useState<Set<string>>(
-    () => new Set()
-  );
-  const [showAllJornadas, setShowAllJornadas] = useState(false);
-
-  useEffect(() => {
-    if (!detalle?.jornadas.length || isEquiposModalidad(detalle.modalidad)) {
-      return;
-    }
-    // Overview: jornadas empiezan colapsadas (menos scroll); el usuario abre la que quiera.
-    setExpandedJornadaIds((prev) => {
-      if (prev.size === 0) return prev;
-      const stillValid = Array.from(prev).some((id) =>
-        detalle.jornadas.some((j) => j.id === id)
-      );
-      return stillValid ? prev : new Set();
-    });
-    setShowAllJornadas(false);
-  }, [detalle]);
-
   useEffect(() => {
     if (!detalle?.jornadas.length) {
       setProgramaJornadaId(null);
       return;
     }
-    const preferred =
-      detalle.jornadas.find((j) => j.estado === "in_progress")?.id ??
-      detalle.jornadas.find((j) => j.estado === "upcoming")?.id ??
-      detalle.jornadas[detalle.jornadas.length - 1]?.id ??
-      detalle.jornadas[0]?.id ??
-      null;
+    const preferred = isEquiposModalidad(detalle.modalidad)
+      ? detalle.jornadas.find((j) => j.estado === "in_progress")?.id ??
+        detalle.jornadas.find((j) => j.estado === "upcoming")?.id ??
+        detalle.jornadas[detalle.jornadas.length - 1]?.id ??
+        detalle.jornadas[0]?.id ??
+        null
+      : jornadaFeaturedOpenId(detalle.jornadas) ??
+        detalle.jornadas[0]?.id ??
+        null;
     setProgramaJornadaId((prev) => {
       if (prev && detalle.jornadas.some((j) => j.id === prev)) return prev;
       return preferred;
@@ -585,60 +539,42 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
               <p className="liga-pantalla__loading">
                 El calendario se publicará pronto.
               </p>
-            ) : (
+            ) : esParejasFijas ? (
               <>
-                {esParejasFijas ? (
-                  <div className="liga-pub-programa__picker">
-                    <label
-                      className="liga-pub-programa__picker-label"
-                      htmlFor="liga-pub-programa-select"
+                <div className="liga-pub-programa__picker">
+                  <label
+                    className="liga-pub-programa__picker-label"
+                    htmlFor="liga-pub-programa-select"
+                  >
+                    Elegir jornada
+                  </label>
+                  <div className="liga-pub-programa__picker-shell">
+                    <select
+                      id="liga-pub-programa-select"
+                      className="liga-pub-programa__select"
+                      value={programaJornadaId ?? ""}
+                      onChange={(e) => setProgramaJornadaId(e.target.value)}
                     >
-                      Elegir jornada
-                    </label>
-                    <div className="liga-pub-programa__picker-shell">
-                      <select
-                        id="liga-pub-programa-select"
-                        className="liga-pub-programa__select"
-                        value={programaJornadaId ?? ""}
-                        onChange={(e) => setProgramaJornadaId(e.target.value)}
-                      >
-                        {detalle.jornadas.map((j) => (
-                          <option key={j.id} value={j.id}>
-                            Jornada {j.numero}
-                            {j.fecha
-                              ? ` · ${formatFechaLegible(dateInputValue(j.fecha))}`
-                              : ""}
-                            {` · ${jornadaBadgeLabel(j.estado)}`}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                      {detalle.jornadas.map((j) => (
+                        <option key={j.id} value={j.id}>
+                          Jornada {j.numero}
+                          {j.fecha
+                            ? ` · ${formatFechaLegible(dateInputValue(j.fecha))}`
+                            : ""}
+                          {` · ${jornadaBadgeLabel(j.estado)}`}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                ) : null}
-                <div
-                  className={`liga-pantalla-jornadas__grid${
-                    esParejasFijas
-                      ? " liga-pantalla-jornadas__grid--parejas liga-pub-programa__grid"
-                      : " liga-pantalla-jornadas__grid--individual"
-                  }`}
-                >
-                  {(esParejasFijas
-                    ? detalle.jornadas
-                    : pickVisibleJornadas(detalle.jornadas, showAllJornadas)
-                  ).map((j, jornadaIndex) => {
+                </div>
+                <div className="liga-pantalla-jornadas__grid liga-pantalla-jornadas__grid--parejas liga-pub-programa__grid">
+                  {detalle.jornadas.map((j, jornadaIndex) => {
                     const tienePantalla = (j.partidos?.length ?? 0) > 0;
                     const esActiva = jornadaActiva?.id === j.id;
                     const matchups = listJornadaPublicMatches(
                       j,
                       detalle.equipos,
-                      esParejasFijas
-                    );
-                    const matchupsPreview = esParejasFijas
-                      ? matchups
-                      : matchups.slice(0, IND_MATCHUPS_PREVIEW);
-                    const matchupsHidden = Math.max(
-                      0,
-                      matchups.length - matchupsPreview.length
+                      true
                     );
                     const estadoMod =
                       j.estado === "in_progress"
@@ -646,103 +582,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                         : j.estado === "completed"
                           ? "done"
                           : "upcoming";
-                    const isSelected =
-                      !esParejasFijas || j.id === programaJornadaId;
-                    const defaultOpen = expandedJornadaIds.has(j.id);
-
-                    if (!esParejasFijas) {
-                      return (
-                        <details
-                          key={j.id}
-                          className={`liga-pantalla-jornada-card liga-ind-jornada${
-                            esActiva ? " liga-pantalla-jornada-card--live" : ""
-                          } liga-pantalla-jornada-card--${estadoMod}`}
-                          open={defaultOpen}
-                          onToggle={(e) => {
-                            const isOpen = (e.currentTarget as HTMLDetailsElement)
-                              .open;
-                            setExpandedJornadaIds((prev) => {
-                              const next = new Set(prev);
-                              if (isOpen) next.add(j.id);
-                              else next.delete(j.id);
-                              return next;
-                            });
-                          }}
-                        >
-                          <summary className="liga-ind-jornada__summary">
-                            <div className="liga-pantalla-jornada-card__head">
-                              <div className="liga-pub-programa__card-titles">
-                                <h3 className="liga-pantalla-jornada-card__num">
-                                  Jornada {j.numero}
-                                </h3>
-                                {j.fecha ? (
-                                  <p className="liga-pantalla-jornada-card__fecha">
-                                    {formatFechaLegible(
-                                      dateInputValue(j.fecha)
-                                    )}
-                                  </p>
-                                ) : null}
-                              </div>
-                              <span className={jornadaBadgeClass(j.estado)}>
-                                {jornadaBadgeLabel(j.estado)}
-                              </span>
-                            </div>
-                          </summary>
-                          <div className="liga-pantalla-jornada-card__body">
-                            {matchups.length === 0 ? (
-                              <p className="liga-pantalla-jornada-card__hint">
-                                Partidos pendientes de iniciar
-                              </p>
-                            ) : (
-                              <div className="liga-pantalla-parejas liga-pantalla-parejas--card">
-                                {matchupsPreview.map((m) => {
-                                  const { a, b } = splitParejaLabel(m.local);
-                                  return (
-                                    <span
-                                      key={m.id}
-                                      className="liga-pantalla-pareja"
-                                    >
-                                      <span className="liga-pantalla-pareja__a">
-                                        {a}
-                                      </span>
-                                      {b ? (
-                                        <>
-                                          <span
-                                            className="liga-pantalla-pareja__sep"
-                                            aria-hidden
-                                          >
-                                            /
-                                          </span>
-                                          <span className="liga-pantalla-pareja__b">
-                                            {b}
-                                          </span>
-                                        </>
-                                      ) : null}
-                                    </span>
-                                  );
-                                })}
-                                {matchupsHidden > 0 ? (
-                                  <span className="liga-ind-jornada__more">
-                                    +{matchupsHidden} más
-                                  </span>
-                                ) : null}
-                              </div>
-                            )}
-                          </div>
-                          {tienePantalla ? (
-                            <a
-                              href={publicLigaJornadaUrl(ligaId, j.numero)}
-                              className="liga-pantalla-jornada-card__link liga-pub-programa__link"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              Ver resultados
-                              <span aria-hidden> →</span>
-                            </a>
-                          ) : null}
-                        </details>
-                      );
-                    }
+                    const isSelected = j.id === programaJornadaId;
 
                     return (
                       <article
@@ -803,7 +643,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                                         partido={j.partidos?.find(
                                           (p) => p.id === m.id
                                         )}
-                                        esParejasFijas={esParejasFijas}
+                                        esParejasFijas
                                         jornadaFecha={j.fecha}
                                         matchIndex={matchIndex}
                                       />
@@ -829,20 +669,150 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                     );
                   })}
                 </div>
-                {!esParejasFijas &&
-                detalle.jornadas.length > IND_JORNADAS_VISIBLE ? (
-                  <button
-                    type="button"
-                    className="liga-ind-jornadas-more"
-                    onClick={() => setShowAllJornadas((v) => !v)}
-                    aria-expanded={showAllJornadas}
-                  >
-                    {showAllJornadas
-                      ? "Mostrar menos"
-                      : `Ver todas las jornadas (${detalle.jornadas.length})`}
-                  </button>
-                ) : null}
               </>
+            ) : (
+              (() => {
+                const selectedJornada =
+                  detalle.jornadas.find((j) => j.id === programaJornadaId) ??
+                  detalle.jornadas[0];
+                if (!selectedJornada) return null;
+                const matchups = listJornadaPublicMatches(
+                  selectedJornada,
+                  detalle.equipos,
+                  false
+                );
+                const tienePantalla =
+                  (selectedJornada.partidos?.length ?? 0) > 0;
+                const estadoMod =
+                  selectedJornada.estado === "in_progress"
+                    ? "live"
+                    : selectedJornada.estado === "completed"
+                      ? "done"
+                      : "upcoming";
+
+                return (
+                  <div className="liga-ind-jornadas">
+                    <div
+                      className="liga-ind-jornadas__index"
+                      role="tablist"
+                      aria-label="Índice de jornadas"
+                    >
+                      {detalle.jornadas.map((j) => {
+                        const selected = j.id === selectedJornada.id;
+                        return (
+                          <button
+                            key={j.id}
+                            type="button"
+                            role="tab"
+                            id={`liga-ind-jornada-tab-${j.numero}`}
+                            aria-selected={selected}
+                            aria-controls="liga-ind-jornada-panel"
+                            tabIndex={selected ? 0 : -1}
+                            className={`liga-ind-jornadas__tab${
+                              selected ? " is-selected" : ""
+                            } liga-ind-jornadas__tab--${
+                              j.estado === "in_progress"
+                                ? "live"
+                                : j.estado === "completed"
+                                  ? "done"
+                                  : "upcoming"
+                            }`}
+                            onClick={() => setProgramaJornadaId(j.id)}
+                          >
+                            <span className="liga-ind-jornadas__tab-num">
+                              {j.numero}
+                            </span>
+                            <span className="liga-ind-jornadas__tab-label">
+                              {jornadaBadgeLabel(j.estado)}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div
+                      id="liga-ind-jornada-panel"
+                      role="tabpanel"
+                      aria-labelledby={`liga-ind-jornada-tab-${selectedJornada.numero}`}
+                      className={`liga-ind-jornadas__panel liga-ind-jornadas__panel--${estadoMod}`}
+                    >
+                      <header className="liga-ind-jornadas__panel-head">
+                        <div className="liga-ind-jornadas__panel-titles">
+                          <h3 className="liga-ind-jornadas__panel-title">
+                            Jornada {selectedJornada.numero}
+                          </h3>
+                          {selectedJornada.fecha ? (
+                            <p className="liga-ind-jornadas__panel-fecha">
+                              {formatFechaLegible(
+                                dateInputValue(selectedJornada.fecha)
+                              )}
+                            </p>
+                          ) : null}
+                        </div>
+                        <span
+                          className={jornadaBadgeClass(selectedJornada.estado)}
+                        >
+                          {jornadaBadgeLabel(selectedJornada.estado)}
+                        </span>
+                      </header>
+
+                      <div className="liga-ind-jornadas__panel-body">
+                        {matchups.length === 0 ? (
+                          <p className="liga-pantalla-jornada-card__hint">
+                            Partidos pendientes de iniciar
+                          </p>
+                        ) : (
+                          <ul className="liga-ind-jornadas__matches">
+                            {matchups.map((m) => {
+                              const { a, b } = splitParejaLabel(m.local);
+                              return (
+                                <li
+                                  key={m.id}
+                                  className="liga-ind-jornadas__match"
+                                >
+                                  <span className="liga-ind-jornadas__pair">
+                                    <span className="liga-ind-jornadas__player">
+                                      {a}
+                                    </span>
+                                    {b ? (
+                                      <>
+                                        <span
+                                          className="liga-ind-jornadas__sep"
+                                          aria-hidden
+                                        >
+                                          /
+                                        </span>
+                                        <span className="liga-ind-jornadas__player">
+                                          {b}
+                                        </span>
+                                      </>
+                                    ) : null}
+                                  </span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
+
+                      {tienePantalla ? (
+                        <a
+                          href={publicLigaJornadaUrl(
+                            ligaId,
+                            selectedJornada.numero
+                          )}
+                          className="liga-ind-jornadas__link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Ver resultados
+                          <span aria-hidden> →</span>
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })()
             )}
           </section>
         </div>
