@@ -152,6 +152,7 @@ function renderRoundBlock(
           matches={roundMatches}
           round={roundMatches[0]?.round ?? parseInt(round, 10)}
           courts={tournament.courts}
+          teamConfig={teamConfig}
         />
       ) : null}
     </div>

@@ -1,6 +1,12 @@
 import React from "react";
 import { Pair, Match } from "../lib/database";
 import { pairPlayersDisplayLabel } from "../lib/pairPlayerNames";
+import {
+  getPairTeamIndex,
+  getPairTeamName,
+  type TeamConfigLike,
+} from "../lib/teamConfigDisplay";
+import { TeamBadge } from "./teams/TeamBadge";
 import { TablerIcon } from "./ui/TablerIcon";
 import "./RestingPairsSection.css";
 
@@ -9,6 +15,7 @@ interface RestingPairsSectionProps {
   matches: Match[];
   round: number;
   courts: number;
+  teamConfig?: TeamConfigLike | null;
 }
 
 /** Partidos de la ronda: si ya vienen filtrados (p. ej. remontada), no re-filtrar por número. */
@@ -30,13 +37,12 @@ const getRestingPairs = (
 ): Pair[] => {
   const roundMatches = resolveRoundMatches(matches, round);
   const playingPairIds = new Set<string>();
-  
+
   roundMatches.forEach((match) => {
     playingPairIds.add(match.pair1_id);
     playingPairIds.add(match.pair2_id);
   });
 
-  // Las parejas que descansan son las que NO están jugando
   return pairs.filter((pair) => !playingPairIds.has(pair.id));
 };
 
@@ -45,17 +51,21 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
   matches,
   round,
   courts,
+  teamConfig = null,
 }) => {
   const restingPairs = getRestingPairs(pairs, matches, round);
 
-  // Si todas las parejas están jugando, no mostrar nada
   if (restingPairs.length === 0) {
     return null;
   }
 
-  // Calcular cuántas parejas deberían jugar vs cuántas descansan
   const pairsPlaying = pairs.length - restingPairs.length;
-  const maxPairsThatCanPlay = courts * 2; // Cada cancha = 2 parejas por partido
+  const maxPairsThatCanPlay = courts * 2;
+  const showTeams = Boolean(
+    teamConfig?.teamNames?.length &&
+      teamConfig?.pairToTeam &&
+      Object.keys(teamConfig.pairToTeam).length > 0
+  );
 
   return (
     <div className="resting-pairs-section">
@@ -68,18 +78,40 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
         </span>
       </div>
       <div className="resting-pairs-list">
-        {restingPairs.map((pair) => (
-          <div key={pair.id} className="resting-pair-card">
-            <span className="resting-pair-name">
-              {pairPlayersDisplayLabel(pair)}
-            </span>
-          </div>
-        ))}
+        {restingPairs.map((pair) => {
+          const teamName = showTeams
+            ? getPairTeamName(pair.id, teamConfig, pair)
+            : null;
+          const teamIndex = showTeams
+            ? getPairTeamIndex(pair.id, teamConfig, pair)
+            : null;
+
+          return (
+            <div
+              key={pair.id}
+              className={`resting-pair-card${
+                showTeams ? " resting-pair-card--teams" : ""
+              }`}
+            >
+              {teamName ? (
+                <TeamBadge
+                  name={teamName}
+                  teamIndex={teamIndex ?? undefined}
+                  className="resting-pair-team"
+                />
+              ) : null}
+              <span className="resting-pair-name">
+                {pairPlayersDisplayLabel(pair)}
+              </span>
+            </div>
+          );
+        })}
       </div>
       {restingPairs.length > 0 && (
         <div className="resting-pairs-info">
           <span className="resting-pairs-info-text">
-            {pairsPlaying} parejas jugando ({courts} canchas × 2 parejas = {maxPairsThatCanPlay} máximo)
+            {pairsPlaying} parejas jugando ({courts} canchas × 2 parejas ={" "}
+            {maxPairsThatCanPlay} máximo)
           </span>
         </div>
       )}

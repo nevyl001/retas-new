@@ -1455,6 +1455,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                   matches={roundMatches}
                   round={roundNum}
                   courts={courts}
+                  teamConfig={teamConfig}
                   pairLabelById={Object.fromEntries(
                     pairs.map((pair) => [pair.id, formatPairLabel(pair.id)])
                   )}
