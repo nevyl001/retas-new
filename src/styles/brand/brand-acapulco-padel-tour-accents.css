@@ -149,6 +149,24 @@
   background: var(--apt-lime) !important;
   color: var(--apt-on-lime) !important;
   -webkit-text-fill-color: var(--apt-on-lime);
+  border: 1px solid transparent;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    filter 180ms ease;
+}
+
+[data-brand="acapulco-padel-tour"] .liga-page .jornada-start-bar__btn:hover:not(:disabled),
+[data-club="acapulco-padel-tour"] .liga-page .jornada-start-bar__btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--apt-lime) 86%, #ffffff) !important;
+  border-color: color-mix(in srgb, #ffffff 20%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--apt-lime) 40%, transparent),
+    0 8px 20px rgba(0, 0, 0, 0.28);
+  transform: translateY(-1px);
+  filter: brightness(1.03);
 }
 
 /* ============================================================

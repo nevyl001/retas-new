@@ -1121,23 +1121,48 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         ) : null}
 
         {!esParejasFijas && jornadaJugadoresRows.length > 0 ? (
-          <JornadaStandings
-            sectionId="jornada-ranking-jornada"
-            title="Ranking de la jornada"
-            hint="Calculado desde los partidos guardados (games por jugador)."
-            rows={jornadaJugadoresRows}
-            columns={[
-              { key: "pos", header: "POS", align: "center", render: (r) => r.position },
-              { key: "nombre", header: "Jugador", render: (r) => r.label },
-              {
-                key: "pts",
-                header: "PTS",
-                align: "right",
-                emphasis: true,
-                render: (r) => r.points,
-              },
-            ]}
-          />
+          <div className="jornada-standings-dual">
+            <JornadaStandings
+              sectionId="jornada-ranking-jornada"
+              title="Ranking de la jornada"
+              hint="Calculado desde los partidos guardados (parcial por jugador)."
+              rows={jornadaJugadoresRows}
+              columns={[
+                { key: "pos", header: "POS", align: "center", render: (r) => r.position },
+                { key: "nombre", header: "Jugador", render: (r) => r.label },
+                {
+                  key: "pts",
+                  header: "PTS",
+                  align: "right",
+                  emphasis: true,
+                  render: (r) => r.points,
+                },
+              ]}
+            />
+            <JornadaStandings
+              sectionId="jornada-ranking-general"
+              title="Ranking general"
+              hint="Puntos de la liga. Se recalcula al guardar o finalizar."
+              rows={rankingJugadoresRows}
+              columns={[
+                { key: "pos", header: "POS", align: "center", render: (r) => r.position },
+                { key: "nombre", header: "Jugador", render: (r) => r.label },
+                {
+                  key: "pts",
+                  header: "PTS",
+                  align: "right",
+                  emphasis: true,
+                  render: (r) => r.points,
+                },
+                {
+                  key: "jorn",
+                  header: "Jorn.",
+                  align: "center",
+                  render: (r) => r.matchesPlayed ?? 0,
+                },
+              ]}
+            />
+          </div>
         ) : null}
 
         {esParejasFijas ? (
@@ -1158,31 +1183,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               columns={PAREJAS_JORNADA_RANKING_COLUMNS}
             />
           </div>
-        ) : (
-          <JornadaStandings
-            sectionId="jornada-ranking-general"
-            title="Ranking general"
-            hint="Puntos en base de datos de la liga. Al guardar resultados o finalizar, se recalcula automáticamente."
-            rows={rankingJugadoresRows}
-            columns={[
-              { key: "pos", header: "POS", align: "center", render: (r) => r.position },
-              { key: "nombre", header: "Jugador", render: (r) => r.label },
-              {
-                key: "pts",
-                header: "PTS",
-                align: "right",
-                emphasis: true,
-                render: (r) => r.points,
-              },
-              {
-                key: "jorn",
-                header: "Jorn.",
-                align: "center",
-                render: (r) => r.matchesPlayed ?? 0,
-              },
-            ]}
-          />
-        )}
+        ) : null}
 
         {!esParejasFijas && (
           <div className="liga-jornada-manual">
