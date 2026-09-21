@@ -1233,10 +1233,24 @@
     var(--brand-surface-alt, #0d1118) 82%,
     rgba(0, 0, 0, 0.55)
   );
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15.5rem, 20rem);
+  align-items: start;
   width: 100%;
   max-width: none;
   margin: 0;
-  gap: clamp(1.35rem, 2.8vw, 2.75rem);
+  gap: clamp(1rem, 2vw, 1.75rem);
+}
+
+@media (max-width: 959px) {
+  .liga-pantalla--jornada-fijas .liga-pantalla__layout--parejas {
+    grid-template-columns: 1fr;
+  }
+
+  /* En móvil/tablet: tablas arriba para no quedar ocultas bajo los partidos */
+  .liga-pantalla--jornada-fijas .liga-pantalla__layout--parejas > .liga-pantalla-ranking {
+    order: -1;
+  }
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla__rondas {
@@ -1701,7 +1715,19 @@
   max-width: none;
   width: 100%;
   text-align: center;
-  position: static;
+  position: sticky;
+  top: 0.75rem;
+  align-self: start;
+  max-height: calc(100vh - 1.5rem);
+  overflow: auto;
+}
+
+@media (max-width: 959px) {
+  .liga-pantalla-ranking--jornada-fijas {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-ranking__title,
@@ -1720,9 +1746,22 @@
 .liga-pantalla--jornada-fijas .liga-pub-standings--jornada {
   text-align: left;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(0.55rem, 1vw, 0.85rem) clamp(0.6rem, 1.1vw, 0.95rem);
+  grid-template-columns: 1fr;
+  gap: 0.45rem;
   width: 100%;
+}
+
+@media (max-width: 959px) {
+  .liga-pantalla--jornada-fijas .liga-pub-standings--jornada {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.5rem, 1vw, 0.75rem);
+  }
+}
+
+@media (max-width: 559px) {
+  .liga-pantalla--jornada-fijas .liga-pub-standings--jornada {
+    grid-template-columns: 1fr;
+  }
 }
 
 .liga-pantalla--jornada-fijas .liga-pub-standings--jornada .liga-pub-standings__row {
@@ -1806,13 +1845,13 @@
   gap: 0.65rem;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 959px) {
   .liga-pantalla--jornada-fijas .liga-pub-standings--jornada {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 559px) {
   .liga-pantalla--jornada-fijas .liga-pub-standings--jornada {
     grid-template-columns: 1fr;
   }
