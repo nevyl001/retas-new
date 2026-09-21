@@ -425,14 +425,19 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
             ) : (
               <>
                 <div className="liga-ind-top3" role="list" aria-label="Podio del ranking">
-                  {ranking.slice(0, 3).map((row) => {
+                  {ranking.slice(0, 3).map((row, idx) => {
                     const support = supportStatsByJugador.get(row.jugador_id);
                     const showSupport = hasMeaningfulSupportStats(support);
                     return (
                       <article
                         key={row.jugador_id}
                         role="listitem"
-                        className={`liga-ind-top3__card liga-ind-top3__card--${row.posicion}`}
+                        className={`liga-ind-top3__card liga-ind-top3__card--${row.posicion} liga-ind-enter`}
+                        style={
+                          {
+                            ["--liga-ind-i" as string]: idx,
+                          } as React.CSSProperties
+                        }
                       >
                         <span className="liga-ind-top3__pos" aria-hidden>
                           {row.posicion}
@@ -480,8 +485,16 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {ranking.slice(3).map((row) => (
-                          <tr key={row.jugador_id}>
+                        {ranking.slice(3).map((row, idx) => (
+                          <tr
+                            key={row.jugador_id}
+                            className="liga-ind-enter"
+                            style={
+                              {
+                                ["--liga-ind-i" as string]: idx + 3,
+                              } as React.CSSProperties
+                            }
+                          >
                             <td className="liga-pantalla-ranking__rank">
                               {row.posicion}
                             </td>
