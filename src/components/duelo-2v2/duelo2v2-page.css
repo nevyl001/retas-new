@@ -2655,8 +2655,11 @@
 }
 
 
-/* Split VS panels in Duelo 2v2 public live board */
+/* Split VS panels in Duelo 2v2 public live board — pareja arriba / vs / pareja abajo */
 .duelo2v2-live-board--split-vs .duelo2v2-live-board__arena--split-vs {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto;
+  align-items: stretch;
   gap: clamp(0.85rem, 2.2vw, 1.25rem);
 }
 
@@ -2672,11 +2675,4 @@
 
 .duelo2v2-live-team--split-vs .duelo2v2-live-team__score {
   align-self: center;
-}
-
-@media (min-width: 900px) {
-  .duelo2v2-live-board--split-vs .duelo2v2-live-board__arena--split-vs {
-    grid-template-columns: 1fr auto 1fr;
-    align-items: start;
-  }
 }
