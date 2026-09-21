@@ -1287,15 +1287,15 @@
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-ronda__matches--courts {
-  /* Split VS: 4 columnas de foto por card → necesita más ancho mínimo */
-  --liga-court-card-min: clamp(20rem, 30vw, 26rem);
+  /* Cards compactas: más partidos visibles por fila en la ronda */
+  --liga-court-card-min: clamp(16rem, 24vw, 22rem);
   display: grid;
   grid-template-columns: repeat(
     auto-fit,
     minmax(min(100%, var(--liga-court-card-min)), 1fr)
   );
   gap: clamp(0.85rem, 1.6vw, 1.45rem);
-  align-items: stretch;
+  align-items: start;
   width: 100%;
   max-width: none;
 }
