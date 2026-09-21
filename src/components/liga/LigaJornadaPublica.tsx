@@ -396,6 +396,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         p1Wins,
         p2Wins,
         matchStyle,
+        scoreSummaryOnly: !esParejasFijas,
       };
 
       if (partido.estado === "completed") {

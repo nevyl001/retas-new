@@ -5,6 +5,11 @@ import { formatSetColumnLabel } from "./ligaJornadaMatchNames";
 
 interface LigaJornadaMatchScoreGridProps {
   board: PartidoPublicScoreboard;
+  /**
+   * Liga individual (rotativo): un solo set/tiempo — solo el resumen grande,
+   * sin la columna PTS duplicada. No usar en parejas fijas / playoffs.
+   */
+  summaryOnly?: boolean;
 }
 
 function setsWonSummary(
@@ -23,7 +28,7 @@ function setsWonSummary(
 /** Marcador tipo broadcast: resumen 2-0 + SET 1 / SET 2 con ganador resaltado. */
 export const LigaJornadaMatchScoreGrid: React.FC<
   LigaJornadaMatchScoreGridProps
-> = ({ board }) => {
+> = ({ board, summaryOnly = false }) => {
   if (board.kind === "wo") {
     return (
       <div className="liga-jornada-match-score liga-jornada-match-score--wo">
@@ -38,8 +43,16 @@ export const LigaJornadaMatchScoreGrid: React.FC<
     const topWin = board.s1 > board.s2;
     const botWin = board.s2 > board.s1;
     return (
-      <div className="liga-jornada-match-score" aria-label="Marcador">
-        <div className="liga-jornada-match-score__summary" aria-hidden>
+      <div
+        className={`liga-jornada-match-score${
+          summaryOnly ? " liga-jornada-match-score--summary-only" : ""
+        }`}
+        aria-label="Marcador"
+      >
+        <div
+          className="liga-jornada-match-score__summary"
+          aria-hidden={summaryOnly ? undefined : true}
+        >
           <span
             className={`liga-jornada-match-score__summary-num${
               topWin ? " is-win" : ""
@@ -56,26 +69,28 @@ export const LigaJornadaMatchScoreGrid: React.FC<
             {board.s2}
           </span>
         </div>
-        <div
-          className="liga-jornada-match-score__grid liga-jornada-match-score__grid--simple"
-          style={{ ["--score-cols" as string]: 1 }}
-        >
-          <span className="liga-jornada-match-score__head">PTS</span>
-          <span
-            className={`liga-jornada-match-score__cell${
-              topWin ? " liga-jornada-match-score__cell--win" : ""
-            }`}
+        {summaryOnly ? null : (
+          <div
+            className="liga-jornada-match-score__grid liga-jornada-match-score__grid--simple"
+            style={{ ["--score-cols" as string]: 1 }}
           >
-            <LigaMotionValue morphKey={board.s1} value={board.s1} />
-          </span>
-          <span
-            className={`liga-jornada-match-score__cell${
-              botWin ? " liga-jornada-match-score__cell--win" : ""
-            }`}
-          >
-            <LigaMotionValue morphKey={board.s2} value={board.s2} />
-          </span>
-        </div>
+            <span className="liga-jornada-match-score__head">PTS</span>
+            <span
+              className={`liga-jornada-match-score__cell${
+                topWin ? " liga-jornada-match-score__cell--win" : ""
+              }`}
+            >
+              <LigaMotionValue morphKey={board.s1} value={board.s1} />
+            </span>
+            <span
+              className={`liga-jornada-match-score__cell${
+                botWin ? " liga-jornada-match-score__cell--win" : ""
+              }`}
+            >
+              <LigaMotionValue morphKey={board.s2} value={board.s2} />
+            </span>
+          </div>
+        )}
       </div>
     );
   }

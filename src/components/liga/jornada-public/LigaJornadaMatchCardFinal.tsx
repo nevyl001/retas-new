@@ -15,6 +15,8 @@ interface LigaJornadaMatchCardFinalProps {
   p1Wins: boolean;
   p2Wins: boolean;
   matchStyle?: React.CSSProperties;
+  /** Individual rotativo: solo marcador resumen (sin grid PTS). */
+  scoreSummaryOnly?: boolean;
 }
 
 /** Invierte p1/p2 del marcador para alinear con ganador arriba. */
@@ -52,6 +54,7 @@ export const LigaJornadaMatchCardFinal: React.FC<
   p1Wins,
   p2Wins,
   matchStyle,
+  scoreSummaryOnly = false,
 }) => {
   const winnerOnTop = p2Wins;
   const topSide = winnerOnTop ? side2 : side1;
@@ -90,7 +93,10 @@ export const LigaJornadaMatchCardFinal: React.FC<
           />
         </div>
         <div className="liga-jornada-match-card__final-score">
-          <LigaJornadaMatchScoreGrid board={visualBoard} />
+          <LigaJornadaMatchScoreGrid
+            board={visualBoard}
+            summaryOnly={scoreSummaryOnly}
+          />
         </div>
       </div>
     </article>

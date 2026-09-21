@@ -634,6 +634,16 @@
   gap: 0.55rem;
 }
 
+.liga-pantalla--jornada-fijas .liga-jornada-match-score--summary-only {
+  gap: 0;
+}
+
+.liga-pantalla--jornada-fijas
+  .liga-jornada-match-score--summary-only
+  .liga-jornada-match-score__summary-num {
+  font-size: clamp(1.55rem, 3.6vw, 2rem);
+}
+
 .liga-pantalla--jornada-fijas .liga-jornada-match-score__summary {
   display: flex;
   align-items: baseline;
