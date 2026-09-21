@@ -1089,6 +1089,76 @@ export async function startJornada(jornadaId: string): Promise<void> {
   if (uErr) throw new Error(uErr.message);
 }
 
+/**
+ * Borra y vuelve a generar los partidos de una jornada individual_rotativo
+ * con el calendario de 1-factorización (llena canchas por ronda).
+ * Útil para corregir jornadas generadas con el empaquetado greedy antiguo.
+ */
+export async function regenerarPartidosJornadaRotativo(
+  jornadaId: string
+): Promise<{ partidos: number; rondas: number }> {
+  await requireUserId();
+
+  const { data: jornada, error: jErr } = await supabase
+    .from("liga_jornadas")
+    .select("*, liga:ligas(*)")
+    .eq("id", jornadaId)
+    .maybeSingle();
+
+  if (jErr) throw new Error(jErr.message);
+  if (!jornada) throw new Error("Jornada no encontrada.");
+  if (jornada.estado === "completed") {
+    throw new Error("No se puede regenerar una jornada finalizada.");
+  }
+
+  const ligaRow = jornada.liga as {
+    canchas_disponibles?: number;
+    modalidad?: string;
+  };
+  const modalidad = parseLigaModalidad(ligaRow?.modalidad);
+  if (isEquiposModalidad(modalidad)) {
+    throw new Error(
+      "Solo aplica a ligas individuales (rotativo). En parejas fijas regenera el calendario de la liga."
+    );
+  }
+
+  const { data: parejas, error: pErr } = await supabase
+    .from("liga_jornada_parejas")
+    .select("id")
+    .eq("jornada_id", jornadaId);
+
+  if (pErr) throw new Error(pErr.message);
+  if (!parejas || parejas.length < 3) {
+    throw new Error("Se necesitan al menos 3 parejas en la jornada.");
+  }
+
+  const canchas = Math.max(1, Number(ligaRow?.canchas_disponibles ?? 3));
+
+  const { error: delErr } = await supabase
+    .from("liga_partidos")
+    .delete()
+    .eq("jornada_id", jornadaId);
+  if (delErr) throw new Error(delErr.message);
+
+  const rows = generarPartidosJornada(
+    jornadaId,
+    parejas.map((p) => ({ id: String(p.id) })),
+    canchas
+  );
+
+  const { error: insErr } = await supabase.from("liga_partidos").insert(rows);
+  if (insErr) throw new Error(insErr.message);
+
+  const { error: uErr } = await supabase
+    .from("liga_jornadas")
+    .update({ estado: "in_progress" })
+    .eq("id", jornadaId);
+  if (uErr) throw new Error(uErr.message);
+
+  const rondas = rows.reduce((max, r) => Math.max(max, r.ronda), 0);
+  return { partidos: rows.length, rondas };
+}
+
 export interface LigaScoreConflict {
   scorePareja1: number | null;
   scorePareja2: number | null;
