@@ -19,6 +19,7 @@ import {
   validateEquiposParaPlayoffsCalendario,
   validateInscripcionesParaCalendario,
 } from "../lib/liga/calendario";
+import { scheduleJornadaRoundRobin } from "../lib/liga/jornadaRoundRobinSchedule";
 import {
   fetchEquiposForLiga,
   insertJornadasForLigaParejasFijas,
@@ -976,156 +977,26 @@ type PartidoJornadaInsert = {
   score_pareja2: null;
 };
 
-/** Uso acumulado de cada pareja por cancha (índice 0 = cancha 1). */
-function getUsoCanchas(
-  uso: Map<string, number[]>,
-  parejaId: string,
-  numCanchas: number
-): number[] {
-  let arr = uso.get(parejaId);
-  if (!arr) {
-    arr = Array(numCanchas).fill(0);
-    uso.set(parejaId, arr);
-  }
-  return arr;
-}
-
-/** Elige cancha libre donde las dos parejas menos hayan jugado; rota en empates. */
-function elegirCanchaRotando(
-  enf: { p1: string; p2: string },
-  canchasOcupadasEnRonda: Set<number>,
-  usoPorPareja: Map<string, number[]>,
-  ultimaCancha: Map<string, number>,
-  numCanchas: number,
-  ronda: number
-): number {
-  const candidatas: { cancha: number; score: number }[] = [];
-
-  for (let c = 1; c <= numCanchas; c++) {
-    if (canchasOcupadasEnRonda.has(c)) continue;
-    const u1 = getUsoCanchas(usoPorPareja, enf.p1, numCanchas);
-    const u2 = getUsoCanchas(usoPorPareja, enf.p2, numCanchas);
-    candidatas.push({ cancha: c, score: u1[c - 1] + u2[c - 1] });
-  }
-
-  if (candidatas.length === 0) {
-    throw new Error("No hay cancha libre en esta ronda.");
-  }
-
-  const minScore = Math.min(...candidatas.map((x) => x.score));
-  const mejores = candidatas.filter((x) => x.score === minScore);
-
-  mejores.sort((a, b) => {
-    const ultA1 = ultimaCancha.get(enf.p1);
-    const ultA2 = ultimaCancha.get(enf.p2);
-    const repA =
-      (ultA1 === a.cancha ? 1 : 0) + (ultA2 === a.cancha ? 1 : 0);
-    const repB =
-      (ultA1 === b.cancha ? 1 : 0) + (ultA2 === b.cancha ? 1 : 0);
-    if (repA !== repB) return repA - repB;
-    const rotA = (a.cancha + ronda) % numCanchas;
-    const rotB = (b.cancha + ronda) % numCanchas;
-    return rotA - rotB;
-  });
-
-  return mejores[0].cancha;
-}
-
-function registrarCanchaPareja(
-  parejaId: string,
-  cancha: number,
-  usoPorPareja: Map<string, number[]>,
-  ultimaCancha: Map<string, number>,
-  numCanchas: number
-): void {
-  const u = getUsoCanchas(usoPorPareja, parejaId, numCanchas);
-  u[cancha - 1] += 1;
-  ultimaCancha.set(parejaId, cancha);
-}
-
-/** Todos contra todos; rondas con máx. canchas simultáneas; rotación de cancha por pareja. */
+/** Genera insert rows: todos vs todos con 1-factorización + rotación de cancha. */
 function generarPartidosJornada(
   jornadaId: string,
   parejas: { id: string }[],
   canchasDisponibles: number
 ): PartidoJornadaInsert[] {
-  const todos: { p1: string; p2: string }[] = [];
-  for (let i = 0; i < parejas.length; i++) {
-    for (let j = i + 1; j < parejas.length; j++) {
-      todos.push({ p1: parejas[i].id, p2: parejas[j].id });
-    }
-  }
-
-  const partidos: PartidoJornadaInsert[] = [];
-  const pendientes = [...todos];
-  const usoPorPareja = new Map<string, number[]>();
-  const ultimaCancha = new Map<string, number>();
-  let ronda = 1;
-  const maxIter = todos.length * parejas.length + 10;
-
-  while (pendientes.length > 0) {
-    const usadosEnRonda = new Set<string>();
-    const estaRonda: { p1: string; p2: string }[] = [];
-    const sobran: { p1: string; p2: string }[] = [];
-
-    for (const enf of pendientes) {
-      const cabe =
-        estaRonda.length < canchasDisponibles &&
-        !usadosEnRonda.has(enf.p1) &&
-        !usadosEnRonda.has(enf.p2);
-
-      if (cabe) {
-        estaRonda.push(enf);
-        usadosEnRonda.add(enf.p1);
-        usadosEnRonda.add(enf.p2);
-      } else {
-        sobran.push(enf);
-      }
-    }
-
-    if (estaRonda.length === 0 && sobran.length > 0) {
-      throw new Error(
-        "No se pudo armar el calendario de partidos con las canchas disponibles."
-      );
-    }
-
-    const canchasOcupadasEnRonda = new Set<number>();
-
-    for (const enf of estaRonda) {
-      const cancha = elegirCanchaRotando(
-        enf,
-        canchasOcupadasEnRonda,
-        usoPorPareja,
-        ultimaCancha,
-        canchasDisponibles,
-        ronda
-      );
-      canchasOcupadasEnRonda.add(cancha);
-      registrarCanchaPareja(enf.p1, cancha, usoPorPareja, ultimaCancha, canchasDisponibles);
-      registrarCanchaPareja(enf.p2, cancha, usoPorPareja, ultimaCancha, canchasDisponibles);
-
-      partidos.push({
-        jornada_id: jornadaId,
-        pareja1_id: enf.p1,
-        pareja2_id: enf.p2,
-        ronda,
-        cancha,
-        estado: ronda === 1 ? "in_progress" : "upcoming",
-        score_pareja1: null,
-        score_pareja2: null,
-      });
-    }
-
-    pendientes.length = 0;
-    pendientes.push(...sobran);
-    ronda += 1;
-
-    if (ronda > maxIter) {
-      throw new Error("Error al distribuir partidos en rondas.");
-    }
-  }
-
-  return partidos;
+  const scheduled = scheduleJornadaRoundRobin(
+    parejas.map((p) => p.id),
+    canchasDisponibles
+  );
+  return scheduled.map((m) => ({
+    jornada_id: jornadaId,
+    pareja1_id: m.p1,
+    pareja2_id: m.p2,
+    ronda: m.ronda,
+    cancha: m.cancha,
+    estado: m.ronda === 1 ? ("in_progress" as const) : ("upcoming" as const),
+    score_pareja1: null,
+    score_pareja2: null,
+  }));
 }
 
 export async function startJornada(jornadaId: string): Promise<void> {

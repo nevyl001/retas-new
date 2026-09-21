@@ -272,8 +272,8 @@ export function groupJornadaPublicMatchesByRonda(
   }
 
   const courtsCap = Math.max(1, Math.floor(canchasDisponibles) || 1);
-  // Una sola ronda en BD → partir en 2 olas (mitad de partidos por ola).
-  const courts = Math.min(courtsCap, Math.floor(schedulable.length / 2));
+  // Respetar canchas configuradas (antes se limitaba a mitad de partidos → 2 canchas con 4 juegos).
+  const courts = courtsCap;
   const packed = packPlayoffsJornadaMatches(schedulable, Math.max(1, courts));
   const matchById = new Map(matches.map((m) => [m.id, m]));
   const byPacked = new Map<number, JornadaPublicMatch[]>();

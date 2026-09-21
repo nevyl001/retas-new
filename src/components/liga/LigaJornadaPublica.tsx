@@ -583,6 +583,16 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                           ? " liga-pantalla-ronda__matches--courts"
                           : ""
                       }`}
+                      {...(esParejasFijas
+                        ? {
+                            "data-cols": String(
+                              Math.max(
+                                1,
+                                Math.min(canchasDisponibles, partidos.length)
+                              )
+                            ),
+                          }
+                        : {})}
                     >
                       {partidos.map((partido, matchIndex) =>
                         renderMatchCard(partido, esParejasFijas, matchIndex)

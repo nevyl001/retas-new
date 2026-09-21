@@ -232,11 +232,54 @@ describe("publicDisplay", () => {
     };
     const rows = listJornadaPublicMatches(jornada, [], true);
     const groups = groupJornadaPublicMatchesByRonda(rows, jornada, 4);
-    expect(groups).toHaveLength(2);
+    // 4 partidos disjuntos + 4 canchas → una sola ola llena las 4 canchas
+    expect(groups).toHaveLength(1);
     expect(groups[0].ronda).toBe(1);
-    expect(groups[1].ronda).toBe(2);
-    expect(groups[0].matches).toHaveLength(2);
-    expect(groups[1].matches).toHaveLength(2);
+    expect(groups[0].matches).toHaveLength(4);
+    expect(groups[0].matches.map((m) => m.cancha).sort()).toEqual([1, 2, 3, 4]);
+  });
+
+  it("con 3 canchas reparte 4 partidos disjuntos en 2 olas (3+1)", () => {
+    const parejas: LigaJornadaPareja[] = Array.from({ length: 8 }, (_, i) => ({
+      id: `p${i + 1}`,
+      jornada_id: "j4b",
+      jugador1_id: `j${i * 2 + 1}`,
+      jugador2_id: `j${i * 2 + 2}`,
+      equipo_id: `eq${i + 1}`,
+    }));
+    const partidos = [
+      { a: 1, b: 2, cancha: 1 },
+      { a: 3, b: 4, cancha: 2 },
+      { a: 5, b: 6, cancha: 3 },
+      { a: 7, b: 8, cancha: 4 },
+    ].map((row, idx) => ({
+      id: `m${idx + 1}`,
+      jornada_id: "j4b",
+      pareja1_id: `p${row.a}`,
+      pareja2_id: `p${row.b}`,
+      score_pareja1: null,
+      score_pareja2: null,
+      cancha: row.cancha,
+      ronda: 1,
+      estado: "upcoming" as const,
+      created_at: "",
+    }));
+    const jornada: LigaJornada = {
+      id: "j4b",
+      liga_id: "l1",
+      numero: 4,
+      estado: "upcoming",
+      fecha: null,
+      created_at: "",
+      puntos_aplicados: false,
+      parejas,
+      partidos,
+    };
+    const rows = listJornadaPublicMatches(jornada, [], true);
+    const groups = groupJornadaPublicMatchesByRonda(rows, jornada, 3);
+    expect(groups).toHaveLength(2);
+    expect(groups[0].matches).toHaveLength(3);
+    expect(groups[1].matches).toHaveLength(1);
   });
 
   it("reparte 8 partidos en ronda 1 en dos olas cuando hay 4 canchas", () => {
