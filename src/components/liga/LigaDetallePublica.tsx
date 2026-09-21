@@ -95,6 +95,35 @@ function jornadaFeaturedOpenId(jornadas: LigaJornada[]): string | null {
   return completed[0]?.id ?? null;
 }
 
+/** Cuántas jornadas se listan antes de «Ver todas» (evita scroll infinito). */
+const IND_JORNADAS_VISIBLE = 3;
+/** Preview de partidos dentro de una jornada abierta. */
+const IND_MATCHUPS_PREVIEW = 3;
+
+/** Ventana corta centrada en la jornada relevante (en curso / última completada). */
+function pickVisibleJornadas(
+  jornadas: LigaJornada[],
+  showAll: boolean,
+  limit = IND_JORNADAS_VISIBLE
+): LigaJornada[] {
+  if (showAll || jornadas.length <= limit) return jornadas;
+  const featuredId = jornadaFeaturedOpenId(jornadas);
+  const focus = Math.max(
+    0,
+    featuredId
+      ? jornadas.findIndex((j) => j.id === featuredId)
+      : 0
+  );
+  const picked = new Set<number>([focus]);
+  for (let i = focus + 1; i < jornadas.length && picked.size < limit; i += 1) {
+    picked.add(i);
+  }
+  for (let i = focus - 1; i >= 0 && picked.size < limit; i -= 1) {
+    picked.add(i);
+  }
+  return jornadas.filter((_, i) => picked.has(i));
+}
+
 interface LigaDetallePublicaProps {
   ligaId: string;
 }
@@ -270,22 +299,21 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const [expandedJornadaIds, setExpandedJornadaIds] = useState<Set<string>>(
     () => new Set()
   );
+  const [showAllJornadas, setShowAllJornadas] = useState(false);
 
   useEffect(() => {
     if (!detalle?.jornadas.length || isEquiposModalidad(detalle.modalidad)) {
       return;
     }
-    const featured = jornadaFeaturedOpenId(detalle.jornadas);
+    // Overview: jornadas empiezan colapsadas (menos scroll); el usuario abre la que quiera.
     setExpandedJornadaIds((prev) => {
-      // Solo inicializar si aún no hay selección (evita pisar toggles del usuario).
-      if (prev.size > 0) {
-        const stillValid = Array.from(prev).some((id) =>
-          detalle.jornadas.some((j) => j.id === id)
-        );
-        if (stillValid) return prev;
-      }
-      return featured ? new Set([featured]) : new Set();
+      if (prev.size === 0) return prev;
+      const stillValid = Array.from(prev).some((id) =>
+        detalle.jornadas.some((j) => j.id === id)
+      );
+      return stillValid ? prev : new Set();
     });
+    setShowAllJornadas(false);
   }, [detalle]);
 
   useEffect(() => {
@@ -594,13 +622,23 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                       : " liga-pantalla-jornadas__grid--individual"
                   }`}
                 >
-                  {detalle.jornadas.map((j, jornadaIndex) => {
+                  {(esParejasFijas
+                    ? detalle.jornadas
+                    : pickVisibleJornadas(detalle.jornadas, showAllJornadas)
+                  ).map((j, jornadaIndex) => {
                     const tienePantalla = (j.partidos?.length ?? 0) > 0;
                     const esActiva = jornadaActiva?.id === j.id;
                     const matchups = listJornadaPublicMatches(
                       j,
                       detalle.equipos,
                       esParejasFijas
+                    );
+                    const matchupsPreview = esParejasFijas
+                      ? matchups
+                      : matchups.slice(0, IND_MATCHUPS_PREVIEW);
+                    const matchupsHidden = Math.max(
+                      0,
+                      matchups.length - matchupsPreview.length
                     );
                     const estadoMod =
                       j.estado === "in_progress"
@@ -657,7 +695,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                               </p>
                             ) : (
                               <div className="liga-pantalla-parejas liga-pantalla-parejas--card">
-                                {matchups.map((m) => {
+                                {matchupsPreview.map((m) => {
                                   const { a, b } = splitParejaLabel(m.local);
                                   return (
                                     <span
@@ -683,6 +721,11 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                                     </span>
                                   );
                                 })}
+                                {matchupsHidden > 0 ? (
+                                  <span className="liga-ind-jornada__more">
+                                    +{matchupsHidden} más
+                                  </span>
+                                ) : null}
                               </div>
                             )}
                           </div>
@@ -786,6 +829,19 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                     );
                   })}
                 </div>
+                {!esParejasFijas &&
+                detalle.jornadas.length > IND_JORNADAS_VISIBLE ? (
+                  <button
+                    type="button"
+                    className="liga-ind-jornadas-more"
+                    onClick={() => setShowAllJornadas((v) => !v)}
+                    aria-expanded={showAllJornadas}
+                  >
+                    {showAllJornadas
+                      ? "Mostrar menos"
+                      : `Ver todas las jornadas (${detalle.jornadas.length})`}
+                  </button>
+                ) : null}
               </>
             )}
           </section>
