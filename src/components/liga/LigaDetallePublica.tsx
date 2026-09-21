@@ -424,7 +424,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
               <p className="liga-pantalla__loading">Sin puntos aún.</p>
             ) : (
               <>
-                <div className="liga-ind-top3" role="list">
+                <div className="liga-ind-top3" role="list" aria-label="Podio del ranking">
                   {ranking.slice(0, 3).map((row) => {
                     const support = supportStatsByJugador.get(row.jugador_id);
                     const showSupport = hasMeaningfulSupportStats(support);
