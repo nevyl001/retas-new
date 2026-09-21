@@ -2042,17 +2042,17 @@
   padding-bottom: 0;
 }
 
-/* Altura fija al viewport: que quepan ambas parejas y varios juegos de la ronda */
+/* Retrato fluido: crece/encoge con el ancho de la card (pantalla) */
 .reta-eq-duel__portrait {
   position: relative;
   container-type: inline-size;
-  aspect-ratio: unset;
+  aspect-ratio: 5 / 4;
   width: 100%;
   min-width: 0;
   min-height: 0;
-  height: clamp(4.75rem, 12vh, 6.5rem);
-  max-height: clamp(4.75rem, 12vh, 6.5rem);
-  border-radius: 0.5rem;
+  height: auto;
+  max-height: none;
+  border-radius: 0.55rem;
   overflow: hidden;
   background: var(--eq-duel-fallback-bg, linear-gradient(145deg, #2a3340, #12161c));
   box-shadow:
@@ -2060,39 +2060,27 @@
     0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
-/* Móvil: fotos compactas (compartir ronda completa) */
+/* Móvil: mismo ratio fluido, tipografía un poco mayor */
 @media (max-width: 639px) {
   .te-public--reta-equipos .reta-sb-card--teams.reta-eq-duel-card,
   .te-public--reta-equipos .te-pub-match.reta-sb-card--teams.reta-eq-duel-card {
-    padding: 0.38rem 0.34rem 0.3rem !important;
+    padding: 0.45rem 0.4rem 0.35rem !important;
   }
 
   .reta-eq-duel__portraits {
-    gap: 0.16rem;
+    gap: 0.2rem;
   }
 
   .reta-eq-duel__portrait {
-    height: clamp(5rem, 14vh, 6.75rem);
-    max-height: clamp(5rem, 14vh, 6.75rem);
-    border-radius: 0.5rem;
-  }
-
-  .reta-eq-duel__given {
-    font-size: clamp(0.78rem, 3.8vw, 0.95rem);
-  }
-
-  .reta-eq-duel__family {
-    font-size: clamp(0.58rem, 2.8vw, 0.72rem);
-  }
-
-  .reta-eq-duel__rating.jugador-rating-chip {
-    font-size: 0.58rem;
-    padding: 0.08rem 0.28rem;
+    aspect-ratio: 5 / 4;
+    height: auto;
+    max-height: none;
+    border-radius: 0.55rem;
   }
 
   .reta-eq-duel__float-logo {
-    width: 2.15rem;
-    height: 2.15rem;
+    width: clamp(1.85rem, 18cqi, 2.35rem);
+    height: clamp(1.85rem, 18cqi, 2.35rem);
   }
 
   .reta-eq-duel-card .reta-sb-card__score-faceoff .te-pub-score__num {
@@ -2106,15 +2094,13 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 18%;
+  object-position: center 12%;
   opacity: 0;
   transition: opacity 220ms ease;
 }
 
 .reta-eq-duel__portrait--photo .reta-eq-duel__photo.is-visible {
   opacity: 1;
-  transform: scale(1.06);
-  transform-origin: center 14%;
 }
 
 .reta-eq-duel__photo.is-visible {
@@ -2195,7 +2181,7 @@
   right: 2.6rem;
   bottom: 1.05rem;
   font-family: var(--font-display, var(--ro-font-heading), "Segoe UI", sans-serif);
-  font-size: clamp(0.72rem, 9.5cqi, 0.95rem);
+  font-size: clamp(0.7rem, 10cqi, 1.05rem);
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.05;
@@ -2215,7 +2201,7 @@
   left: 0.35rem;
   right: 2.6rem;
   bottom: 0.28rem;
-  font-size: clamp(0.55rem, 6.5cqi, 0.7rem);
+  font-size: clamp(0.52rem, 7cqi, 0.75rem);
   font-weight: 600;
   line-height: 1.05;
   color: rgba(255, 255, 255, 0.88);
@@ -2278,21 +2264,21 @@
   }
 }
 
-/* Logo centrado entre la pareja */
+/* Logo centrado entre la pareja — escala con el ancho del panel */
 .reta-eq-duel__float-logo {
   position: absolute;
   z-index: 5;
   left: 50%;
   top: 50%;
   bottom: auto;
-  width: 2.35rem;
-  height: 2.35rem;
+  width: clamp(1.7rem, 16cqi, 2.5rem);
+  height: clamp(1.7rem, 16cqi, 2.5rem);
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.22rem;
-  border-radius: 0.6rem;
+  padding: 0.18rem;
+  border-radius: 0.55rem;
   background:
     linear-gradient(155deg, rgba(255, 255, 255, 0.24) 0%, rgba(10, 11, 16, 0.94) 100%);
   border: 1px solid rgba(255, 255, 255, 0.34);
@@ -2381,16 +2367,15 @@
   }
 
   .reta-eq-duel__portraits {
-    gap: 0.16rem;
+    gap: 0.18rem;
     padding-bottom: 0;
   }
 
   .reta-eq-duel__portrait {
-    aspect-ratio: unset;
-    min-height: 0;
-    height: clamp(5rem, 11vh, 6.75rem);
-    max-height: clamp(5rem, 11vh, 6.75rem);
-    border-radius: 0.5rem;
+    aspect-ratio: 5 / 4;
+    height: auto;
+    max-height: none;
+    border-radius: 0.55rem;
   }
 
   .reta-eq-duel__vs-ring {
@@ -2399,17 +2384,9 @@
     font-size: 0.48rem;
   }
 
-  .reta-eq-duel__given {
-    font-size: clamp(0.72rem, 3.4cqi, 0.9rem);
-  }
-
-  .reta-eq-duel__family {
-    font-size: clamp(0.55rem, 2.6cqi, 0.7rem);
-  }
-
   .reta-eq-duel__float-logo {
-    width: 2.15rem;
-    height: 2.15rem;
+    width: clamp(1.75rem, 16cqi, 2.35rem);
+    height: clamp(1.75rem, 16cqi, 2.35rem);
     top: 50%;
     bottom: auto;
     padding: 0.16rem;
@@ -2420,22 +2397,13 @@
 @media (min-width: 1100px) {
   .te-public--reta-equipos .reta-sb-card--teams.reta-eq-duel-card,
   .te-public--reta-equipos .te-pub-match.reta-sb-card--teams.reta-eq-duel-card {
-    padding: 0.4rem 0.4rem 0.32rem !important;
+    padding: 0.45rem 0.45rem 0.38rem !important;
   }
 
   .reta-eq-duel__portrait {
-    aspect-ratio: unset;
-    min-height: 0;
-    height: clamp(5.25rem, 10.5vh, 7rem);
-    max-height: clamp(5.25rem, 10.5vh, 7rem);
-  }
-
-  .reta-eq-duel__given {
-    font-size: clamp(0.75rem, 3.2cqi, 0.92rem);
-  }
-
-  .reta-eq-duel__family {
-    font-size: clamp(0.56rem, 2.5cqi, 0.72rem);
+    aspect-ratio: 5 / 4;
+    height: auto;
+    max-height: none;
   }
 
   .reta-eq-duel__portraits {
@@ -2443,8 +2411,8 @@
   }
 
   .reta-eq-duel__float-logo {
-    width: 2.35rem;
-    height: 2.35rem;
+    width: clamp(1.9rem, 15cqi, 2.55rem);
+    height: clamp(1.9rem, 15cqi, 2.55rem);
     top: 50%;
     bottom: auto;
     padding: 0.18rem;
@@ -2457,19 +2425,19 @@
 
 @media (min-width: 1500px) {
   .reta-eq-duel__portraits {
-    gap: 0.2rem;
+    gap: 0.22rem;
     padding-bottom: 0;
   }
 
   .reta-eq-duel__portrait {
-    min-height: 0;
-    height: clamp(5.5rem, 10vh, 7.25rem);
-    max-height: clamp(5.5rem, 10vh, 7.25rem);
+    aspect-ratio: 5 / 4;
+    height: auto;
+    max-height: none;
   }
 
   .reta-eq-duel__float-logo {
-    width: 2.45rem;
-    height: 2.45rem;
+    width: clamp(2rem, 14cqi, 2.65rem);
+    height: clamp(2rem, 14cqi, 2.65rem);
     top: 50%;
     bottom: auto;
   }
@@ -2577,33 +2545,14 @@
   text-shadow: 0 0 16px color-mix(in srgb, var(--ro-medal-gold, #c9a227) 28%, transparent);
 }
 
-/* Con 3+ canchas en hilera: retratos y logos más compactos */
+/* Con 3+ canchas: logos más chicos; el retrato sigue el ratio del ancho */
 @media (min-width: 640px) {
   .te-public--reta-equipos
     .te-pub-matches-grid--wide:has(> :nth-child(3))
-    .reta-eq-duel__portrait {
-    height: clamp(3.85rem, 9vh, 5.35rem);
-    max-height: clamp(3.85rem, 9vh, 5.35rem);
-  }
-
-  .te-public--reta-equipos
-    .te-pub-matches-grid--wide:has(> :nth-child(3))
     .reta-eq-duel__float-logo {
-    width: 1.85rem;
-    height: 1.85rem;
-    padding: 0.14rem;
-  }
-
-  .te-public--reta-equipos
-    .te-pub-matches-grid--wide:has(> :nth-child(3))
-    .reta-eq-duel__given {
-    font-size: clamp(0.62rem, 8cqi, 0.78rem);
-  }
-
-  .te-public--reta-equipos
-    .te-pub-matches-grid--wide:has(> :nth-child(3))
-    .reta-eq-duel__family {
-    font-size: clamp(0.48rem, 6cqi, 0.62rem);
+    width: clamp(1.45rem, 14cqi, 1.95rem);
+    height: clamp(1.45rem, 14cqi, 1.95rem);
+    padding: 0.12rem;
   }
 
   .te-public--reta-equipos
@@ -2612,6 +2561,12 @@
     width: 1.25rem;
     height: 1.25rem;
     font-size: 0.42rem;
+  }
+
+  .te-public--reta-equipos
+    .te-pub-matches-grid--wide:has(> :nth-child(3))
+    .reta-eq-duel-card {
+    padding: 0.4rem 0.35rem 0.32rem !important;
   }
 }
 
