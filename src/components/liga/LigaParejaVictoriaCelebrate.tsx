@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { getLigaVictoriaCelebrateMessage, useBranding } from "../../club-experience";
+import { useBranding } from "../../club-experience";
 import {
   formatSignedPoints,
   type ParejaJornadaMatchLine,
@@ -90,21 +90,20 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
             stats.dif >= 0 ? `+${stats.dif}` : String(stats.dif)
           }`
         : undefined;
-    const celebrateName =
-      (torneoNombre || "").trim() || (organizerName || "").trim() || "Riviera Open";
     return {
       badge: "1.ER LUGAR",
       title: "¡Felicidades!",
-      message: getLigaVictoriaCelebrateMessage(celebrateName),
+      // Sin copy motivacional dentro de la card (va aparte / se omite).
+      message: "",
       ...(rankLine ? { rank: rankLine } : {}),
     };
-  }, [
-    organizerName,
-    torneoNombre,
-    matchLines.length,
-    stats.victorias,
-    stats.dif,
-  ]);
+  }, [matchLines.length, stats.victorias, stats.dif]);
+
+  const criteriaNote = (
+    <p className="liga-celebrate-shell__criteria">
+      Criterio de victoria · games acumulados → diferencia → partidos ganados
+    </p>
+  );
 
   const players = useMemo(
     () => pairPlayersById[pairId] ?? [],
@@ -159,6 +158,7 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
 
   return (
     <div className="liga-celebrate-shell">
+      {criteriaNote}
       <div className="liga-celebrate-shell__mobile">
         <PodiumCard
           position={1}

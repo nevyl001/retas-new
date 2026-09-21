@@ -92,9 +92,6 @@ export const LigaParejaVictoriaCelebrateDesktop: React.FC<
               <p className="liga-celebrate-desktop__player-name">{playerB.name}</p>
             </div>
           </div>
-          {copy.message ? (
-            <p className="liga-celebrate-desktop__quote">{copy.message}</p>
-          ) : null}
         </div>
       </div>
 

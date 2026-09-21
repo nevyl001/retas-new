@@ -393,7 +393,7 @@ export const PodiumCard: React.FC<{
           </div>
 
           <div className="podium-card__aside">
-            <p className="podium-card__quote">{message}</p>
+            {message ? <p className="podium-card__quote">{message}</p> : null}
 
             {stats ? (
               <>
@@ -402,14 +402,6 @@ export const PodiumCard: React.FC<{
                     Resumen de la reta
                     <span className="podium-card__summary-kicker-sub">
                       Ganan por games acumulados (FAV)
-                    </span>
-                  </p>
-                ) : null}
-                {statsLayout === "liga-jornada" ? (
-                  <p className="podium-card__summary-kicker">
-                    Resumen de la jornada
-                    <span className="podium-card__summary-kicker-sub">
-                      Ganan por games acum. → dif. → partidos ganados
                     </span>
                   </p>
                 ) : null}
