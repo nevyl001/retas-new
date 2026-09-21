@@ -2485,6 +2485,46 @@
   .te-public--reta-equipos.te-public--reta-wide .te-pub-matches-grid--wide:has(> :nth-child(6)) {
     grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
   }
+
+  /* 1 partido: centrado, ancho de ~1 cancha (no llena toda la pantalla) */
+  .te-public--reta-equipos .te-pub-matches-grid--wide:has(> :only-child),
+  .te-public--reta-equipos.te-public--reta-wide .te-pub-matches-grid--wide:has(> :only-child),
+  .te-public--reta-equipos
+    .te-pub-matches-grid--wide.te-pub-matches-grid--few:has(> :only-child),
+  .te-public--reta-equipos.te-public--reta-wide
+    .te-pub-matches-grid--wide.te-pub-matches-grid--few:has(> :only-child) {
+    grid-template-columns: minmax(0, min(100%, 22rem)) !important;
+    justify-content: center !important;
+    justify-items: stretch !important;
+    width: 100% !important;
+    max-width: min(100%, 22rem) !important;
+    margin-inline: auto !important;
+  }
+}
+
+/* Móvil: 1 partido también centrado y con tope de ancho */
+.te-public--reta-equipos .te-pub-matches-grid--wide:has(> :only-child),
+.te-public--reta-equipos.te-public--reta-wide .te-pub-matches-grid--wide:has(> :only-child) {
+  justify-content: center !important;
+  justify-items: stretch !important;
+  width: 100%;
+  max-width: min(100%, 22rem);
+  margin-inline: auto;
+}
+
+.te-public--reta-equipos .te-pub-matches-grid--wide:has(> :only-child) > .reta-eq-duel-card,
+.te-public--reta-equipos
+  .te-pub-matches-grid--wide:has(> :only-child)
+  > .te-pub-match.reta-eq-duel-card {
+  width: 100%;
+  max-width: 100%;
+}
+
+.te-public--reta-equipos
+  .te-pub-matches-grid--wide:has(> :only-child)
+  .reta-eq-duel__portraits {
+  max-width: min(100%, 20rem);
+  margin-inline: auto;
 }
 
 /* Equipos públicos: paneles compactos (caben 3–4 canchas en hilera) */
