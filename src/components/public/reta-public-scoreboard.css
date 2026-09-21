@@ -2425,8 +2425,8 @@
 }
 
 /*
- * Equipos: máx. 2 cards por fila para que las fotos tengan presencia real.
- * (4 columnas dejaba cada foto minúscula.)
+ * Equipos: mismo Split VS compacto que Americano (compañeros apilados,
+ * parejas lado a lado). Máx. 2 cards por fila.
  */
 .te-public--reta-equipos .te-pub-matches-grid--wide,
 .te-public--reta-equipos.te-public--reta-wide .te-pub-matches-grid--wide {
@@ -2450,6 +2450,49 @@
     gap: clamp(0.65rem, 1.2vw, 1.1rem) !important;
     align-items: start !important;
   }
+}
+
+/* Equipos públicos: paneles compactos como la referencia Americano */
+.te-public--reta-equipos .reta-sb-card--split-vs.reta-sb-card--teams {
+  padding: 0.65rem 0.7rem 0.6rem;
+}
+
+.te-public--reta-equipos .reta-sb-card--split-vs.reta-sb-card--teams .pub-split-vs-pair,
+.te-public--reta-equipos .reta-sb-card--split-vs.reta-sb-card--teams .reta-sb-team__players--split-vs {
+  width: 100%;
+  max-width: min(100%, 15.5rem);
+  margin-inline: auto;
+}
+
+.te-public--reta-equipos
+  .reta-sb-card--split-vs.reta-sb-card--teams
+  .pub-split-vs-pair--compact
+  .pub-split-vs-panel {
+  aspect-ratio: 5 / 4 !important;
+  max-width: 10.75rem;
+  max-height: none;
+  height: auto;
+  margin-inline: auto;
+  border-radius: 12px;
+}
+
+.te-public--reta-equipos
+  .reta-sb-card--split-vs.reta-sb-card--teams
+  .pub-split-vs-pair--win {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ro-medal-gold, #c9a227) 72%, transparent),
+    0 10px 28px rgba(0, 0, 0, 0.4),
+    0 0 24px color-mix(in srgb, var(--ro-medal-gold, #c9a227) 22%, transparent);
+  padding: 0.4rem;
+  border-radius: 14px;
+}
+
+.te-public--reta-equipos
+  .reta-sb-card--split-vs.reta-sb-card--teams
+  .reta-sb-card__score-faceoff
+  .te-pub-score__num.te-pub-score__num--win {
+  color: var(--ro-medal-gold, #c9a227);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--ro-medal-gold, #c9a227) 28%, transparent);
 }
 
 /* Marcador vacío: tipografía suave, no caja tipo botón "−" */
