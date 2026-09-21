@@ -2106,9 +2106,15 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 16%;
+  object-position: center 18%;
   opacity: 0;
   transition: opacity 220ms ease;
+}
+
+.reta-eq-duel__portrait--photo .reta-eq-duel__photo.is-visible {
+  opacity: 1;
+  transform: scale(1.06);
+  transform-origin: center 14%;
 }
 
 .reta-eq-duel__photo.is-visible {
@@ -2122,108 +2128,153 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-display, var(--ro-font-heading), "Segoe UI", sans-serif);
-  font-size: clamp(0.7rem, 12cqi, 1rem);
+  font-size: clamp(1.1rem, 22cqi, 1.85rem);
   font-weight: 800;
   letter-spacing: 0.04em;
   color: var(--eq-duel-fallback-fg, #f7f4ee);
-  opacity: 0.18;
+  opacity: 0.16;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
   pointer-events: none;
   transform: none;
 }
 
+/* Banda oscura inferior: cara libre arriba, nombre/rating legibles */
 .reta-eq-duel__scrim {
   position: absolute;
   z-index: 2;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 48%;
+  height: 58%;
   pointer-events: none;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(6, 8, 12, 0.4) 35%,
-    rgba(6, 8, 12, 0.94) 100%
+    rgba(4, 6, 10, 0.15) 28%,
+    rgba(4, 6, 10, 0.72) 62%,
+    rgba(4, 6, 10, 0.96) 100%
   );
 }
 
+.reta-eq-duel__portrait--photo .reta-eq-duel__scrim {
+  height: 62%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(4, 6, 10, 0.08) 22%,
+    rgba(4, 6, 10, 0.55) 48%,
+    rgba(4, 6, 10, 0.88) 72%,
+    rgba(4, 6, 10, 0.98) 100%
+  );
+}
+
+/* Nombre izq + rating der sobre la foto */
 .reta-eq-duel__identity {
   position: absolute;
   z-index: 3;
-  left: 0.2rem;
-  right: 0.2rem;
-  bottom: 0.22rem;
-  top: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.02rem;
+  inset: 0;
+  display: block;
   padding: 0;
   min-width: 0;
-  text-align: center;
+  text-align: left;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .reta-eq-duel__portrait:first-child .reta-eq-duel__identity,
 .reta-eq-duel__portrait:last-child .reta-eq-duel__identity {
-  align-items: center;
-  text-align: center;
-  padding-left: 0.2rem;
-  padding-right: 0.2rem;
+  align-items: unset;
+  text-align: left;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .reta-eq-duel__given {
+  position: absolute;
+  left: 0.35rem;
+  right: 2.6rem;
+  bottom: 1.05rem;
   font-family: var(--font-display, var(--ro-font-heading), "Segoe UI", sans-serif);
-  font-size: clamp(0.68rem, 9cqi, 0.9rem);
+  font-size: clamp(0.72rem, 9.5cqi, 0.95rem);
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   line-height: 1.05;
-  color: #f7f4ee;
+  color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  text-align: left;
   text-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.95),
-    0 4px 12px rgba(0, 0, 0, 0.65);
+    0 1px 2px rgba(0, 0, 0, 0.98),
+    0 3px 10px rgba(0, 0, 0, 0.75);
 }
 
 .reta-eq-duel__family {
-  font-size: clamp(0.55rem, 6.5cqi, 0.72rem);
+  position: absolute;
+  left: 0.35rem;
+  right: 2.6rem;
+  bottom: 0.28rem;
+  font-size: clamp(0.55rem, 6.5cqi, 0.7rem);
   font-weight: 600;
   line-height: 1.05;
-  color: rgba(247, 244, 238, 0.9);
+  color: rgba(255, 255, 255, 0.88);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  text-align: left;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+}
+
+.reta-eq-duel__given:not(:has(+ .reta-eq-duel__family)) {
+  bottom: 0.32rem;
 }
 
 .reta-eq-duel__rating.jugador-rating-chip {
-  margin-top: 0.1rem;
-  font-size: 0.58rem;
-  padding: 0.1rem 0.38rem;
-  line-height: 1.15;
-  border-color: rgba(163, 230, 53, 0.45);
-  background: rgba(8, 12, 8, 0.72);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  position: absolute;
+  right: 0.28rem;
+  bottom: 0.28rem;
+  margin: 0;
+  z-index: 4;
+  font-size: 0.62rem;
+  font-weight: 750;
+  padding: 0.14rem 0.4rem;
+  line-height: 1.1;
+  border-radius: 999px;
+  border: 1px solid rgba(163, 230, 53, 0.55);
+  color: #d9f99d;
+  background: rgba(6, 10, 6, 0.88);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 @media (max-width: 639px) {
   .reta-eq-duel__given {
-    font-size: clamp(1.1rem, 5.5vw, 1.4rem);
+    font-size: clamp(0.78rem, 4.2vw, 0.98rem);
+    left: 0.4rem;
+    right: 2.85rem;
+    bottom: 1.15rem;
   }
 
   .reta-eq-duel__family {
-    font-size: clamp(0.82rem, 4vw, 1.05rem);
+    font-size: clamp(0.6rem, 3.2vw, 0.74rem);
+    left: 0.4rem;
+    right: 2.85rem;
+  }
+
+  .reta-eq-duel__given:not(:has(+ .reta-eq-duel__family)) {
+    bottom: 0.38rem;
   }
 
   .reta-eq-duel__rating.jugador-rating-chip {
-    font-size: 0.7rem;
-    padding: 0.12rem 0.42rem;
+    font-size: 0.66rem;
+    padding: 0.16rem 0.42rem;
+    right: 0.32rem;
+    bottom: 0.32rem;
   }
 }
 
