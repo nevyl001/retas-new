@@ -651,37 +651,86 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                   Ranking de la jornada
                 </h2>
                 <p className="liga-pantalla-ranking__hint">
-                  Games anotados en esta jornada (por jugador)
+                  Resultados de esta jornada por pareja y por jugador
                 </p>
-                {jornadaStats.rankingJugadores.length === 0 ? (
-                  <p className="liga-pantalla__loading">Sin resultados aún.</p>
-                ) : (
-                  <table className="liga-pantalla-ranking__table--compact liga-pantalla-ranking__table--individual">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Jugador</th>
-                        <th>Pts</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {jornadaStats.rankingJugadores.map((row) => (
-                        <tr
-                          key={row.jugadorId}
-                          className={
-                            row.posicion <= 3
-                              ? "liga-pantalla-ranking-top"
-                              : undefined
-                          }
-                        >
-                          <td>{row.posicion}</td>
-                          <td>{row.nombre}</td>
-                          <td>{row.puntos}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+                <div className="liga-pantalla-ranking__dual">
+                  <div className="liga-pantalla-ranking__panel">
+                    <h3 className="liga-pantalla-ranking__subtitle liga-pantalla-ranking__subtitle--flush">
+                      Parejas
+                    </h3>
+                    {jornadaStats.rankingParejas.length === 0 ? (
+                      <p className="liga-pantalla__loading">Sin resultados aún.</p>
+                    ) : (
+                      <table className="liga-pantalla-ranking__table--compact">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Pareja</th>
+                            <th>V</th>
+                            <th>Pts</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {jornadaStats.rankingParejas.map((row) => (
+                            <tr
+                              key={row.parejaId}
+                              className={
+                                row.parejaId ===
+                                jornadaStats.ganadorPareja?.parejaId
+                                  ? "liga-pantalla-ranking-winner"
+                                  : row.posicion <= 3
+                                    ? "liga-pantalla-ranking-top"
+                                    : undefined
+                              }
+                            >
+                              <td>{row.posicion}</td>
+                              <td className="liga-pantalla-ranking__pair">
+                                {row.nombre}
+                              </td>
+                              <td>{row.victorias}</td>
+                              <td>{row.puntos}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+
+                  <div className="liga-pantalla-ranking__panel">
+                    <h3 className="liga-pantalla-ranking__subtitle liga-pantalla-ranking__subtitle--flush">
+                      Jugadores
+                    </h3>
+                    {jornadaStats.rankingJugadores.length === 0 ? (
+                      <p className="liga-pantalla__loading">Sin resultados aún.</p>
+                    ) : (
+                      <table className="liga-pantalla-ranking__table--compact">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Jugador</th>
+                            <th>Pts</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {jornadaStats.rankingJugadores.map((row) => (
+                            <tr
+                              key={row.jugadorId}
+                              className={
+                                row.posicion <= 3
+                                  ? "liga-pantalla-ranking-top"
+                                  : undefined
+                              }
+                            >
+                              <td>{row.posicion}</td>
+                              <td>{row.nombre}</td>
+                              <td>{row.puntos}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
               </>
             )}
           </aside>
