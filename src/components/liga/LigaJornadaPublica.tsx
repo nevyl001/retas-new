@@ -34,6 +34,8 @@ import { LigaJornadaMatchCardFinal } from "./jornada-public/LigaJornadaMatchCard
 import { LigaJornadaMatchCardPending } from "./jornada-public/LigaJornadaMatchCardPending";
 import { LigaJornadaStandingsRow } from "./jornada-public/LigaJornadaStandingsRow";
 import { PublicSplitVsPairHalf } from "../public/split-vs";
+import { TablerIcon } from "../ui/TablerIcon";
+import { getJugadorInitials } from "../jugadores/JugadorAvatar";
 import {
   useFlipReorder,
   useInViewOnce,
@@ -45,6 +47,11 @@ import "./liga-public-premium-2026.css";
 import "./liga-public-motion.css";
 import "./jornada-public/liga-jornada-public-match.css";
 import "../jugadores/riviera-jugadores.css";
+
+function parseWinnerPairNames(label: string): [string, string] {
+  const parts = label.split(/\s*\/\s*/).map((s) => s.trim()).filter(Boolean);
+  return [parts[0] ?? label, parts[1] ?? ""];
+}
 
 function jornadaEstadoLabel(estado: LigaJornada["estado"]): string {
   if (estado === "completed") return "Finalizada";
@@ -737,16 +744,100 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         {!esParejasFijas &&
           todosPartidosCompletos &&
           jornadaStats.ganadorPareja && (
-          <div className="liga-pantalla-winner" role="status">
-            <p className="liga-pantalla-winner__eyebrow">¡Felicidades!</p>
-            <p className="liga-pantalla-winner__title">
-              {jornadaStats.ganadorPareja.nombre}
-            </p>
-            <p className="liga-pantalla-winner__meta">
-              Pareja ganadora de la jornada · {jornadaStats.ganadorPareja.victorias}{" "}
-              {jornadaStats.ganadorPareja.victorias === 1 ? "victoria" : "victorias"} ·{" "}
-              {jornadaStats.ganadorPareja.puntos} pts
-            </p>
+          <div
+            className="liga-pantalla-winner"
+            role="status"
+            aria-label="Pareja ganadora de la jornada"
+          >
+            {(() => {
+              const gp = jornadaStats.ganadorPareja!;
+              const pareja = jornada.parejas?.find((p) => p.id === gp.parejaId);
+              const avatars = winnerAvatarsForPareja(pareja);
+              const [n1, n2] = parseWinnerPairNames(
+                nombreParejaGanadora(gp.parejaId, gp.nombre)
+              );
+              const p1 = avatars?.[0];
+              const p2 = avatars?.[1];
+              const name1 = p1?.name ?? n1;
+              const name2 = p2?.name ?? n2;
+              return (
+                <>
+                  <p className="liga-pantalla-winner__eyebrow">
+                    Campeones de la jornada
+                  </p>
+                  <div
+                    className="liga-pantalla-winner__pair"
+                    aria-label={`${name1} / ${name2}`}
+                  >
+                    <div className="liga-pantalla-winner__player">
+                      <div className="liga-pantalla-winner__avatar">
+                        {p1?.fotoUrl ? (
+                          <img
+                            src={p1.fotoUrl}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        ) : (
+                          <span aria-hidden>{getJugadorInitials(name1)}</span>
+                        )}
+                      </div>
+                      <span className="liga-pantalla-winner__player-name">
+                        {name1}
+                      </span>
+                    </div>
+                    <div
+                      className="liga-pantalla-winner__trophy"
+                      aria-hidden
+                    >
+                      <TablerIcon name="trophy" size={22} />
+                    </div>
+                    <div className="liga-pantalla-winner__player">
+                      <div className="liga-pantalla-winner__avatar">
+                        {p2?.fotoUrl ? (
+                          <img
+                            src={p2.fotoUrl}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        ) : (
+                          <span aria-hidden>{getJugadorInitials(name2)}</span>
+                        )}
+                      </div>
+                      <span className="liga-pantalla-winner__player-name">
+                        {name2}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="liga-pantalla-winner__subtitle">
+                    Pareja ganadora de la jornada
+                  </p>
+                  <div className="liga-pantalla-winner__stats">
+                    <div className="liga-pantalla-winner__stat">
+                      <span className="liga-pantalla-winner__stat-value">
+                        {gp.victorias}
+                      </span>
+                      <span className="liga-pantalla-winner__stat-label">
+                        {gp.victorias === 1 ? "Victoria" : "Victorias"}
+                      </span>
+                    </div>
+                    <div
+                      className="liga-pantalla-winner__stat-sep"
+                      aria-hidden
+                    />
+                    <div className="liga-pantalla-winner__stat">
+                      <span className="liga-pantalla-winner__stat-value">
+                        {gp.puntos}
+                      </span>
+                      <span className="liga-pantalla-winner__stat-label">
+                        Pts
+                      </span>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 

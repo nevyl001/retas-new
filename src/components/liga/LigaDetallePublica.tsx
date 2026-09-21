@@ -32,6 +32,7 @@ import { LigaPubProgramaMatchCard } from "./LigaPubProgramaMatchCard";
 import { LigaPublicParejasStandings } from "./LigaPublicParejasStandings";
 import "./liga-public-pantalla.css";
 import "./liga-public-programa.css";
+import "./liga-public-individual-2026.css";
 import "../jugadores/riviera-jugadores.css";
 
 function estadoLigaBadgeVariant(
@@ -40,6 +41,13 @@ function estadoLigaBadgeVariant(
   if (estado === "in_progress") return "live";
   if (estado === "completed") return "muted";
   return "pending";
+}
+
+/** Separa "A / B" para tipografía editorial en cards individuales. */
+function splitParejaLabel(label: string): { a: string; b: string | null } {
+  const parts = label.split(/\s*\/\s*/);
+  if (parts.length < 2) return { a: label, b: null };
+  return { a: parts[0]!, b: parts.slice(1).join(" / ") };
 }
 
 function estadoLigaLabel(estado: LigaDetalle["estado"]): string {
@@ -292,6 +300,9 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const ligaHeroMeta = esParejasFijas
     ? `${detalle.equipos.length} parejas · ${detalle.jornadas.length} jornadas`
     : `${detalle.inscripciones.length} jugadores · ${detalle.jornadas.length} jornadas`;
+  const modalidadLabel = ligaModalidadPublicLabel(detalle.modalidad);
+  /** Individual: modalidad en la meta del topline (sin pill suelto). */
+  const heroMetaIndividual = `${modalidadLabel} · ${ligaHeroMeta}`;
 
   return (
     <ClubExperienceScope
@@ -301,7 +312,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     <PublicScopedBrandGate message="Cargando liga…">
     <div
       className={`liga-pantalla App--public-full-width ro-public-view ro-surface-dark${
-        esParejasFijas ? " liga-pantalla--liga-fijas" : ""
+        esParejasFijas ? " liga-pantalla--liga-fijas" : " liga-pantalla--individual"
       }`}
     >
       <div className="liga-pantalla__grain" aria-hidden />
@@ -318,14 +329,14 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
             }
             nombreEvento={detalle.nombre}
             club={isClubBranded ? organizerName : undefined}
-            categoria={ligaModalidadPublicLabel(detalle.modalidad)}
-            meta={ligaHeroMeta}
+            categoria={esParejasFijas ? modalidadLabel : undefined}
+            meta={esParejasFijas ? ligaHeroMeta : heroMetaIndividual}
           />
         ) : (
           <header className="liga-pantalla__header">
             <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
             <p className="liga-pantalla__subtitle">
-              {ligaModalidadPublicLabel(detalle.modalidad)} · {estadoLigaLabel(detalle.estado)} ·{" "}
+              {modalidadLabel} · {estadoLigaLabel(detalle.estado)} ·{" "}
               {ligaHeroMeta}
             </p>
           </header>
@@ -488,7 +499,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                                   ? " liga-pub-programa__card--selected"
                                   : ""
                               }`
-                            : ""
+                            : ` liga-pantalla-jornada-card--${estadoMod}`
                         }`}
                         style={
                           esParejasFijas
@@ -552,11 +563,27 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                             </div>
                           ) : (
                             <div className="liga-pantalla-parejas liga-pantalla-parejas--card">
-                              {matchups.map((m) => (
-                                <span key={m.id} className="liga-pantalla-pareja">
-                                  {m.local}
-                                </span>
-                              ))}
+                              {matchups.map((m) => {
+                                const { a, b } = splitParejaLabel(m.local);
+                                return (
+                                  <span key={m.id} className="liga-pantalla-pareja">
+                                    <span className="liga-pantalla-pareja__a">{a}</span>
+                                    {b ? (
+                                      <>
+                                        <span
+                                          className="liga-pantalla-pareja__sep"
+                                          aria-hidden
+                                        >
+                                          /
+                                        </span>
+                                        <span className="liga-pantalla-pareja__b">
+                                          {b}
+                                        </span>
+                                      </>
+                                    ) : null}
+                                  </span>
+                                );
+                              })}
                             </div>
                           )}
                         </div>

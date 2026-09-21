@@ -610,6 +610,37 @@
   color: #fff;
 }
 
+/* Individual overview: live con turquesa (paleta navy/azul), no lima de sistema */
+[data-brand="acapulco-padel-tour"] .liga-pantalla--individual .rv-pill--live,
+[data-club="acapulco-padel-tour"] .liga-pantalla--individual .rv-pill--live,
+[data-brand="acapulco-padel-tour"] .liga-pantalla--individual .liga-pantalla-ronda__badge--live,
+[data-club="acapulco-padel-tour"] .liga-pantalla--individual .liga-pantalla-ronda__badge--live,
+.club-experience-scope[data-brand="acapulco-padel-tour"] .liga-pantalla--individual .rv-pill--live,
+.club-experience-scope[data-club="acapulco-padel-tour"] .liga-pantalla--individual .rv-pill--live,
+.club-experience-scope[data-brand="acapulco-padel-tour"]
+  .liga-pantalla--individual
+  .liga-pantalla-ronda__badge--live,
+.club-experience-scope[data-club="acapulco-padel-tour"]
+  .liga-pantalla--individual
+  .liga-pantalla-ronda__badge--live {
+  border-color: rgba(0, 175, 196, 0.5);
+  background: rgba(0, 175, 196, 0.14);
+  color: #7adceb;
+  animation: none;
+}
+
+[data-brand="acapulco-padel-tour"] .liga-pantalla--individual .liga-pantalla-jornada-card--live,
+[data-club="acapulco-padel-tour"] .liga-pantalla--individual .liga-pantalla-jornada-card--live,
+.club-experience-scope[data-brand="acapulco-padel-tour"]
+  .liga-pantalla--individual
+  .liga-pantalla-jornada-card--live,
+.club-experience-scope[data-club="acapulco-padel-tour"]
+  .liga-pantalla--individual
+  .liga-pantalla-jornada-card--live {
+  border-color: rgba(0, 175, 196, 0.58);
+  box-shadow: 0 0 0 1px rgba(0, 175, 196, 0.12);
+}
+
 [data-brand="acapulco-padel-tour"] .liga-pantalla .liga-pub-standings--jornada .liga-pub-standings__row,
 [data-club="acapulco-padel-tour"] .liga-pantalla .liga-pub-standings--jornada .liga-pub-standings__row,
 .club-experience-scope[data-brand="acapulco-padel-tour"]
