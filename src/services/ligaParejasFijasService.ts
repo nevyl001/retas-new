@@ -66,15 +66,19 @@ export function mapLigaEquipo(row: Record<string, unknown>): LigaEquipo {
   };
 }
 
-/** Columnas de liga_jugadores sin PII (email/telefono) — embed público / anon. */
+/**
+ * Columnas de liga_jugadores sin PII (email/telefono).
+ * Siempre en embeds: `*` rompe con anon (sin SELECT en email/telefono).
+ * `opts.publicRead` se conserva por compatibilidad de firma.
+ */
 const LIGA_JUGADOR_EMBED_PUBLIC =
   "id,nombre,genero,nivel,estado,organizador_id,created_at" as const;
 
 export async function fetchEquiposForLiga(
   ligaId: string,
-  opts?: { publicRead?: boolean }
+  _opts?: { publicRead?: boolean }
 ): Promise<LigaEquipo[]> {
-  const jugadorCols = opts?.publicRead ? LIGA_JUGADOR_EMBED_PUBLIC : "*";
+  const jugadorCols = LIGA_JUGADOR_EMBED_PUBLIC;
   const { data, error } = await supabase
     .from("liga_equipos")
     .select(

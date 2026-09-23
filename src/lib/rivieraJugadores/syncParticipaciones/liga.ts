@@ -39,6 +39,11 @@ export async function syncLigaJornada(
 ): Promise<CareerEventSyncOutcome> {
   try {
     const detalle = await getLigaById(ligaId);
+    // Carrera Riviera pertenece al club dueño de la liga, no al actor de la sesión
+    // (p. ej. master admin reparando). INSERT RLS acepta dueño o is_master_admin.
+    const organizadorId =
+      (detalle.organizador_id && String(detalle.organizador_id).trim()) ||
+      userId;
     const jornada = detalle.jornadas.find((j) => j.numero === jornadaNumero);
     if (!jornada) {
       console.error(
@@ -256,7 +261,7 @@ export async function syncLigaJornada(
           const { jugadorId, failure } = await resolveJugadorForEventSync(
             {
               nombre: st.nombre,
-              organizadorId: userId,
+              organizadorId,
               legacyLigaJugadorId: st.legacyLigaJugadorId,
               tipoEvento: "liga",
               eventoId: jornada.id,
@@ -305,7 +310,7 @@ export async function syncLigaJornada(
           const metadata = enrichMetadataWithPartidosDetalle(
             {
               subtipo: "liga_jornada",
-              ...hostClubMetadata(userId),
+              ...hostClubMetadata(organizadorId),
               liga_id: ligaId,
               liga_nombre: detalle.nombre,
               jornada_numero: jornada.numero,
@@ -421,13 +426,16 @@ export async function syncLigaInscripcionRanking(
   const syncFailures: CareerEventAssertionFailure[] = [];
   try {
     const detalle = await getLigaById(ligaId);
+    const orgId =
+      (detalle.organizador_id && String(detalle.organizador_id).trim()) ||
+      organizadorId;
     const jugadorLiga = detalle.jugadores.find((j) => j.id === legacyLigaJugadorId);
     const nombre = jugadorLiga?.nombre ?? "Jugador";
 
     const { jugadorId, failure } = await resolveJugadorForEventSync(
       {
         nombre,
-        organizadorId,
+        organizadorId: orgId,
         legacyLigaJugadorId,
         tipoEvento: "liga",
         eventoId: ligaId,
@@ -451,7 +459,7 @@ export async function syncLigaInscripcionRanking(
       calcParams: { esNuevoEnLiga: true },
       metadata: {
         subtipo: "liga_inscripcion",
-        ...hostClubMetadata(organizadorId),
+        ...hostClubMetadata(orgId),
         liga_id: ligaId,
         liga_nombre: detalle.nombre,
         modalidad: "liga",
@@ -482,6 +490,9 @@ export async function syncLigaFinalPodio(
   const excluded = toExcludedJugadorIdSet(options?.excludeJugadorIds);
   try {
     const detalle = await getLigaById(ligaId);
+    const orgId =
+      (detalle.organizador_id && String(detalle.organizador_id).trim()) ||
+      organizadorId;
     const ranking = [...detalle.inscripciones].sort(
       (a, b) => b.puntos - a.puntos
     );
@@ -499,7 +510,7 @@ export async function syncLigaFinalPodio(
           const { jugadorId, failure } = await resolveJugadorForEventSync(
             {
               nombre,
-              organizadorId,
+              organizadorId: orgId,
               legacyLigaJugadorId: ins.jugador_id,
               tipoEvento: "liga",
               eventoId: ligaId,
@@ -527,7 +538,7 @@ export async function syncLigaFinalPodio(
             calcParams: { posicion_final: posicion },
             metadata: {
               subtipo: "liga_podio_final",
-              ...hostClubMetadata(organizadorId),
+              ...hostClubMetadata(orgId),
               liga_id: ligaId,
               liga_nombre: detalle.nombre,
               posicion_final: posicion,

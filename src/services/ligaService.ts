@@ -279,13 +279,20 @@ export async function getLigas(): Promise<Liga[]> {
   );
 }
 
-/** Columnas de liga_jugadores sin PII (email/telefono) para consumo público. */
+/**
+ * Columnas de liga_jugadores sin PII (email/telefono).
+ * Siempre se usan en embeds: anon no tiene SELECT sobre email/telefono
+ * (fix-rls 2026-07-29) y `liga_jugadores(*)` falla con
+ * "permission denied for table liga_jugadores". El sync de carrera
+ * (syncLigaJornada / inscripción) solo necesita id/nombre.
+ * PII sigue disponible en add/updateJugadorLiga vía select directo autenticado.
+ */
 const LIGA_JUGADOR_SELECT_PUBLIC =
   "id,nombre,genero,nivel,estado,organizador_id,created_at" as const;
 
 export async function getLigaById(
   ligaId: string,
-  usePublicClient = false
+  _usePublicClient = false
 ): Promise<LigaDetalle> {
   const { data: liga, error: lErr } = await supabase
     .from("ligas")
@@ -296,28 +303,23 @@ export async function getLigaById(
   if (lErr) throw new Error(lErr.message);
   if (!liga) throw new Error("Liga no encontrada.");
 
-  const inscripcionesQuery = usePublicClient
-    ? supabase
-        .from("liga_inscripciones")
-        .select(`*, jugador:liga_jugadores(${LIGA_JUGADOR_SELECT_PUBLIC})`)
-        .eq("liga_id", ligaId)
-    : supabase
-        .from("liga_inscripciones")
-        .select("*, jugador:liga_jugadores(*)")
-        .eq("liga_id", ligaId);
-
+  // `_usePublicClient` se conserva en la firma (call sites públicos) pero el
+  // embed ya no usa `*`: evita permission denied si la sesión cae a anon.
   const [
     { data: inscripciones, error: iErr },
     { data: jornadas, error: jErr },
     equipos,
   ] = await Promise.all([
-    inscripcionesQuery,
+    supabase
+      .from("liga_inscripciones")
+      .select(`*, jugador:liga_jugadores(${LIGA_JUGADOR_SELECT_PUBLIC})`)
+      .eq("liga_id", ligaId),
     supabase
       .from("liga_jornadas")
       .select("*")
       .eq("liga_id", ligaId)
       .order("numero", { ascending: true }),
-    fetchEquiposForLiga(ligaId, { publicRead: usePublicClient }).catch(
+    fetchEquiposForLiga(ligaId, { publicRead: true }).catch(
       () => [] as LigaEquipo[]
     ),
   ]);
@@ -1805,9 +1807,10 @@ export async function resyncLigaJornadaCareer(
   try {
     const ligaId = String(jornada.liga_id);
     const detalle = await getLigaById(ligaId);
+    const organizadorId = String(detalle.organizador_id ?? userId);
     await ensureLigaInscripcionRankingForLiga(
       ligaId,
-      userId,
+      organizadorId,
       collectLigaParticipantLegacyJugadorIds(detalle)
     );
 
@@ -1815,7 +1818,7 @@ export async function resyncLigaJornadaCareer(
       "../lib/rivieraJugadores/repairCareerClose"
     );
     const outcome = await repairLigaJornadaCareerSync({
-      organizadorId: userId,
+      organizadorId,
       ligaId: String(jornada.liga_id),
       jornadaNumero: Number(jornada.numero),
     });
@@ -1826,7 +1829,7 @@ export async function resyncLigaJornadaCareer(
           ligaId: jornada.liga_id,
           jornadaNumero: jornada.numero,
           jornadaId,
-          organizadorId: userId,
+          organizadorId,
           failures: outcome.pipeline.failures,
         }
       );
