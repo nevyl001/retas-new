@@ -824,9 +824,13 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                                 clubName: convocatoriaOrigin,
                                 categoryLabel: dueloConvocatoriaNivel(duelo),
                                 costo: duelo.costo,
-                                includeCosto: duelo.mostrar_costo === true,
+                                includeCosto:
+                                  duelo.mostrar_costo === true ||
+                                  Boolean(duelo.costo?.trim()),
                                 premio: duelo.premio,
-                                includePremio: duelo.mostrar_premio === true,
+                                includePremio:
+                                  duelo.mostrar_premio === true ||
+                                  Boolean(duelo.premio?.trim()),
                               })}
                             />
                           ) : null}

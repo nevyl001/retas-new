@@ -82,8 +82,9 @@ export async function syncConvocatoriaMetaToEntity(
   const mostrar_lugar = input.includeLugar !== false;
   const costo = input.costo?.trim() || null;
   const premio = input.premio?.trim() || null;
-  const mostrar_costo = input.includeCosto === true;
-  const mostrar_premio = input.includePremio === true;
+  // Texto no vacío ⇒ publicar (mantiene /jugar alineado con WhatsApp).
+  const mostrar_costo = input.includeCosto === true || Boolean(costo);
+  const mostrar_premio = input.includePremio === true || Boolean(premio);
 
   if (input.mode === "duelo_2v2") {
     const nombre = input.name?.trim();
@@ -96,10 +97,13 @@ export async function syncConvocatoriaMetaToEntity(
         nombre,
         lugar: mostrar_lugar ? lugar ?? "" : "",
         mostrar_lugar,
-        costo,
-        mostrar_costo,
-        premio,
-        mostrar_premio,
+        // No borrar texto guardado en Detalles si el share no trae include.
+        ...(costo != null || mostrar_costo
+          ? { costo, mostrar_costo }
+          : { mostrar_costo: false }),
+        ...(premio != null || mostrar_premio
+          ? { premio, mostrar_premio }
+          : { mostrar_premio: false }),
         ...(cancha != null ? { cancha } : {}),
         programado_en,
         programado_hasta,
@@ -132,10 +136,12 @@ export async function syncConvocatoriaMetaToEntity(
       cancha,
       programado_en,
       programado_hasta,
-      costo,
-      mostrar_costo,
-      premio,
-      mostrar_premio,
+      ...(costo != null || mostrar_costo
+        ? { costo, mostrar_costo }
+        : { mostrar_costo: false }),
+      ...(premio != null || mostrar_premio
+        ? { premio, mostrar_premio }
+        : { mostrar_premio: false }),
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

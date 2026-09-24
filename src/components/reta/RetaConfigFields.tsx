@@ -438,7 +438,13 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             placeholder="$200 por jugador"
             value={values.costo}
             disabled={costoEd.locked}
-            onChange={(e) => patch({ costo: e.target.value })}
+            onChange={(e) => {
+              const costo = e.target.value;
+              patch({
+                costo,
+                mostrar_costo: Boolean(costo.trim()),
+              });
+            }}
           />
           {values.mostrar_costo ? (
             <span className="reta-details-form__visibility-hint">
@@ -511,7 +517,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             placeholder="Trofeo + pelotas"
             value={values.premio}
             disabled={premioEd.locked}
-            onChange={(e) => patch({ premio: e.target.value })}
+            onChange={(e) => {
+              const premio = e.target.value;
+              patch({
+                premio,
+                // Texto ⇒ visible en convocatoria (evita premio lleno pero “Oculto”).
+                mostrar_premio: Boolean(premio.trim()),
+              });
+            }}
           />
           {values.mostrar_premio ? (
             <span className="reta-details-form__visibility-hint">

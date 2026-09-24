@@ -589,24 +589,27 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     premio?: string | null;
     includePremio?: boolean;
   }) => {
+    // Detalles es la fuente de verdad: si hay texto de costo/premio, va al
+    // WhatsApp (Americano/Reta/Duelo). Antes solo mirábamos mostrar_*, y el
+    // premio quedaba fuera aunque estuviera lleno en Detalles.
+    const costoText =
+      overrides?.costo?.trim() ||
+      context.defaultCosto?.trim() ||
+      costoLabel.trim() ||
+      "";
+    const premioText =
+      overrides?.premio?.trim() ||
+      context.defaultPremio?.trim() ||
+      premioLabel.trim() ||
+      "";
     const includeCostoResolved = preferDetailsCostoPremio
-      ? context.includeCosto === true
+      ? Boolean(costoText)
       : overrides?.includeCosto ?? includeCosto;
     const includePremioResolved = preferDetailsCostoPremio
-      ? context.includePremio === true
+      ? Boolean(premioText)
       : overrides?.includePremio ?? includePremio;
-    const costoResolved = !includeCostoResolved
-      ? null
-      : overrides?.costo?.trim() ||
-        context.defaultCosto?.trim() ||
-        costoLabel.trim() ||
-        null;
-    const premioResolved = !includePremioResolved
-      ? null
-      : overrides?.premio?.trim() ||
-        context.defaultPremio?.trim() ||
-        premioLabel.trim() ||
-        null;
+    const costoResolved = includeCostoResolved ? costoText || null : null;
+    const premioResolved = includePremioResolved ? premioText || null : null;
     return {
       includeCosto: includeCostoResolved,
       includePremio: includePremioResolved,
