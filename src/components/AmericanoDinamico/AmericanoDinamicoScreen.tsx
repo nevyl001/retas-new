@@ -100,7 +100,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     syncRegistrationPlayers,
     startTournament,
     commitRoundScores,
-    submitScore,
     editScore,
     nextRound,
     resetTournament,
@@ -260,7 +259,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
    *
    * BLK-02: durante "playing"/"finished", `rounds` es propiedad EXCLUSIVA de
    * los guardados atómicos por partido (persistAmericanoDinamicoMatchScore,
-   * ver useAmericanoDinamico.submitScore/commitRoundScores) — este efecto ya
+   * ver useAmericanoDinamico.commitRoundScores) — este efecto ya
    * NO debe escribir `rounds` como parte de un blob completo, o volvería a
    * sobreescribir en silencio el resultado de un partido guardado por otro
    * dispositivo momentos antes. Solo persiste ranking/fase/totalRounds/roster.
@@ -581,7 +580,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
               round={currentRound}
               totalRounds={totalRounds}
               onCommitRound={commitRoundScores}
-              onSubmitScore={submitScore}
               onRoundFinalized={nextRound}
               roundSyncPending={roundSyncPending}
               roundSyncError={roundSyncError}
@@ -618,7 +616,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             round={currentRound}
             totalRounds={totalRounds}
             onCommitRound={commitRoundScores}
-            onSubmitScore={submitScore}
             onRoundFinalized={nextRound}
             roundSyncPending={roundSyncPending}
             roundSyncError={roundSyncError}
