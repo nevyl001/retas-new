@@ -50,7 +50,7 @@ import {
   ModeSectionTabs,
 } from "../platform";
 import { PublicShareSection } from "../platform/PublicShareSection";
-import { Button } from "../ui";
+import { Button, Input } from "../ui";
 import { LoadingProgressHint } from "../ui/LoadingProgressHint";
 import { AmericanoModeShell } from "./AmericanoModeShell";
 import { closeOpenGameRegistration } from "../../lib/retaAbierta/retaAbiertaService";
@@ -103,6 +103,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     editScore,
     nextRound,
     resetTournament,
+    updateTotalRounds,
     hydrating,
     remoteSyncReady,
     participacionSyncError,
@@ -551,6 +552,60 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       </div>
     );
 
+    const minRoundsEditable = Math.max(1, rounds.length);
+    const roundsConfigPanel = (
+      <div className="americano-screen__rounds-edit">
+        <div className="americano-screen__rounds-edit-copy">
+          <p className="americano-screen__rounds-edit-title">
+            Rondas del americano
+          </p>
+          <p className="americano-screen__rounds-edit-hint">
+            Vas en la ronda {currentRound?.roundNumber ?? rounds.length} de{" "}
+            {totalRounds || "—"}. Si te equivocaste al configurar, corrige el
+            total aquí (mínimo {minRoundsEditable}
+            {rounds.length > 1 ? ", las ya jugadas no se borran" : ""}).
+          </p>
+        </div>
+        <div className="americano-screen__rounds-edit-stepper" role="group" aria-label="Total de rondas">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            aria-label="Menos rondas"
+            disabled={totalRounds <= minRoundsEditable}
+            onClick={() => updateTotalRounds(totalRounds - 1)}
+          >
+            −
+          </Button>
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={minRoundsEditable}
+            max={99}
+            value={totalRounds > 0 ? totalRounds : ""}
+            aria-label="Número total de rondas"
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (raw.trim() === "") return;
+              const n = Number(raw);
+              if (!Number.isFinite(n)) return;
+              updateTotalRounds(n);
+            }}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            aria-label="Más rondas"
+            disabled={totalRounds >= 99}
+            onClick={() => updateTotalRounds(totalRounds + 1)}
+          >
+            +
+          </Button>
+        </div>
+      </div>
+    );
+
     const playingBody = isMobile ? (
       <div className="mode-mobile-shell mode-mobile-shell--tabbed americano-mobile-shell">
         <ModeEventHeader
@@ -574,6 +629,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           ariaLabel="Secciones del americano"
         />
         <ModeSectionPanel id="ronda" activeId={playingTab}>
+          {roundsConfigPanel}
           {currentRound ? (
             <RoundView
               key={currentRound.roundNumber}
@@ -610,6 +666,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       </div>
     ) : (
       <>
+        {roundsConfigPanel}
         {currentRound && (
           <RoundView
             key={currentRound.roundNumber}

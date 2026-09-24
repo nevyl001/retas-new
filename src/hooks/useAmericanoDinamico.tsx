@@ -158,6 +158,7 @@ export function useAmericanoDinamico(
   const [rounds, setRounds] = useState<AmericanoRound[]>([]);
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
   const [phase, setPhase] = useState<AmericanoPhase>("registration");
+  const [totalRounds, setTotalRounds] = useState(0);
   const [hydrating, setHydrating] = useState(() => Boolean(resolvedTournamentId));
   const [remoteSyncReady, setRemoteSyncReady] = useState(true);
 
@@ -258,6 +259,7 @@ export function useAmericanoDinamico(
         { setPlayers, setRounds, setCurrentRoundIndex, setPhase },
         { baseRosterRef, totalRoundsRef, courtsRef }
       );
+      setTotalRounds(totalRoundsRef.current);
     },
     []
   );
@@ -387,6 +389,7 @@ export function useAmericanoDinamico(
           (typeof crypto !== "undefined" && "randomUUID" in crypto
             ? crypto.randomUUID()
             : `americano-${Date.now()}`);
+        setTotalRounds(totalRounds);
         setPlayers(seededPlayers);
         setRounds([round]);
         setCurrentRoundIndex(0);
@@ -769,6 +772,7 @@ export function useAmericanoDinamico(
     setRounds([]);
     setCurrentRoundIndex(0);
     setPhase("registration");
+    setTotalRounds(0);
     baseRosterRef.current = [];
     totalRoundsRef.current = 0;
     courtsRef.current = 1;
@@ -788,6 +792,21 @@ export function useAmericanoDinamico(
     }
     return true;
   }, [phase, resolvedTournamentId]);
+
+  const updateTotalRounds = useCallback(
+    (next: number) => {
+      if (phase !== "playing") return;
+      const minRounds = Math.max(1, roundsRef.current.length);
+      const safe = Math.min(
+        99,
+        Math.max(minRounds, Math.floor(Number(next)) || minRounds)
+      );
+      if (safe === totalRoundsRef.current) return;
+      totalRoundsRef.current = safe;
+      setTotalRounds(safe);
+    },
+    [phase]
+  );
 
   const ranking = useMemo(() => {
     if (phase === "registration") return [];
@@ -816,7 +835,7 @@ export function useAmericanoDinamico(
     rounds,
     currentRoundIndex,
     phase,
-    totalRounds: totalRoundsRef.current,
+    totalRounds,
     hydrating,
     remoteSyncReady,
     participacionSyncError,
@@ -832,6 +851,7 @@ export function useAmericanoDinamico(
     editScore,
     nextRound,
     resetTournament,
+    updateTotalRounds,
     ranking,
     rosterForUi,
     currentRound,

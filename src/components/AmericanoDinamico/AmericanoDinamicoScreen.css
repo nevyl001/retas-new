@@ -148,6 +148,61 @@
   border-radius: var(--radius-lg);
 }
 
+.americano-screen__rounds-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 20px;
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  background: var(--rv-bg-card, var(--ro-bg-card));
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--ro-shadow-sm);
+}
+
+.americano-screen__rounds-edit-copy {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.americano-screen__rounds-edit-title {
+  margin: 0 0 4px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.americano-screen__rounds-edit-hint {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.americano-screen__rounds-edit-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.americano-screen__rounds-edit-stepper .riviera-input,
+.americano-screen__rounds-edit-stepper input {
+  width: 4.25rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 767px) {
+  .americano-screen__rounds-edit {
+    padding: 14px 16px;
+  }
+}
+
 .americano-screen__danger-copy {
   flex: 1 1 260px;
   min-width: 0;

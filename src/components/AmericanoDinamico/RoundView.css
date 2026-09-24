@@ -20,6 +20,13 @@
   line-height: 1.1;
 }
 
+.americano-round__of-total {
+  font-size: 0.72em;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-muted, var(--text-secondary));
+}
+
 .americano-round__phase {
   display: inline-block;
   font-family: var(--font-body);

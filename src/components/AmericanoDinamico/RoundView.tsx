@@ -153,7 +153,15 @@ export const RoundView: React.FC<RoundViewProps> = ({
     <section className="americano-round rv-card">
       <header className="americano-round__header">
         <div>
-          <h3>Ronda {round.roundNumber}</h3>
+          <h3>
+            Ronda {round.roundNumber}
+            {totalRounds > 0 ? (
+              <span className="americano-round__of-total">
+                {" "}
+                de {totalRounds}
+              </span>
+            ) : null}
+          </h3>
           <span
             className="americano-round__phase"
             title="Rotación americana equilibrada: emparejamientos por costo, sin usar el ranking."
