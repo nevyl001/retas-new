@@ -530,7 +530,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           <h3 className="americano-screen__jugadores-title">Inscritos</h3>
           <p className="americano-screen__jugadores-count">
             {players.length} jugador{players.length === 1 ? "" : "es"} en el
-            torneo
+            pádel americano
           </p>
         </div>
         <ul className="americano-screen__jugadores-list" aria-label="Inscritos">
@@ -749,7 +749,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             <h3 className="americano-screen__jugadores-title">Inscritos</h3>
             <p className="americano-screen__jugadores-count">
               {players.length} jugador{players.length === 1 ? "" : "es"} en el
-              torneo
+              pádel americano
             </p>
           </div>
           <ul
