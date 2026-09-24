@@ -269,10 +269,10 @@
   color: var(--ro-chrome-text, #f5f2eb);
 }
 
-/* —— Grid: auto-fit + centrado cuando hay 1–2 partidos (sin hueco vacío a la derecha) —— */
+/* —— Grid: columnas = cantidad de partidos (sin huérfano en fila extra) —— */
 .riviera-organizer-reta .matches-grid-simplified {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  grid-template-columns: 1fr;
   gap: 16px;
   width: 100%;
   justify-content: center;
@@ -292,19 +292,49 @@
   justify-content: center;
 }
 
-/* 2 partidos: dos columnas centradas (no deja tercera vacía) */
 @media (min-width: 701px) {
+  /* 2 partidos */
   .riviera-organizer-reta
     .matches-grid-simplified:has(> :nth-child(2):last-child) {
-    grid-template-columns: repeat(2, minmax(min(100%, 300px), 420px));
-    justify-content: center;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* 3 partidos */
+  .riviera-organizer-reta
+    .matches-grid-simplified:has(> :nth-child(3):last-child) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* 4 partidos: 2×2 equilibrado (evita 3+1) */
+  .riviera-organizer-reta
+    .matches-grid-simplified:has(> :nth-child(4):last-child) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* 5+ : auto-fit, mínimo ~260px */
+  .riviera-organizer-reta
+    .matches-grid-simplified:has(> :nth-child(5)) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   }
 }
 
-/* 3+ partidos: hasta 3 columnas equitativas */
-@media (min-width: 1100px) {
-  .riviera-organizer-reta .matches-grid-simplified:has(> :nth-child(3)) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+@media (min-width: 1200px) {
+  /* Pantalla ancha: 4 partidos en una sola hilera */
+  .riviera-organizer-reta
+    .matches-grid-simplified:has(> :nth-child(4):last-child) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* 5 partidos en una hilera si cabe */
+  .riviera-organizer-reta
+    .matches-grid-simplified:has(> :nth-child(5):last-child) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  /* 6 partidos en una hilera */
+  .riviera-organizer-reta
+    .matches-grid-simplified:has(> :nth-child(6):last-child) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
