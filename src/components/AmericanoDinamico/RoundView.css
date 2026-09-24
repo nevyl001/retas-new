@@ -115,8 +115,20 @@
 }
 
 .am-match-board--split-vs .am-match-board__pair .pub-split-vs-panel {
-  aspect-ratio: auto;
+  /* Debe conservar ratio: media/identidad son absolute; `auto` colapsa a 0
+     y los nombres desaparecen (franjas vacías en Ronda). */
+  aspect-ratio: 5 / 4;
+  min-height: 4.75rem;
+  max-width: none;
+  margin-inline: 0;
   border-radius: 10px;
+}
+
+.am-match-board--split-vs .am-match-board__pair .pub-split-vs-panel__given,
+.am-match-board--split-vs .am-match-board__pair .pub-split-vs-panel__family {
+  color: #fff;
+  opacity: 1;
+  visibility: visible;
 }
 
 .am-match-board--split-vs .am-match-board__vs {
