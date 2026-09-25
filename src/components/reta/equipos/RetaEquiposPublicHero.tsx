@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import {
   TEAMS_PUBLIC_CLUB_FALLBACK,
+  TEAMS_PUBLIC_MOTIVATIONAL,
   formatBroadcastBattleTitle,
 } from "../../../lib/reta/teamsPublicCopy";
 import { resolveTeamLogoUrl } from "../../../lib/reta/teamLogoDisplay";
@@ -225,7 +226,9 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
               </span>
             </div>
             <span className="reta-eq-faceoff__vs" aria-hidden>
-              vs
+              <span className="reta-eq-faceoff__vs-rule reta-eq-faceoff__vs-rule--l" />
+              <span className="reta-eq-faceoff__vs-mark">VS</span>
+              <span className="reta-eq-faceoff__vs-rule reta-eq-faceoff__vs-rule--r" />
             </span>
             <div className="reta-eq-faceoff__team reta-eq-faceoff__team--b">
               <TeamLogo
@@ -272,19 +275,27 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
             .join(" ")}
         >
           {sedeLabel ? (
-            <span className="reta-eq-event-bar__item reta-eq-event-bar__sede">
-              {sedeLabel}
-            </span>
+            <div className="reta-eq-event-bar__item reta-eq-event-bar__sede">
+              <span className="reta-eq-event-bar__sede-kicker">SEDE</span>
+              <span className="reta-eq-event-bar__sede-name">{sedeLabel}</span>
+              <span className="reta-eq-event-bar__sede-motto">
+                {TEAMS_PUBLIC_MOTIVATIONAL}
+              </span>
+            </div>
           ) : null}
-          {horarioOnly ? (
-            <span className="reta-eq-event-bar__item reta-eq-event-bar__time">
-              {horarioOnly}
-            </span>
-          ) : null}
-          {!cta.live && statusLabel ? (
-            <span className="reta-eq-event-bar__item reta-eq-event-bar__status">
-              {statusLabel}
-            </span>
+          {horarioOnly || (!cta.live && statusLabel) ? (
+            <div className="reta-eq-event-bar__meta">
+              {horarioOnly ? (
+                <span className="reta-eq-event-bar__item reta-eq-event-bar__time">
+                  {horarioOnly}
+                </span>
+              ) : null}
+              {!cta.live && statusLabel ? (
+                <span className="reta-eq-event-bar__item reta-eq-event-bar__status">
+                  {statusLabel}
+                </span>
+              ) : null}
+            </div>
           ) : null}
           {showCountdown ? (
             <div className="reta-eq-event-bar__countdown">

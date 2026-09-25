@@ -55,8 +55,21 @@ function useCylinderMetrics(overridePx?: number): CylinderMetrics {
         return;
       }
       if (w < 640) {
-        /* Más radio en móvil: menos choque entre caras del cilindro. */
-        setMetrics({ radius: 158, scale: 0.88 });
+        const vw = Math.min(
+          w,
+          typeof document !== "undefined"
+            ? document.documentElement.clientWidth || w
+            : w
+        );
+        /* Radio vs escala: que (2r + card) * scale quepa en el viewport
+           sin recortar caras a la mitad, con hueco 3D entre cards. */
+        const avail = Math.max(280, vw - 32);
+        const scale = vw < 360 ? 0.78 : vw < 400 ? 0.82 : 0.86;
+        const cardW = 118;
+        const radius = Math.round(
+          Math.min(162, Math.max(126, (avail / scale - cardW) / 2.2))
+        );
+        setMetrics({ radius, scale });
         return;
       }
       if (w < 900) {

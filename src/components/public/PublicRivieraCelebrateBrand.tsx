@@ -41,14 +41,15 @@ export const PublicRivieraCelebrateBrand: React.FC<{
           className="ro-pub-celebrate__club-identity"
           logoOnly={logoOnly}
         />
-      ) : null}
-      <p className="ro-pub-celebrate__wordmark">
-        <span>R I V I E R A</span>
-        <span className="ro-pub-celebrate__wordmark-sep" aria-hidden>
-          ·
-        </span>
-        <span>O P E N</span>
-      </p>
+      ) : (
+        <p className="ro-pub-celebrate__wordmark">
+          <span>R I V I E R A</span>
+          <span className="ro-pub-celebrate__wordmark-sep" aria-hidden>
+            ·
+          </span>
+          <span>O P E N</span>
+        </p>
+      )}
       {showTagline ? (
         <p className="ro-pub-celebrate__brand-tagline">
           {tagline ?? manifest.slogans.primary}
