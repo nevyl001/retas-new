@@ -3523,28 +3523,37 @@
   }
 }
 
-/* Desktop: escena más ancha para el radio mayor del cilindro */
+/* Desktop: escena fluida — el tambor llena la columna, no un recuadro chico */
 @media (min-width: 1024px) {
   .reta-eq-stage--broadcast .reta-eq-scene {
-    max-width: 24rem;
-    height: 20.5rem;
-    perspective: 1400px;
+    width: 100%;
+    max-width: min(100%, 46rem);
+    height: clamp(22rem, 46svh, 36rem);
+    perspective: 1600px;
   }
 
   .reta-eq-stage--broadcast .reta-eq-duel-stage {
-    min-height: 360px;
-  }
-}
-
-@media (min-width: 1280px) {
-  .reta-eq-stage--broadcast .reta-eq-scene {
-    max-width: 27rem;
-    height: 22rem;
-    perspective: 1500px;
+    min-height: clamp(22rem, 48svh, 40rem);
   }
 
-  .reta-eq-stage--broadcast .reta-eq-duel-stage {
-    min-height: 400px;
+  .reta-eq-stage--broadcast .reta-eq-tambor {
+    width: clamp(10rem, 12vw, 16rem);
+    height: clamp(14.5rem, 18.5vw, 24rem);
+  }
+
+  .reta-eq-stage--broadcast .reta-eq-cara {
+    width: clamp(8.75rem, 10.5vw, 13.75rem);
+    height: clamp(13.15rem, 15.75vw, 20.6rem);
+    margin: calc(clamp(13.15rem, 15.75vw, 20.6rem) / -2) 0 0
+      calc(clamp(8.75rem, 10.5vw, 13.75rem) / -2);
+  }
+
+  .reta-eq-stage--broadcast .reta-eq-cara__name {
+    font-size: clamp(0.7rem, 0.42rem + 0.4vw, 0.95rem);
+  }
+
+  .reta-eq-stage--broadcast .reta-eq-cara__lado {
+    font-size: clamp(0.58rem, 0.35rem + 0.22vw, 0.72rem);
   }
 }
 
@@ -3859,6 +3868,7 @@
   .reta-eq-stage--broadcast {
     margin: 0;
     background: transparent;
+    min-height: calc(100svh - 4.5rem);
   }
 
   .reta-eq-stage--broadcast .reta-eq-stage__glow {
@@ -3877,39 +3887,39 @@
   }
 
   .reta-eq-stage--broadcast .reta-eq-stage__shell {
-    gap: 0.85rem;
-    max-width: 1440px;
+    gap: clamp(0.7rem, 1.5vh, 1.35rem);
+    max-width: min(100%, 1760px);
     margin: 0 auto;
-    padding: 1rem clamp(28px, 4.5vw, 72px) 1.15rem;
-    min-height: min(100dvh, 900px);
+    padding: 1rem clamp(24px, 4vw, 64px) 1.25rem;
+    min-height: calc(100svh - 4.5rem);
   }
 
   .reta-eq-stage--broadcast .reta-eq-match-hero {
-    gap: 0.55rem;
+    gap: clamp(0.45rem, 1vh, 0.75rem);
     animation: reta-eq-fade-up 620ms ease both;
   }
 
   .reta-eq-stage--broadcast .reta-eq-stage__battle-title {
-    max-width: min(100%, 42rem);
-    font-size: clamp(1.85rem, 1.3rem + 1.4vw, 2.45rem);
+    max-width: min(100%, 52rem);
+    font-size: clamp(1.85rem, 1.05rem + 1.7vw, 3.15rem);
     letter-spacing: 0.08em;
   }
 
   .reta-eq-stage--broadcast .reta-eq-faceoff {
-    --reta-eq-faceoff-logo: 3.5rem;
-    --reta-eq-vs-rule: 1.6rem;
-    width: min(100%, 36rem);
-    max-width: 46rem;
+    --reta-eq-faceoff-logo: clamp(3.5rem, 2.15rem + 2.4vw, 6.15rem);
+    --reta-eq-vs-rule: clamp(1.4rem, 1.8vw, 2.5rem);
+    width: min(100%, 48rem);
+    max-width: 58rem;
     animation: reta-eq-fade-up 660ms ease 40ms both;
   }
 
   .reta-eq-stage--broadcast .reta-eq-faceoff__name {
-    font-size: 1.05rem;
+    font-size: clamp(1.05rem, 0.65rem + 0.75vw, 1.5rem);
     letter-spacing: 0.08em;
   }
 
   .reta-eq-stage--broadcast .reta-eq-faceoff__vs-mark {
-    font-size: clamp(2.15rem, 2.1vw, 2.85rem);
+    font-size: clamp(2.2rem, 1.15rem + 1.8vw, 4.15rem);
   }
 
   .reta-eq-stage--broadcast .reta-eq-duel-stage {
@@ -3918,8 +3928,8 @@
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     justify-items: stretch;
-    gap: clamp(1.25rem, 3vw, 2.75rem);
-    min-height: 0;
+    gap: clamp(1.5rem, 4vw, 4.75rem);
+    min-height: clamp(22rem, 48svh, 40rem);
     margin: 0;
     padding: 0;
     overflow: visible;
@@ -3950,42 +3960,37 @@
   .reta-eq-event-bar--strip {
     justify-content: space-between;
     gap: 0.75rem 1.5rem;
-    padding: 0.7rem 1.15rem;
+    padding: 0.8rem 1.25rem;
     animation: reta-eq-fade-up 700ms ease 120ms both;
   }
 
   .reta-eq-event-bar__item {
-    font-size: 0.78rem;
-  }
-
-  .reta-eq-event-bar__sede-name {
     font-size: 0.82rem;
   }
 
+  .reta-eq-event-bar__sede-name {
+    font-size: clamp(0.82rem, 0.55rem + 0.35vw, 1.05rem);
+  }
+
   .reta-eq-event-bar__sede-motto {
-    font-size: 0.76rem;
+    font-size: clamp(0.76rem, 0.5rem + 0.28vw, 0.92rem);
   }
 }
 
 @media (min-width: 1280px) {
   .reta-eq-stage--broadcast .reta-eq-stage__shell {
-    gap: 0.95rem;
+    gap: 1rem;
     padding-top: 1.15rem;
-    padding-bottom: 1.25rem;
-    min-height: min(100dvh, 980px);
-  }
-
-  .reta-eq-stage--broadcast .reta-eq-faceoff {
-    --reta-eq-faceoff-logo: 3.75rem;
-    max-width: 48rem;
+    padding-bottom: 1.3rem;
   }
 
   .reta-eq-stage--broadcast .reta-eq-duel-stage {
-    gap: clamp(1.5rem, 3.5vw, 3.25rem);
+    gap: clamp(1.75rem, 4.2vw, 5rem);
   }
 }
 
 @media (min-width: 1024px) and (max-height: 820px) {
+  .reta-eq-stage--broadcast,
   .reta-eq-stage--broadcast .reta-eq-stage__shell {
     gap: 0.55rem;
     min-height: 0;
@@ -3995,6 +4000,14 @@
 
   .reta-eq-stage--broadcast .reta-eq-stage__battle-title {
     font-size: clamp(1.5rem, 1.15rem + 0.9vw, 1.95rem);
+  }
+
+  .reta-eq-stage--broadcast .reta-eq-scene {
+    height: clamp(16rem, 42vh, 22rem);
+  }
+
+  .reta-eq-stage--broadcast .reta-eq-duel-stage {
+    min-height: 0;
   }
 }
 

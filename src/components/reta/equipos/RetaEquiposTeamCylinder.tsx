@@ -76,12 +76,20 @@ function useCylinderMetrics(overridePx?: number): CylinderMetrics {
         setMetrics({ radius: 152, scale: 0.94 });
         return;
       }
-      if (w < 1280) {
-        /* Desktop: más separación entre cards del tambor. */
-        setMetrics({ radius: 215, scale: 1 });
-        return;
+      const vw = Math.min(
+        w,
+        typeof document !== "undefined"
+          ? document.documentElement.clientWidth || w
+          : w
+      );
+      const vh =
+        typeof window !== "undefined" ? window.innerHeight || 800 : 800;
+      const col = Math.max(300, (vw - 96) / 2);
+      let radius = Math.round(Math.min(360, Math.max(200, col * 0.36)));
+      if (vh < 820) {
+        radius = Math.round(Math.min(radius, 210));
       }
-      setMetrics({ radius: 245, scale: 1 });
+      setMetrics({ radius, scale: 1 });
     };
 
     handleResize();
