@@ -118,31 +118,25 @@ const CylinderCard: React.FC<{
             />
           ) : (
             <span className="reta-eq-cara__medal" aria-hidden>
-              <span className="reta-eq-cara__medal-sheen" />
-              <span className="reta-eq-cara__medal-ring" />
               <span className="reta-eq-cara__medal-ini">{initials}</span>
             </span>
           )}
           <span className="reta-eq-cara__scrim" aria-hidden />
         </div>
 
-        <header className="reta-eq-cara__top">
-          {lado ? <span className="reta-eq-cara__lado">{lado}</span> : <span />}
-          {pais ? (
-            <span className="reta-eq-cara__pais" aria-label={pais.nombre}>
-              <JugadorPaisBadge
-                codigo={player.nacionalidad}
-                size="sm"
-                showCode={false}
-              />
-            </span>
-          ) : (
-            <span />
-          )}
-        </header>
+        {pais ? (
+          <span className="reta-eq-cara__pais" aria-label={pais.nombre}>
+            <JugadorPaisBadge
+              codigo={player.nacionalidad}
+              size="sm"
+              showCode={false}
+            />
+          </span>
+        ) : null}
 
         <footer className="reta-eq-cara__foot">
           <p className="reta-eq-cara__name">{player.nombre}</p>
+          {lado ? <p className="reta-eq-cara__lado">{lado}</p> : null}
         </footer>
       </article>
     </div>

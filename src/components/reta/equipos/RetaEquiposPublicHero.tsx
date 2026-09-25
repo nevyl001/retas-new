@@ -1,8 +1,6 @@
 import React, { useMemo } from "react";
 import {
-  TEAMS_PUBLIC_BRAND_LINE,
   TEAMS_PUBLIC_CLUB_FALLBACK,
-  TEAMS_PUBLIC_MOTIVATIONAL,
   formatBroadcastBattleTitle,
 } from "../../../lib/reta/teamsPublicCopy";
 import { resolveTeamLogoUrl } from "../../../lib/reta/teamLogoDisplay";
@@ -82,47 +80,21 @@ function shortTeamLabel(name: string): string {
   return cleaned || name;
 }
 
-/** Marquesina broadcast: fecha larga en mayúsculas (es-MX). */
+/** Fecha compacta broadcast: JUEVES · 24 SEP 2026 */
 function formatBroadcastMarqueeDate(iso?: string | null): string | null {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return new Intl.DateTimeFormat("es-MX", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })
+  const weekday = new Intl.DateTimeFormat("es-MX", { weekday: "long" })
     .format(d)
     .toUpperCase();
-}
-
-function TransmissionPill({
-  horario,
-  status,
-}: {
-  horario: string | null;
-  status: string;
-}) {
-  const parts: string[] = [];
-  if (horario) parts.push(horario);
-  if (status) parts.push(status);
-  if (parts.length === 0) return null;
-
-  return (
-    <p className="reta-eq-tx-pill" aria-label="Horario del evento">
-      {parts.map((text, i) => (
-        <React.Fragment key={`${text}-${i}`}>
-          {i > 0 ? (
-            <span className="reta-eq-tx-pill__sep" aria-hidden>
-              ·
-            </span>
-          ) : null}
-          <span className="reta-eq-tx-pill__item">{text}</span>
-        </React.Fragment>
-      ))}
-    </p>
-  );
+  const day = new Intl.DateTimeFormat("es-MX", { day: "numeric" }).format(d);
+  const month = new Intl.DateTimeFormat("es-MX", { month: "short" })
+    .format(d)
+    .replace(/\./g, "")
+    .toUpperCase();
+  const year = new Intl.DateTimeFormat("es-MX", { year: "numeric" }).format(d);
+  return `${weekday} · ${day} ${month} ${year}`;
 }
 
 export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
@@ -189,6 +161,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   const eventTitle = eventName?.trim() || null;
   const headline = formatBroadcastBattleTitle(eventTitle, [nameA, nameB], eventDescription);
   const clubLine = clubName?.trim() || TEAMS_PUBLIC_CLUB_FALLBACK;
+  const showCountdown = !cta.live && !isFinished && schedulePhase !== "after";
 
   if (compact) {
     return (
@@ -228,10 +201,10 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
       <div className="reta-eq-stage__shell">
         <div className="reta-eq-match-hero">
           <header className="reta-eq-stage__header reta-eq-stage__header--broadcast">
+            <h1 className="reta-eq-stage__battle-title">{headline}</h1>
             {marqueeDate ? (
               <p className="reta-eq-stage__marquee-date">{marqueeDate}</p>
             ) : null}
-            <h1 className="reta-eq-stage__battle-title">{headline}</h1>
             <p className="reta-eq-stage__club">by {clubLine}</p>
           </header>
 
@@ -252,7 +225,7 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
               </span>
             </div>
             <span className="reta-eq-faceoff__vs" aria-hidden>
-              VS
+              vs
             </span>
             <div className="reta-eq-faceoff__team reta-eq-faceoff__team--b">
               <TeamLogo
@@ -291,40 +264,30 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
 
         <div
           className={[
-            "reta-eq-center",
-            "reta-eq-center--duel",
             "reta-eq-event-bar",
-            cta.live ? "reta-eq-center--hub" : "",
+            "reta-eq-event-bar--strip",
+            cta.live ? "reta-eq-event-bar--live" : "",
           ]
             .filter(Boolean)
             .join(" ")}
         >
-          <div className="reta-eq-event-bar__col reta-eq-event-bar__col--sede">
-            <div className="reta-eq-duel-foot">
-              {sedeLabel ? (
-                <p className="reta-eq-duel-foot__sede">
-                  <span className="reta-eq-duel-foot__sede-kicker">Sede</span>
-                  <span className="reta-eq-duel-foot__sede-name">{sedeLabel}</span>
-                </p>
-              ) : null}
-              <p className="reta-eq-duel-foot__motto">
-                {TEAMS_PUBLIC_MOTIVATIONAL}
-              </p>
-              <p className="reta-eq-duel-foot__brand reta-eq-event-bar__brand-mobile">
-                {TEAMS_PUBLIC_BRAND_LINE}
-              </p>
-            </div>
-          </div>
-
-          <div className="reta-eq-event-bar__col reta-eq-event-bar__col--time">
-            <TransmissionPill
-              horario={horarioOnly}
-              status={cta.live ? "" : statusLabel}
-            />
-          </div>
-
-          {!cta.live ? (
-            <div className="reta-eq-event-bar__col reta-eq-event-bar__col--count reta-eq-center__countdown">
+          {sedeLabel ? (
+            <span className="reta-eq-event-bar__item reta-eq-event-bar__sede">
+              {sedeLabel}
+            </span>
+          ) : null}
+          {horarioOnly ? (
+            <span className="reta-eq-event-bar__item reta-eq-event-bar__time">
+              {horarioOnly}
+            </span>
+          ) : null}
+          {!cta.live && statusLabel ? (
+            <span className="reta-eq-event-bar__item reta-eq-event-bar__status">
+              {statusLabel}
+            </span>
+          ) : null}
+          {showCountdown ? (
+            <div className="reta-eq-event-bar__countdown">
               <RetaEquiposCountdown
                 programadoEn={programadoEn}
                 programadoHasta={programadoHasta}
@@ -332,28 +295,26 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
               />
             </div>
           ) : null}
-
           {onGoLive ? (
-            <div className="reta-eq-event-bar__col reta-eq-event-bar__col--cta">
-              <button
-                type="button"
-                className={[
-                  "reta-eq-cta",
-                  cta.live ? "reta-eq-cta--hub" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                onClick={onGoLive}
-              >
-                {cta.live ? (
-                  <span className="reta-eq-cta__dot" aria-hidden />
-                ) : null}
-                <span className="reta-eq-cta__label">{cta.label}</span>
-                <span className="reta-eq-cta__arrow" aria-hidden>
-                  →
-                </span>
-              </button>
-            </div>
+            <button
+              type="button"
+              className={[
+                "reta-eq-cta",
+                "reta-eq-cta--strip",
+                cta.live ? "reta-eq-cta--hub" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={onGoLive}
+            >
+              {cta.live ? (
+                <span className="reta-eq-cta__dot" aria-hidden />
+              ) : null}
+              <span className="reta-eq-cta__label">{cta.label}</span>
+              <span className="reta-eq-cta__arrow" aria-hidden>
+                →
+              </span>
+            </button>
           ) : null}
         </div>
       </div>
