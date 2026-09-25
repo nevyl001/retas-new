@@ -91,8 +91,10 @@
 .reta-eq-logo__img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 14%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+  padding: 0;
   display: block;
 }
 
@@ -539,9 +541,10 @@
   width: var(--reta-eq-faceoff-logo);
   height: var(--reta-eq-faceoff-logo);
   border-radius: 999px;
-  padding: 0.22rem;
+  padding: 0;
   background: #0e0f15;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .reta-eq-faceoff__logo--a,
@@ -565,8 +568,9 @@
   width: 100%;
   height: 100%;
   border-radius: 999px;
-  object-fit: contain;
-  padding: 8%;
+  object-fit: cover;
+  object-position: center;
+  padding: 0;
   display: block;
 }
 
@@ -857,15 +861,16 @@
   letter-spacing: 0.04em;
 }
 
-/* Logo real: llena el círculo, sin padding que lo achique */
+/* Logo real: llena el círculo (1:1 con cover) */
 .reta-eq-matchbar__logo .reta-eq-logo__img,
 .reta-eq-matchbar .reta-eq-logo.reta-eq-matchbar__logo .reta-eq-logo__img,
 .reta-eq-live-header .reta-eq-matchbar__logo .reta-eq-logo__img {
   width: 100% !important;
   height: 100% !important;
-  padding: 6% !important;
-  object-fit: contain !important;
+  padding: 0 !important;
+  object-fit: cover !important;
   object-position: center !important;
+  border-radius: 999px !important;
   background: transparent !important;
   display: block;
 }
@@ -933,11 +938,6 @@
 
   .reta-eq-matchbar--arena .reta-eq-matchbar__logo .reta-eq-logo__initials {
     font-size: 1.55rem;
-  }
-
-  .reta-eq-matchbar__logo .reta-eq-logo__img,
-  .reta-eq-live-header .reta-eq-matchbar__logo .reta-eq-logo__img {
-    padding: 5% !important;
   }
 }
 
@@ -2079,9 +2079,10 @@
 .reta-eq-arena__logo .reta-eq-logo__img {
   width: 100% !important;
   height: 100% !important;
-  padding: 7% !important;
-  object-fit: contain !important;
+  padding: 0 !important;
+  object-fit: cover !important;
   object-position: center !important;
+  border-radius: 999px !important;
   display: block;
 }
 

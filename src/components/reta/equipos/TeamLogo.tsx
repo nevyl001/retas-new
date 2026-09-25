@@ -14,7 +14,7 @@ type TeamLogoProps = {
 };
 
 /**
- * Logo 1:1 con object-fit: contain + fallback de iniciales.
+ * Logo 1:1 a sangre en círculo (object-fit: cover) + fallback de iniciales.
  */
 export const TeamLogo: React.FC<TeamLogoProps> = ({
   logoUrl,

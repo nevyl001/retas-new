@@ -264,7 +264,9 @@
 .reta-sb-team .reta-eq-logo.reta-sb-team__watermark-logo .reta-eq-logo__img {
   width: 100% !important;
   height: 100% !important;
-  object-fit: contain !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border-radius: 50% !important;
   padding: 0 !important;
 }
 
@@ -2264,7 +2266,7 @@
   }
 }
 
-/* Logo centrado entre la pareja — escala con el ancho del panel */
+/* Logo centrado entre la pareja — círculo a sangre */
 .reta-eq-duel__float-logo {
   position: absolute;
   z-index: 5;
@@ -2277,8 +2279,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.18rem;
-  border-radius: 0.55rem;
+  padding: 0;
+  border-radius: 50%;
+  overflow: hidden;
   background:
     linear-gradient(155deg, rgba(255, 255, 255, 0.24) 0%, rgba(10, 11, 16, 0.94) 100%);
   border: 1px solid rgba(255, 255, 255, 0.34);
@@ -2308,8 +2311,10 @@
 .reta-eq-duel__float-logo-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  border-radius: 0.28rem;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+  display: block;
 }
 
 .reta-eq-duel__float-logo--text span {
