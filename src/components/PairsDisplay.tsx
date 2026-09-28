@@ -159,7 +159,8 @@ export const PairsDisplay: React.FC<PairsDisplayProps> = ({
       </div>
 
       {/* Grid de Parejas Compacto */}
-      <div className="compact-pairs-grid">
+      <div className="compact-pairs-grid-wrap">
+        <div className="compact-pairs-grid">
         {pairs.map((pair, index) => {
           const teamName = getPairTeamName(pair.id, teamConfig);
           const teamIndex = getPairTeamIndex(pair.id, teamConfig);
@@ -246,6 +247,7 @@ export const PairsDisplay: React.FC<PairsDisplayProps> = ({
             </div>
           );
         })}
+        </div>
       </div>
     </div>
   );
