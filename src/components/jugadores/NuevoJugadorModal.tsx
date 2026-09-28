@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type {
   EnCancha,
   ManoDominante,
@@ -56,8 +56,13 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
   const [mano, setMano] = useState<ManoDominante | "">("");
   const [enCancha, setEnCancha] = useState<EnCancha | "">("");
   const [paisCodigo, setPaisCodigo] = useState("MX");
+  const [formGenero, setFormGenero] = useState<RivieraJugadorGenero>(genero);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) setFormGenero(genero);
+  }, [open, genero]);
 
   if (!open) return null;
 
@@ -70,6 +75,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
     setMano("");
     setEnCancha("");
     setPaisCodigo("MX");
+    setFormGenero(genero);
     setError(null);
   };
 
@@ -97,7 +103,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
         mano_dominante: mano || null,
         en_cancha: enCancha || null,
         pais_codigo: paisCodigo || null,
-        genero,
+        genero: formGenero,
       });
       resetForm();
       onClose();
@@ -109,7 +115,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
   };
 
   const ramaClass =
-    genero === "F" ? "rj-modal--new-player-f" : "rj-modal--new-player-m";
+    formGenero === "F" ? "rj-modal--new-player-f" : "rj-modal--new-player-m";
 
   return (
     <div className="rj-modal-backdrop" role="presentation" onClick={onClose}>
@@ -121,9 +127,8 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <header className="rj-new-player__header">
-          <p className="rj-new-player__kicker">{RIVIERA_GENERO_LABELS[genero]}</p>
           <h2 id="rj-modal-title" className="rj-new-player__title">
-            {RIVIERA_GENERO_NEW_LABEL[genero]}
+            {RIVIERA_GENERO_NEW_LABEL[formGenero]}
           </h2>
           <p className="rj-new-player__lead">
             Completa el perfil para el registro y el ranking del club.
@@ -132,28 +137,58 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
 
         <form className="rj-new-player__form" onSubmit={handleSubmit}>
           <section className="rj-new-player__section" aria-label="Identidad">
-            <Input
-              id="rj-nombre"
-              label="Nombre *"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              autoFocus
-              required
-            />
-            <Input
-              id="rj-email"
-              label="Email *"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <Input
-              id="rj-tel"
-              label="Teléfono / WhatsApp"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-            />
+            <div className="rj-new-player__row rj-new-player__row--identity-top">
+              <Input
+                id="rj-nombre"
+                label="Nombre *"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                autoFocus
+                required
+              />
+              <fieldset className="rj-new-player__rama">
+                <legend className="riviera-label">Rama *</legend>
+                <div
+                  className="rj-new-player__rama-group"
+                  role="radiogroup"
+                  aria-label="Rama del jugador"
+                >
+                  {(["M", "F"] as const).map((g) => {
+                    const active = formGenero === g;
+                    return (
+                      <button
+                        key={g}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        className={`rj-new-player__rama-btn${
+                          active ? " rj-new-player__rama-btn--active" : ""
+                        }`}
+                        onClick={() => setFormGenero(g)}
+                      >
+                        {RIVIERA_GENERO_LABELS[g]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            </div>
+            <div className="rj-new-player__row rj-new-player__row--2">
+              <Input
+                id="rj-email"
+                label="Email *"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <Input
+                id="rj-tel"
+                label="Teléfono / WhatsApp"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+              />
+            </div>
           </section>
 
           <section className="rj-new-player__section" aria-label="Competencia">
