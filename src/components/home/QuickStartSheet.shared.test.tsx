@@ -90,7 +90,10 @@ describe("QuickStartSheet shared form", () => {
       'input[placeholder="Reta del domingo…"]'
     ) as HTMLInputElement;
     expect(nameInput.value).toBe("Reta cargada");
-    expect(container.textContent).toMatch(/3/);
+    const courtsInput = container.querySelector(
+      'input[aria-label="Número de canchas"]'
+    ) as HTMLInputElement | null;
+    expect(courtsInput?.value).toBe("3");
     expect(container.textContent).toMatch(/Día/);
     expect(container.textContent).toMatch(/Hora/);
     expect(container.querySelector('input[type="date"]')).toBeTruthy();

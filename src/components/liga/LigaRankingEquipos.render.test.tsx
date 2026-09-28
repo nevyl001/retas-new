@@ -73,7 +73,7 @@ describe("LigaRankingEquipos — cards móviles reflejan el mismo orden y datos 
     expect(cardNames).toEqual(tableNames);
   });
 
-  it("la card móvil muestra las mismas estadísticas que la fila desktop (PJ/PG/PP/GF/GC/PTS)", () => {
+  it("card móvil muestra FAV/PG/PJ/PP; la tabla desktop conserva PTS de ranking", () => {
     const rows: LigaEquipoRankingItem[] = [
       equipo({
         posicion: 1,
@@ -96,17 +96,19 @@ describe("LigaRankingEquipos — cards móviles reflejan el mismo orden y datos 
 
     const card = container.querySelector(".standings-mobile-card");
     expect(card?.textContent).toContain("Fernández / López");
-    // FAV/PG/PJ/PP/PTS son los campos mapeados 1:1 desde LigaEquipoRankingItem.
+    // Contrato compartido actual: FAV, PG, PJ, PP en __stat-value. PTS no se pinta en móvil.
     const statValues = Array.from(
       card?.querySelectorAll(".standings-mobile-card__stat-value") ?? []
     ).map((el) => el.textContent);
-    expect(statValues).toEqual(expect.arrayContaining(["44", "4", "5", "1", "15"]));
+    expect(statValues).toEqual(["44", "4", "5", "1"]);
+    expect(statValues).not.toContain("15");
 
     const row = container.querySelector(".liga-ranking-table tbody tr");
     const cells = Array.from(row?.querySelectorAll("td") ?? []).map(
       (el) => el.textContent
     );
     expect(cells).toEqual(["1", "Fernández / López", "5", "4", "1", "44", "28", "16", "15"]);
+    expect(cells[cells.length - 1]).toBe("15");
   });
 
   it("conserva la tabla desktop (no la reemplaza) junto con las cards móviles", () => {

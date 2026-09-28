@@ -10,6 +10,7 @@ import {
   resolvePlayerPointsBreakdown,
 } from "./playerPointsBreakdown";
 import { buildJugadorPuntosBreakdown } from "./jugadorPuntosBreakdown";
+import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
 import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
 
 jest.mock("./publicCareerLinkage", () => ({
@@ -23,6 +24,18 @@ jest.mock("./orphanProfileLink", () => ({
   ensureOfficialProfileLinkForParticipacion: jest.fn(),
   requireOfficialProfileLinkForParticipacion: jest.fn(),
 }));
+
+jest.mock("./rivieraOfficialActivity", () => ({
+  resolveOfficialGlobalPuntos: jest.fn(async () => null),
+}));
+
+jest.mock("./careerPointsByClub", () => {
+  const actual = jest.requireActual("./careerPointsByClub") as typeof import("./careerPointsByClub");
+  return {
+    ...actual,
+    buildJugadorHomeOrgMapFromParticipaciones: jest.fn(async () => new Map()),
+  };
+});
 
 const HACKPADEL = "e724de97-3552-4a01-a269-f621e6f1ed26";
 const RIVIERA_OPEN = "2770b522-9064-4c7b-a729-4a0ea7e3f6e8";
@@ -74,6 +87,7 @@ describe("orphan career profile integrity", () => {
     jest.clearAllMocks();
     (listParticipacionesForJugadorIds as jest.Mock).mockResolvedValue([]);
     (listCareerParticipacionesPublic as jest.Mock).mockResolvedValue([]);
+    (resolveOfficialGlobalPuntos as jest.Mock).mockResolvedValue(null);
   });
 
   it("1) oficial + huérfano: tras link, merge incluye ambos y breakdown suma", async () => {
@@ -236,6 +250,10 @@ describe("orphan career profile integrity", () => {
 });
 
 describe("orphan repair UI coherence", () => {
+  beforeEach(() => {
+    (resolveOfficialGlobalPuntos as jest.Mock).mockResolvedValue(null);
+  });
+
   it("card y ficha usan resolvePlayerPointsBreakdown con mismos totales", async () => {
     const participaciones = [
       part("ui-1", DANIEL_OFFICIAL, HACKPADEL, 75, "Reta Nocturna"),
@@ -246,6 +264,7 @@ describe("orphan repair UI coherence", () => {
       organizador_id: RIVIERA_OPEN,
       careerPuntosByClub: [{ organizadorId: HACKPADEL, puntos: 75 }],
       careerPuntosTotal: 75,
+      officialPuntosGlobal: null,
     } as RivieraJugadorWithStats;
 
     const breakdown = await resolvePlayerPointsBreakdown({
