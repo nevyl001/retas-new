@@ -1,5 +1,5 @@
 {
-  "_readme": "Excepciones explícitas y revisables para scripts/scan-unsafe-sql.mjs (BLK-05). Cada entrada documenta POR QUÉ el archivo puede contener un patrón normalmente inseguro. No se ignoran carpetas completas (salvo supabase/_archive/, que el scanner excluye siempre por ser histórico no ejecutable) — cada archivo de esta lista se revisó individualmente.",
+  "_readme": "Excepciones explícitas y revisables para scripts/scan-unsafe-sql.mjs (BLK-05). Formato: { file, reason } permite TODOS los hallazgos del archivo (entradas históricas). { file, exceptions: [{ rule, context, reason }] } permite únicamente el par regla+contexto (p. ej. SEC-001 + nombre de policy). No se ignoran carpetas completas (salvo supabase/_archive/). Cada entrada se revisó individualmente.",
   "entries": [
     {
       "file": "supabase/rls-enable-public-schema.sql",
@@ -27,11 +27,21 @@
     },
     {
       "file": "supabase/rls-multiclub-pr1-public-read-helpers.sql",
-      "reason": "El comentario de cabecera menciona 'políticas anon USING (true)' como el problema que este archivo reemplaza — no crea ninguna policy con ese patrón."
+      "reason": "El comentario de cabecera menciona 'políticas anon USING (true)' como el problema que este archivo reemplaza — no crea ninguna policy insegura nueva."
     },
     {
       "file": "supabase/sql/verify-torneo-express-realtime.sql",
       "reason": "Diagnóstico de solo lectura: el comentario menciona 'SELECT anon USING(true)' como estado esperado a confirmar contra pg_policies, no crea ninguna policy."
+    },
+    {
+      "file": "supabase/migrations/0039_riviera_coaching_core.sql",
+      "exceptions": [
+        {
+          "rule": "SEC-001",
+          "context": "crubric_select_auth",
+          "reason": "Audited historical policy. SELECT-only on public.coach_rubric_versions for authenticated users. No anon access and no authenticated INSERT/UPDATE/DELETE grants. Table contains rubric catalog/formula, not PII. Read scope should be revisited when Riviera Coaching Phase B authorization contract is finalized. This does not mean USING (true) is generally safe."
+        }
+      ]
     }
   ]
 }
