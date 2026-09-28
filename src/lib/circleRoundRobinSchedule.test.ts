@@ -245,15 +245,30 @@ describe("teams cross schedule rest rotation", () => {
 
     // En rondas llenas (3 partidos), exactamente 1 pareja por equipo descansa
     // y no se repite el mismo descanso en la ronda siguiente.
-    for (let i = 0; i < restersByRound0.length; i += 1) {
-      const roundMatches = byRound.get(i + 1)!;
-      if (roundMatches.length < 3) continue;
-      expect(restersByRound0[i]).toHaveLength(1);
-      expect(restersByRound1[i]).toHaveLength(1);
-      if (i > 0 && byRound.get(i)!.length === 3) {
-        expect(restersByRound0[i][0]).not.toBe(restersByRound0[i - 1][0]);
-        expect(restersByRound1[i][0]).not.toBe(restersByRound1[i - 1][0]);
-      }
-    }
+    const fullRoundIndexes = restersByRound0
+      .map((_, i) => i)
+      .filter((i) => (byRound.get(i + 1)?.length ?? 0) === 3);
+    const adjacentFullRoundIndexes = fullRoundIndexes.filter(
+      (i) => i > 0 && (byRound.get(i)?.length ?? 0) === 3
+    );
+
+    expect(fullRoundIndexes.length).toBeGreaterThan(0);
+    expect(adjacentFullRoundIndexes.length).toBeGreaterThan(0);
+    expect(fullRoundIndexes.map((i) => restersByRound0[i].length)).toEqual(
+      fullRoundIndexes.map(() => 1)
+    );
+    expect(fullRoundIndexes.map((i) => restersByRound1[i].length)).toEqual(
+      fullRoundIndexes.map(() => 1)
+    );
+    expect(
+      adjacentFullRoundIndexes.map(
+        (i) => restersByRound0[i][0] !== restersByRound0[i - 1][0]
+      )
+    ).toEqual(adjacentFullRoundIndexes.map(() => true));
+    expect(
+      adjacentFullRoundIndexes.map(
+        (i) => restersByRound1[i][0] !== restersByRound1[i - 1][0]
+      )
+    ).toEqual(adjacentFullRoundIndexes.map(() => true));
   });
 });
