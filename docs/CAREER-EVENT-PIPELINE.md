@@ -355,7 +355,7 @@ src/lib/rivieraJugadores/
 | Enlazar perfil huérfano | `ensureOfficialProfileLinkForParticipacion` |
 | Detectar/reparar huérfanos | SQL `diagnose/repair-orphan-career-profile-links` |
 
-`MatchResultCalculator.accumulateMatchStatistics` es **solo UI** — no persiste.
+La acumulación de estadísticas de marcador en la UI de reta no persiste; el pipeline oficial es el de la tabla.
 
 ---
 

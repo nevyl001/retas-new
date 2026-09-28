@@ -120,7 +120,7 @@ Los 5 modos de juego (Reta, Liga, Americano, Duelo 2v2, Torneo Express) funciona
 | D3 | `/duelo-2v2/:id/gestionar` | `Duelo2v2Gestionar` (desktop lineal / móvil tabbed) | `Duelo2v2PageShell` | gestión + resultados + cierre |
 | D4 | `/public/duelo-2v2/:id` | `Duelo2v2Publica` | `Duelo2v2PageShell` + `PublicModeShell` | vista pública (live + celebración) |
 
-**Nota:** Duelo **no tiene pantalla de standings/ranking propia** — no hay `<table>` de posiciones; solo aplica rating al finalizar. `Duelo2v2SetsBreakdown.tsx` tiene CSS completo pero **no está montado en ninguna pantalla** (código muerto).
+**Nota:** Duelo **no tiene pantalla de standings/ranking propia** — no hay `<table>` de posiciones; solo aplica rating al finalizar. Quedan reglas `.duelo2v2-sets-breakdown` en `duelo2v2-page.css` sin JSX montado.
 
 ### 2.6 Resumen de gaps estructurales por modo
 
@@ -301,7 +301,7 @@ Clasificadas como se pidió: **correcta**, **inconsistencia**, **deuda técnica*
 | 9 | `LigaRankingEquipos` no tiene versión de cards móviles — tabla con scroll horizontal forzado en pantallas de 320-360px | Liga | **Riesgo móvil** |
 | 10 | `LigaDetalle.tsx` existe, tiene CSS legacy (`.liga-title`, sin `ModeHeader`) y **no está enrutado** — código muerto que puede confundir a futuros desarrolladores | Liga | **Deuda técnica** |
 | 11 | `.liga-jornada-toolbar` definido en CSS (72 líneas) sin ningún JSX que lo use | Liga | **Deuda técnica** |
-| 12 | `Duelo2v2SetsBreakdown.tsx` + CSS completo, sin ningún import de uso | Duelo 2v2 | **Deuda técnica** |
+| 12 | Reglas `.duelo2v2-sets-breakdown` en `duelo2v2-page.css` sin JSX montado | Duelo 2v2 | **Deuda técnica** |
 | 13 | `MatchCard` (platform) tiene 0 imports externos — cada modo reimplementa su propia match card | Todos | **Deuda técnica / oportunidad** |
 | 14 | 3 taxonomías de badge de estado (`StatusBadge`, `Badge`/`riviera-badge`, badges locales por modo) con los mismos colores redefinidos 4 veces | Todos | **Deuda técnica** |
 | 15 | `DESIGN_SYSTEM.md` documenta "sin dorado" pero el dorado (`#c9a227`) es central en 4 de 5 modos (todo excepto la ficción "Precision Dark" pura) | Todos (doc vs realidad) | **Problema UX / documentación desalineada** |

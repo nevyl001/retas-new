@@ -281,17 +281,6 @@
 .te-grupo-badge--4 { color: var(--ro-mode-torneo); border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.12); }
 
 /* Sección Grupos (gestión torneo) */
-.te-entry-card__title {
-  margin: 0 0 var(--space-2);
-}
-
-.te-entry-card__text {
-  margin: 0 0 var(--space-4);
-  font-size: var(--text-body);
-  line-height: 1.45;
-  color: var(--text-secondary);
-}
-
 .te-grupos-card {
   padding: var(--space-6) var(--space-6) var(--space-8);
   margin-bottom: var(--space-md);

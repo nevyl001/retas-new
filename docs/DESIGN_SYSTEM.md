@@ -150,7 +150,7 @@ Verificar: sin amber `#f59e0b`, focus Tab visible, hover en cards, glow en botó
 - `--medal-silver` / `--medal-bronze` para podios públicos.
 - `.torneo-express-btn` alineado a `.riviera-btn` (pill + primary sólido).
 - Vista pública TE: sin bloque `:root` duplicado; badge live en dorado.
-- `ListaTorneosExpress` usa `<Button>` + `TePageShell`.
+- `TorneosExpressLista` usa `<Button>` + `TePageShell`.
 
 ### Pendiente (post-sprint)
 
