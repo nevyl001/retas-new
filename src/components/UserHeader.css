@@ -13,9 +13,21 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 1600px;
+  /* Home: mismo riel 1280 + gutter que .home-inner / .main-layout */
+  max-width: calc(1280px + 2 * var(--mode-shell-pad-x));
   margin: 0 auto;
-  padding: var(--space-lg) var(--space-2xl);
+  padding: var(--space-md) var(--mode-shell-pad-x);
+  box-sizing: border-box;
+}
+
+/* Prep y modos a sangre: mismo gutter que el workspace, sin columna 1600 */
+body:has(.main-layout > .reta-content) .user-header-content,
+body:has(.qm-ws--wide) .user-header-content,
+body:has(.liga-page) .user-header-content,
+body:has(.americano-screen) .user-header-content,
+body:has(.duelo2v2-page:not(.duelo2v2-page--public)) .user-header-content,
+body:has(.torneo-express-page:not(.te-public)) .user-header-content {
+  max-width: none;
 }
 
 .user-header-main {
@@ -297,8 +309,8 @@
   }
 
   .user-header-content {
-    padding: var(--space-sm) var(--space-md);
-    padding-top: max(var(--space-sm), env(safe-area-inset-top, 0px));
+    padding: max(var(--space-sm), env(safe-area-inset-top, 0px))
+      var(--mode-shell-pad-x);
   }
 
   .user-header-main {
@@ -319,8 +331,8 @@
 
 @media (max-width: 480px) {
   .user-header-content {
-    padding: var(--space-xs) var(--space-sm);
-    padding-top: max(var(--space-xs), env(safe-area-inset-top, 0px));
+    padding: max(var(--space-xs), env(safe-area-inset-top, 0px))
+      var(--mode-shell-pad-x);
   }
 
   .user-avatar {

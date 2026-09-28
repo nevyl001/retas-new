@@ -264,7 +264,7 @@
    * Full-bleed + padding (Liga / Torneo / Eventos / Reta).
    * Sin columna angosta tipo “pantalla reducida”.
    */
-  --mode-shell-pad-x: clamp(20px, 4vw, 56px);
+  --mode-shell-pad-x: clamp(20px, 3.5vw, 72px);
   --mode-shell-pad-y: clamp(28px, 5vw, 52px);
   --mode-shell-pad-bottom: max(
     clamp(48px, 6vw, 80px),
