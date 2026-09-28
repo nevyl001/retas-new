@@ -3,16 +3,18 @@
 ## Estado actual (2026-08-03, BLK-05)
 
 Este repo **no tiene** (todavía) un historial de migraciones numeradas y
-reproducibles para el esquema completo. El historial real vive como ~160
-archivos `.sql` sueltos en `supabase/` (raíz) y `supabase/sql/`, con
+reproducibles para el esquema completo. El historial de esquema/RPC que
+sigue siendo necesario para reconstruir o documentar el estado vigente vive
+como archivos `.sql` sueltos en `supabase/` (raíz) y `supabase/sql/`, con
 convención de nombre pero sin orden canónico explícito:
 
-- `*-fase1-*.sql`, `patch-*.sql`, `hotfix-*.sql`, `fix-*.sql` — cambios reales aplicados (o a aplicar) contra producción.
-- `verify-*.sql` — verificación de solo lectura tras aplicar un fix.
-- `rollback-*.sql` — reversión de un fix, si hiciera falta.
-- `audit-*.sql`, `diagnose-*.sql` — solo lectura, para investigar un problema puntual.
-- `backup-*.sql` — snapshot de datos/policies antes de una limpieza destructiva.
-- `cleanup-*.sql`, `delete-*.sql` — limpieza real, normalmente de un caso puntual ya diagnosticado.
+    - `hotfix-*.sql`, `fix-*.sql`, `rls-*.sql`, `riviera-*.sql` — cambios de esquema/RPC aplicados (o bootstrap) que las migraciones numeradas aún no cubren por completo.
+    - `verify-*.sql` / `rollback-*.sql` — compañeros de un fix vigente (cuando existen).
+    - Scripts de integridad de carrera / identidad referenciados por tests o `scripts/`.
+
+Los `audit-*`, `backup-*`, `cleanup-*` y verificaciones/reparaciones de un
+solo incidente ya ejecutado se retiraron del working tree (el historial Git
+los conserva). No re-ejecutarlos.
 
 **Esta carpeta (`supabase/migrations/`) es nueva** (BLK-05/BLK-07) y contiene
 únicamente los cambios de la auditoría de preproducción 2026-08-03 en
@@ -53,20 +55,20 @@ TABLE / ADD COLUMN) todavía necesario para construir desde cero:
 | `duelos-2v2.sql` | `fix-rls-open-policies-liga-torneo-express-20260729.sql` |
 | `rating-sistema.sql` | `rls-fase1-rating-rpc-hardening.sql` → `fix-rank001-rating-ledger-reconciliation-20260729.sql` |
 
-Los siguientes 4 archivos se movieron a `supabase/_archive/unsafe-historical/`
-porque no aportan ningún DDL de bootstrap propio (solo duplicaban, respaldaban
-o revertían deliberadamente políticas ya superadas) — **nunca deben
-ejecutarse** salvo una decisión operativa real y documentada de rollback:
+Los siguientes 4 archivos (antes en `supabase/_archive/unsafe-historical/`)
+se eliminaron del working tree: no aportan DDL de bootstrap y solo
+duplicaban, respaldaban o revertían políticas ya superadas. El historial
+de Git los conserva. **Nunca deben re-ejecutarse**:
 
 - `backup-rls-open-policies-liga-torneo-express-20260729.sql` (snapshot, sin uso)
 - `verify-and-enable-torneo-express-anon-select.sql` (duplicaba SEC-001)
-- `rollback-rls-open-policies-liga-torneo-express-20260729.sql` (reabre SEC-001 a propósito, uso de emergencia únicamente)
-- `rollback-profiles-boxes-cleanup-20260728.sql` (restaura esquema de una app ajena ya limpiada, sin relación con el modelo multi-tenant de Riviera)
+- `rollback-rls-open-policies-liga-torneo-express-20260729.sql` (reabre SEC-001 a propósito)
+- `rollback-profiles-boxes-cleanup-20260728.sql` (restaura esquema de una app ajena ya limpiada)
 
 ## Verificación automática
 
 `npm run lint:sql` (`scripts/scan-unsafe-sql.mjs`) escanea todo `supabase/**/*.sql`
-**excepto** `supabase/_archive/**` en busca de `USING (true)`, `WITH CHECK (true)`,
+(sigue ignorando `supabase/_archive/**` si existiera) en busca de `USING (true)`, `WITH CHECK (true)`,
 `OR true` como cláusula de policy, `GRANT ... TO anon` sobre operaciones
 sensibles, y `SECURITY DEFINER` sin `SET search_path`. Los 3 archivos
 bootstrap de la tabla de arriba están en la lista de excepciones explícita de

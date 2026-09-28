@@ -33,9 +33,9 @@ ledger en sí es la fuente autoritativa y no se tocó; solo se recalculó el
 campo cacheado. Verificado con `ROLLBACK` antes de aplicar en serio.
 
 **SQL**: `backup-fase35-ledger-totals-desalineados-20260729.sql` (snapshot
-exacto de las 4 filas) → `fix-fase35-ledger-totals-desalineados-20260729.sql`
-(aplicado) → `verify-fase35-ledger-totals-desalineados-20260729.sql`
-(confirmado: 0 desalineados tras el fix) → `rollback-...sql` disponible.
+exacto de las 4 filas; retirado del working tree) → `fix-fase35-ledger-totals-desalineados-20260729.sql`
+(aplicado; se conserva) → `verify-fase35-ledger-totals-desalineados-20260729.sql`
+(confirmado: 0 desalineados tras el fix; retirado) → `rollback-...sql` estaba disponible (retirado).
 
 ## 2. Falso positivo: 2 participaciones de Liga
 

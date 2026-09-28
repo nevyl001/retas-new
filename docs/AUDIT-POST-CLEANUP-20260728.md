@@ -6,7 +6,8 @@ funciones / vistas ajenas (app de gimnasio "Parabellum Cross" ejecutada por
 error contra este proyecto de Supabase). La limpieza en sí está documentada
 en `supabase/backup-foreign-block-pre-cleanup-20260728.sql`,
 `cleanup-foreign-block-20260728.sql`, `cleanup-profiles-boxes-20260728.sql`
-y sus respectivos `rollback-*`/`verify-*`.
+y sus respectivos `rollback-*`/`verify-*` (scripts de incidente ya aplicados;
+retirados del working tree — el historial Git los conserva).
 
 ## Commit
 

@@ -67,7 +67,7 @@ Criterio **AND** aplicado:
 
 Nota: el sufijo de timestamp quedó en 63 caracteres (límite de identificadores de Postgres); el nombre generado con segundos completos tenía 64 y se truncó al crear la tabla. Ese nombre truncado es el nombre real de la relación.
 
-Scripts:
+Scripts (incidente ya ejecutado; SQL retirado del working tree, historial Git):
 
 | Paso | Archivo |
 |------|---------|
