@@ -1,0 +1,24 @@
+---
+description: Política de QA visual — el dueño revisa en localhost; no persistir screenshots temporales en el repo
+alwaysApply: true
+---
+
+# Visual QA Policy
+
+The project owner reviews visual changes directly in localhost.
+
+Do not create or persist screenshots, PNG captures, responsive screenshots, browser snapshots, or visual QA artifacts inside the repository unless explicitly requested by the project owner.
+
+Do not generate screenshots at multiple viewport sizes as proof of a UI change.
+
+For normal UI work:
+
+1. Implement the change.
+2. Run the relevant code/build/test validation.
+3. Let the project owner review the result in localhost.
+
+If a screenshot is exceptionally required for internal diagnosis, store it only inside a Git-ignored temporary directory (`tmp/`, `.tmp-shots/`) and remove it when the diagnosis is complete.
+
+Never commit temporary visual QA artifacts.
+
+This does **not** forbid screenshots that are part of a real automated test fixture that the suite actually asserts on.

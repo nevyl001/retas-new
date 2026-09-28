@@ -20,6 +20,14 @@ build
 # Artefactos de simulación/QA y credenciales de entorno que viven ahí
 tmp/
 
+# Capturas temporales de QA visual (localhost / Playwright ad-hoc)
+.tmp-shots/
+.tmp-screenshots/
+.playwright-verify/
+test-results/
+playwright-report/
+
+
 # Claude Code — configuración personal, no compartida
 .claude/settings.local.json
 

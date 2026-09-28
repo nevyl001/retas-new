@@ -8,7 +8,7 @@ import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const outDir = resolve(__dirname, "../assets/validation-evidence");
+const outDir = resolve(__dirname, "../tmp/visual-qa/validation-evidence");
 mkdirSync(outDir, { recursive: true });
 
 const CLUB_TEST = "cd45cea7-a8ac-4596-b0ee-24959b4cbb5d";

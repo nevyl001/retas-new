@@ -1,4 +1,5 @@
 const { chromium } = require("playwright");
+const fs = require("fs");
 const path = require("path");
 
 async function capture(page, url, outFile, width, height) {
@@ -15,13 +16,15 @@ async function capture(page, url, outFile, width, height) {
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  const base = "file://" + path.resolve(__dirname, "..");
+  const root = path.resolve(__dirname, "..");
+  fs.mkdirSync(path.join(root, "tmp", "visual-qa"), { recursive: true });
+  const base = "file://" + root;
 
   const shots = [
-    ["public-desktop", `${base}/scripts/preview-duelo-public-result.html`, "scripts/duelo-public-result-1440x900.png", 1440, 900],
-    ["celebrate-desktop", `${base}/scripts/preview-duelo-celebrate.html`, "scripts/duelo-celebrate-1440x900.png", 1440, 900],
-    ["public-mobile", `${base}/scripts/preview-duelo-public-result.html`, "scripts/duelo-public-result-390x844.png", 390, 844],
-    ["celebrate-mobile", `${base}/scripts/preview-duelo-celebrate.html`, "scripts/duelo-celebrate-390x844.png", 390, 844],
+    ["public-desktop", `${base}/scripts/preview-duelo-public-result.html`, "tmp/visual-qa/duelo-public-result-1440x900.png", 1440, 900],
+    ["celebrate-desktop", `${base}/scripts/preview-duelo-celebrate.html`, "tmp/visual-qa/duelo-celebrate-1440x900.png", 1440, 900],
+    ["public-mobile", `${base}/scripts/preview-duelo-public-result.html`, "tmp/visual-qa/duelo-public-result-390x844.png", 390, 844],
+    ["celebrate-mobile", `${base}/scripts/preview-duelo-celebrate.html`, "tmp/visual-qa/duelo-celebrate-390x844.png", 390, 844],
   ];
 
   const results = {};

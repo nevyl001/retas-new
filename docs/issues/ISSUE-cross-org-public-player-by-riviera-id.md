@@ -100,5 +100,5 @@ gh issue create --repo nevyl001/retas-new \
 ## Referencias
 
 - Validación puntos multi-club: Sebastian `c7440f26` / `RIV-00000024` — 25+25=50 en todas las orgs.
-- Evidencia Terry: `assets/validation-evidence/terry-club-test-*.png`
+- Evidencia Terry: capturas locales de QA (no versionadas; `scripts/capture-validation-screenshots.mjs` → `tmp/visual-qa/`).
 - Script validación: `scripts/validate-career-totals-ui.mjs`
