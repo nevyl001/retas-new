@@ -12,6 +12,8 @@ export const ModeEventHeader: React.FC<{
   summary?: string;
   nextActionLabel?: string;
   onNextAction?: () => void;
+  /** El shell de la pantalla ya muestra el título: no lo repitas aquí. */
+  omitTitle?: boolean;
   className?: string;
 }> = ({
   eyebrow,
@@ -23,15 +25,22 @@ export const ModeEventHeader: React.FC<{
   summary,
   nextActionLabel,
   onNextAction,
+  omitTitle = false,
   className = "",
 }) => (
   <header className={["mode-event-header", className].filter(Boolean).join(" ")}>
-    {eyebrow ? <p className="mode-event-header__eyebrow">{eyebrow}</p> : null}
+    {!omitTitle && eyebrow ? (
+      <p className="mode-event-header__eyebrow">{eyebrow}</p>
+    ) : null}
     <div className="mode-event-header__top">
-      {titleContent ?? <h2 className="mode-event-header__title">{title}</h2>}
+      {omitTitle ? null : (titleContent ?? (
+        <h2 className="mode-event-header__title">{title}</h2>
+      ))}
       <StatusBadge variant={statusVariant}>{statusLabel}</StatusBadge>
     </div>
-    {modality ? <p className="mode-event-header__modality">{modality}</p> : null}
+    {!omitTitle && modality ? (
+      <p className="mode-event-header__modality">{modality}</p>
+    ) : null}
     {summary ? <p className="mode-event-header__summary">{summary}</p> : null}
     {nextActionLabel && onNextAction ? (
       <button

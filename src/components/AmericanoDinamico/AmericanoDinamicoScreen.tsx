@@ -615,9 +615,14 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           statusLabel={americanoStatus.label}
           statusVariant={americanoStatus.variant}
           summary={americanoSummary}
-          nextActionLabel={americanoNextAction?.label}
+          omitTitle
+          nextActionLabel={
+            americanoNextAction && playingTab !== americanoNextAction.tabId
+              ? americanoNextAction.label
+              : undefined
+          }
           onNextAction={
-            americanoNextAction
+            americanoNextAction && playingTab !== americanoNextAction.tabId
               ? () => setPlayingTab(americanoNextAction.tabId)
               : undefined
           }
@@ -629,7 +634,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           ariaLabel="Secciones del americano"
         />
         <ModeSectionPanel id="ronda" activeId={playingTab}>
-          {roundsConfigPanel}
           {currentRound ? (
             <RoundView
               key={currentRound.roundNumber}
@@ -644,6 +648,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           ) : (
             <p className="americano-screen__loading">Preparando ronda…</p>
           )}
+          {roundsConfigPanel}
         </ModeSectionPanel>
         <ModeSectionPanel id="partidos" activeId={playingTab}>
           <RoundHistory
