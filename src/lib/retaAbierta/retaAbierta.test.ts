@@ -174,16 +174,18 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain(
       "*🙏 Gracias por sumarte — ¡vamos con todo a la cancha!*"
     );
+    expect(text).toContain("Si gustan sumarse a reserva, son bienvenidos.");
     expect(text).toContain("✓ Nevyl (3.34)");
     expect(text).toContain("✓ Fernando Q (3.00)");
-    expect(text).toContain("Lista de espera (1)");
+    expect(text).toContain("Reserva");
     expect(text).toContain("⏳ Lalo B (2.90)");
-    expect(text.indexOf("✓ Fernando Q")).toBeLessThan(
-      text.indexOf("Lista de espera")
-    );
-    expect(text.indexOf("Lista de espera")).toBeLessThan(
-      text.indexOf("⏳ Lalo B")
-    );
+    expect(text).toContain("1-");
+    expect(text).toContain("2-");
+    expect(text).not.toContain("3-");
+    expect(text.indexOf("✓ Fernando Q")).toBeLessThan(text.indexOf("Reserva"));
+    expect(text.indexOf("Reserva")).toBeLessThan(text.indexOf("⏳ Lalo B"));
+    expect(text.indexOf("⏳ Lalo B")).toBeLessThan(text.indexOf("1-"));
+    expect(text.indexOf("1-")).toBeLessThan(text.indexOf("2-"));
   });
 
   it("Remontada Final: mismo mode_type reta, headline de producto", () => {

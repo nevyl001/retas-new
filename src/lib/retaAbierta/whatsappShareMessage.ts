@@ -159,6 +159,9 @@ function formatCupoSummaryLine(
   return `${confirmedCount} de ${capacity} confirmados`;
 }
 
+/** Huecos de reserva que se ofrecen aunque el cupo confirmado ya esté lleno. */
+const RESERVE_OPEN_SLOTS = 2;
+
 /**
  * WhatsApp no agranda tipografía: mayúsculas + *negrita* leen como “grande”.
  * Se usa cuando el cupo ya está lleno.
@@ -172,6 +175,7 @@ function formatCompletedThanksLines(waitlistCount: number): string[] {
     "",
     `*🔥 ¡CONVOCATORIA COMPLETA!*`,
     `*🙏 Gracias por sumarte — ¡vamos con todo a la cancha!*`,
+    "Si gustan sumarse a reserva, son bienvenidos.",
     status,
     "",
   ];
@@ -212,12 +216,38 @@ function formatWaitlistRosterLines(
       : `Lista de espera (${waitlist.length})`;
   const lines = [header];
   for (const e of waitlist) {
-    const name = displayNameForShare(e.nombre, displayFullName);
-    const rating =
-      displayRating && e.rating != null
-        ? ` (${Number(e.rating).toFixed(2)})`
-        : "";
-    lines.push(`⏳ ${name}${rating}`);
+    lines.push(formatWaitlistEntryLine(e, displayFullName, displayRating));
+  }
+  return lines;
+}
+
+function formatWaitlistEntryLine(
+  entry: { nombre: string; rating?: number | null },
+  displayFullName: boolean,
+  displayRating: boolean
+): string {
+  const name = displayNameForShare(entry.nombre, displayFullName);
+  const rating =
+    displayRating && entry.rating != null
+      ? ` (${Number(entry.rating).toFixed(2)})`
+      : "";
+  return `⏳ ${name}${rating}`;
+}
+
+/**
+ * Cupo lleno: reserva con quienes ya están en espera y dos huecos abiertos.
+ */
+function formatReserveRosterLines(
+  waitlist: { nombre: string; rating?: number | null }[],
+  displayFullName: boolean,
+  displayRating: boolean
+): string[] {
+  const lines = ["Reserva"];
+  for (const e of waitlist) {
+    lines.push(formatWaitlistEntryLine(e, displayFullName, displayRating));
+  }
+  for (let i = 1; i <= RESERVE_OPEN_SLOTS; i += 1) {
+    lines.push(`${i}-`);
   }
   return lines;
 }
@@ -353,11 +383,21 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     Boolean(dto.display_rating),
     1
   );
-  const waitlistLines = formatWaitlistRosterLines(
-    waitlist,
-    displayFullName,
-    Boolean(dto.display_rating)
-  );
+  const isFull = dto.capacity > 0 && openSlots <= 0;
+  const reserveLines = isFull
+    ? formatReserveRosterLines(
+        waitlist,
+        displayFullName,
+        Boolean(dto.display_rating)
+      )
+    : [];
+  const waitlistLines = isFull
+    ? []
+    : formatWaitlistRosterLines(
+        waitlist,
+        displayFullName,
+        Boolean(dto.display_rating)
+      );
   const openPlaceholders = formatOpenSlotPlaceholders(
     confirmedCount,
     dto.capacity
@@ -368,6 +408,10 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     lines.push(formatCupoSummaryLine(confirmedCount, dto.capacity, openSlots));
     if (rosterLines.length > 0) lines.push(...rosterLines);
     if (openPlaceholders.length > 0) lines.push(...openPlaceholders);
+    if (reserveLines.length > 0) {
+      lines.push("");
+      lines.push(...reserveLines);
+    }
     if (waitlistLines.length > 0) {
       lines.push("");
       lines.push(...waitlistLines);
@@ -376,6 +420,10 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     lines.push(publicUrl);
     if (rosterLines.length > 0) lines.push(...rosterLines);
     if (openPlaceholders.length > 0) lines.push(...openPlaceholders);
+    if (reserveLines.length > 0) {
+      lines.push("");
+      lines.push(...reserveLines);
+    }
     if (waitlistLines.length > 0) {
       lines.push("");
       lines.push(...waitlistLines);
