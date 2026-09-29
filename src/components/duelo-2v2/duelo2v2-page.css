@@ -2669,8 +2669,26 @@
 }
 
 .duelo2v2-live-team--split-vs .pub-split-vs-pair {
-  width: 100%;
+  width: min(100%, 34rem);
+  margin-inline: auto;
   margin-bottom: 0.85rem;
+}
+
+.duelo2v2-live-team--split-vs .pub-split-vs-panel {
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  max-height: min(38vh, 18rem);
+}
+
+@media (min-width: 900px) {
+  .duelo2v2-live-team--split-vs .pub-split-vs-pair {
+    width: min(100%, 40rem);
+  }
+
+  .duelo2v2-live-team--split-vs .pub-split-vs-panel {
+    aspect-ratio: 4 / 5;
+    max-height: min(34vh, 20rem);
+  }
 }
 
 .duelo2v2-live-team--split-vs .duelo2v2-live-team__score {
