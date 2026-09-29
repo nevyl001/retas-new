@@ -50,21 +50,20 @@
 
 .americano-round__matches {
   display: grid;
-  gap: clamp(0.5rem, 1.2vw, 0.85rem);
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16.5rem), 22rem));
-  justify-content: start;
+  gap: clamp(0.75rem, 1.4vw, 1rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
   margin-bottom: 14px;
 }
 
 .americano-round__matches:has(> .americano-match-card:only-child) {
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .americano-round__matches:has(> .americano-match-card:only-child)
   > .americano-match-card {
-  flex: 1 1 16.5rem;
-  max-width: min(100%, 22rem);
+  flex: 1 1 24rem;
+  max-width: min(100%, 40rem);
   width: 100%;
 }
 
@@ -72,10 +71,9 @@
   background: var(--rv-bg-card-soft, var(--ro-bg-inset, var(--bg-elevated)));
   border: 1px solid var(--ro-border, var(--border-subtle));
   border-radius: var(--radius-lg);
-  padding: 10px 12px 12px;
-  max-width: 22rem;
+  padding: 12px 14px 14px;
   width: 100%;
-  justify-self: start;
+  min-width: 0;
   transition: border-color var(--motion-micro), background var(--motion-micro);
   animation: fadeInUp var(--motion-enter) both;
   animation-delay: calc(var(--motion-stagger) * var(--i, 0));
@@ -126,20 +124,47 @@
 }
 
 .am-match-board--split-vs .am-match-board__pair .pub-split-vs-pair__grid {
-  grid-template-columns: 1fr 1fr;
-  gap: 0.28rem;
+  grid-template-columns: 1fr;
+  gap: 0.35rem;
 }
 
 .am-match-board--split-vs .am-match-board__pair .pub-split-vs-panel {
-  /* Alto fijo: el ratio 5/4 estiraba cada foto a casi media pantalla. */
-  aspect-ratio: 1 / 1;
+  /* Franja con presencia, no el póster 5/4 que llenaba la pantalla. */
+  aspect-ratio: auto;
   width: 100%;
-  height: auto;
-  min-height: 0;
+  height: clamp(5.5rem, 16vw, 8.25rem);
+  min-height: 5.5rem;
   max-width: none;
-  max-height: none;
+  max-height: 8.25rem;
   margin-inline: 0;
-  border-radius: 8px;
+  border-radius: 10px;
+}
+
+.am-match-board--split-vs .am-match-board__pair .pub-split-vs-panel__given {
+  bottom: 1.05rem;
+  left: 0.45rem;
+  right: 2.6rem;
+  font-size: clamp(0.78rem, 5.2cqi, 1rem);
+}
+
+.am-match-board--split-vs .am-match-board__pair .pub-split-vs-panel__family {
+  bottom: 0.28rem;
+  left: 0.45rem;
+  right: 2.6rem;
+  font-size: clamp(0.62rem, 3.8cqi, 0.75rem);
+}
+
+.am-match-board--split-vs
+  .am-match-board__pair
+  .pub-split-vs-panel__given:not(:has(+ .pub-split-vs-panel__family)) {
+  bottom: 0.38rem;
+}
+
+.am-match-board--split-vs .am-match-board__pair .pub-split-vs-panel__rating.jugador-rating-chip {
+  top: auto;
+  bottom: 0.32rem;
+  right: 0.32rem;
+  font-size: 0.62rem;
 }
 
 .am-match-board--split-vs .am-match-board__pair .pub-split-vs-panel__given,
@@ -209,15 +234,15 @@
 
 .am-match-board__score {
   width: 100%;
-  max-width: 3.25rem;
-  min-height: 2.5rem;
-  padding: 0.2rem 0.15rem;
+  max-width: 4rem;
+  min-height: 2.75rem;
+  padding: 0.25rem 0.2rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-accent);
   background: var(--bg-elevated);
   color: var(--text-primary);
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 700;
   line-height: 1;
   text-align: center;
@@ -322,26 +347,21 @@
 @media (max-width: 480px) {
   .americano-match-card {
     padding: 10px 10px 12px;
-    max-width: none;
   }
 
-  .am-match-board--split-vs .am-match-board__pair {
-    max-width: 100%;
+  .am-match-board--split-vs .am-match-board__pair .pub-split-vs-panel {
+    height: clamp(4.75rem, 22vw, 6.25rem);
+    min-height: 4.75rem;
+    max-height: 6.25rem;
   }
 
   .am-match-board__score {
-    max-width: 3rem;
-    min-height: 2.35rem;
-    font-size: 1.25rem;
+    max-width: 3.25rem;
+    min-height: 2.5rem;
+    font-size: 1.35rem;
   }
 
   .americano-round__header h3 {
     font-size: 1.35rem;
-  }
-}
-
-@media (min-width: 640px) {
-  .americano-round__matches {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 22rem));
   }
 }
