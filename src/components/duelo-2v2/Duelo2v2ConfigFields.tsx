@@ -1,8 +1,6 @@
 import React from "react";
-import {
-  RETA_DURATION_MAX,
-  clampRetaDurationMinutes,
-} from "../../lib/reta/retaConfigValidation";
+import { RETA_DURATION_MAX, clampRetaDurationMinutes } from "../../lib/reta/retaConfigValidation";
+import { DurationMinutesField } from "../reta/DurationMinutesField";
 import { addMinutesToTimeInput } from "../../lib/duelo2v2/schedule";
 
 export type Duelo2v2ConfigFieldValues = {
@@ -52,9 +50,11 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
     >
   ) => {
     const draftTimeStart = partial.draftTimeStart ?? values.draftTimeStart;
-    const durationMinutes = clampRetaDurationMinutes(
-      partial.durationMinutes ?? values.durationMinutes
-    );
+    const rawDuration = partial.durationMinutes ?? values.durationMinutes;
+    const durationMinutes =
+      Number.isFinite(rawDuration) && rawDuration > 0
+        ? Math.min(RETA_DURATION_MAX, Math.floor(rawDuration))
+        : values.durationMinutes;
     const draftTimeEnd =
       draftTimeStart.trim().length > 0
         ? addMinutesToTimeInput(draftTimeStart, durationMinutes)
@@ -168,33 +168,16 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
                   </span>
                 ) : null}
               </span>
-              <input
+              <DurationMinutesField
                 id={`${idPrefix}-duracion`}
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                autoComplete="off"
-                className="home-sheet__input riviera-input"
-                value={String(values.durationMinutes)}
+                value={values.durationMinutes}
                 disabled={disabled}
-                aria-label="Duración en minutos"
-                onChange={(e) => {
-                  const digits = e.target.value.replace(/[^\d]/g, "").slice(0, 3);
-                  if (digits === "") return;
-                  const n = Number(digits);
-                  if (!Number.isFinite(n)) return;
+                onChange={(minutes) =>
+                  applySchedule({ durationMinutes: minutes })
+                }
+                onCommit={(minutes) =>
                   applySchedule({
-                    durationMinutes: Math.min(
-                      RETA_DURATION_MAX,
-                      Math.max(0, n)
-                    ),
-                  });
-                }}
-                onBlur={() =>
-                  applySchedule({
-                    durationMinutes: clampRetaDurationMinutes(
-                      values.durationMinutes
-                    ),
+                    durationMinutes: clampRetaDurationMinutes(minutes),
                   })
                 }
               />

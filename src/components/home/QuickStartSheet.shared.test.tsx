@@ -136,4 +136,72 @@ describe("QuickStartSheet shared form", () => {
     });
     expect(Object.keys(errors)).toHaveLength(0);
   });
+
+  it("la duración se puede vaciar, escribir y subir con +", () => {
+    const values: RetaConfigFormValues = {
+      name: "Reta",
+      description: "",
+      nivel: "",
+      courts: 2,
+      championshipEnabled: false,
+      championshipRounds: 2,
+      lugar: "",
+      mostrar_lugar: false,
+      costo: "",
+      mostrar_costo: false,
+      premio: "",
+      mostrar_premio: false,
+      rama: "",
+      cancha: "",
+      programado_en: "2026-09-29T19:00",
+      duration_minutes: 15,
+    };
+
+    const Harness = () => {
+      const [current, setCurrent] = React.useState(values);
+      return (
+        <RetaConfigFields
+          mode="edit"
+          phase="draft"
+          layout="essentials"
+          values={current}
+          onChange={setCurrent}
+        />
+      );
+    };
+
+    act(() => {
+      root.render(<Harness />);
+    });
+
+    const input = container.querySelector(
+      'input[aria-label="Duración en minutos"]'
+    ) as HTMLInputElement;
+    const setValue = (next: string) => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value"
+      )?.set;
+      setter?.call(input, next);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+
+    act(() => {
+      setValue("");
+    });
+    expect(input.value).toBe("");
+
+    act(() => {
+      setValue("90");
+    });
+    expect(input.value).toBe("90");
+
+    const plus = container.querySelector(
+      'button[aria-label="Más duración"]'
+    ) as HTMLButtonElement;
+    act(() => {
+      plus.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(input.value).toBe("105");
+  });
 });

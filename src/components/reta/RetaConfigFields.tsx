@@ -11,11 +11,10 @@ import {
 } from "../../lib/reta/retaRama";
 import {
   RETA_COURTS_MAX,
-  RETA_DURATION_MAX,
   clampChampionshipRoundsShared,
   clampRetaCourts,
-  clampRetaDurationMinutes,
 } from "../../lib/reta/retaConfigValidation";
+import { DurationMinutesField } from "./DurationMinutesField";
 
 export type RetaConfigFieldsProps = {
   values: RetaConfigFormValues;
@@ -213,33 +212,12 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             Duración
             <span className="reta-details-form__duration-unit"> (min)</span>
           </span>
-          <input
+          <DurationMinutesField
             id={retaConfigFieldId("duration")}
-            name={retaConfigFieldId("duration")}
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="off"
-            className="home-sheet__input riviera-input"
-            value={String(values.duration_minutes)}
+            value={values.duration_minutes}
             disabled={durEd.locked}
-            aria-label="Duración en minutos"
-            onChange={(e) => {
-              const digits = e.target.value.replace(/[^\d]/g, "").slice(0, 3);
-              if (digits === "") return;
-              const n = Number(digits);
-              if (!Number.isFinite(n)) return;
-              patch({
-                duration_minutes: Math.min(RETA_DURATION_MAX, Math.max(0, n)),
-              });
-            }}
-            onBlur={() =>
-              patch({
-                duration_minutes: clampRetaDurationMinutes(
-                  values.duration_minutes
-                ),
-              })
-            }
+            onChange={(minutes) => patch({ duration_minutes: minutes })}
+            onCommit={(minutes) => patch({ duration_minutes: minutes })}
           />
           {durEd.locked ? <FieldLock reason={durEd.reason} /> : null}
         </label>
