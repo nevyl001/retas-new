@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { AmericanoRound } from "../../lib/db/types";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
+import { sortByMatchCourt } from "../../lib/matchCourt";
 import { Button, Input } from "../ui";
 import "./RoundHistory.css";
 
@@ -46,7 +47,7 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
 
           {openRound === round.roundNumber && (
             <div className="americano-history__matches">
-              {round.matches.map((match) => (
+              {sortByMatchCourt(round.matches).map((match) => (
                 <div key={match.id} className="americano-history__match">
                   <span>
                     C{match.court}: {match.teamA[0].name}/{match.teamA[1].name} vs{" "}

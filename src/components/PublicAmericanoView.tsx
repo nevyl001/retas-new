@@ -21,6 +21,7 @@ import {
 } from "../lib/buildAmericanoPublicMatchHistory";
 import type { UnifiedStandingStats } from "../lib/unifiedStandings";
 import { americanoRoundPhaseCaption } from "../lib/americanoPhaseLabels";
+import { sortByMatchCourt } from "../lib/matchCourt";
 import { AMERICANO_PUBLIC_POLL_INTERVAL_MS } from "../lib/americano/publicPoll";
 import {
   formatTenantDocumentTitle,
@@ -300,7 +301,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   }, []);
 
   const roundMatchesSorted = (round: AmericanoSnapshotRound) =>
-    [...round.matches].sort((a, b) => a.court - b.court);
+    sortByMatchCourt(round.matches);
 
   const roundFullyScored = (round: AmericanoSnapshotRound) =>
     round.matches.length > 0 &&

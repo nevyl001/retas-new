@@ -3,6 +3,7 @@ import {
   formatMatchCourtLabel,
   isAssignedCourt,
   maxAssignedCourt,
+  sortByMatchCourt,
   UNASSIGNED_COURT_LABEL,
 } from "./matchCourt";
 import { findCourtRotationRepairs } from "./circleRoundRobinSchedule";
@@ -17,6 +18,12 @@ describe("matchCourt nullable / Por asignar", () => {
     expect(formatMatchCourtLabel(2)).toBe("Cancha 2");
     expect(isAssignedCourt(null)).toBe(false);
     expect(isAssignedCourt(1)).toBe(true);
+  });
+
+  it("sortByMatchCourt deja cancha 1, 2, 3 aunque el generador las mezcle", () => {
+    const matches = [{ id: "c", court: 3 }, { id: "a", court: 1 }, { id: "b", court: 2 }];
+    expect(sortByMatchCourt(matches).map((m) => m.court)).toEqual([1, 2, 3]);
+    expect(matches.map((m) => m.court)).toEqual([3, 1, 2]);
   });
 
   it("no rompe ordenamientos: NULL al final, no como 1", () => {

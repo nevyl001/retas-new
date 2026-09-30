@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import type { AmericanoDinamicoSnapshotV1 } from "../../lib/americanoDinamicoStorage";
 import { buildPublicVistaPublicaUrl } from "../../lib/publicVistaPublica";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
+import { sortByMatchCourt } from "../../lib/matchCourt";
 import { resolveAmericanoRankingFromSnapshot } from "../../lib/americanoSnapshotRoster";
 import { StandingsScoringHelp } from "../standings/StandingsScoringHelp";
 import { StandingsDifCell } from "../standings/StandingsDifCell";
@@ -144,7 +145,7 @@ export const AmericanoTournamentSummary: React.FC<
             );
             const matchesList = (
               <ul className="americano-summary__matches">
-                {round.matches.map((m) => (
+                {sortByMatchCourt(round.matches).map((m) => (
                   <li key={m.id} className="americano-summary__match">
                     <span className="americano-summary__court">C{m.court}</span>
                     <span className="americano-summary__teams">

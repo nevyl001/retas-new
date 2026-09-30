@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { AmericanoMatch, AmericanoRound } from "../../lib/db/types";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
-import { formatMatchCourtLabel } from "../../lib/matchCourt";
+import { formatMatchCourtLabel, sortByMatchCourt } from "../../lib/matchCourt";
 import { ActionBar } from "../platform/ActionBar";
 import { Button } from "../ui";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
@@ -131,6 +131,11 @@ export const RoundView: React.FC<RoundViewProps> = ({
     [round, draftScores]
   );
 
+  const matchesByCourt = useMemo(
+    () => sortByMatchCourt(round.matches),
+    [round.matches]
+  );
+
   const committed = useMemo(() => allMatchesCommitted(round), [round]);
   const dirty = useMemo(
     () => draftsDifferFromCommitted(round, draftScores),
@@ -178,7 +183,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
       </header>
 
       <div className="americano-round__matches">
-        {round.matches.map((match) => {
+        {matchesByCourt.map((match) => {
           const { a, b } = readDraft(match, draftScores);
           const teamALabel = teamPlayersLabel(match.teamA);
           const teamBLabel = teamPlayersLabel(match.teamB);

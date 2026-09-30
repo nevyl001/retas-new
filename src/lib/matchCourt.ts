@@ -31,6 +31,13 @@ export function compareMatchCourt(
   return a - b;
 }
 
+/** Copia ordenada como la vista pública: cancha 1, 2, 3… */
+export function sortByMatchCourt<T extends { court: number | null | undefined }>(
+  matches: readonly T[]
+): T[] {
+  return [...matches].sort((a, b) => compareMatchCourt(a.court, b.court));
+}
+
 export function maxAssignedCourt(
   courts: readonly (number | null | undefined)[]
 ): number {
