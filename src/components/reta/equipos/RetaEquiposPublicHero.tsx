@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { RIVIERA_PRODUCT_NAME } from "../../../club-experience/motherBrand";
 import {
   TEAMS_PUBLIC_CLUB_FALLBACK,
   TEAMS_PUBLIC_MOTIVATIONAL,
@@ -162,6 +163,10 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
   const eventTitle = eventName?.trim() || null;
   const headline = formatBroadcastBattleTitle(eventTitle, [nameA, nameB], eventDescription);
   const clubLine = clubName?.trim() || TEAMS_PUBLIC_CLUB_FALLBACK;
+  const showClubByline =
+    clubLine.localeCompare(RIVIERA_PRODUCT_NAME, undefined, {
+      sensitivity: "accent",
+    }) !== 0;
   const showCountdown = !cta.live && !isFinished && schedulePhase !== "after";
 
   if (compact) {
@@ -206,7 +211,9 @@ export const RetaEquiposPublicHero: React.FC<RetaEquiposPublicHeroProps> = ({
             {marqueeDate ? (
               <p className="reta-eq-stage__marquee-date">{marqueeDate}</p>
             ) : null}
-            <p className="reta-eq-stage__club">by {clubLine}</p>
+            {showClubByline ? (
+              <p className="reta-eq-stage__club">by {clubLine}</p>
+            ) : null}
           </header>
 
           <div
