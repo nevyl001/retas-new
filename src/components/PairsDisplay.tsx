@@ -66,12 +66,12 @@ function DraggablePlayer({
       onDragOver={canDrag ? (e) => onDragOver(e, pair.id, slot) : undefined}
       onDragLeave={canDrag ? onDragLeave : undefined}
       onDrop={canDrag ? (e) => onDrop(e, pair.id, slot) : undefined}
-      title={canDrag ? "Arrastra para intercambiar con otro jugador" : undefined}
+      title={canDrag ? `${name} — arrastra para intercambiar` : name}
     >
       {canDrag ? (
         <span className="compact-pair-player__grip" aria-hidden>⠿</span>
       ) : null}
-      {name}
+      <span className="compact-pair-player__name">{name}</span>
     </span>
   );
 }
@@ -201,18 +201,22 @@ export const PairsDisplay: React.FC<PairsDisplayProps> = ({
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                   />
-                  <span className="compact-pair-sep">/</span>
-                  <DraggablePlayer
-                    pair={pair}
-                    slot="player2"
-                    canDrag={canDrag}
-                    dragOverSlot={dragOver?.pairId === pair.id && dragOver?.slot === "player2"}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                  />
+                  <span className="compact-pair-partner">
+                    <span className="compact-pair-sep" aria-hidden>
+                      /
+                    </span>
+                    <DraggablePlayer
+                      pair={pair}
+                      slot="player2"
+                      canDrag={canDrag}
+                      dragOverSlot={dragOver?.pairId === pair.id && dragOver?.slot === "player2"}
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    />
+                  </span>
                 </div>
 
                 {/* Estadísticas Compactas */}
