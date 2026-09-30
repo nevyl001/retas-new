@@ -2655,42 +2655,57 @@
 }
 
 
-/* Split VS panels in Duelo 2v2 public live board — pareja arriba / vs / pareja abajo */
-.duelo2v2-live-board--split-vs .duelo2v2-live-board__arena--split-vs {
-  grid-template-columns: 1fr;
-  grid-template-rows: auto auto auto;
-  align-items: stretch;
-  gap: clamp(0.85rem, 2.2vw, 1.25rem);
-}
-
-.duelo2v2-live-team--split-vs {
-  align-items: stretch;
+/* Split VS: pareja | VS | pareja, para que las dos quepan en la pantalla. */
+.duelo2v2-publica .duelo2v2-live-board--split-vs .duelo2v2-live-board__arena--split-vs {
+  grid-template-columns: minmax(0, max-content) auto minmax(0, max-content);
+  grid-template-rows: auto;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(0.5rem, 1.6vw, 1.1rem);
   width: 100%;
 }
 
+.duelo2v2-live-team--split-vs {
+  align-items: center;
+  width: max-content;
+  max-width: min(46vw, 32rem);
+  padding: 0.65rem 0.7rem 0.75rem;
+}
+
+.duelo2v2-live-team--split-vs .duelo2v2-live-team__label {
+  margin-bottom: 0.4rem;
+}
+
+.duelo2v2-publica .duelo2v2-live-board--split-vs .duelo2v2-live-board__center {
+  flex-direction: column;
+  justify-content: center;
+  min-width: 2.25rem;
+  padding: 0;
+}
+
 .duelo2v2-live-team--split-vs .pub-split-vs-pair {
-  width: min(100%, 34rem);
-  margin-inline: auto;
-  margin-bottom: 0.85rem;
+  width: max-content;
+  max-width: 100%;
+  margin-inline: 0;
+  margin-bottom: 0.4rem;
+}
+
+.duelo2v2-live-team--split-vs .pub-split-vs-pair__grid {
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: repeat(2, auto);
+  justify-content: center;
 }
 
 .duelo2v2-live-team--split-vs .pub-split-vs-panel {
   aspect-ratio: 3 / 4;
-  width: 100%;
-  max-height: min(38vh, 18rem);
-}
-
-@media (min-width: 900px) {
-  .duelo2v2-live-team--split-vs .pub-split-vs-pair {
-    width: min(100%, 40rem);
-  }
-
-  .duelo2v2-live-team--split-vs .pub-split-vs-panel {
-    aspect-ratio: 4 / 5;
-    max-height: min(34vh, 20rem);
-  }
+  width: auto;
+  height: clamp(4.75rem, min(34vh, 16vw), 16.5rem);
+  max-height: none;
+  justify-self: center;
 }
 
 .duelo2v2-live-team--split-vs .duelo2v2-live-team__score {
   align-self: center;
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
 }
