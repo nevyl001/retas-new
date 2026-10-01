@@ -83,6 +83,7 @@ const Duelo2v2PublicHero: React.FC<Duelo2v2PublicHeroProps> = ({
       nombreEvento={duelo.nombre}
       club={isClubBranded ? organizerName : undefined}
       nivel={nivelLabel}
+      descripcion={duelo.categoria?.trim() || undefined}
       fecha={fechaHorario}
       lugar={lugar || undefined}
       meta="Duelo 2 vs 2"
@@ -291,6 +292,7 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
             setsB={duelo.sets_pareja_b}
             detalle={duelo.detalle_sets}
             torneoNombre={duelo.nombre}
+            descripcion={duelo.categoria}
             finalizado={finalizado}
             ratingByJugadorId={ratingByJugadorId}
           />

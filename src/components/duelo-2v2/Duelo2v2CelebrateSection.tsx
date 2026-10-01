@@ -23,6 +23,7 @@ interface Duelo2v2CelebrateSectionProps {
   setsB: number;
   detalle: Duelo2v2SetDetalle[];
   torneoNombre: string;
+  descripcion?: string | null;
   finalizado: boolean;
   ratingByJugadorId?: Record<string, RatingMovimientoPartido>;
 }
@@ -50,6 +51,7 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
   setsB,
   detalle,
   torneoNombre,
+  descripcion,
   finalizado,
   ratingByJugadorId,
 }) => {
@@ -85,6 +87,7 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
     detalle,
     setOutcomes: summary.setOutcomes,
     dueloNombre: torneoNombre,
+    eventDescription: descripcion,
     clubName: organizerName,
     clubLogoUrl: logoUrl,
     showMotherAttribution: shouldShowMotherAttribution(

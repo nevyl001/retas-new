@@ -60,6 +60,11 @@ export function Duelo2v2ShareCard({
 
           <div className="duelo2v2-share-card__context">
             <span>{presentation.dueloNombre}</span>
+            {presentation.eventDescription ? (
+              <p className="duelo2v2-share-card__description">
+                {presentation.eventDescription}
+              </p>
+            ) : null}
             <small>Duelo 2 vs 2</small>
           </div>
         </header>

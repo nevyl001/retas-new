@@ -34,6 +34,7 @@ export type Duelo2v2SharePresentation = {
   gamesTotal: string | null;
   message: string;
   dueloNombre: string;
+  eventDescription: string | null;
   clubName: string;
   clubLogoUrl: string | null;
   showMotherAttribution: boolean;
@@ -85,6 +86,7 @@ export function createDuelo2v2SharePresentation(input: {
   side: "a" | "b";
   message: string;
   dueloNombre: string;
+  eventDescription?: string | null;
   clubName: string;
   clubLogoUrl: string | null;
   showMotherAttribution: boolean;
@@ -106,6 +108,7 @@ export function createDuelo2v2SharePresentation(input: {
         : null,
     message: input.message,
     dueloNombre: input.dueloNombre,
+    eventDescription: input.eventDescription?.trim() || null,
     clubName: input.clubName,
     clubLogoUrl: input.clubLogoUrl,
     showMotherAttribution: input.showMotherAttribution,

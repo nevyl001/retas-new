@@ -33,7 +33,10 @@ describe("duelo2v2SharePresentation", () => {
       clubName: "Riviera Open",
       clubLogoUrl: null,
       showMotherAttribution: false,
+      eventDescription: "Por el orgullo",
     });
+
+    expect(card.eventDescription).toBe("Por el orgullo");
 
     expect(card.setRows).toEqual([
       { label: "Set 01", score: "3–6", won: false, tied: false },

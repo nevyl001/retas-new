@@ -73,6 +73,9 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
               <span className={STATUS_CLASS[status.tone]}> · {status.label}</span>
             ) : null}
           </p>
+          {duelo.categoria?.trim() ? (
+            <p className="duelo2v2-live-board__description">{duelo.categoria.trim()}</p>
+          ) : null}
           <Duelo2v2MatchMeta
             duelo={duelo}
             clubName={organizerName}

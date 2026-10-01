@@ -506,6 +506,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
         setsB={duelo.sets_pareja_b}
         detalle={duelo.detalle_sets}
         torneoNombre={duelo.nombre}
+        descripcion={duelo.categoria}
         finalizado
         ratingByJugadorId={ratingByJugadorId}
       />

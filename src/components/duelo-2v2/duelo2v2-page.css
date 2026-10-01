@@ -1225,9 +1225,18 @@
 }
 
 .duelo2v2-live-board__sub {
-  margin: 0;
+  margin: 0 0 0.35rem;
   font-size: clamp(0.9rem, 2vw, 1.05rem);
-  color:var(--ro-text-secondary);
+  color: var(--ro-text-secondary);
+}
+
+.duelo2v2-live-board__description {
+  margin: 0 auto 0.85rem;
+  max-width: 36rem;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ro-text-secondary);
 }
 
 .duelo2v2-live-dot {
