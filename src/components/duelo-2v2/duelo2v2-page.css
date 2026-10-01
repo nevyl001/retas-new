@@ -2709,3 +2709,116 @@
   align-self: center;
   font-size: clamp(1.65rem, 3vw, 2.35rem);
 }
+
+/* Móvil: las parejas se apilan. La foto queda arriba y el nombre debajo, no encima de la cara. */
+@media (max-width: 767px) {
+  .duelo2v2-publica .duelo2v2-live-board--split-vs .duelo2v2-live-board__arena--split-vs {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    justify-content: stretch;
+    gap: 0.55rem;
+  }
+
+  .duelo2v2-publica .duelo2v2-live-board--split-vs .duelo2v2-live-board__center {
+    flex-direction: row;
+    align-items: center;
+    min-width: 0;
+    gap: 0.75rem;
+    padding: 0.1rem 0;
+  }
+
+  .duelo2v2-publica .duelo2v2-live-board--split-vs .duelo2v2-live-board__center::before,
+  .duelo2v2-publica .duelo2v2-live-board--split-vs .duelo2v2-live-board__center::after {
+    content: "";
+    flex: 1 1 2.5rem;
+    height: 1px;
+    background: var(--ro-border);
+  }
+
+  .duelo2v2-live-team--split-vs {
+    align-items: stretch;
+    width: 100%;
+    max-width: none;
+    padding: 0.75rem 0.7rem 0.85rem;
+  }
+
+  .duelo2v2-live-team--split-vs .duelo2v2-live-team__label {
+    align-self: center;
+    margin-bottom: 0.55rem;
+  }
+
+  .duelo2v2-live-team--split-vs .pub-split-vs-pair,
+  .duelo2v2-live-team--split-vs .pub-split-vs-pair__grid {
+    width: 100%;
+  }
+
+  .duelo2v2-live-team--split-vs .pub-split-vs-pair__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .duelo2v2-live-team--split-vs .pub-split-vs-panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+    aspect-ratio: auto;
+    max-height: none;
+    overflow: visible;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .duelo2v2-live-team--split-vs .pub-split-vs-panel__media {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .duelo2v2-live-team--split-vs .pub-split-vs-panel__scrim {
+    display: none;
+  }
+
+  .duelo2v2-live-team--split-vs .pub-split-vs-panel__identity {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.12rem;
+    margin-top: 0.4rem;
+    padding: 0 0.1rem;
+    text-align: center;
+  }
+
+  .duelo2v2-live-team--split-vs .pub-split-vs-panel__given,
+  .duelo2v2-live-team--split-vs .pub-split-vs-panel__family {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    text-shadow: none;
+    color: var(--ro-text-primary);
+  }
+
+  .duelo2v2-live-team--split-vs .pub-split-vs-panel__given {
+    font-size: 0.84rem;
+  }
+
+  .duelo2v2-live-team--split-vs .pub-split-vs-panel__family {
+    font-size: 0.72rem;
+    color: var(--ro-text-secondary);
+  }
+
+  .duelo2v2-live-team--split-vs .pub-split-vs-panel__rating.jugador-rating-chip {
+    margin-top: 0.2rem;
+  }
+
+  .duelo2v2-live-team--split-vs .duelo2v2-live-team__score {
+    font-size: 1.75rem;
+  }
+}
