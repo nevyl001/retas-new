@@ -2609,11 +2609,10 @@
 
 .duelo2v2-celebrate__story-gallery {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: flex-start;
-  gap: clamp(1.15rem, 3vw, 2rem);
-  width: min(1280px, calc(100% - 48px));
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
   margin-inline: auto;
 }
 
@@ -2652,6 +2651,16 @@
   .duelo2v2-celebrate__participantes-note {
     max-width: none;
     padding-inline: 0;
+  }
+}
+
+@media (min-width: 900px) {
+  .duelo2v2-celebrate--stories .duelo2v2-celebrate__story-gallery {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(16.5rem, 0.72fr);
+    align-items: stretch;
+    width: min(72rem, calc(100% - 3rem));
+    gap: 1.15rem;
   }
 }
 
