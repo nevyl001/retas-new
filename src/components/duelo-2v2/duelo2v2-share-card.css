@@ -162,6 +162,24 @@
   margin-top: 0.1rem;
 }
 
+.duelo2v2-share-card__pair {
+  width: min(100%, 24rem);
+  margin-top: 0.45rem;
+}
+
+.duelo2v2-share-card__pair .pub-split-vs-pair__grid {
+  grid-template-columns: repeat(2, auto);
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.duelo2v2-share-card__pair .pub-split-vs-panel {
+  width: auto;
+  height: clamp(9rem, 32vw, 13.5rem);
+  aspect-ratio: 3 / 4;
+  max-height: none;
+}
+
 .duelo2v2-share-card__badge {
   margin: 0;
   font-size: 0.52rem;
@@ -480,7 +498,8 @@
       0 0 0 1px color-mix(in srgb, var(--d2-share-accent) 58%, transparent);
   }
 
-  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__art {
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__art,
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--runner-up .duelo2v2-share-card__art {
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(13.5rem, 0.82fr);
     grid-template-areas:
@@ -491,16 +510,22 @@
     align-items: center;
     justify-content: stretch;
     gap: 0.7rem 1.35rem;
-    min-height: 28rem;
+    padding: 1.2rem 1.4rem 1rem;
+  }
+
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__art {
+    min-height: 24rem;
     padding: 1.35rem 1.5rem 1.15rem;
   }
 
-  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__top {
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__top,
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--runner-up .duelo2v2-share-card__top {
     grid-area: top;
     margin: 0;
   }
 
-  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__hero {
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__hero,
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--runner-up .duelo2v2-share-card__hero {
     grid-area: hero;
     margin: 0;
     align-self: center;
@@ -510,12 +535,12 @@
     font-size: clamp(1.7rem, 2.4vw, 2.15rem);
   }
 
-  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__avatar.rj-avatar--xl {
-    width: 7.25rem;
-    height: 7.25rem;
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__pair .pub-split-vs-panel {
+    height: 15rem;
   }
 
-  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__result {
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__result,
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--runner-up .duelo2v2-share-card__result {
     grid-area: result;
     align-self: stretch;
     justify-content: center;
@@ -529,46 +554,32 @@
     font-size: 3.4rem;
   }
 
-  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__message {
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__message,
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--runner-up .duelo2v2-share-card__message {
     grid-area: message;
     max-width: 40rem;
     margin-inline: auto;
     font-size: 0.84rem;
   }
 
-  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__social {
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--winner .duelo2v2-share-card__social,
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--runner-up .duelo2v2-share-card__social {
     grid-area: social;
   }
 
   .duelo2v2-celebrate--stories .duelo2v2-share-card--runner-up {
     order: 2;
-    align-self: stretch;
-  }
-
-  .duelo2v2-celebrate--stories .duelo2v2-share-card--runner-up .duelo2v2-share-card__art {
-    justify-content: space-between;
-    min-height: 100%;
-    padding: 1.1rem 1rem 0.95rem;
-    background:
-      linear-gradient(
-        180deg,
-        rgba(8, 10, 14, 0.94) 0%,
-        rgba(8, 10, 14, 0.9) 42%,
-        rgba(8, 10, 14, 0.96) 100%
-      ),
-      url("../../assets/cancha-riviera-vertical.jpg") center 30% / cover no-repeat;
   }
 
   .duelo2v2-celebrate--stories .duelo2v2-share-card--runner-up .duelo2v2-share-card__headline {
-    font-size: 1.2rem;
+    font-size: 1.35rem;
   }
 
-  .duelo2v2-celebrate--stories .duelo2v2-share-card--runner-up .duelo2v2-share-card__avatar.rj-avatar--xl {
-    width: 4.6rem;
-    height: 4.6rem;
+  .duelo2v2-celebrate--stories .duelo2v2-share-card--runner-up .duelo2v2-share-card__pair .pub-split-vs-panel {
+    height: 11.5rem;
   }
 
   .duelo2v2-celebrate--stories .duelo2v2-share-card--runner-up .duelo2v2-share-card__score-inline > span:first-child {
-    font-size: 1.85rem;
+    font-size: 2.4rem;
   }
 }

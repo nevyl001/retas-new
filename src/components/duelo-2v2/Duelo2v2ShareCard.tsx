@@ -1,22 +1,10 @@
 import React, { useState } from "react";
 import type { Duelo2v2SharePresentation } from "../../lib/duelo2v2/duelo2v2SharePresentation";
-import { JugadorAvatar } from "../jugadores/JugadorAvatar";
+import { PublicSplitVsPairHalf } from "../public/split-vs";
 import "./duelo2v2-share-card.css";
 
 const RIVIERA_SOCIAL_PLATFORMS = "Instagram · Facebook · TikTok";
 const RIVIERA_SOCIAL_HANDLE = "@RivieraOpen";
-
-function RatingStat({ rating }: { rating?: number | null }) {
-  if (rating == null || !Number.isFinite(rating)) {
-    return null;
-  }
-  return (
-    <span className="duelo2v2-share-card__rating">
-      <span className="duelo2v2-share-card__rating-label">Rating</span>
-      <span className="duelo2v2-share-card__rating-value">{rating.toFixed(2)}</span>
-    </span>
-  );
-}
 
 function RivieraSocialFooter() {
   return (
@@ -76,52 +64,33 @@ export function Duelo2v2ShareCard({
           </div>
         </header>
 
-        <div className="duelo2v2-share-card__hero">
-          <p className="duelo2v2-share-card__badge">{presentation.badge}</p>
-          <h2 className="duelo2v2-share-card__headline">{presentation.headline}</h2>
+          <div className="duelo2v2-share-card__hero">
+            <p className="duelo2v2-share-card__badge">{presentation.badge}</p>
+            <h2 className="duelo2v2-share-card__headline">{presentation.headline}</h2>
 
-          <div className="duelo2v2-share-card__players" aria-label={presentation.teamName}>
-            <div className="duelo2v2-share-card__player">
-              {firstPlayer ? (
-                <>
-                  <span className="duelo2v2-share-card__avatar-frame">
-                    <JugadorAvatar
-                      fotoUrl={firstPlayer.fotoUrl}
-                      nombre={firstPlayer.name}
-                      size="xl"
-                      loading="lazy"
-                      alt={firstPlayer.fotoUrl ? `Foto de ${firstPlayer.name}` : ""}
-                      className="duelo2v2-share-card__avatar"
-                    />
-                  </span>
-                  <strong title={firstPlayer.name}>{firstPlayer.name}</strong>
-                  <RatingStat rating={firstPlayer.rating} />
-                </>
-              ) : null}
-            </div>
-
-            <span className="duelo2v2-share-card__pair-axis" aria-hidden />
-
-            <div className="duelo2v2-share-card__player">
-              {secondPlayer ? (
-                <>
-                  <span className="duelo2v2-share-card__avatar-frame">
-                    <JugadorAvatar
-                      fotoUrl={secondPlayer.fotoUrl}
-                      nombre={secondPlayer.name}
-                      size="xl"
-                      loading="lazy"
-                      alt={secondPlayer.fotoUrl ? `Foto de ${secondPlayer.name}` : ""}
-                      className="duelo2v2-share-card__avatar"
-                    />
-                  </span>
-                  <strong title={secondPlayer.name}>{secondPlayer.name}</strong>
-                  <RatingStat rating={secondPlayer.rating} />
-                </>
-              ) : null}
-            </div>
+            {firstPlayer ? (
+              <PublicSplitVsPairHalf
+                className="duelo2v2-share-card__pair"
+                player1={{
+                  name: firstPlayer.name,
+                  foto: firstPlayer.fotoUrl,
+                  rating: firstPlayer.rating,
+                }}
+                player2={
+                  secondPlayer
+                    ? {
+                        name: secondPlayer.name,
+                        foto: secondPlayer.fotoUrl,
+                        rating: secondPlayer.rating,
+                      }
+                    : null
+                }
+                label={presentation.teamName}
+                tone={isWinner ? "win" : "loss"}
+                showWinnerBadge={isWinner}
+              />
+            ) : null}
           </div>
-        </div>
 
         <div className="duelo2v2-share-card__result">
           <div
