@@ -7,7 +7,12 @@ import {
   emptyEquipoRankingStats,
   type EquipoRankingStats,
 } from "./equiposRanking";
-import type { PlayoffsMatchPoints } from "./parejasFijasPlayoffsMatchScore";
+import {
+  computePlayoffsMatchPoints,
+  derivePlayoffsGamesTotals,
+  parsePlayoffsSetScoresJson,
+  type PlayoffsMatchPoints,
+} from "./parejasFijasPlayoffsMatchScore";
 
 export function applyPlayoffsMatchToEquipoStats(
   stats: EquipoRankingStats,
@@ -45,6 +50,48 @@ export function applyPlayoffsMatchBothSides(
     result.pointsP2,
     !result.p1Won
   );
+}
+
+/**
+ * Suma un partido completado al ranking de ambas parejas.
+ * Devuelve false si el marcador no se puede clasificar; no toca las stats.
+ */
+export function foldPlayoffsMatchIntoRanking(
+  statsByEquipo: Map<string, EquipoRankingStats>,
+  match: {
+    equipo1Id: string;
+    equipo2Id: string;
+    score1: number;
+    score2: number;
+    setScores: unknown;
+  }
+): boolean {
+  if (!Number.isFinite(match.score1) || !Number.isFinite(match.score2)) {
+    return false;
+  }
+  const payload = parsePlayoffsSetScoresJson(match.setScores);
+  if (!payload) return false;
+  const derived = derivePlayoffsGamesTotals(payload, match.score1, match.score2);
+  if ("error" in derived) return false;
+  const computed = computePlayoffsMatchPoints(
+    derived.gamesTotalP1,
+    derived.gamesTotalP2,
+    payload
+  );
+  if (!computed.ok) return false;
+
+  const st1 = statsByEquipo.get(match.equipo1Id) ?? emptyEquipoRankingStats();
+  const st2 = statsByEquipo.get(match.equipo2Id) ?? emptyEquipoRankingStats();
+  applyPlayoffsMatchBothSides(
+    st1,
+    st2,
+    derived.gamesTotalP1,
+    derived.gamesTotalP2,
+    computed.result
+  );
+  statsByEquipo.set(match.equipo1Id, st1);
+  statsByEquipo.set(match.equipo2Id, st2);
+  return true;
 }
 
 export { emptyEquipoRankingStats };

@@ -27,8 +27,8 @@ import {
   type PlayoffsSetScoresPayload,
 } from "../lib/liga/parejasFijasPlayoffsMatchScore";
 import {
-  applyPlayoffsMatchBothSides,
   emptyEquipoRankingStats,
+  foldPlayoffsMatchIntoRanking,
 } from "../lib/liga/parejasFijasPlayoffsRanking";
 import {
   compareEquiposRanking,
@@ -225,26 +225,13 @@ export async function recalcularPuntosLigaEquiposPlayoffs(
       const eq2 = equipoByParejaId.get(String(m.pareja2_id));
       if (!eq1 || !eq2) continue;
 
-      const score1 =
-        m.score_pareja1 != null ? Number(m.score_pareja1) : NaN;
-      const score2 =
-        m.score_pareja2 != null ? Number(m.score_pareja2) : NaN;
-      const payload = parsePlayoffsSetScoresJson(m.set_scores);
-      if (!payload || !Number.isFinite(score1) || !Number.isFinite(score2)) {
-        continue;
-      }
-      const derived = derivePlayoffsGamesTotals(payload, score1, score2);
-      if ("error" in derived) continue;
-      const games1 = derived.gamesTotalP1;
-      const games2 = derived.gamesTotalP2;
-      const computed = computePlayoffsMatchPoints(games1, games2, payload);
-      if (!computed.ok) continue;
-
-      const st1 = statsByEquipo.get(eq1) ?? emptyEquipoRankingStats();
-      const st2 = statsByEquipo.get(eq2) ?? emptyEquipoRankingStats();
-      applyPlayoffsMatchBothSides(st1, st2, games1, games2, computed.result);
-      statsByEquipo.set(eq1, st1);
-      statsByEquipo.set(eq2, st2);
+      foldPlayoffsMatchIntoRanking(statsByEquipo, {
+        equipo1Id: eq1,
+        equipo2Id: eq2,
+        score1: m.score_pareja1 != null ? Number(m.score_pareja1) : NaN,
+        score2: m.score_pareja2 != null ? Number(m.score_pareja2) : NaN,
+        setScores: m.set_scores,
+      });
     }
 
     if (jornadaCompleta) {
