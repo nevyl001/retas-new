@@ -49,7 +49,18 @@ describe("torneoExpressService — bloqueo torneo cerrado", () => {
     });
 
     await expect(
-      savePartidoResultado("partido-1", [{ local: 6, visitante: 4 }])
+      savePartidoResultado("partido-1", [{ local: 6, visitante: 4 }], {
+        local: {
+          pair_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+          player1_id: "20000000-0000-0000-0000-000000000001",
+          player2_id: "20000000-0000-0000-0000-000000000002",
+        },
+        visitante: {
+          pair_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+          player1_id: "20000000-0000-0000-0000-000000000003",
+          player2_id: "20000000-0000-0000-0000-000000000004",
+        },
+      })
     ).rejects.toThrow(TORNEO_CERRADO_RESULTADO_MSG);
 
     expect(supabase.rpc).toHaveBeenCalledWith(

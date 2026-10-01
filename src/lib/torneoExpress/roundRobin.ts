@@ -147,9 +147,16 @@ export function groupPartidosByRonda(
   return groups;
 }
 
+/** A-B y B-A son el mismo cruce. Misma clave que usa dedupePartidosExpress. */
+export function unorderedMatchupKey(localId: string, visitanteId: string): string {
+  return [localId, visitanteId].sort().join("|");
+}
+
 function matchupKey(p: TorneoExpressPartido): string {
-  const pairIds = [p.pareja_local_id, p.pareja_visitante_id].sort().join("|");
-  return `${p.grupo_id}:${pairIds}`;
+  return `${p.grupo_id}:${unorderedMatchupKey(
+    p.pareja_local_id,
+    p.pareja_visitante_id
+  )}`;
 }
 
 function pickPreferredPartido(

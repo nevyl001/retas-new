@@ -29,10 +29,12 @@ import {
   PARTIDO_CANCHA_OCUPADA_MSG,
 } from "../../lib/torneoExpress/partidoCourtSlotConflict";
 import type {
+  ExpectedPairs,
   PartidoSetScore,
   TorneoExpressGrupoPareja,
   TorneoExpressPartido,
 } from "../../lib/torneoExpress/types";
+import { captureExpectedPairs } from "../../lib/torneoExpress/expectedPairs";
 import { Badge, Button } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
 import { PartidoSetsResultModal } from "./PartidoSetsResultModal";
@@ -51,6 +53,7 @@ interface PartidosGrupoProps {
   onSaveResultado?: (
     partidoId: string,
     sets: PartidoSetScore[],
+    expectedPairs: ExpectedPairs,
     force?: boolean
   ) => Promise<void>;
   onSaveCancha?: (partidoId: string, cancha: string | null) => Promise<void>;
@@ -416,6 +419,7 @@ function PartidoHorarioField({
 
 function PartidoRow({
   partido,
+  parejas,
   localLabel,
   visitLabel,
   matchNumber,
@@ -435,6 +439,7 @@ function PartidoRow({
   pairSlotConflict = false,
 }: {
   partido: TorneoExpressPartido;
+  parejas: TorneoExpressGrupoPareja[];
   localLabel: string;
   visitLabel: string;
   /** Solo presentación (Partido 01…). */
@@ -458,6 +463,9 @@ function PartidoRow({
   const scheduleConflict = courtConflict || pairSlotConflict;
   const played = partido.estado === "jugado";
   const [setsModalOpen, setSetsModalOpen] = useState(false);
+  const [openedExpected, setOpenedExpected] = useState<ExpectedPairs | null>(
+    null
+  );
   const [canchaEditOpen, setCanchaEditOpen] = useState(false);
   const [horarioEditOpen, setHorarioEditOpen] = useState(false);
 
@@ -485,6 +493,18 @@ function PartidoRow({
   const metaBusy = savingCancha || savingProgramado;
   const canEditResult = editable && !!onSave;
   const matchLabel = `Partido ${String(matchNumber).padStart(2, "0")}`;
+
+  const openResultado = () => {
+    const captured = captureExpectedPairs(partido, parejas);
+    if (!captured) return;
+    setOpenedExpected(captured);
+    setSetsModalOpen(true);
+  };
+
+  const closeResultado = () => {
+    setSetsModalOpen(false);
+    setOpenedExpected(null);
+  };
 
   return (
     <>
@@ -652,7 +672,7 @@ function PartidoRow({
               variant="ghost"
               size="sm"
               className="te-partido-edit-btn"
-              onClick={() => setSetsModalOpen(true)}
+              onClick={openResultado}
             >
               Corregir resultado
             </Button>
@@ -667,7 +687,7 @@ function PartidoRow({
               size="sm"
               loading={saving}
               disabled={saving}
-              onClick={() => setSetsModalOpen(true)}
+              onClick={openResultado}
             >
               Capturar resultado
             </Button>
@@ -678,12 +698,16 @@ function PartidoRow({
       {canEditResult ? (
         <PartidoSetsResultModal
           open={setsModalOpen}
-          onClose={() => setSetsModalOpen(false)}
+          onClose={closeResultado}
           localLabel={localLabel}
           visitLabel={visitLabel}
           initialPartido={partido}
+          expectedPairs={openedExpected}
           saving={saving}
-          onSave={(sets) => onSave!(partido.id, sets, played)}
+          onSave={(sets, expected) => {
+            if (!expected) return Promise.resolve();
+            return onSave!(partido.id, sets, expected, played);
+          }}
         />
       ) : null}
     </>
@@ -912,6 +936,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
         >
           <PartidoRow
             partido={partido}
+            parejas={parejas}
             localLabel={labelById.get(partido.pareja_local_id) ?? "Local"}
             visitLabel={
               labelById.get(partido.pareja_visitante_id) ?? "Visitante"

@@ -49,6 +49,7 @@ import {
 } from "../lib/torneoExpress/partidoSets";
 import { resolveEventoEstadoFromCategorias } from "../lib/torneoExpress/eventoEstadoFromCategorias";
 import type {
+  ExpectedPairs,
   GrupoAssignmentDraft,
   PartidoSetScore,
   TorneoExpress,
@@ -169,12 +170,17 @@ async function syncPairsNamesFromPlayers(
 
 function enrichParejasWithLabels(
   rows: TorneoExpressGrupoPareja[],
-  labels: Map<string, string>
+  rosters: Map<string, PairRoster>
 ): TorneoExpressGrupoPareja[] {
-  return rows.map((row) => ({
-    ...row,
-    pareja_display: labels.get(row.pareja_id) ?? row.pareja_display ?? row.pareja_id,
-  }));
+  return rows.map((row) => {
+    const roster = rosters.get(row.pareja_id);
+    return {
+      ...row,
+      pareja_display: roster?.display ?? row.pareja_display ?? row.pareja_id,
+      player1_id: roster?.player1Id ?? row.player1_id ?? null,
+      player2_id: roster?.player2Id ?? row.player2_id ?? null,
+    };
+  });
 }
 
 export type TeCreateScheduleInput = {
@@ -479,12 +485,18 @@ export async function pruneDraftPairsForTournament(
   return final;
 }
 
-export async function fetchPairLabelsByIds(
+export interface PairRoster {
+  player1Id: string;
+  player2Id: string;
+  display: string;
+}
+
+export async function fetchPairRostersByIds(
   pairIds: string[],
   client = supabase
-): Promise<Map<string, string>> {
+): Promise<Map<string, PairRoster>> {
   const unique = Array.from(new Set(pairIds.filter(Boolean)));
-  const map = new Map<string, string>();
+  const map = new Map<string, PairRoster>();
   if (unique.length === 0) return map;
 
   const { data, error } = await client
@@ -492,10 +504,7 @@ export async function fetchPairLabelsByIds(
     .select(PAIRS_SELECT)
     .in("id", unique);
   if (error) {
-    console.warn(
-      "[torneoExpress] fetchPairLabelsByIds:",
-      error.message
-    );
+    console.warn("[torneoExpress] fetchPairRostersByIds:", error.message);
     return map;
   }
   const pairs = (data ?? []) as Pair[];
@@ -503,7 +512,24 @@ export async function fetchPairLabelsByIds(
     pairs.flatMap((p) => [p.player1_id, p.player2_id]),
     client
   );
-  pairs.forEach((p) => map.set(p.id, pairLabelFromRow(p, names)));
+  pairs.forEach((p) => {
+    if (!p.player1_id || !p.player2_id) return;
+    map.set(p.id, {
+      player1Id: p.player1_id,
+      player2Id: p.player2_id,
+      display: pairLabelFromRow(p, names),
+    });
+  });
+  return map;
+}
+
+export async function fetchPairLabelsByIds(
+  pairIds: string[],
+  client = supabase
+): Promise<Map<string, string>> {
+  const rosters = await fetchPairRostersByIds(pairIds, client);
+  const map = new Map<string, string>();
+  rosters.forEach((roster, id) => map.set(id, roster.display));
   return map;
 }
 
@@ -817,11 +843,11 @@ export async function fetchTorneoExpressBundle(
     allParejaIds.push(p.pareja_id);
   });
 
-  const labels = await fetchPairLabelsByIds(allParejaIds, client);
+  const rosters = await fetchPairRostersByIds(allParejaIds, client);
   Object.keys(parejasPorGrupo).forEach((grupoId) => {
     parejasPorGrupo[grupoId] = enrichParejasWithLabels(
       parejasPorGrupo[grupoId],
-      labels
+      rosters
     );
   });
 
@@ -1079,15 +1105,29 @@ export class TorneoExpressResultadoConflictError extends Error {
   }
 }
 
+/** El formulario de resultado se abrió con otra composición de pareja. */
+export const PAIR_COMPOSITION_CHANGED_MSG =
+  "La composición de una pareja cambió mientras capturabas el resultado. Actualizamos la categoría; vuelve a abrir el partido para registrar el marcador.";
+
+export class TorneoExpressComposicionCambiadaError extends Error {
+  readonly code = "PAIR_COMPOSITION_CHANGED" as const;
+
+  constructor() {
+    super(PAIR_COMPOSITION_CHANGED_MSG);
+    this.name = "TorneoExpressComposicionCambiadaError";
+  }
+}
+
 /**
  * Guardado atómico server-side (BLK-06): RPC con SELECT...FOR UPDATE +
  * ownership + detección de conflicto, mismo patrón usado en Liga (rotativa y
  * parejas fijas) y en la fase eliminatoria de Torneo Express — ver
- * supabase/migrations/0003_apply_torneo_express_grupo_resultado.sql.
+ * supabase/migrations/0044_torneo_express_categoria_edicion.sql.
  */
 export async function savePartidoResultado(
   partidoId: string,
   sets: PartidoSetScore[],
+  expectedPairs: ExpectedPairs,
   force = false
 ): Promise<TorneoExpressPartido> {
   await requireAuthUser();
@@ -1110,6 +1150,7 @@ export async function savePartidoResultado(
       p_ganador_side: payload.ganadorSide ?? "empate",
       p_sets_resultado: payload.sets_resultado,
       p_force: force,
+      p_expected_pairs: expectedPairs,
     }
   );
 
@@ -1129,6 +1170,9 @@ export async function savePartidoResultado(
     }
     if (result.error === "torneo_cerrado") {
       throw new Error(TORNEO_CERRADO_RESULTADO_MSG);
+    }
+    if (result.error === "PAIR_COMPOSITION_CHANGED") {
+      throw new TorneoExpressComposicionCambiadaError();
     }
     if (result.error === "conflict") {
       throw new TorneoExpressResultadoConflictError({

@@ -75,6 +75,18 @@ export interface PartidoSetScore {
   visitante: number;
 }
 
+export interface ExpectedPairSide {
+  pair_id: string;
+  player1_id: string;
+  player2_id: string;
+}
+
+/** Composición congelada al abrir el modal de resultado. Solo ids. */
+export interface ExpectedPairs {
+  local: ExpectedPairSide;
+  visitante: ExpectedPairSide;
+}
+
 export interface TorneoExpress {
   id: string;
   nombre: string;
@@ -126,6 +138,9 @@ export interface TorneoExpressGrupoPareja {
   pareja_id: string;
   /** No existe en BD; se rellena desde tabla `pairs` al cargar. */
   pareja_display?: string;
+  /** Identidad interna de la pareja. No se muestra en la UI. */
+  player1_id?: string | null;
+  player2_id?: string | null;
   created_at: string;
 }
 

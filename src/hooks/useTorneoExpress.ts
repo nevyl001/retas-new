@@ -4,7 +4,7 @@ import {
   buildStandingsForGrupo,
   buildStandingsGeneral,
 } from "../lib/torneoExpress/standings";
-import type { PartidoSetScore, StandingRowExpress, TorneoExpressBundle } from "../lib/torneoExpress/types";
+import type { ExpectedPairs, PartidoSetScore, StandingRowExpress, TorneoExpressBundle } from "../lib/torneoExpress/types";
 import {
   checkPartidosCanchaColumnAvailable,
   checkPartidosOrdenColumnAvailable,
@@ -25,6 +25,7 @@ import {
   savePartidoProgramado,
   savePartidoResultado,
   savePartidosOrden,
+  TorneoExpressComposicionCambiadaError,
   rescheduleTorneoExpressGruposPartidos,
   subscribeTorneoExpress,
   type TeCreateScheduleInput,
@@ -186,13 +187,23 @@ export function useTorneoExpress(
   }, [bundle]);
 
   const saveResultado = useCallback(
-    async (partidoId: string, sets: PartidoSetScore[], force = false) => {
+    async (
+      partidoId: string,
+      sets: PartidoSetScore[],
+      expectedPairs: ExpectedPairs,
+      force = false
+    ) => {
       setSavingPartidoId(partidoId);
       setError(null);
       try {
-        await savePartidoResultado(partidoId, sets, force);
+        await savePartidoResultado(partidoId, sets, expectedPairs, force);
         await reload();
       } catch (e) {
+        if (e instanceof TorneoExpressComposicionCambiadaError) {
+          await reload({ silent: true }).catch(() => undefined);
+          setError(e.message);
+          throw e;
+        }
         if (
           e instanceof Error &&
           e.message.includes("sobrescribir") &&
@@ -201,12 +212,11 @@ export function useTorneoExpress(
             `${e.message}\n\n¿Continuar y guardar tu corrección?`
           )
         ) {
-          await savePartidoResultado(partidoId, sets, true);
+          await savePartidoResultado(partidoId, sets, expectedPairs, true);
           await reload();
           return;
         }
         setError(e instanceof Error ? e.message : "No se pudo guardar el resultado");
-        // Reflejar estado real si el update parcial/remoto ya ocurrió.
         await reload({ silent: true }).catch(() => undefined);
         throw e;
       } finally {

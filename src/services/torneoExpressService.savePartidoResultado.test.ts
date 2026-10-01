@@ -3,6 +3,8 @@ import {
   savePartidoResultado,
   confirmarFaseEliminatoria,
   TorneoExpressResultadoConflictError,
+  TorneoExpressComposicionCambiadaError,
+  PAIR_COMPOSITION_CHANGED_MSG,
 } from "../services/torneoExpressService";
 
 jest.mock("../lib/supabaseClient", () => ({
@@ -15,6 +17,18 @@ jest.mock("../lib/supabaseClient", () => ({
 }));
 
 const VALID_SETS = [{ local: 6, visitante: 4 }];
+const EXPECTED = {
+  local: {
+    pair_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    player1_id: "20000000-0000-0000-0000-000000000001",
+    player2_id: "20000000-0000-0000-0000-000000000002",
+  },
+  visitante: {
+    pair_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    player1_id: "20000000-0000-0000-0000-000000000003",
+    player2_id: "20000000-0000-0000-0000-000000000004",
+  },
+};
 
 function authOk() {
   (supabase.auth.getSession as jest.Mock).mockResolvedValue({
@@ -46,7 +60,7 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
     });
     mockFetchAfterSave({ id: "partido-1", puntos_local: 6, puntos_visitante: 4 });
 
-    const result = await savePartidoResultado("partido-1", VALID_SETS);
+    const result = await savePartidoResultado("partido-1", VALID_SETS, EXPECTED);
 
     expect(supabase.rpc).toHaveBeenCalledWith(
       "apply_torneo_express_grupo_resultado",
@@ -56,6 +70,7 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
         p_puntos_visitante: 4,
         p_ganador_side: "local",
         p_force: false,
+        p_expected_pairs: EXPECTED,
       })
     );
     expect(result).toEqual({ id: "partido-1", puntos_local: 6, puntos_visitante: 4 });
@@ -68,7 +83,7 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
     });
     mockFetchAfterSave({ id: "partido-1" });
 
-    await expect(savePartidoResultado("partido-1", VALID_SETS)).resolves.toBeTruthy();
+    await expect(savePartidoResultado("partido-1", VALID_SETS, EXPECTED)).resolves.toBeTruthy();
     // Un solo llamado a rpc, sin reintento propio.
     expect(supabase.rpc).toHaveBeenCalledTimes(1);
   });
@@ -85,7 +100,7 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
     });
 
     await expect(
-      savePartidoResultado("partido-1", VALID_SETS)
+      savePartidoResultado("partido-1", VALID_SETS, EXPECTED)
     ).rejects.toBeInstanceOf(TorneoExpressResultadoConflictError);
     expect(supabase.rpc).toHaveBeenCalledTimes(1);
   });
@@ -97,11 +112,34 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
     });
     mockFetchAfterSave({ id: "partido-1" });
 
-    await savePartidoResultado("partido-1", VALID_SETS, true);
+    await savePartidoResultado("partido-1", VALID_SETS, EXPECTED, true);
     expect(supabase.rpc).toHaveBeenCalledWith(
       "apply_torneo_express_grupo_resultado",
-      expect.objectContaining({ p_force: true })
+      expect.objectContaining({ p_force: true, p_expected_pairs: EXPECTED })
     );
+  });
+
+  it("composición distinta: no ofrece sobrescribir y conserva la expectativa en el RPC", async () => {
+    (supabase.rpc as jest.Mock).mockResolvedValue({
+      data: { ok: false, error: "PAIR_COMPOSITION_CHANGED" },
+      error: null,
+    });
+
+    await expect(
+      savePartidoResultado("partido-1", VALID_SETS, EXPECTED, true)
+    ).rejects.toBeInstanceOf(TorneoExpressComposicionCambiadaError);
+    await expect(
+      savePartidoResultado("partido-1", VALID_SETS, EXPECTED, true)
+    ).rejects.toThrow(PAIR_COMPOSITION_CHANGED_MSG);
+    expect(PAIR_COMPOSITION_CHANGED_MSG.includes("sobrescribir")).toBe(false);
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "apply_torneo_express_grupo_resultado",
+      expect.objectContaining({
+        p_force: true,
+        p_expected_pairs: EXPECTED,
+      })
+    );
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 
   it("partido inexistente: mensaje explícito, sin fetch posterior", async () => {
@@ -111,7 +149,7 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
     });
 
     await expect(
-      savePartidoResultado("no-existe", VALID_SETS)
+      savePartidoResultado("no-existe", VALID_SETS, EXPECTED)
     ).rejects.toThrow("Partido no encontrado.");
     expect(supabase.from).not.toHaveBeenCalled();
   });
@@ -123,17 +161,21 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
     });
 
     await expect(
-      savePartidoResultado("partido-ajeno", VALID_SETS)
+      savePartidoResultado("partido-ajeno", VALID_SETS, EXPECTED)
     ).rejects.toThrow("Sin permiso sobre este torneo");
     expect(supabase.from).not.toHaveBeenCalled();
   });
 
   it("resultado inválido (1-1 en sets sin tercer set): se rechaza antes de llamar al RPC (validación de cliente)", async () => {
     await expect(
-      savePartidoResultado("partido-1", [
-        { local: 6, visitante: 4 },
-        { local: 4, visitante: 6 },
-      ])
+      savePartidoResultado(
+        "partido-1",
+        [
+          { local: 6, visitante: 4 },
+          { local: 4, visitante: 6 },
+        ],
+        EXPECTED
+      )
     ).rejects.toThrow(/empatado/i);
     expect(supabase.rpc).not.toHaveBeenCalled();
   });
@@ -144,7 +186,7 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
       error: null,
     });
 
-    await expect(savePartidoResultado("partido-1", VALID_SETS)).rejects.toThrow(
+    await expect(savePartidoResultado("partido-1", VALID_SETS, EXPECTED)).rejects.toThrow(
       /cerrad/i
     );
     expect(supabase.from).not.toHaveBeenCalled();

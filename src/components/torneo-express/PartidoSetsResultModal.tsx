@@ -10,7 +10,8 @@ import {
   getPartidoSets,
   getSetsValidationMessage,
 } from "../../lib/torneoExpress/partidoSets";
-import type { PartidoSetScore } from "../../lib/torneoExpress/types";
+import type { ExpectedPairs, PartidoSetScore } from "../../lib/torneoExpress/types";
+import { TorneoExpressComposicionCambiadaError } from "../../services/torneoExpressService";
 import { Button } from "../ui";
 import { Modal } from "../ui/Modal";
 import "./torneo-express.css";
@@ -26,8 +27,13 @@ export interface PartidoSetsResultModalProps {
     puntos_visitante?: number | null;
     estado?: string;
   };
+  /** Ids congelados por quien abre el modal. La eliminatoria no los usa. */
+  expectedPairs?: ExpectedPairs | null;
   saving?: boolean;
-  onSave: (sets: PartidoSetScore[]) => Promise<void>;
+  onSave: (
+    sets: PartidoSetScore[],
+    expectedPairs: ExpectedPairs | null
+  ) => Promise<void>;
 }
 
 function cloneSets(sets: PartidoSetScore[]): PartidoSetScore[] {
@@ -49,6 +55,7 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
   localLabel,
   visitLabel,
   initialPartido,
+  expectedPairs = null,
   saving = false,
   onSave,
 }) => {
@@ -61,6 +68,9 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
       scoreDraftValue(s.visitante),
     ])
   );
+  const [frozenExpected, setFrozenExpected] = useState<ExpectedPairs | null>(
+    expectedPairs
+  );
 
   useEffect(() => {
     if (open) {
@@ -72,8 +82,12 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
           scoreDraftValue(s.visitante),
         ])
       );
+      // El snapshot es el de esta apertura. Un realtime posterior no lo pisa.
+      setFrozenExpected(expectedPairs);
     }
-  }, [open, initialPartido]);
+    // expectedPairs se lee solo cuando `open` cambia, no en cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const winner = useMemo(() => detectMatchWinner(sets), [sets]);
   const wins = useMemo(() => countSetWins(sets), [sets]);
@@ -152,9 +166,13 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
             loading={saving}
             disabled={!canSave || saving}
             onClick={() => {
-              void onSave(sets)
+              void onSave(sets, frozenExpected)
                 .then(onClose)
                 .catch((err: unknown) => {
+                  if (err instanceof TorneoExpressComposicionCambiadaError) {
+                    onClose();
+                    return;
+                  }
                   const msg =
                     err instanceof Error
                       ? err.message
