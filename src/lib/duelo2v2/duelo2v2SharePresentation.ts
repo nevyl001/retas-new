@@ -17,6 +17,8 @@ export type Duelo2v2SharePlayer = {
 export type Duelo2v2ShareSetRow = {
   label: string;
   score: string;
+  won: boolean;
+  tied: boolean;
 };
 
 export type Duelo2v2SharePresentation = {
@@ -49,6 +51,7 @@ function toSharePlayer(player: PublicRetaWinnerAvatar): Duelo2v2SharePlayer {
 function buildSetRows(
   detalle: Duelo2v2SetDetalle[],
   setOutcomes: ReturnType<typeof computeDueloScore>["setOutcomes"],
+  side: "a" | "b",
 ): Duelo2v2ShareSetRow[] {
   return detalle
     .map((row, index) => ({
@@ -57,10 +60,16 @@ function buildSetRows(
       outcome: setOutcomes[index] ?? "incompleto",
     }))
     .filter(({ outcome }) => outcome !== "incompleto")
-    .map(({ row, index }) => ({
-      label: `Set ${String(index + 1).padStart(2, "0")}`,
-      score: `${row.a}–${row.b}`,
-    }));
+    .map(({ row, index, outcome }) => {
+      const gamesFor = side === "a" ? row.a : row.b;
+      const gamesAgainst = side === "a" ? row.b : row.a;
+      return {
+        label: `Set ${String(index + 1).padStart(2, "0")}`,
+        score: `${gamesFor}–${gamesAgainst}`,
+        won: outcome === side,
+        tied: outcome === "empate",
+      };
+    });
 }
 
 export function createDuelo2v2SharePresentation(input: {
@@ -73,6 +82,7 @@ export function createDuelo2v2SharePresentation(input: {
   setOutcomes: ReturnType<typeof computeDueloScore>["setOutcomes"];
   gamesWin: number;
   gamesLoss: number;
+  side: "a" | "b";
   message: string;
   dueloNombre: string;
   clubName: string;
@@ -89,7 +99,7 @@ export function createDuelo2v2SharePresentation(input: {
     players: input.players.map(toSharePlayer),
     setsWin: input.setsWin,
     setsLoss: input.setsLoss,
-    setRows: buildSetRows(input.detalle, input.setOutcomes),
+    setRows: buildSetRows(input.detalle, input.setOutcomes, input.side),
     gamesTotal:
       input.gamesWin > 0 || input.gamesLoss > 0
         ? `${input.gamesWin}–${input.gamesLoss} juegos totales`

@@ -139,9 +139,19 @@ export function Duelo2v2ShareCard({
           {presentation.setRows.length > 0 ? (
             <div className="duelo2v2-share-card__sets" aria-label="Detalle por set">
               {presentation.setRows.map((row) => (
-                <div key={row.label} className="duelo2v2-share-card__set">
+                <div
+                  key={row.label}
+                  className={`duelo2v2-share-card__set${
+                    row.tied
+                      ? " duelo2v2-share-card__set--tied"
+                      : row.won
+                        ? " duelo2v2-share-card__set--won"
+                        : " duelo2v2-share-card__set--lost"
+                  }`}
+                >
                   <span>{row.label}</span>
                   <strong>{row.score}</strong>
+                  <em>{row.tied ? "Empate" : row.won ? "Ganó" : "Perdió"}</em>
                 </div>
               ))}
             </div>

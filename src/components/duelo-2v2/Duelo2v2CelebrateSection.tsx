@@ -102,6 +102,7 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
     gamesWin,
     gamesLoss,
     message: winnerMessage,
+    side: ganador,
     ...shareBase,
   });
 
@@ -114,6 +115,7 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
     gamesWin: gamesLoss,
     gamesLoss: gamesWin,
     message: loserMessage,
+    side: ganador === "a" ? "b" : "a",
     ...shareBase,
   });
 

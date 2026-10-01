@@ -1852,9 +1852,10 @@
 }
 
 .duelo2v2-live-team__sets {
-  width: 100%;
-  max-width: 200px;
-  margin: 0 0 1rem;
+  align-self: center;
+  width: min(100%, 16rem);
+  max-width: none;
+  margin: 0 auto 0.65rem;
   padding: 0.65rem 0.75rem;
   border-radius: 12px;
   background:var(--ro-bg-inset);
