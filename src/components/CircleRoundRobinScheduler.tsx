@@ -102,7 +102,9 @@ export class CircleRoundRobinScheduler {
     if (pairs.length < 2) return [];
     const teamByPairId =
       pairToTeam && Object.keys(pairToTeam).length > 0
-        ? new Map<string, number>(Object.entries(pairToTeam).map(([k, v]) => [k, v]))
+        ? new Map<string, number>(
+            Object.keys(pairToTeam).map((key) => [key, pairToTeam[key]])
+          )
         : this.assignTeamsToPairs(pairs, Math.min(Math.max(2, teamsCount), pairs.length));
 
     // Solo 2 equipos: índice 0 y 1
