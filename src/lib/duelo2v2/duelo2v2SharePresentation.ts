@@ -94,7 +94,7 @@ export function createDuelo2v2SharePresentation(input: {
     place: input.place,
     positionLabel: isWinner ? "1.er LUGAR" : "2.º LUGAR",
     badge: isWinner ? "Ganadores" : "Segundo lugar",
-    headline: isWinner ? "¡Felicidades!" : "Sigue adelante",
+    headline: isWinner ? "¡Felicidades!" : "Sigan adelante",
     teamName: input.teamName,
     players: input.players.map(toSharePlayer),
     setsWin: input.setsWin,
