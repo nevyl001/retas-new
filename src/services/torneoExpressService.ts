@@ -24,7 +24,6 @@ import {
   planProgramadoChange,
   PARTIDO_CANCHA_OCUPADA_MSG,
 } from "../lib/torneoExpress/partidoCourtSlotConflict";
-import { formatPairDisplay } from "../lib/torneoExpress/standings";
 import { crucesPrimeraRonda } from "../lib/torneoExpress/bracket";
 import type { BracketFase, BracketSlotEntry } from "../lib/torneoExpress/bracketTypes";
 import {
@@ -65,15 +64,16 @@ import type {
   TorneoExpressGrupoPareja,
   TorneoExpressPartido,
 } from "../lib/torneoExpress/types";
-import type { Pair } from "../lib/database";
 import { deletePair, updatePair } from "../lib/database";
+import { pairIdentityFromRow } from "../lib/torneoExpress/pairIdentity";
+import type { TorneoExpressPairRow } from "../lib/torneoExpress/types";
 import { splitParejaDraftsByPlayerName } from "../lib/rivieraJugadores/playerNameKey";
 import type { Player } from "../lib/db/types";
 
 const readClient = supabasePublicRead;
 
 const PAIRS_SELECT =
-  "id, tournament_id, player1_id, player2_id, player1_name, player2_name, created_at";
+  "id, tournament_id, player1_id, player2_id, player1_name, player2_name, is_virtual, virtual_label, created_at";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -112,7 +112,7 @@ async function requireAuthUser() {
 }
 
 async function fetchPlayerNamesByIds(
-  playerIds: string[],
+  playerIds: Array<string | null | undefined>,
   client = supabase
 ): Promise<Map<string, string>> {
   const unique = Array.from(new Set(playerIds.filter(Boolean)));
@@ -134,23 +134,22 @@ async function fetchPlayerNamesByIds(
   return map;
 }
 
-function pairLabelFromRow(p: Pair, playerNames: Map<string, string>): string {
-  const n1 =
-    playerNames.get(p.player1_id) ?? p.player1_name?.trim() ?? "Jugador 1";
-  const n2 =
-    playerNames.get(p.player2_id) ?? p.player2_name?.trim() ?? "Jugador 2";
-  return formatPairDisplay(n1, n2);
-}
-
 /** Sincroniza player1_name / player2_name desde la tabla players (evita Carlos Co vs Carlos R). */
 async function syncPairsNamesFromPlayers(
-  pairs: Pair[],
+  pairs: Array<{
+    id: string;
+    player1_id: string | null;
+    player2_id: string | null;
+    player1_name: string | null;
+    player2_name: string | null;
+  }>,
   client = supabase
 ): Promise<void> {
   const playerIds = pairs.flatMap((p) => [p.player1_id, p.player2_id]);
   const names = await fetchPlayerNamesByIds(playerIds, client);
 
   for (const p of pairs) {
+    if (!p.player1_id || !p.player2_id) continue;
     const n1 = names.get(p.player1_id);
     const n2 = names.get(p.player2_id);
     if (!n1 || !n2) continue;
@@ -177,8 +176,10 @@ function enrichParejasWithLabels(
     return {
       ...row,
       pareja_display: roster?.display ?? row.pareja_display ?? row.pareja_id,
-      player1_id: roster?.player1Id ?? row.player1_id ?? null,
-      player2_id: roster?.player2Id ?? row.player2_id ?? null,
+      player1_id: roster ? roster.player1Id : (row.player1_id ?? null),
+      player2_id: roster ? roster.player2Id : (row.player2_id ?? null),
+      is_virtual: roster ? roster.isVirtual : row.is_virtual,
+      virtual_label: roster?.isVirtual ? roster.display : row.virtual_label,
     };
   });
 }
@@ -425,27 +426,38 @@ async function insertTorneoExpressRow(
 export async function fetchPairsForTournament(
   tournamentId: string,
   client = supabase
-): Promise<Pair[]> {
+): Promise<TorneoExpressPairRow[]> {
   const { data, error } = await client
     .from("pairs")
     .select(PAIRS_SELECT)
     .eq("tournament_id", tournamentId)
     .order("created_at", { ascending: true });
   throwIfError(error, "fetchPairsForTournament");
-  return (data ?? []) as Pair[];
+  return (data ?? []) as TorneoExpressPairRow[];
 }
 
 /**
  * Borra parejas huérfanas del borrador y duplicados por jugador (nombre).
  * La UI (`keepPairIds`) es la fuente de verdad al crear el torneo.
  */
+function persistedRealPairs(rows: TorneoExpressPairRow[]) {
+  return rows.filter(
+    (
+      row
+    ): row is TorneoExpressPairRow & {
+      player1_id: string;
+      player2_id: string;
+    } => row.is_virtual !== true && Boolean(row.player1_id) && Boolean(row.player2_id)
+  );
+}
+
 export async function pruneDraftPairsForTournament(
   tournamentId: string,
   keepPairIds: string[] = []
-): Promise<Pair[]> {
+): Promise<TorneoExpressPairRow[]> {
   const keep = new Set(keepPairIds.filter(Boolean));
   let rows = await fetchPairsForTournament(tournamentId);
-  await syncPairsNamesFromPlayers(rows);
+  await syncPairsNamesFromPlayers(persistedRealPairs(rows));
 
   for (const row of rows) {
     if (keep.size > 0 && !keep.has(row.id)) {
@@ -454,19 +466,19 @@ export async function pruneDraftPairsForTournament(
   }
 
   rows = await fetchPairsForTournament(tournamentId);
-  await syncPairsNamesFromPlayers(rows);
+  await syncPairsNamesFromPlayers(persistedRealPairs(rows));
 
-  const drafts = rows.map((row) => ({
+  const drafts = persistedRealPairs(rows).map((row) => ({
     id: row.id,
     jugador1: {
       id: row.player1_id,
-      name: row.player1_name,
+      name: row.player1_name ?? "",
       email: "",
       created_at: row.created_at,
     } as Player,
     jugador2: {
       id: row.player2_id,
-      name: row.player2_name,
+      name: row.player2_name ?? "",
       email: "",
       created_at: row.created_at,
     } as Player,
@@ -481,13 +493,15 @@ export async function pruneDraftPairsForTournament(
   }
 
   const final = await fetchPairsForTournament(tournamentId);
-  await syncPairsNamesFromPlayers(final);
+  await syncPairsNamesFromPlayers(persistedRealPairs(final));
   return final;
 }
 
 export interface PairRoster {
-  player1Id: string;
-  player2Id: string;
+  pairId: string;
+  player1Id: string | null;
+  player2Id: string | null;
+  isVirtual: boolean;
   display: string;
 }
 
@@ -507,17 +521,19 @@ export async function fetchPairRostersByIds(
     console.warn("[torneoExpress] fetchPairRostersByIds:", error.message);
     return map;
   }
-  const pairs = (data ?? []) as Pair[];
+  const pairs = (data ?? []) as TorneoExpressPairRow[];
   const names = await fetchPlayerNamesByIds(
     pairs.flatMap((p) => [p.player1_id, p.player2_id]),
     client
   );
   pairs.forEach((p) => {
-    if (!p.player1_id || !p.player2_id) return;
+    const identity = pairIdentityFromRow(p, names);
     map.set(p.id, {
-      player1Id: p.player1_id,
-      player2Id: p.player2_id,
-      display: pairLabelFromRow(p, names),
+      pairId: identity.pairId,
+      player1Id: identity.player1Id,
+      player2Id: identity.player2Id,
+      isVirtual: identity.isVirtual,
+      display: identity.display,
     });
   });
   return map;
@@ -536,7 +552,7 @@ export async function fetchPairLabelsByIds(
 /** Parejas completas (con nombres) para vista pública del bracket. */
 export async function fetchPairsByIdsPublic(
   pairIds: string[]
-): Promise<Pair[]> {
+): Promise<TorneoExpressPairRow[]> {
   const unique = Array.from(new Set(pairIds.filter(Boolean)));
   if (unique.length === 0) return [];
 
@@ -549,17 +565,20 @@ export async function fetchPairsByIdsPublic(
     return [];
   }
 
-  const pairs = (data ?? []) as Pair[];
+  const pairs = (data ?? []) as TorneoExpressPairRow[];
   const names = await fetchPlayerNamesByIds(
     pairs.flatMap((p) => [p.player1_id, p.player2_id]),
     readClient
   );
 
-  return pairs.map((p) => ({
-    ...p,
-    player1_name: names.get(p.player1_id) ?? p.player1_name,
-    player2_name: names.get(p.player2_id) ?? p.player2_name,
-  }));
+  return pairs.map((p) => {
+    if (p.is_virtual || !p.player1_id || !p.player2_id) return p;
+    return {
+      ...p,
+      player1_name: names.get(p.player1_id) ?? p.player1_name,
+      player2_name: names.get(p.player2_id) ?? p.player2_name,
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1967,6 +1986,13 @@ export async function deleteEvento(eventoId: string): Promise<void> {
     );
   }
   throwIfError(delErr, "deleteEvento");
+}
+
+/** Vista pública: hub de categorías del Evento (`/eventos/{slug}`). */
+export function publicEventoUrl(slug: string): string {
+  const s = slug.trim();
+  if (!s) return `${window.location.origin}/eventos`;
+  return `${window.location.origin}/eventos/${encodeURIComponent(s)}`;
 }
 
 export function publicGrupoUrl(torneoId: string, grupoId: string): string {

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
-import { useTorneoPublicDisplayNombre } from "../../hooks/useTorneoPublicDisplayNombre";
+import { useTorneoPublicEventoNav } from "../../hooks/useTorneoPublicDisplayNombre";
 import { copyToClipboard, publicGrupoUrl } from "../../services/torneoExpressService";
 import { buildSharePublicOgUrlFromPlayUrl } from "../../lib/retaAbierta/shareOgUrl";
 import {
@@ -22,7 +22,7 @@ export const VistaPublicaGrupo: React.FC<{
       realtime: true,
       pollIntervalMs: TE_PUBLIC_POLL_INTERVAL_MS,
     });
-  const displayNombre = useTorneoPublicDisplayNombre(bundle?.torneo);
+  const { displayNombre, eventoHref } = useTorneoPublicEventoNav(bundle?.torneo);
   const [copyMsg, setCopyMsg] = useState("");
 
   const grupoProps = useMemo(
@@ -65,6 +65,7 @@ export const VistaPublicaGrupo: React.FC<{
             {...grupoProps}
             onCopyLink={copyLink}
             copyMsg={copyMsg || undefined}
+            eventoHref={eventoHref}
           />
           <PublicTorneoExpressSyncFooter
             lastRefreshedAt={lastRefreshedAt}

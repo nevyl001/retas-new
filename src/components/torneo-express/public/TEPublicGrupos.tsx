@@ -70,6 +70,8 @@ export interface TEPublicGruposProps {
   copyMsg?: string;
   /** Si la categoría ya tiene cuadro, enlace a la vista pública de eliminatoria. */
   faseFinalHref?: string;
+  /** Enlace al hub del Evento (todas las categorías). */
+  eventoHref?: string | null;
 }
 
 const DEFAULT_CLASIFICAN = 2;
@@ -683,6 +685,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
   onCopyLink,
   copyMsg,
   faseFinalHref,
+  eventoHref,
 }) => {
   const [selectedGrupoId, setSelectedGrupoId] = useState<string | null>(null);
   const { branding, manifest, isScopeBrandingReady } = useClubExperience();
@@ -751,6 +754,15 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
   return (
     <div className="te-grupos-page">
       <header className="te-grupos-hero">
+        {eventoHref ? (
+          <a
+            href={eventoHref}
+            className="te-grupos-back-evento"
+            aria-label="Volver al evento y ver todas las categorías"
+          >
+            ← Volver al evento
+          </a>
+        ) : null}
         <div className="te-grupos-hero__top">
           <div>
             <p className="te-grupos-eyebrow">{eyebrow}</p>

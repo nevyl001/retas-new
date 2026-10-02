@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
-import { useTorneoPublicDisplayNombre } from "../../hooks/useTorneoPublicDisplayNombre";
+import { useTorneoPublicEventoNav } from "../../hooks/useTorneoPublicDisplayNombre";
 import { copyToClipboard, publicGeneralUrl } from "../../services/torneoExpressService";
 import { buildSharePublicOgUrlFromPlayUrl } from "../../lib/retaAbierta/shareOgUrl";
 import { PublicStandingsSection } from "./public/PublicStandingsSection";
@@ -24,7 +24,7 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
       realtime: true,
       pollIntervalMs: TE_PUBLIC_POLL_INTERVAL_MS,
     });
-  const displayNombre = useTorneoPublicDisplayNombre(bundle?.torneo);
+  const { displayNombre, eventoHref } = useTorneoPublicEventoNav(bundle?.torneo);
   const [copyMsg, setCopyMsg] = useState("");
 
   const goBack = () => {
@@ -61,11 +61,18 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
             onCopyLink={copyLink}
             copyMsg={copyMsg || undefined}
             extraActions={
-              user ? (
-                <Button type="button" variant="back" size="sm" onClick={goBack}>
-                  ← Regresar
-                </Button>
-              ) : undefined
+              <>
+                {eventoHref ? (
+                  <a href={eventoHref} className="te-grupos-back-evento">
+                    ← Volver al evento
+                  </a>
+                ) : null}
+                {user ? (
+                  <Button type="button" variant="back" size="sm" onClick={goBack}>
+                    ← Regresar
+                  </Button>
+                ) : null}
+              </>
             }
           />
 

@@ -9,7 +9,7 @@ import {
 import { isRondaTercerLugar } from "../../../lib/torneoExpress/bracketRounds";
 import type { TorneoExpressBundle } from "../../../lib/torneoExpress/types";
 import { useClubExperience } from "../../../club-experience";
-import { useTorneoPublicDisplayNombre } from "../../../hooks/useTorneoPublicDisplayNombre";
+import { useTorneoPublicEventoNav } from "../../../hooks/useTorneoPublicDisplayNombre";
 import { Badge, Button } from "../../ui";
 import { TEPublicBracketVisual } from "./TEPublicBracketVisual";
 import { usePublicBracketPairPlayers } from "../../../hooks/usePublicBracketPairPlayers";
@@ -70,6 +70,8 @@ export interface TEPublicEliminatoriaProps {
   copyMsg?: string;
   /** Enlace secundario a grupos (siempre accesible tras generar eliminatoria). */
   gruposHref?: string;
+  /** Enlace al hub del Evento (todas las categorías). */
+  eventoHref?: string | null;
   /** true si el canal Realtime está SUBSCRIBED; si no, se degrada a "Actualizado hace Ns". */
   realtimeConnected?: boolean;
 }
@@ -81,6 +83,7 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
   onCopyLink,
   copyMsg,
   gruposHref,
+  eventoHref,
   realtimeConnected,
 }) => {
   const [spinning, setSpinning] = useState(false);
@@ -174,6 +177,15 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
   return (
     <div className="te-grupos-page te-elim-public">
       <header className="te-elim-public__header te-pub-fade-in">
+        {eventoHref ? (
+          <a
+            href={eventoHref}
+            className="te-grupos-back-evento"
+            aria-label="Volver al evento y ver todas las categorías"
+          >
+            ← Volver al evento
+          </a>
+        ) : null}
         <div className="te-elim-public__header-top">
           <div>
             <h1 className="te-elim-public__title">

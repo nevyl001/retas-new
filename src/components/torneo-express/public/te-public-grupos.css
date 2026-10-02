@@ -20,6 +20,29 @@
   border-bottom: 0.5px solid var(--border-subtle);
 }
 
+.te-grupos-back-evento {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ro-text-muted, rgba(255, 255, 255, 0.72));
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.te-grupos-back-evento:hover,
+.te-grupos-back-evento:focus-visible {
+  color: var(--ro-text, #fff);
+  text-decoration: underline;
+  outline: none;
+}
+
 .te-grupos-hero__top {
   display: flex;
   align-items: flex-start;

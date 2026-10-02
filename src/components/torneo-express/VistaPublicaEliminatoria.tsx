@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
+import { useTorneoPublicEventoNav } from "../../hooks/useTorneoPublicDisplayNombre";
 import {
   copyToClipboard,
   publicEliminatoriaUrl,
@@ -25,6 +26,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     realtime: true,
     pollIntervalMs: TE_PUBLIC_POLL_INTERVAL_MS,
   });
+  const { eventoHref } = useTorneoPublicEventoNav(bundle?.torneo);
   const [copyMsg, setCopyMsg] = useState("");
 
   const copyLink = async () => {
@@ -78,6 +80,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
           onCopyLink={copyLink}
           copyMsg={copyMsg || undefined}
           gruposHref={`/torneo-express/${torneoId}/grupos`}
+          eventoHref={eventoHref}
         />
       ) : null}
     </PublicTorneoExpressShell>
