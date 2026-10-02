@@ -9,6 +9,7 @@ import {
   getPartidoSets,
   matchWinnerSideFromPartido,
 } from "../../../lib/torneoExpress/partidoSets";
+import { isPartidoEnVivoWindow } from "../../../lib/torneoExpress/partidoEnVivo";
 import { sortPartidosByOrden } from "../../../lib/torneoExpress/roundRobin";
 import { isGrupoPartidosCompletos } from "../../../lib/torneoExpress/grupoCompletion";
 import { shareGroupWinnerImage } from "../../../lib/torneoExpress/shareGroupWinnerImage";
@@ -81,10 +82,18 @@ const DEFAULT_CLASIFICAN = 2;
 
 function resolvePartidoEstado(
   partido: TorneoExpressPartido,
-  enVivoId: string | null
+  now: Date
 ): TEPartidoEstadoPublico {
   if (partido.estado === "jugado") return "finalizado";
-  if (partido.id === enVivoId) return "en_vivo";
+  if (
+    isPartidoEnVivoWindow({
+      estado: partido.estado,
+      programado_en: partido.programado_en,
+      now,
+    })
+  ) {
+    return "en_vivo";
+  }
   return "pendiente";
 }
 
@@ -93,15 +102,7 @@ function mapPartidosForGrupo(
   labelById: Map<string, string>
 ): TEPublicGruposPartido[] {
   const sorted = sortPartidosByOrden(partidos);
-  const nowMs = Date.now();
-  const enVivoId =
-    sorted.find((p) => {
-      if (p.estado !== "pendiente") return false;
-      const iso = p.programado_en?.trim();
-      if (!iso) return false;
-      const ms = Date.parse(iso);
-      return Number.isFinite(ms) && nowMs >= ms;
-    })?.id ?? null;
+  const now = new Date();
 
   return sorted.map((partido) => {
     const played = partido.estado === "jugado";
@@ -115,7 +116,7 @@ function mapPartidosForGrupo(
       pareja2: labelById.get(partido.pareja_visitante_id) ?? "Visitante",
       score1: played ? (partido.puntos_local ?? 0) : null,
       score2: played ? (partido.puntos_visitante ?? 0) : null,
-      estado: resolvePartidoEstado(partido, enVivoId),
+      estado: resolvePartidoEstado(partido, now),
       partidoExpress: partido,
     };
   });

@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { isPartidoEnVivoWindow } from "../../../lib/torneoExpress/partidoEnVivo";
 import { sortPartidosByOrden } from "../../../lib/torneoExpress/roundRobin";
 import type {
   TorneoExpressGrupoPareja,
@@ -21,18 +22,6 @@ export const PublicPartidosSection: React.FC<{
     );
     return m;
   }, [parejas]);
-
-  const enVivoId = useMemo(() => {
-    const nowMs = Date.now();
-    const first = sorted.find((p) => {
-      if (p.estado !== "pendiente") return false;
-      const iso = p.programado_en?.trim();
-      if (!iso) return false;
-      const ms = Date.parse(iso);
-      return Number.isFinite(ms) && nowMs >= ms;
-    });
-    return first?.id ?? null;
-  }, [sorted]);
 
   if (sorted.length === 0) {
     return (
@@ -57,7 +46,10 @@ export const PublicPartidosSection: React.FC<{
             visitLabel={
               labelById.get(partido.pareja_visitante_id) ?? "Visitante"
             }
-            enVivo={partido.id === enVivoId}
+            enVivo={isPartidoEnVivoWindow({
+              estado: partido.estado,
+              programado_en: partido.programado_en,
+            })}
             index={index}
           />
         ))}

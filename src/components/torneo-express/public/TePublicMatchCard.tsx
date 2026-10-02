@@ -33,12 +33,14 @@ export const TePublicMatchCard: React.FC<{
     programado_en: partido.programado_en,
     programado_hasta: null,
   });
+  // TE: «En vivo» solo si el caller confirma ventana de horario (día+hora).
+  // Sin horario (unknown) o fuera de ventana → upcoming/pending, nunca live.
   const statusVariant = played
     ? "played"
-    : schedulePhase === "upcoming"
-      ? "upcoming"
-      : enVivo || schedulePhase === "in_window" || schedulePhase === "unknown"
-        ? "live"
+    : enVivo
+      ? "live"
+      : schedulePhase === "upcoming" || schedulePhase === "unknown"
+        ? "upcoming"
         : resolvePublicMatchStatusVariant({
             matchFinished: false,
             eventPhase: schedulePhase,

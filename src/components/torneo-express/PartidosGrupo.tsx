@@ -23,6 +23,7 @@ import {
   getPartidoSets,
   matchWinnerSideFromPartido,
 } from "../../lib/torneoExpress/partidoSets";
+import { findPartidoEnVivoId } from "../../lib/torneoExpress/partidoEnVivo";
 import {
   formatProgramadoSwapPrompt,
   findConflictingPartidoIds,
@@ -806,10 +807,10 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
     return m;
   }, [parejas]);
 
-  const enJuegoId = useMemo(() => {
-    const firstPending = localPartidos.find((p) => p.estado === "pendiente");
-    return firstPending?.id ?? null;
-  }, [localPartidos]);
+  const enJuegoId = useMemo(
+    () => findPartidoEnVivoId(localPartidos),
+    [localPartidos]
+  );
 
   const showReorder = allowReorder && editable && Boolean(onSaveOrden);
 
