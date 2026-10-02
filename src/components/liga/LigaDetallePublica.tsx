@@ -5,7 +5,12 @@ import type {
   LigaJornada,
   RankingItem,
 } from "../../lib/liga/types";
-import { isEquiposModalidad } from "../../lib/liga/ligaModalidad";
+import {
+  isEquiposModalidad,
+  isParejasFijasPlayoffs,
+} from "../../lib/liga/ligaModalidad";
+import { supabase } from "../../lib/supabaseClient";
+import { aplicarRatingsPendientesLigaPlayoffs } from "../../lib/rivieraJugadores/aplicarRatingPartido";
 import { compareEquiposRanking } from "../../lib/liga/equiposRanking";
 import { ligaModalidadPublicLabel } from "../../lib/liga/types";
 import {
@@ -203,9 +208,22 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
 
     let cancelled = false;
     setParejaFotosReady(false);
-    void resolveLigaJugadorPublicProfiles(organizadorId, entries).then(
+    void (async () => {
+      if (isParejasFijasPlayoffs(detalle?.modalidad)) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user?.id === organizadorId) {
+          try {
+            await aplicarRatingsPendientesLigaPlayoffs(ligaId, organizadorId);
+          } catch (error) {
+            console.warn("[rating] liga playoffs pendientes:", error);
+          }
+        }
+      }
+      if (cancelled) return;
+      return resolveLigaJugadorPublicProfiles(organizadorId, entries);
+    })().then(
       (profiles) => {
-        if (cancelled) return;
+        if (cancelled || !profiles) return;
         const fotos: Record<string, string | null> = {};
         const ratings: Record<string, number | null> = {};
         for (const entry of entries) {
@@ -216,12 +234,15 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
         setParejaRatings(ratings);
         setParejaFotosReady(true);
       }
-    );
+    ).catch((error) => {
+      console.warn("[rating] perfiles liga:", error);
+      if (!cancelled) setParejaFotosReady(true);
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [detalle?.organizador_id, detalle?.modalidad, detalle?.equipos]);
+  }, [ligaId, detalle?.organizador_id, detalle?.modalidad, detalle?.equipos]);
 
   const rankingEquiposOrdered = useMemo(() => {
     const sorted = [...rankingEquipos].sort((a, b) =>

@@ -16,6 +16,7 @@ import {
   isEquiposModalidad,
   isParejasFijasPlayoffs,
 } from "../../lib/liga/ligaModalidad";
+import { aplicarRatingsPendientesLigaPlayoffs } from "../../lib/rivieraJugadores/aplicarRatingPartido";
 import { PLAYOFFS_MIN_TEAMS } from "../../lib/liga/parejasFijasPlayoffsFixture";
 import { copyTextToClipboard } from "../../lib/clipboard/copyTextToClipboard";
 import { formatFechaLegible, dateInputValue } from "../../lib/liga/programacion";
@@ -242,6 +243,15 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     void (async () => {
       try {
         const outcome = await resyncAllCompletedLigaJornadasCareer(ligaKey);
+        if (
+          isParejasFijasPlayoffs(detalle.modalidad) &&
+          detalle.organizador_id
+        ) {
+          await aplicarRatingsPendientesLigaPlayoffs(
+            ligaKey,
+            detalle.organizador_id
+          );
+        }
         if (cancelled) return;
         if (outcome.careerSyncOk) {
           autoJornadasResyncRef.current = ligaKey;

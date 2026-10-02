@@ -565,7 +565,7 @@ async function aplicarRatingLigaPorGanador(
   );
   if (!teamA || !teamB) return;
 
-  aplicarRatingPartidoSafe({
+  await aplicarRatingPartido({
     j1: teamA[0],
     j2: teamA[1],
     j3: teamB[0],
@@ -575,6 +575,64 @@ async function aplicarRatingLigaPorGanador(
     partidoRef: `liga:${partido.id}`,
     descripcion: "Liga · jornada",
   });
+}
+
+const ligaPlayoffsRatingSynced = new Set<string>();
+
+/**
+ * Las jornadas de parejas fijas playoffs no pasaban por el motor de rating.
+ * Aplica, en orden de jornada, cada partido ya completado. El RPC es
+ * idempotente por `liga:{partidoId}`: no cuenta dos veces el mismo partido.
+ */
+export async function aplicarRatingsPendientesLigaPlayoffs(
+  ligaId: string,
+  organizadorId: string
+): Promise<void> {
+  const key = `${ligaId}:${organizadorId}`;
+  if (!ligaId || !organizadorId || ligaPlayoffsRatingSynced.has(key)) return;
+  ligaPlayoffsRatingSynced.add(key);
+
+  try {
+    const { data: jornadas, error: jErr } = await supabase
+      .from("liga_jornadas")
+      .select("id, numero")
+      .eq("liga_id", ligaId)
+      .order("numero", { ascending: true });
+    if (jErr) throw new Error(jErr.message);
+
+    const order = new Map(
+      (jornadas ?? []).map((j) => [String(j.id), Number(j.numero ?? 0)])
+    );
+    const jornadaIds = Array.from(order.keys());
+    if (jornadaIds.length === 0) return;
+
+    const { data: partidos, error: pErr } = await supabase
+      .from("liga_partidos")
+      .select("id, jornada_id, ronda, estado, score_pareja1, score_pareja2")
+      .in("jornada_id", jornadaIds)
+      .eq("estado", "completed");
+    if (pErr) throw new Error(pErr.message);
+
+    const list = (partidos ?? []).filter(
+      (p) => p.score_pareja1 != null && p.score_pareja2 != null
+    );
+    list.sort((a, b) => {
+      const ja = order.get(String(a.jornada_id)) ?? 0;
+      const jb = order.get(String(b.jornada_id)) ?? 0;
+      if (ja !== jb) return ja - jb;
+      return Number(a.ronda ?? 0) - Number(b.ronda ?? 0);
+    });
+
+    for (const partido of list) {
+      await aplicarRatingLigaPlayoffsPartido(String(partido.id), organizadorId);
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.toLowerCase().includes("no autorizado")) {
+      ligaPlayoffsRatingSynced.delete(key);
+    }
+    throw error;
+  }
 }
 
 export async function aplicarRatingAmericanoPartido(
