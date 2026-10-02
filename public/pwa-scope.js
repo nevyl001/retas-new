@@ -1,8 +1,11 @@
 /**
- * Compatibilidad con un index.html viejo todavía cacheado.
- * El HTML actual ya no referencia este archivo: carga public/pwa-scope.js
- * en el head. Se conserva por si ese HTML antiguo sigue pidiendo
- * /sw-unregister.js al final del body.
+ * Gate de PWA antes de React.
+ * El HTML no incluye <link rel="manifest">. Este script impide el mini-infobar
+ * de Chrome hasta que la app privada ponga window.__rivieraAllowPwaInstall = true,
+ * y da de baja service workers que una visita anterior hubiera registrado.
+ *
+ * No vuelve a registrar /sw.js: el fetch del SW interfería con el refresh de
+ * token de Supabase. Chrome instala con el manifest; el SW no es requisito.
  */
 (function () {
   var w = window;

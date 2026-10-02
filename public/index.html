@@ -90,7 +90,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!-- El manifest PWA no se enlaza aquí: las vistas públicas no deben ser instalables.
+         La app autenticada lo inserta en runtime (src/lib/pwa/pwaInstallability.ts). -->
+    <script src="%PUBLIC_URL%/pwa-scope.js"></script>
     <link rel="stylesheet" href="%PUBLIC_URL%/ios-pwa.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -101,7 +103,5 @@
 <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-
-    <script src="%PUBLIC_URL%/sw-unregister.js"></script>
 
 </html>

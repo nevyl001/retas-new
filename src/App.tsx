@@ -56,6 +56,7 @@ import {
 } from "./lib/mobileAppNavigation";
 import { PrivacidadTerminosPage } from "./components/legal/PrivacidadTerminosPage";
 import { useSyncPathname } from "./components/torneo-express/torneoExpressNav";
+import { syncPwaInstallabilityForSession } from "./lib/pwa/pwaInstallability";
 import {
   navigateToAppHome,
   navigateToReta,
@@ -168,6 +169,15 @@ function AppContent() {
   const { user, loading: authLoading } = useUser();
   const { isAdminLoggedIn, loading: adminLoading } = useAdmin();
   const appPathname = useSyncPathname();
+
+  useEffect(() => {
+    syncPwaInstallabilityForSession({
+      pathname: appPathname,
+      hasUserSession: Boolean(user),
+      isAdminLoggedIn,
+      authReady: !authLoading && !adminLoading,
+    });
+  }, [appPathname, user, isAdminLoggedIn, authLoading, adminLoading]);
 
   useEffect(() => {
     const redirect = resolvePublicVistaPublicaRedirect(appPathname);
