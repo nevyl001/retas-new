@@ -10,6 +10,10 @@ import {
   parseSetScoresJson,
   resolveParejasFijasPartidoTotals,
 } from "../liga/parejasFijasMatchScore";
+import {
+  computePlayoffsMatchPoints,
+  parsePlayoffsSetScoresJson,
+} from "../liga/parejasFijasPlayoffsMatchScore";
 
 export type RatingModoJuego =
   | "reta_rr"
@@ -470,6 +474,55 @@ export async function aplicarRatingLigaPartido(
   });
   if (!totals) return;
 
+  await aplicarRatingLigaPorGanador(
+    partido,
+    organizadorId,
+    totals.p1WonMatch
+  );
+}
+
+/**
+ * Parejas fijas playoffs: el marcador no trae `kind`, así que el helper
+ * legacy no puede decidir ganador. Sí mueve el rating de la ficha.
+ */
+export async function aplicarRatingLigaPlayoffsPartido(
+  partidoId: string,
+  organizadorId: string
+): Promise<void> {
+  const { data: partido } = await supabase
+    .from("liga_partidos")
+    .select(
+      "id, pareja1_id, pareja2_id, score_pareja1, score_pareja2, set_scores"
+    )
+    .eq("id", partidoId)
+    .maybeSingle();
+  if (!partido) return;
+
+  const score1 =
+    partido.score_pareja1 != null ? Number(partido.score_pareja1) : NaN;
+  const score2 =
+    partido.score_pareja2 != null ? Number(partido.score_pareja2) : NaN;
+  const payload = parsePlayoffsSetScoresJson(partido.set_scores);
+  if (!payload || !Number.isFinite(score1) || !Number.isFinite(score2)) return;
+  const computed = computePlayoffsMatchPoints(score1, score2, payload);
+  if (!computed.ok) return;
+
+  await aplicarRatingLigaPorGanador(
+    partido,
+    organizadorId,
+    computed.result.p1Won
+  );
+}
+
+async function aplicarRatingLigaPorGanador(
+  partido: {
+    id: string;
+    pareja1_id: string;
+    pareja2_id: string;
+  },
+  organizadorId: string,
+  p1Won: boolean
+): Promise<void> {
   const { data: parejas } = await supabase
     .from("liga_jornada_parejas")
     .select(
@@ -517,9 +570,9 @@ export async function aplicarRatingLigaPartido(
     j2: teamA[1],
     j3: teamB[0],
     j4: teamB[1],
-    ganador: totals.p1WonMatch ? "a" : "b",
+    ganador: p1Won ? "a" : "b",
     modoJuego: "liga",
-    partidoRef: `liga:${partidoId}`,
+    partidoRef: `liga:${partido.id}`,
     descripcion: "Liga · jornada",
   });
 }

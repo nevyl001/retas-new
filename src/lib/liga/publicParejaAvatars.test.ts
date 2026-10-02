@@ -95,7 +95,11 @@ describe("resolveLigaJugadorPublicFotos", () => {
         error: null,
       })
       .mockResolvedValueOnce({
-        data: [{ nombre: "César G", rating: 3.31 }],
+        data: [{ id: "rj-cesar", nombre: "César G", rating: 3.04 }],
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: [{ jugador_id: "rj-cesar", rating: 3.31 }],
         error: null,
       });
 

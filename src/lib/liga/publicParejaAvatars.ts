@@ -196,7 +196,7 @@ async function fetchDirectLigaJugadorFotosByName(
   return { fotos, ratings };
 }
 
-/** Rating del roster del club (misma cifra que la ficha del jugador). */
+/** Rating del roster del club, el mismo de la ficha (canónico, no el clon local). */
 async function fetchRatingsFromClubRoster(
   organizadorId: string,
   entries: PlayerAvatarLookupEntry[]
@@ -215,21 +215,64 @@ async function fetchRatingsFromClubRoster(
   );
   if (error || !Array.isArray(data)) return ratings;
 
-  const byName = new Map<string, number[]>();
-  for (const row of data as Array<{ nombre?: string | null; rating?: unknown }>) {
+  const byName = new Map<string, { ids: string[]; ratings: number[] }>();
+  for (const row of data as Array<{
+    id?: string | null;
+    nombre?: string | null;
+    rating?: unknown;
+  }>) {
     const key = normalizePlayerNameKey(String(row.nombre ?? ""));
     const rating = parsePublicRating(row.rating);
+    const id = String(row.id ?? "").trim();
     if (!key || rating == null) continue;
-    const list = byName.get(key) ?? [];
-    list.push(rating);
-    byName.set(key, list);
+    const bucket = byName.get(key) ?? { ids: [], ratings: [] };
+    if (id) bucket.ids.push(id);
+    bucket.ratings.push(rating);
+    byName.set(key, bucket);
+  }
+
+  const rivieraIds = Array.from(
+    new Set(
+      Array.from(byName.values()).flatMap((bucket) =>
+        Array.from(new Set(bucket.ids)).length === 1 ? bucket.ids : []
+      )
+    )
+  );
+  const canonical = new Map<string, number>();
+  if (rivieraIds.length > 0) {
+    const { data: profiles, error: profileErr } = await supabasePublicRead.rpc(
+      "riviera_public_riviera_jugador_profiles",
+      {
+        p_organizador_id: organizadorId,
+        p_jugador_ids: rivieraIds,
+      }
+    );
+    if (!profileErr && Array.isArray(profiles)) {
+      for (const row of profiles as Array<{
+        jugador_id?: string | null;
+        rating?: unknown;
+      }>) {
+        const id = String(row.jugador_id ?? "").trim();
+        const rating = parsePublicRating(row.rating);
+        if (id && rating != null) canonical.set(id, rating);
+      }
+    }
   }
 
   for (const entry of pending) {
     const key = normalizePlayerNameKey(entry.name ?? "");
-    const list = byName.get(key) ?? [];
-    const unique = Array.from(new Set(list));
-    if (unique.length === 1) ratings.set(entry.id, unique[0]!);
+    const bucket = byName.get(key);
+    if (!bucket) continue;
+    const uniqueIds = Array.from(new Set(bucket.ids));
+    const uniqueLocal = Array.from(new Set(bucket.ratings));
+    if (uniqueIds.length === 1) {
+      const fromFicha = canonical.get(uniqueIds[0]!);
+      if (fromFicha != null) {
+        ratings.set(entry.id, fromFicha);
+        continue;
+      }
+    }
+    if (uniqueLocal.length === 1) ratings.set(entry.id, uniqueLocal[0]!);
   }
   return ratings;
 }

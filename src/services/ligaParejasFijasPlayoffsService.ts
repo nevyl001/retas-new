@@ -576,6 +576,19 @@ export async function updateScoreParejasFijasPlayoffs(
     };
   }
 
+  if (result.status !== "unchanged") {
+    const { data: authData } = await supabase.auth.getUser();
+    const organizadorId = authData.user?.id;
+    if (organizadorId) {
+      void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
+        ({ aplicarRatingLigaPlayoffsPartido }) =>
+          aplicarRatingLigaPlayoffsPartido(partidoId, organizadorId).catch(
+            (e) => console.warn("[rating] liga playoffs:", e)
+          )
+      );
+    }
+  }
+
   const { data: partido } = await supabase
     .from("liga_partidos")
     .select("liga_id, bracket_slot, jornada_id")
