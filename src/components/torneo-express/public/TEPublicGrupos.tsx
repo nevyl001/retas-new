@@ -20,7 +20,7 @@ import {
 } from "../../../lib/rivieraBranding";
 import { RIVIERA_CO_BRAND_ATTRIBUTION } from "../../../club-experience/motherBrand";
 import { useClubExperience } from "../../../club-experience";
-import { clasificacionStepsSummary } from "../../../lib/torneoExpress/clasificacionModo";
+import { clasificacionOrderSummary } from "../../../lib/torneoExpress/clasificacionModo";
 import type {
   StandingRowExpress,
   TorneoExpressBundle,
@@ -862,10 +862,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
       {grupos.length > 0 && (
         <details className="te-grupos-scoring-help">
           <summary>Criterios de clasificación</summary>
-          <p>
-            {clasificacionStepsSummary(clasificacionModo)} La columna derecha
-            muestra DIF.
-          </p>
+          <p>{clasificacionOrderSummary(clasificacionModo)}</p>
         </details>
       )}
 

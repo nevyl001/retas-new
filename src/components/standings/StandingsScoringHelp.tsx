@@ -35,12 +35,7 @@ function expressLead(modo: TorneoExpressClasificacionModo): React.ReactNode {
 }
 
 function expressOrder(modo: TorneoExpressClasificacionModo): React.ReactNode {
-  return (
-    <>
-      Orden: <strong>{clasificacionOrderSummary(modo)}</strong> ·{" "}
-      <strong>PTS</strong> = referencia
-    </>
-  );
+  return <strong>{clasificacionOrderSummary(modo)}</strong>;
 }
 
 function buildHelpCopy(

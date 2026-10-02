@@ -8,8 +8,7 @@ export const PublicStandingsScoringHelp: React.FC<{
 }> = ({ clasificacionModo = "dif_puntos" }) => (
   <aside className="te-pub-scoring-help" aria-label="Cómo se calcula la clasificación">
     <p className="te-pub-scoring-help__text">
-      Orden: <strong>{clasificacionOrderSummary(clasificacionModo)}</strong> ·
-      columna derecha = <strong>DIF</strong>
+      <strong>{clasificacionOrderSummary(clasificacionModo)}</strong>
     </p>
   </aside>
 );

@@ -51,8 +51,7 @@ export const CLASIFICACION_MODO_OPTIONS: readonly ClasificacionModoOption[] = [
       "5. Más sets ganados",
       "6. Más games ganados",
     ],
-    orderSummary:
-      "PG → H2H (2) → DIF sets → DIF games → sets ganados → games ganados",
+    orderSummary: "PG → H2H → sets → games",
   },
 ] as const;
 
@@ -98,11 +97,3 @@ export function clasificacionOrderSummary(
   return opt?.orderSummary ?? CLASIFICACION_MODO_OPTIONS[0].orderSummary;
 }
 
-/** Texto largo legible para criterios públicos / help. */
-export function clasificacionStepsSummary(
-  modo: TorneoExpressClasificacionModo
-): string {
-  const opt = CLASIFICACION_MODO_OPTIONS.find((o) => o.value === modo);
-  if (!opt) return clasificacionOrderSummary(modo);
-  return `${opt.description} ${opt.steps.join(" · ")}`;
-}
