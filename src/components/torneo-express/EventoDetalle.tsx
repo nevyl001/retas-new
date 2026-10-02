@@ -595,7 +595,10 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                     Clasificación a siguiente fase
                   </legend>
                   {CLASIFICACION_MODO_OPTIONS.map((opt) => (
-                    <label key={opt.value} className="te-evento-radio te-evento-radio--stacked">
+                    <label
+                      key={opt.value}
+                      className="te-evento-radio te-evento-radio--stacked"
+                    >
                       <span className="te-evento-radio__row">
                         <input
                           type="radio"
@@ -605,7 +608,14 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                         />
                         {opt.label}
                       </span>
-                      <span className="te-evento-radio__desc">{opt.description}</span>
+                      <span className="te-evento-radio__desc">
+                        {opt.description}
+                      </span>
+                      <ol className="te-evento-radio__steps">
+                        {opt.steps.map((step) => (
+                          <li key={step}>{step.replace(/^\d+\.\s*/, "")}</li>
+                        ))}
+                      </ol>
                     </label>
                   ))}
                 </fieldset>
@@ -614,7 +624,10 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                     Formato de partido
                   </legend>
                   {PARTIDO_FORMATO_OPTIONS.map((opt) => (
-                    <label key={opt.value} className="te-evento-radio te-evento-radio--stacked">
+                    <label
+                      key={opt.value}
+                      className="te-evento-radio te-evento-radio--stacked"
+                    >
                       <span className="te-evento-radio__row">
                         <input
                           type="radio"
@@ -624,7 +637,16 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                         />
                         {opt.label}
                       </span>
-                      <span className="te-evento-radio__desc">{opt.description}</span>
+                      <span className="te-evento-radio__desc">
+                        {opt.description}
+                      </span>
+                      {opt.steps && opt.steps.length > 0 ? (
+                        <ol className="te-evento-radio__steps">
+                          {opt.steps.map((step) => (
+                            <li key={step}>{step.replace(/^\d+\.\s*/, "")}</li>
+                          ))}
+                        </ol>
+                      ) : null}
                     </label>
                   ))}
                 </fieldset>

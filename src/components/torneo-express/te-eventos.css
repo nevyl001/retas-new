@@ -266,9 +266,24 @@
 
 .te-evento-radio__desc {
   font-size: 0.75rem;
-  line-height: 1.35;
-  color: var(--ro-text-muted);
+  line-height: 1.4;
+  color: var(--ro-text-secondary, var(--ro-text-muted));
   padding-left: 1.75rem;
+}
+
+.te-evento-radio__steps {
+  margin: 0.15rem 0 0.35rem;
+  padding: 0 0 0 2.85rem;
+  list-style: decimal;
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--ro-text-muted);
+}
+
+.te-evento-radio__steps li {
+  padding-left: 0.15rem;
 }
 
 .te-evento-flyer-tools {
