@@ -22,11 +22,13 @@ const EXPECTED = {
     pair_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
     player1_id: "20000000-0000-0000-0000-000000000001",
     player2_id: "20000000-0000-0000-0000-000000000002",
+    is_virtual: false,
   },
   visitante: {
     pair_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     player1_id: "20000000-0000-0000-0000-000000000003",
     player2_id: "20000000-0000-0000-0000-000000000004",
+    is_virtual: false,
   },
 };
 

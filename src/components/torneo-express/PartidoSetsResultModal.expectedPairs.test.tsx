@@ -5,13 +5,13 @@ import { TorneoExpressComposicionCambiadaError } from "../../services/torneoExpr
 import type { ExpectedPairs } from "../../lib/torneoExpress/types";
 
 const JUAN_PEDRO: ExpectedPairs = {
-  local: { pair_id: "local", player1_id: "juan", player2_id: "pedro" },
-  visitante: { pair_id: "visit", player1_id: "luis", player2_id: "mario" },
+  local: { pair_id: "local", player1_id: "juan", player2_id: "pedro", is_virtual: false },
+  visitante: { pair_id: "visit", player1_id: "luis", player2_id: "mario", is_virtual: false },
 };
 
 const JUAN_CARLOS: ExpectedPairs = {
-  local: { pair_id: "local", player1_id: "juan", player2_id: "carlos" },
-  visitante: { pair_id: "visit", player1_id: "luis", player2_id: "mario" },
+  local: { pair_id: "local", player1_id: "juan", player2_id: "carlos", is_virtual: false },
+  visitante: { pair_id: "visit", player1_id: "luis", player2_id: "mario", is_virtual: false },
 };
 
 describe("PartidoSetsResultModal expectedPairs", () => {

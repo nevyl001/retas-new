@@ -77,11 +77,12 @@ export interface PartidoSetScore {
 
 export interface ExpectedPairSide {
   pair_id: string;
-  player1_id: string;
-  player2_id: string;
+  player1_id: string | null;
+  player2_id: string | null;
+  is_virtual: boolean;
 }
 
-/** Composición congelada al abrir el modal de resultado. Solo ids. */
+/** Composición congelada al abrir el modal de resultado. No sigue al realtime. */
 export interface ExpectedPairs {
   local: ExpectedPairSide;
   visitante: ExpectedPairSide;
@@ -141,7 +142,35 @@ export interface TorneoExpressGrupoPareja {
   /** Identidad interna de la pareja. No se muestra en la UI. */
   player1_id?: string | null;
   player2_id?: string | null;
+  /** Plaza sin jugadores. El label público es `virtual_label` o `pareja_display`. */
+  is_virtual?: boolean;
+  virtual_label?: string | null;
   created_at: string;
+}
+
+/** Fila de `pairs` cuando la pareja puede ser virtual. No es el `Pair` de reta. */
+export interface TorneoExpressPairRow {
+  id: string;
+  tournament_id: string;
+  player1_id: string | null;
+  player2_id: string | null;
+  player1_name: string | null;
+  player2_name: string | null;
+  is_virtual: boolean;
+  virtual_label: string | null;
+  created_at: string;
+}
+
+/**
+ * Identidad de una plaza. `pairId` no cambia al resolver una virtual.
+ * `display` es lo único que se muestra.
+ */
+export interface PairIdentity {
+  pairId: string;
+  player1Id: string | null;
+  player2Id: string | null;
+  isVirtual: boolean;
+  display: string;
 }
 
 export interface TorneoExpressPartido {
