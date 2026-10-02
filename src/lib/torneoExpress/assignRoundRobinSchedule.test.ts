@@ -357,7 +357,47 @@ describe("assignRoundRobinSchedule", () => {
       new Set(g2.map((m) => partidoTimeInputValue24(m.programado_en!)))
     ).sort();
     expect(g1Times).toEqual(g2Times);
+    validateScheduleInvariants(draft, scheduled);
+  });
 
+  test("one court interleaves groups instead of finishing one round first", () => {
+    const grupos: GrupoAssignmentDraft[] = [
+      { nombre: "Grupo A", orden: 0, parejaIds: ["a1", "a2", "a3", "a4"] },
+      { nombre: "Grupo B", orden: 1, parejaIds: ["b1", "b2", "b3", "b4"] },
+    ];
+    const draft = buildDraftScheduleMatches(grupos);
+    const scheduled = assignRoundRobinSchedule(
+      scheduleInput(draft, {
+        courts: ["3"],
+        date: "2026-10-03",
+        startTime: "16:20",
+        durationMinutes: 30,
+      })
+    );
+
+    const byTime = [...scheduled].sort((a, b) =>
+      (a.programado_en ?? "").localeCompare(b.programado_en ?? "")
+    );
+    const groups = byTime.map((m) => m.groupKey);
+    expect(groups.slice(0, 4)).toEqual([0, 1, 0, 1]);
+
+    const groupB = byTime
+      .filter((m) => m.groupKey === 1)
+      .map((m) => partidoTimeInputValue24(m.programado_en!));
+    expect(groupB[0]).toBe("16:50");
+    expect(groupB).toEqual([
+      "16:50",
+      "17:50",
+      "18:50",
+      "19:50",
+      "20:50",
+      "21:50",
+    ]);
+
+    const groupA = byTime
+      .filter((m) => m.groupKey === 0)
+      .map((m) => partidoTimeInputValue24(m.programado_en!));
+    expect(groupA[0]).toBe("16:20");
     validateScheduleInvariants(draft, scheduled);
   });
 });

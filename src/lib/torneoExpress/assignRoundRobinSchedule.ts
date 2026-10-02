@@ -166,11 +166,13 @@ export function assignRoundRobinSchedule(
         });
       }
 
-      pending = interleavePendingByGroup(
-        pending.filter(
-          (m) => !scheduledThisSlot.some((s) => s.match.matchKey === m.matchKey)
-        )
+      const scheduledKeys = new Set(
+        scheduledThisSlot.map((slot) => slot.match.matchKey)
       );
+      // Conservar el orden intercalado (G1, G2, G1, G2…). Reagrupar por
+      // grupo empuja otra vez al primero y, con 1 cancha, retrasa 1 ronda
+      // completa al siguiente grupo.
+      pending = pending.filter((m) => !scheduledKeys.has(m.matchKey));
 
       slotIndex += 1;
       const next = addMinutesToMexicoCalendar(
