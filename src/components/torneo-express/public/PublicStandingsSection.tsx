@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { computeStandingDif } from "../../../utils/standingsDisplay";
+import { clasificacionStandingHighlight } from "../../../lib/torneoExpress/clasificacionModo";
 import type {
   StandingRowExpress,
   TorneoExpressClasificacionModo,
@@ -103,6 +104,12 @@ export const PublicStandingsSection: React.FC<{
       <div className="te-pub-standings-cards">
         {rows.map((row, index) => {
           const isLeader = index === 0;
+          const hero = clasificacionStandingHighlight(clasificacionModo, {
+            pg: row.pg,
+            ptsFav: row.ptsFav,
+            dif: row.dif,
+            setsDif: (row.setsFav ?? 0) - (row.setsCon ?? 0),
+          });
           return (
             <article
               key={`m-${row.grupoId}-${row.parejaId}`}
@@ -122,7 +129,9 @@ export const PublicStandingsSection: React.FC<{
                     <span className="te-pub-grupo-chip">{row.grupoNombre}</span>
                   )}
                 </div>
-                <span className="te-pub-standing-card__pts">{row.puntos} pts</span>
+                <span className="te-pub-standing-card__pts">
+                  {hero.value} {hero.label}
+                </span>
               </div>
               <div className="te-pub-standing-card__stats">
                 <span>

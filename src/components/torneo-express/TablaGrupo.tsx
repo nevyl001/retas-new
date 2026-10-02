@@ -41,7 +41,11 @@ export const TablaGrupo: React.FC<TablaGrupoProps> = ({
     [rows]
   );
   const criterionOrder =
-    scoringHelpVariant === "express" ? "express" : "americano";
+    scoringHelpVariant !== "express"
+      ? "americano"
+      : clasificacionModo === "setto_pg"
+        ? "express-setto"
+        : "express";
 
   return (
     <div className="te-standings-block">

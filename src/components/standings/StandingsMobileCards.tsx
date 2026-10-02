@@ -59,9 +59,9 @@ export const StandingsMobileCards: React.FC<{
   }, [rows, decidingProp, criterionOrder]);
 
   const rankClass = (key: StandingsCriterionKey) => {
-    if (criterionOrder === "express") {
-      if (key === "dif") return "standings-mobile-card__stat--criterion-1";
-      if (key === "fav") return "standings-mobile-card__stat--criterion-2";
+    if (criterionOrder === "express-setto") {
+      if (key === "pg") return "standings-mobile-card__stat--criterion-1";
+      if (key === "dif") return "standings-mobile-card__stat--criterion-2";
       return "standings-mobile-card__stat--criterion-3";
     }
     if (criterionOrder === "dual-meet") {
@@ -69,10 +69,13 @@ export const StandingsMobileCards: React.FC<{
       if (key === "con") return "standings-mobile-card__stat--criterion-2";
       return "standings-mobile-card__stat--criterion-3";
     }
+    // americano + express (games a favor): FAV → DIF → PG
     if (key === "fav") return "standings-mobile-card__stat--criterion-1";
     if (key === "dif") return "standings-mobile-card__stat--criterion-2";
     return "standings-mobile-card__stat--criterion-3";
   };
+
+  const heroIsPg = criterionOrder === "express-setto";
 
   if (rows.length === 0) return null;
 
@@ -97,9 +100,13 @@ export const StandingsMobileCards: React.FC<{
                 className={`standings-mobile-card__fav-hero${
                   isLeader ? " standings-mobile-card__fav-hero--leader" : ""
                 }`}
-                title="Games a favor (1.er criterio)"
+                title={
+                  heroIsPg
+                    ? "Partidos ganados (1.er criterio)"
+                    : "Games a favor (1.er criterio)"
+                }
               >
-                {row.points} FAV
+                {heroIsPg ? `${row.pg} PG` : `${row.points} FAV`}
               </span>
             </header>
 

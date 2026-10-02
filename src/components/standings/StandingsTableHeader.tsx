@@ -36,7 +36,7 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
   criterionOrder = "americano",
 }) => {
   const entityHeader = STANDINGS_ENTITY_HEADERS[entity];
-  const isExpress = criterionOrder === "express";
+  const isExpressSetto = criterionOrder === "express-setto";
   const isDualMeet = criterionOrder === "dual-meet";
 
   return (
@@ -53,7 +53,11 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
       </th>
       <th
         className={`${COL_PG} ${criterionHeaderClass("pg", criterionOrder)}`}
-        title="Partidos ganados (último criterio de desempate)"
+        title={
+          isExpressSetto
+            ? "Partidos ganados (1.er criterio)"
+            : "Partidos ganados (3.er criterio de desempate)"
+        }
       >
         PG
       </th>
@@ -63,8 +67,8 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
       <th
         className={`${COL_FAV} ${criterionHeaderClass("fav", criterionOrder)}`}
         title={
-          isExpress
-            ? "Juegos a favor (2.º criterio)"
+          isExpressSetto
+            ? "Juegos a favor (desempate)"
             : "Juegos a favor (1.er criterio)"
         }
       >
@@ -91,8 +95,8 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
         title={
           isDualMeet
             ? "Diferencia FAV − CON (informativo)"
-            : isExpress
-              ? "Diferencia FAV − CON (1.er criterio)"
+            : isExpressSetto
+              ? "Diferencia FAV − CON (desempate)"
               : "Diferencia FAV − CON (2.º criterio)"
         }
       >

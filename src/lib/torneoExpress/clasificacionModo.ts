@@ -152,3 +152,44 @@ export function clasificacionAchievementStats(
   ];
 }
 
+export type ClasificacionStandingHighlight = {
+  label: string;
+  value: string;
+};
+
+export type ClasificacionStandingMetaStat = {
+  label: string;
+  value: string;
+};
+
+/** Valor grande a la derecha de cada fila en la lista pública de grupo. */
+export function clasificacionStandingHighlight(
+  modo: TorneoExpressClasificacionModo,
+  row: ClasificacionAchievementInput
+): ClasificacionStandingHighlight {
+  if (modo === "setto_pg") {
+    return { label: "PG", value: String(row.pg) };
+  }
+  return { label: "FAV", value: String(row.ptsFav) };
+}
+
+/** Stats secundarios bajo el nombre en la lista pública de grupo. */
+export function clasificacionStandingMeta(
+  modo: TorneoExpressClasificacionModo,
+  row: ClasificacionAchievementInput & { pj: number }
+): ClasificacionStandingMetaStat[] {
+  if (modo === "setto_pg") {
+    const setsDif = row.setsDif ?? 0;
+    return [
+      { label: "PJ", value: String(row.pj) },
+      { label: "SETS", value: formatSignedStat(setsDif) },
+      { label: "DIF", value: formatSignedStat(row.dif) },
+    ];
+  }
+  return [
+    { label: "PJ", value: String(row.pj) },
+    { label: "PG", value: String(row.pg) },
+    { label: "DIF", value: formatSignedStat(row.dif) },
+  ];
+}
+

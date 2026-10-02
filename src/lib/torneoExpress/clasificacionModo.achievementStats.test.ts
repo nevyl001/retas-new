@@ -1,4 +1,8 @@
-import { clasificacionAchievementStats } from "./clasificacionModo";
+import {
+  clasificacionAchievementStats,
+  clasificacionStandingHighlight,
+  clasificacionStandingMeta,
+} from "./clasificacionModo";
 
 describe("clasificacionAchievementStats", () => {
   const row = {
@@ -21,6 +25,40 @@ describe("clasificacionAchievementStats", () => {
       { label: "PG", value: "2" },
       { label: "SETS", value: "+3", highlight: true },
       { label: "DIF", value: "+12", highlight: true },
+    ]);
+  });
+});
+
+describe("clasificacionStandingHighlight / meta", () => {
+  const row = {
+    pg: 2,
+    ptsFav: 15,
+    dif: 12,
+    setsDif: 3,
+    pj: 2,
+  };
+
+  it("games a favor destaca FAV y meta PJ/PG/DIF", () => {
+    expect(clasificacionStandingHighlight("dif_puntos", row)).toEqual({
+      label: "FAV",
+      value: "15",
+    });
+    expect(clasificacionStandingMeta("dif_puntos", row)).toEqual([
+      { label: "PJ", value: "2" },
+      { label: "PG", value: "2" },
+      { label: "DIF", value: "+12" },
+    ]);
+  });
+
+  it("partidos ganados destaca PG y meta PJ/SETS/DIF", () => {
+    expect(clasificacionStandingHighlight("setto_pg", row)).toEqual({
+      label: "PG",
+      value: "2",
+    });
+    expect(clasificacionStandingMeta("setto_pg", row)).toEqual([
+      { label: "PJ", value: "2" },
+      { label: "SETS", value: "+3" },
+      { label: "DIF", value: "+12" },
     ]);
   });
 });

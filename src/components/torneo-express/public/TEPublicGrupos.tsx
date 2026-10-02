@@ -23,6 +23,8 @@ import { useClubExperience } from "../../../club-experience";
 import {
   clasificacionAchievementStats,
   clasificacionOrderSummary,
+  clasificacionStandingHighlight,
+  clasificacionStandingMeta,
 } from "../../../lib/torneoExpress/clasificacionModo";
 import type {
   StandingRowExpress,
@@ -312,10 +314,6 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
   );
 }
 
-function formatDif(dif: number): string {
-  return dif > 0 ? `+${dif}` : String(dif);
-}
-
 function readShareTheme(): { primary: string; accent: string } {
   if (typeof document === "undefined") {
     return { primary: "#111416", accent: "#c9845c" };
@@ -397,9 +395,11 @@ function ParejaStandingName({ label }: { label: string }) {
 function GrupoStandings({
   rows,
   clasifican,
+  clasificacionModo,
 }: {
   rows: StandingRowExpress[];
   clasifican: number;
+  clasificacionModo: TorneoExpressClasificacionModo;
 }) {
   const grupoIniciado = rows.some((r) => r.pj > 0);
   return (
@@ -416,6 +416,18 @@ function GrupoStandings({
         <ol className="te-grupo-standings__list">
           {rows.map((row, index) => {
             const clasifica = grupoIniciado && index < clasifican;
+            const rowInput = {
+              pg: row.pg,
+              ptsFav: row.ptsFav,
+              dif: row.dif,
+              setsDif: (row.setsFav ?? 0) - (row.setsCon ?? 0),
+              pj: row.pj,
+            };
+            const highlight = clasificacionStandingHighlight(
+              clasificacionModo,
+              rowInput
+            );
+            const meta = clasificacionStandingMeta(clasificacionModo, rowInput);
             return (
               <li
                 key={`${row.grupoId}-${row.parejaId}`}
@@ -429,15 +441,11 @@ function GrupoStandings({
                     <ParejaStandingName label={row.parejaLabel} />
                   </div>
                   <span className="te-standing-row__meta">
-                    <span className="te-standing-row__stat">
-                      <b>{row.pj}</b> PJ
-                    </span>
-                    <span className="te-standing-row__stat">
-                      <b>{row.pg}</b> PG
-                    </span>
-                    <span className="te-standing-row__stat">
-                      {row.ptsFav}–{row.ptsCon}
-                    </span>
+                    {meta.map((stat) => (
+                      <span key={stat.label} className="te-standing-row__stat">
+                        <b>{stat.value}</b> {stat.label}
+                      </span>
+                    ))}
                   </span>
                   {clasifica ? (
                     <span className="te-standing-row__qualified">
@@ -446,8 +454,8 @@ function GrupoStandings({
                   ) : null}
                 </div>
                 <strong className="te-standing-row__points">
-                  {formatDif(row.dif)}
-                  <small>DIF</small>
+                  {highlight.value}
+                  <small>{highlight.label}</small>
                 </strong>
               </li>
             );
@@ -902,6 +910,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
                 <GrupoStandings
                   rows={grupo.standingRows}
                   clasifican={grupo.clasifican}
+                  clasificacionModo={clasificacionModo}
                 />
                 <GrupoWinnerSummary
                   grupoNombre={grupo.nombre}
