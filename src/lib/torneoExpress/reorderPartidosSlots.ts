@@ -13,6 +13,9 @@ import type { TorneoExpressPartido } from "./types";
 export const REORDER_PAIR_SLOT_CONFLICT_MSG =
   "Esa pareja ya juega a esa hora. Elige otro lugar.";
 
+export const REORDER_COURT_SLOT_CONFLICT_MSG =
+  "No se pudo reorganizar sin chocar con otra cancha u horario. Revisa la programación.";
+
 type ScheduleSlot = {
   programado_en: string | null;
   cancha: string | null;
@@ -20,13 +23,22 @@ type ScheduleSlot = {
 
 const DEFAULT_REORDER_DURATION_MINUTES = 30;
 
+/** Misma normalización que partidoCourtSlotConflict.canchaSlotKey (sin ciclo de imports). */
+function courtKey(raw: string | null | undefined): string {
+  const v = (raw ?? "").trim().replace(/\s+/g, " ");
+  if (!v) return "";
+  const lower = v.toLowerCase();
+  const prefixed = lower.match(/^cancha\s+(.+)$/);
+  return (prefixed ? prefixed[1].trim() || lower : lower);
+}
+
 function slotSortKey(slot: ScheduleSlot): string {
   const iso = slot.programado_en?.trim();
   if (!iso) return `\uffff|${slot.cancha ?? ""}`;
   try {
-    return `${mexicoScheduleSlotKey(iso)}|${(slot.cancha ?? "").trim().toLowerCase()}`;
+    return `${mexicoScheduleSlotKey(iso)}|${courtKey(slot.cancha)}`;
   } catch {
-    return `${iso}|${slot.cancha ?? ""}`;
+    return `${iso}|${courtKey(slot.cancha)}`;
   }
 }
 
@@ -71,35 +83,46 @@ function inferDurationMinutesFromSlots(slots: ScheduleSlot[]): number {
   return bestGap;
 }
 
-function uniqueCourtsPreserveOrder(slots: ScheduleSlot[]): string[] {
+/** Nombre de cancha canónico para guardar (prioriza el texto ya usado). */
+function uniqueCourtsPreserveOrder(
+  slots: ScheduleSlot[],
+  extra: TorneoExpressPartido[] = []
+): string[] {
   const seen = new Set<string>();
   const courts: string[] = [];
-  for (const slot of slots) {
-    const name = slot.cancha?.trim();
-    if (!name) continue;
-    const key = name.toLowerCase();
-    if (seen.has(key)) continue;
+
+  const push = (raw: string | null | undefined) => {
+    const name = raw?.trim();
+    if (!name) return;
+    const key = courtKey(name);
+    if (!key || seen.has(key)) return;
     seen.add(key);
     courts.push(name);
-  }
+  };
+
+  for (const slot of slots) push(slot.cancha);
+  for (const partido of extra) push(partido.cancha);
+
   return courts.length > 0 ? courts : ["Cancha 1"];
 }
 
+function slotKeyOf(iso: string | null | undefined): string | null {
+  const value = iso?.trim();
+  if (!value) return null;
+  try {
+    return mexicoScheduleSlotKey(value);
+  } catch {
+    return null;
+  }
+}
+
 function pairsBusyAtSlot(
-  assigned: TorneoExpressPartido[],
+  partidos: TorneoExpressPartido[],
   slotKey: string
 ): Set<string> {
   const busy = new Set<string>();
-  for (const partido of assigned) {
-    const iso = partido.programado_en?.trim();
-    if (!iso) continue;
-    let key: string;
-    try {
-      key = mexicoScheduleSlotKey(iso);
-    } catch {
-      continue;
-    }
-    if (key !== slotKey) continue;
+  for (const partido of partidos) {
+    if (slotKeyOf(partido.programado_en) !== slotKey) continue;
     busy.add(partido.pareja_local_id);
     busy.add(partido.pareja_visitante_id);
   }
@@ -107,29 +130,19 @@ function pairsBusyAtSlot(
 }
 
 function courtsTakenAtSlot(
-  assigned: TorneoExpressPartido[],
+  partidos: TorneoExpressPartido[],
   slotKey: string
 ): Set<string> {
   const taken = new Set<string>();
-  for (const partido of assigned) {
-    const iso = partido.programado_en?.trim();
-    const cancha = partido.cancha?.trim();
-    if (!iso || !cancha) continue;
-    let key: string;
-    try {
-      key = mexicoScheduleSlotKey(iso);
-    } catch {
-      continue;
-    }
-    if (key === slotKey) taken.add(cancha.toLowerCase());
+  for (const partido of partidos) {
+    if (slotKeyOf(partido.programado_en) !== slotKey) continue;
+    const key = courtKey(partido.cancha);
+    if (key) taken.add(key);
   }
   return taken;
 }
 
-function nextIsoAfter(
-  iso: string,
-  durationMinutes: number
-): string | null {
+function nextIsoAfter(iso: string, durationMinutes: number): string | null {
   const date = partidoDateInputValue(iso);
   const time = partidoTimeInputValue24(iso);
   const next = addMinutesToMexicoCalendar(date, time, durationMinutes);
@@ -137,14 +150,22 @@ function nextIsoAfter(
   return programadoIsoFromMexicoCalendar(next.date, next.time);
 }
 
+export type ReorderScheduleOptions = {
+  /**
+   * Partidos de otros grupos (o del torneo) que no se mueven.
+   * Sus canchas/horarios se respetan al reorganizar.
+   */
+  externalPartidos?: TorneoExpressPartido[];
+};
+
 /**
- * Empaqueta partidos en orden deseado sobre canchas/horarios del grupo.
- * Si dos partidos no pueden compartir horario (misma pareja), el segundo
- * se corre al siguiente hueco — reorganiza automáticamente.
+ * Empaqueta partidos en el orden deseado eligiendo horario + cancha libres
+ * respecto a parejas del grupo y canchas ya ocupadas en el torneo.
  */
 function packMatchesInDesiredOrder(
   matches: TorneoExpressPartido[],
-  templateSlots: ScheduleSlot[]
+  templateSlots: ScheduleSlot[],
+  externalPartidos: TorneoExpressPartido[]
 ): TorneoExpressPartido[] {
   if (matches.length === 0) return [];
 
@@ -159,9 +180,12 @@ function packMatchesInDesiredOrder(
     }));
   }
 
-  const courts = uniqueCourtsPreserveOrder(timedSlots);
+  const courts = uniqueCourtsPreserveOrder(timedSlots, externalPartidos);
   const durationMinutes = inferDurationMinutesFromSlots(timedSlots);
   const startIso = timedSlots[0]!.programado_en!.trim();
+
+  const movingIds = new Set(matches.map((m) => m.id));
+  const externals = externalPartidos.filter((p) => !movingIds.has(p.id));
 
   const queue = [...matches];
   const assigned: TorneoExpressPartido[] = [];
@@ -170,18 +194,16 @@ function packMatchesInDesiredOrder(
 
   while (queue.length > 0 && guard < 500) {
     guard += 1;
-    let slotKey: string;
-    try {
-      slotKey = mexicoScheduleSlotKey(currentIso);
-    } catch {
-      break;
-    }
+    const slotKey = slotKeyOf(currentIso);
+    if (!slotKey) break;
 
     const busyPairs = pairsBusyAtSlot(assigned, slotKey);
-    const takenCourts = courtsTakenAtSlot(assigned, slotKey);
-    const availableCourts = courts.filter(
-      (c) => !takenCourts.has(c.toLowerCase())
-    );
+    const takenCourts = new Set<string>([
+      ...Array.from(courtsTakenAtSlot(assigned, slotKey)),
+      ...Array.from(courtsTakenAtSlot(externals, slotKey)),
+    ]);
+
+    const availableCourts = courts.filter((c) => !takenCourts.has(courtKey(c)));
 
     let placedThisSlot = 0;
     for (let i = 0; i < queue.length && availableCourts.length > 0; ) {
@@ -203,6 +225,7 @@ function packMatchesInDesiredOrder(
       });
       busyPairs.add(match.pareja_local_id);
       busyPairs.add(match.pareja_visitante_id);
+      takenCourts.add(courtKey(court));
       queue.splice(i, 1);
       placedThisSlot += 1;
     }
@@ -217,8 +240,6 @@ function packMatchesInDesiredOrder(
   }
 
   if (queue.length > 0) {
-    // No se pudo colocar todo: conserva identidades restantes al final
-    // con el último horario conocido (el chequeo de conflictos lo detectará).
     for (const match of queue) {
       assigned.push({
         ...match,
@@ -231,14 +252,14 @@ function packMatchesInDesiredOrder(
 }
 
 /**
- * Al arrastrar un partido a otra posición, ese orden es la intención:
- * el partido pasa a ser el N-ésimo y los horarios se reorganizan solos
- * (recorren) para que ninguna pareja juegue dos veces a la misma hora.
+ * Al arrastrar un partido, ese orden es la intención: se recalculan
+ * horarios y canchas del grupo sin chocar parejas ni canchas del torneo.
  */
 export function reassignScheduleSlotsOnReorder(
   current: TorneoExpressPartido[],
   fromIndex: number,
-  toIndex: number
+  toIndex: number,
+  options: ReorderScheduleOptions = {}
 ): TorneoExpressPartido[] {
   if (
     fromIndex === toIndex ||
@@ -259,7 +280,41 @@ export function reassignScheduleSlotsOnReorder(
   const [moved] = identities.splice(fromIndex, 1);
   identities.splice(toIndex, 0, moved);
 
-  return packMatchesInDesiredOrder(identities, templateSlots);
+  return packMatchesInDesiredOrder(
+    identities,
+    templateSlots,
+    options.externalPartidos ?? []
+  );
+}
+
+/** Tras reordenar: ¿queda alguna cancha+horario chocado en el torneo? */
+export function reorderCreatesCourtConflict(
+  reorderedGroup: TorneoExpressPartido[],
+  externalPartidos: TorneoExpressPartido[]
+): boolean {
+  const movingIds = new Set(reorderedGroup.map((p) => p.id));
+  const merged = [
+    ...externalPartidos.filter((p) => !movingIds.has(p.id)),
+    ...reorderedGroup,
+  ];
+
+  const bySlotCourt = new Map<string, string[]>();
+  for (const partido of merged) {
+    const slot = slotKeyOf(partido.programado_en ?? partidoScheduleIso(partido));
+    const court = courtKey(partido.cancha);
+    if (!slot || !court) continue;
+    const key = `${slot}|${court}`;
+    const list = bySlotCourt.get(key) ?? [];
+    list.push(partido.id);
+    bySlotCourt.set(key, list);
+  }
+
+  const conflictIds = new Set<string>();
+  for (const list of Array.from(bySlotCourt.values())) {
+    if (list.length < 2) continue;
+    for (const id of list) conflictIds.add(id);
+  }
+  return reorderedGroup.some((p) => conflictIds.has(p.id));
 }
 
 export function hasPairSameSlotConflict(
@@ -284,7 +339,10 @@ export function findPairSameSlotConflictDetails(
     } catch {
       continue;
     }
-    for (const pairId of [partido.pareja_local_id, partido.pareja_visitante_id]) {
+    for (const pairId of [
+      partido.pareja_local_id,
+      partido.pareja_visitante_id,
+    ]) {
       const key = `${slotKey}|${pairId}`;
       const prevPartidoId = seen.get(key);
       if (prevPartidoId) {

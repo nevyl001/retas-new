@@ -4,6 +4,8 @@ import {
   findPairSameSlotConflictDetails,
   formatPairSameSlotConflictMessage,
   reassignScheduleSlotsOnReorder,
+  reorderCreatesCourtConflict,
+  REORDER_COURT_SLOT_CONFLICT_MSG,
 } from "../../lib/torneoExpress/reorderPartidosSlots";
 import {
   canchaDraftFromStored,
@@ -745,10 +747,6 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
     [partidos, partidosCourtCheckScope]
   );
 
-  const conflictingPartidoIds = useMemo(
-    () => findConflictingPartidoIds(courtCheckScope),
-    [courtCheckScope]
-  );
   const duplicadosOcultos = partidos.length - partidosLimpios.length;
 
   const [localPartidos, setLocalPartidos] = useState(partidosLimpios);
@@ -759,6 +757,23 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [pendingOrderSave, setPendingOrderSave] = useState(false);
+
+  const conflictingPartidoIds = useMemo(() => {
+    const localIds = new Set(localPartidos.map((p) => p.id));
+    const merged = [
+      ...courtCheckScope.filter((p) => !localIds.has(p.id)),
+      ...localPartidos,
+    ];
+    return findConflictingPartidoIds(merged);
+  }, [courtCheckScope, localPartidos]);
+
+  const mergedCourtCheckScope = useMemo(() => {
+    const localIds = new Set(localPartidos.map((p) => p.id));
+    return [
+      ...courtCheckScope.filter((p) => !localIds.has(p.id)),
+      ...localPartidos,
+    ];
+  }, [courtCheckScope, localPartidos]);
 
   const conflictMatchLabels = useMemo(() => {
     return localPartidos
@@ -820,10 +835,14 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
   const reorderPartidos = useCallback(
     async (fromIndex: number, toIndex: number) => {
       if (fromIndex === toIndex) return;
+      const externalPartidos = courtCheckScope.filter(
+        (p) => !localPartidos.some((local) => local.id === p.id)
+      );
       const next = reassignScheduleSlotsOnReorder(
         localPartidos,
         fromIndex,
-        toIndex
+        toIndex,
+        { externalPartidos }
       );
       const conflict = findPairSameSlotConflictDetails(next);
       if (conflict.pairIds.length > 0) {
@@ -833,11 +852,15 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
         );
         return;
       }
+      if (reorderCreatesCourtConflict(next, externalPartidos)) {
+        setOrdenError(REORDER_COURT_SLOT_CONFLICT_MSG);
+        return;
+      }
       setPairConflictPartidoIds(new Set());
       setLocalPartidos(next);
       await persistOrder(next);
     },
-    [labelById, localPartidos, persistOrder]
+    [courtCheckScope, labelById, localPartidos, persistOrder]
   );
 
   const clearDragState = useCallback(() => {
@@ -952,7 +975,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
             onSave={onSaveResultado}
             onSaveCancha={onSaveCancha}
             onSaveProgramado={onSaveProgramado}
-            courtCheckScope={courtCheckScope}
+            courtCheckScope={mergedCourtCheckScope}
             courtConflict={conflictingPartidoIds.has(partido.id)}
             pairSlotConflict={pairConflictPartidoIds.has(partido.id)}
             dragHandle={

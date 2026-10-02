@@ -3,6 +3,7 @@ import {
   formatPairSameSlotConflictMessage,
   hasPairSameSlotConflict,
   reassignScheduleSlotsOnReorder,
+  reorderCreatesCourtConflict,
 } from "./reorderPartidosSlots";
 import {
   mexicoScheduleSlotKey,
@@ -29,93 +30,148 @@ function partido(
   };
 }
 
-const iso0800 = programadoIsoFromMexicoCalendar("2026-08-24", "08:00")!;
-const iso0830 = programadoIsoFromMexicoCalendar("2026-08-24", "08:30")!;
+const iso0900 = programadoIsoFromMexicoCalendar("2026-10-03", "09:00")!;
+const iso0930 = programadoIsoFromMexicoCalendar("2026-10-03", "09:30")!;
+const iso1000 = programadoIsoFromMexicoCalendar("2026-10-03", "10:00")!;
 
 describe("reassignScheduleSlotsOnReorder", () => {
   it("el partido arrastrado al primero abre la jornada y el resto se recorre", () => {
     const list = [
       partido("a", {
         orden: 1,
-        programado_en: iso0800,
-        cancha: "1",
+        programado_en: iso0900,
+        cancha: "Cancha 1",
         pareja_local_id: "p1",
         pareja_visitante_id: "p2",
       }),
       partido("b", {
         orden: 2,
-        programado_en: iso0800,
-        cancha: "3",
+        programado_en: iso0900,
+        cancha: "Cancha 3",
         pareja_local_id: "p3",
         pareja_visitante_id: "p4",
       }),
       partido("c", {
         orden: 3,
-        programado_en: iso0830,
-        cancha: "1",
+        programado_en: iso0930,
+        cancha: "Cancha 1",
         pareja_local_id: "p1",
         pareja_visitante_id: "p3",
       }),
     ];
 
-    // Mover c (comparte p1 con a) al primer lugar: no puede compartir 08:00 con a.
     const next = reassignScheduleSlotsOnReorder(list, 2, 0);
     expect(next.map((p) => p.id)).toEqual(["c", "a", "b"]);
-    expect(partidoTimeInputValue24(next[0]!.programado_en!)).toBe("08:00");
-    expect(next[0]!.cancha).toBe("1");
-
-    // a y b no comparten parejas: pueden ir en paralelo en el siguiente hueco
-    // o a puede ir a 08:00 con c si no comparten — c tiene p1/p3, a tiene p1/p2 → conflicto.
-    // a debe correrse.
-    expect(partidoTimeInputValue24(next[1]!.programado_en!)).toBe("08:30");
+    expect(partidoTimeInputValue24(next[0]!.programado_en!)).toBe("09:00");
+    expect(next[0]!.cancha).toBe("Cancha 1");
+    expect(partidoTimeInputValue24(next[1]!.programado_en!)).toBe("09:30");
     expect(hasPairSameSlotConflict(next)).toBe(false);
   });
 
-  it("pone el partido en primer horario y reorganiza sin conflicto de pareja", () => {
-    const list = [
-      partido("m1", {
+  it("respeta canchas de otros grupos y elige huecos libres", () => {
+    // Grupo A usa 1+3 a las 9:00 y 2+4 a las 9:30 (patrón intercalado).
+    const groupA = [
+      partido("a1", {
+        grupo_id: "A",
         orden: 1,
-        programado_en: iso0800,
-        cancha: "1",
-        pareja_local_id: "emiliano",
-        pareja_visitante_id: "nancy",
+        programado_en: iso0900,
+        cancha: "Cancha 1",
+        pareja_local_id: "a-p1",
+        pareja_visitante_id: "a-p2",
       }),
-      partido("m2", {
+      partido("a2", {
+        grupo_id: "A",
         orden: 2,
-        programado_en: iso0800,
-        cancha: "3",
-        pareja_local_id: "fernando",
-        pareja_visitante_id: "otro",
+        programado_en: iso0900,
+        cancha: "Cancha 3",
+        pareja_local_id: "a-p3",
+        pareja_visitante_id: "a-p4",
       }),
-      partido("m3", {
+      partido("a3", {
+        grupo_id: "A",
         orden: 3,
-        programado_en: iso0830,
-        cancha: "2",
-        pareja_local_id: "a",
-        pareja_visitante_id: "b",
+        programado_en: iso0930,
+        cancha: "Cancha 2",
+        pareja_local_id: "a-p1",
+        pareja_visitante_id: "a-p3",
       }),
-      partido("m4", {
+      partido("a4", {
+        grupo_id: "A",
         orden: 4,
-        programado_en: iso0830,
-        cancha: "4",
-        pareja_local_id: "nancy",
-        pareja_visitante_id: "fernando",
+        programado_en: iso0930,
+        cancha: "Cancha 4",
+        pareja_local_id: "a-p2",
+        pareja_visitante_id: "a-p4",
+      }),
+      partido("a5", {
+        grupo_id: "A",
+        orden: 5,
+        programado_en: iso1000,
+        cancha: "Cancha 1",
+        pareja_local_id: "a-p1",
+        pareja_visitante_id: "a-p4",
+      }),
+      partido("a6", {
+        grupo_id: "A",
+        orden: 6,
+        programado_en: iso1000,
+        cancha: "Cancha 3",
+        pareja_local_id: "a-p2",
+        pareja_visitante_id: "a-p3",
       }),
     ];
 
-    // Arrastrar m4 (nancy+fernando) al primero: antes chocaba a las 08:00.
-    const next = reassignScheduleSlotsOnReorder(list, 3, 0);
-    expect(next[0]!.id).toBe("m4");
-    expect(partidoTimeInputValue24(next[0]!.programado_en!)).toBe("08:00");
-    expect(hasPairSameSlotConflict(next)).toBe(false);
+    // Grupo B ocupa 2+4 a las 9:00 y 1+3 a las 9:30.
+    const groupB = [
+      partido("b1", {
+        grupo_id: "B",
+        programado_en: iso0900,
+        cancha: "Cancha 2",
+        pareja_local_id: "b-p1",
+        pareja_visitante_id: "b-p2",
+      }),
+      partido("b2", {
+        grupo_id: "B",
+        programado_en: iso0900,
+        cancha: "Cancha 4",
+        pareja_local_id: "b-p3",
+        pareja_visitante_id: "b-p4",
+      }),
+      partido("b3", {
+        grupo_id: "B",
+        programado_en: iso0930,
+        cancha: "Cancha 1",
+        pareja_local_id: "b-p1",
+        pareja_visitante_id: "b-p3",
+      }),
+      partido("b4", {
+        grupo_id: "B",
+        programado_en: iso0930,
+        cancha: "Cancha 3",
+        pareja_local_id: "b-p2",
+        pareja_visitante_id: "b-p4",
+      }),
+    ];
 
-    const nancySlots = next
-      .filter(
-        (p) =>
-          p.pareja_local_id === "nancy" || p.pareja_visitante_id === "nancy"
-      )
-      .map((p) => mexicoScheduleSlotKey(p.programado_en!));
-    expect(new Set(nancySlots).size).toBe(nancySlots.length);
+    // Mover a6 al primero: debe reorganizar sin pisar canchas de B.
+    const next = reassignScheduleSlotsOnReorder(groupA, 5, 0, {
+      externalPartidos: groupB,
+    });
+
+    expect(next[0]!.id).toBe("a6");
+    expect(partidoTimeInputValue24(next[0]!.programado_en!)).toBe("09:00");
+    expect(hasPairSameSlotConflict(next)).toBe(false);
+    expect(reorderCreatesCourtConflict(next, groupB)).toBe(false);
+
+    const at0930 = next.filter(
+      (p) =>
+        mexicoScheduleSlotKey(p.programado_en!) ===
+        mexicoScheduleSlotKey(iso0930)
+    );
+    expect(at0930.length).toBeGreaterThan(0);
+    for (const p of at0930) {
+      expect(["Cancha 2", "Cancha 4"]).toContain(p.cancha);
+    }
   });
 
   it("detecta pareja duplicada en el mismo horario", () => {
@@ -123,13 +179,13 @@ describe("reassignScheduleSlotsOnReorder", () => {
       partido("a", {
         pareja_local_id: "lalo",
         pareja_visitante_id: "pepito",
-        programado_en: iso0800,
+        programado_en: iso0900,
         cancha: "1",
       }),
       partido("b", {
         pareja_local_id: "lalo",
         pareja_visitante_id: "devyl",
-        programado_en: iso0800,
+        programado_en: iso0900,
         cancha: "Estadio",
       }),
     ];
@@ -152,8 +208,16 @@ describe("reassignScheduleSlotsOnReorder", () => {
 
   it("sin horarios solo actualiza el orden de identidades", () => {
     const list = [
-      partido("a", { orden: 1, pareja_local_id: "p1", pareja_visitante_id: "p2" }),
-      partido("b", { orden: 2, pareja_local_id: "p3", pareja_visitante_id: "p4" }),
+      partido("a", {
+        orden: 1,
+        pareja_local_id: "p1",
+        pareja_visitante_id: "p2",
+      }),
+      partido("b", {
+        orden: 2,
+        pareja_local_id: "p3",
+        pareja_visitante_id: "p4",
+      }),
     ];
     const next = reassignScheduleSlotsOnReorder(list, 1, 0);
     expect(next.map((p) => p.id)).toEqual(["b", "a"]);
