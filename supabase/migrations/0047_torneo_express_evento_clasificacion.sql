@@ -31,7 +31,7 @@ BEGIN
 END $$;
 
 COMMENT ON COLUMN public.torneo_express_evento.clasificacion_modo IS
-  'Preset de desempate de grupos: dif_puntos (DIF→FAV→PG→H2H) o setto_pg (PG→H2H→sets→games).';
+  'Preset de desempate de grupos: dif_puntos (FAV→DIF→PG→H2H) o setto_pg (PG→H2H→sets→games).';
 
 COMMENT ON COLUMN public.torneo_express_evento.partido_formato IS
   'Formato de captura: flexible (0–99) o bo3_super_muerte (mejor de 3, 3er set super TB).';

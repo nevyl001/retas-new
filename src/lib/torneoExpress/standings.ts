@@ -83,11 +83,11 @@ function enrichWithSetStats(
   });
 }
 
-/** Torneo Express default: DIF → FAV → PG → H2H → seed. */
+/** Torneo Express default: FAV → DIF → PG → H2H → seed. */
 function createDifPuntosComparator(matches: MatchResult[]) {
   return (a: ExpressPairStanding, b: ExpressPairStanding): number => {
-    if (b.diferencia !== a.diferencia) return b.diferencia - a.diferencia;
     if (b.juegosFavor !== a.juegosFavor) return b.juegosFavor - a.juegosFavor;
+    if (b.diferencia !== a.diferencia) return b.diferencia - a.diferencia;
     if (b.PG !== a.PG) return b.PG - a.PG;
     const h2h = getHeadToHead(a.pairId, b.pairId, matches);
     if (h2h !== 0) return h2h;

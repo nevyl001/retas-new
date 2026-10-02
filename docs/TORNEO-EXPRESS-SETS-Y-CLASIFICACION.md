@@ -34,7 +34,7 @@
  *
  * Preset en `torneo_express_evento.clasificacion_modo`:
  *
- * - **dif_puntos** (default): **DIF → FAV → PG → H2H → seed**
+ * - **dif_puntos** (default): **FAV → DIF → PG → H2H → seed**
  * - **setto_pg**: **PG → H2H (solo si exactamente 2 empatados) → DIF sets →
  *   DIF games → más sets ganados → más games ganados → seed**
  *

@@ -38,7 +38,7 @@ export const StandingsMobileCards: React.FC<{
   const decidingCriterion = useMemo(() => {
     if (decidingProp) return decidingProp;
     if (rows.length < 2) {
-      return criterionOrder === "express" ? ("dif" as const) : ("fav" as const);
+      return "fav" as const;
     }
     return getDecidingCriterionBetween(
       {

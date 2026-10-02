@@ -52,14 +52,28 @@ describe("buildStandingsForGrupo clasificacion modes", () => {
     pareja("c", "C"),
   ];
 
-  it("dif_puntos ordena por DIF de games antes que PG", () => {
-    // A 1-0, DIF +2; B 1-0, DIF +10; C 0-2
+  it("dif_puntos ordena por FAV, luego DIF", () => {
+    // Mismo FAV (6): B gana por mejor DIF (+10 vs +2).
     const partidos = [
       partido("m1", "a", "c", [{ local: 6, visitante: 4 }], "a"),
       partido("m2", "b", "c", [{ local: 6, visitante: 0 }], "b"),
     ];
     const rows = buildStandingsForGrupo(grupo, parejas, partidos, "dif_puntos");
     expect(rows.map((r) => r.parejaId)).toEqual(["b", "a", "c"]);
+  });
+
+  it("dif_puntos prioriza FAV sobre DIF", () => {
+    // A: FAV 10 DIF +2; B: FAV 8 DIF +6 → manda FAV (A arriba de B).
+    const partidos = [
+      partido("m1", "a", "c", [{ local: 10, visitante: 8 }], "a"),
+      partido("m2", "b", "c", [{ local: 8, visitante: 2 }], "b"),
+    ];
+    const rows = buildStandingsForGrupo(grupo, parejas, partidos, "dif_puntos");
+    expect(rows[0].parejaId).toBe("a");
+    expect(rows[0].ptsFav).toBe(10);
+    const rankB = rows.findIndex((r) => r.parejaId === "b");
+    const rankA = rows.findIndex((r) => r.parejaId === "a");
+    expect(rankA).toBeLessThan(rankB);
   });
 
   it("setto_pg ordena por PG primero; con 3 empatados salta H2H", () => {

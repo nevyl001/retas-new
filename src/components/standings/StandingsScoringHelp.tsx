@@ -11,7 +11,7 @@ interface StandingsScoringHelpProps {
   className?: string;
   /** Versión de una línea para tablas reducidas (p. ej. resumen americano). */
   compact?: boolean;
-  /** Torneo Express: DIF → FAV → PG → H2H */
+  /** Torneo Express: FAV → DIF → PG → H2H (o preset del evento). */
   variant?: "default" | "express";
   /** Tipo de reta/torneo para el párrafo contextual (evita mencionar americano en dual meet, etc.). */
   mode?: StandingsHelpMode;
@@ -29,7 +29,7 @@ function expressLead(modo: TorneoExpressClasificacionModo): React.ReactNode {
   }
   return (
     <>
-      Gana quien tenga mejor <strong>diferencia (DIF)</strong>.
+      Gana quien tenga más <strong>games a favor (FAV)</strong>.
     </>
   );
 }

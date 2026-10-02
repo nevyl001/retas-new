@@ -24,10 +24,10 @@ export type PartidoFormatoOption = {
 export const CLASIFICACION_MODO_OPTIONS: readonly ClasificacionModoOption[] = [
   {
     value: "dif_puntos",
-    label: "Diferencia de puntos (games)",
+    label: "Games a favor",
     description:
-      "Ordena por diferencia de games (ganados − recibidos), luego games a favor, partidos ganados y enfrentamiento directo.",
-    orderSummary: "DIF → FAV → PG → H2H",
+      "Ordena por games ganados (a favor); si hay empate, por diferencia, luego partidos ganados y cara a cara.",
+    orderSummary: "FAV → DIF → PG → H2H",
   },
   {
     value: "setto_pg",
