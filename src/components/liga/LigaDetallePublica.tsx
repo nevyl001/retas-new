@@ -14,7 +14,7 @@ import {
 } from "../../lib/liga/publicDisplay";
 import { formatFechaLegible, dateInputValue } from "../../lib/liga/programacion";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
-import { resolveLigaJugadorPublicFotos } from "../../lib/liga/publicParejaAvatars";
+import { resolveLigaJugadorPublicProfiles } from "../../lib/liga/publicParejaAvatars";
 import {
   aggregateJugadorSeasonSupportStats,
   formatSupportDif,
@@ -110,6 +110,9 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const [parejaFotos, setParejaFotos] = useState<Record<string, string | null>>(
     {}
   );
+  const [parejaRatings, setParejaRatings] = useState<
+    Record<string, number | null>
+  >({});
   const [parejaFotosReady, setParejaFotosReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -200,11 +203,20 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
 
     let cancelled = false;
     setParejaFotosReady(false);
-    void resolveLigaJugadorPublicFotos(organizadorId, entries).then((fotos) => {
-      if (cancelled) return;
-      setParejaFotos(fotos);
-      setParejaFotosReady(true);
-    });
+    void resolveLigaJugadorPublicProfiles(organizadorId, entries).then(
+      (profiles) => {
+        if (cancelled) return;
+        const fotos: Record<string, string | null> = {};
+        const ratings: Record<string, number | null> = {};
+        for (const entry of entries) {
+          fotos[entry.id] = profiles[entry.id]?.fotoUrl ?? null;
+          ratings[entry.id] = profiles[entry.id]?.rating ?? null;
+        }
+        setParejaFotos(fotos);
+        setParejaRatings(ratings);
+        setParejaFotosReady(true);
+      }
+    );
 
     return () => {
       cancelled = true;
@@ -253,9 +265,17 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
           : equipo
             ? parejaFotos[equipo.jugador2_id] ?? null
             : null,
+        rating1: equipo ? parejaRatings[equipo.jugador1_id] ?? null : null,
+        rating2: equipo ? parejaRatings[equipo.jugador2_id] ?? null : null,
       };
     });
-  }, [detalle, rankingEquiposOrdered, parejaFotos, parejaFotosReady]);
+  }, [
+    detalle,
+    rankingEquiposOrdered,
+    parejaFotos,
+    parejaRatings,
+    parejaFotosReady,
+  ]);
 
   const supportStatsByJugador = useMemo((): Map<
     string,

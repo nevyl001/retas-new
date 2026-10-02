@@ -8,6 +8,24 @@ type RivieraLigaLinkRow = {
   legacy_liga_jugador_id?: string | null;
   nombre?: string | null;
   foto_url?: unknown;
+  rating?: unknown;
+};
+
+export type LigaJugadorPublicProfile = {
+  fotoUrl: string | null;
+  /** Rating de riviera_jugadores. null = el RPC aún no lo trae. */
+  rating: number | null;
+};
+
+function parsePublicRating(raw: unknown): number | null {
+  if (raw == null || raw === "") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+type LigaPublicLookup = {
+  fotos: Map<string, string>;
+  ratings: Map<string, number>;
 };
 
 async function getLigaFotoReadClient(
@@ -26,10 +44,11 @@ async function getLigaFotoReadClient(
 async function fetchPublicLigaJugadorFotosRpc(
   organizadorId: string,
   ligaJugadorIds: string[]
-): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
+): Promise<LigaPublicLookup> {
+  const fotos = new Map<string, string>();
+  const ratings = new Map<string, number>();
   const ids = Array.from(new Set(ligaJugadorIds.map((id) => id.trim()).filter(Boolean)));
-  if (!organizadorId.trim() || ids.length === 0) return map;
+  if (!organizadorId.trim() || ids.length === 0) return { fotos, ratings };
 
   const { data, error } = await supabasePublicRead.rpc(
     "riviera_public_liga_jugador_profiles",
@@ -46,45 +65,49 @@ async function fetchPublicLigaJugadorFotosRpc(
     ) {
       console.warn("[publicParejaAvatars] rpc:", error.message);
     }
-    return map;
+    return { fotos, ratings };
   }
 
   for (const row of data ?? []) {
     const ligaId = String(
       (row as { liga_jugador_id?: string }).liga_jugador_id ?? ""
     ).trim();
+    if (!ligaId) continue;
     const foto =
       typeof (row as { foto_url?: unknown }).foto_url === "string" &&
       (row as { foto_url: string }).foto_url.trim()
         ? (row as { foto_url: string }).foto_url.trim()
         : null;
-    if (ligaId && foto && !map.has(ligaId)) map.set(ligaId, foto);
+    if (foto && !fotos.has(ligaId)) fotos.set(ligaId, foto);
+    const rating = parsePublicRating((row as { rating?: unknown }).rating);
+    if (rating != null && !ratings.has(ligaId)) ratings.set(ligaId, rating);
   }
 
-  return map;
+  return { fotos, ratings };
 }
 
 async function fetchDirectLigaJugadorFotos(
   organizadorId: string,
   entries: PlayerAvatarLookupEntry[],
   publicOnly: boolean
-): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
+): Promise<LigaPublicLookup> {
+  const fotos = new Map<string, string>();
+  const ratings = new Map<string, number>();
   const ids = Array.from(new Set(entries.map((e) => e.id.trim()).filter(Boolean)));
-  if (!organizadorId.trim() || ids.length === 0) return map;
+  if (!organizadorId.trim() || ids.length === 0) return { fotos, ratings };
 
   const client = await getLigaFotoReadClient(organizadorId, publicOnly);
 
   const { data, error } = await client
     .from("riviera_jugadores")
-    .select("id, legacy_liga_jugador_id, nombre, foto_url")
+    .select("id, legacy_liga_jugador_id, nombre, foto_url, rating")
     .eq("organizador_id", organizadorId)
     .in("legacy_liga_jugador_id", ids)
     .neq("estado", "archivado");
 
   if (error && !isMissingColumnError(error, "riviera_jugadores", "foto_url")) {
     console.warn("[publicParejaAvatars] direct legacy_liga:", error.message);
-    return map;
+    return { fotos, ratings };
   }
 
   const byLigaId = new Map<string, RivieraLigaLinkRow[]>();
@@ -117,31 +140,34 @@ async function fetchDirectLigaJugadorFotos(
       typeof picked.foto_url === "string" && picked.foto_url.trim()
         ? picked.foto_url.trim()
         : null;
-    if (foto) map.set(ligaId, foto);
+    if (foto) fotos.set(ligaId, foto);
+    const rating = parsePublicRating(picked.rating);
+    if (rating != null) ratings.set(ligaId, rating);
   }
 
-  return map;
+  return { fotos, ratings };
 }
 
 async function fetchDirectLigaJugadorFotosByName(
   organizadorId: string,
   entries: PlayerAvatarLookupEntry[],
   publicOnly: boolean
-): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
+): Promise<LigaPublicLookup> {
+  const fotos = new Map<string, string>();
+  const ratings = new Map<string, number>();
   const pending = entries.filter((e) => e.id.trim() && e.name?.trim());
-  if (!organizadorId.trim() || pending.length === 0) return map;
+  if (!organizadorId.trim() || pending.length === 0) return { fotos, ratings };
 
   const client = await getLigaFotoReadClient(organizadorId, publicOnly);
   const { data, error } = await client
     .from("riviera_jugadores")
-    .select("nombre, foto_url")
+    .select("nombre, foto_url, rating")
     .eq("organizador_id", organizadorId)
     .neq("estado", "archivado");
 
   if (error) {
     console.warn("[publicParejaAvatars] direct by name:", error.message);
-    return map;
+    return { fotos, ratings };
   }
 
   const rowsByName = new Map<string, RivieraLigaLinkRow[]>();
@@ -162,10 +188,50 @@ async function fetchDirectLigaJugadorFotosByName(
       typeof matches[0]!.foto_url === "string" && matches[0]!.foto_url.trim()
         ? matches[0]!.foto_url.trim()
         : null;
-    if (foto) map.set(entry.id, foto);
+    if (foto) fotos.set(entry.id, foto);
+    const rating = parsePublicRating(matches[0]!.rating);
+    if (rating != null) ratings.set(entry.id, rating);
   }
 
-  return map;
+  return { fotos, ratings };
+}
+
+/** Rating del roster del club (misma cifra que la ficha del jugador). */
+async function fetchRatingsFromClubRoster(
+  organizadorId: string,
+  entries: PlayerAvatarLookupEntry[]
+): Promise<Map<string, number>> {
+  const ratings = new Map<string, number>();
+  const pending = entries.filter((e) => e.id.trim() && e.name?.trim());
+  if (!organizadorId.trim() || pending.length === 0) return ratings;
+
+  const { data, error } = await supabasePublicRead.rpc(
+    "riviera_ranking_interno_por_organizador",
+    {
+      p_organizador_id: organizadorId,
+      p_categoria: null,
+      p_genero: null,
+    }
+  );
+  if (error || !Array.isArray(data)) return ratings;
+
+  const byName = new Map<string, number[]>();
+  for (const row of data as Array<{ nombre?: string | null; rating?: unknown }>) {
+    const key = normalizePlayerNameKey(String(row.nombre ?? ""));
+    const rating = parsePublicRating(row.rating);
+    if (!key || rating == null) continue;
+    const list = byName.get(key) ?? [];
+    list.push(rating);
+    byName.set(key, list);
+  }
+
+  for (const entry of pending) {
+    const key = normalizePlayerNameKey(entry.name ?? "");
+    const list = byName.get(key) ?? [];
+    const unique = Array.from(new Set(list));
+    if (unique.length === 1) ratings.set(entry.id, unique[0]!);
+  }
+  return ratings;
 }
 
 async function fetchRivieraProfilesForLigaLinks(
@@ -209,6 +275,93 @@ async function fetchRivieraProfilesForLigaLinks(
   return map;
 }
 
+function applyLookup(
+  fotosOut: Record<string, string | null>,
+  ratingsOut: Record<string, number | null>,
+  lookup: LigaPublicLookup
+): void {
+  for (const [id, foto] of Array.from(lookup.fotos.entries())) {
+    if (id in fotosOut && foto && !fotosOut[id]) fotosOut[id] = foto;
+  }
+  for (const [id, rating] of Array.from(lookup.ratings.entries())) {
+    if (id in ratingsOut && ratingsOut[id] == null) ratingsOut[id] = rating;
+  }
+}
+
+/**
+ * Foto y rating de riviera_jugadores para cada liga_jugadores.id.
+ * En vistas públicas el rating sale del RPC (RLS no deja leer la tabla).
+ */
+export async function resolveLigaJugadorPublicProfiles(
+  organizadorId: string,
+  entries: PlayerAvatarLookupEntry[],
+  options?: { publicOnly?: boolean }
+): Promise<Record<string, LigaJugadorPublicProfile>> {
+  const publicOnly = options?.publicOnly !== false;
+  const fotos: Record<string, string | null> = {};
+  const ratings: Record<string, number | null> = {};
+  for (const e of entries) {
+    fotos[e.id] = null;
+    ratings[e.id] = null;
+  }
+  if (!organizadorId.trim() || entries.length === 0) {
+    return Object.fromEntries(
+      entries.map((e) => [e.id, { fotoUrl: null, rating: null }])
+    );
+  }
+
+  const ids = Array.from(new Set(entries.map((e) => e.id.trim()).filter(Boolean)));
+  if (!ids.length) {
+    return Object.fromEntries(
+      entries.map((e) => [e.id, { fotoUrl: fotos[e.id] ?? null, rating: null }])
+    );
+  }
+
+  if (publicOnly) {
+    applyLookup(fotos, ratings, await fetchPublicLigaJugadorFotosRpc(organizadorId, ids));
+  }
+
+  const missingFoto = entries.filter((e) => !fotos[e.id]);
+  if (missingFoto.length > 0) {
+    applyLookup(
+      fotos,
+      ratings,
+      await fetchDirectLigaJugadorFotos(organizadorId, missingFoto, publicOnly)
+    );
+  }
+
+  const missingFotoAfterLegacy = entries.filter((e) => !fotos[e.id]);
+  if (missingFotoAfterLegacy.length > 0) {
+    applyLookup(
+      fotos,
+      ratings,
+      await fetchDirectLigaJugadorFotosByName(
+        organizadorId,
+        missingFotoAfterLegacy,
+        publicOnly
+      )
+    );
+  }
+
+  const stillWithoutRating = entries.filter((e) => ratings[e.id] == null);
+  if (stillWithoutRating.length > 0) {
+    const fromRoster = await fetchRatingsFromClubRoster(
+      organizadorId,
+      stillWithoutRating
+    );
+    for (const [id, rating] of Array.from(fromRoster.entries())) {
+      if (id in ratings && ratings[id] == null) ratings[id] = rating;
+    }
+  }
+
+  return Object.fromEntries(
+    entries.map((e) => [
+      e.id,
+      { fotoUrl: fotos[e.id] ?? null, rating: ratings[e.id] ?? null },
+    ])
+  );
+}
+
 /**
  * Fotos para jugadores de liga (liga_jugadores.id → riviera via legacy_liga_jugador_id).
  * En vistas públicas usa RPC SECURITY DEFINER (sin gate visible_publico).
@@ -218,44 +371,21 @@ export async function resolveLigaJugadorPublicFotos(
   entries: PlayerAvatarLookupEntry[],
   options?: { publicOnly?: boolean }
 ): Promise<Record<string, string | null>> {
-  const publicOnly = options?.publicOnly !== false;
+  const profiles = await resolveLigaJugadorPublicProfiles(
+    organizadorId,
+    entries,
+    options
+  );
   const out: Record<string, string | null> = {};
-  for (const e of entries) out[e.id] = null;
-  if (!organizadorId.trim() || entries.length === 0) return out;
+  for (const e of entries) out[e.id] = profiles[e.id]?.fotoUrl ?? null;
 
-  const ids = Array.from(new Set(entries.map((e) => e.id.trim()).filter(Boolean)));
-  if (!ids.length) return out;
-
-  const applyMap = (map: Map<string, string>) => {
-    for (const [id, foto] of Array.from(map.entries())) {
-      if (id in out && foto && !out[id]) out[id] = foto;
-    }
-  };
-
-  if (publicOnly) {
-    applyMap(await fetchPublicLigaJugadorFotosRpc(organizadorId, ids));
-  }
-
-  const missingAfterRpc = entries.filter((e) => !out[e.id]);
-  if (missingAfterRpc.length > 0) {
-    applyMap(
-      await fetchDirectLigaJugadorFotos(organizadorId, missingAfterRpc, publicOnly)
-    );
-  }
-
-  const missingAfterLegacy = entries.filter((e) => !out[e.id]);
-  if (missingAfterLegacy.length > 0) {
-    applyMap(
-      await fetchDirectLigaJugadorFotosByName(
-        organizadorId,
-        missingAfterLegacy,
-        publicOnly
-      )
-    );
-  }
-
+  const publicOnly = options?.publicOnly !== false;
   const stillMissing = entries.filter((e) => !out[e.id]);
-  if (stillMissing.length > 0 && publicOnly) {
+  if (!organizadorId.trim() || stillMissing.length === 0 || !publicOnly) {
+    return out;
+  }
+
+  {
     const client = await getLigaFotoReadClient(organizadorId, publicOnly);
     const { data } = await client
       .from("riviera_jugadores")

@@ -58,6 +58,57 @@ describe("resolveLigaJugadorPublicFotos", () => {
     expect(fotos["liga-1"]).toBe("https://cdn.example/a.jpg");
   });
 
+  it("toma el rating del RPC, no el valor inicial del chip", async () => {
+    mockRpc.mockResolvedValueOnce({
+      data: [
+        {
+          liga_jugador_id: "liga-cesar",
+          foto_url: "https://cdn.example/cesar.jpg",
+          rating: 3.31,
+        },
+      ],
+      error: null,
+    });
+
+    const { resolveLigaJugadorPublicProfiles } = await import(
+      "./publicParejaAvatars"
+    );
+    const profiles = await resolveLigaJugadorPublicProfiles("org-1", [
+      { id: "liga-cesar", name: "César G" },
+    ]);
+
+    expect(profiles["liga-cesar"]?.rating).toBe(3.31);
+    expect(profiles["liga-cesar"]?.fotoUrl).toBe(
+      "https://cdn.example/cesar.jpg"
+    );
+  });
+
+  it("si el RPC de liga no trae rating, usa el del roster del club", async () => {
+    mockRpc
+      .mockResolvedValueOnce({
+        data: [
+          {
+            liga_jugador_id: "liga-cesar",
+            foto_url: "https://cdn.example/cesar.jpg",
+          },
+        ],
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: [{ nombre: "César G", rating: 3.31 }],
+        error: null,
+      });
+
+    const { resolveLigaJugadorPublicProfiles } = await import(
+      "./publicParejaAvatars"
+    );
+    const profiles = await resolveLigaJugadorPublicProfiles("org-1", [
+      { id: "liga-cesar", name: "César G" },
+    ]);
+
+    expect(profiles["liga-cesar"]?.rating).toBe(3.31);
+  });
+
   it("hace fallback directo por legacy_liga cuando el RPC no devuelve nada", async () => {
     mockFromChain({
       data: [

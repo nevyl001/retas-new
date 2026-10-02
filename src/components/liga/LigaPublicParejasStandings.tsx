@@ -17,6 +17,8 @@ export type LigaPublicParejaStandingRow = {
   /** `undefined` = fotos aún resolviendo (sin jersey de placeholder). */
   foto1: string | null | undefined;
   foto2: string | null | undefined;
+  rating1?: number | null;
+  rating2?: number | null;
 };
 
 interface LigaPublicParejasStandingsProps {
@@ -149,7 +151,7 @@ function PodiumCard({
   row: LigaPublicParejaStandingRow;
   index: number;
 }) {
-  const { ranking, equipo, foto1, foto2 } = row;
+  const { ranking, equipo, foto1, foto2, rating1, rating2 } = row;
   const { name1, name2 } = resolveNames(ranking, equipo);
   const place = ranking.posicion;
 
@@ -170,8 +172,8 @@ function PodiumCard({
 
       <div className="liga-pub-podium__pair">
         <PublicSplitVsPairHalf
-          player1={{ name: name1, foto: foto1 }}
-          player2={{ name: name2, foto: foto2 }}
+          player1={{ name: name1, foto: foto1, rating: rating1 }}
+          player2={{ name: name2, foto: foto2, rating: rating2 }}
           tone={place === 1 ? "win" : "neutral"}
           showWinnerBadge={place === 1}
           className={`liga-pub-podium__faces liga-pub-podium__faces--${place}`}
@@ -197,7 +199,7 @@ function RestRow({
   row: LigaPublicParejaStandingRow;
   index: number;
 }) {
-  const { ranking, equipo, foto1, foto2 } = row;
+  const { ranking, equipo, foto1, foto2, rating1, rating2 } = row;
   const { name1, name2 } = resolveNames(ranking, equipo);
 
   return (
@@ -221,8 +223,8 @@ function RestRow({
       <div className="liga-pub-general__body">
         <div className="liga-pub-general__faces">
           <PublicSplitVsPairHalf
-            player1={{ name: name1, foto: foto1 }}
-            player2={{ name: name2, foto: foto2 }}
+            player1={{ name: name1, foto: foto1, rating: rating1 }}
+            player2={{ name: name2, foto: foto2, rating: rating2 }}
             className="liga-pub-general__faces-pair pub-split-vs-pair--compact"
           />
         </div>
