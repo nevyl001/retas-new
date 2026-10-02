@@ -138,7 +138,12 @@ export function getTablaOrdenada(
 ) {
   const parejas = bundle.parejasPorGrupo[grupo.id] ?? [];
   const partidos = bundle.partidosPorGrupo[grupo.id] ?? [];
-  return buildStandingsForGrupo(grupo, parejas, partidos);
+  return buildStandingsForGrupo(
+    grupo,
+    parejas,
+    partidos,
+    bundle.clasificacion_modo
+  );
 }
 
 export function calcularClasificadosFase(

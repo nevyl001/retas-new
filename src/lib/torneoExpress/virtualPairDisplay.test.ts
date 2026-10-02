@@ -105,6 +105,8 @@ describe("standings y bracket con pareja virtual", () => {
       parejasPorGrupo: { g1: [virtual, rival] },
       partidosPorGrupo: {},
       eliminatoriaPartidos: [partido],
+      clasificacion_modo: "dif_puntos",
+      partido_formato: "flexible",
     });
     const before = buildPublicBracketViewModel(
       {
@@ -113,6 +115,8 @@ describe("standings y bracket con pareja virtual", () => {
         parejasPorGrupo: { g1: [virtual, rival] },
         partidosPorGrupo: {},
         eliminatoriaPartidos: [partido],
+        clasificacion_modo: "dif_puntos",
+        partido_formato: "flexible",
       },
       beforeMap
     );
@@ -128,6 +132,8 @@ describe("standings y bracket con pareja virtual", () => {
       parejasPorGrupo: { g1: [resolved, rival] },
       partidosPorGrupo: {},
       eliminatoriaPartidos: [partido],
+      clasificacion_modo: "dif_puntos",
+      partido_formato: "flexible",
     });
     const after = buildPublicBracketViewModel(
       {
@@ -136,6 +142,8 @@ describe("standings y bracket con pareja virtual", () => {
         parejasPorGrupo: { g1: [resolved, rival] },
         partidosPorGrupo: {},
         eliminatoriaPartidos: [partido],
+        clasificacion_modo: "dif_puntos",
+        partido_formato: "flexible",
       },
       afterMap
     );

@@ -86,6 +86,8 @@ function makeBundle(opts: {
     parejasPorGrupo,
     partidosPorGrupo,
     eliminatoriaPartidos: [],
+    clasificacion_modo: "dif_puntos",
+    partido_formato: "flexible",
   };
 }
 

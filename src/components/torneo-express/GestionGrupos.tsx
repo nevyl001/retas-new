@@ -436,6 +436,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           allowReorder={partidosOrdenDisponible}
           canchaEditable={partidosCanchaDisponible}
           horarioEditable={partidosProgramadoDisponible}
+          partidoFormato={bundle!.partido_formato}
           savingPartidoId={savingPartidoId}
           savingCanchaId={savingCanchaId}
           savingProgramadoId={savingProgramadoId}
@@ -785,6 +786,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                   <TablaGrupo
                     rows={standingsByGrupo[grupo.id] ?? []}
                     scoringHelpVariant="express"
+                    clasificacionModo={bundle?.clasificacion_modo}
                   />
                 </>
               ) : (
@@ -1217,6 +1219,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                   allowReorder={partidosOrdenDisponible}
                   canchaEditable={partidosCanchaDisponible}
                   horarioEditable={partidosProgramadoDisponible}
+                  partidoFormato={bundle.partido_formato}
                   savingPartidoId={savingPartidoId}
                   savingCanchaId={savingCanchaId}
                   savingProgramadoId={savingProgramadoId}
@@ -1254,6 +1257,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                 <TablaGrupo
                   rows={standingsByGrupo[grupo.id] ?? []}
                   scoringHelpVariant="express"
+                  clasificacionModo={bundle.clasificacion_modo}
                 />
               </section>
             </div>

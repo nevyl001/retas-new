@@ -138,6 +138,8 @@ describe("partidoSets", () => {
       pairAId: "a",
       pairBId: "b",
       gamesA: 6,
+      setsA: 0,
+      setsB: 0,
       gamesB: 2,
       winnerId: "a",
     });
@@ -310,6 +312,40 @@ describe("validación flexible de marcador de set", () => {
   it("isLegalSuperTieBreakScore conserva la regla clásica a 10", () => {
     expect(isLegalSuperTieBreakScore({ local: 10, visitante: 8 })).toBe(true);
     expect(isLegalSuperTieBreakScore({ local: 10, visitante: 9 })).toBe(false);
+  });
+
+  it("bo3_super_muerte exige súper TB legal en el Set 3", () => {
+    const sets = [
+      { local: 6, visitante: 4 },
+      { local: 3, visitante: 6 },
+      { local: 10, visitante: 9 },
+    ];
+    expect(
+      getSetsValidationMessage(sets, { partidoFormato: "bo3_super_muerte" })
+    ).toBe("El Set 3 debe ser súper muerte (a 10 con 2 de ventaja).");
+    expect(
+      getSetsValidationMessage(
+        [
+          { local: 6, visitante: 4 },
+          { local: 3, visitante: 6 },
+          { local: 10, visitante: 8 },
+        ],
+        { partidoFormato: "bo3_super_muerte" }
+      )
+    ).toBeNull();
+  });
+
+  it("flexible sigue aceptando Set 3 no clásico", () => {
+    expect(
+      getSetsValidationMessage(
+        [
+          { local: 6, visitante: 4 },
+          { local: 3, visitante: 6 },
+          { local: 8, visitante: 6 },
+        ],
+        { partidoFormato: "flexible" }
+      )
+    ).toBeNull();
   });
 });
 

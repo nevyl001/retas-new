@@ -58,6 +58,8 @@ describe("publicEliminatoriaPodiumStats", () => {
         created_at: "",
       },
     ],
+    clasificacion_modo: "dif_puntos",
+    partido_formato: "flexible",
   };
 
   it("combina fase de grupos y eliminatoria", () => {

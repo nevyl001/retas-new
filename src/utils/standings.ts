@@ -13,6 +13,10 @@ export interface MatchResult {
   pairBId: string;
   gamesA: number;
   gamesB: number;
+  /** Sets ganados por A (Torneo Express multi-set); opcional. */
+  setsA?: number;
+  /** Sets ganados por B (Torneo Express multi-set); opcional. */
+  setsB?: number;
   /** Ganador explícito (p. ej. ganador_id en torneo express). */
   winnerId?: string | null;
   /** Orden de ronda (americano); si falta, se usa el orden del array. */

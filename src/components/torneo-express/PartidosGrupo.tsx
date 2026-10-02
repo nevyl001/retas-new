@@ -35,6 +35,7 @@ import type {
   PartidoSetScore,
   TorneoExpressGrupoPareja,
   TorneoExpressPartido,
+  TorneoExpressPartidoFormato,
 } from "../../lib/torneoExpress/types";
 import { captureExpectedPairs } from "../../lib/torneoExpress/expectedPairs";
 import { Badge, Button } from "../ui";
@@ -73,6 +74,8 @@ interface PartidosGrupoProps {
   ) => Promise<void>;
   /** Partidos del torneo usados para validar cancha+horario (todos los grupos). */
   partidosCourtCheckScope?: TorneoExpressPartido[];
+  /** Formato de marcador heredado del evento. */
+  partidoFormato?: TorneoExpressPartidoFormato;
 }
 
 function PartidoStatusBadge({
@@ -439,6 +442,7 @@ function PartidoRow({
   dragHandle,
   courtConflict = false,
   pairSlotConflict = false,
+  partidoFormato = "flexible",
 }: {
   partido: TorneoExpressPartido;
   parejas: TorneoExpressGrupoPareja[];
@@ -461,6 +465,7 @@ function PartidoRow({
   onSave?: PartidosGrupoProps["onSaveResultado"];
   onSaveCancha?: PartidosGrupoProps["onSaveCancha"];
   onSaveProgramado?: PartidosGrupoProps["onSaveProgramado"];
+  partidoFormato?: PartidosGrupoProps["partidoFormato"];
 }) {
   const scheduleConflict = courtConflict || pairSlotConflict;
   const played = partido.estado === "jugado";
@@ -705,6 +710,7 @@ function PartidoRow({
           visitLabel={visitLabel}
           initialPartido={partido}
           expectedPairs={openedExpected}
+          partidoFormato={partidoFormato}
           saving={saving}
           onSave={(sets, expected) => {
             if (!expected) return Promise.resolve();
@@ -732,6 +738,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
   onSaveProgramado,
   onSaveOrden,
   partidosCourtCheckScope,
+  partidoFormato = "flexible",
 }) => {
   const partidosLimpios = useMemo(
     () => dedupePartidosExpress(partidos),
@@ -975,6 +982,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
             onSave={onSaveResultado}
             onSaveCancha={onSaveCancha}
             onSaveProgramado={onSaveProgramado}
+            partidoFormato={partidoFormato}
             courtCheckScope={mergedCourtCheckScope}
             courtConflict={conflictingPartidoIds.has(partido.id)}
             pairSlotConflict={pairConflictPartidoIds.has(partido.id)}

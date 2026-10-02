@@ -4,7 +4,11 @@ import {
   formatSupabaseError,
 } from "../../services/torneoExpressService";
 import { buildStandingsGeneral } from "../../lib/torneoExpress/standings";
-import type { StandingRowExpress, TorneoExpress } from "../../lib/torneoExpress/types";
+import type {
+  StandingRowExpress,
+  TorneoExpress,
+  TorneoExpressClasificacionModo,
+} from "../../lib/torneoExpress/types";
 import { TablaGeneral } from "./TablaGeneral";
 import { Button } from "../ui";
 
@@ -29,6 +33,8 @@ export const TorneoExpressTablaGeneralPanel: React.FC<
   TorneoExpressTablaGeneralPanelProps
 > = ({ torneo, onClose }) => {
   const [rows, setRows] = useState<StandingRowExpress[]>([]);
+  const [clasificacionModo, setClasificacionModo] =
+    useState<TorneoExpressClasificacionModo>("dif_puntos");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,11 +51,13 @@ export const TorneoExpressTablaGeneralPanel: React.FC<
           setRows([]);
           return;
         }
+        setClasificacionModo(bundle.clasificacion_modo);
         setRows(
           buildStandingsGeneral(
             bundle.grupos,
             bundle.parejasPorGrupo,
-            bundle.partidosPorGrupo
+            bundle.partidosPorGrupo,
+            bundle.clasificacion_modo
           )
         );
       })
@@ -93,7 +101,7 @@ export const TorneoExpressTablaGeneralPanel: React.FC<
       )}
 
       {!loading && !error && rows.length > 0 && (
-        <TablaGeneral rows={rows} />
+        <TablaGeneral rows={rows} clasificacionModo={clasificacionModo} />
       )}
     </div>
   );

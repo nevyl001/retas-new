@@ -1,9 +1,20 @@
 import React from "react";
 import { TablaGrupo } from "./TablaGrupo";
-import type { StandingRowExpress } from "../../lib/torneoExpress/types";
+import type {
+  StandingRowExpress,
+  TorneoExpressClasificacionModo,
+} from "../../lib/torneoExpress/types";
 
-export const TablaGeneral: React.FC<{ rows: StandingRowExpress[] }> = ({
-  rows,
-}) => {
-  return <TablaGrupo rows={rows} showGrupoColumn scoringHelpVariant="express" />;
+export const TablaGeneral: React.FC<{
+  rows: StandingRowExpress[];
+  clasificacionModo?: TorneoExpressClasificacionModo;
+}> = ({ rows, clasificacionModo }) => {
+  return (
+    <TablaGrupo
+      rows={rows}
+      showGrupoColumn
+      scoringHelpVariant="express"
+      clasificacionModo={clasificacionModo}
+    />
+  );
 };

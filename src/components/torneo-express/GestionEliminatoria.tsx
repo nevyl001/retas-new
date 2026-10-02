@@ -69,6 +69,7 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
             savingPartidoId={savingEliminatoriaId}
             savingCanchaId={savingEliminatoriaCanchaId}
             savingProgramadoId={savingEliminatoriaProgramadoId}
+            partidoFormato={bundle.partido_formato}
             onSaveResultado={editable && !cerrado ? onSaveResultado : undefined}
             onSaveCancha={onSaveCancha}
             onSaveProgramado={onSaveProgramado}

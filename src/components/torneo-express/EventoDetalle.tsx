@@ -1,9 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type {
   TorneoExpress,
+  TorneoExpressClasificacionModo,
   TorneoExpressEvento,
   TorneoExpressEventoLogoSource,
+  TorneoExpressPartidoFormato,
 } from "../../lib/torneoExpress/types";
+import {
+  CLASIFICACION_MODO_OPTIONS,
+  PARTIDO_FORMATO_OPTIONS,
+} from "../../lib/torneoExpress/clasificacionModo";
 import { slugifyEvento } from "../../lib/torneoExpress/eventoSlug";
 import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
 import {
@@ -121,6 +127,11 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
   const [logoSource, setLogoSource] =
     useState<TorneoExpressEventoLogoSource>("club");
   const [flyerUrl, setFlyerUrl] = useState("");
+  const [clasificacionModo, setClasificacionModo] =
+    useState<TorneoExpressClasificacionModo>("dif_puntos");
+  const [partidoFormato, setPartidoFormato] =
+    useState<TorneoExpressPartidoFormato>("flexible");
+  const [savingReglas, setSavingReglas] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<TorneoExpress | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [editingCategoriaId, setEditingCategoriaId] = useState<string | null>(
@@ -157,6 +168,8 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       setCategorias(data.categorias);
       setLogoSource(data.evento.logo_source);
       setFlyerUrl(data.evento.flyer_url ?? "");
+      setClasificacionModo(data.evento.clasificacion_modo);
+      setPartidoFormato(data.evento.partido_formato);
       const synced = await syncEventoEstadoFromCategorias(data.evento.id).catch(
         () => null
       );
@@ -164,6 +177,8 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
         setEvento(synced);
         setLogoSource(synced.logo_source);
         setFlyerUrl(synced.flyer_url ?? "");
+        setClasificacionModo(synced.clasificacion_modo);
+        setPartidoFormato(synced.partido_formato);
       }
     } catch (e) {
       setError(formatSupabaseError(e));
@@ -196,6 +211,28 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       showActionToast(msg, "error");
     } finally {
       setSavingBrand(false);
+    }
+  };
+
+  const handleSaveReglas = async () => {
+    if (!evento) return;
+    setSavingReglas(true);
+    setError(null);
+    try {
+      const updated = await updateEvento(evento.id, {
+        clasificacion_modo: clasificacionModo,
+        partido_formato: partidoFormato,
+      });
+      setEvento(updated);
+      setClasificacionModo(updated.clasificacion_modo);
+      setPartidoFormato(updated.partido_formato);
+      showActionToast("Reglas del evento guardadas", "success");
+    } catch (e) {
+      const msg = formatSupabaseError(e);
+      setError(msg);
+      showActionToast(msg, "error");
+    } finally {
+      setSavingReglas(false);
     }
   };
 
@@ -537,6 +574,71 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                   })}
                 </ul>
               )}
+            </section>
+
+            <section
+              className="te-evento-section"
+              aria-labelledby="te-evento-reglas-heading"
+            >
+              <h2
+                id="te-evento-reglas-heading"
+                className="te-evento-section__title"
+              >
+                Reglas del evento
+              </h2>
+              <p className="te-evento-section__hint">
+                Aplican a todas las categorías y grupos de este evento.
+              </p>
+              <div className="te-evento-brand">
+                <fieldset className="te-evento-brand__source">
+                  <legend className="te-evento-field__label">
+                    Clasificación a siguiente fase
+                  </legend>
+                  {CLASIFICACION_MODO_OPTIONS.map((opt) => (
+                    <label key={opt.value} className="te-evento-radio te-evento-radio--stacked">
+                      <span className="te-evento-radio__row">
+                        <input
+                          type="radio"
+                          name="clasificacion_modo"
+                          checked={clasificacionModo === opt.value}
+                          onChange={() => setClasificacionModo(opt.value)}
+                        />
+                        {opt.label}
+                      </span>
+                      <span className="te-evento-radio__desc">{opt.description}</span>
+                    </label>
+                  ))}
+                </fieldset>
+                <fieldset className="te-evento-brand__source">
+                  <legend className="te-evento-field__label">
+                    Formato de partido
+                  </legend>
+                  {PARTIDO_FORMATO_OPTIONS.map((opt) => (
+                    <label key={opt.value} className="te-evento-radio te-evento-radio--stacked">
+                      <span className="te-evento-radio__row">
+                        <input
+                          type="radio"
+                          name="partido_formato"
+                          checked={partidoFormato === opt.value}
+                          onChange={() => setPartidoFormato(opt.value)}
+                        />
+                        {opt.label}
+                      </span>
+                      <span className="te-evento-radio__desc">{opt.description}</span>
+                    </label>
+                  ))}
+                </fieldset>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  loading={savingReglas}
+                  disabled={savingReglas}
+                  onClick={() => void handleSaveReglas()}
+                >
+                  {savingReglas ? "Guardando…" : "Guardar reglas"}
+                </Button>
+              </div>
             </section>
 
             <section

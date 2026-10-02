@@ -54,11 +54,13 @@ import type {
   TorneoExpress,
   TorneoExpressBundle,
   TorneoExpressEliminatoriaPartido,
+  TorneoExpressClasificacionModo,
   TorneoExpressEvento,
   TorneoExpressEventoConCategorias,
   TorneoExpressEventoEstado,
   TorneoExpressEventoLogoSource,
   TorneoExpressEventoPublico,
+  TorneoExpressPartidoFormato,
   TorneoExpressFaseEliminacion,
   TorneoExpressGrupo,
   TorneoExpressGrupoPareja,
@@ -66,6 +68,10 @@ import type {
 } from "../lib/torneoExpress/types";
 import { deletePair, updatePair } from "../lib/database";
 import { pairIdentityFromRow } from "../lib/torneoExpress/pairIdentity";
+import {
+  resolveClasificacionModo,
+  resolvePartidoFormato,
+} from "../lib/torneoExpress/clasificacionModo";
 import type { TorneoExpressPairRow } from "../lib/torneoExpress/types";
 import { splitParejaDraftsByPlayerName } from "../lib/rivieraJugadores/playerNameKey";
 import type { Player } from "../lib/db/types";
@@ -792,6 +798,43 @@ export async function fetchTorneoExpress(
   return data as TorneoExpress | null;
 }
 
+async function resolveEventoReglasForTorneo(
+  torneo: Pick<TorneoExpress, "evento_id">,
+  usePublicClient = false
+): Promise<{
+  clasificacion_modo: TorneoExpressClasificacionModo;
+  partido_formato: TorneoExpressPartidoFormato;
+}> {
+  const eventoId = torneo.evento_id?.trim();
+  if (!eventoId) {
+    return {
+      clasificacion_modo: "dif_puntos",
+      partido_formato: "flexible",
+    };
+  }
+  const client = usePublicClient ? readClient : supabase;
+  const { data, error } = await client
+    .from("torneo_express_evento")
+    .select("clasificacion_modo, partido_formato")
+    .eq("id", eventoId)
+    .maybeSingle();
+  if (error || !data) {
+    return {
+      clasificacion_modo: "dif_puntos",
+      partido_formato: "flexible",
+    };
+  }
+  const row = data as Record<string, unknown>;
+  return {
+    clasificacion_modo: resolveClasificacionModo(
+      row.clasificacion_modo == null ? null : String(row.clasificacion_modo)
+    ),
+    partido_formato: resolvePartidoFormato(
+      row.partido_formato == null ? null : String(row.partido_formato)
+    ),
+  };
+}
+
 export async function fetchTorneoExpressBundle(
   torneoId: string,
   usePublicClient = false
@@ -799,6 +842,8 @@ export async function fetchTorneoExpressBundle(
   const client = usePublicClient ? readClient : supabase;
   const torneo = await fetchTorneoExpress(torneoId, usePublicClient);
   if (!torneo) return null;
+
+  const eventoReglas = await resolveEventoReglasForTorneo(torneo, usePublicClient);
 
   const { data: grupos, error: gErr } = await client
     .from("torneo_express_grupos")
@@ -835,6 +880,7 @@ export async function fetchTorneoExpressBundle(
       parejasPorGrupo: {},
       partidosPorGrupo: {},
       eliminatoriaPartidos,
+      ...eventoReglas,
     };
   }
 
@@ -881,6 +927,7 @@ export async function fetchTorneoExpressBundle(
     parejasPorGrupo,
     partidosPorGrupo,
     eliminatoriaPartidos,
+    ...eventoReglas,
   };
 }
 
@@ -1143,6 +1190,35 @@ export class TorneoExpressComposicionCambiadaError extends Error {
  * parejas fijas) y en la fase eliminatoria de Torneo Express — ver
  * supabase/migrations/0044_torneo_express_categoria_edicion.sql.
  */
+async function resolvePartidoFormatoForGrupoPartido(
+  partidoId: string
+): Promise<TorneoExpressPartidoFormato> {
+  try {
+    const { data: partido } = await supabase
+      .from("torneo_express_partidos")
+      .select("grupo_id")
+      .eq("id", partidoId)
+      .maybeSingle();
+    const grupoId = (partido as { grupo_id?: string } | null)?.grupo_id;
+    if (!grupoId) return "flexible";
+
+    const { data: grupo } = await supabase
+      .from("torneo_express_grupos")
+      .select("torneo_id")
+      .eq("id", grupoId)
+      .maybeSingle();
+    const torneoId = (grupo as { torneo_id?: string } | null)?.torneo_id;
+    if (!torneoId) return "flexible";
+
+    const torneo = await fetchTorneoExpress(torneoId);
+    if (!torneo) return "flexible";
+    const reglas = await resolveEventoReglasForTorneo(torneo);
+    return reglas.partido_formato;
+  } catch {
+    return "flexible";
+  }
+}
+
 export async function savePartidoResultado(
   partidoId: string,
   sets: PartidoSetScore[],
@@ -1151,8 +1227,10 @@ export async function savePartidoResultado(
 ): Promise<TorneoExpressPartido> {
   await requireAuthUser();
 
-  const validation = getSetsValidationMessage(sets);
-  const payload = buildPersistPayload(sets);
+  const partidoFormato = await resolvePartidoFormatoForGrupoPartido(partidoId);
+  const validationOpts = { partidoFormato };
+  const validation = getSetsValidationMessage(sets, validationOpts);
+  const payload = buildPersistPayload(sets, validationOpts);
   if (!payload || validation) {
     throw new Error(
       validation ??
@@ -2589,16 +2667,6 @@ export async function saveEliminatoriaResultado(
 ): Promise<TorneoExpressEliminatoriaPartido> {
   await requireAuthUser();
 
-  const validation = getSetsValidationMessage(sets, { allowDraw: false });
-  const payload = buildPersistPayload(sets, { allowDraw: false });
-  if (!payload || validation || !payload.ganadorSide) {
-    throw new Error(
-      validation ??
-        "Completa todos los sets y asegúrate de que haya un ganador"
-    );
-  }
-  const ganadorSide = payload.ganadorSide;
-
   const { data: existing, error: fetchErr } = await supabase
     .from("torneo_express_eliminatoria_partidos")
     .select(
@@ -2620,6 +2688,25 @@ export async function saveEliminatoriaResultado(
 
   await assertTorneoExpressNotClosed(existing.torneo_id as string);
 
+  const torneoId = existing.torneo_id as string;
+  const torneo = await fetchTorneoExpress(torneoId);
+  if (!torneo) {
+    throw new Error("No se pudo resolver el torneo del partido");
+  }
+  const partidoFormato = (
+    await resolveEventoReglasForTorneo(torneo)
+  ).partido_formato;
+  const validationOpts = { allowDraw: false as const, partidoFormato };
+  const validation = getSetsValidationMessage(sets, validationOpts);
+  const payload = buildPersistPayload(sets, validationOpts);
+  if (!payload || validation || !payload.ganadorSide) {
+    throw new Error(
+      validation ??
+        "Completa todos los sets y asegúrate de que haya un ganador"
+    );
+  }
+  const ganadorSide = payload.ganadorSide;
+
   const ganadorId =
     ganadorSide === "local"
       ? existing.pareja_local_id
@@ -2637,7 +2724,6 @@ export async function saveEliminatoriaResultado(
     sets_resultado: payload.sets_resultado,
   };
 
-  const torneoId = existing.torneo_id as string;
   const previousGanador = existing.ganador_id as string | null;
 
   // ── Calcular TODO el plan de escrituras en memoria, con la misma lógica
@@ -2646,11 +2732,6 @@ export async function saveEliminatoriaResultado(
   const updates: Array<{ id: string } & Record<string, unknown>> = [
     { id: partidoId, ...updateRow },
   ];
-
-  const torneo = await fetchTorneoExpress(torneoId);
-  if (!torneo) {
-    throw new Error("No se pudo resolver el torneo del partido");
-  }
 
   let allPartidos = await fetchEliminatoriaPartidos(torneoId);
   // Reflejar en memoria el guardado base (todavía no escrito) para que la
@@ -2839,6 +2920,16 @@ const EVENTO_LOGO_SOURCES: readonly TorneoExpressEventoLogoSource[] = [
   "club",
 ] as const;
 
+const EVENTO_CLASIFICACION_MODOS: readonly TorneoExpressClasificacionModo[] = [
+  "dif_puntos",
+  "setto_pg",
+] as const;
+
+const EVENTO_PARTIDO_FORMATOS: readonly TorneoExpressPartidoFormato[] = [
+  "flexible",
+  "bo3_super_muerte",
+] as const;
+
 function mapTorneoExpressEvento(row: Record<string, unknown>): TorneoExpressEvento {
   const estadoRaw = String(row.estado ?? "draft");
   const estado = (EVENTO_ESTADOS as readonly string[]).includes(estadoRaw)
@@ -2848,6 +2939,18 @@ function mapTorneoExpressEvento(row: Record<string, unknown>): TorneoExpressEven
   const logo_source = (EVENTO_LOGO_SOURCES as readonly string[]).includes(logoRaw)
     ? (logoRaw as TorneoExpressEventoLogoSource)
     : "club";
+  const clasifRaw = String(row.clasificacion_modo ?? "dif_puntos");
+  const clasificacion_modo = (
+    EVENTO_CLASIFICACION_MODOS as readonly string[]
+  ).includes(clasifRaw)
+    ? (clasifRaw as TorneoExpressClasificacionModo)
+    : "dif_puntos";
+  const formatoRaw = String(row.partido_formato ?? "flexible");
+  const partido_formato = (
+    EVENTO_PARTIDO_FORMATOS as readonly string[]
+  ).includes(formatoRaw)
+    ? (formatoRaw as TorneoExpressPartidoFormato)
+    : "flexible";
 
   return {
     id: String(row.id),
@@ -2869,6 +2972,8 @@ function mapTorneoExpressEvento(row: Record<string, unknown>): TorneoExpressEven
       row.fecha_fin == null || row.fecha_fin === ""
         ? null
         : String(row.fecha_fin),
+    clasificacion_modo,
+    partido_formato,
     created_at: String(row.created_at ?? ""),
   };
 }
@@ -3192,6 +3297,8 @@ export async function updateEvento(
       | "timezone"
       | "fecha_inicio"
       | "fecha_fin"
+      | "clasificacion_modo"
+      | "partido_formato"
     >
   >
 ): Promise<TorneoExpressEvento> {
@@ -3220,6 +3327,26 @@ export async function updateEvento(
   }
   if (patch.fecha_inicio !== undefined) payload.fecha_inicio = patch.fecha_inicio;
   if (patch.fecha_fin !== undefined) payload.fecha_fin = patch.fecha_fin;
+  if (patch.clasificacion_modo !== undefined) {
+    if (
+      !(EVENTO_CLASIFICACION_MODOS as readonly string[]).includes(
+        patch.clasificacion_modo
+      )
+    ) {
+      throw new Error("Modo de clasificación inválido");
+    }
+    payload.clasificacion_modo = patch.clasificacion_modo;
+  }
+  if (patch.partido_formato !== undefined) {
+    if (
+      !(EVENTO_PARTIDO_FORMATOS as readonly string[]).includes(
+        patch.partido_formato
+      )
+    ) {
+      throw new Error("Formato de partido inválido");
+    }
+    payload.partido_formato = patch.partido_formato;
+  }
 
   if (Object.keys(payload).length === 0) {
     const current = await fetchEventoById(id);

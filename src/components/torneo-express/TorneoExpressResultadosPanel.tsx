@@ -9,7 +9,10 @@ import {
   formatResultadosCopyText,
   type GrupoStandingsBlock,
 } from "../../lib/torneoExpress/resultadosCopy";
-import type { TorneoExpress } from "../../lib/torneoExpress/types";
+import type {
+  TorneoExpress,
+  TorneoExpressClasificacionModo,
+} from "../../lib/torneoExpress/types";
 import { TablaGrupo } from "./TablaGrupo";
 import { Button } from "../ui";
 
@@ -34,6 +37,8 @@ export const TorneoExpressResultadosPanel: React.FC<
   TorneoExpressResultadosPanelProps
 > = ({ torneo, onClose }) => {
   const [blocks, setBlocks] = useState<GrupoStandingsBlock[]>([]);
+  const [clasificacionModo, setClasificacionModo] =
+    useState<TorneoExpressClasificacionModo>("dif_puntos");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -51,6 +56,7 @@ export const TorneoExpressResultadosPanel: React.FC<
           setBlocks([]);
           return;
         }
+        setClasificacionModo(bundle.clasificacion_modo);
         setBlocks(buildGrupoStandingsFromBundle(bundle));
       })
       .catch((e) => {
@@ -105,7 +111,11 @@ export const TorneoExpressResultadosPanel: React.FC<
         blocks.map((block) => (
           <div key={block.grupo.id} className="te-resultados-grupo">
             <h4 className="te-resultados-grupo__title">{block.grupo.nombre}</h4>
-            <TablaGrupo rows={block.rows} scoringHelpVariant="express" />
+            <TablaGrupo
+              rows={block.rows}
+              scoringHelpVariant="express"
+              clasificacionModo={clasificacionModo}
+            />
           </div>
         ))}
 

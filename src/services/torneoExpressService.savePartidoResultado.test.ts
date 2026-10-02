@@ -49,10 +49,22 @@ function mockFetchAfterSave(row: Record<string, unknown>) {
   });
 }
 
+function mockFormatoLookupFlexible() {
+  (supabase.from as jest.Mock).mockReturnValue({
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+        single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      }),
+    }),
+  });
+}
+
 describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     authOk();
+    mockFormatoLookupFlexible();
   });
 
   it("guardado normal: llama al RPC con el payload calculado y devuelve el partido recargado", async () => {
@@ -141,7 +153,6 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
         p_expected_pairs: EXPECTED,
       })
     );
-    expect(supabase.from).not.toHaveBeenCalled();
   });
 
   it("partido inexistente: mensaje explícito, sin fetch posterior", async () => {
@@ -153,7 +164,7 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
     await expect(
       savePartidoResultado("no-existe", VALID_SETS, EXPECTED)
     ).rejects.toThrow("Partido no encontrado.");
-    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalled();
   });
 
   it("organizador ajeno / sin permiso: la RPC rechaza, sin escritura", async () => {
@@ -165,7 +176,7 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
     await expect(
       savePartidoResultado("partido-ajeno", VALID_SETS, EXPECTED)
     ).rejects.toThrow("Sin permiso sobre este torneo");
-    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalled();
   });
 
   it("resultado inválido (1-1 en sets sin tercer set): se rechaza antes de llamar al RPC (validación de cliente)", async () => {
@@ -191,7 +202,7 @@ describe("savePartidoResultado — guardado atómico fase de grupos (BLK-06)", (
     await expect(savePartidoResultado("partido-1", VALID_SETS, EXPECTED)).rejects.toThrow(
       /cerrad/i
     );
-    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalled();
   });
 });
 

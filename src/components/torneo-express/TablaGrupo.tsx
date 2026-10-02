@@ -17,19 +17,24 @@ import {
   TABLA_WRAPPER_CLASS,
 } from "../standings/standingsTableColumns";
 import { GrupoBadge } from "./GrupoBadge";
-import type { StandingRowExpress } from "../../lib/torneoExpress/types";
+import type {
+  StandingRowExpress,
+  TorneoExpressClasificacionModo,
+} from "../../lib/torneoExpress/types";
 import "../../styles/standings-mobile-cards.css";
 
 interface TablaGrupoProps {
   rows: StandingRowExpress[];
   showGrupoColumn?: boolean;
   scoringHelpVariant?: "default" | "express";
+  clasificacionModo?: TorneoExpressClasificacionModo;
 }
 
 export const TablaGrupo: React.FC<TablaGrupoProps> = ({
   rows,
   showGrupoColumn = false,
   scoringHelpVariant = "express",
+  clasificacionModo = "dif_puntos",
 }) => {
   const mobileRows = useMemo(
     () => rows.map((row, index) => teStandingRowToMobileRow(row, index)),
@@ -40,7 +45,10 @@ export const TablaGrupo: React.FC<TablaGrupoProps> = ({
 
   return (
     <div className="te-standings-block">
-      <StandingsScoringHelp variant={scoringHelpVariant} />
+      <StandingsScoringHelp
+        variant={scoringHelpVariant}
+        clasificacionModo={clasificacionModo}
+      />
       <div className="te-standings-mobile-cards">
         <StandingsMobileCards
           rows={mobileRows}

@@ -1,9 +1,11 @@
 import type {
   StandingRowExpress,
+  TorneoExpressClasificacionModo,
   TorneoExpressGrupo,
   TorneoExpressGrupoPareja,
   TorneoExpressPartido,
 } from "./types";
+import { DEFAULT_CLASIFICACION_MODO } from "./types";
 import {
   calcularEstadisticas,
   getHeadToHead,
@@ -12,6 +14,11 @@ import {
 } from "../../utils/standings";
 import { computeStandingDif } from "../../utils/standingsDisplay";
 import { partidoToMatchResult } from "./partidoSets";
+
+type ExpressPairStanding = PairStanding & {
+  setsFavor: number;
+  setsContra: number;
+};
 
 function standingToExpressRow(
   s: PairStanding,
@@ -44,9 +51,41 @@ function partidosToMatches(partidos: TorneoExpressPartido[]): MatchResult[] {
   return matches;
 }
 
-/** Torneo Express: DIF → FAV → PG → H2H → seed. */
-function createExpressStandingsComparator(matches: MatchResult[]) {
-  return (a: PairStanding, b: PairStanding): number => {
+function enrichWithSetStats(
+  stats: PairStanding[],
+  matches: MatchResult[]
+): ExpressPairStanding[] {
+  const setsByPair = new Map<string, { favor: number; contra: number }>();
+  for (const s of stats) {
+    setsByPair.set(s.pairId, { favor: 0, contra: 0 });
+  }
+  for (const m of matches) {
+    const a = setsByPair.get(m.pairAId);
+    const b = setsByPair.get(m.pairBId);
+    const setsA = m.setsA ?? 0;
+    const setsB = m.setsB ?? 0;
+    if (a) {
+      a.favor += setsA;
+      a.contra += setsB;
+    }
+    if (b) {
+      b.favor += setsB;
+      b.contra += setsA;
+    }
+  }
+  return stats.map((s) => {
+    const sets = setsByPair.get(s.pairId) ?? { favor: 0, contra: 0 };
+    return {
+      ...s,
+      setsFavor: sets.favor,
+      setsContra: sets.contra,
+    };
+  });
+}
+
+/** Torneo Express default: DIF → FAV → PG → H2H → seed. */
+function createDifPuntosComparator(matches: MatchResult[]) {
+  return (a: ExpressPairStanding, b: ExpressPairStanding): number => {
     if (b.diferencia !== a.diferencia) return b.diferencia - a.diferencia;
     if (b.juegosFavor !== a.juegosFavor) return b.juegosFavor - a.juegosFavor;
     if (b.PG !== a.PG) return b.PG - a.PG;
@@ -56,21 +95,80 @@ function createExpressStandingsComparator(matches: MatchResult[]) {
   };
 }
 
+function setDiff(s: ExpressPairStanding): number {
+  return s.setsFavor - s.setsContra;
+}
+
+/**
+ * Desempate Setto dentro de un grupo ya empatado en PG:
+ * H2H solo si exactamente 2; luego DIF sets → DIF games → sets → games → seed.
+ */
+function compareSettoWithinPgTie(
+  a: ExpressPairStanding,
+  b: ExpressPairStanding,
+  matches: MatchResult[],
+  tiedCount: number
+): number {
+  if (tiedCount === 2) {
+    const h2h = getHeadToHead(a.pairId, b.pairId, matches);
+    if (h2h !== 0) return h2h;
+  }
+  const setDifA = setDiff(a);
+  const setDifB = setDiff(b);
+  if (setDifB !== setDifA) return setDifB - setDifA;
+  if (b.diferencia !== a.diferencia) return b.diferencia - a.diferencia;
+  if (b.setsFavor !== a.setsFavor) return b.setsFavor - a.setsFavor;
+  if (b.juegosFavor !== a.juegosFavor) return b.juegosFavor - a.juegosFavor;
+  return a.seed - b.seed;
+}
+
+/** PG → (H2H si 2 empatados) → DIF sets → DIF games → sets → games → seed. */
+function sortSettoPg(
+  rows: ExpressPairStanding[],
+  matches: MatchResult[]
+): ExpressPairStanding[] {
+  const byPg = [...rows].sort((a, b) => {
+    if (b.PG !== a.PG) return b.PG - a.PG;
+    return a.seed - b.seed;
+  });
+
+  const result: ExpressPairStanding[] = [];
+  let i = 0;
+  while (i < byPg.length) {
+    let j = i + 1;
+    while (j < byPg.length && byPg[j].PG === byPg[i].PG) j += 1;
+    const group = byPg.slice(i, j);
+    if (group.length === 1) {
+      result.push(group[0]);
+    } else {
+      group.sort((a, b) =>
+        compareSettoWithinPgTie(a, b, matches, group.length)
+      );
+      result.push(...group);
+    }
+    i = j;
+  }
+  return result;
+}
+
 function calculateExpressStandings(
   pairs: Array<{ id: string; name: string; seed?: number }>,
-  matches: MatchResult[]
+  matches: MatchResult[],
+  modo: TorneoExpressClasificacionModo = DEFAULT_CLASIFICACION_MODO
 ): PairStanding[] {
-  const stats = calcularEstadisticas(pairs, matches);
-  const cmp = createExpressStandingsComparator(matches);
-  return [...stats]
-    .sort(cmp)
-    .map((pair, index) => ({ ...pair, posicion: index + 1 }));
+  const stats = enrichWithSetStats(calcularEstadisticas(pairs, matches), matches);
+  const sorted =
+    modo === "setto_pg"
+      ? sortSettoPg(stats, matches)
+      : [...stats].sort(createDifPuntosComparator(matches));
+  return sorted.map((pair, index) => ({ ...pair, posicion: index + 1 }));
 }
 
 export function buildStandingsForGrupo(
   grupo: TorneoExpressGrupo,
   parejas: TorneoExpressGrupoPareja[],
-  partidos: TorneoExpressPartido[]
+  partidos: TorneoExpressPartido[],
+  modo: TorneoExpressClasificacionModo = DEFAULT_CLASIFICACION_MODO
 ): StandingRowExpress[] {
   const labels = new Map<string, string>();
   parejas.forEach((p) => {
@@ -84,7 +182,7 @@ export function buildStandingsForGrupo(
   }));
 
   const matches = partidosToMatches(partidos);
-  const standings = calculateExpressStandings(pairInputs, matches);
+  const standings = calculateExpressStandings(pairInputs, matches, modo);
 
   return standings.map((s) =>
     standingToExpressRow(s, grupo, labels.get(s.pairId) ?? s.pairName)
@@ -94,7 +192,8 @@ export function buildStandingsForGrupo(
 export function buildStandingsGeneral(
   grupos: TorneoExpressGrupo[],
   parejasPorGrupo: Record<string, TorneoExpressGrupoPareja[]>,
-  partidosPorGrupo: Record<string, TorneoExpressPartido[]>
+  partidosPorGrupo: Record<string, TorneoExpressPartido[]>,
+  modo: TorneoExpressClasificacionModo = DEFAULT_CLASIFICACION_MODO
 ): StandingRowExpress[] {
   const pairInputs: Array<{ id: string; name: string; seed?: number }> = [];
   const labels = new Map<string, string>();
@@ -117,7 +216,7 @@ export function buildStandingsGeneral(
     });
   });
 
-  const standings = calculateExpressStandings(pairInputs, allMatches);
+  const standings = calculateExpressStandings(pairInputs, allMatches, modo);
 
   return standings.map((s) => {
     const meta = metaByPair.get(s.pairId);

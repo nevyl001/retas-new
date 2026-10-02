@@ -162,11 +162,13 @@ export function useTorneoExpress(
   const standingsByGrupo = useMemo(() => {
     if (!bundle) return {} as Record<string, StandingRowExpress[]>;
     const out: Record<string, StandingRowExpress[]> = {};
+    const modo = bundle.clasificacion_modo;
     bundle.grupos.forEach((grupo) => {
       out[grupo.id] = buildStandingsForGrupo(
         grupo,
         bundle.parejasPorGrupo[grupo.id] ?? [],
-        bundle.partidosPorGrupo[grupo.id] ?? []
+        bundle.partidosPorGrupo[grupo.id] ?? [],
+        modo
       );
     });
     return out;
@@ -177,7 +179,8 @@ export function useTorneoExpress(
     return buildStandingsGeneral(
       bundle.grupos,
       bundle.parejasPorGrupo,
-      bundle.partidosPorGrupo
+      bundle.partidosPorGrupo,
+      bundle.clasificacion_modo
     );
   }, [bundle]);
 

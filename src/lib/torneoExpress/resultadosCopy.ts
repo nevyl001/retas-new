@@ -18,7 +18,8 @@ export function buildGrupoStandingsFromBundle(
     rows: buildStandingsForGrupo(
       grupo,
       bundle.parejasPorGrupo[grupo.id] ?? [],
-      bundle.partidosPorGrupo[grupo.id] ?? []
+      bundle.partidosPorGrupo[grupo.id] ?? [],
+      bundle.clasificacion_modo
     ),
   }));
 }

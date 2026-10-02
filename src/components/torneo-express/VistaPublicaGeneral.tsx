@@ -80,6 +80,7 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
             rows={standingsGeneral}
             showGrupoColumn
             title="Tabla general"
+            clasificacionModo={bundle.clasificacion_modo}
           />
 
           <PublicTorneoExpressSyncFooter

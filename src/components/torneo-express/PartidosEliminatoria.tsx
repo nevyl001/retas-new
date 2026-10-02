@@ -25,6 +25,7 @@ import type {
   TorneoExpressEliminatoriaPartido,
   TorneoExpressFaseEliminacion,
   TorneoExpressPartido,
+  TorneoExpressPartidoFormato,
 } from "../../lib/torneoExpress/types";
 import { Badge, Button } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
@@ -40,6 +41,7 @@ interface PartidosEliminatoriaProps {
   savingPartidoId?: string | null;
   savingCanchaId?: string | null;
   savingProgramadoId?: string | null;
+  partidoFormato?: TorneoExpressPartidoFormato;
   onSaveResultado?: (
     partidoId: string,
     sets: PartidoSetScore[]
@@ -82,6 +84,7 @@ function EliminatoriaPartidoCard({
   onSave,
   onSaveCancha,
   onSaveProgramado,
+  partidoFormato = "flexible",
 }: {
   partido: TorneoExpressEliminatoriaPartido;
   localLabel: string;
@@ -94,6 +97,7 @@ function EliminatoriaPartidoCard({
   onSave?: PartidosEliminatoriaProps["onSaveResultado"];
   onSaveCancha?: PartidosEliminatoriaProps["onSaveCancha"];
   onSaveProgramado?: PartidosEliminatoriaProps["onSaveProgramado"];
+  partidoFormato?: TorneoExpressPartidoFormato;
 }) {
   const played = partido.estado === "jugado";
   const [setsModalOpen, setSetsModalOpen] = useState(false);
@@ -450,6 +454,8 @@ function EliminatoriaPartidoCard({
           localLabel={localLabel}
           visitLabel={visitLabel}
           initialPartido={partido}
+          partidoFormato={partidoFormato}
+          allowDraw={false}
           saving={saving}
           onSave={(sets) => onSave!(partido.id, sets)}
         />
@@ -467,6 +473,7 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
   savingPartidoId,
   savingCanchaId,
   savingProgramadoId,
+  partidoFormato = "flexible",
   onSaveResultado,
   onSaveCancha,
   onSaveProgramado,
@@ -539,6 +546,7 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
             onSave={onSaveResultado}
             onSaveCancha={onSaveCancha}
             onSaveProgramado={onSaveProgramado}
+            partidoFormato={partidoFormato}
           />
         ))}
       </div>

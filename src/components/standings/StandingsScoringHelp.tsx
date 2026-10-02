@@ -3,6 +3,8 @@ import {
   getStandingsCompactSchedulingHint,
   type StandingsHelpMode,
 } from "../../lib/standingsHelpMode";
+import { clasificacionOrderSummary } from "../../lib/torneoExpress/clasificacionModo";
+import type { TorneoExpressClasificacionModo } from "../../lib/torneoExpress/types";
 import "../../styles/standings-scoring-help.css";
 
 interface StandingsScoringHelpProps {
@@ -13,26 +15,44 @@ interface StandingsScoringHelpProps {
   variant?: "default" | "express";
   /** Tipo de reta/torneo para el párrafo contextual (evita mencionar americano en dual meet, etc.). */
   mode?: StandingsHelpMode;
+  /** Preset de desempate del evento (solo Express). */
+  clasificacionModo?: TorneoExpressClasificacionModo;
+}
+
+function expressLead(modo: TorneoExpressClasificacionModo): React.ReactNode {
+  if (modo === "setto_pg") {
+    return (
+      <>
+        Gana quien tenga más <strong>partidos ganados (PG)</strong>.
+      </>
+    );
+  }
+  return (
+    <>
+      Gana quien tenga mejor <strong>diferencia (DIF)</strong>.
+    </>
+  );
+}
+
+function expressOrder(modo: TorneoExpressClasificacionModo): React.ReactNode {
+  return (
+    <>
+      Orden: <strong>{clasificacionOrderSummary(modo)}</strong> ·{" "}
+      <strong>PTS</strong> = referencia
+    </>
+  );
 }
 
 function buildHelpCopy(
   variant: "default" | "express",
-  mode: StandingsHelpMode
+  mode: StandingsHelpMode,
+  clasificacionModo: TorneoExpressClasificacionModo
 ): { lead: React.ReactNode; order: React.ReactNode } {
   const isExpress = variant === "express" || mode === "express";
   if (isExpress) {
     return {
-      lead: (
-        <>
-          Gana quien tenga mejor <strong>diferencia (DIF)</strong>.
-        </>
-      ),
-      order: (
-        <>
-          Orden: <strong>DIF</strong> → <strong>FAV</strong> → <strong>PG</strong> →
-          H2H · <strong>PTS</strong> = referencia
-        </>
-      ),
+      lead: expressLead(clasificacionModo),
+      order: expressOrder(clasificacionModo),
     };
   }
   if (mode === "dual-meet") {
@@ -68,16 +88,12 @@ function buildHelpCopy(
 
 function buildCompactLine(
   variant: "default" | "express",
-  mode: StandingsHelpMode
+  mode: StandingsHelpMode,
+  clasificacionModo: TorneoExpressClasificacionModo
 ): React.ReactNode {
   const isExpress = variant === "express" || mode === "express";
   if (isExpress) {
-    return (
-      <>
-        Orden: <strong>DIF</strong> → <strong>FAV</strong> → <strong>PG</strong> →
-        H2H · <strong>PTS</strong> = referencia
-      </>
-    );
+    return expressOrder(clasificacionModo);
   }
   if (mode === "dual-meet") {
     return (
@@ -101,6 +117,7 @@ export const StandingsScoringHelp: React.FC<StandingsScoringHelpProps> = ({
   compact = false,
   variant = "default",
   mode: modeProp,
+  clasificacionModo = "dif_puntos",
 }) => {
   const mode: StandingsHelpMode =
     modeProp ?? (variant === "express" ? "express" : "round-robin");
@@ -113,13 +130,13 @@ export const StandingsScoringHelp: React.FC<StandingsScoringHelpProps> = ({
         className={`standings-scoring-help standings-scoring-help--compact ${className}`.trim()}
         aria-label="Cómo se calcula la clasificación"
       >
-        {buildCompactLine(variant, mode)}
+        {buildCompactLine(variant, mode, clasificacionModo)}
         {schedulingHint ? <> · {schedulingHint}</> : null}
       </p>
     );
   }
 
-  const { lead, order } = buildHelpCopy(variant, mode);
+  const { lead, order } = buildHelpCopy(variant, mode, clasificacionModo);
 
   return (
     <aside

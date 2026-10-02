@@ -19,9 +19,11 @@ import {
 } from "../../../lib/rivieraBranding";
 import { RIVIERA_CO_BRAND_ATTRIBUTION } from "../../../club-experience/motherBrand";
 import { useClubExperience } from "../../../club-experience";
+import { clasificacionOrderSummary } from "../../../lib/torneoExpress/clasificacionModo";
 import type {
   StandingRowExpress,
   TorneoExpressBundle,
+  TorneoExpressClasificacionModo,
   TorneoExpressPartido,
 } from "../../../lib/torneoExpress/types";
 import { TablerIcon } from "../../ui/TablerIcon";
@@ -72,6 +74,7 @@ export interface TEPublicGruposProps {
   faseFinalHref?: string;
   /** Enlace al hub del Evento (todas las categorías). */
   eventoHref?: string | null;
+  clasificacionModo?: TorneoExpressClasificacionModo;
 }
 
 const DEFAULT_CLASIFICAN = 2;
@@ -168,6 +171,7 @@ export function buildTEPublicGruposProps(
     categoria: bundle.torneo.categoria?.trim() ?? "",
     fecha,
     lugar: options?.lugar?.trim() ?? "",
+    clasificacionModo: bundle.clasificacion_modo,
   };
 }
 
@@ -686,6 +690,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
   copyMsg,
   faseFinalHref,
   eventoHref,
+  clasificacionModo = "dif_puntos",
 }) => {
   const [selectedGrupoId, setSelectedGrupoId] = useState<string | null>(null);
   const { branding, manifest, isScopeBrandingReady } = useClubExperience();
@@ -857,7 +862,8 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
         <details className="te-grupos-scoring-help">
           <summary>Criterios de clasificación</summary>
           <p>
-            DIF → FAV → PG → H2H · la columna derecha muestra DIF
+            {clasificacionOrderSummary(clasificacionModo)} · la columna derecha
+            muestra DIF
           </p>
         </details>
       )}

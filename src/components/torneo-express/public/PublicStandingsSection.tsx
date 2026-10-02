@@ -1,6 +1,9 @@
 import React, { useMemo } from "react";
 import { computeStandingDif } from "../../../utils/standingsDisplay";
-import type { StandingRowExpress } from "../../../lib/torneoExpress/types";
+import type {
+  StandingRowExpress,
+  TorneoExpressClasificacionModo,
+} from "../../../lib/torneoExpress/types";
 import { PublicStandingsScoringHelp } from "./PublicStandingsScoringHelp";
 
 function DifPill({ ptsFav, ptsCon }: { ptsFav: number; ptsCon: number }) {
@@ -17,11 +20,13 @@ export const PublicStandingsSection: React.FC<{
   /** Leyenda «¿Cómo se ordena la tabla?»; desactivar si ya se muestra arriba en la página */
   showScoringHelp?: boolean;
   title?: string;
+  clasificacionModo?: TorneoExpressClasificacionModo;
 }> = ({
   rows,
   showGrupoColumn = false,
   showScoringHelp = true,
   title = "Clasificación",
+  clasificacionModo = "dif_puntos",
 }) => {
   const staggerBase = useMemo(() => 0.04, []);
 
@@ -39,7 +44,9 @@ export const PublicStandingsSection: React.FC<{
       <h2 className="te-public-section__title">{title}</h2>
       <div className="te-public-section__divider" aria-hidden />
 
-      {showScoringHelp ? <PublicStandingsScoringHelp /> : null}
+      {showScoringHelp ? (
+        <PublicStandingsScoringHelp clasificacionModo={clasificacionModo} />
+      ) : null}
 
       <div className="te-pub-standings-table-wrap standings-table-desktop te-pub-fade-in te-pub-fade-in--delay-1">
         <table className="te-pub-standings-table">

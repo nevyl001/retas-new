@@ -49,7 +49,8 @@ function pairIdsFromBundleStandings(bundle: TorneoExpressBundle): Set<string> {
     const tabla = buildStandingsForGrupo(
       grupo,
       bundle.parejasPorGrupo[grupo.id] ?? [],
-      bundle.partidosPorGrupo[grupo.id] ?? []
+      bundle.partidosPorGrupo[grupo.id] ?? [],
+      bundle.clasificacion_modo
     );
     tabla.slice(0, CLASIFICAN_POR_GRUPO).forEach((row) => qualified.add(row.parejaId));
   }

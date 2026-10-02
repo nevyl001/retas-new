@@ -1317,6 +1317,13 @@ button.te-partido-chip--cancha:disabled {
   color: var(--text-primary);
 }
 
+.te-sets-modal__format-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
 .te-sets-modal__hint {
   margin: 0;
   font-size: 0.8125rem;

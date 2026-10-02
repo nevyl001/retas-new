@@ -13,6 +13,16 @@ export type TorneoExpressEventoEstado =
 
 export type TorneoExpressEventoLogoSource = "flyer" | "club";
 
+/** Preset de desempate de grupos (pase a siguiente fase), a nivel evento. */
+export type TorneoExpressClasificacionModo = "dif_puntos" | "setto_pg";
+
+/** Formato de captura de partidos a nivel evento. */
+export type TorneoExpressPartidoFormato = "flexible" | "bo3_super_muerte";
+
+export const DEFAULT_CLASIFICACION_MODO: TorneoExpressClasificacionModo =
+  "dif_puntos";
+export const DEFAULT_PARTIDO_FORMATO: TorneoExpressPartidoFormato = "flexible";
+
 /** Evento contenedor multi-categoría (`torneo_express_evento`). */
 export interface TorneoExpressEvento {
   id: string;
@@ -25,6 +35,10 @@ export interface TorneoExpressEvento {
   timezone: string;
   fecha_inicio: string | null;
   fecha_fin: string | null;
+  /** Desempate de standings de grupos para todas las categorías. */
+  clasificacion_modo: TorneoExpressClasificacionModo;
+  /** Reglas de marcador (flexible vs Bo3 + super muerte). */
+  partido_formato: TorneoExpressPartidoFormato;
   created_at: string;
 }
 
@@ -201,6 +215,10 @@ export interface TorneoExpressBundle {
   parejasPorGrupo: Record<string, TorneoExpressGrupoPareja[]>;
   partidosPorGrupo: Record<string, TorneoExpressPartido[]>;
   eliminatoriaPartidos: TorneoExpressEliminatoriaPartido[];
+  /** Heredado del evento contenedor; default dif_puntos si no hay evento. */
+  clasificacion_modo: TorneoExpressClasificacionModo;
+  /** Heredado del evento contenedor; default flexible si no hay evento. */
+  partido_formato: TorneoExpressPartidoFormato;
 }
 
 export interface StandingRowExpress {

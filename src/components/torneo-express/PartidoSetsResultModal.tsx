@@ -10,7 +10,11 @@ import {
   getPartidoSets,
   getSetsValidationMessage,
 } from "../../lib/torneoExpress/partidoSets";
-import type { ExpectedPairs, PartidoSetScore } from "../../lib/torneoExpress/types";
+import type {
+  ExpectedPairs,
+  PartidoSetScore,
+  TorneoExpressPartidoFormato,
+} from "../../lib/torneoExpress/types";
 import { TorneoExpressComposicionCambiadaError } from "../../services/torneoExpressService";
 import { Button } from "../ui";
 import { Modal } from "../ui/Modal";
@@ -29,6 +33,10 @@ export interface PartidoSetsResultModalProps {
   };
   /** Ids congelados por quien abre el modal. La eliminatoria no los usa. */
   expectedPairs?: ExpectedPairs | null;
+  /** Formato del evento; afecta validación del 3er set. */
+  partidoFormato?: TorneoExpressPartidoFormato;
+  /** En eliminatoria no se permiten empates a un set. */
+  allowDraw?: boolean;
   saving?: boolean;
   onSave: (
     sets: PartidoSetScore[],
@@ -56,6 +64,8 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
   visitLabel,
   initialPartido,
   expectedPairs = null,
+  partidoFormato = "flexible",
+  allowDraw = true,
   saving = false,
   onSave,
 }) => {
@@ -89,20 +99,27 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  const validationOpts = useMemo(
+    () => ({ allowDraw, partidoFormato }),
+    [allowDraw, partidoFormato]
+  );
   const winner = useMemo(() => detectMatchWinner(sets), [sets]);
   const wins = useMemo(() => countSetWins(sets), [sets]);
   const validationMessage = useMemo(
-    () => getSetsValidationMessage(sets),
-    [sets]
+    () => getSetsValidationMessage(sets, validationOpts),
+    [sets, validationOpts]
   );
   const isDraw =
     sets.length === 1 &&
     sets[0].local === sets[0].visitante &&
     validationMessage === null;
   const canSave = useMemo(
-    () => buildPersistPayload(sets) !== null && validationMessage === null,
-    [sets, validationMessage]
+    () =>
+      buildPersistPayload(sets, validationOpts) !== null &&
+      validationMessage === null,
+    [sets, validationOpts, validationMessage]
   );
+  const showSuperMuerteHint = partidoFormato === "bo3_super_muerte";
 
   const updateSet = (
     index: number,
@@ -195,6 +212,13 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
             {visitLabel}
           </span>
         </div>
+
+        {showSuperMuerteHint ? (
+          <p className="te-sets-modal__format-hint" role="note">
+            Formato del evento: mejor de 3. Si van 1–1, el Set 3 debe ser súper
+            muerte (a 10 con 2 de ventaja).
+          </p>
+        ) : null}
 
         <div className="te-sets-modal__rows">
           {sets.map((set, index) => (

@@ -157,11 +157,14 @@ export function partidoToMatchResult(partido: {
   const stored = parseSetsResultado(partido.sets_resultado);
   if (stored && stored.length > 0) {
     const games = totalGamesFromSets(stored);
+    const sets = countSetWins(stored);
     return {
       pairAId: partido.pareja_local_id,
       pairBId: partido.pareja_visitante_id,
       gamesA: games.local,
       gamesB: games.visitante,
+      setsA: sets.local,
+      setsB: sets.visitante,
       winnerId: partido.ganador_id,
     };
   }
@@ -176,6 +179,8 @@ export function partidoToMatchResult(partido: {
       pairBId: partido.pareja_visitante_id,
       gamesA: 0,
       gamesB: 0,
+      setsA: pl,
+      setsB: pv,
       winnerId: partido.ganador_id,
     };
   }
@@ -185,6 +190,8 @@ export function partidoToMatchResult(partido: {
     pairBId: partido.pareja_visitante_id,
     gamesA: pl,
     gamesB: pv,
+    setsA: 0,
+    setsB: 0,
     winnerId: partido.ganador_id,
   };
 }
@@ -296,6 +303,11 @@ export type SetsValidationOptions = {
    * Default: true.
    */
   allowDraw?: boolean;
+  /**
+   * Si es `bo3_super_muerte`, el set 3 (índice 2) debe ser súper tiebreak
+   * clásico (a 10 con 2 de ventaja).
+   */
+  partidoFormato?: "flexible" | "bo3_super_muerte";
 };
 
 /** Mensaje de validación para UI; null si se puede guardar. */
@@ -304,6 +316,7 @@ export function getSetsValidationMessage(
   options?: SetsValidationOptions
 ): string | null {
   const allowDraw = options?.allowDraw !== false;
+  const requireSuperTb = options?.partidoFormato === "bo3_super_muerte";
 
   if (sets.length === 0) {
     return "Agrega al menos un set.";
@@ -319,7 +332,11 @@ export function getSetsValidationMessage(
     if (s.local < 0 || s.visitante < 0) {
       return "Los marcadores no pueden ser negativos.";
     }
-    if (!isLegalSetScoreAtIndex(s, i)) {
+    if (requireSuperTb && i === 2) {
+      if (!isLegalSuperTieBreakScore(s)) {
+        return "El Set 3 debe ser súper muerte (a 10 con 2 de ventaja).";
+      }
+    } else if (!isLegalSetScoreAtIndex(s, i)) {
       return `El Set ${i + 1} debe ser un marcador entre 0 y 99.`;
     }
     if (s.local === s.visitante) {
