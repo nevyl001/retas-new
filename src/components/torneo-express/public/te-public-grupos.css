@@ -1170,13 +1170,15 @@
   width: min(100%, 360px);
   margin: 0 0 12px;
   padding: 3px;
-  border: 1px solid var(--te-groups-border);
+  border: 1px solid var(--te-groups-border-strong);
   border-radius: 14px;
   background: color-mix(
     in srgb,
-    var(--te-groups-surface) 88%,
-    transparent
+    var(--te-groups-surface-raised) 72%,
+    var(--te-groups-bg)
   );
+  box-shadow: inset 0 1px 0
+    color-mix(in srgb, var(--text-primary, #fff) 6%, transparent);
 }
 
 .te-public.te-public--grupos-wide .te-phase-segment__item {
@@ -1186,24 +1188,37 @@
   justify-content: center;
   padding: 0 14px;
   border-radius: 10px;
-  color: var(--text-muted);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.78));
   font-size: 0.8125rem;
   font-weight: 650;
+  letter-spacing: 0.01em;
   text-decoration: none;
   transition:
     background var(--te-groups-motion),
-    color var(--te-groups-motion);
+    color var(--te-groups-motion),
+    box-shadow var(--te-groups-motion);
 }
 
 .te-public.te-public--grupos-wide .te-phase-segment__item--active {
-  background: var(--te-groups-surface-raised);
-  color: var(--text-primary);
-  box-shadow: inset 0 0 0 1px var(--te-groups-border);
+  background: color-mix(
+    in srgb,
+    var(--te-groups-surface-raised) 92%,
+    var(--text-primary, #fff)
+  );
+  color: var(--text-primary, #fff);
+  box-shadow:
+    inset 0 0 0 1px var(--te-groups-border-strong),
+    inset 0 -2px 0 color-mix(in srgb, var(--te-groups-accent) 70%, transparent);
 }
 
 .te-public.te-public--grupos-wide .te-phase-segment__item--disabled {
-  color: var(--text-disabled);
+  color: color-mix(
+    in srgb,
+    var(--text-primary, #fff) 42%,
+    transparent
+  );
   cursor: default;
+  opacity: 1;
 }
 
 .te-public.te-public--grupos-wide
@@ -1344,21 +1359,42 @@
     flex: 0 0 auto;
     min-height: 44px;
     padding: 0 16px;
-    border: 0;
+    border: 1px solid var(--te-groups-border);
     border-radius: 12px;
-    background: transparent;
-    color: var(--text-muted);
+    background: color-mix(
+      in srgb,
+      var(--te-groups-surface) 55%,
+      transparent
+    );
+    color: var(--text-secondary, rgba(255, 255, 255, 0.78));
     font-size: 0.8125rem;
     touch-action: manipulation;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupos-index__btn:hover,
+  .te-public.te-public--grupos-wide .te-grupos-index__btn:focus-visible {
+    border-color: var(--te-groups-border-strong);
+    background: color-mix(
+      in srgb,
+      var(--te-groups-surface-raised) 70%,
+      transparent
+    );
+    color: var(--text-primary, #fff);
   }
 
   .te-public.te-public--grupos-wide .te-grupos-index__btn--active,
   .te-public.te-public--grupos-wide .te-grupos-index__btn--active:hover,
   .te-public.te-public--grupos-wide .te-grupos-index__btn--active:focus-visible {
-    border: 0;
-    background: var(--te-groups-surface-raised);
-    color: var(--text-primary);
-    box-shadow: inset 0 0 0 1px var(--te-groups-border);
+    border-color: var(--te-groups-border-strong);
+    background: color-mix(
+      in srgb,
+      var(--te-groups-surface-raised) 94%,
+      var(--text-primary, #fff)
+    );
+    color: var(--text-primary, #fff);
+    box-shadow:
+      inset 0 0 0 1px var(--te-groups-border),
+      inset 0 -2px 0 color-mix(in srgb, var(--te-groups-accent) 66%, transparent);
   }
 
   .te-public.te-public--grupos-wide .te-grupos-scoring-help {
@@ -3155,16 +3191,46 @@
 .club-experience-scope[data-brand="padel-court-series"]
   .te-public.te-public--grupos-wide
   .te-phase-segment {
-  border-color: var(--te-groups-border-strong);
+  border-color: color-mix(
+    in srgb,
+    var(--brand-text) 18%,
+    var(--te-groups-border-strong)
+  );
   background:
     linear-gradient(
       145deg,
-      color-mix(in srgb, var(--brand-primary) 88%, var(--brand-secondary)),
-      color-mix(in srgb, var(--brand-secondary) 82%, var(--brand-primary))
+      color-mix(in srgb, var(--brand-primary) 72%, var(--brand-secondary)),
+      color-mix(in srgb, var(--brand-secondary) 68%, var(--brand-primary))
     );
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--brand-text) 4%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--brand-text) 10%, transparent),
     0 14px 34px color-mix(in srgb, var(--brand-secondary) 28%, transparent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-phase-segment__item {
+  color: color-mix(in srgb, var(--brand-text) 78%, transparent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-phase-segment__item--disabled {
+  color: color-mix(in srgb, var(--brand-text) 48%, transparent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-phase-segment__item:not(.te-phase-segment__item--active):not(
+    .te-phase-segment__item--disabled
+  ):hover,
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-phase-segment__item:not(.te-phase-segment__item--active):not(
+    .te-phase-segment__item--disabled
+  ):focus-visible {
+  background: color-mix(in srgb, var(--brand-text) 10%, transparent);
+  color: var(--brand-text);
 }
 
 .club-experience-scope[data-brand="padel-court-series"]
@@ -3172,12 +3238,40 @@
   .te-phase-segment__item--active {
   background: color-mix(
     in srgb,
-    var(--brand-secondary) 78%,
-    var(--brand-primary)
+    var(--brand-secondary) 55%,
+    color-mix(in srgb, var(--brand-text) 12%, var(--brand-primary))
   );
   color: var(--brand-text);
-  box-shadow: inset 0 -2px 0
-    color-mix(in srgb, var(--brand-accent) 72%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--brand-text) 14%, transparent),
+    inset 0 -2px 0 color-mix(in srgb, var(--brand-accent) 78%, transparent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupos-index__btn {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-text) 22%,
+    var(--te-groups-border)
+  );
+  background: color-mix(in srgb, var(--brand-text) 6%, transparent);
+  color: color-mix(in srgb, var(--brand-text) 82%, transparent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupos-index__btn:hover,
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupos-index__btn:focus-visible {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-text) 34%,
+    var(--te-groups-border-strong)
+  );
+  background: color-mix(in srgb, var(--brand-text) 10%, transparent);
+  color: var(--brand-text);
 }
 
 .club-experience-scope[data-brand="padel-court-series"]
@@ -3191,17 +3285,18 @@
   .te-grupos-index__btn--active:focus-visible {
   border-color: color-mix(
     in srgb,
-    var(--brand-accent) 36%,
-    var(--te-groups-border)
+    var(--brand-accent) 40%,
+    var(--te-groups-border-strong)
   );
   background: color-mix(
     in srgb,
-    var(--brand-secondary) 82%,
-    var(--brand-primary)
+    var(--brand-secondary) 62%,
+    color-mix(in srgb, var(--brand-text) 10%, var(--brand-primary))
   );
   color: var(--brand-text);
-  box-shadow: inset 0 -2px 0
-    color-mix(in srgb, var(--brand-accent) 66%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--brand-text) 12%, transparent),
+    inset 0 -2px 0 color-mix(in srgb, var(--brand-accent) 72%, transparent);
 }
 
 .club-experience-scope[data-brand="padel-court-series"]
