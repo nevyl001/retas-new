@@ -125,6 +125,8 @@ const EventoPublicoBody: React.FC<EventoPublicoBodyProps> = ({
                 stats: statsByTorneoId[cat.id],
                 eliminatoriaPartidos:
                   eliminatoriaPartidosByTorneoId[cat.id] ?? [],
+                eventFechaInicio: evento.fecha_inicio,
+                eventTimezone: evento.timezone,
               });
               return (
                 <li key={cat.id}>

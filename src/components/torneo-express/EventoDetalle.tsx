@@ -6,6 +6,10 @@ import type {
 } from "../../lib/torneoExpress/types";
 import { slugifyEvento } from "../../lib/torneoExpress/eventoSlug";
 import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
+import {
+  resolveEventoDisplayEstado,
+  resolveTorneoExpressDisplayEstado,
+} from "../../lib/torneoExpress/resolveDisplayEstado";
 import { uploadEventoFlyer } from "../../lib/torneoExpress/uploadEventoFlyer";
 import {
   deleteTorneoExpress,
@@ -319,17 +323,28 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
             <header className="te-evento-detalle__header">
               <div className="te-evento-detalle__title-row">
                 <h1 className="te-evento-detalle__title">{evento.nombre}</h1>
-                <Badge
-                  variant={
-                    evento.estado === "draft"
-                      ? "pending"
-                      : evento.estado === "completed"
-                        ? "finished"
-                        : "live"
-                  }
-                >
-                  {EVENTO_ESTADO_LABEL[evento.estado]}
-                </Badge>
+                {(() => {
+                  const displayEventoEstado = resolveEventoDisplayEstado({
+                    estado: evento.estado,
+                    fecha_inicio: evento.fecha_inicio,
+                    timezone: evento.timezone,
+                  });
+                  return (
+                    <Badge
+                      variant={
+                        displayEventoEstado === "draft"
+                          ? "pending"
+                          : displayEventoEstado === "completed"
+                            ? "finished"
+                            : displayEventoEstado === "in_progress"
+                              ? "live"
+                              : "scheduled"
+                      }
+                    >
+                      {EVENTO_ESTADO_LABEL[displayEventoEstado]}
+                    </Badge>
+                  );
+                })()}
               </div>
               <p className="te-evento-detalle__meta">
                 {[
@@ -411,6 +426,11 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                   {categorias.map((cat) => {
                     const title = categoriaDisplayLabel(cat);
                     const isEditing = editingCategoriaId === cat.id;
+                    const displayEstado = resolveTorneoExpressDisplayEstado({
+                      estado: cat.estado,
+                      eventFechaInicio: evento.fecha_inicio,
+                      eventTimezone: evento.timezone,
+                    });
                     return (
                     <li key={cat.id} className="te-evento-card">
                       <div className="te-evento-card__main">
@@ -478,14 +498,14 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                           )}
                           <Badge
                             variant={
-                              cat.estado === "finalizado"
+                              displayEstado === "finalizado"
                                 ? "finished"
-                                : cat.estado === "en_curso"
+                                : displayEstado === "en_curso"
                                   ? "live"
                                   : "pending"
                             }
                           >
-                            {TORNEO_ESTADO_LABEL[cat.estado] ?? cat.estado}
+                            {TORNEO_ESTADO_LABEL[displayEstado] ?? cat.estado}
                           </Badge>
                         </div>
                       </div>

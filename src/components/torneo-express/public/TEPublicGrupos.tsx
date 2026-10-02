@@ -88,7 +88,15 @@ function mapPartidosForGrupo(
   labelById: Map<string, string>
 ): TEPublicGruposPartido[] {
   const sorted = sortPartidosByOrden(partidos);
-  const enVivoId = sorted.find((p) => p.estado === "pendiente")?.id ?? null;
+  const nowMs = Date.now();
+  const enVivoId =
+    sorted.find((p) => {
+      if (p.estado !== "pendiente") return false;
+      const iso = p.programado_en?.trim();
+      if (!iso) return false;
+      const ms = Date.parse(iso);
+      return Number.isFinite(ms) && nowMs >= ms;
+    })?.id ?? null;
 
   return sorted.map((partido) => {
     const played = partido.estado === "jugado";

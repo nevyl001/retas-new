@@ -4,6 +4,7 @@ import type {
   TorneoExpressEvento,
 } from "../../lib/torneoExpress/types";
 import { resolveEventoEstadoFromCategorias } from "../../lib/torneoExpress/eventoEstadoFromCategorias";
+import { resolveEventoDisplayEstado } from "../../lib/torneoExpress/resolveDisplayEstado";
 import {
   deleteEvento,
   fetchEventosByOrganizador,
@@ -158,8 +159,13 @@ export const EventosLista: React.FC = () => {
 
   const renderEventoCard = (ev: TorneoExpressEvento) => {
     const nCat = (categoriasByEvento[ev.id] ?? []).length;
-    const activo = isEventoActivo(ev.estado);
-    const finalizado = isEventoFinalizado(ev.estado);
+    const displayEstado = resolveEventoDisplayEstado({
+      estado: ev.estado,
+      fecha_inicio: ev.fecha_inicio,
+      timezone: ev.timezone,
+    });
+    const activo = isEventoActivo(displayEstado);
+    const finalizado = isEventoFinalizado(displayEstado);
     const fi = formatFecha(ev.fecha_inicio);
     const ff = formatFecha(ev.fecha_fin);
     const rango = [fi, ff].filter(Boolean).join(" – ");
@@ -179,7 +185,7 @@ export const EventosLista: React.FC = () => {
             <div className="te-torneo-card__meta-top">
               {activo ? (
                 <Badge variant="live" className="te-torneo-card__badge-live">
-                  {ev.estado === "in_progress" ? "EN CURSO" : "PUBLICADO"}
+                  {displayEstado === "in_progress" ? "EN CURSO" : "PUBLICADO"}
                 </Badge>
               ) : finalizado ? (
                 <Badge variant="finished" className="te-torneo-card__badge-done">

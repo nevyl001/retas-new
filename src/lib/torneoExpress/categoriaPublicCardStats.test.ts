@@ -73,4 +73,16 @@ describe("buildCategoriaPublicCardStats", () => {
     expect(s.phaseLabel).toBe("Semifinales");
     expect(s.progress01).toBe(1);
   });
+
+  it("antes de fecha_inicio del evento muestra Pendiente aunque esté en_curso", () => {
+    const s = buildCategoriaPublicCardStats({
+      categoria: baseCat({ id: "c1", fase_torneo: "grupos" }),
+      grupos: [],
+      stats: { parejaCount: 4, partidoTotal: 6, partidoJugados: 0 },
+      eliminatoriaPartidos: [],
+      eventFechaInicio: "2026-10-03",
+      now: new Date("2026-10-02T18:00:00.000Z"),
+    });
+    expect(s.estadoLabel).toBe("Pendiente");
+  });
 });

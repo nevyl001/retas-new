@@ -23,7 +23,14 @@ export const PublicPartidosSection: React.FC<{
   }, [parejas]);
 
   const enVivoId = useMemo(() => {
-    const first = sorted.find((p) => p.estado === "pendiente");
+    const nowMs = Date.now();
+    const first = sorted.find((p) => {
+      if (p.estado !== "pendiente") return false;
+      const iso = p.programado_en?.trim();
+      if (!iso) return false;
+      const ms = Date.parse(iso);
+      return Number.isFinite(ms) && nowMs >= ms;
+    });
     return first?.id ?? null;
   }, [sorted]);
 

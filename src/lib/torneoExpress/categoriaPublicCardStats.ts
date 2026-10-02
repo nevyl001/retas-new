@@ -4,6 +4,7 @@ import {
   type EliminatoriaPartidoPhaseHint,
 } from "./categoriaPublicPhase";
 import { formatTorneoExpressCategoria } from "./formatCategoria";
+import { resolveTorneoExpressDisplayEstado } from "./resolveDisplayEstado";
 import type {
   TorneoExpress,
   TorneoExpressEventoPublicoCategoriaStats,
@@ -57,6 +58,9 @@ export function buildCategoriaPublicCardStats(input: {
   grupos: TorneoExpressEventoPublicoGrupo[];
   stats: TorneoExpressEventoPublicoCategoriaStats | undefined;
   eliminatoriaPartidos: EliminatoriaPartidoPhaseHint[];
+  eventFechaInicio?: string | null;
+  eventTimezone?: string | null;
+  now?: Date;
 }): CategoriaPublicCardStats {
   const { categoria, grupos, stats, eliminatoriaPartidos } = input;
   const parejaCount = stats?.parejaCount ?? 0;
@@ -66,16 +70,22 @@ export function buildCategoriaPublicCardStats(input: {
     categoria.fase_torneo,
     eliminatoriaPartidos.length
   );
+  const displayEstado = resolveTorneoExpressDisplayEstado({
+    estado: categoria.estado,
+    eventFechaInicio: input.eventFechaInicio,
+    eventTimezone: input.eventTimezone,
+    now: input.now,
+  });
 
   return {
     title:
       formatTorneoExpressCategoria(categoria.categoria) ||
       categoria.nombre?.trim() ||
       "Categoría",
-    estadoLabel: estadoLabelFromCategoria(categoria.estado),
+    estadoLabel: estadoLabelFromCategoria(displayEstado),
     phaseLabel: resolveCategoriaPhaseLabel({
       faseTorneo: categoria.fase_torneo,
-      estado: categoria.estado,
+      estado: displayEstado,
       faseEliminacion: categoria.fase_eliminacion,
       bracketSlots: categoria.bracket_slots,
       eliminatoriaPartidos,

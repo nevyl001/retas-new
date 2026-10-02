@@ -17,6 +17,10 @@ import {
   torneoExpressEstadoLabel,
   torneoExpressFaseLabel,
 } from "../../lib/torneoExpress/labels";
+import {
+  earliestProgramadoEnFromPartidos,
+  resolveTorneoExpressDisplayEstado,
+} from "../../lib/torneoExpress/resolveDisplayEstado";
 import { GrupoBadge } from "./GrupoBadge";
 import { GestionEliminatoria } from "./GestionEliminatoria";
 import { PartidosGrupo } from "./PartidosGrupo";
@@ -641,6 +645,12 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const backLabel = parentEventoId
     ? "← Volver a categorías del evento"
     : "← Volver a Torneos Express";
+  const allPartidosForSchedule = Object.values(bundle.partidosPorGrupo).flat();
+  const displayEstado = resolveTorneoExpressDisplayEstado({
+    estado: bundle.torneo.estado,
+    earliestProgramadoEn:
+      earliestProgramadoEnFromPartidos(allPartidosForSchedule),
+  });
 
   const publicLinks = (
     <div
@@ -866,10 +876,10 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
               </Badge>
             ) : null}
             <Badge
-              variant={torneoEstadoBadgeVariant(bundle.torneo.estado)}
+              variant={torneoEstadoBadgeVariant(displayEstado)}
               className="te-gestion-estado-pill"
             >
-              {torneoExpressEstadoLabel(bundle.torneo.estado)}
+              {torneoExpressEstadoLabel(displayEstado)}
             </Badge>
           </div>
         </div>
