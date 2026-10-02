@@ -882,8 +882,8 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
       {showReorder ? (
         <p className="te-partidos-order-hint">
           Arrastra el icono{" "}
-          <TablerIcon name="grip-vertical" size={14} aria-hidden={false} /> para
-          que el partido ocupe ese horario y cancha.
+          <TablerIcon name="grip-vertical" size={14} aria-hidden={false} />{" "}
+          para cambiar el orden; los horarios se reorganizan solos.
         </p>
       ) : null}
 
@@ -965,7 +965,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
                   onDragStart={onDragStart(index)}
                   onDragEnd={clearDragState}
                   aria-label={`Arrastrar partido ${index + 1}`}
-                  title="Arrastrar para reordenar"
+                  title="Arrastrar para reordenar horarios"
                 >
                   <TablerIcon name="grip-vertical" size={18} />
                 </button>
