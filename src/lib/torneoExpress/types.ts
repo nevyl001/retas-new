@@ -234,6 +234,9 @@ export interface StandingRowExpress {
   ptsCon: number;
   dif: number;
   puntos: number;
+  /** Sets a favor / en contra (desempate setto_pg); opcional en fixtures. */
+  setsFav?: number;
+  setsCon?: number;
 }
 
 export interface GrupoAssignmentDraft {

@@ -1,4 +1,9 @@
 import { RIVIERA_SOCIAL_HANDLE } from "../rivieraBranding";
+import {
+  clasificacionAchievementStats,
+} from "./clasificacionModo";
+import type { TorneoExpressClasificacionModo } from "./types";
+import { DEFAULT_CLASIFICACION_MODO } from "./types";
 
 export const GROUP_WINNER_SHARE_WIDTH = 1080;
 export const GROUP_WINNER_SHARE_HEIGHT = 1920;
@@ -25,6 +30,8 @@ export type GroupWinnerShareData = {
   fav?: number;
   con?: number;
   diff: number;
+  setsDif?: number;
+  clasificacionModo?: TorneoExpressClasificacionModo;
   themePrimary?: string;
   themeAccent?: string;
 };
@@ -993,11 +1000,15 @@ export async function renderGroupWinnerShareCanvas(
   ctx.fillRect(pad + 26, STORY_LAYOUT.stats.top, 126, 4);
 
   const statW = (w - pad * 2) / 3;
-  const stats = [
-    { value: String(data.points), label: "PTS" },
-    { value: String(data.wins), label: "PG" },
-    { value: formatSignedNumber(data.diff), label: "DIF" },
-  ];
+  const stats = clasificacionAchievementStats(
+    data.clasificacionModo ?? DEFAULT_CLASIFICACION_MODO,
+    {
+      pg: data.wins,
+      ptsFav: data.fav ?? 0,
+      dif: data.diff,
+      setsDif: data.setsDif,
+    }
+  );
   stats.forEach((stat, index) => {
     const x = pad + statW * index;
     if (index > 0) {
@@ -1017,7 +1028,8 @@ export async function renderGroupWinnerShareCanvas(
       ctx.lineTo(x, STORY_LAYOUT.stats.bottom - 28);
       ctx.stroke();
     }
-    ctx.fillStyle = index === 2 && data.diff > 0 ? accent : cream;
+    const lit = Boolean(stat.highlight);
+    ctx.fillStyle = lit ? accent : cream;
     ctx.font = font(830, 76);
     ctx.fillText(stat.value, x + statW / 2, STORY_LAYOUT.stats.valueY);
     ctx.fillStyle = quiet;
@@ -1031,7 +1043,7 @@ export async function renderGroupWinnerShareCanvas(
       STORY_LAYOUT.stats.labelY,
       3
     );
-    ctx.fillStyle = index === 2 && data.diff > 0 ? accent : "rgba(247,243,237,0.22)";
+    ctx.fillStyle = lit ? accent : "rgba(247,243,237,0.22)";
     ctx.fillRect(x + statW / 2 - 28, STORY_LAYOUT.stats.labelY + 18, 56, 2);
   });
 

@@ -20,7 +20,10 @@ import {
 } from "../../../lib/rivieraBranding";
 import { RIVIERA_CO_BRAND_ATTRIBUTION } from "../../../club-experience/motherBrand";
 import { useClubExperience } from "../../../club-experience";
-import { clasificacionOrderSummary } from "../../../lib/torneoExpress/clasificacionModo";
+import {
+  clasificacionAchievementStats,
+  clasificacionOrderSummary,
+} from "../../../lib/torneoExpress/clasificacionModo";
 import type {
   StandingRowExpress,
   TorneoExpressBundle,
@@ -528,6 +531,7 @@ function GrupoWinnerSummary({
   players,
   clubName,
   clubLogoUrl,
+  clasificacionModo,
 }: {
   grupoNombre: string;
   rows: StandingRowExpress[];
@@ -537,6 +541,7 @@ function GrupoWinnerSummary({
   players?: TEPublicGruposAchievementPlayer[];
   clubName: string;
   clubLogoUrl?: string | null;
+  clasificacionModo: TorneoExpressClasificacionModo;
 }) {
   const [shareMsg, setShareMsg] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -549,6 +554,13 @@ function GrupoWinnerSummary({
     players && players.length >= 2
       ? players.slice(0, 2)
       : fallbackPlayersFromPair(winner.parejaLabel);
+  const setsDif = (winner.setsFav ?? 0) - (winner.setsCon ?? 0);
+  const achievementStats = clasificacionAchievementStats(clasificacionModo, {
+    pg: winner.pg,
+    ptsFav: winner.ptsFav,
+    dif: winner.dif,
+    setsDif,
+  });
 
   const flashShareMsg = (msg: string) => {
     setShareMsg(msg);
@@ -578,6 +590,8 @@ function GrupoWinnerSummary({
         fav: winner.ptsFav,
         con: winner.ptsCon,
         diff: winner.dif,
+        setsDif,
+        clasificacionModo,
         themePrimary: theme.primary,
         themeAccent: theme.accent,
       });
@@ -634,18 +648,12 @@ function GrupoWinnerSummary({
           className="te-grupo-achievement__stats"
           aria-label="Estadísticas del logro"
         >
-          <span>
-            <strong>{winner.puntos}</strong>
-            <small>PTS</small>
-          </span>
-          <span>
-            <strong>{winner.pg}</strong>
-            <small>PG</small>
-          </span>
-          <span>
-            <strong>{formatDif(winner.dif)}</strong>
-            <small>DIF</small>
-          </span>
+          {achievementStats.map((stat) => (
+            <span key={stat.label}>
+              <strong>{stat.value}</strong>
+              <small>{stat.label}</small>
+            </span>
+          ))}
         </div>
         <p className="te-grupo-achievement__tagline">{WINNER_TAGLINE}</p>
         <AchievementSocialSignature />
@@ -904,6 +912,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
                   players={grupo.achievementPlayers}
                   clubName={clubName}
                   clubLogoUrl={clubLogoUrl}
+                  clasificacionModo={clasificacionModo}
                 />
               </div>
             </div>

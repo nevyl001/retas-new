@@ -1,8 +1,10 @@
 import React from "react";
 import { isGrupoPartidosCompletos } from "../../../lib/torneoExpress/grupoCompletion";
+import { clasificacionAchievementStats } from "../../../lib/torneoExpress/clasificacionModo";
 import { RIVIERA_APP_TAGLINE } from "../../../lib/rivieraBranding";
 import type {
   StandingRowExpress,
+  TorneoExpressClasificacionModo,
   TorneoExpressPartido,
 } from "../../../lib/torneoExpress/types";
 
@@ -21,11 +23,6 @@ function leaderFromRows(
   return leader;
 }
 
-function formatDif(dif: number): string {
-  if (dif > 0) return `+${dif}`;
-  return String(dif);
-}
-
 export const PublicGrupoLeaderCelebrate: React.FC<{
   grupoNombre: string;
   rows: StandingRowExpress[];
@@ -33,6 +30,7 @@ export const PublicGrupoLeaderCelebrate: React.FC<{
   torneoNombre?: string;
   /** Frase corta entre el nombre y el lugar (p. ej. "Dominaron la cancha.") */
   fraseMotivacional?: string;
+  clasificacionModo?: TorneoExpressClasificacionModo;
   className?: string;
 }> = ({
   grupoNombre,
@@ -40,12 +38,19 @@ export const PublicGrupoLeaderCelebrate: React.FC<{
   partidos,
   torneoNombre,
   fraseMotivacional = DEFAULT_MOTIVATIONAL,
+  clasificacionModo = "dif_puntos",
   className = "",
 }) => {
   const leader = leaderFromRows(rows, partidos);
   if (!leader) return null;
 
   const grupoUpper = grupoNombre.trim().toUpperCase();
+  const stats = clasificacionAchievementStats(clasificacionModo, {
+    pg: leader.pg,
+    ptsFav: leader.ptsFav,
+    dif: leader.dif,
+    setsDif: (leader.setsFav ?? 0) - (leader.setsCon ?? 0),
+  });
 
   return (
     <aside
@@ -88,24 +93,16 @@ export const PublicGrupoLeaderCelebrate: React.FC<{
         ) : null}
 
         <div className="te-pub-grupo-celebrate__stats">
-          <div className="te-pub-grupo-celebrate__stat">
-            <span className="te-pub-grupo-celebrate__stat-label">Pts</span>
-            <span className="te-pub-grupo-celebrate__stat-value">
-              {leader.puntos}
-            </span>
-          </div>
-          <div className="te-pub-grupo-celebrate__stat">
-            <span className="te-pub-grupo-celebrate__stat-label">Partidos</span>
-            <span className="te-pub-grupo-celebrate__stat-value">
-              {leader.pg}G-{leader.pp}P
-            </span>
-          </div>
-          <div className="te-pub-grupo-celebrate__stat">
-            <span className="te-pub-grupo-celebrate__stat-label">Dif</span>
-            <span className="te-pub-grupo-celebrate__stat-value">
-              {formatDif(leader.dif)}
-            </span>
-          </div>
+          {stats.map((stat) => (
+            <div key={stat.label} className="te-pub-grupo-celebrate__stat">
+              <span className="te-pub-grupo-celebrate__stat-label">
+                {stat.label}
+              </span>
+              <span className="te-pub-grupo-celebrate__stat-value">
+                {stat.value}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </aside>

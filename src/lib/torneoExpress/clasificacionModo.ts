@@ -97,3 +97,58 @@ export function clasificacionOrderSummary(
   return opt?.orderSummary ?? CLASIFICACION_MODO_OPTIONS[0].orderSummary;
 }
 
+export type ClasificacionAchievementStat = {
+  label: string;
+  value: string;
+  /** Resaltar valores positivos de diferencia. */
+  highlight?: boolean;
+};
+
+export type ClasificacionAchievementInput = {
+  pg: number;
+  ptsFav: number;
+  dif: number;
+  /** Diferencia de sets (favor − contra); solo relevante en setto_pg. */
+  setsDif?: number;
+};
+
+function formatSignedStat(value: number): string {
+  if (value > 0) return `+${value}`;
+  return String(value);
+}
+
+/**
+ * Tres métricas de la card de logro / share, alineadas al modo de clasificación
+ * para que se entienda por qué quedó arriba en la tabla.
+ */
+export function clasificacionAchievementStats(
+  modo: TorneoExpressClasificacionModo,
+  row: ClasificacionAchievementInput
+): ClasificacionAchievementStat[] {
+  if (modo === "setto_pg") {
+    const setsDif = row.setsDif ?? 0;
+    return [
+      { label: "PG", value: String(row.pg) },
+      {
+        label: "SETS",
+        value: formatSignedStat(setsDif),
+        highlight: setsDif > 0,
+      },
+      {
+        label: "DIF",
+        value: formatSignedStat(row.dif),
+        highlight: row.dif > 0,
+      },
+    ];
+  }
+  return [
+    { label: "FAV", value: String(row.ptsFav) },
+    {
+      label: "DIF",
+      value: formatSignedStat(row.dif),
+      highlight: row.dif > 0,
+    },
+    { label: "PG", value: String(row.pg) },
+  ];
+}
+

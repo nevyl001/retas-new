@@ -21,7 +21,7 @@ type ExpressPairStanding = PairStanding & {
 };
 
 function standingToExpressRow(
-  s: PairStanding,
+  s: PairStanding & { setsFavor?: number; setsContra?: number },
   grupo: TorneoExpressGrupo,
   label: string
 ): StandingRowExpress {
@@ -38,6 +38,8 @@ function standingToExpressRow(
     ptsCon: s.juegosContra,
     dif: computeStandingDif(s.juegosFavor, s.juegosContra),
     puntos: s.puntos,
+    setsFav: s.setsFavor ?? 0,
+    setsCon: s.setsContra ?? 0,
   };
 }
 
