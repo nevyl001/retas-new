@@ -31,7 +31,7 @@ export const CLASIFICACION_MODO_OPTIONS: readonly ClasificacionModoOption[] = [
   },
   {
     value: "setto_pg",
-    label: "Partidos ganados (estilo Setto)",
+    label: "Partidos ganados",
     description:
       "Ordena por partidos ganados; con exactamente dos empatados usa cara a cara; luego diferencia de sets, diferencia de games, más sets y más games.",
     orderSummary:
