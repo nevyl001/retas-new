@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { Player } from "../../lib/database";
 import {
   dedupePlayersForSelect,
@@ -8,6 +8,13 @@ import { playerNeedsEmailContact } from "../../services/torneoExpressNotificacio
 import { nextPairPick } from "../../lib/torneoExpress/pairPick";
 import { TE_CREATE_NOTIFS_ENABLED } from "../../lib/torneoExpress/teCreateNotifs";
 import type { ParejaDraft } from "./crearTorneoExpressTypes";
+import { isRealDraftPair, isVirtualDraftPair } from "./crearTorneoExpressTypes";
+import {
+  VIRTUAL_PAIR_BADGE,
+  VIRTUAL_PAIR_LABEL_MAX,
+  draftPairDisplay,
+  normalizeVirtualPairLabel,
+} from "../../lib/torneoExpress/virtualPairDraft";
 import { TePlayerCard, type TePlayerCardPlayer } from "./TePlayerCard";
 import { navigateJugadoresLista } from "../jugadores/jugadoresGeneroNav";
 import { Button } from "../ui";
@@ -22,6 +29,8 @@ export interface ArmarParejasPickerProps {
   parejas: ParejaDraft[];
   addingPair: boolean;
   onFormarPareja: (jugador1: Player, jugador2: Player) => void;
+  onAgregarParejaVirtual: () => void;
+  onRenombrarParejaVirtual: (pairId: string, label: string) => void;
   onEliminarPareja: (pareja: ParejaDraft) => void;
   onRefreshRegistro?: () => void;
 }
@@ -35,13 +44,18 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
   parejas,
   addingPair,
   onFormarPareja,
+  onAgregarParejaVirtual,
+  onRenombrarParejaVirtual,
   onEliminarPareja,
   onRefreshRegistro,
 }) => {
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
 
-  const idsInPairs = useMemo(() => playerIdsInPairs(parejas), [parejas]);
+  const idsInPairs = useMemo(
+    () => playerIdsInPairs(parejas.filter(isRealDraftPair)),
+    [parejas]
+  );
 
   const disponibles = useMemo(
     () =>
@@ -103,6 +117,15 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
           {parejas.length > 0 ? ` · ${parejas.length} pareja(s)` : ""}
         </p>
         <div className="te-armar-parejas__toolbar-actions">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={addingPair}
+            onClick={onAgregarParejaVirtual}
+          >
+            + Pareja virtual
+          </Button>
           {onRefreshRegistro ? (
             <Button
               type="button"
@@ -262,7 +285,7 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
           </h3>
           {parejas.length === 0 ? (
             <p className="te-armar-parejas__formed-empty">
-              Todavía ninguna. Toca dos fichas.
+              Todavía ninguna. Toca dos fichas o agrega una pareja virtual.
             </p>
           ) : (
             <p className="te-armar-parejas__formed-hint">
@@ -279,13 +302,25 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
                   <span className="te-armar-parejas__item-num" aria-hidden>
                     {index + 1}
                   </span>
-                  <span className="te-armar-parejas__item-names">
-                    <span>{p.jugador1.name}</span>
-                    <span className="te-armar-parejas__item-sep" aria-hidden>
-                      /
+                  {isVirtualDraftPair(p) ? (
+                    <span className="te-armar-parejas__item-names">
+                      <VirtualLabelField
+                        pairId={p.id}
+                        label={p.virtualLabel}
+                        disabled={addingPair}
+                        onCommit={onRenombrarParejaVirtual}
+                      />
+                      <span className="te-virtual-badge">{VIRTUAL_PAIR_BADGE}</span>
                     </span>
-                    <span>{p.jugador2.name}</span>
-                  </span>
+                  ) : isRealDraftPair(p) ? (
+                    <span className="te-armar-parejas__item-names">
+                      <span>{p.jugador1.name}</span>
+                      <span className="te-armar-parejas__item-sep" aria-hidden>
+                        /
+                      </span>
+                      <span>{p.jugador2.name}</span>
+                    </span>
+                  ) : null}
                 </div>
                 <Button
                   type="button"
@@ -293,7 +328,7 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
                   size="sm"
                   className="te-armar-parejas__item-delete"
                   onClick={() => onEliminarPareja(p)}
-                  aria-label={`Borrar pareja ${p.jugador1.name} y ${p.jugador2.name}`}
+                  aria-label={`Borrar ${draftPairDisplay(p)}`}
                 >
                   Borrar
                 </Button>
@@ -305,3 +340,40 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
     </section>
   );
 };
+
+function VirtualLabelField({
+  pairId,
+  label,
+  disabled,
+  onCommit,
+}: {
+  pairId: string;
+  label: string;
+  disabled: boolean;
+  onCommit: (pairId: string, label: string) => void;
+}) {
+  const [value, setValue] = useState(label);
+
+  useEffect(() => {
+    setValue(label);
+  }, [label]);
+
+  return (
+    <input
+      className="te-armar-parejas__virtual-label"
+      aria-label="Nombre de la pareja virtual"
+      value={value}
+      maxLength={VIRTUAL_PAIR_LABEL_MAX}
+      disabled={disabled}
+      onChange={(event) => setValue(event.target.value)}
+      onBlur={() => {
+        const next = normalizeVirtualPairLabel(value);
+        if (!next || next === label) {
+          setValue(label);
+          return;
+        }
+        onCommit(pairId, next);
+      }}
+    />
+  );
+}

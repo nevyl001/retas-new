@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createVirtualPair, updateVirtualPairLabel } from "../../lib/createVirtualPair";
+import { draftPairDisplay, nextVirtualPairLabel } from "../../lib/torneoExpress/virtualPairDraft";
 import {
   createPair,
   createTournament,
@@ -23,6 +25,8 @@ import { ArmarParejasPicker } from "./ArmarParejasPicker";
 import { AsignarParejasGrupos } from "./AsignarParejasGrupos";
 import {
   ParejaDraft,
+  isRealDraftPair,
+  isVirtualDraftPair,
   TE_EXPRESS_DRAFT_TOURNAMENT_NAME,
   clearTeWizardDraft,
   loadTeWizardDraft,
@@ -58,7 +62,6 @@ import {
 } from "../../lib/torneoExpress/assignRoundRobinSchedule";
 import { buildDraftScheduleMatches } from "../../lib/torneoExpress/draftScheduleMatch";
 import { validateScheduleInvariants } from "../../lib/torneoExpress/scheduleInvariants";
-import { formatPairDisplay } from "../../lib/torneoExpress/standings";
 
 type PlayerWithContact = Player & {
   email_verified?: boolean | null;
@@ -132,6 +135,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   const jugadoresEnParejasSinEmail = useMemo(() => {
     const ids = new Set<string>();
     parejas.forEach((p) => {
+      if (!isRealDraftPair(p)) return;
       ids.add(p.jugador1.id);
       ids.add(p.jugador2.id);
     });
@@ -148,11 +152,15 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
 
   const syncParejasFromPlayers = useCallback((list: Player[]) => {
     setParejas((prev) =>
-      prev.map((p) => ({
-        ...p,
-        jugador1: resolvePlayerInPool(p.jugador1, list),
-        jugador2: resolvePlayerInPool(p.jugador2, list),
-      }))
+      prev.map((p) =>
+        isRealDraftPair(p)
+          ? {
+              ...p,
+              jugador1: resolvePlayerInPool(p.jugador1, list),
+              jugador2: resolvePlayerInPool(p.jugador2, list),
+            }
+          : p
+      )
     );
   }, []);
 
@@ -198,11 +206,20 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
       const byId = new Map(players.map((p) => [p.id, p]));
       const drafts: ParejaDraft[] = [];
       for (const row of rows ?? []) {
+        if (row.is_virtual) {
+          drafts.push({
+            kind: "virtual",
+            id: row.id,
+            virtualLabel: row.virtual_label?.trim() || "Pareja por definir",
+          });
+          continue;
+        }
+        if (!row.player1_id || !row.player2_id) continue;
         const raw1 =
           byId.get(row.player1_id) ??
           ({
             id: row.player1_id,
-            name: row.player1_name,
+            name: row.player1_name ?? "",
             email: "",
             created_at: row.created_at,
           } as Player);
@@ -210,13 +227,14 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
           byId.get(row.player2_id) ??
           ({
             id: row.player2_id,
-            name: row.player2_name,
+            name: row.player2_name ?? "",
             email: "",
             created_at: row.created_at,
           } as Player);
         const j1 = resolvePlayerInPool(raw1, players);
         const j2 = resolvePlayerInPool(raw2, players);
         drafts.push({
+          kind: "real",
           id: row.id,
           jugador1: j1,
           jugador2: j2,
@@ -240,9 +258,10 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
           }
         }
       }
-      const preferIds = drafts.map((d) => d.id);
+      const realDrafts = drafts.filter(isRealDraftPair);
+      const preferIds = realDrafts.map((d) => d.id);
       const { kept, droppedIds } = splitParejaDraftsByPlayerId(
-        drafts,
+        realDrafts,
         preferIds
       );
       for (const id of droppedIds) {
@@ -252,7 +271,12 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
           /* fila ya eliminada */
         }
       }
-      setParejas(kept);
+      const keptIds = new Set(kept.map((pair) => pair.id));
+      setParejas(
+        drafts.filter(
+          (pair) => isVirtualDraftPair(pair) || keptIds.has(pair.id)
+        )
+      );
     },
     []
   );
@@ -370,10 +394,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   const pairLabelById = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of parejas) {
-      map.set(
-        p.id,
-        formatPairDisplay(p.jugador1.name, p.jugador2.name)
-      );
+      map.set(p.id, draftPairDisplay(p));
     }
     return map;
   }, [parejas]);
@@ -471,6 +492,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
 
     const pairKey = unorderedPairIdKey(j1.id, j2.id);
     const yaEnPareja = parejas.some((p) => {
+      if (!isRealDraftPair(p)) return false;
       const ids = [p.jugador1.id, p.jugador2.id];
       return (
         ids.includes(j1.id) ||
@@ -496,20 +518,74 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         player1_name: j1.name.trim(),
         player2_name: j2.name.trim(),
       });
-      setParejas((prev) =>
-        dedupeParejaDraftsByPlayerId([
-          ...prev,
-          {
-            id: pair.id,
-            jugador1: { ...j1, name: j1.name.trim() },
-            jugador2: { ...j2, name: j2.name.trim() },
-          },
-        ])
-      );
+      const nextReal = {
+        kind: "real" as const,
+        id: pair.id,
+        jugador1: { ...j1, name: j1.name.trim() },
+        jugador2: { ...j2, name: j2.name.trim() },
+      };
+      setParejas((prev) => {
+        const reals = dedupeParejaDraftsByPlayerId([
+          ...prev.filter(isRealDraftPair),
+          nextReal,
+        ]);
+        const keptIds = new Set(reals.map((item) => item.id));
+        const kept = prev.filter(
+          (item) => isVirtualDraftPair(item) || keptIds.has(item.id)
+        );
+        return kept.some((item) => item.id === nextReal.id)
+          ? kept.map((item) => (item.id === nextReal.id ? nextReal : item))
+          : [...kept, nextReal];
+      });
     } catch (err) {
       setError(formatSupabaseError(err));
     } finally {
       setAddingPair(false);
+    }
+  };
+
+  const agregarParejaVirtual = async () => {
+    if (!draftTournamentId || addingPair) return;
+    const label = nextVirtualPairLabel(
+      parejas.filter(isVirtualDraftPair).map((pair) => pair.virtualLabel)
+    );
+    setAddingPair(true);
+    setError(null);
+    try {
+      const created = await createVirtualPair({
+        tournamentId: draftTournamentId,
+        virtualLabel: label,
+      });
+      setParejas((prev) => [
+        ...prev,
+        {
+          kind: "virtual",
+          id: created.id,
+          virtualLabel: created.virtual_label,
+        },
+      ]);
+    } catch (err) {
+      setError(formatSupabaseError(err));
+    } finally {
+      setAddingPair(false);
+    }
+  };
+
+  const renombrarParejaVirtual = async (pairId: string, rawLabel: string) => {
+    const current = parejas.find((pair) => pair.id === pairId);
+    if (!current || !isVirtualDraftPair(current)) return;
+    setError(null);
+    try {
+      await updateVirtualPairLabel(pairId, rawLabel);
+      setParejas((prev) =>
+        prev.map((pair) =>
+          pair.id === pairId && isVirtualDraftPair(pair)
+            ? { ...pair, virtualLabel: rawLabel.trim() }
+            : pair
+        )
+      );
+    } catch (err) {
+      setError(formatSupabaseError(err));
     }
   };
 
@@ -857,8 +933,8 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     </h3>
                   </header>
                   <p className="te-crear-step__lead">
-                    Toca dos jugadores: la pareja se forma sola. Si te
-                    equivocas, bórrala abajo.
+                    Toca dos jugadores para armar una pareja, o agrega una plaza
+                    virtual si todavía no tiene jugadores.
                   </p>
                   <div className="te-crear-step__body">
                     {loadingJugadores ? (
@@ -870,6 +946,10 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                         addingPair={addingPair}
                         onFormarPareja={(j1, j2) => void formarPareja(j1, j2)}
                         onEliminarPareja={(p) => void eliminarPareja(p)}
+                        onAgregarParejaVirtual={() => void agregarParejaVirtual()}
+                        onRenombrarParejaVirtual={(pairId, label) =>
+                          void renombrarParejaVirtual(pairId, label)
+                        }
                         onRefreshRegistro={() => void cargarJugadores()}
                       />
                     )}

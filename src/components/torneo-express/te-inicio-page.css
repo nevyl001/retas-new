@@ -1028,6 +1028,34 @@
   display: none;
 }
 
+.torneo-express-page.te-inicio-page .te-armar-parejas__virtual-label {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--ro-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ro-text-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.torneo-express-page.te-inicio-page .te-virtual-badge {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--ro-border);
+  border-radius: 999px;
+  color: var(--ro-text-muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+}
+
 .torneo-express-page.te-inicio-page .te-armar-parejas__item-delete.riviera-btn {
   flex: 0 0 auto;
   align-self: center;

@@ -1,6 +1,11 @@
 import React, { useMemo } from "react";
 import type { GrupoAssignmentDraft } from "../../lib/torneoExpress/types";
 import type { ParejaDraft } from "./crearTorneoExpressTypes";
+import { isRealDraftPair, isVirtualDraftPair } from "./crearTorneoExpressTypes";
+import {
+  VIRTUAL_PAIR_BADGE,
+  draftPairDisplay,
+} from "../../lib/torneoExpress/virtualPairDraft";
 
 export interface AsignarParejasGruposProps {
   parejas: ParejaDraft[];
@@ -38,7 +43,7 @@ export const AsignarParejasGrupos: React.FC<AsignarParejasGruposProps> = ({
         <p className="te-asignar-grupos__warn" role="status">
           Sin grupo:{" "}
           {unassigned
-            .map((p) => `${p.jugador1.name} / ${p.jugador2.name}`)
+            .map((p) => draftPairDisplay(p))
             .join(" · ")}
         </p>
       ) : (
@@ -80,7 +85,7 @@ export const AsignarParejasGrupos: React.FC<AsignarParejasGruposProps> = ({
               aria-label={`Parejas en ${grupo.nombre}`}
             >
               {parejas.map((p) => {
-                const label = `${p.jugador1.name} / ${p.jugador2.name}`;
+                const label = draftPairDisplay(p);
                 const inThis = grupo.parejaIds.includes(p.id);
                 const inOther = !inThis && assignedIds.has(p.id);
                 return (
@@ -95,8 +100,17 @@ export const AsignarParejasGrupos: React.FC<AsignarParejasGruposProps> = ({
                     aria-label={label}
                     onClick={() => onTogglePair(gi, p.id)}
                   >
-                    <span className="te-pareja-chip__name">{p.jugador1.name}</span>
-                    <span className="te-pareja-chip__name">{p.jugador2.name}</span>
+                    {isVirtualDraftPair(p) ? (
+                      <>
+                        <span className="te-pareja-chip__name">{p.virtualLabel}</span>
+                        <span className="te-virtual-badge">{VIRTUAL_PAIR_BADGE}</span>
+                      </>
+                    ) : isRealDraftPair(p) ? (
+                      <>
+                        <span className="te-pareja-chip__name">{p.jugador1.name}</span>
+                        <span className="te-pareja-chip__name">{p.jugador2.name}</span>
+                      </>
+                    ) : null}
                   </button>
                 );
               })}

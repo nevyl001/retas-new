@@ -1,13 +1,19 @@
-import type { Player } from "../../lib/database";
 import type { GrupoAssignmentDraft } from "../../lib/torneoExpress/types";
 import { defaultCourtNames } from "../../lib/torneoExpress/assignRoundRobinSchedule";
 import { todayMexicoDateInput } from "../../lib/torneoExpress/teScheduleTime";
+import type { DraftTournamentPair } from "../../lib/torneoExpress/virtualPairDraft";
 
-export type ParejaDraft = {
-  id: string;
-  jugador1: Player;
-  jugador2: Player;
-};
+export type {
+  DraftTournamentPair,
+  RealDraftPair,
+  VirtualDraftPair,
+} from "../../lib/torneoExpress/virtualPairDraft";
+export {
+  isRealDraftPair,
+  isVirtualDraftPair,
+} from "../../lib/torneoExpress/virtualPairDraft";
+
+export type ParejaDraft = DraftTournamentPair;
 
 /** Legacy global key (standalone /torneo-express/nuevo). */
 export const TE_DRAFT_TOURNAMENT_KEY = "torneo_express_draft_tournament_id";
