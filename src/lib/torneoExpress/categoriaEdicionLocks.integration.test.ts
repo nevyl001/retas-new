@@ -2,9 +2,10 @@
  * @jest-environment node
  */
 /**
- * PGlite aplica 0044 desde cero. No abre dos conexiones, así que no espera
- * un lock ajeno: demuestra el orden en el cuerpo de las funciones y el
- * equivalente secuencial de la carrera resultado vs cambiar jugador.
+ * PGlite aplica 0044 y 0046 desde cero. No abre dos conexiones, así que no
+ * espera un lock ajeno: demuestra el orden en el cuerpo de las funciones,
+ * la forma real/virtual de pairs y el equivalente secuencial de resolver
+ * la misma plaza dos veces.
  *
  * Ejecutar: RUN_SQL_INTEGRATION=1 NODE_OPTIONS=--experimental-vm-modules \
  *   npx react-scripts test --watchAll=false --runInBand \
@@ -123,10 +124,11 @@ maybeDescribe("0044 locks Torneo Express (PGlite, una conexión)", () => {
       CREATE TABLE public.pairs (
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         tournament_id uuid,
-        player1_id uuid,
-        player2_id uuid,
+        player1_id uuid REFERENCES public.players(id) ON DELETE CASCADE,
+        player2_id uuid REFERENCES public.players(id) ON DELETE CASCADE,
         player1_name text,
-        player2_name text
+        player2_name text,
+        created_at timestamptz DEFAULT now()
       );
       CREATE TABLE public.torneo_express (
         id uuid PRIMARY KEY,
@@ -162,7 +164,21 @@ maybeDescribe("0044 locks Torneo Express (PGlite, una conexión)", () => {
       );
       CREATE TABLE public.torneo_express_eliminatoria_partidos (
         id uuid PRIMARY KEY,
-        torneo_id uuid
+        torneo_id uuid NOT NULL,
+        ronda integer NOT NULL DEFAULT 1,
+        orden integer NOT NULL DEFAULT 1,
+        cruce_index integer NOT NULL DEFAULT 0,
+        pareja_local_id uuid,
+        pareja_visitante_id uuid,
+        puntos_local integer,
+        puntos_visitante integer,
+        ganador_id uuid,
+        estado text,
+        es_bye boolean,
+        cancha text,
+        programado_en timestamptz,
+        created_at timestamptz DEFAULT now(),
+        sets_resultado jsonb
       );
       CREATE FUNCTION public._is_legal_padel_set(p_local integer, p_visitante integer)
       RETURNS boolean LANGUAGE sql IMMUTABLE SET search_path = public AS $$
@@ -183,17 +199,26 @@ maybeDescribe("0044 locks Torneo Express (PGlite, una conexión)", () => {
       ),
       "utf8"
     );
-    const statements = splitSql(migration);
-    for (let index = 0; index < statements.length; index += 1) {
-      try {
-        await db.exec(statements[index]);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        throw new Error(`SQL ${index}: ${message}\n${statements[index].slice(0, 180)}`);
+    const virtualPairs = readFileSync(
+      resolve(
+        __dirname,
+        "../../../supabase/migrations/0046_torneo_express_virtual_pairs.sql"
+      ),
+      "utf8"
+    );
+    for (const source of [migration, virtualPairs]) {
+      const statements = splitSql(source);
+      for (let index = 0; index < statements.length; index += 1) {
+        try {
+          await db.exec(statements[index]);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          throw new Error(`SQL ${index}: ${message}\n${statements[index].slice(0, 180)}`);
+        }
       }
     }
     await db.query(`SELECT set_config('app.user_id', $1, false)`, [ORG]);
-  }, 30000);
+  }, 60000);
 
   afterAll(async () => {
     await db.close();
@@ -303,11 +328,17 @@ maybeDescribe("0044 locks Torneo Express (PGlite, una conexión)", () => {
     localPair = PAIR_A
   ): string {
     return JSON.stringify({
-      local: { pair_id: localPair, player1_id: local1, player2_id: local2 },
+      local: {
+        pair_id: localPair,
+        player1_id: local1,
+        player2_id: local2,
+        is_virtual: false,
+      },
       visitante: {
         pair_id: PAIR_B,
         player1_id: P_LUIS,
         player2_id: P_MARIA,
+        is_virtual: false,
       },
     });
   }
@@ -450,6 +481,12 @@ maybeDescribe("0044 locks Torneo Express (PGlite, una conexión)", () => {
 
     await resetCategoria();
     await db.query(
+      `INSERT INTO public.players (id, name) VALUES
+        ('20000000-0000-0000-0000-000000000008', 'Extra'),
+        ('20000000-0000-0000-0000-000000000009', 'Dos')
+       ON CONFLICT (id) DO NOTHING`
+    );
+    await db.query(
       `INSERT INTO public.pairs
         (id, tournament_id, player1_id, player2_id, player1_name, player2_name)
        VALUES ($1, $2, $3, $4, 'Extra', 'Dos')`,
@@ -459,12 +496,6 @@ maybeDescribe("0044 locks Torneo Express (PGlite, una conexión)", () => {
         "20000000-0000-0000-0000-000000000008",
         "20000000-0000-0000-0000-000000000009",
       ]
-    );
-    await db.query(
-      `INSERT INTO public.players (id, name) VALUES
-        ('20000000-0000-0000-0000-000000000008', 'Extra'),
-        ('20000000-0000-0000-0000-000000000009', 'Dos')
-       ON CONFLICT (id) DO NOTHING`
     );
     await db.query(
       `UPDATE public.pairs
@@ -486,5 +517,365 @@ maybeDescribe("0044 locks Torneo Express (PGlite, una conexión)", () => {
 
     const forced = await applyScore(2, expectedJson(), true);
     expect(forced.rows[0].r).toMatchObject({ ok: true, status: "updated" });
+  });
+
+  const PAIR_V = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+  const P_MARA = "20000000-0000-0000-0000-000000000011";
+  const P_FER = "20000000-0000-0000-0000-000000000012";
+  const ELIM = "dddddddd-dddd-dddd-dddd-dddddddddddd";
+
+  async function makeVirtualSlot(): Promise<void> {
+    await resetCategoria();
+    await db.query(
+      `UPDATE public.pairs
+       SET is_virtual = true,
+           virtual_label = 'Pareja por definir 1',
+           player1_id = NULL,
+           player2_id = NULL,
+           player1_name = NULL,
+           player2_name = NULL
+       WHERE id = $1`,
+      [PAIR_A]
+    );
+    await db.query(
+      `INSERT INTO public.players (id, name) VALUES ($1, 'Mara Blanco'), ($2, 'Fernanda Fabian')`,
+      [P_MARA, P_FER]
+    );
+  }
+
+  function virtualSnapshot(resolved = false): string {
+    return JSON.stringify({
+      local: resolved
+        ? {
+            pair_id: PAIR_A,
+            player1_id: P_MARA,
+            player2_id: P_FER,
+            is_virtual: false,
+          }
+        : {
+            pair_id: PAIR_A,
+            player1_id: null,
+            player2_id: null,
+            is_virtual: true,
+          },
+      visitante: {
+        pair_id: PAIR_B,
+        player1_id: P_LUIS,
+        player2_id: P_MARIA,
+        is_virtual: false,
+      },
+    });
+  }
+
+  async function resolveVirtual(accept: boolean, p1 = P_MARA, p2 = P_FER) {
+    return db.query<{
+      r: { ok: boolean; error?: string; pareja_id?: string; played_count?: number };
+    }>(
+      `SELECT public.resolve_torneo_express_virtual_pair($1, $2, $3, $4, $5) AS r`,
+      [T, PAIR_A, p1, p2, accept]
+    );
+  }
+
+  it("las filas reales siguen válidas y el CHECK rechaza formas mixtas", async () => {
+    await resetCategoria();
+    const shape = await db.query<{ def: string; nnull: boolean; fks: number }>(
+      `SELECT pg_get_constraintdef(c.oid) AS def,
+              bool_or(a.attnotnull) AS nnull,
+              (SELECT count(*) FROM pg_constraint f
+                WHERE f.conrelid = 'public.pairs'::regclass AND f.contype = 'f') AS fks
+       FROM pg_constraint c
+       JOIN pg_attribute a
+         ON a.attrelid = c.conrelid
+        AND a.attname IN ('player1_id', 'player2_id', 'player1_name', 'player2_name')
+       WHERE c.conname = 'pairs_shape_real_or_virtual'
+       GROUP BY c.oid`
+    );
+    expect(shape.rows[0].def).toContain("is_virtual");
+    expect(shape.rows[0].def).toContain("btrim");
+    expect(shape.rows[0].nnull).toBe(false);
+    expect(Number(shape.rows[0].fks)).toBe(2);
+
+    const badExisting = await db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM public.pairs
+       WHERE player1_id IS NULL OR player2_id IS NULL
+          OR player1_name IS NULL OR player2_name IS NULL
+          OR is_virtual OR virtual_label IS NOT NULL`
+    );
+    expect(badExisting.rows[0].n).toBe(0);
+
+    await db.query(
+      `INSERT INTO public.pairs
+        (id, tournament_id, is_virtual, virtual_label)
+       VALUES ($1, $2, true, 'Pareja por definir 2')`,
+      [PAIR_V, T]
+    );
+    await db.query(`DELETE FROM public.pairs WHERE id = $1`, [PAIR_V]);
+
+    const rejects = [
+      `INSERT INTO public.pairs (id, tournament_id, is_virtual, virtual_label, player1_id)
+       VALUES ('${PAIR_V}', '${T}', true, 'x', '${P_PEDRO}')`,
+      `INSERT INTO public.pairs (id, tournament_id, player1_id, player2_name, player2_id, player1_name)
+       VALUES ('${PAIR_V}', '${T}', NULL, 'Ana', '${P_ANA}', 'Pedro')`,
+      `INSERT INTO public.pairs (id, tournament_id, player1_id, player2_id, player1_name, player2_name, virtual_label)
+       VALUES ('${PAIR_V}', '${T}', '${P_PEDRO}', '${P_ANA}', 'Pedro', 'Ana', 'etiqueta')`,
+      `INSERT INTO public.pairs (id, tournament_id, is_virtual, virtual_label)
+       VALUES ('${PAIR_V}', '${T}', true, '   ')`,
+      `INSERT INTO public.pairs (id, tournament_id, is_virtual)
+       VALUES ('${PAIR_V}', '${T}', true)`,
+    ];
+    for (const sql of rejects) {
+      await expect(db.exec(sql)).rejects.toThrow();
+    }
+  });
+
+  it("resuelve la virtual en el mismo id sin tocar partidos ni crear players", async () => {
+    await makeVirtualSlot();
+    await db.query(
+      `UPDATE public.torneo_express_partidos
+       SET cancha = '1', programado_en = '2026-10-03T18:00:00Z', orden = 5, ronda = 2
+       WHERE id = $1`,
+      [MATCH]
+    );
+    await db.query(
+      `INSERT INTO public.torneo_express_eliminatoria_partidos
+        (id, torneo_id, pareja_local_id, pareja_visitante_id, estado, es_bye, cancha, programado_en, ronda, orden)
+       VALUES ($1, $2, $3, $4, 'pendiente', false, '1', '2026-10-03T20:00:00Z', 1, 1)`,
+      [ELIM, T, PAIR_A, PAIR_B]
+    );
+    const playersBefore = await db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM public.players`
+    );
+
+    const saved = await applyScore(4, virtualSnapshot());
+    expect(saved.rows[0].r).toMatchObject({ ok: true, status: "updated" });
+
+    const blocked = await resolveVirtual(false);
+    expect(blocked.rows[0].r.error).toBe("VIRTUAL_PAIR_HAS_HISTORY");
+    expect(blocked.rows[0].r.played_count).toBe(1);
+
+    const resolved = await resolveVirtual(true);
+    expect(resolved.rows[0].r).toMatchObject({
+      ok: true,
+      pareja_id: PAIR_A,
+      played_count: 1,
+    });
+
+    const pair = await db.query<{
+      id: string;
+      is_virtual: boolean;
+      virtual_label: string | null;
+      player1_id: string;
+      player2_id: string;
+      player1_name: string;
+      player2_name: string;
+    }>(
+      `SELECT id, is_virtual, virtual_label, player1_id, player2_id, player1_name, player2_name
+       FROM public.pairs WHERE id = $1`,
+      [PAIR_A]
+    );
+    expect(pair.rows[0]).toEqual({
+      id: PAIR_A,
+      is_virtual: false,
+      virtual_label: null,
+      player1_id: P_MARA,
+      player2_id: P_FER,
+      player1_name: "Mara Blanco",
+      player2_name: "Fernanda Fabian",
+    });
+
+    const partido = await db.query<{
+      pareja_local_id: string;
+      cancha: string;
+      orden: number;
+      estado: string;
+    }>(
+      `SELECT pareja_local_id, cancha, orden, estado
+       FROM public.torneo_express_partidos WHERE id = $1`,
+      [MATCH]
+    );
+    expect(partido.rows[0]).toEqual({
+      pareja_local_id: PAIR_A,
+      cancha: "1",
+      orden: 5,
+      estado: "jugado",
+    });
+
+    const elim = await db.query<{ pareja_local_id: string; programado: string }>(
+      `SELECT pareja_local_id,
+              to_char(programado_en AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI') AS programado
+       FROM public.torneo_express_eliminatoria_partidos WHERE id = $1`,
+      [ELIM]
+    );
+    expect(elim.rows[0]).toEqual({
+      pareja_local_id: PAIR_A,
+      programado: "2026-10-03T20:00",
+    });
+
+    const playersAfter = await db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM public.players`
+    );
+    expect(playersAfter.rows[0].n).toBe(playersBefore.rows[0].n);
+
+    const stale = await applyScore(4, virtualSnapshot(), true);
+    expect(stale.rows[0].r.error).toBe("PAIR_COMPOSITION_CHANGED");
+
+    const reopened = await applyScore(3, virtualSnapshot(true), true);
+    expect(reopened.rows[0].r).toMatchObject({ ok: true, status: "updated" });
+
+    const again = await resolveVirtual(true, P_CARLOS, P_MARA);
+    expect(again.rows[0].r.error).toBe("VIRTUAL_PAIR_ALREADY_RESOLVED");
+    const still = await db.query<{ player1_id: string }>(
+      `SELECT player1_id FROM public.pairs WHERE id = $1`,
+      [PAIR_A]
+    );
+    expect(still.rows[0].player1_id).toBe(P_MARA);
+  });
+
+  it("rechaza virtual incompleta, jugador duplicado, misma persona y cambiar jugador", async () => {
+    await makeVirtualSlot();
+    const mixed = await applyScore(
+      4,
+      JSON.stringify({
+        local: {
+          pair_id: PAIR_A,
+          player1_id: P_MARA,
+          player2_id: null,
+          is_virtual: true,
+        },
+        visitante: {
+          pair_id: PAIR_B,
+          player1_id: P_LUIS,
+          player2_id: P_MARIA,
+          is_virtual: false,
+        },
+      })
+    );
+    expect(mixed.rows[0].r.error).toBe("PAIR_COMPOSITION_CHANGED");
+
+    const samePerson = await resolveVirtual(false, P_MARA, P_MARA);
+    expect(samePerson.rows[0].r.error).toBe("INVALID_MATCH_PAYLOAD");
+
+    const duplicate = await resolveVirtual(false, P_LUIS, P_MARA);
+    expect(duplicate.rows[0].r.error).toBe("PLAYER_ALREADY_REGISTERED");
+
+    const replaced = await db.query<{ r: { error?: string } }>(
+      `SELECT public.replace_torneo_express_pair_player($1, $2, $3, $4) AS r`,
+      [T, PAIR_A, P_MARA, P_CARLOS]
+    );
+    expect(replaced.rows[0].r.error).toBe("PAIR_IS_VIRTUAL");
+
+    const stillVirtual = await db.query<{ is_virtual: boolean }>(
+      `SELECT is_virtual FROM public.pairs WHERE id = $1`,
+      [PAIR_A]
+    );
+    expect(stillVirtual.rows[0].is_virtual).toBe(true);
+  });
+
+  it("bloquea cerrado y finalizado, y permite eliminatoria", async () => {
+    await makeVirtualSlot();
+    await db.query(
+      `UPDATE public.torneo_express SET fase_torneo = 'cerrado' WHERE id = $1`,
+      [T]
+    );
+    expect((await resolveVirtual(false)).rows[0].r.error).toBe("TOURNAMENT_CLOSED");
+
+    await db.query(
+      `UPDATE public.torneo_express
+       SET fase_torneo = 'grupos', estado = 'finalizado' WHERE id = $1`,
+      [T]
+    );
+    expect((await resolveVirtual(false)).rows[0].r.error).toBe("TOURNAMENT_CLOSED");
+
+    await db.query(
+      `UPDATE public.torneo_express
+       SET fase_torneo = 'eliminatoria', estado = 'en_curso' WHERE id = $1`,
+      [T]
+    );
+    await db.query(
+      `INSERT INTO public.torneo_express_eliminatoria_partidos
+        (id, torneo_id, pareja_local_id, pareja_visitante_id, estado, es_bye, programado_en, orden, ronda)
+       VALUES ($1, $2, $3, $4, 'pendiente', false, '2026-10-03T21:00:00Z', 1, 1)`,
+      [ELIM, T, PAIR_A, PAIR_B]
+    );
+    const resolved = await resolveVirtual(false);
+    expect(resolved.rows[0].r.ok).toBe(true);
+    const bracket = await db.query<{ pareja_local_id: string; orden: number }>(
+      `SELECT pareja_local_id, orden
+       FROM public.torneo_express_eliminatoria_partidos WHERE id = $1`,
+      [ELIM]
+    );
+    expect(bracket.rows[0]).toEqual({ pareja_local_id: PAIR_A, orden: 1 });
+  });
+
+  it("la reorganización y el round robin usan pair.id de la virtual", async () => {
+    await makeVirtualSlot();
+    await db.query(`DELETE FROM public.torneo_express_partidos`);
+    await db.query(
+      `DELETE FROM public.torneo_express_grupo_parejas WHERE pareja_id = $1`,
+      [PAIR_A]
+    );
+    await db.query(
+      `INSERT INTO public.pairs (id, tournament_id, is_virtual, virtual_label)
+       VALUES ($1, $2, true, 'Pareja por definir 2')`,
+      [PAIR_V, T]
+    );
+    await db.query(
+      `INSERT INTO public.torneo_express_grupo_parejas (grupo_id, pareja_id)
+       VALUES ($1, $2)`,
+      [G, PAIR_V]
+    );
+
+    const rr = await db.query<{
+      local_id: string;
+      visitante_id: string;
+      ronda: number;
+      orden: number;
+    }>(
+      `SELECT local_id, visitante_id, ronda, orden
+       FROM public.te_balanced_round_robin(ARRAY[$1, $2]::uuid[])`,
+      [PAIR_V, PAIR_B]
+    );
+    expect(rr.rows).toHaveLength(1);
+    expect([rr.rows[0].local_id, rr.rows[0].visitante_id].sort()).toEqual(
+      [PAIR_B, PAIR_V].sort()
+    );
+
+    const reorg = await db.query<{ r: { ok: boolean; error?: string } }>(
+      `SELECT public.reorganize_torneo_express_grupos($1, $2::jsonb) AS r`,
+      [
+        T,
+        JSON.stringify({
+          grupos: [
+            {
+              nombre: "Grupo 1",
+              orden: 1,
+              pareja_ids: [PAIR_V, PAIR_B],
+            },
+          ],
+          partidos: [
+            {
+              grupo_orden: 1,
+              pareja_local_id: rr.rows[0].local_id,
+              pareja_visitante_id: rr.rows[0].visitante_id,
+              ronda: rr.rows[0].ronda,
+              orden: rr.rows[0].orden,
+              cancha: "1",
+              programado_en: "2026-10-03T18:00:00Z",
+            },
+          ],
+        }),
+      ]
+    );
+    expect(reorg.rows[0].r.ok).toBe(true);
+    const kept = await db.query<{ id: string; is_virtual: boolean; programado: string }>(
+      `SELECT pr.id, pr.is_virtual, p.programado_en::text AS programado
+       FROM public.pairs pr
+       JOIN public.torneo_express_partidos p
+         ON p.pareja_local_id = pr.id OR p.pareja_visitante_id = pr.id
+       WHERE pr.id = $1`,
+      [PAIR_V]
+    );
+    expect(kept.rows[0].is_virtual).toBe(true);
+    expect(kept.rows[0].programado).toContain("2026-10-03");
   });
 });

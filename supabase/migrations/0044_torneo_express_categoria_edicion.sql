@@ -5,11 +5,15 @@
 -- (antes bloqueaba el partido y después el torneo). No hay en_juego:
 -- lo que se congela es la composición que existe cuando el resultado
 -- ya quedó persistido, más un rechazo si cambió mientras este guardado
--- esperaba el lock. Si una validación falla, Postgres revierte la función.
+-- esperaba el lock. La composición admite plaza virtual (is_virtual,
+-- columna de 0046): null en los ids no es error si el snapshot y la fila
+-- coinciden. Virtual → real es PAIR_COMPOSITION_CHANGED.
+-- Si una validación falla, Postgres revierte la función.
 -- Reorganizar está prohibida en cuanto existe historial persistido, porque
 -- recrear grupos o partidos atribuiría resultados a otra estructura.
 -- Nunca se borra public.pairs ni public.players: la pareja puede vivir fuera
 -- de esta categoría. Solo se retiran vínculos y partidos de este torneo.
+-- 0046 debe ir en el mismo despliegue: estas funciones leen is_virtual.
 
 -- Historial persistido. Misma regla que partidoTieneHistorial:
 -- jugado, ganador, puntos o sets con marcador. El badge EN JUEGO no existe.
@@ -203,15 +207,83 @@ $fn$;
 
 -- Lectura de la composición de una pareja. apply_torneo_express_grupo_resultado
 -- la llama antes y después de los locks para detectar un cambio mientras esperaba.
+-- is_virtual llega con 0046. Un id null no es error por sí solo: la forma
+-- válida es real (is_virtual false y ambos ids) o virtual (true y ambos null).
 CREATE OR REPLACE FUNCTION public.te_pair_player_ids(p_pair_id uuid)
-RETURNS TABLE (player1_id uuid, player2_id uuid)
-LANGUAGE sql
+RETURNS TABLE (player1_id uuid, player2_id uuid, is_virtual boolean)
+LANGUAGE plpgsql
 STABLE
 SET search_path = public
 AS $fn$
-  SELECT pr.player1_id, pr.player2_id
+BEGIN
+  RETURN QUERY
+  SELECT pr.player1_id, pr.player2_id, pr.is_virtual
   FROM public.pairs pr
   WHERE pr.id = p_pair_id;
+END;
+$fn$;
+
+-- El snapshot de un lado es válido y coincide con la fila. NULL de jugador
+-- solo vale si is_virtual es true. Una mezcla o un virtual→real es false.
+CREATE OR REPLACE FUNCTION public.te_side_composition_matches(
+  p_expected jsonb,
+  p_pair_id uuid,
+  p_player1_id uuid,
+  p_player2_id uuid,
+  p_is_virtual boolean
+) RETURNS boolean
+LANGUAGE plpgsql
+STABLE
+SET search_path = public
+AS $fn$
+DECLARE
+  v_pair uuid;
+  v_p1 uuid;
+  v_p2 uuid;
+  v_virtual boolean;
+BEGIN
+  IF p_expected IS NULL OR jsonb_typeof(p_expected) <> 'object' THEN
+    RETURN false;
+  END IF;
+  IF jsonb_typeof(p_expected -> 'is_virtual') IS DISTINCT FROM 'boolean' THEN
+    RETURN false;
+  END IF;
+
+  BEGIN
+    v_pair := (p_expected ->> 'pair_id')::uuid;
+    v_virtual := (p_expected ->> 'is_virtual')::boolean;
+    IF jsonb_typeof(p_expected -> 'player1_id') = 'string' THEN
+      v_p1 := (p_expected ->> 'player1_id')::uuid;
+    ELSIF jsonb_typeof(p_expected -> 'player1_id') IS DISTINCT FROM 'null' THEN
+      RETURN false;
+    END IF;
+    IF jsonb_typeof(p_expected -> 'player2_id') = 'string' THEN
+      v_p2 := (p_expected ->> 'player2_id')::uuid;
+    ELSIF jsonb_typeof(p_expected -> 'player2_id') IS DISTINCT FROM 'null' THEN
+      RETURN false;
+    END IF;
+  EXCEPTION
+    WHEN invalid_text_representation THEN
+      RETURN false;
+  END;
+
+  IF v_pair IS NULL OR v_virtual IS NULL THEN
+    RETURN false;
+  END IF;
+
+  IF v_virtual THEN
+    IF v_p1 IS NOT NULL OR v_p2 IS NOT NULL THEN
+      RETURN false;
+    END IF;
+  ELSIF v_p1 IS NULL OR v_p2 IS NULL THEN
+    RETURN false;
+  END IF;
+
+  RETURN v_pair IS NOT DISTINCT FROM p_pair_id
+    AND v_p1 IS NOT DISTINCT FROM p_player1_id
+    AND v_p2 IS NOT DISTINCT FROM p_player2_id
+    AND v_virtual IS NOT DISTINCT FROM p_is_virtual;
+END;
 $fn$;
 
 CREATE OR REPLACE FUNCTION public.append_torneo_express_pareja_grupo(
@@ -506,13 +578,17 @@ BEGIN
     player1_id,
     player2_id,
     player1_name,
-    player2_name
+    player2_name,
+    is_virtual,
+    virtual_label
   ) VALUES (
     v_tournament_id,
     p_player1_id,
     p_player2_id,
     v_name1,
-    v_name2
+    v_name2,
+    false,
+    NULL
   )
   RETURNING id INTO v_pareja_id;
 
@@ -565,6 +641,7 @@ DECLARE
   v_guard jsonb;
   v_player1 uuid;
   v_player2 uuid;
+  v_is_virtual boolean;
   v_name text;
   v_slot text;
 BEGIN
@@ -599,6 +676,21 @@ BEGIN
       RETURN jsonb_build_object('ok', false, 'error', 'PAIR_HAS_HISTORY');
   END;
 
+  SELECT player1_id, player2_id, is_virtual
+    INTO v_player1, v_player2, v_is_virtual
+  FROM public.pairs
+  WHERE id = p_pareja_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'PAIR_NOT_FOUND');
+  END IF;
+
+  -- Una plaza virtual se resuelve con asignar jugadores, no con cambiar uno.
+  IF v_is_virtual THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'PAIR_IS_VIRTUAL');
+  END IF;
+
   IF EXISTS (
     SELECT 1
     FROM public.torneo_express_partidos p
@@ -614,16 +706,6 @@ BEGIN
       )
   ) THEN
     RETURN jsonb_build_object('ok', false, 'error', 'PAIR_HAS_HISTORY');
-  END IF;
-
-  SELECT player1_id, player2_id
-    INTO v_player1, v_player2
-  FROM public.pairs
-  WHERE id = p_pareja_id
-  FOR UPDATE;
-
-  IF NOT FOUND THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'PAIR_NOT_FOUND');
   END IF;
 
   IF v_player1 = p_jugador_saliente_id THEN
@@ -988,6 +1070,7 @@ BEGIN
   END IF;
 
   -- Partidos primero, luego vínculos y grupos. pairs no se toca.
+  -- Una plaza virtual entra igual que una real: el vínculo es pair.id.
   DELETE FROM public.torneo_express_partidos p
   USING public.torneo_express_grupos g
   WHERE p.grupo_id = g.id
@@ -1071,14 +1154,10 @@ DECLARE
   v_lock_torneo uuid;
   v_after_local_p1 uuid;
   v_after_local_p2 uuid;
+  v_after_local_virtual boolean;
   v_after_visit_p1 uuid;
   v_after_visit_p2 uuid;
-  v_exp_local_pair uuid;
-  v_exp_local_p1 uuid;
-  v_exp_local_p2 uuid;
-  v_exp_visit_pair uuid;
-  v_exp_visit_p1 uuid;
-  v_exp_visit_p2 uuid;
+  v_after_visit_virtual boolean;
 BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Sesión requerida';
@@ -1165,45 +1244,34 @@ BEGIN
   ORDER BY id
   FOR UPDATE;
 
-  SELECT player1_id, player2_id
-    INTO v_after_local_p1, v_after_local_p2
+  SELECT player1_id, player2_id, is_virtual
+    INTO v_after_local_p1, v_after_local_p2, v_after_local_virtual
   FROM public.te_pair_player_ids(v_partido.pareja_local_id);
-  SELECT player1_id, player2_id
-    INTO v_after_visit_p1, v_after_visit_p2
+  SELECT player1_id, player2_id, is_virtual
+    INTO v_after_visit_p1, v_after_visit_p2, v_after_visit_virtual
   FROM public.te_pair_player_ids(v_partido.pareja_visitante_id);
 
   -- p_force no interviene: un formulario viejo no se sobrescribe.
+  -- NULL en un jugador no rechaza solo: virtual es null/null e is_virtual true.
+  -- virtual → real (o cualquier mezcla) es PAIR_COMPOSITION_CHANGED.
   IF p_expected_pairs IS NULL
      OR jsonb_typeof(p_expected_pairs) <> 'object'
      OR jsonb_typeof(p_expected_pairs -> 'local') <> 'object'
-     OR jsonb_typeof(p_expected_pairs -> 'visitante') <> 'object' THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'PAIR_COMPOSITION_CHANGED');
-  END IF;
-
-  BEGIN
-    v_exp_local_pair := (p_expected_pairs #>> '{local,pair_id}')::uuid;
-    v_exp_local_p1 := (p_expected_pairs #>> '{local,player1_id}')::uuid;
-    v_exp_local_p2 := (p_expected_pairs #>> '{local,player2_id}')::uuid;
-    v_exp_visit_pair := (p_expected_pairs #>> '{visitante,pair_id}')::uuid;
-    v_exp_visit_p1 := (p_expected_pairs #>> '{visitante,player1_id}')::uuid;
-    v_exp_visit_p2 := (p_expected_pairs #>> '{visitante,player2_id}')::uuid;
-  EXCEPTION
-    WHEN invalid_text_representation THEN
-      RETURN jsonb_build_object('ok', false, 'error', 'PAIR_COMPOSITION_CHANGED');
-  END;
-
-  IF v_exp_local_pair IS NULL
-     OR v_exp_local_p1 IS NULL
-     OR v_exp_local_p2 IS NULL
-     OR v_exp_visit_pair IS NULL
-     OR v_exp_visit_p1 IS NULL
-     OR v_exp_visit_p2 IS NULL
-     OR v_partido.pareja_local_id IS DISTINCT FROM v_exp_local_pair
-     OR v_partido.pareja_visitante_id IS DISTINCT FROM v_exp_visit_pair
-     OR v_after_local_p1 IS DISTINCT FROM v_exp_local_p1
-     OR v_after_local_p2 IS DISTINCT FROM v_exp_local_p2
-     OR v_after_visit_p1 IS DISTINCT FROM v_exp_visit_p1
-     OR v_after_visit_p2 IS DISTINCT FROM v_exp_visit_p2 THEN
+     OR jsonb_typeof(p_expected_pairs -> 'visitante') <> 'object'
+     OR NOT public.te_side_composition_matches(
+       p_expected_pairs -> 'local',
+       v_partido.pareja_local_id,
+       v_after_local_p1,
+       v_after_local_p2,
+       v_after_local_virtual
+     )
+     OR NOT public.te_side_composition_matches(
+       p_expected_pairs -> 'visitante',
+       v_partido.pareja_visitante_id,
+       v_after_visit_p1,
+       v_after_visit_p2,
+       v_after_visit_virtual
+     ) THEN
     RETURN jsonb_build_object('ok', false, 'error', 'PAIR_COMPOSITION_CHANGED');
   END IF;
 
@@ -1269,6 +1337,7 @@ REVOKE ALL ON FUNCTION public.te_matchup_key(uuid, uuid) FROM PUBLIC, anon, auth
 REVOKE ALL ON FUNCTION public.te_balanced_round_robin(uuid[]) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.te_lock_categoria_editable(uuid) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.te_pair_player_ids(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.te_side_composition_matches(jsonb, uuid, uuid, uuid, boolean) FROM PUBLIC, anon, authenticated;
 
 GRANT EXECUTE ON FUNCTION public.te_sets_tienen_marcador(jsonb) TO CURRENT_USER;
 GRANT EXECUTE ON FUNCTION public.te_partido_tiene_historial(text, uuid, integer, integer, jsonb) TO CURRENT_USER;
@@ -1277,6 +1346,7 @@ GRANT EXECUTE ON FUNCTION public.te_matchup_key(uuid, uuid) TO CURRENT_USER;
 GRANT EXECUTE ON FUNCTION public.te_balanced_round_robin(uuid[]) TO CURRENT_USER;
 GRANT EXECUTE ON FUNCTION public.te_lock_categoria_editable(uuid) TO CURRENT_USER;
 GRANT EXECUTE ON FUNCTION public.te_pair_player_ids(uuid) TO CURRENT_USER;
+GRANT EXECUTE ON FUNCTION public.te_side_composition_matches(jsonb, uuid, uuid, uuid, boolean) TO CURRENT_USER;
 
 REVOKE ALL ON FUNCTION public.append_torneo_express_pareja_grupo(uuid, uuid, uuid, uuid, jsonb) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.replace_torneo_express_pair_player(uuid, uuid, uuid, uuid) FROM PUBLIC, anon;
