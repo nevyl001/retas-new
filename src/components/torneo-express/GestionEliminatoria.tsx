@@ -1,8 +1,13 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import type {
   PartidoSetScore,
   TorneoExpressBundle,
+  TorneoExpressPartido,
 } from "../../lib/torneoExpress/types";
+import {
+  courtSlotsFromPartidos,
+  type TeCourtCheckPartido,
+} from "../../lib/torneoExpress/courtCheckScope";
 import { torneoExpressFaseLabel } from "../../lib/torneoExpress/labels";
 import { PartidosEliminatoria } from "./PartidosEliminatoria";
 import { TeReprogramarEliminatoriaModal } from "./TeReprogramarEliminatoriaModal";
@@ -16,6 +21,7 @@ interface GestionEliminatoriaProps {
   savingEliminatoriaCanchaId: string | null;
   savingEliminatoriaProgramadoId: string | null;
   savingEliminatoriaReprogramacion?: boolean;
+  courtCheckScope?: Array<TorneoExpressPartido | TeCourtCheckPartido>;
   onSaveResultado: (
     partidoId: string,
     sets: PartidoSetScore[]
@@ -44,6 +50,7 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
   savingEliminatoriaCanchaId,
   savingEliminatoriaProgramadoId,
   savingEliminatoriaReprogramacion = false,
+  courtCheckScope = [],
   onSaveResultado,
   onSaveCancha,
   onSaveProgramado,
@@ -62,6 +69,23 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
 
   const canBulkSchedule =
     editable && !cerrado && Boolean(onRescheduleRonda);
+
+  const occupiedForRound = useMemo(() => {
+    if (reprogramRonda == null) return [];
+    const rewritingIds = new Set(
+      bundle.eliminatoriaPartidos
+        .filter(
+          (p) =>
+            p.ronda === reprogramRonda &&
+            p.estado !== "jugado" &&
+            !p.es_bye
+        )
+        .map((p) => p.id)
+    );
+    return courtSlotsFromPartidos(courtCheckScope, {
+      excludeIds: rewritingIds,
+    });
+  }, [bundle.eliminatoriaPartidos, courtCheckScope, reprogramRonda]);
 
   return (
     <div className="torneo-express-card te-grupos-card te-gestion-card te-elim-gestion">
@@ -94,6 +118,7 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
             savingCanchaId={savingEliminatoriaCanchaId}
             savingProgramadoId={savingEliminatoriaProgramadoId}
             partidoFormato={bundle.partido_formato}
+            courtCheckScope={courtCheckScope}
             onSaveResultado={editable && !cerrado ? onSaveResultado : undefined}
             onSaveCancha={onSaveCancha}
             onSaveProgramado={onSaveProgramado}
@@ -117,6 +142,7 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
           rondaLabel={reprogramLabel}
           partidos={bundle.eliminatoriaPartidos}
           ronda={reprogramRonda}
+          occupiedCourtSlots={occupiedForRound}
           onCancel={() => setReprogramOpen(false)}
           onConfirm={(schedule) => {
             void onRescheduleRonda(reprogramRonda, schedule)

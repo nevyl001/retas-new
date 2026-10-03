@@ -28,9 +28,23 @@ import {
 } from "../lib/torneoExpress/scheduleInvariants";
 import { dedupePartidosExpress } from "../lib/torneoExpress/roundRobin";
 import {
+  courtSlotsFromPartidos,
+  eliminatoriaAsCourtCheckPartido,
+  formatCourtOccupiedError,
+  getCourtCheckMeta,
+  withCourtCheckMeta,
+  type TeCourtCheckPartido,
+  type TeOccupiedCourtSlot,
+} from "../lib/torneoExpress/courtCheckScope";
+import { formatTorneoExpressCategoria } from "../lib/torneoExpress/formatCategoria";
+import { partidoScheduleIso } from "../lib/torneoExpress/partidoSchedule";
+import {
+  findPartidoCourtSlotConflict,
   planCanchaChange,
   planProgramadoChange,
   PARTIDO_CANCHA_OCUPADA_MSG,
+  type CanchaChangePlan,
+  type ProgramadoChangePlan,
 } from "../lib/torneoExpress/partidoCourtSlotConflict";
 import { crucesPrimeraRonda } from "../lib/torneoExpress/bracket";
 import type { BracketFase, BracketSlotEntry } from "../lib/torneoExpress/bracketTypes";
@@ -970,6 +984,8 @@ export async function createTorneoExpressWithGroups(input: {
   /** Parejas visibles en la UI; borra huérfanas del borrador en `pairs`. */
   keepPairIds?: string[];
   schedule: TeCreateScheduleInput;
+  /** Si se crea dentro de un evento, evita canchas ya ocupadas por otras categorías. */
+  eventoId?: string | null;
 }): Promise<string> {
   const user = await requireAuthUser();
   const organizador_id = user.id;
@@ -1025,6 +1041,10 @@ export async function createTorneoExpressWithGroups(input: {
   }
 
   const draftMatches = buildDraftScheduleMatches(input.grupos);
+  const eventoId = input.eventoId?.trim() || null;
+  const occupiedCourtSlots = eventoId
+    ? courtSlotsFromPartidos(await fetchCourtCheckPartidosForEvento(eventoId))
+    : [];
   let scheduledMatches;
   try {
     scheduledMatches = assignRoundRobinSchedule({
@@ -1032,6 +1052,7 @@ export async function createTorneoExpressWithGroups(input: {
       courts,
       days,
       durationMinutes,
+      occupiedCourtSlots,
     });
     validateScheduleInvariants(draftMatches, scheduledMatches);
   } catch (err) {
@@ -1344,9 +1365,171 @@ export class PartidosProgramadoColumnMissingError extends Error {
 
 export { PARTIDO_CANCHA_OCUPADA_MSG };
 
+type CourtScopeTorneo = { id: string; categoria: string | null };
+
+function categoriaLabelForCourtScope(
+  categoria: string | null | undefined
+): string {
+  return formatTorneoExpressCategoria(categoria) || "Sin categoría";
+}
+
+async function resolveCourtScopeTorneos(
+  torneoId: string
+): Promise<CourtScopeTorneo[]> {
+  const torneo = await fetchTorneoExpress(torneoId);
+  if (!torneo) return [];
+
+  const eventoId = torneo.evento_id?.trim();
+  if (!eventoId) {
+    return [{ id: torneo.id, categoria: torneo.categoria ?? null }];
+  }
+
+  const { data, error } = await supabase
+    .from("torneo_express")
+    .select("id, categoria")
+    .eq("evento_id", eventoId);
+  if (error && isMissingColumnError(error, "torneo_express", "evento_id")) {
+    return [{ id: torneo.id, categoria: torneo.categoria ?? null }];
+  }
+  throwIfError(error, "resolveCourtScopeTorneos");
+
+  const rows = (data ?? []) as Array<{ id: string; categoria?: string | null }>;
+  if (rows.length === 0) {
+    return [{ id: torneo.id, categoria: torneo.categoria ?? null }];
+  }
+  return rows.map((row) => ({
+    id: row.id,
+    categoria: row.categoria ?? null,
+  }));
+}
+
+async function loadCourtCheckPartidosForTorneos(
+  torneos: CourtScopeTorneo[]
+): Promise<TeCourtCheckPartido[]> {
+  if (torneos.length === 0) return [];
+
+  const torneoIds = torneos.map((t) => t.id);
+  const labelByTorneo = new Map(
+    torneos.map((t) => [t.id, categoriaLabelForCourtScope(t.categoria)])
+  );
+
+  const { data: grupos, error: gruposErr } = await supabase
+    .from("torneo_express_grupos")
+    .select("id, torneo_id")
+    .in("torneo_id", torneoIds);
+  throwIfError(gruposErr, "loadCourtCheckPartidos.grupos");
+
+  const grupoToTorneo = new Map<string, string>();
+  for (const row of grupos ?? []) {
+    const g = row as { id: string; torneo_id: string };
+    grupoToTorneo.set(g.id, g.torneo_id);
+  }
+  const grupoIds = Array.from(grupoToTorneo.keys());
+  const grupoPartidos =
+    grupoIds.length > 0
+      ? await fetchPartidosForGrupoIds(supabase, grupoIds)
+      : [];
+
+  let elimPartidos: TorneoExpressEliminatoriaPartido[] = [];
+  const { data: elimRows, error: elimErr } = await supabase
+    .from("torneo_express_eliminatoria_partidos")
+    .select("*")
+    .in("torneo_id", torneoIds);
+  if (elimErr) {
+    if (!isBracketSchemaError(elimErr)) {
+      throwIfError(elimErr, "loadCourtCheckPartidos.eliminatoria");
+    }
+  } else {
+    elimPartidos = (elimRows ?? []) as TorneoExpressEliminatoriaPartido[];
+  }
+
+  const pairIds = new Set<string>();
+  for (const p of grupoPartidos) {
+    if (p.pareja_local_id) pairIds.add(p.pareja_local_id);
+    if (p.pareja_visitante_id) pairIds.add(p.pareja_visitante_id);
+  }
+  for (const p of elimPartidos) {
+    if (p.pareja_local_id) pairIds.add(p.pareja_local_id);
+    if (p.pareja_visitante_id) pairIds.add(p.pareja_visitante_id);
+  }
+  const pairLabels = await fetchPairLabelsByIds(Array.from(pairIds));
+
+  const out: TeCourtCheckPartido[] = [];
+
+  for (const partido of grupoPartidos) {
+    const torneoId = grupoToTorneo.get(partido.grupo_id) ?? "";
+    out.push(
+      withCourtCheckMeta(partido, {
+        categoriaLabel: labelByTorneo.get(torneoId) ?? "Sin categoría",
+        parejaLocalLabel:
+          pairLabels.get(partido.pareja_local_id) ?? "Pareja",
+        parejaVisitanteLabel:
+          pairLabels.get(partido.pareja_visitante_id) ?? "Pareja",
+        source: "grupo",
+        torneoId,
+      })
+    );
+  }
+
+  for (const partido of elimPartidos) {
+    const torneoId = partido.torneo_id;
+    out.push(
+      eliminatoriaAsCourtCheckPartido(partido, {
+        categoriaLabel: labelByTorneo.get(torneoId) ?? "Sin categoría",
+        parejaLocalLabel: partido.pareja_local_id
+          ? pairLabels.get(partido.pareja_local_id) ?? "Pareja"
+          : "Por definir",
+        parejaVisitanteLabel: partido.pareja_visitante_id
+          ? pairLabels.get(partido.pareja_visitante_id) ?? "Pareja"
+          : "Por definir",
+        source: "eliminatoria",
+        torneoId,
+      })
+    );
+  }
+
+  return out;
+}
+
+/**
+ * Partidos programados del torneo y, si pertenece a un evento,
+ * de todas las categorías hermanas (grupos + eliminatoria).
+ */
+export async function fetchCourtCheckPartidosForTorneo(
+  torneoId: string
+): Promise<TeCourtCheckPartido[]> {
+  const torneos = await resolveCourtScopeTorneos(torneoId);
+  return loadCourtCheckPartidosForTorneos(torneos);
+}
+
+/** Partidos programados de todas las categorías de un evento. */
+export async function fetchCourtCheckPartidosForEvento(
+  eventoId: string
+): Promise<TeCourtCheckPartido[]> {
+  const trimmed = eventoId.trim();
+  if (!trimmed) return [];
+
+  const { data, error } = await supabase
+    .from("torneo_express")
+    .select("id, categoria")
+    .eq("evento_id", trimmed);
+  if (error && isMissingColumnError(error, "torneo_express", "evento_id")) {
+    return [];
+  }
+  throwIfError(error, "fetchCourtCheckPartidosForEvento");
+
+  const torneos = ((data ?? []) as Array<{ id: string; categoria?: string | null }>).map(
+    (row) => ({
+      id: row.id,
+      categoria: row.categoria ?? null,
+    })
+  );
+  return loadCourtCheckPartidosForTorneos(torneos);
+}
+
 async function fetchTorneoPartidosForConflictCheck(
   partidoId: string
-): Promise<TorneoExpressPartido[]> {
+): Promise<TeCourtCheckPartido[]> {
   const { data: partidoRow, error: partidoErr } = await supabase
     .from("torneo_express_partidos")
     .select("grupo_id")
@@ -1363,22 +1546,66 @@ async function fetchTorneoPartidosForConflictCheck(
   throwIfError(grupoErr, "fetch grupo for court conflict");
   if (!grupoRow?.torneo_id) return [];
 
-  const { data: grupos, error: gruposErr } = await supabase
-    .from("torneo_express_grupos")
-    .select("id")
-    .eq("torneo_id", grupoRow.torneo_id);
-  throwIfError(gruposErr, "fetch grupos for court conflict");
+  return fetchCourtCheckPartidosForTorneo(String(grupoRow.torneo_id));
+}
 
-  const grupoIds = (grupos ?? []).map((g) => g.id);
-  if (grupoIds.length === 0) return [];
+async function fetchEliminatoriaPartidosForConflictCheck(
+  partidoId: string
+): Promise<TeCourtCheckPartido[]> {
+  const { data: partidoRow, error: partidoErr } = await supabase
+    .from("torneo_express_eliminatoria_partidos")
+    .select("torneo_id")
+    .eq("id", partidoId)
+    .maybeSingle();
+  if (isBracketSchemaError(partidoErr)) {
+    return [];
+  }
+  throwIfError(partidoErr, "fetch elim for court conflict");
+  if (!partidoRow?.torneo_id) return [];
+  return fetchCourtCheckPartidosForTorneo(String(partidoRow.torneo_id));
+}
 
-  const { data: partidos, error: partidosErr } = await supabase
-    .from("torneo_express_partidos")
-    .select("*")
-    .in("grupo_id", grupoIds);
-  throwIfError(partidosErr, "fetch partidos for court conflict");
+function throwCourtOccupied(conflict: TorneoExpressPartido | TeCourtCheckPartido): never {
+  throw new Error(formatCourtOccupiedError(conflict));
+}
 
-  return dedupePartidosExpress((partidos ?? []) as TorneoExpressPartido[]);
+async function updateCourtFieldBySource(
+  partidoId: string,
+  source: "grupo" | "eliminatoria",
+  patch: { cancha?: string; programado_en?: string | null }
+): Promise<void> {
+  const table =
+    source === "eliminatoria"
+      ? "torneo_express_eliminatoria_partidos"
+      : "torneo_express_partidos";
+  const { error } = await supabase.from(table).update(patch).eq("id", partidoId);
+  if (source === "eliminatoria" && isBracketSchemaError(error)) {
+    throw new BracketSchemaMissingError();
+  }
+  if (
+    error &&
+    patch.cancha !== undefined &&
+    isMissingColumnError(error, table, "cancha")
+  ) {
+    if (source === "grupo") partidosCanchaColumnKnown = false;
+    throw new PartidosCanchaColumnMissingError();
+  }
+  if (
+    error &&
+    patch.programado_en !== undefined &&
+    isMissingColumnError(error, table, "programado_en")
+  ) {
+    if (source === "grupo") partidosProgramadoColumnKnown = false;
+    throw new PartidosProgramadoColumnMissingError();
+  }
+  throwIfError(error, `update ${table} court field`);
+}
+
+function occupiedSlotsExcluding(
+  partidos: TeCourtCheckPartido[],
+  excludeIds: ReadonlySet<string>
+): TeOccupiedCourtSlot[] {
+  return courtSlotsFromPartidos(partidos, { excludeIds });
 }
 
 export async function savePartidoCancha(
@@ -1425,10 +1652,19 @@ export async function savePartidoCancha(
     return data as TorneoExpressPartido;
   }
 
-  let plan;
+  let plan: CanchaChangePlan;
   try {
     plan = planCanchaChange(currentPartido, value, torneoPartidos);
   } catch (e) {
+    if (e instanceof Error && e.message === PARTIDO_CANCHA_OCUPADA_MSG) {
+      const hit = findPartidoCourtSlotConflict(
+        partidoId,
+        partidoScheduleIso(currentPartido),
+        value,
+        torneoPartidos
+      );
+      if (hit) throwCourtOccupied(hit);
+    }
     throw e instanceof Error ? e : new Error(PARTIDO_CANCHA_OCUPADA_MSG);
   }
 
@@ -1437,17 +1673,13 @@ export async function savePartidoCancha(
   }
 
   if (plan.kind === "swap") {
-    const { error: swapErr } = await supabase
-      .from("torneo_express_partidos")
-      .update({ cancha: plan.swapCancha })
-      .eq("id", plan.swapWithId);
-    if (swapErr) {
-      if (isMissingColumnError(swapErr, "torneo_express_partidos", "cancha")) {
-        partidosCanchaColumnKnown = false;
-        throw new PartidosCanchaColumnMissingError();
-      }
-      throwIfError(swapErr, "swap cancha torneo_express_partidos");
-    }
+    const swapWithId = plan.swapWithId;
+    const swapCancha = plan.swapCancha;
+    const other = torneoPartidos.find((p) => p.id === swapWithId);
+    const source = getCourtCheckMeta(other!)?.source ?? "grupo";
+    await updateCourtFieldBySource(swapWithId, source, {
+      cancha: swapCancha,
+    });
   }
 
   const { data, error } = await supabase
@@ -1494,7 +1726,7 @@ export async function savePartidoProgramado(
     const currentPartido = current as TorneoExpressPartido;
     const torneoPartidos = await fetchTorneoPartidosForConflictCheck(partidoId);
 
-    let plan;
+    let plan: ProgramadoChangePlan;
     try {
       plan = planProgramadoChange(
         currentPartido,
@@ -1502,6 +1734,15 @@ export async function savePartidoProgramado(
         torneoPartidos
       );
     } catch (e) {
+      if (e instanceof Error && e.message === PARTIDO_CANCHA_OCUPADA_MSG) {
+        const hit = findPartidoCourtSlotConflict(
+          partidoId,
+          programadoEn,
+          currentPartido.cancha,
+          torneoPartidos
+        );
+        if (hit) throwCourtOccupied(hit);
+      }
       throw e instanceof Error ? e : new Error(PARTIDO_CANCHA_OCUPADA_MSG);
     }
 
@@ -1510,23 +1751,13 @@ export async function savePartidoProgramado(
     }
 
     if (plan.kind === "swap") {
-      const { error: swapErr } = await supabase
-        .from("torneo_express_partidos")
-        .update({ programado_en: plan.swapProgramadoEn })
-        .eq("id", plan.swapWithId);
-      if (swapErr) {
-        if (
-          isMissingColumnError(
-            swapErr,
-            "torneo_express_partidos",
-            "programado_en"
-          )
-        ) {
-          partidosProgramadoColumnKnown = false;
-          throw new PartidosProgramadoColumnMissingError();
-        }
-        throwIfError(swapErr, "swap programado_en torneo_express_partidos");
-      }
+      const swapWithId = plan.swapWithId;
+      const swapProgramadoEn = plan.swapProgramadoEn;
+      const other = torneoPartidos.find((p) => p.id === swapWithId);
+      const source = getCourtCheckMeta(other!)?.source ?? "grupo";
+      await updateCourtFieldBySource(swapWithId, source, {
+        programado_en: swapProgramadoEn,
+      });
     }
 
     const { data, error } = await supabase
@@ -1636,22 +1867,6 @@ export async function rescheduleTorneoExpressGruposPartidos(
     throw new Error("No hay partidos para reprogramar.");
   }
 
-  let scheduled;
-  try {
-    scheduled = assignRoundRobinSchedule({
-      matches: persistedMatches,
-      courts,
-      days,
-      durationMinutes,
-    });
-    validateScheduleInvariants(persistedMatches, scheduled);
-  } catch (e) {
-    if (e instanceof ScheduleInvariantError) {
-      throw new Error(e.message);
-    }
-    throw e;
-  }
-
   const jugadoIds = new Set<string>();
   const pendingIds = new Set<string>();
   for (const list of Object.values(bundle.partidosPorGrupo)) {
@@ -1662,6 +1877,29 @@ export async function rescheduleTorneoExpressGruposPartidos(
         pendingIds.add(partido.id);
       }
     }
+  }
+
+  const eventoScope = await fetchCourtCheckPartidosForTorneo(torneoId);
+  const occupiedCourtSlots = occupiedSlotsExcluding(
+    eventoScope,
+    pendingIds
+  );
+
+  let scheduled;
+  try {
+    scheduled = assignRoundRobinSchedule({
+      matches: persistedMatches,
+      courts,
+      days,
+      durationMinutes,
+      occupiedCourtSlots,
+    });
+    validateScheduleInvariants(persistedMatches, scheduled);
+  } catch (e) {
+    if (e instanceof ScheduleInvariantError) {
+      throw new Error(e.message);
+    }
+    throw e;
   }
 
   const mapped = mapPersistedScheduleToPartidoUpdates(scheduled);
@@ -1771,6 +2009,19 @@ export async function rescheduleTorneoExpressEliminatoriaRonda(
     throw new Error("No hay partidos programables en esta ronda.");
   }
 
+  const jugadoIds = new Set(
+    partidos
+      .filter((p) => p.ronda === ronda && p.estado === "jugado")
+      .map((p) => p.id)
+  );
+  const rewritingIds = new Set(
+    partidos
+      .filter((p) => p.ronda === ronda && p.estado !== "jugado" && !p.es_bye)
+      .map((p) => p.id)
+  );
+  const eventoScope = await fetchCourtCheckPartidosForTorneo(torneoId);
+  const occupiedCourtSlots = occupiedSlotsExcluding(eventoScope, rewritingIds);
+
   let scheduled;
   try {
     scheduled = assignRoundRobinSchedule({
@@ -1778,6 +2029,7 @@ export async function rescheduleTorneoExpressEliminatoriaRonda(
       courts,
       days,
       durationMinutes,
+      occupiedCourtSlots,
     });
     validateScheduleInvariants(draftMatches, scheduled);
   } catch (e) {
@@ -1786,12 +2038,6 @@ export async function rescheduleTorneoExpressEliminatoriaRonda(
     }
     throw e;
   }
-
-  const jugadoIds = new Set(
-    partidos
-      .filter((p) => p.ronda === ronda && p.estado === "jugado")
-      .map((p) => p.id)
-  );
 
   const updates = mapPersistedScheduleToPartidoUpdates(scheduled).filter(
     (row) => !jugadoIds.has(row.partidoId)
@@ -2980,6 +3226,43 @@ export async function saveEliminatoriaCancha(
   await requireAuthUser();
   const value = normalizeCanchaForSave(cancha ?? "");
 
+  const scope = await fetchEliminatoriaPartidosForConflictCheck(partidoId);
+  const current = scope.find((p) => p.id === partidoId);
+  if (current) {
+    let plan: CanchaChangePlan;
+    try {
+      plan = planCanchaChange(current, value, scope);
+    } catch (e) {
+      if (e instanceof Error && e.message === PARTIDO_CANCHA_OCUPADA_MSG) {
+        const hit = findPartidoCourtSlotConflict(
+          partidoId,
+          partidoScheduleIso(current),
+          value,
+          scope
+        );
+        if (hit) throwCourtOccupied(hit);
+      }
+      throw e instanceof Error ? e : new Error(PARTIDO_CANCHA_OCUPADA_MSG);
+    }
+    if (plan.kind === "noop") {
+      const { data } = await supabase
+        .from("torneo_express_eliminatoria_partidos")
+        .select("*")
+        .eq("id", partidoId)
+        .maybeSingle();
+      return (data as TorneoExpressEliminatoriaPartido) ?? (current as unknown as TorneoExpressEliminatoriaPartido);
+    }
+    if (plan.kind === "swap") {
+      const swapWithId = plan.swapWithId;
+      const swapCancha = plan.swapCancha;
+      const other = scope.find((p) => p.id === swapWithId);
+      const source = getCourtCheckMeta(other!)?.source ?? "eliminatoria";
+      await updateCourtFieldBySource(swapWithId, source, {
+        cancha: swapCancha,
+      });
+    }
+  }
+
   const { data, error } = await supabase
     .from("torneo_express_eliminatoria_partidos")
     .update({ cancha: value })
@@ -3000,6 +3283,48 @@ export async function saveEliminatoriaProgramado(
   programadoEn: string | null
 ): Promise<TorneoExpressEliminatoriaPartido> {
   await requireAuthUser();
+
+  if (programadoEn) {
+    const scope = await fetchEliminatoriaPartidosForConflictCheck(partidoId);
+    const current = scope.find((p) => p.id === partidoId);
+    if (current) {
+      let plan: ProgramadoChangePlan;
+      try {
+        plan = planProgramadoChange(current, programadoEn, scope);
+      } catch (e) {
+        if (e instanceof Error && e.message === PARTIDO_CANCHA_OCUPADA_MSG) {
+          const hit = findPartidoCourtSlotConflict(
+            partidoId,
+            programadoEn,
+            current.cancha,
+            scope
+          );
+          if (hit) throwCourtOccupied(hit);
+        }
+        throw e instanceof Error ? e : new Error(PARTIDO_CANCHA_OCUPADA_MSG);
+      }
+      if (plan.kind === "noop") {
+        const { data } = await supabase
+          .from("torneo_express_eliminatoria_partidos")
+          .select("*")
+          .eq("id", partidoId)
+          .maybeSingle();
+        return (
+          (data as TorneoExpressEliminatoriaPartido) ??
+          (current as unknown as TorneoExpressEliminatoriaPartido)
+        );
+      }
+      if (plan.kind === "swap") {
+        const swapWithId = plan.swapWithId;
+        const swapProgramadoEn = plan.swapProgramadoEn;
+        const other = scope.find((p) => p.id === swapWithId);
+        const source = getCourtCheckMeta(other!)?.source ?? "eliminatoria";
+        await updateCourtFieldBySource(swapWithId, source, {
+          programado_en: swapProgramadoEn,
+        });
+      }
+    }
+  }
 
   const { data, error } = await supabase
     .from("torneo_express_eliminatoria_partidos")

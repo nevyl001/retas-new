@@ -25,12 +25,18 @@ import {
 } from "../../lib/torneoExpress/partidoSets";
 import { findPartidoEnVivoId } from "../../lib/torneoExpress/partidoEnVivo";
 import {
-  formatProgramadoSwapPrompt,
   findConflictingPartidoIds,
+  findPartidoCourtSlotConflict,
   planCanchaChange,
   planProgramadoChange,
   PARTIDO_CANCHA_OCUPADA_MSG,
+  type CanchaChangePlan,
+  type ProgramadoChangePlan,
 } from "../../lib/torneoExpress/partidoCourtSlotConflict";
+import {
+  formatCourtOccupiedError,
+  formatCourtSwapPrompt,
+} from "../../lib/torneoExpress/courtCheckScope";
 import type {
   ExpectedPairs,
   PartidoSetScore,
@@ -136,12 +142,22 @@ function PartidoCanchaField({
   const guardarCancha = () => {
     if (!onSaveCancha) return;
     const next = normalizeCanchaForSave(draft);
-    let plan;
+    let plan: CanchaChangePlan;
     try {
       plan = planCanchaChange(partido, next, courtCheckScope);
     } catch (e) {
+      const hit = findPartidoCourtSlotConflict(
+        partido.id,
+        partidoScheduleIso(partido),
+        next,
+        courtCheckScope
+      );
       setCanchaError(
-        e instanceof Error ? e.message : PARTIDO_CANCHA_OCUPADA_MSG
+        hit
+          ? formatCourtOccupiedError(hit)
+          : e instanceof Error
+            ? e.message
+            : PARTIDO_CANCHA_OCUPADA_MSG
       );
       return;
     }
@@ -288,14 +304,24 @@ function PartidoHorarioField({
       return;
     }
 
-    let plan;
+    let plan: ProgramadoChangePlan;
     try {
       plan = planProgramadoChange(partido, next, courtCheckScope);
     } catch (e) {
       setSwapPrompt(null);
       setPendingSwapIso(null);
+      const hit = findPartidoCourtSlotConflict(
+        partido.id,
+        next,
+        partido.cancha,
+        courtCheckScope
+      );
       setHorarioError(
-        e instanceof Error ? e.message : PARTIDO_CANCHA_OCUPADA_MSG
+        hit
+          ? formatCourtOccupiedError(hit)
+          : e instanceof Error
+            ? e.message
+            : PARTIDO_CANCHA_OCUPADA_MSG
       );
       return;
     }
@@ -306,10 +332,19 @@ function PartidoHorarioField({
     }
 
     if (plan.kind === "swap") {
+      const swapWithId = plan.swapWithId;
+      const occupiedIso = plan.programado_en;
+      const freedIso = plan.swapProgramadoEn;
       setHorarioError(null);
-      setPendingSwapIso(plan.programado_en);
+      setPendingSwapIso(occupiedIso);
+      const conflict =
+        courtCheckScope.find((p) => p.id === swapWithId) ?? partido;
       setSwapPrompt(
-        formatProgramadoSwapPrompt(plan.programado_en, plan.swapProgramadoEn)
+        formatCourtSwapPrompt({
+          occupiedProgramadoEn: occupiedIso,
+          freedProgramadoEn: freedIso,
+          conflict,
+        })
       );
       return;
     }

@@ -14,6 +14,7 @@ import {
 import { validatePlayDays } from "../../lib/torneoExpress/scheduleDayWindows";
 import { validateScheduleInvariants } from "../../lib/torneoExpress/scheduleInvariants";
 import { PARTIDO_CANCHA_OCUPADA_MSG } from "../../lib/torneoExpress/partidoCourtSlotConflict";
+import type { TeOccupiedCourtSlot } from "../../lib/torneoExpress/courtCheckScope";
 import type { TorneoExpressPartido } from "../../lib/torneoExpress/types";
 import { Button, Modal } from "../ui";
 import { TeScheduleDaysEditor } from "./TeScheduleDaysEditor";
@@ -24,6 +25,7 @@ type TeReprogramarEliminatoriaModalProps = {
   rondaLabel: string;
   partidos: TorneoExpressEliminatoriaPartido[];
   ronda: number;
+  occupiedCourtSlots?: TeOccupiedCourtSlot[];
   onCancel: () => void;
   onConfirm: (schedule: {
     days: Array<{ date: string; startTime: string; endTime: string }>;
@@ -59,6 +61,7 @@ export const TeReprogramarEliminatoriaModal: React.FC<
   rondaLabel,
   partidos,
   ronda,
+  occupiedCourtSlots = [],
   onCancel,
   onConfirm,
 }) => {
@@ -120,6 +123,7 @@ export const TeReprogramarEliminatoriaModal: React.FC<
         courts: activeCourtNames,
         days: schedule.days,
         durationMinutes: Math.floor(schedule.durationMinutes),
+        occupiedCourtSlots,
       });
       validateScheduleInvariants(draft, scheduled);
       return null;
@@ -131,7 +135,7 @@ export const TeReprogramarEliminatoriaModal: React.FC<
         ? e.message
         : "No fue posible programar los partidos con esta configuración.";
     }
-  }, [activeCourtNames, partidos, ronda, schedule]);
+  }, [activeCourtNames, occupiedCourtSlots, partidos, ronda, schedule]);
 
   const scheduleReady =
     schedule.durationMinutes > 0 &&

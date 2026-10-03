@@ -547,3 +547,45 @@ describe("buildDraftScheduleMatchKey", () => {
     expect(key).toBe("0:x:y:1:2");
   });
 });
+
+describe("occupiedCourtSlots cross-category", () => {
+  test("skips a court already taken at the first slot", () => {
+    const occupiedIso = programadoIsoFromMexicoCalendar("2026-08-25", "19:00");
+    expect(occupiedIso).toBeTruthy();
+
+    const matches = [
+      mkMatch({
+        matchKey: "m0",
+        parejaLocalId: "a",
+        parejaVisitanteId: "b",
+        orden: 1,
+        ronda: 1,
+      }),
+      mkMatch({
+        matchKey: "m1",
+        parejaLocalId: "c",
+        parejaVisitanteId: "d",
+        orden: 2,
+        ronda: 1,
+      }),
+    ];
+
+    const scheduled = assignRoundRobinSchedule({
+      matches,
+      courts: ["Central", "Estadio"],
+      date: "2026-08-25",
+      startTime: "19:00",
+      durationMinutes: 30,
+      occupiedCourtSlots: [
+        { programado_en: occupiedIso!, cancha: "Central" },
+      ],
+    });
+
+    expect(scheduled).toHaveLength(2);
+    const at1900 = scheduled.filter(
+      (m) => partidoTimeInputValue24(m.programado_en!) === "19:00"
+    );
+    expect(at1900).toHaveLength(1);
+    expect(at1900[0]!.cancha).toBe("Estadio");
+  });
+});

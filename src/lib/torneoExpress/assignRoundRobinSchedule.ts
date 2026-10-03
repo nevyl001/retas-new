@@ -1,5 +1,10 @@
 import type { DraftScheduleMatch } from "./draftScheduleMatch";
 import {
+  buildOccupiedCourtSlotSet,
+  occupiedCourtSlotKey,
+  type TeOccupiedCourtSlot,
+} from "./courtCheckScope";
+import {
   SCHEDULE_INCOMPLETE_MSG,
   ScheduleInvariantError,
 } from "./scheduleInvariants";
@@ -31,6 +36,11 @@ export type AssignRoundRobinScheduleInput = {
   /** Legacy: cierre uniforme + endDate. Si se omite junto a days, modo abierto. */
   endTime?: string;
   endDate?: string;
+  /**
+   * Canchas ya ocupadas por otras categorías / partidos que no se reescriben.
+   * El motor salta esas canchas en ese horario.
+   */
+  occupiedCourtSlots?: TeOccupiedCourtSlot[];
 };
 
 export type SchedulePreviewSummary = {
@@ -179,7 +189,8 @@ function advanceDayCursor(
 function packSlots(
   matches: DraftScheduleMatch[],
   courts: string[],
-  nextSlot: () => { date: string; time: string }
+  nextSlot: () => { date: string; time: string },
+  occupiedCourtKeys: Set<string>
 ): DraftScheduleMatch[] {
   const scheduled: DraftScheduleMatch[] = [];
   let slotIndex = 0;
@@ -205,7 +216,10 @@ function packSlots(
 
       const rotatedCourts = rotateCourts(courts, slotIndex);
       const busyPairs = new Set<string>();
-      const availableCourts = [...rotatedCourts];
+      const availableCourts = rotatedCourts.filter((court) => {
+        const key = occupiedCourtSlotKey(programadoIso, court);
+        return !key || !occupiedCourtKeys.has(key);
+      });
       const scheduledThisSlot: Array<{
         match: DraftScheduleMatch;
         court: string;
@@ -223,6 +237,8 @@ function packSlots(
         scheduledThisSlot.push({ match, court });
         busyPairs.add(match.parejaLocalId);
         busyPairs.add(match.parejaVisitanteId);
+        const takenKey = occupiedCourtSlotKey(programadoIso, court);
+        if (takenKey) occupiedCourtKeys.add(takenKey);
       }
 
       if (scheduledThisSlot.length === 0) {
@@ -257,7 +273,8 @@ function assignWithDayWindows(
   matches: DraftScheduleMatch[],
   courts: string[],
   durationMinutes: number,
-  days: TeScheduleDayWindow[]
+  days: TeScheduleDayWindow[],
+  occupiedCourtKeys: Set<string>
 ): DraftScheduleMatch[] {
   let cursor: DayCursor = ensureValidDayCursor(
     days,
@@ -266,16 +283,21 @@ function assignWithDayWindows(
   );
   let prepared = false;
 
-  return packSlots(matches, courts, () => {
-    if (prepared) {
-      cursor = advanceDayCursor(days, cursor, durationMinutes);
-    } else {
-      cursor = ensureValidDayCursor(days, cursor, durationMinutes);
-      prepared = true;
-    }
-    const day = days[cursor.dayIndex]!;
-    return { date: day.date, time: cursor.time };
-  });
+  return packSlots(
+    matches,
+    courts,
+    () => {
+      if (prepared) {
+        cursor = advanceDayCursor(days, cursor, durationMinutes);
+      } else {
+        cursor = ensureValidDayCursor(days, cursor, durationMinutes);
+        prepared = true;
+      }
+      const day = days[cursor.dayIndex]!;
+      return { date: day.date, time: cursor.time };
+    },
+    occupiedCourtKeys
+  );
 }
 
 /** Legacy: sin cierre, avanza solo con duración (puede cruzar medianoche). */
@@ -284,7 +306,8 @@ function assignOpenEnded(
   courts: string[],
   durationMinutes: number,
   date: string,
-  startTime: string
+  startTime: string,
+  occupiedCourtKeys: Set<string>
 ): DraftScheduleMatch[] {
   if (!programadoIsoFromMexicoCalendar(date, startTime)) {
     throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
@@ -294,23 +317,28 @@ function assignOpenEnded(
   let currentTime = startTime;
   let prepared = false;
 
-  return packSlots(matches, courts, () => {
-    if (prepared) {
-      const next = addMinutesToMexicoCalendar(
-        currentDate,
-        currentTime,
-        durationMinutes
-      );
-      if (!next) {
-        throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+  return packSlots(
+    matches,
+    courts,
+    () => {
+      if (prepared) {
+        const next = addMinutesToMexicoCalendar(
+          currentDate,
+          currentTime,
+          durationMinutes
+        );
+        if (!next) {
+          throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+        }
+        currentDate = next.date;
+        currentTime = next.time;
+      } else {
+        prepared = true;
       }
-      currentDate = next.date;
-      currentTime = next.time;
-    } else {
-      prepared = true;
-    }
-    return { date: currentDate, time: currentTime };
-  });
+      return { date: currentDate, time: currentTime };
+    },
+    occupiedCourtKeys
+  );
 }
 
 /**
@@ -330,6 +358,10 @@ export function assignRoundRobinSchedule(
     throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
   }
 
+  const occupiedCourtKeys = buildOccupiedCourtSlotSet(
+    input.occupiedCourtSlots ?? []
+  );
+
   const hasExplicitDays = Boolean(input.days && input.days.length > 0);
   const hasEndWindow = Boolean(input.endTime?.trim()) || hasExplicitDays;
 
@@ -339,7 +371,14 @@ export function assignRoundRobinSchedule(
     if (!date || !startTime) {
       throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
     }
-    return assignOpenEnded(matches, courts, durationMinutes, date, startTime);
+    return assignOpenEnded(
+      matches,
+      courts,
+      durationMinutes,
+      date,
+      startTime,
+      occupiedCourtKeys
+    );
   }
 
   const days = hasExplicitDays
@@ -356,7 +395,13 @@ export function assignRoundRobinSchedule(
     throw new ScheduleInvariantError(daysError);
   }
 
-  return assignWithDayWindows(matches, courts, durationMinutes, days);
+  return assignWithDayWindows(
+    matches,
+    courts,
+    durationMinutes,
+    days,
+    occupiedCourtKeys
+  );
 }
 
 export function buildSchedulePreviewSummary(

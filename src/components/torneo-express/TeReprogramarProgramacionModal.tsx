@@ -9,6 +9,7 @@ import {
 import { validatePlayDays } from "../../lib/torneoExpress/scheduleDayWindows";
 import { validateScheduleInvariants } from "../../lib/torneoExpress/scheduleInvariants";
 import { PARTIDO_CANCHA_OCUPADA_MSG } from "../../lib/torneoExpress/partidoCourtSlotConflict";
+import type { TeOccupiedCourtSlot } from "../../lib/torneoExpress/courtCheckScope";
 import { Button, Modal } from "../ui";
 import {
   assignRoundRobinSchedule,
@@ -27,6 +28,8 @@ type TeReprogramarProgramacionModalProps = {
   open: boolean;
   saving: boolean;
   bundle: TorneoExpressBundle;
+  /** Canchas ocupadas por otras categorías / partidos que no se reescriben. */
+  occupiedCourtSlots?: TeOccupiedCourtSlot[];
   onCancel: () => void;
   onConfirm: (schedule: TeReprogramarScheduleConfirm) => void;
 };
@@ -37,7 +40,14 @@ function flattenPartidos(bundle: TorneoExpressBundle) {
 
 export const TeReprogramarProgramacionModal: React.FC<
   TeReprogramarProgramacionModalProps
-> = ({ open, saving, bundle, onCancel, onConfirm }) => {
+> = ({
+  open,
+  saving,
+  bundle,
+  occupiedCourtSlots = [],
+  onCancel,
+  onConfirm,
+}) => {
   const allPartidos = useMemo(() => flattenPartidos(bundle), [bundle]);
   const pendingCount = useMemo(
     () => allPartidos.filter((p) => p.estado !== "jugado").length,
@@ -92,6 +102,7 @@ export const TeReprogramarProgramacionModal: React.FC<
         courts: activeCourtNames,
         days: schedule.days,
         durationMinutes: Math.floor(schedule.durationMinutes),
+        occupiedCourtSlots,
       });
       validateScheduleInvariants(persistedMatches, scheduled);
       return null;
@@ -108,6 +119,7 @@ export const TeReprogramarProgramacionModal: React.FC<
     activeCourtNames,
     schedule.days,
     schedule.durationMinutes,
+    occupiedCourtSlots,
   ]);
 
   const scheduleReady =

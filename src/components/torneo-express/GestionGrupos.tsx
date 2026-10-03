@@ -7,11 +7,16 @@ import { eliminatoriaUltimaRondaCompleta, eliminatoriaBracketSize, eliminatoriaT
 import { isGrupoPartidosCompletos } from "../../lib/torneoExpress/grupoCompletion";
 import {
   copyToClipboard,
+  fetchCourtCheckPartidosForTorneo,
   publicEliminatoriaUrl,
   publicGeneralUrl,
   publicGrupoUrl,
   publicGruposUrl,
 } from "../../services/torneoExpressService";
+import {
+  courtSlotsFromPartidos,
+  type TeCourtCheckPartido,
+} from "../../lib/torneoExpress/courtCheckScope";
 import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
 import {
   torneoExpressEstadoLabel,
@@ -153,6 +158,43 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         : [],
     [bundle]
   );
+
+  const [eventoCourtScope, setEventoCourtScope] = useState<TeCourtCheckPartido[]>(
+    []
+  );
+
+  useEffect(() => {
+    const torneoIdForScope = bundle?.torneo.id;
+    if (!torneoIdForScope) {
+      setEventoCourtScope([]);
+      return;
+    }
+    let cancelled = false;
+    void fetchCourtCheckPartidosForTorneo(torneoIdForScope)
+      .then((rows) => {
+        if (!cancelled) setEventoCourtScope(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setEventoCourtScope([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [bundle]);
+
+  const courtCheckScope = useMemo(() => {
+    if (eventoCourtScope.length > 0) return eventoCourtScope;
+    return allTorneoPartidos;
+  }, [eventoCourtScope, allTorneoPartidos]);
+
+  const occupiedForGruposReschedule = useMemo(() => {
+    const pendingIds = new Set(
+      allTorneoPartidos
+        .filter((p) => p.estado !== "jugado")
+        .map((p) => p.id)
+    );
+    return courtSlotsFromPartidos(courtCheckScope, { excludeIds: pendingIds });
+  }, [allTorneoPartidos, courtCheckScope]);
 
   const puedeFinalizarTorneo = useMemo(() => {
     if (!bundle || faseTorneo !== "eliminatoria") return false;
@@ -432,7 +474,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         <PartidosGrupo
           partidos={bundle!.partidosPorGrupo[grupo.id] ?? []}
           parejas={bundle!.parejasPorGrupo[grupo.id] ?? []}
-          partidosCourtCheckScope={allTorneoPartidos}
+          partidosCourtCheckScope={courtCheckScope}
           editable={faseTorneo === "grupos"}
           allowReorder={partidosOrdenDisponible}
           canchaEditable={partidosCanchaDisponible}
@@ -816,6 +858,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                 savingEliminatoriaCanchaId={savingEliminatoriaCanchaId}
                 savingEliminatoriaProgramadoId={savingEliminatoriaProgramadoId}
                 savingEliminatoriaReprogramacion={savingReprogramacion}
+                courtCheckScope={courtCheckScope}
                 onSaveResultado={saveEliminatoriaResultado}
                 onSaveCancha={saveEliminatoriaCancha}
                 onSaveProgramado={saveEliminatoriaProgramado}
@@ -1067,6 +1110,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           savingEliminatoriaCanchaId={savingEliminatoriaCanchaId}
           savingEliminatoriaProgramadoId={savingEliminatoriaProgramadoId}
           savingEliminatoriaReprogramacion={savingReprogramacion}
+          courtCheckScope={courtCheckScope}
           onSaveResultado={saveEliminatoriaResultado}
           onSaveCancha={saveEliminatoriaCancha}
           onSaveProgramado={saveEliminatoriaProgramado}
@@ -1221,7 +1265,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                 <PartidosGrupo
                   partidos={bundle.partidosPorGrupo[grupo.id] ?? []}
                   parejas={bundle.parejasPorGrupo[grupo.id] ?? []}
-                  partidosCourtCheckScope={allTorneoPartidos}
+                  partidosCourtCheckScope={courtCheckScope}
                   editable={faseTorneo === "grupos"}
                   allowReorder={partidosOrdenDisponible}
                   canchaEditable={partidosCanchaDisponible}
@@ -1323,6 +1367,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         open={reprogramOpen}
         saving={savingReprogramacion}
         bundle={bundle}
+        occupiedCourtSlots={occupiedForGruposReschedule}
         onCancel={() => setReprogramOpen(false)}
         onConfirm={(schedule) => {
           void rescheduleGruposProgramacion(schedule)

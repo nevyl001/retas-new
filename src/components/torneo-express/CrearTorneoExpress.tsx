@@ -15,11 +15,14 @@ import { useUser } from "../../contexts/UserContext";
 import type { GrupoAssignmentDraft } from "../../lib/torneoExpress/types";
 import {
   createTorneoExpressWithGroups,
+  fetchCourtCheckPartidosForEvento,
   fetchPairsForTournament,
   formatSupabaseError,
   linkTorneoToEvento,
   pruneDraftPairsForTournament,
 } from "../../services/torneoExpressService";
+import { courtSlotsFromPartidos } from "../../lib/torneoExpress/courtCheckScope";
+import type { TeOccupiedCourtSlot } from "../../lib/torneoExpress/courtCheckScope";
 import { navigateTorneoExpress } from "./torneoExpressNav";
 import { ArmarParejasPicker } from "./ArmarParejasPicker";
 import { AsignarParejasGrupos } from "./AsignarParejasGrupos";
@@ -130,9 +133,31 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   const [schedule, setSchedule] = useState<TeWizardScheduleDraft>(
     normalizeTeWizardScheduleDraft(initialDraft?.schedule)
   );
+  const [eventoOccupiedSlots, setEventoOccupiedSlots] = useState<
+    TeOccupiedCourtSlot[]
+  >([]);
   const [loadingJugadores, setLoadingJugadores] = useState(false);
   /** Evita crear el torneo con un doble clic al pasar de programación → confirmar. */
   const [confirmArmed, setConfirmArmed] = useState(false);
+
+  useEffect(() => {
+    const id = eventoId?.trim();
+    if (!id) {
+      setEventoOccupiedSlots([]);
+      return;
+    }
+    let cancelled = false;
+    void fetchCourtCheckPartidosForEvento(id)
+      .then((rows) => {
+        if (!cancelled) setEventoOccupiedSlots(courtSlotsFromPartidos(rows));
+      })
+      .catch(() => {
+        if (!cancelled) setEventoOccupiedSlots([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [eventoId]);
 
   const jugadoresEnParejasSinEmail = useMemo(() => {
     const ids = new Set<string>();
@@ -433,6 +458,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         courts: activeCourtNames,
         days: schedule.days,
         durationMinutes: Math.floor(schedule.durationMinutes),
+        occupiedCourtSlots: eventoOccupiedSlots,
       });
       validateScheduleInvariants(draftMatches, scheduled);
 
@@ -451,6 +477,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     schedule.days,
     schedule.durationMinutes,
     scheduleCourtError,
+    eventoOccupiedSlots,
   ]);
 
   const scheduleReady = Boolean(schedulePreview) && !scheduleCourtError;
@@ -687,6 +714,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         sourceTournamentId: draftTournamentId,
         grupos: assignments,
         keepPairIds: keepIds,
+        eventoId: eventoId?.trim() || null,
         schedule: {
           days: schedule.days,
           durationMinutes: Math.floor(schedule.durationMinutes),
