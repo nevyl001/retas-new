@@ -28,10 +28,7 @@ interface GestionEliminatoriaProps {
   onRescheduleRonda?: (
     ronda: number,
     schedule: {
-      playDate: string;
-      endDate: string;
-      startTime: string;
-      endTime: string;
+      days: Array<{ date: string; startTime: string; endTime: string }>;
       durationMinutes: number;
       courtNames: string[];
     }

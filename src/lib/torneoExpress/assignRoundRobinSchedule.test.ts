@@ -213,7 +213,6 @@ describe("assignRoundRobinSchedule", () => {
       courts: ["C1"],
       date: "2026-10-03",
       startTime: "09:00",
-      endTime: "10:00",
       durationMinutes: 30,
     });
 
@@ -224,6 +223,37 @@ describe("assignRoundRobinSchedule", () => {
     expect(partidoDateInputValue(scheduled[2].programado_en!)).toBe("2026-10-04");
     expect(partidoTimeInputValue24(scheduled[2].programado_en!)).toBe("09:00");
     expect(partidoDateInputValue(scheduled[4].programado_en!)).toBe("2026-10-05");
+    validateScheduleInvariants(matches, scheduled);
+  });
+
+  test("cada día puede tener horario distinto", () => {
+    const matches = Array.from({ length: 4 }, (_, i) =>
+      mkMatch({
+        matchKey: `m${i}`,
+        parejaLocalId: `a${i}`,
+        parejaVisitanteId: `b${i}`,
+        orden: i + 1,
+      })
+    );
+
+    const days = [
+      { date: "2026-10-03", startTime: "09:00", endTime: "10:00" },
+      { date: "2026-10-04", startTime: "16:00", endTime: "17:00" },
+    ];
+
+    const scheduled = assignRoundRobinSchedule({
+      matches,
+      courts: ["C1"],
+      days,
+      durationMinutes: 30,
+    });
+
+    expect(partidoDateInputValue(scheduled[0].programado_en!)).toBe("2026-10-03");
+    expect(partidoTimeInputValue24(scheduled[0].programado_en!)).toBe("09:00");
+    expect(partidoTimeInputValue24(scheduled[1].programado_en!)).toBe("09:30");
+    expect(partidoDateInputValue(scheduled[2].programado_en!)).toBe("2026-10-04");
+    expect(partidoTimeInputValue24(scheduled[2].programado_en!)).toBe("16:00");
+    expect(partidoTimeInputValue24(scheduled[3].programado_en!)).toBe("16:30");
     validateScheduleInvariants(matches, scheduled);
   });
 
@@ -239,7 +269,7 @@ describe("assignRoundRobinSchedule", () => {
           durationMinutes: 30,
         })
       )
-    ).toThrow(/no cabe en el horario/i);
+    ).toThrow(/no cabe entre/i);
   });
 
   test("si no alcanza el día de fin, error claro", () => {
@@ -262,7 +292,7 @@ describe("assignRoundRobinSchedule", () => {
           courts: ["C1"],
         })
       )
-    ).toThrow(/antes del/i);
+    ).toThrow(/días configurados/i);
   });
 
   test("participant collision prevention", () => {

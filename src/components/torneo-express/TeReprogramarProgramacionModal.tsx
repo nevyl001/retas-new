@@ -6,6 +6,7 @@ import {
   resolveActiveCourtNamesFromDraft,
   type TeScheduleDraft,
 } from "../../lib/torneoExpress/inferScheduleDraftFromPartidos";
+import { validatePlayDays } from "../../lib/torneoExpress/scheduleDayWindows";
 import { validateScheduleInvariants } from "../../lib/torneoExpress/scheduleInvariants";
 import { PARTIDO_CANCHA_OCUPADA_MSG } from "../../lib/torneoExpress/partidoCourtSlotConflict";
 import { Button, Modal } from "../ui";
@@ -14,12 +15,10 @@ import {
   defaultCourtNames,
   validateCourtNames,
 } from "../../lib/torneoExpress/assignRoundRobinSchedule";
+import { TeScheduleDaysEditor } from "./TeScheduleDaysEditor";
 
 export type TeReprogramarScheduleConfirm = {
-  playDate: string;
-  endDate: string;
-  startTime: string;
-  endTime: string;
+  days: Array<{ date: string; startTime: string; endTime: string }>;
   durationMinutes: number;
   courtNames: string[];
 };
@@ -66,13 +65,6 @@ export const TeReprogramarProgramacionModal: React.FC<
     if (courtError) return courtError;
 
     if (
-      !schedule.playDate.trim() ||
-      !schedule.startTime.trim() ||
-      !schedule.endTime.trim()
-    ) {
-      return null;
-    }
-    if (
       !Number.isFinite(schedule.durationMinutes) ||
       schedule.durationMinutes <= 0
     ) {
@@ -81,9 +73,12 @@ export const TeReprogramarProgramacionModal: React.FC<
     if (activeCourtNames.length === 0) {
       return "Agrega al menos una cancha.";
     }
-    if (schedule.endDate.trim() && schedule.endDate < schedule.playDate) {
-      return "El día de fin no puede ser anterior al día de inicio.";
-    }
+
+    const daysError = validatePlayDays(
+      schedule.days,
+      schedule.durationMinutes
+    );
+    if (daysError) return daysError;
 
     try {
       const persistedMatches = buildScheduleMatchesFromBundle(
@@ -95,10 +90,7 @@ export const TeReprogramarProgramacionModal: React.FC<
       const scheduled = assignRoundRobinSchedule({
         matches: persistedMatches,
         courts: activeCourtNames,
-        date: schedule.playDate.trim(),
-        startTime: schedule.startTime.trim(),
-        endTime: schedule.endTime.trim(),
-        endDate: schedule.endDate.trim() || undefined,
+        days: schedule.days,
         durationMinutes: Math.floor(schedule.durationMinutes),
       });
       validateScheduleInvariants(persistedMatches, scheduled);
@@ -114,18 +106,12 @@ export const TeReprogramarProgramacionModal: React.FC<
   }, [
     bundle,
     activeCourtNames,
-    schedule.playDate,
-    schedule.endDate,
-    schedule.startTime,
-    schedule.endTime,
+    schedule.days,
     schedule.durationMinutes,
   ]);
 
   const scheduleReady =
     pendingCount > 0 &&
-    Boolean(schedule.playDate.trim()) &&
-    Boolean(schedule.startTime.trim()) &&
-    Boolean(schedule.endTime.trim()) &&
     Number.isFinite(schedule.durationMinutes) &&
     schedule.durationMinutes > 0 &&
     activeCourtNames.length > 0 &&
@@ -162,10 +148,7 @@ export const TeReprogramarProgramacionModal: React.FC<
   const handleConfirm = () => {
     if (!scheduleReady) return;
     onConfirm({
-      playDate: schedule.playDate.trim(),
-      endDate: schedule.endDate.trim() || schedule.playDate.trim(),
-      startTime: schedule.startTime.trim(),
-      endTime: schedule.endTime.trim(),
+      days: schedule.days,
       durationMinutes: Math.floor(schedule.durationMinutes),
       courtNames: activeCourtNames,
     });
@@ -205,9 +188,8 @@ export const TeReprogramarProgramacionModal: React.FC<
     >
       <div className="te-reprogramar-modal">
         <p className="te-reprogramar-modal__lead">
-          Define el rango de días y el horario de canchas. Los partidos
-          pendientes se reasignan en paralelo por grupo; si no caben en un día,
-          continúan al siguiente dentro de la misma ventana (apertura → cierre).
+          Configura cada día con su hora de apertura y cierre. Los partidos
+          pendientes se asignan en orden; al llenar un día pasan al siguiente.
         </p>
         {playedCount > 0 ? (
           <p className="te-reprogramar-modal__note" role="note">
@@ -215,64 +197,14 @@ export const TeReprogramarProgramacionModal: React.FC<
           </p>
         ) : null}
 
+        <TeScheduleDaysEditor
+          days={schedule.days}
+          disabled={saving}
+          idPrefix="te-reprog-day"
+          onChange={(days) => setSchedule((prev) => ({ ...prev, days }))}
+        />
+
         <div className="te-reprogramar-modal__fields">
-          <div className="torneo-express-field">
-            <label htmlFor="te-reprog-date">Día de inicio</label>
-            <input
-              id="te-reprog-date"
-              type="date"
-              value={schedule.playDate}
-              disabled={saving}
-              onChange={(e) =>
-                setSchedule((prev) => {
-                  const playDate = e.target.value;
-                  return {
-                    ...prev,
-                    playDate,
-                    endDate:
-                      prev.endDate < playDate ? playDate : prev.endDate,
-                  };
-                })
-              }
-            />
-          </div>
-          <div className="torneo-express-field">
-            <label htmlFor="te-reprog-end-date">Día de fin</label>
-            <input
-              id="te-reprog-end-date"
-              type="date"
-              value={schedule.endDate}
-              min={schedule.playDate}
-              disabled={saving}
-              onChange={(e) =>
-                setSchedule((prev) => ({ ...prev, endDate: e.target.value }))
-              }
-            />
-          </div>
-          <div className="torneo-express-field">
-            <label htmlFor="te-reprog-time">Hora de apertura</label>
-            <input
-              id="te-reprog-time"
-              type="time"
-              value={schedule.startTime}
-              disabled={saving}
-              onChange={(e) =>
-                setSchedule((prev) => ({ ...prev, startTime: e.target.value }))
-              }
-            />
-          </div>
-          <div className="torneo-express-field">
-            <label htmlFor="te-reprog-end-time">Hora de cierre</label>
-            <input
-              id="te-reprog-end-time"
-              type="time"
-              value={schedule.endTime}
-              disabled={saving}
-              onChange={(e) =>
-                setSchedule((prev) => ({ ...prev, endTime: e.target.value }))
-              }
-            />
-          </div>
           <div className="torneo-express-field">
             <label htmlFor="te-reprog-duration">Duración por partido</label>
             <div className="te-reprogramar-modal__duration">

@@ -1296,9 +1296,41 @@
   color: var(--ro-text-primary);
 }
 
+.torneo-express-page.te-inicio-page .te-schedule-days {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.torneo-express-page.te-inicio-page .te-schedule-days__list {
+  display: grid;
+  gap: 10px;
+}
+
+.torneo-express-page.te-inicio-page .te-schedule-days__row {
+  padding: 12px;
+  border: 1px solid var(--ro-border, rgba(0, 0, 0, 0.12));
+  border-radius: var(--ro-radius-md, 10px);
+  background: var(--ro-bg-card, #fff);
+}
+
+.torneo-express-page.te-inicio-page .te-schedule-days__row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.torneo-express-page.te-inicio-page .te-schedule-days__fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .torneo-express-page.te-inicio-page .te-crear-schedule__fields {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px 14px;
   align-items: end;
   margin-bottom: 14px;

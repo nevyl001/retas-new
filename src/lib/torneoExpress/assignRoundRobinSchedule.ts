@@ -4,29 +4,32 @@ import {
   ScheduleInvariantError,
 } from "./scheduleInvariants";
 import {
-  addDaysToMexicoCalendarDate,
+  normalizePlayDays,
+  resolveScheduleDays,
+  validatePlayDays,
+  type TeScheduleDayWindow,
+} from "./scheduleDayWindows";
+import {
   addMinutesToMexicoCalendar,
   mexicoScheduleSlotKey,
-  mexicoTimeToMinutes,
   programadoIsoFromMexicoCalendar,
   slotFitsDailyWindow,
 } from "./teScheduleTime";
 
-/** Tope de seguridad: no programar más de N días naturales. */
+/** Tope de seguridad de iteraciones. */
 export const MAX_SCHEDULE_SPAN_DAYS = 60;
 
 export type AssignRoundRobinScheduleInput = {
   matches: DraftScheduleMatch[];
   courts: string[];
-  date: string;
-  startTime: string;
   durationMinutes: number;
-  /**
-   * Hora de cierre de canchas (HH:MM). Si se omite, no hay ventana diaria
-   * (comportamiento legacy: puede cruzar medianoche).
-   */
+  /** Días con horario propio (preferido para fase de grupos). */
+  days?: TeScheduleDayWindow[];
+  /** Legacy: día/hora de inicio. */
+  date?: string;
+  startTime?: string;
+  /** Legacy: cierre uniforme + endDate. Si se omite junto a days, modo abierto. */
   endTime?: string;
-  /** Última fecha permitida (YYYY-MM-DD). Por defecto: date + MAX_SCHEDULE_SPAN_DAYS. */
   endDate?: string;
 };
 
@@ -51,6 +54,11 @@ export type SchedulePreviewSlot = {
   >;
 };
 
+type DayCursor = {
+  dayIndex: number;
+  time: string;
+};
+
 function rotateCourts(courts: string[], slotIndex: number): string[] {
   const n = courts.length;
   if (n === 0) return [];
@@ -73,7 +81,6 @@ function sortUniqueRounds(matches: DraftScheduleMatch[]): number[] {
   return Array.from(set).sort((a, b) => a - b);
 }
 
-/** G1-M1, G2-M1, G1-M2, G2-M2… para repartir canchas en paralelo por grupo. */
 function interleavePendingByGroup(
   pending: DraftScheduleMatch[]
 ): DraftScheduleMatch[] {
@@ -103,177 +110,79 @@ function interleavePendingByGroup(
   return interleaved;
 }
 
-function resolveMaxDate(startDate: string, endDate?: string): string {
-  if (endDate?.trim()) return endDate.trim();
-  const capped = addDaysToMexicoCalendarDate(startDate, MAX_SCHEDULE_SPAN_DAYS);
-  if (!capped) {
-    throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
-  }
-  return capped;
-}
-
-function validateDailyWindow(
-  startTime: string,
-  endTime: string,
-  durationMinutes: number
-): void {
-  const start = mexicoTimeToMinutes(startTime);
-  const end = mexicoTimeToMinutes(endTime);
-  if (start == null || end == null) {
-    throw new ScheduleInvariantError(
-      "Indica una hora de inicio y de cierre válidas (HH:MM)."
-    );
-  }
-  if (end <= start) {
-    throw new ScheduleInvariantError(
-      "La hora de cierre debe ser posterior a la hora de inicio."
-    );
-  }
-  if (start + durationMinutes > end) {
-    throw new ScheduleInvariantError(
-      "La duración por partido no cabe en el horario de canchas. Reduce la duración o amplía el cierre."
-    );
-  }
-}
-
-/**
- * Asegura que (date, time) sea un inicio válido dentro de la ventana diaria.
- * Si no cabe, salta al día siguiente a la hora de apertura.
- */
-function ensureValidSlotStart(
-  date: string,
-  time: string,
-  startTime: string,
-  endTime: string | undefined,
-  durationMinutes: number,
-  maxDate: string
-): { date: string; time: string } {
-  if (!endTime) {
-    return { date, time };
-  }
-
-  let cursorDate = date;
-  let cursorTime = time;
-  let guard = 0;
-
-  while (guard < MAX_SCHEDULE_SPAN_DAYS + 2) {
-    guard += 1;
-    if (cursorDate > maxDate) {
-      throw new ScheduleInvariantError(
-        `No caben todos los partidos antes del ${maxDate}. Amplía el día de fin, añade canchas o reduce la duración.`
-      );
-    }
-    if (
-      slotFitsDailyWindow(cursorTime, durationMinutes, startTime, endTime)
-    ) {
-      return { date: cursorDate, time: cursorTime };
-    }
-    const nextDate = addDaysToMexicoCalendarDate(cursorDate, 1);
-    if (!nextDate) {
-      throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
-    }
-    cursorDate = nextDate;
-    cursorTime = startTime;
-  }
-
+function throwNoCapacity(days: TeScheduleDayWindow[]): never {
+  const first = days[0]?.date ?? "—";
+  const last = days[days.length - 1]?.date ?? "—";
   throw new ScheduleInvariantError(
-    `No caben todos los partidos antes del ${maxDate}. Amplía el día de fin, añade canchas o reduce la duración.`
+    `No caben todos los partidos en los días configurados (${first} → ${last}). Agrega otro día, amplía horarios o añade canchas.`
   );
 }
 
-function advanceAfterSlot(
-  date: string,
-  time: string,
-  startTime: string,
-  endTime: string | undefined,
-  durationMinutes: number,
-  maxDate: string
-): { date: string; time: string } {
-  const next = addMinutesToMexicoCalendar(date, time, durationMinutes);
+function ensureValidDayCursor(
+  days: TeScheduleDayWindow[],
+  cursor: DayCursor,
+  durationMinutes: number
+): DayCursor {
+  let { dayIndex, time } = cursor;
+  let guard = 0;
+  while (dayIndex < days.length && guard < days.length + 2) {
+    guard += 1;
+    const day = days[dayIndex]!;
+    if (
+      slotFitsDailyWindow(time, durationMinutes, day.startTime, day.endTime)
+    ) {
+      return { dayIndex, time };
+    }
+    dayIndex += 1;
+    if (dayIndex < days.length) {
+      time = days[dayIndex]!.startTime;
+    }
+  }
+  throwNoCapacity(days);
+}
+
+function advanceDayCursor(
+  days: TeScheduleDayWindow[],
+  cursor: DayCursor,
+  durationMinutes: number
+): DayCursor {
+  const day = days[cursor.dayIndex];
+  if (!day) throwNoCapacity(days);
+
+  const next = addMinutesToMexicoCalendar(
+    day.date,
+    cursor.time,
+    durationMinutes
+  );
   if (!next) {
     throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
   }
 
-  if (!endTime) {
-    return next;
-  }
-
-  // Si seguimos el mismo día y el siguiente inicio cabe en la ventana, úsalo.
   if (
-    next.date === date &&
-    slotFitsDailyWindow(next.time, durationMinutes, startTime, endTime)
+    next.date === day.date &&
+    slotFitsDailyWindow(next.time, durationMinutes, day.startTime, day.endTime)
   ) {
-    return next;
+    return { dayIndex: cursor.dayIndex, time: next.time };
   }
 
-  // Cierre del día → abrir al día siguiente a la hora de inicio.
-  const nextDate = addDaysToMexicoCalendarDate(date, 1);
-  if (!nextDate) {
-    throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+  const nextIndex = cursor.dayIndex + 1;
+  if (nextIndex >= days.length) {
+    throwNoCapacity(days);
   }
-  return ensureValidSlotStart(
-    nextDate,
-    startTime,
-    startTime,
-    endTime,
-    durationMinutes,
-    maxDate
+  return ensureValidDayCursor(
+    days,
+    { dayIndex: nextIndex, time: days[nextIndex]!.startTime },
+    durationMinutes
   );
 }
 
-/**
- * Programa partidos existentes sin alterar enfrentamientos ni rondas.
- * Por ronda, reparte grupos en paralelo sobre las canchas (mismo horario,
- * distinta cancha). Con `endTime`, respeta el horario de cierre y continúa
- * en días siguientes dentro de la misma ventana horaria.
- */
-export function assignRoundRobinSchedule(
-  input: AssignRoundRobinScheduleInput
+function packSlots(
+  matches: DraftScheduleMatch[],
+  courts: string[],
+  nextSlot: () => { date: string; time: string }
 ): DraftScheduleMatch[] {
-  const {
-    matches,
-    courts,
-    date,
-    startTime,
-    durationMinutes,
-    endTime,
-    endDate,
-  } = input;
-
-  if (matches.length === 0) return [];
-  if (!courts.length) {
-    throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
-  }
-  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
-    throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
-  }
-  if (!programadoIsoFromMexicoCalendar(date, startTime)) {
-    throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
-  }
-
-  const trimmedEnd = endTime?.trim() || undefined;
-  if (trimmedEnd) {
-    validateDailyWindow(startTime, trimmedEnd, durationMinutes);
-  }
-
-  const maxDate = resolveMaxDate(date, endDate);
-  if (maxDate < date) {
-    throw new ScheduleInvariantError(
-      "El día de fin no puede ser anterior al día de inicio."
-    );
-  }
-
   const scheduled: DraftScheduleMatch[] = [];
   let slotIndex = 0;
-  let cursor = ensureValidSlotStart(
-    date,
-    startTime,
-    startTime,
-    trimmedEnd,
-    durationMinutes,
-    maxDate
-  );
-
   const rounds = sortUniqueRounds(matches);
 
   for (const ronda of rounds) {
@@ -288,19 +197,8 @@ export function assignRoundRobinSchedule(
         throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
       }
 
-      cursor = ensureValidSlotStart(
-        cursor.date,
-        cursor.time,
-        startTime,
-        trimmedEnd,
-        durationMinutes,
-        maxDate
-      );
-
-      const programadoIso = programadoIsoFromMexicoCalendar(
-        cursor.date,
-        cursor.time
-      );
+      const { date, time } = nextSlot();
+      const programadoIso = programadoIsoFromMexicoCalendar(date, time);
       if (!programadoIso) {
         throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
       }
@@ -321,7 +219,6 @@ export function assignRoundRobinSchedule(
         ) {
           continue;
         }
-
         const court = availableCourts.shift()!;
         scheduledThisSlot.push({ match, court });
         busyPairs.add(match.parejaLocalId);
@@ -329,15 +226,6 @@ export function assignRoundRobinSchedule(
       }
 
       if (scheduledThisSlot.length === 0) {
-        // Conflicto de parejas en este hueco: avanzar horario y reintentar.
-        cursor = advanceAfterSlot(
-          cursor.date,
-          cursor.time,
-          startTime,
-          trimmedEnd,
-          durationMinutes,
-          maxDate
-        );
         slotIndex += 1;
         continue;
       }
@@ -354,16 +242,7 @@ export function assignRoundRobinSchedule(
         scheduledThisSlot.map((slot) => slot.match.matchKey)
       );
       pending = pending.filter((m) => !scheduledKeys.has(m.matchKey));
-
       slotIndex += 1;
-      cursor = advanceAfterSlot(
-        cursor.date,
-        cursor.time,
-        startTime,
-        trimmedEnd,
-        durationMinutes,
-        maxDate
-      );
     }
   }
 
@@ -374,12 +253,121 @@ export function assignRoundRobinSchedule(
   return scheduled.sort(compareMatchesForScheduling);
 }
 
+function assignWithDayWindows(
+  matches: DraftScheduleMatch[],
+  courts: string[],
+  durationMinutes: number,
+  days: TeScheduleDayWindow[]
+): DraftScheduleMatch[] {
+  let cursor: DayCursor = ensureValidDayCursor(
+    days,
+    { dayIndex: 0, time: days[0]!.startTime },
+    durationMinutes
+  );
+  let prepared = false;
+
+  return packSlots(matches, courts, () => {
+    if (prepared) {
+      cursor = advanceDayCursor(days, cursor, durationMinutes);
+    } else {
+      cursor = ensureValidDayCursor(days, cursor, durationMinutes);
+      prepared = true;
+    }
+    const day = days[cursor.dayIndex]!;
+    return { date: day.date, time: cursor.time };
+  });
+}
+
+/** Legacy: sin cierre, avanza solo con duración (puede cruzar medianoche). */
+function assignOpenEnded(
+  matches: DraftScheduleMatch[],
+  courts: string[],
+  durationMinutes: number,
+  date: string,
+  startTime: string
+): DraftScheduleMatch[] {
+  if (!programadoIsoFromMexicoCalendar(date, startTime)) {
+    throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+  }
+
+  let currentDate = date;
+  let currentTime = startTime;
+  let prepared = false;
+
+  return packSlots(matches, courts, () => {
+    if (prepared) {
+      const next = addMinutesToMexicoCalendar(
+        currentDate,
+        currentTime,
+        durationMinutes
+      );
+      if (!next) {
+        throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+      }
+      currentDate = next.date;
+      currentTime = next.time;
+    } else {
+      prepared = true;
+    }
+    return { date: currentDate, time: currentTime };
+  });
+}
+
+/**
+ * Programa partidos existentes sin alterar enfrentamientos ni rondas.
+ * Preferido: `days` con apertura/cierre por día.
+ */
+export function assignRoundRobinSchedule(
+  input: AssignRoundRobinScheduleInput
+): DraftScheduleMatch[] {
+  const { matches, courts, durationMinutes } = input;
+
+  if (matches.length === 0) return [];
+  if (!courts.length) {
+    throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+  }
+  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+    throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+  }
+
+  const hasExplicitDays = Boolean(input.days && input.days.length > 0);
+  const hasEndWindow = Boolean(input.endTime?.trim()) || hasExplicitDays;
+
+  if (!hasEndWindow) {
+    const date = (input.date || "").trim();
+    const startTime = (input.startTime || "").trim();
+    if (!date || !startTime) {
+      throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+    }
+    return assignOpenEnded(matches, courts, durationMinutes, date, startTime);
+  }
+
+  const days = hasExplicitDays
+    ? normalizePlayDays(input.days)
+    : resolveScheduleDays({
+        date: input.date,
+        startTime: input.startTime,
+        endTime: input.endTime,
+        endDate: input.endDate,
+      });
+
+  const daysError = validatePlayDays(days, durationMinutes);
+  if (daysError) {
+    throw new ScheduleInvariantError(daysError);
+  }
+
+  return assignWithDayWindows(matches, courts, durationMinutes, days);
+}
+
 export function buildSchedulePreviewSummary(
   scheduled: DraftScheduleMatch[],
-  input: Pick<
-    AssignRoundRobinScheduleInput,
-    "date" | "startTime" | "durationMinutes" | "courts" | "endTime"
-  >
+  input: {
+    date?: string;
+    startTime?: string;
+    durationMinutes: number;
+    courts: string[];
+    days?: TeScheduleDayWindow[];
+  }
 ): SchedulePreviewSummary {
   const slotsMap = new Map<string, SchedulePreviewSlot>();
 
@@ -407,8 +395,10 @@ export function buildSchedulePreviewSummary(
     a.slotKey.localeCompare(b.slotKey)
   );
 
-  let endDate = input.date;
-  let endTime = input.startTime;
+  const fallbackDate = input.days?.[0]?.date ?? input.date ?? "";
+  const fallbackStart = input.days?.[0]?.startTime ?? input.startTime ?? "";
+  let endDate = fallbackDate;
+  let endTime = fallbackStart;
   const daySet = new Set<string>();
 
   if (slots.length > 0) {
@@ -431,8 +421,8 @@ export function buildSchedulePreviewSummary(
     matchCount: scheduled.length,
     courtCount: input.courts.length,
     blockCount: slots.length,
-    startDate: input.date,
-    startTime: input.startTime,
+    startDate: slots[0]?.date ?? fallbackDate,
+    startTime: slots[0]?.time ?? fallbackStart,
     endDate,
     endTime,
     dayCount: Math.max(1, daySet.size),
@@ -467,10 +457,8 @@ export function validateScheduleWindow(
   endTime: string,
   durationMinutes: number
 ): string | null {
-  try {
-    validateDailyWindow(startTime, endTime, durationMinutes);
-    return null;
-  } catch (e) {
-    return e instanceof Error ? e.message : "Horario de canchas inválido.";
-  }
+  return validatePlayDays(
+    [{ date: "2000-01-01", startTime, endTime }],
+    durationMinutes
+  );
 }

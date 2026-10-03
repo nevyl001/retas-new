@@ -19,6 +19,10 @@ import {
   eliminatoriaRoundPendingCount,
 } from "../lib/torneoExpress/eliminatoriaRoundSchedule";
 import {
+  normalizePlayDays,
+  validatePlayDays,
+} from "../lib/torneoExpress/scheduleDayWindows";
+import {
   validateScheduleInvariants,
   ScheduleInvariantError,
 } from "../lib/torneoExpress/scheduleInvariants";
@@ -195,12 +199,8 @@ function enrichParejasWithLabels(
 }
 
 export type TeCreateScheduleInput = {
-  playDate: string;
-  startTime: string;
-  /** Hora de cierre de canchas; si falta partidos, continúa al día siguiente. */
-  endTime: string;
-  /** Último día permitido (inclusive). Si se omite, hasta ~60 días. */
-  endDate?: string;
+  /** Días de juego con apertura/cierre propios (fase de grupos). */
+  days: Array<{ date: string; startTime: string; endTime: string }>;
   durationMinutes: number;
   courtNames: string[];
 };
@@ -984,11 +984,10 @@ export async function createTorneoExpressWithGroups(input: {
     throw new Error("La duración por partido debe ser mayor a 0 minutos.");
   }
 
-  if (!input.schedule.playDate.trim() || !input.schedule.startTime.trim()) {
-    throw new Error("Indica el día y la hora de inicio.");
-  }
-  if (!input.schedule.endTime?.trim()) {
-    throw new Error("Indica la hora de cierre de las canchas.");
+  const days = normalizePlayDays(input.schedule.days);
+  const daysError = validatePlayDays(days, durationMinutes);
+  if (daysError) {
+    throw new Error(daysError);
   }
 
   const courts = normalizeCourtNames(input.schedule.courtNames);
@@ -1031,10 +1030,7 @@ export async function createTorneoExpressWithGroups(input: {
     scheduledMatches = assignRoundRobinSchedule({
       matches: draftMatches,
       courts,
-      date: input.schedule.playDate.trim(),
-      startTime: input.schedule.startTime.trim(),
-      endTime: input.schedule.endTime.trim(),
-      endDate: input.schedule.endDate?.trim() || undefined,
+      days,
       durationMinutes,
     });
     validateScheduleInvariants(draftMatches, scheduledMatches);
@@ -1591,11 +1587,10 @@ export async function rescheduleTorneoExpressGruposPartidos(
     throw new Error("La duración por partido debe ser mayor a 0 minutos.");
   }
 
-  if (!schedule.playDate.trim() || !schedule.startTime.trim()) {
-    throw new Error("Indica el día y la hora de inicio.");
-  }
-  if (!schedule.endTime?.trim()) {
-    throw new Error("Indica la hora de cierre de las canchas.");
+  const days = normalizePlayDays(schedule.days);
+  const daysError = validatePlayDays(days, durationMinutes);
+  if (daysError) {
+    throw new Error(daysError);
   }
 
   const courts = normalizeCourtNames(schedule.courtNames);
@@ -1646,10 +1641,7 @@ export async function rescheduleTorneoExpressGruposPartidos(
     scheduled = assignRoundRobinSchedule({
       matches: persistedMatches,
       courts,
-      date: schedule.playDate.trim(),
-      startTime: schedule.startTime.trim(),
-      endTime: schedule.endTime.trim(),
-      endDate: schedule.endDate?.trim() || undefined,
+      days,
       durationMinutes,
     });
     validateScheduleInvariants(persistedMatches, scheduled);
@@ -1747,11 +1739,10 @@ export async function rescheduleTorneoExpressEliminatoriaRonda(
     throw new Error("La duración por partido debe ser mayor a 0 minutos.");
   }
 
-  if (!schedule.playDate.trim() || !schedule.startTime.trim()) {
-    throw new Error("Indica el día y la hora de inicio.");
-  }
-  if (!schedule.endTime?.trim()) {
-    throw new Error("Indica la hora de cierre de las canchas.");
+  const days = normalizePlayDays(schedule.days);
+  const daysError = validatePlayDays(days, durationMinutes);
+  if (daysError) {
+    throw new Error(daysError);
   }
 
   const courts = normalizeCourtNames(schedule.courtNames);
@@ -1785,10 +1776,7 @@ export async function rescheduleTorneoExpressEliminatoriaRonda(
     scheduled = assignRoundRobinSchedule({
       matches: draftMatches,
       courts,
-      date: schedule.playDate.trim(),
-      startTime: schedule.startTime.trim(),
-      endTime: schedule.endTime.trim(),
-      endDate: schedule.endDate?.trim() || undefined,
+      days,
       durationMinutes,
     });
     validateScheduleInvariants(draftMatches, scheduled);

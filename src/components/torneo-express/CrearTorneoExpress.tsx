@@ -23,6 +23,8 @@ import {
 import { navigateTorneoExpress } from "./torneoExpressNav";
 import { ArmarParejasPicker } from "./ArmarParejasPicker";
 import { AsignarParejasGrupos } from "./AsignarParejasGrupos";
+import { TeScheduleDaysEditor } from "./TeScheduleDaysEditor";
+import { validatePlayDays } from "../../lib/torneoExpress/scheduleDayWindows";
 import {
   ParejaDraft,
   isRealDraftPair,
@@ -416,12 +418,11 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
 
   const schedulePreview = useMemo(() => {
     if (gruposIncomplete || scheduleCourtError) return null;
-    if (!schedule.playDate.trim() || !schedule.startTime.trim()) return null;
-    if (!schedule.endTime.trim()) return null;
     if (!Number.isFinite(schedule.durationMinutes) || schedule.durationMinutes <= 0) {
       return null;
     }
     if (activeCourtNames.length === 0) return null;
+    if (validatePlayDays(schedule.days, schedule.durationMinutes)) return null;
 
     try {
       const draftMatches = buildDraftScheduleMatches(assignments);
@@ -430,19 +431,14 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
       const scheduled = assignRoundRobinSchedule({
         matches: draftMatches,
         courts: activeCourtNames,
-        date: schedule.playDate.trim(),
-        startTime: schedule.startTime.trim(),
-        endTime: schedule.endTime.trim(),
-        endDate: schedule.endDate.trim() || undefined,
+        days: schedule.days,
         durationMinutes: Math.floor(schedule.durationMinutes),
       });
       validateScheduleInvariants(draftMatches, scheduled);
 
       return buildSchedulePreviewSummary(scheduled, {
         courts: activeCourtNames,
-        date: schedule.playDate.trim(),
-        startTime: schedule.startTime.trim(),
-        endTime: schedule.endTime.trim(),
+        days: schedule.days,
         durationMinutes: Math.floor(schedule.durationMinutes),
       });
     } catch {
@@ -452,10 +448,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     assignments,
     activeCourtNames,
     gruposIncomplete,
-    schedule.playDate,
-    schedule.endDate,
-    schedule.startTime,
-    schedule.endTime,
+    schedule.days,
     schedule.durationMinutes,
     scheduleCourtError,
   ]);
@@ -662,12 +655,12 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
       setError(scheduleCourtError);
       return;
     }
-    if (!schedule.playDate.trim() || !schedule.startTime.trim()) {
-      setError("Indica el día y la hora de inicio.");
-      return;
-    }
-    if (!schedule.endTime.trim()) {
-      setError("Indica la hora de cierre de las canchas.");
+    const daysError = validatePlayDays(
+      schedule.days,
+      schedule.durationMinutes
+    );
+    if (daysError) {
+      setError(daysError);
       return;
     }
     if (!Number.isFinite(schedule.durationMinutes) || schedule.durationMinutes <= 0) {
@@ -695,10 +688,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         grupos: assignments,
         keepPairIds: keepIds,
         schedule: {
-          playDate: schedule.playDate.trim(),
-          endDate: schedule.endDate.trim() || schedule.playDate.trim(),
-          startTime: schedule.startTime.trim(),
-          endTime: schedule.endTime.trim(),
+          days: schedule.days,
           durationMinutes: Math.floor(schedule.durationMinutes),
           courtNames: activeCourtNames,
         },
@@ -1013,9 +1003,8 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     </h3>
                   </header>
                   <p className="te-crear-step__lead">
-                    Define el rango de días y el horario de canchas. Si no caben
-                    todos los partidos en un día, continúan al siguiente dentro
-                    de la misma ventana horaria.
+                    Cada día de juego tiene su propia apertura y cierre. Si no
+                    caben todos los partidos, pasan al siguiente día de la lista.
                   </p>
                   <div className="te-crear-step__body">
                     <section
@@ -1026,78 +1015,18 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                         id="te-crear-schedule-heading"
                         className="te-crear-schedule__title"
                       >
-                        Horarios
+                        Días de juego
                       </h4>
 
+                      <TeScheduleDaysEditor
+                        days={schedule.days}
+                        idPrefix="te-crear-day"
+                        onChange={(days) =>
+                          setSchedule((prev) => ({ ...prev, days }))
+                        }
+                      />
+
                       <div className="te-crear-schedule__fields">
-                        <div className="torneo-express-field">
-                          <label htmlFor="te-play-date">Día de inicio</label>
-                          <input
-                            id="te-play-date"
-                            type="date"
-                            value={schedule.playDate}
-                            onChange={(e) =>
-                              setSchedule((prev) => {
-                                const playDate = e.target.value;
-                                return {
-                                  ...prev,
-                                  playDate,
-                                  endDate:
-                                    prev.endDate < playDate
-                                      ? playDate
-                                      : prev.endDate,
-                                };
-                              })
-                            }
-                            required
-                          />
-                        </div>
-                        <div className="torneo-express-field">
-                          <label htmlFor="te-end-date">Día de fin</label>
-                          <input
-                            id="te-end-date"
-                            type="date"
-                            value={schedule.endDate}
-                            min={schedule.playDate}
-                            onChange={(e) =>
-                              setSchedule((prev) => ({
-                                ...prev,
-                                endDate: e.target.value,
-                              }))
-                            }
-                            required
-                          />
-                        </div>
-                        <div className="torneo-express-field">
-                          <label htmlFor="te-start-time">Hora de apertura</label>
-                          <input
-                            id="te-start-time"
-                            type="time"
-                            value={schedule.startTime}
-                            onChange={(e) =>
-                              setSchedule((prev) => ({
-                                ...prev,
-                                startTime: e.target.value,
-                              }))
-                            }
-                            required
-                          />
-                        </div>
-                        <div className="torneo-express-field">
-                          <label htmlFor="te-end-time">Hora de cierre</label>
-                          <input
-                            id="te-end-time"
-                            type="time"
-                            value={schedule.endTime}
-                            onChange={(e) =>
-                              setSchedule((prev) => ({
-                                ...prev,
-                                endTime: e.target.value,
-                              }))
-                            }
-                            required
-                          />
-                        </div>
                         <div className="torneo-express-field">
                           <label htmlFor="te-duration">
                             Duración por partido
@@ -1291,12 +1220,15 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                       {schedulePreview ? (
                         <>
                           <li>
-                            <span>Día de juego</span>
-                            <strong>{schedule.playDate}</strong>
+                            <span>Días</span>
+                            <strong>{schedulePreview.dayCount}</strong>
                           </li>
                           <li>
-                            <span>Hora de inicio</span>
-                            <strong>{schedulePreview.startTime}</strong>
+                            <span>Inicio</span>
+                            <strong>
+                              {schedulePreview.startDate}{" "}
+                              {schedulePreview.startTime}
+                            </strong>
                           </li>
                           <li>
                             <span>Partidos</span>

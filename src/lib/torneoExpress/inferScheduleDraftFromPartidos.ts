@@ -1,32 +1,28 @@
 import { defaultCourtNames } from "./assignRoundRobinSchedule";
 import {
+  defaultScheduleDay,
+  normalizePlayDays,
+  type TeScheduleDayWindow,
+} from "./scheduleDayWindows";
+import {
   partidoScheduleIso,
   programadoDraftFromPartido,
 } from "./partidoSchedule";
 import {
-  addDaysToMexicoCalendarDate,
   addMinutesToMexicoCalendar,
   todayMexicoDateInput,
 } from "./teScheduleTime";
 import type { TorneoExpressPartido } from "./types";
 
 export type TeScheduleDraft = {
-  playDate: string;
-  /** Último día permitido para desborde (inclusive). */
-  endDate: string;
-  startTime: string;
-  /** Cierre de canchas cada día. */
-  endTime: string;
+  days: TeScheduleDayWindow[];
   durationMinutes: number;
   courtCount: number;
   courtNames: string[];
 };
 
 const DEFAULT_SCHEDULE: TeScheduleDraft = {
-  playDate: todayMexicoDateInput(),
-  endDate: todayMexicoDateInput(),
-  startTime: "09:00",
-  endTime: "21:00",
+  days: [defaultScheduleDay()],
   durationMinutes: 45,
   courtCount: 2,
   courtNames: defaultCourtNames(2),
@@ -58,26 +54,8 @@ function normalizeScheduleDraft(
     return stored || fallback;
   });
 
-  const playDate =
-    typeof raw?.playDate === "string" && raw.playDate.trim()
-      ? raw.playDate.trim()
-      : DEFAULT_SCHEDULE.playDate;
-  const endDateRaw =
-    typeof raw?.endDate === "string" && raw.endDate.trim()
-      ? raw.endDate.trim()
-      : playDate;
-
   return {
-    playDate,
-    endDate: endDateRaw < playDate ? playDate : endDateRaw,
-    startTime:
-      typeof raw?.startTime === "string" && raw.startTime.trim()
-        ? raw.startTime.trim()
-        : DEFAULT_SCHEDULE.startTime,
-    endTime:
-      typeof raw?.endTime === "string" && raw.endTime.trim()
-        ? raw.endTime.trim()
-        : DEFAULT_SCHEDULE.endTime,
+    days: normalizePlayDays(raw?.days, DEFAULT_SCHEDULE.days),
     durationMinutes,
     courtCount,
     courtNames,
@@ -95,7 +73,9 @@ function inferDurationMinutes(partidos: TorneoExpressPartido[]): number {
 
   const gaps: number[] = [];
   for (let i = 1; i < uniqueTimes.length; i += 1) {
-    const gapMinutes = Math.round((uniqueTimes[i]! - uniqueTimes[i - 1]!) / 60_000);
+    const gapMinutes = Math.round(
+      (uniqueTimes[i]! - uniqueTimes[i - 1]!) / 60_000
+    );
     if (gapMinutes >= 15 && gapMinutes <= 180) {
       gaps.push(gapMinutes);
     }
@@ -122,6 +102,43 @@ function inferDurationMinutes(partidos: TorneoExpressPartido[]): number {
   return bestGap;
 }
 
+function inferDaysFromPartidos(
+  partidos: TorneoExpressPartido[],
+  durationMinutes: number
+): TeScheduleDayWindow[] {
+  const byDate = new Map<string, { min: string; max: string }>();
+
+  for (const partido of partidos) {
+    const draft = programadoDraftFromPartido(partido);
+    if (!draft.date || !draft.time) continue;
+    const existing = byDate.get(draft.date);
+    if (!existing) {
+      byDate.set(draft.date, { min: draft.time, max: draft.time });
+    } else {
+      if (draft.time < existing.min) existing.min = draft.time;
+      if (draft.time > existing.max) existing.max = draft.time;
+    }
+  }
+
+  if (byDate.size === 0) {
+    return [defaultScheduleDay(todayMexicoDateInput())];
+  }
+
+  return Array.from(byDate.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, times]) => {
+      const close =
+        addMinutesToMexicoCalendar(date, times.max, durationMinutes) ?? null;
+      const endTime =
+        close && close.date === date ? close.time : DEFAULT_SCHEDULE.days[0]!.endTime;
+      return {
+        date,
+        startTime: times.min,
+        endTime,
+      };
+    });
+}
+
 /** Valores iniciales del editor de programación a partir de partidos existentes. */
 export function inferScheduleDraftFromPartidos(
   partidos: TorneoExpressPartido[]
@@ -137,29 +154,8 @@ export function inferScheduleDraftFromPartidos(
       new Date(partidoScheduleIso(a)).getTime() -
       new Date(partidoScheduleIso(b)).getTime()
   );
-  const first = sorted[0]!;
-  const last = sorted[sorted.length - 1]!;
-  const draft = programadoDraftFromPartido(first);
-  const lastDraft = programadoDraftFromPartido(last);
   const durationMinutes = inferDurationMinutes(sorted);
-  const closeGuess =
-    addMinutesToMexicoCalendar(
-      lastDraft.date,
-      lastDraft.time,
-      durationMinutes
-    ) ?? null;
-  // Si el último partido cae otro día, usar cierre amplio por defecto.
-  const inferredEndTime =
-    closeGuess && closeGuess.date === draft.date
-      ? closeGuess.time
-      : DEFAULT_SCHEDULE.endTime;
-  const spanEnd =
-    lastDraft.date >= draft.date
-      ? lastDraft.date
-      : draft.date;
-  // Deja margen de un día extra al reprogramar torneos grandes.
-  const endDate =
-    addDaysToMexicoCalendarDate(spanEnd, 1) ?? spanEnd;
+  const days = inferDaysFromPartidos(sorted, durationMinutes);
 
   const courtSet = new Set<string>();
   for (const partido of partidos) {
@@ -173,10 +169,7 @@ export function inferScheduleDraftFromPartidos(
       : defaultCourtNames(DEFAULT_SCHEDULE.courtCount);
 
   return normalizeScheduleDraft({
-    playDate: draft.date,
-    endDate,
-    startTime: draft.time,
-    endTime: inferredEndTime,
+    days,
     durationMinutes,
     courtCount: courtNames.length,
     courtNames,

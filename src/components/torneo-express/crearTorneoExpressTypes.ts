@@ -1,7 +1,14 @@
 import type { GrupoAssignmentDraft } from "../../lib/torneoExpress/types";
 import { defaultCourtNames } from "../../lib/torneoExpress/assignRoundRobinSchedule";
-import { todayMexicoDateInput } from "../../lib/torneoExpress/teScheduleTime";
+import {
+  defaultScheduleDay,
+  expandUniformPlayDays,
+  normalizePlayDays,
+  type TeScheduleDayWindow,
+} from "../../lib/torneoExpress/scheduleDayWindows";
 import type { DraftTournamentPair } from "../../lib/torneoExpress/virtualPairDraft";
+
+export type { TeScheduleDayWindow };
 
 export type {
   DraftTournamentPair,
@@ -32,20 +39,14 @@ export type TeWizardStepId =
 export type TeWizardStepIdLegacy = TeWizardStepId | "crear";
 
 export type TeWizardScheduleDraft = {
-  playDate: string;
-  endDate: string;
-  startTime: string;
-  endTime: string;
+  days: TeScheduleDayWindow[];
   durationMinutes: number;
   courtCount: number;
   courtNames: string[];
 };
 
 export const TE_DEFAULT_SCHEDULE: TeWizardScheduleDraft = {
-  playDate: todayMexicoDateInput(),
-  endDate: todayMexicoDateInput(),
-  startTime: "09:00",
-  endTime: "21:00",
+  days: [defaultScheduleDay()],
   durationMinutes: 45,
   courtCount: 2,
   courtNames: defaultCourtNames(2),
@@ -79,7 +80,14 @@ function normalizeWizardStep(raw: string | undefined): TeWizardStepId | null {
 }
 
 export function normalizeTeWizardScheduleDraft(
-  raw: Partial<TeWizardScheduleDraft> | undefined
+  raw:
+    | (Partial<TeWizardScheduleDraft> & {
+        playDate?: string;
+        endDate?: string;
+        startTime?: string;
+        endTime?: string;
+      })
+    | undefined
 ): TeWizardScheduleDraft {
   const courtCountRaw = raw?.courtCount;
   const courtCount =
@@ -102,26 +110,31 @@ export function normalizeTeWizardScheduleDraft(
     return stored || fallback;
   });
 
-  const playDate =
-    typeof raw?.playDate === "string" && raw.playDate.trim()
-      ? raw.playDate.trim()
-      : TE_DEFAULT_SCHEDULE.playDate;
-  const endDateRaw =
-    typeof raw?.endDate === "string" && raw.endDate.trim()
-      ? raw.endDate.trim()
-      : playDate;
+  let days: TeScheduleDayWindow[];
+  if (Array.isArray(raw?.days) && raw!.days!.length > 0) {
+    days = normalizePlayDays(raw!.days, TE_DEFAULT_SCHEDULE.days);
+  } else if (raw?.playDate || raw?.startTime) {
+    days = expandUniformPlayDays({
+      playDate:
+        typeof raw?.playDate === "string" && raw.playDate.trim()
+          ? raw.playDate.trim()
+          : TE_DEFAULT_SCHEDULE.days[0]!.date,
+      endDate: typeof raw?.endDate === "string" ? raw.endDate : undefined,
+      startTime:
+        typeof raw?.startTime === "string" && raw.startTime.trim()
+          ? raw.startTime.trim()
+          : TE_DEFAULT_SCHEDULE.days[0]!.startTime,
+      endTime:
+        typeof raw?.endTime === "string" && raw.endTime.trim()
+          ? raw.endTime.trim()
+          : TE_DEFAULT_SCHEDULE.days[0]!.endTime,
+    });
+  } else {
+    days = TE_DEFAULT_SCHEDULE.days.map((d) => ({ ...d }));
+  }
 
   return {
-    playDate,
-    endDate: endDateRaw < playDate ? playDate : endDateRaw,
-    startTime:
-      typeof raw?.startTime === "string" && raw.startTime.trim()
-        ? raw.startTime.trim()
-        : TE_DEFAULT_SCHEDULE.startTime,
-    endTime:
-      typeof raw?.endTime === "string" && raw.endTime.trim()
-        ? raw.endTime.trim()
-        : TE_DEFAULT_SCHEDULE.endTime,
+    days,
     durationMinutes,
     courtCount,
     courtNames,
