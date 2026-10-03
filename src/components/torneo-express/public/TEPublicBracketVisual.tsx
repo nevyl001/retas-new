@@ -486,7 +486,17 @@ function MatchScoreboard({
           scoreColumns={scoreColumns}
           scoreSide="local"
         />
-        <div className="te-pb-match__divider" aria-hidden />
+        <div
+          className="te-pb-match__faceoff"
+          role="separator"
+          aria-label="contra"
+        >
+          <span className="te-pb-match__faceoff-rule" aria-hidden="true" />
+          <span className="te-pb-match__faceoff-mark" aria-hidden="true">
+            VS
+          </span>
+          <span className="te-pb-match__faceoff-rule" aria-hidden="true" />
+        </div>
         <TeamBlock
           team={match.visit}
           imageLoading={variant === "history" ? "lazy" : "eager"}

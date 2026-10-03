@@ -278,6 +278,17 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
             </span>
           </div>
           <div
+            className="te-partido-faceoff"
+            role="separator"
+            aria-label="contra"
+          >
+            <span className="te-partido-faceoff__rule" aria-hidden="true" />
+            <span className="te-partido-faceoff__mark" aria-hidden="true">
+              VS
+            </span>
+            <span className="te-partido-faceoff__rule" aria-hidden="true" />
+          </div>
+          <div
             className={`te-team-row${
               team2Wins ? " te-team-row--winner" : ""
             }${isTie ? " te-team-row--tie" : ""}${

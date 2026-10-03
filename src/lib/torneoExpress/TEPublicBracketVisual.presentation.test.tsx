@@ -64,7 +64,7 @@ describe("TEPublicBracketVisual presentation", () => {
     expect(getJugadorInitials("Tpvs11")).toBe("T11");
   });
 
-  it("renders both pair names without decorative VS labels", () => {
+  it("renders each matchup as two pairs separated by a faceoff", () => {
     render(
       <TEPublicBracketVisual
         allCards={cards}
@@ -79,7 +79,12 @@ describe("TEPublicBracketVisual presentation", () => {
     expect(screen.getAllByText("Diego Ramírez").length).toBeGreaterThanOrEqual(
       1,
     );
-    expect(screen.queryByText(/^VS$/)).toBeNull();
+    expect(screen.getAllByRole("separator", { name: "contra" })).toHaveLength(
+      4,
+    );
+    expect(
+      screen.getAllByText("VS", { selector: ".te-pb-match__faceoff-mark" }),
+    ).toHaveLength(4);
   });
 
   it("binds each active semifinal portrait to its stable player identity", () => {
@@ -189,7 +194,7 @@ describe("TEPublicBracketVisual presentation", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText("✓ GANADORES")).toHaveLength(1);
     expect(screen.getByText("Luis Pérez")).toBeInTheDocument();
-    expect(screen.queryByText(/^VS$/)).toBeNull();
+    expect(screen.getByRole("separator", { name: "contra" })).toBeInTheDocument();
   });
 
   const renderStage = (

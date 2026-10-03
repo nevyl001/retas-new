@@ -581,8 +581,62 @@
 .te-partido-teams {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.4rem;
   min-width: 0;
+}
+
+.te-grupos-page .te-partido-faceoff {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.te-grupos-page .te-partido-faceoff__rule {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--text-primary, #fff) 32%, transparent)
+  );
+}
+
+.te-grupos-page .te-partido-faceoff__rule:last-child {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--text-primary, #fff) 32%, transparent),
+    transparent
+  );
+}
+
+.te-grupos-page .te-partido-faceoff__mark {
+  display: grid;
+  place-items: center;
+  min-width: 2.4rem;
+  height: 1.45rem;
+  padding-inline: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--text-primary, #fff) 24%, transparent);
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--ro-chrome-deep, var(--ro-chrome-bg)) 88%,
+    transparent
+  );
+  color: var(--text-primary, #fff);
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-indent: 0.14em;
+}
+
+.te-grupos-page
+  .te-team-row:not(.te-team-row--winner):not(.te-team-row--loser):not(
+    .te-team-row--tie
+  ) {
+  border: 1px solid color-mix(in srgb, var(--text-primary, #fff) 14%, transparent);
+  background: color-mix(in srgb, var(--text-primary, #fff) 6%, transparent);
 }
 
 .te-partido-badge {
@@ -1696,7 +1750,13 @@
 
   .te-public.te-public--grupos-wide .te-partido-teams {
     display: grid;
-    gap: 4px;
+    gap: 0.35rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-partido-faceoff__mark {
+    min-width: 2.5rem;
+    height: 1.5rem;
+    font-size: 0.6875rem;
   }
 
   .te-public.te-public--grupos-wide .te-team-name {
@@ -2702,6 +2762,16 @@
   .te-public.te-public--grupos-wide .te-team-row {
     min-height: 26px;
     gap: 6px;
+  }
+
+  .te-public.te-public--grupos-wide .te-partido-faceoff {
+    gap: 0.4rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-partido-faceoff__mark {
+    min-width: 2rem;
+    height: 1.15rem;
+    font-size: 0.5625rem;
   }
 
   .te-public.te-public--grupos-wide .te-team-name {
