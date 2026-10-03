@@ -33,7 +33,9 @@ export type TeWizardStepIdLegacy = TeWizardStepId | "crear";
 
 export type TeWizardScheduleDraft = {
   playDate: string;
+  endDate: string;
   startTime: string;
+  endTime: string;
   durationMinutes: number;
   courtCount: number;
   courtNames: string[];
@@ -41,7 +43,9 @@ export type TeWizardScheduleDraft = {
 
 export const TE_DEFAULT_SCHEDULE: TeWizardScheduleDraft = {
   playDate: todayMexicoDateInput(),
+  endDate: todayMexicoDateInput(),
   startTime: "09:00",
+  endTime: "21:00",
   durationMinutes: 45,
   courtCount: 2,
   courtNames: defaultCourtNames(2),
@@ -98,15 +102,26 @@ export function normalizeTeWizardScheduleDraft(
     return stored || fallback;
   });
 
+  const playDate =
+    typeof raw?.playDate === "string" && raw.playDate.trim()
+      ? raw.playDate.trim()
+      : TE_DEFAULT_SCHEDULE.playDate;
+  const endDateRaw =
+    typeof raw?.endDate === "string" && raw.endDate.trim()
+      ? raw.endDate.trim()
+      : playDate;
+
   return {
-    playDate:
-      typeof raw?.playDate === "string" && raw.playDate.trim()
-        ? raw.playDate.trim()
-        : TE_DEFAULT_SCHEDULE.playDate,
+    playDate,
+    endDate: endDateRaw < playDate ? playDate : endDateRaw,
     startTime:
       typeof raw?.startTime === "string" && raw.startTime.trim()
         ? raw.startTime.trim()
         : TE_DEFAULT_SCHEDULE.startTime,
+    endTime:
+      typeof raw?.endTime === "string" && raw.endTime.trim()
+        ? raw.endTime.trim()
+        : TE_DEFAULT_SCHEDULE.endTime,
     durationMinutes,
     courtCount,
     courtNames,

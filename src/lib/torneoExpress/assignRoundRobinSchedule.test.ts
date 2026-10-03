@@ -37,6 +37,8 @@ function scheduleInput(
     courts: string[];
     date: string;
     startTime: string;
+    endTime: string;
+    endDate: string;
     durationMinutes: number;
   }> = {}
 ) {
@@ -45,6 +47,8 @@ function scheduleInput(
     courts: overrides.courts ?? ["Central"],
     date: overrides.date ?? "2026-08-25",
     startTime: overrides.startTime ?? "19:00",
+    endTime: overrides.endTime,
+    endDate: overrides.endDate,
     durationMinutes: overrides.durationMinutes ?? 20,
   };
 }
@@ -181,6 +185,84 @@ describe("assignRoundRobinSchedule", () => {
     expect(partidoTimeInputValue24(scheduled[0].programado_en!)).toBe("23:50");
     expect(partidoTimeInputValue24(scheduled[1].programado_en!)).toBe("00:10");
     expect(scheduled[1].programado_en!.slice(0, 10)).not.toBe("2026-08-25");
+  });
+
+  test("con hora de cierre desborda al día siguiente en la misma ventana", () => {
+    // Ventana 09:00–10:00, duración 30 → 2 slots/día con 1 cancha.
+    const matches = Array.from({ length: 5 }, (_, i) =>
+      mkMatch({
+        matchKey: `m${i}`,
+        parejaLocalId: `a${i}`,
+        parejaVisitanteId: `b${i}`,
+        orden: i + 1,
+      })
+    );
+
+    const scheduled = assignRoundRobinSchedule(
+      scheduleInput(matches, {
+        date: "2026-10-03",
+        startTime: "09:00",
+        endTime: "10:00",
+        endDate: "2026-10-10",
+        durationMinutes: 30,
+        courts: ["C1"],
+      })
+    );
+
+    const summary = buildSchedulePreviewSummary(scheduled, {
+      courts: ["C1"],
+      date: "2026-10-03",
+      startTime: "09:00",
+      endTime: "10:00",
+      durationMinutes: 30,
+    });
+
+    expect(summary.dayCount).toBe(3);
+    expect(partidoDateInputValue(scheduled[0].programado_en!)).toBe("2026-10-03");
+    expect(partidoTimeInputValue24(scheduled[0].programado_en!)).toBe("09:00");
+    expect(partidoTimeInputValue24(scheduled[1].programado_en!)).toBe("09:30");
+    expect(partidoDateInputValue(scheduled[2].programado_en!)).toBe("2026-10-04");
+    expect(partidoTimeInputValue24(scheduled[2].programado_en!)).toBe("09:00");
+    expect(partidoDateInputValue(scheduled[4].programado_en!)).toBe("2026-10-05");
+    validateScheduleInvariants(matches, scheduled);
+  });
+
+  test("rechaza ventana donde no cabe ni un partido", () => {
+    const matches = [
+      mkMatch({ matchKey: "a", parejaLocalId: "p1", parejaVisitanteId: "p2" }),
+    ];
+    expect(() =>
+      assignRoundRobinSchedule(
+        scheduleInput(matches, {
+          startTime: "09:00",
+          endTime: "09:20",
+          durationMinutes: 30,
+        })
+      )
+    ).toThrow(/no cabe en el horario/i);
+  });
+
+  test("si no alcanza el día de fin, error claro", () => {
+    const matches = Array.from({ length: 6 }, (_, i) =>
+      mkMatch({
+        matchKey: `m${i}`,
+        parejaLocalId: `a${i}`,
+        parejaVisitanteId: `b${i}`,
+        orden: i + 1,
+      })
+    );
+    expect(() =>
+      assignRoundRobinSchedule(
+        scheduleInput(matches, {
+          date: "2026-10-03",
+          startTime: "09:00",
+          endTime: "10:00",
+          endDate: "2026-10-03",
+          durationMinutes: 30,
+          courts: ["C1"],
+        })
+      )
+    ).toThrow(/antes del/i);
   });
 
   test("participant collision prevention", () => {

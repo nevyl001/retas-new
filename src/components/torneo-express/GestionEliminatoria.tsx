@@ -29,7 +29,9 @@ interface GestionEliminatoriaProps {
     ronda: number,
     schedule: {
       playDate: string;
+      endDate: string;
       startTime: string;
+      endTime: string;
       durationMinutes: number;
       courtNames: string[];
     }

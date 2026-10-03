@@ -197,6 +197,10 @@ function enrichParejasWithLabels(
 export type TeCreateScheduleInput = {
   playDate: string;
   startTime: string;
+  /** Hora de cierre de canchas; si falta partidos, continúa al día siguiente. */
+  endTime: string;
+  /** Último día permitido (inclusive). Si se omite, hasta ~60 días. */
+  endDate?: string;
   durationMinutes: number;
   courtNames: string[];
 };
@@ -983,6 +987,9 @@ export async function createTorneoExpressWithGroups(input: {
   if (!input.schedule.playDate.trim() || !input.schedule.startTime.trim()) {
     throw new Error("Indica el día y la hora de inicio.");
   }
+  if (!input.schedule.endTime?.trim()) {
+    throw new Error("Indica la hora de cierre de las canchas.");
+  }
 
   const courts = normalizeCourtNames(input.schedule.courtNames);
   if (courts.length === 0) {
@@ -1026,6 +1033,8 @@ export async function createTorneoExpressWithGroups(input: {
       courts,
       date: input.schedule.playDate.trim(),
       startTime: input.schedule.startTime.trim(),
+      endTime: input.schedule.endTime.trim(),
+      endDate: input.schedule.endDate?.trim() || undefined,
       durationMinutes,
     });
     validateScheduleInvariants(draftMatches, scheduledMatches);
@@ -1585,6 +1594,9 @@ export async function rescheduleTorneoExpressGruposPartidos(
   if (!schedule.playDate.trim() || !schedule.startTime.trim()) {
     throw new Error("Indica el día y la hora de inicio.");
   }
+  if (!schedule.endTime?.trim()) {
+    throw new Error("Indica la hora de cierre de las canchas.");
+  }
 
   const courts = normalizeCourtNames(schedule.courtNames);
   if (courts.length === 0) {
@@ -1636,6 +1648,8 @@ export async function rescheduleTorneoExpressGruposPartidos(
       courts,
       date: schedule.playDate.trim(),
       startTime: schedule.startTime.trim(),
+      endTime: schedule.endTime.trim(),
+      endDate: schedule.endDate?.trim() || undefined,
       durationMinutes,
     });
     validateScheduleInvariants(persistedMatches, scheduled);
@@ -1736,6 +1750,9 @@ export async function rescheduleTorneoExpressEliminatoriaRonda(
   if (!schedule.playDate.trim() || !schedule.startTime.trim()) {
     throw new Error("Indica el día y la hora de inicio.");
   }
+  if (!schedule.endTime?.trim()) {
+    throw new Error("Indica la hora de cierre de las canchas.");
+  }
 
   const courts = normalizeCourtNames(schedule.courtNames);
   if (courts.length === 0) {
@@ -1770,6 +1787,8 @@ export async function rescheduleTorneoExpressEliminatoriaRonda(
       courts,
       date: schedule.playDate.trim(),
       startTime: schedule.startTime.trim(),
+      endTime: schedule.endTime.trim(),
+      endDate: schedule.endDate?.trim() || undefined,
       durationMinutes,
     });
     validateScheduleInvariants(draftMatches, scheduled);

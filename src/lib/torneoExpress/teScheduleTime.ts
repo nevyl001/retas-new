@@ -117,6 +117,52 @@ export function programadoIsoFromMexicoCalendar(
   return null;
 }
 
+/** Minutos desde medianoche (0–1439) para un HH:MM. */
+export function mexicoTimeToMinutes(timeStr: string): number | null {
+  const parts = parseTimeInput(timeStr);
+  if (!parts) return null;
+  return parts.hour * 60 + parts.minute;
+}
+
+/** ¿El partido que inicia en `slotTime` termina a más tardar en `endTime`? */
+export function slotFitsDailyWindow(
+  slotTime: string,
+  durationMinutes: number,
+  startTime: string,
+  endTime: string
+): boolean {
+  const slot = mexicoTimeToMinutes(slotTime);
+  const start = mexicoTimeToMinutes(startTime);
+  const end = mexicoTimeToMinutes(endTime);
+  if (
+    slot == null ||
+    start == null ||
+    end == null ||
+    !Number.isFinite(durationMinutes) ||
+    durationMinutes <= 0
+  ) {
+    return false;
+  }
+  if (end <= start) return false;
+  if (slot < start) return false;
+  return slot + durationMinutes <= end;
+}
+
+/** Suma días de calendario a una fecha YYYY-MM-DD (calendario México / civil). */
+export function addDaysToMexicoCalendarDate(
+  dateStr: string,
+  days: number
+): string | null {
+  const parts = parseCalendarDate(dateStr);
+  if (!parts || !Number.isFinite(days)) return null;
+  const utc = Date.UTC(parts.year, parts.month - 1, parts.day);
+  const next = new Date(utc + Math.floor(days) * 86_400_000);
+  const y = next.getUTCFullYear();
+  const m = pad2(next.getUTCMonth() + 1);
+  const d = pad2(next.getUTCDate());
+  return `${y}-${m}-${d}`;
+}
+
 /** Suma minutos a un instante ISO; devuelve fecha/hora calendario México. */
 export function addMinutesToMexicoCalendar(
   dateStr: string,
