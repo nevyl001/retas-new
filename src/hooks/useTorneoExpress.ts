@@ -27,6 +27,7 @@ import {
   savePartidosOrden,
   TorneoExpressComposicionCambiadaError,
   rescheduleTorneoExpressGruposPartidos,
+  rescheduleTorneoExpressEliminatoriaRonda,
   subscribeTorneoExpress,
   type TeCreateScheduleInput,
 } from "../services/torneoExpressService";
@@ -297,6 +298,33 @@ export function useTorneoExpress(
     [torneoId, reload]
   );
 
+  const rescheduleEliminatoriaRonda = useCallback(
+    async (ronda: number, schedule: TeCreateScheduleInput) => {
+      if (!torneoId) return 0;
+      setSavingReprogramacion(true);
+      setError(null);
+      try {
+        const count = await rescheduleTorneoExpressEliminatoriaRonda(
+          torneoId,
+          ronda,
+          schedule
+        );
+        await reload();
+        return count;
+      } catch (e) {
+        setError(
+          e instanceof Error
+            ? e.message
+            : "No se pudo reprogramar la ronda eliminatoria"
+        );
+        throw e;
+      } finally {
+        setSavingReprogramacion(false);
+      }
+    },
+    [torneoId, reload]
+  );
+
   const saveOrden = useCallback(
     async (
       updates: Array<{
@@ -507,6 +535,7 @@ export function useTorneoExpress(
     saveProgramado,
     saveOrden,
     rescheduleGruposProgramacion,
+    rescheduleEliminatoriaRonda,
     saveGrupoNombre,
     saveEliminatoriaResultado,
     saveEliminatoriaCancha,

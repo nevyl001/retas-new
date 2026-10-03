@@ -2203,9 +2203,19 @@
   line-height: 1.5;
 }
 
+.te-gestion-page .te-elim-gestion .te-elim-rondas-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  margin: 0 0 0.55rem;
+}
+
 .te-gestion-page .te-elim-gestion .te-elim-rondas-tabs {
+  flex: 1 1 auto;
   gap: 0.4rem;
-  margin: 0 0 0.25rem;
+  margin: 0;
 }
 
 .te-gestion-page .te-elim-gestion .te-elim-rondas-tabs .te-grupos-tab {

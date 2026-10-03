@@ -11,6 +11,7 @@ import {
   eliminatoriaBracketSize,
   totalRondasEliminatoria,
 } from "../../lib/torneoExpress/bracketRounds";
+import { eliminatoriaRoundPendingCount } from "../../lib/torneoExpress/eliminatoriaRoundSchedule";
 import { parejaLabelFromMap } from "../../lib/torneoExpress/eliminatoriaLabels";
 import {
   formatPartidoFecha,
@@ -51,6 +52,8 @@ interface PartidosEliminatoriaProps {
     partidoId: string,
     programadoEn: string | null
   ) => Promise<void>;
+  /** Abre el editor de programación masiva de la ronda visible. */
+  onEditRoundSchedule?: (ronda: number, rondaLabel: string) => void;
 }
 
 function asSchedulePartido(
@@ -477,6 +480,7 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
   onSaveResultado,
   onSaveCancha,
   onSaveProgramado,
+  onEditRoundSchedule,
 }) => {
   const bracketSize = eliminatoriaBracketSize(fase, bracketSlots);
   const totalRondas = totalRondasEliminatoria(fase, bracketSize);
@@ -507,15 +511,20 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
   }
 
   const partidosRonda = partidosDeRonda(partidos, rondaVisible);
+  const rondaLabel = labelForRonda(rondaVisible);
+  const canEditRoundSchedule =
+    Boolean(onEditRoundSchedule) &&
+    eliminatoriaRoundPendingCount(partidos, rondaVisible) > 0;
 
   return (
     <div className="te-elim-partidos">
-      <div
-        className="te-grupos-card__tabs te-elim-rondas-tabs"
-        role="tablist"
-        aria-label="Rondas eliminatorias"
-      >
-        {rondas.map((r) => (
+      <div className="te-gestion-section-head te-elim-rondas-head">
+        <div
+          className="te-grupos-card__tabs te-elim-rondas-tabs"
+          role="tablist"
+          aria-label="Rondas eliminatorias"
+        >
+          {rondas.map((r) => (
             <button
               key={r}
               type="button"
@@ -529,6 +538,18 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
               {labelForRonda(r)}
             </button>
           ))}
+        </div>
+        {canEditRoundSchedule ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="te-gestion-edit-schedule-btn"
+            onClick={() => onEditRoundSchedule?.(rondaVisible, rondaLabel)}
+          >
+            Editar programación
+          </Button>
+        ) : null}
       </div>
 
       <div className="te-partidos-list">

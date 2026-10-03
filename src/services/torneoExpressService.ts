@@ -15,6 +15,10 @@ import {
   mapPersistedScheduleToPartidoUpdates,
 } from "../lib/torneoExpress/draftScheduleMatch";
 import {
+  buildEliminatoriaRoundScheduleMatches,
+  eliminatoriaRoundPendingCount,
+} from "../lib/torneoExpress/eliminatoriaRoundSchedule";
+import {
   validateScheduleInvariants,
   ScheduleInvariantError,
 } from "../lib/torneoExpress/scheduleInvariants";
@@ -1702,6 +1706,108 @@ export async function rescheduleTorneoExpressGruposPartidos(
           throwIfError(fallbackErr, "reschedule torneo_express_partidos");
         }
       }
+    })
+  );
+
+  return updates.length;
+}
+
+/**
+ * Reprograma todos los partidos pendientes de una ronda eliminatoria
+ * (octavos, cuartos, semis, final, 3.er lugar).
+ */
+export async function rescheduleTorneoExpressEliminatoriaRonda(
+  torneoId: string,
+  ronda: number,
+  schedule: TeCreateScheduleInput
+): Promise<number> {
+  await requireAuthUser();
+
+  const courtValidation = validateCourtNames(schedule.courtNames);
+  if (courtValidation) {
+    throw new Error(courtValidation);
+  }
+
+  const durationMinutes = Math.floor(schedule.durationMinutes);
+  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+    throw new Error("La duración por partido debe ser mayor a 0 minutos.");
+  }
+
+  if (!schedule.playDate.trim() || !schedule.startTime.trim()) {
+    throw new Error("Indica el día y la hora de inicio.");
+  }
+
+  const courts = normalizeCourtNames(schedule.courtNames);
+  if (courts.length === 0) {
+    throw new Error("Agrega al menos una cancha.");
+  }
+
+  const bundle = await fetchTorneoExpressBundle(torneoId);
+  if (!bundle) {
+    throw new Error("Torneo no encontrado");
+  }
+  if (bundle.torneo.fase_torneo !== "eliminatoria") {
+    throw new Error("La categoría no está en fase eliminatoria.");
+  }
+  if (bundle.torneo.estado === "finalizado") {
+    throw new Error("No se puede reprogramar un torneo finalizado.");
+  }
+
+  const partidos = bundle.eliminatoriaPartidos ?? [];
+  if (eliminatoriaRoundPendingCount(partidos, ronda) === 0) {
+    throw new Error("No hay partidos pendientes para reprogramar en esta ronda.");
+  }
+
+  const draftMatches = buildEliminatoriaRoundScheduleMatches(partidos, ronda);
+  if (draftMatches.length === 0) {
+    throw new Error("No hay partidos programables en esta ronda.");
+  }
+
+  let scheduled;
+  try {
+    scheduled = assignRoundRobinSchedule({
+      matches: draftMatches,
+      courts,
+      date: schedule.playDate.trim(),
+      startTime: schedule.startTime.trim(),
+      durationMinutes,
+    });
+    validateScheduleInvariants(draftMatches, scheduled);
+  } catch (e) {
+    if (e instanceof ScheduleInvariantError) {
+      throw new Error(e.message);
+    }
+    throw e;
+  }
+
+  const jugadoIds = new Set(
+    partidos
+      .filter((p) => p.ronda === ronda && p.estado === "jugado")
+      .map((p) => p.id)
+  );
+
+  const updates = mapPersistedScheduleToPartidoUpdates(scheduled).filter(
+    (row) => !jugadoIds.has(row.partidoId)
+  );
+
+  if (updates.length === 0) {
+    throw new Error("No hay partidos pendientes para reprogramar en esta ronda.");
+  }
+
+  await Promise.all(
+    updates.map(async (row) => {
+      const { error } = await supabase
+        .from("torneo_express_eliminatoria_partidos")
+        .update({
+          programado_en: row.programado_en,
+          cancha: row.cancha,
+        })
+        .eq("id", row.partidoId)
+        .eq("torneo_id", torneoId);
+      if (isBracketSchemaError(error)) {
+        throw new BracketSchemaMissingError();
+      }
+      throwIfError(error, "reschedule eliminatoria ronda");
     })
   );
 

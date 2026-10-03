@@ -99,6 +99,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     saveGrupoNombre,
     savingGrupoNombreId,
     rescheduleGruposProgramacion,
+    rescheduleEliminatoriaRonda,
     savingReprogramacion,
   } = useTorneoExpress(torneoId, { publicMode: false, realtime: true });
 
@@ -814,9 +815,12 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                 savingEliminatoriaId={savingEliminatoriaId}
                 savingEliminatoriaCanchaId={savingEliminatoriaCanchaId}
                 savingEliminatoriaProgramadoId={savingEliminatoriaProgramadoId}
+                savingEliminatoriaReprogramacion={savingReprogramacion}
                 onSaveResultado={saveEliminatoriaResultado}
                 onSaveCancha={saveEliminatoriaCancha}
                 onSaveProgramado={saveEliminatoriaProgramado}
+                onRescheduleRonda={rescheduleEliminatoriaRonda}
+                onRescheduleToast={showActionToast}
               />
             ) : (
               <EmptyState
@@ -1062,9 +1066,12 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           savingEliminatoriaId={savingEliminatoriaId}
           savingEliminatoriaCanchaId={savingEliminatoriaCanchaId}
           savingEliminatoriaProgramadoId={savingEliminatoriaProgramadoId}
+          savingEliminatoriaReprogramacion={savingReprogramacion}
           onSaveResultado={saveEliminatoriaResultado}
           onSaveCancha={saveEliminatoriaCancha}
           onSaveProgramado={saveEliminatoriaProgramado}
+          onRescheduleRonda={rescheduleEliminatoriaRonda}
+          onRescheduleToast={showActionToast}
         />
       ) : (
         <div className="torneo-express-card te-grupos-card te-gestion-card te-gestion-card--ops">
