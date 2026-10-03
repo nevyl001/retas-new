@@ -9,6 +9,11 @@ import {
 import { isRondaTercerLugar } from "../../../lib/torneoExpress/bracketRounds";
 import type { TorneoExpressBundle } from "../../../lib/torneoExpress/types";
 import { useClubExperience } from "../../../club-experience";
+import { useOrganizerDisplayName } from "../../../club-experience/useOrganizerDisplayName";
+import {
+  isRivieraOwnAccountName,
+  RIVIERA_PRODUCT_NAME,
+} from "../../../club-experience/motherBrand";
 import { useTorneoPublicEventoNav } from "../../../hooks/useTorneoPublicDisplayNombre";
 import { Badge, Button } from "../../ui";
 import { TEPublicBracketVisual } from "./TEPublicBracketVisual";
@@ -102,14 +107,11 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
   const categoria = formatTorneoExpressCategoria(bundle.torneo.categoria);
   const displayNombre =
     useTorneoPublicEventoNav(bundle.torneo).displayNombre || bundle.torneo.nombre;
-  const { branding, manifest, isClubBranded, isScopeBrandingReady } =
-    useClubExperience();
-  const clubName =
-    isScopeBrandingReady && manifest.displayName.trim()
-      ? manifest.displayName.trim()
-      : isScopeBrandingReady && branding.nombre.trim()
-        ? branding.nombre.trim()
-        : "Riviera Open";
+  const { branding, isScopeBrandingReady } = useClubExperience();
+  const organizerName = useOrganizerDisplayName(
+    bundle.torneo.organizador_id
+  ).trim();
+  const clubName = organizerName || RIVIERA_PRODUCT_NAME;
   const clubLogoUrl = isScopeBrandingReady ? branding.logoUrl : null;
   const closingPairStatsById = useMemo(() => {
     const pairIds = new Set<string>();
@@ -238,7 +240,7 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
           category={categoria}
           clubName={clubName}
           clubLogoUrl={clubLogoUrl}
-          showMotherAttribution={isScopeBrandingReady && isClubBranded}
+          showMotherAttribution={!isRivieraOwnAccountName(clubName)}
           pairStatsById={closingPairStatsById}
         />
       </section>

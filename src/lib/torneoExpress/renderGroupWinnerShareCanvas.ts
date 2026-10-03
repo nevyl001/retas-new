@@ -1,3 +1,4 @@
+import { isRivieraOwnAccountName } from "../../club-experience/motherBrand";
 import { RIVIERA_SOCIAL_HANDLE } from "../rivieraBranding";
 import {
   clasificacionAchievementStats,
@@ -619,6 +620,7 @@ async function drawClubIdentity(
   }
 
   const textX = x + logoBox + 24;
+  const showMotherAttribution = !isRivieraOwnAccountName(clubName);
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
   ctx.fillStyle = cream;
@@ -630,17 +632,13 @@ async function drawClubIdentity(
       GROUP_WINNER_SHARE_WIDTH - textX - x
     ),
     textX,
-    top + 38
+    showMotherAttribution ? top + 38 : top + logoBox / 2 + 12
   );
-  ctx.fillStyle = muted;
-  ctx.font = font(720, 21, "body");
-  drawTrackedText(
-    ctx,
-    "BY RIVIERA OPEN",
-    textX,
-    top + 74,
-    2.5
-  );
+  if (showMotherAttribution) {
+    ctx.fillStyle = muted;
+    ctx.font = font(720, 21, "body");
+    drawTrackedText(ctx, "BY RIVIERA OPEN", textX, top + 74, 2.5);
+  }
   ctx.fillStyle = "rgba(247,243,237,0.14)";
   ctx.fillRect(x, top + 112, GROUP_WINNER_SHARE_WIDTH - x * 2, 2);
   ctx.fillStyle = accent;

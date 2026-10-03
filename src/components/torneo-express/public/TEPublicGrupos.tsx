@@ -18,8 +18,13 @@ import {
   RIVIERA_SOCIAL_HANDLE,
   RIVIERA_SOCIAL_LINKS,
 } from "../../../lib/rivieraBranding";
-import { RIVIERA_CO_BRAND_ATTRIBUTION } from "../../../club-experience/motherBrand";
+import {
+  isRivieraOwnAccountName,
+  RIVIERA_CO_BRAND_ATTRIBUTION,
+  RIVIERA_PRODUCT_NAME,
+} from "../../../club-experience/motherBrand";
 import { useClubExperience } from "../../../club-experience";
+import { useOrganizerDisplayName } from "../../../club-experience/useOrganizerDisplayName";
 import {
   clasificacionAchievementStats,
   clasificacionOrderSummary,
@@ -486,9 +491,11 @@ const SOCIAL_ICON_BY_ID = {
 function AchievementClubSignature({
   clubName,
   clubLogoUrl,
+  showMotherAttribution,
 }: {
   clubName: string;
   clubLogoUrl?: string | null;
+  showMotherAttribution: boolean;
 }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const showLogo = Boolean(clubLogoUrl?.trim()) && !logoFailed;
@@ -510,9 +517,11 @@ function AchievementClubSignature({
         ) : null}
         <div className="te-grupo-achievement__club-copy">
           <span className="te-grupo-achievement__club-name">{clubName}</span>
-          <span className="te-grupo-achievement__club-by">
-            {RIVIERA_CO_BRAND_ATTRIBUTION}
-          </span>
+          {showMotherAttribution ? (
+            <span className="te-grupo-achievement__club-by">
+              {RIVIERA_CO_BRAND_ATTRIBUTION}
+            </span>
+          ) : null}
         </div>
       </div>
     </section>
@@ -550,6 +559,7 @@ function GrupoWinnerSummary({
   players,
   clubName,
   clubLogoUrl,
+  showMotherAttribution,
   clasificacionModo,
 }: {
   grupoNombre: string;
@@ -560,6 +570,7 @@ function GrupoWinnerSummary({
   players?: TEPublicGruposAchievementPlayer[];
   clubName: string;
   clubLogoUrl?: string | null;
+  showMotherAttribution: boolean;
   clasificacionModo: TorneoExpressClasificacionModo;
 }) {
   const [shareMsg, setShareMsg] = useState<string | null>(null);
@@ -637,6 +648,7 @@ function GrupoWinnerSummary({
         <AchievementClubSignature
           clubName={clubName}
           clubLogoUrl={clubLogoUrl}
+          showMotherAttribution={showMotherAttribution}
         />
         <div className="te-grupo-achievement__topline">
           <span>{torneoNombre}</span>
@@ -721,13 +733,10 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
   clasificacionModo = "dif_puntos",
 }) => {
   const [selectedGrupoId, setSelectedGrupoId] = useState<string | null>(null);
-  const { branding, manifest, isScopeBrandingReady } = useClubExperience();
-  const clubName =
-    isScopeBrandingReady && manifest.displayName.trim()
-      ? manifest.displayName.trim()
-      : isScopeBrandingReady && branding.nombre.trim()
-        ? branding.nombre.trim()
-      : "Riviera Open";
+  const { branding, isScopeBrandingReady } = useClubExperience();
+  const organizerName = useOrganizerDisplayName().trim();
+  const clubName = organizerName || RIVIERA_PRODUCT_NAME;
+  const showMotherAttribution = !isRivieraOwnAccountName(clubName);
   const clubLogoUrl = isScopeBrandingReady ? branding.logoUrl : null;
   const showGrupoIndex = !singleGrupo && grupos.length > 1;
 
@@ -932,6 +941,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
                   players={grupo.achievementPlayers}
                   clubName={clubName}
                   clubLogoUrl={clubLogoUrl}
+                  showMotherAttribution={showMotherAttribution}
                   clasificacionModo={clasificacionModo}
                 />
               </div>

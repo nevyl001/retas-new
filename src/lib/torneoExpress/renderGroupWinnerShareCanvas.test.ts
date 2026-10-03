@@ -97,6 +97,31 @@ describe("renderGroupWinnerShareCanvas", () => {
     expect(paintedText).not.toContain("GANADORES DEL GRUPO A");
   });
 
+  it("la cuenta madre no repite by Riviera Open", async () => {
+    const context = canvasContext();
+    const canvas = {
+      width: 0,
+      height: 0,
+      getContext: jest.fn(() => context),
+      toBlob: jest.fn(),
+    } as unknown as HTMLCanvasElement;
+    const realCreate = document.createElement.bind(document);
+    jest.spyOn(document, "createElement").mockImplementation((tag: string) =>
+      tag === "canvas" ? canvas : realCreate(tag)
+    );
+
+    await renderGroupWinnerShareCanvas({
+      ...baseData,
+      clubName: "Riviera Open",
+    });
+
+    const paintedText = (context.fillText as jest.Mock).mock.calls.map(
+      ([text]) => String(text)
+    );
+    expect(paintedText).toContain("RIVIERA OPEN");
+    expect(paintedText.join("")).not.toContain("BY RIVIERA OPEN");
+  });
+
   it("admite datos dinámicos, nombres largos y diferencias con signo", async () => {
     expect(formatSignedNumber(12)).toBe("+12");
     expect(formatSignedNumber(-4)).toBe("-4");
