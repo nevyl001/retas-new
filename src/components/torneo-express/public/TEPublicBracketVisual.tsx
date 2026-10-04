@@ -794,6 +794,17 @@ function TournamentClosingStack({
       } => Boolean(entry.presentation),
     );
 
+  const pairLabel = (place: PodiumSharePlace) => {
+    const entry = podiums.find((item) => item.place === place);
+    const names = entry?.presentation.players.map((player) => player.name) ?? [];
+    if (names.length === 0) return null;
+    if (names.length === 1) return names[0];
+    return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+  };
+  const championNames = pairLabel("first");
+  const runnerNames = pairLabel("second");
+  const tournamentLabel = [tournamentName, category].filter(Boolean).join(" · ");
+
   return (
     <div className="te-pb-closing-stack" aria-label="Cierre del torneo">
       <div className="te-pb-podium-share-grid">
@@ -806,7 +817,23 @@ function TournamentClosingStack({
           />
         ))}
       </div>
-      <footer className="te-pb-closing-community" aria-label="Agradecimiento">
+      <footer className="te-pb-closing-community" aria-label="Resumen del torneo">
+        <p className="te-pb-closing-community__kicker">Resumen del torneo</p>
+        <h2>Felicidades.</h2>
+        {championNames ? (
+          <p>
+            <strong>{championNames}</strong>
+            {tournamentLabel
+              ? ` se coronan campeones de ${tournamentLabel}.`
+              : " se coronan campeones."}
+            {runnerNames ? (
+              <>
+                {" "}
+                <strong>{runnerNames}</strong> cierran como subcampeones.
+              </>
+            ) : null}
+          </p>
+        ) : null}
         <p>
           Gracias a todos los jugadores por ser parte del torneo, competir con
           intensidad y hacer crecer esta comunidad.
