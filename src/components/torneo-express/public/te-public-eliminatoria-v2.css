@@ -2600,12 +2600,12 @@
   background: color-mix(in srgb, var(--te-podium-tone) 7%, transparent);
 }
 
-/* Escritorio: una columna que escala con la ventana. El móvil sigue en 9:16. */
+/* Escritorio: panel horizontal que cabe en la ventana. El móvil sigue en 9:16. */
 @media (min-width: 64rem) {
   .te-elim-v2 .te-pb-closing-stack {
-    width: min(100%, 72rem);
+    width: min(100%, 62rem);
     margin-inline: auto;
-    gap: clamp(1.5rem, 2.4vw, 2.25rem);
+    gap: clamp(1rem, 2vh, 1.5rem);
   }
 
   .te-elim-v2 .te-pb-podium-share-grid {
@@ -2623,119 +2623,109 @@
   }
 
   .te-elim-v2 .te-podium-share__art {
+    grid-template-columns: minmax(16rem, 0.9fr) minmax(0, 1.1fr);
     grid-template-rows: auto;
+    grid-template-areas:
+      "brand brand"
+      "context context"
+      "hero aside"
+      "closing closing"
+      "social social";
     align-content: start;
-    justify-items: center;
+    align-items: center;
     min-height: 0;
-    padding: clamp(1.75rem, 2.6vw, 2.75rem) clamp(2rem, 4vw, 3.5rem);
-    gap: clamp(1.15rem, 2vw, 1.75rem);
+    padding: clamp(1rem, 2vh, 1.35rem) clamp(1.25rem, 2vw, 1.75rem);
+    gap: clamp(0.65rem, 1.4vh, 0.9rem) clamp(1.25rem, 2vw, 2rem);
   }
 
   .te-elim-v2 .te-podium-share__brand {
+    grid-area: brand;
     width: 100%;
     min-height: 0;
-    padding-bottom: clamp(0.85rem, 1.4vw, 1.15rem);
-  }
-
-  .te-elim-v2 .te-podium-share__brand strong {
-    font-size: clamp(0.95rem, 1.2vw, 1.125rem);
-  }
-
-  .te-elim-v2 .te-podium-share__brand span {
-    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    padding-bottom: 0.65rem;
   }
 
   .te-elim-v2 .te-podium-share__context {
+    grid-area: context;
     width: 100%;
-    font-size: clamp(0.75rem, 1vw, 0.875rem);
-  }
-
-  .te-elim-v2 .te-podium-share__context small,
-  .te-elim-v2 .te-podium-share__context > span {
-    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    font-size: 0.75rem;
   }
 
   .te-elim-v2 .te-podium-share__hero {
-    width: min(100%, 46rem);
-    gap: clamp(0.7rem, 1.2vw, 1rem);
+    grid-area: hero;
+    width: 100%;
+    gap: 0.45rem;
   }
 
   .te-elim-v2 .te-podium-share__hero > p:first-child {
-    font-size: clamp(0.75rem, 1vw, 0.875rem);
-    letter-spacing: 0.18em;
+    font-size: 0.75rem;
+    letter-spacing: 0.16em;
   }
 
   .te-elim-v2 .te-podium-share__players {
-    width: min(100%, 36rem);
-    margin-block: clamp(0.35rem, 0.8vw, 0.75rem);
+    width: min(100%, 22rem);
+    margin-block: 0.2rem;
   }
 
   .te-elim-v2 .te-podium-share__avatar.rj-avatar {
-    width: clamp(7.5rem, 11vw, 10.5rem);
-    height: clamp(7.5rem, 11vw, 10.5rem);
-    font-size: clamp(1.5rem, 2vw, 2rem);
+    width: clamp(4.75rem, 10vh, 6.25rem);
+    height: clamp(4.75rem, 10vh, 6.25rem);
+    font-size: 1.25rem;
   }
 
   .te-elim-v2 .te-podium-share__pair-axis {
-    width: clamp(1.75rem, 2vw, 2.5rem);
-    height: clamp(7.5rem, 11vw, 10.5rem);
+    width: 1.5rem;
+    height: clamp(4.75rem, 10vh, 6.25rem);
   }
 
   .te-elim-v2 .te-podium-share__player > strong {
-    max-width: 14rem;
-    font-size: clamp(1.05rem, 1.4vw, 1.3rem);
-  }
-
-  .te-elim-v2 .te-podium-share__hero h3,
-  .te-elim-v2 .te-podium-share__hero > p:last-child,
-  .te-elim-v2 .te-podium-share__closing p {
-    max-width: 40rem;
+    max-width: 9rem;
+    font-size: 0.95rem;
   }
 
   .te-elim-v2 .te-podium-share__hero h3 {
-    font-size: clamp(2rem, 3.2vw, 3rem);
+    font-size: clamp(1.45rem, 2.6vh, 1.85rem);
   }
 
-  .te-elim-v2 .te-podium-share__hero > p:last-child {
-    font-size: clamp(1.05rem, 1.35vw, 1.25rem);
-    line-height: 1.45;
+  .te-elim-v2 .te-podium-share__hero > p:last-child,
+  .te-elim-v2 .te-podium-share__closing p,
+  .te-elim-v2 .te-podium-share__closing p:first-child {
+    max-width: 36rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
   }
 
   .te-elim-v2 .te-podium-share__stats {
-    width: min(100%, 46rem);
-    gap: clamp(0.45rem, 0.8vw, 0.7rem);
-    padding: clamp(0.85rem, 1.4vw, 1.15rem) clamp(1rem, 2vw, 1.5rem);
+    grid-area: aside;
+    width: 100%;
+    align-self: center;
+    gap: 0.4rem;
+    padding: 0.85rem 1rem;
   }
 
   .te-elim-v2 .te-podium-share__stats > span,
   .te-elim-v2 .te-podium-share__stats dt {
-    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    font-size: 0.7rem;
   }
 
   .te-elim-v2 .te-podium-share__stats dd {
-    font-size: clamp(1.5rem, 2.2vw, 2rem);
+    font-size: clamp(1.25rem, 2.4vh, 1.6rem);
   }
 
-  .te-elim-v2 .te-podium-share__closing,
+  .te-elim-v2 .te-podium-share__closing {
+    grid-area: closing;
+    width: 100%;
+  }
+
   .te-elim-v2 .te-podium-share__social {
-    width: min(100%, 46rem);
-  }
-
-  .te-elim-v2 .te-podium-share__closing p,
-  .te-elim-v2 .te-podium-share__closing p:first-child {
-    font-size: clamp(1rem, 1.25vw, 1.15rem);
-    line-height: 1.5;
-  }
-
-  .te-elim-v2 .te-podium-share__social > strong,
-  .te-elim-v2 .te-podium-share__social span {
-    font-size: clamp(0.75rem, 0.95vw, 0.875rem);
+    grid-area: social;
+    width: 100%;
   }
 
   .te-elim-v2 .te-pb-closing-community {
-    width: min(100%, 46rem);
-    gap: clamp(0.75rem, 1.2vw, 1rem);
-    padding: clamp(1.5rem, 2.4vw, 2.25rem) clamp(1.25rem, 2vw, 2rem);
+    width: min(100%, 62rem);
+    gap: 0.55rem;
+    padding: clamp(1rem, 2vh, 1.35rem) clamp(1.25rem, 2vw, 1.75rem);
     border: 1px solid
       color-mix(in srgb, var(--ro-chrome-text) 12%, transparent);
     border-radius: 1.35rem;
@@ -2746,18 +2736,14 @@
     );
   }
 
-  .te-elim-v2 .te-pb-closing-community__kicker {
-    font-size: clamp(0.75rem, 0.95vw, 0.875rem);
-  }
-
   .te-elim-v2 .te-pb-closing-community h2 {
-    font-size: clamp(2rem, 3vw, 2.75rem);
+    font-size: clamp(1.45rem, 2.8vh, 1.85rem);
   }
 
   .te-elim-v2 .te-pb-closing-community p,
   .te-elim-v2 .te-pb-closing-community strong {
-    max-width: 46rem;
-    font-size: clamp(1.05rem, 1.35vw, 1.25rem);
+    max-width: 52rem;
+    font-size: 1rem;
   }
 }
 
