@@ -234,6 +234,8 @@ function findMiddleSwapCandidate(
 /**
  * Evita choques de grupo SIN romper el seeding premium:
  * - #1 y #2 siguen enfrentando a N y N-1 (mejores terceros / peores seeds).
+ * - Quien el cuadro clásico manda contra un BYE pasa directo. Ese cruce no se
+ *   mueve para resolver un choque de grupo.
  * - El resto del cuadro sí puede reordenarse para evitar mismo grupo en 1ª ronda.
  */
 export function resolverChoquesAutomaticos(
@@ -292,6 +294,17 @@ export function resolverChoquesAutomaticos(
         }
       }
     }
+  }
+
+  // Pase directo: el seed que el cuadro clásico enfrenta a un BYE no se mueve.
+  // Sin esto, el anti-choque le robaba el BYE a un 1º (p. ej. #1 terminaba
+  // jugando y un 2º pasaba solo).
+  for (let i = 0; i < next.length; i += 2) {
+    const leftBye = next[i]?.type === "bye";
+    const rightBye = next[i + 1]?.type === "bye";
+    if (leftBye === rightBye) continue;
+    protectedSlots.add(i);
+    protectedSlots.add(i + 1);
   }
 
   // Resolver choques en el resto del cuadro (p. ej. 1ºC vs 2ºC).

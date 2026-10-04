@@ -207,4 +207,20 @@ describe("resolverChoquesAutomaticos", () => {
     ]);
     expect(validarChoques(fixed)).toEqual([]);
   });
+
+  it("6 clasificados en cuartos: los 2 mejores 1º conservan el BYE", () => {
+    const slots = placeClassic8([
+      qf("B", "Nevyl / Zaid", 1, 1),
+      qf("A", "Omar / Ernesto", 1, 2),
+      qf("A", "Alexander / Iván", 2, 3),
+      qf("B", "Javier / Carlos", 2, 4),
+      qf("A", "Pepe / Areli", 3, 5),
+      qf("B", "José / Héctor", 3, 6),
+    ]);
+    const fixed = resolverChoquesAutomaticos(slots);
+
+    expect(partnerSeed(fixed, 1)).toBe(-1);
+    expect(partnerSeed(fixed, 2)).toBe(-1);
+    expect(validarChoques(fixed)).toEqual([]);
+  });
 });
