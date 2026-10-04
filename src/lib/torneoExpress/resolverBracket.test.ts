@@ -241,5 +241,15 @@ describe("resolverChoquesAutomaticos", () => {
     expect(partnerSeed(built.slots, 3)).toBe(6);
     expect(partnerSeed(built.slots, 4)).toBe(5);
     expect(validarChoques(built.slots)).toEqual([]);
+
+    const finalSide = (seed: number) => {
+      const idx = built.slots.findIndex(
+        (s) => s.type === "team" && s.qualifier.seed === seed
+      );
+      const cruce = Math.floor(idx / 2);
+      return cruce < built.slots.length / 4 ? "A" : "B";
+    };
+    expect(finalSide(1)).toBe("A");
+    expect(finalSide(2)).toBe("B");
   });
 });

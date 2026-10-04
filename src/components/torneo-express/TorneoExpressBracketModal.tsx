@@ -238,6 +238,17 @@ export const TorneoExpressBracketModal: React.FC<
       ? slots.filter((s) => s.type === "team").length
       : totalAvanzan;
   const matchCount = Math.floor(totalSlots / 2);
+  const ladoSize = Math.ceil(matchCount / 2);
+  const lados = [
+    { id: "A", cruces: Array.from({ length: ladoSize }, (_, i) => i) },
+    {
+      id: "B",
+      cruces: Array.from(
+        { length: Math.max(0, matchCount - ladoSize) },
+        (_, i) => i + ladoSize
+      ),
+    },
+  ].filter((lado) => lado.cruces.length > 0);
 
   return createPortal(
     <div
@@ -534,50 +545,70 @@ export const TorneoExpressBracketModal: React.FC<
                   </div>
                 )}
 
-                <div className="te-bracket-grid">
-                  {Array.from({ length: totalSlots / 2 }, (_, cruceIdx) => {
-                    const i = cruceIdx * 2;
-                    const a = slots[i];
-                    const b = slots[i + 1];
-                    const clash = advertencias.some(
-                      (w) => w.cruceIndex === cruceIdx
-                    );
-                    const matchLabel = String(cruceIdx + 1).padStart(2, "0");
+                <div className="te-bracket-halves">
+                  {lados.map((lado) => (
+                    <section
+                      key={lado.id}
+                      className="te-bracket-half"
+                      aria-label={`Lado ${lado.id}`}
+                    >
+                      <h3 className="te-bracket-half__title">Lado {lado.id}</h3>
+                      <div className="te-bracket-half__matches">
+                        {lado.cruces.map((cruceIdx) => {
+                          const i = cruceIdx * 2;
+                          const a = slots[i];
+                          const b = slots[i + 1];
+                          const clash = advertencias.some(
+                            (w) => w.cruceIndex === cruceIdx
+                          );
+                          const matchLabel = String(cruceIdx + 1).padStart(
+                            2,
+                            "0"
+                          );
 
-                    return (
-                      <div
-                        key={`cruce-${cruceIdx}`}
-                        className={`te-bracket-cruce${
-                          clash ? " te-bracket-cruce--clash" : ""
-                        }`}
-                      >
-                        <span className="te-bracket-cruce__label">
-                          Partido {matchLabel}
-                          {clash ? " · Mismo grupo" : ""}
-                        </span>
-                        <div className="te-bracket-cruce__pair">
-                          <BracketSlotCard
-                            slot={a}
-                            index={i}
-                            dragging={dragIndex === i}
-                            onDragStart={handleDragStart}
-                            onDragOver={handleDragOver}
-                            onDrop={handleDrop}
-                          />
-                          <span className="te-bracket-cruce__vs">VS</span>
-                          <BracketSlotCard
-                            slot={b}
-                            index={i + 1}
-                            dragging={dragIndex === i + 1}
-                            onDragStart={handleDragStart}
-                            onDragOver={handleDragOver}
-                            onDrop={handleDrop}
-                          />
-                        </div>
+                          return (
+                            <div
+                              key={`cruce-${cruceIdx}`}
+                              className={`te-bracket-cruce${
+                                clash ? " te-bracket-cruce--clash" : ""
+                              }`}
+                            >
+                              <span className="te-bracket-cruce__label">
+                                Partido {matchLabel}
+                                {clash ? " · Mismo grupo" : ""}
+                              </span>
+                              <div className="te-bracket-cruce__pair">
+                                <BracketSlotCard
+                                  slot={a}
+                                  index={i}
+                                  dragging={dragIndex === i}
+                                  onDragStart={handleDragStart}
+                                  onDragOver={handleDragOver}
+                                  onDrop={handleDrop}
+                                />
+                                <span className="te-bracket-cruce__vs">VS</span>
+                                <BracketSlotCard
+                                  slot={b}
+                                  index={i + 1}
+                                  dragging={dragIndex === i + 1}
+                                  onDragStart={handleDragStart}
+                                  onDragOver={handleDragOver}
+                                  onDrop={handleDrop}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
+                    </section>
+                  ))}
                 </div>
+                {lados.length === 2 ? (
+                  <p className="te-bracket-halves__note">
+                    Cada lado es una mitad del cuadro. Si los dos primeros
+                    ganan, se cruzan en la final.
+                  </p>
+                ) : null}
               </div>
             </div>
 
