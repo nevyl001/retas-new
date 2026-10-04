@@ -721,6 +721,175 @@ function TournamentClosingCardBase({
   );
 }
 
+function championMatchLines(
+  rounds: BracketRoundPresentation[],
+  parejaId: string | null,
+) {
+  if (!parejaId) return [];
+  const lines: Array<{
+    id: string;
+    round: string;
+    opponent: string;
+    score: string;
+    dif: number;
+  }> = [];
+
+  for (const round of rounds) {
+    for (const match of round.matches) {
+      if (match.isPlaceholder || match.status === "bye" || match.status === "pending") {
+        continue;
+      }
+      const isLocal = match.local.parejaId === parejaId;
+      const isVisit = match.visit.parejaId === parejaId;
+      if (!isLocal && !isVisit) continue;
+      const opponent = isLocal ? match.visit : match.local;
+      if (opponent.kind !== "team") continue;
+      const sets = match.sets ?? [];
+      const score = sets
+        .map((set) =>
+          isLocal
+            ? `${set.local}-${set.visitante}`
+            : `${set.visitante}-${set.local}`,
+        )
+        .join("  ");
+      let favor = 0;
+      let contra = 0;
+      for (const set of sets) {
+        favor += isLocal ? set.local : set.visitante;
+        contra += isLocal ? set.visitante : set.local;
+      }
+      const opponentLabel =
+        opponent.names.filter(Boolean).join(" / ") || opponent.label;
+      lines.push({
+        id: match.id,
+        round: round.tabLabel || round.title,
+        opponent: opponentLabel,
+        score: score || "—",
+        dif: favor - contra,
+      });
+    }
+  }
+
+  return lines;
+}
+
+function TournamentRecap({
+  champion,
+  runnerUp,
+  tournamentName,
+  category,
+  stats,
+  rounds,
+}: {
+  champion: BracketTeamPresentation;
+  runnerUp: BracketTeamPresentation | null;
+  tournamentName: string;
+  category?: string | null;
+  stats: PublicEliminatoriaPodiumStats | null;
+  rounds: BracketRoundPresentation[];
+}) {
+  const players = getTeamPlayers(champion).slice(0, 2);
+  const matches = championMatchLines(rounds, champion.parejaId);
+  const eyebrow = ["Campeones", tournamentName, category]
+    .filter(Boolean)
+    .join(" · ");
+  const runnerLabel = runnerUp
+    ? getTeamPlayers(runnerUp)
+        .map((player) => player.name)
+        .filter(Boolean)
+        .join(" / ")
+    : null;
+
+  return (
+    <section className="te-elim-recap" aria-label="Resumen del torneo">
+      <header className="te-elim-recap__header">
+        <p className="te-elim-recap__eyebrow">{eyebrow}</p>
+        <span className="te-elim-recap__rule" aria-hidden />
+      </header>
+      <div className="te-elim-recap__hero">
+        <p className="te-elim-recap__badge">1.er lugar</p>
+        <h2 className="te-elim-recap__title">¡Felicidades!</h2>
+        <div className="te-elim-recap__pair" aria-label="Pareja campeona">
+          {players.map((player, index) => (
+            <React.Fragment key={player.id}>
+              {index > 0 ? (
+                <span className="te-elim-recap__trophy" aria-hidden>
+                  <TablerIcon name="trophy" size={22} />
+                </span>
+              ) : null}
+              <div className="te-elim-recap__player">
+                <JugadorAvatar
+                  fotoUrl={player.fotoUrl}
+                  nombre={player.name}
+                  size="xl"
+                  alt={player.fotoUrl ? `Foto de ${player.name}` : ""}
+                  className="te-elim-recap__avatar"
+                />
+                <p>{player.name}</p>
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
+        {runnerLabel ? (
+          <p className="te-elim-recap__runner">
+            Subcampeones · {runnerLabel}
+          </p>
+        ) : null}
+      </div>
+      {stats ? (
+        <div className="te-elim-recap__stats" aria-label="Números del campeón">
+          <div>
+            <span>Games acum.</span>
+            <strong>{stats.juegosFavor}</strong>
+          </div>
+          <div>
+            <span>Dif. juegos</span>
+            <strong>{formatPublicPodiumDif(stats.dif)}</strong>
+          </div>
+          <div>
+            <span>Partidos ganados</span>
+            <strong>{stats.victorias}</strong>
+          </div>
+          <div>
+            <span>Derrotas</span>
+            <strong>{stats.derrotas}</strong>
+          </div>
+        </div>
+      ) : null}
+      {matches.length > 0 ? (
+        <section className="te-elim-recap__matches" aria-label="Enfrentamientos">
+          <p>Enfrentamientos</p>
+          <div className="te-elim-recap__matches-head" aria-hidden>
+            <span>Rival</span>
+            <span>Ronda</span>
+            <span>Marcador</span>
+            <span>Dif</span>
+          </div>
+          <ul>
+            {matches.map((line) => (
+              <li key={line.id}>
+                <span className="te-elim-recap__rival">
+                  <i>vs</i>
+                  {line.opponent}
+                </span>
+                <span className="te-elim-recap__round">{line.round}</span>
+                <span className="te-elim-recap__score">{line.score}</span>
+                <span className="te-elim-recap__dif">
+                  {formatPublicPodiumDif(line.dif)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      <footer className="te-elim-recap__footer">
+        <span aria-hidden />
+        <p>Vive Riviera Open</p>
+      </footer>
+    </section>
+  );
+}
+
 function TournamentClosingStack({
   champion,
   runnerUp,
@@ -731,6 +900,7 @@ function TournamentClosingStack({
   clubLogoUrl,
   showMotherAttribution,
   pairStatsById,
+  rounds,
 }: {
   champion: BracketTeamPresentation;
   runnerUp: BracketTeamPresentation | null;
@@ -741,6 +911,7 @@ function TournamentClosingStack({
   clubLogoUrl?: string | null;
   showMotherAttribution: boolean;
   pairStatsById: Record<string, PublicEliminatoriaPodiumStats | null>;
+  rounds: BracketRoundPresentation[];
 }) {
   const [sharingPlace, setSharingPlace] = useState<PodiumSharePlace | null>(
     null,
@@ -807,6 +978,14 @@ function TournamentClosingStack({
 
   return (
     <div className="te-pb-closing-stack" aria-label="Cierre del torneo">
+      <TournamentRecap
+        champion={champion}
+        runnerUp={runnerUp}
+        tournamentName={tournamentName}
+        category={category}
+        stats={statsFor(champion)}
+        rounds={rounds}
+      />
       <div className="te-pb-podium-share-grid">
         {podiums.map(({ place, presentation }) => (
           <TournamentPodiumShareCard
@@ -1081,6 +1260,7 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
                 clubLogoUrl={clubLogoUrl}
                 showMotherAttribution={showMotherAttribution}
                 pairStatsById={pairStatsById}
+                rounds={presentation.allRounds}
               />
             ) : null}
           </section>

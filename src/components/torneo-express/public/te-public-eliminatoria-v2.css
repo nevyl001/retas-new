@@ -2600,8 +2600,293 @@
   background: color-mix(in srgb, var(--te-podium-tone) 7%, transparent);
 }
 
+.te-elim-v2 .te-elim-recap {
+  display: none;
+  position: relative;
+  width: 100%;
+  border: 1px solid
+    color-mix(in srgb, var(--brand-accent, var(--ro-medal-gold)) 28%, var(--ro-chrome-border));
+  border-radius: 1rem;
+  background:
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--brand-accent, var(--ro-medal-gold)) 8%, transparent),
+      transparent 42%
+    ),
+    var(--ro-chrome-deep, var(--ro-chrome-bg));
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.te-elim-v2 .te-elim-recap__header,
+.te-elim-v2 .te-elim-recap__hero,
+.te-elim-v2 .te-elim-recap__stats,
+.te-elim-v2 .te-elim-recap__matches,
+.te-elim-v2 .te-elim-recap__footer {
+  position: relative;
+}
+
+.te-elim-v2 .te-elim-recap__header {
+  padding: 1.35rem 1.5rem 0;
+  text-align: center;
+}
+
+.te-elim-v2 .te-elim-recap__eyebrow {
+  margin: 0;
+  color: var(--brand-accent, var(--ro-medal-gold));
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+
+.te-elim-v2 .te-elim-recap__rule {
+  display: block;
+  width: min(8rem, 22%);
+  height: 1px;
+  margin: 0.7rem auto 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--brand-accent, var(--ro-medal-gold)) 70%, transparent),
+    transparent
+  );
+}
+
+.te-elim-v2 .te-elim-recap__hero {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 1rem 1.5rem 0.25rem;
+  text-align: center;
+}
+
+.te-elim-v2 .te-elim-recap__badge {
+  margin: 0;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid
+    color-mix(in srgb, var(--ro-medal-gold) 55%, transparent);
+  border-radius: 999px;
+  color: var(--ro-chrome-text);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.te-elim-v2 .te-elim-recap__title {
+  margin: 0.35rem 0 0;
+  color: var(--ro-chrome-text);
+  font-family: var(--font-display, var(--font-body));
+  font-size: clamp(1.7rem, 2.4vw, 2.15rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.te-elim-v2 .te-elim-recap__pair {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  margin-top: 0.85rem;
+}
+
+.te-elim-v2 .te-elim-recap__player {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  width: 8.5rem;
+}
+
+.te-elim-v2 .te-elim-recap__player p {
+  margin: 0;
+  color: var(--ro-chrome-text);
+  font-size: 1.05rem;
+  font-weight: 750;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.te-elim-v2 .te-elim-recap__avatar.rj-avatar {
+  width: 6.75rem;
+  height: 6.75rem;
+  border: 2px solid
+    color-mix(in srgb, var(--brand-accent, var(--ro-medal-gold)) 55%, transparent);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  font-size: 1.6rem;
+}
+
+.te-elim-v2 .te-elim-recap__trophy {
+  display: grid;
+  place-items: center;
+  align-self: center;
+  margin-top: 1.6rem;
+  color: var(--brand-accent, var(--ro-medal-gold));
+}
+
+.te-elim-v2 .te-elim-recap__runner {
+  margin: 0.85rem 0 0;
+  color: var(--ro-chrome-text-muted);
+  font-size: 0.95rem;
+}
+
+.te-elim-v2 .te-elim-recap__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 1rem 1.5rem 0;
+  padding: 0.7rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--ro-chrome-text) 12%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--ro-chrome-bg) 35%, transparent);
+}
+
+.te-elim-v2 .te-elim-recap__stats div {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.te-elim-v2 .te-elim-recap__stats div + div {
+  border-left: 1px solid color-mix(in srgb, var(--ro-chrome-text) 12%, transparent);
+}
+
+.te-elim-v2 .te-elim-recap__stats span {
+  color: var(--ro-chrome-text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.te-elim-v2 .te-elim-recap__stats strong {
+  color: var(--ro-chrome-text);
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.te-elim-v2 .te-elim-recap__matches {
+  margin: 0.9rem 1.5rem 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--ro-chrome-text) 12%, transparent);
+}
+
+.te-elim-v2 .te-elim-recap__matches > p {
+  margin: 0 0 0.55rem;
+  color: var(--brand-accent, var(--ro-medal-gold));
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.te-elim-v2 .te-elim-recap__matches-head,
+.te-elim-v2 .te-elim-recap__matches li {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(5.5rem, auto) minmax(6.5rem, auto) 3rem;
+  align-items: baseline;
+  gap: 0.75rem 1rem;
+}
+
+.te-elim-v2 .te-elim-recap__matches-head {
+  margin-bottom: 0.35rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ro-chrome-text) 10%, transparent);
+  color: var(--ro-chrome-text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.te-elim-v2 .te-elim-recap__matches-head span:nth-child(n + 2),
+.te-elim-v2 .te-elim-recap__round,
+.te-elim-v2 .te-elim-recap__score,
+.te-elim-v2 .te-elim-recap__dif {
+  text-align: right;
+}
+
+.te-elim-v2 .te-elim-recap__matches ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.te-elim-v2 .te-elim-recap__matches li {
+  padding: 0.45rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ro-chrome-text) 8%, transparent);
+  color: var(--ro-chrome-text);
+  font-size: 0.95rem;
+}
+
+.te-elim-v2 .te-elim-recap__matches li:last-child {
+  border-bottom: 0;
+}
+
+.te-elim-v2 .te-elim-recap__rival {
+  display: flex;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.te-elim-v2 .te-elim-recap__rival i {
+  flex: none;
+  color: var(--ro-chrome-text-muted);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.te-elim-v2 .te-elim-recap__round,
+.te-elim-v2 .te-elim-recap__score {
+  color: var(--ro-chrome-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.te-elim-v2 .te-elim-recap__dif {
+  color: var(--brand-accent, var(--ro-medal-gold));
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.te-elim-v2 .te-elim-recap__footer {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  padding: 1.1rem 1.5rem 1.25rem;
+}
+
+.te-elim-v2 .te-elim-recap__footer span {
+  width: 6rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--ro-chrome-text) 18%, transparent);
+}
+
+.te-elim-v2 .te-elim-recap__footer p {
+  margin: 0;
+  color: var(--ro-chrome-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 /* Escritorio: panel horizontal que cabe en la ventana. El móvil sigue en 9:16. */
 @media (min-width: 64rem) {
+  .te-elim-v2 .te-pb-podium-share-grid,
+  .te-elim-v2 .te-pb-closing-community {
+    display: none;
+  }
+
+  .te-elim-v2 .te-elim-recap {
+    display: block;
+  }
+
   .te-elim-v2 .te-pb-closing-stack {
     width: min(100%, 62rem);
     margin-inline: auto;
