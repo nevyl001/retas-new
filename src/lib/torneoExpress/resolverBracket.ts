@@ -11,18 +11,30 @@ import type {
 } from "./bracketTypes";
 import { BRACKET_FASE_SLOTS } from "./bracketTypes";
 
-const SEED_SLOT_INDEX: Record<number, number[]> = {
-  4: [0, 3, 2, 1],
-  8: [0, 7, 3, 4, 2, 5, 6, 1],
-  16: [0, 15, 7, 8, 3, 12, 4, 11, 2, 13, 6, 9, 5, 10, 14, 1],
-};
-
+/**
+ * Cuadro clásico, de arriba a abajo:
+ * 1 vs N, 4 vs 5, 2 vs N-1, 3 vs N-2.
+ * Así un 2º queda contra un 3º, y los mejores 1º contra el peor seed o un BYE.
+ * El valor es el slot (0-based) de cada seed, en orden de seed.
+ */
 function seedPlacementOrder(count: number): number[] {
-  const map = SEED_SLOT_INDEX[count];
-  if (!map) {
+  if (count < 2 || (count & (count - 1)) !== 0) {
     throw new Error(`Bracket no soportado para ${count} plazas`);
   }
-  return map;
+  let positions = [1, 2];
+  while (positions.length < count) {
+    const span = positions.length * 2 + 1;
+    const next: number[] = [];
+    for (const seed of positions) {
+      next.push(seed, span - seed);
+    }
+    positions = next;
+  }
+  const slots = new Array<number>(count);
+  positions.forEach((seed, slot) => {
+    slots[seed - 1] = slot;
+  });
+  return slots;
 }
 
 function fasePrevia(fase: BracketFase): BracketFase | null {
@@ -202,9 +214,24 @@ function countChoques(slots: BracketSlotEntry[]): number {
   return n;
 }
 
+/** Distancia de seeds del cruce. Un BYE cuenta como el cruce más abierto. */
+function pairSpread(slots: BracketSlotEntry[], matchStart: number): number {
+  const a = slots[matchStart];
+  const b = slots[matchStart + 1];
+  if (a?.type === "bye" || b?.type === "bye") return 1000;
+  if (a?.type !== "team" || b?.type !== "team") return 0;
+  return Math.abs(a.qualifier.seed - b.qualifier.seed);
+}
+
+function totalSpread(slots: BracketSlotEntry[]): number {
+  let sum = 0;
+  for (let i = 0; i < slots.length; i += 2) sum += pairSpread(slots, i);
+  return sum;
+}
+
 /**
- * Busca un intercambio que reduzca choques de grupo sin tocar slots protegidos
- * (cruces de seeds #1 y #2 contra N / N-1).
+ * Intercambio que reduce choques de grupo sin tocar slots protegidos.
+ * Si hay varios, se queda el que más separa los seeds (2º contra 3º).
  */
 function findMiddleSwapCandidate(
   slots: BracketSlotEntry[],
@@ -216,6 +243,8 @@ function findMiddleSwapCandidate(
   const partner = partnerSlotIndex(clashSlot);
   const before = countChoques(slots);
 
+  let best: { other: number; clashes: number; spread: number } | null = null;
+
   for (let other = 0; other < slots.length; other++) {
     if (other === clashSlot || other === partner) continue;
     if (protectedSlots.has(other) || protectedSlots.has(clashSlot)) continue;
@@ -224,11 +253,19 @@ function findMiddleSwapCandidate(
 
     swapSlots(slots, clashSlot, other);
     const after = countChoques(slots);
-    swapSlots(slots, clashSlot, other); // revert trial
+    const spread = totalSpread(slots);
+    swapSlots(slots, clashSlot, other);
 
-    if (after < before) return other;
+    if (after >= before) continue;
+    if (
+      !best ||
+      after < best.clashes ||
+      (after === best.clashes && spread > best.spread)
+    ) {
+      best = { other, clashes: after, spread };
+    }
   }
-  return null;
+  return best?.other ?? null;
 }
 
 /**
@@ -236,7 +273,8 @@ function findMiddleSwapCandidate(
  * - #1 y #2 siguen enfrentando a N y N-1 (mejores terceros / peores seeds).
  * - Quien el cuadro clásico manda contra un BYE pasa directo. Ese cruce no se
  *   mueve para resolver un choque de grupo.
- * - El resto del cuadro sí puede reordenarse para evitar mismo grupo en 1ª ronda.
+ * - El resto se reordena sin juntar dos 2º ni dos 3º: un puesto alto sigue
+ *   contra un puesto bajo.
  */
 export function resolverChoquesAutomaticos(
   slots: BracketSlotEntry[]

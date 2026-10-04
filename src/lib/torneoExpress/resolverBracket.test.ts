@@ -140,9 +140,9 @@ describe("resolverChoquesAutomaticos", () => {
     };
   }
 
-  /** Coloca seeds en slots con el mapa clásico de 8. */
+  /** Coloca seeds en el cuadro clásico de 8: 1-8, 4-5, 2-7, 3-6. */
   function placeClassic8(qs: BracketQualifier[]): BracketSlotEntry[] {
-    const map = [0, 7, 3, 4, 2, 5, 6, 1];
+    const map = [0, 4, 6, 2, 3, 7, 5, 1];
     const slots: BracketSlotEntry[] = Array.from({ length: 8 }, () => ({
       type: "bye" as const,
     }));
@@ -221,6 +221,25 @@ describe("resolverChoquesAutomaticos", () => {
 
     expect(partnerSeed(fixed, 1)).toBe(-1);
     expect(partnerSeed(fixed, 2)).toBe(-1);
+    expect([partnerSeed(fixed, 3), partnerSeed(fixed, 4)].sort()).toEqual([
+      5, 6,
+    ]);
+    expect(partnerSeed(fixed, 3)).not.toBe(4);
+    expect(partnerSeed(fixed, 5)).not.toBe(6);
     expect(validarChoques(fixed)).toEqual([]);
+
+    const built = resolverBracket(2, "cuartos", [
+      qf("B", "Nevyl / Zaid", 1, 1),
+      qf("A", "Omar / Ernesto", 1, 2),
+      qf("A", "Alexander / Iván", 2, 3),
+      qf("B", "Javier / Carlos", 2, 4),
+      qf("A", "Pepe / Areli", 3, 5),
+      qf("B", "José / Héctor", 3, 6),
+    ]);
+    expect(partnerSeed(built.slots, 1)).toBe(-1);
+    expect(partnerSeed(built.slots, 2)).toBe(-1);
+    expect(partnerSeed(built.slots, 3)).toBe(6);
+    expect(partnerSeed(built.slots, 4)).toBe(5);
+    expect(validarChoques(built.slots)).toEqual([]);
   });
 });
