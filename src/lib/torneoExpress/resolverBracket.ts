@@ -233,6 +233,73 @@ function totalSpread(slots: BracketSlotEntry[]): number {
  * Intercambio que reduce choques de grupo sin tocar slots protegidos.
  * Si hay varios, se queda el que más separa los seeds (2º contra 3º).
  */
+function matchStart(slotIndex: number): number {
+  return slotIndex - (slotIndex % 2);
+}
+
+function siblingMatchStart(matchStartIndex: number): number {
+  const cruce = matchStartIndex / 2;
+  const sibling = cruce % 2 === 0 ? cruce + 1 : cruce - 1;
+  return sibling * 2;
+}
+
+function teamOf(slot: BracketSlotEntry | undefined): BracketQualifier | null {
+  return slot?.type === "team" ? slot.qualifier : null;
+}
+
+/** Favorito del otro cruce de la misma semifinal. */
+function favoritoDelCruceVecino(
+  slots: BracketSlotEntry[],
+  slotIndex: number
+): BracketQualifier | null {
+  const sibling = siblingMatchStart(matchStart(slotIndex));
+  const a = teamOf(slots[sibling]);
+  const b = teamOf(slots[sibling + 1]);
+  if (a && b) return a.seed <= b.seed ? a : b;
+  return a ?? b;
+}
+
+function esChoqueDeSemifinal(
+  slots: BracketSlotEntry[],
+  slotIndex: number
+): boolean {
+  const anchor = teamOf(slots[slotIndex]);
+  const favorito = favoritoDelCruceVecino(slots, slotIndex);
+  if (!anchor || !favorito) return false;
+  return anchor.grupoId === favorito.grupoId;
+}
+
+function esCruceConBye(slots: BracketSlotEntry[], slotIndex: number): boolean {
+  const start = matchStart(slotIndex);
+  return (slots[start]?.type === "bye") !== (slots[start + 1]?.type === "bye");
+}
+
+/**
+ * Cruza los dos primeros de mitad cuando cada uno caería en semifinal
+ * contra el 2º de su propio grupo. El BYE sigue con cada 1º.
+ */
+function cruzarPrimerosSiChoqueDeSemifinal(slots: BracketSlotEntry[]): void {
+  const bySeed = slotIndexBySeed(slots);
+  const slot1 = bySeed.get(1);
+  const slot2 = bySeed.get(2);
+  if (slot1 == null || slot2 == null) return;
+  if (!esCruceConBye(slots, slot1) || !esCruceConBye(slots, slot2)) return;
+  if (Math.floor(matchStart(slot1) / 4) === Math.floor(matchStart(slot2) / 4)) {
+    return;
+  }
+
+  const before =
+    Number(esChoqueDeSemifinal(slots, slot1)) +
+    Number(esChoqueDeSemifinal(slots, slot2));
+  if (before === 0) return;
+
+  swapSlots(slots, slot1, slot2);
+  const after =
+    Number(esChoqueDeSemifinal(slots, slot1)) +
+    Number(esChoqueDeSemifinal(slots, slot2));
+  if (after >= before) swapSlots(slots, slot1, slot2);
+}
+
 function findMiddleSwapCandidate(
   slots: BracketSlotEntry[],
   clashSlot: number,
@@ -364,6 +431,10 @@ export function resolverChoquesAutomaticos(
     }
     if (!progressed) break;
   }
+
+  // 1º contra el 2º del otro grupo en la semifinal. Si el cuadro clásico
+  // deja a cada 1º con el 2º de su grupo, se cambian de mitad y conservan el BYE.
+  cruzarPrimerosSiChoqueDeSemifinal(next);
 
   return next;
 }

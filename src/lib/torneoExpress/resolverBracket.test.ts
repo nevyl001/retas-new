@@ -249,7 +249,45 @@ describe("resolverChoquesAutomaticos", () => {
       const cruce = Math.floor(idx / 2);
       return cruce < built.slots.length / 4 ? "A" : "B";
     };
-    expect(finalSide(1)).toBe("A");
-    expect(finalSide(2)).toBe("B");
+    const siblingSeeds = (seed: number) => {
+      const idx = built.slots.findIndex(
+        (s) => s.type === "team" && s.qualifier.seed === seed
+      );
+      const cruce = Math.floor(idx / 2);
+      const sibling = cruce % 2 === 0 ? cruce + 1 : cruce - 1;
+      const start = sibling * 2;
+      return [start, start + 1]
+        .map((i) => built.slots[i])
+        .filter((s) => s?.type === "team")
+        .map((s) => (s.type === "team" ? s.qualifier.seed : -1))
+        .sort((a, b) => a - b);
+    };
+
+    // 1°B no puede caer con el 2°B. Cada 1º va a la mitad del 2º del otro grupo.
+    expect(finalSide(1)).toBe("B");
+    expect(finalSide(2)).toBe("A");
+    expect(siblingSeeds(2)).toEqual([4, 5]);
+    expect(siblingSeeds(1)).toEqual([3, 6]);
+  });
+
+  it("no cruza mitades si cada 1º ya cae con el 2º del otro grupo", () => {
+    const built = resolverBracket(2, "cuartos", [
+      qf("A", "1A", 1, 1),
+      qf("B", "1B", 1, 2),
+      qf("A", "2A", 2, 3),
+      qf("B", "2B", 2, 4),
+      qf("A", "3A", 3, 5),
+      qf("B", "3B", 3, 6),
+    ]);
+    const side = (seed: number) => {
+      const idx = built.slots.findIndex(
+        (s) => s.type === "team" && s.qualifier.seed === seed
+      );
+      return Math.floor(idx / 2) < built.slots.length / 4 ? "A" : "B";
+    };
+    expect(side(1)).toBe("A");
+    expect(side(2)).toBe("B");
+    expect(partnerSeed(built.slots, 1)).toBe(-1);
+    expect(partnerSeed(built.slots, 2)).toBe(-1);
   });
 });
