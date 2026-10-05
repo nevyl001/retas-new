@@ -2655,7 +2655,7 @@
 
 .te-elim-v2 .te-elim-recap__stage {
   display: grid;
-  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  grid-template-columns: minmax(22rem, 46%) minmax(0, 1fr);
   align-items: center;
   gap: 1rem 1.75rem;
   padding: 1.15rem 1.5rem 0.15rem;
@@ -2663,7 +2663,9 @@
 
 .te-elim-v2 .te-elim-recap__portraits {
   display: grid;
-  gap: 1.1rem;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  gap: 0.7rem 0.85rem;
 }
 
 .te-elim-v2 .te-elim-recap__results {
@@ -2697,14 +2699,24 @@
 .te-elim-v2 .te-elim-recap__title {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.55rem;
   margin: 0.35rem 0 0;
   color: var(--ro-chrome-text);
   font-family: var(--font-display, var(--font-body));
-  font-size: clamp(1.7rem, 2.4vw, 2.15rem);
+  font-size: clamp(1.45rem, 2.1vw, 1.9rem);
   font-weight: 750;
   letter-spacing: -0.03em;
-  line-height: 1.05;
+  line-height: 1.1;
+}
+
+.te-elim-v2 .te-elim-recap__message {
+  margin: 0.35rem 0 0;
+  max-width: 36rem;
+  color: var(--ro-chrome-text-muted);
+  font-size: 0.98rem;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .te-elim-v2 .te-elim-recap__title svg,
@@ -2735,111 +2747,63 @@
   color: var(--ro-medal-gold);
 }
 
-.te-elim-v2 .te-elim-recap--champion .te-elim-recap__title {
-  font-size: clamp(2rem, 2.8vw, 2.55rem);
-}
-
-.te-elim-v2 .te-elim-recap--champion .te-elim-recap__stage {
-  grid-template-columns: minmax(22rem, 46%) minmax(0, 1fr);
-  align-items: center;
-}
-
-.te-elim-v2 .te-elim-recap--champion .te-elim-recap__portraits {
-  grid-template-columns: 1fr 1fr;
-  align-items: end;
-  gap: 0.7rem 0.85rem;
-}
-
-.te-elim-v2 .te-elim-recap--champion .te-elim-recap__player {
+.te-elim-v2 .te-elim-recap__player {
+  display: grid;
   grid-template-columns: 1fr;
   justify-items: center;
   gap: 0.65rem;
-}
-
-.te-elim-v2 .te-elim-recap--champion .te-elim-recap__player p {
-  margin: 0;
-  text-align: center;
-  font-size: 1.15rem;
-}
-
-.te-elim-v2 .te-elim-recap--champion .te-elim-recap__avatar.rj-avatar {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 4 / 5;
-  max-height: 16.5rem;
-  border-radius: 1.2rem;
-  box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.42),
-    inset 0 0 0 1px color-mix(in srgb, var(--ro-medal-gold) 62%, transparent);
-}
-
-.te-elim-v2 .te-elim-recap--champion .te-elim-recap__avatar.rj-avatar .rj-avatar__img {
-  border-radius: 1.2rem;
-}
-
-.te-elim-v2 .te-elim-recap__player {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: end;
-  gap: 0.85rem;
   width: 100%;
 }
 
 .te-elim-v2 .te-elim-recap__player p {
-  margin: 0 0 0.35rem;
+  margin: 0;
   color: var(--ro-chrome-text);
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 750;
   line-height: 1.15;
+  text-align: center;
 }
 
 .te-elim-v2 .te-elim-recap__avatar.rj-avatar {
-  width: clamp(8.5rem, 14vh, 10.5rem);
-  height: clamp(10.5rem, 18vh, 13rem);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  max-height: 16.5rem;
   border: 0;
-  border-radius: 1.35rem;
+  border-radius: 1.2rem;
   box-shadow:
-    0 16px 36px rgba(0, 0, 0, 0.38),
-    inset 0 0 0 1px
-      color-mix(in srgb, var(--brand-accent, var(--ro-medal-gold)) 45%, transparent);
+    0 18px 40px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px color-mix(in srgb, var(--ro-medal-gold) 62%, transparent);
   font-size: 2rem;
 }
 
 .te-elim-v2 .te-elim-recap__avatar.rj-avatar .rj-avatar__img {
-  border-radius: 1.35rem;
+  border-radius: 1.2rem;
   object-position: center 18%;
 }
 
 .te-elim-v2 .te-elim-recap--second {
   border-color: color-mix(
     in srgb,
-    var(--ro-medal-silver) 32%,
+    var(--ro-medal-silver) 48%,
     var(--ro-chrome-border)
   );
   background:
-    linear-gradient(
-      168deg,
-      color-mix(in srgb, var(--ro-medal-silver) 9%, transparent),
-      transparent 42%
+    radial-gradient(
+      120% 80% at 18% 0%,
+      color-mix(in srgb, var(--ro-medal-silver) 14%, transparent),
+      transparent 46%
     ),
     var(--ro-chrome-deep, var(--ro-chrome-bg));
-}
-
-.te-elim-v2 .te-elim-recap--second .te-elim-recap__stage {
-  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+  box-shadow:
+    0 24px 56px rgba(0, 0, 0, 0.36),
+    0 0 0 1px color-mix(in srgb, var(--ro-medal-silver) 20%, transparent);
 }
 
 .te-elim-v2 .te-elim-recap--second .te-elim-recap__avatar.rj-avatar {
-  width: clamp(6.25rem, 10vh, 7.5rem);
-  height: clamp(7.75rem, 13vh, 9.25rem);
-}
-
-.te-elim-v2 .te-elim-recap--second .te-elim-recap__player p {
-  font-size: 1.05rem;
-}
-
-.te-elim-v2 .te-elim-recap--second .te-elim-recap__title {
-  font-size: clamp(1.45rem, 2vw, 1.75rem);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px color-mix(in srgb, var(--ro-medal-silver) 62%, transparent);
 }
 
 .te-elim-v2 .te-elim-recap--second .te-elim-recap__eyebrow,
@@ -2861,12 +2825,6 @@
 
 .te-elim-v2 .te-elim-recap--second .te-elim-recap__badge {
   border-color: color-mix(in srgb, var(--ro-medal-silver) 55%, transparent);
-}
-
-.te-elim-v2 .te-elim-recap--second .te-elim-recap__avatar.rj-avatar {
-  box-shadow:
-    0 16px 36px rgba(0, 0, 0, 0.38),
-    inset 0 0 0 1px color-mix(in srgb, var(--ro-medal-silver) 55%, transparent);
 }
 
 .te-elim-v2 .te-elim-recap__stats {

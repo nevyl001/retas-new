@@ -829,8 +829,15 @@ function TournamentRecap({
             </p>
             <h2 className="te-elim-recap__title">
               <TablerIcon name={isChampion ? "trophy" : "medal"} size={22} />
-              {isChampion ? "¡Felicidades!" : "Gran torneo."}
+              {isChampion
+                ? "¡Felicidades, campeones!"
+                : "¡Felicidades, subcampeones!"}
             </h2>
+            <p className="te-elim-recap__message">
+              {isChampion
+                ? "Se coronaron. Este título es de ustedes, y la próxima toca defenderlo."
+                : "Llegaron a la final. Quedaron a un paso, y la próxima van por el título."}
+            </p>
           </div>
       {stats ? (
         <div
