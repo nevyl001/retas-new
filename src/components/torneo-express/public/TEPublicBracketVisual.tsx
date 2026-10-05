@@ -797,7 +797,7 @@ function TournamentRecap({
 
   return (
     <section
-      className={`te-elim-recap${isChampion ? "" : " te-elim-recap--second"}`}
+      className={`te-elim-recap${isChampion ? " te-elim-recap--champion" : " te-elim-recap--second"}`}
       aria-label={isChampion ? "Resumen de los campeones" : "Resumen de los subcampeones"}
     >
       <header className="te-elim-recap__header">
