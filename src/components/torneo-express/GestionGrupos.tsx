@@ -35,7 +35,9 @@ import { TorneoExpressBracketModal } from "./TorneoExpressBracketModal";
 import { TorneoExpressNotificacionesPanel } from "./TorneoExpressNotificacionesPanel";
 import { TorneoExpressResetEliminatoriaModal } from "./TorneoExpressResetEliminatoriaModal";
 import { TeProgramacionMenu } from "./TeProgramacionMenu";
+import { TeReiniciarFaseGruposAction } from "./TeReiniciarFaseGruposAction";
 import { TeProgramarGrupoModal } from "./TeProgramarGrupoModal";
+import { puedeReiniciarFaseDeGrupos } from "../../lib/torneoExpress/resetFaseGrupos";
 import { TeReprogramarProgramacionModal } from "./TeReprogramarProgramacionModal";
 import type { ScheduleMode } from "../../lib/torneoExpress/schedulePendingGroup";
 import { torneoEstadoBadgeVariant } from "./teEstadoBadge";
@@ -210,6 +212,19 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     }));
   }, [bundle, courtCheckScope, grupoId]);
 
+  const renderReiniciarFase = () =>
+    bundle && puedeReiniciarFaseGrupos ? (
+      <TeReiniciarFaseGruposAction
+        grupos={bundle.grupos.map((grupo) => ({
+          id: grupo.id,
+          orden: grupo.orden,
+          version: typeof grupo.version === "number" ? grupo.version : null,
+        }))}
+        onReload={() => reload()}
+        onDone={(message) => setActionToast({ message, type: "success" })}
+      />
+    ) : null;
+
   const renderProgramacionMenu = () =>
     puedeEditarProgramacion ? (
       <TeProgramacionMenu
@@ -290,6 +305,22 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
 
   const puedeReiniciarEliminatoria =
     faseTorneo === "eliminatoria" && bundle?.torneo.estado !== "finalizado";
+
+  const puedeReiniciarFaseGrupos = bundle
+    ? puedeReiniciarFaseDeGrupos({
+        faseTorneo,
+        estado: bundle.torneo.estado,
+        eliminatoriaCount: bundle.eliminatoriaPartidos.length,
+        gruposCount: bundle.grupos.length,
+      })
+    : false;
+
+  useEffect(() => {
+    if (!bundle || !activeGrupoId) return;
+    if (!bundle.grupos.some((grupo) => grupo.id === activeGrupoId)) {
+      setActiveGrupoId(null);
+    }
+  }, [bundle, activeGrupoId]);
 
   const hasPendingGrupoPartidos = useMemo(() => {
     if (!bundle || faseTorneo !== "grupos") return false;
@@ -641,6 +672,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         >
           Ver tabla general
         </Button>
+        {renderReiniciarFase()}
       </ActionBar>
       {showNotifPanel && (
         <TorneoExpressNotificacionesPanel torneoExpressId={torneoId} />
@@ -1066,6 +1098,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           >
             Ver tabla general
           </Button>
+          {renderReiniciarFase()}
         </ActionBar>
       </header>
 

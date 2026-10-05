@@ -181,6 +181,21 @@ export async function applyGroupSchedule(input: {
   };
 }
 
+export async function resetGroup(input: {
+  grupoId: string;
+  expectedVersion: number;
+}): Promise<{ matchesReset: number; ratingsReverted: number; version: number }> {
+  const row = await callRpc("reset_torneo_express_grupo", {
+    p_grupo_id: input.grupoId,
+    p_expected_version: input.expectedVersion,
+  });
+  return {
+    matchesReset: Number(row.matches_reset),
+    ratingsReverted: Number(row.ratings_reverted),
+    version: Number(row.version),
+  };
+}
+
 export async function reconcileGroupMatches(input: {
   grupoId: string;
   expectedVersion: number;

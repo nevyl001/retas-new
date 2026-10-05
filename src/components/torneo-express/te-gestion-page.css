@@ -569,7 +569,8 @@
   }
 }
 
-.te-gestion-page .te-programacion-menu {
+.te-gestion-page .te-programacion-menu,
+.te-gestion-page .te-categoria-menu {
   position: relative;
   flex: 0 0 auto;
 }
@@ -578,7 +579,14 @@
   margin-left: 0.35rem;
 }
 
-.te-gestion-page .te-programacion-menu__panel {
+.te-gestion-page .te-categoria-menu__trigger.riviera-btn {
+  min-width: 2.5rem;
+  padding-inline: 0.65rem;
+  letter-spacing: 0.12em;
+}
+
+.te-gestion-page .te-programacion-menu__panel,
+.te-gestion-page .te-categoria-menu__panel {
   position: absolute;
   top: calc(100% + 0.35rem);
   right: 0;
@@ -593,7 +601,8 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
-.te-gestion-page .te-programacion-menu__item {
+.te-gestion-page .te-programacion-menu__item,
+.te-gestion-page .te-categoria-menu__item {
   display: block;
   width: 100%;
   margin: 0;
@@ -610,7 +619,9 @@
 }
 
 .te-gestion-page .te-programacion-menu__item:hover,
-.te-gestion-page .te-programacion-menu__item:focus-visible {
+.te-gestion-page .te-programacion-menu__item:focus-visible,
+.te-gestion-page .te-categoria-menu__item:hover,
+.te-gestion-page .te-categoria-menu__item:focus-visible {
   background: color-mix(in srgb, var(--text-primary) 6%, transparent);
 }
 

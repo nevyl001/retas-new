@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabaseClient";
-import { applyGroupSchedule, changePairPlayer, TorneoExpressGrupoOpError } from "./torneoExpressGrupoOps";
+import { applyGroupSchedule, changePairPlayer, resetGroup, TorneoExpressGrupoOpError } from "./torneoExpressGrupoOps";
 
 jest.mock("../lib/supabaseClient", () => ({
   supabase: {
@@ -72,5 +72,21 @@ describe("torneoExpressGrupoOps", () => {
       p_expected_version: 2,
       p_mode: "faltantes",
     }));
+  });
+
+  it("reinicia un grupo con la versión esperada", async () => {
+    rpc.mockResolvedValue({
+      data: { ok: true, group_id: "g", matches_reset: 2, ratings_reverted: 1, version: 5 },
+      error: null,
+    });
+    await expect(resetGroup({ grupoId: "g", expectedVersion: 4 })).resolves.toEqual({
+      matchesReset: 2,
+      ratingsReverted: 1,
+      version: 5,
+    });
+    expect(rpc).toHaveBeenCalledWith("reset_torneo_express_grupo", {
+      p_grupo_id: "g",
+      p_expected_version: 4,
+    });
   });
 });
