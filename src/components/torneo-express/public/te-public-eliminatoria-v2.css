@@ -2601,7 +2601,7 @@
 }
 
 .te-elim-v2 .te-elim-recap {
-  display: none;
+  display: block;
   position: relative;
   width: 100%;
   border: 1px solid
@@ -2655,10 +2655,10 @@
 
 .te-elim-v2 .te-elim-recap__stage {
   display: grid;
-  grid-template-columns: minmax(22rem, 46%) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: 1rem 1.75rem;
-  padding: 1.15rem 1.5rem 0.15rem;
+  gap: 1rem;
+  padding: 1rem 1rem 0.15rem;
 }
 
 .te-elim-v2 .te-elim-recap__portraits {
@@ -2677,10 +2677,10 @@
 
 .te-elim-v2 .te-elim-recap__hero {
   display: grid;
-  justify-items: start;
+  justify-items: center;
   gap: 0.35rem;
   padding: 0;
-  text-align: left;
+  text-align: center;
 }
 
 .te-elim-v2 .te-elim-recap__badge {
@@ -2700,11 +2700,12 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.45rem 0.55rem;
   margin: 0.35rem 0 0;
   color: var(--ro-chrome-text);
   font-family: var(--font-display, var(--font-body));
-  font-size: clamp(1.45rem, 2.1vw, 1.9rem);
+  font-size: clamp(1.35rem, 5.5vw, 1.9rem);
   font-weight: 750;
   letter-spacing: -0.03em;
   line-height: 1.1;
@@ -2712,11 +2713,12 @@
 
 .te-elim-v2 .te-elim-recap__message {
   margin: 0.35rem 0 0;
-  max-width: 36rem;
+  max-width: 34rem;
   color: var(--ro-chrome-text-muted);
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   font-weight: 500;
   line-height: 1.4;
+  text-align: center;
 }
 
 .te-elim-v2 .te-elim-recap__title svg,
@@ -2867,6 +2869,7 @@
 .te-elim-v2 .te-elim-recap__matches {
   margin: 0;
   padding-top: 0.15rem;
+  overflow-x: auto;
   border-top: 1px solid color-mix(in srgb, var(--ro-chrome-text) 12%, transparent);
 }
 
@@ -2972,15 +2975,44 @@
   text-transform: uppercase;
 }
 
-/* Escritorio: panel horizontal que cabe en la ventana. El móvil sigue en 9:16. */
+/* Móvil: la misma tarjeta, en vertical. El póster redondo no se muestra. */
+@media (max-width: 63.99rem) {
+  .te-elim-v2 .te-podium-share__art {
+    display: none;
+  }
+
+  .te-elim-v2 .te-podium-share {
+    width: min(100%, 28rem);
+  }
+
+  .te-elim-v2 .te-elim-recap__matches-head,
+  .te-elim-v2 .te-elim-recap__matches li {
+    min-width: 20rem;
+  }
+}
+
+/* Escritorio: fotos a la izquierda y resultados a la derecha. */
 @media (min-width: 64rem) {
   .te-elim-v2 .te-pb-podium-share-grid,
   .te-elim-v2 .te-pb-closing-community {
     display: none;
   }
 
-  .te-elim-v2 .te-elim-recap {
-    display: block;
+  .te-elim-v2 .te-elim-recap__stage {
+    grid-template-columns: minmax(22rem, 46%) minmax(0, 1fr);
+    gap: 1rem 1.75rem;
+    padding: 1.15rem 1.5rem 0.15rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__hero,
+  .te-elim-v2 .te-elim-recap__message {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .te-elim-v2 .te-elim-recap__title {
+    justify-content: flex-start;
+    font-size: clamp(1.45rem, 2.1vw, 1.9rem);
   }
 
   .te-elim-v2 .te-pb-closing-stack {
