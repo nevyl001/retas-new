@@ -2960,7 +2960,7 @@
   padding: 1.1rem 1.5rem 1.25rem;
 }
 
-.te-elim-v2 .te-elim-recap__footer span {
+.te-elim-v2 .te-elim-recap__footer > span {
   width: 6rem;
   height: 1px;
   background: color-mix(in srgb, var(--ro-chrome-text) 18%, transparent);
@@ -2973,6 +2973,37 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+}
+
+.te-elim-v2 .te-elim-recap__social {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.te-elim-v2 .te-elim-recap__social ul {
+  display: flex;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.te-elim-v2 .te-elim-recap__social a {
+  color: var(--ro-chrome-text-muted);
+  text-decoration: none;
+}
+
+.te-elim-v2 .te-elim-recap__social a:hover,
+.te-elim-v2 .te-elim-recap__social a:focus-visible {
+  color: var(--ro-chrome-text);
+}
+
+.te-elim-v2 .te-elim-recap__handle {
+  color: var(--ro-chrome-text-muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
 }
 
 /* Móvil: tarjeta vertical para un pantallazo. Sin botón de compartir. */

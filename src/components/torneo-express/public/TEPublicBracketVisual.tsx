@@ -893,6 +893,27 @@ function TournamentRecap({
       <footer className="te-elim-recap__footer">
         <span aria-hidden />
         <p>Vive Riviera Open</p>
+        <div className="te-elim-recap__social">
+          <ul aria-label="Redes sociales Riviera Open">
+            {(["tiktok", "instagram", "facebook"] as const).map((id) => {
+              const link = RIVIERA_SOCIAL_LINKS.find((item) => item.id === id);
+              if (!link) return null;
+              return (
+                <li key={link.id}>
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${link.label} ${RIVIERA_SOCIAL_HANDLE}`}
+                  >
+                    <TablerIcon name={SOCIAL_ICON_BY_ID[link.id]} size={16} />
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+          <span className="te-elim-recap__handle">{RIVIERA_SOCIAL_HANDLE}</span>
+        </div>
       </footer>
     </section>
   );
