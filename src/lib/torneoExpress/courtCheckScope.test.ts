@@ -65,5 +65,7 @@ describe("courtCheckScope", () => {
     expect(occupiedCourtSlotKey(iso, "Cancha 1")).toBe(
       occupiedCourtSlotKey(iso, "1")
     );
+    expect(occupiedCourtSlotKey(iso, "")).toBeNull();
+    expect(occupiedCourtSlotKey(iso, null)).toBeNull();
   });
 });

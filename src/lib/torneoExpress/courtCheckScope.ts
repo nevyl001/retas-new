@@ -1,7 +1,4 @@
-import {
-  formatCanchaDisplay,
-  normalizeCanchaForSave,
-} from "./canchaDisplay";
+import { formatCanchaDisplay } from "./canchaDisplay";
 import { formatPartidoHora, partidoScheduleIso } from "./partidoSchedule";
 import { mexicoScheduleSlotKey } from "./teScheduleTime";
 import type {
@@ -16,9 +13,10 @@ export type TeOccupiedCourtSlot = {
 };
 
 function courtKeyForOccupancy(raw: string | null | undefined): string {
-  const v = normalizeCanchaForSave(raw ?? "");
+  const v = (raw ?? "").trim();
+  if (!v) return "";
   const prefixed = v.match(/^cancha\s+(.+)$/i);
-  const normalized = prefixed ? prefixed[1].trim() || v : v;
+  const normalized = prefixed ? prefixed[1].trim() : v;
   return normalized.toLowerCase();
 }
 
@@ -154,7 +152,7 @@ export function courtSlotsFromPartidos(
   const out: TeOccupiedCourtSlot[] = [];
   for (const partido of partidos) {
     if (exclude?.has(partido.id)) continue;
-    const iso = partidoScheduleIso(partido);
+    const iso = partido.programado_en?.trim();
     if (!iso || !partido.cancha?.trim()) continue;
     out.push({ programado_en: iso, cancha: partido.cancha });
   }

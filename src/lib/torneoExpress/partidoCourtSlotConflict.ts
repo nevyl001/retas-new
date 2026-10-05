@@ -11,10 +11,19 @@ export const PARTIDO_CANCHA_OCUPADA_MSG =
   "Cancha ocupada en ese horario. Elige otra cancha u otro horario.";
 
 export function canchaSlotKey(raw: string | null | undefined): string {
-  const v = normalizeCanchaForSave(raw ?? "");
+  const v = (raw ?? "").trim();
+  if (!v) return "";
   const prefixed = v.match(/^cancha\s+(.+)$/i);
-  const normalized = prefixed ? prefixed[1].trim() || v : v;
+  const normalized = prefixed ? prefixed[1].trim() : v;
   return normalized.toLowerCase();
+}
+
+/** Solo un horario guardado ocupa cancha. `created_at` no es programación. */
+function assignedScheduleIso(
+  partido: TorneoExpressPartido
+): string | null {
+  const iso = partido.programado_en?.trim();
+  return iso || null;
 }
 
 export function findPartidoCourtSlotConflict(
@@ -37,7 +46,8 @@ export function findPartidoCourtSlotConflict(
 
   for (const partido of partidos) {
     if (partido.id === partidoId) continue;
-    const otherIso = partidoScheduleIso(partido);
+    const otherIso = assignedScheduleIso(partido);
+    if (!otherIso || !canchaSlotKey(partido.cancha)) continue;
     if (mexicoScheduleSlotKey(otherIso) !== slotKey) continue;
     if (canchaSlotKey(partido.cancha) !== courtKey) continue;
     return partido;
@@ -67,7 +77,8 @@ export function findAllPartidoCourtSlotConflicts(
 
   return partidos.filter((partido) => {
     if (partido.id === partidoId) return false;
-    const otherIso = partidoScheduleIso(partido);
+    const otherIso = assignedScheduleIso(partido);
+    if (!otherIso || !canchaSlotKey(partido.cancha)) return false;
     if (mexicoScheduleSlotKey(otherIso) !== slotKey) return false;
     return canchaSlotKey(partido.cancha) === courtKey;
   });
@@ -240,7 +251,7 @@ export function findConflictingPartidoIds(
   const bySlotCourt = new Map<string, string[]>();
 
   for (const partido of partidos) {
-    const iso = partidoScheduleIso(partido);
+    const iso = assignedScheduleIso(partido);
     if (!iso) continue;
     let slotKey: string;
     try {

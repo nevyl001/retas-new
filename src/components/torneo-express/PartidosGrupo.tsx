@@ -970,15 +970,13 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
         </div>
       ) : null}
 
-      {conflictingPartidoIds.size > 0 ? (
+      {conflictMatchLabels.length > 0 ? (
         <div className="te-partidos-court-conflict-banner" role="alert">
           <span className="te-partidos-court-conflict-banner__label">
             Conflicto de programación
           </span>
           <p className="te-partidos-court-conflict-banner__text">
-            {conflictMatchLabels.length > 0
-              ? `Corrige ${conflictMatchLabels.join(" y ")}: misma cancha y horario.`
-              : "Corrige los partidos marcados en rojo: misma cancha y horario."}
+            {`Corrige ${conflictMatchLabels.join(" y ")}: misma cancha y horario.`}
           </p>
         </div>
       ) : null}

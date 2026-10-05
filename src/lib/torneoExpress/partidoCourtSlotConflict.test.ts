@@ -134,6 +134,47 @@ describe("partidoCourtSlotConflict", () => {
     });
   });
 
+  it("no marca conflicto si el otro partido no tiene horario ni cancha", () => {
+    const list = [
+      partido("a", { cancha: "1", programado_en: "2026-08-24T15:00:00.000Z" }),
+      partido("b", {
+        cancha: null,
+        programado_en: null,
+        created_at: "2026-08-24T15:00:00.000Z",
+        pareja_local_id: "p3",
+        pareja_visitante_id: "p4",
+      }),
+      partido("c", {
+        cancha: null,
+        programado_en: null,
+        created_at: "2026-08-24T15:00:00.000Z",
+        pareja_local_id: "p5",
+        pareja_visitante_id: "p6",
+      }),
+    ];
+    expect(findConflictingPartidoIds(list).size).toBe(0);
+    expect(
+      findPartidoCourtSlotConflict(
+        "a",
+        "2026-08-24T15:00:00.000Z",
+        "1",
+        list
+      )
+    ).toBeNull();
+  });
+
+  it("no trata la cancha vacía como cancha 1", () => {
+    const list = [
+      partido("a", { cancha: "1" }),
+      partido("b", {
+        cancha: null,
+        pareja_local_id: "p3",
+        pareja_visitante_id: "p4",
+      }),
+    ];
+    expect(findConflictingPartidoIds(list).size).toBe(0);
+  });
+
   it("planProgramadoChange update si el horario está libre en esa cancha", () => {
     const a = partido("a", {
       cancha: "1",
