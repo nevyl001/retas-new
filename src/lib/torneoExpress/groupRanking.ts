@@ -6,8 +6,9 @@
  * - 2 parejas en dif_puntos: un enfrentamiento directo, o empate sin resolver.
  * - 3 o más en dif_puntos: un mini-ranking FAV → DIF → PG. Lo que siga igual
  *   no vuelve a entrar al mismo procedimiento.
- * - setto_pg no usa ese mini-ranking. Después de sus criterios deportivos,
- *   lo que siga igual queda sin resolver.
+ * - setto_pg ordena por puntos (2 por partido ganado) y luego por
+ *   diferencia de games. El cara a cara solo separa a dos que sigan
+ *   iguales. Lo que siga empatado queda sin resolver.
  *
  * El orden del arreglo dentro de un empate sin resolver es solo de presentación.
  * La posición deportiva es `posicion`, compartida por todo el subconjunto.
@@ -103,17 +104,9 @@ function difPrimaryKey(row: GroupStandingStats): readonly number[] {
   return [row.juegosFavor, row.diferencia, row.pg];
 }
 
-function settoPrimaryKey(row: GroupStandingStats): readonly number[] {
-  return [row.pg];
-}
-
-function settoSecondaryKey(row: GroupStandingStats): readonly number[] {
-  return [
-    row.setsFavor - row.setsContra,
-    row.diferencia,
-    row.setsFavor,
-    row.juegosFavor,
-  ];
+/** 2 puntos por partido ganado, luego games a favor menos en contra. */
+function settoRankKey(row: GroupStandingStats): readonly number[] {
+  return [row.puntos, row.diferencia];
 }
 
 function matchesInside(pairIds: ReadonlySet<string>, matches: readonly MatchResult[]): MatchResult[] {
@@ -285,9 +278,8 @@ function resolveSettoBlock(
     return [blockOf([...block], RESOLVED)];
   }
 
-  const pending = [...block];
-  if (pending.length === 2) {
-    const [first, second] = pending;
+  if (block.length === 2) {
+    const [first, second] = block;
     const h2h = getHeadToHead(first.pairId, second.pairId, [...matches]);
     if (h2h < 0) {
       return [blockOf([first], RESOLVED), blockOf([second], RESOLVED)];
@@ -297,10 +289,7 @@ function resolveSettoBlock(
     }
   }
 
-  const sorted = sortByKeys(pending, settoSecondaryKey);
-  return sliceEqualRuns(sorted, settoSecondaryKey).map((run) =>
-    blockOf(run, run.length === 1 ? RESOLVED : unresolvedTie(run.map((row) => row.pairId)))
-  );
+  return [blockOf([...block], unresolvedTie(block.map((row) => row.pairId)))];
 }
 
 function assignCompetitionRanks(blocks: readonly RankBlock[]): RankedGroupStanding[] {
@@ -321,8 +310,8 @@ export function rankGroupStandings(
   modo: TorneoExpressClasificacionModo
 ): RankedGroupStanding[] {
   if (modo === "setto_pg") {
-    const sorted = sortByKeys(stats, settoPrimaryKey);
-    const blocks = sliceEqualRuns(sorted, settoPrimaryKey).flatMap((run) =>
+    const sorted = sortByKeys(stats, settoRankKey);
+    const blocks = sliceEqualRuns(sorted, settoRankKey).flatMap((run) =>
       resolveSettoBlock(run, matches)
     );
     return assignCompetitionRanks(blocks);

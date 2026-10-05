@@ -4,7 +4,7 @@ export type StandingsCriterionKey = "fav" | "dif" | "con" | "pg";
 
 /**
  * Americano/Reta/Express (games): FAV → DIF → PG.
- * Express setto: PG → DIF → FAV (aprox. sin columna SETS/H2H).
+ * Express setto: PTS (2 por PG) → DIF de games → H2H.
  * Duelo equipos: FAV → CON → PG.
  */
 export type StandingsCriterionOrder =
@@ -45,8 +45,7 @@ export function getDecidingCriterionBetween(
   if (order === "express-setto") {
     if (higher.pg !== lower.pg) return "pg";
     if (standingsRowDiff(higher) !== standingsRowDiff(lower)) return "dif";
-    if (higher.fav !== lower.fav) return "fav";
-    return "pg";
+    return "dif";
   }
 
   if (order === "dual-meet") {
@@ -72,8 +71,8 @@ export function criterionRank(
     return 3;
   }
   if (order === "express-setto") {
-    if (column === "pg") return 1;
     if (column === "dif") return 2;
+    if (column === "pg") return 1;
     return 3;
   }
   if (order === "dual-meet") {

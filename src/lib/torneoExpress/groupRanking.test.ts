@@ -359,7 +359,7 @@ describe("resolveTwoWayTie", () => {
 });
 
 describe("standings setto_pg", () => {
-  it("mantiene PG, H2H de dos y el desempate de sets y games", () => {
+  it("ordena por puntos, diferencia de games y cara a cara", () => {
     const three = table(
       ["a", "b", "c"],
       [
@@ -393,7 +393,7 @@ describe("standings setto_pg", () => {
       ],
       "setto_pg"
     );
-    expect(three.every((row) => row.pg === 1)).toBe(true);
+    expect(three.every((row) => row.puntos === 2)).toBe(true);
     expect(three.map((row) => row.parejaId)).toEqual(["b", "c", "a"]);
     expect(three.map((row) => row.posicion)).toEqual([1, 2, 3]);
 
@@ -436,7 +436,38 @@ describe("standings setto_pg", () => {
     );
   });
 
-  it("dos empatadas sin H2H ni diferencia de sets o games quedan unresolved", () => {
+  it("la diferencia de games manda antes que el cara a cara", () => {
+    const rows = table(
+      ["a", "b", "c"],
+      [
+        jugado({
+          id: "m1",
+          local: "b",
+          visit: "a",
+          gamesLocal: 6,
+          gamesVisit: 4,
+          sets: [{ local: 6, visitante: 4 }],
+          ganador: "b",
+        }),
+        jugado({
+          id: "m2",
+          local: "a",
+          visit: "c",
+          gamesLocal: 6,
+          gamesVisit: 0,
+          sets: [{ local: 6, visitante: 0 }],
+          ganador: "a",
+        }),
+      ],
+      "setto_pg"
+    );
+    expect(rows.map((row) => row.parejaId)).toEqual(["a", "b", "c"]);
+    expect(byId(rows, "a").puntos).toBe(2);
+    expect(byId(rows, "a").dif).toBe(4);
+    expect(byId(rows, "b").dif).toBe(2);
+  });
+
+  it("dos empatadas en puntos y games sin cara a cara quedan unresolved", () => {
     const rows = table(
       ["b", "a"],
       [

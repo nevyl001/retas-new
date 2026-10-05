@@ -76,7 +76,7 @@ describe("buildStandingsForGrupo clasificacion modes", () => {
     expect(rankA).toBeLessThan(rankB);
   });
 
-  it("setto_pg ordena por PG primero; con 3 empatados salta H2H", () => {
+  it("setto_pg ordena por puntos y luego por diferencia de games", () => {
     // Round-robin: cada uno 1 victoria. Empate a 3 en PG.
     // Sets: A vs B 6-4; B vs C 6-3; C vs A 6-2 → DIF sets/games favorece B.
     const partidos = [
@@ -85,14 +85,12 @@ describe("buildStandingsForGrupo clasificacion modes", () => {
       partido("m3", "c", "a", [{ local: 6, visitante: 2 }], "c"),
     ];
     const rows = buildStandingsForGrupo(grupo, parejas, partidos, "setto_pg");
-    expect(rows.every((r) => r.pg === 1)).toBe(true);
-    // Con 3 empatados no se usa H2H; DIF sets/games decide.
-    // A: sets 1-1 games 8-10; B: 1-1 games 10-9; C: 1-1 games 9-8
-    // DIF games: B +1, C +1, A -2 → B vs C por FAV games: B 10 > C 9
+    expect(rows.every((r) => r.puntos === 2)).toBe(true);
+    // Mismos puntos. DIF: B +1, C +1, A -2. B y C empatan y el cara a cara lo gana B.
     expect(rows.map((r) => r.parejaId)).toEqual(["b", "c", "a"]);
   });
 
-  it("setto_pg usa H2H cuando exactamente dos empatan en PG", () => {
+  it("setto_pg usa H2H cuando empatan en puntos y en diferencia de games", () => {
     // A beat B; both beat C. A and B tied on PG=1? Wait A and B each have 1 win if only those?
     // A vs B: A wins; A vs C: A wins; B vs C: B wins → A 2-0, B 1-1, C 0-2
     // Need A and B both with 1 PG: only A vs B + both lose to someone? Better:

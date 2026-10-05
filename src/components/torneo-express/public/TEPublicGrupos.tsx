@@ -505,7 +505,7 @@ function GrupoStandings({
               pg: row.pg,
               ptsFav: row.ptsFav,
               dif: row.dif,
-              setsDif: (row.setsFav ?? 0) - (row.setsCon ?? 0),
+              puntos: row.puntos,
               pj: row.pj,
             };
             const highlight = clasificacionStandingHighlight(

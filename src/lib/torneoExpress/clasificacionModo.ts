@@ -42,16 +42,13 @@ export const CLASIFICACION_MODO_OPTIONS: readonly ClasificacionModoOption[] = [
     value: "setto_pg",
     label: "Partidos ganados",
     description:
-      "Gana quien gane más partidos. Si empatan, se desempata así:",
+      "Cada partido ganado vale 2 puntos. Si empatan, se desempata así:",
     steps: [
-      "1. Partidos ganados",
-      "2. Cara a cara (solo si empatan exactamente 2 parejas)",
-      "3. Diferencia de sets",
-      "4. Diferencia de games",
-      "5. Más sets ganados",
-      "6. Más games ganados",
+      "1. Puntos (2 por partido ganado)",
+      "2. Diferencia de games (a favor − en contra)",
+      "3. Cara a cara (enfrentamiento directo)",
     ],
-    orderSummary: "PG → H2H → sets → games",
+    orderSummary: "PTS → DIF → H2H",
   },
 ] as const;
 
@@ -108,7 +105,9 @@ export type ClasificacionAchievementInput = {
   pg: number;
   ptsFav: number;
   dif: number;
-  /** Diferencia de sets (favor − contra); solo relevante en setto_pg. */
+  /** 2 por partido ganado. Si falta, se calcula como pg × 2. */
+  puntos?: number;
+  /** Diferencia de sets (favor − contra). Ya no ordena setto_pg. */
   setsDif?: number;
 };
 
@@ -126,14 +125,10 @@ export function clasificacionAchievementStats(
   row: ClasificacionAchievementInput
 ): ClasificacionAchievementStat[] {
   if (modo === "setto_pg") {
-    const setsDif = row.setsDif ?? 0;
+    const puntos = row.puntos ?? row.pg * 2;
     return [
-      { label: "PG", value: String(row.pg) },
-      {
-        label: "SETS",
-        value: formatSignedStat(setsDif),
-        highlight: setsDif > 0,
-      },
+      { label: "PTS", value: String(puntos) },
+      { label: "FAV", value: String(row.ptsFav) },
       {
         label: "DIF",
         value: formatSignedStat(row.dif),
@@ -168,7 +163,7 @@ export function clasificacionStandingHighlight(
   row: ClasificacionAchievementInput
 ): ClasificacionStandingHighlight {
   if (modo === "setto_pg") {
-    return { label: "PG", value: String(row.pg) };
+    return { label: "PTS", value: String(row.puntos ?? row.pg * 2) };
   }
   return { label: "FAV", value: String(row.ptsFav) };
 }
@@ -179,10 +174,9 @@ export function clasificacionStandingMeta(
   row: ClasificacionAchievementInput & { pj: number }
 ): ClasificacionStandingMetaStat[] {
   if (modo === "setto_pg") {
-    const setsDif = row.setsDif ?? 0;
     return [
       { label: "PJ", value: String(row.pj) },
-      { label: "SETS", value: formatSignedStat(setsDif) },
+      { label: "FAV", value: String(row.ptsFav) },
       { label: "DIF", value: formatSignedStat(row.dif) },
     ];
   }

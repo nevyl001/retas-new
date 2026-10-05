@@ -20,10 +20,10 @@ describe("clasificacionAchievementStats", () => {
     ]);
   });
 
-  it("modo partidos ganados: PG → SETS → DIF", () => {
+  it("modo partidos ganados: PTS → FAV → DIF", () => {
     expect(clasificacionAchievementStats("setto_pg", row)).toEqual([
-      { label: "PG", value: "2" },
-      { label: "SETS", value: "+3", highlight: true },
+      { label: "PTS", value: "4" },
+      { label: "FAV", value: "15" },
       { label: "DIF", value: "+12", highlight: true },
     ]);
   });
@@ -50,14 +50,14 @@ describe("clasificacionStandingHighlight / meta", () => {
     ]);
   });
 
-  it("partidos ganados destaca PG y meta PJ/SETS/DIF", () => {
+  it("partidos ganados destaca PTS y meta PJ/FAV/DIF", () => {
     expect(clasificacionStandingHighlight("setto_pg", row)).toEqual({
-      label: "PG",
-      value: "2",
+      label: "PTS",
+      value: "4",
     });
     expect(clasificacionStandingMeta("setto_pg", row)).toEqual([
       { label: "PJ", value: "2" },
-      { label: "SETS", value: "+3" },
+      { label: "FAV", value: "15" },
       { label: "DIF", value: "+12" },
     ]);
   });

@@ -23,7 +23,7 @@ function expressLead(modo: TorneoExpressClasificacionModo): React.ReactNode {
   if (modo === "setto_pg") {
     return (
       <>
-        Gana quien tenga más <strong>partidos ganados (PG)</strong>.
+        Gana quien sume más <strong>puntos (2 por partido ganado)</strong>.
       </>
     );
   }

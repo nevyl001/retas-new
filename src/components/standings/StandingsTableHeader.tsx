@@ -52,10 +52,12 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
         PJ
       </th>
       <th
-        className={`${COL_PG} ${criterionHeaderClass("pg", criterionOrder)}`}
+        className={`${COL_PG}${
+          isExpressSetto ? "" : ` ${criterionHeaderClass("pg", criterionOrder)}`
+        }`}
         title={
           isExpressSetto
-            ? "Partidos ganados (1.er criterio)"
+            ? "Partidos ganados. Cada uno vale 2 puntos"
             : "Partidos ganados (3.er criterio de desempate)"
         }
       >
@@ -65,10 +67,12 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
         PP
       </th>
       <th
-        className={`${COL_FAV} ${criterionHeaderClass("fav", criterionOrder)}`}
+        className={`${COL_FAV}${
+          isExpressSetto ? "" : ` ${criterionHeaderClass("fav", criterionOrder)}`
+        }`}
         title={
           isExpressSetto
-            ? "Juegos a favor (desempate)"
+            ? "Games a favor"
             : "Juegos a favor (1.er criterio)"
         }
       >
@@ -96,15 +100,23 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
           isDualMeet
             ? "Diferencia FAV − CON (informativo)"
             : isExpressSetto
-              ? "Diferencia FAV − CON (desempate)"
+              ? "Games a favor menos en contra (2.º criterio)"
               : "Diferencia FAV − CON (2.º criterio)"
         }
       >
         DIF
       </th>
       <th
-        className={`${COL_PTS} standings-col-informative`}
-        title={STANDINGS_PTS_TABLE_TITLE}
+        className={`${COL_PTS}${
+          isExpressSetto
+            ? " standings-criterion-col standings-criterion-col--rank-1"
+            : " standings-col-informative"
+        }`}
+        title={
+          isExpressSetto
+            ? "Puntos de tabla: 2 por partido ganado (1.er criterio)"
+            : STANDINGS_PTS_TABLE_TITLE
+        }
       >
         PTS
       </th>

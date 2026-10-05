@@ -108,7 +108,7 @@ export const PublicStandingsSection: React.FC<{
             pg: row.pg,
             ptsFav: row.ptsFav,
             dif: row.dif,
-            setsDif: (row.setsFav ?? 0) - (row.setsCon ?? 0),
+            puntos: row.puntos,
           });
           return (
             <article

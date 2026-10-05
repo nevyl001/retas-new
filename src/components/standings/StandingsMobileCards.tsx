@@ -60,9 +60,8 @@ export const StandingsMobileCards: React.FC<{
 
   const rankClass = (key: StandingsCriterionKey) => {
     if (criterionOrder === "express-setto") {
-      if (key === "pg") return "standings-mobile-card__stat--criterion-1";
       if (key === "dif") return "standings-mobile-card__stat--criterion-2";
-      return "standings-mobile-card__stat--criterion-3";
+      return "";
     }
     if (criterionOrder === "dual-meet") {
       if (key === "fav") return "standings-mobile-card__stat--criterion-1";
@@ -102,11 +101,11 @@ export const StandingsMobileCards: React.FC<{
                 }`}
                 title={
                   heroIsPg
-                    ? "Partidos ganados (1.er criterio)"
+                    ? "Puntos: 2 por partido ganado (1.er criterio)"
                     : "Games a favor (1.er criterio)"
                 }
               >
-                {heroIsPg ? `${row.pg} PG` : `${row.points} FAV`}
+                {heroIsPg ? `${row.puntosTorneo} PTS` : `${row.points} FAV`}
               </span>
             </header>
 
