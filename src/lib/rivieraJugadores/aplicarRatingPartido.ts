@@ -7,6 +7,10 @@ import { resolveJugadorIdForParticipacion } from "./jugadorIdResolver";
 import { resolveJugadorIdForRating } from "./organizerPlayerAccess";
 import type { CloseIdentityCache } from "./careerEventPipeline/closeIdentityCache";
 import {
+  parseParticipantesSnapshot,
+  ratingSideFromSnapshot,
+} from "../torneoExpress/participantesSnapshot";
+import {
   parseSetScoresJson,
   resolveParejasFijasPartidoTotals,
 } from "../liga/parejasFijasMatchScore";
@@ -322,10 +326,17 @@ export async function aplicarRatingTorneoExpressGrupoPartido(
 
   const { data: partido } = await supabase
     .from("torneo_express_partidos")
-    .select("pareja_local_id, pareja_visitante_id, grupo_id")
+    .select("pareja_local_id, pareja_visitante_id, grupo_id, participantes")
     .eq("id", partidoId)
     .maybeSingle();
   if (!partido?.grupo_id) return;
+
+  const snapshot = parseParticipantesSnapshot(
+    (partido as { participantes?: unknown }).participantes
+  );
+  const frozenLocal = snapshot ? ratingSideFromSnapshot(snapshot.local) : null;
+  const frozenVisit = snapshot ? ratingSideFromSnapshot(snapshot.visitante) : null;
+  if (snapshot && (!frozenLocal || !frozenVisit)) return;
 
   const { data: grupo } = await supabase
     .from("torneo_express_grupos")
@@ -344,12 +355,16 @@ export async function aplicarRatingTorneoExpressGrupoPartido(
     : "";
   if (!organizadorId) return;
 
-  const pairs = await fetchPairsForRating([
-    String(partido.pareja_local_id),
-    String(partido.pareja_visitante_id),
-  ]);
-  const local = pairs.find((p) => p.id === partido.pareja_local_id);
-  const visit = pairs.find((p) => p.id === partido.pareja_visitante_id);
+  const pairs = snapshot
+    ? []
+    : await fetchPairsForRating([
+        String(partido.pareja_local_id),
+        String(partido.pareja_visitante_id),
+      ]);
+  const local = frozenLocal
+    ?? pairs.find((p) => p.id === partido.pareja_local_id);
+  const visit = frozenVisit
+    ?? pairs.find((p) => p.id === partido.pareja_visitante_id);
   if (!local || !visit) return;
 
   const ganador = puntosLocal > puntosVisitante ? "a" : "b";

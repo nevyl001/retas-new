@@ -95,6 +95,8 @@ describe("modePresentation", () => {
           parejaLabel: "Pareja B",
           grupoNombre: "Grupo 1",
           grupoOrden: 1,
+          posicion: 1,
+          tie: { status: "resolved" },
           pj: 2,
           pg: 2,
           pp: 0,

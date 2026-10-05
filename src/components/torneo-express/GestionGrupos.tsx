@@ -34,7 +34,10 @@ import { TePageShell } from "./TePageShell";
 import { TorneoExpressBracketModal } from "./TorneoExpressBracketModal";
 import { TorneoExpressNotificacionesPanel } from "./TorneoExpressNotificacionesPanel";
 import { TorneoExpressResetEliminatoriaModal } from "./TorneoExpressResetEliminatoriaModal";
+import { TeProgramacionMenu } from "./TeProgramacionMenu";
+import { TeProgramarGrupoModal } from "./TeProgramarGrupoModal";
 import { TeReprogramarProgramacionModal } from "./TeReprogramarProgramacionModal";
+import type { ScheduleMode } from "../../lib/torneoExpress/schedulePendingGroup";
 import { torneoEstadoBadgeVariant } from "./teEstadoBadge";
 import {
   navigateTorneoExpress,
@@ -115,6 +118,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const [bracketOpen, setBracketOpen] = useState(false);
   const [resetElimOpen, setResetElimOpen] = useState(false);
   const [reprogramOpen, setReprogramOpen] = useState(false);
+  const [programarMode, setProgramarMode] = useState<ScheduleMode | null>(null);
   const [vista, setVista] = useState<"grupos" | "eliminatoria">("grupos");
   const [mobileTab, setMobileTab] = useState<TeMobileTabId>("resumen");
   const isMobile = useMobileViewport(767);
@@ -195,6 +199,25 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     );
     return courtSlotsFromPartidos(courtCheckScope, { excludeIds: pendingIds });
   }, [allTorneoPartidos, courtCheckScope]);
+
+  const occupiedForGroupSchedule = useMemo(() => {
+    const ownIds = new Set(
+      (grupoId ? bundle?.partidosPorGrupo[grupoId] ?? [] : []).map((partido) => partido.id)
+    );
+    return courtSlotsFromPartidos(courtCheckScope, { excludeIds: ownIds }).map((slot) => ({
+      programadoEn: slot.programado_en,
+      cancha: slot.cancha,
+    }));
+  }, [bundle, courtCheckScope, grupoId]);
+
+  const renderProgramacionMenu = () =>
+    puedeEditarProgramacion ? (
+      <TeProgramacionMenu
+        onProgramarFaltantes={() => setProgramarMode("faltantes")}
+        onReorganizar={() => setProgramarMode("reorganizar")}
+        onEditarCalendario={() => setReprogramOpen(true)}
+      />
+    ) : null;
 
   const puedeFinalizarTorneo = useMemo(() => {
     if (!bundle || faseTorneo !== "eliminatoria") return false;
@@ -427,17 +450,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
             Captura resultados, horarios y canchas de cada juego. También puedes
             reprogramar todos los partidos pendientes.
           </p>
-          {puedeEditarProgramacion ? (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="te-gestion-edit-schedule-btn"
-              onClick={() => setReprogramOpen(true)}
-            >
-              Editar programación
-            </Button>
-          ) : null}
+          {renderProgramacionMenu()}
         </div>
         {faseTorneo !== "grupos" ? (
           <p className="te-partidos-migration-hint" role="status">
@@ -1217,17 +1230,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                       También puedes reprogramar todos los partidos pendientes.
                     </p>
                   </div>
-                  {puedeEditarProgramacion ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      className="te-gestion-edit-schedule-btn"
-                      onClick={() => setReprogramOpen(true)}
-                    >
-                      Editar programación
-                    </Button>
-                  ) : null}
+                  {renderProgramacionMenu()}
                 </div>
                 {faseTorneo !== "grupos" ? (
                   <p className="te-partidos-migration-hint" role="status">
@@ -1362,6 +1365,32 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           );
         }}
       />
+
+      {grupo && programarMode ? (
+        <TeProgramarGrupoModal
+          open
+          mode={programarMode}
+          grupoId={grupo.id}
+          grupoVersion={typeof grupo.version === "number" ? grupo.version : null}
+          partidos={bundle.partidosPorGrupo[grupo.id] ?? []}
+          parejas={bundle.parejasPorGrupo[grupo.id] ?? []}
+          occupied={occupiedForGroupSchedule}
+          onClose={() => setProgramarMode(null)}
+          onReload={() => {
+            void reload();
+          }}
+          onApplied={(changed) => {
+            setProgramarMode(null);
+            void reload();
+            showActionToast(
+              changed === 0
+                ? "La programación ya estaba así."
+                : `Programación actualizada en ${changed} partido${changed === 1 ? "" : "s"}.`,
+              "success"
+            );
+          }}
+        />
+      ) : null}
 
       <TeReprogramarProgramacionModal
         open={reprogramOpen}

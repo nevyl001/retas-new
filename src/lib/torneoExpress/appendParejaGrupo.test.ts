@@ -3,7 +3,11 @@ import {
   buildAppendedPairDraftMatches,
   missingMatchupsForNewPair,
 } from "./appendParejaGrupo";
-import { generateBalancedRoundRobin, unorderedMatchupKey } from "./roundRobin";
+import {
+  canonicalMatchupKey,
+  generateBalancedRoundRobin,
+  unorderedMatchupKey,
+} from "./roundRobin";
 import { programadoIsoFromMexicoCalendar, mexicoScheduleSlotKey } from "./teScheduleTime";
 
 describe("missingMatchupsForNewPair", () => {
@@ -16,7 +20,7 @@ describe("missingMatchupsForNewPair", () => {
       "E"
     );
     expect(missing.map((m) => unorderedMatchupKey(m.localId, m.visitanteId)).sort()).toEqual(
-      ["A|E", "B|E", "C|E", "D|E"].sort()
+      ["A", "B", "C", "D"].map((id) => canonicalMatchupKey(id, "E")).sort()
     );
   });
 
@@ -31,7 +35,7 @@ describe("missingMatchupsForNewPair", () => {
       "E"
     );
     const keys = missing.map((m) => unorderedMatchupKey(m.localId, m.visitanteId));
-    expect(keys).not.toContain("A|B");
+    expect(keys).not.toContain(canonicalMatchupKey("A", "B"));
     expect(keys).toHaveLength(4);
   });
 });

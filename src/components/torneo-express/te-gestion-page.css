@@ -569,6 +569,155 @@
   }
 }
 
+.te-gestion-page .te-programacion-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.te-gestion-page .te-programacion-menu__caret {
+  margin-left: 0.35rem;
+}
+
+.te-gestion-page .te-programacion-menu__panel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 30;
+  min-width: 15.5rem;
+  margin: 0;
+  padding: 0.3rem;
+  list-style: none;
+  border: 1px solid var(--ro-border, rgba(0, 0, 0, 0.12));
+  border-radius: 10px;
+  background: var(--ro-bg-card, #fff);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.te-gestion-page .te-programacion-menu__item {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.te-gestion-page .te-programacion-menu__item:hover,
+.te-gestion-page .te-programacion-menu__item:focus-visible {
+  background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+.te-gestion-page .te-programacion-menu__sep {
+  height: 1px;
+  margin: 0.25rem 0.45rem;
+  background: var(--ro-border, rgba(0, 0, 0, 0.12));
+}
+
+/* El modal se monta en document.body, fuera de .te-gestion-page. */
+.te-programar-grupo-modal .te-reprogramar-modal__lead {
+  margin: 0 0 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.te-programar-grupo-modal .te-reprogramar-modal__note {
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text-primary) 4%, transparent);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.te-programar-grupo-modal .te-reprogramar-modal__fields,
+.te-programar-grupo-modal .te-reprogramar-modal__courts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.te-programar-grupo-modal .te-reprogramar-modal__error {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  color: var(--ro-error, #c0392b);
+}
+
+.te-programar-grupo-modal .te-programacion-preview {
+  display: grid;
+  gap: 0.55rem;
+  max-height: min(52vh, 28rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: auto;
+}
+
+.te-programar-grupo-modal .te-programacion-change {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  border: 1px solid var(--ro-border, rgba(0, 0, 0, 0.12));
+  border-radius: 10px;
+  background: var(--ro-bg-card, #fff);
+}
+
+.te-programar-grupo-modal .te-programacion-change__matchup {
+  display: grid;
+  gap: 0.1rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.te-programar-grupo-modal .te-programacion-change__vs {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.te-programar-grupo-modal .te-programacion-change__clock {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.te-programar-grupo-modal .te-programacion-change__clock span,
+.te-programar-grupo-modal .te-programacion-change__shift span {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.te-programar-grupo-modal .te-programacion-change__shift {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.te-programar-grupo-modal .te-programacion-change__shift p {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 640px) {
+  .te-programar-grupo-modal .te-reprogramar-modal__fields,
+  .te-programar-grupo-modal .te-reprogramar-modal__courts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .te-gestion-page .te-gestion-layout__standings {
   padding-top: 0.85rem;
   border-top: 1px solid var(--ro-border-subtle);

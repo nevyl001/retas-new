@@ -8,6 +8,7 @@ import {
   totalRondasEliminatoria,
 } from "../../torneoExpress/bracketRounds";
 import { clasificadosPairIdsFromBundle } from "../../torneoExpress/clasificadosPairs";
+import { careerPairFromSide } from "../../torneoExpress/participantesSnapshot";
 import type { TorneoExpressBundle } from "../../torneoExpress/types";
 import type { TorneoExpressEliminatoriaPartido } from "../../torneoExpress/types";
 import { formatLugarOrdinal } from "../historialDisplay";
@@ -456,13 +457,26 @@ export async function syncTorneoExpressParticipaciones(
     for (const list of Object.values(bundle.partidosPorGrupo)) {
       for (const p of list) {
         if (p.estado !== "jugado") continue;
+        const scoped = new Map(pairMap);
+        const localPair = careerPairFromSide(
+          p.pareja_local_id,
+          p.participantes?.local,
+          pairMap.get(p.pareja_local_id)
+        );
+        const visitPair = careerPairFromSide(
+          p.pareja_visitante_id,
+          p.participantes?.visitante,
+          pairMap.get(p.pareja_visitante_id)
+        );
+        if (localPair) scoped.set(p.pareja_local_id, localPair);
+        if (visitPair) scoped.set(p.pareja_visitante_id, visitPair);
         processExpressPartido(
           p.pareja_local_id,
           p.pareja_visitante_id,
           p.puntos_local,
           p.puntos_visitante,
           p.ganador_id,
-          pairMap,
+          scoped,
           agg
         );
       }

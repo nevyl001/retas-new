@@ -64,8 +64,9 @@ export function generateRoundRobinMatchups(
   );
 }
 
+/** N * (N - 1) / 2. Con menos de 2 parejas no hay partidos. */
 export function expectedMatchCount(pairCount: number): number {
-  if (pairCount < 2) return 0;
+  if (!Number.isInteger(pairCount) || pairCount < 2) return 0;
   return (pairCount * (pairCount - 1)) / 2;
 }
 
@@ -147,9 +148,23 @@ export function groupPartidosByRonda(
   return groups;
 }
 
-/** A-B y B-A son el mismo cruce. Misma clave que usa dedupePartidosExpress. */
+function encodeMatchupPart(id: string): string {
+  return `${id.length}:${id}`;
+}
+
+/**
+ * A-B y B-A son el mismo cruce.
+ * El prefijo de longitud evita que "1"+"23" colisione con "12"+"3".
+ */
+export function canonicalMatchupKey(a: string, b: string): string {
+  const first = a <= b ? a : b;
+  const second = a <= b ? b : a;
+  return `${encodeMatchupPart(first)}\u001f${encodeMatchupPart(second)}`;
+}
+
+/** Misma clave que `canonicalMatchupKey`. */
 export function unorderedMatchupKey(localId: string, visitanteId: string): string {
-  return [localId, visitanteId].sort().join("|");
+  return canonicalMatchupKey(localId, visitanteId);
 }
 
 function matchupKey(p: TorneoExpressPartido): string {

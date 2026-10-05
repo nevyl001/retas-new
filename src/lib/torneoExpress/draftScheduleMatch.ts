@@ -4,7 +4,7 @@ import type {
   TorneoExpressGrupo,
   TorneoExpressPartido,
 } from "./types";
-import { generateBalancedRoundRobin } from "./roundRobin";
+import { canonicalMatchupKey, generateBalancedRoundRobin } from "./roundRobin";
 
 /** Partido pre-insert con identidad estable antes de persistir en Supabase. */
 export type DraftScheduleMatch = {
@@ -80,7 +80,7 @@ export function buildGrupoAssignmentsFromBundle(
 }
 
 function pairIdsKey(localId: string, visitId: string): string {
-  return [localId, visitId].sort().join("|");
+  return canonicalMatchupKey(localId, visitId);
 }
 
 /** Resuelve un partido persistido para un match programado (todos los grupos). */

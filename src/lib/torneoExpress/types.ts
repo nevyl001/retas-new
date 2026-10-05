@@ -144,13 +144,35 @@ export interface TorneoExpressGrupo {
   torneo_id: string;
   nombre: string;
   orden: number;
+  /** Sube al resetear, guardar marcador o cambiar el roster. */
+  version?: number;
   created_at: string;
+}
+
+/** Lado congelado al guardar el primer resultado. Los nombres son los que ya tenía la pareja. */
+export interface ParticipanteLadoSnapshot {
+  player1_id: string | null;
+  player2_id: string | null;
+  player1_name: string | null;
+  player2_name: string | null;
+  is_virtual: boolean;
+  virtual_label: string | null;
+}
+
+export interface ParticipantesSnapshot {
+  local: ParticipanteLadoSnapshot;
+  visitante: ParticipanteLadoSnapshot;
 }
 
 export interface TorneoExpressGrupoPareja {
   id: string;
   grupo_id: string;
   pareja_id: string;
+  /** Falta el campo en filas viejas: se trata como activa. */
+  activa?: boolean;
+  retirada_at?: string | null;
+  /** Parejas anteriores del mismo slot. Sus partidos jugados cuentan para `pareja_id`. */
+  pareja_previa_ids?: string[];
   /** No existe en BD; se rellena desde tabla `pairs` al cargar. */
   pareja_display?: string;
   /** Identidad interna de la pareja. No se muestra en la UI. */
@@ -198,6 +220,8 @@ export interface TorneoExpressPartido {
   sets_resultado?: PartidoSetScore[] | null;
   ganador_id: string | null;
   estado: PartidoExpressEstado;
+  /** Quién jugó de verdad. Null mientras el partido no está jugado. */
+  participantes?: ParticipantesSnapshot | null;
   /** Orden de juego en el grupo (1 = primero). */
   orden?: number | null;
   /** Ronda round-robin circular. */
@@ -221,12 +245,23 @@ export interface TorneoExpressBundle {
   partido_formato: TorneoExpressPartidoFormato;
 }
 
+/**
+ * Empate deportivo de un bloque de la tabla.
+ * `pairIds` identifica el subconjunto; el orden de ese arreglo no es una posición.
+ */
+export type StandingTie =
+  | { status: "resolved" }
+  | { status: "unresolved"; pairIds: readonly string[] };
+
 export interface StandingRowExpress {
   parejaId: string;
   parejaLabel: string;
   grupoId: string;
   grupoNombre: string;
   grupoOrden: number;
+  /** Ranking competitivo: 1, 2, 2, 4. No es el índice visual del arreglo. */
+  posicion: number;
+  tie: StandingTie;
   pj: number;
   pg: number;
   pp: number;

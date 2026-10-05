@@ -206,7 +206,21 @@ maybeDescribe("0044 locks Torneo Express (PGlite, una conexión)", () => {
       ),
       "utf8"
     );
-    for (const source of [migration, virtualPairs]) {
+    const resetGrupo = readFileSync(
+      resolve(
+        __dirname,
+        "../../../supabase/migrations/0048_torneo_express_grupo_reset.sql"
+      ),
+      "utf8"
+    );
+    const grupoParejas = readFileSync(
+      resolve(
+        __dirname,
+        "../../../supabase/migrations/0049_torneo_express_grupo_parejas.sql"
+      ),
+      "utf8"
+    );
+    for (const source of [migration, virtualPairs, resetGrupo, grupoParejas]) {
       const statements = splitSql(source);
       for (let index = 0; index < statements.length; index += 1) {
         try {
