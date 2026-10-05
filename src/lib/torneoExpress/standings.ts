@@ -197,6 +197,17 @@ export function buildStandingsGeneral(
   });
 }
 
+/** Un puesto solo existe si una pareja lo ocupa sola y el desempate está resuelto. */
+export function puestoResuelto(
+  tabla: StandingRowExpress[],
+  posicion: number
+): StandingRowExpress | null {
+  const rows = tabla.filter(
+    (row) => row.posicion === posicion && row.tie.status === "resolved"
+  );
+  return rows.length === 1 ? rows[0] : null;
+}
+
 export function formatPairDisplay(
   player1Name?: string,
   player2Name?: string

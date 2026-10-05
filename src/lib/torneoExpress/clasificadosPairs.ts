@@ -1,10 +1,8 @@
 import { deserializeBracketSlots } from "./bracketPersistence";
-import { buildStandingsForGrupo } from "./standings";
+import { buildStandingsForGrupo, puestoResuelto } from "./standings";
 import { supabase } from "../supabaseClient";
 import type { TorneoExpressBundle } from "./types";
 import { fetchTorneoExpressBundle } from "../../services/torneoExpressService";
-
-const CLASIFICAN_POR_GRUPO = 2;
 
 async function pairIdsFromEliminatoriaPartidos(
   torneoExpressId: string
@@ -52,7 +50,10 @@ function pairIdsFromBundleStandings(bundle: TorneoExpressBundle): Set<string> {
       bundle.partidosPorGrupo[grupo.id] ?? [],
       bundle.clasificacion_modo
     );
-    tabla.slice(0, CLASIFICAN_POR_GRUPO).forEach((row) => qualified.add(row.parejaId));
+    [1, 2].forEach((posicion) => {
+      const row = puestoResuelto(tabla, posicion);
+      if (row) qualified.add(row.parejaId);
+    });
   }
   return qualified;
 }

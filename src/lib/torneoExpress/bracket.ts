@@ -1,4 +1,4 @@
-import { buildStandingsForGrupo } from "./standings";
+import { buildStandingsForGrupo, puestoResuelto } from "./standings";
 import type {
   BracketBuildResult,
   BracketFase,
@@ -97,21 +97,24 @@ export function calcularResumenClasificados(
 
   bundle.grupos.forEach((grupo) => {
     const tabla = getTablaOrdenada(bundle, grupo);
-    if (tabla[0]) {
+    const primero = puestoResuelto(tabla, 1);
+    const segundo = puestoResuelto(tabla, 2);
+    const tercero = puestoResuelto(tabla, 3);
+    if (primero) {
       fijos.push({
-        ...standingToQualifier(tabla[0], 1, false),
+        ...standingToQualifier(primero, 1, false),
         seed: 0,
       });
     }
-    if (tabla[1]) {
+    if (segundo) {
       fijos.push({
-        ...standingToQualifier(tabla[1], 2, false),
+        ...standingToQualifier(segundo, 2, false),
         seed: 0,
       });
     }
-    if (tabla[2]) {
+    if (tercero) {
       tercerosCandidatos.push({
-        ...standingToQualifier(tabla[2], 3, false),
+        ...standingToQualifier(tercero, 3, false),
         seed: 0,
       });
     }
@@ -159,6 +162,11 @@ export function calcularClasificadosFase(
   }
 
   const resumen = calcularResumenClasificados(bundle, fase);
+  if (resumen.fijos.length !== bundle.grupos.length * 2) {
+    throw new Error(
+      "No hay clasificación. Faltan resultados o hay empates sin resolver en la fase de grupos."
+    );
+  }
   const primeros = resumen.fijos
     .filter((q) => q.posEnGrupo === 1)
     .sort(compareQualifiers);

@@ -230,4 +230,19 @@ describe("calcularClasificadosFase", () => {
     const opp2 = partner(2);
     expect([opp1, opp2].sort()).toEqual([7, 8]);
   });
+
+  it("sin resultados no inventa 1° y 2°", () => {
+    const bundle = makeBundle({ numGrupos: 2 });
+    for (const partidos of Object.values(bundle.partidosPorGrupo)) {
+      for (const partido of partidos) {
+        partido.estado = "pendiente";
+        partido.puntos_local = null;
+        partido.puntos_visitante = null;
+        partido.ganador_id = null;
+      }
+    }
+    expect(() => calcularClasificadosFase(bundle, "semifinal")).toThrow(
+      /No hay clasificación/
+    );
+  });
 });

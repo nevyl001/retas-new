@@ -558,7 +558,16 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
             variant="primary"
             size="md"
             className="te-btn-finalizar-fase te-btn-fase-cta"
-            onClick={() => setBracketOpen(true)}
+            disabled={!allGruposCompletos}
+            title={
+              allGruposCompletos
+                ? undefined
+                : "Faltan resultados. Termina los partidos de grupos para finalizar la fase."
+            }
+            onClick={() => {
+              if (!allGruposCompletos) return;
+              setBracketOpen(true);
+            }}
           >
             Finalizar fase
             <span className="te-btn-fase-cta__arrow" aria-hidden>
@@ -984,7 +993,16 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
               variant="primary"
               size="md"
               className="te-btn-finalizar-fase te-btn-fase-cta"
-              onClick={() => setBracketOpen(true)}
+              disabled={!allGruposCompletos}
+              title={
+                allGruposCompletos
+                  ? undefined
+                  : "Faltan resultados. Termina los partidos de grupos para finalizar la fase."
+              }
+              onClick={() => {
+                if (!allGruposCompletos) return;
+                setBracketOpen(true);
+              }}
             >
               Finalizar fase
               <span className="te-btn-fase-cta__arrow" aria-hidden>
