@@ -33,8 +33,7 @@ function renderAction(overrides?: Partial<React.ComponentProps<typeof TeReinicia
 }
 
 function openConfirm() {
-  fireEvent.click(screen.getByRole("button", { name: "Más acciones de la categoría" }));
-  fireEvent.click(screen.getByRole("menuitem", { name: "Reiniciar fase de grupos" }));
+  fireEvent.click(screen.getByRole("button", { name: "Reiniciar fase de grupos" }));
 }
 
 describe("puedeReiniciarFaseDeGrupos", () => {
@@ -93,7 +92,7 @@ describe("TeReiniciarFaseGruposAction", () => {
 
   it("abre la confirmación y cancelar no llama al reset", () => {
     renderAction();
-    expect(screen.getByRole("button", { name: "Más acciones de la categoría" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Reiniciar fase de grupos" })).toBeTruthy();
     openConfirm();
     expect(screen.getByRole("dialog", { name: "Reiniciar fase de grupos" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));

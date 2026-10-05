@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button, Modal } from "../ui";
 import {
   RESET_FASE_STALE_COPY,
@@ -24,29 +24,10 @@ const SUCCESS_COPY =
 export const TeReiniciarFaseGruposAction: React.FC<
   TeReiniciarFaseGruposActionProps
 > = ({ grupos, onReload, onDone }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
   const busyRef = useRef(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const menuId = useId();
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onDoc = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setMenuOpen(false);
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [menuOpen]);
 
   const closeConfirm = () => {
     if (busyRef.current) return;
@@ -87,39 +68,20 @@ export const TeReiniciarFaseGruposAction: React.FC<
   };
 
   return (
-    <div className="te-categoria-menu" ref={rootRef}>
+    <>
       <Button
         type="button"
         variant="ghost"
         size="sm"
-        className="te-categoria-menu__trigger"
-        aria-label="Más acciones de la categoría"
-        aria-haspopup="menu"
-        aria-expanded={menuOpen}
-        aria-controls={menuId}
+        className="te-btn-tabla-general te-btn-reiniciar-fase"
         disabled={busy}
-        onClick={() => setMenuOpen((value) => !value)}
+        onClick={() => {
+          setErrorText(null);
+          setConfirmOpen(true);
+        }}
       >
-        •••
+        Reiniciar fase de grupos
       </Button>
-      {menuOpen ? (
-        <ul className="te-categoria-menu__panel" id={menuId} role="menu">
-          <li role="none">
-            <button
-              type="button"
-              role="menuitem"
-              className="te-categoria-menu__item"
-              onClick={() => {
-                setMenuOpen(false);
-                setErrorText(null);
-                setConfirmOpen(true);
-              }}
-            >
-              Reiniciar fase de grupos
-            </button>
-          </li>
-        </ul>
-      ) : null}
       <Modal
         open={confirmOpen}
         onClose={closeConfirm}
@@ -175,6 +137,6 @@ export const TeReiniciarFaseGruposAction: React.FC<
           </div>
         </div>
       </Modal>
-    </div>
+    </>
   );
 };
