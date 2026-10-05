@@ -2975,8 +2975,13 @@
   text-transform: uppercase;
 }
 
-/* Móvil: la misma tarjeta, en vertical. El póster redondo no se muestra. */
+/* Móvil: la misma tarjeta, en vertical y lo bastante baja para una captura. */
 @media (max-width: 63.99rem) {
+  .te-elim-v2 .te-pb-closing-stack {
+    gap: 0.75rem;
+    margin: 0.75rem auto 1rem;
+  }
+
   .te-elim-v2 .te-podium-share__art {
     display: none;
   }
@@ -2985,9 +2990,111 @@
     width: min(100%, 28rem);
   }
 
+  .te-elim-v2 .te-elim-recap__header {
+    padding: 0.65rem 0.8rem 0;
+  }
+
+  .te-elim-v2 .te-elim-recap__eyebrow {
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    line-height: 1.3;
+  }
+
+  .te-elim-v2 .te-elim-recap__rule {
+    margin-top: 0.35rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__stage {
+    gap: 0.55rem;
+    padding: 0.55rem 0.7rem 0;
+  }
+
+  .te-elim-v2 .te-elim-recap__portraits {
+    justify-items: center;
+    gap: 0.45rem 0.55rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__player {
+    width: min(100%, 7.25rem);
+    gap: 0.3rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__player p {
+    font-size: 0.82rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__avatar.rj-avatar {
+    max-height: 9rem;
+    border-radius: 0.85rem;
+    font-size: 1.15rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__avatar.rj-avatar .rj-avatar__img {
+    border-radius: 0.85rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__results {
+    gap: 0.4rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__title {
+    margin-top: 0.1rem;
+    font-size: 1.15rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__title svg,
+  .te-elim-v2 .te-elim-recap__title .ti {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+
+  .te-elim-v2 .te-elim-recap__message {
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .te-elim-v2 .te-elim-recap__stats {
+    padding: 0.3rem 0.15rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__stats span {
+    font-size: 0.5rem;
+    letter-spacing: 0.04em;
+  }
+
+  .te-elim-v2 .te-elim-recap__stats strong {
+    font-size: 0.95rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__matches > p {
+    margin-bottom: 0.2rem;
+    font-size: 0.6rem;
+  }
+
   .te-elim-v2 .te-elim-recap__matches-head,
   .te-elim-v2 .te-elim-recap__matches li {
-    min-width: 20rem;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1.35fr) minmax(3.2rem, auto) minmax(4rem, auto) 1.7rem;
+    gap: 0.15rem 0.35rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__matches-head {
+    margin-bottom: 0.1rem;
+    padding-bottom: 0.15rem;
+    font-size: 0.52rem;
+    letter-spacing: 0.06em;
+  }
+
+  .te-elim-v2 .te-elim-recap__matches li {
+    padding: 0.18rem 0;
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+
+  .te-elim-v2 .te-elim-recap__footer {
+    gap: 0.25rem;
+    padding: 0.45rem 0.8rem 0.55rem;
   }
 }
 
