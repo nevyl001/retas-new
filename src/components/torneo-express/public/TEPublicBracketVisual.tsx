@@ -806,36 +806,34 @@ function TournamentRecap({
         <p className="te-elim-recap__eyebrow">{eyebrow}</p>
         <span className="te-elim-recap__rule" aria-hidden />
       </header>
-      <div className="te-elim-recap__hero">
-        <p className="te-elim-recap__badge">1.er lugar</p>
-        <h2 className="te-elim-recap__title">¡Felicidades!</h2>
-        <div className="te-elim-recap__pair" aria-label="Pareja campeona">
-          {players.map((player, index) => (
-            <React.Fragment key={player.id}>
-              {index > 0 ? (
-                <span className="te-elim-recap__trophy" aria-hidden>
-                  <TablerIcon name="trophy" size={22} />
-                </span>
-              ) : null}
-              <div className="te-elim-recap__player">
-                <JugadorAvatar
-                  fotoUrl={player.fotoUrl}
-                  nombre={player.name}
-                  size="xl"
-                  alt={player.fotoUrl ? `Foto de ${player.name}` : ""}
-                  className="te-elim-recap__avatar"
-                />
-                <p>{player.name}</p>
-              </div>
-            </React.Fragment>
+      <div className="te-elim-recap__stage">
+        <div className="te-elim-recap__portraits" aria-label="Pareja campeona">
+          {players.map((player) => (
+            <div className="te-elim-recap__player" key={player.id}>
+              <JugadorAvatar
+                fotoUrl={player.fotoUrl}
+                nombre={player.name}
+                size="xl"
+                alt={player.fotoUrl ? `Foto de ${player.name}` : ""}
+                className="te-elim-recap__avatar"
+              />
+              <p>{player.name}</p>
+            </div>
           ))}
         </div>
-        {runnerLabel ? (
-          <p className="te-elim-recap__runner">
-            Subcampeones · {runnerLabel}
-          </p>
-        ) : null}
-      </div>
+        <div className="te-elim-recap__results">
+          <div className="te-elim-recap__hero">
+            <p className="te-elim-recap__badge">1.er lugar</p>
+            <h2 className="te-elim-recap__title">
+              <TablerIcon name="trophy" size={22} />
+              ¡Felicidades!
+            </h2>
+            {runnerLabel ? (
+              <p className="te-elim-recap__runner">
+                Subcampeones · {runnerLabel}
+              </p>
+            ) : null}
+          </div>
       {stats ? (
         <div className="te-elim-recap__stats" aria-label="Números del campeón">
           <div>
@@ -882,6 +880,8 @@ function TournamentRecap({
           </ul>
         </section>
       ) : null}
+        </div>
+      </div>
       <footer className="te-elim-recap__footer">
         <span aria-hidden />
         <p>Vive Riviera Open</p>

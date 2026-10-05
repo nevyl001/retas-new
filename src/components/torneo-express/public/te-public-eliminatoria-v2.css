@@ -2653,12 +2653,32 @@
   );
 }
 
+.te-elim-v2 .te-elim-recap__stage {
+  display: grid;
+  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem 1.75rem;
+  padding: 1.15rem 1.5rem 0.15rem;
+}
+
+.te-elim-v2 .te-elim-recap__portraits {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.te-elim-v2 .te-elim-recap__results {
+  display: grid;
+  align-content: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
 .te-elim-v2 .te-elim-recap__hero {
   display: grid;
-  justify-items: center;
+  justify-items: start;
   gap: 0.35rem;
-  padding: 1rem 1.5rem 0.25rem;
-  text-align: center;
+  padding: 0;
+  text-align: left;
 }
 
 .te-elim-v2 .te-elim-recap__badge {
@@ -2675,6 +2695,9 @@
 }
 
 .te-elim-v2 .te-elim-recap__title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   margin: 0.35rem 0 0;
   color: var(--ro-chrome-text);
   font-family: var(--font-display, var(--font-body));
@@ -2684,49 +2707,46 @@
   line-height: 1.05;
 }
 
-.te-elim-v2 .te-elim-recap__pair {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: clamp(1.25rem, 3vw, 2.5rem);
-  margin-top: 0.85rem;
+.te-elim-v2 .te-elim-recap__title svg {
+  flex: none;
+  color: var(--brand-accent, var(--ro-medal-gold));
 }
 
 .te-elim-v2 .te-elim-recap__player {
   display: grid;
-  justify-items: center;
-  gap: 0.55rem;
-  width: 8.5rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: 0.85rem;
+  width: 100%;
 }
 
 .te-elim-v2 .te-elim-recap__player p {
-  margin: 0;
+  margin: 0 0 0.35rem;
   color: var(--ro-chrome-text);
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   font-weight: 750;
-  line-height: 1.2;
-  text-align: center;
+  line-height: 1.15;
 }
 
 .te-elim-v2 .te-elim-recap__avatar.rj-avatar {
-  width: 6.75rem;
-  height: 6.75rem;
-  border: 2px solid
-    color-mix(in srgb, var(--brand-accent, var(--ro-medal-gold)) 55%, transparent);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
-  font-size: 1.6rem;
+  width: clamp(8.5rem, 14vh, 10.5rem);
+  height: clamp(10.5rem, 18vh, 13rem);
+  border: 0;
+  border-radius: 1.35rem;
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.38),
+    inset 0 0 0 1px
+      color-mix(in srgb, var(--brand-accent, var(--ro-medal-gold)) 45%, transparent);
+  font-size: 2rem;
 }
 
-.te-elim-v2 .te-elim-recap__trophy {
-  display: grid;
-  place-items: center;
-  align-self: center;
-  margin-top: 1.6rem;
-  color: var(--brand-accent, var(--ro-medal-gold));
+.te-elim-v2 .te-elim-recap__avatar.rj-avatar .rj-avatar__img {
+  border-radius: 1.35rem;
+  object-position: center 18%;
 }
 
 .te-elim-v2 .te-elim-recap__runner {
-  margin: 0.85rem 0 0;
+  margin: 0.45rem 0 0;
   color: var(--ro-chrome-text-muted);
   font-size: 0.95rem;
 }
@@ -2734,7 +2754,7 @@
 .te-elim-v2 .te-elim-recap__stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 1rem 1.5rem 0;
+  margin: 0;
   padding: 0.7rem 0.5rem;
   border: 1px solid color-mix(in srgb, var(--ro-chrome-text) 12%, transparent);
   border-radius: 0.75rem;
@@ -2769,8 +2789,8 @@
 }
 
 .te-elim-v2 .te-elim-recap__matches {
-  margin: 0.9rem 1.5rem 0;
-  padding-top: 0.75rem;
+  margin: 0;
+  padding-top: 0.15rem;
   border-top: 1px solid color-mix(in srgb, var(--ro-chrome-text) 12%, transparent);
 }
 
