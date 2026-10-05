@@ -1303,6 +1303,13 @@ button.te-partido-chip--cancha:disabled {
   gap: 0.5rem;
 }
 
+.te-sets-modal__toolbar-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .te-sets-modal__winner {
   margin: 0;
   padding: 0.65rem 0.75rem;

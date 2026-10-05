@@ -2,6 +2,7 @@ import {
   areLegalSetScores,
   buildPersistPayload,
   canAddAnotherSet,
+  canAddSuperMuerte,
   countSetWins,
   detectMatchWinner,
   formatSetWinsForWinner,
@@ -206,6 +207,26 @@ describe("partidoSets", () => {
   it("parseSetsResultado rejects invalid", () => {
     expect(parseSetsResultado(null)).toBeNull();
     expect(parseSetsResultado([{ local: 1 }])).toBeNull();
+  });
+
+  it("la súper muerte es opcional y se conserva al leer el marcador", () => {
+    const played = [
+      { local: 6, visitante: 2 },
+      { local: 6, visitante: 3 },
+    ];
+    expect(canAddSuperMuerte(played)).toBe(true);
+    expect(canAddSuperMuerte([...played, { local: 10, visitante: 8, super_muerte: true }])).toBe(
+      false
+    );
+    expect(
+      parseSetsResultado([
+        { local: 6, visitante: 4 },
+        { local: 10, visitante: 7, super_muerte: true },
+      ])
+    ).toEqual([
+      { local: 6, visitante: 4 },
+      { local: 10, visitante: 7, super_muerte: true },
+    ]);
   });
 
   it("matchWinnerSideFromPartido prefers sets over wrong ganador_id", () => {

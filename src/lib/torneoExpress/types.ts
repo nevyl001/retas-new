@@ -87,6 +87,8 @@ export interface TorneoExpressEventoPublico
 export interface PartidoSetScore {
   local: number;
   visitante: number;
+  /** El usuario lo agregó a mano. No cambia el resto de los sets. */
+  super_muerte?: boolean;
 }
 
 export interface ExpectedPairSide {

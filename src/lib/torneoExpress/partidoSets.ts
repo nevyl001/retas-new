@@ -29,9 +29,11 @@ export function parseSetsResultado(raw: unknown): PartidoSetScore[] | null {
     const local = (item as PartidoSetScore).local;
     const visitante = (item as PartidoSetScore).visitante;
     if (!isValidSetScore(local) || !isValidSetScore(visitante)) return null;
+    const superMuerte = (item as PartidoSetScore).super_muerte === true;
     sets.push({
       local: Math.floor(local),
       visitante: Math.floor(visitante),
+      ...(superMuerte ? { super_muerte: true } : {}),
     });
   }
   return sets.length > 0 ? sets : null;
@@ -219,6 +221,12 @@ export function canAddAnotherSet(sets: PartidoSetScore[]): boolean {
   return true;
 }
 
+/** El usuario decide si captura una súper muerte. Solo cabe una, y hay tope de 3 sets. */
+export function canAddSuperMuerte(sets: PartidoSetScore[]): boolean {
+  if (sets.length >= MAX_SETS) return false;
+  return !sets.some((set) => set.super_muerte === true);
+}
+
 export function isSetComplete(set: PartidoSetScore): boolean {
   return (
     typeof set.local === "number" &&
@@ -294,6 +302,10 @@ export function canRemoveLastSet(sets: PartidoSetScore[]): boolean {
 
 export function emptySetDraft(): PartidoSetScore {
   return { local: 0, visitante: 0 };
+}
+
+export function emptySuperMuerteDraft(): PartidoSetScore {
+  return { local: 0, visitante: 0, super_muerte: true };
 }
 
 export type SetsValidationOptions = {

@@ -2,10 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   buildPersistPayload,
   canAddAnotherSet,
+  canAddSuperMuerte,
   canRemoveLastSet,
   countSetWins,
   detectMatchWinner,
   emptySetDraft,
+  emptySuperMuerteDraft,
   formatSetWinsForWinner,
   getPartidoSets,
   getSetsValidationMessage,
@@ -145,6 +147,12 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
     setDrafts((prev) => [...prev, "", ""]);
   };
 
+  const addSuperMuerte = () => {
+    if (!canAddSuperMuerte(sets)) return;
+    setSets((prev) => [...prev, emptySuperMuerteDraft()]);
+    setDrafts((prev) => [...prev, "", ""]);
+  };
+
   const removeLastSet = () => {
     if (!canRemoveLastSet(sets)) return;
     setSets((prev) => prev.slice(0, -1));
@@ -223,7 +231,9 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
         <div className="te-sets-modal__rows">
           {sets.map((set, index) => (
             <div key={index} className="te-sets-modal__row">
-              <span className="te-sets-modal__row-label">Set {index + 1}</span>
+              <span className="te-sets-modal__row-label">
+                {set.super_muerte ? "Súper muerte" : `Set ${index + 1}`}
+              </span>
               <div className="te-sets-modal__row-inputs">
                 <input
                   type="text"
@@ -232,7 +242,7 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
                   className="te-sets-modal__input"
                   value={drafts[index * 2] ?? ""}
                   disabled={saving}
-                  aria-label={`Set ${index + 1} ${localLabel}`}
+                  aria-label={`${set.super_muerte ? "Súper muerte" : `Set ${index + 1}`} ${localLabel}`}
                   onFocus={(e) => e.currentTarget.select()}
                   onChange={(e) => updateSet(index, "local", e.target.value)}
                 />
@@ -244,7 +254,7 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
                   className="te-sets-modal__input"
                   value={drafts[index * 2 + 1] ?? ""}
                   disabled={saving}
-                  aria-label={`Set ${index + 1} ${visitLabel}`}
+                  aria-label={`${set.super_muerte ? "Súper muerte" : `Set ${index + 1}`} ${visitLabel}`}
                   onFocus={(e) => e.currentTarget.select()}
                   onChange={(e) =>
                     updateSet(index, "visitante", e.target.value)
@@ -256,19 +266,30 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
         </div>
 
         <div className="te-sets-modal__toolbar">
-          {canAddAnotherSet(sets) ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={saving}
-              onClick={addSet}
-            >
-              + Añadir set
-            </Button>
-          ) : (
-            <span />
-          )}
+          <div className="te-sets-modal__toolbar-add">
+            {canAddAnotherSet(sets) ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={saving}
+                onClick={addSet}
+              >
+                + Añadir set
+              </Button>
+            ) : null}
+            {canAddSuperMuerte(sets) ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={saving}
+                onClick={addSuperMuerte}
+              >
+                + Súper muerte
+              </Button>
+            ) : null}
+          </div>
           {canRemoveLastSet(sets) ? (
             <Button
               type="button"

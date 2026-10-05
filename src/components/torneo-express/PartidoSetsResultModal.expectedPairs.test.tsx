@@ -14,6 +14,35 @@ const JUAN_CARLOS: ExpectedPairs = {
   visitante: { pair_id: "visit", player1_id: "luis", player2_id: "mario", is_virtual: false },
 };
 
+describe("PartidoSetsResultModal súper muerte", () => {
+  it("el usuario puede agregar el campo y también quitarlo", () => {
+    render(
+      <PartidoSetsResultModal
+        open
+        onClose={jest.fn()}
+        localLabel="Ferrito / Ferro"
+        visitLabel="Juan P / IsraBe"
+        initialPartido={{
+          estado: "pendiente",
+          sets_resultado: [
+            { local: 6, visitante: 2 },
+            { local: 6, visitante: 3 },
+          ],
+        }}
+        onSave={jest.fn()}
+      />
+    );
+    const rowLabel = () =>
+      screen.queryByText("Súper muerte", { selector: ".te-sets-modal__row-label" });
+    expect(rowLabel()).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "+ Súper muerte" }));
+    expect(rowLabel()).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "✕ Quitar último" }));
+    expect(rowLabel()).toBeNull();
+    expect(screen.getByRole("button", { name: "+ Súper muerte" })).toBeTruthy();
+  });
+});
+
 describe("PartidoSetsResultModal expectedPairs", () => {
   it("guarda el snapshot de la apertura aunque después cambie la prop", async () => {
     const onSave = jest.fn().mockResolvedValue(undefined);
