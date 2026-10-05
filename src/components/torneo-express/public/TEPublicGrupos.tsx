@@ -24,6 +24,7 @@ import {
   RIVIERA_PRODUCT_NAME,
 } from "../../../club-experience/motherBrand";
 import { useClubExperience } from "../../../club-experience";
+import { resolvePlayerPublicProfiles } from "../../../lib/rivieraJugadores/publicPlayerAvatars";
 import { useOrganizerDisplayName } from "../../../club-experience/useOrganizerDisplayName";
 import {
   clasificacionAchievementStats,
@@ -62,12 +63,12 @@ export interface TEPublicGruposGrupo {
   partidosExpress: TorneoExpressPartido[];
   standingRows: StandingRowExpress[];
   clasifican: number;
-  /** Preparado para fotos futuras; el bundle público actual no expone avatares. */
   achievementPlayers?: TEPublicGruposAchievementPlayer[];
 }
 
 export interface TEPublicGruposAchievementPlayer {
   name: string;
+  playerId?: string | null;
   avatarUrl?: string | null;
 }
 
@@ -163,6 +164,7 @@ export function buildTEPublicGruposProps(
       labelById.set(p.pareja_id, p.pareja_display ?? p.pareja_id);
     });
 
+    const standingRows = standingsByGrupo[grupo.id] ?? [];
     return {
       id: grupo.id,
       nombre: grupo.nombre,
@@ -171,8 +173,9 @@ export function buildTEPublicGruposProps(
         labelById
       ),
       partidosExpress: bundle.partidosPorGrupo[grupo.id] ?? [],
-      standingRows: standingsByGrupo[grupo.id] ?? [],
+      standingRows,
       clasifican,
+      achievementPlayers: achievementPlayersFromWinner(parejas, standingRows),
     };
   });
 
@@ -352,6 +355,87 @@ function initialsFromName(name: string): string {
   if (words.length === 0) return "RO";
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
+}
+
+function achievementPlayersFromWinner(
+  parejas: TorneoExpressBundle["parejasPorGrupo"][string],
+  rows: StandingRowExpress[]
+): TEPublicGruposAchievementPlayer[] | undefined {
+  const winner = rows[0];
+  if (!winner) return undefined;
+  const pareja = parejas.find((item) => item.pareja_id === winner.parejaId);
+  if (!pareja || pareja.is_virtual || !pareja.player1_id || !pareja.player2_id) {
+    return undefined;
+  }
+  const names = winner.parejaLabel
+    .split(/\s*\/\s*/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+  return [
+    { name: names[0] || "Jugador 1", playerId: pareja.player1_id },
+    { name: names[1] || names[0] || "Jugador 2", playerId: pareja.player2_id },
+  ];
+}
+
+function useGroupWinnerPhotos(
+  grupos: TEPublicGruposGrupo[]
+): Record<string, string | null> {
+  const { organizadorId } = useClubExperience();
+  const [photos, setPhotos] = useState<Record<string, string | null>>({});
+  const lookupKey = useMemo(() => {
+    const entries: Array<{ id: string; name: string }> = [];
+    const seen = new Set<string>();
+    for (const grupo of grupos) {
+      for (const player of grupo.achievementPlayers ?? []) {
+        const id = player.playerId?.trim();
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        entries.push({ id, name: player.name });
+      }
+    }
+    entries.sort((a, b) => a.id.localeCompare(b.id));
+    return JSON.stringify(entries);
+  }, [grupos]);
+
+  useEffect(() => {
+    if (!organizadorId || lookupKey === "[]") {
+      setPhotos({});
+      return;
+    }
+    const entries = JSON.parse(lookupKey) as Array<{ id: string; name: string }>;
+    let cancelled = false;
+    void resolvePlayerPublicProfiles(organizadorId, entries, { publicOnly: true })
+      .then((profiles) => {
+        if (cancelled) return;
+        const next: Record<string, string | null> = {};
+        for (const entry of entries) {
+          next[entry.id] = profiles[entry.id]?.fotoUrl ?? null;
+        }
+        setPhotos(next);
+      })
+      .catch(() => {
+        if (!cancelled) setPhotos({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [organizadorId, lookupKey]);
+
+  return photos;
+}
+
+function withAchievementPhotos(
+  players: TEPublicGruposAchievementPlayer[] | undefined,
+  photos: Record<string, string | null>
+): TEPublicGruposAchievementPlayer[] | undefined {
+  if (!players) return players;
+  return players.map((player) => {
+    const fromProfile = player.playerId ? photos[player.playerId] : null;
+    return {
+      ...player,
+      avatarUrl: player.avatarUrl || fromProfile || null,
+    };
+  });
 }
 
 function fallbackPlayersFromPair(
@@ -734,6 +818,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
 }) => {
   const [selectedGrupoId, setSelectedGrupoId] = useState<string | null>(null);
   const { branding, isScopeBrandingReady } = useClubExperience();
+  const winnerPhotos = useGroupWinnerPhotos(grupos);
   const organizerName = useOrganizerDisplayName().trim();
   const clubName = organizerName || RIVIERA_PRODUCT_NAME;
   const showMotherAttribution = !isRivieraOwnAccountName(clubName);
@@ -938,7 +1023,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
                   partidos={grupo.partidosExpress}
                   torneoNombre={torneoNombre}
                   categoria={categoria}
-                  players={grupo.achievementPlayers}
+                  players={withAchievementPhotos(grupo.achievementPlayers, winnerPhotos)}
                   clubName={clubName}
                   clubLogoUrl={clubLogoUrl}
                   showMotherAttribution={showMotherAttribution}

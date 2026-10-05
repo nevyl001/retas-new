@@ -53,14 +53,13 @@ const STORY_LAYOUT = {
     copyY: 610,
   },
   players: {
-    firstX: 326,
-    secondX: 758,
-    firstY: 842,
-    secondY: 912,
-    diameter: 292,
-    firstNameY: 1025,
-    secondNameY: 1095,
-    nameWidth: 370,
+    firstX: 330,
+    secondX: 750,
+    top: 688,
+    width: 320,
+    height: 400,
+    nameY: 1136,
+    nameWidth: 340,
   },
   stats: {
     top: 1212,
@@ -357,45 +356,25 @@ async function drawAvatar(
   ctx: CanvasRenderingContext2D,
   player: GroupWinnerSharePlayer,
   centerX: number,
-  centerY: number,
-  diameter: number,
+  top: number,
+  width: number,
+  height: number,
   accent: string
 ) {
-  const radius = diameter / 2;
-  const portraitRadius = radius - 18;
+  const x = centerX - width / 2;
+  const radius = 36;
 
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.72)";
-  ctx.shadowBlur = 42;
-  ctx.shadowOffsetY = 20;
-  ctx.fillStyle = "#090a0c";
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius + 12, 0, Math.PI * 2);
+  ctx.shadowColor = "rgba(0,0,0,0.55)";
+  ctx.shadowBlur = 36;
+  ctx.shadowOffsetY = 18;
+  ctx.fillStyle = "#121418";
+  roundedRectPath(ctx, x, top, width, height, radius);
   ctx.fill();
   ctx.restore();
 
   ctx.save();
-  ctx.strokeStyle = "rgba(247,243,237,0.1)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius + 7, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.strokeStyle = accent;
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius + 1, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.strokeStyle = "#090a0c";
-  ctx.lineWidth = 14;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius - 8, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, portraitRadius, 0, Math.PI * 2);
-  ctx.closePath();
+  roundedRectPath(ctx, x, top, width, height, radius);
   ctx.clip();
 
   let image: HTMLImageElement | null = null;
@@ -410,71 +389,30 @@ async function drawAvatar(
     const crop = computeCoverCrop(
       image.naturalWidth || image.width,
       image.naturalHeight || image.height,
-      portraitRadius * 2,
-      portraitRadius * 2
+      width,
+      height
     );
-    ctx.drawImage(
-      image,
-      crop.sx,
-      crop.sy,
-      crop.sw,
-      crop.sh,
-      centerX - portraitRadius,
-      centerY - portraitRadius,
-      portraitRadius * 2,
-      portraitRadius * 2
-    );
+    ctx.drawImage(image, crop.sx, crop.sy, crop.sw, crop.sh, x, top, width, height);
   } else {
-    const gradient = ctx.createRadialGradient(
-      centerX - portraitRadius * 0.38,
-      centerY - portraitRadius * 0.42,
-      portraitRadius * 0.03,
-      centerX + portraitRadius * 0.1,
-      centerY + portraitRadius * 0.16,
-      portraitRadius
-    );
-    gradient.addColorStop(0, "#4b4d52");
-    gradient.addColorStop(0.22, "#303238");
-    gradient.addColorStop(0.68, "#1b1d22");
+    const gradient = ctx.createLinearGradient(x, top, x + width, top + height);
+    gradient.addColorStop(0, "#3a3d44");
+    gradient.addColorStop(0.45, "#1c1e23");
     gradient.addColorStop(1, "#0c0d10");
     ctx.fillStyle = gradient;
-    ctx.fillRect(
-      centerX - portraitRadius,
-      centerY - portraitRadius,
-      portraitRadius * 2,
-      portraitRadius * 2
-    );
-    const innerLight = ctx.createLinearGradient(
-      centerX - portraitRadius,
-      centerY - portraitRadius,
-      centerX + portraitRadius,
-      centerY + portraitRadius
-    );
-    innerLight.addColorStop(0, "rgba(247,243,237,0.11)");
-    innerLight.addColorStop(0.5, "rgba(247,243,237,0)");
-    innerLight.addColorStop(1, "rgba(0,0,0,0.18)");
-    ctx.fillStyle = innerLight;
-    ctx.fillRect(
-      centerX - portraitRadius,
-      centerY - portraitRadius,
-      portraitRadius * 2,
-      portraitRadius * 2
-    );
+    ctx.fillRect(x, top, width, height);
     ctx.fillStyle = "#f7f3ed";
-    ctx.font = font(820, 84);
+    ctx.font = font(820, 72);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.shadowColor = "rgba(0,0,0,0.55)";
-    ctx.shadowBlur = 12;
-    ctx.fillText(initialsFromName(player.name), centerX, centerY + 7);
+    ctx.fillText(initialsFromName(player.name), centerX, top + height / 2);
   }
   ctx.restore();
 
   ctx.save();
-  ctx.strokeStyle = "rgba(247,243,237,0.22)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, portraitRadius, 0, Math.PI * 2);
+  ctx.strokeStyle = accent;
+  ctx.globalAlpha = 0.72;
+  ctx.lineWidth = 3;
+  roundedRectPath(ctx, x, top, width, height, radius);
   ctx.stroke();
   ctx.restore();
 }
@@ -916,47 +854,30 @@ export async function renderGroupWinnerShareCanvas(
     STORY_LAYOUT.achievement.copyY
   );
 
-  // PLAYERS — retratos protagonistas con eje central y profundidad de póster.
-  ctx.save();
-  ctx.strokeStyle = accent;
-  ctx.globalAlpha = 0.2;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(w / 2, 716);
-  ctx.lineTo(w / 2, 1114);
-  ctx.stroke();
-  ctx.restore();
-
   await drawAvatar(
     ctx,
     data.player1,
     STORY_LAYOUT.players.firstX,
-    STORY_LAYOUT.players.firstY,
-    STORY_LAYOUT.players.diameter,
+    STORY_LAYOUT.players.top,
+    STORY_LAYOUT.players.width,
+    STORY_LAYOUT.players.height,
     accent
   );
   await drawAvatar(
     ctx,
     data.player2,
     STORY_LAYOUT.players.secondX,
-    STORY_LAYOUT.players.secondY,
-    STORY_LAYOUT.players.diameter,
+    STORY_LAYOUT.players.top,
+    STORY_LAYOUT.players.width,
+    STORY_LAYOUT.players.height,
     accent
   );
 
   ctx.textAlign = "center";
   ctx.fillStyle = cream;
-  for (const [player, x, y] of [
-    [
-      data.player1,
-      STORY_LAYOUT.players.firstX,
-      STORY_LAYOUT.players.firstNameY,
-    ],
-    [
-      data.player2,
-      STORY_LAYOUT.players.secondX,
-      STORY_LAYOUT.players.secondNameY,
-    ],
+  for (const [player, x] of [
+    [data.player1, STORY_LAYOUT.players.firstX],
+    [data.player2, STORY_LAYOUT.players.secondX],
   ] as const) {
     const lines = textLinesToFit(
       ctx,
@@ -967,7 +888,7 @@ export async function renderGroupWinnerShareCanvas(
       30,
       750
     );
-    drawTextLines(ctx, lines, x, y, 1.12, 750);
+    drawTextLines(ctx, lines, x, STORY_LAYOUT.players.nameY, 1.12, 750);
   }
 
   // STATS — scoreboard continuo: una superficie, tres lecturas, un solo ritmo.
