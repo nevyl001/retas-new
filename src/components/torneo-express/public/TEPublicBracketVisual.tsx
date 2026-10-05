@@ -774,40 +774,41 @@ function championMatchLines(
 }
 
 function TournamentRecap({
-  champion,
-  runnerUp,
+  team,
+  place,
   tournamentName,
   category,
   stats,
   rounds,
 }: {
-  champion: BracketTeamPresentation;
-  runnerUp: BracketTeamPresentation | null;
+  team: BracketTeamPresentation;
+  place: "first" | "second";
   tournamentName: string;
   category?: string | null;
   stats: PublicEliminatoriaPodiumStats | null;
   rounds: BracketRoundPresentation[];
 }) {
-  const players = getTeamPlayers(champion).slice(0, 2);
-  const matches = championMatchLines(rounds, champion.parejaId);
-  const eyebrow = ["Campeones", tournamentName, category]
+  const isChampion = place === "first";
+  const players = getTeamPlayers(team).slice(0, 2);
+  const matches = championMatchLines(rounds, team.parejaId);
+  const eyebrow = [isChampion ? "Campeones" : "Subcampeones", tournamentName, category]
     .filter(Boolean)
     .join(" · ");
-  const runnerLabel = runnerUp
-    ? getTeamPlayers(runnerUp)
-        .map((player) => player.name)
-        .filter(Boolean)
-        .join(" / ")
-    : null;
 
   return (
-    <section className="te-elim-recap" aria-label="Resumen del torneo">
+    <section
+      className={`te-elim-recap${isChampion ? "" : " te-elim-recap--second"}`}
+      aria-label={isChampion ? "Resumen de los campeones" : "Resumen de los subcampeones"}
+    >
       <header className="te-elim-recap__header">
         <p className="te-elim-recap__eyebrow">{eyebrow}</p>
         <span className="te-elim-recap__rule" aria-hidden />
       </header>
       <div className="te-elim-recap__stage">
-        <div className="te-elim-recap__portraits" aria-label="Pareja campeona">
+        <div
+          className="te-elim-recap__portraits"
+          aria-label={isChampion ? "Pareja campeona" : "Pareja subcampeona"}
+        >
           {players.map((player) => (
             <div className="te-elim-recap__player" key={player.id}>
               <JugadorAvatar
@@ -823,19 +824,19 @@ function TournamentRecap({
         </div>
         <div className="te-elim-recap__results">
           <div className="te-elim-recap__hero">
-            <p className="te-elim-recap__badge">1.er lugar</p>
+            <p className="te-elim-recap__badge">
+              {isChampion ? "1.er lugar" : "2.º lugar"}
+            </p>
             <h2 className="te-elim-recap__title">
-              <TablerIcon name="trophy" size={22} />
-              ¡Felicidades!
+              <TablerIcon name={isChampion ? "trophy" : "medal"} size={22} />
+              {isChampion ? "¡Felicidades!" : "Gran torneo."}
             </h2>
-            {runnerLabel ? (
-              <p className="te-elim-recap__runner">
-                Subcampeones · {runnerLabel}
-              </p>
-            ) : null}
           </div>
       {stats ? (
-        <div className="te-elim-recap__stats" aria-label="Números del campeón">
+        <div
+          className="te-elim-recap__stats"
+          aria-label={isChampion ? "Números del campeón" : "Números del subcampeón"}
+        >
           <div>
             <span>Games acum.</span>
             <strong>{stats.juegosFavor}</strong>
@@ -979,13 +980,23 @@ function TournamentClosingStack({
   return (
     <div className="te-pb-closing-stack" aria-label="Cierre del torneo">
       <TournamentRecap
-        champion={champion}
-        runnerUp={runnerUp}
+        team={champion}
+        place="first"
         tournamentName={tournamentName}
         category={category}
         stats={statsFor(champion)}
         rounds={rounds}
       />
+      {runnerUp ? (
+        <TournamentRecap
+          team={runnerUp}
+          place="second"
+          tournamentName={tournamentName}
+          category={category}
+          stats={statsFor(runnerUp)}
+          rounds={rounds}
+        />
+      ) : null}
       <div className="te-pb-podium-share-grid">
         {podiums.map(({ place, presentation }) => (
           <TournamentPodiumShareCard

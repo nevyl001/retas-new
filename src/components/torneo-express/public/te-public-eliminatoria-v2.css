@@ -2745,10 +2745,45 @@
   object-position: center 18%;
 }
 
-.te-elim-v2 .te-elim-recap__runner {
-  margin: 0.45rem 0 0;
-  color: var(--ro-chrome-text-muted);
-  font-size: 0.95rem;
+.te-elim-v2 .te-elim-recap--second {
+  border-color: color-mix(
+    in srgb,
+    var(--ro-medal-silver) 32%,
+    var(--ro-chrome-border)
+  );
+  background:
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--ro-medal-silver) 9%, transparent),
+      transparent 42%
+    ),
+    var(--ro-chrome-deep, var(--ro-chrome-bg));
+}
+
+.te-elim-v2 .te-elim-recap--second .te-elim-recap__eyebrow,
+.te-elim-v2 .te-elim-recap--second .te-elim-recap__title svg,
+.te-elim-v2 .te-elim-recap--second .te-elim-recap__matches > p,
+.te-elim-v2 .te-elim-recap--second .te-elim-recap__dif {
+  color: var(--ro-medal-silver);
+}
+
+.te-elim-v2 .te-elim-recap--second .te-elim-recap__rule {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ro-medal-silver) 70%, transparent),
+    transparent
+  );
+}
+
+.te-elim-v2 .te-elim-recap--second .te-elim-recap__badge {
+  border-color: color-mix(in srgb, var(--ro-medal-silver) 55%, transparent);
+}
+
+.te-elim-v2 .te-elim-recap--second .te-elim-recap__avatar.rj-avatar {
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.38),
+    inset 0 0 0 1px color-mix(in srgb, var(--ro-medal-silver) 55%, transparent);
 }
 
 .te-elim-v2 .te-elim-recap__stats {
