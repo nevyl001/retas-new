@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { formatCanchaDisplay } from "../../../lib/torneoExpress/canchaDisplay";
 import {
   formatPartidoFecha,
@@ -12,7 +12,6 @@ import {
 import { isPartidoEnVivoWindow } from "../../../lib/torneoExpress/partidoEnVivo";
 import { sortPartidosByOrden } from "../../../lib/torneoExpress/roundRobin";
 import { isGrupoPartidosCompletos } from "../../../lib/torneoExpress/grupoCompletion";
-import { shareGroupWinnerImage } from "../../../lib/torneoExpress/shareGroupWinnerImage";
 import { WINNER_TAGLINE } from "../../../lib/torneoExpress/renderGroupWinnerShareCanvas";
 import {
   RIVIERA_SOCIAL_HANDLE,
@@ -333,20 +332,6 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
   );
 }
 
-function readShareTheme(): { primary: string; accent: string } {
-  if (typeof document === "undefined") {
-    return { primary: "#111416", accent: "#c9845c" };
-  }
-  const styles = getComputedStyle(document.documentElement);
-  return {
-    primary: styles.getPropertyValue("--brand-primary").trim() || "#111416",
-    accent:
-      styles.getPropertyValue("--brand-accent").trim() ||
-      styles.getPropertyValue("--ro-accent").trim() ||
-      "#c9845c",
-  };
-}
-
 function initialsFromName(name: string): string {
   const words = name
     .trim()
@@ -657,10 +642,6 @@ function GrupoWinnerSummary({
   showMotherAttribution: boolean;
   clasificacionModo: TorneoExpressClasificacionModo;
 }) {
-  const [shareMsg, setShareMsg] = useState<string | null>(null);
-  const [isSharing, setIsSharing] = useState(false);
-  const sharingRef = useRef(false);
-
   if (!isGrupoPartidosCompletos(partidos) || rows.length === 0) return null;
   const winner = rows[0];
   if (!rows.some((row) => row.pj > 0)) return null;
@@ -675,52 +656,6 @@ function GrupoWinnerSummary({
     dif: winner.dif,
     setsDif,
   });
-
-  const flashShareMsg = (msg: string) => {
-    setShareMsg(msg);
-    window.setTimeout(() => setShareMsg(null), 2600);
-  };
-
-  const handleShare = async () => {
-    if (sharingRef.current) return;
-    sharingRef.current = true;
-    setIsSharing(true);
-    setShareMsg(null);
-    try {
-      const theme = readShareTheme();
-      const result = await shareGroupWinnerImage({
-        tournamentName: torneoNombre,
-        clubName,
-        clubLogoUrl,
-        categoryName: categoria || "Torneo Express",
-        groupName: grupoNombre,
-        pairName: winner.parejaLabel,
-        player1: achievementPlayers[0],
-        player2: achievementPlayers[1],
-        position: 1,
-        points: winner.puntos,
-        played: winner.pj,
-        wins: winner.pg,
-        fav: winner.ptsFav,
-        con: winner.ptsCon,
-        diff: winner.dif,
-        setsDif,
-        clasificacionModo,
-        themePrimary: theme.primary,
-        themeAccent: theme.accent,
-      });
-      if (result.status === "downloaded") {
-        flashShareMsg("Logro guardado. Ya puedes compartirlo en tus redes.");
-      } else if (result.status === "error") {
-        flashShareMsg("No pudimos preparar tu logro. Intenta nuevamente.");
-      }
-    } catch {
-      flashShareMsg("No pudimos preparar tu logro. Intenta nuevamente.");
-    } finally {
-      sharingRef.current = false;
-      setIsSharing(false);
-    }
-  };
 
   return (
     <aside
@@ -773,32 +708,6 @@ function GrupoWinnerSummary({
         <p className="te-grupo-achievement__tagline">{WINNER_TAGLINE}</p>
         <AchievementSocialSignature />
       </div>
-      <footer className="te-grupo-achievement__footer">
-        <button
-          type="button"
-          className="te-grupo-achievement__share"
-          onClick={handleShare}
-          disabled={isSharing}
-          aria-busy={isSharing}
-        >
-          <svg
-            width="17"
-            height="17"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            aria-hidden
-          >
-            <circle cx="18" cy="5" r="3" />
-            <circle cx="6" cy="12" r="3" />
-            <circle cx="18" cy="19" r="3" />
-            <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
-          </svg>
-          {isSharing ? "Preparando tu logro…" : "Compartir logro"}
-        </button>
-        {shareMsg ? <p aria-live="polite">{shareMsg}</p> : null}
-      </footer>
     </aside>
   );
 }
