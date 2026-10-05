@@ -516,18 +516,16 @@ function PartidoRow({
   const pair1Won = winnerSide === "local";
   const pair2Won = winnerSide === "visitante";
   const sets = played ? getPartidoSets(partido) : [];
-  const localPtsLabel =
+  const hasSuperMuerte = sets.some((set) => set.super_muerte === true);
+  const setsAria =
     sets.length === 0
-      ? ""
-      : sets.length === 1
-        ? String(sets[0].local)
-        : sets.map((s) => s.local).join(" · ");
-  const visitPtsLabel =
-    sets.length === 0
-      ? ""
-      : sets.length === 1
-        ? String(sets[0].visitante)
-        : sets.map((s) => s.visitante).join(" · ");
+      ? undefined
+      : sets
+          .map((set, index) => {
+            const name = set.super_muerte ? "Súper muerte" : `Set ${index + 1}`;
+            return `${name}: ${set.local} a ${set.visitante}`;
+          })
+          .join(". ");
 
   const scheduleIso = partidoScheduleIso(partido);
   const fechaLabel = formatPartidoFecha(scheduleIso);
@@ -624,61 +622,92 @@ function PartidoRow({
           )}
         </div>
 
-        <div
-          className={`te-partido-scoreboard${
-            played ? " te-partido-scoreboard--played" : ""
-          }`}
-        >
-          <div className="te-partido-scoreboard__row">
-            <span
-              className={`te-partido-team te-partido-team--local${
-                pair1Won
-                  ? " te-partido-team--winner"
-                  : pair2Won
-                    ? " te-partido-team--loser"
-                    : ""
-              }`}
-            >
-              {localLabel}
-            </span>
-            {played ? (
+        {played ? (
+          <div
+            className={`te-partido-scoreboard te-partido-scoreboard--played${
+              hasSuperMuerte ? " te-partido-scoreboard--sm" : ""
+            }`}
+          >
+            <div className="te-partido-scoreboard__sides">
               <span
-                className={`te-partido-scoreboard__pts${
-                  pair1Won ? " te-partido-scoreboard__pts--win" : ""
+                className={`te-partido-team te-partido-team--local${
+                  pair1Won
+                    ? " te-partido-team--winner"
+                    : pair2Won
+                      ? " te-partido-team--loser"
+                      : ""
                 }`}
               >
-                {localPtsLabel}
+                {localLabel}
               </span>
+              <span
+                className={`te-partido-team te-partido-team--visit${
+                  pair2Won
+                    ? " te-partido-team--winner"
+                    : pair1Won
+                      ? " te-partido-team--loser"
+                      : ""
+                }`}
+              >
+                {visitLabel}
+              </span>
+            </div>
+            {sets.length > 0 ? (
+              <div className="te-partido-setboard" aria-label={setsAria}>
+                {sets.map((set, index) => {
+                  const localWonSet = set.local > set.visitante;
+                  const visitWonSet = set.visitante > set.local;
+                  return (
+                    <div
+                      key={index}
+                      className={`te-partido-setcol${
+                        set.super_muerte ? " te-partido-setcol--sm" : ""
+                      }`}
+                    >
+                      {set.super_muerte ? (
+                        <span className="te-partido-setcol__mark">SM</span>
+                      ) : null}
+                      <span
+                        className={`te-partido-setcol__n${
+                          localWonSet
+                            ? " te-partido-setcol__n--win"
+                            : " te-partido-setcol__n--lose"
+                        }`}
+                      >
+                        {set.local}
+                      </span>
+                      <span
+                        className={`te-partido-setcol__n${
+                          visitWonSet
+                            ? " te-partido-setcol__n--win"
+                            : " te-partido-setcol__n--lose"
+                        }`}
+                      >
+                        {set.visitante}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             ) : null}
           </div>
-          {!played ? (
+        ) : (
+          <div className="te-partido-scoreboard">
+            <div className="te-partido-scoreboard__row">
+              <span className="te-partido-team te-partido-team--local">
+                {localLabel}
+              </span>
+            </div>
             <span className="te-partido-vs" aria-hidden>
               vs
             </span>
-          ) : null}
-          <div className="te-partido-scoreboard__row">
-            <span
-              className={`te-partido-team te-partido-team--visit${
-                pair2Won
-                  ? " te-partido-team--winner"
-                  : pair1Won
-                    ? " te-partido-team--loser"
-                    : ""
-              }`}
-            >
-              {visitLabel}
-            </span>
-            {played ? (
-              <span
-                className={`te-partido-scoreboard__pts${
-                  pair2Won ? " te-partido-scoreboard__pts--win" : ""
-                }`}
-              >
-                {visitPtsLabel}
+            <div className="te-partido-scoreboard__row">
+              <span className="te-partido-team te-partido-team--visit">
+                {visitLabel}
               </span>
-            ) : null}
+            </div>
           </div>
-        </div>
+        )}
 
         {((horarioEditOpen && horarioEditable && onSaveProgramado) ||
           (canchaEditOpen && canchaEditable && onSaveCancha)) && (

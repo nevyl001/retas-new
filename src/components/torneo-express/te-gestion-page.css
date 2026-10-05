@@ -1098,20 +1098,90 @@
   padding: 0.05rem 0;
 }
 
-.te-gestion-page .te-partido-scoreboard__pts {
-  flex: none;
-  min-width: 1.25rem;
-  font-family: var(--ro-font-heading);
-  font-size: 1.2rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  text-align: right;
-  color: var(--ro-text-secondary);
+.te-gestion-page .te-partido-scoreboard--played {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-top: 0.15rem;
 }
 
-.te-gestion-page .te-partido-scoreboard__pts--win {
+.te-gestion-page .te-partido-scoreboard--sm {
+  margin-top: 0.7rem;
+}
+
+.te-gestion-page .te-partido-scoreboard__sides {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.te-gestion-page .te-partido-scoreboard--played .te-partido-team {
+  display: flex;
+  align-items: center;
+  min-height: 1.15rem;
+}
+
+.te-gestion-page .te-partido-setboard {
+  display: flex;
+  align-items: stretch;
+  gap: 0.45rem;
+}
+
+.te-gestion-page .te-partido-setcol {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 0.35rem;
+  min-width: 1.25rem;
+}
+
+.te-gestion-page .te-partido-setcol--sm {
+  margin-left: 0.15rem;
+  padding-left: 0.5rem;
+}
+
+.te-gestion-page .te-partido-setcol--sm::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.1rem;
+  bottom: 0.1rem;
+  width: 1px;
+  background: var(--ro-border);
+}
+
+.te-gestion-page .te-partido-setcol__mark {
+  position: absolute;
+  top: -0.85rem;
+  right: 0;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: var(--ro-text-muted);
+}
+
+.te-gestion-page .te-partido-setcol__n {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 1.15rem;
+  min-height: 1.15rem;
+  font-family: var(--ro-font-heading);
+  font-size: 1.05rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--ro-text-muted);
+}
+
+.te-gestion-page .te-partido-setcol__n--win {
   color: var(--ro-text-primary);
+  font-weight: 800;
 }
 
 .te-gestion-page .te-partido-actions {
@@ -1324,10 +1394,13 @@
 }
 
 .te-gestion-page .te-partido-actions--corner .te-partido-edit-btn,
-.te-gestion-page .te-partido-actions--corner .riviera-btn-ghost {
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary, var(--text-muted));
+.te-gestion-page .te-partido-actions--corner .riviera-btn.riviera-btn-ghost.te-partido-edit-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ro-text-muted);
   text-decoration: none;
+  text-underline-offset: 0;
   padding: 0;
   min-height: unset;
   border: none;
@@ -1335,10 +1408,10 @@
 }
 
 .te-gestion-page .te-partido-actions--corner .te-partido-edit-btn:hover,
-.te-gestion-page .te-partido-actions--corner .riviera-btn-ghost:hover:not(:disabled) {
+.te-gestion-page .te-partido-actions--corner .riviera-btn.riviera-btn-ghost.te-partido-edit-btn:hover:not(:disabled) {
   color: var(--ro-text-primary);
   background: transparent;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .te-gestion-page .te-partido-actions:not(.te-partido-actions--corner) {
