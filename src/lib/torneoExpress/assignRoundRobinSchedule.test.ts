@@ -364,6 +364,52 @@ describe("assignRoundRobinSchedule", () => {
     validateScheduleInvariants(matches, scheduled);
   });
 
+  test("cada día usa solo sus canchas y su horario", () => {
+    const matches = Array.from({ length: 3 }, (_, i) =>
+      mkMatch({
+        matchKey: `a${i}`,
+        groupKey: 0,
+        parejaLocalId: `a${i}`,
+        parejaVisitanteId: `a${i + 1}`,
+        orden: i + 1,
+        ronda: i + 1,
+      })
+    );
+
+    const scheduled = assignRoundRobinSchedule({
+      matches,
+      courts: ["Cancha 2", "Cancha 3"],
+      days: [
+        {
+          date: "2026-10-08",
+          startTime: "17:00",
+          endTime: "18:00",
+          courts: ["Cancha 2", "Cancha 3"],
+        },
+        {
+          date: "2026-10-09",
+          startTime: "17:00",
+          endTime: "20:00",
+          courts: ["Pista Norte"],
+        },
+      ],
+      durationMinutes: 60,
+    });
+
+    expect(
+      scheduled.map((match) => partidoDateInputValue(match.programado_en!))
+    ).toEqual(["2026-10-09", "2026-10-09", "2026-10-09"]);
+    expect(scheduled.map((match) => match.cancha)).toEqual([
+      "Pista Norte",
+      "Pista Norte",
+      "Pista Norte",
+    ]);
+    expect(
+      scheduled.map((match) => partidoTimeInputValue24(match.programado_en!)).sort()
+    ).toEqual(["17:00", "18:00", "19:00"]);
+    validateScheduleInvariants(matches, scheduled);
+  });
+
   test("rechaza ventana donde no cabe ni un partido", () => {
     const matches = [
       mkMatch({ matchKey: "a", parejaLocalId: "p1", parejaVisitanteId: "p2" }),

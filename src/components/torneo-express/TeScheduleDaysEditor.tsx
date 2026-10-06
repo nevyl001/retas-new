@@ -4,7 +4,11 @@ import {
   todayMexicoDateInput,
 } from "../../lib/torneoExpress/teScheduleTime";
 import type { TeScheduleDayWindow } from "../../lib/torneoExpress/scheduleDayWindows";
-import { defaultScheduleDay } from "../../lib/torneoExpress/scheduleDayWindows";
+import {
+  defaultScheduleDay,
+  MAX_DAY_COURTS,
+  resizeDayCourts,
+} from "../../lib/torneoExpress/scheduleDayWindows";
 import { Button } from "../ui";
 
 type TeScheduleDaysEditorProps = {
@@ -44,8 +48,13 @@ export const TeScheduleDaysEditor: React.FC<TeScheduleDaysEditorProps> = ({
         date: nextDate,
         startTime: last.startTime,
         endTime: last.endTime,
+        courts: [...(last.courts ?? resizeDayCourts(undefined, 2))],
       },
     ]);
+  };
+
+  const updateDayCourts = (index: number, courts: string[]) => {
+    updateDay(index, { courts });
   };
 
   return (
@@ -108,6 +117,58 @@ export const TeScheduleDaysEditor: React.FC<TeScheduleDaysEditorProps> = ({
                     updateDay(index, { endTime: e.target.value })
                   }
                 />
+              </div>
+            </div>
+            <div className="te-schedule-days__courts">
+              <div className="torneo-express-field te-schedule-days__court-count">
+                <label htmlFor={`${idPrefix}-courts-${index}`}>
+                  Canchas este día
+                </label>
+                <input
+                  id={`${idPrefix}-courts-${index}`}
+                  type="number"
+                  min={1}
+                  max={MAX_DAY_COURTS}
+                  step={1}
+                  value={(day.courts ?? resizeDayCourts(undefined, 2)).length}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    updateDayCourts(
+                      index,
+                      resizeDayCourts(day.courts, Number(e.target.value))
+                    )
+                  }
+                />
+              </div>
+              <div className="te-schedule-days__court-names">
+                {(day.courts ?? resizeDayCourts(undefined, 2)).map(
+                  (courtName, courtIndex) => (
+                    <div
+                      key={`${idPrefix}-court-${index}-${courtIndex}`}
+                      className="torneo-express-field"
+                    >
+                      <label
+                        htmlFor={`${idPrefix}-court-name-${index}-${courtIndex}`}
+                      >
+                        Cancha {courtIndex + 1}
+                      </label>
+                      <input
+                        id={`${idPrefix}-court-name-${index}-${courtIndex}`}
+                        type="text"
+                        value={courtName}
+                        disabled={disabled}
+                        placeholder={`Cancha ${courtIndex + 1}`}
+                        onChange={(e) => {
+                          const next = [
+                            ...(day.courts ?? resizeDayCourts(undefined, 2)),
+                          ];
+                          next[courtIndex] = e.target.value;
+                          updateDayCourts(index, next);
+                        }}
+                      />
+                    </div>
+                  )
+                )}
               </div>
             </div>
           </div>

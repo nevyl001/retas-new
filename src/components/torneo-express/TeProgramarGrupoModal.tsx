@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Button, Modal } from "../ui";
 import {
-  defaultCourtNames,
-  validateCourtNames,
-} from "../../lib/torneoExpress/assignRoundRobinSchedule";
+  courtsForScheduleDay,
+  courtsListedOnDays,
+  validatePlayDays,
+} from "../../lib/torneoExpress/scheduleDayWindows";
 import { slotsFromParejas } from "../../lib/torneoExpress/groupRoster";
 import {
   changesFromAssignments,
@@ -17,10 +18,8 @@ import {
 } from "../../lib/torneoExpress/groupSchedulePreview";
 import {
   inferScheduleDraftFromPartidos,
-  resolveActiveCourtNamesFromDraft,
   type TeScheduleDraft,
 } from "../../lib/torneoExpress/inferScheduleDraftFromPartidos";
-import { validatePlayDays } from "../../lib/torneoExpress/scheduleDayWindows";
 import {
   buildCourtTimeOpenings,
   schedulePendingGroup,
@@ -136,33 +135,10 @@ export const TeProgramarGrupoModal: React.FC<TeProgramarGrupoModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mode, grupoId]);
 
-  const courts = useMemo(
-    () => resolveActiveCourtNamesFromDraft(schedule),
-    [schedule]
-  );
   const title = mode === "faltantes" ? "Programar faltantes" : "Reorganizar pendientes";
   const nothingToPlace = mode === "faltantes" ? missing.length === 0 : pendingCount === 0;
 
-  const handleCourtCountChange = (raw: string) => {
-    const parsed = Number(raw);
-    const nextCount = Number.isFinite(parsed)
-      ? Math.max(1, Math.min(8, Math.floor(parsed)))
-      : 1;
-    setSchedule((prev) => {
-      const names = [...prev.courtNames];
-      while (names.length < nextCount) {
-        names.push(defaultCourtNames(nextCount)[names.length] ?? `Cancha ${names.length + 1}`);
-      }
-      return { ...prev, courtCount: nextCount, courtNames: names };
-    });
-  };
-
   const generatePreview = () => {
-    const courtError = validateCourtNames(courts);
-    if (courtError) {
-      setConfigError(courtError);
-      return;
-    }
     if (!Number.isFinite(schedule.durationMinutes) || schedule.durationMinutes <= 0) {
       setConfigError("La duración por partido debe ser mayor a 0 minutos.");
       return;
@@ -177,7 +153,7 @@ export const TeProgramarGrupoModal: React.FC<TeProgramarGrupoModalProps> = ({
     const generatedAt = new Date().toISOString();
     const openings = buildCourtTimeOpenings({
       days: schedule.days,
-      courts,
+      courts: courtsForScheduleDay(schedule.days[0]!),
       durationMinutes: Math.floor(schedule.durationMinutes),
       nowIso: generatedAt,
     });
@@ -222,7 +198,7 @@ export const TeProgramarGrupoModal: React.FC<TeProgramarGrupoModalProps> = ({
         expectedVersion: grupoVersion,
         mode,
         nowIso,
-        courts,
+        courts: courtsListedOnDays(schedule.days),
         slots: previewSlots,
         assignments,
         occupied,
@@ -372,40 +348,6 @@ export const TeProgramarGrupoModal: React.FC<TeProgramarGrupoModalProps> = ({
                   <span className="te-reprogramar-modal__unit">min</span>
                 </div>
               </div>
-              <div className="torneo-express-field">
-                <label htmlFor={`te-grupo-${mode}-courts`}>Canchas disponibles</label>
-                <input
-                  id={`te-grupo-${mode}-courts`}
-                  type="number"
-                  min={1}
-                  max={8}
-                  step={1}
-                  value={schedule.courtCount}
-                  onChange={(event) => handleCourtCountChange(event.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="te-reprogramar-modal__courts">
-              {Array.from({ length: schedule.courtCount }, (_, index) => (
-                <div key={`grupo-court-${index}`} className="torneo-express-field">
-                  <label htmlFor={`te-grupo-${mode}-court-${index}`}>Cancha {index + 1}</label>
-                  <input
-                    id={`te-grupo-${mode}-court-${index}`}
-                    type="text"
-                    value={schedule.courtNames[index] ?? ""}
-                    placeholder={`Cancha ${index + 1}`}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setSchedule((prev) => {
-                        const names = [...prev.courtNames];
-                        names[index] = value;
-                        return { ...prev, courtNames: names };
-                      });
-                    }}
-                  />
-                </div>
-              ))}
             </div>
           </>
         ) : null}

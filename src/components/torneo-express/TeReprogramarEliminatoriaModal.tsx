@@ -1,17 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { TorneoExpressEliminatoriaPartido } from "../../lib/torneoExpress/types";
-import {
-  assignRoundRobinSchedule,
-  defaultCourtNames,
-  validateCourtNames,
-} from "../../lib/torneoExpress/assignRoundRobinSchedule";
+import { assignRoundRobinSchedule } from "../../lib/torneoExpress/assignRoundRobinSchedule";
 import { buildEliminatoriaRoundScheduleMatches } from "../../lib/torneoExpress/eliminatoriaRoundSchedule";
 import {
   inferScheduleDraftFromPartidos,
-  resolveActiveCourtNamesFromDraft,
   type TeScheduleDraft,
 } from "../../lib/torneoExpress/inferScheduleDraftFromPartidos";
-import { validatePlayDays } from "../../lib/torneoExpress/scheduleDayWindows";
+import {
+  courtsForScheduleDay,
+  validatePlayDays,
+  type TeScheduleDayWindow,
+} from "../../lib/torneoExpress/scheduleDayWindows";
 import { validateScheduleInvariants } from "../../lib/torneoExpress/scheduleInvariants";
 import { PARTIDO_CANCHA_OCUPADA_MSG } from "../../lib/torneoExpress/partidoCourtSlotConflict";
 import type { TeOccupiedCourtSlot } from "../../lib/torneoExpress/courtCheckScope";
@@ -28,7 +27,7 @@ type TeReprogramarEliminatoriaModalProps = {
   occupiedCourtSlots?: TeOccupiedCourtSlot[];
   onCancel: () => void;
   onConfirm: (schedule: {
-    days: Array<{ date: string; startTime: string; endTime: string }>;
+    days: TeScheduleDayWindow[];
     durationMinutes: number;
     courtNames: string[];
   }) => void;
@@ -92,22 +91,12 @@ export const TeReprogramarEliminatoriaModal: React.FC<
     }
   }, [open, roundPartidos]);
 
-  const activeCourtNames = useMemo(
-    () => resolveActiveCourtNamesFromDraft(schedule),
-    [schedule]
-  );
-
   const scheduleError = useMemo(() => {
-    const courtError = validateCourtNames(activeCourtNames);
-    if (courtError) return courtError;
     if (
       !Number.isFinite(schedule.durationMinutes) ||
       schedule.durationMinutes <= 0
     ) {
       return "La duración por partido debe ser mayor a 0 minutos.";
-    }
-    if (activeCourtNames.length === 0) {
-      return "Agrega al menos una cancha.";
     }
     const daysError = validatePlayDays(
       schedule.days,
@@ -120,7 +109,7 @@ export const TeReprogramarEliminatoriaModal: React.FC<
       if (draft.length === 0) return null;
       const scheduled = assignRoundRobinSchedule({
         matches: draft,
-        courts: activeCourtNames,
+        courts: courtsForScheduleDay(schedule.days[0]!),
         days: schedule.days,
         durationMinutes: Math.floor(schedule.durationMinutes),
         occupiedCourtSlots,
@@ -135,42 +124,17 @@ export const TeReprogramarEliminatoriaModal: React.FC<
         ? e.message
         : "No fue posible programar los partidos con esta configuración.";
     }
-  }, [activeCourtNames, occupiedCourtSlots, partidos, ronda, schedule]);
+  }, [occupiedCourtSlots, partidos, ronda, schedule]);
 
   const scheduleReady =
-    schedule.durationMinutes > 0 &&
-    activeCourtNames.length > 0 &&
-    !scheduleError &&
-    pendingCount > 0;
-
-  const handleCourtCountChange = (raw: string) => {
-    const parsed = Number(raw);
-    const courtCount = Number.isFinite(parsed)
-      ? Math.max(1, Math.min(8, Math.floor(parsed)))
-      : 1;
-    setSchedule((prev) => ({
-      ...prev,
-      courtCount,
-      courtNames: defaultCourtNames(courtCount).map(
-        (fallback, i) => prev.courtNames[i]?.trim() || fallback
-      ),
-    }));
-  };
-
-  const handleCourtNameChange = (index: number, value: string) => {
-    setSchedule((prev) => {
-      const courtNames = [...prev.courtNames];
-      courtNames[index] = value;
-      return { ...prev, courtNames };
-    });
-  };
+    schedule.durationMinutes > 0 && !scheduleError && pendingCount > 0;
 
   const handleConfirm = () => {
     if (!scheduleReady || saving) return;
     onConfirm({
       days: schedule.days,
       durationMinutes: Math.floor(schedule.durationMinutes),
-      courtNames: activeCourtNames,
+      courtNames: courtsForScheduleDay(schedule.days[0]!),
     });
   };
 
@@ -208,9 +172,8 @@ export const TeReprogramarEliminatoriaModal: React.FC<
     >
       <div className="te-reprogramar-modal">
         <p className="te-reprogramar-modal__lead">
-          Cada día de <strong>{rondaLabel}</strong> puede tener apertura y
-          cierre distintos. Al llenar un día, los partidos siguen en el
-          siguiente.
+          Cada día de <strong>{rondaLabel}</strong> tiene su horario y sus
+          canchas. Al llenar un día, los partidos siguen en el siguiente.
         </p>
         {playedCount > 0 ? (
           <p className="te-reprogramar-modal__note" role="note">
@@ -249,35 +212,6 @@ export const TeReprogramarEliminatoriaModal: React.FC<
               <span className="te-reprogramar-modal__unit">min</span>
             </div>
           </div>
-          <div className="torneo-express-field">
-            <label htmlFor="te-elim-reprog-courts">Canchas disponibles</label>
-            <input
-              id="te-elim-reprog-courts"
-              type="number"
-              min={1}
-              max={8}
-              step={1}
-              value={schedule.courtCount}
-              disabled={saving}
-              onChange={(e) => handleCourtCountChange(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="te-reprogramar-modal__courts">
-          {Array.from({ length: schedule.courtCount }, (_, i) => (
-            <div key={`elim-reprog-court-${i}`} className="torneo-express-field">
-              <label htmlFor={`te-elim-reprog-court-${i}`}>Cancha {i + 1}</label>
-              <input
-                id={`te-elim-reprog-court-${i}`}
-                type="text"
-                value={schedule.courtNames[i] ?? ""}
-                disabled={saving}
-                onChange={(e) => handleCourtNameChange(i, e.target.value)}
-                placeholder={`Cancha ${i + 1}`}
-              />
-            </div>
-          ))}
         </div>
 
         {scheduleError ? (

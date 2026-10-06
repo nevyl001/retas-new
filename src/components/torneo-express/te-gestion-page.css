@@ -483,6 +483,25 @@
   gap: 0.55rem;
 }
 
+.te-gestion-page .te-schedule-days__courts,
+.te-schedule-days__courts {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.te-gestion-page .te-schedule-days__court-count,
+.te-schedule-days__court-count {
+  max-width: 9rem;
+}
+
+.te-gestion-page .te-schedule-days__court-names,
+.te-schedule-days__court-names {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+  gap: 0.55rem;
+}
+
 @media (max-width: 640px) {
   .te-gestion-page .te-schedule-days__fields,
   .te-schedule-days__fields {

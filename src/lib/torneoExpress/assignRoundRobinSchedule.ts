@@ -9,6 +9,7 @@ import {
   ScheduleInvariantError,
 } from "./scheduleInvariants";
 import {
+  courtsForScheduleDay,
   normalizePlayDays,
   resolveScheduleDays,
   validatePlayDays,
@@ -351,7 +352,10 @@ function packOneGroupOnItsStartDay(
 
     const ronda = pending[0]!.ronda;
     const wave = pending.filter((match) => match.ronda === ronda);
-    const availableCourts = rotateCourts(courts, slotIndex).filter((court) => {
+    const availableCourts = rotateCourts(
+      courtsForScheduleDay(day, courts),
+      slotIndex
+    ).filter((court) => {
       const key = occupiedCourtSlotKey(programadoIso, court);
       return !key || !occupied.has(key);
     });
@@ -530,7 +534,8 @@ function assignOpenEnded(
 
 /**
  * Programa partidos existentes sin alterar enfrentamientos ni rondas.
- * Preferido: `days` con apertura/cierre por día.
+ * Preferido: `days` con apertura, cierre y canchas de ese día.
+ * `courts` solo se usa en un día que no trae su propia lista.
  */
 export function assignRoundRobinSchedule(
   input: AssignRoundRobinScheduleInput
@@ -538,7 +543,10 @@ export function assignRoundRobinSchedule(
   const { matches, courts, durationMinutes } = input;
 
   if (matches.length === 0) return [];
-  if (!courts.length) {
+  const dayBackedCourts = (input.days ?? []).some(
+    (day) => courtsForScheduleDay(day).length > 0
+  );
+  if (!courts.length && !dayBackedCourts) {
     throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
   }
   if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
@@ -627,6 +635,13 @@ export function buildSchedulePreviewSummary(
     a.slotKey.localeCompare(b.slotKey)
   );
 
+  const usedCourts = new Set<string>();
+  for (const slot of slots) {
+    for (const match of slot.matches) {
+      if (match.cancha) usedCourts.add(match.cancha);
+    }
+  }
+
   const fallbackDate = input.days?.[0]?.date ?? input.date ?? "";
   const fallbackStart = input.days?.[0]?.startTime ?? input.startTime ?? "";
   let endDate = fallbackDate;
@@ -651,7 +666,7 @@ export function buildSchedulePreviewSummary(
 
   return {
     matchCount: scheduled.length,
-    courtCount: input.courts.length,
+    courtCount: usedCourts.size || input.courts.length,
     blockCount: slots.length,
     startDate: slots[0]?.date ?? fallbackDate,
     startTime: slots[0]?.time ?? fallbackStart,

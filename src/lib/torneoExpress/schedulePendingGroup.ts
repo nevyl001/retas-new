@@ -6,7 +6,10 @@ import {
   programadoIsoFromMexicoCalendar,
   slotFitsDailyWindow,
 } from "./teScheduleTime";
-import type { TeScheduleDayWindow } from "./scheduleDayWindows";
+import {
+  courtsForScheduleDay,
+  type TeScheduleDayWindow,
+} from "./scheduleDayWindows";
 
 /**
  * Pesos. Un consecutivo pesa más que mover un pendiente o alargar el día.
@@ -101,15 +104,15 @@ export function buildCourtTimeOpenings(input: {
   durationMinutes: number;
   nowIso?: string | null;
 }): CourtTimeSlot[] {
-  const courts = [...input.courts].sort((a, b) => {
-    const byKey = canchaSlotKey(a).localeCompare(canchaSlotKey(b));
-    return byKey === 0 ? a.localeCompare(b) : byKey;
-  });
   const nowKey = input.nowIso ? timeKeyOf(input.nowIso) : null;
   const openings: CourtTimeSlot[] = [];
   const days = [...input.days].sort((a, b) => a.date.localeCompare(b.date));
 
   for (const day of days) {
+    const courts = [...courtsForScheduleDay(day, input.courts)].sort((a, b) => {
+      const byKey = canchaSlotKey(a).localeCompare(canchaSlotKey(b));
+      return byKey === 0 ? a.localeCompare(b) : byKey;
+    });
     let time = day.startTime;
     let guard = 0;
     while (

@@ -27,7 +27,10 @@ import { navigateTorneoExpress } from "./torneoExpressNav";
 import { ArmarParejasPicker } from "./ArmarParejasPicker";
 import { AsignarParejasGrupos } from "./AsignarParejasGrupos";
 import { TeScheduleDaysEditor } from "./TeScheduleDaysEditor";
-import { validatePlayDays } from "../../lib/torneoExpress/scheduleDayWindows";
+import {
+  courtsForScheduleDay,
+  validatePlayDays,
+} from "../../lib/torneoExpress/scheduleDayWindows";
 import {
   ParejaDraft,
   isRealDraftPair,
@@ -36,7 +39,6 @@ import {
   clearTeWizardDraft,
   loadTeWizardDraft,
   normalizeTeWizardScheduleDraft,
-  resolveActiveCourtNames,
   saveTeWizardDraft,
   teDraftTournamentStorageKey,
   type TeWizardScheduleDraft,
@@ -62,8 +64,6 @@ import { Button } from "../ui";
 import {
   assignRoundRobinSchedule,
   buildSchedulePreviewSummary,
-  defaultCourtNames,
-  validateCourtNames,
 } from "../../lib/torneoExpress/assignRoundRobinSchedule";
 import { buildDraftScheduleMatches } from "../../lib/torneoExpress/draftScheduleMatch";
 import { validateScheduleInvariants } from "../../lib/torneoExpress/scheduleInvariants";
@@ -426,15 +426,12 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     return map;
   }, [parejas]);
 
-  const activeCourtNames = useMemo(
-    () => resolveActiveCourtNames(schedule),
-    [schedule]
-  );
-
-  const scheduleCourtError = useMemo(
-    () => validateCourtNames(activeCourtNames),
-    [activeCourtNames]
-  );
+  const scheduleCourtError = useMemo(() => {
+    if (!Number.isFinite(schedule.durationMinutes) || schedule.durationMinutes <= 0) {
+      return "La duración por partido debe ser mayor a 0 minutos.";
+    }
+    return validatePlayDays(schedule.days, schedule.durationMinutes);
+  }, [schedule.days, schedule.durationMinutes]);
 
   const gruposIncomplete = useMemo(() => {
     if (parejas.length < 2) return true;
@@ -443,36 +440,32 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
 
   const schedulePreview = useMemo(() => {
     if (gruposIncomplete || scheduleCourtError) return null;
-    if (!Number.isFinite(schedule.durationMinutes) || schedule.durationMinutes <= 0) {
-      return null;
-    }
-    if (activeCourtNames.length === 0) return null;
-    if (validatePlayDays(schedule.days, schedule.durationMinutes)) return null;
 
     try {
       const draftMatches = buildDraftScheduleMatches(assignments);
       if (draftMatches.length === 0) return null;
+      const durationMinutes = Math.floor(schedule.durationMinutes);
+      const courts = courtsForScheduleDay(schedule.days[0]!);
 
       const scheduled = assignRoundRobinSchedule({
         matches: draftMatches,
-        courts: activeCourtNames,
+        courts,
         days: schedule.days,
-        durationMinutes: Math.floor(schedule.durationMinutes),
+        durationMinutes,
         occupiedCourtSlots: eventoOccupiedSlots,
       });
       validateScheduleInvariants(draftMatches, scheduled);
 
       return buildSchedulePreviewSummary(scheduled, {
-        courts: activeCourtNames,
+        courts,
         days: schedule.days,
-        durationMinutes: Math.floor(schedule.durationMinutes),
+        durationMinutes,
       });
     } catch {
       return null;
     }
   }, [
     assignments,
-    activeCourtNames,
     gruposIncomplete,
     schedule.days,
     schedule.durationMinutes,
@@ -481,32 +474,6 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   ]);
 
   const scheduleReady = Boolean(schedulePreview) && !scheduleCourtError;
-
-  const handleCourtCountChange = (raw: string) => {
-    const parsed = Number(raw);
-    const nextCount = Number.isFinite(parsed)
-      ? Math.max(1, Math.min(8, Math.floor(parsed)))
-      : 1;
-    setSchedule((prev) => {
-      const names = [...prev.courtNames];
-      while (names.length < nextCount) {
-        names.push(defaultCourtNames(nextCount)[names.length] ?? `Cancha ${names.length + 1}`);
-      }
-      return normalizeTeWizardScheduleDraft({
-        ...prev,
-        courtCount: nextCount,
-        courtNames: names,
-      });
-    });
-  };
-
-  const handleCourtNameChange = (index: number, value: string) => {
-    setSchedule((prev) => {
-      const names = [...prev.courtNames];
-      names[index] = value;
-      return { ...prev, courtNames: names };
-    });
-  };
 
   const formarPareja = async (j1: Player, j2: Player) => {
     if (!user?.id || !draftTournamentId) return;
@@ -682,22 +649,6 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
       setError(scheduleCourtError);
       return;
     }
-    const daysError = validatePlayDays(
-      schedule.days,
-      schedule.durationMinutes
-    );
-    if (daysError) {
-      setError(daysError);
-      return;
-    }
-    if (!Number.isFinite(schedule.durationMinutes) || schedule.durationMinutes <= 0) {
-      setError("La duración por partido debe ser mayor a 0 minutos.");
-      return;
-    }
-    if (activeCourtNames.length === 0) {
-      setError("Agrega al menos una cancha.");
-      return;
-    }
     if (!schedulePreview) {
       setError("No fue posible programar todos los partidos. Revisa la configuración.");
       return;
@@ -718,7 +669,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         schedule: {
           days: schedule.days,
           durationMinutes: Math.floor(schedule.durationMinutes),
-          courtNames: activeCourtNames,
+          courtNames: courtsForScheduleDay(schedule.days[0]!),
         },
       });
       sessionStorage.removeItem(teDraftTournamentStorageKey(eventoId));
@@ -1031,8 +982,9 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     </h3>
                   </header>
                   <p className="te-crear-step__lead">
-                    Cada día de juego tiene su propia apertura y cierre. Si no
-                    caben todos los partidos, pasan al siguiente día de la lista.
+                    Cada día tiene su fecha, su horario y sus canchas. Los
+                    partidos se acomodan con las canchas y el horario de ese día;
+                    si no caben, pasan al siguiente.
                   </p>
                   <div className="te-crear-step__body">
                     <section
@@ -1080,44 +1032,6 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                             <span className="te-crear-schedule__unit">min</span>
                           </div>
                         </div>
-                        <div className="torneo-express-field">
-                          <label htmlFor="te-court-count">
-                            Canchas disponibles
-                          </label>
-                          <input
-                            id="te-court-count"
-                            type="number"
-                            min={1}
-                            max={8}
-                            step={1}
-                            value={schedule.courtCount}
-                            onChange={(e) => handleCourtCountChange(e.target.value)}
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className="te-crear-schedule__courts">
-                        {Array.from({ length: schedule.courtCount }, (_, i) => (
-                          <div
-                            key={`court-${i}`}
-                            className="torneo-express-field te-crear-schedule__court-field"
-                          >
-                            <label htmlFor={`te-court-name-${i}`}>
-                              Cancha {i + 1}
-                            </label>
-                            <input
-                              id={`te-court-name-${i}`}
-                              type="text"
-                              value={schedule.courtNames[i] ?? ""}
-                              onChange={(e) =>
-                                handleCourtNameChange(i, e.target.value)
-                              }
-                              placeholder={`Cancha ${i + 1}`}
-                              required
-                            />
-                          </div>
-                        ))}
                       </div>
 
                       {scheduleCourtError ? (

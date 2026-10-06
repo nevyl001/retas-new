@@ -1,6 +1,7 @@
 import type { GrupoAssignmentDraft } from "../../lib/torneoExpress/types";
 import { defaultCourtNames } from "../../lib/torneoExpress/assignRoundRobinSchedule";
 import {
+  attachFallbackCourts,
   defaultScheduleDay,
   expandUniformPlayDays,
   normalizePlayDays,
@@ -112,7 +113,10 @@ export function normalizeTeWizardScheduleDraft(
 
   let days: TeScheduleDayWindow[];
   if (Array.isArray(raw?.days) && raw!.days!.length > 0) {
-    days = normalizePlayDays(raw!.days, TE_DEFAULT_SCHEDULE.days);
+    days = attachFallbackCourts(
+      normalizePlayDays(raw!.days, TE_DEFAULT_SCHEDULE.days),
+      courtNames
+    );
   } else if (raw?.playDate || raw?.startTime) {
     days = expandUniformPlayDays({
       playDate:
@@ -129,8 +133,12 @@ export function normalizeTeWizardScheduleDraft(
           ? raw.endTime.trim()
           : TE_DEFAULT_SCHEDULE.days[0]!.endTime,
     });
+    days = attachFallbackCourts(days, courtNames);
   } else {
-    days = TE_DEFAULT_SCHEDULE.days.map((d) => ({ ...d }));
+    days = attachFallbackCourts(
+      TE_DEFAULT_SCHEDULE.days.map((d) => ({ ...d })),
+      courtNames
+    );
   }
 
   return {

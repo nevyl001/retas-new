@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { generateBalancedRoundRobin } from "./roundRobin";
+import { mexicoScheduleSlotKey } from "./teScheduleTime";
 import type { RosterSlot } from "./groupRoster";
 import {
   buildCourtTimeOpenings,
@@ -12,6 +13,40 @@ import {
 } from "./schedulePendingGroup";
 
 const NOW = "2026-08-01T14:00:00Z";
+
+it("abre solo las canchas configuradas en cada día", () => {
+  const slots = buildCourtTimeOpenings({
+    days: [
+      {
+        date: "2026-08-01",
+        startTime: "10:00",
+        endTime: "11:00",
+        courts: ["Cancha 2", "Cancha 3"],
+      },
+      {
+        date: "2026-08-02",
+        startTime: "18:00",
+        endTime: "19:00",
+        courts: ["Cancha 3"],
+      },
+    ],
+    courts: ["No usar"],
+    durationMinutes: 60,
+    nowIso: NOW,
+  });
+
+  const byDate = new Map<string, string[]>();
+  for (const slot of slots) {
+    const date = mexicoScheduleSlotKey(slot.programadoEn).slice(0, 10);
+    const list = byDate.get(date) ?? [];
+    list.push(slot.cancha);
+    byDate.set(date, list);
+  }
+
+  expect(byDate.get("2026-08-01")?.sort()).toEqual(["Cancha 2", "Cancha 3"]);
+  expect(byDate.get("2026-08-02")).toEqual(["Cancha 3"]);
+  expect(slots.some((slot) => slot.cancha === "No usar")).toBe(false);
+});
 
 function openings(courts: string[], end = "12:00", duration = 20) {
   return buildCourtTimeOpenings({

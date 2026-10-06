@@ -6,7 +6,6 @@ import {
 import {
   assignRoundRobinSchedule,
   normalizeCourtNames,
-  validateCourtNames,
 } from "../lib/torneoExpress/assignRoundRobinSchedule";
 import {
   buildDraftScheduleMatches,
@@ -19,8 +18,8 @@ import {
   eliminatoriaRoundPendingCount,
 } from "../lib/torneoExpress/eliminatoriaRoundSchedule";
 import {
-  normalizePlayDays,
-  validatePlayDays,
+  resolveScheduledPlayDays,
+  type TeScheduleDayWindow,
 } from "../lib/torneoExpress/scheduleDayWindows";
 import {
   validateScheduleInvariants,
@@ -213,11 +212,29 @@ function enrichParejasWithLabels(
 }
 
 export type TeCreateScheduleInput = {
-  /** Días de juego con apertura/cierre propios (fase de grupos). */
-  days: Array<{ date: string; startTime: string; endTime: string }>;
+  /** Días de juego. Cada día puede traer sus propias canchas. */
+  days: TeScheduleDayWindow[];
   durationMinutes: number;
+  /** Respaldo si algún día no trae canchas propias. */
   courtNames: string[];
 };
+
+function resolveCreateSchedule(schedule: TeCreateScheduleInput): {
+  days: TeScheduleDayWindow[];
+  courts: string[];
+  durationMinutes: number;
+} {
+  const durationMinutes = Math.floor(schedule.durationMinutes);
+  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+    throw new Error("La duración por partido debe ser mayor a 0 minutos.");
+  }
+  const resolved = resolveScheduledPlayDays(
+    schedule.days,
+    normalizeCourtNames(schedule.courtNames),
+    durationMinutes
+  );
+  return { ...resolved, durationMinutes };
+}
 
 export const TE_SCHEDULE_COLUMNS_MISSING_MSG =
   "La base de datos no tiene las columnas de programación necesarias (orden, cancha, programado_en). Aplica la migración del proyecto.";
@@ -990,26 +1007,7 @@ export async function createTorneoExpressWithGroups(input: {
   const user = await requireAuthUser();
   const organizador_id = user.id;
 
-  const courtValidation = validateCourtNames(input.schedule.courtNames);
-  if (courtValidation) {
-    throw new Error(courtValidation);
-  }
-
-  const durationMinutes = Math.floor(input.schedule.durationMinutes);
-  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
-    throw new Error("La duración por partido debe ser mayor a 0 minutos.");
-  }
-
-  const days = normalizePlayDays(input.schedule.days);
-  const daysError = validatePlayDays(days, durationMinutes);
-  if (daysError) {
-    throw new Error(daysError);
-  }
-
-  const courts = normalizeCourtNames(input.schedule.courtNames);
-  if (courts.length === 0) {
-    throw new Error("Agrega al menos una cancha.");
-  }
+  const { days, courts, durationMinutes } = resolveCreateSchedule(input.schedule);
 
   const keepPairIds =
     input.keepPairIds?.length
@@ -1808,26 +1806,7 @@ export async function rescheduleTorneoExpressGruposPartidos(
 ): Promise<number> {
   await requireAuthUser();
 
-  const courtValidation = validateCourtNames(schedule.courtNames);
-  if (courtValidation) {
-    throw new Error(courtValidation);
-  }
-
-  const durationMinutes = Math.floor(schedule.durationMinutes);
-  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
-    throw new Error("La duración por partido debe ser mayor a 0 minutos.");
-  }
-
-  const days = normalizePlayDays(schedule.days);
-  const daysError = validatePlayDays(days, durationMinutes);
-  if (daysError) {
-    throw new Error(daysError);
-  }
-
-  const courts = normalizeCourtNames(schedule.courtNames);
-  if (courts.length === 0) {
-    throw new Error("Agrega al menos una cancha.");
-  }
+  const { days, courts, durationMinutes } = resolveCreateSchedule(schedule);
 
   const [ordenOk, canchaOk, programadoOk] = await Promise.all([
     checkPartidosOrdenColumnAvailable(),
@@ -1967,26 +1946,7 @@ export async function rescheduleTorneoExpressEliminatoriaRonda(
 ): Promise<number> {
   await requireAuthUser();
 
-  const courtValidation = validateCourtNames(schedule.courtNames);
-  if (courtValidation) {
-    throw new Error(courtValidation);
-  }
-
-  const durationMinutes = Math.floor(schedule.durationMinutes);
-  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
-    throw new Error("La duración por partido debe ser mayor a 0 minutos.");
-  }
-
-  const days = normalizePlayDays(schedule.days);
-  const daysError = validatePlayDays(days, durationMinutes);
-  if (daysError) {
-    throw new Error(daysError);
-  }
-
-  const courts = normalizeCourtNames(schedule.courtNames);
-  if (courts.length === 0) {
-    throw new Error("Agrega al menos una cancha.");
-  }
+  const { days, courts, durationMinutes } = resolveCreateSchedule(schedule);
 
   const bundle = await fetchTorneoExpressBundle(torneoId);
   if (!bundle) {

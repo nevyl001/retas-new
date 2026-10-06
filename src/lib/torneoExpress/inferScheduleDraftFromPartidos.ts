@@ -1,5 +1,6 @@
 import { defaultCourtNames } from "./assignRoundRobinSchedule";
 import {
+  attachFallbackCourts,
   defaultScheduleDay,
   normalizePlayDays,
   type TeScheduleDayWindow,
@@ -54,8 +55,13 @@ function normalizeScheduleDraft(
     return stored || fallback;
   });
 
+  const days = attachFallbackCourts(
+    normalizePlayDays(raw?.days, DEFAULT_SCHEDULE.days),
+    courtNames
+  );
+
   return {
-    days: normalizePlayDays(raw?.days, DEFAULT_SCHEDULE.days),
+    days,
     durationMinutes,
     courtCount,
     courtNames,
@@ -106,17 +112,25 @@ function inferDaysFromPartidos(
   partidos: TorneoExpressPartido[],
   durationMinutes: number
 ): TeScheduleDayWindow[] {
-  const byDate = new Map<string, { min: string; max: string }>();
+  const byDate = new Map<string, { min: string; max: string; courts: string[] }>();
 
   for (const partido of partidos) {
     const draft = programadoDraftFromPartido(partido);
     if (!draft.date || !draft.time) continue;
     const existing = byDate.get(draft.date);
+    const court = partido.cancha?.trim() ?? "";
     if (!existing) {
-      byDate.set(draft.date, { min: draft.time, max: draft.time });
+      byDate.set(draft.date, {
+        min: draft.time,
+        max: draft.time,
+        courts: court ? [court] : [],
+      });
     } else {
       if (draft.time < existing.min) existing.min = draft.time;
       if (draft.time > existing.max) existing.max = draft.time;
+      if (court && !existing.courts.some((name) => name.toLowerCase() === court.toLowerCase())) {
+        existing.courts.push(court);
+      }
     }
   }
 
@@ -135,6 +149,7 @@ function inferDaysFromPartidos(
         date,
         startTime: times.min,
         endTime,
+        ...(times.courts.length > 0 ? { courts: times.courts } : {}),
       };
     });
 }

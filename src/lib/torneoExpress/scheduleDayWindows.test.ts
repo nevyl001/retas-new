@@ -40,4 +40,52 @@ describe("scheduleDayWindows", () => {
       )
     ).toMatch(/cierre/i);
   });
+
+  it("conserva las canchas de cada día", () => {
+    expect(
+      normalizePlayDays([
+        {
+          date: "2026-10-08",
+          startTime: "17:00",
+          endTime: "21:00",
+          courts: ["Cancha 2", "Cancha 3"],
+        },
+        {
+          date: "2026-10-09",
+          startTime: "17:00",
+          endTime: "19:00",
+          courts: ["Cancha 3"],
+        },
+      ])
+    ).toEqual([
+      {
+        date: "2026-10-08",
+        startTime: "17:00",
+        endTime: "21:00",
+        courts: ["Cancha 2", "Cancha 3"],
+      },
+      {
+        date: "2026-10-09",
+        startTime: "17:00",
+        endTime: "19:00",
+        courts: ["Cancha 3"],
+      },
+    ]);
+  });
+
+  it("rechaza canchas repetidas dentro del mismo día", () => {
+    expect(
+      validatePlayDays(
+        [
+          {
+            date: "2026-10-08",
+            startTime: "17:00",
+            endTime: "21:00",
+            courts: ["Cancha 2", "cancha 2"],
+          },
+        ],
+        60
+      )
+    ).toMatch(/únicos/i);
+  });
 });
