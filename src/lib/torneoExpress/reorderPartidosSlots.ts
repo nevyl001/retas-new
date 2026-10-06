@@ -332,7 +332,8 @@ export function findPairSameSlotConflictDetails(
   const conflictingPairIds = new Set<string>();
 
   for (const partido of partidos) {
-    const iso = partidoScheduleIso(partido);
+    const iso = partido.programado_en?.trim();
+    if (!iso) continue;
     let slotKey: string;
     try {
       slotKey = mexicoScheduleSlotKey(iso);

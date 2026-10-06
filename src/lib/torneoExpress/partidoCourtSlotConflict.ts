@@ -75,12 +75,15 @@ export function findAllPartidoCourtSlotConflicts(
   const courtKey = canchaSlotKey(cancha);
   if (!courtKey) return [];
 
+  const seen = new Set<string>();
   return partidos.filter((partido) => {
-    if (partido.id === partidoId) return false;
+    if (partido.id === partidoId || seen.has(partido.id)) return false;
     const otherIso = assignedScheduleIso(partido);
     if (!otherIso || !canchaSlotKey(partido.cancha)) return false;
     if (mexicoScheduleSlotKey(otherIso) !== slotKey) return false;
-    return canchaSlotKey(partido.cancha) === courtKey;
+    if (canchaSlotKey(partido.cancha) !== courtKey) return false;
+    seen.add(partido.id);
+    return true;
   });
 }
 

@@ -195,6 +195,43 @@ describe("partidoCourtSlotConflict", () => {
     });
   });
 
+  it("el horario elegido se queda y el otro partido pasa al hueco", () => {
+    const moving = partido("moving", {
+      cancha: "3",
+      programado_en: "2026-10-08T23:00:00.000Z",
+      pareja_local_id: "montse",
+      pareja_visitante_id: "jancsi",
+    });
+    const occupied = partido("occupied", {
+      cancha: "3",
+      programado_en: "2026-10-09T03:00:00.000Z",
+      pareja_local_id: "diego",
+      pareja_visitante_id: "irvin",
+    });
+    const unscheduled = partido("pending", {
+      cancha: null,
+      programado_en: null,
+      created_at: "2026-10-09T03:00:00.000Z",
+      pareja_local_id: "montse",
+      pareja_visitante_id: "otra",
+    });
+    expect(
+      planScheduleSlotChange(
+        moving,
+        occupied.programado_en!,
+        "3",
+        [moving, occupied, unscheduled]
+      )
+    ).toEqual({
+      kind: "swap",
+      programado_en: occupied.programado_en,
+      cancha: "3",
+      swapWithId: "occupied",
+      swapProgramadoEn: moving.programado_en,
+      swapCancha: "3",
+    });
+  });
+
   it("día, hora y cancha juntos no chocan con los pasos intermedios", () => {
     const moving = partido("moving", {
       cancha: "1",

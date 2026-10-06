@@ -31,10 +31,7 @@ import {
   PARTIDO_CANCHA_OCUPADA_MSG,
   type ScheduleSlotChangePlan,
 } from "../../lib/torneoExpress/partidoCourtSlotConflict";
-import {
-  formatCourtOccupiedError,
-  formatCourtSwapPrompt,
-} from "../../lib/torneoExpress/courtCheckScope";
+import { formatCourtOccupiedError } from "../../lib/torneoExpress/courtCheckScope";
 import type {
   ExpectedPairs,
   PartidoSetScore,
@@ -160,11 +157,6 @@ function PartidoHorarioField({
     canchaDraftFromStored(partido.cancha)
   );
   const [horarioError, setHorarioError] = useState<string | null>(null);
-  const [swapPrompt, setSwapPrompt] = useState<string | null>(null);
-  const [pendingSlot, setPendingSlot] = useState<{
-    programadoEn: string;
-    cancha: string;
-  } | null>(null);
 
   useEffect(() => {
     if (forceEdit) setEditing(true);
@@ -185,8 +177,6 @@ function PartidoHorarioField({
     setDraftTime(d.time);
     setDraftCancha(canchaDraftFromStored(partido.cancha));
     setHorarioError(null);
-    setSwapPrompt(null);
-    setPendingSlot(null);
     setEditing(false);
     onClose?.();
   };
@@ -194,8 +184,6 @@ function PartidoHorarioField({
   const persistSlot = (programadoEn: string, cancha: string) => {
     if (!onSaveProgramacion) return;
     setHorarioError(null);
-    setSwapPrompt(null);
-    setPendingSlot(null);
     void onSaveProgramacion(partido.id, programadoEn, cancha)
       .then(() => closeEdit())
       .catch((e) => {
@@ -210,8 +198,6 @@ function PartidoHorarioField({
     const next = programadoIsoFromDraft(draftDate, draftTime);
     if (!next) {
       setHorarioError("Revisa la fecha y la hora");
-      setSwapPrompt(null);
-      setPendingSlot(null);
       return;
     }
     const cancha = normalizeCanchaForSave(draftCancha);
@@ -220,21 +206,18 @@ function PartidoHorarioField({
     try {
       plan = planScheduleSlotChange(partido, next, cancha, courtCheckScope);
     } catch (e) {
-      setSwapPrompt(null);
-      setPendingSlot(null);
+      const message = e instanceof Error ? e.message : PARTIDO_CANCHA_OCUPADA_MSG;
+      if (message !== PARTIDO_CANCHA_OCUPADA_MSG) {
+        setHorarioError(message);
+        return;
+      }
       const hit = findPartidoCourtSlotConflict(
         partido.id,
         next,
         cancha,
         courtCheckScope
       );
-      setHorarioError(
-        hit
-          ? formatCourtOccupiedError(hit)
-          : e instanceof Error
-            ? e.message
-            : PARTIDO_CANCHA_OCUPADA_MSG
-      );
+      setHorarioError(hit ? formatCourtOccupiedError(hit) : message);
       return;
     }
 
@@ -243,31 +226,7 @@ function PartidoHorarioField({
       return;
     }
 
-    if (plan.kind === "swap") {
-      const swap = plan;
-      setHorarioError(null);
-      setPendingSlot({
-        programadoEn: swap.programado_en,
-        cancha: swap.cancha,
-      });
-      const conflict =
-        courtCheckScope.find((p) => p.id === swap.swapWithId) ?? partido;
-      setSwapPrompt(
-        formatCourtSwapPrompt({
-          occupiedProgramadoEn: swap.programado_en,
-          freedProgramadoEn: swap.swapProgramadoEn,
-          conflict,
-        })
-      );
-      return;
-    }
-
     persistSlot(plan.programado_en, plan.cancha);
-  };
-
-  const confirmarIntercambio = () => {
-    if (!pendingSlot) return;
-    persistSlot(pendingSlot.programadoEn, pendingSlot.cancha);
   };
 
   if (!horarioEditable || !onSaveProgramacion || !editing) {
@@ -287,8 +246,6 @@ function PartidoHorarioField({
             disabled={savingProgramado}
             onChange={(e) => {
               setDraftDate(e.target.value);
-              setSwapPrompt(null);
-              setPendingSlot(null);
               setHorarioError(null);
             }}
           />
@@ -302,8 +259,6 @@ function PartidoHorarioField({
             disabled={savingProgramado}
             onChange={(e) => {
               setDraftTime(e.target.value);
-              setSwapPrompt(null);
-              setPendingSlot(null);
               setHorarioError(null);
             }}
           />
@@ -320,8 +275,6 @@ function PartidoHorarioField({
           disabled={savingProgramado}
           onChange={(e) => {
             setDraftCancha(e.target.value);
-            setSwapPrompt(null);
-            setPendingSlot(null);
             setHorarioError(null);
           }}
           onKeyDown={(e) => {
@@ -330,60 +283,26 @@ function PartidoHorarioField({
           }}
         />
       </label>
-      {swapPrompt ? (
-        <p className="te-partido-meta-edit__confirm" role="status">
-          {swapPrompt}
-        </p>
-      ) : null}
       <div className="te-partido-meta-edit__actions">
-        {swapPrompt ? (
-          <>
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              disabled={savingProgramado}
-              loading={savingProgramado}
-              onClick={confirmarIntercambio}
-            >
-              {savingProgramado ? "…" : "Intercambiar"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={savingProgramado}
-              onClick={() => {
-                setSwapPrompt(null);
-                setPendingSlot(null);
-              }}
-            >
-              No intercambiar
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              disabled={savingProgramado}
-              loading={savingProgramado}
-              onClick={guardarHorario}
-            >
-              {savingProgramado ? "…" : "Guardar"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={savingProgramado}
-              onClick={closeEdit}
-            >
-              Cancelar
-            </Button>
-          </>
-        )}
+        <Button
+          type="button"
+          variant="primary"
+          size="sm"
+          disabled={savingProgramado}
+          loading={savingProgramado}
+          onClick={guardarHorario}
+        >
+          {savingProgramado ? "…" : "Guardar"}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={savingProgramado}
+          onClick={closeEdit}
+        >
+          Cancelar
+        </Button>
       </div>
       {horarioError ? (
         <p className="te-partido-meta-edit__error">{horarioError}</p>
