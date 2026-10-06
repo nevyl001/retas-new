@@ -77,11 +77,14 @@ export function useTorneoExpress(
   const [savingReprogramacion, setSavingReprogramacion] = useState(false);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
 
+  const reloadSeq = useRef(0);
   const reload = useCallback(async (opts?: { silent?: boolean }) => {
     if (!torneoId) {
+      reloadSeq.current += 1;
       setBundle(null);
       return;
     }
+    const seq = ++reloadSeq.current;
     const silent = opts?.silent ?? false;
     if (!silent) {
       setLoading(true);
@@ -100,15 +103,17 @@ export function useTorneoExpress(
           ? Promise.resolve(true)
           : checkPartidosProgramadoColumnAvailable(),
       ]);
+      if (seq !== reloadSeq.current) return;
       setBundle(data);
       setPartidosOrdenDisponible(ordenOk);
       setPartidosCanchaDisponible(canchaOk);
       setPartidosProgramadoDisponible(programadoOk);
       setLastRefreshedAt(new Date());
     } catch (e) {
+      if (seq !== reloadSeq.current) return;
       setError(e instanceof Error ? e.message : "Error al cargar el torneo");
     } finally {
-      if (!silent) {
+      if (!silent && seq === reloadSeq.current) {
         setLoading(false);
       }
     }

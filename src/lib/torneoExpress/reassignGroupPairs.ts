@@ -1,3 +1,4 @@
+import { canchaSlotKey } from "./partidoCourtSlotConflict";
 import { generateBalancedRoundRobin, unorderedMatchupKey } from "./roundRobin";
 import {
   addMinutesToMexicoCalendar,
@@ -46,9 +47,16 @@ function sameSlot(a: string, b: string): boolean {
   }
 }
 
+function sameCourt(a: string, b: string): boolean {
+  if (a === b) return true;
+  const left = canchaSlotKey(a);
+  const right = canchaSlotKey(b);
+  return left !== "" && left === right;
+}
+
 function collides(a: Slot, b: Slot): boolean {
   if (!sameSlot(a.programadoEn, b.programadoEn)) return false;
-  if (a.cancha === b.cancha) return true;
+  if (sameCourt(a.cancha, b.cancha)) return true;
   return (
     a.localId === b.localId ||
     a.localId === b.visitanteId ||
@@ -78,6 +86,8 @@ function hourAfter(iso: string): string | null {
 export function buildGroupReassignment(input: {
   grupos: ReassignGroupDraft[];
   existentes: ReassignExistingMatch[];
+  /** Hora de partida si ningún partido tiene día y cancha guardados. */
+  anchorIso?: string;
 }): { ok: true; payload: ReassignPayload } | { ok: false; error: string } {
   const seen = new Set<string>();
   for (const grupo of input.grupos) {
@@ -97,8 +107,10 @@ export function buildGroupReassignment(input: {
 
   const stored = input.existentes
     .map((match) => {
-      const cancha = match.cancha?.trim() ?? "";
-      const programadoEn = match.programadoEn?.trim() ?? "";
+      const cancha = (match.cancha == null ? "" : String(match.cancha)).trim();
+      const programadoEn = (
+        match.programadoEn == null ? "" : String(match.programadoEn)
+      ).trim();
       if (!cancha || !programadoEn) return null;
       return {
         key: unorderedMatchupKey(match.localId, match.visitanteId),
@@ -111,13 +123,6 @@ export function buildGroupReassignment(input: {
       };
     })
     .filter((row): row is { key: string; slot: Slot } => row !== null);
-
-  if (stored.length === 0) {
-    return {
-      ok: false,
-      error: "Primero guarda día, hora y cancha de los partidos.",
-    };
-  }
 
   const byMatchup = new Map<string, Slot>();
   for (const row of stored) {
@@ -179,11 +184,17 @@ export function buildGroupReassignment(input: {
     }
   }
 
-  const courts = Array.from(new Set(stored.map((row) => row.slot.cancha)));
-  let latest = stored.reduce<string | null>(
-    (max, row) => laterIso(max, row.slot.programadoEn),
-    null
-  );
+  const courts =
+    stored.length > 0
+      ? Array.from(new Set(stored.map((row) => row.slot.cancha)))
+      : ["1"];
+  let latest =
+    stored.reduce<string | null>(
+      (max, row) => laterIso(max, row.slot.programadoEn),
+      null
+    ) ??
+    input.anchorIso?.trim() ??
+    new Date().toISOString();
 
   for (const match of pending) {
     const fromPool = pool.findIndex((slot) => {

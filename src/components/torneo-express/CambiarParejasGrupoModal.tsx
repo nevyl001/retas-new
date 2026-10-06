@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { partidoTieneHistorial } from "../../lib/torneoExpress/partidoHistorial";
 import type {
   TorneoExpressGrupo,
   TorneoExpressGrupoPareja,
@@ -26,8 +27,7 @@ export interface CambiarParejasGrupoModalProps {
   parejasPorGrupo: Record<string, TorneoExpressGrupoPareja[]>;
   partidosPorGrupo: Record<string, TorneoExpressPartido[]>;
   onClose: () => void;
-  onSaved: () => void;
-  onFailed: (message: string) => void;
+  onSaved: () => void | Promise<void>;
 }
 
 function activePairs(
@@ -53,7 +53,6 @@ export const CambiarParejasGrupoModal: React.FC<
   partidosPorGrupo,
   onClose,
   onSaved,
-  onFailed,
 }) => {
   const orderedGroups = useMemo(
     () => [...grupos].sort((a, b) => a.orden - b.orden),
@@ -71,6 +70,8 @@ export const CambiarParejasGrupoModal: React.FC<
 
   const [assignment, setAssignment] = useState<Map<string, number>>(initial);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
 
   const pairs = useMemo(
     () => orderedGroups.flatMap((grupo) => activePairs(grupo, parejasPorGrupo)),
@@ -84,14 +85,23 @@ export const CambiarParejasGrupoModal: React.FC<
     [orderedGroups, parejasPorGrupo]
   );
 
+  const current = useMemo(() => {
+    const next = new Map(initial);
+    assignment.forEach((orden, id) => {
+      if (next.has(id)) next.set(id, orden);
+    });
+    return next;
+  }, [assignment, initial]);
+
   if (!open) return null;
 
-  const current = assignment.size === initial.size ? assignment : initial;
   const played = Object.values(partidosPorGrupo)
     .flat()
-    .some((partido) => partido.estado === "jugado");
+    .some((partido) => partidoTieneHistorial(partido));
+  const blocked = played || withdrawn || saving;
 
   const save = async () => {
+    if (savingRef.current) return;
     if (played || withdrawn) {
       setError(
         played
@@ -112,38 +122,61 @@ export const CambiarParejasGrupoModal: React.FC<
         .filter((pair) => current.get(pair.id) === grupo.orden)
         .map((pair) => pair.id),
     }));
-    const built = buildGroupReassignment({
-      grupos: gruposDraft,
-      existentes: Object.values(partidosPorGrupo)
-        .flat()
-        .map((partido) => ({
-          localId: partido.pareja_local_id,
-          visitanteId: partido.pareja_visitante_id,
-          cancha: partido.cancha ?? null,
-          programadoEn: partido.programado_en ?? null,
-        })),
-    });
+    let built: ReturnType<typeof buildGroupReassignment>;
+    try {
+      built = buildGroupReassignment({
+        grupos: gruposDraft,
+        anchorIso: new Date().toISOString(),
+        existentes: Object.values(partidosPorGrupo)
+          .flat()
+          .map((partido) => ({
+            localId: partido.pareja_local_id,
+            visitanteId: partido.pareja_visitante_id,
+            cancha: partido.cancha ?? null,
+            programadoEn: partido.programado_en ?? null,
+          })),
+      });
+    } catch (e) {
+      setError(
+        e instanceof Error && e.message.trim()
+          ? e.message
+          : "No se pudieron cambiar las parejas de grupo."
+      );
+      return;
+    }
     if (!built.ok) {
       setError(built.error);
       return;
     }
+    savingRef.current = true;
+    setSaving(true);
     setError("");
-    onClose();
     try {
       await reorganizeGroups({ torneoId, payload: built.payload });
-      onSaved();
+      await onSaved();
+      onClose();
     } catch (e) {
-      const code = e instanceof TorneoExpressGrupoOpError ? e.code : "";
-      onFailed(
-        code
-          ? reorganizeGroupsMessage(code)
+      savingRef.current = false;
+      setSaving(false);
+      if (e instanceof TorneoExpressGrupoOpError) {
+        setError(reorganizeGroupsMessage(e.code));
+        return;
+      }
+      const detail = e instanceof Error ? e.message.trim() : "";
+      setError(
+        detail
+          ? `No se pudieron cambiar las parejas de grupo. ${detail}`
           : "No se pudieron cambiar las parejas de grupo."
       );
     }
   };
 
   return createPortal(
-    <div className="te-define-pair-backdrop" role="presentation" onClick={onClose}>
+    <div
+      className="te-define-pair-backdrop"
+      role="presentation"
+      onClick={saving ? undefined : onClose}
+    >
       <div
         className="te-define-pair-dialog te-move-pairs-dialog"
         role="dialog"
@@ -157,6 +190,7 @@ export const CambiarParejasGrupoModal: React.FC<
             type="button"
             className="te-define-pair-dialog__close"
             onClick={onClose}
+            disabled={saving}
             aria-label="Cerrar"
           >
             ×
@@ -167,17 +201,6 @@ export const CambiarParejasGrupoModal: React.FC<
             Elige el grupo de cada pareja. Los partidos pendientes se arman de
             nuevo y conservan el horario cuando el cruce sigue igual.
           </p>
-          {played ? (
-            <p className="te-error">
-              No se pueden cambiar los grupos si ya hay resultados.
-            </p>
-          ) : null}
-          {withdrawn ? (
-            <p className="te-error">
-              No se pueden mover grupos mientras haya una pareja retirada.
-            </p>
-          ) : null}
-          {error ? <p className="te-error">{error}</p> : null}
           <div className="te-move-pairs__list">
             {orderedGroups.map((grupo) => {
               const rows = pairs.filter(
@@ -194,7 +217,7 @@ export const CambiarParejasGrupoModal: React.FC<
                         <span>{pair.label}</span>
                         <select
                           value={String(current.get(pair.id) ?? grupo.orden)}
-                          disabled={played || withdrawn}
+                          disabled={blocked}
                           aria-label={`Grupo de ${pair.label}`}
                           onChange={(event) => {
                             const orden = Number(event.target.value);
@@ -223,17 +246,30 @@ export const CambiarParejasGrupoModal: React.FC<
           </div>
         </div>
         <footer className="te-define-pair-dialog__foot">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            variant="primary"
-            disabled={played || withdrawn}
-            onClick={() => void save()}
-          >
-            Guardar grupos
-          </Button>
+          {played ? (
+            <p className="te-error te-move-pairs__error">
+              No se pueden cambiar los grupos si ya hay resultados.
+            </p>
+          ) : null}
+          {withdrawn ? (
+            <p className="te-error te-move-pairs__error">
+              No se pueden mover grupos mientras haya una pareja retirada.
+            </p>
+          ) : null}
+          {error ? <p className="te-error te-move-pairs__error">{error}</p> : null}
+          <div className="te-move-pairs__actions">
+            <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              disabled={blocked}
+              onClick={() => void save()}
+            >
+              {saving ? "Guardando…" : "Guardar grupos"}
+            </Button>
+          </div>
         </footer>
       </div>
     </div>,

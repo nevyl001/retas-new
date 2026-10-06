@@ -1466,12 +1466,9 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           parejasPorGrupo={bundle.parejasPorGrupo}
           partidosPorGrupo={bundle.partidosPorGrupo}
           onClose={() => setPairsOpen(false)}
-          onSaved={() => {
-            void reload({ silent: true });
+          onSaved={async () => {
+            await reload({ silent: true });
             showActionToast("Parejas de grupo actualizadas.", "success");
-          }}
-          onFailed={(message) => {
-            showActionToast(message, "error");
           }}
         />
       ) : null}

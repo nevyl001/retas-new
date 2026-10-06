@@ -450,6 +450,23 @@
   width: min(100%, 36rem);
 }
 
+.te-define-pair-dialog.te-move-pairs-dialog .te-define-pair-dialog__foot {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.te-move-pairs__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.te-move-pairs__error {
+  margin: 0;
+  text-align: left;
+}
+
 .te-move-pairs__list {
   display: grid;
   gap: 0.85rem;
@@ -1530,7 +1547,7 @@
   position: fixed;
   bottom: 1.25rem;
   right: 1.25rem;
-  z-index: 1200;
+  z-index: 6100;
   max-width: min(calc(100vw - 2rem), 22rem);
   padding: 0.75rem 1rem;
   border-radius: 10px;
