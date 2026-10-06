@@ -99,18 +99,44 @@ export function paintPairSide(
   };
 }
 
+const MATCH_AVATAR_PX = 50;
+
+function MatchPlayer({ player }: { player: TEPublicPairPlayer }) {
+  return (
+    <div className="te-public-pair__player">
+      <JugadorAvatar
+        fotoUrl={player.fotoUrl}
+        nombre={player.nombre}
+        size="md"
+        className="te-public-pair__avatar"
+        style={{ width: MATCH_AVATAR_PX, height: MATCH_AVATAR_PX }}
+      />
+      <span className="te-public-pair__name">{player.nombre}</span>
+    </div>
+  );
+}
+
 export const TEPublicPairIdentity: React.FC<{
   player1: TEPublicPairPlayer;
   player2?: TEPublicPairPlayer | null;
   variant: TEPublicPairVariant;
   className?: string;
 }> = ({ player1, player2 = null, variant, className = "" }) => {
+  const rootClass = ["te-public-pair", `te-public-pair--${variant}`, className]
+    .filter(Boolean)
+    .join(" ");
+
+  if (variant === "match") {
+    return (
+      <div className={rootClass}>
+        <MatchPlayer player={player1} />
+        {player2 ? <MatchPlayer player={player2} /> : null}
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={["te-public-pair", `te-public-pair--${variant}`, className]
-        .filter(Boolean)
-        .join(" ")}
-    >
+    <div className={rootClass}>
       <div className="te-public-pair__avatars" aria-hidden="true">
         <JugadorAvatar
           fotoUrl={player1.fotoUrl}

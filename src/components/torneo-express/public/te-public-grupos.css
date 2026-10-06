@@ -4067,44 +4067,35 @@
   word-break: break-word;
 }
 
-.te-public.te-public--grupos-wide .te-match-card .te-public-pair--match {
-  --te-public-pair-size: 40px;
+.te-public .te-public-pair--match {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.te-public .te-public-pair--match .te-public-pair__player {
+  display: flex;
+  align-items: center;
   gap: 0.7rem;
+  min-width: 0;
 }
 
-.te-public.te-public--grupos-wide
-  .te-match-card
-  .te-public-pair--match
-  .te-public-pair__avatar.rj-avatar {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
-  border: 1px solid color-mix(in srgb, var(--text-primary, #fff) 34%, transparent);
+.te-public .te-public-pair--match .te-public-pair__avatar.rj-avatar {
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
+  min-height: 50px;
+  flex: 0 0 50px;
+  border: 1px solid color-mix(in srgb, var(--text-primary, #fff) 30%, transparent);
   box-shadow: 0 0 0 2px var(--te-groups-bg, var(--ro-chrome-bg, #0d0f11));
+  font-size: 0.95rem;
 }
 
-.te-public.te-public--grupos-wide
-  .te-match-card
-  .te-public-pair--match
-  .te-public-pair__avatar--overlap.rj-avatar {
-  margin-left: -5px;
-}
-
-.te-public.te-public--grupos-wide
-  .te-match-card
-  .te-public-pair--match
-  .te-public-pair__avatar
-  .rj-avatar__img {
-  object-position: center 16%;
-}
-
-.te-public.te-public--grupos-wide
-  .te-match-card
-  .te-public-pair--match
-  .te-public-pair__name {
+.te-public .te-public-pair--match .te-public-pair__name {
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   line-height: 1.2;
 }
