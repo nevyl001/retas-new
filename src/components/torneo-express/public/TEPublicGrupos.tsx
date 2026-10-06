@@ -38,6 +38,13 @@ import type {
   TorneoExpressPartido,
 } from "../../../lib/torneoExpress/types";
 import { TablerIcon } from "../../ui/TablerIcon";
+import {
+  collectPairPlayerEntries,
+  paintPairSide,
+  pairSideFromRoster,
+  TEPublicPairIdentity,
+  type TEPublicPairSide,
+} from "./TEPublicPairIdentity";
 import "./te-public-grupos.css";
 
 export type TEPartidoEstadoPublico = "pendiente" | "en_vivo" | "finalizado";
@@ -48,6 +55,8 @@ export interface TEPublicGruposPartido {
   cancha: string;
   pareja1: string;
   pareja2: string;
+  local: TEPublicPairSide;
+  visitante: TEPublicPairSide;
   /** @deprecated Preferir partidoExpress + PartidoSetsScoreDisplay */
   score1: number | null;
   score2: number | null;
@@ -61,6 +70,7 @@ export interface TEPublicGruposGrupo {
   partidos: TEPublicGruposPartido[];
   partidosExpress: TorneoExpressPartido[];
   standingRows: StandingRowExpress[];
+  pairsById: Record<string, TEPublicPairSide>;
   clasifican: number;
   achievementPlayers?: TEPublicGruposAchievementPlayer[];
 }
@@ -107,9 +117,26 @@ function resolvePartidoEstado(
   return "pendiente";
 }
 
+function pairSideForId(
+  parejaId: string,
+  parejasById: Map<string, TorneoExpressBundle["parejasPorGrupo"][string][number]>,
+  fallbackLabel: string
+): TEPublicPairSide {
+  const pareja = parejasById.get(parejaId);
+  if (!pareja) {
+    return pairSideFromRoster({ display: fallbackLabel, isVirtual: true });
+  }
+  return pairSideFromRoster({
+    isVirtual: pareja.is_virtual,
+    display: pareja.pareja_display ?? pareja.pareja_id,
+    player1Id: pareja.player1_id,
+    player2Id: pareja.player2_id,
+  });
+}
+
 function mapPartidosForGrupo(
   partidos: TorneoExpressPartido[],
-  labelById: Map<string, string>
+  parejasById: Map<string, TorneoExpressBundle["parejasPorGrupo"][string][number]>
 ): TEPublicGruposPartido[] {
   const sorted = sortPartidosByOrden(partidos);
   const now = new Date();
@@ -117,13 +144,27 @@ function mapPartidosForGrupo(
   return sorted.map((partido) => {
     const played = partido.estado === "jugado";
     const scheduleIso = partidoScheduleIso(partido);
+    const pareja1 =
+      parejasById.get(partido.pareja_local_id)?.pareja_display ??
+      parejasById.get(partido.pareja_local_id)?.pareja_id ??
+      "Local";
+    const pareja2 =
+      parejasById.get(partido.pareja_visitante_id)?.pareja_display ??
+      parejasById.get(partido.pareja_visitante_id)?.pareja_id ??
+      "Visitante";
 
     return {
       id: partido.id,
       hora: formatPartidoHora(scheduleIso),
       cancha: formatCanchaDisplay(partido.cancha),
-      pareja1: labelById.get(partido.pareja_local_id) ?? "Local",
-      pareja2: labelById.get(partido.pareja_visitante_id) ?? "Visitante",
+      pareja1,
+      pareja2,
+      local: pairSideForId(partido.pareja_local_id, parejasById, "Local"),
+      visitante: pairSideForId(
+        partido.pareja_visitante_id,
+        parejasById,
+        "Visitante"
+      ),
       score1: played ? (partido.puntos_local ?? 0) : null,
       score2: played ? (partido.puntos_visitante ?? 0) : null,
       estado: resolvePartidoEstado(partido, now),
@@ -158,9 +199,15 @@ export function buildTEPublicGruposProps(
 
   const grupos: TEPublicGruposGrupo[] = gruposOrdenados.map((grupo) => {
     const parejas = bundle.parejasPorGrupo[grupo.id] ?? [];
-    const labelById = new Map<string, string>();
+    const parejasById = new Map(parejas.map((p) => [p.pareja_id, p]));
+    const pairsById: Record<string, TEPublicPairSide> = {};
     parejas.forEach((p) => {
-      labelById.set(p.pareja_id, p.pareja_display ?? p.pareja_id);
+      pairsById[p.pareja_id] = pairSideFromRoster({
+        isVirtual: p.is_virtual,
+        display: p.pareja_display ?? p.pareja_id,
+        player1Id: p.player1_id,
+        player2Id: p.player2_id,
+      });
     });
 
     const standingRows = standingsByGrupo[grupo.id] ?? [];
@@ -169,10 +216,11 @@ export function buildTEPublicGruposProps(
       nombre: grupo.nombre,
       partidos: mapPartidosForGrupo(
         bundle.partidosPorGrupo[grupo.id] ?? [],
-        labelById
+        parejasById
       ),
       partidosExpress: bundle.partidosPorGrupo[grupo.id] ?? [],
       standingRows,
+      pairsById,
       clasifican,
       achievementPlayers: achievementPlayersFromWinner(parejas, standingRows),
     };
@@ -218,7 +266,15 @@ function PartidoStatusBadge({ estado }: { estado: TEPartidoEstadoPublico }) {
   return <span className="te-badge-proximo">Próximo</span>;
 }
 
-function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
+function PartidoRow({
+  partido,
+  photos,
+}: {
+  partido: TEPublicGruposPartido;
+  photos: Readonly<Record<string, string | null>>;
+}) {
+  const local = paintPairSide(partido.local, photos);
+  const visitante = paintPairSide(partido.visitante, photos);
   const played = partido.estado === "finalizado";
   const winnerSide = played
     ? matchWinnerSideFromPartido(partido.partidoExpress)
@@ -232,9 +288,9 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
 
   return (
     <article
-      className={`te-partido-item${played ? " te-partido-item--played" : ""}${
-        isTie ? " te-partido-item--tie" : ""
-      }`}
+      className={`te-partido-item te-match-card${
+        played ? " te-partido-item--played" : ""
+      }${isTie ? " te-partido-item--tie" : ""}`}
     >
       <header className="te-partido-item__top">
         <div className="te-partido-meta">
@@ -261,7 +317,7 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
             }`}
           >
             <span
-              className={`te-team-name${
+              className={`te-team-name te-team-name--pair${
                 team1Wins ? " te-team-name--winner" : ""
               }${isTie ? " te-team-name--tie" : ""}${
                 played && !team1Wins && !isTie ? " te-team-name--loser" : ""
@@ -274,7 +330,11 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
                     ? { "aria-label": `Perdedor: ${partido.pareja1}` }
                     : {})}
             >
-              {partido.pareja1}
+              <TEPublicPairIdentity
+                variant="match"
+                player1={local.player1}
+                player2={local.player2}
+              />
             </span>
             <span className="te-team-score-mobile" aria-label="Marcador local">
               {played
@@ -303,7 +363,7 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
             }`}
           >
             <span
-              className={`te-team-name${
+              className={`te-team-name te-team-name--pair${
                 team2Wins ? " te-team-name--winner" : ""
               }${isTie ? " te-team-name--tie" : ""}${
                 played && !team2Wins && !isTie ? " te-team-name--loser" : ""
@@ -316,7 +376,11 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
                     ? { "aria-label": `Perdedor: ${partido.pareja2}` }
                     : {})}
             >
-              {partido.pareja2}
+              <TEPublicPairIdentity
+                variant="match"
+                player1={visitante.player1}
+                player2={visitante.player2}
+              />
             </span>
             <span className="te-team-score-mobile" aria-label="Marcador visitante">
               {played
@@ -362,24 +426,21 @@ function achievementPlayersFromWinner(
   ];
 }
 
-function useGroupWinnerPhotos(
+function usePublicGruposPlayerPhotos(
   grupos: TEPublicGruposGrupo[]
 ): Record<string, string | null> {
   const { organizadorId } = useClubExperience();
   const [photos, setPhotos] = useState<Record<string, string | null>>({});
   const lookupKey = useMemo(() => {
-    const entries: Array<{ id: string; name: string }> = [];
-    const seen = new Set<string>();
+    const sides: TEPublicPairSide[] = [];
+    const extra: Array<{ id?: string | null; name?: string | null }> = [];
     for (const grupo of grupos) {
+      sides.push(...Object.values(grupo.pairsById));
       for (const player of grupo.achievementPlayers ?? []) {
-        const id = player.playerId?.trim();
-        if (!id || seen.has(id)) continue;
-        seen.add(id);
-        entries.push({ id, name: player.name });
+        extra.push({ id: player.playerId, name: player.name });
       }
     }
-    entries.sort((a, b) => a.id.localeCompare(b.id));
-    return JSON.stringify(entries);
+    return JSON.stringify(collectPairPlayerEntries(sides, extra));
   }, [grupos]);
 
   useEffect(() => {
@@ -464,16 +525,13 @@ function AchievementAvatar({
   );
 }
 
-function ParejaStandingName({ label }: { label: string }) {
-  const parts = label.split(" / ").map((p) => p.trim()).filter(Boolean);
-  if (parts.length < 2) {
-    return <span className="te-standing-row__name">{label}</span>;
-  }
+function ParejaStandingName({ side }: { side: TEPublicPairSide }) {
   return (
-    <span className="te-standing-row__name" title={label}>
-      <span className="te-standing-row__player">{parts[0]}</span>
-      <span className="te-standing-row__player">{parts[1]}</span>
-    </span>
+    <TEPublicPairIdentity
+      variant="standings"
+      player1={side.player1}
+      player2={side.player2}
+    />
   );
 }
 
@@ -481,71 +539,120 @@ function GrupoStandings({
   rows,
   clasifican,
   clasificacionModo,
+  pairsById,
+  photos,
 }: {
   rows: StandingRowExpress[];
   clasifican: number;
   clasificacionModo: TorneoExpressClasificacionModo;
+  pairsById: Record<string, TEPublicPairSide>;
+  photos: Readonly<Record<string, string | null>>;
 }) {
   const grupoIniciado = rows.some((r) => r.pj > 0);
+  const qualifyLabel = `${clasifican} clasifica${clasifican === 1 ? "" : "n"}`;
+  const headerSource = rows[0];
+  const headerInput = headerSource
+    ? {
+        pg: headerSource.pg,
+        ptsFav: headerSource.ptsFav,
+        dif: headerSource.dif,
+        puntos: headerSource.puntos,
+        pj: headerSource.pj,
+      }
+    : null;
+  const headerMeta = headerInput
+    ? clasificacionStandingMeta(clasificacionModo, headerInput)
+    : [];
+  const headerHighlight = headerInput
+    ? clasificacionStandingHighlight(clasificacionModo, headerInput)
+    : null;
+
   return (
-    <section className="te-grupo-standings" aria-label="Clasificación">
+    <section
+      className="te-grupo-standings te-standings-board"
+      aria-label="Clasificación"
+    >
       <header className="te-grupo-standings__header">
         <h3>Clasificación</h3>
-        <span>
-          {clasifican} clasifica{clasifican === 1 ? "" : "n"}
-        </span>
+        <span className="te-standings-board__qualify">{qualifyLabel}</span>
       </header>
-      {rows.length === 0 ? (
+      {rows.length === 0 || !headerHighlight ? (
         <p className="te-grupos-empty">Sin datos de clasificación.</p>
       ) : (
-        <ol className="te-grupo-standings__list">
-          {rows.map((row, index) => {
-            const clasifica = grupoIniciado && index < clasifican;
-            const rowInput = {
-              pg: row.pg,
-              ptsFav: row.ptsFav,
-              dif: row.dif,
-              puntos: row.puntos,
-              pj: row.pj,
-            };
-            const highlight = clasificacionStandingHighlight(
-              clasificacionModo,
-              rowInput
-            );
-            const meta = clasificacionStandingMeta(clasificacionModo, rowInput);
-            return (
-              <li
-                key={`${row.grupoId}-${row.parejaId}`}
-                className={`te-standing-row${
-                  index === 0 ? " te-standing-row--leader" : ""
-                }${clasifica ? " te-standing-row--qualifies" : ""}`}
-              >
-                <span className="te-standing-row__position">{index + 1}</span>
-                <div className="te-standing-row__content">
-                  <div className="te-standing-row__primary">
-                    <ParejaStandingName label={row.parejaLabel} />
-                  </div>
-                  <span className="te-standing-row__meta">
-                    {meta.map((stat) => (
-                      <span key={stat.label} className="te-standing-row__stat">
-                        <b>{stat.value}</b> {stat.label}
-                      </span>
-                    ))}
+        <>
+          <div className="te-standings-board__head" aria-hidden="true">
+            <span />
+            <span>Pareja</span>
+            {headerMeta.map((stat) => (
+              <span key={stat.label}>{stat.label}</span>
+            ))}
+            <span>{headerHighlight.label}</span>
+          </div>
+          <ol className="te-grupo-standings__list">
+            {rows.map((row, index) => {
+              const clasifica = grupoIniciado && index < clasifican;
+              const rowInput = {
+                pg: row.pg,
+                ptsFav: row.ptsFav,
+                dif: row.dif,
+                puntos: row.puntos,
+                pj: row.pj,
+              };
+              const highlight = clasificacionStandingHighlight(
+                clasificacionModo,
+                rowInput
+              );
+              const meta = clasificacionStandingMeta(
+                clasificacionModo,
+                rowInput
+              );
+              const position = index + 1;
+              return (
+                <li
+                  key={`${row.grupoId}-${row.parejaId}`}
+                  className={`te-standing-row${
+                    index === 0 ? " te-standing-row--leader" : ""
+                  }${clasifica ? " te-standing-row--qualifies" : ""}`}
+                >
+                  <span
+                    className="te-standing-row__position"
+                    aria-label={
+                      clasifica
+                        ? `Posición ${position}, clasificado`
+                        : `Posición ${position}`
+                    }
+                  >
+                    {position}
                   </span>
-                  {clasifica ? (
-                    <span className="te-standing-row__qualified">
-                      <span aria-hidden>✓</span> Clasificado
+                  <div className="te-standing-row__primary">
+                    <ParejaStandingName
+                      side={paintPairSide(
+                        pairsById[row.parejaId] ??
+                          pairSideFromRoster({ display: row.parejaLabel }),
+                        photos
+                      )}
+                    />
+                  </div>
+                  {meta.map((stat) => (
+                    <span
+                      key={stat.label}
+                      className="te-standings-board__stat"
+                      aria-label={`${stat.label} ${stat.value}`}
+                    >
+                      {stat.value}
                     </span>
-                  ) : null}
-                </div>
-                <strong className="te-standing-row__points">
-                  {highlight.value}
-                  <small>{highlight.label}</small>
-                </strong>
-              </li>
-            );
-          })}
-        </ol>
+                  ))}
+                  <strong
+                    className="te-standing-row__points"
+                    aria-label={`${highlight.label} ${highlight.value}`}
+                  >
+                    {highlight.value}
+                  </strong>
+                </li>
+              );
+            })}
+          </ol>
+        </>
       )}
     </section>
   );
@@ -727,7 +834,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
 }) => {
   const [selectedGrupoId, setSelectedGrupoId] = useState<string | null>(null);
   const { branding, isScopeBrandingReady } = useClubExperience();
-  const winnerPhotos = useGroupWinnerPhotos(grupos);
+  const playerPhotos = usePublicGruposPlayerPhotos(grupos);
   const organizerName = useOrganizerDisplayName().trim();
   const clubName = organizerName || RIVIERA_PRODUCT_NAME;
   const showMotherAttribution = !isRivieraOwnAccountName(clubName);
@@ -777,10 +884,11 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
     : categoria.trim()
       ? categoria.trim()
       : torneoNombre;
-  const eyebrow = `TORNEO · ${torneoNombre.trim().toUpperCase()}`;
+  const eyebrow = torneoNombre.trim();
   const phaseMeta = singleGrupo && grupoNombre
     ? `Fase de grupos · ${grupoNombre}`
     : `Fase de grupos · ${subInfo}`;
+  const copyLabel = copyMsg || "Copiar enlace";
 
   const gridClass =
     singleGrupo || showingFiltered
@@ -809,38 +917,53 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
             <div className="te-grupos-hero__actions">
               <button
                 type="button"
-                className="te-grupos-share"
+                className={`te-grupos-share${
+                  copyMsg ? " te-grupos-share--done" : ""
+                }`}
                 onClick={onCopyLink}
+                aria-live="polite"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  aria-hidden
-                >
-                  <circle cx="18" cy="5" r="3" />
-                  <circle cx="6" cy="12" r="3" />
-                  <circle cx="18" cy="19" r="3" />
-                  <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
-                </svg>
-                Copiar enlace
+                {copyMsg ? (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    aria-hidden
+                  >
+                    <path d="M5 12.5 9.2 17 19 7" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    aria-hidden
+                  >
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
+                  </svg>
+                )}
+                {copyLabel}
               </button>
             </div>
           ) : null}
         </div>
-        {copyMsg ? (
-          <p className="te-grupos-copy-msg" aria-live="polite">
-            {copyMsg}
-          </p>
-        ) : null}
       </header>
 
       {!singleGrupo ? (
         <nav className="te-phase-segment" aria-label="Fase del torneo">
-          <span className="te-phase-segment__item te-phase-segment__item--active">
+          <span
+            className="te-phase-segment__item te-phase-segment__item--active"
+            aria-current="page"
+          >
             Grupos
           </span>
           {faseFinalHref ? (
@@ -915,7 +1038,11 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
                   <p className="te-grupos-empty">Sin partidos programados.</p>
                 ) : (
                   grupo.partidos.map((partido) => (
-                    <PartidoRow key={partido.id} partido={partido} />
+                    <PartidoRow
+                      key={partido.id}
+                      partido={partido}
+                      photos={playerPhotos}
+                    />
                   ))
                 )}
               </div>
@@ -925,6 +1052,8 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
                   rows={grupo.standingRows}
                   clasifican={grupo.clasifican}
                   clasificacionModo={clasificacionModo}
+                  pairsById={grupo.pairsById}
+                  photos={playerPhotos}
                 />
                 <GrupoWinnerSummary
                   grupoNombre={grupo.nombre}
@@ -932,7 +1061,10 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
                   partidos={grupo.partidosExpress}
                   torneoNombre={torneoNombre}
                   categoria={categoria}
-                  players={withAchievementPhotos(grupo.achievementPlayers, winnerPhotos)}
+                  players={withAchievementPhotos(
+                    grupo.achievementPlayers,
+                    playerPhotos
+                  )}
                   clubName={clubName}
                   clubLogoUrl={clubLogoUrl}
                   showMotherAttribution={showMotherAttribution}
