@@ -189,7 +189,7 @@ describe("assignRoundRobinSchedule", () => {
   });
 
   test("con hora de cierre desborda al día siguiente en la misma ventana", () => {
-    // Ventana 09:00–10:00, duración 30 → 2 slots/día con 1 cancha.
+    // Ventana 09:00–10:30, duración 30 → 09:00 y 09:30. El de 10:00 llegaría al cierre.
     // Cada grupo cabe en un día y no se parte al siguiente.
     const matches = [
       ...Array.from({ length: 2 }, (_, i) =>
@@ -223,7 +223,7 @@ describe("assignRoundRobinSchedule", () => {
       scheduleInput(matches, {
         date: "2026-10-03",
         startTime: "09:00",
-        endTime: "10:00",
+        endTime: "10:30",
         endDate: "2026-10-10",
         durationMinutes: 30,
         courts: ["C1"],
@@ -280,8 +280,8 @@ describe("assignRoundRobinSchedule", () => {
     ];
 
     const days = [
-      { date: "2026-10-03", startTime: "09:00", endTime: "10:00" },
-      { date: "2026-10-04", startTime: "16:00", endTime: "17:00" },
+      { date: "2026-10-03", startTime: "09:00", endTime: "10:30" },
+      { date: "2026-10-04", startTime: "16:00", endTime: "17:30" },
     ];
 
     const scheduled = assignRoundRobinSchedule({
@@ -338,8 +338,8 @@ describe("assignRoundRobinSchedule", () => {
       matches,
       courts: ["Cancha 3"],
       days: [
-        { date: "2026-10-06", startTime: "17:00", endTime: "20:00" },
-        { date: "2026-10-07", startTime: "17:00", endTime: "20:00" },
+        { date: "2026-10-06", startTime: "17:00", endTime: "21:00" },
+        { date: "2026-10-07", startTime: "17:00", endTime: "21:00" },
       ],
       durationMinutes: 60,
     });
@@ -518,7 +518,7 @@ describe("assignRoundRobinSchedule", () => {
           ),
         ],
       })
-    ).toThrow(/Día 2 \(2026-10-08, 18:00–23:00\): Cancha 2 y Cancha 3, 10 libres/);
+    ).toThrow(/Día 2 \(2026-10-08, 18:00–23:00\): Cancha 2 y Cancha 3, 8 libres/);
   });
 
   test("si un grupo no cabe en un solo día, sigue en el siguiente", () => {
@@ -540,13 +540,13 @@ describe("assignRoundRobinSchedule", () => {
         {
           date: "2026-10-07",
           startTime: "20:00",
-          endTime: "22:00",
+          endTime: "23:00",
           courts: ["Cancha 2"],
         },
         {
           date: "2026-10-08",
           startTime: "20:00",
-          endTime: "22:00",
+          endTime: "23:00",
           courts: ["Cancha 3"],
         },
       ],
@@ -584,7 +584,7 @@ describe("assignRoundRobinSchedule", () => {
         {
           date: "2026-10-08",
           startTime: "17:00",
-          endTime: "18:00",
+          endTime: "19:00",
           courts: ["Cancha 2", "Cancha 3"],
         },
         {
@@ -871,10 +871,9 @@ describe("assignRoundRobinSchedule", () => {
 
 describe("teScheduleTime Mexico timezone", () => {
   test("una hora con segundos sigue cabiendo en la ventana", () => {
-    expect(slotFitsDailyWindow("15:00:00", 60, "15:00:00", "21:00:00")).toBe(
-      true
-    );
-    expect(slotFitsDailyWindow("20:00:00", 60, "15:00", "21:00")).toBe(true);
+    expect(slotFitsDailyWindow("17:00", 60, "17:00", "21:00")).toBe(true);
+    expect(slotFitsDailyWindow("19:00", 60, "17:00", "21:00")).toBe(true);
+    expect(slotFitsDailyWindow("20:00:00", 60, "15:00", "21:00")).toBe(false);
     expect(slotFitsDailyWindow("21:00:00", 60, "15:00", "21:00")).toBe(false);
   });
 

@@ -124,7 +124,10 @@ export function mexicoTimeToMinutes(timeStr: string): number | null {
   return parts.hour * 60 + parts.minute;
 }
 
-/** ¿El partido que inicia en `slotTime` termina a más tardar en `endTime`? */
+/**
+ * El partido cabe si empieza en la ventana y termina antes de la hora de cierre.
+ * Cerrar a las 21:00 admite 17:00, 18:00 y 19:00; no admite el juego 20:00–21:00.
+ */
 export function slotFitsDailyWindow(
   slotTime: string,
   durationMinutes: number,
@@ -145,7 +148,7 @@ export function slotFitsDailyWindow(
   }
   if (end <= start) return false;
   if (slot < start) return false;
-  return slot + durationMinutes <= end;
+  return slot + durationMinutes < end;
 }
 
 /** Suma días de calendario a una fecha YYYY-MM-DD (calendario México / civil). */

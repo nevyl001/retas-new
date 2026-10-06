@@ -1005,9 +1005,9 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     </h3>
                   </header>
                   <p className="te-crear-step__lead">
-                    Cada día tiene su fecha, su horario y sus canchas. Los
-                    partidos se acomodan con las canchas y el horario de ese día;
-                    si no caben, pasan al siguiente.
+                    Cada día tiene su fecha, su horario y sus canchas. La hora de
+                    apertura es el primer juego y la de cierre es el tope: ningún
+                    juego puede llegar a esa hora. Si no caben, pasan al siguiente.
                   </p>
                   <div className="te-crear-step__body">
                     <section
