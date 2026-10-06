@@ -125,8 +125,9 @@ export function mexicoTimeToMinutes(timeStr: string): number | null {
 }
 
 /**
- * El partido cabe si empieza en la ventana y termina antes de la hora de cierre.
- * Cerrar a las 21:00 admite 17:00, 18:00 y 19:00; no admite el juego 20:00–21:00.
+ * El partido cabe si empieza a la hora de apertura o después y termina
+ * a la hora de cierre o antes. De 17:00 a 20:00 caben 17:00, 18:00 y 19:00.
+ * No cabe uno que empiece a las 20:00 y termine a las 21:00.
  */
 export function slotFitsDailyWindow(
   slotTime: string,
@@ -148,7 +149,7 @@ export function slotFitsDailyWindow(
   }
   if (end <= start) return false;
   if (slot < start) return false;
-  return slot + durationMinutes < end;
+  return slot + durationMinutes <= end;
 }
 
 /** Suma días de calendario a una fecha YYYY-MM-DD (calendario México / civil). */

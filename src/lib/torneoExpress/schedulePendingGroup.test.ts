@@ -20,13 +20,13 @@ it("abre solo las canchas configuradas en cada día", () => {
       {
         date: "2026-08-01",
         startTime: "10:00",
-        endTime: "12:00",
+        endTime: "11:00",
         courts: ["Cancha 2", "Cancha 3"],
       },
       {
         date: "2026-08-02",
         startTime: "18:00",
-        endTime: "20:00",
+        endTime: "19:00",
         courts: ["Cancha 3"],
       },
     ],
@@ -191,7 +191,7 @@ describe("schedulePendingGroup", () => {
   });
 
   it("el mismo linaje no juega a la vez aunque cambie el pair id", () => {
-    const grid = openings(["1", "2"], "11:00");
+    const grid = openings(["1", "2"], "10:40");
     const plan = schedulePendingGroup({
       matches: [
         match({ id: "old", localId: "a", visitanteId: "b" }),
