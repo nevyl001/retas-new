@@ -189,14 +189,34 @@ describe("assignRoundRobinSchedule", () => {
 
   test("con hora de cierre desborda al día siguiente en la misma ventana", () => {
     // Ventana 09:00–10:00, duración 30 → 2 slots/día con 1 cancha.
-    const matches = Array.from({ length: 5 }, (_, i) =>
+    // Cada grupo cabe en un día y no se parte al siguiente.
+    const matches = [
+      ...Array.from({ length: 2 }, (_, i) =>
+        mkMatch({
+          matchKey: `a${i}`,
+          groupKey: 0,
+          parejaLocalId: `a${i}`,
+          parejaVisitanteId: `b${i}`,
+          orden: i + 1,
+        })
+      ),
+      ...Array.from({ length: 2 }, (_, i) =>
+        mkMatch({
+          matchKey: `c${i}`,
+          groupKey: 1,
+          parejaLocalId: `c${i}`,
+          parejaVisitanteId: `d${i}`,
+          orden: i + 1,
+        })
+      ),
       mkMatch({
-        matchKey: `m${i}`,
-        parejaLocalId: `a${i}`,
-        parejaVisitanteId: `b${i}`,
-        orden: i + 1,
-      })
-    );
+        matchKey: "e0",
+        groupKey: 2,
+        parejaLocalId: "e0",
+        parejaVisitanteId: "f0",
+        orden: 1,
+      }),
+    ];
 
     const scheduled = assignRoundRobinSchedule(
       scheduleInput(matches, {
@@ -217,24 +237,46 @@ describe("assignRoundRobinSchedule", () => {
     });
 
     expect(summary.dayCount).toBe(3);
-    expect(partidoDateInputValue(scheduled[0].programado_en!)).toBe("2026-10-03");
-    expect(partidoTimeInputValue24(scheduled[0].programado_en!)).toBe("09:00");
-    expect(partidoTimeInputValue24(scheduled[1].programado_en!)).toBe("09:30");
-    expect(partidoDateInputValue(scheduled[2].programado_en!)).toBe("2026-10-04");
-    expect(partidoTimeInputValue24(scheduled[2].programado_en!)).toBe("09:00");
-    expect(partidoDateInputValue(scheduled[4].programado_en!)).toBe("2026-10-05");
+    const byGroup = (key: number) =>
+      scheduled
+        .filter((match) => match.groupKey === key)
+        .sort((a, b) =>
+          (a.programado_en ?? "").localeCompare(b.programado_en ?? "")
+        );
+    const g0 = byGroup(0);
+    const g1 = byGroup(1);
+    const g2 = byGroup(2);
+    expect(partidoDateInputValue(g0[0].programado_en!)).toBe("2026-10-03");
+    expect(partidoTimeInputValue24(g0[0].programado_en!)).toBe("09:00");
+    expect(partidoTimeInputValue24(g0[1].programado_en!)).toBe("09:30");
+    expect(partidoDateInputValue(g1[0].programado_en!)).toBe("2026-10-04");
+    expect(partidoTimeInputValue24(g1[0].programado_en!)).toBe("09:00");
+    expect(partidoDateInputValue(g2[0].programado_en!)).toBe("2026-10-05");
+    expect(summary.dayCount).toBe(3);
     validateScheduleInvariants(matches, scheduled);
   });
 
   test("cada día puede tener horario distinto", () => {
-    const matches = Array.from({ length: 4 }, (_, i) =>
-      mkMatch({
-        matchKey: `m${i}`,
-        parejaLocalId: `a${i}`,
-        parejaVisitanteId: `b${i}`,
-        orden: i + 1,
-      })
-    );
+    const matches = [
+      ...Array.from({ length: 2 }, (_, i) =>
+        mkMatch({
+          matchKey: `a${i}`,
+          groupKey: 0,
+          parejaLocalId: `a${i}`,
+          parejaVisitanteId: `b${i}`,
+          orden: i + 1,
+        })
+      ),
+      ...Array.from({ length: 2 }, (_, i) =>
+        mkMatch({
+          matchKey: `c${i}`,
+          groupKey: 1,
+          parejaLocalId: `c${i}`,
+          parejaVisitanteId: `d${i}`,
+          orden: i + 1,
+        })
+      ),
+    ];
 
     const days = [
       { date: "2026-10-03", startTime: "09:00", endTime: "10:00" },
@@ -248,12 +290,77 @@ describe("assignRoundRobinSchedule", () => {
       durationMinutes: 30,
     });
 
-    expect(partidoDateInputValue(scheduled[0].programado_en!)).toBe("2026-10-03");
-    expect(partidoTimeInputValue24(scheduled[0].programado_en!)).toBe("09:00");
-    expect(partidoTimeInputValue24(scheduled[1].programado_en!)).toBe("09:30");
-    expect(partidoDateInputValue(scheduled[2].programado_en!)).toBe("2026-10-04");
-    expect(partidoTimeInputValue24(scheduled[2].programado_en!)).toBe("16:00");
-    expect(partidoTimeInputValue24(scheduled[3].programado_en!)).toBe("16:30");
+    const g0 = scheduled
+      .filter((match) => match.groupKey === 0)
+      .sort((a, b) =>
+        (a.programado_en ?? "").localeCompare(b.programado_en ?? "")
+      );
+    const g1 = scheduled
+      .filter((match) => match.groupKey === 1)
+      .sort((a, b) =>
+        (a.programado_en ?? "").localeCompare(b.programado_en ?? "")
+      );
+    expect(partidoDateInputValue(g0[0].programado_en!)).toBe("2026-10-03");
+    expect(partidoTimeInputValue24(g0[0].programado_en!)).toBe("09:00");
+    expect(partidoTimeInputValue24(g0[1].programado_en!)).toBe("09:30");
+    expect(partidoDateInputValue(g1[0].programado_en!)).toBe("2026-10-04");
+    expect(partidoTimeInputValue24(g1[0].programado_en!)).toBe("16:00");
+    expect(partidoTimeInputValue24(g1[1].programado_en!)).toBe("16:30");
+    validateScheduleInvariants(matches, scheduled);
+  });
+
+  test("un grupo juega seguido el día en que empieza", () => {
+    const matches = [
+      ...Array.from({ length: 3 }, (_, i) =>
+        mkMatch({
+          matchKey: `a${i}`,
+          groupKey: 0,
+          parejaLocalId: `a${i}`,
+          parejaVisitanteId: `a${i + 1}`,
+          orden: i + 1,
+          ronda: i + 1,
+        })
+      ),
+      ...Array.from({ length: 3 }, (_, i) =>
+        mkMatch({
+          matchKey: `b${i}`,
+          groupKey: 1,
+          parejaLocalId: `b${i}`,
+          parejaVisitanteId: `b${i + 1}`,
+          orden: i + 1,
+          ronda: i + 1,
+        })
+      ),
+    ];
+
+    const scheduled = assignRoundRobinSchedule({
+      matches,
+      courts: ["Cancha 3"],
+      days: [
+        { date: "2026-10-06", startTime: "17:00", endTime: "20:00" },
+        { date: "2026-10-07", startTime: "17:00", endTime: "20:00" },
+      ],
+      durationMinutes: 60,
+    });
+
+    const datesOf = (groupKey: number) =>
+      Array.from(
+        new Set(
+          scheduled
+            .filter((match) => match.groupKey === groupKey)
+            .map((match) => partidoDateInputValue(match.programado_en!))
+        )
+      );
+    const timesOf = (groupKey: number) =>
+      scheduled
+        .filter((match) => match.groupKey === groupKey)
+        .map((match) => partidoTimeInputValue24(match.programado_en!))
+        .sort();
+
+    expect(datesOf(0)).toEqual(["2026-10-06"]);
+    expect(timesOf(0)).toEqual(["17:00", "18:00", "19:00"]);
+    expect(datesOf(1)).toEqual(["2026-10-07"]);
+    expect(timesOf(1)).toEqual(["17:00", "18:00", "19:00"]);
     validateScheduleInvariants(matches, scheduled);
   });
 
