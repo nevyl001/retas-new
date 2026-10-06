@@ -304,16 +304,16 @@ export function useTorneoExpress(
 
   const rescheduleGruposProgramacion = useCallback(
     async (schedule: TeCreateScheduleInput) => {
-      if (!torneoId) return 0;
+      if (!torneoId) return { scheduled: 0, unscheduled: 0 };
       setSavingReprogramacion(true);
       setError(null);
       try {
-        const count = await rescheduleTorneoExpressGruposPartidos(
+        const result = await rescheduleTorneoExpressGruposPartidos(
           torneoId,
           schedule
         );
         await reload();
-        return count;
+        return result;
       } catch (e) {
         setError(
           e instanceof Error ? e.message : "No se pudo reprogramar los partidos"

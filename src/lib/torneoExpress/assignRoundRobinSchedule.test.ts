@@ -653,6 +653,39 @@ describe("assignRoundRobinSchedule", () => {
     validateScheduleInvariants(matches, scheduled);
   });
 
+  test("si no caben todos, deja el resto sin horario", () => {
+    const matches = Array.from({ length: 4 }, (_, i) =>
+      mkMatch({
+        matchKey: `m${i}`,
+        parejaLocalId: `p${i * 2}`,
+        parejaVisitanteId: `p${i * 2 + 1}`,
+        orden: i + 1,
+        ronda: i + 1,
+      })
+    );
+
+    const scheduled = assignRoundRobinSchedule({
+      matches,
+      courts: ["3"],
+      days: [
+        {
+          date: "2026-10-08",
+          startTime: "17:00",
+          endTime: "20:00",
+          courts: ["3"],
+        },
+      ],
+      durationMinutes: 60,
+      allowPartial: true,
+    });
+
+    expect(scheduled).toHaveLength(3);
+    expect(
+      scheduled.map((match) => partidoTimeInputValue24(match.programado_en!))
+    ).toEqual(["17:00", "18:00", "19:00"]);
+    validateScheduleInvariants(matches, scheduled, { allowPartial: true });
+  });
+
   test("rechaza ventana donde no cabe ni un partido", () => {
     const matches = [
       mkMatch({ matchKey: "a", parejaLocalId: "p1", parejaVisitanteId: "p2" }),

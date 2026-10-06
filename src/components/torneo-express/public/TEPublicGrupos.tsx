@@ -148,11 +148,14 @@ function mapPartidosForGrupo(
 
   return sorted.map((partido) => {
     const played = partido.estado === "jugado";
+    const unscheduled = !partido.programado_en?.trim();
     const scheduleIso = partidoScheduleIso(partido);
     const fechaLarga = formatPartidoFecha(scheduleIso);
-    const fechaDia = fechaLarga.includes(" ")
-      ? fechaLarga.slice(0, fechaLarga.lastIndexOf(" "))
-      : fechaLarga;
+    const fechaDia = unscheduled
+      ? "Por programar"
+      : fechaLarga.includes(" ")
+        ? fechaLarga.slice(0, fechaLarga.lastIndexOf(" "))
+        : fechaLarga;
     const pareja1 =
       parejasById.get(partido.pareja_local_id)?.pareja_display ??
       parejasById.get(partido.pareja_local_id)?.pareja_id ??
@@ -165,9 +168,11 @@ function mapPartidosForGrupo(
     return {
       id: partido.id,
       fechaDia,
-      fechaNumero: formatMatchDateShort(scheduleIso, { includeYear: false }),
-      hora: formatPartidoHora(scheduleIso),
-      cancha: formatCanchaDisplay(partido.cancha),
+      fechaNumero: unscheduled
+        ? ""
+        : formatMatchDateShort(scheduleIso, { includeYear: false }),
+      hora: unscheduled ? "" : formatPartidoHora(scheduleIso),
+      cancha: unscheduled ? "Por programar" : formatCanchaDisplay(partido.cancha),
       pareja1,
       pareja2,
       local: pairSideForId(partido.pareja_local_id, parejasById, "Local"),
@@ -223,8 +228,7 @@ export function buildTEPublicGruposProps(
   gruposOrdenados.forEach((grupo) => {
     const partidos = bundle.partidosPorGrupo[grupo.id] ?? [];
     partidos.forEach((partido) => {
-      const iso = partidoScheduleIso(partido);
-      if (iso) fechaIsos.push(iso);
+      if (partido.programado_en?.trim()) fechaIsos.push(partido.programado_en);
     });
   });
 

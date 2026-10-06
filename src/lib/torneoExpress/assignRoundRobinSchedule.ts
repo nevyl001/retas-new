@@ -43,6 +43,11 @@ export type AssignRoundRobinScheduleInput = {
    * El motor salta esas canchas en ese horario.
    */
   occupiedCourtSlots?: TeOccupiedCourtSlot[];
+  /**
+   * Si no hay lugar para todos, programa los que caben y deja fuera el resto.
+   * Sin esta opción, la falta de lugares es un error.
+   */
+  allowPartial?: boolean;
 };
 
 export type SchedulePreviewSummary = {
@@ -274,7 +279,8 @@ function assignMatchesOntoDayCourts(
   durationMinutes: number,
   days: TeScheduleDayWindow[],
   occupiedCourtKeys: Set<string>,
-  occupiedLabels: ReadonlyMap<string, string>
+  occupiedLabels: ReadonlyMap<string, string>,
+  allowPartial: boolean
 ): DraftScheduleMatch[] {
   const openings = openingsForDays(
     days,
@@ -327,7 +333,7 @@ function assignMatchesOntoDayCourts(
     scheduled.push(...taken);
   }
 
-  if (pending.length > 0) {
+  if (pending.length > 0 && !allowPartial) {
     throw new ScheduleInvariantError(
       capacityFailureMessage(matches.length, days, openings, courts)
     );
@@ -342,7 +348,8 @@ function assignWithDayWindows(
   durationMinutes: number,
   days: TeScheduleDayWindow[],
   occupiedCourtKeys: Set<string>,
-  occupiedLabels: ReadonlyMap<string, string>
+  occupiedLabels: ReadonlyMap<string, string>,
+  allowPartial: boolean
 ): DraftScheduleMatch[] {
   return assignMatchesOntoDayCourts(
     matches,
@@ -350,7 +357,8 @@ function assignWithDayWindows(
     durationMinutes,
     days,
     occupiedCourtKeys,
-    occupiedLabels
+    occupiedLabels,
+    allowPartial
   );
 }
 
@@ -554,7 +562,8 @@ export function assignRoundRobinSchedule(
     durationMinutes,
     days,
     occupiedCourtKeys,
-    occupiedLabels
+    occupiedLabels,
+    input.allowPartial === true
   );
 }
 

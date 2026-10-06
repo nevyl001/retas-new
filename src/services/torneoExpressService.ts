@@ -1901,10 +1901,15 @@ export async function savePartidoProgramacion(
   return data as TorneoExpressPartido;
 }
 
+export type GruposRescheduleResult = {
+  scheduled: number;
+  unscheduled: number;
+};
+
 export async function rescheduleTorneoExpressGruposPartidos(
   torneoId: string,
   schedule: TeCreateScheduleInput
-): Promise<number> {
+): Promise<GruposRescheduleResult> {
   await requireAuthUser();
 
   const { days, courts, durationMinutes } = resolveCreateSchedule(schedule);
@@ -1947,17 +1952,19 @@ export async function rescheduleTorneoExpressGruposPartidos(
     throw new Error("No hay partidos para reprogramar.");
   }
 
-  const jugadoIds = new Set<string>();
   const pendingIds = new Set<string>();
   for (const list of Object.values(bundle.partidosPorGrupo)) {
     for (const partido of list) {
-      if (partido.estado === "jugado") {
-        jugadoIds.add(partido.id);
-      } else {
-        pendingIds.add(partido.id);
-      }
+      if (partido.estado !== "jugado") pendingIds.add(partido.id);
     }
   }
+  if (pendingIds.size === 0) {
+    throw new Error("No hay partidos pendientes para reprogramar.");
+  }
+
+  const pendingMatches = persistedMatches.filter((match) =>
+    pendingIds.has(match.partidoId)
+  );
 
   const eventoScope = await fetchCourtCheckPartidosForTorneo(torneoId);
   const occupiedCourtSlots = occupiedSlotsExcluding(
@@ -1968,13 +1975,14 @@ export async function rescheduleTorneoExpressGruposPartidos(
   let scheduled;
   try {
     scheduled = assignRoundRobinSchedule({
-      matches: persistedMatches,
+      matches: pendingMatches,
       courts,
       days,
       durationMinutes,
       occupiedCourtSlots,
+      allowPartial: true,
     });
-    validateScheduleInvariants(persistedMatches, scheduled);
+    validateScheduleInvariants(pendingMatches, scheduled, { allowPartial: true });
   } catch (e) {
     if (e instanceof ScheduleInvariantError) {
       throw new Error(e.message);
@@ -1982,20 +1990,9 @@ export async function rescheduleTorneoExpressGruposPartidos(
     throw e;
   }
 
-  const mapped = mapPersistedScheduleToPartidoUpdates(scheduled);
-  const updates = mapped.filter((row) => !jugadoIds.has(row.partidoId));
-
-  if (updates.length === 0) {
-    throw new Error("No hay partidos pendientes para reprogramar.");
-  }
-
+  const updates = mapPersistedScheduleToPartidoUpdates(scheduled);
   const updatedIds = new Set(updates.map((row) => row.partidoId));
-  const unmappedPending = Array.from(pendingIds).filter((id) => !updatedIds.has(id));
-  if (unmappedPending.length > 0) {
-    throw new Error(
-      `No se pudo reprogramar ${unmappedPending.length} partido(s) pendiente(s). Recarga e intenta de nuevo.`
-    );
-  }
+  const unscheduledIds = Array.from(pendingIds).filter((id) => !updatedIds.has(id));
 
   await Promise.all(
     updates.map(async (row) => {
@@ -2033,7 +2030,22 @@ export async function rescheduleTorneoExpressGruposPartidos(
     })
   );
 
-  return updates.length;
+  await Promise.all(
+    unscheduledIds.map(async (partidoId) => {
+      const { error } = await supabase
+        .from("torneo_express_partidos")
+        .update({ programado_en: null, cancha: null })
+        .eq("id", partidoId);
+      if (error) {
+        throwIfError(error, "clear torneo_express_partidos schedule");
+      }
+    })
+  );
+
+  return {
+    scheduled: updates.length,
+    unscheduled: unscheduledIds.length,
+  };
 }
 
 /**

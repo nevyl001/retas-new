@@ -64,50 +64,76 @@ export const TeReprogramarProgramacionModal: React.FC<
     }
   }, [open, allPartidos]);
 
-  const scheduleError = useMemo(() => {
+  const placement = useMemo(() => {
     if (
       !Number.isFinite(schedule.durationMinutes) ||
       schedule.durationMinutes <= 0
     ) {
-      return "La duración por partido debe ser mayor a 0 minutos.";
+      return {
+        error: "La duración por partido debe ser mayor a 0 minutos.",
+        warning: null as string | null,
+      };
     }
 
     const daysError = validatePlayDays(
       schedule.days,
       schedule.durationMinutes
     );
-    if (daysError) return daysError;
+    if (daysError) return { error: daysError, warning: null };
 
     try {
       const persistedMatches = buildScheduleMatchesFromBundle(
         bundle.grupos,
         bundle.partidosPorGrupo
       );
-      if (persistedMatches.length === 0) return null;
+      const pendingIds = new Set(
+        allPartidos.filter((partido) => partido.estado !== "jugado").map((partido) => partido.id)
+      );
+      const pendingMatches = persistedMatches.filter((match) =>
+        pendingIds.has(match.partidoId)
+      );
+      if (pendingMatches.length === 0) return { error: null, warning: null };
 
       const scheduled = assignRoundRobinSchedule({
-        matches: persistedMatches,
+        matches: pendingMatches,
         courts: courtsForScheduleDay(schedule.days[0]!),
         days: schedule.days,
         durationMinutes: Math.floor(schedule.durationMinutes),
         occupiedCourtSlots,
+        allowPartial: true,
       });
-      validateScheduleInvariants(persistedMatches, scheduled);
-      return null;
+      validateScheduleInvariants(pendingMatches, scheduled, {
+        allowPartial: true,
+      });
+      const left = pendingMatches.length - scheduled.length;
+      return {
+        error: null,
+        warning:
+          left > 0
+            ? `Se acomodan ${scheduled.length} partidos en los horarios libres. ${left} quedan por programar.`
+            : null,
+      };
     } catch (e) {
       if (e instanceof Error && e.message === PARTIDO_CANCHA_OCUPADA_MSG) {
-        return PARTIDO_CANCHA_OCUPADA_MSG;
+        return { error: PARTIDO_CANCHA_OCUPADA_MSG, warning: null };
       }
-      return e instanceof Error
-        ? e.message
-        : "No fue posible programar todos los partidos con esta configuración.";
+      return {
+        error:
+          e instanceof Error
+            ? e.message
+            : "No fue posible programar los partidos con esta configuración.",
+        warning: null,
+      };
     }
   }, [
+    allPartidos,
     bundle,
     schedule.days,
     schedule.durationMinutes,
     occupiedCourtSlots,
   ]);
+
+  const scheduleError = placement.error;
 
   const scheduleReady =
     pendingCount > 0 &&
@@ -158,8 +184,9 @@ export const TeReprogramarProgramacionModal: React.FC<
     >
       <div className="te-reprogramar-modal">
         <p className="te-reprogramar-modal__lead">
-          Cada cancha tiene su propio horario en el día. Los partidos
-          pendientes solo se acomodan mientras esa cancha está disponible.
+          Cada cancha tiene su propio horario. Los partidos pendientes se
+          recorren a los lugares libres. Si no caben todos, los que sobran
+          quedan por programar.
         </p>
         {playedCount > 0 ? (
           <p className="te-reprogramar-modal__note" role="note">
@@ -199,6 +226,12 @@ export const TeReprogramarProgramacionModal: React.FC<
             </div>
           </div>
         </div>
+
+        {placement.warning ? (
+          <p className="te-reprogramar-modal__note" role="status">
+            {placement.warning}
+          </p>
+        ) : null}
 
         {scheduleError ? (
           <p className="te-reprogramar-modal__error" role="alert">

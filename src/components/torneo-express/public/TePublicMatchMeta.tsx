@@ -10,10 +10,13 @@ import type { TorneoExpressPartido } from "../../../lib/torneoExpress/types";
 export const TePublicMatchMeta: React.FC<{ partido: TorneoExpressPartido }> = ({
   partido,
 }) => {
+  const unscheduled = !partido.programado_en?.trim();
   const scheduleIso = partidoScheduleIso(partido);
-  const fechaLabel = formatPartidoFecha(scheduleIso);
-  const horaLabel = formatPartidoHora(scheduleIso);
-  const canchaLabel = formatCanchaDisplay(partido.cancha);
+  const fechaLabel = unscheduled ? "Por programar" : formatPartidoFecha(scheduleIso);
+  const horaLabel = unscheduled ? "Por programar" : formatPartidoHora(scheduleIso);
+  const canchaLabel = unscheduled
+    ? "Por programar"
+    : formatCanchaDisplay(partido.cancha);
 
   return (
     <div className="te-pub-match__meta" aria-label="Programación del partido">

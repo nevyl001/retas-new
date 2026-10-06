@@ -15,9 +15,14 @@ export const SCHEDULE_INCOMPLETE_MSG =
 /** Valida que el schedule cumple todas las invariantes antes de persistir. */
 export function validateScheduleInvariants(
   original: DraftScheduleMatch[],
-  scheduled: DraftScheduleMatch[]
+  scheduled: DraftScheduleMatch[],
+  options?: { allowPartial?: boolean }
 ): void {
-  if (scheduled.length !== original.length) {
+  const allowPartial = options?.allowPartial === true;
+  if (!allowPartial && scheduled.length !== original.length) {
+    throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+  }
+  if (scheduled.length > original.length) {
     throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
   }
 
@@ -54,9 +59,11 @@ export function validateScheduleInvariants(
     }
   }
 
-  for (const key of Array.from(originalByKey.keys())) {
-    if (!seenKeys.has(key)) {
-      throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+  if (!allowPartial) {
+    for (const key of Array.from(originalByKey.keys())) {
+      if (!seenKeys.has(key)) {
+        throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
+      }
     }
   }
 

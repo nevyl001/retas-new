@@ -460,10 +460,13 @@ function PartidoRow({
           })
           .join(". ");
 
+  const unscheduled = !partido.programado_en?.trim();
   const scheduleIso = partidoScheduleIso(partido);
-  const fechaLabel = formatPartidoFecha(scheduleIso);
-  const horaLabel = formatPartidoHora(scheduleIso);
-  const canchaLabel = formatCanchaDisplay(partido.cancha);
+  const fechaLabel = unscheduled ? "Por programar" : formatPartidoFecha(scheduleIso);
+  const horaLabel = unscheduled ? "Por programar" : formatPartidoHora(scheduleIso);
+  const canchaLabel = unscheduled
+    ? "Por programar"
+    : formatCanchaDisplay(partido.cancha);
   const metaBusy = savingCancha || savingProgramado;
   const canEditSchedule =
     canchaEditable && horarioEditable && !!onSaveProgramacion;

@@ -1527,12 +1527,18 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         onCancel={() => setReprogramOpen(false)}
         onConfirm={(schedule) => {
           void rescheduleGruposProgramacion(schedule)
-            .then((count) => {
+            .then((result) => {
               setReprogramOpen(false);
+              const placed =
+                result.scheduled === 1
+                  ? "1 partido"
+                  : `${result.scheduled} partidos`;
+              const pending =
+                result.unscheduled > 0
+                  ? ` ${result.unscheduled} quedan por programar.`
+                  : "";
               showActionToast(
-                `Programación actualizada en ${count} partido${
-                  count === 1 ? "" : "s"
-                }.`,
+                `Programación actualizada en ${placed}.${pending}`,
                 "success"
               );
             })
