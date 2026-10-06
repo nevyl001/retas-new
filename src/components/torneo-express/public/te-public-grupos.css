@@ -3644,32 +3644,35 @@
 }
 
 .te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-partido-fecha {
-  display: inline-flex;
-  align-items: baseline;
-  flex: 0 0 auto;
-  gap: 0.35rem;
-  min-height: 1.55rem;
-  padding: 0.16rem 0.55rem;
-  border: 1px solid color-mix(in srgb, var(--text-primary) 28%, transparent);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  display: flex;
+  flex: 1 0 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.08rem;
+  min-width: 0;
+  padding: 0 0 0.15rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--text-primary);
-  line-height: 1.15;
-  white-space: nowrap;
+  line-height: 1.05;
 }
 
 .te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-partido-fecha__dow {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  color: var(--text-secondary);
 }
 
 .te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-partido-fecha__when {
-  font-size: 0.8125rem;
+  font-size: 1.2rem;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-partido-hora,
@@ -4105,23 +4108,23 @@
 .te-public .te-public-pair--match {
   display: flex;
   align-items: stretch;
-  gap: 0.45rem;
+  gap: 0.4rem;
   width: 100%;
   min-width: 0;
 }
 
 .te-public .te-public-pair--match.te-public-pair--solo {
-  max-width: 13.75rem;
+  max-width: 9.5rem;
 }
 
 .te-public .te-public-pair__portrait {
   position: relative;
   flex: 1 1 0;
   min-width: 0;
-  max-width: 13.75rem;
-  aspect-ratio: 4 / 5;
+  max-width: 9.5rem;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-  border-radius: 0.9rem;
+  border-radius: 0.8rem;
   border: 1px solid color-mix(in srgb, var(--text-primary, #fff) 16%, transparent);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 28%),
@@ -4187,7 +4190,7 @@
   min-width: 0;
   overflow: hidden;
   color: #fff;
-  font-size: 0.92rem;
+  font-size: 0.8125rem;
   font-weight: 650;
   line-height: 1.15;
   letter-spacing: -0.01em;
@@ -4198,12 +4201,12 @@
 
 .te-public .te-public-pair__level {
   flex: 0 0 auto;
-  padding: 0.12rem 0.38rem 0.14rem;
+  padding: 0.1rem 0.32rem 0.12rem;
   border: 1px solid color-mix(in srgb, #fff 42%, transparent);
   border-radius: 999px;
   background: rgba(8, 10, 12, 0.55);
   color: #fff;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
@@ -4214,16 +4217,21 @@
   align-items: center;
   min-height: 0;
   padding: 0;
-  column-gap: 0.65rem;
+  column-gap: 0.85rem;
   border: 0;
   background: transparent;
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
-.te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-team-score-mobile {
+.te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-team-score-mobile,
+.te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-team-row--winner .te-team-score-mobile,
+.te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-team-row--loser .te-team-score-mobile,
+.te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-team-row--tie .te-team-score-mobile {
   align-self: center;
-  min-width: 2.25rem;
-  font-size: 1.35rem;
+  flex: 0 0 auto;
+  gap: 0.5rem;
+  min-width: 1.5rem;
+  font-size: 1.0625rem;
 }
 
 .te-public .te-public-pair--standings .te-public-pair__name {
