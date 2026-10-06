@@ -13,6 +13,7 @@ import {
   addMinutesToMexicoCalendar,
   partidoTimeInputValue24,
   programadoIsoFromMexicoCalendar,
+  slotFitsDailyWindow,
 } from "./teScheduleTime";
 import { partidoDateInputValue, partidoTimeInputValue } from "./partidoSchedule";
 import type { GrupoAssignmentDraft } from "./types";
@@ -407,6 +408,119 @@ describe("assignRoundRobinSchedule", () => {
     expect(courtsUsed).toEqual(new Set(["Cancha 2", "Cancha 3"]));
   });
 
+  test("con el día 1 ocupado, el segundo día usa sus dos canchas", () => {
+    const grupos: GrupoAssignmentDraft[] = [0, 1].map((orden) => ({
+      nombre: `Grupo ${orden + 1}`,
+      orden,
+      parejaIds: [0, 1, 2, 3].map((i) => `g${orden}-p${i}`),
+    }));
+    const matches = buildDraftScheduleMatches(grupos);
+    expect(matches).toHaveLength(12);
+
+    const days = [
+      {
+        date: "2026-10-07",
+        startTime: "15:00",
+        endTime: "21:00",
+        courts: ["Cancha 2", "Cancha 3"],
+      },
+      {
+        date: "2026-10-08",
+        startTime: "18:00",
+        endTime: "23:00",
+        courts: ["Cancha 2", "Cancha 3"],
+      },
+      {
+        date: "2026-10-09",
+        startTime: "18:00",
+        endTime: "23:00",
+        courts: ["Cancha 3"],
+      },
+    ];
+    const occupiedCourtSlots = ["15:00", "16:00", "17:00", "18:00", "19:00", "20:00"].flatMap(
+      (time) =>
+        ["Cancha 2", "Cancha 3"].map((cancha) => ({
+          programado_en: programadoIsoFromMexicoCalendar("2026-10-07", time)!,
+          cancha,
+          categoriaLabel: "Mixtos C",
+        }))
+    );
+
+    const scheduled = assignRoundRobinSchedule({
+      matches,
+      courts: ["Cancha 2"],
+      days,
+      durationMinutes: 60,
+      occupiedCourtSlots,
+    });
+
+    const onDay2 = scheduled.filter(
+      (match) => partidoDateInputValue(match.programado_en!) === "2026-10-08"
+    );
+    expect(onDay2.length).toBeGreaterThan(0);
+    expect(new Set(onDay2.map((match) => match.cancha))).toEqual(
+      new Set(["Cancha 2", "Cancha 3"])
+    );
+    validateScheduleInvariants(matches, scheduled);
+  });
+
+  test("si el segundo día no alcanza, el error nombra sus dos canchas", () => {
+    const grupos: GrupoAssignmentDraft[] = [0, 1].map((orden) => ({
+      nombre: `Grupo ${orden + 1}`,
+      orden,
+      parejaIds: [0, 1, 2, 3].map((i) => `g${orden}-p${i}`),
+    }));
+    const matches = buildDraftScheduleMatches(grupos);
+    const occupy = (date: string, times: string[], courts: string[]) =>
+      times.flatMap((time) =>
+        courts.map((cancha) => ({
+          programado_en: programadoIsoFromMexicoCalendar(date, time)!,
+          cancha,
+          categoriaLabel: "Mixtos C",
+        }))
+      );
+
+    expect(() =>
+      assignRoundRobinSchedule({
+        matches,
+        courts: ["Cancha 2"],
+        days: [
+          {
+            date: "2026-10-07",
+            startTime: "15:00",
+            endTime: "21:00",
+            courts: ["Cancha 2", "Cancha 3"],
+          },
+          {
+            date: "2026-10-08",
+            startTime: "18:00",
+            endTime: "23:00",
+            courts: ["Cancha 2", "Cancha 3"],
+          },
+          {
+            date: "2026-10-09",
+            startTime: "18:00",
+            endTime: "23:00",
+            courts: ["Cancha 3"],
+          },
+        ],
+        durationMinutes: 60,
+        occupiedCourtSlots: [
+          ...occupy(
+            "2026-10-07",
+            ["15:00", "16:00", "17:00", "18:00", "19:00", "20:00"],
+            ["Cancha 2", "Cancha 3"]
+          ),
+          ...occupy(
+            "2026-10-09",
+            ["18:00", "19:00", "20:00", "21:00", "22:00"],
+            ["Cancha 3"]
+          ),
+        ],
+      })
+    ).toThrow(/Día 2 \(2026-10-08, 18:00–23:00\): Cancha 2 y Cancha 3, 10 libres/);
+  });
+
   test("si un grupo no cabe en un solo día, sigue en el siguiente", () => {
     const matches = Array.from({ length: 4 }, (_, i) =>
       mkMatch({
@@ -756,6 +870,14 @@ describe("assignRoundRobinSchedule", () => {
 });
 
 describe("teScheduleTime Mexico timezone", () => {
+  test("una hora con segundos sigue cabiendo en la ventana", () => {
+    expect(slotFitsDailyWindow("15:00:00", 60, "15:00:00", "21:00:00")).toBe(
+      true
+    );
+    expect(slotFitsDailyWindow("20:00:00", 60, "15:00", "21:00")).toBe(true);
+    expect(slotFitsDailyWindow("21:00:00", 60, "15:00", "21:00")).toBe(false);
+  });
+
   test("2026-08-25 19:00 → display 19:00 in Mexico", () => {
     const iso = programadoIsoFromMexicoCalendar("2026-08-25", "19:00");
     expect(iso).toBeTruthy();

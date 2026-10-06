@@ -1,6 +1,7 @@
 import {
   expandUniformPlayDays,
   normalizePlayDays,
+  resizeDayCourts,
   validatePlayDays,
 } from "./scheduleDayWindows";
 
@@ -29,6 +30,15 @@ describe("scheduleDayWindows", () => {
     ).toEqual([
       { date: "2026-10-03", startTime: "09:00", endTime: "12:00" },
       { date: "2026-10-05", startTime: "18:00", endTime: "21:00" },
+    ]);
+  });
+
+  it("al sumar una cancha no repite el nombre que ya existe", () => {
+    expect(resizeDayCourts(["Cancha 2"], 2)).toEqual(["Cancha 2", "Cancha 1"]);
+    expect(resizeDayCourts(["Cancha 2", "Cancha 3"], 3)).toEqual([
+      "Cancha 2",
+      "Cancha 3",
+      "Cancha 1",
     ]);
   });
 

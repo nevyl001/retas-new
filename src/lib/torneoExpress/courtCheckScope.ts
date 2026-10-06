@@ -10,6 +10,8 @@ import type {
 export type TeOccupiedCourtSlot = {
   programado_en: string;
   cancha: string;
+  /** Categoría que ya usa ese horario, si se conoce. */
+  categoriaLabel?: string;
 };
 
 function courtKeyForOccupancy(raw: string | null | undefined): string {
@@ -154,7 +156,12 @@ export function courtSlotsFromPartidos(
     if (exclude?.has(partido.id)) continue;
     const iso = partido.programado_en?.trim();
     if (!iso || !partido.cancha?.trim()) continue;
-    out.push({ programado_en: iso, cancha: partido.cancha });
+    const categoriaLabel = getCourtCheckMeta(partido)?.categoriaLabel?.trim();
+    out.push({
+      programado_en: iso,
+      cancha: partido.cancha,
+      ...(categoriaLabel ? { categoriaLabel } : {}),
+    });
   }
   return out;
 }

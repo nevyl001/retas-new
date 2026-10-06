@@ -121,17 +121,20 @@ type CourtOpening = {
   date: string;
   time: string;
   courts: string[];
+  blockedLabels: string[];
 };
 
 function openingsForDays(
   days: TeScheduleDayWindow[],
   courts: string[],
   durationMinutes: number,
-  occupiedCourtKeys: Set<string>
+  occupiedCourtKeys: Set<string>,
+  occupiedLabels: ReadonlyMap<string, string>
 ): CourtOpening[] {
   const openings: CourtOpening[] = [];
 
   for (const day of days) {
+    const configured = courtsForScheduleDay(day, courts);
     let time = day.startTime;
     let guard = 0;
     while (
@@ -140,13 +143,18 @@ function openingsForDays(
     ) {
       guard += 1;
       const programadoIso = programadoIsoFromMexicoCalendar(day.date, time);
+      const blockedLabels: string[] = [];
       const freeCourts = programadoIso
-        ? courtsForScheduleDay(day, courts).filter((court) => {
+        ? configured.filter((court) => {
             const key = occupiedCourtSlotKey(programadoIso, court);
-            return !key || !occupiedCourtKeys.has(key);
+            if (key && occupiedCourtKeys.has(key)) {
+              blockedLabels.push(occupiedLabels.get(key) ?? "");
+              return false;
+            }
+            return true;
           })
         : [];
-      openings.push({ date: day.date, time, courts: freeCourts });
+      openings.push({ date: day.date, time, courts: freeCourts, blockedLabels });
       const next = addMinutesToMexicoCalendar(day.date, time, durationMinutes);
       if (!next || next.date !== day.date) break;
       time = next.time;
@@ -154,6 +162,58 @@ function openingsForDays(
   }
 
   return openings;
+}
+
+function formatCourtList(names: string[]): string {
+  if (names.length === 0) return "sin canchas";
+  if (names.length === 1) return names[0]!;
+  if (names.length === 2) return `${names[0]} y ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+}
+
+function capacityFailureMessage(
+  matchCount: number,
+  days: TeScheduleDayWindow[],
+  openings: CourtOpening[],
+  fallbackCourts: string[]
+): string {
+  const free = openings.reduce((sum, opening) => sum + opening.courts.length, 0);
+  const first = days[0]?.date ?? "—";
+  const last = days[days.length - 1]?.date ?? "—";
+  const byDate = new Map<
+    string,
+    { free: number; labels: Map<string, number> }
+  >();
+  for (const opening of openings) {
+    const row = byDate.get(opening.date) ?? {
+      free: 0,
+      labels: new Map<string, number>(),
+    };
+    row.free += opening.courts.length;
+    for (const label of opening.blockedLabels) {
+      const key = label.trim() || "otra categoría";
+      row.labels.set(key, (row.labels.get(key) ?? 0) + 1);
+    }
+    byDate.set(opening.date, row);
+  }
+
+  const detail = days
+    .map((day, index) => {
+      const names = courtsForScheduleDay(day, fallbackCourts);
+      const row = byDate.get(day.date);
+      const libres = row?.free ?? 0;
+      const occupied = Array.from(row?.labels.entries() ?? []);
+      const occupiedText =
+        occupied.length > 0
+          ? `, ${occupied
+              .map(([label, count]) => `${label} ocupa ${count}`)
+              .join(", ")}`
+          : "";
+      return `Día ${index + 1} (${day.date}, ${day.startTime}–${day.endTime}): ${formatCourtList(names)}, ${libres} libres${occupiedText}`;
+    })
+    .join(". ");
+
+  return `No caben ${matchCount} partidos: quedan ${free} lugares libres (${first} → ${last}). ${detail}.`;
 }
 
 function takeMatchesForCourts(
@@ -198,15 +258,16 @@ function assignMatchesOntoDayCourts(
   courts: string[],
   durationMinutes: number,
   days: TeScheduleDayWindow[],
-  occupiedCourtKeys: Set<string>
+  occupiedCourtKeys: Set<string>,
+  occupiedLabels: ReadonlyMap<string, string>
 ): DraftScheduleMatch[] {
   const openings = openingsForDays(
     days,
     courts,
     durationMinutes,
-    occupiedCourtKeys
+    occupiedCourtKeys,
+    occupiedLabels
   );
-  const lugares = openings.reduce((sum, opening) => sum + opening.courts.length, 0);
   let pending = [...matches].sort(
     (a, b) => a.groupKey - b.groupKey || a.ronda - b.ronda || a.orden - b.orden
   );
@@ -252,10 +313,8 @@ function assignMatchesOntoDayCourts(
   }
 
   if (pending.length > 0) {
-    const first = days[0]?.date ?? "—";
-    const last = days[days.length - 1]?.date ?? "—";
     throw new ScheduleInvariantError(
-      `No caben ${matches.length} partidos: estas canchas y horarios dan ${lugares} lugares (${first} → ${last}). Agrega otro día, amplía el horario o suma canchas.`
+      capacityFailureMessage(matches.length, days, openings, courts)
     );
   }
 
@@ -267,15 +326,29 @@ function assignWithDayWindows(
   courts: string[],
   durationMinutes: number,
   days: TeScheduleDayWindow[],
-  occupiedCourtKeys: Set<string>
+  occupiedCourtKeys: Set<string>,
+  occupiedLabels: ReadonlyMap<string, string>
 ): DraftScheduleMatch[] {
   return assignMatchesOntoDayCourts(
     matches,
     courts,
     durationMinutes,
     days,
-    occupiedCourtKeys
+    occupiedCourtKeys,
+    occupiedLabels
   );
+}
+
+function occupiedCategoryLabels(
+  slots: TeOccupiedCourtSlot[]
+): Map<string, string> {
+  const labels = new Map<string, string>();
+  for (const slot of slots) {
+    const key = occupiedCourtSlotKey(slot.programado_en, slot.cancha);
+    const label = slot.categoriaLabel?.trim();
+    if (key && label && !labels.has(key)) labels.set(key, label);
+  }
+  return labels;
 }
 
 function packSlots(
@@ -423,9 +496,9 @@ export function assignRoundRobinSchedule(
     throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
   }
 
-  const occupiedCourtKeys = buildOccupiedCourtSlotSet(
-    input.occupiedCourtSlots ?? []
-  );
+  const occupiedSlots = input.occupiedCourtSlots ?? [];
+  const occupiedCourtKeys = buildOccupiedCourtSlotSet(occupiedSlots);
+  const occupiedLabels = occupiedCategoryLabels(occupiedSlots);
 
   const hasExplicitDays = Boolean(input.days && input.days.length > 0);
   const hasEndWindow = Boolean(input.endTime?.trim()) || hasExplicitDays;
@@ -465,7 +538,8 @@ export function assignRoundRobinSchedule(
     courts,
     durationMinutes,
     days,
-    occupiedCourtKeys
+    occupiedCourtKeys,
+    occupiedLabels
   );
 }
 

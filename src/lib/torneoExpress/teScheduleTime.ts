@@ -35,7 +35,7 @@ function parseCalendarDate(dateStr: string): {
 }
 
 function parseTimeInput(timeStr: string): { hour: number; minute: number } | null {
-  const match = /^(\d{1,2}):(\d{2})$/.exec((timeStr.trim() || "09:00"));
+  const match = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(timeStr.trim() || "09:00");
   if (!match) return null;
   const hour = Number(match[1]);
   const minute = Number(match[2]);

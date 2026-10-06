@@ -86,8 +86,17 @@ export function resizeDayCourts(
     Math.min(MAX_DAY_COURTS, Number.isFinite(count) ? Math.floor(count) : 1)
   );
   const names = [...(current ?? [])].slice(0, nextCount);
+  const used = new Set(names.map((name) => name.trim().toLowerCase()));
+  let nextNumber = 1;
   while (names.length < nextCount) {
-    names.push(`Cancha ${names.length + 1}`);
+    let candidate = `Cancha ${nextNumber}`;
+    while (used.has(candidate.toLowerCase())) {
+      nextNumber += 1;
+      candidate = `Cancha ${nextNumber}`;
+    }
+    names.push(candidate);
+    used.add(candidate.toLowerCase());
+    nextNumber += 1;
   }
   return names;
 }
