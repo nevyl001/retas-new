@@ -71,7 +71,7 @@ export const TeScheduleDaysEditor: React.FC<TeScheduleDaysEditorProps> = ({
               ) : null}
             </div>
             <div className="te-schedule-days__fields">
-              <div className="torneo-express-field">
+              <div className="torneo-express-field te-schedule-days__field--date">
                 <label htmlFor={`${idPrefix}-date-${index}`}>Fecha</label>
                 <input
                   id={`${idPrefix}-date-${index}`}

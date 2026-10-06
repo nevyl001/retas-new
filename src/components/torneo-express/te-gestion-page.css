@@ -490,6 +490,82 @@
   }
 }
 
+/* El modal de reprogramar se monta en body y mide poco.
+   Tres columnas iguales recortan "08:00 p.m." y la fecha. */
+.te-reprogramar-modal .te-schedule-days {
+  gap: 0.85rem;
+  margin-bottom: 1.1rem;
+}
+
+.te-reprogramar-modal .te-schedule-days__list {
+  gap: 0.75rem;
+}
+
+.te-reprogramar-modal .te-schedule-days__row {
+  padding: 0.9rem 1rem 1rem;
+  border-radius: 12px;
+}
+
+.te-reprogramar-modal .te-schedule-days__row-head {
+  margin-bottom: 0.75rem;
+}
+
+.te-reprogramar-modal .te-schedule-days__row-head strong {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.te-reprogramar-modal .te-schedule-days__row-head .riviera-btn-ghost {
+  min-height: unset;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ro-text-muted, var(--text-secondary));
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-underline-offset: 0;
+}
+
+.te-reprogramar-modal .te-schedule-days__row-head .riviera-btn-ghost:hover:not(:disabled) {
+  color: var(--ro-text-primary, var(--text-primary));
+  background: transparent;
+  text-decoration: none;
+}
+
+.te-reprogramar-modal .te-schedule-days__fields {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem 0.85rem;
+  align-items: end;
+}
+
+.te-reprogramar-modal .te-schedule-days__field--date {
+  grid-column: 1 / -1;
+}
+
+.te-reprogramar-modal .te-schedule-days__fields .torneo-express-field label {
+  margin-bottom: 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  line-height: 1.2;
+}
+
+.te-reprogramar-modal .te-schedule-days__fields input[type="date"],
+.te-reprogramar-modal .te-schedule-days__fields input[type="time"] {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 520px) {
+  .te-reprogramar-modal .te-schedule-days__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .te-gestion-page .te-reprogramar-modal__note {
   margin: 0 0 0.85rem;
   padding: 0.55rem 0.75rem;

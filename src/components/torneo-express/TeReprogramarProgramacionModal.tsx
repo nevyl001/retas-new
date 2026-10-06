@@ -175,7 +175,7 @@ export const TeReprogramarProgramacionModal: React.FC<
         if (!saving) onCancel();
       }}
       title="Editar programación"
-      size="md"
+      size="lg"
       footer={
         <div className="riviera-modal__actions te-modal-actions te-reprogramar-modal__actions">
           <Button
