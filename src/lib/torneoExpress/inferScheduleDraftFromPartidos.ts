@@ -112,7 +112,10 @@ function inferDaysFromPartidos(
   partidos: TorneoExpressPartido[],
   durationMinutes: number
 ): TeScheduleDayWindow[] {
-  const byDate = new Map<string, { min: string; max: string; courts: string[] }>();
+  const byDate = new Map<
+    string,
+    { min: string; max: string; courts: Map<string, { min: string; max: string }> }
+  >();
 
   for (const partido of partidos) {
     const draft = programadoDraftFromPartido(partido);
@@ -120,16 +123,24 @@ function inferDaysFromPartidos(
     const existing = byDate.get(draft.date);
     const court = partido.cancha?.trim() ?? "";
     if (!existing) {
+      const courts = new Map<string, { min: string; max: string }>();
+      if (court) courts.set(court, { min: draft.time, max: draft.time });
       byDate.set(draft.date, {
         min: draft.time,
         max: draft.time,
-        courts: court ? [court] : [],
+        courts,
       });
     } else {
       if (draft.time < existing.min) existing.min = draft.time;
       if (draft.time > existing.max) existing.max = draft.time;
-      if (court && !existing.courts.some((name) => name.toLowerCase() === court.toLowerCase())) {
-        existing.courts.push(court);
+      if (court) {
+        const window = existing.courts.get(court);
+        if (!window) {
+          existing.courts.set(court, { min: draft.time, max: draft.time });
+        } else {
+          if (draft.time < window.min) window.min = draft.time;
+          if (draft.time > window.max) window.max = draft.time;
+        }
       }
     }
   }
@@ -141,15 +152,27 @@ function inferDaysFromPartidos(
   return Array.from(byDate.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, times]) => {
-      const close =
-        addMinutesToMexicoCalendar(date, times.max, durationMinutes) ?? null;
-      const endTime =
-        close && close.date === date ? close.time : DEFAULT_SCHEDULE.days[0]!.endTime;
+      const closeOf = (time: string): string => {
+        const close = addMinutesToMexicoCalendar(date, time, durationMinutes);
+        return close && close.date === date
+          ? close.time
+          : DEFAULT_SCHEDULE.days[0]!.endTime;
+      };
+      const endTime = closeOf(times.max);
+      const courtHours = Array.from(times.courts.entries()).map(
+        ([name, window]) => ({
+          name,
+          startTime: window.min,
+          endTime: closeOf(window.max),
+        })
+      );
       return {
         date,
         startTime: times.min,
         endTime,
-        ...(times.courts.length > 0 ? { courts: times.courts } : {}),
+        ...(courtHours.length > 0
+          ? { courts: courtHours.map((court) => court.name), courtHours }
+          : {}),
       };
     });
 }

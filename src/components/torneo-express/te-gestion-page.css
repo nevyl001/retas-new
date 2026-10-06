@@ -553,8 +553,31 @@
 .te-gestion-page .te-schedule-days__court-names,
 .te-schedule-days__court-names {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+  gap: 0.65rem;
+}
+
+.te-gestion-page .te-schedule-days__court,
+.te-schedule-days__court {
+  display: grid;
   gap: 0.55rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--ro-border, rgba(0, 0, 0, 0.12));
+  border-radius: 10px;
+  background: var(--ro-bg-surface, transparent);
+}
+
+.te-gestion-page .te-schedule-days__court-times,
+.te-schedule-days__court-times {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+@media (max-width: 520px) {
+  .te-gestion-page .te-schedule-days__court-times,
+  .te-schedule-days__court-times {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -627,11 +650,21 @@
 }
 
 .te-reprogramar-modal .te-schedule-days__fields input[type="date"],
-.te-reprogramar-modal .te-schedule-days__fields input[type="time"] {
+.te-reprogramar-modal .te-schedule-days__fields input[type="time"],
+.te-reprogramar-modal .te-schedule-days__court input[type="text"],
+.te-reprogramar-modal .te-schedule-days__court input[type="time"] {
   width: 100%;
   min-width: 0;
   min-height: 2.75rem;
   font-variant-numeric: tabular-nums;
+}
+
+.te-reprogramar-modal .te-schedule-days__court label {
+  margin-bottom: 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  line-height: 1.2;
 }
 
 @media (max-width: 520px) {

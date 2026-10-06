@@ -1,4 +1,5 @@
 import {
+  courtSlotTimesForDay,
   expandUniformPlayDays,
   normalizePlayDays,
   resizeDayCourts,
@@ -80,6 +81,59 @@ describe("scheduleDayWindows", () => {
         endTime: "19:00",
         courts: ["Cancha 3"],
       },
+    ]);
+  });
+
+  it("conserva el horario propio de cada cancha", () => {
+    expect(
+      normalizePlayDays([
+        {
+          date: "2026-10-07",
+          startTime: "17:00",
+          endTime: "23:00",
+          courts: ["1", "2"],
+          courtHours: [
+            { name: "1", startTime: "17:00", endTime: "20:00" },
+            { name: "2", startTime: "20:00", endTime: "23:00" },
+          ],
+        },
+      ])
+    ).toEqual([
+      {
+        date: "2026-10-07",
+        startTime: "17:00",
+        endTime: "23:00",
+        courts: ["1", "2"],
+        courtHours: [
+          { name: "1", startTime: "17:00", endTime: "20:00" },
+          { name: "2", startTime: "20:00", endTime: "23:00" },
+        ],
+      },
+    ]);
+  });
+
+  it("abre cada cancha solo dentro de su horario", () => {
+    expect(
+      courtSlotTimesForDay(
+        {
+          date: "2026-10-07",
+          startTime: "17:00",
+          endTime: "23:00",
+          courts: ["1", "2"],
+          courtHours: [
+            { name: "1", startTime: "17:00", endTime: "20:00" },
+            { name: "2", startTime: "20:00", endTime: "23:00" },
+          ],
+        },
+        60
+      )
+    ).toEqual([
+      { time: "17:00", courts: ["1"] },
+      { time: "18:00", courts: ["1"] },
+      { time: "19:00", courts: ["1"] },
+      { time: "20:00", courts: ["2"] },
+      { time: "21:00", courts: ["2"] },
+      { time: "22:00", courts: ["2"] },
     ]);
   });
 

@@ -172,8 +172,8 @@ export const TeReprogramarEliminatoriaModal: React.FC<
     >
       <div className="te-reprogramar-modal">
         <p className="te-reprogramar-modal__lead">
-          Cada día de <strong>{rondaLabel}</strong> tiene su horario y sus
-          canchas. Al llenar un día, los partidos siguen en el siguiente.
+          Cada cancha de <strong>{rondaLabel}</strong> tiene su propio
+          horario. Al llenar una cancha, los partidos siguen en la siguiente.
         </p>
         {playedCount > 0 ? (
           <p className="te-reprogramar-modal__note" role="note">

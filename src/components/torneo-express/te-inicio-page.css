@@ -1340,8 +1340,27 @@
 
 .torneo-express-page.te-inicio-page .te-schedule-days__court-names {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
   gap: 10px;
+}
+
+.torneo-express-page.te-inicio-page .te-schedule-days__court {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--ro-border, rgba(0, 0, 0, 0.12));
+  border-radius: 10px;
+}
+
+.torneo-express-page.te-inicio-page .te-schedule-days__court-times {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 520px) {
+  .torneo-express-page.te-inicio-page .te-schedule-days__court-times {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {

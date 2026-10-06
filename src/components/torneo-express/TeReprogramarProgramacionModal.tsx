@@ -158,8 +158,8 @@ export const TeReprogramarProgramacionModal: React.FC<
     >
       <div className="te-reprogramar-modal">
         <p className="te-reprogramar-modal__lead">
-          Cada día tiene su fecha, su horario y sus canchas. Los partidos
-          pendientes se acomodan con eso; al llenar un día pasan al siguiente.
+          Cada cancha tiene su propio horario en el día. Los partidos
+          pendientes solo se acomodan mientras esa cancha está disponible.
         </p>
         {playedCount > 0 ? (
           <p className="te-reprogramar-modal__note" role="note">

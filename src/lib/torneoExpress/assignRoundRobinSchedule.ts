@@ -10,6 +10,8 @@ import {
 } from "./scheduleInvariants";
 import {
   courtsForScheduleDay,
+  courtSlotTimesForDay,
+  courtWindowsForScheduleDay,
   normalizePlayDays,
   resolveScheduleDays,
   validatePlayDays,
@@ -19,7 +21,6 @@ import {
   addMinutesToMexicoCalendar,
   mexicoScheduleSlotKey,
   programadoIsoFromMexicoCalendar,
-  slotFitsDailyWindow,
 } from "./teScheduleTime";
 
 /** Tope de seguridad de iteraciones. */
@@ -134,18 +135,11 @@ function openingsForDays(
   const openings: CourtOpening[] = [];
 
   for (const day of days) {
-    const configured = courtsForScheduleDay(day, courts);
-    let time = day.startTime;
-    let guard = 0;
-    while (
-      guard < 48 &&
-      slotFitsDailyWindow(time, durationMinutes, day.startTime, day.endTime)
-    ) {
-      guard += 1;
-      const programadoIso = programadoIsoFromMexicoCalendar(day.date, time);
+    for (const slot of courtSlotTimesForDay(day, durationMinutes, courts)) {
+      const programadoIso = programadoIsoFromMexicoCalendar(day.date, slot.time);
       const blockedLabels: string[] = [];
       const freeCourts = programadoIso
-        ? configured.filter((court) => {
+        ? slot.courts.filter((court) => {
             const key = occupiedCourtSlotKey(programadoIso, court);
             if (key && occupiedCourtKeys.has(key)) {
               blockedLabels.push(occupiedLabels.get(key) ?? "");
@@ -154,10 +148,12 @@ function openingsForDays(
             return true;
           })
         : [];
-      openings.push({ date: day.date, time, courts: freeCourts, blockedLabels });
-      const next = addMinutesToMexicoCalendar(day.date, time, durationMinutes);
-      if (!next || next.date !== day.date) break;
-      time = next.time;
+      openings.push({
+        date: day.date,
+        time: slot.time,
+        courts: freeCourts,
+        blockedLabels,
+      });
     }
   }
 
@@ -199,7 +195,8 @@ function capacityFailureMessage(
 
   const detail = days
     .map((day, index) => {
-      const names = courtsForScheduleDay(day, fallbackCourts);
+      const windows = courtWindowsForScheduleDay(day, fallbackCourts);
+      const names = windows.map((window) => window.name);
       const row = byDate.get(day.date);
       const libres = row?.free ?? 0;
       const occupied = Array.from(row?.labels.entries() ?? []);
@@ -209,7 +206,25 @@ function capacityFailureMessage(
               .map(([label, count]) => `${label} ocupa ${count}`)
               .join(", ")}`
           : "";
-      return `Día ${index + 1} (${day.date}, ${day.startTime}–${day.endTime}): ${formatCourtList(names)}, ${libres} libres${occupiedText}`;
+      const sameHours =
+        windows.length === 0 ||
+        windows.every(
+          (window) =>
+            window.startTime === windows[0]!.startTime &&
+            window.endTime === windows[0]!.endTime
+        );
+      const where = sameHours
+        ? `${day.date}, ${windows[0]?.startTime ?? day.startTime}–${windows[0]?.endTime ?? day.endTime}`
+        : day.date;
+      const who = sameHours
+        ? formatCourtList(names)
+        : windows
+            .map(
+              (window) =>
+                `${window.name} ${window.startTime}–${window.endTime}`
+            )
+            .join(", ");
+      return `Día ${index + 1} (${where}): ${who}, ${libres} libres${occupiedText}`;
     })
     .join(". ");
 

@@ -612,6 +612,47 @@ describe("assignRoundRobinSchedule", () => {
     validateScheduleInvariants(matches, scheduled);
   });
 
+  test("cada cancha solo recibe partidos dentro de su horario", () => {
+    const matches = Array.from({ length: 6 }, (_, i) =>
+      mkMatch({
+        matchKey: `m${i}`,
+        groupKey: 0,
+        parejaLocalId: `p${i * 2}`,
+        parejaVisitanteId: `p${i * 2 + 1}`,
+        orden: i + 1,
+        ronda: i + 1,
+      })
+    );
+
+    const scheduled = assignRoundRobinSchedule({
+      matches,
+      courts: ["1", "2"],
+      days: [
+        {
+          date: "2026-10-07",
+          startTime: "17:00",
+          endTime: "23:00",
+          courts: ["1", "2"],
+          courtHours: [
+            { name: "1", startTime: "17:00", endTime: "20:00" },
+            { name: "2", startTime: "20:00", endTime: "23:00" },
+          ],
+        },
+      ],
+      durationMinutes: 60,
+    });
+
+    const timesOf = (court: string) =>
+      scheduled
+        .filter((match) => match.cancha === court)
+        .map((match) => partidoTimeInputValue24(match.programado_en!))
+        .sort();
+
+    expect(timesOf("1")).toEqual(["17:00", "18:00", "19:00"]);
+    expect(timesOf("2")).toEqual(["20:00", "21:00", "22:00"]);
+    validateScheduleInvariants(matches, scheduled);
+  });
+
   test("rechaza ventana donde no cabe ni un partido", () => {
     const matches = [
       mkMatch({ matchKey: "a", parejaLocalId: "p1", parejaVisitanteId: "p2" }),

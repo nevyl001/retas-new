@@ -1,9 +1,17 @@
 import {
   addDaysToMexicoCalendarDate,
+  addMinutesToMexicoCalendar,
   mexicoTimeToMinutes,
   slotFitsDailyWindow,
   todayMexicoDateInput,
 } from "./teScheduleTime";
+
+/** Horario en el que una cancha acepta partidos ese día. */
+export type TeScheduleCourtWindow = {
+  name: string;
+  startTime: string;
+  endTime: string;
+};
 
 export type TeScheduleDayWindow = {
   date: string;
@@ -11,6 +19,11 @@ export type TeScheduleDayWindow = {
   endTime: string;
   /** Canchas de este día. Si falta, el algoritmo usa la lista global de respaldo. */
   courts?: string[];
+  /**
+   * Horario propio de cada cancha. Si una cancha no está aquí,
+   * usa la apertura y el cierre del día.
+   */
+  courtHours?: TeScheduleCourtWindow[];
 };
 
 export const MAX_DAY_COURTS = 8;
@@ -35,6 +48,23 @@ function readDayCourts(raw: unknown): string[] | undefined {
     .map((item) => item.trim())
     .slice(0, MAX_DAY_COURTS);
   return names.length > 0 ? names : undefined;
+}
+
+function readCourtHours(raw: unknown): TeScheduleCourtWindow[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const hours: TeScheduleCourtWindow[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as Partial<TeScheduleCourtWindow>;
+    const name = typeof row.name === "string" ? row.name.trim() : "";
+    const startTime =
+      typeof row.startTime === "string" ? row.startTime.trim() : "";
+    const endTime = typeof row.endTime === "string" ? row.endTime.trim() : "";
+    if (!name || !startTime || !endTime) continue;
+    hours.push({ name, startTime, endTime });
+    if (hours.length >= MAX_DAY_COURTS) break;
+  }
+  return hours.length > 0 ? hours : undefined;
 }
 
 /** Todas las canchas declaradas, sin repetir. Sirve como lista permitida al guardar. */
@@ -63,6 +93,120 @@ export function courtsForScheduleDay(
   const own = (day.courts ?? []).map((name) => name.trim()).filter(Boolean);
   if (own.length > 0) return own;
   return fallback.map((name) => name.trim()).filter(Boolean);
+}
+
+/**
+ * Horario de cada cancha. Sin horario propio, hereda el del día.
+ * El algoritmo solo abre huecos dentro de esa ventana.
+ */
+export function courtWindowsForScheduleDay(
+  day: TeScheduleDayWindow,
+  fallback: string[] = []
+): TeScheduleCourtWindow[] {
+  const hours = day.courtHours ?? [];
+  return courtsForScheduleDay(day, fallback).map((name) => {
+    const own = hours.find(
+      (hour) => hour.name.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+    return {
+      name,
+      startTime: own?.startTime?.trim() || day.startTime,
+      endTime: own?.endTime?.trim() || day.endTime,
+    };
+  });
+}
+
+/**
+ * Huecos de un día: cada hora solo incluye las canchas abiertas en ese momento.
+ * Dos canchas con horarios distintos no comparten un hueco fuera de su ventana.
+ */
+export function courtSlotTimesForDay(
+  day: TeScheduleDayWindow,
+  durationMinutes: number,
+  fallback: string[] = []
+): Array<{ time: string; courts: string[] }> {
+  const byTime = new Map<string, string[]>();
+  for (const court of courtWindowsForScheduleDay(day, fallback)) {
+    let time = court.startTime;
+    let guard = 0;
+    while (
+      guard < 500 &&
+      slotFitsDailyWindow(
+        time,
+        durationMinutes,
+        court.startTime,
+        court.endTime
+      )
+    ) {
+      guard += 1;
+      const list = byTime.get(time) ?? [];
+      list.push(court.name);
+      byTime.set(time, list);
+      const next = addMinutesToMexicoCalendar(day.date, time, durationMinutes);
+      if (!next || next.date !== day.date) break;
+      time = next.time;
+    }
+  }
+  return Array.from(byTime.keys())
+    .sort()
+    .map((time) => ({ time, courts: byTime.get(time) ?? [] }));
+}
+
+/** Guarda los horarios y deja la ventana del día como el extremo de todas. */
+export function dayWithCourtWindows(
+  day: TeScheduleDayWindow,
+  windows: TeScheduleCourtWindow[]
+): TeScheduleDayWindow {
+  const cleaned = windows
+    .map((window) => ({
+      name: window.name,
+      startTime: window.startTime.trim() || day.startTime,
+      endTime: window.endTime.trim() || day.endTime,
+    }))
+    .slice(0, MAX_DAY_COURTS);
+  const starts = cleaned.map((window) => window.startTime).sort();
+  const ends = cleaned.map((window) => window.endTime).sort();
+  return {
+    ...day,
+    startTime: starts[0] || day.startTime,
+    endTime: ends[ends.length - 1] || day.endTime,
+    courts: cleaned.map((window) => window.name),
+    courtHours: cleaned,
+  };
+}
+
+export function resizeDayCourtWindows(
+  day: TeScheduleDayWindow,
+  count: number
+): TeScheduleDayWindow {
+  const nextCount = Math.max(
+    1,
+    Math.min(MAX_DAY_COURTS, Number.isFinite(count) ? Math.floor(count) : 1)
+  );
+  const current = courtWindowsForScheduleDay(day);
+  const windows = current.slice(0, nextCount);
+  const used = new Set(windows.map((window) => window.name.trim().toLowerCase()));
+  const seed = windows[windows.length - 1] ?? {
+    name: "",
+    startTime: day.startTime,
+    endTime: day.endTime,
+  };
+  let nextNumber = 1;
+  while (windows.length < nextCount) {
+    let candidate = `Cancha ${nextNumber}`;
+    while (used.has(candidate.toLowerCase())) {
+      nextNumber += 1;
+      candidate = `Cancha ${nextNumber}`;
+    }
+    windows.push({
+      name: candidate,
+      startTime: seed.startTime,
+      endTime: seed.endTime,
+    });
+    used.add(candidate.toLowerCase());
+    nextNumber += 1;
+  }
+  return dayWithCourtWindows(day, windows);
 }
 
 /** Rellena canchas solo en días que todavía no traen su propia lista. */
@@ -161,7 +305,16 @@ export function normalizePlayDays(
         : DEFAULT_DAY_END_TIME;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
     const courts = readDayCourts(row.courts);
-    cleaned.push(courts ? { date, startTime, endTime, courts } : { date, startTime, endTime });
+    const courtHours = readCourtHours(
+      (row as { courtHours?: unknown }).courtHours
+    );
+    cleaned.push({
+      date,
+      startTime,
+      endTime,
+      ...(courts ? { courts } : {}),
+      ...(courtHours ? { courtHours } : {}),
+    });
   }
 
   if (cleaned.length === 0) {
@@ -220,6 +373,26 @@ export function validatePlayDays(
     if (Array.isArray(day.courts)) {
       const courtError = dayCourtNamesError(day.courts, i + 1);
       if (courtError) return courtError;
+    }
+    for (const court of courtWindowsForScheduleDay(day)) {
+      const courtStart = mexicoTimeToMinutes(court.startTime);
+      const courtEnd = mexicoTimeToMinutes(court.endTime);
+      if (courtStart == null || courtEnd == null) {
+        return `En ${day.date}, la cancha ${court.name} tiene horas inválidas.`;
+      }
+      if (courtEnd <= courtStart) {
+        return `En ${day.date}, la cancha ${court.name} debe cerrar después de abrir.`;
+      }
+      if (
+        !slotFitsDailyWindow(
+          court.startTime,
+          durationMinutes,
+          court.startTime,
+          court.endTime
+        )
+      ) {
+        return `En ${day.date}, la cancha ${court.name} no tiene espacio para un partido entre ${court.startTime} y ${court.endTime}.`;
+      }
     }
   }
 

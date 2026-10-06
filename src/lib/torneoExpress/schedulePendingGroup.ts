@@ -1,13 +1,11 @@
 import { canchaSlotKey } from "./partidoCourtSlotConflict";
 import { slotOfPair, type RosterSlot } from "./groupRoster";
 import {
-  addMinutesToMexicoCalendar,
   mexicoScheduleSlotKey,
   programadoIsoFromMexicoCalendar,
-  slotFitsDailyWindow,
 } from "./teScheduleTime";
 import {
-  courtsForScheduleDay,
+  courtSlotTimesForDay,
   type TeScheduleDayWindow,
 } from "./scheduleDayWindows";
 
@@ -109,28 +107,22 @@ export function buildCourtTimeOpenings(input: {
   const days = [...input.days].sort((a, b) => a.date.localeCompare(b.date));
 
   for (const day of days) {
-    const courts = [...courtsForScheduleDay(day, input.courts)].sort((a, b) => {
-      const byKey = canchaSlotKey(a).localeCompare(canchaSlotKey(b));
-      return byKey === 0 ? a.localeCompare(b) : byKey;
-    });
-    let time = day.startTime;
-    let guard = 0;
-    while (
-      guard < 500 &&
-      slotFitsDailyWindow(time, input.durationMinutes, day.startTime, day.endTime)
-    ) {
-      guard += 1;
-      const iso = programadoIsoFromMexicoCalendar(day.date, time);
-      if (!iso) break;
+    for (const slot of courtSlotTimesForDay(
+      day,
+      input.durationMinutes,
+      input.courts
+    )) {
+      const iso = programadoIsoFromMexicoCalendar(day.date, slot.time);
+      if (!iso) continue;
       const key = timeKeyOf(iso);
-      if (key && (nowKey == null || key >= nowKey)) {
-        for (const cancha of courts) {
-          openings.push({ programadoEn: iso, cancha });
-        }
+      if (!key || (nowKey != null && key < nowKey)) continue;
+      const courts = [...slot.courts].sort((a, b) => {
+        const byKey = canchaSlotKey(a).localeCompare(canchaSlotKey(b));
+        return byKey === 0 ? a.localeCompare(b) : byKey;
+      });
+      for (const cancha of courts) {
+        openings.push({ programadoEn: iso, cancha });
       }
-      const next = addMinutesToMexicoCalendar(day.date, time, input.durationMinutes);
-      if (!next || next.date !== day.date) break;
-      time = next.time;
     }
   }
   return openings;
