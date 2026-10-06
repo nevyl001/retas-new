@@ -303,6 +303,40 @@ function PartidoStatusBadge({ estado }: { estado: TEPartidoEstadoPublico }) {
   return <span className="te-badge-proximo">Próximo</span>;
 }
 
+function setTone(score: number, other: number): "won" | "lost" | "tie" {
+  if (score > other) return "won";
+  if (score < other) return "lost";
+  return "tie";
+}
+
+function setsAriaLabel(scores: number[]): string {
+  return scores.map((score, index) => `Set ${index + 1}: ${score}`).join(", ");
+}
+
+function SetMarks({
+  scores,
+  opponent,
+  showIndex,
+}: {
+  scores: number[];
+  opponent: number[];
+  showIndex: boolean;
+}) {
+  return (
+    <span className="te-set-marks" aria-hidden="true">
+      {scores.map((score, index) => (
+        <span
+          key={index}
+          className={`te-set-cell te-set-cell--${setTone(score, opponent[index] ?? score)}`}
+        >
+          {showIndex ? <span className="te-set-cell__n">{index + 1}</span> : null}
+          <span className="te-set-cell__g">{score}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function PartidoRow({
   partido,
   photos,
@@ -385,12 +419,23 @@ function PartidoRow({
                 player2={local.player2}
               />
             </span>
-            <span className="te-team-score-mobile" aria-label="Marcador local">
-              {played
-                ? localScores.map((score, index) => (
-                    <span key={index}>{score}</span>
-                  ))
-                : "—"}
+            <span
+              className="te-team-score-mobile"
+              aria-label={
+                played && localScores.length > 0
+                  ? setsAriaLabel(localScores)
+                  : "Sin marcador"
+              }
+            >
+              {played && localScores.length > 0 ? (
+                <SetMarks
+                  scores={localScores}
+                  opponent={visitanteScores}
+                  showIndex
+                />
+              ) : (
+                "—"
+              )}
             </span>
           </div>
           <div
@@ -431,12 +476,23 @@ function PartidoRow({
                 player2={visitante.player2}
               />
             </span>
-            <span className="te-team-score-mobile" aria-label="Marcador visitante">
-              {played
-                ? visitanteScores.map((score, index) => (
-                    <span key={index}>{score}</span>
-                  ))
-                : "—"}
+            <span
+              className="te-team-score-mobile"
+              aria-label={
+                played && visitanteScores.length > 0
+                  ? setsAriaLabel(visitanteScores)
+                  : "Sin marcador"
+              }
+            >
+              {played && visitanteScores.length > 0 ? (
+                <SetMarks
+                  scores={visitanteScores}
+                  opponent={localScores}
+                  showIndex={false}
+                />
+              ) : (
+                "—"
+              )}
             </span>
           </div>
         </div>

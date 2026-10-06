@@ -4525,3 +4525,100 @@
     transition: none;
   }
 }
+
+/* Marcador bajo las fotos, centrado con la pareja. */
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-teams {
+  justify-items: center;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-team-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  width: min(100%, 20rem);
+  max-width: 100%;
+  margin-inline: auto;
+  min-height: 0;
+  padding: 0.7rem 0.85rem 0.75rem;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-team-name--pair {
+  flex: 0 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-team-score-mobile,
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-team-row--winner .te-team-score-mobile,
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-team-row--loser .te-team-score-mobile,
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-team-row--tie .te-team-score-mobile {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 1.0625rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-marks {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 2.45rem;
+  gap: 0.45rem;
+  align-items: end;
+  justify-content: center;
+  margin-inline: auto;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.28rem;
+  width: 2.45rem;
+  min-width: 2.45rem;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-cell__n {
+  color: var(--text-muted);
+  font-size: 0.5625rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-cell__g {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 1.85rem;
+  padding: 0.15rem 0.1rem;
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--text-primary, #fff) 6%, transparent);
+  color: color-mix(in srgb, var(--text-primary, #fff) 68%, transparent);
+  font-family: var(--ro-font-heading, var(--font-heading));
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-cell--won .te-set-cell__g {
+  background: color-mix(in srgb, var(--text-primary, #fff) 14%, transparent);
+  color: var(--text-primary, #fff);
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-cell--tie .te-set-cell__g {
+  background: color-mix(in srgb, var(--text-primary, #fff) 10%, transparent);
+  color: var(--text-primary, #fff);
+}
