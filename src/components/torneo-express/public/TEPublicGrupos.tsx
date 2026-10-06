@@ -549,7 +549,6 @@ function GrupoStandings({
   photos: Readonly<Record<string, string | null>>;
 }) {
   const grupoIniciado = rows.some((r) => r.pj > 0);
-  const qualifyLabel = `${clasifican} clasifica${clasifican === 1 ? "" : "n"}`;
   const headerSource = rows[0];
   const headerInput = headerSource
     ? {
@@ -574,7 +573,6 @@ function GrupoStandings({
     >
       <header className="te-grupo-standings__header">
         <h3>Clasificación</h3>
-        <span className="te-standings-board__qualify">{qualifyLabel}</span>
       </header>
       {rows.length === 0 || !headerHighlight ? (
         <p className="te-grupos-empty">Sin datos de clasificación.</p>
@@ -633,20 +631,21 @@ function GrupoStandings({
                       )}
                     />
                   </div>
-                  {meta.map((stat) => (
-                    <span
-                      key={stat.label}
-                      className="te-standings-board__stat"
-                      aria-label={`${stat.label} ${stat.value}`}
-                    >
-                      {stat.value}
-                    </span>
-                  ))}
-                  <strong
-                    className="te-standing-row__points"
-                    aria-label={`${highlight.label} ${highlight.value}`}
-                  >
-                    {highlight.value}
+                  <div className="te-standing-row__meta">
+                    {meta.map((stat) => (
+                      <span key={stat.label} className="te-standing-row__stat">
+                        <span className="te-standing-row__stat-label">
+                          {stat.label}
+                        </span>
+                        <span className="te-standing-row__stat-value">
+                          {stat.value}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                  <strong className="te-standing-row__points">
+                    <b>{highlight.value}</b>
+                    <small>{highlight.label}</small>
                   </strong>
                 </li>
               );
