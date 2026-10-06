@@ -3989,133 +3989,8 @@
   text-transform: uppercase;
 }
 
-@container te-standings (min-width: 30rem) {
-  .te-public.te-public--grupos-wide .te-grupos-page .te-standings-board__head {
-    display: grid;
-    grid-template-columns: 1.5rem minmax(0, 1fr) repeat(3, 2.7rem) 3.15rem;
-    column-gap: 0.7rem;
-    align-items: end;
-    margin: 0;
-    padding: 0.15rem 0 0.4rem;
-    color: var(--text-muted);
-    font-size: 0.625rem;
-    font-weight: 650;
-    letter-spacing: 0.06em;
-    line-height: 1.2;
-    text-transform: uppercase;
-  }
-
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board__head
-    > span:nth-child(n + 3) {
-    text-align: center;
-  }
-
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board__head
-    > span:last-child {
-    text-align: end;
-  }
-
-  .te-public.te-public--grupos-wide .te-grupos-page .te-standings-board .te-standing-row {
-    grid-template-columns: 1.5rem minmax(0, 1fr) repeat(3, 2.7rem) 3.15rem;
-    grid-template-rows: auto;
-    column-gap: 0.7rem;
-    row-gap: 0;
-    align-items: center;
-    padding-block: 0.45rem;
-  }
-
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board
-    .te-standing-row__position,
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board
-    .te-standing-row__primary,
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board
-    .te-standing-row__points {
-    grid-column: auto;
-    grid-row: auto;
-    align-self: center;
-    margin-top: 0;
-  }
-
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board
-    .te-standing-row__meta {
-    display: contents;
-    margin: 0;
-    padding: 0;
-  }
-
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board
-    .te-standing-row__stat {
-    position: relative;
-    justify-content: center;
-    min-width: 0;
-  }
-
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board
-    .te-standing-row__stat-label,
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board
-    .te-standing-row__points small {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board
-    .te-standing-row__stat:not(:last-child)::after {
-    content: none;
-    display: none;
-  }
-
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board
-    .te-standing-row__stat-value {
-    color: var(--text-secondary);
-    font-size: 0.8125rem;
-    text-align: center;
-  }
-
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board
-    .te-standing-row__points {
-    justify-self: end;
-    min-width: 0;
-    font-size: 0.9375rem;
-  }
-
-  .te-public.te-public--grupos-wide
-    .te-grupos-page
-    .te-standings-board
-    .te-standing-row__points b {
-    font-size: 0.9375rem;
-  }
-}
+/* La clasificación usa el mismo renglón compacto en cualquier ancho.
+   El modo de puntos (PTS o FAV) lo decide el dato, no el viewport. */
 
 @media (prefers-reduced-motion: reduce) {
   .te-grupos-page .te-public.te-public--grupos-wide .te-match-card {
@@ -4192,31 +4067,46 @@
   word-break: break-word;
 }
 
-.te-public .te-public-pair--match {
-  --te-public-pair-size: 38px;
-  gap: 0.65rem;
+.te-public.te-public--grupos-wide .te-match-card .te-public-pair--match {
+  --te-public-pair-size: 40px;
+  gap: 0.7rem;
 }
 
-.te-public .te-public-pair--match .te-public-pair__avatar.rj-avatar {
-  border: 1px solid color-mix(in srgb, var(--text-primary, #fff) 24%, transparent);
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--te-groups-bg, #0d0f11) 94%, black),
-    0 0 0 3px color-mix(in srgb, var(--brand-accent, var(--te-groups-accent)) 22%, transparent);
+.te-public.te-public--grupos-wide
+  .te-match-card
+  .te-public-pair--match
+  .te-public-pair__avatar.rj-avatar {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border: 1px solid color-mix(in srgb, var(--text-primary, #fff) 34%, transparent);
+  box-shadow: 0 0 0 2px var(--te-groups-bg, var(--ro-chrome-bg, #0d0f11));
 }
 
-.te-public .te-public-pair--match .te-public-pair__avatar--overlap.rj-avatar {
-  margin-left: calc(var(--te-public-pair-size) * -0.14);
+.te-public.te-public--grupos-wide
+  .te-match-card
+  .te-public-pair--match
+  .te-public-pair__avatar--overlap.rj-avatar {
+  margin-left: -5px;
 }
 
-.te-public .te-public-pair--match .te-public-pair__avatar .rj-avatar__img {
-  object-position: center 18%;
+.te-public.te-public--grupos-wide
+  .te-match-card
+  .te-public-pair--match
+  .te-public-pair__avatar
+  .rj-avatar__img {
+  object-position: center 16%;
 }
 
-.te-public .te-public-pair--match .te-public-pair__name {
-  color: inherit;
-  font-size: 0.9375rem;
+.te-public.te-public--grupos-wide
+  .te-match-card
+  .te-public-pair--match
+  .te-public-pair__name {
+  color: var(--text-primary);
+  font-size: 1rem;
   font-weight: 600;
-  line-height: 1.18;
+  line-height: 1.2;
 }
 
 .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-team-row {
