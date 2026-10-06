@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabaseClient";
-import { applyGroupSchedule, changePairPlayer, resetGroup, TorneoExpressGrupoOpError } from "./torneoExpressGrupoOps";
+import { applyGroupSchedule, changePairPlayer, resetGroup, resolveVirtualPair, TorneoExpressGrupoOpError } from "./torneoExpressGrupoOps";
 
 jest.mock("../lib/supabaseClient", () => ({
   supabase: {
@@ -87,6 +87,29 @@ describe("torneoExpressGrupoOps", () => {
     expect(rpc).toHaveBeenCalledWith("reset_torneo_express_grupo", {
       p_grupo_id: "g",
       p_expected_version: 4,
+    });
+  });
+
+  it("resuelve una plaza virtual con los dos jugadores elegidos", async () => {
+    rpc.mockResolvedValue({
+      data: { ok: true, pareja_id: "pair-v", played_count: 0 },
+      error: null,
+    });
+    await expect(
+      resolveVirtualPair({
+        torneoId: "t",
+        parejaId: "pair-v",
+        player1Id: "p1",
+        player2Id: "p2",
+        acceptExistingHistory: false,
+      })
+    ).resolves.toEqual({ parejaId: "pair-v", playedCount: 0 });
+    expect(rpc).toHaveBeenCalledWith("resolve_torneo_express_virtual_pair", {
+      p_torneo_id: "t",
+      p_pareja_id: "pair-v",
+      p_player1_id: "p1",
+      p_player2_id: "p2",
+      p_accept_existing_history: false,
     });
   });
 });

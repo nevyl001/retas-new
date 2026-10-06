@@ -79,10 +79,46 @@ interface PartidosGrupoProps {
       cancha?: string | null;
     }>
   ) => Promise<void>;
+  /** Sustituye una plaza “Pareja por definir” por dos jugadores del registro. */
+  onDefineVirtualPair?: (parejaId: string, label: string) => void;
   /** Partidos del torneo usados para validar cancha+horario (todos los grupos). */
   partidosCourtCheckScope?: TorneoExpressPartido[];
   /** Formato de marcador heredado del evento. */
   partidoFormato?: TorneoExpressPartidoFormato;
+}
+
+function PairName({
+  label,
+  sideClass,
+  stateClass = "",
+  virtual,
+  onDefine,
+}: {
+  label: string;
+  sideClass: string;
+  stateClass?: string;
+  virtual: boolean;
+  onDefine?: () => void;
+}) {
+  return (
+    <span
+      className={`te-partido-team ${sideClass}${stateClass}${
+        virtual ? " te-partido-team--virtual" : ""
+      }`}
+    >
+      {label}
+      {virtual && onDefine ? (
+        <button
+          type="button"
+          className="te-partido-define-pair"
+          onClick={onDefine}
+          aria-label={`Sustituir ${label}`}
+        >
+          Sustituir pareja
+        </button>
+      ) : null}
+    </span>
+  );
 }
 
 function PartidoStatusBadge({
@@ -479,6 +515,7 @@ function PartidoRow({
   courtConflict = false,
   pairSlotConflict = false,
   partidoFormato = "flexible",
+  onDefineVirtualPair,
 }: {
   partido: TorneoExpressPartido;
   parejas: TorneoExpressGrupoPareja[];
@@ -502,6 +539,7 @@ function PartidoRow({
   onSaveCancha?: PartidosGrupoProps["onSaveCancha"];
   onSaveProgramado?: PartidosGrupoProps["onSaveProgramado"];
   partidoFormato?: PartidosGrupoProps["partidoFormato"];
+  onDefineVirtualPair?: PartidosGrupoProps["onDefineVirtualPair"];
 }) {
   const scheduleConflict = courtConflict || pairSlotConflict;
   const played = partido.estado === "jugado";
@@ -534,6 +572,20 @@ function PartidoRow({
   const metaBusy = savingCancha || savingProgramado;
   const canEditResult = editable && !!onSave;
   const matchLabel = `Partido ${String(matchNumber).padStart(2, "0")}`;
+  const localPareja = parejas.find(
+    (pareja) => pareja.pareja_id === partido.pareja_local_id
+  );
+  const visitPareja = parejas.find(
+    (pareja) => pareja.pareja_id === partido.pareja_visitante_id
+  );
+  const defineLocal =
+    localPareja?.is_virtual && onDefineVirtualPair
+      ? () => onDefineVirtualPair(localPareja.pareja_id, localLabel)
+      : undefined;
+  const defineVisit =
+    visitPareja?.is_virtual && onDefineVirtualPair
+      ? () => onDefineVirtualPair(visitPareja.pareja_id, visitLabel)
+      : undefined;
 
   const openResultado = () => {
     const captured = captureExpectedPairs(partido, parejas);
@@ -629,28 +681,32 @@ function PartidoRow({
             }`}
           >
             <div className="te-partido-scoreboard__sides">
-              <span
-                className={`te-partido-team te-partido-team--local${
+              <PairName
+                label={localLabel}
+                sideClass="te-partido-team--local"
+                stateClass={
                   pair1Won
                     ? " te-partido-team--winner"
                     : pair2Won
                       ? " te-partido-team--loser"
                       : ""
-                }`}
-              >
-                {localLabel}
-              </span>
-              <span
-                className={`te-partido-team te-partido-team--visit${
+                }
+                virtual={localPareja?.is_virtual === true}
+                onDefine={defineLocal}
+              />
+              <PairName
+                label={visitLabel}
+                sideClass="te-partido-team--visit"
+                stateClass={
                   pair2Won
                     ? " te-partido-team--winner"
                     : pair1Won
                       ? " te-partido-team--loser"
                       : ""
-                }`}
-              >
-                {visitLabel}
-              </span>
+                }
+                virtual={visitPareja?.is_virtual === true}
+                onDefine={defineVisit}
+              />
             </div>
             {sets.length > 0 ? (
               <div className="te-partido-setboard" aria-label={setsAria}>
@@ -694,17 +750,23 @@ function PartidoRow({
         ) : (
           <div className="te-partido-scoreboard">
             <div className="te-partido-scoreboard__row">
-              <span className="te-partido-team te-partido-team--local">
-                {localLabel}
-              </span>
+              <PairName
+                label={localLabel}
+                sideClass="te-partido-team--local"
+                virtual={localPareja?.is_virtual === true}
+                onDefine={defineLocal}
+              />
             </div>
             <span className="te-partido-vs" aria-hidden>
               vs
             </span>
             <div className="te-partido-scoreboard__row">
-              <span className="te-partido-team te-partido-team--visit">
-                {visitLabel}
-              </span>
+              <PairName
+                label={visitLabel}
+                sideClass="te-partido-team--visit"
+                virtual={visitPareja?.is_virtual === true}
+                onDefine={defineVisit}
+              />
             </div>
           </div>
         )}
@@ -802,6 +864,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
   onSaveCancha,
   onSaveProgramado,
   onSaveOrden,
+  onDefineVirtualPair,
   partidosCourtCheckScope,
   partidoFormato = "flexible",
 }) => {
@@ -1049,6 +1112,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
             courtCheckScope={mergedCourtCheckScope}
             courtConflict={conflictingPartidoIds.has(partido.id)}
             pairSlotConflict={pairConflictPartidoIds.has(partido.id)}
+            onDefineVirtualPair={onDefineVirtualPair}
             dragHandle={
               showReorder ? (
                 <button

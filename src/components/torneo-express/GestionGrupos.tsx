@@ -37,6 +37,7 @@ import { TorneoExpressResetEliminatoriaModal } from "./TorneoExpressResetElimina
 import { TeProgramacionMenu } from "./TeProgramacionMenu";
 import { TeReiniciarFaseGruposAction } from "./TeReiniciarFaseGruposAction";
 import { TeProgramarGrupoModal } from "./TeProgramarGrupoModal";
+import { DefinirParejaVirtualModal } from "./DefinirParejaVirtualModal";
 import { puedeReiniciarFaseDeGrupos } from "../../lib/torneoExpress/resetFaseGrupos";
 import { TeReprogramarProgramacionModal } from "./TeReprogramarProgramacionModal";
 import type { ScheduleMode } from "../../lib/torneoExpress/schedulePendingGroup";
@@ -121,6 +122,10 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const [resetElimOpen, setResetElimOpen] = useState(false);
   const [reprogramOpen, setReprogramOpen] = useState(false);
   const [programarMode, setProgramarMode] = useState<ScheduleMode | null>(null);
+  const [virtualSlot, setVirtualSlot] = useState<{
+    parejaId: string;
+    label: string;
+  } | null>(null);
   const [vista, setVista] = useState<"grupos" | "eliminatoria">("grupos");
   const [mobileTab, setMobileTab] = useState<TeMobileTabId>("resumen");
   const isMobile = useMobileViewport(767);
@@ -131,8 +136,22 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   } | null>(null);
 
   const faseTorneo = bundle?.torneo.fase_torneo ?? "grupos";
+  const canDefineVirtualPair =
+    faseTorneo === "grupos" && bundle?.torneo.estado !== "finalizado";
   const enEliminatoria =
     faseTorneo === "eliminatoria" || faseTorneo === "cerrado";
+
+  const occupiedPlayerIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!bundle) return ids;
+    for (const rows of Object.values(bundle.parejasPorGrupo)) {
+      for (const row of rows) {
+        if (row.player1_id) ids.add(row.player1_id);
+        if (row.player2_id) ids.add(row.player2_id);
+      }
+    }
+    return ids;
+  }, [bundle]);
 
   const grupoId = activeGrupoId ?? bundle?.grupos[0]?.id ?? null;
   const grupo = bundle?.grupos.find((g) => g.id === grupoId);
@@ -542,6 +561,11 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           onSaveOrden={
             faseTorneo === "grupos" && partidosOrdenDisponible
               ? saveOrden
+              : undefined
+          }
+          onDefineVirtualPair={
+            canDefineVirtualPair
+              ? (parejaId, label) => setVirtualSlot({ parejaId, label })
               : undefined
           }
         />
@@ -1347,6 +1371,11 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                       ? saveOrden
                       : undefined
                   }
+                  onDefineVirtualPair={
+                    canDefineVirtualPair
+                      ? (parejaId, label) => setVirtualSlot({ parejaId, label })
+                      : undefined
+                  }
                 />
               </section>
 
@@ -1416,6 +1445,23 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           );
         }}
       />
+
+      {virtualSlot && user?.id ? (
+        <DefinirParejaVirtualModal
+          open
+          torneoId={torneoId}
+          parejaId={virtualSlot.parejaId}
+          label={virtualSlot.label}
+          userId={user.id}
+          occupiedPlayerIds={occupiedPlayerIds}
+          onClose={() => setVirtualSlot(null)}
+          onResolved={(display) => {
+            setVirtualSlot(null);
+            void reload();
+            showActionToast(`${display} ya ocupa esa plaza.`, "success");
+          }}
+        />
+      ) : null}
 
       {grupo && programarMode ? (
         <TeProgramarGrupoModal

@@ -105,6 +105,45 @@ export async function changePairPlayer(input: {
   };
 }
 
+export async function resolveVirtualPair(input: {
+  torneoId: string;
+  parejaId: string;
+  player1Id: string;
+  player2Id: string;
+  acceptExistingHistory: boolean;
+}): Promise<{ parejaId: string; playedCount: number }> {
+  const row = await callRpc("resolve_torneo_express_virtual_pair", {
+    p_torneo_id: input.torneoId,
+    p_pareja_id: input.parejaId,
+    p_player1_id: input.player1Id,
+    p_player2_id: input.player2Id,
+    p_accept_existing_history: input.acceptExistingHistory,
+  });
+  return {
+    parejaId: String(row.pareja_id),
+    playedCount: Number(row.played_count ?? 0),
+  };
+}
+
+export function virtualPairResolveMessage(code: string): string {
+  switch (code) {
+    case "PLAYER_ALREADY_REGISTERED":
+      return "Uno de esos jugadores ya está en otra pareja de esta categoría.";
+    case "PLAYER_NOT_FOUND":
+      return "No encontré a uno de los jugadores en el registro.";
+    case "VIRTUAL_PAIR_ALREADY_RESOLVED":
+      return "Esa plaza ya tiene jugadores.";
+    case "TOURNAMENT_CLOSED":
+      return "Esta categoría ya no se puede editar.";
+    case "VIRTUAL_PAIR_HAS_HISTORY":
+      return "Esa plaza ya tiene resultados. Si la sustituyes, esos marcadores quedan con los jugadores nuevos.";
+    case "INVALID_MATCH_PAYLOAD":
+      return "Elige dos jugadores distintos.";
+    default:
+      return "No se pudo sustituir la pareja.";
+  }
+}
+
 export async function replacePair(input: {
   grupoId: string;
   parejaId: string;
