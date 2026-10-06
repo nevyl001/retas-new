@@ -41,9 +41,11 @@ import {
   findPartidoCourtSlotConflict,
   planCanchaChange,
   planProgramadoChange,
+  planScheduleSlotChange,
   PARTIDO_CANCHA_OCUPADA_MSG,
   type CanchaChangePlan,
   type ProgramadoChangePlan,
+  type ScheduleSlotChangePlan,
 } from "../lib/torneoExpress/partidoCourtSlotConflict";
 import { crucesPrimeraRonda } from "../lib/torneoExpress/bracket";
 import type { BracketFase, BracketSlotEntry } from "../lib/torneoExpress/bracketTypes";
@@ -1809,6 +1811,92 @@ export async function savePartidoProgramado(
   }
   if (!data) {
     throw new Error("Error en update programado: sin datos");
+  }
+  return data as TorneoExpressPartido;
+}
+
+export async function savePartidoProgramacion(
+  partidoId: string,
+  programadoEn: string,
+  cancha: string | null
+): Promise<TorneoExpressPartido> {
+  await requireAuthUser();
+
+  const canchaDisponible = await checkPartidosCanchaColumnAvailable();
+  if (!canchaDisponible) {
+    throw new PartidosCanchaColumnMissingError();
+  }
+  const horarioDisponible = await checkPartidosProgramadoColumnAvailable();
+  if (!horarioDisponible) {
+    throw new PartidosProgramadoColumnMissingError();
+  }
+
+  const torneoPartidos = await fetchTorneoPartidosForConflictCheck(partidoId);
+  const currentPartido = torneoPartidos.find((p) => p.id === partidoId);
+  if (!currentPartido) {
+    throw new Error("Partido no encontrado");
+  }
+
+  let plan: ScheduleSlotChangePlan;
+  try {
+    plan = planScheduleSlotChange(
+      currentPartido,
+      programadoEn,
+      cancha ?? "",
+      torneoPartidos
+    );
+  } catch (e) {
+    if (e instanceof Error && e.message === PARTIDO_CANCHA_OCUPADA_MSG) {
+      const hit = findPartidoCourtSlotConflict(
+        partidoId,
+        programadoEn,
+        cancha,
+        torneoPartidos
+      );
+      if (hit) throwCourtOccupied(hit);
+    }
+    throw e instanceof Error ? e : new Error(PARTIDO_CANCHA_OCUPADA_MSG);
+  }
+
+  if (plan.kind === "noop") {
+    return currentPartido;
+  }
+
+  if (plan.kind === "swap") {
+    const swap = plan;
+    const other = torneoPartidos.find((p) => p.id === swap.swapWithId);
+    const source = getCourtCheckMeta(other!)?.source ?? "grupo";
+    await updateCourtFieldBySource(swap.swapWithId, source, {
+      cancha: swap.swapCancha,
+      programado_en: swap.swapProgramadoEn,
+    });
+  }
+
+  const { data, error } = await supabase
+    .from("torneo_express_partidos")
+    .update({
+      cancha: plan.cancha,
+      programado_en: plan.programado_en,
+    })
+    .eq("id", partidoId)
+    .select()
+    .single();
+
+  if (error) {
+    if (isMissingColumnError(error, "torneo_express_partidos", "cancha")) {
+      partidosCanchaColumnKnown = false;
+      throw new PartidosCanchaColumnMissingError();
+    }
+    if (
+      isMissingColumnError(error, "torneo_express_partidos", "programado_en")
+    ) {
+      partidosProgramadoColumnKnown = false;
+      throw new PartidosProgramadoColumnMissingError();
+    }
+    throwIfError(error, "update programacion torneo_express_partidos");
+  }
+  if (!data) {
+    throw new Error("Error en update programacion: sin datos");
   }
   return data as TorneoExpressPartido;
 }

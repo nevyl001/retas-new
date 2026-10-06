@@ -3,6 +3,7 @@ import {
   findConflictingPartidoIds,
   planCanchaChange,
   planProgramadoChange,
+  planScheduleSlotChange,
   PARTIDO_CANCHA_OCUPADA_MSG,
   assertPartidoCourtSlotAvailable,
 } from "./partidoCourtSlotConflict";
@@ -191,6 +192,39 @@ describe("partidoCourtSlotConflict", () => {
     ).toEqual({
       kind: "update",
       programado_en: "2026-08-24T14:00:00.000Z",
+    });
+  });
+
+  it("día, hora y cancha juntos no chocan con los pasos intermedios", () => {
+    const moving = partido("moving", {
+      cancha: "1",
+      programado_en: "2026-10-07T23:00:00.000Z",
+      pareja_local_id: "a",
+      pareja_visitante_id: "b",
+    });
+    const sameCourtLater = partido("later", {
+      cancha: "1",
+      programado_en: "2026-10-08T00:00:00.000Z",
+      pareja_local_id: "c",
+      pareja_visitante_id: "d",
+    });
+    const otherCourtSameTime = partido("other-court", {
+      cancha: "2",
+      programado_en: "2026-10-07T23:00:00.000Z",
+      pareja_local_id: "e",
+      pareja_visitante_id: "f",
+    });
+    expect(
+      planScheduleSlotChange(
+        moving,
+        "2026-10-08T00:00:00.000Z",
+        "2",
+        [moving, sameCourtLater, otherCourtSameTime]
+      )
+    ).toEqual({
+      kind: "update",
+      programado_en: "2026-10-08T00:00:00.000Z",
+      cancha: "2",
     });
   });
 });

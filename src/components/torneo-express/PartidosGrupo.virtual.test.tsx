@@ -58,4 +58,26 @@ describe("PartidosGrupo plaza virtual", () => {
     );
     expect(onDefine).toHaveBeenCalledWith("virtual", "Pareja por definir");
   });
+
+  it("abre día, hora y cancha en un solo guardado", () => {
+    render(
+      <PartidosGrupo
+        partidos={[partido]}
+        parejas={[
+          pareja("real", "Joel He / Eder Mendoza", false),
+          pareja("virtual", "Kevin perez / Brandon perez", false),
+        ]}
+        canchaEditable
+        horarioEditable
+        onSaveProgramacion={jest.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Editar día/ }));
+    expect(screen.getByText("Día, hora y cancha")).toBeTruthy();
+    expect(screen.getByText("Día")).toBeTruthy();
+    expect(screen.getByText("Hora")).toBeTruthy();
+    expect(screen.getByText("Cancha")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Guardar" })).toHaveLength(1);
+  });
 });

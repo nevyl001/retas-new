@@ -89,8 +89,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     partidosOrdenDisponible,
     partidosCanchaDisponible,
     partidosProgramadoDisponible,
-    saveCancha,
-    saveProgramado,
+    saveProgramacion,
     savingCanchaId,
     savingProgramadoId,
     eliminatoriaLabelMap,
@@ -548,14 +547,11 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           savingProgramadoId={savingProgramadoId}
           savingOrden={savingOrden}
           onSaveResultado={faseTorneo === "grupos" ? saveResultado : undefined}
-          onSaveCancha={
-            faseTorneo === "grupos" && partidosCanchaDisponible
-              ? saveCancha
-              : undefined
-          }
-          onSaveProgramado={
-            faseTorneo === "grupos" && partidosProgramadoDisponible
-              ? saveProgramado
+          onSaveProgramacion={
+            faseTorneo === "grupos" &&
+            partidosCanchaDisponible &&
+            partidosProgramadoDisponible
+              ? saveProgramacion
               : undefined
           }
           onSaveOrden={
@@ -1356,14 +1352,11 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                   onSaveResultado={
                     faseTorneo === "grupos" ? saveResultado : undefined
                   }
-                  onSaveCancha={
-                    faseTorneo === "grupos" && partidosCanchaDisponible
-                      ? saveCancha
-                      : undefined
-                  }
-                  onSaveProgramado={
-                    faseTorneo === "grupos" && partidosProgramadoDisponible
-                      ? saveProgramado
+                  onSaveProgramacion={
+                    faseTorneo === "grupos" &&
+                    partidosCanchaDisponible &&
+                    partidosProgramadoDisponible
+                      ? saveProgramacion
                       : undefined
                   }
                   onSaveOrden={

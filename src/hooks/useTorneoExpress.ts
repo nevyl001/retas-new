@@ -22,6 +22,7 @@ import {
   saveEliminatoriaResultado as persistEliminatoriaResultado,
   saveGrupoNombre as persistGrupoNombre,
   savePartidoCancha,
+  savePartidoProgramacion,
   savePartidoProgramado,
   savePartidoResultado,
   savePartidosOrden,
@@ -247,6 +248,33 @@ export function useTorneoExpress(
         throw e;
       } finally {
         setSavingCanchaId(null);
+      }
+    },
+    [reload]
+  );
+
+  const saveProgramacion = useCallback(
+    async (partidoId: string, programadoEn: string, cancha: string | null) => {
+      setSavingCanchaId(partidoId);
+      setSavingProgramadoId(partidoId);
+      setError(null);
+      try {
+        await savePartidoProgramacion(partidoId, programadoEn, cancha);
+        await reload();
+      } catch (e) {
+        if (e instanceof PartidosCanchaColumnMissingError) {
+          setPartidosCanchaDisponible(false);
+        }
+        if (e instanceof PartidosProgramadoColumnMissingError) {
+          setPartidosProgramadoDisponible(false);
+        }
+        setError(
+          e instanceof Error ? e.message : "No se pudo guardar día, hora y cancha"
+        );
+        throw e;
+      } finally {
+        setSavingCanchaId(null);
+        setSavingProgramadoId(null);
       }
     },
     [reload]
@@ -532,6 +560,7 @@ export function useTorneoExpress(
     standingsGeneral,
     saveResultado,
     saveCancha,
+    saveProgramacion,
     saveProgramado,
     saveOrden,
     rescheduleGruposProgramacion,

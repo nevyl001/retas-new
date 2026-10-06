@@ -234,6 +234,90 @@ export function planProgramadoChange(
   throw new Error(PARTIDO_CANCHA_OCUPADA_MSG);
 }
 
+export type ScheduleSlotChangePlan =
+  | { kind: "noop"; programado_en: string; cancha: string }
+  | { kind: "update"; programado_en: string; cancha: string }
+  | {
+      kind: "swap";
+      programado_en: string;
+      cancha: string;
+      swapWithId: string;
+      swapProgramadoEn: string;
+      swapCancha: string;
+    };
+
+/**
+ * Día, hora y cancha se evalúan juntos. Mover a las 6 en la cancha 2
+ * no choca con las 5 en la cancha 2 ni con las 6 en la cancha 1.
+ */
+export function planScheduleSlotChange(
+  partido: TorneoExpressPartido,
+  nextProgramadoEn: string,
+  nextCanchaRaw: string,
+  partidos: TorneoExpressPartido[]
+): ScheduleSlotChangePlan {
+  const nextCancha = normalizeCanchaForSave(nextCanchaRaw);
+  const prevCancha = normalizeCanchaForSave(
+    canchaDraftFromStored(partido.cancha)
+  );
+  const prevIso = partidoScheduleIso(partido);
+  const sameTime = sameMexicoSlot(prevIso, nextProgramadoEn);
+  const sameCourt = canchaSlotKey(nextCancha) === canchaSlotKey(prevCancha);
+
+  if (sameTime && sameCourt) {
+    return { kind: "noop", programado_en: nextProgramadoEn, cancha: nextCancha };
+  }
+
+  const conflicts = findAllPartidoCourtSlotConflicts(
+    partido.id,
+    nextProgramadoEn,
+    nextCancha,
+    partidos
+  );
+
+  if (conflicts.length === 0) {
+    const trial = partidos.map((p) =>
+      p.id === partido.id
+        ? { ...p, programado_en: nextProgramadoEn, cancha: nextCancha }
+        : p
+    );
+    if (hasPairSameSlotConflict(trial)) {
+      throw new Error(
+        "Esa pareja ya juega a esa hora. Elige otro horario o intercambia desde el otro partido."
+      );
+    }
+    return { kind: "update", programado_en: nextProgramadoEn, cancha: nextCancha };
+  }
+
+  if (conflicts.length === 1) {
+    const other = conflicts[0]!;
+    const trial = partidos.map((p) => {
+      if (p.id === partido.id) {
+        return { ...p, programado_en: nextProgramadoEn, cancha: nextCancha };
+      }
+      if (p.id === other.id) {
+        return { ...p, programado_en: prevIso, cancha: prevCancha };
+      }
+      return p;
+    });
+    if (hasPairSameSlotConflict(trial)) {
+      throw new Error(
+        "No se pueden intercambiar: una pareja quedaría jugando dos veces a la misma hora."
+      );
+    }
+    return {
+      kind: "swap",
+      programado_en: nextProgramadoEn,
+      cancha: nextCancha,
+      swapWithId: other.id,
+      swapProgramadoEn: prevIso,
+      swapCancha: prevCancha,
+    };
+  }
+
+  throw new Error(PARTIDO_CANCHA_OCUPADA_MSG);
+}
+
 export function formatProgramadoSwapPrompt(
   occupiedProgramadoEn: string,
   freedProgramadoEn: string
