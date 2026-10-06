@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Player } from "../../lib/database";
 import { getPlayers } from "../../lib/database";
 import { dedupePlayersForSelect } from "../../lib/rivieraJugadores/playerNameKey";
@@ -154,23 +155,30 @@ export const DefinirParejaVirtualModal: React.FC<
     }
   };
 
-  return (
+  const markFor = (id: string) => {
+    if (id === firstId) return "1";
+    if (id === secondId) return "2";
+    return "";
+  };
+
+  return createPortal(
     <div
-      className="te-inscripcion-modal-backdrop"
+      className="te-define-pair-backdrop"
       role="presentation"
       onClick={onClose}
     >
       <div
-        className="te-inscripcion-modal te-inscripcion-modal--define-pair"
+        className="te-define-pair-dialog"
         role="dialog"
+        aria-modal="true"
         aria-labelledby="te-define-pair-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="te-inscripcion-modal__head">
+        <header className="te-define-pair-dialog__head">
           <h2 id="te-define-pair-title">Sustituir {label}</h2>
           <button
             type="button"
-            className="te-inscripcion-modal__close"
+            className="te-define-pair-dialog__close"
             onClick={onClose}
             aria-label="Cerrar"
           >
@@ -178,18 +186,24 @@ export const DefinirParejaVirtualModal: React.FC<
           </button>
         </header>
 
-        <div className="te-inscripcion-modal__body">
+        <div className="te-define-pair-dialog__body">
           <p className="te-define-pair__lead">
-            Elige dos jugadores del registro. El cambio queda en todos los
-            partidos de esta plaza.
+            Toca dos jugadores del registro. El primero es el jugador 1 y el
+            segundo el jugador 2.
           </p>
 
           <div className="te-define-pair__slots">
-            <span>{first ? first.name : "Jugador 1"}</span>
-            <span>{second ? second.name : "Jugador 2"}</span>
+            <span className={first ? "is-filled" : ""}>
+              <small>Jugador 1</small>
+              <strong>{first ? first.name : "Sin elegir"}</strong>
+            </span>
+            <span className={second ? "is-filled" : ""}>
+              <small>Jugador 2</small>
+              <strong>{second ? second.name : "Sin elegir"}</strong>
+            </span>
           </div>
 
-          <label className="te-inscripcion-modal__field">
+          <label className="te-define-pair__search">
             Buscar
             <input
               type="search"
@@ -211,7 +225,8 @@ export const DefinirParejaVirtualModal: React.FC<
               </p>
             ) : (
               filtered.map((player) => {
-                const selected = player.id === firstId || player.id === secondId;
+                const mark = markFor(player.id);
+                const selected = mark !== "";
                 return (
                   <button
                     key={player.id}
@@ -224,7 +239,10 @@ export const DefinirParejaVirtualModal: React.FC<
                     disabled={saving}
                     onClick={() => toggle(player.id)}
                   >
-                    {player.name}
+                    <span className="te-define-pair__mark" aria-hidden>
+                      {mark}
+                    </span>
+                    <span className="te-define-pair__name">{player.name}</span>
                   </button>
                 );
               })
@@ -232,7 +250,7 @@ export const DefinirParejaVirtualModal: React.FC<
           </div>
         </div>
 
-        <footer className="te-inscripcion-modal__foot te-define-pair__foot">
+        <footer className="te-define-pair-dialog__foot">
           <Button
             type="button"
             variant="ghost"
@@ -255,6 +273,7 @@ export const DefinirParejaVirtualModal: React.FC<
           </Button>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
