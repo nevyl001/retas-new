@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { formatMatchDateShort } from "../../../lib/matchDate";
 import { formatCanchaDisplay } from "../../../lib/torneoExpress/canchaDisplay";
 import {
   formatPartidoFecha,
@@ -51,6 +52,10 @@ export type TEPartidoEstadoPublico = "pendiente" | "en_vivo" | "finalizado";
 
 export interface TEPublicGruposPartido {
   id: string;
+  /** Día de la semana, p. ej. "Jueves". */
+  fechaDia: string;
+  /** Día y mes, p. ej. "8 oct". */
+  fechaNumero: string;
   hora: string;
   cancha: string;
   pareja1: string;
@@ -144,6 +149,10 @@ function mapPartidosForGrupo(
   return sorted.map((partido) => {
     const played = partido.estado === "jugado";
     const scheduleIso = partidoScheduleIso(partido);
+    const fechaLarga = formatPartidoFecha(scheduleIso);
+    const fechaDia = fechaLarga.includes(" ")
+      ? fechaLarga.slice(0, fechaLarga.lastIndexOf(" "))
+      : fechaLarga;
     const pareja1 =
       parejasById.get(partido.pareja_local_id)?.pareja_display ??
       parejasById.get(partido.pareja_local_id)?.pareja_id ??
@@ -155,6 +164,8 @@ function mapPartidosForGrupo(
 
     return {
       id: partido.id,
+      fechaDia,
+      fechaNumero: formatMatchDateShort(scheduleIso, { includeYear: false }),
       hora: formatPartidoHora(scheduleIso),
       cancha: formatCanchaDisplay(partido.cancha),
       pareja1,
@@ -294,6 +305,13 @@ function PartidoRow({
     >
       <header className="te-partido-item__top">
         <div className="te-partido-meta">
+          <span
+            className="te-partido-fecha"
+            aria-label={`${partido.fechaDia} ${partido.fechaNumero}`}
+          >
+            <span className="te-partido-fecha__dow">{partido.fechaDia}</span>
+            <span className="te-partido-fecha__when">{partido.fechaNumero}</span>
+          </span>
           <span className="te-partido-hora">{partido.hora}</span>
           <span className="te-partido-meta__separator" aria-hidden>
             ·

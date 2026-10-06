@@ -3637,6 +3637,41 @@
   border-bottom: 1px solid var(--te-standings-line);
 }
 
+.te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-partido-meta {
+  flex-wrap: wrap;
+  overflow: visible;
+  gap: 0.35rem;
+}
+
+.te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-partido-fecha {
+  display: inline-flex;
+  align-items: baseline;
+  flex: 0 0 auto;
+  gap: 0.35rem;
+  min-height: 1.55rem;
+  padding: 0.16rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 28%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  color: var(--text-primary);
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-partido-fecha__dow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-partido-fecha__when {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
 .te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-partido-hora,
 .te-grupos-page .te-public.te-public--grupos-wide .te-match-card .te-partido-cancha {
   min-height: 0;
