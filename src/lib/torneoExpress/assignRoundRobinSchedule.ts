@@ -294,8 +294,11 @@ type GroupPackResult =
   | { ok: false; reason: "hole" | "next-day" | "no-capacity" };
 
 /**
- * Coloca un grupo entero desde `start`, en slots seguidos y en un solo día.
- * Si el bloque se corta, no deja partidos a medias.
+ * Coloca un grupo desde `start`, en slots seguidos.
+ * Sin `allowDaySpan`, si el día se acaba el grupo no se parte: el caller
+ * lo intenta entero en el día siguiente.
+ * Con `allowDaySpan`, lo que no cabe sigue al día siguiente, con las
+ * canchas y el horario de ese día.
  */
 function packOneGroupOnItsStartDay(
   group: DraftScheduleMatch[],
@@ -303,7 +306,8 @@ function packOneGroupOnItsStartDay(
   courts: string[],
   durationMinutes: number,
   start: DayCursor,
-  occupiedCourtKeys: Set<string>
+  occupiedCourtKeys: Set<string>,
+  allowDaySpan = false
 ): GroupPackResult {
   const occupied = new Set(occupiedCourtKeys);
   let pending = [...group];
@@ -312,7 +316,10 @@ function packOneGroupOnItsStartDay(
   let homeDay = start.dayIndex;
   let slotIndex = 0;
   const placed: DraftScheduleMatch[] = [];
-  const limit = Math.max(8, group.length * 6);
+  const limit = Math.max(
+    8,
+    group.length * (allowDaySpan ? Math.max(6, days.length * 4) : 6)
+  );
 
   for (let guard = 0; pending.length > 0; guard += 1) {
     if (guard > limit) return { ok: false, reason: "no-capacity" };
@@ -328,7 +335,11 @@ function packOneGroupOnItsStartDay(
         }
         throw error;
       }
-      if (next.dayIndex !== prevDay) return { ok: false, reason: "next-day" };
+      if (next.dayIndex !== prevDay) {
+        if (!allowDaySpan) return { ok: false, reason: "next-day" };
+        homeDay = next.dayIndex;
+        slotIndex = 0;
+      }
       cursor = next;
     } else {
       try {
@@ -401,6 +412,36 @@ function packOneGroupOnItsStartDay(
   return { ok: true, placed, occupied, cursor: nextCursor };
 }
 
+function commitGroupPack(
+  scheduled: DraftScheduleMatch[],
+  result: Extract<GroupPackResult, { ok: true }>
+): { occupied: Set<string>; cursor: DayCursor } {
+  scheduled.push(...result.placed);
+  return { occupied: result.occupied, cursor: result.cursor };
+}
+
+function placeGroupAcrossDays(
+  group: DraftScheduleMatch[],
+  days: TeScheduleDayWindow[],
+  courts: string[],
+  durationMinutes: number,
+  origin: DayCursor,
+  occupied: Set<string>,
+  scheduled: DraftScheduleMatch[]
+): { occupied: Set<string>; cursor: DayCursor } {
+  const spanned = packOneGroupOnItsStartDay(
+    group,
+    days,
+    courts,
+    durationMinutes,
+    origin,
+    occupied,
+    true
+  );
+  if (!spanned.ok) throwNoCapacity(days);
+  return commitGroupPack(scheduled, spanned);
+}
+
 function assignGroupsOnTheirStartDay(
   matches: DraftScheduleMatch[],
   courts: string[],
@@ -417,14 +458,42 @@ function assignGroupsOnTheirStartDay(
   );
 
   for (const group of groupsInOrder(matches)) {
+    const origin = cursor;
     let placedGroup = false;
     let guard = 0;
 
     while (!placedGroup) {
       guard += 1;
-      if (guard > days.length * 48) throwNoCapacity(days);
-      if (cursor.dayIndex >= days.length) throwNoCapacity(days);
-      cursor = ensureValidDayCursor(days, cursor, durationMinutes);
+      if (guard > days.length * 48 || cursor.dayIndex >= days.length) {
+        ({ occupied, cursor } = placeGroupAcrossDays(
+          group,
+          days,
+          courts,
+          durationMinutes,
+          origin,
+          occupied,
+          scheduled
+        ));
+        break;
+      }
+
+      try {
+        cursor = ensureValidDayCursor(days, cursor, durationMinutes);
+      } catch (error) {
+        if (error instanceof ScheduleInvariantError) {
+          ({ occupied, cursor } = placeGroupAcrossDays(
+            group,
+            days,
+            courts,
+            durationMinutes,
+            origin,
+            occupied,
+            scheduled
+          ));
+          break;
+        }
+        throw error;
+      }
 
       const result = packOneGroupOnItsStartDay(
         group,
@@ -436,32 +505,62 @@ function assignGroupsOnTheirStartDay(
       );
 
       if (result.ok) {
-        scheduled.push(...result.placed);
-        occupied = result.occupied;
-        cursor = result.cursor;
+        ({ occupied, cursor } = commitGroupPack(scheduled, result));
         placedGroup = true;
         continue;
       }
 
-      if (result.reason === "no-capacity") throwNoCapacity(days);
-
       if (result.reason === "hole") {
         try {
           cursor = advanceDayCursor(days, cursor, durationMinutes);
+          continue;
         } catch (error) {
-          if (error instanceof ScheduleInvariantError) throwNoCapacity(days);
+          if (error instanceof ScheduleInvariantError) {
+            ({ occupied, cursor } = placeGroupAcrossDays(
+              group,
+              days,
+              courts,
+              durationMinutes,
+              origin,
+              occupied,
+              scheduled
+            ));
+            break;
+          }
           throw error;
         }
-        continue;
+      }
+
+      if (result.reason === "no-capacity") {
+        ({ occupied, cursor } = placeGroupAcrossDays(
+          group,
+          days,
+          courts,
+          durationMinutes,
+          origin,
+          occupied,
+          scheduled
+        ));
+        break;
       }
 
       const nextIndex = cursor.dayIndex + 1;
-      if (nextIndex >= days.length) throwNoCapacity(days);
-      cursor = ensureValidDayCursor(
-        days,
-        { dayIndex: nextIndex, time: days[nextIndex]!.startTime },
-        durationMinutes
-      );
+      if (nextIndex >= days.length) {
+        ({ occupied, cursor } = placeGroupAcrossDays(
+          group,
+          days,
+          courts,
+          durationMinutes,
+          origin,
+          occupied,
+          scheduled
+        ));
+        break;
+      }
+      cursor = {
+        dayIndex: nextIndex,
+        time: days[nextIndex]!.startTime,
+      };
     }
   }
 

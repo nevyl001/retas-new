@@ -438,12 +438,25 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     return assignments.some((g) => g.parejaIds.length < 2);
   }, [parejas.length, assignments]);
 
-  const schedulePreview = useMemo(() => {
-    if (gruposIncomplete || scheduleCourtError) return null;
+  const scheduleAttempt = useMemo(() => {
+    if (gruposIncomplete) {
+      return {
+        preview: null,
+        failure: "Cada grupo necesita al menos 2 parejas para programar.",
+      };
+    }
+    if (scheduleCourtError) {
+      return { preview: null, failure: scheduleCourtError };
+    }
 
     try {
       const draftMatches = buildDraftScheduleMatches(assignments);
-      if (draftMatches.length === 0) return null;
+      if (draftMatches.length === 0) {
+        return {
+          preview: null,
+          failure: "No hay partidos para programar. Revisa los grupos.",
+        };
+      }
       const durationMinutes = Math.floor(schedule.durationMinutes);
       const courts = courtsForScheduleDay(schedule.days[0]!);
 
@@ -456,13 +469,20 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
       });
       validateScheduleInvariants(draftMatches, scheduled);
 
-      return buildSchedulePreviewSummary(scheduled, {
-        courts,
-        days: schedule.days,
-        durationMinutes,
-      });
-    } catch {
-      return null;
+      return {
+        preview: buildSchedulePreviewSummary(scheduled, {
+          courts,
+          days: schedule.days,
+          durationMinutes,
+        }),
+        failure: null,
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : "No fue posible programar todos los partidos.";
+      return { preview: null, failure: message };
     }
   }, [
     assignments,
@@ -473,7 +493,9 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     eventoOccupiedSlots,
   ]);
 
-  const scheduleReady = Boolean(schedulePreview) && !scheduleCourtError;
+  const schedulePreview = scheduleAttempt.preview;
+  const scheduleFailure = scheduleAttempt.failure;
+  const scheduleReady = Boolean(schedulePreview) && !scheduleFailure;
 
   const formarPareja = async (j1: Player, j2: Player) => {
     if (!user?.id || !draftTournamentId) return;
@@ -729,7 +751,8 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     if (wizardStep === "programacion") {
       if (!scheduleReady) {
         setError(
-          "Revisa la programación: día, hora, duración y canchas deben ser válidos."
+          scheduleFailure ||
+            "Revisa la programación: día, hora, duración y canchas deben ser válidos."
         );
         return;
       }
@@ -1034,9 +1057,9 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                         </div>
                       </div>
 
-                      {scheduleCourtError ? (
+                      {scheduleFailure ? (
                         <p className="te-crear-schedule__error" role="alert">
-                          {scheduleCourtError}
+                          {scheduleFailure}
                         </p>
                       ) : null}
 
@@ -1114,10 +1137,6 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                             ))}
                           </div>
                         </div>
-                      ) : !scheduleCourtError ? (
-                        <p className="te-crear-schedule__hint">
-                          Completa la programación para ver la vista previa.
-                        </p>
                       ) : null}
                     </section>
                   </div>
