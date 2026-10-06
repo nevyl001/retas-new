@@ -1,4 +1,5 @@
 import {
+  findCourtConflictGroups,
   formatCourtOccupiedError,
   formatCourtSwapPrompt,
   occupiedCourtSlotKey,
@@ -58,6 +59,32 @@ describe("courtCheckScope", () => {
     expect(msg).toContain("¿Intercambiar horarios?");
     expect(msg).toContain("Open");
     expect(msg).toContain("eliminatoria");
+  });
+
+  test("el aviso nombra a las parejas aunque el partido no traiga categoría", () => {
+    const labels = new Map([
+      ["p1", "Ana / Bea"],
+      ["p2", "Carla / Dina"],
+    ]);
+    const msg = formatCourtSwapPrompt({
+      occupiedProgramadoEn: "2026-08-24T15:00:00.000Z",
+      freedProgramadoEn: "2026-08-24T14:00:00.000Z",
+      conflict: partido("a"),
+      pairLabels: labels,
+      ownMatchup: "Eva / Fer vs Gina / Hugo",
+    });
+    expect(msg).toContain("Ana / Bea vs Carla / Dina");
+    expect(msg).toContain("Eva / Fer vs Gina / Hugo quedaría");
+  });
+
+  test("findCourtConflictGroups agrupa los partidos que comparten cancha y hora", () => {
+    const groups = findCourtConflictGroups([
+      partido("a"),
+      partido("b", { cancha: "Cancha Estadio" }),
+      partido("c", { cancha: "2" }),
+    ]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.map((p) => p.id)).toEqual(["a", "b"]);
   });
 
   test("occupiedCourtSlotKey normalizes cancha labels", () => {

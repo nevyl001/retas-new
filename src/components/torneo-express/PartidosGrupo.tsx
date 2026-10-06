@@ -31,7 +31,12 @@ import {
   PARTIDO_CANCHA_OCUPADA_MSG,
   type ScheduleSlotChangePlan,
 } from "../../lib/torneoExpress/partidoCourtSlotConflict";
-import { formatCourtOccupiedError } from "../../lib/torneoExpress/courtCheckScope";
+import {
+  findCourtConflictGroups,
+  formatCourtConflictDetails,
+  formatCourtOccupiedError,
+  formatCourtSwapPrompt,
+} from "../../lib/torneoExpress/courtCheckScope";
 import type {
   ExpectedPairs,
   PartidoSetScore,
@@ -138,6 +143,8 @@ function PartidoHorarioField({
   savingProgramado,
   onSaveProgramacion,
   courtCheckScope,
+  pairLabels,
+  ownMatchup,
   forceEdit = false,
   onClose,
 }: {
@@ -146,6 +153,8 @@ function PartidoHorarioField({
   savingProgramado: boolean;
   onSaveProgramacion?: PartidosGrupoProps["onSaveProgramacion"];
   courtCheckScope: TorneoExpressPartido[];
+  pairLabels?: ReadonlyMap<string, string>;
+  ownMatchup?: string;
   forceEdit?: boolean;
   onClose?: () => void;
 }) {
@@ -157,6 +166,11 @@ function PartidoHorarioField({
     canchaDraftFromStored(partido.cancha)
   );
   const [horarioError, setHorarioError] = useState<string | null>(null);
+  const [swapPrompt, setSwapPrompt] = useState<string | null>(null);
+  const [pendingSlot, setPendingSlot] = useState<{
+    programadoEn: string;
+    cancha: string;
+  } | null>(null);
 
   useEffect(() => {
     if (forceEdit) setEditing(true);
@@ -177,6 +191,8 @@ function PartidoHorarioField({
     setDraftTime(d.time);
     setDraftCancha(canchaDraftFromStored(partido.cancha));
     setHorarioError(null);
+    setSwapPrompt(null);
+    setPendingSlot(null);
     setEditing(false);
     onClose?.();
   };
@@ -184,6 +200,8 @@ function PartidoHorarioField({
   const persistSlot = (programadoEn: string, cancha: string) => {
     if (!onSaveProgramacion) return;
     setHorarioError(null);
+    setSwapPrompt(null);
+    setPendingSlot(null);
     void onSaveProgramacion(partido.id, programadoEn, cancha)
       .then(() => closeEdit())
       .catch((e) => {
@@ -198,6 +216,8 @@ function PartidoHorarioField({
     const next = programadoIsoFromDraft(draftDate, draftTime);
     if (!next) {
       setHorarioError("Revisa la fecha y la hora");
+      setSwapPrompt(null);
+      setPendingSlot(null);
       return;
     }
     const cancha = normalizeCanchaForSave(draftCancha);
@@ -206,18 +226,21 @@ function PartidoHorarioField({
     try {
       plan = planScheduleSlotChange(partido, next, cancha, courtCheckScope);
     } catch (e) {
-      const message = e instanceof Error ? e.message : PARTIDO_CANCHA_OCUPADA_MSG;
-      if (message !== PARTIDO_CANCHA_OCUPADA_MSG) {
-        setHorarioError(message);
-        return;
-      }
+      setSwapPrompt(null);
+      setPendingSlot(null);
       const hit = findPartidoCourtSlotConflict(
         partido.id,
         next,
         cancha,
         courtCheckScope
       );
-      setHorarioError(hit ? formatCourtOccupiedError(hit) : message);
+      setHorarioError(
+        hit
+          ? formatCourtOccupiedError(hit, pairLabels)
+          : e instanceof Error
+            ? e.message
+            : PARTIDO_CANCHA_OCUPADA_MSG
+      );
       return;
     }
 
@@ -226,7 +249,33 @@ function PartidoHorarioField({
       return;
     }
 
+    if (plan.kind === "swap") {
+      const swap = plan;
+      setHorarioError(null);
+      setPendingSlot({
+        programadoEn: swap.programado_en,
+        cancha: swap.cancha,
+      });
+      const conflict =
+        courtCheckScope.find((p) => p.id === swap.swapWithId) ?? partido;
+      setSwapPrompt(
+        formatCourtSwapPrompt({
+          occupiedProgramadoEn: swap.programado_en,
+          freedProgramadoEn: swap.swapProgramadoEn,
+          conflict,
+          pairLabels,
+          ownMatchup,
+        })
+      );
+      return;
+    }
+
     persistSlot(plan.programado_en, plan.cancha);
+  };
+
+  const confirmarIntercambio = () => {
+    if (!pendingSlot) return;
+    persistSlot(pendingSlot.programadoEn, pendingSlot.cancha);
   };
 
   if (!horarioEditable || !onSaveProgramacion || !editing) {
@@ -246,6 +295,8 @@ function PartidoHorarioField({
             disabled={savingProgramado}
             onChange={(e) => {
               setDraftDate(e.target.value);
+              setSwapPrompt(null);
+              setPendingSlot(null);
               setHorarioError(null);
             }}
           />
@@ -259,6 +310,8 @@ function PartidoHorarioField({
             disabled={savingProgramado}
             onChange={(e) => {
               setDraftTime(e.target.value);
+              setSwapPrompt(null);
+              setPendingSlot(null);
               setHorarioError(null);
             }}
           />
@@ -275,6 +328,8 @@ function PartidoHorarioField({
           disabled={savingProgramado}
           onChange={(e) => {
             setDraftCancha(e.target.value);
+            setSwapPrompt(null);
+            setPendingSlot(null);
             setHorarioError(null);
           }}
           onKeyDown={(e) => {
@@ -283,26 +338,60 @@ function PartidoHorarioField({
           }}
         />
       </label>
+      {swapPrompt ? (
+        <p className="te-partido-meta-edit__confirm" role="status">
+          {swapPrompt}
+        </p>
+      ) : null}
       <div className="te-partido-meta-edit__actions">
-        <Button
-          type="button"
-          variant="primary"
-          size="sm"
-          disabled={savingProgramado}
-          loading={savingProgramado}
-          onClick={guardarHorario}
-        >
-          {savingProgramado ? "…" : "Guardar"}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={savingProgramado}
-          onClick={closeEdit}
-        >
-          Cancelar
-        </Button>
+        {swapPrompt ? (
+          <>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              disabled={savingProgramado}
+              loading={savingProgramado}
+              onClick={confirmarIntercambio}
+            >
+              {savingProgramado ? "…" : "Intercambiar"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={savingProgramado}
+              onClick={() => {
+                setSwapPrompt(null);
+                setPendingSlot(null);
+              }}
+            >
+              No intercambiar
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              disabled={savingProgramado}
+              loading={savingProgramado}
+              onClick={guardarHorario}
+            >
+              {savingProgramado ? "…" : "Guardar"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={savingProgramado}
+              onClick={closeEdit}
+            >
+              Cancelar
+            </Button>
+          </>
+        )}
       </div>
       {horarioError ? (
         <p className="te-partido-meta-edit__error">{horarioError}</p>
@@ -323,6 +412,7 @@ function PartidoRow({
   onSave,
   onSaveProgramacion,
   courtCheckScope,
+  pairLabels,
   canchaEditable,
   horarioEditable,
   savingCancha,
@@ -347,6 +437,7 @@ function PartidoRow({
   canchaEditable: boolean;
   horarioEditable: boolean;
   courtCheckScope: TorneoExpressPartido[];
+  pairLabels?: ReadonlyMap<string, string>;
   courtConflict?: boolean;
   /** Pareja ya tiene otro partido en el mismo horario (tras reordenar). */
   pairSlotConflict?: boolean;
@@ -598,6 +689,8 @@ function PartidoRow({
               savingProgramado={metaBusy}
               onSaveProgramacion={onSaveProgramacion}
               courtCheckScope={courtCheckScope}
+              pairLabels={pairLabels}
+              ownMatchup={`${localLabel} vs ${visitLabel}`}
               forceEdit
               onClose={() => setScheduleEditOpen(false)}
             />
@@ -714,22 +807,6 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
     ];
   }, [courtCheckScope, localPartidos]);
 
-  const conflictMatchLabels = useMemo(() => {
-    return localPartidos
-      .map((partido, index) =>
-        conflictingPartidoIds.has(partido.id)
-          ? `Partido ${String(index + 1).padStart(2, "0")}`
-          : null
-      )
-      .filter((label): label is string => Boolean(label));
-  }, [localPartidos, conflictingPartidoIds]);
-
-  useEffect(() => {
-    if (!pendingOrderSave && !savingOrden) {
-      setLocalPartidos(partidosLimpios);
-    }
-  }, [partidosLimpios, pendingOrderSave, savingOrden]);
-
   const labelById = useMemo(() => {
     const m = new Map<string, string>();
     parejas.forEach((p) =>
@@ -737,6 +814,40 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
     );
     return m;
   }, [parejas]);
+
+  const conflictLines = useMemo(() => {
+    const numberById = new Map<string, string>();
+    localPartidos.forEach((partido, index) =>
+      numberById.set(partido.id, `Partido ${String(index + 1).padStart(2, "0")}`)
+    );
+    const matchup = (partido: TorneoExpressPartido) => {
+      const local = labelById.get(partido.pareja_local_id);
+      const visit = labelById.get(partido.pareja_visitante_id);
+      return local && visit ? `${local} vs ${visit}` : "";
+    };
+    return findCourtConflictGroups(mergedCourtCheckScope)
+      .filter((group) => group.some((partido) => numberById.has(partido.id)))
+      .map((group) => {
+        const slot = `${formatCanchaDisplay(group[0]!.cancha)} · ${formatPartidoFecha(
+          partidoScheduleIso(group[0]!)
+        )} ${formatPartidoHora(partidoScheduleIso(group[0]!))}`;
+        const names = group.map((partido) => {
+          const number = numberById.get(partido.id);
+          if (number) {
+            const teams = matchup(partido);
+            return teams ? `${number} (${teams})` : number;
+          }
+          return formatCourtConflictDetails(partido, labelById);
+        });
+        return `${slot}: ${names.join(" choca con ")}.`;
+      });
+  }, [labelById, localPartidos, mergedCourtCheckScope]);
+
+  useEffect(() => {
+    if (!pendingOrderSave && !savingOrden) {
+      setLocalPartidos(partidosLimpios);
+    }
+  }, [partidosLimpios, pendingOrderSave, savingOrden]);
 
   const enJuegoId = useMemo(
     () => findPartidoEnVivoId(localPartidos),
@@ -866,13 +977,19 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
         </div>
       ) : null}
 
-      {conflictMatchLabels.length > 0 ? (
+      {conflictLines.length > 0 ? (
         <div className="te-partidos-court-conflict-banner" role="alert">
           <span className="te-partidos-court-conflict-banner__label">
             Conflicto de programación
           </span>
+          {conflictLines.map((line) => (
+            <p key={line} className="te-partidos-court-conflict-banner__text">
+              {line}
+            </p>
+          ))}
           <p className="te-partidos-court-conflict-banner__text">
-            {`Corrige ${conflictMatchLabels.join(" y ")}: misma cancha y horario.`}
+            Cambia día, hora y cancha de uno de los partidos. Si eliges el
+            horario del otro, el sistema te pregunta si quieres intercambiarlos.
           </p>
         </div>
       ) : null}
@@ -913,6 +1030,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
             onSaveProgramacion={onSaveProgramacion}
             partidoFormato={partidoFormato}
             courtCheckScope={mergedCourtCheckScope}
+            pairLabels={labelById}
             courtConflict={conflictingPartidoIds.has(partido.id)}
             pairSlotConflict={pairConflictPartidoIds.has(partido.id)}
             onDefineVirtualPair={onDefineVirtualPair}

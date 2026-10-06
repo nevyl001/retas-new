@@ -83,12 +83,18 @@ export function formatMatchupLabel(
 }
 
 export function formatCourtConflictDetails(
-  conflict: TorneoExpressPartido | TeCourtCheckPartido
+  conflict: TorneoExpressPartido | TeCourtCheckPartido,
+  pairLabels?: ReadonlyMap<string, string>
 ): string {
   const meta = getCourtCheckMeta(conflict);
   const hora = formatPartidoHora(partidoScheduleIso(conflict));
   const cancha = formatCanchaDisplay(conflict.cancha);
   if (!meta) {
+    const local = pairLabels?.get(conflict.pareja_local_id);
+    const visit = pairLabels?.get(conflict.pareja_visitante_id);
+    if (local && visit) {
+      return `${cancha} a las ${hora} · ${formatMatchupLabel(local, visit)}`;
+    }
     return `${cancha} a las ${hora}`;
   }
   const fase = meta.source === "eliminatoria" ? "eliminatoria" : "grupos";
@@ -99,10 +105,12 @@ export function formatCourtConflictDetails(
 }
 
 export function formatCourtOccupiedError(
-  conflict: TorneoExpressPartido | TeCourtCheckPartido
+  conflict: TorneoExpressPartido | TeCourtCheckPartido,
+  pairLabels?: ReadonlyMap<string, string>
 ): string {
   return `Cancha ocupada: ${formatCourtConflictDetails(
-    conflict
+    conflict,
+    pairLabels
   )}. Elige otra cancha u otro horario, o intercambia si te lo propone el sistema.`;
 }
 
@@ -110,11 +118,33 @@ export function formatCourtSwapPrompt(input: {
   occupiedProgramadoEn: string;
   freedProgramadoEn: string;
   conflict: TorneoExpressPartido | TeCourtCheckPartido;
+  pairLabels?: ReadonlyMap<string, string>;
+  /** Partido que se está guardando, por nombre de parejas. */
+  ownMatchup?: string;
 }): string {
   const horaOcupada = formatPartidoHora(input.occupiedProgramadoEn);
   const horaLiberada = formatPartidoHora(input.freedProgramadoEn);
-  const details = formatCourtConflictDetails(input.conflict);
-  return `Choque en ${details}. ¿Intercambiar horarios? Ese partido pasaría a las ${horaLiberada} y el tuyo quedaría a las ${horaOcupada}.`;
+  const details = formatCourtConflictDetails(input.conflict, input.pairLabels);
+  const own = input.ownMatchup ? `${input.ownMatchup} ` : "";
+  return `Choque en ${details}. ¿Intercambiar horarios? Ese partido pasaría a las ${horaLiberada} y ${own ? `${own}quedaría` : "el tuyo quedaría"} a las ${horaOcupada}.`;
+}
+
+/** Grupos de partidos que comparten cancha y horario (2 o más). */
+export function findCourtConflictGroups<
+  T extends TorneoExpressPartido | TeCourtCheckPartido,
+>(partidos: T[]): T[][] {
+  const bySlotCourt = new Map<string, T[]>();
+  const seen = new Set<string>();
+  for (const partido of partidos) {
+    if (seen.has(partido.id)) continue;
+    seen.add(partido.id);
+    const key = occupiedCourtSlotKey(partido.programado_en, partido.cancha);
+    if (!key) continue;
+    const list = bySlotCourt.get(key) ?? [];
+    list.push(partido);
+    bySlotCourt.set(key, list);
+  }
+  return Array.from(bySlotCourt.values()).filter((list) => list.length > 1);
 }
 
 /** Clave estable `slot|cancha` para comparar ocupación entre categorías. */
