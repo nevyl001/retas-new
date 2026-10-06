@@ -364,6 +364,49 @@ describe("assignRoundRobinSchedule", () => {
     validateScheduleInvariants(matches, scheduled);
   });
 
+  test("tres grupos de 4 caben en tres días con dos canchas", () => {
+    const grupos: GrupoAssignmentDraft[] = [0, 1, 2].map((orden) => ({
+      nombre: `Grupo ${orden + 1}`,
+      orden,
+      parejaIds: [0, 1, 2, 3].map((i) => `g${orden}-p${i}`),
+    }));
+    const matches = buildDraftScheduleMatches(grupos);
+    expect(matches).toHaveLength(18);
+
+    const days = [
+      {
+        date: "2026-10-07",
+        startTime: "15:00",
+        endTime: "21:00",
+        courts: ["Cancha 2", "Cancha 3"],
+      },
+      {
+        date: "2026-10-08",
+        startTime: "18:00",
+        endTime: "23:00",
+        courts: ["Cancha 2", "Cancha 3"],
+      },
+      {
+        date: "2026-10-09",
+        startTime: "18:00",
+        endTime: "23:00",
+        courts: ["Cancha 2", "Cancha 3"],
+      },
+    ];
+
+    const scheduled = assignRoundRobinSchedule({
+      matches,
+      courts: ["Cancha 2", "Cancha 3"],
+      days,
+      durationMinutes: 60,
+    });
+
+    expect(scheduled).toHaveLength(18);
+    validateScheduleInvariants(matches, scheduled);
+    const courtsUsed = new Set(scheduled.map((match) => match.cancha));
+    expect(courtsUsed).toEqual(new Set(["Cancha 2", "Cancha 3"]));
+  });
+
   test("si un grupo no cabe en un solo día, sigue en el siguiente", () => {
     const matches = Array.from({ length: 4 }, (_, i) =>
       mkMatch({
@@ -440,17 +483,18 @@ describe("assignRoundRobinSchedule", () => {
       durationMinutes: 60,
     });
 
-    expect(
-      scheduled.map((match) => partidoDateInputValue(match.programado_en!))
-    ).toEqual(["2026-10-09", "2026-10-09", "2026-10-09"]);
-    expect(scheduled.map((match) => match.cancha)).toEqual([
-      "Pista Norte",
-      "Pista Norte",
-      "Pista Norte",
+    const onDay = (date: string) =>
+      scheduled.filter(
+        (match) => partidoDateInputValue(match.programado_en!) === date
+      );
+    const day1 = onDay("2026-10-08");
+    const day2 = onDay("2026-10-09");
+    expect(day1.map((match) => match.cancha).sort()).toEqual([
+      "Cancha 2",
+      "Cancha 3",
     ]);
-    expect(
-      scheduled.map((match) => partidoTimeInputValue24(match.programado_en!)).sort()
-    ).toEqual(["17:00", "18:00", "19:00"]);
+    expect(day2.map((match) => match.cancha)).toEqual(["Pista Norte"]);
+    expect(partidoTimeInputValue24(day2[0]!.programado_en!)).toBe("17:00");
     validateScheduleInvariants(matches, scheduled);
   });
 
@@ -489,7 +533,7 @@ describe("assignRoundRobinSchedule", () => {
           courts: ["C1"],
         })
       )
-    ).toThrow(/días configurados/i);
+    ).toThrow(/no caben 6 partidos/i);
   });
 
   test("participant collision prevention", () => {

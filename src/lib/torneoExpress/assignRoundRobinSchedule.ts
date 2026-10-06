@@ -65,11 +65,6 @@ export type SchedulePreviewSlot = {
   >;
 };
 
-type DayCursor = {
-  dayIndex: number;
-  time: string;
-};
-
 function rotateCourts(courts: string[], slotIndex: number): string[] {
   const n = courts.length;
   if (n === 0) return [];
@@ -121,69 +116,165 @@ function interleavePendingByGroup(
   return interleaved;
 }
 
-function throwNoCapacity(days: TeScheduleDayWindow[]): never {
-  const first = days[0]?.date ?? "—";
-  const last = days[days.length - 1]?.date ?? "—";
-  throw new ScheduleInvariantError(
-    `No caben todos los partidos en los días configurados (${first} → ${last}). Agrega otro día, amplía horarios o añade canchas.`
-  );
-}
 
-function ensureValidDayCursor(
+type CourtOpening = {
+  date: string;
+  time: string;
+  courts: string[];
+};
+
+function openingsForDays(
   days: TeScheduleDayWindow[],
-  cursor: DayCursor,
-  durationMinutes: number
-): DayCursor {
-  let { dayIndex, time } = cursor;
-  let guard = 0;
-  while (dayIndex < days.length && guard < days.length + 2) {
-    guard += 1;
-    const day = days[dayIndex]!;
-    if (
+  courts: string[],
+  durationMinutes: number,
+  occupiedCourtKeys: Set<string>
+): CourtOpening[] {
+  const openings: CourtOpening[] = [];
+
+  for (const day of days) {
+    let time = day.startTime;
+    let guard = 0;
+    while (
+      guard < 48 &&
       slotFitsDailyWindow(time, durationMinutes, day.startTime, day.endTime)
     ) {
-      return { dayIndex, time };
-    }
-    dayIndex += 1;
-    if (dayIndex < days.length) {
-      time = days[dayIndex]!.startTime;
+      guard += 1;
+      const programadoIso = programadoIsoFromMexicoCalendar(day.date, time);
+      const freeCourts = programadoIso
+        ? courtsForScheduleDay(day, courts).filter((court) => {
+            const key = occupiedCourtSlotKey(programadoIso, court);
+            return !key || !occupiedCourtKeys.has(key);
+          })
+        : [];
+      openings.push({ date: day.date, time, courts: freeCourts });
+      const next = addMinutesToMexicoCalendar(day.date, time, durationMinutes);
+      if (!next || next.date !== day.date) break;
+      time = next.time;
     }
   }
-  throwNoCapacity(days);
+
+  return openings;
 }
 
-function advanceDayCursor(
+function takeMatchesForCourts(
+  pool: DraftScheduleMatch[],
+  courts: string[],
+  programadoIso: string,
+  busyPairs: Set<string>,
+  occupiedCourtKeys: Set<string>
+): DraftScheduleMatch[] {
+  const available = [...courts];
+  const taken: DraftScheduleMatch[] = [];
+
+  for (const match of pool) {
+    if (available.length === 0) break;
+    if (
+      busyPairs.has(match.parejaLocalId) ||
+      busyPairs.has(match.parejaVisitanteId)
+    ) {
+      continue;
+    }
+    const court = available.shift()!;
+    taken.push({
+      ...match,
+      programado_en: programadoIso,
+      cancha: court,
+    });
+    busyPairs.add(match.parejaLocalId);
+    busyPairs.add(match.parejaVisitanteId);
+    const takenKey = occupiedCourtSlotKey(programadoIso, court);
+    if (takenKey) occupiedCourtKeys.add(takenKey);
+  }
+
+  return taken;
+}
+
+/**
+ * Cada horario usa todas las canchas libres de ese día.
+ * Primero avanza el grupo en curso; si queda una cancha, entra otro grupo.
+ */
+function assignMatchesOntoDayCourts(
+  matches: DraftScheduleMatch[],
+  courts: string[],
+  durationMinutes: number,
   days: TeScheduleDayWindow[],
-  cursor: DayCursor,
-  durationMinutes: number
-): DayCursor {
-  const day = days[cursor.dayIndex];
-  if (!day) throwNoCapacity(days);
-
-  const next = addMinutesToMexicoCalendar(
-    day.date,
-    cursor.time,
-    durationMinutes
-  );
-  if (!next) {
-    throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
-  }
-
-  if (
-    next.date === day.date &&
-    slotFitsDailyWindow(next.time, durationMinutes, day.startTime, day.endTime)
-  ) {
-    return { dayIndex: cursor.dayIndex, time: next.time };
-  }
-
-  const nextIndex = cursor.dayIndex + 1;
-  if (nextIndex >= days.length) {
-    throwNoCapacity(days);
-  }
-  return ensureValidDayCursor(
+  occupiedCourtKeys: Set<string>
+): DraftScheduleMatch[] {
+  const openings = openingsForDays(
     days,
-    { dayIndex: nextIndex, time: days[nextIndex]!.startTime },
-    durationMinutes
+    courts,
+    durationMinutes,
+    occupiedCourtKeys
+  );
+  const lugares = openings.reduce((sum, opening) => sum + opening.courts.length, 0);
+  let pending = [...matches].sort(
+    (a, b) => a.groupKey - b.groupKey || a.ronda - b.ronda || a.orden - b.orden
+  );
+  const scheduled: DraftScheduleMatch[] = [];
+  let activeGroup = pending[0]?.groupKey ?? 0;
+
+  for (const opening of openings) {
+    if (pending.length === 0) break;
+    if (opening.courts.length === 0) continue;
+    const programadoIso = programadoIsoFromMexicoCalendar(opening.date, opening.time);
+    if (!programadoIso) continue;
+
+    const preferred = activeGroup;
+    const current = pending.some((match) => match.groupKey === preferred)
+      ? preferred
+      : pending[0]!.groupKey;
+    activeGroup = current;
+
+    const busyPairs = new Set<string>();
+    const primary = pending.filter((match) => match.groupKey === current);
+    const rest = pending.filter((match) => match.groupKey !== current);
+    const fromGroup = takeMatchesForCourts(
+      primary,
+      opening.courts,
+      programadoIso,
+      busyPairs,
+      occupiedCourtKeys
+    );
+    const used = new Set(fromGroup.map((match) => match.cancha));
+    const fromOthers = takeMatchesForCourts(
+      rest,
+      opening.courts.filter((court) => !used.has(court)),
+      programadoIso,
+      busyPairs,
+      occupiedCourtKeys
+    );
+    const taken = [...fromGroup, ...fromOthers];
+    if (taken.length === 0) continue;
+
+    const takenKeys = new Set(taken.map((match) => match.matchKey));
+    pending = pending.filter((match) => !takenKeys.has(match.matchKey));
+    scheduled.push(...taken);
+  }
+
+  if (pending.length > 0) {
+    const first = days[0]?.date ?? "—";
+    const last = days[days.length - 1]?.date ?? "—";
+    throw new ScheduleInvariantError(
+      `No caben ${matches.length} partidos: estas canchas y horarios dan ${lugares} lugares (${first} → ${last}). Agrega otro día, amplía el horario o suma canchas.`
+    );
+  }
+
+  return scheduled.sort(compareMatchesForScheduling);
+}
+
+function assignWithDayWindows(
+  matches: DraftScheduleMatch[],
+  courts: string[],
+  durationMinutes: number,
+  days: TeScheduleDayWindow[],
+  occupiedCourtKeys: Set<string>
+): DraftScheduleMatch[] {
+  return assignMatchesOntoDayCourts(
+    matches,
+    courts,
+    durationMinutes,
+    days,
+    occupiedCourtKeys
   );
 }
 
@@ -268,326 +359,6 @@ function packSlots(
   }
 
   return scheduled.sort(compareMatchesForScheduling);
-}
-
-function groupsInOrder(matches: DraftScheduleMatch[]): DraftScheduleMatch[][] {
-  const byGroup = new Map<number, DraftScheduleMatch[]>();
-  for (const match of matches) {
-    const list = byGroup.get(match.groupKey) ?? [];
-    list.push(match);
-    byGroup.set(match.groupKey, list);
-  }
-  return Array.from(byGroup.entries())
-    .sort((a, b) => a[0] - b[0])
-    .map(([, list]) =>
-      [...list].sort((a, b) => a.ronda - b.ronda || a.orden - b.orden)
-    );
-}
-
-type GroupPackResult =
-  | {
-      ok: true;
-      placed: DraftScheduleMatch[];
-      occupied: Set<string>;
-      cursor: DayCursor;
-    }
-  | { ok: false; reason: "hole" | "next-day" | "no-capacity" };
-
-/**
- * Coloca un grupo desde `start`, en slots seguidos.
- * Sin `allowDaySpan`, si el día se acaba el grupo no se parte: el caller
- * lo intenta entero en el día siguiente.
- * Con `allowDaySpan`, lo que no cabe sigue al día siguiente, con las
- * canchas y el horario de ese día.
- */
-function packOneGroupOnItsStartDay(
-  group: DraftScheduleMatch[],
-  days: TeScheduleDayWindow[],
-  courts: string[],
-  durationMinutes: number,
-  start: DayCursor,
-  occupiedCourtKeys: Set<string>,
-  allowDaySpan = false
-): GroupPackResult {
-  const occupied = new Set(occupiedCourtKeys);
-  let pending = [...group];
-  let cursor = start;
-  let started = false;
-  let homeDay = start.dayIndex;
-  let slotIndex = 0;
-  const placed: DraftScheduleMatch[] = [];
-  const limit = Math.max(
-    8,
-    group.length * (allowDaySpan ? Math.max(6, days.length * 4) : 6)
-  );
-
-  for (let guard = 0; pending.length > 0; guard += 1) {
-    if (guard > limit) return { ok: false, reason: "no-capacity" };
-
-    if (started) {
-      const prevDay = cursor.dayIndex;
-      let next: DayCursor;
-      try {
-        next = advanceDayCursor(days, cursor, durationMinutes);
-      } catch (error) {
-        if (error instanceof ScheduleInvariantError) {
-          return { ok: false, reason: "no-capacity" };
-        }
-        throw error;
-      }
-      if (next.dayIndex !== prevDay) {
-        if (!allowDaySpan) return { ok: false, reason: "next-day" };
-        homeDay = next.dayIndex;
-        slotIndex = 0;
-      }
-      cursor = next;
-    } else {
-      try {
-        cursor = ensureValidDayCursor(days, cursor, durationMinutes);
-      } catch (error) {
-        if (error instanceof ScheduleInvariantError) {
-          return { ok: false, reason: "no-capacity" };
-        }
-        throw error;
-      }
-      homeDay = cursor.dayIndex;
-      started = true;
-    }
-
-    if (cursor.dayIndex !== homeDay) return { ok: false, reason: "next-day" };
-
-    const day = days[cursor.dayIndex];
-    if (!day) return { ok: false, reason: "no-capacity" };
-    const programadoIso = programadoIsoFromMexicoCalendar(day.date, cursor.time);
-    if (!programadoIso) return { ok: false, reason: "no-capacity" };
-
-    const ronda = pending[0]!.ronda;
-    const wave = pending.filter((match) => match.ronda === ronda);
-    const availableCourts = rotateCourts(
-      courtsForScheduleDay(day, courts),
-      slotIndex
-    ).filter((court) => {
-      const key = occupiedCourtSlotKey(programadoIso, court);
-      return !key || !occupied.has(key);
-    });
-    const busyPairs = new Set<string>();
-    const taken: DraftScheduleMatch[] = [];
-
-    for (const match of wave) {
-      if (availableCourts.length === 0) break;
-      if (
-        busyPairs.has(match.parejaLocalId) ||
-        busyPairs.has(match.parejaVisitanteId)
-      ) {
-        continue;
-      }
-      const court = availableCourts.shift()!;
-      taken.push({
-        ...match,
-        programado_en: programadoIso,
-        cancha: court,
-      });
-      busyPairs.add(match.parejaLocalId);
-      busyPairs.add(match.parejaVisitanteId);
-      const takenKey = occupiedCourtSlotKey(programadoIso, court);
-      if (takenKey) occupied.add(takenKey);
-    }
-
-    if (taken.length === 0) return { ok: false, reason: "hole" };
-
-    placed.push(...taken);
-    const takenKeys = new Set(taken.map((match) => match.matchKey));
-    pending = pending.filter((match) => !takenKeys.has(match.matchKey));
-    slotIndex += 1;
-  }
-
-  let nextCursor: DayCursor;
-  try {
-    nextCursor = advanceDayCursor(days, cursor, durationMinutes);
-  } catch (error) {
-    if (!(error instanceof ScheduleInvariantError)) throw error;
-    nextCursor = { dayIndex: days.length, time: "00:00" };
-  }
-
-  return { ok: true, placed, occupied, cursor: nextCursor };
-}
-
-function commitGroupPack(
-  scheduled: DraftScheduleMatch[],
-  result: Extract<GroupPackResult, { ok: true }>
-): { occupied: Set<string>; cursor: DayCursor } {
-  scheduled.push(...result.placed);
-  return { occupied: result.occupied, cursor: result.cursor };
-}
-
-function placeGroupAcrossDays(
-  group: DraftScheduleMatch[],
-  days: TeScheduleDayWindow[],
-  courts: string[],
-  durationMinutes: number,
-  origin: DayCursor,
-  occupied: Set<string>,
-  scheduled: DraftScheduleMatch[]
-): { occupied: Set<string>; cursor: DayCursor } {
-  const spanned = packOneGroupOnItsStartDay(
-    group,
-    days,
-    courts,
-    durationMinutes,
-    origin,
-    occupied,
-    true
-  );
-  if (!spanned.ok) throwNoCapacity(days);
-  return commitGroupPack(scheduled, spanned);
-}
-
-function assignGroupsOnTheirStartDay(
-  matches: DraftScheduleMatch[],
-  courts: string[],
-  durationMinutes: number,
-  days: TeScheduleDayWindow[],
-  occupiedCourtKeys: Set<string>
-): DraftScheduleMatch[] {
-  const scheduled: DraftScheduleMatch[] = [];
-  let occupied = new Set(occupiedCourtKeys);
-  let cursor: DayCursor = ensureValidDayCursor(
-    days,
-    { dayIndex: 0, time: days[0]!.startTime },
-    durationMinutes
-  );
-
-  for (const group of groupsInOrder(matches)) {
-    const origin = cursor;
-    let placedGroup = false;
-    let guard = 0;
-
-    while (!placedGroup) {
-      guard += 1;
-      if (guard > days.length * 48 || cursor.dayIndex >= days.length) {
-        ({ occupied, cursor } = placeGroupAcrossDays(
-          group,
-          days,
-          courts,
-          durationMinutes,
-          origin,
-          occupied,
-          scheduled
-        ));
-        break;
-      }
-
-      try {
-        cursor = ensureValidDayCursor(days, cursor, durationMinutes);
-      } catch (error) {
-        if (error instanceof ScheduleInvariantError) {
-          ({ occupied, cursor } = placeGroupAcrossDays(
-            group,
-            days,
-            courts,
-            durationMinutes,
-            origin,
-            occupied,
-            scheduled
-          ));
-          break;
-        }
-        throw error;
-      }
-
-      const result = packOneGroupOnItsStartDay(
-        group,
-        days,
-        courts,
-        durationMinutes,
-        cursor,
-        occupied
-      );
-
-      if (result.ok) {
-        ({ occupied, cursor } = commitGroupPack(scheduled, result));
-        placedGroup = true;
-        continue;
-      }
-
-      if (result.reason === "hole") {
-        try {
-          cursor = advanceDayCursor(days, cursor, durationMinutes);
-          continue;
-        } catch (error) {
-          if (error instanceof ScheduleInvariantError) {
-            ({ occupied, cursor } = placeGroupAcrossDays(
-              group,
-              days,
-              courts,
-              durationMinutes,
-              origin,
-              occupied,
-              scheduled
-            ));
-            break;
-          }
-          throw error;
-        }
-      }
-
-      if (result.reason === "no-capacity") {
-        ({ occupied, cursor } = placeGroupAcrossDays(
-          group,
-          days,
-          courts,
-          durationMinutes,
-          origin,
-          occupied,
-          scheduled
-        ));
-        break;
-      }
-
-      const nextIndex = cursor.dayIndex + 1;
-      if (nextIndex >= days.length) {
-        ({ occupied, cursor } = placeGroupAcrossDays(
-          group,
-          days,
-          courts,
-          durationMinutes,
-          origin,
-          occupied,
-          scheduled
-        ));
-        break;
-      }
-      cursor = {
-        dayIndex: nextIndex,
-        time: days[nextIndex]!.startTime,
-      };
-    }
-  }
-
-  occupiedCourtKeys.clear();
-  for (const key of Array.from(occupied)) occupiedCourtKeys.add(key);
-
-  if (scheduled.length !== matches.length) {
-    throw new ScheduleInvariantError(SCHEDULE_INCOMPLETE_MSG);
-  }
-
-  return scheduled.sort(compareMatchesForScheduling);
-}
-
-function assignWithDayWindows(
-  matches: DraftScheduleMatch[],
-  courts: string[],
-  durationMinutes: number,
-  days: TeScheduleDayWindow[],
-  occupiedCourtKeys: Set<string>
-): DraftScheduleMatch[] {
-  return assignGroupsOnTheirStartDay(
-    matches,
-    courts,
-    durationMinutes,
-    days,
-    occupiedCourtKeys
-  );
 }
 
 /** Legacy: sin cierre, avanza solo con duración (puede cruzar medianoche). */

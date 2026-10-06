@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   addDaysToMexicoCalendarDate,
   todayMexicoDateInput,
@@ -56,6 +56,21 @@ export const TeScheduleDaysEditor: React.FC<TeScheduleDaysEditorProps> = ({
   const updateDayCourts = (index: number, courts: string[]) => {
     updateDay(index, { courts });
   };
+
+  const missingCourts = days.some(
+    (day) => !Array.isArray(day.courts) || day.courts.length === 0
+  );
+
+  useEffect(() => {
+    if (!missingCourts) return;
+    onChange(
+      days.map((day) =>
+        Array.isArray(day.courts) && day.courts.length > 0
+          ? day
+          : { ...day, courts: resizeDayCourts(day.courts, 2) }
+      )
+    );
+  }, [missingCourts, days, onChange]);
 
   return (
     <div className="te-schedule-days">
