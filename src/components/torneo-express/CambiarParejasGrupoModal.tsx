@@ -27,6 +27,7 @@ export interface CambiarParejasGrupoModalProps {
   partidosPorGrupo: Record<string, TorneoExpressPartido[]>;
   onClose: () => void;
   onSaved: () => void;
+  onFailed: (message: string) => void;
 }
 
 function activePairs(
@@ -52,6 +53,7 @@ export const CambiarParejasGrupoModal: React.FC<
   partidosPorGrupo,
   onClose,
   onSaved,
+  onFailed,
 }) => {
   const orderedGroups = useMemo(
     () => [...grupos].sort((a, b) => a.orden - b.orden),
@@ -68,7 +70,6 @@ export const CambiarParejasGrupoModal: React.FC<
   }, [orderedGroups, parejasPorGrupo]);
 
   const [assignment, setAssignment] = useState<Map<string, number>>(initial);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const pairs = useMemo(
@@ -126,16 +127,18 @@ export const CambiarParejasGrupoModal: React.FC<
       setError(built.error);
       return;
     }
-    setSaving(true);
     setError("");
+    onClose();
     try {
       await reorganizeGroups({ torneoId, payload: built.payload });
       onSaved();
     } catch (e) {
       const code = e instanceof TorneoExpressGrupoOpError ? e.code : "";
-      setError(code ? reorganizeGroupsMessage(code) : "No se pudieron cambiar las parejas de grupo.");
-    } finally {
-      setSaving(false);
+      onFailed(
+        code
+          ? reorganizeGroupsMessage(code)
+          : "No se pudieron cambiar las parejas de grupo."
+      );
     }
   };
 
@@ -191,7 +194,7 @@ export const CambiarParejasGrupoModal: React.FC<
                         <span>{pair.label}</span>
                         <select
                           value={String(current.get(pair.id) ?? grupo.orden)}
-                          disabled={saving || played || withdrawn}
+                          disabled={played || withdrawn}
                           aria-label={`Grupo de ${pair.label}`}
                           onChange={(event) => {
                             const orden = Number(event.target.value);
@@ -220,14 +223,13 @@ export const CambiarParejasGrupoModal: React.FC<
           </div>
         </div>
         <footer className="te-define-pair-dialog__foot">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>
+          <Button type="button" variant="ghost" onClick={onClose}>
             Cancelar
           </Button>
           <Button
             type="button"
             variant="primary"
-            loading={saving}
-            disabled={saving || played || withdrawn}
+            disabled={played || withdrawn}
             onClick={() => void save()}
           >
             Guardar grupos
