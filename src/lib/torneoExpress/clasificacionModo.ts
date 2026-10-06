@@ -168,21 +168,19 @@ export function clasificacionStandingHighlight(
   return { label: "FAV", value: String(row.ptsFav) };
 }
 
-/** Stats secundarios bajo el nombre en la lista pública de grupo. */
+/**
+ * Stats bajo el nombre. La misma línea en móvil y escritorio:
+ * PJ, PG, PP y DIF. El número grande (PTS o FAV) sale del highlight.
+ */
 export function clasificacionStandingMeta(
   modo: TorneoExpressClasificacionModo,
-  row: ClasificacionAchievementInput & { pj: number }
+  row: ClasificacionAchievementInput & { pj: number; pp: number }
 ): ClasificacionStandingMetaStat[] {
-  if (modo === "setto_pg") {
-    return [
-      { label: "PJ", value: String(row.pj) },
-      { label: "FAV", value: String(row.ptsFav) },
-      { label: "DIF", value: formatSignedStat(row.dif) },
-    ];
-  }
+  if (modo !== "setto_pg" && modo !== "dif_puntos") return [];
   return [
     { label: "PJ", value: String(row.pj) },
     { label: "PG", value: String(row.pg) },
+    { label: "PP", value: String(row.pp) },
     { label: "DIF", value: formatSignedStat(row.dif) },
   ];
 }

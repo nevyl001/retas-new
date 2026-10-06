@@ -1,4 +1,4 @@
-import { supabase, supabasePublicRead } from "../lib/supabaseClient";
+import { anonRestGet, supabase, supabasePublicRead } from "../lib/supabaseClient";
 import { isMissingColumnError } from "../lib/db/schemaHelpers";
 import {
   normalizeCanchaForSave,
@@ -851,6 +851,27 @@ async function resolveEventoReglasForTorneo(
       partido_formato: "flexible",
     };
   }
+
+  const fromRow = (row: Record<string, unknown>) => ({
+    clasificacion_modo: resolveClasificacionModo(
+      row.clasificacion_modo == null ? null : String(row.clasificacion_modo)
+    ),
+    partido_formato: resolvePartidoFormato(
+      row.partido_formato == null ? null : String(row.partido_formato)
+    ),
+  });
+
+  if (usePublicClient) {
+    const published = await anonRestGet<Record<string, unknown>>(
+      "torneo_express_evento",
+      {
+        id: `eq.${eventoId}`,
+        select: "clasificacion_modo,partido_formato",
+      }
+    );
+    if (published?.[0]) return fromRow(published[0]);
+  }
+
   const client = usePublicClient ? readClient : supabase;
   const { data, error } = await client
     .from("torneo_express_evento")
@@ -863,15 +884,7 @@ async function resolveEventoReglasForTorneo(
       partido_formato: "flexible",
     };
   }
-  const row = data as Record<string, unknown>;
-  return {
-    clasificacion_modo: resolveClasificacionModo(
-      row.clasificacion_modo == null ? null : String(row.clasificacion_modo)
-    ),
-    partido_formato: resolvePartidoFormato(
-      row.partido_formato == null ? null : String(row.partido_formato)
-    ),
-  };
+  return fromRow(data as Record<string, unknown>);
 }
 
 export async function fetchTorneoExpressBundle(

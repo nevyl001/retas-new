@@ -32,32 +32,35 @@ describe("clasificacionAchievementStats", () => {
 describe("clasificacionStandingHighlight / meta", () => {
   const row = {
     pg: 2,
+    pp: 1,
     ptsFav: 15,
     dif: 12,
     setsDif: 3,
-    pj: 2,
+    pj: 3,
   };
 
-  it("games a favor destaca FAV y meta PJ/PG/DIF", () => {
+  it("games a favor destaca FAV y meta PJ/PG/PP/DIF", () => {
     expect(clasificacionStandingHighlight("dif_puntos", row)).toEqual({
       label: "FAV",
       value: "15",
     });
     expect(clasificacionStandingMeta("dif_puntos", row)).toEqual([
-      { label: "PJ", value: "2" },
+      { label: "PJ", value: "3" },
       { label: "PG", value: "2" },
+      { label: "PP", value: "1" },
       { label: "DIF", value: "+12" },
     ]);
   });
 
-  it("partidos ganados destaca PTS y meta PJ/FAV/DIF", () => {
+  it("partidos ganados destaca PTS y meta PJ/PG/PP/DIF", () => {
     expect(clasificacionStandingHighlight("setto_pg", row)).toEqual({
       label: "PTS",
       value: "4",
     });
     expect(clasificacionStandingMeta("setto_pg", row)).toEqual([
-      { label: "PJ", value: "2" },
-      { label: "FAV", value: "15" },
+      { label: "PJ", value: "3" },
+      { label: "PG", value: "2" },
+      { label: "PP", value: "1" },
       { label: "DIF", value: "+12" },
     ]);
   });

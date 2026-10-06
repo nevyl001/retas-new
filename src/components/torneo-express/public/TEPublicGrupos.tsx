@@ -553,6 +553,7 @@ function GrupoStandings({
   const headerInput = headerSource
     ? {
         pg: headerSource.pg,
+        pp: headerSource.pp,
         ptsFav: headerSource.ptsFav,
         dif: headerSource.dif,
         puntos: headerSource.puntos,
@@ -591,6 +592,7 @@ function GrupoStandings({
               const clasifica = grupoIniciado && index < clasifican;
               const rowInput = {
                 pg: row.pg,
+                pp: row.pp,
                 ptsFav: row.ptsFav,
                 dif: row.dif,
                 puntos: row.puntos,
