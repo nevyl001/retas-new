@@ -344,6 +344,8 @@ export function findPairSameSlotConflictDetails(
       partido.pareja_local_id,
       partido.pareja_visitante_id,
     ]) {
+      // Una plaza de eliminatoria sin definir llega vacía: no es una pareja.
+      if (!pairId?.trim()) continue;
       const key = `${slotKey}|${pairId}`;
       const prevPartidoId = seen.get(key);
       if (prevPartidoId) {

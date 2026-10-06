@@ -232,6 +232,87 @@ describe("partidoCourtSlotConflict", () => {
     });
   });
 
+  it("las plazas por definir de otra categoría no cuentan como pareja repetida", () => {
+    const moving = partido("moving", {
+      cancha: "3",
+      programado_en: "2026-10-08T01:00:00.000Z",
+      pareja_local_id: "a",
+      pareja_visitante_id: "b",
+    });
+    const occupied = partido("occupied", {
+      cancha: "2",
+      programado_en: "2026-10-08T00:00:00.000Z",
+      pareja_local_id: "",
+      pareja_visitante_id: "",
+    });
+    const otherPlaceholder = partido("placeholder", {
+      cancha: "1",
+      programado_en: "2026-10-08T01:00:00.000Z",
+      pareja_local_id: "",
+      pareja_visitante_id: "",
+    });
+    expect(
+      planScheduleSlotChange(
+        moving,
+        occupied.programado_en!,
+        "2",
+        [moving, occupied, otherPlaceholder]
+      )
+    ).toMatchObject({ kind: "swap", swapWithId: "occupied" });
+  });
+
+  it("un choque de parejas que ya existía en otro horario no bloquea el cambio", () => {
+    const moving = partido("moving", {
+      cancha: "3",
+      programado_en: "2026-10-08T01:00:00.000Z",
+      pareja_local_id: "a",
+      pareja_visitante_id: "b",
+    });
+    const repeatedOne = partido("r1", {
+      cancha: "1",
+      programado_en: "2026-10-09T01:00:00.000Z",
+      pareja_local_id: "x",
+      pareja_visitante_id: "y",
+    });
+    const repeatedTwo = partido("r2", {
+      cancha: "2",
+      programado_en: "2026-10-09T01:00:00.000Z",
+      pareja_local_id: "x",
+      pareja_visitante_id: "z",
+    });
+    expect(
+      planScheduleSlotChange(
+        moving,
+        "2026-10-08T00:00:00.000Z",
+        "3",
+        [moving, repeatedOne, repeatedTwo]
+      )
+    ).toMatchObject({ kind: "update" });
+  });
+
+  it("sí bloquea cuando la pareja movida ya juega a esa hora", () => {
+    const moving = partido("moving", {
+      cancha: "3",
+      programado_en: "2026-10-08T01:00:00.000Z",
+      pareja_local_id: "a",
+      pareja_visitante_id: "b",
+    });
+    const sameTeam = partido("same", {
+      cancha: "1",
+      programado_en: "2026-10-08T00:00:00.000Z",
+      pareja_local_id: "a",
+      pareja_visitante_id: "c",
+    });
+    expect(() =>
+      planScheduleSlotChange(
+        moving,
+        sameTeam.programado_en!,
+        "3",
+        [moving, sameTeam]
+      )
+    ).toThrow("Esa pareja ya juega a esa hora");
+  });
+
   it("día, hora y cancha juntos no chocan con los pasos intermedios", () => {
     const moving = partido("moving", {
       cancha: "1",

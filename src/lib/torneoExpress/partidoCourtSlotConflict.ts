@@ -3,7 +3,6 @@ import {
   normalizeCanchaForSave,
 } from "./canchaDisplay";
 import { formatPartidoHora, partidoScheduleIso } from "./partidoSchedule";
-import { hasPairSameSlotConflict } from "./reorderPartidosSlots";
 import { mexicoScheduleSlotKey } from "./teScheduleTime";
 import type { TorneoExpressPartido } from "./types";
 
@@ -168,6 +167,45 @@ export type ProgramadoChangePlan =
       swapProgramadoEn: string;
     };
 
+/**
+ * ¿Alguno de los partidos movidos comparte pareja con otro partido a la misma
+ * hora? Solo mira lo que este cambio toca: un choque que ya existía en otra
+ * parte del torneo no debe impedir mover estos partidos.
+ */
+function movedPairClash(
+  trial: TorneoExpressPartido[],
+  movedIds: string[]
+): boolean {
+  const moved = new Set(movedIds);
+  const slotOf = (p: TorneoExpressPartido): string | null => {
+    const iso = p.programado_en?.trim();
+    if (!iso) return null;
+    try {
+      return mexicoScheduleSlotKey(iso);
+    } catch {
+      return null;
+    }
+  };
+  const pairsOf = (p: TorneoExpressPartido): string[] =>
+    [p.pareja_local_id, p.pareja_visitante_id].filter(
+      (id): id is string => Boolean(id?.trim())
+    );
+
+  for (const mover of trial) {
+    if (!moved.has(mover.id)) continue;
+    const slot = slotOf(mover);
+    if (!slot) continue;
+    const pairs = pairsOf(mover);
+    if (pairs.length === 0) continue;
+    for (const other of trial) {
+      if (other.id === mover.id) continue;
+      if (slotOf(other) !== slot) continue;
+      if (pairsOf(other).some((id) => pairs.includes(id))) return true;
+    }
+  }
+  return false;
+}
+
 function sameMexicoSlot(aIso: string, bIso: string): boolean {
   try {
     return mexicoScheduleSlotKey(aIso) === mexicoScheduleSlotKey(bIso);
@@ -201,7 +239,7 @@ export function planProgramadoChange(
     const trial = partidos.map((p) =>
       p.id === partido.id ? { ...p, programado_en: nextProgramadoEn } : p
     );
-    if (hasPairSameSlotConflict(trial)) {
+    if (movedPairClash(trial, [partido.id])) {
       throw new Error(
         "Esa pareja ya juega a esa hora. Elige otro horario o intercambia desde el otro partido."
       );
@@ -221,7 +259,7 @@ export function planProgramadoChange(
       }
       return p;
     });
-    if (hasPairSameSlotConflict(trial)) {
+    if (movedPairClash(trial, [partido.id, other.id])) {
       throw new Error(
         "No se pueden intercambiar: una pareja quedaría jugando dos veces a la misma hora."
       );
@@ -284,7 +322,7 @@ export function planScheduleSlotChange(
         ? { ...p, programado_en: nextProgramadoEn, cancha: nextCancha }
         : p
     );
-    if (hasPairSameSlotConflict(trial)) {
+    if (movedPairClash(trial, [partido.id])) {
       throw new Error(
         "Esa pareja ya juega a esa hora. Elige otro horario o intercambia desde el otro partido."
       );
@@ -303,7 +341,7 @@ export function planScheduleSlotChange(
       }
       return p;
     });
-    if (hasPairSameSlotConflict(trial)) {
+    if (movedPairClash(trial, [partido.id, other.id])) {
       throw new Error(
         "No se pueden intercambiar: una pareja quedaría jugando dos veces a la misma hora."
       );
