@@ -1,10 +1,12 @@
 import React from "react";
-import { JugadorAvatar } from "../../jugadores/JugadorAvatar";
+import { useRetryableImage } from "../../../hooks/useRetryableImage";
+import { getJugadorInitials, JugadorAvatar } from "../../jugadores/JugadorAvatar";
 
 export type TEPublicPairPlayer = {
   id: string | null;
   nombre: string;
   fotoUrl?: string | null;
+  rating?: number | null;
 };
 
 export type TEPublicPairSide = {
@@ -87,11 +89,16 @@ export function collectPairPlayerEntries(
 
 export function paintPairSide(
   side: TEPublicPairSide,
-  photos: Readonly<Record<string, string | null>>
+  photos: Readonly<Record<string, string | null>>,
+  ratings?: Readonly<Record<string, number | null>>
 ): TEPublicPairSide {
   const paint = (player: TEPublicPairPlayer): TEPublicPairPlayer => {
-    if (!player.id) return { ...player, fotoUrl: null };
-    return { ...player, fotoUrl: photos[player.id] ?? null };
+    if (!player.id) return { ...player, fotoUrl: null, rating: null };
+    return {
+      ...player,
+      fotoUrl: photos[player.id] ?? null,
+      rating: ratings?.[player.id] ?? null,
+    };
   };
   return {
     player1: paint(side.player1),
@@ -99,19 +106,41 @@ export function paintPairSide(
   };
 }
 
-const MATCH_AVATAR_PX = 50;
+function formatPlayerLevel(rating?: number | null): string | null {
+  if (rating == null || !Number.isFinite(rating)) return null;
+  return rating.toFixed(2);
+}
 
-function MatchPlayer({ player }: { player: TEPublicPairPlayer }) {
+function MatchPortrait({ player }: { player: TEPublicPairPlayer }) {
+  const { src, onError } = useRetryableImage(player.fotoUrl);
+  const level = formatPlayerLevel(player.rating);
+  const initials = getJugadorInitials(player.nombre);
+
   return (
-    <div className="te-public-pair__player">
-      <JugadorAvatar
-        fotoUrl={player.fotoUrl}
-        nombre={player.nombre}
-        size="md"
-        className="te-public-pair__avatar"
-        style={{ width: MATCH_AVATAR_PX, height: MATCH_AVATAR_PX }}
-      />
-      <span className="te-public-pair__name">{player.nombre}</span>
+    <div className="te-public-pair__portrait">
+      {src ? (
+        <img
+          className="te-public-pair__photo"
+          src={src}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={onError}
+        />
+      ) : (
+        <span className="te-public-pair__fallback" aria-hidden="true">
+          {initials}
+        </span>
+      )}
+      <span className="te-public-pair__shade" aria-hidden="true" />
+      <span className="te-public-pair__caption">
+        <span className="te-public-pair__name">{player.nombre}</span>
+        {level ? (
+          <span className="te-public-pair__level" aria-label={`Nivel ${level}`}>
+            {level}
+          </span>
+        ) : null}
+      </span>
     </div>
   );
 }
@@ -122,15 +151,20 @@ export const TEPublicPairIdentity: React.FC<{
   variant: TEPublicPairVariant;
   className?: string;
 }> = ({ player1, player2 = null, variant, className = "" }) => {
-  const rootClass = ["te-public-pair", `te-public-pair--${variant}`, className]
+  const rootClass = [
+    "te-public-pair",
+    `te-public-pair--${variant}`,
+    variant === "match" && !player2 ? "te-public-pair--solo" : "",
+    className,
+  ]
     .filter(Boolean)
     .join(" ");
 
   if (variant === "match") {
     return (
       <div className={rootClass}>
-        <MatchPlayer player={player1} />
-        {player2 ? <MatchPlayer player={player2} /> : null}
+        <MatchPortrait player={player1} />
+        {player2 ? <MatchPortrait player={player2} /> : null}
       </div>
     );
   }

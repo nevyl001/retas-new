@@ -75,6 +75,21 @@ describe("TEPublicPairIdentity", () => {
 
     expect(painted.player1.fotoUrl).toBe("https://cdn.example/ana.jpg");
     expect(painted.player2?.fotoUrl).toBeNull();
+    expect(painted.player1.rating).toBeNull();
+  });
+
+  it("pinta el nivel junto a la foto", () => {
+    const painted = paintPairSide(
+      side({
+        player1: { id: "a", nombre: "Ana" },
+        player2: { id: "b", nombre: "Beto" },
+      }),
+      { a: null, b: null },
+      { a: 4.25, b: null }
+    );
+
+    expect(painted.player1.rating).toBe(4.25);
+    expect(painted.player2?.rating).toBeNull();
   });
 
   describe("render", () => {
@@ -86,17 +101,21 @@ describe("TEPublicPairIdentity", () => {
             id: "a",
             nombre: "Fernanda Tapia",
             fotoUrl: "https://cdn.example/fer.jpg",
+            rating: 3,
           }}
           player2={{
             id: "b",
             nombre: "Josue",
             fotoUrl: "https://cdn.example/josue.jpg",
+            rating: 3.5,
           }}
         />
       );
 
       expect(screen.getByText("Fernanda Tapia")).toBeTruthy();
       expect(screen.getByText("Josue")).toBeTruthy();
+      expect(screen.getByText("3.00")).toBeTruthy();
+      expect(screen.getByText("3.50")).toBeTruthy();
       expect(screen.queryByText("Fernanda Tapia / Josue")).toBeNull();
       expect(screen.queryByText("FT")).toBeNull();
       expect(screen.queryByText("JE")).toBeNull();

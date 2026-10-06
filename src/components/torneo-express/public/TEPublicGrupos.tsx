@@ -280,12 +280,14 @@ function PartidoStatusBadge({ estado }: { estado: TEPartidoEstadoPublico }) {
 function PartidoRow({
   partido,
   photos,
+  ratings,
 }: {
   partido: TEPublicGruposPartido;
   photos: Readonly<Record<string, string | null>>;
+  ratings: Readonly<Record<string, number | null>>;
 }) {
-  const local = paintPairSide(partido.local, photos);
-  const visitante = paintPairSide(partido.visitante, photos);
+  const local = paintPairSide(partido.local, photos, ratings);
+  const visitante = paintPairSide(partido.visitante, photos, ratings);
   const played = partido.estado === "finalizado";
   const winnerSide = played
     ? matchWinnerSideFromPartido(partido.partidoExpress)
@@ -444,11 +446,15 @@ function achievementPlayersFromWinner(
   ];
 }
 
-function usePublicGruposPlayerPhotos(
-  grupos: TEPublicGruposGrupo[]
-): Record<string, string | null> {
+function usePublicGruposPlayerPhotos(grupos: TEPublicGruposGrupo[]): {
+  photos: Record<string, string | null>;
+  ratings: Record<string, number | null>;
+} {
   const { organizadorId } = useClubExperience();
-  const [photos, setPhotos] = useState<Record<string, string | null>>({});
+  const [lookups, setLookups] = useState<{
+    photos: Record<string, string | null>;
+    ratings: Record<string, number | null>;
+  }>({ photos: {}, ratings: {} });
   const lookupKey = useMemo(() => {
     const sides: TEPublicPairSide[] = [];
     const extra: Array<{ id?: string | null; name?: string | null }> = [];
@@ -463,7 +469,7 @@ function usePublicGruposPlayerPhotos(
 
   useEffect(() => {
     if (!organizadorId || lookupKey === "[]") {
-      setPhotos({});
+      setLookups({ photos: {}, ratings: {} });
       return;
     }
     const entries = JSON.parse(lookupKey) as Array<{ id: string; name: string }>;
@@ -471,21 +477,27 @@ function usePublicGruposPlayerPhotos(
     void resolvePlayerPublicProfiles(organizadorId, entries, { publicOnly: true })
       .then((profiles) => {
         if (cancelled) return;
-        const next: Record<string, string | null> = {};
+        const photos: Record<string, string | null> = {};
+        const ratings: Record<string, number | null> = {};
         for (const entry of entries) {
-          next[entry.id] = profiles[entry.id]?.fotoUrl ?? null;
+          const profile = profiles[entry.id];
+          photos[entry.id] = profile?.fotoUrl ?? null;
+          ratings[entry.id] =
+            profile?.rating != null && Number.isFinite(profile.rating)
+              ? profile.rating
+              : null;
         }
-        setPhotos(next);
+        setLookups({ photos, ratings });
       })
       .catch(() => {
-        if (!cancelled) setPhotos({});
+        if (!cancelled) setLookups({ photos: {}, ratings: {} });
       });
     return () => {
       cancelled = true;
     };
   }, [organizadorId, lookupKey]);
 
-  return photos;
+  return lookups;
 }
 
 function withAchievementPhotos(
@@ -853,7 +865,8 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
 }) => {
   const [selectedGrupoId, setSelectedGrupoId] = useState<string | null>(null);
   const { branding, isScopeBrandingReady } = useClubExperience();
-  const playerPhotos = usePublicGruposPlayerPhotos(grupos);
+  const { photos: playerPhotos, ratings: playerRatings } =
+    usePublicGruposPlayerPhotos(grupos);
   const organizerName = useOrganizerDisplayName().trim();
   const clubName = organizerName || RIVIERA_PRODUCT_NAME;
   const showMotherAttribution = !isRivieraOwnAccountName(clubName);
@@ -1061,6 +1074,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
                       key={partido.id}
                       partido={partido}
                       photos={playerPhotos}
+                      ratings={playerRatings}
                     />
                   ))
                 )}
