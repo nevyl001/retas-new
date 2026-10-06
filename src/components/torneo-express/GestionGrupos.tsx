@@ -38,6 +38,7 @@ import { TeProgramacionMenu } from "./TeProgramacionMenu";
 import { TeReiniciarFaseGruposAction } from "./TeReiniciarFaseGruposAction";
 import { TeProgramarGrupoModal } from "./TeProgramarGrupoModal";
 import { DefinirParejaVirtualModal } from "./DefinirParejaVirtualModal";
+import { CambiarParejasGrupoModal } from "./CambiarParejasGrupoModal";
 import { puedeReiniciarFaseDeGrupos } from "../../lib/torneoExpress/resetFaseGrupos";
 import { TeReprogramarProgramacionModal } from "./TeReprogramarProgramacionModal";
 import type { ScheduleMode } from "../../lib/torneoExpress/schedulePendingGroup";
@@ -125,6 +126,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     parejaId: string;
     label: string;
   } | null>(null);
+  const [pairsOpen, setPairsOpen] = useState(false);
   const [vista, setVista] = useState<"grupos" | "eliminatoria">("grupos");
   const [mobileTab, setMobileTab] = useState<TeMobileTabId>("resumen");
   const isMobile = useMobileViewport(767);
@@ -251,6 +253,23 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         onEditarCalendario={() => setReprogramOpen(true)}
       />
     ) : null;
+
+  const renderPartidosTools = () =>
+    faseTorneo === "grupos" && bundle?.torneo.estado !== "finalizado" ? (
+      <div className="te-gestion-partidos-tools">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => setPairsOpen(true)}
+        >
+          Cambiar parejas
+        </Button>
+        {renderProgramacionMenu()}
+      </div>
+    ) : (
+      renderProgramacionMenu()
+    );
 
   const puedeFinalizarTorneo = useMemo(() => {
     if (!bundle || faseTorneo !== "eliminatoria") return false;
@@ -499,7 +518,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
             Captura resultados, horarios y canchas de cada juego. También puedes
             reprogramar todos los partidos pendientes.
           </p>
-          {renderProgramacionMenu()}
+          {renderPartidosTools()}
         </div>
         {faseTorneo !== "grupos" ? (
           <p className="te-partidos-migration-hint" role="status">
@@ -1301,7 +1320,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                       También puedes reprogramar todos los partidos pendientes.
                     </p>
                   </div>
-                  {renderProgramacionMenu()}
+                  {renderPartidosTools()}
                 </div>
                 {faseTorneo !== "grupos" ? (
                   <p className="te-partidos-migration-hint" role="status">
@@ -1438,6 +1457,22 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           );
         }}
       />
+
+      {pairsOpen && bundle ? (
+        <CambiarParejasGrupoModal
+          open
+          torneoId={torneoId}
+          grupos={bundle.grupos}
+          parejasPorGrupo={bundle.parejasPorGrupo}
+          partidosPorGrupo={bundle.partidosPorGrupo}
+          onClose={() => setPairsOpen(false)}
+          onSaved={() => {
+            setPairsOpen(false);
+            void reload();
+            showActionToast("Parejas de grupo actualizadas.", "success");
+          }}
+        />
+      ) : null}
 
       {virtualSlot && user?.id ? (
         <DefinirParejaVirtualModal

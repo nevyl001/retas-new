@@ -235,6 +235,57 @@ export async function resetGroup(input: {
   };
 }
 
+export async function reorganizeGroups(input: {
+  torneoId: string;
+  payload: {
+    grupos: Array<{ nombre: string; orden: number; pareja_ids: string[] }>;
+    partidos: Array<{
+      grupo_orden: number;
+      pareja_local_id: string;
+      pareja_visitante_id: string;
+      ronda: number;
+      orden: number;
+      cancha: string;
+      programado_en: string;
+    }>;
+  };
+}): Promise<{ grupos: number; partidos: number }> {
+  const row = await callRpc("reorganize_torneo_express_grupos", {
+    p_torneo_id: input.torneoId,
+    p_payload: input.payload,
+  });
+  return {
+    grupos: Number(row.grupos),
+    partidos: Number(row.partidos),
+  };
+}
+
+export function reorganizeGroupsMessage(code: string): string {
+  switch (code) {
+    case "INVALID_REORGANIZATION":
+      return "No se pueden cambiar los grupos si ya hay resultados.";
+    case "PAIR_WITHOUT_GROUP":
+    case "PAIR_NOT_IN_TOURNAMENT":
+      return "Todas las parejas de la categoría tienen que quedar en un grupo.";
+    case "PAIR_DUPLICATED":
+      return "Una pareja quedó en dos grupos.";
+    case "INVALID_GROUP":
+    case "INVALID_MATCH_PAYLOAD":
+    case "DUPLICATE_MATCH":
+      return "No se pudo armar la nueva programación de grupos.";
+    case "ROUND_ROBIN_MISMATCH":
+      return "Los partidos no coinciden con el nuevo grupo.";
+    case "STALE_SCHEDULE":
+      return "Dos partidos quedarían a la misma hora en la misma cancha.";
+    case "TOURNAMENT_NOT_EDITABLE":
+    case "ELIMINATORIA_EXISTS":
+    case "GROUP_NOT_EDITABLE":
+      return "Esta categoría ya no se puede editar.";
+    default:
+      return "No se pudieron cambiar las parejas de grupo.";
+  }
+}
+
 export async function reconcileGroupMatches(input: {
   grupoId: string;
   expectedVersion: number;
