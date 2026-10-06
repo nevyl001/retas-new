@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { formatMatchDateShort } from "../../../lib/matchDate";
+import { formatMatchDateShort, toMexicoCalendarDate } from "../../../lib/matchDate";
 import { formatCanchaDisplay } from "../../../lib/torneoExpress/canchaDisplay";
 import {
   formatPartidoFecha,
@@ -184,6 +184,32 @@ function mapPartidosForGrupo(
   });
 }
 
+function weekdayFromFecha(iso: string): string {
+  const label = formatPartidoFecha(iso);
+  const splitAt = label.lastIndexOf(" ");
+  return splitAt > 0 ? label.slice(0, splitAt) : label;
+}
+
+/** "Martes 6 oct" o "Martes 6 – Jueves 9 oct". */
+function formatTorneoRango(firstIso: string, lastIso: string): string {
+  const firstDay = toMexicoCalendarDate(firstIso);
+  const lastDay = toMexicoCalendarDate(lastIso);
+  const startWeekday = weekdayFromFecha(firstIso);
+  const startShort = formatMatchDateShort(firstIso, { includeYear: false });
+  if (!firstDay || !lastDay || firstDay === lastDay) {
+    return startWeekday ? `${startWeekday} ${startShort}` : startShort;
+  }
+
+  const endWeekday = weekdayFromFecha(lastIso);
+  const endShort = formatMatchDateShort(lastIso, { includeYear: false });
+  const sameMonth = firstDay.slice(0, 7) === lastDay.slice(0, 7);
+  const startDay = String(Number(firstDay.slice(8, 10)));
+  if (sameMonth) {
+    return `${startWeekday} ${startDay} – ${endWeekday} ${endShort}`;
+  }
+  return `${startWeekday} ${startShort} – ${endWeekday} ${endShort}`;
+}
+
 export function buildTEPublicGruposProps(
   bundle: TorneoExpressBundle,
   standingsByGrupo: Record<string, StandingRowExpress[]>,
@@ -192,21 +218,21 @@ export function buildTEPublicGruposProps(
   const clasifican = options?.clasifican ?? DEFAULT_CLASIFICAN;
   const gruposOrdenados = [...bundle.grupos].sort((a, b) => a.orden - b.orden);
 
-  let fechaIso: string | null = null;
+  const fechaIsos: string[] = [];
 
   gruposOrdenados.forEach((grupo) => {
     const partidos = bundle.partidosPorGrupo[grupo.id] ?? [];
     partidos.forEach((partido) => {
       const iso = partidoScheduleIso(partido);
-      if (!fechaIso || iso < fechaIso) {
-        fechaIso = iso;
-      }
+      if (iso) fechaIsos.push(iso);
     });
   });
 
-  const fecha = fechaIso
-    ? formatPartidoFecha(fechaIso)
-    : formatPartidoFecha(bundle.torneo.created_at);
+  fechaIsos.sort();
+  const fecha =
+    fechaIsos.length > 0
+      ? formatTorneoRango(fechaIsos[0]!, fechaIsos[fechaIsos.length - 1]!)
+      : formatPartidoFecha(bundle.torneo.created_at);
 
   const grupos: TEPublicGruposGrupo[] = gruposOrdenados.map((grupo) => {
     const parejas = bundle.parejasPorGrupo[grupo.id] ?? [];
@@ -312,6 +338,9 @@ function PartidoRow({
             aria-label={`${partido.fechaDia} ${partido.fechaNumero}`}
           >
             <span className="te-partido-fecha__dow">{partido.fechaDia}</span>
+            <span className="te-partido-fecha__sep" aria-hidden="true">
+              ·
+            </span>
             <span className="te-partido-fecha__when">{partido.fechaNumero}</span>
           </span>
           <span className="te-partido-hora">{partido.hora}</span>
