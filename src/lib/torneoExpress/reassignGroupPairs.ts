@@ -248,16 +248,24 @@ export function buildGroupReassignment(input: {
     }
   }
 
+  // El servidor exige orden >= 1. Los grupos creados desde el asistente
+  // empiezan en 0, así que se manda la posición 1-based y se conserva el
+  // mismo orden relativo.
+  const sentOrden = new Map<number, number>();
+  input.grupos.forEach((grupo, index) => {
+    sentOrden.set(grupo.orden, index + 1);
+  });
+
   return {
     ok: true,
     payload: {
-      grupos: input.grupos.map((grupo) => ({
+      grupos: input.grupos.map((grupo, index) => ({
         nombre: grupo.nombre,
-        orden: grupo.orden,
+        orden: index + 1,
         pareja_ids: grupo.parejaIds,
       })),
       partidos: planned.map((match) => ({
-        grupo_orden: match.grupoOrden,
+        grupo_orden: sentOrden.get(match.grupoOrden) ?? match.grupoOrden,
         pareja_local_id: match.localId,
         pareja_visitante_id: match.visitanteId,
         ronda: match.ronda,

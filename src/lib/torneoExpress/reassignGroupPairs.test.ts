@@ -177,6 +177,30 @@ describe("buildGroupReassignment", () => {
     assertNoSqlCollision(result.payload.partidos);
   });
 
+  it("manda el orden de grupo desde 1 aunque los grupos empiecen en 0", () => {
+    const result = buildGroupReassignment({
+      grupos: [
+        { orden: 0, nombre: "Grupo A", parejaIds: ["p2", "p3"] },
+        { orden: 1, nombre: "Grupo B", parejaIds: ["p4", "p5", "p6", "p1"] },
+      ],
+      existentes: existentes(),
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.payload.grupos.map((grupo) => grupo.orden)).toEqual([1, 2]);
+    const ordenes = new Set(result.payload.partidos.map((m) => m.grupo_orden));
+    expect(Array.from(ordenes).sort()).toEqual([1, 2]);
+    const kept = result.payload.partidos.find(
+      (match) =>
+        match.pareja_local_id === "p2" && match.pareja_visitante_id === "p3"
+    );
+    expect(kept).toMatchObject({
+      grupo_orden: 1,
+      cancha: "1",
+      programado_en: "2026-10-09T01:00:00.000Z",
+    });
+  });
+
   it("rechaza un grupo con una sola pareja", () => {
     const result = buildGroupReassignment({
       grupos: [
