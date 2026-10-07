@@ -3689,3 +3689,165 @@
     font-size: clamp(1.75rem, 2.4vw, 2.75rem);
   }
 }
+
+/* —— Podio Americano público: retratos grandes con presencia ——
+   Solo aplica con la variante `portrait` de PublicAmericanoPodiumCard. La
+   foto es la protagonista; medalla y nombre se superponen sobre ella. */
+.te-public--americano .am-pub-podium .am-pub-podium__grid {
+  gap: clamp(0.5rem, 2.2vw, 1.25rem);
+  align-items: end;
+  width: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
+}
+
+.te-public--americano
+  .am-pub-podium
+  .am-pub-podium__grid
+  .te-public-podium__card--portrait[data-rank] {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  padding: 0;
+  overflow: hidden;
+  border-radius: clamp(14px, 2.4vw, 20px);
+  background: var(--ro-chrome-elevated, #17191c);
+}
+
+.te-public--americano
+  .am-pub-podium
+  .am-pub-podium__grid
+  .te-public-podium__card--portrait[data-rank="1"] {
+  aspect-ratio: 4 / 5.7;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
+}
+
+.te-public--americano
+  .am-pub-podium
+  .am-pub-podium__grid
+  .te-public-podium__card--portrait[data-rank]
+  .te-public-podium__avatar {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+}
+
+.te-public--americano
+  .am-pub-podium
+  .am-pub-podium__grid
+  .te-public-podium__card--portrait[data-rank]
+  .te-public-podium__avatar
+  .rj-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background:
+    radial-gradient(
+      circle at 50% 30%,
+      rgba(255, 255, 255, 0.1),
+      transparent 62%
+    ),
+    var(--ro-chrome-elevated, #17191c);
+  color: rgba(255, 255, 255, 0.82);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 9vw, 4.5rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.te-public--americano
+  .am-pub-podium
+  .am-pub-podium__grid
+  .te-public-podium__card--portrait[data-rank]
+  .te-public-podium__avatar
+  .rj-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+.te-public--americano
+  .am-pub-podium
+  .am-pub-podium__grid
+  .te-public-podium__card--portrait
+  .te-public-podium__medal {
+  position: absolute;
+  top: clamp(0.45rem, 1.8vw, 0.85rem);
+  left: clamp(0.45rem, 1.8vw, 0.85rem);
+  z-index: 2;
+  width: clamp(1.45rem, 4.5vw, 2rem);
+  height: clamp(1.45rem, 4.5vw, 2rem);
+  margin: 0;
+  font-size: clamp(0.7rem, 2vw, 0.9rem);
+  background-color: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(6px);
+}
+
+/* Nombre sobre la foto, con degradado para que siempre se lea. */
+.te-public--americano
+  .am-pub-podium
+  .am-pub-podium__grid
+  .te-public-podium__card--portrait
+  .te-public-podium__caption {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 2;
+  display: grid;
+  gap: 0.15rem;
+  padding: clamp(1.6rem, 6vw, 3rem) clamp(0.4rem, 1.8vw, 0.9rem)
+    clamp(0.55rem, 2vw, 1rem);
+  text-align: center;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.62) 55%,
+    transparent 100%
+  );
+}
+
+.te-public--americano
+  .am-pub-podium
+  .am-pub-podium__grid
+  .te-public-podium__card--portrait
+  .te-public-podium__place {
+  margin: 0;
+  font-size: clamp(0.56rem, 1.8vw, 0.75rem);
+}
+
+.te-public--americano
+  .am-pub-podium
+  .am-pub-podium__grid
+  .te-public-podium__card--portrait
+  .te-public-podium__name {
+  color: #fff;
+  font-size: clamp(0.78rem, 3vw, 1.2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.te-public--americano
+  .am-pub-podium
+  .am-pub-podium__grid
+  .te-public-podium__card--portrait[data-rank="1"]
+  .te-public-podium__name {
+  font-size: clamp(0.88rem, 3.4vw, 1.45rem);
+}
+
+@media (min-width: 720px) {
+  .te-public--americano .am-pub-podium .am-pub-podium__inner {
+    padding-inline: clamp(1.5rem, 4vw, 3rem);
+  }
+}

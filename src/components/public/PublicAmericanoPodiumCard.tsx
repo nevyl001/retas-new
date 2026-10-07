@@ -7,6 +7,8 @@ interface PublicAmericanoPodiumCardProps {
   name: string;
   fotoUrl?: string | null;
   animationDelay?: string;
+  /** Vista pública: retrato grande con el nombre sobre la foto. */
+  portrait?: boolean;
 }
 
 const RANK_META: Record<
@@ -35,12 +37,22 @@ const RANK_META: Record<
 
 export const PublicAmericanoPodiumCard: React.FC<
   PublicAmericanoPodiumCardProps
-> = ({ rank, name, fotoUrl, animationDelay }) => {
+> = ({ rank, name, fotoUrl, animationDelay, portrait = false }) => {
   const meta = RANK_META[rank];
+  const label = (
+    <>
+      <span className="te-public-podium__place">{meta.place}</span>
+      <span className="te-public-podium__name" title={name}>
+        {name}
+      </span>
+    </>
+  );
   return (
     <article
       data-rank={rank}
-      className={`te-public-podium__card ${meta.cardClass} te-pub-fade-in-up`}
+      className={`te-public-podium__card ${meta.cardClass} te-pub-fade-in-up${
+        portrait ? " te-public-podium__card--portrait" : ""
+      }`}
       style={animationDelay ? { animationDelay } : undefined}
     >
       <span className="te-public-podium__medal" aria-hidden>
@@ -50,14 +62,16 @@ export const PublicAmericanoPodiumCard: React.FC<
         <JugadorAvatar
           fotoUrl={fotoUrl}
           nombre={name}
-          size={meta.avatarSize}
+          size={portrait ? "xl" : meta.avatarSize}
+          loading={portrait ? "eager" : "lazy"}
           className="te-public-podium__avatar-img"
         />
       </div>
-      <span className="te-public-podium__place">{meta.place}</span>
-      <span className="te-public-podium__name" title={name}>
-        {name}
-      </span>
+      {portrait ? (
+        <div className="te-public-podium__caption">{label}</div>
+      ) : (
+        label
+      )}
     </article>
   );
 };

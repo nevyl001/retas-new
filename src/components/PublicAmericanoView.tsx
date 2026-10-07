@@ -785,6 +785,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                 <div className="te-public-podium__grid am-pub-podium__grid">
                   {rankedRows[0] && (
                     <PublicAmericanoPodiumCard
+                      portrait
                       rank={1}
                       name={rankedRows[0].name}
                       fotoUrl={podiumAvatars[rankedRows[0].id]}
@@ -792,6 +793,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                   )}
                   {rankedRows[1] && (
                     <PublicAmericanoPodiumCard
+                      portrait
                       rank={2}
                       name={rankedRows[1].name}
                       fotoUrl={podiumAvatars[rankedRows[1].id]}
@@ -800,6 +802,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                   )}
                   {rankedRows[2] && (
                     <PublicAmericanoPodiumCard
+                      portrait
                       rank={3}
                       name={rankedRows[2].name}
                       fotoUrl={podiumAvatars[rankedRows[2].id]}
