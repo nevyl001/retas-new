@@ -290,7 +290,7 @@
   min-width: 0;
   max-width: calc(50% - 0.4rem);
   justify-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
 .te-public.te-public--grupos-wide .te-grupo-achievement__player > span:last-child {
@@ -3640,7 +3640,7 @@
 .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-meta {
   flex-wrap: wrap;
   overflow: visible;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
 .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-fecha {
@@ -4784,8 +4784,8 @@
 .te-public.te-public--grupos-wide .te-grupo-achievement__club--wordmark .te-grupo-achievement__club-logo {
   flex: 0 1 auto;
   width: auto;
-  height: 3rem;
-  max-width: min(11rem, 55%);
+  height: 2.125rem;
+  max-width: min(8rem, 50%);
 }
 
 .te-public.te-public--grupos-wide .te-grupo-achievement__club--wordmark .te-grupo-achievement__club-logo img {
@@ -4810,7 +4810,7 @@
 .te-public.te-public--grupos-wide .te-grupo-achievement__club--wordmark {
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
 .te-public.te-public--grupos-wide .te-grupo-achievement__club--wordmark .te-public.te-public--grupos-wide .te-grupo-achievement__club-copy {
