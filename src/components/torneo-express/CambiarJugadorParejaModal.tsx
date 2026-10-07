@@ -193,11 +193,12 @@ export const CambiarJugadorParejaModal: React.FC<
 
         <div className="te-define-pair-dialog__body">
           <p className="te-define-pair__lead">
-            1. Toca al jugador que quieres quitar. 2. Elige al jugador nuevo del
-            registro. Los partidos pendientes pasan a la pareja nueva y los
-            resultados ya jugados no se tocan.
+            {selection
+              ? "Elige al jugador nuevo del registro. Los partidos pendientes pasan a la pareja nueva y los resultados ya jugados no se tocan."
+              : "Toca al jugador que quieres quitar. Después elegirás al nuevo del registro."}
           </p>
 
+          {!selection ? (
           <div className="te-move-pairs__list">
             {orderedGroups.map((grupo) => {
               const rows = (parejasPorGrupo[grupo.id] ?? []).filter(
@@ -228,17 +229,11 @@ export const CambiarJugadorParejaModal: React.FC<
                     return (
                       <div key={pair.id} className="te-change-player__pair">
                         {slots.map(([slot, id, label]) => {
-                          const selected =
-                            selection?.parejaId === pair.pareja_id &&
-                            selection.outgoingId === id;
                           return (
                             <button
                               key={slot}
                               type="button"
-                              className={`te-change-player__chip${
-                                selected ? " te-change-player__chip--selected" : ""
-                              }`}
-                              aria-pressed={selected}
+                              className="te-change-player__chip"
                               disabled={saving || !id}
                               onClick={() => pickPlayer(grupo.id, pair, slot)}
                             >
@@ -253,6 +248,7 @@ export const CambiarJugadorParejaModal: React.FC<
               );
             })}
           </div>
+          ) : null}
 
           {selection ? (
             <>
@@ -268,6 +264,19 @@ export const CambiarJugadorParejaModal: React.FC<
                   <strong>{incoming ? incoming.name : "Sin elegir"}</strong>
                 </span>
               </div>
+
+              <button
+                type="button"
+                className="te-change-player__back"
+                disabled={saving}
+                onClick={() => {
+                  setSelection(null);
+                  setIncomingId(null);
+                  setError("");
+                }}
+              >
+                ← Elegir otro jugador para quitar
+              </button>
 
               <label className="te-define-pair__search">
                 Buscar jugador nuevo

@@ -455,6 +455,37 @@
   align-items: stretch;
 }
 
+.te-define-pair-dialog.te-move-pairs-dialog {
+  max-height: calc(100dvh - 2rem);
+}
+
+/* Las filas nunca se encogen: si falta altura, el cuerpo hace scroll. */
+.te-define-pair-dialog.te-move-pairs-dialog .te-define-pair-dialog__body {
+  grid-auto-rows: max-content;
+  align-content: start;
+  -webkit-overflow-scrolling: touch;
+}
+
+.te-define-pair-dialog.te-move-pairs-dialog .te-define-pair__list {
+  min-height: 11rem;
+  max-height: min(22rem, 50dvh);
+}
+
+.te-change-player__back {
+  justify-self: start;
+  padding: 0.25rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--ro-text-secondary, #a0a0a0);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.te-change-player__back:hover:not(:disabled) {
+  color: var(--ro-text-primary, #f4f4f4);
+}
+
 .te-move-pairs__actions {
   display: flex;
   flex-wrap: wrap;
