@@ -144,6 +144,33 @@ export function virtualPairResolveMessage(code: string): string {
   }
 }
 
+export function changePlayerMessage(code: string): string {
+  switch (code) {
+    case "STALE_GROUP_VERSION":
+      return "El grupo cambió mientras lo editabas. Ya recargué los datos, intenta de nuevo.";
+    case "PLAYER_ALREADY_REGISTERED":
+      return "Ese jugador ya está en otra pareja de esta categoría.";
+    case "PLAYER_ALREADY_IN_PAIR":
+      return "Ese jugador ya está en esta pareja.";
+    case "PLAYER_NOT_FOUND":
+      return "No encontré a ese jugador en el registro.";
+    case "PAIR_ALREADY_WITHDRAWN":
+      return "Esa pareja ya está retirada.";
+    case "PAIR_IS_VIRTUAL":
+      return "Esa plaza aún no tiene jugadores. Usa Sustituir pareja.";
+    case "OUTGOING_NOT_IN_PAIR":
+    case "PAIR_NOT_IN_GROUP":
+    case "INVALID_PAIR":
+      return "La pareja cambió. Cierra y vuelve a abrir esta ventana.";
+    case "GROUP_NOT_EDITABLE":
+    case "TOURNAMENT_NOT_EDITABLE":
+    case "ELIMINATORIA_EXISTS":
+      return "Esta categoría ya no se puede editar.";
+    default:
+      return "No se pudo cambiar el jugador.";
+  }
+}
+
 export async function replacePair(input: {
   grupoId: string;
   parejaId: string;

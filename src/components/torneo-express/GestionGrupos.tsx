@@ -38,6 +38,7 @@ import { TeProgramacionMenu } from "./TeProgramacionMenu";
 import { TeReiniciarFaseGruposAction } from "./TeReiniciarFaseGruposAction";
 import { TeProgramarGrupoModal } from "./TeProgramarGrupoModal";
 import { DefinirParejaVirtualModal } from "./DefinirParejaVirtualModal";
+import { CambiarJugadorParejaModal } from "./CambiarJugadorParejaModal";
 import { CambiarParejasGrupoModal } from "./CambiarParejasGrupoModal";
 import { puedeReiniciarFaseDeGrupos } from "../../lib/torneoExpress/resetFaseGrupos";
 import { TeReprogramarProgramacionModal } from "./TeReprogramarProgramacionModal";
@@ -127,6 +128,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     label: string;
   } | null>(null);
   const [pairsOpen, setPairsOpen] = useState(false);
+  const [playerChangeOpen, setPlayerChangeOpen] = useState(false);
   const [vista, setVista] = useState<"grupos" | "eliminatoria">("grupos");
   const [mobileTab, setMobileTab] = useState<TeMobileTabId>("resumen");
   const isMobile = useMobileViewport(767);
@@ -264,6 +266,14 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           onClick={() => setPairsOpen(true)}
         >
           Cambiar parejas
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => setPlayerChangeOpen(true)}
+        >
+          Cambiar jugador
         </Button>
         {renderProgramacionMenu()}
       </div>
@@ -1470,6 +1480,22 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
             await reload({ silent: true });
             showActionToast("Parejas de grupo actualizadas.", "success");
           }}
+        />
+      ) : null}
+
+      {playerChangeOpen && bundle && user?.id ? (
+        <CambiarJugadorParejaModal
+          open
+          userId={user.id}
+          grupos={bundle.grupos}
+          parejasPorGrupo={bundle.parejasPorGrupo}
+          occupiedPlayerIds={occupiedPlayerIds}
+          onClose={() => setPlayerChangeOpen(false)}
+          onChanged={async (message) => {
+            await reload({ silent: true });
+            showActionToast(message, "success");
+          }}
+          onStale={() => reload({ silent: true })}
         />
       ) : null}
 
