@@ -3379,3 +3379,30 @@
     transform: translateY(0);
   }
 }
+
+/* Con logo de club: el logo ya trae el nombre; el texto queda solo para
+   lectores de pantalla. */
+.te-elim-v2 .te-pb-closing-card__club--wordmark .te-pb-closing-card__club-logo {
+  flex: 0 1 auto;
+  width: auto;
+  height: 3rem;
+  max-width: min(11rem, 55%);
+}
+
+.te-elim-v2 .te-pb-closing-card__club--wordmark .te-pb-closing-card__club-logo img {
+  width: auto;
+  max-width: 100%;
+  height: 100%;
+}
+
+.te-elim-v2 .te-pb-closing-card__club--wordmark .te-pb-closing-card__club-name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

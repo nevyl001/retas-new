@@ -526,7 +526,11 @@ function ClosingClubSignature({
       className="te-pb-closing-card__signature"
       aria-label={`Organizado por ${clubName}`}
     >
-      <div className="te-pb-closing-card__club">
+      <div
+        className={`te-pb-closing-card__club${
+          showLogo ? " te-pb-closing-card__club--wordmark" : ""
+        }`}
+      >
         {showLogo ? (
           <span className="te-pb-closing-card__club-logo">
             <img

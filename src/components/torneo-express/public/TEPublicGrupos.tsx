@@ -801,7 +801,11 @@ function AchievementClubSignature({
       className="te-grupo-achievement__signature"
       aria-label={`Organizado por ${clubName}`}
     >
-      <div className="te-grupo-achievement__club">
+      <div
+        className={`te-grupo-achievement__club${
+          showLogo ? " te-grupo-achievement__club--wordmark" : ""
+        }`}
+      >
         {showLogo ? (
           <span className="te-grupo-achievement__club-logo">
             <img
