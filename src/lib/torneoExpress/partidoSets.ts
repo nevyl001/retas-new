@@ -316,8 +316,9 @@ export type SetsValidationOptions = {
    */
   allowDraw?: boolean;
   /**
-   * Si es `bo3_super_muerte`, el set 3 (índice 2) debe ser súper tiebreak
-   * clásico (a 10 con 2 de ventaja).
+   * Preferencia del evento. Es solo una sugerencia de captura: el organizador
+   * decide si el Set 3 es un set normal o una súper muerte, así que no se
+   * exige ningún marcador especial.
    */
   partidoFormato?: "flexible" | "bo3_super_muerte";
 };
@@ -328,7 +329,6 @@ export function getSetsValidationMessage(
   options?: SetsValidationOptions
 ): string | null {
   const allowDraw = options?.allowDraw !== false;
-  const requireSuperTb = options?.partidoFormato === "bo3_super_muerte";
 
   if (sets.length === 0) {
     return "Agrega al menos un set.";
@@ -344,11 +344,7 @@ export function getSetsValidationMessage(
     if (s.local < 0 || s.visitante < 0) {
       return "Los marcadores no pueden ser negativos.";
     }
-    if (requireSuperTb && i === 2) {
-      if (!isLegalSuperTieBreakScore(s)) {
-        return "El Set 3 debe ser súper muerte (a 10 con 2 de ventaja).";
-      }
-    } else if (!isLegalSetScoreAtIndex(s, i)) {
+    if (!isLegalSetScoreAtIndex(s, i)) {
       return `El Set ${i + 1} debe ser un marcador entre 0 y 99.`;
     }
     if (s.local === s.visitante) {

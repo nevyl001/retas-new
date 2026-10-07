@@ -335,21 +335,31 @@ describe("validación flexible de marcador de set", () => {
     expect(isLegalSuperTieBreakScore({ local: 10, visitante: 9 })).toBe(false);
   });
 
-  it("bo3_super_muerte exige súper TB legal en el Set 3", () => {
-    const sets = [
+  it("bo3_super_muerte no impone marcador: el Set 3 es lo que el usuario capture", () => {
+    const normal = [
       { local: 6, visitante: 4 },
       { local: 3, visitante: 6 },
-      { local: 10, visitante: 9 },
+      { local: 6, visitante: 3 },
     ];
     expect(
-      getSetsValidationMessage(sets, { partidoFormato: "bo3_super_muerte" })
-    ).toBe("El Set 3 debe ser súper muerte (a 10 con 2 de ventaja).");
+      getSetsValidationMessage(normal, { partidoFormato: "bo3_super_muerte" })
+    ).toBeNull();
     expect(
       getSetsValidationMessage(
         [
           { local: 6, visitante: 4 },
           { local: 3, visitante: 6 },
-          { local: 10, visitante: 8 },
+          { local: 10, visitante: 8, super_muerte: true },
+        ],
+        { partidoFormato: "bo3_super_muerte" }
+      )
+    ).toBeNull();
+    expect(
+      getSetsValidationMessage(
+        [
+          { local: 6, visitante: 4 },
+          { local: 3, visitante: 6 },
+          { local: 7, visitante: 5 },
         ],
         { partidoFormato: "bo3_super_muerte" }
       )

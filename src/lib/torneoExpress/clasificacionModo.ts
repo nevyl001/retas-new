@@ -68,7 +68,7 @@ export const PARTIDO_FORMATO_OPTIONS: readonly PartidoFormatoOption[] = [
     description: "Todos los partidos al mejor de 3 sets:",
     steps: [
       "Gana quien lleve 2 sets",
-      "Si van 1–1, el Set 3 es súper muerte (a 10, con 2 de ventaja)",
+      "Si van 1–1, el Set 3 puede ser set normal o súper muerte; tú eliges al capturar",
     ],
   },
 ] as const;

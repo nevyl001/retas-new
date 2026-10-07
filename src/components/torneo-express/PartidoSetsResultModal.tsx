@@ -223,8 +223,8 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
 
         {showSuperMuerteHint ? (
           <p className="te-sets-modal__format-hint" role="note">
-            Formato del evento: mejor de 3. Si van 1–1, el Set 3 debe ser súper
-            muerte (a 10 con 2 de ventaja).
+            Formato del evento: mejor de 3. Si van 1–1, captura el Set 3 como
+            set normal o con «+ Súper muerte»; tú decides.
           </p>
         ) : null}
 
