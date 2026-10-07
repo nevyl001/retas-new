@@ -3414,12 +3414,12 @@
   gap: 0.4rem;
 }
 
-.te-elim-v2 .te-pb-closing-card__club--wordmark .te-elim-v2 .te-pb-closing-card__club-copy {
+.te-elim-v2 .te-pb-closing-card__club--wordmark .te-pb-closing-card__club-copy {
   position: relative;
   gap: 0;
 }
 
-.te-elim-v2 .te-pb-closing-card__club--wordmark .te-elim-v2 .te-pb-closing-card__club-by {
+.te-elim-v2 .te-pb-closing-card__club--wordmark .te-pb-closing-card__club-by {
   padding-left: 0.1rem;
   font-size: 0.625rem;
   font-weight: 700;

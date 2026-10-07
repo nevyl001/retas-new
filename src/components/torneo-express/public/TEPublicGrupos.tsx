@@ -1149,7 +1149,8 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
       ) : (
         <div className={gridClass} data-groups={visibleGrupos.length}>
         {visibleGrupos.map((grupo) => (
-          <section key={grupo.id} className="te-grupo-wrap">
+          <div key={grupo.id} className="te-grupo-block">
+          <section className="te-grupo-wrap">
             <div className="te-grupo-head">
               <h2 className="te-grupo-label">{grupo.nombre}</h2>
               <span className="te-grupo-clasifican-badge">
@@ -1174,31 +1175,34 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
               </div>
 
               <div className="te-grupo-standing-full">
-                <GrupoStandings
-                  rows={grupo.standingRows}
-                  clasifican={grupo.clasifican}
-                  clasificacionModo={clasificacionModo}
-                  pairsById={grupo.pairsById}
-                  photos={playerPhotos}
-                />
-                <GrupoWinnerSummary
-                  grupoNombre={grupo.nombre}
-                  rows={grupo.standingRows}
-                  partidos={grupo.partidosExpress}
-                  torneoNombre={torneoNombre}
-                  categoria={categoria}
-                  players={withAchievementPhotos(
-                    grupo.achievementPlayers,
-                    playerPhotos
-                  )}
-                  clubName={clubName}
-                  clubLogoUrl={clubLogoUrl}
-                  showMotherAttribution={showMotherAttribution}
-                  clasificacionModo={clasificacionModo}
-                />
+                <div className="te-grupo-standings-panel">
+                  <GrupoStandings
+                    rows={grupo.standingRows}
+                    clasifican={grupo.clasifican}
+                    clasificacionModo={clasificacionModo}
+                    pairsById={grupo.pairsById}
+                    photos={playerPhotos}
+                  />
+                </div>
               </div>
             </div>
           </section>
+          <GrupoWinnerSummary
+            grupoNombre={grupo.nombre}
+            rows={grupo.standingRows}
+            partidos={grupo.partidosExpress}
+            torneoNombre={torneoNombre}
+            categoria={categoria}
+            players={withAchievementPhotos(
+              grupo.achievementPlayers,
+              playerPhotos
+            )}
+            clubName={clubName}
+            clubLogoUrl={clubLogoUrl}
+            showMotherAttribution={showMotherAttribution}
+            clasificacionModo={clasificacionModo}
+          />
+          </div>
         ))}
         </div>
       )}
