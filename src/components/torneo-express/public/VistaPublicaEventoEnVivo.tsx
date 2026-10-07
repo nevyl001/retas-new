@@ -10,6 +10,7 @@ import { useRetryableImage } from "../../../hooks/useRetryableImage";
 import { useVisiblePolling } from "../../../hooks/useVisiblePolling";
 import {
   buildEnVivoBoard,
+  enVivoCourtKey,
   formatStartsIn,
   type EnVivoCourtLane,
   type EnVivoPairSide,
@@ -20,7 +21,6 @@ import {
   formatPartidoFecha,
   formatPartidoHora,
 } from "../../../lib/torneoExpress/partidoSchedule";
-import { formatCanchaDisplay } from "../../../lib/torneoExpress/canchaDisplay";
 import { resolvePlayerPublicProfiles } from "../../../lib/rivieraJugadores/publicPlayerAvatars";
 import {
   fetchEnVivoPartidos,
@@ -40,7 +40,7 @@ import "./te-evento-en-vivo.css";
 /** Refresco de datos (la transición «próximo → en vivo» ocurre localmente con el reloj). */
 const POLL_INTERVAL_MS = 30_000;
 const CLOCK_TICK_MS = 15_000;
-const UPCOMING_LIMIT = 8;
+const UPCOMING_PER_COURT = 4;
 
 type PhotoMap = Record<string, string | null>;
 
@@ -51,10 +51,17 @@ function dayTag(iso: string, now: Date): string {
   return formatPartidoFecha(iso);
 }
 
-const Portrait: React.FC<{ player: TEPublicPairPlayer }> = ({ player }) => {
+/** Retrato vertical: foto (o iniciales) con sombra inferior; con `caption`, el nombre va sobre la foto. */
+const Portrait: React.FC<{
+  player: TEPublicPairPlayer;
+  caption?: boolean;
+}> = ({ player, caption = false }) => {
   const { src, onError } = useRetryableImage(player.fotoUrl);
   return (
-    <span className="te-live-portrait" aria-hidden="true">
+    <span
+      className={`te-live-portrait${caption ? " te-live-portrait--tile" : ""}`}
+      aria-hidden={caption ? undefined : true}
+    >
       {src ? (
         <img
           className="te-live-portrait__img"
@@ -68,6 +75,12 @@ const Portrait: React.FC<{ player: TEPublicPairPlayer }> = ({ player }) => {
           {getJugadorInitials(player.nombre)}
         </span>
       )}
+      {caption ? (
+        <>
+          <span className="te-live-portrait__shade" aria-hidden="true" />
+          <span className="te-live-portrait__caption">{player.nombre}</span>
+        </>
+      ) : null}
     </span>
   );
 };
@@ -98,7 +111,7 @@ const Faces: React.FC<{ players: TEPublicPairPlayer[] }> = ({ players }) => (
   </span>
 );
 
-/** Pareja: avatares arriba y nombres debajo (tamaño según la tarjeta). */
+/** Pareja: dos retratos con el nombre sobre la foto (o solo texto si es una plaza virtual). */
 const Team: React.FC<{
   side: EnVivoPairSide;
   photos: PhotoMap;
@@ -107,14 +120,28 @@ const Team: React.FC<{
   const { players, showFaces } = teamPlayers(side, photos);
   return (
     <div className={`te-live-team te-live-team--${size}`}>
-      {showFaces ? <Faces players={players} /> : null}
-      <div className="te-live-team__names">
-        {players.map((player, index) => (
-          <span className="te-live-team__name" key={`${player.nombre}-${index}`}>
-            {player.nombre}
-          </span>
-        ))}
-      </div>
+      {showFaces ? (
+        <div className="te-live-team__tiles">
+          {players.map((player, index) => (
+            <Portrait
+              key={`${player.id ?? "p"}-${index}`}
+              player={player}
+              caption
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="te-live-team__names">
+          {players.map((player, index) => (
+            <span
+              className="te-live-team__name"
+              key={`${player.nombre}-${index}`}
+            >
+              {player.nombre}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -209,32 +236,31 @@ const TeamInline: React.FC<{ side: EnVivoPairSide; photos: PhotoMap }> = ({
   );
 };
 
-const UpcomingRow: React.FC<{
+const UpcomingItem: React.FC<{
   partido: EnVivoPartido;
   now: Date;
   photos: PhotoMap;
 }> = ({ partido, now, photos }) => {
   const tag = dayTag(partido.programadoEn, now);
   return (
-    <li className="te-live-upcoming__row">
-      <span className="te-live-upcoming__time">
-        {formatPartidoHora(partido.programadoEn)}
-        {tag ? <small>{tag}</small> : null}
-      </span>
-      <span className="te-live-upcoming__where">
-        <span className="te-live-upcoming__court">
-          {formatCanchaDisplay(partido.cancha)}
+    <li className="te-live-upcoming__item">
+      <div className="te-live-upcoming__top">
+        <span className="te-live-upcoming__time">
+          {formatPartidoHora(partido.programadoEn)}
+          {tag ? <small>{tag}</small> : null}
         </span>
-        <span className="te-live-upcoming__cat">{partido.categoria}</span>
-        <span className="te-live-upcoming__stage">{partido.etapa}</span>
-      </span>
-      <span className="te-live-upcoming__teams">
+        <span className="te-live-upcoming__tags">
+          <span className="te-live-upcoming__cat">{partido.categoria}</span>
+          <span className="te-live-upcoming__stage">{partido.etapa}</span>
+        </span>
+      </div>
+      <div className="te-live-upcoming__teams">
         <TeamInline side={partido.local} photos={photos} />
         <span className="te-live-upcoming__vs" aria-hidden="true">
           vs
         </span>
         <TeamInline side={partido.visitante} photos={photos} />
-      </span>
+      </div>
     </li>
   );
 };
@@ -352,9 +378,20 @@ const EnVivoBoard: React.FC<BoardProps> = ({ estructura }) => {
     [partidos, now]
   );
 
+  // Próximos agrupados por cancha (mismo orden que las tarjetas de arriba).
+  const upcomingByCourt = useMemo(() => {
+    const byKey = new Map<string, EnVivoPartido[]>();
+    for (const partido of board.upcoming) {
+      const key = enVivoCourtKey(partido.cancha);
+      const list = byKey.get(key) ?? [];
+      if (list.length < UPCOMING_PER_COURT) list.push(partido);
+      byKey.set(key, list);
+    }
+    return byKey;
+  }, [board.upcoming]);
   const upcoming = useMemo(
-    () => board.upcoming.slice(0, UPCOMING_LIMIT),
-    [board.upcoming]
+    () => Array.from(upcomingByCourt.values()).flat(),
+    [upcomingByCourt]
   );
 
   // Fotos: solo de quienes se ven en pantalla, y solo ids que aún no se pidieron.
@@ -500,16 +537,32 @@ const EnVivoBoard: React.FC<BoardProps> = ({ estructura }) => {
           {upcoming.length > 0 ? (
             <section className="te-live-upcoming" aria-label="Próximos partidos">
               <h2 className="te-live-upcoming__title">Próximos partidos</h2>
-              <ol className="te-live-upcoming__list">
-                {upcoming.map((partido) => (
-                  <UpcomingRow
-                    key={partido.id}
-                    partido={partido}
-                    now={now}
-                    photos={photos}
-                  />
-                ))}
-              </ol>
+              <div className="te-live-upcoming__cols">
+                {board.courts.map((lane) => {
+                  const items = upcomingByCourt.get(lane.key) ?? [];
+                  return (
+                    <div className="te-live-upcoming__col" key={lane.key}>
+                      <h3 className="te-live-upcoming__court">{lane.label}</h3>
+                      {items.length > 0 ? (
+                        <ol className="te-live-upcoming__list">
+                          {items.map((partido) => (
+                            <UpcomingItem
+                              key={partido.id}
+                              partido={partido}
+                              now={now}
+                              photos={photos}
+                            />
+                          ))}
+                        </ol>
+                      ) : (
+                        <p className="te-live-upcoming__none">
+                          Sin más partidos
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </section>
           ) : null}
         </>

@@ -325,12 +325,20 @@
   text-align: center;
 }
 
-.te-live-team--lg {
-  --te-face: 5.6em;
+/* Retratos de la pareja, lado a lado; el ancho de cada uno se adapta a la tarjeta. */
+.te-live-team__tiles {
+  display: flex;
+  justify-content: center;
+  gap: 0.55em;
+  width: 100%;
 }
 
-.te-live-team--md {
-  --te-face: 3.9em;
+.te-live-team--lg .te-live-team__tiles {
+  max-width: 23em;
+}
+
+.te-live-team--md .te-live-team__tiles {
+  max-width: 15em;
 }
 
 .te-live-team__names {
@@ -341,19 +349,10 @@
 }
 
 .te-live-team__name {
-  font-weight: 600;
+  font-size: 1.15em;
+  font-weight: 700;
   line-height: 1.2;
   overflow-wrap: anywhere;
-}
-
-.te-live-team--lg .te-live-team__name {
-  font-size: 1.3em;
-  font-weight: 700;
-}
-
-.te-live-team--md .te-live-team__name {
-  font-size: 1.05em;
-  color: var(--text-secondary);
 }
 
 .te-live-court__vs {
@@ -364,52 +363,113 @@
   color: var(--text-muted);
 }
 
-/* Avatares: par superpuesto, anillo de acento en la cancha en juego. */
-.te-live-faces {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.te-live-faces .te-live-portrait + .te-live-portrait {
-  margin-left: calc(var(--te-face, 2.2em) * -0.22);
-}
-
+/* —— Retratos verticales —— */
 .te-live-portrait {
+  position: relative;
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: var(--te-face, 2.2em);
-  height: var(--te-face, 2.2em);
-  border-radius: 50%;
   overflow: hidden;
-  border: 2px solid rgba(12, 12, 14, 0.9);
-  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.7em;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04)),
+    rgba(18, 19, 22, 0.9);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.28),
-    0 6px 16px rgba(0, 0, 0, 0.4);
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
-.te-live-court--live .te-live-portrait {
+.te-live-portrait--tile {
+  flex: 1 1 0;
+  min-width: 0;
+  aspect-ratio: 3 / 4;
+  border-radius: 1em;
   box-shadow:
-    0 0 0 2px var(--te-live-accent),
-    0 8px 22px rgba(0, 0, 0, 0.5);
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 14px 30px rgba(0, 0, 0, 0.45);
+}
+
+.te-live-court--live .te-live-portrait--tile {
+  border-color: color-mix(in srgb, var(--te-live-accent) 70%, transparent);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px color-mix(in srgb, var(--te-live-accent) 30%, transparent),
+    0 16px 36px rgba(0, 0, 0, 0.5);
 }
 
 .te-live-portrait__img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 18%;
   display: block;
 }
 
 .te-live-portrait__fallback {
   font-family: var(--font-display);
-  font-size: calc(var(--te-face, 2.2em) * 0.34);
+  font-size: 1.6em;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--text-secondary);
+}
+
+.te-live-portrait__shade {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 52%;
+  background: linear-gradient(
+    to top,
+    rgba(6, 8, 10, 0.92) 0%,
+    rgba(6, 8, 10, 0.5) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.te-live-portrait__caption {
+  position: absolute;
+  inset: auto 0.55em 0.6em 0.6em;
+  z-index: 1;
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.95em;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+  text-align: left;
+  color: var(--text-primary);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.te-live-team--md .te-live-portrait__caption {
+  font-size: 0.8em;
+}
+
+/* Retrato mini (listas): sin texto encima, dos superpuestos. */
+.te-live-faces {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.te-live-faces .te-live-portrait {
+  width: 2.3em;
+  height: 2.9em;
+  border-radius: 0.55em;
+}
+
+.te-live-faces .te-live-portrait + .te-live-portrait {
+  margin-left: -0.55em;
+}
+
+.te-live-faces .te-live-portrait__fallback {
+  font-size: 0.8em;
 }
 
 .te-live-court__foot {
@@ -427,7 +487,7 @@
   color: var(--text-muted);
 }
 
-/* —— Próximos —— */
+/* —— Próximos (por cancha, alineados con las tarjetas de arriba) —— */
 .te-live-upcoming {
   margin-top: 1.75em;
 }
@@ -442,61 +502,89 @@
   color: var(--text-secondary);
 }
 
-.te-live-upcoming__list {
+.te-live-upcoming__cols {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 34em), 1fr));
-  gap: 0.6em 1em;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24em), 1fr));
+  gap: 1em;
+  align-items: start;
+}
+
+.te-live-upcoming__col {
+  min-width: 0;
+}
+
+.te-live-upcoming__court {
+  margin: 0 0 0.6em;
+  padding-bottom: 0.5em;
+  border-bottom: 2px solid var(--te-live-accent);
+  font-family: var(--font-display);
+  font-size: 1.05em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.te-live-upcoming__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.te-live-upcoming__row {
-  display: grid;
-  grid-template-columns: 5.2em 9em minmax(0, 1fr);
-  align-items: center;
-  gap: 0.9em;
-  padding: 0.75em 1em;
+.te-live-upcoming__none {
+  margin: 0;
+  font-size: 0.9em;
+  color: var(--text-muted);
+}
+
+.te-live-upcoming__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  padding: 0.8em 1em;
   border-radius: var(--ro-radius-lg, 14px);
   border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
   background: rgba(255, 255, 255, 0.04);
+}
+
+.te-live-upcoming__top {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
 }
 
 .te-live-upcoming__time {
   display: flex;
   flex-direction: column;
   font-family: var(--font-display);
-  font-size: 1.1em;
+  font-size: 1.15em;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 
 .te-live-upcoming__time small {
   margin-top: 0.15em;
   font-family: var(--font-body);
-  font-size: 0.7em;
+  font-size: 0.65em;
   font-weight: 500;
   text-transform: capitalize;
   color: var(--text-muted);
 }
 
-.te-live-upcoming__where {
+.te-live-upcoming__tags {
   display: flex;
   flex-direction: column;
-  gap: 0.15em;
+  gap: 0.1em;
   min-width: 0;
+  padding-left: 0.8em;
+  border-left: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
   line-height: 1.2;
 }
 
-.te-live-upcoming__court {
-  font-size: 0.9em;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
 .te-live-upcoming__cat {
-  font-size: 0.85em;
+  font-size: 0.9em;
   font-weight: 700;
   color: var(--te-live-accent);
 }
@@ -508,22 +596,24 @@
 
 .te-live-upcoming__teams {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4em 0.75em;
+  flex-direction: column;
+  gap: 0.35em;
   min-width: 0;
 }
 
 .te-live-upcoming__vs {
-  font-size: 0.8em;
+  padding-left: 0.2em;
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 
 .te-live-inline {
-  --te-face: 2.3em;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.55em;
+  gap: 0.7em;
   min-width: 0;
 }
 
@@ -550,12 +640,9 @@
     text-align: center;
   }
 
-  .te-live-upcoming__row {
-    grid-template-columns: 4.6em minmax(0, 1fr);
-  }
-
-  .te-live-upcoming__teams {
-    grid-column: 1 / -1;
+  .te-live-team--lg .te-live-team__tiles,
+  .te-live-team--md .te-live-team__tiles {
+    max-width: 18em;
   }
 
   .te-live-header__side,
