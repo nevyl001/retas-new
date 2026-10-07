@@ -412,6 +412,46 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         <p className="americano-registration__hint">
           Toca una tarjeta para sumar o quitar del roster. Mínimo 4 jugadores.
         </p>
+        <div
+          className="americano-registration__roster"
+          aria-label="Jugadores registrados en esta reta"
+        >
+          <h3 className="americano-registration__roster-title">
+            Registrados en esta reta{" "}
+            <span>
+              ({selectedPlayers.length}
+              {selectedPlayers.length < 4 ? " · mínimo 4" : ""})
+            </span>
+          </h3>
+          {selectedPlayers.length === 0 ? (
+            <p className="americano-registration__hint">
+              Aún no has sumado jugadores. Toca una tarjeta de abajo.
+            </p>
+          ) : (
+            <ul className="americano-registration__roster-list">
+              {selectedPlayers.map((player) => (
+                <li
+                  key={player.id}
+                  className="americano-registration__roster-chip"
+                >
+                  <span>{player.name}</span>
+                  <button
+                    type="button"
+                    className="americano-registration__roster-remove"
+                    aria-label={`Quitar a ${player.name}`}
+                    onClick={() =>
+                      handlePlayerSelect(
+                        selectedPlayers.filter((p) => p.id !== player.id)
+                      )
+                    }
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <ModernPlayerManager
           players={availablePlayers}
           loading={availablePlayersLoading}

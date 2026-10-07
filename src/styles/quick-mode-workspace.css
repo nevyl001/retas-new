@@ -1906,7 +1906,8 @@
   padding: 0;
   border: none;
   background: none;
-  color: var(--brand-accent, var(--ro-accent));
+  /* Fondo oscuro: el acento del club puede ser oscuro e ilegible; texto neutro. */
+  color: var(--qm-ink-text);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -2600,7 +2601,7 @@
 }
 
 .qm-ws-panel .qm-ws__text-btn {
-  color: var(--brand-accent, var(--ro-accent));
+  color: var(--qm-ink-text);
 }
 
 .qm-ws-panel__block--danger {
@@ -3615,3 +3616,65 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 }
 
 /* En móvil se mantiene el 2×2 del bloque max-width:768 (date/time | duration/courts). */
+
+
+/* Roster de la reta (Americano): quién llevo registrado */
+.qm-ws__workbench .americano-registration__roster {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--qm-ink-border);
+  border-radius: var(--ro-radius-sm);
+  background: var(--qm-ink-inset);
+}
+
+.qm-ws__workbench .americano-registration__roster-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--qm-ink-text);
+}
+
+.qm-ws__workbench .americano-registration__roster-title span {
+  color: var(--qm-ink-muted);
+  font-weight: 500;
+}
+
+.qm-ws__workbench .americano-registration__roster-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qm-ws__workbench .americano-registration__roster-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2rem;
+  padding: 0.2rem 0.35rem 0.2rem 0.65rem;
+  border: 1px solid var(--qm-ink-border);
+  border-radius: 999px;
+  background: var(--qm-ink-elevated);
+  color: var(--qm-ink-text);
+  font-size: 0.82rem;
+}
+
+.qm-ws__workbench .americano-registration__roster-remove {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--qm-ink-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.qm-ws__workbench .americano-registration__roster-remove:hover {
+  color: var(--qm-ink-text);
+}
