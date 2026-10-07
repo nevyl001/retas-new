@@ -44,6 +44,37 @@ const UPCOMING_PER_COURT = 4;
 
 type PhotoMap = Record<string, string | null>;
 
+const TAGLINE_INTERVAL_MS = 12_000;
+const TAGLINES = [
+  "Cada punto cuenta. Disfruta cada juego.",
+  "Juega con pasión, gana con respeto.",
+  "La garra se demuestra en cada pelota.",
+  "Hoy todos vinieron a dar lo mejor. ¡Mucho éxito!",
+  "El esfuerzo de hoy es la victoria de mañana.",
+  "Compite fuerte, diviértete más.",
+  "Equipo, actitud y corazón.",
+  "Gana quien no se rinde. ¡Vamos con todo!",
+];
+
+/** Frase para los participantes; cambia sola con un fundido suave. */
+const MotivationalLine: React.FC = () => {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(
+      () => setIndex((i) => (i + 1) % TAGLINES.length),
+      TAGLINE_INTERVAL_MS
+    );
+    return () => window.clearInterval(id);
+  }, []);
+  return (
+    <p className="te-live-header__tagline">
+      <span key={index} className="te-live-header__tagline-text">
+        {TAGLINES[index]}
+      </span>
+    </p>
+  );
+};
+
 /** Índice de entrada escalonada (lo consume el CSS como `--te-i`). */
 function stagger(index: number): React.CSSProperties {
   return { "--te-i": index } as React.CSSProperties;
@@ -165,6 +196,22 @@ const Versus: React.FC<{
   </div>
 );
 
+/** Pelotas cruzando la tarjeta en arco (solo decorativo). Se mueve con CSS; no toca datos. */
+const Rally: React.FC = () => (
+  <span className="te-live-rally" aria-hidden="true">
+    {[0, 1, 2].map((trail) => (
+      <span
+        key={trail}
+        className={`te-live-rally__x te-live-rally__x--${trail}`}
+      >
+        <span className="te-live-rally__y">
+          <span className="te-live-rally__ball" />
+        </span>
+      </span>
+    ))}
+  </span>
+);
+
 const LiveCourtCard: React.FC<{
   lane: EnVivoCourtLane;
   partido: EnVivoPartido;
@@ -175,6 +222,7 @@ const LiveCourtCard: React.FC<{
     className="te-live-court te-live-court--live"
     style={stagger(index)}
   >
+    <Rally />
     <header className="te-live-court__head">
       <h3 className="te-live-court__name">{lane.label}</h3>
       <span className="te-live-badge te-live-badge--live">
@@ -206,6 +254,7 @@ const IdleCourtCard: React.FC<{
       className="te-live-court te-live-court--idle"
       style={stagger(index)}
     >
+      {next ? <Rally /> : null}
       <header className="te-live-court__head">
         <h3 className="te-live-court__name">{lane.label}</h3>
         <span className="te-live-badge te-live-badge--idle">
@@ -473,8 +522,8 @@ const EnVivoBoard: React.FC<BoardProps> = ({ estructura }) => {
     <div className="te-live" data-fullscreen={fullscreen ? "true" : "false"}>
       <header className="te-live-header te-pub-fade-in">
         <div className="te-live-header__title">
-          <p className="te-live-header__kicker">Pantalla de canchas</p>
           <h1 className="te-live-header__name">{evento.nombre}</h1>
+          <MotivationalLine />
         </div>
         <div className="te-live-header__side">
           <div className="te-live-clock" aria-label="Hora actual">

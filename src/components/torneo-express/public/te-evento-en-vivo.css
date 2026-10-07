@@ -50,15 +50,6 @@
   flex: 1 1 18em;
 }
 
-.te-live-header__kicker {
-  margin: 0 0 0.35em;
-  font-size: 0.8em;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
 .te-live-header__name {
   margin: 0;
   font-family: var(--font-display);
@@ -68,6 +59,35 @@
   letter-spacing: -0.01em;
   color: var(--text-primary);
   overflow-wrap: anywhere;
+}
+
+.te-live-header__tagline {
+  margin: 0.55em 0 0;
+  min-height: 1.5em;
+  font-size: 1.1em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary);
+}
+
+.te-live-header__tagline-text {
+  display: inline-block;
+  padding-left: 0.9em;
+  border-left: 2px solid var(--te-live-accent);
+  animation: te-live-tagline 900ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes te-live-tagline {
+  from {
+    opacity: 0;
+    transform: translateY(0.45em);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
 }
 
 .te-live-header__side {
@@ -811,6 +831,133 @@
   animation: te-live-ripple 2s ease-out infinite;
 }
 
+/* —— Pelotas cruzando la tarjeta (rally en arco con estela) —— */
+.te-live {
+  /* Color de objeto (pelota), igual para todos los clubes: no es branding. */
+  --te-ball: hsl(68 88% 56%);
+  --te-ball-hi: hsl(70 95% 80%);
+  --te-ball-lo: hsl(62 70% 34%);
+  --te-rally-ms: 2800ms;
+}
+
+.te-live-rally {
+  position: absolute;
+  inset: 20% 5% 24% 5%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.te-live-court--idle .te-live-rally {
+  opacity: 0.5;
+}
+
+.te-live-rally__x {
+  --te-lag: 0ms;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1.2em;
+  animation: te-rally-x var(--te-rally-ms) cubic-bezier(0.42, 0.08, 0.58, 0.92)
+    infinite alternate backwards;
+  animation-delay: calc(var(--te-i, 0) * -0.7s + var(--te-lag));
+}
+
+.te-live-rally__x--1 {
+  --te-lag: 90ms;
+  opacity: 0.38;
+}
+
+.te-live-rally__x--2 {
+  --te-lag: 180ms;
+  opacity: 0.18;
+}
+
+.te-live-rally__y {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  animation: te-rally-y var(--te-rally-ms) infinite backwards;
+  animation-delay: calc(var(--te-i, 0) * -0.7s + var(--te-lag, 0ms));
+}
+
+.te-live-rally__x--1 .te-live-rally__y {
+  animation-delay: calc(var(--te-i, 0) * -0.7s + 90ms);
+}
+
+.te-live-rally__x--2 .te-live-rally__y {
+  animation-delay: calc(var(--te-i, 0) * -0.7s + 180ms);
+}
+
+.te-live-rally__ball {
+  position: relative;
+  display: block;
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(
+    circle at 32% 28%,
+    var(--te-ball-hi),
+    var(--te-ball) 46%,
+    var(--te-ball-lo) 100%
+  );
+  box-shadow:
+    0 0.5em 0.8em rgba(0, 0, 0, 0.45),
+    0 0 1.1em color-mix(in srgb, var(--te-ball) 40%, transparent);
+  animation: te-rally-spin 1100ms linear infinite;
+}
+
+/* Costuras de la pelota. */
+.te-live-rally__ball::before,
+.te-live-rally__ball::after {
+  content: "";
+  position: absolute;
+  top: -10%;
+  width: 100%;
+  height: 120%;
+  border-radius: 50%;
+  border: 0.09em solid rgba(255, 255, 255, 0.85);
+}
+
+.te-live-rally__ball::before {
+  left: -68%;
+}
+
+.te-live-rally__ball::after {
+  left: 68%;
+}
+
+@keyframes te-rally-x {
+  from {
+    left: 0;
+  }
+  to {
+    left: calc(100% - 1.2em);
+  }
+}
+
+@keyframes te-rally-y {
+  0% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+  }
+  50% {
+    transform: translateY(-92%);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.3);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes te-rally-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .te-live-court,
   .te-live-court--live,
@@ -819,13 +966,15 @@
   .te-live-court--live::after,
   .te-live-court--live .te-live-court__head::after,
   .te-live-court--live .te-live-portrait__img,
+  .te-live-header__tagline-text,
   .te-live-badge__dot,
   .te-live-badge__dot::after {
     animation: none;
   }
 
   .te-live-court--live::after,
-  .te-live-court--live .te-live-court__head::after {
+  .te-live-court--live .te-live-court__head::after,
+  .te-live-rally {
     display: none;
   }
 }
