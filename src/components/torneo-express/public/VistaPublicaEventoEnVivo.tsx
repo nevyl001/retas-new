@@ -41,6 +41,8 @@ import "./te-evento-en-vivo.css";
 const POLL_INTERVAL_MS = 30_000;
 const CLOCK_TICK_MS = 15_000;
 const UPCOMING_PER_COURT = 4;
+const MOTIVATIONAL_PHRASE =
+  "Cada punto cuenta. Juega con pasión, compite con respeto.";
 
 type PhotoMap = Record<string, string | null>;
 
@@ -160,12 +162,20 @@ const Versus: React.FC<{
   </div>
 );
 
+function staggerStyle(index: number): React.CSSProperties {
+  return { "--te-i": index } as React.CSSProperties;
+}
+
 const LiveCourtCard: React.FC<{
   lane: EnVivoCourtLane;
   partido: EnVivoPartido;
   photos: PhotoMap;
-}> = ({ lane, partido, photos }) => (
-  <article className="te-live-court te-live-court--live">
+  index: number;
+}> = ({ lane, partido, photos, index }) => (
+  <article
+    className="te-live-court te-live-court--live"
+    style={staggerStyle(index)}
+  >
     <header className="te-live-court__head">
       <h3 className="te-live-court__name">{lane.label}</h3>
       <span className="te-live-badge te-live-badge--live">
@@ -188,11 +198,15 @@ const IdleCourtCard: React.FC<{
   lane: EnVivoCourtLane;
   now: Date;
   photos: PhotoMap;
-}> = ({ lane, now, photos }) => {
+  index: number;
+}> = ({ lane, now, photos, index }) => {
   const next = lane.next;
   const startsIn = next ? formatStartsIn(next.startMs, now) : null;
   return (
-    <article className="te-live-court te-live-court--idle">
+    <article
+      className="te-live-court te-live-court--idle"
+      style={staggerStyle(index)}
+    >
       <header className="te-live-court__head">
         <h3 className="te-live-court__name">{lane.label}</h3>
         <span className="te-live-badge te-live-badge--idle">
@@ -459,8 +473,8 @@ const EnVivoBoard: React.FC<BoardProps> = ({ estructura }) => {
     <div className="te-live" data-fullscreen={fullscreen ? "true" : "false"}>
       <header className="te-live-header te-pub-fade-in">
         <div className="te-live-header__title">
-          <p className="te-live-header__kicker">Pantalla de canchas</p>
           <h1 className="te-live-header__name">{evento.nombre}</h1>
+          <p className="te-live-header__tagline">{MOTIVATIONAL_PHRASE}</p>
         </div>
         <div className="te-live-header__side">
           <div className="te-live-clock" aria-label="Hora actual">
@@ -520,13 +534,14 @@ const EnVivoBoard: React.FC<BoardProps> = ({ estructura }) => {
               className="te-live-courts"
               aria-label="Canchas"
             >
-              {board.courts.map((lane) =>
+              {board.courts.map((lane, index) =>
                 lane.live ? (
                   <LiveCourtCard
                     key={lane.key}
                     lane={lane}
                     partido={lane.live}
                     photos={photos}
+                    index={index}
                   />
                 ) : (
                   <IdleCourtCard
@@ -534,6 +549,7 @@ const EnVivoBoard: React.FC<BoardProps> = ({ estructura }) => {
                     lane={lane}
                     now={now}
                     photos={photos}
+                    index={index}
                   />
                 )
               )}
@@ -544,10 +560,14 @@ const EnVivoBoard: React.FC<BoardProps> = ({ estructura }) => {
             <section className="te-live-upcoming" aria-label="Próximos partidos">
               <h2 className="te-live-upcoming__title">Próximos partidos</h2>
               <div className="te-live-upcoming__cols">
-                {board.courts.map((lane) => {
+                {board.courts.map((lane, index) => {
                   const items = upcomingByCourt.get(lane.key) ?? [];
                   return (
-                    <div className="te-live-upcoming__col" key={lane.key}>
+                    <div
+                      className="te-live-upcoming__col"
+                      key={lane.key}
+                      style={staggerStyle(board.courts.length + index)}
+                    >
                       <h3 className="te-live-upcoming__court">{lane.label}</h3>
                       {items.length > 0 ? (
                         <ol className="te-live-upcoming__list">
