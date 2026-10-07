@@ -427,6 +427,21 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                     Ver página pública
                   </Button>
                 ) : null}
+                {evento.slug &&
+                (evento.estado === "published" ||
+                  evento.estado === "in_progress" ||
+                  evento.estado === "completed") ? (
+                  <Button
+                    as="a"
+                    href={`/eventos/${evento.slug}/en-vivo`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="secondary"
+                    size="sm"
+                  >
+                    Pantalla de canchas
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
                   variant="primary"

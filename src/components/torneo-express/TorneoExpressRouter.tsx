@@ -7,6 +7,7 @@ import { EventoDetalle } from "./EventoDetalle";
 import { EventoNuevaCategoria } from "./EventoNuevaCategoria";
 import { TorneosExpressLista } from "./TorneosExpressLista";
 import { VistaPublicaEvento } from "./public/VistaPublicaEvento";
+import { VistaPublicaEventoEnVivo } from "./public/VistaPublicaEventoEnVivo";
 import { TePageShell } from "./TePageShell";
 import { VistaPublicaEliminatoria } from "./VistaPublicaEliminatoria";
 import { VistaPublicaGeneral } from "./VistaPublicaGeneral";
@@ -21,6 +22,7 @@ export type TorneoExpressRoute =
   | { kind: "evento"; eventoId: string }
   | { kind: "evento-nueva-categoria"; eventoId: string }
   | { kind: "evento-publico"; slug: string }
+  | { kind: "evento-en-vivo"; slug: string }
   | { kind: "gestionar"; torneoId: string }
   | { kind: "grupo"; torneoId: string; grupoId: string }
   | { kind: "general"; torneoId: string }
@@ -34,6 +36,12 @@ export function parseTorneoExpressPath(pathname: string): TorneoExpressRoute {
   if (path === "/torneo-express/nuevo") return { kind: "nuevo" };
   if (path === "/torneo-express/eventos") return { kind: "eventos" };
   if (path === "/torneo-express/lista") return { kind: "lista-express" };
+
+  // Público: /eventos/{slug}/en-vivo (pantalla de canchas para TV/proyector)
+  const eventoEnVivo = path.match(/^\/eventos\/([^/]+)\/en-vivo$/);
+  if (eventoEnVivo) {
+    return { kind: "evento-en-vivo", slug: decodeURIComponent(eventoEnVivo[1]) };
+  }
 
   // Público: /eventos/{slug} (arquitectura multi-categoría)
   const eventoPublico = path.match(/^\/eventos\/([^/]+)$/);
@@ -66,6 +74,7 @@ export function isTorneoExpressPublicPath(pathname: string): boolean {
   const route = parseTorneoExpressPath(pathname);
   return (
     route.kind === "evento-publico" ||
+    route.kind === "evento-en-vivo" ||
     route.kind === "grupo" ||
     route.kind === "general" ||
     route.kind === "grupos" ||
@@ -93,6 +102,8 @@ export const TorneoExpressRouter: React.FC<{ pathname: string }> = ({
       return <EventoNuevaCategoria eventoId={route.eventoId} />;
     case "evento-publico":
       return <VistaPublicaEvento slug={route.slug} />;
+    case "evento-en-vivo":
+      return <VistaPublicaEventoEnVivo slug={route.slug} />;
     case "gestionar":
       return <GestionGrupos torneoId={route.torneoId} />;
     case "grupo":

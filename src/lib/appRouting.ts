@@ -151,7 +151,7 @@ export function pathRequiresUserSession(pathname: string): boolean {
   ) {
     return false;
   }
-  if (/^\/eventos\/[^/]+\/?$/i.test(path)) return false;
+  if (/^\/eventos\/[^/]+(\/en-vivo)?\/?$/i.test(path)) return false;
   if (/^\/jugar\/[^/]+/i.test(path)) return false;
   if (/^\/reta-abierta\/[^/]+/i.test(path)) return false;
   if (path === "/admin-login" || path === "/admin-dashboard") return false;

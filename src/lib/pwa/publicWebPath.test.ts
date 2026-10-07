@@ -18,6 +18,7 @@ describe("isPublicWebPath", () => {
     "/ranking/o/org-1/femenil",
     "/players/11111111-1111-4111-8111-111111111111",
     "/eventos/pre-liga-40",
+    "/eventos/pre-liga-40/en-vivo",
     "/torneo-express/te1/general",
     "/torneo-express/te1/grupos",
     "/torneo-express/te1/grupo/g1",

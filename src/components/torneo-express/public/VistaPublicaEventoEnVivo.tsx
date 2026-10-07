@@ -1,0 +1,523 @@
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { PublicEventNeutralLoading } from "../../../club-experience";
+import { useRetryableImage } from "../../../hooks/useRetryableImage";
+import { useVisiblePolling } from "../../../hooks/useVisiblePolling";
+import {
+  buildEnVivoBoard,
+  formatStartsIn,
+  type EnVivoCourtLane,
+  type EnVivoPairSide,
+  type EnVivoPartido,
+} from "../../../lib/torneoExpress/eventoEnVivo";
+import { toMexicoCalendarDate } from "../../../lib/matchDate";
+import {
+  formatPartidoFecha,
+  formatPartidoHora,
+} from "../../../lib/torneoExpress/partidoSchedule";
+import { formatCanchaDisplay } from "../../../lib/torneoExpress/canchaDisplay";
+import { resolvePlayerPublicProfiles } from "../../../lib/rivieraJugadores/publicPlayerAvatars";
+import {
+  fetchEnVivoPartidos,
+  fetchEnVivoEstructura,
+  type EnVivoEstructura,
+  type EnVivoRosterCache,
+} from "../../../services/torneoExpressEnVivo";
+import { formatSupabaseError } from "../../../services/torneoExpressService";
+import { getJugadorInitials } from "../../jugadores/JugadorAvatar";
+import {
+  pairSideFromRoster,
+  type TEPublicPairPlayer,
+} from "./TEPublicPairIdentity";
+import { PublicTorneoExpressShell } from "./PublicTorneoExpressShell";
+import "./te-evento-en-vivo.css";
+
+/** Refresco de datos (la transición «próximo → en vivo» ocurre localmente con el reloj). */
+const POLL_INTERVAL_MS = 30_000;
+const CLOCK_TICK_MS = 15_000;
+const UPCOMING_LIMIT = 8;
+
+type PhotoMap = Record<string, string | null>;
+
+function dayTag(iso: string, now: Date): string {
+  if (toMexicoCalendarDate(iso) === toMexicoCalendarDate(now.toISOString())) {
+    return "";
+  }
+  return formatPartidoFecha(iso);
+}
+
+const Portrait: React.FC<{ player: TEPublicPairPlayer }> = ({ player }) => {
+  const { src, onError } = useRetryableImage(player.fotoUrl);
+  return (
+    <span className="te-live-portrait" aria-hidden="true">
+      {src ? (
+        <img
+          className="te-live-portrait__img"
+          src={src}
+          alt=""
+          decoding="async"
+          onError={onError}
+        />
+      ) : (
+        <span className="te-live-portrait__fallback">
+          {getJugadorInitials(player.nombre)}
+        </span>
+      )}
+    </span>
+  );
+};
+
+const TeamBlock: React.FC<{
+  side: EnVivoPairSide;
+  photos: PhotoMap;
+  align: "start" | "end";
+}> = ({ side, photos, align }) => {
+  const identity = pairSideFromRoster({
+    isVirtual: side.isVirtual,
+    display: side.display,
+    player1Id: side.player1Id,
+    player2Id: side.player2Id,
+  });
+  const players = [identity.player1, identity.player2].filter(
+    (p): p is TEPublicPairPlayer => Boolean(p)
+  );
+  const showPhotos = !side.isVirtual && players.length > 0;
+
+  return (
+    <div className={`te-live-team te-live-team--${align}`}>
+      {players.map((player, index) => (
+        <div className="te-live-team__player" key={`${player.id ?? "p"}-${index}`}>
+          {showPhotos ? (
+            <Portrait
+              player={{
+                ...player,
+                fotoUrl: player.id ? (photos[player.id] ?? null) : null,
+              }}
+            />
+          ) : null}
+          <span className="te-live-team__name">{player.nombre}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const LiveCourtCard: React.FC<{
+  lane: EnVivoCourtLane;
+  partido: EnVivoPartido;
+  photos: PhotoMap;
+}> = ({ lane, partido, photos }) => (
+  <article className="te-live-court te-live-court--live">
+    <header className="te-live-court__head">
+      <h3 className="te-live-court__name">{lane.label}</h3>
+      <span className="te-live-badge te-live-badge--live">
+        <span className="te-live-badge__dot" aria-hidden="true" />
+        En vivo
+      </span>
+    </header>
+    <p className="te-live-court__meta">
+      <span className="te-live-chip">{partido.categoria}</span>
+      <span className="te-live-court__stage">{partido.etapa}</span>
+    </p>
+    <div className="te-live-court__versus">
+      <TeamBlock side={partido.local} photos={photos} align="start" />
+      <span className="te-live-court__vs" aria-hidden="true">
+        VS
+      </span>
+      <TeamBlock side={partido.visitante} photos={photos} align="end" />
+    </div>
+    <footer className="te-live-court__foot">
+      Inició {formatPartidoHora(partido.programadoEn)}
+    </footer>
+  </article>
+);
+
+const IdleCourtCard: React.FC<{
+  lane: EnVivoCourtLane;
+  now: Date;
+}> = ({ lane, now }) => {
+  const next = lane.next;
+  const startsIn = next ? formatStartsIn(next.startMs, now) : null;
+  return (
+    <article className="te-live-court te-live-court--idle">
+      <header className="te-live-court__head">
+        <h3 className="te-live-court__name">{lane.label}</h3>
+        <span className="te-live-badge te-live-badge--idle">
+          {next ? (startsIn ? `Próximo ${startsIn}` : "Próximo") : "Libre"}
+        </span>
+      </header>
+      {next ? (
+        <>
+          <p className="te-live-court__meta">
+            <span className="te-live-chip te-live-chip--muted">
+              {next.categoria}
+            </span>
+            <span className="te-live-court__stage">{next.etapa}</span>
+          </p>
+          <p className="te-live-court__next-pair">
+            {next.local.display}
+            <span className="te-live-court__next-vs"> vs </span>
+            {next.visitante.display}
+          </p>
+          <footer className="te-live-court__foot">
+            {[dayTag(next.programadoEn, now), formatPartidoHora(next.programadoEn)]
+              .filter(Boolean)
+              .join(" · ")}
+          </footer>
+        </>
+      ) : (
+        <p className="te-live-court__empty">Sin más partidos programados</p>
+      )}
+    </article>
+  );
+};
+
+const UpcomingRow: React.FC<{ partido: EnVivoPartido; now: Date }> = ({
+  partido,
+  now,
+}) => {
+  const tag = dayTag(partido.programadoEn, now);
+  return (
+    <li className="te-live-upcoming__row">
+      <span className="te-live-upcoming__time">
+        {formatPartidoHora(partido.programadoEn)}
+        {tag ? <small>{tag}</small> : null}
+      </span>
+      <span className="te-live-upcoming__court">
+        {formatCanchaDisplay(partido.cancha)}
+      </span>
+      <span className="te-live-upcoming__body">
+        <span className="te-live-upcoming__cat">
+          {partido.categoria}
+          <span className="te-live-upcoming__stage"> · {partido.etapa}</span>
+        </span>
+        <span className="te-live-upcoming__pair">
+          {partido.local.display}
+          <span className="te-live-upcoming__vs"> vs </span>
+          {partido.visitante.display}
+        </span>
+      </span>
+    </li>
+  );
+};
+
+function useFullscreen() {
+  const [active, setActive] = useState(false);
+  const supported =
+    typeof document !== "undefined" &&
+    Boolean(document.documentElement?.requestFullscreen);
+
+  useEffect(() => {
+    const onChange = () => setActive(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen?.().catch(() => undefined);
+    } else {
+      void document.documentElement.requestFullscreen().catch(() => undefined);
+    }
+  }, []);
+
+  return { active, supported, toggle };
+}
+
+type WakeLockSentinelLike = { release: () => Promise<void> };
+type NavigatorWithWakeLock = Navigator & {
+  wakeLock?: { request: (type: "screen") => Promise<WakeLockSentinelLike> };
+};
+
+/** Mantiene la pantalla encendida mientras se muestra el tablero (TV / proyector). */
+function useScreenWakeLock(enabled: boolean) {
+  useEffect(() => {
+    const wakeLock =
+      typeof navigator === "undefined"
+        ? undefined
+        : (navigator as NavigatorWithWakeLock).wakeLock;
+    if (!enabled || !wakeLock) return;
+    let sentinel: WakeLockSentinelLike | null = null;
+    let cancelled = false;
+
+    const acquire = async () => {
+      try {
+        const next = await wakeLock.request("screen");
+        if (cancelled) {
+          void next.release().catch(() => undefined);
+          return;
+        }
+        sentinel = next;
+      } catch {
+        sentinel = null;
+      }
+    };
+
+    const onVisible = () => {
+      if (!document.hidden) void acquire();
+    };
+
+    void acquire();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      void sentinel?.release().catch(() => undefined);
+    };
+  }, [enabled]);
+}
+
+type BoardProps = {
+  estructura: EnVivoEstructura;
+};
+
+const EnVivoBoard: React.FC<BoardProps> = ({ estructura }) => {
+  const { evento } = estructura;
+  const [partidos, setPartidos] = useState<EnVivoPartido[] | null>(null);
+  const [stale, setStale] = useState(false);
+  const [now, setNow] = useState(() => new Date());
+  const [photos, setPhotos] = useState<PhotoMap>({});
+  const rosterCacheRef = useRef<EnVivoRosterCache>(new Map());
+  const requestedPhotosRef = useRef<Set<string>>(new Set());
+  const { active: fullscreen, supported: fullscreenSupported, toggle } =
+    useFullscreen();
+
+  useScreenWakeLock(true);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), CLOCK_TICK_MS);
+    return () => window.clearInterval(id);
+  }, []);
+
+  useVisiblePolling({
+    intervalMs: POLL_INTERVAL_MS,
+    callback: async () => {
+      try {
+        const next = await fetchEnVivoPartidos(
+          estructura,
+          rosterCacheRef.current,
+          new Date()
+        );
+        setPartidos(next);
+        setStale(false);
+        setNow(new Date());
+      } catch {
+        // Conserva lo último que se mostró; solo avisa que no está al día.
+        setPartidos((prev) => prev ?? []);
+        setStale(true);
+      }
+    },
+  });
+
+  const board = useMemo(
+    () => buildEnVivoBoard(partidos ?? [], now),
+    [partidos, now]
+  );
+
+  // Fotos: solo de quienes están en juego, y solo ids que aún no se pidieron.
+  const livePlayerKey = useMemo(() => {
+    const ids = new Set<string>();
+    for (const p of board.live) {
+      for (const side of [p.local, p.visitante]) {
+        if (side.isVirtual) continue;
+        if (side.player1Id) ids.add(side.player1Id);
+        if (side.player2Id) ids.add(side.player2Id);
+      }
+    }
+    return Array.from(ids).sort().join(",");
+  }, [board.live]);
+
+  useEffect(() => {
+    if (!livePlayerKey || !evento.organizador_id) return;
+    const missing = livePlayerKey
+      .split(",")
+      .filter((id) => id && !requestedPhotosRef.current.has(id));
+    if (missing.length === 0) return;
+    missing.forEach((id) => requestedPhotosRef.current.add(id));
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const profiles = await resolvePlayerPublicProfiles(
+          evento.organizador_id,
+          missing.map((id) => ({ id, name: id })),
+          { publicOnly: true }
+        );
+        if (cancelled) return;
+        setPhotos((prev) => {
+          const next = { ...prev };
+          for (const id of missing) next[id] = profiles[id]?.fotoUrl ?? null;
+          return next;
+        });
+      } catch {
+        // Sin foto se muestran iniciales; permite reintentar en el siguiente cambio.
+        missing.forEach((id) => requestedPhotosRef.current.delete(id));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [livePlayerKey, evento.organizador_id]);
+
+  const liveCount = board.live.length;
+  const freeCourts = board.courts.filter((lane) => !lane.live).length;
+  const upcoming = board.upcoming.slice(0, UPCOMING_LIMIT);
+
+  const clockTime = formatPartidoHora(now.toISOString());
+  const clockDate = formatPartidoFecha(now.toISOString());
+
+  return (
+    <div className="te-live" data-fullscreen={fullscreen ? "true" : "false"}>
+      <header className="te-live-header te-pub-fade-in">
+        <div className="te-live-header__title">
+          <p className="te-live-header__kicker">Pantalla de canchas</p>
+          <h1 className="te-live-header__name">{evento.nombre}</h1>
+        </div>
+        <div className="te-live-header__side">
+          <div className="te-live-clock" aria-label="Hora actual">
+            <span className="te-live-clock__time">{clockTime}</span>
+            <span className="te-live-clock__date">{clockDate}</span>
+          </div>
+          <div className="te-live-header__actions">
+            <a
+              className="te-live-action"
+              href={`/eventos/${encodeURIComponent(evento.slug ?? "")}`}
+            >
+              Ver evento
+            </a>
+            {fullscreenSupported ? (
+              <button
+                type="button"
+                className="te-live-action"
+                onClick={toggle}
+              >
+                {fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </header>
+
+      {partidos == null ? (
+        <PublicEventNeutralLoading message="Cargando canchas…" />
+      ) : (
+        <>
+          <p className="te-live-summary" aria-live="polite">
+            <strong>{liveCount}</strong>{" "}
+            {liveCount === 1 ? "partido en juego" : "partidos en juego"}
+            {board.courts.length > 0 ? (
+              <>
+                <span aria-hidden="true"> · </span>
+                <strong>{freeCourts}</strong>{" "}
+                {freeCourts === 1 ? "cancha libre" : "canchas libres"}
+              </>
+            ) : null}
+            {stale ? (
+              <span className="te-live-summary__stale">
+                {" "}
+                · Reconectando…
+              </span>
+            ) : null}
+          </p>
+
+          {board.courts.length === 0 ? (
+            <p className="te-live-empty">
+              {stale
+                ? "No se pudieron cargar los partidos. Reintentando…"
+                : "No hay partidos programados en las próximas horas."}
+            </p>
+          ) : (
+            <section
+              className="te-live-courts"
+              aria-label="Canchas"
+            >
+              {board.courts.map((lane) =>
+                lane.live ? (
+                  <LiveCourtCard
+                    key={lane.key}
+                    lane={lane}
+                    partido={lane.live}
+                    photos={photos}
+                  />
+                ) : (
+                  <IdleCourtCard key={lane.key} lane={lane} now={now} />
+                )
+              )}
+            </section>
+          )}
+
+          {upcoming.length > 0 ? (
+            <section className="te-live-upcoming" aria-label="Próximos partidos">
+              <h2 className="te-live-upcoming__title">Próximos partidos</h2>
+              <ol className="te-live-upcoming__list">
+                {upcoming.map((partido) => (
+                  <UpcomingRow key={partido.id} partido={partido} now={now} />
+                ))}
+              </ol>
+            </section>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+};
+
+type VistaPublicaEventoEnVivoProps = { slug: string };
+
+/**
+ * Pantalla pública para TV / proyector: partidos que se juegan al mismo tiempo,
+ * con cancha y categoría. Solo lectura; el refresco respeta pestaña visible.
+ */
+export const VistaPublicaEventoEnVivo: React.FC<
+  VistaPublicaEventoEnVivoProps
+> = ({ slug }) => {
+  const [estructura, setEstructura] = useState<EnVivoEstructura | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    void (async () => {
+      try {
+        const data = await fetchEnVivoEstructura(slug);
+        if (cancelled) return;
+        if (!data) {
+          setEstructura(null);
+          setError("Evento no encontrado o no publicado");
+          return;
+        }
+        setEstructura(data);
+      } catch (e) {
+        if (!cancelled) {
+          setEstructura(null);
+          setError(formatSupabaseError(e));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  return (
+    <PublicTorneoExpressShell
+      className="te-public--evento te-public--en-vivo"
+      organizadorId={estructura?.evento.organizador_id ?? null}
+    >
+      {loading ? (
+        <PublicEventNeutralLoading message="Cargando evento…" />
+      ) : null}
+      {error ? <p className="te-error">{error}</p> : null}
+      {!loading && estructura ? <EnVivoBoard estructura={estructura} /> : null}
+    </PublicTorneoExpressShell>
+  );
+};
