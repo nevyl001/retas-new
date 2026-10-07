@@ -4638,3 +4638,121 @@
   background: color-mix(in srgb, var(--text-primary, #fff) 10%, transparent);
   color: var(--text-primary, #fff);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Vista individual de un grupo (pestaña "Grupo A", etc.)                      */
+/* Partidos en tarjetas anchas (pareja · VS · pareja) que llenan el espacio y  */
+/* clasificación como panel propio a la derecha. Solo `.te-grupos-grid--single`*/
+/* -------------------------------------------------------------------------- */
+.te-public.te-public--grupos-wide
+  .te-grupos-page
+  .te-grupos-grid--single
+  .te-grupo-partidos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 34rem), 1fr));
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.te-public.te-public--grupos-wide
+  .te-grupos-page
+  .te-grupos-grid--single
+  .te-match-card {
+  container-type: inline-size;
+  container-name: te-match;
+  height: 100%;
+}
+
+/* Tarjeta ancha: pareja local · VS · pareja visitante, marcador bajo cada una. */
+@container te-match (min-width: 30rem) {
+  .te-public.te-public--grupos-wide
+    .te-grupos-page
+    .te-grupos-grid--single
+    .te-match-card
+    .te-partido-teams {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .te-public.te-public--grupos-wide
+    .te-grupos-page
+    .te-grupos-grid--single
+    .te-match-card
+    .te-team-row {
+    width: 100%;
+    max-width: none;
+  }
+
+  .te-public.te-public--grupos-wide
+    .te-grupos-page
+    .te-grupos-grid--single
+    .te-match-card
+    .te-partido-faceoff {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    margin: 0;
+  }
+
+  .te-public.te-public--grupos-wide
+    .te-grupos-page
+    .te-grupos-grid--single
+    .te-match-card
+    .te-partido-faceoff__rule {
+    flex: 1 1 auto;
+    width: 1px;
+    height: auto;
+    min-height: 0.75rem;
+    background: var(--te-standings-line, var(--te-groups-border-strong));
+  }
+
+  .te-public.te-public--grupos-wide
+    .te-grupos-page
+    .te-grupos-grid--single
+    .te-match-card
+    .te-partido-faceoff__mark {
+    font-size: 0.6875rem;
+  }
+}
+
+/* Clasificación: panel propio, fijo mientras se recorren los partidos. */
+@container (min-width: 860px) {
+  .te-public.te-public--grupos-wide
+    .te-grupos-page
+    .te-grupos-grid--single
+    .te-grupo-inner {
+    grid-template-columns: minmax(0, 1fr) minmax(21rem, 25rem);
+    gap: 1rem;
+  }
+
+  .te-public.te-public--grupos-wide
+    .te-grupos-page
+    .te-grupos-grid--single
+    .te-grupo-standing-full {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+.te-public.te-public--grupos-wide
+  .te-grupos-page
+  .te-grupos-grid--single
+  .te-grupo-standing-full {
+  padding: 0.85rem 1rem 1rem;
+  border: 1px solid var(--te-groups-border-strong);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--te-groups-surface-raised) 70%, transparent);
+}
+
+.te-public.te-public--grupos-wide
+  .te-grupos-page
+  .te-grupos-grid--single
+  .te-grupo-standing-full
+  .te-grupo-standings {
+  border-top: 0;
+}
