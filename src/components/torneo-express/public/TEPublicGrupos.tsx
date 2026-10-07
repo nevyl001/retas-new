@@ -1143,7 +1143,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
       {grupos.length === 0 ? (
         <p className="te-grupos-empty">Sin grupos en este torneo.</p>
       ) : (
-        <div className={gridClass}>
+        <div className={gridClass} data-groups={visibleGrupos.length}>
         {visibleGrupos.map((grupo) => (
           <section key={grupo.id} className="te-grupo-wrap">
             <div className="te-grupo-head">

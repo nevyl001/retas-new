@@ -4439,13 +4439,32 @@
   /* Tantas columnas como quepan; si un grupo no cabe al lado, baja a la
      siguiente fila. Cada card conserva un ancho mínimo legible. */
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 1fr));
-  align-items: start;
+  /* Las cards de una misma fila miden lo mismo: sin escalones ni huecos. */
+  align-items: stretch;
   gap: var(--te-grupos-stack);
+}
+
+/* Filas completas: 4 grupos van 2×2 (no 3+1) y 5 grupos 3+2. */
+.te-public.te-public--grupos-wide .te-grupos-page .te-grupos-grid[data-groups="4"]:not(.te-grupos-grid--single) {
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(max(min(100%, 32rem), calc(50% - var(--te-grupos-stack) / 2)), 1fr)
+  );
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-grupos-grid[data-groups="5"]:not(.te-grupos-grid--single) {
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(
+      max(min(100%, 32rem), calc(33.333% - var(--te-grupos-stack) * 2 / 3)),
+      1fr
+    )
+  );
 }
 
 .te-public.te-public--grupos-wide .te-grupos-page .te-grupo-wrap {
   container-type: inline-size;
-  align-self: start;
+  align-self: stretch;
   height: auto;
   min-height: 0;
   padding: 0.7rem 0.75rem 0.8rem;
