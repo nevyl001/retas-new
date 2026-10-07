@@ -4438,7 +4438,7 @@
 .te-public.te-public--grupos-wide .te-grupos-page .te-grupos-grid:not(.te-grupos-grid--single) {
   /* Tantas columnas como quepan; si un grupo no cabe al lado, baja a la
      siguiente fila. Cada card conserva un ancho mínimo legible. */
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 36rem), 1fr));
   /* Las cards de una misma fila miden lo mismo: sin escalones ni huecos. */
   align-items: stretch;
   gap: var(--te-grupos-stack);
@@ -4448,7 +4448,7 @@
 .te-public.te-public--grupos-wide .te-grupos-page .te-grupos-grid[data-groups="4"]:not(.te-grupos-grid--single) {
   grid-template-columns: repeat(
     auto-fit,
-    minmax(max(min(100%, 32rem), calc(50% - var(--te-grupos-stack) / 2)), 1fr)
+    minmax(max(min(100%, 36rem), calc(50% - var(--te-grupos-stack) / 2)), 1fr)
   );
 }
 
@@ -4456,7 +4456,7 @@
   grid-template-columns: repeat(
     auto-fit,
     minmax(
-      max(min(100%, 32rem), calc(33.333% - var(--te-grupos-stack) * 2 / 3)),
+      max(min(100%, 36rem), calc(33.333% - var(--te-grupos-stack) * 2 / 3)),
       1fr
     )
   );
@@ -4640,13 +4640,13 @@
 }
 
 /* -------------------------------------------------------------------------- */
-/* Vista individual de un grupo (pestaña "Grupo A", etc.)                      */
+/* Grupos (vista "Todos" e individual): partidos anchos + clasificación        */
 /* Partidos en tarjetas anchas (pareja · VS · pareja) que llenan el espacio y  */
-/* clasificación como panel propio a la derecha. Solo `.te-grupos-grid--single`*/
+/* clasificación como panel propio a la derecha. Solo `.te-grupos-grid`*/
 /* -------------------------------------------------------------------------- */
 .te-public.te-public--grupos-wide
   .te-grupos-page
-  .te-grupos-grid--single
+  .te-grupos-grid
   .te-grupo-partidos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 34rem), 1fr));
@@ -4656,7 +4656,7 @@
 
 .te-public.te-public--grupos-wide
   .te-grupos-page
-  .te-grupos-grid--single
+  .te-grupos-grid
   .te-match-card {
   container-type: inline-size;
   container-name: te-match;
@@ -4667,7 +4667,7 @@
 @container te-match (min-width: 30rem) {
   .te-public.te-public--grupos-wide
     .te-grupos-page
-    .te-grupos-grid--single
+    .te-grupos-grid
     .te-match-card
     .te-partido-teams {
     display: grid;
@@ -4678,7 +4678,7 @@
 
   .te-public.te-public--grupos-wide
     .te-grupos-page
-    .te-grupos-grid--single
+    .te-grupos-grid
     .te-match-card
     .te-team-row {
     width: 100%;
@@ -4687,7 +4687,7 @@
 
   .te-public.te-public--grupos-wide
     .te-grupos-page
-    .te-grupos-grid--single
+    .te-grupos-grid
     .te-match-card
     .te-partido-faceoff {
     display: flex;
@@ -4701,7 +4701,7 @@
 
   .te-public.te-public--grupos-wide
     .te-grupos-page
-    .te-grupos-grid--single
+    .te-grupos-grid
     .te-match-card
     .te-partido-faceoff__rule {
     flex: 1 1 auto;
@@ -4713,7 +4713,7 @@
 
   .te-public.te-public--grupos-wide
     .te-grupos-page
-    .te-grupos-grid--single
+    .te-grupos-grid
     .te-match-card
     .te-partido-faceoff__mark {
     font-size: 0.6875rem;
@@ -4721,10 +4721,10 @@
 }
 
 /* Clasificación: panel propio, fijo mientras se recorren los partidos. */
-@container (min-width: 860px) {
+@container (min-width: 56rem) {
   .te-public.te-public--grupos-wide
     .te-grupos-page
-    .te-grupos-grid--single
+    .te-grupos-grid
     .te-grupo-inner {
     grid-template-columns: minmax(0, 1fr) minmax(21rem, 25rem);
     gap: 1rem;
@@ -4732,7 +4732,7 @@
 
   .te-public.te-public--grupos-wide
     .te-grupos-page
-    .te-grupos-grid--single
+    .te-grupos-grid
     .te-grupo-standing-full {
     position: sticky;
     top: 1rem;
@@ -4741,7 +4741,7 @@
 
 .te-public.te-public--grupos-wide
   .te-grupos-page
-  .te-grupos-grid--single
+  .te-grupos-grid
   .te-grupo-standing-full {
   padding: 0.85rem 1rem 1rem;
   border: 1px solid var(--te-groups-border-strong);
@@ -4751,8 +4751,30 @@
 
 .te-public.te-public--grupos-wide
   .te-grupos-page
-  .te-grupos-grid--single
+  .te-grupos-grid
   .te-grupo-standing-full
   .te-grupo-standings {
   border-top: 0;
+}
+
+/* Entre 860 y 896 px la regla base partía en dos columnas demasiado angostas:
+   se mantiene apilado hasta que el panel de clasificación cabe con holgura. */
+@container (min-width: 860px) and (max-width: 55.99rem) {
+  .te-public.te-public--grupos-wide
+    .te-grupos-page
+    .te-grupos-grid
+    .te-grupo-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Retratos más grandes cuando la tarjeta de partido tiene espacio de sobra. */
+@container te-match (min-width: 44rem) {
+  .te-public.te-public--grupos-wide
+    .te-grupos-page
+    .te-grupos-grid
+    .te-match-card
+    .te-public-pair__portrait {
+    max-width: 11.5rem;
+  }
 }
