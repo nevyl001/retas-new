@@ -4259,7 +4259,8 @@
 
 /* Fase 3 — composición del grupo, header y navegación. */
 .te-public.te-public--grupos-wide .te-public__inner {
-  max-width: 1240px;
+  /* Aprovecha pantallas anchas; en laptops ocupa todo el ancho disponible. */
+  max-width: min(100%, 1760px);
   margin-inline: auto;
 }
 
@@ -4435,7 +4436,9 @@
 
 .te-public.te-public--grupos-wide .te-grupos-page .te-grupos-grid,
 .te-public.te-public--grupos-wide .te-grupos-page .te-grupos-grid:not(.te-grupos-grid--single) {
-  grid-template-columns: minmax(0, 1fr);
+  /* Tantas columnas como quepan; si un grupo no cabe al lado, baja a la
+     siguiente fila. Cada card conserva un ancho mínimo legible. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 1fr));
   align-items: start;
   gap: var(--te-grupos-stack);
 }
@@ -4481,12 +4484,6 @@
 @container (min-width: 860px) {
   .te-public.te-public--grupos-wide .te-grupos-page .te-grupo-inner {
     grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 22rem);
-  }
-}
-
-@media (min-width: 1180px) {
-  .te-public.te-public--grupos-wide .te-grupos-page .te-grupos-grid:not(.te-grupos-grid--single) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
