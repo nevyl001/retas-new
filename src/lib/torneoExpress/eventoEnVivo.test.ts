@@ -30,7 +30,7 @@ function partido(
     origen: "grupo",
     torneoId: "t1",
     categoria: "4ta",
-    etapa: "Grupo A · Ronda 1",
+    etapa: "Grupo A",
     cancha: "1",
     programadoEn,
     startMs: Date.parse(programadoEn),

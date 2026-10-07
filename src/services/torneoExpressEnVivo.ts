@@ -54,8 +54,6 @@ type GrupoPartidoRow = {
   estado: string | null;
   cancha: string | null;
   programado_en: string | null;
-  ronda: number | null;
-  orden: number | null;
 };
 
 type ElimPartidoRow = {
@@ -182,7 +180,7 @@ export async function fetchEnVivoPartidos(
       ? supabasePublicRead
           .from("torneo_express_partidos")
           .select(
-            "id, grupo_id, pareja_local_id, pareja_visitante_id, estado, cancha, programado_en, ronda, orden"
+            "id, grupo_id, pareja_local_id, pareja_visitante_id, estado, cancha, programado_en"
           )
           .in("grupo_id", grupoIds)
           .gte("programado_en", fromIso)
@@ -229,9 +227,7 @@ export async function fetchEnVivoPartidos(
     const grupo = estructura.grupoById.get(r.grupo_id);
     if (startMs == null || !r.programado_en || !grupo) continue;
     const cat = estructura.categoriaByTorneoId.get(grupo.torneoId);
-    const etapa = [grupo.nombre?.trim(), r.ronda ? `Ronda ${r.ronda}` : null]
-      .filter(Boolean)
-      .join(" · ");
+    const etapa = grupo.nombre?.trim();
     partidos.push({
       id: r.id,
       origen: "grupo",

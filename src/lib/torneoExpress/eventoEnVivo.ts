@@ -26,7 +26,7 @@ export type EnVivoPartido = {
   torneoId: string;
   /** Etiqueta pública de la categoría (4ta, Mixtos D…). */
   categoria: string;
-  /** «Grupo A · Ronda 2», «Semifinal», «Final»… */
+  /** «Grupo A», «Semifinal», «Final»… */
   etapa: string;
   /** Valor guardado (puede ser null → se muestra Cancha 1 como en el resto de la app). */
   cancha: string | null;
