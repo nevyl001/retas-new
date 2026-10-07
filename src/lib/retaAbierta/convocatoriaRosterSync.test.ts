@@ -1,6 +1,7 @@
 import type { OpenRegistrationOrganizerEntry } from "./types";
 import {
   buildRosterFromConvocatoriaEntries,
+  mergeConvocatoriaIntoRoster,
   sameConvocatoriaRoster,
 } from "./convocatoriaRosterSync";
 import { getRivieraJugadorPrivateById } from "../rivieraJugadores/rivieraJugadoresService";
@@ -116,5 +117,36 @@ describe("convocatoriaRosterSync", () => {
     );
 
     expect(roster).toEqual([{ id: "legacy-c", name: "Carlos Pool" }]);
+  });
+});
+
+describe("mergeConvocatoriaIntoRoster", () => {
+  const p = (id: string) => ({ id, name: id.toUpperCase() });
+
+  it("conserva a los jugadores sumados a mano al llegar confirmados", () => {
+    const merged = mergeConvocatoriaIntoRoster(
+      [p("manual1"), p("manual2")],
+      null,
+      [p("conv1")]
+    );
+    expect(merged.map((x) => x.id)).toEqual(["manual1", "manual2", "conv1"]);
+  });
+
+  it("no pisa la selección manual cuando la convocatoria no cambió", () => {
+    const merged = mergeConvocatoriaIntoRoster(
+      [p("conv1"), p("manual1")],
+      new Set(["conv1"]),
+      [p("conv1")]
+    );
+    expect(merged.map((x) => x.id)).toEqual(["conv1", "manual1"]);
+  });
+
+  it("quita solo a quien canceló en la convocatoria", () => {
+    const merged = mergeConvocatoriaIntoRoster(
+      [p("conv1"), p("conv2"), p("manual1")],
+      new Set(["conv1", "conv2"]),
+      [p("conv1")]
+    );
+    expect(merged.map((x) => x.id)).toEqual(["conv1", "manual1"]);
   });
 });

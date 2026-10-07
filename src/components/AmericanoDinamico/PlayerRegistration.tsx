@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   useClubModeEyebrow,
 } from "../../club-experience";
@@ -20,6 +26,7 @@ import {
 } from "../../lib/americanoDinamicoSync";
 import {
   buildRosterFromConvocatoriaEntries,
+  mergeConvocatoriaIntoRoster,
   sameConvocatoriaRoster,
 } from "../../lib/retaAbierta/convocatoriaRosterSync";
 import {
@@ -129,6 +136,9 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const [starting, setStarting] = useState(false);
   const [savingCourts, setSavingCourts] = useState(false);
   const [savingRounds, setSavingRounds] = useState(false);
+  const playersRef = useRef(players);
+  playersRef.current = players;
+  const convConfirmedIdsRef = useRef<Set<string> | null>(null);
 
   useEffect(() => {
     const fromTournament = Math.max(
@@ -284,16 +294,24 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       );
       if (cfg.status === "open" || confirmed > 0) setConvTouched(true);
 
-      if (confirmedEntries.length > 0 && !availablePlayersLoading) {
-        const roster = await buildRosterFromConvocatoriaEntries(
-          confirmedEntries,
-          availablePlayers
-        );
-        if (
-          roster.length > 0 &&
-          !sameConvocatoriaRoster(roster, players)
-        ) {
-          onSyncPlayers(roster);
+      if (!availablePlayersLoading) {
+        const roster =
+          confirmedEntries.length > 0
+            ? await buildRosterFromConvocatoriaEntries(
+                confirmedEntries,
+                availablePlayers
+              )
+            : [];
+        const current = playersRef.current;
+        const previous = convConfirmedIdsRef.current;
+        if (roster.length > 0 || (previous && previous.size > 0)) {
+          // Los jugadores sumados a mano se conservan: solo cambian los de la
+          // convocatoria (nuevos confirmados / cancelados).
+          const merged = mergeConvocatoriaIntoRoster(current, previous, roster);
+          convConfirmedIdsRef.current = new Set(roster.map((p) => p.id));
+          if (!sameConvocatoriaRoster(merged, current)) {
+            onSyncPlayers(merged);
+          }
         }
       }
     } catch {
@@ -303,7 +321,6 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
     tournament?.id,
     availablePlayers,
     availablePlayersLoading,
-    players,
     onSyncPlayers,
   ]);
 

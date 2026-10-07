@@ -25,6 +25,32 @@ export function sameConvocatoriaRoster(
   return rosterSignature(a) === rosterSignature(b);
 }
 
+/**
+ * Aplica los cambios de la convocatoria al roster SIN pisar a los jugadores
+ * que el organizador sumó a mano: quita solo a quien dejó de estar confirmado
+ * desde la última sincronización y agrega a los confirmados que falten.
+ */
+export function mergeConvocatoriaIntoRoster<T extends ConvocatoriaRosterPlayer>(
+  current: ReadonlyArray<T>,
+  previousConfirmedIds: ReadonlySet<string> | null,
+  confirmed: ReadonlyArray<T>
+): T[] {
+  const nowIds = new Set(confirmed.map((p) => p.id));
+  const removed = new Set<string>();
+  previousConfirmedIds?.forEach((id) => {
+    if (!nowIds.has(id)) removed.add(id);
+  });
+  const next = current.filter((p) => !removed.has(p.id));
+  const present = new Set(next.map((p) => p.id));
+  confirmed.forEach((p) => {
+    if (!present.has(p.id)) {
+      present.add(p.id);
+      next.push(p);
+    }
+  });
+  return next;
+}
+
 function sortConfirmedEntries(
   entries: OpenRegistrationOrganizerEntry[]
 ): OpenRegistrationOrganizerEntry[] {
