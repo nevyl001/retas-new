@@ -379,16 +379,22 @@ const EnVivoBoard: React.FC<BoardProps> = ({ estructura }) => {
   );
 
   // Próximos agrupados por cancha (mismo orden que las tarjetas de arriba).
+  // El «siguiente» de una cancha libre ya se ve en su tarjeta: no se repite aquí.
   const upcomingByCourt = useMemo(() => {
     const byKey = new Map<string, EnVivoPartido[]>();
+    const shownInCards = new Set<string>();
+    for (const lane of board.courts) {
+      if (!lane.live && lane.next) shownInCards.add(lane.next.id);
+    }
     for (const partido of board.upcoming) {
+      if (shownInCards.has(partido.id)) continue;
       const key = enVivoCourtKey(partido.cancha);
       const list = byKey.get(key) ?? [];
       if (list.length < UPCOMING_PER_COURT) list.push(partido);
       byKey.set(key, list);
     }
     return byKey;
-  }, [board.upcoming]);
+  }, [board.upcoming, board.courts]);
   const upcoming = useMemo(
     () => Array.from(upcomingByCourt.values()).flat(),
     [upcomingByCourt]
