@@ -20,12 +20,17 @@ export type EliminatoriaDuraciones = Record<EliminatoriaRondaKey, number>;
 export const ELIMINATORIA_RONDA_FIELDS: ReadonlyArray<{
   key: EliminatoriaRondaKey;
   label: string;
+  hint: string;
+  required: boolean;
 }> = [
-  { key: "octavos", label: "Octavos" },
-  { key: "cuartos", label: "Cuartos" },
-  { key: "semifinal", label: "Semis" },
-  { key: "final", label: "Final" },
+  { key: "octavos", label: "Octavos", hint: "16 parejas", required: false },
+  { key: "cuartos", label: "Cuartos", hint: "8 parejas", required: false },
+  { key: "semifinal", label: "Semis", hint: "4 parejas", required: true },
+  { key: "final", label: "Final", hint: "2 parejas", required: true },
 ];
+
+export const DEFAULT_ELIMINATORIA_RONDAS_ACTIVAS: readonly EliminatoriaRondaKey[] =
+  ["cuartos", "semifinal", "final"];
 
 export const DEFAULT_ELIMINATORIA_DURACIONES: EliminatoriaDuraciones = {
   octavos: ELIMINATORIA_RONDA_DEFAULT_MINUTES,
@@ -72,9 +77,99 @@ export function sameEliminatoriaDuraciones(
 ): boolean {
   const left = normalizeEliminatoriaDuraciones(a);
   const right = normalizeEliminatoriaDuraciones(b);
-  return ELIMINATORIA_RONDA_FIELDS.every(
+  const sameMinutes = ELIMINATORIA_RONDA_FIELDS.every(
     ({ key }) => left[key] === right[key]
   );
+  if (!sameMinutes) return false;
+  const leftRondas = parseEliminatoriaRondasActivas(a).join(",");
+  const rightRondas = parseEliminatoriaRondasActivas(b).join(",");
+  return leftRondas === rightRondas;
+}
+
+export function parseEliminatoriaRondasActivas(
+  raw: unknown
+): EliminatoriaRondaKey[] {
+  const obj =
+    raw && typeof raw === "object" && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
+  const allowed = new Set(
+    ELIMINATORIA_RONDA_FIELDS.map((field) => field.key)
+  );
+  const listed = Array.isArray(obj.activas)
+    ? obj.activas
+        .map((item) => String(item))
+        .filter((key): key is EliminatoriaRondaKey =>
+          allowed.has(key as EliminatoriaRondaKey)
+        )
+    : null;
+  const picked = new Set(
+    listed ?? DEFAULT_ELIMINATORIA_RONDAS_ACTIVAS
+  );
+  for (const field of ELIMINATORIA_RONDA_FIELDS) {
+    if (field.required) picked.add(field.key);
+  }
+  return ELIMINATORIA_RONDA_FIELDS.map((field) => field.key).filter((key) =>
+    picked.has(key)
+  );
+}
+
+export function toggleEliminatoriaRonda(
+  activas: readonly EliminatoriaRondaKey[],
+  key: EliminatoriaRondaKey,
+  enabled: boolean
+): EliminatoriaRondaKey[] {
+  const field = ELIMINATORIA_RONDA_FIELDS.find((item) => item.key === key);
+  if (field?.required) return parseEliminatoriaRondasActivas({ activas });
+  const next = new Set(activas);
+  if (enabled) {
+    next.add(key);
+    if (key === "octavos") next.add("cuartos");
+  } else {
+    next.delete(key);
+    if (key === "cuartos") next.delete("octavos");
+  }
+  return parseEliminatoriaRondasActivas({ activas: Array.from(next) });
+}
+
+export function faseFromRondasActivas(
+  activas: readonly EliminatoriaRondaKey[]
+): TorneoExpressFaseEliminacion {
+  if (activas.includes("octavos")) return "octavos";
+  if (activas.includes("cuartos")) return "cuartos";
+  return "semifinal";
+}
+
+export function inferFaseEliminacion(
+  categoriaFase: TorneoExpressFaseEliminacion | null | undefined,
+  duraciones?: unknown
+): TorneoExpressFaseEliminacion {
+  if (
+    categoriaFase === "octavos" ||
+    categoriaFase === "cuartos" ||
+    categoriaFase === "semifinal"
+  ) {
+    return categoriaFase;
+  }
+  return faseFromRondasActivas(parseEliminatoriaRondasActivas(duraciones));
+}
+
+export function serializeEliminatoriaDuraciones(
+  minutes: unknown,
+  activas: readonly EliminatoriaRondaKey[]
+): EliminatoriaDuraciones & { activas: EliminatoriaRondaKey[] } {
+  return {
+    ...normalizeEliminatoriaDuraciones(minutes),
+    activas: parseEliminatoriaRondasActivas({ activas }),
+  };
+}
+
+export function rondaPathLabel(
+  activas: readonly EliminatoriaRondaKey[]
+): string {
+  return ELIMINATORIA_RONDA_FIELDS.filter((field) => activas.includes(field.key))
+    .map((field) => field.label)
+    .join(" → ");
 }
 
 /** Minutos de cuadro para una categoría, según su fase y los tiempos del evento. */
@@ -83,8 +178,9 @@ export function categoriaKnockoutMinutes(
   duraciones?: unknown
 ): number {
   const d = normalizeEliminatoriaDuraciones(duraciones);
-  if (fase === "semifinal") return d.semifinal + d.final;
-  if (fase === "octavos") {
+  const resolved = inferFaseEliminacion(fase, duraciones);
+  if (resolved === "semifinal") return d.semifinal + d.final;
+  if (resolved === "octavos") {
     return d.octavos + d.cuartos + d.semifinal + d.final;
   }
   return d.cuartos + d.semifinal + d.final;

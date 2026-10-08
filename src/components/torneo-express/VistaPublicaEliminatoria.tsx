@@ -7,7 +7,10 @@ import {
   publicEliminatoriaUrl,
 } from "../../services/torneoExpressService";
 import { buildSharePublicOgUrlFromPlayUrl } from "../../lib/retaAbierta/shareOgUrl";
-import { buildEliminatoriaPossibleSchedule } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
+import {
+  buildEliminatoriaPossibleSchedule,
+  inferFaseEliminacion,
+} from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import type { EliminatoriaPossibleSlot } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
 import { buildEliminatoriaPreviewCards } from "../../lib/torneoExpress/eliminatoriaPreviewBracket";
@@ -109,7 +112,10 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     () =>
       bundle
         ? buildEliminatoriaPreviewCards({
-            fase: bundle.torneo.fase_eliminacion,
+            fase: inferFaseEliminacion(
+              bundle.torneo.fase_eliminacion,
+              evento?.eliminatoria_duraciones
+            ),
             startAt: categorySlot?.startsAt ?? null,
             courts: categorySlot?.courts ?? evento?.eliminatoria_canchas,
             duraciones: evento?.eliminatoria_duraciones,

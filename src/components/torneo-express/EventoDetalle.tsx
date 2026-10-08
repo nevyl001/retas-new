@@ -36,10 +36,14 @@ import { EventoEliminatoriaHorarioForm } from "./EventoEliminatoriaHorarioForm";
 import { EventoReglasForm } from "./EventoReglasForm";
 import {
   DEFAULT_ELIMINATORIA_DURACIONES,
+  DEFAULT_ELIMINATORIA_RONDAS_ACTIVAS,
   normalizeEliminatoriaCanchas,
   normalizeEliminatoriaDuraciones,
   orderCategoriasForEliminatoria,
+  parseEliminatoriaRondasActivas,
+  serializeEliminatoriaDuraciones,
   type EliminatoriaDuraciones,
+  type EliminatoriaRondaKey,
 } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import {
   formatZonedDateTimeLocal,
@@ -138,6 +142,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
   const [eliminatoriaCanchas, setEliminatoriaCanchas] = useState<string[]>([]);
   const [eliminatoriaDuraciones, setEliminatoriaDuraciones] =
     useState<EliminatoriaDuraciones>(DEFAULT_ELIMINATORIA_DURACIONES);
+  const [eliminatoriaRondasActivas, setEliminatoriaRondasActivas] = useState<
+    EliminatoriaRondaKey[]
+  >([...DEFAULT_ELIMINATORIA_RONDAS_ACTIVAS]);
   const [savingEliminatoria, setSavingEliminatoria] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<TorneoExpress | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -171,7 +178,10 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       ),
       eliminatoriaCategoriaOrden: eliminatoriaOrdenIds,
       eliminatoriaCanchas,
-      eliminatoriaDuraciones,
+      eliminatoriaDuraciones: serializeEliminatoriaDuraciones(
+        eliminatoriaDuraciones,
+        eliminatoriaRondasActivas
+      ),
     },
     defaultEliminatoriaOrden
   );
@@ -241,6 +251,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       setEliminatoriaDuraciones(
         normalizeEliminatoriaDuraciones(data.evento.eliminatoria_duraciones)
       );
+      setEliminatoriaRondasActivas(
+        parseEliminatoriaRondasActivas(data.evento.eliminatoria_duraciones)
+      );
       const synced = await syncEventoEstadoFromCategorias(data.evento.id).catch(
         () => null
       );
@@ -267,6 +280,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
         );
         setEliminatoriaDuraciones(
           normalizeEliminatoriaDuraciones(synced.eliminatoria_duraciones)
+        );
+        setEliminatoriaRondasActivas(
+          parseEliminatoriaRondasActivas(synced.eliminatoria_duraciones)
         );
       }
     } catch (e) {
@@ -331,8 +347,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
     setError(null);
     try {
       const canchas = normalizeEliminatoriaCanchas(eliminatoriaCanchas);
-      const duraciones = normalizeEliminatoriaDuraciones(
-        eliminatoriaDuraciones
+      const duraciones = serializeEliminatoriaDuraciones(
+        eliminatoriaDuraciones,
+        eliminatoriaRondasActivas
       );
       const updated = await updateEvento(evento.id, {
         eliminatoria_inicio: zonedDateTimeIso(
@@ -361,6 +378,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       );
       setEliminatoriaDuraciones(
         normalizeEliminatoriaDuraciones(updated.eliminatoria_duraciones)
+      );
+      setEliminatoriaRondasActivas(
+        parseEliminatoriaRondasActivas(updated.eliminatoria_duraciones)
       );
       showActionToast("Eliminatoria del evento guardada", "success");
     } catch (e) {
@@ -631,12 +651,13 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                   Eliminatoria del evento
                 </h2>
                 <p className="te-evento-section__hint">
-                  Horarios posibles en la vista pública. No genera el cuadro:
-                  solo hora, orden de categorías y canchas.
+                  Define qué rondas se juegan y sus horarios posibles. No
+                  genera el cuadro hasta cerrar grupos.
                 </p>
                 <EventoEliminatoriaHorarioForm
                   inicioLocal={eliminatoriaInicioLocal}
                   onInicioLocalChange={setEliminatoriaInicioLocal}
+                  timezone={evento?.timezone}
                   categorias={categorias}
                   ordenIds={eliminatoriaOrdenIds}
                   onOrdenIdsChange={setEliminatoriaOrdenIds}
@@ -644,6 +665,8 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                   onCanchasChange={setEliminatoriaCanchas}
                   duraciones={eliminatoriaDuraciones}
                   onDuracionesChange={setEliminatoriaDuraciones}
+                  rondasActivas={eliminatoriaRondasActivas}
+                  onRondasActivasChange={setEliminatoriaRondasActivas}
                 />
                 <div className="te-evd-savebar">
                   {eliminatoriaDirty ? (

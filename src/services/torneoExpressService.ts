@@ -3508,6 +3508,7 @@ function mapTorneoExpressEvento(row: Record<string, unknown>): TorneoExpressEven
             cuartos: number;
             semifinal: number;
             final: number;
+            activas?: Array<"octavos" | "cuartos" | "semifinal" | "final">;
           })
         : null,
     created_at: String(row.created_at ?? ""),

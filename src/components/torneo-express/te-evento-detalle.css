@@ -572,12 +572,31 @@
 
 .te-evd-elim-horario {
   display: grid;
-  gap: 12px;
+  gap: 1.35rem;
   min-width: 0;
-  padding: 14px 16px 16px;
+  padding: 1.15rem 1.2rem 1.35rem;
   border: 1px solid var(--ro-border);
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--ro-bg-card);
+}
+
+.te-evd-elim-block {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.te-evd-elim-block__head {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.te-evd-elim-block__title {
+  margin: 0;
+  color: var(--ro-text-primary);
+  font-size: 0.9375rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
 }
 
 .te-evd-elim-horario__field {
@@ -590,16 +609,22 @@
 }
 
 .te-evd-elim-horario__label {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: var(--ro-text-primary);
+  color: var(--ro-text-muted);
+}
+
+.te-evd-elim-inicio {
+  display: grid;
+  grid-template-columns: minmax(12rem, 16rem) minmax(8.5rem, 11rem);
+  gap: 10px;
 }
 
 .te-evd-elim-horario__input {
   width: 100%;
-  max-width: 22rem;
-  min-height: 2.5rem;
-  padding: 0.45rem 0.7rem;
+  max-width: none;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--ro-border);
   border-radius: 10px;
   background: var(--ro-bg-inset);
@@ -607,32 +632,103 @@
   font: inherit;
 }
 
-.te-evd-elim-horario__duraciones {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
-  gap: 10px;
+.te-evd-elim-horario__meta {
+  margin: 0;
+  color: var(--ro-text-muted);
+  font-size: 0.75rem;
 }
 
-.te-evd-elim-horario__duracion {
+.te-evd-elim-rondas {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.te-evd-elim-ronda {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 4px 6px;
+  align-items: center;
+  gap: 12px;
+  min-height: 3.25rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--ro-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ro-text-primary) 4%, transparent);
 }
 
-.te-evd-elim-horario__duracion .te-evd-elim-horario__court-label {
-  grid-column: 1 / -1;
+.te-evd-elim-ronda--off {
+  background: transparent;
+}
+
+.te-evd-elim-ronda__check {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.7rem;
+  cursor: pointer;
+}
+
+.te-evd-elim-ronda__check input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  accent-color: var(--ro-text-primary);
+}
+
+.te-evd-elim-ronda__check input:disabled {
+  cursor: default;
+}
+
+.te-evd-elim-ronda__name {
+  display: block;
+  color: var(--ro-text-primary);
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.te-evd-elim-ronda__hint {
+  display: block;
+  color: var(--ro-text-muted);
+  font-size: 0.75rem;
+}
+
+.te-evd-elim-ronda__mins {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .te-evd-elim-horario__input--mins {
+  width: 4.75rem;
   max-width: none;
+  min-height: 2.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .te-evd-elim-horario__unit {
-  padding-bottom: 0.55rem;
   font-size: 0.75rem;
   font-weight: 650;
   color: var(--ro-text-muted);
+}
+
+.te-evd-elim-ronda__skip {
+  color: var(--ro-text-muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+@media (max-width: 639px) {
+  .te-evd-elim-inicio {
+    grid-template-columns: 1fr;
+  }
+
+  .te-evd-elim-ronda {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
 }
 
 .te-evd-elim-horario__hint,
@@ -656,9 +752,9 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border: 1px solid var(--ro-border-subtle);
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .te-evd-elim-horario__index {
@@ -668,12 +764,23 @@
   font-weight: 700;
 }
 
-.te-evd-elim-horario__name {
+.te-evd-elim-horario__copy {
+  display: grid;
+  gap: 0.15rem;
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 0.875rem;
+}
+
+.te-evd-elim-horario__name {
+  min-width: 0;
+  font-size: 0.9375rem;
   font-weight: 650;
   color: var(--ro-text-primary);
+}
+
+.te-evd-elim-horario__path {
+  color: var(--ro-text-muted);
+  font-size: 0.75rem;
 }
 
 .te-evd-elim-horario__move {

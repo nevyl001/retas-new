@@ -51,6 +51,7 @@ export interface TorneoExpressEvento {
     cuartos: number;
     semifinal: number;
     final: number;
+    activas?: Array<"octavos" | "cuartos" | "semifinal" | "final">;
   } | null;
   created_at: string;
 }

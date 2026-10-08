@@ -2,9 +2,13 @@ import {
   buildEliminatoriaPossibleSchedule,
   categoriaKnockoutMinutes,
   categoriaNivelRank,
+  faseFromRondasActivas,
+  inferFaseEliminacion,
   normalizeEliminatoriaCanchas,
   normalizeEliminatoriaDuraciones,
   orderCategoriasForEliminatoria,
+  parseEliminatoriaRondasActivas,
+  toggleEliminatoriaRonda,
 } from "./eliminatoriaCategoriaOrden";
 
 describe("categoriaNivelRank", () => {
@@ -130,6 +134,41 @@ describe("normalizeEliminatoriaDuraciones", () => {
         semifinal: 60,
         final: 240,
       }
+    );
+  });
+});
+
+describe("rondas activas de eliminatoria", () => {
+  it("por defecto no incluye octavos", () => {
+    expect(parseEliminatoriaRondasActivas(null)).toEqual([
+      "cuartos",
+      "semifinal",
+      "final",
+    ]);
+  });
+
+  it("al marcar octavos también activa cuartos", () => {
+    expect(
+      toggleEliminatoriaRonda(["cuartos", "semifinal", "final"], "octavos", true)
+    ).toEqual(["octavos", "cuartos", "semifinal", "final"]);
+  });
+
+  it("al quitar cuartos también quita octavos", () => {
+    expect(
+      toggleEliminatoriaRonda(
+        ["octavos", "cuartos", "semifinal", "final"],
+        "cuartos",
+        false
+      )
+    ).toEqual(["semifinal", "final"]);
+  });
+
+  it("infiere cuartos si el organizador no marcó octavos", () => {
+    expect(faseFromRondasActivas(["cuartos", "semifinal", "final"])).toBe(
+      "cuartos"
+    );
+    expect(inferFaseEliminacion(null, { activas: ["semifinal", "final"] })).toBe(
+      "semifinal"
     );
   });
 });
