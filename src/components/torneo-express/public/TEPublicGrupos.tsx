@@ -496,7 +496,7 @@ function PartidoRow({
                 <SetMarks
                   scores={visitanteScores}
                   opponent={localScores}
-                  showIndex={false}
+                  showIndex
                 />
               ) : (
                 "—"

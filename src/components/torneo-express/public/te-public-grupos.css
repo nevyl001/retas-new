@@ -4833,3 +4833,130 @@
   line-height: 1;
   opacity: 0.85;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Tarjeta de partido (Grupos): compacta y con marcador legible en ambas      */
+/* parejas. Solo `.te-grupos-page .te-match-card`; no afecta otras vistas.    */
+/* Estructura y espaciado únicos; el color sale de los tokens existentes.     */
+/* -------------------------------------------------------------------------- */
+
+/* Marcador: misma celda, mismo tamaño y mismo contraste para las dos parejas.
+   Cada set lleva su número encima (1, 2, 3…) en ambos lados. */
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-marks {
+  grid-auto-columns: 2.5rem;
+  gap: 0.4rem;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-cell {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  gap: 0.25rem;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-cell__n {
+  color: var(--text-secondary);
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-cell__g,
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-cell--won .te-set-cell__g,
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-cell--tie .te-set-cell__g {
+  min-height: 2rem;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 16%, transparent);
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.36);
+  color: var(--text-primary);
+  font-size: 1.1875rem;
+  font-weight: 700;
+}
+
+/* El set ganado se distingue solo por el borde; el número conserva contraste. */
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-set-cell--won .te-set-cell__g {
+  border-color: color-mix(in srgb, var(--text-primary) 46%, transparent);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Bloque de pareja + marcador más ajustado. */
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-team-row {
+  gap: 0.45rem;
+  padding: 0.5rem 0.6rem 0.55rem;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-teams {
+  gap: 0.3rem;
+}
+
+.te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-faceoff__mark {
+  min-width: 2.25rem;
+  height: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  /* Un solo contenedor por partido: el grupo deja de enmarcar a sus tarjetas. */
+  .te-public.te-public--grupos-wide .te-grupos-page .te-grupo-wrap {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupos-page .te-grupo-inner {
+    gap: 0.75rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupos-page .te-grupos-grid .te-grupo-partidos {
+    gap: 0.5rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupos-page .te-match-card {
+    min-height: 0;
+    gap: 0.4rem;
+    padding: 0.5rem 0.5rem 0.55rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-item__top {
+    min-height: 0;
+    padding-bottom: 0.45rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-hora,
+  .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-meta .te-partido-hora,
+  .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-meta .te-partido-cancha {
+    min-height: 26px;
+    padding-inline: 0.4rem;
+  }
+
+  /* Fecha · hora · cancha caben en una sola línea en móviles de 375 px+;
+     por debajo, la cancha baja a una segunda línea sin cortarse. */
+  .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-meta {
+    gap: 0.3rem;
+    row-gap: 0.25rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-fecha {
+    gap: 0.3rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-fecha__dow,
+  .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-partido-fecha__when {
+    font-size: 0.9375rem;
+  }
+
+  /* La pareja usa todo el ancho de la tarjeta (antes se limitaba a 20rem). */
+  .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-team-row {
+    width: 100%;
+    max-width: none;
+    padding: 0.4rem 0.4rem 0.5rem;
+    border-radius: 0.75rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-public-pair--match {
+    justify-content: center;
+    gap: 0.35rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupos-page .te-match-card .te-public-pair__portrait {
+    aspect-ratio: 6 / 5;
+  }
+}
