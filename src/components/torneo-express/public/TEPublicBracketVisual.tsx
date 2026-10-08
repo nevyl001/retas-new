@@ -1074,7 +1074,7 @@ function BracketRoundColumn({
   pairStatsById = {},
 }: {
   round: BracketRoundPresentation;
-  display?: "history" | "current";
+  display?: "history" | "current" | "preview";
   pairStatsById?: Record<string, PublicEliminatoriaPodiumStats | null>;
 }) {
   const isFinal =
@@ -1086,6 +1086,9 @@ function BracketRoundColumn({
     ? (pairTeams.find((team) => team.isWinner) ?? null)
     : null;
 
+  const isPreview = display === "preview";
+  const isHistory = display === "history";
+
   return (
     <section
       className={`te-pb-round${
@@ -1093,10 +1096,8 @@ function BracketRoundColumn({
       }${isFinal ? " te-pb-round--final" : ""}${
         round.isSemifinal ? " te-pb-round--semis" : ""
       }${round.isCompleted ? " te-pb-round--completed" : ""}${
-        display === "history"
-          ? " te-pb-round--history"
-          : " te-pb-round--current"
-      }`}
+        isHistory ? " te-pb-round--history" : " te-pb-round--current"
+      }${isPreview ? " te-pb-round--preview" : ""}`}
       data-round={round.id}
       data-display={display}
       aria-label={round.title}
@@ -1112,6 +1113,7 @@ function BracketRoundColumn({
             {isFinal ? "◆" : "●"}
           </span>
           {display === "current" &&
+          !isPreview &&
           !champion &&
           (round.isSemifinal || isFinal) ? (
             <span className="te-pb-round__eyebrow">
@@ -1135,7 +1137,10 @@ function BracketRoundColumn({
         ) : null}
       </header>
 
-      {display === "current" && !round.isThirdPlace && !champion ? (
+      {display === "current" &&
+      !isPreview &&
+      !round.isThirdPlace &&
+      !champion ? (
         <div className="te-pb-round__editorial">
           {round.isSemifinal ? (
             <>
@@ -1159,7 +1164,9 @@ function BracketRoundColumn({
 
       <div className="te-pb-round__stack">
         {round.matches.map((match) =>
-          display === "current" && (isFinal || round.isThirdPlace) ? (
+          display === "current" &&
+          !isPreview &&
+          (isFinal || round.isThirdPlace) ? (
             <FinalHeroScoreboard
               key={match.id}
               match={match}
@@ -1171,16 +1178,21 @@ function BracketRoundColumn({
               key={match.id}
               match={match}
               variant={
-                display === "history"
+                isHistory
                   ? "history"
-                  : round.isSemifinal
-                    ? "semifinal"
-                    : round.isThirdPlace
-                      ? "third"
+                  : isPreview
+                    ? round.isSemifinal
+                      ? "semifinal"
                       : "standard"
+                    : round.isSemifinal
+                      ? "semifinal"
+                      : round.isThirdPlace
+                        ? "third"
+                        : "standard"
               }
               hideLiveStatus={
                 display === "current" &&
+                !isPreview &&
                 round.matches.length > 1 &&
                 round.matches.every((entry) => entry.status === "live")
               }
@@ -1203,6 +1215,8 @@ export interface TEPublicBracketVisualProps {
   clubLogoUrl?: string | null;
   showMotherAttribution?: boolean;
   pairStatsById?: Record<string, PublicEliminatoriaPodiumStats | null>;
+  /** Projected empty tree before groups close; fills in when knockout matches exist. */
+  preview?: boolean;
 }
 
 export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
@@ -1216,6 +1230,7 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   clubLogoUrl = null,
   showMotherAttribution = false,
   pairStatsById = {},
+  preview = false,
 }) => {
   const presentation = useMemo(
     () =>
@@ -1224,8 +1239,9 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
         totalRondas,
         activeRonda,
         pairPlayersById,
+        { includePendingSlots: preview },
       ),
-    [allCards, totalRondas, activeRonda, pairPlayersById],
+    [allCards, totalRondas, activeRonda, pairPlayersById, preview],
   );
   const completedChampion =
     presentation.visibleRound?.isFinalRound &&
@@ -1255,12 +1271,30 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   }
 
   return (
-    <div className="te-pb te-elim-v2">
+    <div className={`te-pb te-elim-v2${preview ? " te-elim-v2--preview" : ""}`}>
       <div
         className="te-pb-current-stage"
-        aria-label="Etapa actual de la eliminatoria"
+        aria-label={
+          preview
+            ? "Cuadro proyectado de la eliminatoria"
+            : "Etapa actual de la eliminatoria"
+        }
       >
-        {presentation.visibleRound ? (
+        {preview && presentation.rounds.length > 0 ? (
+          <section className="te-pb-stage te-pb-stage--preview">
+            {presentation.rounds.map((round, index) => (
+              <React.Fragment key={round.id}>
+                {index > 0 ? (
+                  <div className="te-pb-stage-progression" aria-hidden>
+                    <span />
+                    <i>●</i>
+                  </div>
+                ) : null}
+                <BracketRoundColumn round={round} display="preview" />
+              </React.Fragment>
+            ))}
+          </section>
+        ) : presentation.visibleRound ? (
           <section
             className={`te-pb-stage te-pb-stage--${presentation.visibleRound.id}`}
             key={presentation.visibleRound.id}

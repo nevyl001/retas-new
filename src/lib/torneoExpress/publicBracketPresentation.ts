@@ -499,7 +499,8 @@ function mapMatchCard(
     sets: card.sets,
     isFinal,
     isThirdPlace: isThird,
-    isPlaceholder: false,
+    isPlaceholder:
+      !teamHasParticipant(card.local) && !teamHasParticipant(card.visit),
   };
 }
 
@@ -514,18 +515,29 @@ function inferRoundLabel(ronda: number, totalRondas: number): string {
   return `Ronda ${ronda}`;
 }
 
+export type BuildBracketPresentationOptions = {
+  /** Keep TBD slots so a projected tree can render before groups close. */
+  includePendingSlots?: boolean;
+};
+
+function cardHasPublishedSides(card: PublicMatchupCard): boolean {
+  return (
+    (card.local.isBye || Boolean(card.local.parejaId)) &&
+    (card.visit.isBye || Boolean(card.visit.parejaId))
+  );
+}
+
 function buildRoundPresentation(
   ronda: number,
   totalRondas: number,
   byRound: Map<number, PublicMatchupCard[]>,
   activeRonda: number,
   pairPlayersById: BracketPairPlayersById,
+  includePendingSlots = false,
 ): BracketRoundPresentation {
   const isThird = isRondaTercerLugar(ronda);
   const existing = (byRound.get(ronda) ?? []).filter(
-    (card) =>
-      (card.local.isBye || Boolean(card.local.parejaId)) &&
-      (card.visit.isBye || Boolean(card.visit.parejaId)),
+    (card) => includePendingSlots || cardHasPublishedSides(card),
   );
   const matches = existing.map((card) =>
     mapMatchCard(card, totalRondas, byRound, pairPlayersById),
@@ -559,7 +571,9 @@ export function buildBracketPresentationModel(
   totalRondas: number,
   activeRonda?: number,
   pairPlayersById: BracketPairPlayersById = {},
+  options: BuildBracketPresentationOptions = {},
 ): BracketPresentationModel {
+  const includePendingSlots = Boolean(options.includePendingSlots);
   const byRound = cardsByRound(allCards);
   const resolvedActive =
     activeRonda != null && activeRonda >= 1
@@ -582,6 +596,7 @@ export function buildBracketPresentationModel(
       byRound,
       resolvedActive,
       pairPlayersById,
+      includePendingSlots,
     );
     if (round.matches.length > 0) rounds.push(round);
   }
@@ -595,6 +610,7 @@ export function buildBracketPresentationModel(
       byRound,
       resolvedActive,
       pairPlayersById,
+      includePendingSlots,
     );
     if (thirdPlace.matches.length === 0) thirdPlace = null;
   }

@@ -6,6 +6,7 @@ import { getJugadorInitials } from "../../components/jugadores/JugadorAvatar";
 import { RONDA_TERCER_LUGAR } from "./bracketRounds";
 import type { PublicMatchupCard } from "./publicBracketModel";
 import type { PublicEliminatoriaPodiumStats } from "./publicEliminatoriaPodiumStats";
+import { buildEliminatoriaPreviewCards } from "./eliminatoriaPreviewBracket";
 
 function card(
   id: string,
@@ -622,5 +623,26 @@ describe("TEPublicBracketVisual presentation", () => {
     expect(screen.getByText("Cancha por confirmar")).toHaveClass(
       "te-pb-match__court--pending",
     );
+  });
+
+  it("renders the real match cards empty when previewing before groups close", () => {
+    const { cards, totalRondas } = buildEliminatoriaPreviewCards({
+      fase: "cuartos",
+    });
+    render(
+      <TEPublicBracketVisual
+        allCards={cards}
+        totalRondas={totalRondas}
+        activeRonda={1}
+        preview
+      />,
+    );
+
+    expect(screen.getByText(/^CUARTOS DE FINAL$/)).toBeInTheDocument();
+    expect(screen.getByText(/^SEMIFINALES$/)).toBeInTheDocument();
+    expect(screen.getByText(/^GRAN FINAL$/)).toBeInTheDocument();
+    expect(screen.getAllByText("Por definir").length).toBeGreaterThanOrEqual(8);
+    expect(screen.getAllByRole("separator", { name: "contra" }).length).toBe(7);
+    expect(screen.queryByText("Felicidades, semifinalistas.")).toBeNull();
   });
 });

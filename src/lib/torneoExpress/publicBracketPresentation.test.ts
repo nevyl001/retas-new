@@ -318,4 +318,37 @@ describe("publicBracketPresentation", () => {
     const model = buildBracketPresentationModel(cards, 3, 2);
     expect(model.defaultMobileTabId).toBe("ronda-2");
   });
+
+  it("hides projected TBD cards until includePendingSlots is on", () => {
+    const empty: PublicMatchupCard = {
+      ...card("q1", 1, 0),
+      local: {
+        parejaId: null,
+        label: "",
+        seed: null,
+        originBadge: null,
+        isBye: false,
+        isWinner: false,
+        score: null,
+      },
+      visit: {
+        parejaId: null,
+        label: "",
+        seed: null,
+        originBadge: null,
+        isBye: false,
+        isWinner: false,
+        score: null,
+      },
+    };
+    const hidden = buildBracketPresentationModel([empty], 3, 1);
+    expect(hidden.rounds).toHaveLength(0);
+
+    const shown = buildBracketPresentationModel([empty], 3, 1, {}, {
+      includePendingSlots: true,
+    });
+    expect(shown.rounds).toHaveLength(1);
+    expect(shown.rounds[0].matches[0].local.kind).toBe("dependency");
+    expect(shown.rounds[0].matches[0].isPlaceholder).toBe(true);
+  });
 });
