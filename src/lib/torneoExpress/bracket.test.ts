@@ -1,10 +1,14 @@
 import {
   calcularClasificadosFase,
   calcularBracketInicial,
+  getTablaOrdenada,
   mejoresTercerosNecesarios,
+  sugerirFaseAutomatica,
   swapBracketSlots,
+  validarFaseElegible,
   validarChoques,
 } from "./bracket";
+import { puestoResuelto } from "./standings";
 import type {
   TorneoExpress,
   TorneoExpressBundle,
@@ -244,5 +248,61 @@ describe("calcularClasificadosFase", () => {
     expect(() => calcularClasificadosFase(bundle, "semifinal")).toThrow(
       /No hay clasificación/
     );
+  });
+});
+
+describe("7 grupos: primeros lugares + mejor segundo", () => {
+  it("sugiere cuartos y solo admite cuartos", () => {
+    expect(sugerirFaseAutomatica(7)).toBe("cuartos");
+    expect(validarFaseElegible(7, "cuartos")).toEqual({ ok: true });
+    expect(validarFaseElegible(7, "octavos").ok).toBe(false);
+    expect(validarFaseElegible(7, "semifinal").ok).toBe(false);
+  });
+
+  it("hay un solo hueco extra (mejor segundo)", () => {
+    expect(mejoresTercerosNecesarios(7, "cuartos")).toBe(1);
+  });
+
+  it("clasifican los 7 primeros + el mejor 2.° (8 equipos)", () => {
+    const bundle = makeBundle({ numGrupos: 7 });
+    const q = calcularClasificadosFase(bundle, "cuartos");
+    expect(q).toHaveLength(8);
+    expect(q.filter((x) => x.posEnGrupo === 1)).toHaveLength(7);
+    const extras = q.filter((x) => x.posEnGrupo === 2);
+    expect(extras).toHaveLength(1);
+    expect(extras[0].isMejorTercero).toBe(true);
+    expect(extras[0].seed).toBe(8);
+    expect(q.some((x) => x.posEnGrupo === 3)).toBe(false);
+  });
+
+  it("el mejor 2.° es el de mejor FAV → DIF → PG entre todos los segundos", () => {
+    const bundle = makeBundle({ numGrupos: 7 });
+    const segundos = bundle.grupos
+      .map((g) => puestoResuelto(getTablaOrdenada(bundle, g), 2))
+      .filter((row): row is NonNullable<typeof row> => row != null)
+      .sort(
+        (a, b) => b.ptsFav - a.ptsFav || b.dif - a.dif || b.pg - a.pg
+      );
+    const elegido = calcularClasificadosFase(bundle, "cuartos").find(
+      (x) => x.posEnGrupo === 2
+    )!;
+    expect(segundos).toHaveLength(7);
+    expect(elegido.ptsFav).toBe(segundos[0].ptsFav);
+    expect(elegido.dif).toBe(segundos[0].dif);
+  });
+
+  it("arma un bracket limpio de 8 sin BYEs", () => {
+    const bundle = makeBundle({ numGrupos: 7 });
+    const result = calcularBracketInicial(bundle, "cuartos");
+    expect(result.slots).toHaveLength(8);
+    expect(result.slots.filter((s) => s.type === "team")).toHaveLength(8);
+    expect(result.byeCount).toBe(0);
+  });
+
+  it("la regla general no cambia con 4 grupos (1.° y 2.°)", () => {
+    const bundle = makeBundle({ numGrupos: 4 });
+    const q = calcularClasificadosFase(bundle, "cuartos");
+    expect(q).toHaveLength(8);
+    expect(q.filter((x) => x.posEnGrupo === 2)).toHaveLength(4);
   });
 });

@@ -25,6 +25,7 @@ import {
 } from "../../../club-experience/motherBrand";
 import { useClubExperience } from "../../../club-experience";
 import { resolvePlayerPublicProfiles } from "../../../lib/rivieraJugadores/publicPlayerAvatars";
+import { reglaClasificacion } from "../../../lib/torneoExpress/reglaClasificacion";
 import { useOrganizerDisplayName } from "../../../club-experience/useOrganizerDisplayName";
 import {
   clasificacionAchievementStats,
@@ -77,6 +78,8 @@ export interface TEPublicGruposGrupo {
   standingRows: StandingRowExpress[];
   pairsById: Record<string, TEPublicPairSide>;
   clasifican: number;
+  /** 7 grupos: además del 1.°, el mejor 2.° de todos los grupos avanza. */
+  mejorSegundo?: boolean;
   achievementPlayers?: TEPublicGruposAchievementPlayer[];
 }
 
@@ -102,8 +105,6 @@ export interface TEPublicGruposProps {
   eventoHref?: string | null;
   clasificacionModo?: TorneoExpressClasificacionModo;
 }
-
-const DEFAULT_CLASIFICAN = 2;
 
 function resolvePartidoEstado(
   partido: TorneoExpressPartido,
@@ -220,7 +221,9 @@ export function buildTEPublicGruposProps(
   standingsByGrupo: Record<string, StandingRowExpress[]>,
   options?: { clasifican?: number; lugar?: string }
 ): Omit<TEPublicGruposProps, "onCopyLink" | "copyMsg"> {
-  const clasifican = options?.clasifican ?? DEFAULT_CLASIFICAN;
+  const regla = reglaClasificacion(bundle.grupos.length);
+  const clasifican = options?.clasifican ?? regla.porGrupo;
+  const mejorSegundo = regla.posicionExtra === 2;
   const gruposOrdenados = [...bundle.grupos].sort((a, b) => a.orden - b.orden);
 
   const fechaIsos: string[] = [];
@@ -263,6 +266,7 @@ export function buildTEPublicGruposProps(
       standingRows,
       pairsById,
       clasifican,
+      mejorSegundo,
       achievementPlayers: achievementPlayersFromWinner(parejas, standingRows),
     };
   });
@@ -1154,7 +1158,9 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
             <div className="te-grupo-head">
               <h2 className="te-grupo-label">{grupo.nombre}</h2>
               <span className="te-grupo-clasifican-badge">
-                Clasifican {grupo.clasifican}
+                {grupo.mejorSegundo
+                  ? "Clasifica 1° + mejor 2°"
+                  : `Clasifican ${grupo.clasifican}`}
               </span>
             </div>
 

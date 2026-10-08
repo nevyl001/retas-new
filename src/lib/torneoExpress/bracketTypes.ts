@@ -51,6 +51,8 @@ export interface ClasificadosSummary {
   fijos: BracketQualifier[];
   tercerosCandidatos: BracketQualifier[];
   mejoresTercerosNecesarios: number;
+  /** Posición de los "mejores" extra: 3.° en la regla general, 2.° con 7 grupos. */
+  posicionExtra: 2 | 3;
   totalClasificados: number;
 }
 

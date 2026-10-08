@@ -10,6 +10,7 @@ import {
   BRACKET_FASE_SLOTS,
   standingToQualifier,
 } from "./bracketTypes";
+import { reglaClasificacion } from "./reglaClasificacion";
 import {
   previsualizarResolverBracket,
   resolverBracket,
@@ -37,18 +38,23 @@ export function grupoBadgeLabel(q: BracketQualifier): string {
   return `${q.posEnGrupo}°${letter}`;
 }
 
-/** Máximo de mejores terceros que pueden entrar (el resto del hueco son BYE). */
+/**
+ * Máximo de "mejores" extra que pueden entrar (el resto del hueco son BYE):
+ * mejores terceros en la regla general, mejor segundo con 7 grupos.
+ */
 export function mejoresTercerosNecesarios(
   numGrupos: number,
   fase: BracketFase
 ): number {
   const slots = BRACKET_FASE_SLOTS[fase];
-  const gap = Math.max(0, slots - numGrupos * 2);
+  const gap = Math.max(0, slots - numGrupos * reglaClasificacion(numGrupos).porGrupo);
   return Math.min(numGrupos, gap);
 }
 
 export function sugerirFaseAutomatica(numGrupos: number): BracketFase {
-  const fijos = numGrupos * 2;
+  const regla = reglaClasificacion(numGrupos);
+  if (regla.faseUnica) return regla.faseUnica;
+  const fijos = numGrupos * regla.porGrupo;
   if (fijos <= 4) return "semifinal";
   if (fijos <= 8) return "cuartos";
   return "octavos";
@@ -58,8 +64,16 @@ export function validarFaseElegible(
   numGrupos: number,
   fase: BracketFase
 ): { ok: true } | { ok: false; error: string } {
-  const fijos = numGrupos * 2;
+  const regla = reglaClasificacion(numGrupos);
+  const fijos = numGrupos * regla.porGrupo;
   const maxPlazas = BRACKET_FASE_SLOTS.octavos;
+
+  if (regla.faseUnica && fase !== regla.faseUnica) {
+    return {
+      ok: false,
+      error: `Con ${numGrupos} grupos pasan los ${numGrupos} primeros lugares y el mejor segundo (${BRACKET_FASE_SLOTS[regla.faseUnica]} equipos): usa ${labelFase(regla.faseUnica)}.`,
+    };
+  }
 
   if (fijos > maxPlazas) {
     return {
@@ -92,8 +106,9 @@ export function calcularResumenClasificados(
   fase: BracketFase
 ): ClasificadosSummary {
   const numGrupos = bundle.grupos.length;
+  const regla = reglaClasificacion(numGrupos);
   const fijos: BracketQualifier[] = [];
-  const tercerosCandidatos: BracketQualifier[] = [];
+  const extrasCandidatos: BracketQualifier[] = [];
 
   bundle.grupos.forEach((grupo) => {
     const tabla = getTablaOrdenada(bundle, grupo);
@@ -106,31 +121,33 @@ export function calcularResumenClasificados(
         seed: 0,
       });
     }
-    if (segundo) {
+    if (regla.porGrupo === 2 && segundo) {
       fijos.push({
         ...standingToQualifier(segundo, 2, false),
         seed: 0,
       });
     }
-    if (tercero) {
-      tercerosCandidatos.push({
-        ...standingToQualifier(tercero, 3, false),
+    const extra = regla.posicionExtra === 2 ? segundo : tercero;
+    if (extra) {
+      extrasCandidatos.push({
+        ...standingToQualifier(extra, regla.posicionExtra, false),
         seed: 0,
       });
     }
   });
 
-  const mejoresTercerosNec = mejoresTercerosNecesarios(numGrupos, fase);
-  const tercerosOrdenados = [...tercerosCandidatos].sort(compareQualifiers);
-  const mejoresTerceros = tercerosOrdenados.slice(0, mejoresTercerosNec).map(
+  const mejoresExtraNec = mejoresTercerosNecesarios(numGrupos, fase);
+  const extrasOrdenados = [...extrasCandidatos].sort(compareQualifiers);
+  const mejoresExtra = extrasOrdenados.slice(0, mejoresExtraNec).map(
     (q) => ({ ...q, isMejorTercero: true })
   );
 
-  const todos = [...fijos, ...mejoresTerceros];
+  const todos = [...fijos, ...mejoresExtra];
   return {
     fijos,
-    tercerosCandidatos,
-    mejoresTercerosNecesarios: mejoresTercerosNec,
+    tercerosCandidatos: extrasCandidatos,
+    mejoresTercerosNecesarios: mejoresExtraNec,
+    posicionExtra: regla.posicionExtra,
     totalClasificados: todos.length,
   };
 }
@@ -162,7 +179,8 @@ export function calcularClasificadosFase(
   }
 
   const resumen = calcularResumenClasificados(bundle, fase);
-  if (resumen.fijos.length !== bundle.grupos.length * 2) {
+  const regla = reglaClasificacion(bundle.grupos.length);
+  if (resumen.fijos.length !== bundle.grupos.length * regla.porGrupo) {
     throw new Error(
       "No hay clasificación. Faltan resultados o hay empates sin resolver en la fase de grupos."
     );
@@ -173,6 +191,7 @@ export function calcularClasificadosFase(
   const segundos = resumen.fijos
     .filter((q) => q.posEnGrupo === 2)
     .sort(compareQualifiers);
+  // Extras: mejores terceros (regla general) o mejor segundo (7 grupos).
   const maxTerceros =
     opts?.cantidadTerceros ??
     resumen.mejoresTercerosNecesarios;

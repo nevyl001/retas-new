@@ -1,3 +1,4 @@
+import { etiquetaMejoresExtra, reglaClasificacion } from "../../lib/torneoExpress/reglaClasificacion";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -136,7 +137,7 @@ export const TorneoExpressBracketModal: React.FC<
   const fasePreviews = useMemo(() => {
     if (!bundle) return {} as Partial<Record<BracketFase, string>>;
     const numGrupos = bundle.grupos.length;
-    const fijos = numGrupos * 2;
+    const fijos = numGrupos * reglaClasificacion(numGrupos).porGrupo;
     const out: Partial<Record<BracketFase, string>> = {};
     for (const opt of FASE_OPCIONES) {
       const maxTer = mejoresTercerosNecesarios(numGrupos, opt.id);
@@ -232,6 +233,9 @@ export const TorneoExpressBracketModal: React.FC<
   const totalSlots = slots.length > 0 ? slots.length : BRACKET_FASE_SLOTS[fase];
   const fijosCount = resumenClasificados?.fijos.length ?? 0;
   const tercerosIncluidos = Math.min(cantidadTerceros, maxTerceros);
+  const posicionExtra = resumenClasificados?.posicionExtra ?? 3;
+  const etiquetaExtra = etiquetaMejoresExtra(posicionExtra, tercerosIncluidos);
+  const etiquetaExtraMax = etiquetaMejoresExtra(posicionExtra, 2);
   const totalAvanzan = fijosCount + tercerosIncluidos;
   const teamCount =
     slots.length > 0
@@ -395,7 +399,7 @@ export const TorneoExpressBracketModal: React.FC<
                               +
                             </span>
                             <span className="te-bracket-resumen__chip te-bracket-resumen__chip--tercero">
-                              {tercerosIncluidos} mejores terceros
+                              {tercerosIncluidos} {etiquetaExtra}
                             </span>
                           </>
                         ) : null}
@@ -408,7 +412,8 @@ export const TorneoExpressBracketModal: React.FC<
                           id="te-bracket-terceros-label"
                           className="te-bracket-terceros-field__label"
                         >
-                          Mejores terceros
+                          {etiquetaExtraMax.charAt(0).toUpperCase() +
+                            etiquetaExtraMax.slice(1)}
                         </span>
                         <div
                           className="te-bracket-stepper"
@@ -420,7 +425,7 @@ export const TorneoExpressBracketModal: React.FC<
                             className="te-bracket-stepper__btn"
                             onClick={() => adjustTerceros(-1)}
                             disabled={cantidadTerceros <= 0}
-                            aria-label="Disminuir mejores terceros"
+                            aria-label={`Disminuir ${etiquetaExtraMax}`}
                           >
                             −
                           </button>
@@ -435,7 +440,7 @@ export const TorneoExpressBracketModal: React.FC<
                             className="te-bracket-stepper__btn"
                             onClick={() => adjustTerceros(1)}
                             disabled={cantidadTerceros >= maxTerceros}
-                            aria-label="Aumentar mejores terceros"
+                            aria-label={`Aumentar ${etiquetaExtraMax}`}
                           >
                             +
                           </button>
