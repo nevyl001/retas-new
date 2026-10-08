@@ -79,6 +79,8 @@ export interface TEPublicEliminatoriaProps {
   eventoHref?: string | null;
   /** true si el canal Realtime está SUBSCRIBED; si no, se degrada a "Actualizado hace Ns". */
   realtimeConnected?: boolean;
+  /** Horarios posibles del evento (proyección; no genera el cuadro). */
+  schedule?: React.ReactNode;
 }
 
 export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
@@ -90,6 +92,7 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
   gruposHref,
   eventoHref,
   realtimeConnected,
+  schedule,
 }) => {
   const [spinning, setSpinning] = useState(false);
   const prevRefreshRef = useRef<Date | null>(null);
@@ -229,6 +232,7 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
           ) : null}
         </div>
       </header>
+      {schedule}
 
       <section className="te-elim-public-bracket-wrap te-pub-fade-in">
         <TEPublicBracketVisual

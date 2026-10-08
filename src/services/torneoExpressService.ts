@@ -3485,6 +3485,15 @@ function mapTorneoExpressEvento(row: Record<string, unknown>): TorneoExpressEven
         : String(row.fecha_fin),
     clasificacion_modo,
     partido_formato,
+    eliminatoria_inicio:
+      row.eliminatoria_inicio == null || row.eliminatoria_inicio === ""
+        ? null
+        : String(row.eliminatoria_inicio),
+    eliminatoria_categoria_orden: Array.isArray(row.eliminatoria_categoria_orden)
+      ? (row.eliminatoria_categoria_orden as unknown[])
+          .map((id) => String(id ?? "").trim())
+          .filter(Boolean)
+      : null,
     created_at: String(row.created_at ?? ""),
   };
 }
@@ -3627,12 +3636,14 @@ export async function fetchEventoBySlug(
 }
 
 export async function fetchEventoConCategorias(
-  eventoId: string
+  eventoId: string,
+  usePublicClient = false
 ): Promise<TorneoExpressEventoConCategorias | null> {
-  const evento = await fetchEventoById(eventoId);
+  const evento = await fetchEventoById(eventoId, usePublicClient);
   if (!evento) return null;
 
-  const { data, error } = await supabase
+  const client = usePublicClient ? readClient : supabase;
+  const { data, error } = await client
     .from("torneo_express")
     .select("*")
     .eq("evento_id", evento.id)
@@ -3810,6 +3821,8 @@ export async function updateEvento(
       | "fecha_fin"
       | "clasificacion_modo"
       | "partido_formato"
+      | "eliminatoria_inicio"
+      | "eliminatoria_categoria_orden"
     >
   >
 ): Promise<TorneoExpressEvento> {
@@ -3858,6 +3871,12 @@ export async function updateEvento(
     }
     payload.partido_formato = patch.partido_formato;
   }
+  if (patch.eliminatoria_inicio !== undefined) {
+    payload.eliminatoria_inicio = patch.eliminatoria_inicio;
+  }
+  if (patch.eliminatoria_categoria_orden !== undefined) {
+    payload.eliminatoria_categoria_orden = patch.eliminatoria_categoria_orden;
+  }
 
   if (Object.keys(payload).length === 0) {
     const current = await fetchEventoById(id);
@@ -3865,12 +3884,29 @@ export async function updateEvento(
     return current;
   }
 
-  const { data, error } = await supabase
-    .from("torneo_express_evento")
-    .update(payload)
-    .eq("id", id)
-    .select()
-    .single();
+  const runUpdate = () =>
+    supabase.from("torneo_express_evento").update(payload).eq("id", id).select().single();
+
+  let { data, error } = await runUpdate();
+
+  if (
+    error &&
+    (isMissingColumnError(error, "torneo_express_evento", "eliminatoria_inicio") ||
+      isMissingColumnError(
+        error,
+        "torneo_express_evento",
+        "eliminatoria_categoria_orden"
+      ))
+  ) {
+    delete payload.eliminatoria_inicio;
+    delete payload.eliminatoria_categoria_orden;
+    if (Object.keys(payload).length === 0) {
+      const current = await fetchEventoById(id);
+      if (!current) throw new Error("Evento no encontrado");
+      return current;
+    }
+    ({ data, error } = await runUpdate());
+  }
 
   if (isEventoTableMissing(error)) {
     throw new Error(

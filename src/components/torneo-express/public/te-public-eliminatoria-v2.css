@@ -3427,3 +3427,99 @@
   line-height: 1;
   opacity: 0.85;
 }
+
+.te-public.te-public--eliminatoria .te-phase-segment {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px;
+  width: min(100%, 360px);
+  margin: 0 0 1rem;
+  padding: 3px;
+  border: 1px solid var(--te-v2-border);
+  border-radius: 14px;
+  background: var(--te-v2-surface-active);
+}
+
+.te-public.te-public--eliminatoria .te-phase-segment__item {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.te-public.te-public--eliminatoria .te-phase-segment__item--active {
+  background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  color: var(--text-primary);
+}
+
+.te-elim-horario {
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.1rem 1.15rem;
+  border: 1px solid var(--te-v2-border);
+  border-radius: 16px;
+  background: var(--te-v2-surface-active);
+}
+
+.te-elim-horario__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.te-elim-horario__hint {
+  margin: 0 0 0.85rem;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.te-elim-horario__list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.te-elim-horario__row {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--te-v2-border);
+  color: inherit;
+  text-decoration: none;
+}
+
+.te-elim-horario__row--current {
+  border-color: color-mix(in srgb, var(--text-primary) 28%, transparent);
+  background: color-mix(in srgb, var(--text-primary) 7%, transparent);
+}
+
+.te-elim-horario__index {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.te-elim-horario__name {
+  min-width: 0;
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.te-elim-horario__time {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

@@ -74,6 +74,7 @@ export type EventoReglasFormProps = {
   dirty: boolean;
   saving: boolean;
   onSave: () => void;
+  children?: React.ReactNode;
 };
 
 /**
@@ -88,6 +89,7 @@ export const EventoReglasForm: React.FC<EventoReglasFormProps> = ({
   dirty,
   saving,
   onSave,
+  children,
 }) => (
   <div className="te-evd-rules">
     <div className="te-evd-rules__groups">
@@ -106,6 +108,7 @@ export const EventoReglasForm: React.FC<EventoReglasFormProps> = ({
         onChange={onPartidoFormatoChange}
       />
     </div>
+    {children}
     <div className="te-evd-savebar">
       {dirty ? (
         <p className="te-evd-dirty" role="status">

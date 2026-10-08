@@ -31,7 +31,13 @@ import { ModeSectionTabs } from "../platform/ModeSectionTabs";
 import { EventoBrandingForm } from "./EventoBrandingForm";
 import { EventoCategoriaCard } from "./EventoCategoriaCard";
 import { EventoDetalleHeader } from "./EventoDetalleHeader";
+import { EventoEliminatoriaHorarioForm } from "./EventoEliminatoriaHorarioForm";
 import { EventoReglasForm } from "./EventoReglasForm";
+import { orderCategoriasForEliminatoria } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
+import {
+  formatZonedDateTimeLocal,
+  zonedDateTimeIso,
+} from "../../lib/torneoExpress/eventoTemporal";
 import { TePageShell } from "./TePageShell";
 import { TeUnsavedChangesModal } from "./TeUnsavedChangesModal";
 import { TorneoExpressDeleteModal } from "./TorneoExpressDeleteModal";
@@ -117,6 +123,10 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
   const [partidoFormato, setPartidoFormato] =
     useState<TorneoExpressPartidoFormato>("flexible");
   const [savingReglas, setSavingReglas] = useState(false);
+  const [eliminatoriaInicioLocal, setEliminatoriaInicioLocal] = useState("");
+  const [eliminatoriaOrdenIds, setEliminatoriaOrdenIds] = useState<string[]>(
+    []
+  );
   const [deleteTarget, setDeleteTarget] = useState<TorneoExpress | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [editingCategoriaId, setEditingCategoriaId] = useState<string | null>(
@@ -132,7 +142,23 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
   const [activeTab, setActiveTab] = useState<EventoTabId>("categorias");
 
   // Cambios sin guardar = formulario distinto de lo persistido en `evento`.
-  const reglasDirty = isReglasDirty(evento, { clasificacionModo, partidoFormato });
+  const defaultEliminatoriaOrden = orderCategoriasForEliminatoria(
+    categorias,
+    evento?.eliminatoria_categoria_orden
+  ).map((cat) => cat.id);
+  const reglasDirty = isReglasDirty(
+    evento,
+    {
+      clasificacionModo,
+      partidoFormato,
+      eliminatoriaInicio: zonedDateTimeIso(
+        eliminatoriaInicioLocal,
+        evento?.timezone
+      ),
+      eliminatoriaCategoriaOrden: eliminatoriaOrdenIds,
+    },
+    defaultEliminatoriaOrden
+  );
   const brandingDirty = isBrandingDirty(evento, { logoSource, flyerUrl });
   const dirtySections = [
     ...(reglasDirty ? ["Reglas"] : []),
@@ -180,6 +206,18 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       setFlyerUrl(data.evento.flyer_url ?? "");
       setClasificacionModo(data.evento.clasificacion_modo);
       setPartidoFormato(data.evento.partido_formato);
+      setEliminatoriaInicioLocal(
+        formatZonedDateTimeLocal(
+          data.evento.eliminatoria_inicio,
+          data.evento.timezone
+        )
+      );
+      setEliminatoriaOrdenIds(
+        orderCategoriasForEliminatoria(
+          data.categorias,
+          data.evento.eliminatoria_categoria_orden
+        ).map((cat) => cat.id)
+      );
       const synced = await syncEventoEstadoFromCategorias(data.evento.id).catch(
         () => null
       );
@@ -189,6 +227,18 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
         setFlyerUrl(synced.flyer_url ?? "");
         setClasificacionModo(synced.clasificacion_modo);
         setPartidoFormato(synced.partido_formato);
+        setEliminatoriaInicioLocal(
+          formatZonedDateTimeLocal(
+            synced.eliminatoria_inicio,
+            synced.timezone
+          )
+        );
+        setEliminatoriaOrdenIds(
+          orderCategoriasForEliminatoria(
+            data.categorias,
+            synced.eliminatoria_categoria_orden
+          ).map((cat) => cat.id)
+        );
       }
     } catch (e) {
       setError(formatSupabaseError(e));
@@ -232,10 +282,27 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       const updated = await updateEvento(evento.id, {
         clasificacion_modo: clasificacionModo,
         partido_formato: partidoFormato,
+        eliminatoria_inicio: zonedDateTimeIso(
+          eliminatoriaInicioLocal,
+          evento.timezone
+        ),
+        eliminatoria_categoria_orden: eliminatoriaOrdenIds,
       });
       setEvento(updated);
       setClasificacionModo(updated.clasificacion_modo);
       setPartidoFormato(updated.partido_formato);
+      setEliminatoriaInicioLocal(
+        formatZonedDateTimeLocal(
+          updated.eliminatoria_inicio,
+          updated.timezone
+        )
+      );
+      setEliminatoriaOrdenIds(
+        orderCategoriasForEliminatoria(
+          categorias,
+          updated.eliminatoria_categoria_orden
+        ).map((cat) => cat.id)
+      );
       showActionToast("Reglas del evento guardadas", "success");
     } catch (e) {
       const msg = formatSupabaseError(e);
@@ -499,7 +566,23 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                   dirty={reglasDirty}
                   saving={savingReglas}
                   onSave={() => void handleSaveReglas()}
-                />
+                >
+                  <h3 className="te-evento-section__title">
+                    Horario de eliminatorias
+                  </h3>
+                  <p className="te-evento-section__hint">
+                    Vista pública con horarios posibles. Empieza la categoría
+                    más baja (ej. Mixtos D) y termina en la más alta (ej. 4ta),
+                    o reordena.
+                  </p>
+                  <EventoEliminatoriaHorarioForm
+                    inicioLocal={eliminatoriaInicioLocal}
+                    onInicioLocalChange={setEliminatoriaInicioLocal}
+                    categorias={categorias}
+                    ordenIds={eliminatoriaOrdenIds}
+                    onOrdenIdsChange={setEliminatoriaOrdenIds}
+                  />
+                </EventoReglasForm>
               </section>
             </div>
 

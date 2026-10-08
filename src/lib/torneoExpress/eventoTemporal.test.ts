@@ -2,7 +2,9 @@ import { resolveEventoDisplayEstado } from "./resolveDisplayEstado";
 import {
   classifyEventoTemporal,
   filterEventos,
+  formatZonedDateTimeLocal,
   summarizeEventos,
+  zonedDateTimeIso,
   zonedDayStartMs,
   type EventoTemporalInput,
 } from "./eventoTemporal";
@@ -32,6 +34,26 @@ describe("zonedDayStartMs", () => {
     );
     expect(zonedDayStartMs("06/10/2026", MX)).toBeNull();
     expect(zonedDayStartMs(null, MX)).toBeNull();
+  });
+});
+
+describe("zonedDateTimeIso / formatZonedDateTimeLocal", () => {
+  it("interpreta datetime-local en la zona del evento", () => {
+    expect(zonedDateTimeIso("2026-10-10T14:00", MX)).toBe(
+      "2026-10-10T20:00:00.000Z"
+    );
+    expect(zonedDateTimeIso("2026-10-10T14:00:00", MX)).toBe(
+      "2026-10-10T20:00:00.000Z"
+    );
+    expect(formatZonedDateTimeLocal("2026-10-10T20:00:00.000Z", MX)).toBe(
+      "2026-10-10T14:00"
+    );
+  });
+
+  it("vacío o inválido da null / cadena vacía", () => {
+    expect(zonedDateTimeIso("", MX)).toBeNull();
+    expect(zonedDateTimeIso("10/10/2026 14:00", MX)).toBeNull();
+    expect(formatZonedDateTimeLocal(null, MX)).toBe("");
   });
 });
 

@@ -91,6 +91,64 @@ export function zonedDayStartMs(
   return Number.isFinite(result) ? result : null;
 }
 
+const DATETIME_LOCAL_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2})?$/;
+
+/** Instante UTC (ms) de un `datetime-local` interpretado en la zona del evento. */
+export function zonedDateTimeMs(
+  local: string | null | undefined,
+  timeZone?: string | null
+): number | null {
+  const raw = local?.trim() ?? "";
+  const match = DATETIME_LOCAL_RE.exec(raw);
+  if (!match) return null;
+  const tz = resolveEventoTimeZone(timeZone);
+  const y = Number(match[1]);
+  const month = Number(match[2]);
+  const d = Number(match[3]);
+  const h = Number(match[4]);
+  const min = Number(match[5]);
+  const guess = Date.UTC(y, month - 1, d, h, min, 0);
+  let result = guess - offsetMsAt(guess, tz);
+  const second = guess - offsetMsAt(result, tz);
+  if (second !== result) result = second;
+  return Number.isFinite(result) ? result : null;
+}
+
+export function zonedDateTimeIso(
+  local: string | null | undefined,
+  timeZone?: string | null
+): string | null {
+  const ms = zonedDateTimeMs(local, timeZone);
+  return ms == null ? null : new Date(ms).toISOString();
+}
+
+/** Valor para `<input type="datetime-local">` en la zona del evento. */
+export function formatZonedDateTimeLocal(
+  iso: string | null | undefined,
+  timeZone?: string | null
+): string {
+  if (!iso?.trim()) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const tz = resolveEventoTimeZone(timeZone);
+  const parts: Record<string, string> = {};
+  for (const part of new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(date)) {
+    if (part.type !== "literal") parts[part.type] = part.value;
+  }
+  if (!parts.year || !parts.month || !parts.day || !parts.hour || !parts.minute) {
+    return "";
+  }
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
 export function classifyEventoTemporal(
   evento: EventoTemporalInput,
   now: Date = new Date()

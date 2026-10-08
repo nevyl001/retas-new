@@ -18,6 +18,38 @@ describe("isReglasDirty", () => {
     expect(isReglasDirty(saved, { clasificacionModo: "dif_puntos", partidoFormato: "bo3_super_muerte" })).toBe(true);
   });
 
+  it("detecta cambio de inicio u orden de eliminatoria", () => {
+    expect(
+      isReglasDirty(saved, {
+        clasificacionModo: "dif_puntos",
+        partidoFormato: "flexible",
+        eliminatoriaInicio: "2026-10-10T20:00:00.000Z",
+      })
+    ).toBe(true);
+    expect(
+      isReglasDirty(
+        saved,
+        {
+          clasificacionModo: "dif_puntos",
+          partidoFormato: "flexible",
+          eliminatoriaCategoriaOrden: ["b", "a"],
+        },
+        ["a", "b"]
+      )
+    ).toBe(true);
+    expect(
+      isReglasDirty(
+        saved,
+        {
+          clasificacionModo: "dif_puntos",
+          partidoFormato: "flexible",
+          eliminatoriaCategoriaOrden: ["a", "b"],
+        },
+        ["a", "b"]
+      )
+    ).toBe(false);
+  });
+
   it("volver al valor original deja de ser cambio", () => {
     expect(isReglasDirty(saved, { clasificacionModo: "dif_puntos", partidoFormato: "flexible" })).toBe(false);
   });

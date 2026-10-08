@@ -460,7 +460,7 @@
 .te-evd-rules {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .te-evd-rules__groups {
@@ -566,6 +566,101 @@
 
 .te-evd-rule__steps li::marker {
   color: var(--ro-text-muted);
+}
+
+.te-evd-elim-horario {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--ro-border);
+  border-radius: 14px;
+  background: var(--ro-bg-card);
+}
+
+.te-evd-elim-horario__field {
+  display: grid;
+  gap: 6px;
+}
+
+.te-evd-elim-horario__label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--ro-text-primary);
+}
+
+.te-evd-elim-horario__input {
+  width: 100%;
+  max-width: 22rem;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--ro-border);
+  border-radius: 10px;
+  background: var(--ro-bg-inset);
+  color: var(--ro-text-primary);
+  font: inherit;
+}
+
+.te-evd-elim-horario__hint,
+.te-evd-elim-horario__empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--ro-text-secondary);
+}
+
+.te-evd-elim-horario__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.te-evd-elim-horario__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: 10px;
+}
+
+.te-evd-elim-horario__index {
+  flex: 0 0 auto;
+  color: var(--ro-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.te-evd-elim-horario__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--ro-text-primary);
+}
+
+.te-evd-elim-horario__move {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.te-evd-elim-horario__btn {
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  border: 1px solid var(--ro-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ro-text-primary);
+  cursor: pointer;
+}
+
+.te-evd-elim-horario__btn:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 /* ——— Barra de guardado ——— */

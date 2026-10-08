@@ -39,6 +39,10 @@ export interface TorneoExpressEvento {
   clasificacion_modo: TorneoExpressClasificacionModo;
   /** Reglas de marcador (flexible vs Bo3 + super muerte). */
   partido_formato: TorneoExpressPartidoFormato;
+  /** Inicio de la fase eliminatoria del evento. NULL = por definir. */
+  eliminatoria_inicio?: string | null;
+  /** Orden de arranque de categorías (`torneo_express.id`). NULL = por nivel. */
+  eliminatoria_categoria_orden?: string[] | null;
   created_at: string;
 }
 
