@@ -658,10 +658,14 @@
   overflow-wrap: anywhere;
 }
 
-/* —— Móvil: parejas apiladas —— */
+/* —— Móvil: parejas apiladas; retratos a todo el ancho de la tarjeta. —— */
 @media (max-width: 560px) {
   .te-live {
     min-height: calc(100dvh - 4.5rem);
+  }
+
+  .te-live-court {
+    padding: 1.1em 1em 1em;
   }
 
   .te-live-court__versus {
@@ -673,9 +677,17 @@
     text-align: center;
   }
 
+  .te-live-team {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .te-live-team__tiles,
   .te-live-team--lg .te-live-team__tiles,
   .te-live-team--md .te-live-team__tiles {
-    max-width: 18em;
+    width: 100%;
+    max-width: none;
+    gap: 0.45em;
   }
 
   .te-live-header__side,
