@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
 import { useTorneoPublicEventoNav } from "../../hooks/useTorneoPublicDisplayNombre";
 import {
@@ -10,10 +10,11 @@ import { buildSharePublicOgUrlFromPlayUrl } from "../../lib/retaAbierta/shareOgU
 import { buildEliminatoriaPossibleSchedule } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import type { EliminatoriaPossibleSlot } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
+import { buildEliminatoriaPreviewCards } from "../../lib/torneoExpress/eliminatoriaPreviewBracket";
 import type { TorneoExpressEvento } from "../../lib/torneoExpress/types";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
 import { TEPublicEliminatoria } from "./public/TEPublicEliminatoria";
-import { TEPublicEliminatoriaHorario } from "./public/TEPublicEliminatoriaHorario";
+import { TEPublicEliminatoriaPreview } from "./public/TEPublicEliminatoriaPreview";
 import { PublicEventNeutralLoading } from "../../club-experience";
 import { TE_PUBLIC_POLL_INTERVAL_MS } from "../../lib/torneoExpress/publicPoll";
 import "./public/te-public-grupos.css";
@@ -35,9 +36,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     realtime: true,
     pollIntervalMs: TE_PUBLIC_POLL_INTERVAL_MS,
   });
-  const { eventoHref, displayNombre } = useTorneoPublicEventoNav(
-    bundle?.torneo
-  );
+  const { eventoHref } = useTorneoPublicEventoNav(bundle?.torneo);
   const [copyMsg, setCopyMsg] = useState("");
   const [evento, setEvento] = useState<TorneoExpressEvento | null>(null);
   const [slots, setSlots] = useState<EliminatoriaPossibleSlot[]>([]);
@@ -105,12 +104,19 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
 
   const hasElimPartidos = (bundle?.eliminatoriaPartidos.length ?? 0) > 0;
   const gruposHref = `/torneo-express/${torneoId}/grupos`;
-  const horario = (
-    <TEPublicEliminatoriaHorario
-      slots={slots}
-      timeZone={evento?.timezone}
-      currentTorneoId={torneoId}
-    />
+  const categorySlot = slots.find((slot) => slot.torneoId === torneoId);
+  const preview = useMemo(
+    () =>
+      bundle
+        ? buildEliminatoriaPreviewCards({
+            fase: bundle.torneo.fase_eliminacion,
+            startAt: categorySlot?.startsAt ?? null,
+            courts: categorySlot?.courts ?? evento?.eliminatoria_canchas,
+            duraciones: evento?.eliminatoria_duraciones,
+            timeZone: evento?.timezone,
+          })
+        : null,
+    [bundle, categorySlot, evento]
   );
   const phaseNav = (
     <nav className="te-phase-segment" aria-label="Fase del torneo">
@@ -140,29 +146,15 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
       {!loading && !bundle ? (
         <p className="te-public-error">{error ?? "Torneo no encontrado"}</p>
       ) : null}
-      {bundle && !hasElimPartidos ? (
-        <div className="te-grupos-page te-elim-public">
-          {eventoHref ? (
-            <a
-              href={eventoHref}
-              className="te-grupos-back-evento"
-              aria-label="Volver al evento y ver todas las categorías"
-            >
-              ← Volver al evento
-            </a>
-          ) : null}
-          <header className="te-elim-public__header">
-            <h1 className="te-elim-public__title">
-              {displayNombre || bundle.torneo.nombre}
-            </h1>
-          </header>
-          {phaseNav}
-          {horario}
-          <p className="te-elim-horario__hint">
-            El cuadro se publica al cerrar grupos. Mientras tanto, estos son
-            los horarios posibles.
-          </p>
-        </div>
+      {bundle && !hasElimPartidos && preview ? (
+        <TEPublicEliminatoriaPreview
+          bundle={bundle}
+          cards={preview.cards}
+          totalRondas={preview.totalRondas}
+          gruposHref={gruposHref}
+          eventoHref={eventoHref}
+          timeZone={evento?.timezone}
+        />
       ) : null}
       {bundle && hasElimPartidos ? (
         <TEPublicEliminatoria
@@ -174,12 +166,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
           copyMsg={copyMsg || undefined}
           gruposHref={gruposHref}
           eventoHref={eventoHref}
-          schedule={
-            <>
-              {phaseNav}
-              {horario}
-            </>
-          }
+          schedule={phaseNav}
         />
       ) : null}
     </PublicTorneoExpressShell>

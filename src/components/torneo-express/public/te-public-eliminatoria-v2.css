@@ -3535,3 +3535,124 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+.te-elim-preview-tree {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 0.25rem 0 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.35rem;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.te-elim-preview-tree__round {
+  position: relative;
+  display: flex;
+  flex: 0 0 min(17.75rem, 86vw);
+  flex-direction: column;
+  min-width: 0;
+  padding: 0 0.85rem;
+  scroll-snap-align: start;
+}
+
+.te-elim-preview-tree__round + .te-elim-preview-tree__round::before {
+  content: "";
+  position: absolute;
+  top: 2.35rem;
+  bottom: 0.5rem;
+  left: 0;
+  width: 2px;
+  background: color-mix(in srgb, var(--brand-accent, var(--text-primary)) 42%, transparent);
+}
+
+.te-elim-preview-tree__title {
+  margin: 0 0 0.85rem;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-align: center;
+}
+
+.te-elim-preview-tree__stack {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 0.75rem;
+  min-height: 100%;
+}
+
+.te-elim-preview-card {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.7rem 0.8rem 0.75rem;
+  border: 1px solid var(--te-v2-border);
+  border-radius: 14px;
+  background: var(--te-v2-surface-active);
+}
+
+.te-elim-preview-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.te-elim-preview-card__code {
+  color: var(--text-muted, var(--text-secondary));
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.te-elim-preview-card__date,
+.te-elim-preview-card__time {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.3rem;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.te-elim-preview-card__sides {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.te-elim-preview-card__side {
+  margin: 0;
+  overflow: hidden;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.te-elim-preview-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.te-elim-preview-card__court {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+
+@media (max-width: 639px) {
+  .te-elim-preview-tree {
+    margin-inline: -0.15rem;
+  }
+}
