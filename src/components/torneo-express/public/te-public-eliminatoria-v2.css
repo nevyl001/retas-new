@@ -3536,89 +3536,158 @@
   white-space: nowrap;
 }
 
-.te-elim-preview-tree {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  margin: 0.25rem 0 1.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.35rem;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-}
-
-.te-elim-preview-tree__round {
-  position: relative;
-  display: flex;
-  flex: 0 0 min(17.75rem, 86vw);
-  flex-direction: column;
+.te-elim-preview {
   min-width: 0;
-  padding: 0 0.85rem;
-  scroll-snap-align: start;
 }
 
-.te-elim-preview-tree__round + .te-elim-preview-tree__round::before {
-  content: "";
-  position: absolute;
-  top: 2.35rem;
-  bottom: 0.5rem;
-  left: 0;
-  width: 2px;
-  background: color-mix(in srgb, var(--brand-accent, var(--text-primary)) 42%, transparent);
-}
-
-.te-elim-preview-tree__title {
-  margin: 0 0 0.85rem;
+.te-elim-preview-note {
+  margin: 0 0 1rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--te-v2-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text-primary) 5%, transparent);
   color: var(--text-secondary);
-  font-size: 0.72rem;
-  font-weight: 750;
-  letter-spacing: 0.14em;
-  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.45;
 }
 
-.te-elim-preview-tree__stack {
+.te-elim-preview-nav {
+  position: sticky;
+  top: 0;
+  z-index: 5;
   display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: space-around;
+  gap: 0.4rem;
+  margin: 0 0 1.25rem;
+  padding: 0.4rem 0 0.65rem;
+  overflow-x: auto;
+  background: color-mix(
+    in srgb,
+    var(--ro-chrome-deep, var(--bg-deep)) 88%,
+    transparent
+  );
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.te-elim-preview-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.te-elim-preview-nav__item {
+  display: inline-flex;
+  flex: 1 1 0;
+  min-height: 44px;
+  min-width: 4.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.85rem;
+  border: 1px solid var(--te-v2-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.te-elim-preview-nav__item:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--text-primary));
+  outline-offset: 2px;
+}
+
+.te-elim-preview-itinerary {
+  display: grid;
+  gap: 1.75rem;
+  min-width: 0;
+  padding-bottom: 2rem;
+}
+
+.te-elim-preview-round {
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+  scroll-margin-top: 4.25rem;
+}
+
+.te-elim-preview-round__head {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.te-elim-preview-round__kicker {
+  margin: 0;
+  color: var(--text-muted, var(--text-secondary));
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.te-elim-preview-round__title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.te-elim-preview-round__meta {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.te-elim-preview-round__grid {
+  display: grid;
   gap: 0.75rem;
-  min-height: 100%;
 }
 
 .te-elim-preview-card {
   display: grid;
-  gap: 0.55rem;
-  padding: 0.7rem 0.8rem 0.75rem;
+  gap: 0.85rem;
+  min-width: 0;
+  padding: 0.95rem 1rem 1rem;
   border: 1px solid var(--te-v2-border);
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--te-v2-surface-active);
 }
 
 .te-elim-preview-card__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  display: grid;
+  gap: 0.4rem;
 }
 
 .te-elim-preview-card__code {
-  color: var(--text-muted, var(--text-secondary));
-  font-size: 0.75rem;
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
   font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.te-elim-preview-card__when {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.85rem;
+  margin: 0;
 }
 
 .te-elim-preview-card__date,
-.te-elim-preview-card__time {
+.te-elim-preview-card__time,
+.te-elim-preview-card__court {
   display: inline-flex;
   min-width: 0;
   align-items: center;
-  gap: 0.3rem;
-  overflow: hidden;
+  gap: 0.35rem;
   color: var(--text-secondary);
-  font-size: 0.72rem;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.te-elim-preview-card__court--pending {
+  color: var(--text-muted, var(--text-secondary));
 }
 
 .te-elim-preview-card__sides {
@@ -3629,30 +3698,56 @@
 .te-elim-preview-card__side {
   margin: 0;
   overflow: hidden;
-  padding: 0.45rem 0.55rem;
-  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
   background: color-mix(in srgb, var(--text-primary) 6%, transparent);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  font-weight: 650;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.te-elim-preview-card__vs {
+  margin: 0;
+  color: var(--text-muted, var(--text-secondary));
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .te-elim-preview-card__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  display: grid;
+  gap: 0.45rem;
 }
 
-.te-elim-preview-card__court {
+.te-elim-preview-card__next {
   color: var(--text-secondary);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
 }
 
-@media (max-width: 639px) {
-  .te-elim-preview-tree {
-    margin-inline: -0.15rem;
+.te-elim-preview-advance {
+  margin: 0.15rem 0 0;
+  padding-top: 0.15rem;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+
+@media (min-width: 720px) {
+  .te-elim-preview-round__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .te-elim-preview-round__grid > :only-child {
+    grid-column: 1 / -1;
+    max-width: 32rem;
   }
 }
