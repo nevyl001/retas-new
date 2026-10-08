@@ -3166,71 +3166,661 @@
   }
 }
 
-/* —— Nuevo grupo (con la fase de grupos ya iniciada) —— */
+/* —— Nuevo grupo (con la fase de grupos ya iniciada) ——
+   El modal vive en un portal (fuera de .te-inicio-page), así que el picker de
+   parejas se estiliza aquí, acotado a .te-new-group-dialog. */
 .te-define-pair-dialog.te-move-pairs-dialog.te-new-group-dialog {
-  width: min(100%, 46rem);
+  width: min(100%, 48rem);
+  max-height: calc(100dvh - 2rem);
+  border-radius: 20px;
+}
+
+.te-new-group-dialog .te-define-pair-dialog__head {
+  align-items: flex-start;
+  padding: 1.1rem 1.35rem 0.95rem;
+}
+
+.te-new-group__titles h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.te-new-group__titles p {
+  margin: 0.2rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group-dialog .te-define-pair-dialog__body {
+  gap: 1rem;
+  padding: 1.15rem 1.35rem;
+}
+
+.te-new-group-dialog .te-define-pair-dialog__foot {
+  gap: 0.75rem;
+  padding: 0.95rem 1.35rem 1.15rem;
 }
 
 .te-new-group__field {
   display: grid;
-  gap: 0.35rem;
-  font-size: 0.85rem;
-  color: var(--ro-text-muted, #a0a0a0);
+  gap: 0.4rem;
+}
+
+.te-new-group__field > span {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted);
 }
 
 .te-new-group__field input {
-  min-height: 2.5rem;
-  padding: 0.3rem 0.65rem;
-  border-radius: 8px;
-  border: 1px solid var(--ro-border, #2a2a2a);
-  background-color: var(--ro-bg-surface, #0f0f0f);
-  color: var(--ro-text-primary, #f4f4f4);
+  min-height: 2.9rem;
+  padding: 0 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--ro-border);
+  background-color: var(--ro-bg-surface);
+  color: var(--ro-text-primary);
   font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
+.te-new-group-dialog input:focus-visible,
+.te-new-group__chip:has(input:focus-visible) {
+  outline: none;
+  border-color: color-mix(in srgb, var(--ro-text-primary) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ro-text-primary) 12%, transparent);
+}
+
+/* Secciones numeradas */
 .te-new-group__section {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.9rem;
+  padding: 1.05rem 1.1rem 1.1rem;
+  border-radius: 16px;
+  border: 1px solid var(--ro-border-subtle);
+  background: color-mix(in srgb, var(--ro-bg-surface) 55%, transparent);
 }
 
-.te-new-group__section h3 {
+.te-new-group__section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.te-new-group__section-head h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ro-text-primary);
+}
+
+.te-new-group__section-head p {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group__step {
+  flex: 0 0 auto;
+  width: 1.65rem;
+  height: 1.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--ro-border);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ro-text-secondary);
+}
+
+.te-new-group__optional {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--ro-border);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group__empty,
+.te-new-group__locked {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  border: 1px dashed var(--ro-border);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group__locked strong {
+  color: var(--ro-text-secondary);
+}
+
+/* Picker de parejas dentro del modal */
+.te-new-group-dialog .te-armar-parejas {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.te-new-group-dialog .te-armar-parejas__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.te-new-group-dialog .te-armar-parejas__toolbar-meta {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group-dialog .te-armar-parejas__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.te-new-group-dialog .te-armar-parejas__toolbar-actions .riviera-btn {
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--ro-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.te-new-group-dialog .te-armar-parejas__slots {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0.6rem;
+}
+
+.te-new-group-dialog .te-armar-parejas__slot {
+  display: grid;
+  align-content: center;
+  gap: 0.2rem;
+  min-height: 3.6rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 14px;
+  border: 1.5px dashed var(--ro-border);
+  background: var(--ro-bg-surface);
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.te-new-group-dialog .te-armar-parejas__slot--filled {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--ro-success) 55%, var(--ro-border));
+  background: color-mix(in srgb, var(--ro-success) 8%, var(--ro-bg-surface));
+}
+
+.te-new-group-dialog .te-armar-parejas__slot-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group-dialog .te-armar-parejas__slot-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ro-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.te-new-group-dialog
+  .te-armar-parejas__slot:not(.te-armar-parejas__slot--filled)
+  .te-armar-parejas__slot-value {
+  font-weight: 500;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group-dialog .te-armar-parejas__slots-plus {
+  align-self: center;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group-dialog .te-armar-parejas__pick-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ro-success) 40%, var(--ro-border));
+  background: color-mix(in srgb, var(--ro-success) 6%, transparent);
+}
+
+.te-new-group-dialog .te-armar-parejas__pick-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ro-text-secondary);
+}
+
+.te-new-group-dialog .te-armar-parejas__pick-bar .riviera-btn {
+  min-height: 1.9rem;
+  padding: 0 0.7rem;
+  font-size: 0.75rem;
+}
+
+.te-new-group-dialog .te-players-search {
+  position: relative;
+}
+
+.te-new-group-dialog .te-players-search input {
+  width: 100%;
+  min-height: 2.9rem;
+  padding: 0 0.9rem 0 2.5rem;
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 1px solid var(--ro-border);
+  background-color: var(--ro-bg-surface);
+  color: var(--ro-text-primary);
+  font: inherit;
+  font-size: 0.9375rem;
+}
+
+.te-new-group-dialog .te-players-search input::placeholder {
+  color: var(--ro-text-muted);
+  opacity: 1;
+}
+
+.te-new-group-dialog .te-players-search__icon {
+  position: absolute;
+  top: 50%;
+  left: 0.9rem;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.te-new-group-dialog .te-armar-parejas__meta {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group-dialog .te-armar-parejas__empty,
+.te-new-group-dialog .te-armar-parejas__empty-box {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group-dialog .te-players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  gap: 0.5rem;
+  max-height: 15rem;
+  overflow-y: auto;
+  padding: 0.15rem 0.25rem 0.15rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ro-text-muted) 45%, transparent) transparent;
+}
+
+.te-new-group-dialog .te-players-grid__item {
+  position: relative;
+  min-width: 0;
+}
+
+.te-new-group-dialog .te-player-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 4rem;
+  padding: 0.6rem 0.8rem;
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-surface);
+  color: var(--ro-text-primary);
+  font: inherit;
+  text-align: left;
+  overflow: hidden;
+  isolation: isolate;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background-color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.te-new-group-dialog .te-player-card:hover:not(:disabled):not(.te-player-card--selected) {
+  border-color: var(--ro-border-strong);
+  background: var(--ro-bg-card-hover);
+}
+
+.te-new-group-dialog .te-player-card--selected {
+  border-color: color-mix(in srgb, var(--ro-success) 65%, var(--ro-border));
+  background: color-mix(in srgb, var(--ro-success) 10%, var(--ro-bg-surface));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ro-success) 16%, transparent);
+}
+
+.te-new-group-dialog .te-player-card--disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.te-new-group-dialog .te-player-card__photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.3;
+}
+
+.te-new-group-dialog .te-player-card__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ro-bg-surface) 30%, transparent),
+    color-mix(in srgb, var(--ro-bg-surface) 92%, transparent)
+  );
+}
+
+.te-new-group-dialog .te-player-card__info {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.te-new-group-dialog .te-player-card__name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.te-new-group-dialog .te-player-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.te-new-group-dialog .te-player-card__no-id {
+  font-size: 0.625rem;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ro-text-muted, #a0a0a0);
+  color: var(--ro-text-muted);
 }
 
+.te-new-group-dialog .te-players-grid__warn {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.4rem;
+  z-index: 3;
+  font-size: 0.7rem;
+}
+
+/* Parejas armadas */
+.te-new-group-dialog .te-armar-parejas__formed {
+  display: grid;
+  gap: 0.6rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--ro-border-subtle);
+}
+
+.te-new-group-dialog .te-armar-parejas__formed-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--ro-text-primary);
+}
+
+.te-new-group-dialog .te-armar-parejas__formed-empty,
+.te-new-group-dialog .te-armar-parejas__formed-hint {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group-dialog .te-armar-parejas__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.5rem;
+}
+
+.te-new-group-dialog .te-armar-parejas__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.6rem 0.7rem;
+  border-radius: 12px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-surface);
+}
+
+.te-new-group-dialog .te-armar-parejas__item-main {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.te-new-group-dialog .te-armar-parejas__item-num {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--ro-bg-inset);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.te-new-group-dialog .te-armar-parejas__item-names {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.te-new-group-dialog .te-armar-parejas__item-sep {
+  display: none;
+}
+
+.te-new-group-dialog .te-armar-parejas__virtual-label {
+  width: 100%;
+  min-width: 0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--ro-border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+}
+
+.te-new-group-dialog .te-virtual-badge {
+  width: fit-content;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--ro-border);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group-dialog .te-armar-parejas__item-delete.riviera-btn {
+  flex: 0 0 auto;
+  min-height: 1.9rem;
+  padding: 0 0.7rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ro-error) 35%, transparent);
+  background: color-mix(in srgb, var(--ro-error) 8%, transparent);
+  color: var(--ro-error);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* Mover parejas existentes */
 .te-new-group__existing {
   display: grid;
-  gap: 0.3rem;
-  max-height: 14rem;
+  gap: 0.85rem;
+  max-height: 15rem;
   overflow-y: auto;
+  scrollbar-width: thin;
 }
 
-.te-new-group__row {
+.te-new-group__existing-group {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.6rem;
-  align-items: center;
-  padding: 0.35rem 0.5rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  cursor: pointer;
+  gap: 0.45rem;
 }
 
-.te-new-group__row small {
-  color: var(--ro-text-muted, #a0a0a0);
+.te-new-group__existing-group h4 {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.te-new-group__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  min-height: 2.3rem;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-surface);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.te-new-group__chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.te-new-group__chip::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--ro-border-strong);
+  transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.te-new-group__chip:hover {
+  border-color: var(--ro-border-strong);
+}
+
+.te-new-group__chip--on {
+  border-color: color-mix(in srgb, var(--ro-success) 65%, var(--ro-border));
+  background: color-mix(in srgb, var(--ro-success) 10%, var(--ro-bg-surface));
+}
+
+.te-new-group__chip--on::before {
+  border-color: var(--ro-success);
+  background: var(--ro-success);
+  box-shadow: inset 0 0 0 2.5px var(--ro-bg-surface);
 }
 
 .te-new-group__summary {
   margin: 0;
-  font-size: 0.88rem;
-  line-height: 1.4;
-  color: var(--ro-text-secondary, #c8c8c8);
+  padding: 0.75rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ro-success) 40%, var(--ro-border));
+  background: color-mix(in srgb, var(--ro-success) 7%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--ro-text-secondary);
+}
+
+.te-new-group__summary strong {
+  color: var(--ro-text-primary);
 }
 
 .te-new-group__hint {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--ro-text-muted);
+}
+
+.te-new-group-dialog .te-move-pairs__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+@media (max-width: 560px) {
+  .te-new-group-dialog .te-define-pair-dialog__head,
+  .te-new-group-dialog .te-define-pair-dialog__body,
+  .te-new-group-dialog .te-define-pair-dialog__foot {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .te-new-group__section {
+    padding: 0.9rem 0.8rem;
+  }
+
+  .te-new-group-dialog .te-armar-parejas__slots {
+    grid-template-columns: 1fr;
+  }
+
+  .te-new-group-dialog .te-armar-parejas__slots-plus {
+    display: none;
+  }
+
+  .te-new-group-dialog .te-move-pairs__actions .riviera-btn {
+    flex: 1;
+  }
 }

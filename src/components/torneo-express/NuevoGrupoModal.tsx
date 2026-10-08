@@ -424,7 +424,10 @@ export const NuevoGrupoModal: React.FC<NuevoGrupoModalProps> = ({
         onClick={(event) => event.stopPropagation()}
       >
         <header className="te-define-pair-dialog__head">
-          <h2 id="te-new-group-title">Nuevo grupo</h2>
+          <div className="te-new-group__titles">
+            <h2 id="te-new-group-title">Nuevo grupo</h2>
+            <p>Disponible aunque la fase de grupos ya haya empezado.</p>
+          </div>
           <button
             type="button"
             className="te-define-pair-dialog__close"
@@ -437,11 +440,6 @@ export const NuevoGrupoModal: React.FC<NuevoGrupoModalProps> = ({
         </header>
 
         <div className="te-define-pair-dialog__body">
-          <p className="te-define-pair__lead">
-            Crea un grupo aunque la fase de grupos ya haya empezado. Suma parejas
-            nuevas, mueve parejas de otros grupos, o las dos cosas.
-          </p>
-
           <label className="te-new-group__field">
             <span>Nombre del grupo</span>
             <input
@@ -457,9 +455,17 @@ export const NuevoGrupoModal: React.FC<NuevoGrupoModalProps> = ({
           </label>
 
           <section className="te-new-group__section">
-            <h3>Parejas nuevas</h3>
+            <header className="te-new-group__section-head">
+              <span className="te-new-group__step" aria-hidden>
+                1
+              </span>
+              <div>
+                <h3>Parejas nuevas</h3>
+                <p>Forma parejas con jugadores que aún no están en el torneo.</p>
+              </div>
+            </header>
             {loadingPlayers ? (
-              <p className="te-define-pair__empty">Cargando jugadores…</p>
+              <p className="te-new-group__empty">Cargando jugadores…</p>
             ) : (
               <ArmarParejasPicker
                 jugadoresPool={pool}
@@ -477,47 +483,80 @@ export const NuevoGrupoModal: React.FC<NuevoGrupoModalProps> = ({
           </section>
 
           <section className="te-new-group__section">
-            <h3>Mover parejas de otros grupos</h3>
+            <header className="te-new-group__section-head">
+              <span className="te-new-group__step" aria-hidden>
+                2
+              </span>
+              <div>
+                <h3>
+                  Mover parejas de otros grupos
+                  <span className="te-new-group__optional">Opcional</span>
+                </h3>
+                <p>Solo grupos que todavía no tienen resultados.</p>
+              </div>
+            </header>
             {existingPairs.length === 0 ? (
-              <p className="te-define-pair__empty">
+              <p className="te-new-group__empty">
                 No hay parejas que se puedan mover: todos los grupos ya iniciaron.
               </p>
             ) : (
               <div className="te-new-group__existing">
-                {existingPairs.map((pair) => (
-                  <label key={pair.id} className="te-new-group__row">
-                    <input
-                      type="checkbox"
-                      checked={moved.has(pair.id)}
-                      disabled={saving}
-                      onChange={() => toggleMoved(pair.id)}
-                    />
-                    <span>{pair.label}</span>
-                    <small>{pair.grupoNombre}</small>
-                  </label>
-                ))}
+                {orderedGroups
+                  .filter((grupo) =>
+                    existingPairs.some((pair) => pair.grupoId === grupo.id)
+                  )
+                  .map((grupo) => (
+                    <div key={grupo.id} className="te-new-group__existing-group">
+                      <h4>{grupo.nombre}</h4>
+                      <div className="te-new-group__chips">
+                        {existingPairs
+                          .filter((pair) => pair.grupoId === grupo.id)
+                          .map((pair) => (
+                            <label
+                              key={pair.id}
+                              className={`te-new-group__chip${
+                                moved.has(pair.id)
+                                  ? " te-new-group__chip--on"
+                                  : ""
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={moved.has(pair.id)}
+                                disabled={saving}
+                                onChange={() => toggleMoved(pair.id)}
+                              />
+                              <span>{pair.label}</span>
+                            </label>
+                          ))}
+                      </div>
+                    </div>
+                  ))}
               </div>
             )}
             {lockedGroups.map((grupo) => (
-              <p key={grupo.id} className="te-define-pair__empty">
-                {grupo.nombre}: {textoBloqueoGrupo(bloqueados.get(grupo.id)!)}
+              <p key={grupo.id} className="te-new-group__locked">
+                <strong>{grupo.nombre}</strong>{" "}
+                {textoBloqueoGrupo(bloqueados.get(grupo.id)!)}
               </p>
             ))}
           </section>
 
-          {drafts.length + moved.size > 0 ? (
+          {totalParejas > 0 ? (
             <p className="te-new-group__summary">
-              {totalParejas} {totalParejas === 1 ? "pareja" : "parejas"} en{" "}
-              <strong>{nombre.trim() || "el grupo nuevo"}</strong>
+              <strong>
+                {totalParejas} {totalParejas === 1 ? "pareja" : "parejas"}
+              </strong>{" "}
+              en {nombre.trim() || "el grupo nuevo"}
               {drafts.length > 0
-                ? `: ${drafts.map(draftPairDisplay).join(" · ")}`
+                ? ` · ${drafts.map(draftPairDisplay).join(" · ")}`
                 : ""}
             </p>
           ) : null}
         </div>
 
         <footer className="te-define-pair-dialog__foot">
-          <p className="te-define-pair__lead te-new-group__hint">
+          <p className="te-new-group__hint">
             {moved.size > 0
               ? "Al mover parejas, solo se rearman los grupos sin resultados; los que ya iniciaron no se tocan."
               : "Los partidos del grupo nuevo se crean sin horario. Prográmalos con Editar programación → Programar faltantes."}
