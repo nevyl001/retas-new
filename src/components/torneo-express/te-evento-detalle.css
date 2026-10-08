@@ -509,6 +509,10 @@
   transition: background-color 0.15s ease;
 }
 
+.te-evd-rule:last-child {
+  padding-bottom: 16px;
+}
+
 .te-evd-rule:hover {
   background: var(--ro-bg-elevated);
 }
@@ -535,6 +539,7 @@
 }
 
 .te-evd-rule__label {
+  overflow-wrap: break-word;
   font-size: 0.9375rem;
   font-weight: 700;
   line-height: 1.3;
@@ -552,6 +557,7 @@
   gap: 2px;
   margin: 2px 0 0;
   padding: 0 0 0 1.15rem;
+  overflow-wrap: anywhere;
   list-style: decimal;
   font-size: 0.8125rem;
   line-height: 1.45;

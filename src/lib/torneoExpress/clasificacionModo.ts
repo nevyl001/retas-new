@@ -64,11 +64,11 @@ export const PARTIDO_FORMATO_OPTIONS: readonly PartidoFormatoOption[] = [
   },
   {
     value: "bo3_super_muerte",
-    label: "Mejor de 3 · 3er set súper muerte",
+    label: "Mejor de 3 · 3er set normal o súper muerte",
     description: "Todos los partidos al mejor de 3 sets:",
     steps: [
       "Gana quien lleve 2 sets",
-      "Si van 1–1, el Set 3 puede ser set normal o súper muerte; tú eliges al capturar",
+      "Si van 1–1, eliges si el Set 3 es set normal o súper muerte",
     ],
   },
 ] as const;
