@@ -39,6 +39,7 @@ import {
   crearGrupoConParejas,
   crearGrupoNuevo,
   descartarGrupo,
+  resolverRegistroParejas,
 } from "../../services/torneoExpressNuevoGrupo";
 import { reasignarParejasGrupos } from "../../services/torneoExpressReasignarGrupos";
 import { formatSupabaseError } from "../../services/torneoExpressService";
@@ -98,6 +99,42 @@ export const NuevoGrupoModal: React.FC<NuevoGrupoModalProps> = ({
   const savingRef = useRef(false);
   const draftsRef = useRef<DraftTournamentPair[]>([]);
   draftsRef.current = drafts;
+
+  const [registroId, setRegistroId] = useState<string | null>(sourceTournamentId);
+
+  useEffect(() => {
+    if (!open || registroId) return;
+    let cancelled = false;
+    const parejaIds = Object.values(parejasPorGrupo)
+      .flat()
+      .map((p) => p.pareja_id);
+    void resolverRegistroParejas({ sourceTournamentId, parejaIds })
+      .then((id) => {
+        if (!cancelled) setRegistroId(id);
+      })
+      .catch(() => {
+        // Se avisa al intentar formar una pareja.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, registroId, sourceTournamentId, parejasPorGrupo]);
+
+  const ensureRegistro = async (): Promise<string | null> => {
+    if (registroId) return registroId;
+    try {
+      const id = await resolverRegistroParejas({
+        sourceTournamentId,
+        parejaIds: Object.values(parejasPorGrupo)
+          .flat()
+          .map((p) => p.pareja_id),
+      });
+      if (id) setRegistroId(id);
+      return id;
+    } catch {
+      return null;
+    }
+  };
 
   const loadPlayers = useCallback(async () => {
     setLoadingPlayers(true);
@@ -180,10 +217,6 @@ export const NuevoGrupoModal: React.FC<NuevoGrupoModalProps> = ({
   };
 
   const formarPareja = async (j1: Player, j2: Player) => {
-    if (!sourceTournamentId) {
-      setError("No se encontró el registro de parejas de esta categoría.");
-      return;
-    }
     if (!j1.id || !j2.id || j1.id === j2.id) {
       setError("Elige dos jugadores distintos.");
       return;
@@ -191,7 +224,12 @@ export const NuevoGrupoModal: React.FC<NuevoGrupoModalProps> = ({
     setAddingPair(true);
     setError("");
     try {
-      const pair = await createPair(sourceTournamentId, j1.id, j2.id, userId);
+      const registro = await ensureRegistro();
+      if (!registro) {
+        setError("No se encontró el registro de parejas de esta categoría.");
+        return;
+      }
+      const pair = await createPair(registro, j1.id, j2.id, userId);
       await updatePair(pair.id, {
         player1_name: j1.name.trim(),
         player2_name: j2.name.trim(),
@@ -213,12 +251,17 @@ export const NuevoGrupoModal: React.FC<NuevoGrupoModalProps> = ({
   };
 
   const agregarVirtual = async () => {
-    if (!sourceTournamentId || addingPair) return;
+    if (addingPair) return;
     setAddingPair(true);
     setError("");
     try {
+      const registro = await ensureRegistro();
+      if (!registro) {
+        setError("No se encontró el registro de parejas de esta categoría.");
+        return;
+      }
       const created = await createVirtualPair({
-        tournamentId: sourceTournamentId,
+        tournamentId: registro,
         virtualLabel: nextVirtualPairLabel(virtualLabels),
       });
       setDrafts((prev) => [

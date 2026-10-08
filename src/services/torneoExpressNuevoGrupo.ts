@@ -107,3 +107,37 @@ export async function crearGrupoNuevo(input: {
     throw e;
   }
 }
+
+/**
+ * `pairs.tournament_id` donde viven las parejas de la categoría. Usa
+ * `source_tournament_id` si existe; si no, lo deduce de las parejas que ya
+ * están en los grupos (todas comparten el mismo registro).
+ */
+export async function resolverRegistroParejas(input: {
+  sourceTournamentId: string | null;
+  parejaIds: string[];
+}): Promise<string | null> {
+  const source = input.sourceTournamentId?.trim();
+  if (source) return source;
+  const ids = Array.from(new Set(input.parejaIds.filter(Boolean))).slice(0, 50);
+  if (ids.length === 0) return null;
+  const { data, error } = await supabase
+    .from("pairs")
+    .select("tournament_id")
+    .in("id", ids);
+  if (error) throw new Error(formatSupabaseError(error));
+  const counts = new Map<string, number>();
+  for (const row of (data ?? []) as Array<{ tournament_id?: string | null }>) {
+    const id = row.tournament_id?.trim();
+    if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  let best: string | null = null;
+  let bestCount = 0;
+  counts.forEach((count, id) => {
+    if (count > bestCount) {
+      best = id;
+      bestCount = count;
+    }
+  });
+  return best;
+}
