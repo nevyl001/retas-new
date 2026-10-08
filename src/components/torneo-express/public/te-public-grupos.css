@@ -312,10 +312,12 @@
 .te-public.te-public--grupos-wide .te-grupo-achievement__avatar {
   position: relative;
   display: flex;
-  width: 100%;
+  /* Retrato real: el ancho manda y el alto sale del aspect-ratio (antes el
+     max-height cortaba el alto y la foto quedaba panorámica y recortada). */
+  width: min(100%, 10.5rem);
   height: auto;
   aspect-ratio: 4 / 5;
-  max-height: 11.5rem;
+  max-height: none;
   align-items: center;
   justify-content: center;
   overflow: hidden;
@@ -340,7 +342,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 18%;
+  object-position: center 22%;
 }
 
 .te-public.te-public--grupos-wide .te-grupo-achievement__main h3 {
@@ -2866,7 +2868,8 @@
   }
 
   .te-public.te-public--grupos-wide .te-grupo-achievement__avatar {
-    max-height: 8.5rem;
+    width: min(100%, 7.5rem);
+    max-height: none;
     border-radius: 0.9rem;
     font-size: 1.05rem;
   }
