@@ -4960,3 +4960,240 @@
     aspect-ratio: 6 / 5;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Card de ganadores del grupo — composición editorial 2026.                  */
+/* El fondo (degradado, luz ambiental, cancha, marca de agua) NO se toca:     */
+/* aquí solo se recompone el contenido y se afinan los espacios. Todo el      */
+/* color sale de los tokens existentes; no hay paneles ni cajas en las stats. */
+/* -------------------------------------------------------------------------- */
+
+.te-public.te-public--grupos-wide .te-grupo-achievement {
+  min-height: 0;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__art {
+  padding: 16px 16px 18px;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__signature {
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+}
+
+/* Encabezado: torneo + categoría a la izquierda, posición «01» a la derecha. */
+.te-public.te-public--grupos-wide .te-grupo-achievement__topline {
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__heading {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__tournament {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.625rem;
+  font-weight: 750;
+  letter-spacing: 0.15em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__heading .te-grupo-achievement__event {
+  margin: 0;
+  overflow: hidden;
+  color: var(--te-groups-accent);
+  font-size: 0.6875rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__rank {
+  flex: 0 0 auto;
+  color: var(--te-groups-accent);
+  font-family: var(--ro-font-heading, var(--font-heading));
+  font-size: 2.125rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 0.85;
+}
+
+/* Jugadores: dos retratos a todo el ancho, con el nombre sobre la foto. */
+.te-public.te-public--grupos-wide .te-grupo-achievement__main {
+  padding: 12px 0 6px;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__avatars {
+  gap: 0.625rem;
+  margin-bottom: 12px;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement .te-grupo-achievement__player {
+  position: relative;
+  display: block;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement .te-grupo-achievement__avatar {
+  width: 100%;
+  max-height: none;
+  border: 1px solid color-mix(in srgb, var(--te-groups-accent) 42%, transparent);
+  border-radius: 1.05rem;
+  box-shadow: none;
+  font-size: 2rem;
+}
+
+/* Sin foto: las iniciales quedan en la zona alta, libres del nombre. */
+.te-public.te-public--grupos-wide .te-grupo-achievement__avatar > span {
+  padding-bottom: 22%;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement .te-grupo-achievement__player > span:last-child {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  left: 1px;
+  display: -webkit-box;
+  box-sizing: border-box;
+  width: auto;
+  padding: 1.75rem 0.65rem 0.6rem;
+  overflow: hidden;
+  border-radius: 0 0 calc(1.05rem - 1px) calc(1.05rem - 1px);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--te-groups-bg) 82%, transparent) 0%,
+    color-mix(in srgb, var(--te-groups-bg) 46%, transparent) 55%,
+    transparent 100%
+  );
+  color: var(--text-primary);
+  font-size: 1.0625rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-align: left;
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--te-groups-bg) 70%, transparent);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Reconocimiento. */
+.te-public.te-public--grupos-wide .te-grupo-achievement__main h3 {
+  font-size: clamp(1.6rem, 7vw, 2rem);
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__main p {
+  margin: 6px auto 0;
+  font-size: 0.75rem;
+}
+
+/* Estadísticas: directamente sobre el fondo, con tipografía y líneas finas.
+   Fila 1 = PJ PG PP PTS · Fila 2 = GF GC DIF. */
+.te-public.te-public--grupos-wide .te-grupo-achievement__stats {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: none;
+  margin-top: 4px;
+  border-top: 1px solid var(--te-groups-border);
+  border-bottom: 1px solid var(--te-groups-border);
+  background: none;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__stats-row {
+  display: grid;
+  grid-template-columns: repeat(var(--te-stat-cols, 4), minmax(0, 1fr));
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__stats-row[data-count="3"] {
+  --te-stat-cols: 3;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__stats-row + .te-grupo-achievement__stats-row {
+  border-top: 1px solid var(--te-groups-border);
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__stat {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: 4px;
+  padding: 0.6rem 0.25rem 0.55rem;
+  background: none;
+  text-align: center;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__stat + .te-grupo-achievement__stat {
+  border-left: 1px solid var(--te-groups-border);
+}
+
+/* Altura fija para el valor: las siglas quedan alineadas en toda la fila
+   aunque PTS (el número principal) sea más grande. */
+.te-public.te-public--grupos-wide .te-grupo-achievement__stat strong {
+  display: flex;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, var(--text-primary) 90%, transparent);
+  font-family: var(--ro-font-heading, var(--font-heading));
+  font-size: 1.4375rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__stat small {
+  display: block;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__stat--primary strong {
+  color: var(--text-primary);
+  font-size: 1.875rem;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__stat--highlight strong {
+  color: var(--te-groups-accent);
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Cierre más ajustado. */
+.te-public.te-public--grupos-wide .te-grupo-achievement__tagline {
+  margin: 10px 0 8px;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__social {
+  margin-top: 6px;
+  padding-top: 8px;
+}

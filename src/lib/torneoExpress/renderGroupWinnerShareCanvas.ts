@@ -1,10 +1,11 @@
 import { isRivieraOwnAccountName } from "../../club-experience/motherBrand";
 import { RIVIERA_SOCIAL_HANDLE } from "../rivieraBranding";
 import {
-  clasificacionAchievementStats,
-} from "./clasificacionModo";
+  GROUP_WINNER_STATS_ROW_SIZES,
+  groupWinnerOfficialStats,
+  type GroupWinnerOfficialStat,
+} from "./groupWinnerStats";
 import type { TorneoExpressClasificacionModo } from "./types";
-import { DEFAULT_CLASIFICACION_MODO } from "./types";
 
 export const GROUP_WINNER_SHARE_WIDTH = 1080;
 export const GROUP_WINNER_SHARE_HEIGHT = 1920;
@@ -28,10 +29,16 @@ export type GroupWinnerShareData = {
   points: number;
   played: number;
   wins: number;
+  /** Partidos perdidos (PP). Si falta, se deriva como jugados − ganados. */
+  losses?: number;
   fav?: number;
   con?: number;
   diff: number;
   setsDif?: number;
+  /**
+   * Se conserva por compatibilidad con quien arma los datos. La imagen ya no
+   * depende del modo: siempre muestra las siete estadísticas oficiales.
+   */
   clasificacionModo?: TorneoExpressClasificacionModo;
   themePrimary?: string;
   themeAccent?: string;
@@ -45,33 +52,32 @@ const STORY_LAYOUT = {
   padX: 76,
   header: {
     tournamentY: 282,
-    contextY: 332,
-  },
-  achievement: {
-    detailY: 426,
-    titleY: 548,
-    copyY: 610,
+    contextY: 330,
+    rankY: 340,
+    ruleY: 376,
   },
   players: {
-    firstX: 330,
-    secondX: 750,
-    top: 688,
-    width: 320,
-    height: 400,
-    nameY: 1136,
-    nameWidth: 340,
+    top: 412,
+    height: 560,
+    gap: 24,
+    namePadX: 30,
+    namePadBottom: 30,
+  },
+  achievement: {
+    titleY: 1090,
+    copyY: 1142,
   },
   stats: {
-    top: 1212,
-    valueY: 1334,
-    labelY: 1384,
-    bottom: 1438,
+    top: 1190,
+    rowHeight: 134,
+    valueY: 86,
+    labelY: 118,
   },
   footer: {
-    taglineTop: 1510,
-    taglineY: 1584,
-    socialTop: 1644,
-    socialY: 1708,
+    taglineTop: 1514,
+    taglineY: 1580,
+    socialTop: 1642,
+    socialY: 1706,
   },
 } as const;
 
@@ -276,11 +282,6 @@ function drawTextLines(
   return y;
 }
 
-function placementLabel(position: number): string {
-  if (position === 1) return "PRIMER LUGAR";
-  return `${position}º LUGAR`;
-}
-
 function parseCssRgb(color: string): [number, number, number] | null {
   const value = color.trim();
   const shortHex = value.match(/^#([\da-f])([\da-f])([\da-f])$/i);
@@ -352,22 +353,27 @@ function roundedRectPath(
   ctx.closePath();
 }
 
+/**
+ * Retrato de un jugador con su nombre integrado en la parte inferior, sobre un
+ * degradado sutil. El nombre se ajusta (hasta 2 líneas) para no recortarse.
+ */
 async function drawAvatar(
   ctx: CanvasRenderingContext2D,
   player: GroupWinnerSharePlayer,
-  centerX: number,
+  x: number,
   top: number,
   width: number,
   height: number,
-  accent: string
+  accent: string,
+  cream: string
 ) {
-  const x = centerX - width / 2;
   const radius = 36;
+  const centerX = x + width / 2;
 
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.55)";
-  ctx.shadowBlur = 36;
-  ctx.shadowOffsetY = 18;
+  ctx.shadowColor = "rgba(0,0,0,0.32)";
+  ctx.shadowBlur = 22;
+  ctx.shadowOffsetY = 8;
   ctx.fillStyle = "#121418";
   roundedRectPath(ctx, x, top, width, height, radius);
   ctx.fill();
@@ -400,20 +406,118 @@ async function drawAvatar(
     gradient.addColorStop(1, "#0c0d10");
     ctx.fillStyle = gradient;
     ctx.fillRect(x, top, width, height);
-    ctx.fillStyle = "#f7f3ed";
-    ctx.font = font(820, 72);
+    ctx.fillStyle = cream;
+    ctx.font = font(820, 132);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(initialsFromName(player.name), centerX, top + height / 2);
+    ctx.fillText(initialsFromName(player.name), centerX, top + height * 0.4);
   }
+
+  // Nombre: hasta 2 líneas, siempre dentro del retrato.
+  const padX = STORY_LAYOUT.players.namePadX;
+  const maxNameWidth = width - padX * 2;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  const nameLines = textLinesToFit(ctx, player.name, maxNameWidth, 2, 52, 32, 760);
+  const lineHeight = 1.12;
+  const nameBlock = nameLines.reduce(
+    (total, line) => total + line.fontSize * lineHeight,
+    0
+  );
+  const shadeHeight = Math.min(height * 0.5, nameBlock + 120);
+  const shade = ctx.createLinearGradient(0, top + height - shadeHeight, 0, top + height);
+  shade.addColorStop(0, "rgba(9,10,12,0)");
+  shade.addColorStop(0.55, "rgba(9,10,12,0.42)");
+  shade.addColorStop(1, "rgba(9,10,12,0.82)");
+  ctx.fillStyle = shade;
+  ctx.fillRect(x, top + height - shadeHeight, width, shadeHeight);
+
+  ctx.fillStyle = cream;
+  const firstBaseline =
+    top +
+    height -
+    STORY_LAYOUT.players.namePadBottom -
+    nameBlock +
+    nameLines[0].fontSize * 0.92;
+  drawTextLines(ctx, nameLines, x + padX, firstBaseline, lineHeight, 760);
   ctx.restore();
 
   ctx.save();
   ctx.strokeStyle = accent;
-  ctx.globalAlpha = 0.72;
+  ctx.globalAlpha = 0.6;
   ctx.lineWidth = 3;
   roundedRectPath(ctx, x, top, width, height, radius);
   ctx.stroke();
+  ctx.restore();
+}
+
+/**
+ * Siete estadísticas oficiales directamente sobre el fondo: tipografía,
+ * alineación y líneas finas. Fila 1: PJ PG PP PTS · Fila 2: GF GC DIF.
+ */
+function drawOfficialStats(
+  ctx: CanvasRenderingContext2D,
+  stats: GroupWinnerOfficialStat[],
+  accent: string,
+  cream: string,
+  quiet: string
+): void {
+  const pad = STORY_LAYOUT.padX;
+  const width = GROUP_WINNER_SHARE_WIDTH - pad * 2;
+  const { top, rowHeight, valueY, labelY } = STORY_LAYOUT.stats;
+  const rows: GroupWinnerOfficialStat[][] = [];
+  let cursor = 0;
+  for (const size of GROUP_WINNER_STATS_ROW_SIZES) {
+    rows.push(stats.slice(cursor, cursor + size));
+    cursor += size;
+  }
+  const hairline = "rgba(247,243,237,0.16)";
+
+  ctx.save();
+  ctx.fillStyle = hairline;
+  ctx.fillRect(pad, top, width, 2);
+  ctx.textBaseline = "alphabetic";
+
+  rows.forEach((row, rowIndex) => {
+    const rowTop = top + rowHeight * rowIndex;
+    const colWidth = width / row.length;
+    if (rowIndex > 0) {
+      ctx.fillStyle = hairline;
+      ctx.fillRect(pad, rowTop, width, 2);
+    }
+
+    row.forEach((stat, index) => {
+      const colX = pad + colWidth * index;
+      const centerX = colX + colWidth / 2;
+      if (index > 0) {
+        ctx.fillStyle = hairline;
+        ctx.fillRect(colX - 1, rowTop + 26, 2, rowHeight - 52);
+      }
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = stat.highlight
+        ? accent
+        : stat.primary
+          ? cream
+          : "rgba(247,243,237,0.9)";
+      ctx.font = font(stat.primary ? 850 : 800, stat.primary ? 100 : 74);
+      ctx.fillText(stat.value, centerX, rowTop + valueY);
+
+      ctx.fillStyle = quiet;
+      ctx.font = font(780, 21, "body");
+      ctx.textAlign = "left";
+      drawTrackedText(
+        ctx,
+        stat.label,
+        centerX - trackedTextWidth(ctx, stat.label, 3) / 2,
+        rowTop + labelY,
+        3
+      );
+    });
+  });
+
+  ctx.fillStyle = hairline;
+  ctx.fillRect(pad, top + rowHeight * rows.length - 2, width, 2);
   ctx.restore();
 }
 
@@ -765,17 +869,23 @@ export async function renderGroupWinnerShareCanvas(
   ctx.fillRect(0, 0, w, h);
 
   // HEADER — el club anfitrión abre la pieza; Riviera queda como plataforma.
+  // Torneo y categoría a la izquierda; la posición «01» a la derecha.
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
   await drawClubIdentity(ctx, data, accent, cream, muted);
 
+  const rankText = String(data.position).padStart(2, "0");
+  ctx.font = font(850, 112);
+  const rankWidth = ctx.measureText(rankText).width;
+  const headingWidth = w - pad * 2 - rankWidth - 40;
+
   const eventLines = textLinesToFit(
     ctx,
     data.tournamentName.toUpperCase(),
-    760,
+    headingWidth,
     1,
     42,
-    30,
+    28,
     800
   );
   ctx.fillStyle = cream;
@@ -787,61 +897,71 @@ export async function renderGroupWinnerShareCanvas(
     1.08,
     800
   );
-  ctx.fillStyle = muted;
-  ctx.font = font(700, 24, "body");
+  ctx.fillStyle = accent;
+  ctx.font = font(760, 24, "body");
   const context = `${data.categoryName.toUpperCase()}  ·  ${data.groupName.toUpperCase()}`;
   ctx.fillText(
-    ellipsizeText(ctx, context, w - pad * 2),
+    ellipsizeText(ctx, context, headingWidth),
     pad,
     STORY_LAYOUT.header.contextY
   );
 
-  // ACHIEVEMENT — índice, regla editorial y logro construyen un solo gesto.
+  ctx.fillStyle = accent;
+  ctx.font = font(850, 112);
+  ctx.textAlign = "right";
+  ctx.fillText(rankText, w - pad, STORY_LAYOUT.header.rankY);
+  ctx.textAlign = "left";
+
   ctx.save();
   ctx.strokeStyle = "rgba(247,243,237,0.13)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(pad, 376);
-  ctx.lineTo(w - pad, 376);
+  ctx.moveTo(pad, STORY_LAYOUT.header.ruleY);
+  ctx.lineTo(w - pad, STORY_LAYOUT.header.ruleY);
   ctx.stroke();
   ctx.restore();
 
-  ctx.fillStyle = accent;
-  ctx.font = font(820, 36);
-  ctx.fillText(
-    String(data.position).padStart(2, "0"),
-    pad,
-    STORY_LAYOUT.achievement.detailY
-  );
-  ctx.fillRect(pad + 66, STORY_LAYOUT.achievement.detailY - 12, 206, 3);
-  ctx.fillStyle = cream;
-  ctx.font = font(760, 23, "body");
-  drawTrackedText(
+  // PLAYERS — dos retratos a todo el ancho útil, con el nombre integrado.
+  const photoGap = STORY_LAYOUT.players.gap;
+  const photoWidth = (w - pad * 2 - photoGap) / 2;
+  await drawAvatar(
     ctx,
-    placementLabel(data.position),
-    pad + 300,
-    STORY_LAYOUT.achievement.detailY,
-    2.8
+    data.player1,
+    pad,
+    STORY_LAYOUT.players.top,
+    photoWidth,
+    STORY_LAYOUT.players.height,
+    accent,
+    cream
   );
-  ctx.fillStyle = accent;
-  ctx.fillRect(w - pad - 74, STORY_LAYOUT.achievement.detailY - 22, 74, 3);
-  ctx.fillRect(w - pad - 42, STORY_LAYOUT.achievement.detailY - 8, 42, 3);
-  ctx.fillRect(w - pad - 20, STORY_LAYOUT.achievement.detailY + 6, 20, 3);
+  await drawAvatar(
+    ctx,
+    data.player2,
+    pad + photoWidth + photoGap,
+    STORY_LAYOUT.players.top,
+    photoWidth,
+    STORY_LAYOUT.players.height,
+    accent,
+    cream
+  );
 
+  // ACHIEVEMENT — el reconocimiento principal, centrado bajo los retratos.
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
   ctx.fillStyle = cream;
   const titleLines = textLinesToFit(
     ctx,
     "¡FELICIDADES!",
     w - pad * 2,
     1,
-    98,
-    82,
+    96,
+    80,
     850
   );
   drawTextLines(
     ctx,
     titleLines,
-    pad,
+    w / 2,
     STORY_LAYOUT.achievement.titleY,
     1,
     850
@@ -850,121 +970,26 @@ export async function renderGroupWinnerShareCanvas(
   ctx.font = font(560, 30, "body");
   ctx.fillText(
     "Lo dieron todo de principio a fin.",
-    pad + 4,
+    w / 2,
     STORY_LAYOUT.achievement.copyY
   );
 
-  await drawAvatar(
+  // STATS — las siete estadísticas oficiales, sin paneles ni cajas.
+  drawOfficialStats(
     ctx,
-    data.player1,
-    STORY_LAYOUT.players.firstX,
-    STORY_LAYOUT.players.top,
-    STORY_LAYOUT.players.width,
-    STORY_LAYOUT.players.height,
-    accent
-  );
-  await drawAvatar(
-    ctx,
-    data.player2,
-    STORY_LAYOUT.players.secondX,
-    STORY_LAYOUT.players.top,
-    STORY_LAYOUT.players.width,
-    STORY_LAYOUT.players.height,
-    accent
-  );
-
-  ctx.textAlign = "center";
-  ctx.fillStyle = cream;
-  for (const [player, x] of [
-    [data.player1, STORY_LAYOUT.players.firstX],
-    [data.player2, STORY_LAYOUT.players.secondX],
-  ] as const) {
-    const lines = textLinesToFit(
-      ctx,
-      player.name,
-      STORY_LAYOUT.players.nameWidth,
-      2,
-      44,
-      30,
-      750
-    );
-    drawTextLines(ctx, lines, x, STORY_LAYOUT.players.nameY, 1.12, 750);
-  }
-
-  // STATS — scoreboard continuo: una superficie, tres lecturas, un solo ritmo.
-  ctx.textAlign = "center";
-  roundedRectPath(
-    ctx,
-    pad,
-    STORY_LAYOUT.stats.top,
-    w - pad * 2,
-    STORY_LAYOUT.stats.bottom - STORY_LAYOUT.stats.top,
-    26
-  );
-  const scoreboard = ctx.createLinearGradient(
-    pad,
-    STORY_LAYOUT.stats.top,
-    w - pad,
-    STORY_LAYOUT.stats.bottom
-  );
-  scoreboard.addColorStop(0, "rgba(247,243,237,0.055)");
-  scoreboard.addColorStop(0.5, "rgba(247,243,237,0.025)");
-  scoreboard.addColorStop(1, "rgba(247,243,237,0.045)");
-  ctx.fillStyle = scoreboard;
-  ctx.fill();
-  ctx.strokeStyle = "rgba(247,243,237,0.16)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.fillStyle = accent;
-  ctx.fillRect(pad + 26, STORY_LAYOUT.stats.top, 126, 4);
-
-  const statW = (w - pad * 2) / 3;
-  const stats = clasificacionAchievementStats(
-    data.clasificacionModo ?? DEFAULT_CLASIFICACION_MODO,
-    {
+    groupWinnerOfficialStats({
+      pj: data.played,
       pg: data.wins,
+      pp: data.losses ?? Math.max(0, data.played - data.wins),
+      puntos: data.points,
       ptsFav: data.fav ?? 0,
+      ptsCon: data.con ?? 0,
       dif: data.diff,
-      setsDif: data.setsDif,
-    }
+    }),
+    accent,
+    cream,
+    quiet
   );
-  stats.forEach((stat, index) => {
-    const x = pad + statW * index;
-    if (index > 0) {
-      const divider = ctx.createLinearGradient(
-        x,
-        STORY_LAYOUT.stats.top + 30,
-        x,
-        STORY_LAYOUT.stats.bottom - 30
-      );
-      divider.addColorStop(0, "rgba(247,243,237,0)");
-      divider.addColorStop(0.5, "rgba(247,243,237,0.22)");
-      divider.addColorStop(1, "rgba(247,243,237,0)");
-      ctx.strokeStyle = divider;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x, STORY_LAYOUT.stats.top + 28);
-      ctx.lineTo(x, STORY_LAYOUT.stats.bottom - 28);
-      ctx.stroke();
-    }
-    const lit = Boolean(stat.highlight);
-    ctx.fillStyle = lit ? accent : cream;
-    ctx.font = font(830, 76);
-    ctx.fillText(stat.value, x + statW / 2, STORY_LAYOUT.stats.valueY);
-    ctx.fillStyle = quiet;
-    ctx.font = font(760, 21, "body");
-    drawTrackedText(
-      ctx,
-      stat.label,
-      x +
-        statW / 2 -
-        trackedTextWidth(ctx, stat.label, 2.6) / 2,
-      STORY_LAYOUT.stats.labelY,
-      3
-    );
-    ctx.fillStyle = lit ? accent : "rgba(247,243,237,0.22)";
-    ctx.fillRect(x + statW / 2 - 28, STORY_LAYOUT.stats.labelY + 18, 56, 2);
-  });
 
   // FOOTER — cierre emocional primero; firma social integrada después.
   ctx.fillStyle = accent;

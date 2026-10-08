@@ -97,6 +97,112 @@ describe("renderGroupWinnerShareCanvas", () => {
     expect(paintedText).not.toContain("GANADORES DEL GRUPO A");
   });
 
+  it("pinta las siete estadísticas oficiales (PJ·PG·PP·PTS·GF·GC·DIF) y no el trío anterior", async () => {
+    const context = canvasContext();
+    const canvas = {
+      width: 0,
+      height: 0,
+      getContext: jest.fn(() => context),
+      toBlob: jest.fn(),
+    } as unknown as HTMLCanvasElement;
+    const realCreate = document.createElement.bind(document);
+    jest.spyOn(document, "createElement").mockImplementation((tag: string) =>
+      tag === "canvas" ? canvas : realCreate(tag)
+    );
+
+    await renderGroupWinnerShareCanvas({
+      ...baseData,
+      played: 3,
+      wins: 2,
+      losses: 1,
+      points: 4,
+      fav: 25,
+      con: 13,
+      diff: 12,
+      // El modo ya no cambia las estadísticas que se muestran.
+      clasificacionModo: "setto_pg",
+    });
+
+    const painted = (context.fillText as jest.Mock).mock.calls.map(([text]) =>
+      String(text)
+    );
+    // Cada sigla se pinta carácter a carácter (texto con tracking).
+    const joined = painted.join("");
+    for (const label of ["PJ", "PG", "PP", "PTS", "GF", "GC", "DIF"]) {
+      expect(joined).toContain(label);
+    }
+    expect(joined).not.toContain("FAV");
+    // Valores oficiales, en el mismo orden que la card pública.
+    const values = ["3", "2", "1", "4", "25", "13", "+12"];
+    const positions = values.map((value) => painted.indexOf(value));
+    expect(positions.every((position) => position >= 0)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+
+  it("sin `losses` deriva PP como jugados − ganados", async () => {
+    const context = canvasContext();
+    const canvas = {
+      width: 0,
+      height: 0,
+      getContext: jest.fn(() => context),
+      toBlob: jest.fn(),
+    } as unknown as HTMLCanvasElement;
+    const realCreate = document.createElement.bind(document);
+    jest.spyOn(document, "createElement").mockImplementation((tag: string) =>
+      tag === "canvas" ? canvas : realCreate(tag)
+    );
+
+    await renderGroupWinnerShareCanvas({
+      ...baseData,
+      played: 3,
+      wins: 2,
+      diff: 0,
+    });
+    const painted = (context.fillText as jest.Mock).mock.calls.map(([text]) =>
+      String(text)
+    );
+    expect(painted).toContain("1");
+    expect(painted).toContain("0");
+  });
+
+  it("los nombres largos se ajustan a máximo 2 líneas dentro del retrato", async () => {
+    const context = canvasContext();
+    const canvas = {
+      width: 0,
+      height: 0,
+      getContext: jest.fn(() => context),
+      toBlob: jest.fn(),
+    } as unknown as HTMLCanvasElement;
+    const realCreate = document.createElement.bind(document);
+    jest.spyOn(document, "createElement").mockImplementation((tag: string) =>
+      tag === "canvas" ? canvas : realCreate(tag)
+    );
+
+    await renderGroupWinnerShareCanvas({
+      ...baseData,
+      player1: { name: "Maximiliano Alejandro Hernández de la Torre" },
+      player2: { name: "Jose Luis Domínguez Villaseñor" },
+    });
+
+    const calls = (context.fillText as jest.Mock).mock.calls as [
+      string,
+      number,
+      number,
+    ][];
+    const nameCalls = calls.filter(([text]) =>
+      /Maximiliano|Hernández|Torre|Domínguez|Villaseñor|Jose Luis/.test(text)
+    );
+    // Dos jugadores × hasta 2 líneas cada uno.
+    expect(nameCalls.length).toBeGreaterThanOrEqual(2);
+    expect(nameCalls.length).toBeLessThanOrEqual(4);
+    // Con el mock (14 px por carácter) ninguna línea excede el ancho útil del retrato.
+    const photoWidth = (GROUP_WINNER_SHARE_WIDTH - 76 * 2 - 24) / 2;
+    const usable = photoWidth - 30 * 2;
+    for (const [text] of nameCalls) {
+      expect(text.replace("…", "").length * 14).toBeLessThanOrEqual(usable);
+    }
+  });
+
   it("la cuenta madre no repite by Riviera Open", async () => {
     const context = canvasContext();
     const canvas = {

@@ -28,11 +28,11 @@ import { resolvePlayerPublicProfiles } from "../../../lib/rivieraJugadores/publi
 import { reglaClasificacion } from "../../../lib/torneoExpress/reglaClasificacion";
 import { useOrganizerDisplayName } from "../../../club-experience/useOrganizerDisplayName";
 import {
-  clasificacionAchievementStats,
   clasificacionOrderSummary,
   clasificacionStandingHighlight,
   clasificacionStandingMeta,
 } from "../../../lib/torneoExpress/clasificacionModo";
+import { groupWinnerOfficialStatRows } from "../../../lib/torneoExpress/groupWinnerStats";
 import type {
   StandingRowExpress,
   TorneoExpressBundle,
@@ -864,7 +864,6 @@ function GrupoWinnerSummary({
   clubName,
   clubLogoUrl,
   showMotherAttribution,
-  clasificacionModo,
 }: {
   grupoNombre: string;
   rows: StandingRowExpress[];
@@ -875,7 +874,6 @@ function GrupoWinnerSummary({
   clubName: string;
   clubLogoUrl?: string | null;
   showMotherAttribution: boolean;
-  clasificacionModo: TorneoExpressClasificacionModo;
 }) {
   if (!isGrupoPartidosCompletos(partidos) || rows.length === 0) return null;
   const winner = rows[0];
@@ -884,12 +882,14 @@ function GrupoWinnerSummary({
     players && players.length >= 2
       ? players.slice(0, 2)
       : fallbackPlayersFromPair(winner.parejaLabel);
-  const setsDif = (winner.setsFav ?? 0) - (winner.setsCon ?? 0);
-  const achievementStats = clasificacionAchievementStats(clasificacionModo, {
+  const statRows = groupWinnerOfficialStatRows({
+    pj: winner.pj,
     pg: winner.pg,
+    pp: winner.pp,
+    puntos: winner.puntos,
     ptsFav: winner.ptsFav,
+    ptsCon: winner.ptsCon,
     dif: winner.dif,
-    setsDif,
   });
 
   return (
@@ -905,8 +905,17 @@ function GrupoWinnerSummary({
           showMotherAttribution={showMotherAttribution}
         />
         <div className="te-grupo-achievement__topline">
-          <span>{torneoNombre}</span>
-          <span aria-hidden>01</span>
+          <div className="te-grupo-achievement__heading">
+            <span className="te-grupo-achievement__tournament">
+              {torneoNombre}
+            </span>
+            <span className="te-grupo-achievement__event">
+              {categoria || "Torneo Express"} · {grupoNombre}
+            </span>
+          </div>
+          <span className="te-grupo-achievement__rank" aria-hidden>
+            01
+          </span>
         </div>
         <div className="te-grupo-achievement__main">
           <div
@@ -925,19 +934,32 @@ function GrupoWinnerSummary({
           </div>
           <h3>¡Felicidades!</h3>
           <p>Lo dieron todo de principio a fin.</p>
-          <span className="te-grupo-achievement__event">
-            {categoria || "Torneo Express"} · {grupoNombre}
-          </span>
         </div>
         <div
           className="te-grupo-achievement__stats"
           aria-label="Estadísticas del logro"
         >
-          {achievementStats.map((stat) => (
-            <span key={stat.label}>
-              <strong>{stat.value}</strong>
-              <small>{stat.label}</small>
-            </span>
+          {statRows.map((row, rowIndex) => (
+            <div
+              key={rowIndex}
+              className="te-grupo-achievement__stats-row"
+              data-count={row.length}
+            >
+              {row.map((stat) => (
+                <span
+                  key={stat.id}
+                  className={`te-grupo-achievement__stat${
+                    stat.primary ? " te-grupo-achievement__stat--primary" : ""
+                  }${
+                    stat.highlight ? " te-grupo-achievement__stat--highlight" : ""
+                  }`}
+                >
+                  <strong>{stat.value}</strong>
+                  <small aria-hidden="true">{stat.label}</small>
+                  <span className="te-grupo-achievement__sr">{stat.name}</span>
+                </span>
+              ))}
+            </div>
           ))}
         </div>
         <p className="te-grupo-achievement__tagline">{WINNER_TAGLINE}</p>
@@ -1206,7 +1228,6 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
             clubName={clubName}
             clubLogoUrl={clubLogoUrl}
             showMotherAttribution={showMotherAttribution}
-            clasificacionModo={clasificacionModo}
           />
           </div>
         ))}
