@@ -8,7 +8,9 @@ import {
   normalizeEliminatoriaDuraciones,
   orderCategoriasForEliminatoria,
   parseEliminatoriaRondasActivas,
+  rondasFromFase,
   toggleEliminatoriaRonda,
+  unionEliminatoriaRondas,
 } from "./eliminatoriaCategoriaOrden";
 
 describe("categoriaNivelRank", () => {
@@ -170,5 +172,24 @@ describe("rondas activas de eliminatoria", () => {
     expect(inferFaseEliminacion(null, { activas: ["semifinal", "final"] })).toBe(
       "semifinal"
     );
+  });
+
+  it("convierte la fase de una categoría a sus rondas", () => {
+    expect(rondasFromFase("semifinal")).toEqual(["semifinal", "final"]);
+    expect(rondasFromFase(null)).toEqual(["cuartos", "semifinal", "final"]);
+  });
+
+  it("une las rondas de varias categorías", () => {
+    expect(unionEliminatoriaRondas({})).toEqual([
+      "cuartos",
+      "semifinal",
+      "final",
+    ]);
+    expect(
+      unionEliminatoriaRondas({
+        mix: ["cuartos", "semifinal", "final"],
+        quinta: ["octavos", "cuartos", "semifinal", "final"],
+      })
+    ).toEqual(["octavos", "cuartos", "semifinal", "final"]);
   });
 });

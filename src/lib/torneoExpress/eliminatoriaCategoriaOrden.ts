@@ -140,6 +140,55 @@ export function faseFromRondasActivas(
   return "semifinal";
 }
 
+export function rondasFromFase(
+  fase: TorneoExpressFaseEliminacion | null | undefined
+): EliminatoriaRondaKey[] {
+  if (fase === "octavos") {
+    return ["octavos", "cuartos", "semifinal", "final"];
+  }
+  if (fase === "semifinal") return ["semifinal", "final"];
+  return [...DEFAULT_ELIMINATORIA_RONDAS_ACTIVAS];
+}
+
+export function unionEliminatoriaRondas(
+  byCategoria: Record<string, readonly EliminatoriaRondaKey[]>
+): EliminatoriaRondaKey[] {
+  const lists = Object.values(byCategoria);
+  if (lists.length === 0) return [...DEFAULT_ELIMINATORIA_RONDAS_ACTIVAS];
+  const picked = new Set<EliminatoriaRondaKey>();
+  for (const rondas of lists) {
+    for (const key of rondas) picked.add(key);
+  }
+  for (const field of ELIMINATORIA_RONDA_FIELDS) {
+    if (field.required) picked.add(field.key);
+  }
+  return ELIMINATORIA_RONDA_FIELDS.map((field) => field.key).filter((key) =>
+    picked.has(key)
+  );
+}
+
+export function isCategoriaEliminatoriaLocked(
+  faseTorneo: string | null | undefined
+): boolean {
+  return faseTorneo === "eliminatoria" || faseTorneo === "cerrado";
+}
+
+export function sameCategoriaRondas(
+  categorias: ReadonlyArray<{
+    id: string;
+    fase_eliminacion?: TorneoExpressFaseEliminacion | null;
+  }>,
+  draft: Record<string, readonly EliminatoriaRondaKey[]>
+): boolean {
+  return categorias.every((cat) => {
+    const saved = rondasFromFase(cat.fase_eliminacion).join(",");
+    const next = (draft[cat.id] ?? rondasFromFase(cat.fase_eliminacion)).join(
+      ","
+    );
+    return saved === next;
+  });
+}
+
 export function inferFaseEliminacion(
   categoriaFase: TorneoExpressFaseEliminacion | null | undefined,
   duraciones?: unknown

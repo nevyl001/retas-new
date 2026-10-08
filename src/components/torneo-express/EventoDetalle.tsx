@@ -19,6 +19,7 @@ import {
   deleteTorneoExpress,
   fetchEventoConCategorias,
   formatSupabaseError,
+  saveCategoriaFaseEliminacionPlan,
   saveTorneoExpressCategoria,
   syncEventoEstadoFromCategorias,
   updateEvento,
@@ -36,12 +37,14 @@ import { EventoEliminatoriaHorarioForm } from "./EventoEliminatoriaHorarioForm";
 import { EventoReglasForm } from "./EventoReglasForm";
 import {
   DEFAULT_ELIMINATORIA_DURACIONES,
-  DEFAULT_ELIMINATORIA_RONDAS_ACTIVAS,
+  faseFromRondasActivas,
+  isCategoriaEliminatoriaLocked,
   normalizeEliminatoriaCanchas,
   normalizeEliminatoriaDuraciones,
   orderCategoriasForEliminatoria,
-  parseEliminatoriaRondasActivas,
+  rondasFromFase,
   serializeEliminatoriaDuraciones,
+  unionEliminatoriaRondas,
   type EliminatoriaDuraciones,
   type EliminatoriaRondaKey,
 } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
@@ -142,9 +145,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
   const [eliminatoriaCanchas, setEliminatoriaCanchas] = useState<string[]>([]);
   const [eliminatoriaDuraciones, setEliminatoriaDuraciones] =
     useState<EliminatoriaDuraciones>(DEFAULT_ELIMINATORIA_DURACIONES);
-  const [eliminatoriaRondasActivas, setEliminatoriaRondasActivas] = useState<
-    EliminatoriaRondaKey[]
-  >([...DEFAULT_ELIMINATORIA_RONDAS_ACTIVAS]);
+  const [categoriaRondas, setCategoriaRondas] = useState<
+    Record<string, EliminatoriaRondaKey[]>
+  >({});
   const [savingEliminatoria, setSavingEliminatoria] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<TorneoExpress | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -180,10 +183,12 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       eliminatoriaCanchas,
       eliminatoriaDuraciones: serializeEliminatoriaDuraciones(
         eliminatoriaDuraciones,
-        eliminatoriaRondasActivas
+        unionEliminatoriaRondas(categoriaRondas)
       ),
+      categoriaRondas,
     },
-    defaultEliminatoriaOrden
+    defaultEliminatoriaOrden,
+    categorias
   );
   const brandingDirty = isBrandingDirty(evento, { logoSource, flyerUrl });
   const dirtySections = [
@@ -251,8 +256,10 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       setEliminatoriaDuraciones(
         normalizeEliminatoriaDuraciones(data.evento.eliminatoria_duraciones)
       );
-      setEliminatoriaRondasActivas(
-        parseEliminatoriaRondasActivas(data.evento.eliminatoria_duraciones)
+      setCategoriaRondas(
+        Object.fromEntries(
+          data.categorias.map((cat) => [cat.id, rondasFromFase(cat.fase_eliminacion)])
+        )
       );
       const synced = await syncEventoEstadoFromCategorias(data.evento.id).catch(
         () => null
@@ -280,9 +287,6 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
         );
         setEliminatoriaDuraciones(
           normalizeEliminatoriaDuraciones(synced.eliminatoria_duraciones)
-        );
-        setEliminatoriaRondasActivas(
-          parseEliminatoriaRondasActivas(synced.eliminatoria_duraciones)
         );
       }
     } catch (e) {
@@ -349,7 +353,7 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       const canchas = normalizeEliminatoriaCanchas(eliminatoriaCanchas);
       const duraciones = serializeEliminatoriaDuraciones(
         eliminatoriaDuraciones,
-        eliminatoriaRondasActivas
+        unionEliminatoriaRondas(categoriaRondas)
       );
       const updated = await updateEvento(evento.id, {
         eliminatoria_inicio: zonedDateTimeIso(
@@ -379,8 +383,25 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       setEliminatoriaDuraciones(
         normalizeEliminatoriaDuraciones(updated.eliminatoria_duraciones)
       );
-      setEliminatoriaRondasActivas(
-        parseEliminatoriaRondasActivas(updated.eliminatoria_duraciones)
+      const nextCategorias = [...categorias];
+      for (let i = 0; i < nextCategorias.length; i += 1) {
+        const cat = nextCategorias[i];
+        if (isCategoriaEliminatoriaLocked(cat.fase_torneo)) continue;
+        const desired = faseFromRondasActivas(
+          categoriaRondas[cat.id] ?? rondasFromFase(cat.fase_eliminacion)
+        );
+        if (cat.fase_eliminacion === desired) continue;
+        const saved = await saveCategoriaFaseEliminacionPlan(cat.id, desired);
+        if (saved) nextCategorias[i] = saved;
+      }
+      setCategorias(nextCategorias);
+      setCategoriaRondas(
+        Object.fromEntries(
+          nextCategorias.map((cat) => [
+            cat.id,
+            rondasFromFase(cat.fase_eliminacion),
+          ])
+        )
       );
       showActionToast("Eliminatoria del evento guardada", "success");
     } catch (e) {
@@ -665,8 +686,13 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                   onCanchasChange={setEliminatoriaCanchas}
                   duraciones={eliminatoriaDuraciones}
                   onDuracionesChange={setEliminatoriaDuraciones}
-                  rondasActivas={eliminatoriaRondasActivas}
-                  onRondasActivasChange={setEliminatoriaRondasActivas}
+                  categoriaRondas={categoriaRondas}
+                  onCategoriaRondasChange={(torneoId, rondas) =>
+                    setCategoriaRondas((current) => ({
+                      ...current,
+                      [torneoId]: rondas,
+                    }))
+                  }
                 />
                 <div className="te-evd-savebar">
                   {eliminatoriaDirty ? (

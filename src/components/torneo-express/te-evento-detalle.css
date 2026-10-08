@@ -747,14 +747,59 @@
   list-style: none;
 }
 
-.te-evd-elim-horario__item {
+.te-evd-elim-horario__item,
+.te-evd-elim-cat {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: 14px;
+}
+
+.te-evd-elim-cat__top {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--ro-border-subtle);
-  border-radius: 12px;
+}
+
+.te-evd-elim-cat__rondas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.te-evd-elim-cat__chip {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--ro-border);
+  border-radius: 999px;
+  color: var(--ro-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.te-evd-elim-cat__chip.is-on {
+  border-color: color-mix(in srgb, var(--ro-text-primary) 28%, transparent);
+  background: color-mix(in srgb, var(--ro-text-primary) 8%, transparent);
+  color: var(--ro-text-primary);
+}
+
+.te-evd-elim-cat__chip input {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin: 0;
+  accent-color: var(--ro-text-primary);
+}
+
+.te-evd-elim-cat__chip:has(input:disabled) {
+  cursor: default;
+  opacity: 0.72;
 }
 
 .te-evd-elim-horario__index {

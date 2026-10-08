@@ -2277,6 +2277,43 @@ export async function saveTorneoExpressCategoria(
   return data as TorneoExpress;
 }
 
+/** Plan de cuadro (octavos/cuartos/semis) sin generar partidos. */
+export async function saveCategoriaFaseEliminacionPlan(
+  torneoId: string,
+  fase: TorneoExpressFaseEliminacion
+): Promise<TorneoExpress | null> {
+  const user = await requireAuthUser();
+  const id = torneoId.trim();
+  if (!id) throw new Error("torneoId inválido");
+  if (fase !== "octavos" && fase !== "cuartos" && fase !== "semifinal") {
+    throw new Error("Fase eliminatoria inválida");
+  }
+
+  const { data: torneo, error: tErr } = await supabase
+    .from("torneo_express")
+    .select("id, organizador_id, fase_torneo, fase_eliminacion")
+    .eq("id", id)
+    .maybeSingle();
+  throwIfError(tErr, "saveCategoriaFaseEliminacionPlan.fetch");
+  if (!torneo) throw new Error("Categoría no encontrada");
+  if (torneo.organizador_id !== user.id) {
+    throw new Error("No tienes permiso para editar esta categoría");
+  }
+  const faseTorneo = String(torneo.fase_torneo ?? "grupos");
+  if (faseTorneo === "eliminatoria" || faseTorneo === "cerrado") {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("torneo_express")
+    .update({ fase_eliminacion: fase })
+    .eq("id", id)
+    .select()
+    .single();
+  throwIfError(error, "saveCategoriaFaseEliminacionPlan.update");
+  return (data as TorneoExpress) ?? null;
+}
+
 export async function savePartidosOrden(
   updates: Array<{
     id: string;

@@ -28,6 +28,7 @@ jest.mock("../../services/torneoExpressService", () => ({
   deleteTorneoExpress: async () => undefined,
   fetchEventoConCategorias: async () => ({ evento: mockEvento, categorias: [] }),
   formatSupabaseError: (e: unknown) => String(e),
+  saveCategoriaFaseEliminacionPlan: async () => null,
   saveTorneoExpressCategoria: async () => undefined,
   syncEventoEstadoFromCategorias: async () => null,
   updateEvento: (...args: unknown[]) => mockUpdateEvento(...args),

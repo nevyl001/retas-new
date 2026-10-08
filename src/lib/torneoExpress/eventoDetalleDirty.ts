@@ -2,11 +2,14 @@ import type {
   TorneoExpressClasificacionModo,
   TorneoExpressEvento,
   TorneoExpressEventoLogoSource,
+  TorneoExpressFaseEliminacion,
   TorneoExpressPartidoFormato,
 } from "./types";
 import {
   normalizeEliminatoriaCanchas,
+  sameCategoriaRondas,
   sameEliminatoriaDuraciones,
+  type EliminatoriaRondaKey,
 } from "./eliminatoriaCategoriaOrden";
 
 type EventoGuardado = Pick<
@@ -54,8 +57,13 @@ export function isEliminatoriaConfigDirty(
     eliminatoriaCategoriaOrden?: readonly string[] | null;
     eliminatoriaCanchas?: readonly string[] | null;
     eliminatoriaDuraciones?: unknown;
+    categoriaRondas?: Record<string, readonly EliminatoriaRondaKey[]>;
   },
-  defaultCategoriaOrden: readonly string[] = []
+  defaultCategoriaOrden: readonly string[] = [],
+  categorias: ReadonlyArray<{
+    id: string;
+    fase_eliminacion?: TorneoExpressFaseEliminacion | null;
+  }> = []
 ): boolean {
   if (!evento) return false;
   const savedInicio = evento.eliminatoria_inicio ?? null;
@@ -72,7 +80,8 @@ export function isEliminatoriaConfigDirty(
     !sameEliminatoriaDuraciones(
       evento.eliminatoria_duraciones,
       draft.eliminatoriaDuraciones
-    )
+    ) ||
+    !sameCategoriaRondas(categorias, draft.categoriaRondas ?? {})
   );
 }
 
