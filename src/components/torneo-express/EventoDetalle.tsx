@@ -355,11 +355,15 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
         eliminatoriaDuraciones,
         unionEliminatoriaRondas(categoriaRondas)
       );
+      const inicioIso = zonedDateTimeIso(
+        eliminatoriaInicioLocal,
+        evento.timezone
+      );
+      if (eliminatoriaInicioLocal.trim() && !inicioIso) {
+        throw new Error("Fecha u hora de inicio inválida");
+      }
       const updated = await updateEvento(evento.id, {
-        eliminatoria_inicio: zonedDateTimeIso(
-          eliminatoriaInicioLocal,
-          evento.timezone
-        ),
+        eliminatoria_inicio: inicioIso,
         eliminatoria_categoria_orden: eliminatoriaOrdenIds,
         eliminatoria_canchas: canchas,
         eliminatoria_duraciones: duraciones,

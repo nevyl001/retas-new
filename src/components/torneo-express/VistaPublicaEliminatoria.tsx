@@ -10,6 +10,7 @@ import { buildSharePublicOgUrlFromPlayUrl } from "../../lib/retaAbierta/shareOgU
 import {
   buildEliminatoriaPossibleSchedule,
   inferFaseEliminacion,
+  parseEliminatoriaInicio,
 } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import type { EliminatoriaPossibleSlot } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
@@ -71,25 +72,32 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
       return;
     }
     let cancelled = false;
+    const apply = (
+      data: Awaited<ReturnType<typeof fetchEventoConCategorias>>
+    ) => {
+      if (cancelled || !data) return false;
+      setEvento(data.evento);
+      setSlots(
+        buildEliminatoriaPossibleSchedule(
+          data.categorias,
+          data.evento.eliminatoria_categoria_orden,
+          data.evento.eliminatoria_inicio,
+          data.evento.eliminatoria_canchas,
+          data.evento.eliminatoria_duraciones
+        )
+      );
+      return true;
+    };
     void fetchEventoConCategorias(eventoId, true)
       .then((data) => {
-        if (cancelled || !data) return;
-        setEvento(data.evento);
-        setSlots(
-          buildEliminatoriaPossibleSchedule(
-            data.categorias,
-            data.evento.eliminatoria_categoria_orden,
-            data.evento.eliminatoria_inicio,
-            data.evento.eliminatoria_canchas,
-            data.evento.eliminatoria_duraciones
-          )
-        );
+        if (apply(data)) return;
+        return fetchEventoConCategorias(eventoId, false).then(apply);
       })
       .catch(() => {
-        if (!cancelled) {
-          setEvento(null);
-          setSlots([]);
-        }
+        if (cancelled) return;
+        void fetchEventoConCategorias(eventoId, false)
+          .then(apply)
+          .catch(() => undefined);
       });
     return () => {
       cancelled = true;
@@ -116,8 +124,13 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
               bundle.torneo.fase_eliminacion,
               evento?.eliminatoria_duraciones
             ),
-            startAt: categorySlot?.startsAt ?? null,
-            courts: categorySlot?.courts ?? evento?.eliminatoria_canchas,
+            startAt:
+              categorySlot?.startsAt ??
+              parseEliminatoriaInicio(evento?.eliminatoria_inicio),
+            courts:
+              categorySlot?.courts && categorySlot.courts.length > 0
+                ? categorySlot.courts
+                : evento?.eliminatoria_canchas,
             duraciones: evento?.eliminatoria_duraciones,
             timeZone: evento?.timezone,
           })

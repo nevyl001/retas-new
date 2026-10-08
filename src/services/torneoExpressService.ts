@@ -3522,10 +3522,13 @@ function mapTorneoExpressEvento(row: Record<string, unknown>): TorneoExpressEven
         : String(row.fecha_fin),
     clasificacion_modo,
     partido_formato,
-    eliminatoria_inicio:
-      row.eliminatoria_inicio == null || row.eliminatoria_inicio === ""
-        ? null
-        : String(row.eliminatoria_inicio),
+    eliminatoria_inicio: (() => {
+      if (row.eliminatoria_inicio == null || row.eliminatoria_inicio === "") {
+        return null;
+      }
+      const parsed = new Date(String(row.eliminatoria_inicio));
+      return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+    })(),
     eliminatoria_categoria_orden: Array.isArray(row.eliminatoria_categoria_orden)
       ? (row.eliminatoria_categoria_orden as unknown[])
           .map((id) => String(id ?? "").trim())
@@ -3966,16 +3969,9 @@ export async function updateEvento(
         "eliminatoria_duraciones"
       ))
   ) {
-    delete payload.eliminatoria_inicio;
-    delete payload.eliminatoria_categoria_orden;
-    delete payload.eliminatoria_canchas;
-    delete payload.eliminatoria_duraciones;
-    if (Object.keys(payload).length === 0) {
-      const current = await fetchEventoById(id);
-      if (!current) throw new Error("Evento no encontrado");
-      return current;
-    }
-    ({ data, error } = await runUpdate());
+    throw new Error(
+      "No se pudo guardar el horario de eliminatoria. Falta una columna en el evento (inicio, canchas o duraciones)."
+    );
   }
 
   if (isEventoTableMissing(error)) {
@@ -3985,7 +3981,22 @@ export async function updateEvento(
   }
   throwIfError(error, "updateEvento");
   if (!data) throw new Error("No se pudo actualizar el evento");
-  return mapTorneoExpressEvento(data as Record<string, unknown>);
+  const mapped = mapTorneoExpressEvento(data as Record<string, unknown>);
+  const sentCanchas = Array.isArray(patch.eliminatoria_canchas)
+    ? patch.eliminatoria_canchas
+        .map((name) => String(name ?? "").trim())
+        .filter(Boolean)
+    : [];
+  const savedCanchas = mapped.eliminatoria_canchas ?? [];
+  if (
+    (patch.eliminatoria_inicio && !mapped.eliminatoria_inicio) ||
+    (sentCanchas.length > 0 && savedCanchas.length === 0)
+  ) {
+    throw new Error(
+      "No se pudo guardar el horario de eliminatoria. Falta una columna en el evento (inicio, canchas o duraciones)."
+    );
+  }
+  return mapped;
 }
 
 /**

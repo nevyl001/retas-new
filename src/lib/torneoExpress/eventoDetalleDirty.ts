@@ -34,6 +34,19 @@ function sameIdList(
   return left.every((id, index) => id === right[index]);
 }
 
+function sameInicioIso(
+  a: string | null | undefined,
+  b: string | null | undefined
+): boolean {
+  const left = a?.trim() || "";
+  const right = b?.trim() || "";
+  if (left === right) return true;
+  if (!left || !right) return false;
+  const leftMs = new Date(left).getTime();
+  const rightMs = new Date(right).getTime();
+  return Number.isFinite(leftMs) && leftMs === rightMs;
+}
+
 /** Reglas del formulario distintas a las guardadas en el evento. */
 export function isReglasDirty(
   evento: EventoGuardado | null,
@@ -74,7 +87,7 @@ export function isEliminatoriaConfigDirty(
   );
   const draftCanchas = normalizeEliminatoriaCanchas(draft.eliminatoriaCanchas);
   return (
-    draftInicio !== savedInicio ||
+    !sameInicioIso(draftInicio, savedInicio) ||
     !sameIdList(defaultCategoriaOrden, draftOrden) ||
     !sameIdList(savedCanchas, draftCanchas) ||
     !sameEliminatoriaDuraciones(

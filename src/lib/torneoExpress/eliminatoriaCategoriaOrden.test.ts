@@ -52,21 +52,29 @@ describe("orderCategoriasForEliminatoria", () => {
 });
 
 describe("categoriaKnockoutMinutes", () => {
-  it("suma cuartos + semis + final por defecto", () => {
-    expect(categoriaKnockoutMinutes("cuartos")).toBe(180);
-    expect(categoriaKnockoutMinutes("semifinal")).toBe(120);
-    expect(categoriaKnockoutMinutes("octavos")).toBe(240);
+  it("cuenta oleadas: 4 cuartos en 1 cancha + 2 semis + final", () => {
+    expect(categoriaKnockoutMinutes("cuartos")).toBe(420);
+    expect(categoriaKnockoutMinutes("semifinal")).toBe(180);
+    expect(categoriaKnockoutMinutes("octavos")).toBe(900);
+  });
+
+  it("en 3 canchas los cuartos caben en 2 oleadas", () => {
+    expect(categoriaKnockoutMinutes("cuartos", undefined, 3)).toBe(240);
   });
 
   it("usa los minutos que puso el organizador", () => {
     expect(
-      categoriaKnockoutMinutes("cuartos", {
-        octavos: 40,
-        cuartos: 50,
-        semifinal: 45,
-        final: 70,
-      })
-    ).toBe(165);
+      categoriaKnockoutMinutes(
+        "cuartos",
+        {
+          octavos: 40,
+          cuartos: 50,
+          semifinal: 45,
+          final: 70,
+        },
+        1
+      )
+    ).toBe(50 * 4 + 45 * 2 + 70);
   });
 });
 
@@ -95,7 +103,8 @@ describe("buildEliminatoriaPossibleSchedule", () => {
     expect(slots).toHaveLength(2);
     expect(slots[0].label).toBe("Mixtos D");
     expect(slots[0].startsAt?.toISOString()).toBe("2026-10-10T20:00:00.000Z");
-    expect(slots[1].startsAt?.toISOString()).toBe("2026-10-10T22:00:00.000Z");
+    // 1 cancha: 4×40 cuartos + 2×40 semis + 40 final = 280 min
+    expect(slots[1].startsAt?.toISOString()).toBe("2026-10-11T00:40:00.000Z");
   });
 
   it("deja la hora vacía si el evento no fijó inicio", () => {

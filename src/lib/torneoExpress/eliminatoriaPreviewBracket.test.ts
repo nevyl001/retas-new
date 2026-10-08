@@ -35,6 +35,26 @@ describe("buildEliminatoriaPreviewCards", () => {
     expect(cuartos[0].canchaLabel).toBe("Cancha 1");
   });
 
+  it("con 3 canchas programa 2 oleadas de cuartos y asigna cancha", () => {
+    const { cards } = buildEliminatoriaPreviewCards({
+      fase: "cuartos",
+      startAt: new Date("2026-10-09T14:00:00.000Z"),
+      courts: ["1", "2", "3"],
+      duraciones: { octavos: 60, cuartos: 60, semifinal: 60, final: 60 },
+      timeZone: "UTC",
+    });
+    const cuartos = cards.filter((c) => c.ronda === 1);
+    expect(cuartos.map((c) => c.canchaLabel)).toEqual([
+      "Cancha 1",
+      "Cancha 2",
+      "Cancha 3",
+      "Cancha 1",
+    ]);
+    expect(cuartos[0].scheduleMs).toBe(Date.parse("2026-10-09T14:00:00.000Z"));
+    expect(cuartos[3].scheduleMs).toBe(Date.parse("2026-10-09T15:00:00.000Z"));
+    expect(cuartos[0].horaDisplay).toMatch(/14:00/);
+  });
+
   it("arma octavos con 8 cruces en la primera ronda", () => {
     const { cards, totalRondas } = buildEliminatoriaPreviewCards({
       fase: "octavos",

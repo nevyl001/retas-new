@@ -72,6 +72,18 @@ describe("isEliminatoriaConfigDirty", () => {
       isEliminatoriaConfigDirty(saved, { eliminatoriaDuraciones: {} })
     ).toBe(false);
   });
+
+  it("el mismo instante de inicio no es sucio aunque el ISO venga distinto", () => {
+    const withInicio = {
+      ...saved,
+      eliminatoria_inicio: "2026-10-09 14:00:00+00",
+    };
+    expect(
+      isEliminatoriaConfigDirty(withInicio, {
+        eliminatoriaInicio: "2026-10-09T14:00:00.000Z",
+      })
+    ).toBe(false);
+  });
 });
 
 describe("isBrandingDirty", () => {

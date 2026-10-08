@@ -221,18 +221,48 @@ export function rondaPathLabel(
     .join(" → ");
 }
 
-/** Minutos de cuadro para una categoría, según su fase y los tiempos del evento. */
+/** Oleadas de una ronda: partidos en paralelo según canchas. */
+export function rondaWaveCount(
+  matchCount: number,
+  courtCount: number
+): number {
+  return Math.ceil(Math.max(1, matchCount) / Math.max(1, courtCount));
+}
+
+/**
+ * Minutos de cuadro de una categoría: cada ronda dura
+ * oleadas × minutos, no un solo bloque.
+ */
 export function categoriaKnockoutMinutes(
   fase: TorneoExpressFaseEliminacion | null | undefined,
-  duraciones?: unknown
+  duraciones?: unknown,
+  courtCount = 1
 ): number {
   const d = normalizeEliminatoriaDuraciones(duraciones);
   const resolved = inferFaseEliminacion(fase, duraciones);
-  if (resolved === "semifinal") return d.semifinal + d.final;
-  if (resolved === "octavos") {
-    return d.octavos + d.cuartos + d.semifinal + d.final;
+  const courts = Math.max(1, courtCount);
+  const add = (matches: number, minutes: number) =>
+    rondaWaveCount(matches, courts) * minutes;
+  if (resolved === "semifinal") {
+    return add(2, d.semifinal) + add(1, d.final);
   }
-  return d.cuartos + d.semifinal + d.final;
+  if (resolved === "octavos") {
+    return (
+      add(8, d.octavos) +
+      add(4, d.cuartos) +
+      add(2, d.semifinal) +
+      add(1, d.final)
+    );
+  }
+  return add(4, d.cuartos) + add(2, d.semifinal) + add(1, d.final);
+}
+
+export function parseEliminatoriaInicio(
+  startIso: string | null | undefined
+): Date | null {
+  if (!startIso?.trim()) return null;
+  const ms = new Date(startIso).getTime();
+  return Number.isFinite(ms) ? new Date(ms) : null;
 }
 
 const FUERZA_RANK: ReadonlyArray<{ needle: string; rank: number }> = [
@@ -353,7 +383,8 @@ export function buildEliminatoriaPossibleSchedule(
 ): EliminatoriaPossibleSlot[] {
   const ordered = orderCategoriasForEliminatoria(categorias, savedIds);
   const courts = normalizeEliminatoriaCanchas(canchas);
-  const startMs = startIso ? new Date(startIso).getTime() : NaN;
+  const startAt = parseEliminatoriaInicio(startIso);
+  const startMs = startAt?.getTime() ?? NaN;
   const hasStart = Number.isFinite(startMs);
   let offsetMs = 0;
   return ordered.map((cat) => {
@@ -365,7 +396,11 @@ export function buildEliminatoriaPossibleSchedule(
       courts,
     };
     offsetMs +=
-      categoriaKnockoutMinutes(cat.fase_eliminacion, duraciones) * 60 * 1000;
+      categoriaKnockoutMinutes(
+        cat.fase_eliminacion,
+        duraciones,
+        courts.length
+      ) * 60 * 1000;
     return slot;
   });
 }
