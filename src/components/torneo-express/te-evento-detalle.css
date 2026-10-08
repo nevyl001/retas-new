@@ -964,7 +964,9 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px 16px;
+  gap: 10px 16px;
+  margin-top: 1.5rem;
+  padding-top: 0.15rem;
 }
 
 .te-evd-savebar .te-evd-dirty {
@@ -972,8 +974,9 @@
 }
 
 .te-evd-savebar .te-evd-savebar__btn {
-  min-height: 2.5rem;
-  min-width: 8.5rem;
+  min-height: 2.75rem;
+  min-width: 9.5rem;
+  padding-inline: 1.15rem;
   justify-content: center;
 }
 
@@ -1017,6 +1020,7 @@
 
 .te-evd-brand__save {
   grid-area: save;
+  margin-top: 0;
 }
 
 .te-evd-brand__preview-title {
