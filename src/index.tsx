@@ -5,6 +5,14 @@ import { bootstrapAppBranding } from "./branding/bootstrapAppBranding";
 import "./index.css";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { installPopStateGate } from "./lib/appRouting";
+import { installHistoryIndexTracking } from "./lib/historyIndex";
+
+// Numera las entradas del historial antes de que cualquier módulo use pushState/replaceState.
+installHistoryIndexTracking();
+// Puerta única de `popstate`: debe registrarse ANTES que cualquier listener de navegación
+// de la app (se ejecutan en orden de registro) para que las guardas lleguen primero.
+installPopStateGate();
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement

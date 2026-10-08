@@ -19,7 +19,11 @@ import {
   fetchMasterAdminByAuthId,
   navigateToAdminDashboard,
 } from "../lib/admin/masterAdminAuth";
-import { normalizeAppPathname, resetProtectedPathToAppHome } from "../lib/appRouting";
+import {
+  confirmSessionExit,
+  normalizeAppPathname,
+  resetProtectedPathToAppHome,
+} from "../lib/appRouting";
 
 interface UserProfile {
   id: string;
@@ -360,6 +364,10 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   const signOut = async () => {
+    // Pantallas con cambios sin guardar piden confirmación ANTES de cerrar la sesión.
+    // Sin guardas registradas resuelve de inmediato y el flujo es idéntico al anterior.
+    if (!(await confirmSessionExit())) return;
+
     try {
       setLoading(true);
       beginBrandingTransition("session-logout");
