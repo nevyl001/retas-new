@@ -51,7 +51,7 @@ describe("QuickStartSheet shared form", () => {
     expect(scope.textContent).toMatch(/Resumen/);
     expect(scope.textContent).toMatch(/Nivel/);
     expect(scope.querySelector('[data-testid="guardar-reta"]')).toBeTruthy();
-    // Remontada vive en Detalles opcionales (siempre visibles).
+    // Remontada final tiene su propia sección visible.
     expect(scope.textContent).toMatch(/Detalles opcionales/);
     expect(scope.textContent).toMatch(/Remontada/);
   });

@@ -602,7 +602,9 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         essentials ? " reta-details-form__field--champ-compact" : " home-sheet__field--champ"
       }`}
     >
-      <span className="home-sheet__field-label">Remontada</span>
+      {essentials ? null : (
+        <span className="home-sheet__field-label">Remontada</span>
+      )}
       {essentials ? (
         <>
           <label className="reta-details-form__champ-control">
@@ -614,8 +616,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
               disabled={champEd.locked}
               onChange={(e) => patch({ championshipEnabled: e.target.checked })}
             />
-            <span>
-              {values.championshipEnabled ? "Activada" : "Desactivada"}
+            <span className="reta-details-form__champ-copy">
+              <strong>
+                {values.championshipEnabled ? "Activada" : "Desactivada"}
+              </strong>
+              <small>
+                Rondas extra al terminar el round robin para definir al campeón
+                entre los mejores.
+              </small>
             </span>
           </label>
           {champEd.locked ? <FieldLock reason={champEd.reason} /> : null}
@@ -721,6 +729,23 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           ) : null}
         </section>
 
+        {championshipField ? (
+          <section
+            className="reta-details-form__section reta-details-form__section--champ"
+            aria-labelledby="reta-details-sec-champ"
+          >
+            <h3
+              id="reta-details-sec-champ"
+              className="reta-details-form__section-title"
+            >
+              Remontada final
+            </h3>
+            <div className="reta-details-form__row reta-details-form__row--champ">
+              {championshipField}
+            </div>
+          </section>
+        ) : null}
+
         <section
           className="reta-details-form__section reta-details-form__section--optional"
           aria-labelledby="reta-details-sec-optional"
@@ -737,11 +762,6 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             {costoField}
             {premioField}
           </div>
-          {championshipField ? (
-            <div className="reta-details-form__row reta-details-form__row--champ">
-              {championshipField}
-            </div>
-          ) : null}
         </section>
       </div>
     );
