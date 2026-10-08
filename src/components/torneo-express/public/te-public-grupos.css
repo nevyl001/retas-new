@@ -208,11 +208,6 @@
   .te-grupos-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .te-grupos-grid:not(.te-grupos-grid--single) .te-grupo-wrap:only-child {
-    grid-column: 1 / -1;
-    max-width: 720px;
-  }
 }
 
 /* Achievement humano — fotografía primero, marca como firma. */
@@ -2709,7 +2704,6 @@
   /* El split interno depende del ancho real de la card, no del viewport:
      así la clasificación nunca queda estrangulada en pantallas medianas. */
   .te-public.te-public--grupos-wide .te-grupo-wrap {
-    container-type: inline-size;
     padding: 11px;
     border-radius: 14px;
   }
@@ -4466,9 +4460,11 @@
 }
 
 .te-public.te-public--grupos-wide .te-grupos-page .te-grupo-wrap {
-  container-type: inline-size;
   align-self: stretch;
+  width: 100%;
+  max-width: none;
   height: auto;
+  min-width: 0;
   min-height: 0;
   padding: 0.7rem 0.75rem 0.8rem;
   border: 1px solid var(--te-groups-border);
@@ -4663,6 +4659,8 @@
   .te-match-card {
   container-type: inline-size;
   container-name: te-match;
+  width: 100%;
+  min-width: 0;
   height: 100%;
 }
 
@@ -4752,11 +4750,17 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  width: 100%;
   min-width: 0;
+  /* El query de clasificación vive aquí: en el wrap encogía la tarjeta
+     a su contenido y descuadraba el gutter derecho del grid. */
+  container-type: inline-size;
 }
 
 .te-public.te-public--grupos-wide .te-grupos-page .te-grupo-block > .te-grupo-wrap {
   flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
 }
 
 .te-public.te-public--grupos-wide .te-grupos-page .te-grupo-block > .te-grupo-achievement {
