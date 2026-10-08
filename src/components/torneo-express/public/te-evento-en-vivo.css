@@ -379,7 +379,7 @@
 }
 
 .te-live-team__name {
-  font-size: 1.15em;
+  font-size: 0.95em;
   font-weight: 700;
   line-height: 1.2;
   overflow-wrap: anywhere;
@@ -466,7 +466,7 @@
   z-index: 1;
   display: -webkit-box;
   overflow: hidden;
-  font-size: 0.95em;
+  font-size: 0.78em;
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.005em;
@@ -478,7 +478,7 @@
 }
 
 .te-live-team--md .te-live-portrait__caption {
-  font-size: 0.8em;
+  font-size: 0.68em;
 }
 
 /* Retrato mini (listas): sin texto encima, dos superpuestos. */
