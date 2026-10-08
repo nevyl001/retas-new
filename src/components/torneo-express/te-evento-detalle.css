@@ -900,6 +900,16 @@
   cursor: default;
 }
 
+.te-evd-elim-horario__footer {
+  margin-top: 0.35rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid var(--ro-border);
+}
+
+.te-evd-elim-horario__footer .te-evd-savebar {
+  margin-top: 0;
+}
+
 .te-evd-elim-jump {
   display: flex;
   flex-wrap: wrap;

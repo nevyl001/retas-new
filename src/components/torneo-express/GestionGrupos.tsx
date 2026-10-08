@@ -86,6 +86,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     reload,
     standingsByGrupo,
     saveResultado,
+    resetResultado,
     saveOrden,
     savingPartidoId,
     savingOrden,
@@ -586,6 +587,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           savingProgramadoId={savingProgramadoId}
           savingOrden={savingOrden}
           onSaveResultado={faseTorneo === "grupos" ? saveResultado : undefined}
+          onResetResultado={faseTorneo === "grupos" ? resetResultado : undefined}
           onSaveProgramacion={
             faseTorneo === "grupos" &&
             partidosCanchaDisponible &&
@@ -1390,6 +1392,9 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                   savingOrden={savingOrden}
                   onSaveResultado={
                     faseTorneo === "grupos" ? saveResultado : undefined
+                  }
+                  onResetResultado={
+                    faseTorneo === "grupos" ? resetResultado : undefined
                   }
                   onSaveProgramacion={
                     faseTorneo === "grupos" &&

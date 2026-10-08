@@ -81,3 +81,74 @@ describe("PartidosGrupo plaza virtual", () => {
     expect(screen.getAllByRole("button", { name: "Guardar" })).toHaveLength(1);
   });
 });
+
+describe("PartidosGrupo borrar resultado", () => {
+  const jugado: TorneoExpressPartido = {
+    ...partido,
+    puntos_local: 6,
+    puntos_visitante: 1,
+    ganador_id: "real",
+    estado: "jugado",
+  };
+
+  const parejas = [
+    pareja("real", "Zaid / Mauricio", false),
+    pareja("virtual", "Isra / Isbi", false),
+  ];
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("muestra Borrar resultado junto a Corregir cuando el partido ya se jugó", () => {
+    render(
+      <PartidosGrupo
+        partidos={[jugado]}
+        parejas={parejas}
+        editable
+        onSaveResultado={jest.fn()}
+        onResetResultado={jest.fn()}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Corregir resultado" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Borrar resultado" })).toBeTruthy();
+  });
+
+  it("pide confirmación y borra el resultado", () => {
+    const onReset = jest.fn().mockResolvedValue(undefined);
+    jest.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(
+      <PartidosGrupo
+        partidos={[jugado]}
+        parejas={parejas}
+        editable
+        onSaveResultado={jest.fn()}
+        onResetResultado={onReset}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Borrar resultado" }));
+    expect(window.confirm).toHaveBeenCalled();
+    expect(onReset).toHaveBeenCalledWith("m1");
+  });
+
+  it("no borra si se cancela la confirmación", () => {
+    const onReset = jest.fn();
+    jest.spyOn(window, "confirm").mockReturnValue(false);
+
+    render(
+      <PartidosGrupo
+        partidos={[jugado]}
+        parejas={parejas}
+        editable
+        onSaveResultado={jest.fn()}
+        onResetResultado={onReset}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Borrar resultado" }));
+    expect(onReset).not.toHaveBeenCalled();
+  });
+});

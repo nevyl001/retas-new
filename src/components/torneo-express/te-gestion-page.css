@@ -1685,6 +1685,8 @@
   margin: 0;
   padding: 0.15rem 0 0;
   justify-content: flex-end;
+  gap: 0.85rem;
+  flex-wrap: wrap;
   border-top: none;
 }
 
@@ -1707,6 +1709,11 @@
   color: var(--ro-text-primary);
   background: transparent;
   text-decoration: none;
+}
+
+.te-gestion-page .te-partido-actions--corner .te-partido-edit-btn--danger:hover,
+.te-gestion-page .te-partido-actions--corner .riviera-btn.riviera-btn-ghost.te-partido-edit-btn--danger:hover:not(:disabled) {
+  color: var(--ro-error);
 }
 
 .te-gestion-page .te-partido-actions:not(.te-partido-actions--corner) {

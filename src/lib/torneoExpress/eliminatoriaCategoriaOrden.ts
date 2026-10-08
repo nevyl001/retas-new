@@ -77,13 +77,9 @@ export function sameEliminatoriaDuraciones(
 ): boolean {
   const left = normalizeEliminatoriaDuraciones(a);
   const right = normalizeEliminatoriaDuraciones(b);
-  const sameMinutes = ELIMINATORIA_RONDA_FIELDS.every(
+  return ELIMINATORIA_RONDA_FIELDS.every(
     ({ key }) => left[key] === right[key]
   );
-  if (!sameMinutes) return false;
-  const leftRondas = parseEliminatoriaRondasActivas(a).join(",");
-  const rightRondas = parseEliminatoriaRondasActivas(b).join(",");
-  return leftRondas === rightRondas;
 }
 
 export function parseEliminatoriaRondasActivas(

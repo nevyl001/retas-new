@@ -66,6 +66,7 @@ interface PartidosGrupoProps {
     expectedPairs: ExpectedPairs,
     force?: boolean
   ) => Promise<void>;
+  onResetResultado?: (partidoId: string) => Promise<void>;
   onSaveProgramacion?: (
     partidoId: string,
     programadoEn: string,
@@ -410,6 +411,7 @@ function PartidoRow({
   saving,
   enJuego,
   onSave,
+  onReset,
   onSaveProgramacion,
   courtCheckScope,
   pairLabels,
@@ -443,6 +445,7 @@ function PartidoRow({
   pairSlotConflict?: boolean;
   dragHandle?: React.ReactNode;
   onSave?: PartidosGrupoProps["onSaveResultado"];
+  onReset?: PartidosGrupoProps["onResetResultado"];
   onSaveProgramacion?: PartidosGrupoProps["onSaveProgramacion"];
   partidoFormato?: PartidosGrupoProps["partidoFormato"];
   onDefineVirtualPair?: PartidosGrupoProps["onDefineVirtualPair"];
@@ -704,10 +707,32 @@ function PartidoRow({
               variant="ghost"
               size="sm"
               className="te-partido-edit-btn"
+              disabled={saving}
               onClick={openResultado}
             >
               Corregir resultado
             </Button>
+            {onReset ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="te-partido-edit-btn te-partido-edit-btn--danger"
+                disabled={saving}
+                onClick={() => {
+                  if (
+                    !window.confirm(
+                      "¿Borrar el resultado de este partido? El marcador volverá a pendiente y podrás capturarlo de nuevo."
+                    )
+                  ) {
+                    return;
+                  }
+                  void onReset(partido.id);
+                }}
+              >
+                Borrar resultado
+              </Button>
+            ) : null}
           </div>
         ) : null}
 
@@ -759,6 +784,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
   canchaEditable = false,
   horarioEditable = false,
   onSaveResultado,
+  onResetResultado,
   onSaveProgramacion,
   onSaveOrden,
   onDefineVirtualPair,
@@ -1027,6 +1053,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
             horarioEditable={horarioEditable}
             enJuego={partido.id === enJuegoId}
             onSave={onSaveResultado}
+            onReset={onResetResultado}
             onSaveProgramacion={onSaveProgramacion}
             partidoFormato={partidoFormato}
             courtCheckScope={mergedCourtCheckScope}

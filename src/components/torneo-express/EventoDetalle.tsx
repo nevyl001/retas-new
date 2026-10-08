@@ -265,28 +265,44 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
         () => null
       );
       if (synced) {
-        setEvento(synced);
-        setLogoSource(synced.logo_source);
-        setFlyerUrl(synced.flyer_url ?? "");
-        setClasificacionModo(synced.clasificacion_modo);
-        setPartidoFormato(synced.partido_formato);
+        const nextEvento = {
+          ...synced,
+          eliminatoria_inicio:
+            synced.eliminatoria_inicio ?? data.evento.eliminatoria_inicio,
+          eliminatoria_categoria_orden:
+            synced.eliminatoria_categoria_orden ??
+            data.evento.eliminatoria_categoria_orden,
+          eliminatoria_canchas:
+            synced.eliminatoria_canchas &&
+            synced.eliminatoria_canchas.length > 0
+              ? synced.eliminatoria_canchas
+              : data.evento.eliminatoria_canchas,
+          eliminatoria_duraciones:
+            synced.eliminatoria_duraciones ??
+            data.evento.eliminatoria_duraciones,
+        };
+        setEvento(nextEvento);
+        setLogoSource(nextEvento.logo_source);
+        setFlyerUrl(nextEvento.flyer_url ?? "");
+        setClasificacionModo(nextEvento.clasificacion_modo);
+        setPartidoFormato(nextEvento.partido_formato);
         setEliminatoriaInicioLocal(
           formatZonedDateTimeLocal(
-            synced.eliminatoria_inicio,
-            synced.timezone
+            nextEvento.eliminatoria_inicio,
+            nextEvento.timezone
           )
         );
         setEliminatoriaOrdenIds(
           orderCategoriasForEliminatoria(
             data.categorias,
-            synced.eliminatoria_categoria_orden
+            nextEvento.eliminatoria_categoria_orden
           ).map((cat) => cat.id)
         );
         setEliminatoriaCanchas(
-          normalizeEliminatoriaCanchas(synced.eliminatoria_canchas)
+          normalizeEliminatoriaCanchas(nextEvento.eliminatoria_canchas)
         );
         setEliminatoriaDuraciones(
-          normalizeEliminatoriaDuraciones(synced.eliminatoria_duraciones)
+          normalizeEliminatoriaDuraciones(nextEvento.eliminatoria_duraciones)
         );
       }
     } catch (e) {
@@ -368,24 +384,37 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
         eliminatoria_canchas: canchas,
         eliminatoria_duraciones: duraciones,
       });
-      setEvento(updated);
+      const savedEvento = {
+        ...updated,
+        eliminatoria_inicio: updated.eliminatoria_inicio ?? inicioIso,
+        eliminatoria_categoria_orden:
+          updated.eliminatoria_categoria_orden ?? eliminatoriaOrdenIds,
+        eliminatoria_canchas:
+          updated.eliminatoria_canchas &&
+          updated.eliminatoria_canchas.length > 0
+            ? updated.eliminatoria_canchas
+            : canchas,
+        eliminatoria_duraciones:
+          updated.eliminatoria_duraciones ?? duraciones,
+      };
+      setEvento(savedEvento);
       setEliminatoriaInicioLocal(
         formatZonedDateTimeLocal(
-          updated.eliminatoria_inicio,
-          updated.timezone
+          savedEvento.eliminatoria_inicio,
+          savedEvento.timezone
         )
       );
       setEliminatoriaOrdenIds(
         orderCategoriasForEliminatoria(
           categorias,
-          updated.eliminatoria_categoria_orden
+          savedEvento.eliminatoria_categoria_orden
         ).map((cat) => cat.id)
       );
       setEliminatoriaCanchas(
-        normalizeEliminatoriaCanchas(updated.eliminatoria_canchas)
+        normalizeEliminatoriaCanchas(savedEvento.eliminatoria_canchas)
       );
       setEliminatoriaDuraciones(
-        normalizeEliminatoriaDuraciones(updated.eliminatoria_duraciones)
+        normalizeEliminatoriaDuraciones(savedEvento.eliminatoria_duraciones)
       );
       const nextCategorias = [...categorias];
       for (let i = 0; i < nextCategorias.length; i += 1) {
@@ -697,27 +726,29 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                       [torneoId]: rondas,
                     }))
                   }
+                  footer={
+                    <div className="te-evd-savebar">
+                      {eliminatoriaDirty ? (
+                        <p className="te-evd-dirty" role="status">
+                          Tienes cambios sin guardar
+                        </p>
+                      ) : null}
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        className="te-evd-savebar__btn"
+                        loading={savingEliminatoria}
+                        disabled={savingEliminatoria}
+                        onClick={() => void handleSaveEliminatoria()}
+                      >
+                        {savingEliminatoria
+                          ? "Guardando…"
+                          : "Guardar eliminatoria"}
+                      </Button>
+                    </div>
+                  }
                 />
-                <div className="te-evd-savebar">
-                  {eliminatoriaDirty ? (
-                    <p className="te-evd-dirty" role="status">
-                      Tienes cambios sin guardar
-                    </p>
-                  ) : null}
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    className="te-evd-savebar__btn"
-                    loading={savingEliminatoria}
-                    disabled={savingEliminatoria}
-                    onClick={() => void handleSaveEliminatoria()}
-                  >
-                    {savingEliminatoria
-                      ? "Guardando…"
-                      : "Guardar eliminatoria"}
-                  </Button>
-                </div>
               </section>
             </div>
 

@@ -34,6 +34,17 @@ function sameIdList(
   return left.every((id, index) => id === right[index]);
 }
 
+function parseInicioMs(value: string): number {
+  const trimmed = value.trim();
+  const direct = new Date(trimmed).getTime();
+  if (Number.isFinite(direct)) return direct;
+  const normalized = trimmed
+    .replace(" ", "T")
+    .replace(/([+-]\d{2})$/, "$1:00");
+  const fallback = new Date(normalized).getTime();
+  return Number.isFinite(fallback) ? fallback : Number.NaN;
+}
+
 function sameInicioIso(
   a: string | null | undefined,
   b: string | null | undefined
@@ -42,8 +53,8 @@ function sameInicioIso(
   const right = b?.trim() || "";
   if (left === right) return true;
   if (!left || !right) return false;
-  const leftMs = new Date(left).getTime();
-  const rightMs = new Date(right).getTime();
+  const leftMs = parseInicioMs(left);
+  const rightMs = parseInicioMs(right);
   return Number.isFinite(leftMs) && leftMs === rightMs;
 }
 
@@ -82,13 +93,15 @@ export function isEliminatoriaConfigDirty(
   const savedInicio = evento.eliminatoria_inicio ?? null;
   const draftInicio = draft.eliminatoriaInicio ?? null;
   const draftOrden = draft.eliminatoriaCategoriaOrden ?? defaultCategoriaOrden;
+  const ordenHydrating =
+    draftOrden.length === 0 && categorias.length > 0;
   const savedCanchas = normalizeEliminatoriaCanchas(
     evento.eliminatoria_canchas
   );
   const draftCanchas = normalizeEliminatoriaCanchas(draft.eliminatoriaCanchas);
   return (
     !sameInicioIso(draftInicio, savedInicio) ||
-    !sameIdList(defaultCategoriaOrden, draftOrden) ||
+    (!ordenHydrating && !sameIdList(defaultCategoriaOrden, draftOrden)) ||
     !sameIdList(savedCanchas, draftCanchas) ||
     !sameEliminatoriaDuraciones(
       evento.eliminatoria_duraciones,

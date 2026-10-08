@@ -1343,6 +1343,115 @@ export async function savePartidoResultado(
   return fresh;
 }
 
+type ResetTorneoExpressGrupoPartidoRpcResult = {
+  ok: boolean;
+  status?: string;
+  error?: string;
+  partido_id?: string;
+};
+
+function isMissingResetGrupoPartidoRpc(
+  error: { code?: string; message?: string } | null
+): boolean {
+  if (!error) return false;
+  const msg = (error.message ?? "").toLowerCase();
+  return (
+    error.code === "PGRST202" ||
+    error.code === "42883" ||
+    msg.includes("reset_torneo_express_grupo_partido") ||
+    msg.includes("could not find the function")
+  );
+}
+
+async function assertGrupoPartidoResetable(partidoId: string): Promise<void> {
+  const { data: partido, error: partidoErr } = await supabase
+    .from("torneo_express_partidos")
+    .select("grupo_id")
+    .eq("id", partidoId)
+    .maybeSingle();
+  throwIfError(partidoErr, "fetch partido para borrar resultado");
+  const grupoId = (partido as { grupo_id?: string } | null)?.grupo_id;
+  if (!grupoId) throw new Error("Partido no encontrado.");
+
+  const { data: grupo, error: grupoErr } = await supabase
+    .from("torneo_express_grupos")
+    .select("torneo_id")
+    .eq("id", grupoId)
+    .maybeSingle();
+  throwIfError(grupoErr, "fetch grupo para borrar resultado");
+  const torneoId = (grupo as { torneo_id?: string } | null)?.torneo_id;
+  if (!torneoId) throw new Error("Partido no encontrado.");
+
+  const { data: torneo, error: torneoErr } = await supabase
+    .from("torneo_express")
+    .select("fase_torneo, estado")
+    .eq("id", torneoId)
+    .maybeSingle();
+  throwIfError(torneoErr, "fetch categoría para borrar resultado");
+  if (!torneo) throw new Error("Partido no encontrado.");
+  if (isTorneoExpressClosed(torneo)) {
+    throw new Error(TORNEO_CERRADO_RESULTADO_MSG);
+  }
+  if ((torneo as { fase_torneo?: string | null }).fase_torneo !== "grupos") {
+    throw new Error(
+      "No se puede borrar el resultado: la fase de grupos ya no está abierta."
+    );
+  }
+}
+
+export async function resetPartidoResultado(
+  partidoId: string
+): Promise<TorneoExpressPartido> {
+  await requireAuthUser();
+
+  const { data, error: rpcErr } = await supabase.rpc(
+    "reset_torneo_express_grupo_partido",
+    { p_partido_id: partidoId }
+  );
+
+  if (rpcErr && !isMissingResetGrupoPartidoRpc(rpcErr)) {
+    throw new Error(rpcErr.message);
+  }
+
+  if (!rpcErr) {
+    const result = data as ResetTorneoExpressGrupoPartidoRpcResult | null;
+    if (!result) throw new Error("Respuesta inválida del servidor.");
+    if (!result.ok) {
+      if (result.error === "not_found") {
+        throw new Error("Partido no encontrado.");
+      }
+      if (result.error === "torneo_cerrado") {
+        throw new Error(TORNEO_CERRADO_RESULTADO_MSG);
+      }
+      if (result.error === "group_not_editable") {
+        throw new Error(
+          "No se puede borrar el resultado: la fase de grupos ya no está abierta."
+        );
+      }
+      throw new Error(result.error ?? "No se pudo borrar el resultado.");
+    }
+  } else {
+    await assertGrupoPartidoResetable(partidoId);
+    const { error: updateErr } = await supabase
+      .from("torneo_express_partidos")
+      .update({
+        puntos_local: null,
+        puntos_visitante: null,
+        sets_resultado: null,
+        ganador_id: null,
+        estado: "pendiente",
+      })
+      .eq("id", partidoId);
+    if (updateErr) throw new Error(updateErr.message);
+  }
+
+  const fresh = await fetchPartidoResultadoById(partidoId);
+  if (!fresh) {
+    throw new Error("No se pudo recargar el partido tras borrar el resultado");
+  }
+  return fresh;
+}
+
 async function fetchPartidoResultadoById(
   partidoId: string
 ): Promise<TorneoExpressPartido | null> {

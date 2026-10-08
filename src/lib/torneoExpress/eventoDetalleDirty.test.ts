@@ -83,6 +83,66 @@ describe("isEliminatoriaConfigDirty", () => {
         eliminatoriaInicio: "2026-10-09T14:00:00.000Z",
       })
     ).toBe(false);
+    expect(
+      isEliminatoriaConfigDirty(
+        { ...saved, eliminatoria_inicio: "2026-10-09T14:00:00+00" },
+        { eliminatoriaInicio: "2026-10-09T14:00:00.000Z" }
+      )
+    ).toBe(false);
+  });
+
+  it("un horario ya guardado no pide confirmar al salir", () => {
+    const cats = [
+      { id: "mix", fase_eliminacion: "cuartos" as const },
+      { id: "6ta", fase_eliminacion: "cuartos" as const },
+    ];
+    const withHorario = {
+      ...saved,
+      eliminatoria_inicio: "2026-10-09T14:00:00+00:00",
+      eliminatoria_categoria_orden: ["mix", "6ta"],
+      eliminatoria_canchas: ["1", "2"],
+      eliminatoria_duraciones: {
+        octavos: 60,
+        cuartos: 60,
+        semifinal: 60,
+        final: 60,
+      },
+    };
+    expect(
+      isEliminatoriaConfigDirty(
+        withHorario,
+        {
+          eliminatoriaInicio: "2026-10-09T14:00:00.000Z",
+          eliminatoriaCategoriaOrden: ["mix", "6ta"],
+          eliminatoriaCanchas: ["1", "2"],
+          eliminatoriaDuraciones: {
+            octavos: 60,
+            cuartos: 60,
+            semifinal: 60,
+            final: 60,
+            activas: ["cuartos", "semifinal", "final"],
+          },
+          categoriaRondas: {
+            mix: ["cuartos", "semifinal", "final"],
+            "6ta": ["cuartos", "semifinal", "final"],
+          },
+        },
+        ["mix", "6ta"],
+        cats
+      )
+    ).toBe(false);
+  });
+
+  it("no marca sucio el orden mientras el formulario aún hidrata", () => {
+    const cats = [{ id: "mix", fase_eliminacion: "cuartos" as const }];
+    expect(
+      isEliminatoriaConfigDirty(
+        { ...saved, eliminatoria_categoria_orden: ["mix"] },
+        { eliminatoriaCategoriaOrden: [] },
+        ["mix"],
+        cats
+      )
+    ).toBe(false);
   });
 });
 

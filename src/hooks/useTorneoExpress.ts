@@ -25,6 +25,7 @@ import {
   savePartidoProgramacion,
   savePartidoProgramado,
   savePartidoResultado,
+  resetPartidoResultado,
   savePartidosOrden,
   TorneoExpressComposicionCambiadaError,
   rescheduleTorneoExpressGruposPartidos,
@@ -227,6 +228,26 @@ export function useTorneoExpress(
           return;
         }
         setError(e instanceof Error ? e.message : "No se pudo guardar el resultado");
+        await reload({ silent: true }).catch(() => undefined);
+        throw e;
+      } finally {
+        setSavingPartidoId(null);
+      }
+    },
+    [reload]
+  );
+
+  const resetResultado = useCallback(
+    async (partidoId: string) => {
+      setSavingPartidoId(partidoId);
+      setError(null);
+      try {
+        await resetPartidoResultado(partidoId);
+        await reload();
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "No se pudo borrar el resultado"
+        );
         await reload({ silent: true }).catch(() => undefined);
         throw e;
       } finally {
@@ -564,6 +585,7 @@ export function useTorneoExpress(
     standingsByGrupo,
     standingsGeneral,
     saveResultado,
+    resetResultado,
     saveCancha,
     saveProgramacion,
     saveProgramado,

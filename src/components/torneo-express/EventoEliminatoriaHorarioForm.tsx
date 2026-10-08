@@ -34,6 +34,7 @@ export type EventoEliminatoriaHorarioFormProps = {
     torneoId: string,
     rondas: EliminatoriaRondaKey[]
   ) => void;
+  footer?: React.ReactNode;
 };
 
 function moveId(ids: string[], index: number, delta: number): string[] {
@@ -79,6 +80,7 @@ export const EventoEliminatoriaHorarioForm: React.FC<
   onDuracionesChange,
   categoriaRondas,
   onCategoriaRondasChange,
+  footer,
 }) => {
   const byId = new Map(categorias.map((cat) => [cat.id, cat]));
   const ordered = ordenIds
@@ -330,6 +332,9 @@ export const EventoEliminatoriaHorarioForm: React.FC<
           Agregar cancha
         </button>
       </section>
+      {footer ? (
+        <div className="te-evd-elim-horario__footer">{footer}</div>
+      ) : null}
     </div>
   );
 };
