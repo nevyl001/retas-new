@@ -45,6 +45,13 @@ export interface TorneoExpressEvento {
   eliminatoria_categoria_orden?: string[] | null;
   /** Canchas disponibles para la fase eliminatoria. NULL/vacío = por definir. */
   eliminatoria_canchas?: string[] | null;
+  /** Minutos por ronda (octavos, cuartos, semis, final). NULL = 60 cada una. */
+  eliminatoria_duraciones?: {
+    octavos: number;
+    cuartos: number;
+    semifinal: number;
+    final: number;
+  } | null;
   created_at: string;
 }
 

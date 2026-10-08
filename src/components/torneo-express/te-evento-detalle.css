@@ -607,6 +607,34 @@
   font: inherit;
 }
 
+.te-evd-elim-horario__duraciones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 10px;
+}
+
+.te-evd-elim-horario__duracion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 4px 6px;
+}
+
+.te-evd-elim-horario__duracion .te-evd-elim-horario__court-label {
+  grid-column: 1 / -1;
+}
+
+.te-evd-elim-horario__input--mins {
+  max-width: none;
+}
+
+.te-evd-elim-horario__unit {
+  padding-bottom: 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--ro-text-muted);
+}
+
 .te-evd-elim-horario__hint,
 .te-evd-elim-horario__empty {
   margin: 0;

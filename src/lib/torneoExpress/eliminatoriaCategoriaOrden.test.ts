@@ -1,7 +1,9 @@
 import {
   buildEliminatoriaPossibleSchedule,
+  categoriaKnockoutMinutes,
   categoriaNivelRank,
   normalizeEliminatoriaCanchas,
+  normalizeEliminatoriaDuraciones,
   orderCategoriasForEliminatoria,
 } from "./eliminatoriaCategoriaOrden";
 
@@ -43,20 +45,51 @@ describe("orderCategoriasForEliminatoria", () => {
   });
 });
 
+describe("categoriaKnockoutMinutes", () => {
+  it("suma cuartos + semis + final por defecto", () => {
+    expect(categoriaKnockoutMinutes("cuartos")).toBe(180);
+    expect(categoriaKnockoutMinutes("semifinal")).toBe(120);
+    expect(categoriaKnockoutMinutes("octavos")).toBe(240);
+  });
+
+  it("usa los minutos que puso el organizador", () => {
+    expect(
+      categoriaKnockoutMinutes("cuartos", {
+        octavos: 40,
+        cuartos: 50,
+        semifinal: 45,
+        final: 70,
+      })
+    ).toBe(165);
+  });
+});
+
 describe("buildEliminatoriaPossibleSchedule", () => {
-  it("escalona 60 minutos desde la hora de inicio", () => {
+  it("escalona con la duración real de cada categoría", () => {
     const slots = buildEliminatoriaPossibleSchedule(
       [
-        { id: "mix", nombre: "Mixtos D", categoria: "Mixtos D" },
-        { id: "4ta", nombre: "4ta", categoria: "4ta Fuerza" },
+        {
+          id: "mix",
+          nombre: "Mixtos D",
+          categoria: "Mixtos D",
+          fase_eliminacion: "cuartos",
+        },
+        {
+          id: "4ta",
+          nombre: "4ta",
+          categoria: "4ta Fuerza",
+          fase_eliminacion: "cuartos",
+        },
       ],
       null,
-      "2026-10-10T20:00:00.000Z"
+      "2026-10-10T20:00:00.000Z",
+      null,
+      { octavos: 60, cuartos: 40, semifinal: 40, final: 40 }
     );
     expect(slots).toHaveLength(2);
     expect(slots[0].label).toBe("Mixtos D");
     expect(slots[0].startsAt?.toISOString()).toBe("2026-10-10T20:00:00.000Z");
-    expect(slots[1].startsAt?.toISOString()).toBe("2026-10-10T21:00:00.000Z");
+    expect(slots[1].startsAt?.toISOString()).toBe("2026-10-10T22:00:00.000Z");
   });
 
   it("deja la hora vacía si el evento no fijó inicio", () => {
@@ -85,5 +118,18 @@ describe("normalizeEliminatoriaCanchas", () => {
       "1",
       "2",
     ]);
+  });
+});
+
+describe("normalizeEliminatoriaDuraciones", () => {
+  it("rellena y recorta minutos inválidos", () => {
+    expect(normalizeEliminatoriaDuraciones({ cuartos: 50, final: 999 })).toEqual(
+      {
+        octavos: 60,
+        cuartos: 50,
+        semifinal: 60,
+        final: 240,
+      }
+    );
   });
 });

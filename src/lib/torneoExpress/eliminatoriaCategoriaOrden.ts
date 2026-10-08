@@ -1,10 +1,94 @@
 import { formatCanchaDisplay, normalizeCanchaForSave } from "./canchaDisplay";
 import { formatTorneoExpressCategoria } from "./formatCategoria";
 import { resolveEventoTimeZone } from "./eventoTemporal";
+import type { TorneoExpressFaseEliminacion } from "./types";
 
 export const ELIMINATORIA_CANCHAS_MAX = 16;
 
-export const ELIMINATORIA_CATEGORIA_GAP_MINUTES = 60;
+export const ELIMINATORIA_RONDA_MINUTES_MIN = 5;
+export const ELIMINATORIA_RONDA_MINUTES_MAX = 240;
+export const ELIMINATORIA_RONDA_DEFAULT_MINUTES = 60;
+
+export type EliminatoriaRondaKey =
+  | "octavos"
+  | "cuartos"
+  | "semifinal"
+  | "final";
+
+export type EliminatoriaDuraciones = Record<EliminatoriaRondaKey, number>;
+
+export const ELIMINATORIA_RONDA_FIELDS: ReadonlyArray<{
+  key: EliminatoriaRondaKey;
+  label: string;
+}> = [
+  { key: "octavos", label: "Octavos" },
+  { key: "cuartos", label: "Cuartos" },
+  { key: "semifinal", label: "Semis" },
+  { key: "final", label: "Final" },
+];
+
+export const DEFAULT_ELIMINATORIA_DURACIONES: EliminatoriaDuraciones = {
+  octavos: ELIMINATORIA_RONDA_DEFAULT_MINUTES,
+  cuartos: ELIMINATORIA_RONDA_DEFAULT_MINUTES,
+  semifinal: ELIMINATORIA_RONDA_DEFAULT_MINUTES,
+  final: ELIMINATORIA_RONDA_DEFAULT_MINUTES,
+};
+
+function clampRondaMinutes(value: unknown): number {
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed)) return ELIMINATORIA_RONDA_DEFAULT_MINUTES;
+  return Math.min(
+    ELIMINATORIA_RONDA_MINUTES_MAX,
+    Math.max(ELIMINATORIA_RONDA_MINUTES_MIN, Math.round(parsed))
+  );
+}
+
+export function normalizeEliminatoriaDuraciones(
+  raw: unknown
+): EliminatoriaDuraciones {
+  const obj =
+    raw && typeof raw === "object" && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
+  return {
+    octavos: clampRondaMinutes(
+      obj.octavos ?? DEFAULT_ELIMINATORIA_DURACIONES.octavos
+    ),
+    cuartos: clampRondaMinutes(
+      obj.cuartos ?? DEFAULT_ELIMINATORIA_DURACIONES.cuartos
+    ),
+    semifinal: clampRondaMinutes(
+      obj.semifinal ?? DEFAULT_ELIMINATORIA_DURACIONES.semifinal
+    ),
+    final: clampRondaMinutes(
+      obj.final ?? DEFAULT_ELIMINATORIA_DURACIONES.final
+    ),
+  };
+}
+
+export function sameEliminatoriaDuraciones(
+  a: unknown,
+  b: unknown
+): boolean {
+  const left = normalizeEliminatoriaDuraciones(a);
+  const right = normalizeEliminatoriaDuraciones(b);
+  return ELIMINATORIA_RONDA_FIELDS.every(
+    ({ key }) => left[key] === right[key]
+  );
+}
+
+/** Minutos de cuadro para una categoría, según su fase y los tiempos del evento. */
+export function categoriaKnockoutMinutes(
+  fase: TorneoExpressFaseEliminacion | null | undefined,
+  duraciones?: unknown
+): number {
+  const d = normalizeEliminatoriaDuraciones(duraciones);
+  if (fase === "semifinal") return d.semifinal + d.final;
+  if (fase === "octavos") {
+    return d.octavos + d.cuartos + d.semifinal + d.final;
+  }
+  return d.cuartos + d.semifinal + d.final;
+}
 
 const FUERZA_RANK: ReadonlyArray<{ needle: string; rank: number }> = [
   { needle: "8ta", rank: 100 },
@@ -50,6 +134,7 @@ export type CategoriaOrdenable = {
   id: string;
   nombre: string;
   categoria?: string | null;
+  fase_eliminacion?: TorneoExpressFaseEliminacion | null;
 };
 
 export function categoriaOrdenLabel(cat: CategoriaOrdenable): string {
@@ -118,20 +203,26 @@ export function buildEliminatoriaPossibleSchedule(
   categorias: readonly CategoriaOrdenable[],
   savedIds: readonly string[] | null | undefined,
   startIso: string | null | undefined,
-  canchas?: readonly string[] | null
+  canchas?: readonly string[] | null,
+  duraciones?: unknown
 ): EliminatoriaPossibleSlot[] {
   const ordered = orderCategoriasForEliminatoria(categorias, savedIds);
   const courts = normalizeEliminatoriaCanchas(canchas);
   const startMs = startIso ? new Date(startIso).getTime() : NaN;
   const hasStart = Number.isFinite(startMs);
-  const gapMs = ELIMINATORIA_CATEGORIA_GAP_MINUTES * 60 * 1000;
-  return ordered.map((cat, index) => ({
-    torneoId: cat.id,
-    label: categoriaOrdenLabel(cat),
-    startsAt: hasStart ? new Date(startMs + index * gapMs) : null,
-    href: `/torneo-express/${cat.id}/eliminatoria`,
-    courts,
-  }));
+  let offsetMs = 0;
+  return ordered.map((cat) => {
+    const slot: EliminatoriaPossibleSlot = {
+      torneoId: cat.id,
+      label: categoriaOrdenLabel(cat),
+      startsAt: hasStart ? new Date(startMs + offsetMs) : null,
+      href: `/torneo-express/${cat.id}/eliminatoria`,
+      courts,
+    };
+    offsetMs +=
+      categoriaKnockoutMinutes(cat.fase_eliminacion, duraciones) * 60 * 1000;
+    return slot;
+  });
 }
 
 export function formatEliminatoriaSlotTime(

@@ -4,7 +4,10 @@ import type {
   TorneoExpressEventoLogoSource,
   TorneoExpressPartidoFormato,
 } from "./types";
-import { normalizeEliminatoriaCanchas } from "./eliminatoriaCategoriaOrden";
+import {
+  normalizeEliminatoriaCanchas,
+  sameEliminatoriaDuraciones,
+} from "./eliminatoriaCategoriaOrden";
 
 type EventoGuardado = Pick<
   TorneoExpressEvento,
@@ -15,6 +18,7 @@ type EventoGuardado = Pick<
   | "eliminatoria_inicio"
   | "eliminatoria_categoria_orden"
   | "eliminatoria_canchas"
+  | "eliminatoria_duraciones"
 >;
 
 function sameIdList(
@@ -49,6 +53,7 @@ export function isEliminatoriaConfigDirty(
     eliminatoriaInicio?: string | null;
     eliminatoriaCategoriaOrden?: readonly string[] | null;
     eliminatoriaCanchas?: readonly string[] | null;
+    eliminatoriaDuraciones?: unknown;
   },
   defaultCategoriaOrden: readonly string[] = []
 ): boolean {
@@ -63,7 +68,11 @@ export function isEliminatoriaConfigDirty(
   return (
     draftInicio !== savedInicio ||
     !sameIdList(defaultCategoriaOrden, draftOrden) ||
-    !sameIdList(savedCanchas, draftCanchas)
+    !sameIdList(savedCanchas, draftCanchas) ||
+    !sameEliminatoriaDuraciones(
+      evento.eliminatoria_duraciones,
+      draft.eliminatoriaDuraciones
+    )
   );
 }
 

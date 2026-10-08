@@ -3499,6 +3499,17 @@ function mapTorneoExpressEvento(row: Record<string, unknown>): TorneoExpressEven
           .map((name) => String(name ?? "").trim())
           .filter(Boolean)
       : null,
+    eliminatoria_duraciones:
+      row.eliminatoria_duraciones &&
+      typeof row.eliminatoria_duraciones === "object" &&
+      !Array.isArray(row.eliminatoria_duraciones)
+        ? (row.eliminatoria_duraciones as {
+            octavos: number;
+            cuartos: number;
+            semifinal: number;
+            final: number;
+          })
+        : null,
     created_at: String(row.created_at ?? ""),
   };
 }
@@ -3829,6 +3840,7 @@ export async function updateEvento(
       | "eliminatoria_inicio"
       | "eliminatoria_categoria_orden"
       | "eliminatoria_canchas"
+      | "eliminatoria_duraciones"
     >
   >
 ): Promise<TorneoExpressEvento> {
@@ -3886,6 +3898,9 @@ export async function updateEvento(
   if (patch.eliminatoria_canchas !== undefined) {
     payload.eliminatoria_canchas = patch.eliminatoria_canchas;
   }
+  if (patch.eliminatoria_duraciones !== undefined) {
+    payload.eliminatoria_duraciones = patch.eliminatoria_duraciones;
+  }
 
   if (Object.keys(payload).length === 0) {
     const current = await fetchEventoById(id);
@@ -3906,11 +3921,17 @@ export async function updateEvento(
         "torneo_express_evento",
         "eliminatoria_categoria_orden"
       ) ||
-      isMissingColumnError(error, "torneo_express_evento", "eliminatoria_canchas"))
+      isMissingColumnError(error, "torneo_express_evento", "eliminatoria_canchas") ||
+      isMissingColumnError(
+        error,
+        "torneo_express_evento",
+        "eliminatoria_duraciones"
+      ))
   ) {
     delete payload.eliminatoria_inicio;
     delete payload.eliminatoria_categoria_orden;
     delete payload.eliminatoria_canchas;
+    delete payload.eliminatoria_duraciones;
     if (Object.keys(payload).length === 0) {
       const current = await fetchEventoById(id);
       if (!current) throw new Error("Evento no encontrado");

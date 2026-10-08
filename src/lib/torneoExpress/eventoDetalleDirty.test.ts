@@ -63,6 +63,14 @@ describe("isEliminatoriaConfigDirty", () => {
     expect(isEliminatoriaConfigDirty(saved, { eliminatoriaCanchas: [] })).toBe(
       false
     );
+    expect(
+      isEliminatoriaConfigDirty(saved, {
+        eliminatoriaDuraciones: { cuartos: 45 },
+      })
+    ).toBe(true);
+    expect(
+      isEliminatoriaConfigDirty(saved, { eliminatoriaDuraciones: {} })
+    ).toBe(false);
   });
 });
 

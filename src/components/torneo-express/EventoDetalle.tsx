@@ -35,8 +35,11 @@ import { EventoDetalleHeader } from "./EventoDetalleHeader";
 import { EventoEliminatoriaHorarioForm } from "./EventoEliminatoriaHorarioForm";
 import { EventoReglasForm } from "./EventoReglasForm";
 import {
+  DEFAULT_ELIMINATORIA_DURACIONES,
   normalizeEliminatoriaCanchas,
+  normalizeEliminatoriaDuraciones,
   orderCategoriasForEliminatoria,
+  type EliminatoriaDuraciones,
 } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import {
   formatZonedDateTimeLocal,
@@ -133,6 +136,8 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
     []
   );
   const [eliminatoriaCanchas, setEliminatoriaCanchas] = useState<string[]>([]);
+  const [eliminatoriaDuraciones, setEliminatoriaDuraciones] =
+    useState<EliminatoriaDuraciones>(DEFAULT_ELIMINATORIA_DURACIONES);
   const [savingEliminatoria, setSavingEliminatoria] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<TorneoExpress | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -166,6 +171,7 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       ),
       eliminatoriaCategoriaOrden: eliminatoriaOrdenIds,
       eliminatoriaCanchas,
+      eliminatoriaDuraciones,
     },
     defaultEliminatoriaOrden
   );
@@ -232,6 +238,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       setEliminatoriaCanchas(
         normalizeEliminatoriaCanchas(data.evento.eliminatoria_canchas)
       );
+      setEliminatoriaDuraciones(
+        normalizeEliminatoriaDuraciones(data.evento.eliminatoria_duraciones)
+      );
       const synced = await syncEventoEstadoFromCategorias(data.evento.id).catch(
         () => null
       );
@@ -255,6 +264,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
         );
         setEliminatoriaCanchas(
           normalizeEliminatoriaCanchas(synced.eliminatoria_canchas)
+        );
+        setEliminatoriaDuraciones(
+          normalizeEliminatoriaDuraciones(synced.eliminatoria_duraciones)
         );
       }
     } catch (e) {
@@ -319,6 +331,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
     setError(null);
     try {
       const canchas = normalizeEliminatoriaCanchas(eliminatoriaCanchas);
+      const duraciones = normalizeEliminatoriaDuraciones(
+        eliminatoriaDuraciones
+      );
       const updated = await updateEvento(evento.id, {
         eliminatoria_inicio: zonedDateTimeIso(
           eliminatoriaInicioLocal,
@@ -326,6 +341,7 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
         ),
         eliminatoria_categoria_orden: eliminatoriaOrdenIds,
         eliminatoria_canchas: canchas,
+        eliminatoria_duraciones: duraciones,
       });
       setEvento(updated);
       setEliminatoriaInicioLocal(
@@ -342,6 +358,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       );
       setEliminatoriaCanchas(
         normalizeEliminatoriaCanchas(updated.eliminatoria_canchas)
+      );
+      setEliminatoriaDuraciones(
+        normalizeEliminatoriaDuraciones(updated.eliminatoria_duraciones)
       );
       showActionToast("Eliminatoria del evento guardada", "success");
     } catch (e) {
@@ -623,6 +642,8 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                   onOrdenIdsChange={setEliminatoriaOrdenIds}
                   canchas={eliminatoriaCanchas}
                   onCanchasChange={setEliminatoriaCanchas}
+                  duraciones={eliminatoriaDuraciones}
+                  onDuracionesChange={setEliminatoriaDuraciones}
                 />
                 <div className="te-evd-savebar">
                   {eliminatoriaDirty ? (

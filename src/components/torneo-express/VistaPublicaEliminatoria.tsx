@@ -78,7 +78,8 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
             data.categorias,
             data.evento.eliminatoria_categoria_orden,
             data.evento.eliminatoria_inicio,
-            data.evento.eliminatoria_canchas
+            data.evento.eliminatoria_canchas,
+            data.evento.eliminatoria_duraciones
           )
         );
       })

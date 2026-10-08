@@ -1,9 +1,12 @@
 import React from "react";
 import type { TorneoExpress } from "../../lib/torneoExpress/types";
+import type { EliminatoriaDuraciones } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import {
   categoriaOrdenLabel,
   ELIMINATORIA_CANCHAS_MAX,
-  ELIMINATORIA_CATEGORIA_GAP_MINUTES,
+  ELIMINATORIA_RONDA_FIELDS,
+  ELIMINATORIA_RONDA_MINUTES_MAX,
+  ELIMINATORIA_RONDA_MINUTES_MIN,
 } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 
 export type EventoEliminatoriaHorarioFormProps = {
@@ -14,6 +17,8 @@ export type EventoEliminatoriaHorarioFormProps = {
   onOrdenIdsChange: (ids: string[]) => void;
   canchas: string[];
   onCanchasChange: (canchas: string[]) => void;
+  duraciones: EliminatoriaDuraciones;
+  onDuracionesChange: (duraciones: EliminatoriaDuraciones) => void;
 };
 
 function moveId(ids: string[], index: number, delta: number): string[] {
@@ -44,6 +49,8 @@ export const EventoEliminatoriaHorarioForm: React.FC<
   onOrdenIdsChange,
   canchas,
   onCanchasChange,
+  duraciones,
+  onDuracionesChange,
 }) => {
   const byId = new Map(categorias.map((cat) => [cat.id, cat]));
   const ordered = ordenIds
@@ -65,10 +72,46 @@ export const EventoEliminatoriaHorarioForm: React.FC<
         />
       </label>
       <p className="te-evd-elim-horario__hint">
-        La primera de la lista arranca a esta hora. Las siguientes salen cada{" "}
-        {ELIMINATORIA_CATEGORIA_GAP_MINUTES} minutos, en el orden que tú pongas
-        abajo.
+        La primera de la lista arranca a esta hora. La siguiente categoría
+        empieza cuando termina el cuadro de la anterior.
       </p>
+
+      <fieldset className="te-evd-elim-horario__field">
+        <legend className="te-evd-elim-horario__label">
+          Tiempo de cada ronda
+        </legend>
+        <p className="te-evd-elim-horario__hint">
+          Minutos de juego de octavos, cuartos, semis y final. Puedes
+          cambiarlos cuando las rondas duren distinto.
+        </p>
+        <div className="te-evd-elim-horario__duraciones">
+          {ELIMINATORIA_RONDA_FIELDS.map(({ key, label }) => (
+            <label
+              key={key}
+              className="te-evd-elim-horario__duracion"
+              htmlFor={`te-evd-elim-${key}`}
+            >
+              <span className="te-evd-elim-horario__court-label">{label}</span>
+              <input
+                id={`te-evd-elim-${key}`}
+                type="number"
+                min={ELIMINATORIA_RONDA_MINUTES_MIN}
+                max={ELIMINATORIA_RONDA_MINUTES_MAX}
+                step={5}
+                className="te-evd-elim-horario__input te-evd-elim-horario__input--mins"
+                value={duraciones[key]}
+                onChange={(event) =>
+                  onDuracionesChange({
+                    ...duraciones,
+                    [key]: Number(event.target.value),
+                  })
+                }
+              />
+              <span className="te-evd-elim-horario__unit">min</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <fieldset className="te-evd-elim-horario__field">
         <legend className="te-evd-elim-horario__label">
