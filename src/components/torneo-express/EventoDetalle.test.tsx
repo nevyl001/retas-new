@@ -152,14 +152,13 @@ describe("EventoDetalle (Fase 2)", () => {
     expect(window.location.pathname).toBe("/torneo-express/eventos");
   });
 
-  it("ofrece Ver página pública y Pantalla de canchas en el menú Vista pública", async () => {
+  it("muestra Ver página pública y Pantalla de canchas como enlaces visibles", async () => {
     await renderDetalle();
-    fireEvent.click(screen.getByRole("button", { name: "Vista pública" }));
-    expect(screen.getByRole("menuitem", { name: "Ver página pública" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Ver página pública" })).toHaveAttribute(
       "href",
       "/eventos/copa-riviera"
     );
-    expect(screen.getByRole("menuitem", { name: "Pantalla de canchas" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Pantalla de canchas" })).toHaveAttribute(
       "href",
       "/eventos/copa-riviera/en-vivo"
     );

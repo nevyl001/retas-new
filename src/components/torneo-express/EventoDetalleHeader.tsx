@@ -11,7 +11,6 @@ import {
   formatEventoRango,
   isEventoPublicado,
 } from "./EventoListaCard";
-import { TeActionMenu } from "./TeActionMenu";
 import "./te-evento-detalle.css";
 
 type EventoDetalleHeaderProps = {
@@ -125,25 +124,28 @@ export const EventoDetalleHeader: React.FC<EventoDetalleHeaderProps> = ({
             </Button>
           ) : null}
           {canViewPublic ? (
-            <TeActionMenu
-              label="Vista pública del evento"
-              triggerLabel="Vista pública"
-              align="end"
-              items={[
-                {
-                  id: "public",
-                  label: "Ver página pública",
-                  href: `/eventos/${evento.slug}`,
-                  external: true,
-                },
-                {
-                  id: "live",
-                  label: "Pantalla de canchas",
-                  href: `/eventos/${evento.slug}/en-vivo`,
-                  external: true,
-                },
-              ]}
-            />
+            <>
+              <Button
+                as="a"
+                variant="secondary"
+                size="sm"
+                href={`/eventos/${evento.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ver página pública
+              </Button>
+              <Button
+                as="a"
+                variant="secondary"
+                size="sm"
+                href={`/eventos/${evento.slug}/en-vivo`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Pantalla de canchas
+              </Button>
+            </>
           ) : null}
         </div>
       ) : null}
