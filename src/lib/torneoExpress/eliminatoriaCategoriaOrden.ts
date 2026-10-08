@@ -1,5 +1,8 @@
+import { formatCanchaDisplay, normalizeCanchaForSave } from "./canchaDisplay";
 import { formatTorneoExpressCategoria } from "./formatCategoria";
 import { resolveEventoTimeZone } from "./eventoTemporal";
+
+export const ELIMINATORIA_CANCHAS_MAX = 16;
 
 export const ELIMINATORIA_CATEGORIA_GAP_MINUTES = 60;
 
@@ -83,14 +86,42 @@ export type EliminatoriaPossibleSlot = {
   label: string;
   startsAt: Date | null;
   href: string;
+  courts: string[];
 };
+
+export function normalizeEliminatoriaCanchas(
+  raw: readonly string[] | null | undefined
+): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of raw ?? []) {
+    const value = normalizeCanchaForSave(String(item ?? ""));
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(value);
+    if (out.length >= ELIMINATORIA_CANCHAS_MAX) break;
+  }
+  return out;
+}
+
+export function formatEliminatoriaCourtsLabel(
+  courts: readonly string[]
+): string | null {
+  const labels = courts.map((court) => formatCanchaDisplay(court));
+  if (labels.length === 0) return null;
+  if (labels.length === 1) return labels[0];
+  return labels.join(", ");
+}
 
 export function buildEliminatoriaPossibleSchedule(
   categorias: readonly CategoriaOrdenable[],
   savedIds: readonly string[] | null | undefined,
-  startIso: string | null | undefined
+  startIso: string | null | undefined,
+  canchas?: readonly string[] | null
 ): EliminatoriaPossibleSlot[] {
   const ordered = orderCategoriasForEliminatoria(categorias, savedIds);
+  const courts = normalizeEliminatoriaCanchas(canchas);
   const startMs = startIso ? new Date(startIso).getTime() : NaN;
   const hasStart = Number.isFinite(startMs);
   const gapMs = ELIMINATORIA_CATEGORIA_GAP_MINUTES * 60 * 1000;
@@ -99,6 +130,7 @@ export function buildEliminatoriaPossibleSchedule(
     label: categoriaOrdenLabel(cat),
     startsAt: hasStart ? new Date(startMs + index * gapMs) : null,
     href: `/torneo-express/${cat.id}/eliminatoria`,
+    courts,
   }));
 }
 

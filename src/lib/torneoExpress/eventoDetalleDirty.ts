@@ -4,6 +4,7 @@ import type {
   TorneoExpressEventoLogoSource,
   TorneoExpressPartidoFormato,
 } from "./types";
+import { normalizeEliminatoriaCanchas } from "./eliminatoriaCategoriaOrden";
 
 type EventoGuardado = Pick<
   TorneoExpressEvento,
@@ -13,6 +14,7 @@ type EventoGuardado = Pick<
   | "flyer_url"
   | "eliminatoria_inicio"
   | "eliminatoria_categoria_orden"
+  | "eliminatoria_canchas"
 >;
 
 function sameIdList(
@@ -31,8 +33,22 @@ export function isReglasDirty(
   draft: {
     clasificacionModo: TorneoExpressClasificacionModo;
     partidoFormato: TorneoExpressPartidoFormato;
+  }
+): boolean {
+  if (!evento) return false;
+  return (
+    draft.clasificacionModo !== evento.clasificacion_modo ||
+    draft.partidoFormato !== evento.partido_formato
+  );
+}
+
+/** Horario, orden y canchas de eliminatoria distintos a lo guardado. */
+export function isEliminatoriaConfigDirty(
+  evento: EventoGuardado | null,
+  draft: {
     eliminatoriaInicio?: string | null;
     eliminatoriaCategoriaOrden?: readonly string[] | null;
+    eliminatoriaCanchas?: readonly string[] | null;
   },
   defaultCategoriaOrden: readonly string[] = []
 ): boolean {
@@ -40,11 +56,14 @@ export function isReglasDirty(
   const savedInicio = evento.eliminatoria_inicio ?? null;
   const draftInicio = draft.eliminatoriaInicio ?? null;
   const draftOrden = draft.eliminatoriaCategoriaOrden ?? defaultCategoriaOrden;
+  const savedCanchas = normalizeEliminatoriaCanchas(
+    evento.eliminatoria_canchas
+  );
+  const draftCanchas = normalizeEliminatoriaCanchas(draft.eliminatoriaCanchas);
   return (
-    draft.clasificacionModo !== evento.clasificacion_modo ||
-    draft.partidoFormato !== evento.partido_formato ||
     draftInicio !== savedInicio ||
-    !sameIdList(defaultCategoriaOrden, draftOrden)
+    !sameIdList(defaultCategoriaOrden, draftOrden) ||
+    !sameIdList(savedCanchas, draftCanchas)
   );
 }
 

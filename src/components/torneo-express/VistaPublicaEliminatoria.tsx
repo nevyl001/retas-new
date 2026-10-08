@@ -63,6 +63,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
           label: categoriaLabel,
           startsAt: null,
           href: `/torneo-express/${torneoId}/eliminatoria`,
+          courts: [],
         },
       ]);
       return;
@@ -76,7 +77,8 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
           buildEliminatoriaPossibleSchedule(
             data.categorias,
             data.evento.eliminatoria_categoria_orden,
-            data.evento.eliminatoria_inicio
+            data.evento.eliminatoria_inicio,
+            data.evento.eliminatoria_canchas
           )
         );
       })

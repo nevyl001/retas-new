@@ -65,13 +65,16 @@ describe("EventoDetalle (Fase 2)", () => {
     window.history.replaceState({}, "", "/torneo-express/evento/e1");
   });
 
-  it("muestra encabezado compacto y pestañas Categorías | Reglas | Branding", async () => {
+  it("muestra encabezado compacto y pestañas Categorías | Eliminatoria | Reglas | Branding", async () => {
     await renderDetalle();
     const tabs = screen.getAllByRole("tab").map((t) => t.textContent);
-    expect(tabs).toEqual(["Categorías", "Reglas", "Branding"]);
+    expect(tabs).toEqual(["Categorías", "Eliminatoria", "Reglas", "Branding"]);
     expect(screen.getByRole("tab", { name: "Categorías" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("button", { name: "Volver a borrador" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Agregar categoría" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Programación de eliminatoria/ })
+    ).toBeInTheDocument();
   });
 
   it("solo el panel activo es visible y los demás se conservan montados", async () => {
@@ -91,9 +94,9 @@ describe("EventoDetalle (Fase 2)", () => {
     await renderDetalle();
     const first = screen.getByRole("tab", { name: "Categorías" });
     fireEvent.keyDown(first, { key: "ArrowRight" });
-    expect(screen.getByRole("tab", { name: "Reglas" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("tab", { name: "Reglas" })).toHaveFocus();
-    fireEvent.keyDown(screen.getByRole("tab", { name: "Reglas" }), { key: "End" });
+    expect(screen.getByRole("tab", { name: "Eliminatoria" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Eliminatoria" })).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("tab", { name: "Eliminatoria" }), { key: "End" });
     expect(screen.getByRole("tab", { name: "Branding" })).toHaveAttribute("aria-selected", "true");
   });
 

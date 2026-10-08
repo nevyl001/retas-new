@@ -143,6 +143,7 @@
 
 .te-evd-tabs.mode-section-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin: 0;
   padding: 0 0 12px;
@@ -183,6 +184,7 @@
 }
 
 /* Punto de «cambios sin guardar» en la pestaña correspondiente. */
+.te-evd-tabs-wrap[data-dirty-eliminatoria] #mode-tab-eliminatoria::after,
 .te-evd-tabs-wrap[data-dirty-reglas] #mode-tab-reglas::after,
 .te-evd-tabs-wrap[data-dirty-branding] #mode-tab-branding::after {
   content: "";
@@ -581,6 +583,10 @@
 .te-evd-elim-horario__field {
   display: grid;
   gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 .te-evd-elim-horario__label {
@@ -661,6 +667,115 @@
 .te-evd-elim-horario__btn:disabled {
   opacity: 0.35;
   cursor: default;
+}
+
+.te-evd-elim-horario__courts {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.te-evd-elim-horario__court {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.te-evd-elim-horario__court-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 10rem;
+}
+
+.te-evd-elim-horario__court-label {
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--ro-text-muted);
+}
+
+.te-evd-elim-horario__input--court {
+  max-width: 14rem;
+}
+
+.te-evd-elim-horario__add {
+  justify-self: start;
+  min-height: 2.5rem;
+  padding: 0 12px;
+  border: 1px dashed var(--ro-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ro-text-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.te-evd-elim-horario__add:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.te-evd-elim-jump {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 14px 16px;
+  border: 1px solid var(--ro-border);
+  border-radius: 14px;
+  background: var(--ro-bg-card);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.te-evd-elim-jump:hover,
+.te-evd-elim-jump:focus-visible {
+  border-color: var(--ro-border-strong);
+}
+
+.te-evd-elim-jump:focus-visible {
+  outline: 2px solid var(--ro-text-primary);
+  outline-offset: 2px;
+}
+
+.te-evd-elim-jump__copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.te-evd-elim-jump__title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--ro-text-primary);
+}
+
+.te-evd-elim-jump__hint {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--ro-text-secondary);
+}
+
+.te-evd-elim-jump__action {
+  flex: 0 0 auto;
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--ro-border);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--ro-text-primary);
 }
 
 /* ——— Barra de guardado ——— */

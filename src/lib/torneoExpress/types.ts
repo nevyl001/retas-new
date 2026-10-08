@@ -43,6 +43,8 @@ export interface TorneoExpressEvento {
   eliminatoria_inicio?: string | null;
   /** Orden de arranque de categorías (`torneo_express.id`). NULL = por nivel. */
   eliminatoria_categoria_orden?: string[] | null;
+  /** Canchas disponibles para la fase eliminatoria. NULL/vacío = por definir. */
+  eliminatoria_canchas?: string[] | null;
   created_at: string;
 }
 

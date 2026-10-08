@@ -1,6 +1,7 @@
 import {
   buildEliminatoriaPossibleSchedule,
   categoriaNivelRank,
+  normalizeEliminatoriaCanchas,
   orderCategoriasForEliminatoria,
 } from "./eliminatoriaCategoriaOrden";
 
@@ -65,5 +66,24 @@ describe("buildEliminatoriaPossibleSchedule", () => {
       null
     );
     expect(slots[0].startsAt).toBeNull();
+  });
+
+  it("adjunta las canchas disponibles a cada categoría", () => {
+    const slots = buildEliminatoriaPossibleSchedule(
+      [{ id: "mix", nombre: "Mixtos D", categoria: "Mixtos D" }],
+      null,
+      null,
+      ["1", "2"]
+    );
+    expect(slots[0].courts).toEqual(["1", "2"]);
+  });
+});
+
+describe("normalizeEliminatoriaCanchas", () => {
+  it("quita vacíos y duplicados", () => {
+    expect(normalizeEliminatoriaCanchas(["1", " 1 ", "", "2"])).toEqual([
+      "1",
+      "2",
+    ]);
   });
 });

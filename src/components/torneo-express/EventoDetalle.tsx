@@ -11,6 +11,7 @@ import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCate
 import { resolveTorneoExpressDisplayEstado } from "../../lib/torneoExpress/resolveDisplayEstado";
 import {
   isBrandingDirty,
+  isEliminatoriaConfigDirty,
   isReglasDirty,
 } from "../../lib/torneoExpress/eventoDetalleDirty";
 import { uploadEventoFlyer } from "../../lib/torneoExpress/uploadEventoFlyer";
@@ -33,7 +34,10 @@ import { EventoCategoriaCard } from "./EventoCategoriaCard";
 import { EventoDetalleHeader } from "./EventoDetalleHeader";
 import { EventoEliminatoriaHorarioForm } from "./EventoEliminatoriaHorarioForm";
 import { EventoReglasForm } from "./EventoReglasForm";
-import { orderCategoriasForEliminatoria } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
+import {
+  normalizeEliminatoriaCanchas,
+  orderCategoriasForEliminatoria,
+} from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import {
   formatZonedDateTimeLocal,
   zonedDateTimeIso,
@@ -94,10 +98,11 @@ function categoriaEditValue(cat: TorneoExpress): string {
   return cat.categoria?.trim() || cat.nombre?.trim() || "";
 }
 
-type EventoTabId = "categorias" | "reglas" | "branding";
+type EventoTabId = "categorias" | "eliminatoria" | "reglas" | "branding";
 
 const EVENTO_TABS: ReadonlyArray<{ id: EventoTabId; label: string }> = [
   { id: "categorias", label: "Categorías" },
+  { id: "eliminatoria", label: "Eliminatoria" },
   { id: "reglas", label: "Reglas" },
   { id: "branding", label: "Branding" },
 ];
@@ -127,6 +132,8 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
   const [eliminatoriaOrdenIds, setEliminatoriaOrdenIds] = useState<string[]>(
     []
   );
+  const [eliminatoriaCanchas, setEliminatoriaCanchas] = useState<string[]>([]);
+  const [savingEliminatoria, setSavingEliminatoria] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<TorneoExpress | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [editingCategoriaId, setEditingCategoriaId] = useState<string | null>(
@@ -146,21 +153,25 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
     categorias,
     evento?.eliminatoria_categoria_orden
   ).map((cat) => cat.id);
-  const reglasDirty = isReglasDirty(
+  const reglasDirty = isReglasDirty(evento, {
+    clasificacionModo,
+    partidoFormato,
+  });
+  const eliminatoriaDirty = isEliminatoriaConfigDirty(
     evento,
     {
-      clasificacionModo,
-      partidoFormato,
       eliminatoriaInicio: zonedDateTimeIso(
         eliminatoriaInicioLocal,
         evento?.timezone
       ),
       eliminatoriaCategoriaOrden: eliminatoriaOrdenIds,
+      eliminatoriaCanchas,
     },
     defaultEliminatoriaOrden
   );
   const brandingDirty = isBrandingDirty(evento, { logoSource, flyerUrl });
   const dirtySections = [
+    ...(eliminatoriaDirty ? ["Eliminatoria"] : []),
     ...(reglasDirty ? ["Reglas"] : []),
     ...(brandingDirty ? ["Branding"] : []),
   ];
@@ -218,6 +229,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
           data.evento.eliminatoria_categoria_orden
         ).map((cat) => cat.id)
       );
+      setEliminatoriaCanchas(
+        normalizeEliminatoriaCanchas(data.evento.eliminatoria_canchas)
+      );
       const synced = await syncEventoEstadoFromCategorias(data.evento.id).catch(
         () => null
       );
@@ -238,6 +252,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
             data.categorias,
             synced.eliminatoria_categoria_orden
           ).map((cat) => cat.id)
+        );
+        setEliminatoriaCanchas(
+          normalizeEliminatoriaCanchas(synced.eliminatoria_canchas)
         );
       }
     } catch (e) {
@@ -282,15 +299,35 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       const updated = await updateEvento(evento.id, {
         clasificacion_modo: clasificacionModo,
         partido_formato: partidoFormato,
+      });
+      setEvento(updated);
+      setClasificacionModo(updated.clasificacion_modo);
+      setPartidoFormato(updated.partido_formato);
+      showActionToast("Reglas del evento guardadas", "success");
+    } catch (e) {
+      const msg = formatSupabaseError(e);
+      setError(msg);
+      showActionToast(msg, "error");
+    } finally {
+      setSavingReglas(false);
+    }
+  };
+
+  const handleSaveEliminatoria = async () => {
+    if (!evento) return;
+    setSavingEliminatoria(true);
+    setError(null);
+    try {
+      const canchas = normalizeEliminatoriaCanchas(eliminatoriaCanchas);
+      const updated = await updateEvento(evento.id, {
         eliminatoria_inicio: zonedDateTimeIso(
           eliminatoriaInicioLocal,
           evento.timezone
         ),
         eliminatoria_categoria_orden: eliminatoriaOrdenIds,
+        eliminatoria_canchas: canchas,
       });
       setEvento(updated);
-      setClasificacionModo(updated.clasificacion_modo);
-      setPartidoFormato(updated.partido_formato);
       setEliminatoriaInicioLocal(
         formatZonedDateTimeLocal(
           updated.eliminatoria_inicio,
@@ -303,13 +340,16 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
           updated.eliminatoria_categoria_orden
         ).map((cat) => cat.id)
       );
-      showActionToast("Reglas del evento guardadas", "success");
+      setEliminatoriaCanchas(
+        normalizeEliminatoriaCanchas(updated.eliminatoria_canchas)
+      );
+      showActionToast("Eliminatoria del evento guardada", "success");
     } catch (e) {
       const msg = formatSupabaseError(e);
       setError(msg);
       showActionToast(msg, "error");
     } finally {
-      setSavingReglas(false);
+      setSavingEliminatoria(false);
     }
   };
 
@@ -443,6 +483,7 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
 
             <div
               className="te-evd-tabs-wrap"
+              data-dirty-eliminatoria={eliminatoriaDirty ? "true" : undefined}
               data-dirty-reglas={reglasDirty ? "true" : undefined}
               data-dirty-branding={brandingDirty ? "true" : undefined}
               onKeyDown={handleTabsKeyDown}
@@ -535,6 +576,74 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                     })}
                   </ul>
                 )}
+                <button
+                  type="button"
+                  className="te-evd-elim-jump"
+                  onClick={() => setActiveTab("eliminatoria")}
+                >
+                  <span className="te-evd-elim-jump__copy">
+                    <span className="te-evd-elim-jump__title">
+                      Programación de eliminatoria
+                    </span>
+                    <span className="te-evd-elim-jump__hint">
+                      Hora de inicio, orden de categorías y canchas disponibles.
+                    </span>
+                  </span>
+                  <span className="te-evd-elim-jump__action">Configurar</span>
+                </button>
+              </section>
+            </div>
+
+            <div
+              role="tabpanel"
+              id="mode-panel-eliminatoria"
+              aria-labelledby="mode-tab-eliminatoria"
+              className="te-evd-panel"
+              hidden={activeTab !== "eliminatoria"}
+            >
+              <section
+                className="te-evento-section"
+                aria-labelledby="te-evento-elim-heading"
+              >
+                <h2
+                  id="te-evento-elim-heading"
+                  className="te-evento-section__title"
+                >
+                  Eliminatoria del evento
+                </h2>
+                <p className="te-evento-section__hint">
+                  Horarios posibles en la vista pública. No genera el cuadro:
+                  solo hora, orden de categorías y canchas.
+                </p>
+                <EventoEliminatoriaHorarioForm
+                  inicioLocal={eliminatoriaInicioLocal}
+                  onInicioLocalChange={setEliminatoriaInicioLocal}
+                  categorias={categorias}
+                  ordenIds={eliminatoriaOrdenIds}
+                  onOrdenIdsChange={setEliminatoriaOrdenIds}
+                  canchas={eliminatoriaCanchas}
+                  onCanchasChange={setEliminatoriaCanchas}
+                />
+                <div className="te-evd-savebar">
+                  {eliminatoriaDirty ? (
+                    <p className="te-evd-dirty" role="status">
+                      Tienes cambios sin guardar
+                    </p>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    className="te-evd-savebar__btn"
+                    loading={savingEliminatoria}
+                    disabled={savingEliminatoria}
+                    onClick={() => void handleSaveEliminatoria()}
+                  >
+                    {savingEliminatoria
+                      ? "Guardando…"
+                      : "Guardar eliminatoria"}
+                  </Button>
+                </div>
               </section>
             </div>
 
@@ -566,23 +675,7 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                   dirty={reglasDirty}
                   saving={savingReglas}
                   onSave={() => void handleSaveReglas()}
-                >
-                  <h3 className="te-evento-section__title">
-                    Horario de eliminatorias
-                  </h3>
-                  <p className="te-evento-section__hint">
-                    Vista pública con horarios posibles. Empieza la categoría
-                    más baja (ej. Mixtos D) y termina en la más alta (ej. 4ta),
-                    o reordena.
-                  </p>
-                  <EventoEliminatoriaHorarioForm
-                    inicioLocal={eliminatoriaInicioLocal}
-                    onInicioLocalChange={setEliminatoriaInicioLocal}
-                    categorias={categorias}
-                    ordenIds={eliminatoriaOrdenIds}
-                    onOrdenIdsChange={setEliminatoriaOrdenIds}
-                  />
-                </EventoReglasForm>
+                />
               </section>
             </div>
 

@@ -3494,6 +3494,11 @@ function mapTorneoExpressEvento(row: Record<string, unknown>): TorneoExpressEven
           .map((id) => String(id ?? "").trim())
           .filter(Boolean)
       : null,
+    eliminatoria_canchas: Array.isArray(row.eliminatoria_canchas)
+      ? (row.eliminatoria_canchas as unknown[])
+          .map((name) => String(name ?? "").trim())
+          .filter(Boolean)
+      : null,
     created_at: String(row.created_at ?? ""),
   };
 }
@@ -3823,6 +3828,7 @@ export async function updateEvento(
       | "partido_formato"
       | "eliminatoria_inicio"
       | "eliminatoria_categoria_orden"
+      | "eliminatoria_canchas"
     >
   >
 ): Promise<TorneoExpressEvento> {
@@ -3877,6 +3883,9 @@ export async function updateEvento(
   if (patch.eliminatoria_categoria_orden !== undefined) {
     payload.eliminatoria_categoria_orden = patch.eliminatoria_categoria_orden;
   }
+  if (patch.eliminatoria_canchas !== undefined) {
+    payload.eliminatoria_canchas = patch.eliminatoria_canchas;
+  }
 
   if (Object.keys(payload).length === 0) {
     const current = await fetchEventoById(id);
@@ -3896,10 +3905,12 @@ export async function updateEvento(
         error,
         "torneo_express_evento",
         "eliminatoria_categoria_orden"
-      ))
+      ) ||
+      isMissingColumnError(error, "torneo_express_evento", "eliminatoria_canchas"))
   ) {
     delete payload.eliminatoria_inicio;
     delete payload.eliminatoria_categoria_orden;
+    delete payload.eliminatoria_canchas;
     if (Object.keys(payload).length === 0) {
       const current = await fetchEventoById(id);
       if (!current) throw new Error("Evento no encontrado");

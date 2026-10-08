@@ -1,4 +1,8 @@
-import { isBrandingDirty, isReglasDirty } from "./eventoDetalleDirty";
+import {
+  isBrandingDirty,
+  isEliminatoriaConfigDirty,
+  isReglasDirty,
+} from "./eventoDetalleDirty";
 
 const saved = {
   clasificacion_modo: "dif_puntos" as const,
@@ -18,40 +22,47 @@ describe("isReglasDirty", () => {
     expect(isReglasDirty(saved, { clasificacionModo: "dif_puntos", partidoFormato: "bo3_super_muerte" })).toBe(true);
   });
 
-  it("detecta cambio de inicio u orden de eliminatoria", () => {
+  it("no mezcla horario de eliminatoria con reglas", () => {
     expect(
       isReglasDirty(saved, {
         clasificacionModo: "dif_puntos",
         partidoFormato: "flexible",
-        eliminatoriaInicio: "2026-10-10T20:00:00.000Z",
       })
-    ).toBe(true);
-    expect(
-      isReglasDirty(
-        saved,
-        {
-          clasificacionModo: "dif_puntos",
-          partidoFormato: "flexible",
-          eliminatoriaCategoriaOrden: ["b", "a"],
-        },
-        ["a", "b"]
-      )
-    ).toBe(true);
-    expect(
-      isReglasDirty(
-        saved,
-        {
-          clasificacionModo: "dif_puntos",
-          partidoFormato: "flexible",
-          eliminatoriaCategoriaOrden: ["a", "b"],
-        },
-        ["a", "b"]
-      )
     ).toBe(false);
   });
 
   it("volver al valor original deja de ser cambio", () => {
     expect(isReglasDirty(saved, { clasificacionModo: "dif_puntos", partidoFormato: "flexible" })).toBe(false);
+  });
+});
+
+describe("isEliminatoriaConfigDirty", () => {
+  it("detecta cambio de inicio, orden o canchas", () => {
+    expect(
+      isEliminatoriaConfigDirty(saved, {
+        eliminatoriaInicio: "2026-10-10T20:00:00.000Z",
+      })
+    ).toBe(true);
+    expect(
+      isEliminatoriaConfigDirty(
+        saved,
+        { eliminatoriaCategoriaOrden: ["b", "a"] },
+        ["a", "b"]
+      )
+    ).toBe(true);
+    expect(
+      isEliminatoriaConfigDirty(
+        saved,
+        { eliminatoriaCategoriaOrden: ["a", "b"] },
+        ["a", "b"]
+      )
+    ).toBe(false);
+    expect(
+      isEliminatoriaConfigDirty(saved, { eliminatoriaCanchas: ["1", "2"] })
+    ).toBe(true);
+    expect(isEliminatoriaConfigDirty(saved, { eliminatoriaCanchas: [] })).toBe(
+      false
+    );
   });
 });
 
