@@ -1,0 +1,479 @@
+/*
+ * Lista «Eventos del club» (EventosLista). Todo bajo clases propias `te-ev*`:
+ * no depende ni modifica estilos compartidos (te-torneo-card, te-torneos-cards, etc.).
+ * Solo usa tokens: el color de marca de cada club llega vía --ro-accent / --brand-*.
+ * El dorado semántico (campeón) no se usa aquí.
+ */
+
+.te-ev {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 4px;
+  min-width: 0;
+}
+
+/* ——— Cabecera de sección ——— */
+.te-ev__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.te-ev__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ro-text-primary);
+}
+
+.te-ev__create {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ——— Error ——— */
+.te-ev__error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--ro-error);
+  background: var(--ro-bg-inset);
+}
+
+.te-ev__error p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ro-error);
+}
+
+/* ——— Filtros y búsqueda ——— */
+.te-ev__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.te-ev__filters {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.te-ev__filters::-webkit-scrollbar {
+  display: none;
+}
+
+.te-ev__chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 2.25rem;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--ro-border);
+  background: transparent;
+  color: var(--ro-text-secondary);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease,
+    color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.te-ev__chip:hover {
+  border-color: var(--ro-border-strong);
+  color: var(--ro-text-primary);
+}
+
+.te-ev__chip.is-active {
+  border-color: var(--ro-accent);
+  background: var(--ro-bg-elevated);
+  color: var(--ro-text-primary);
+}
+
+.te-ev__chip:focus-visible,
+.te-ev__search-input:focus-visible {
+  outline: 2px solid var(--ro-text-primary);
+  outline-offset: 2px;
+}
+
+.te-ev__chip-count {
+  min-width: 1.25rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--ro-bg-inset);
+  color: var(--ro-text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.te-ev__search {
+  position: relative;
+  width: 100%;
+}
+
+.te-ev__search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ro-text-muted);
+  pointer-events: none;
+}
+
+.te-ev__search-input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0 12px 0 36px;
+  border-radius: 10px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-input);
+  color: var(--ro-text-primary);
+  font: inherit;
+  font-size: 0.9375rem; /* ≥16px efectivos evita el zoom de iOS en la mayoría de casos */
+}
+
+.te-ev__search-input::placeholder {
+  color: var(--ro-text-muted);
+}
+
+@media (min-width: 720px) {
+  .te-ev__controls {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .te-ev__filters {
+    overflow: visible;
+    flex-wrap: wrap;
+  }
+
+  .te-ev__search {
+    width: 16rem;
+    flex: 0 0 auto;
+  }
+}
+
+.te-ev__sr-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ——— Grilla: 1 / 2 / 3 columnas (una sola card nunca ocupa todo el ancho en desktop) ——— */
+.te-ev__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 640px) {
+  .te-ev__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .te-ev__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+/* ——— Card ——— */
+.te-ev-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 16px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-card);
+  transition: border-color 0.15s ease;
+}
+
+.te-ev-card:hover,
+.te-ev-card:focus-within {
+  border-color: var(--ro-border-strong);
+}
+
+/* Estados que piden atención llevan el acento de marca del club, sin dorado. */
+.te-ev-card--en_curso {
+  border-color: var(--ro-border-accent);
+}
+
+.te-ev-card--finalizado .te-ev-card__visual {
+  opacity: 0.88;
+}
+
+.te-ev-card__visual {
+  position: relative;
+  border-radius: 15px 15px 0 0;
+}
+
+/* Área de proporción uniforme: el flyer se muestra completo (contain), nunca recortado. */
+.te-ev-card__media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 15px 15px 0 0;
+  background: var(--ro-bg-inset);
+}
+
+.te-ev-card__media-bg {
+  position: absolute;
+  inset: -12%;
+  width: 124%;
+  height: 124%;
+  object-fit: cover;
+  filter: blur(22px) saturate(1.1);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.te-ev-card__flyer {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.te-ev-card__media--empty {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.te-ev-card__initials {
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--ro-text-muted);
+}
+
+.te-ev-card__media-hint {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ro-text-muted);
+}
+
+.te-ev-card__state {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.te-ev-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 14px 16px 4px;
+}
+
+.te-ev-card__title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin: 0;
+  min-height: calc(1.25em * 2);
+  font-size: 1.0625rem;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--ro-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.te-ev-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.te-ev-card__meta li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--ro-text-secondary);
+}
+
+.te-ev-card__meta li > i {
+  flex: 0 0 auto;
+  color: var(--ro-text-muted);
+}
+
+.te-ev-card__meta li > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.te-ev-card__footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 12px 16px 16px;
+}
+
+.te-ev-card__manage {
+  flex: 1 1 auto;
+  min-height: 2.5rem;
+  justify-content: center;
+}
+
+/* ——— Estados vacíos ——— */
+.te-ev__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 36px 20px;
+  border-radius: 16px;
+  border: 1px dashed var(--ro-border-strong);
+  background: var(--ro-bg-card);
+  text-align: center;
+}
+
+.te-ev__empty--filtered {
+  padding: 28px 20px;
+}
+
+.te-ev__empty-icon {
+  color: var(--ro-text-muted);
+}
+
+.te-ev__empty-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: var(--ro-text-primary);
+}
+
+.te-ev__empty-text {
+  max-width: 36ch;
+  margin: 0 0 8px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--ro-text-secondary);
+}
+
+/* ——— Carga (misma geometría que la card real para evitar saltos) ——— */
+.te-ev-skeleton {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-card);
+  overflow: hidden;
+}
+
+.te-ev-skeleton__media {
+  aspect-ratio: 4 / 3;
+}
+
+.te-ev-skeleton__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 4px;
+}
+
+.te-ev-skeleton__footer {
+  height: 2.5rem;
+  margin: 12px 16px 16px;
+  border-radius: 10px;
+}
+
+.te-ev-skeleton__line {
+  display: block;
+  height: 0.75rem;
+  border-radius: 6px;
+  width: 85%;
+}
+
+.te-ev-skeleton__line--title {
+  height: 1.1rem;
+  width: 70%;
+}
+
+.te-ev-skeleton__line--short {
+  width: 45%;
+}
+
+.te-ev-skeleton__media,
+.te-ev-skeleton__footer,
+.te-ev-skeleton__line {
+  background: linear-gradient(
+    90deg,
+    var(--ro-bg-inset) 0%,
+    var(--ro-bg-elevated) 50%,
+    var(--ro-bg-inset) 100%
+  );
+  background-size: 200% 100%;
+  animation: te-ev-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes te-ev-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .te-ev-skeleton__media,
+  .te-ev-skeleton__footer,
+  .te-ev-skeleton__line {
+    animation: none;
+  }
+
+  .te-ev-card,
+  .te-ev__chip {
+    transition: none;
+  }
+}

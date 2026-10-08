@@ -1,0 +1,746 @@
+/*
+ * Administración interior del Evento — encabezado, pestañas y protección de cambios.
+ * Clases propias `te-evd-*`; los selectores sobre `.mode-section-tabs` van compuestos
+ * con `.te-evd-tabs` para no afectar a otros módulos que comparten ModeSectionTabs.
+ * Solo tokens: el color de marca de cada club llega vía --ro-accent. Sin dorado.
+ */
+
+/* ——— Encabezado ——— */
+.te-evd-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 20px;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-card);
+}
+
+.te-evd-head__id {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1 1 22rem;
+}
+
+.te-evd-head__thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 4rem;
+  height: 4rem;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-inset);
+}
+
+.te-evd-head__thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.te-evd-head__thumb span {
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--ro-text-muted);
+}
+
+.te-evd-head__text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.te-evd-head__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.te-evd-head__title {
+  margin: 0;
+  min-width: 0;
+  font-size: clamp(1.25rem, 3.4vw, 1.625rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--ro-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.te-evd-head__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.te-evd-head__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--ro-text-secondary);
+}
+
+.te-evd-head__meta li > i {
+  flex: 0 0 auto;
+  color: var(--ro-text-muted);
+}
+
+.te-evd-head__slug span {
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ro-text-muted);
+}
+
+.te-evd-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.te-evd-head__actions .riviera-btn {
+  min-height: 2.5rem;
+}
+
+@media (max-width: 639px) {
+  .te-evd-head {
+    padding: 12px;
+  }
+
+  .te-evd-head__thumb {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+
+  .te-evd-head__actions {
+    width: 100%;
+  }
+}
+
+/* ——— Pestañas (ModeSectionTabs, visible también en desktop solo aquí) ——— */
+.te-evd-tabs-wrap {
+  margin-bottom: 14px;
+}
+
+.te-evd-tabs.mode-section-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--ro-border-subtle);
+}
+
+.te-evd-tabs.mode-section-tabs .mode-section-tabs__btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 2.5rem;
+  padding: 0 16px;
+  border-color: var(--ro-border);
+  background: transparent;
+  color: var(--ro-text-secondary);
+  font-size: 0.875rem;
+}
+
+.te-evd-tabs.mode-section-tabs .mode-section-tabs__btn:hover {
+  border-color: var(--ro-border-strong);
+  background: transparent;
+  color: var(--ro-text-primary);
+}
+
+.te-evd-tabs.mode-section-tabs .mode-section-tabs__btn[aria-selected="true"],
+.te-evd-tabs.mode-section-tabs .mode-section-tabs__btn[aria-selected="true"]:hover,
+.te-evd-tabs.mode-section-tabs .mode-section-tabs__btn[aria-selected="true"]:focus,
+.te-evd-tabs.mode-section-tabs .mode-section-tabs__btn[aria-selected="true"]:focus-visible {
+  border-color: var(--ro-accent) !important;
+  background: var(--ro-bg-elevated) !important;
+  color: var(--ro-text-primary) !important;
+}
+
+.te-evd-tabs.mode-section-tabs .mode-section-tabs__btn:focus-visible {
+  outline: 2px solid var(--ro-text-primary) !important;
+  outline-offset: 2px;
+}
+
+/* Punto de «cambios sin guardar» en la pestaña correspondiente. */
+.te-evd-tabs-wrap[data-dirty-reglas] #mode-tab-reglas::after,
+.te-evd-tabs-wrap[data-dirty-branding] #mode-tab-branding::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ro-accent);
+}
+
+@media (min-width: 640px) {
+  .te-evd-tabs.mode-section-tabs {
+    overflow: visible;
+  }
+}
+
+/* ——— Paneles ——— */
+.te-evd-panel[hidden] {
+  display: none !important;
+}
+
+.te-evd-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 0.85rem;
+}
+
+.te-evd-section-head .te-evento-section__hint {
+  margin-bottom: 0;
+}
+
+.te-evd-section-head .riviera-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 2.5rem;
+}
+
+/* ——— Aviso de cambios sin guardar (junto al botón Guardar) ——— */
+.te-evd-dirty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ro-text-secondary);
+}
+
+.te-evd-dirty::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ro-accent);
+}
+
+/* ——— Categorías (EventoCategoriaCard) ——— */
+.te-evd-cats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 720px) {
+  .te-evd-cats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+.te-evd-cat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-card);
+  transition: border-color 0.15s ease;
+}
+
+.te-evd-cat:hover,
+.te-evd-cat:focus-within {
+  border-color: var(--ro-border-strong);
+}
+
+/* Una categoría en juego lleva el acento de marca del club (mismo criterio que la lista de eventos). */
+.te-evd-cat--en_curso {
+  border-color: var(--ro-border-accent);
+}
+
+.te-evd-cat__head {
+  display: flex;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+  min-height: 2.25rem;
+}
+
+.te-evd-cat__title {
+  margin: 0;
+  min-width: 0;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--ro-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.te-evd-cat__pencil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ro-text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.te-evd-cat__pencil:hover:not(:disabled) {
+  color: var(--ro-text-primary);
+  border-color: var(--ro-border);
+  background: var(--ro-bg-elevated);
+}
+
+.te-evd-cat__pencil:focus-visible,
+.te-evd-cat__edit-btn:focus-visible,
+.te-evd-cat__edit-input:focus-visible {
+  outline: 2px solid var(--ro-text-primary);
+  outline-offset: 2px;
+}
+
+.te-evd-cat__state {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* Renombrar en línea */
+.te-evd-cat__edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.te-evd-cat__edit-input {
+  flex: 1 1 8rem;
+  min-width: 0;
+  min-height: 2.25rem;
+  padding: 0 12px;
+  border: 1px solid var(--ro-border);
+  border-radius: 10px;
+  background: var(--ro-bg-input);
+  color: var(--ro-text-primary);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.te-evd-cat__edit-input:focus {
+  border-color: var(--ro-border-accent);
+}
+
+.te-evd-cat__edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--ro-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ro-text-secondary);
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.te-evd-cat__edit-btn--ok {
+  border-color: var(--ro-accent);
+  color: var(--ro-text-primary);
+}
+
+.te-evd-cat__edit-btn:hover:not(:disabled) {
+  background: var(--ro-bg-elevated);
+}
+
+.te-evd-cat__edit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Acciones: Gestionar (principal) a la izquierda; Borrar (secundaria) a la derecha. */
+.te-evd-cat__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.te-evd-cat .te-evd-cat__manage {
+  flex: 0 0 auto;
+  justify-content: center;
+  min-width: 8rem;
+  min-height: 2.5rem;
+}
+
+.te-evd-cat .te-evd-cat__delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-height: 2.5rem;
+  color: var(--ro-text-muted);
+}
+
+.te-evd-cat .te-evd-cat__delete:hover:not(:disabled) {
+  color: var(--ro-error);
+}
+
+/* ——— Estado vacío ——— */
+.te-evd-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 28px 20px;
+  border-radius: 14px;
+  border: 1px dashed var(--ro-border-strong);
+  background: var(--ro-bg-card);
+  text-align: center;
+}
+
+.te-evd-empty__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: var(--ro-text-primary);
+}
+
+.te-evd-empty__text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ro-text-secondary);
+}
+
+@media (max-width: 639px) {
+  .te-evd-cat {
+    padding: 12px 14px;
+  }
+
+  .te-evd-cat .te-evd-cat__manage {
+    flex: 1 1 auto;
+  }
+}
+
+/* ——— Reglas (EventoReglasForm) ——— */
+.te-evd-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.te-evd-rules__groups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .te-evd-rules__groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Cada grupo es UNA tarjeta; las opciones son filas separadas por una línea, no cajas anidadas. */
+.te-evd-rule-group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-card);
+}
+
+.te-evd-rule-group__legend {
+  float: left;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ro-text-primary);
+}
+
+.te-evd-rule {
+  clear: both;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--ro-border-subtle);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.te-evd-rule:hover {
+  background: var(--ro-bg-elevated);
+}
+
+.te-evd-rule--selected {
+  background: var(--ro-bg-elevated);
+  box-shadow: inset 3px 0 0 var(--ro-accent);
+}
+
+.te-evd-rule__input {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 1px 0 0;
+  accent-color: var(--ro-accent);
+  cursor: pointer;
+}
+
+.te-evd-rule__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.te-evd-rule__label {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ro-text-primary);
+}
+
+.te-evd-rule__desc {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--ro-text-secondary);
+}
+
+.te-evd-rule__steps {
+  display: grid;
+  gap: 2px;
+  margin: 2px 0 0;
+  padding: 0 0 0 1.15rem;
+  list-style: decimal;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--ro-text-secondary);
+}
+
+.te-evd-rule__steps li::marker {
+  color: var(--ro-text-muted);
+}
+
+/* ——— Barra de guardado ——— */
+.te-evd-savebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 16px;
+}
+
+.te-evd-savebar .te-evd-dirty {
+  margin-right: auto;
+}
+
+.te-evd-savebar .te-evd-savebar__btn {
+  min-height: 2.5rem;
+  min-width: 8.5rem;
+  justify-content: center;
+}
+
+/* ——— Branding (EventoBrandingForm) ———
+ * Reutiliza el grupo de opciones de Reglas (`te-evd-rule*`) y la barra de guardado.
+ * Configuración a la izquierda y vista previa a la derecha; en móvil, en vertical.
+ */
+.te-evd-brand {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "config"
+    "preview"
+    "save";
+  gap: 14px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .te-evd-brand {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "config preview"
+      "save preview";
+  }
+}
+
+.te-evd-brand__config {
+  grid-area: config;
+}
+
+.te-evd-brand__preview {
+  grid-area: preview;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-card);
+}
+
+.te-evd-brand__save {
+  grid-area: save;
+}
+
+.te-evd-brand__preview-title {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ro-text-primary);
+}
+
+/* Área de la imagen: el flyer se ve completo (contain), nunca recortado ni deformado. */
+.te-evd-brand__stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 16rem;
+  padding: 16px;
+  overflow: hidden;
+  border-top: 1px solid var(--ro-border-subtle);
+  background: var(--ro-bg-inset);
+}
+
+.te-evd-brand__stage-bg {
+  position: absolute;
+  inset: -12%;
+  width: 124%;
+  height: 124%;
+  object-fit: cover;
+  filter: blur(22px) saturate(1.1);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.te-evd-brand__flyer {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  max-height: 28rem;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+
+.te-evd-brand__empty {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  max-width: 30ch;
+  text-align: center;
+  color: var(--ro-text-muted);
+}
+
+.te-evd-brand__empty > i {
+  margin-bottom: 4px;
+}
+
+.te-evd-brand__empty-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--ro-text-primary);
+}
+
+.te-evd-brand__empty-text {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--ro-text-secondary);
+}
+
+/* Herramientas del flyer: dentro de la misma tarjeta, separadas por una línea. */
+.te-evd-brand__tools {
+  clear: both;
+  display: grid;
+  gap: 14px;
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--ro-border-subtle);
+}
+
+.te-evd-brand__upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.te-evd-brand .te-evd-brand__upload-btn {
+  min-height: 2.5rem;
+  justify-content: center;
+}
+
+.te-evd-brand__hint {
+  font-size: 0.8125rem;
+  color: var(--ro-text-muted);
+}
+
+.te-evd-brand__file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.te-evd-brand__field {
+  display: grid;
+  gap: 6px;
+}
+
+.te-evd-brand__field-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ro-text-secondary);
+}

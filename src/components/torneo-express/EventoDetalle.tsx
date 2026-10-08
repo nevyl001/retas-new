@@ -6,16 +6,13 @@ import type {
   TorneoExpressEventoLogoSource,
   TorneoExpressPartidoFormato,
 } from "../../lib/torneoExpress/types";
-import {
-  CLASIFICACION_MODO_OPTIONS,
-  PARTIDO_FORMATO_OPTIONS,
-} from "../../lib/torneoExpress/clasificacionModo";
 import { slugifyEvento } from "../../lib/torneoExpress/eventoSlug";
 import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
+import { resolveTorneoExpressDisplayEstado } from "../../lib/torneoExpress/resolveDisplayEstado";
 import {
-  resolveEventoDisplayEstado,
-  resolveTorneoExpressDisplayEstado,
-} from "../../lib/torneoExpress/resolveDisplayEstado";
+  isBrandingDirty,
+  isReglasDirty,
+} from "../../lib/torneoExpress/eventoDetalleDirty";
 import { uploadEventoFlyer } from "../../lib/torneoExpress/uploadEventoFlyer";
 import {
   deleteTorneoExpress,
@@ -26,41 +23,21 @@ import {
   updateEvento,
 } from "../../services/torneoExpressService";
 import { useUser } from "../../contexts/UserContext";
-import { Badge, Button, Input } from "../ui";
+import { Button } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
+import { useUnsavedChangesGuard } from "../../hooks/useUnsavedChangesGuard";
 import { ActionBar } from "../platform/ActionBar";
+import { ModeSectionTabs } from "../platform/ModeSectionTabs";
+import { EventoBrandingForm } from "./EventoBrandingForm";
+import { EventoCategoriaCard } from "./EventoCategoriaCard";
+import { EventoDetalleHeader } from "./EventoDetalleHeader";
+import { EventoReglasForm } from "./EventoReglasForm";
 import { TePageShell } from "./TePageShell";
+import { TeUnsavedChangesModal } from "./TeUnsavedChangesModal";
 import { TorneoExpressDeleteModal } from "./TorneoExpressDeleteModal";
 import { navigateTorneoExpress } from "./torneoExpressNav";
 import "./te-inicio-page.css";
 import "./te-eventos.css";
-
-const EVENTO_ESTADO_LABEL: Record<TorneoExpressEvento["estado"], string> = {
-  draft: "Borrador",
-  published: "Publicado",
-  in_progress: "En curso",
-  completed: "Finalizado",
-  archived: "Archivado",
-};
-
-const TORNEO_ESTADO_LABEL: Record<string, string> = {
-  pendiente: "Pendiente",
-  en_curso: "En curso",
-  finalizado: "Finalizado",
-};
-
-function formatFecha(iso: string | null): string | null {
-  if (!iso) return null;
-  try {
-    return new Date(`${iso}T12:00:00`).toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
-}
 
 function isUniqueViolation(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
@@ -111,6 +88,14 @@ function categoriaEditValue(cat: TorneoExpress): string {
   return cat.categoria?.trim() || cat.nombre?.trim() || "";
 }
 
+type EventoTabId = "categorias" | "reglas" | "branding";
+
+const EVENTO_TABS: ReadonlyArray<{ id: EventoTabId; label: string }> = [
+  { id: "categorias", label: "Categorías" },
+  { id: "reglas", label: "Reglas" },
+  { id: "branding", label: "Branding" },
+];
+
 type EventoDetalleProps = {
   eventoId: string;
 };
@@ -144,6 +129,31 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
     type: "success" | "error";
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState<EventoTabId>("categorias");
+
+  // Cambios sin guardar = formulario distinto de lo persistido en `evento`.
+  const reglasDirty = isReglasDirty(evento, { clasificacionModo, partidoFormato });
+  const brandingDirty = isBrandingDirty(evento, { logoSource, flyerUrl });
+  const dirtySections = [
+    ...(reglasDirty ? ["Reglas"] : []),
+    ...(brandingDirty ? ["Branding"] : []),
+  ];
+  const unsavedGuard = useUnsavedChangesGuard(dirtySections.length > 0);
+
+  const handleTabsKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const index = EVENTO_TABS.findIndex((tab) => tab.id === activeTab);
+    let next = -1;
+    if (event.key === "ArrowRight") next = (index + 1) % EVENTO_TABS.length;
+    else if (event.key === "ArrowLeft")
+      next = (index - 1 + EVENTO_TABS.length) % EVENTO_TABS.length;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = EVENTO_TABS.length - 1;
+    if (next < 0) return;
+    event.preventDefault();
+    const nextId = EVENTO_TABS[next].id;
+    setActiveTab(nextId);
+    document.getElementById(`mode-tab-${nextId}`)?.focus();
+  };
 
   const showActionToast = useCallback(
     (message: string, type: "success" | "error") => {
@@ -357,417 +367,174 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
 
         {!loading && evento ? (
           <>
-            <header className="te-evento-detalle__header">
-              <div className="te-evento-detalle__title-row">
-                <h1 className="te-evento-detalle__title">{evento.nombre}</h1>
-                {(() => {
-                  const displayEventoEstado = resolveEventoDisplayEstado({
-                    estado: evento.estado,
-                    fecha_inicio: evento.fecha_inicio,
-                    timezone: evento.timezone,
-                  });
-                  return (
-                    <Badge
-                      variant={
-                        displayEventoEstado === "draft"
-                          ? "pending"
-                          : displayEventoEstado === "completed"
-                            ? "finished"
-                            : displayEventoEstado === "in_progress"
-                              ? "live"
-                              : "scheduled"
-                      }
+            <EventoDetalleHeader
+              evento={evento}
+              categoriaCount={categorias.length}
+              publishing={publishing}
+              onTogglePublish={() => void handlePublishToggle()}
+            />
+
+            <div
+              className="te-evd-tabs-wrap"
+              data-dirty-reglas={reglasDirty ? "true" : undefined}
+              data-dirty-branding={brandingDirty ? "true" : undefined}
+              onKeyDown={handleTabsKeyDown}
+            >
+              <ModeSectionTabs
+                className="te-evd-tabs"
+                ariaLabel="Secciones del evento"
+                tabs={EVENTO_TABS.map((tab) => ({ ...tab }))}
+                activeId={activeTab}
+                onChange={(id) => setActiveTab(id as EventoTabId)}
+              />
+            </div>
+
+            <div
+              role="tabpanel"
+              id="mode-panel-categorias"
+              aria-labelledby="mode-tab-categorias"
+              className="te-evd-panel"
+              hidden={activeTab !== "categorias"}
+            >
+              <section
+                className="te-evento-section"
+                aria-labelledby="te-evento-cats-heading"
+              >
+                <div className="te-evd-section-head">
+                  <div>
+                    <h2
+                      id="te-evento-cats-heading"
+                      className="te-evento-section__title"
                     >
-                      {EVENTO_ESTADO_LABEL[displayEventoEstado]}
-                    </Badge>
-                  );
-                })()}
-              </div>
-              <p className="te-evento-detalle__meta">
-                {[
-                  formatFecha(evento.fecha_inicio),
-                  formatFecha(evento.fecha_fin),
-                ]
-                  .filter(Boolean)
-                  .join(" – ") || "Fechas por definir"}
-                {" · "}
-                {evento.timezone}
-                {evento.slug ? ` · /${evento.slug}` : ""}
-              </p>
-              <div className="te-evento-detalle__actions">
-                {(evento.estado === "draft" ||
-                  evento.estado === "published" ||
-                  evento.estado === "in_progress" ||
-                  evento.estado === "completed") && (
+                      Categorías
+                    </h2>
+                    <p className="te-evento-section__hint">
+                      Cada categoría es un torneo independiente (grupos, standings
+                      y eliminatoria aislados).
+                    </p>
+                  </div>
                   <Button
                     type="button"
-                    variant={evento.estado === "draft" ? "primary" : "secondary"}
+                    variant="primary"
                     size="sm"
-                    loading={publishing}
-                    disabled={publishing}
-                    onClick={() => void handlePublishToggle()}
+                    onClick={() =>
+                      navigateTorneoExpress(
+                        `/torneo-express/evento/${evento.id}/nueva-categoria`
+                      )
+                    }
                   >
-                    {evento.estado === "draft"
-                      ? "Publicar evento"
-                      : "Volver a borrador"}
+                    <TablerIcon name="plus" size={16} />
+                    Agregar categoría
                   </Button>
-                )}
-                {evento.slug &&
-                (evento.estado === "published" ||
-                  evento.estado === "in_progress" ||
-                  evento.estado === "completed") ? (
-                  <Button
-                    as="a"
-                    href={`/eventos/${evento.slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    variant="secondary"
-                    size="sm"
-                  >
-                    Ver página pública
-                  </Button>
-                ) : null}
-                {evento.slug &&
-                (evento.estado === "published" ||
-                  evento.estado === "in_progress" ||
-                  evento.estado === "completed") ? (
-                  <Button
-                    as="a"
-                    href={`/eventos/${evento.slug}/en-vivo`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    variant="secondary"
-                    size="sm"
-                  >
-                    Pantalla de canchas
-                  </Button>
-                ) : null}
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  onClick={() =>
-                    navigateTorneoExpress(
-                      `/torneo-express/evento/${evento.id}/nueva-categoria`
-                    )
-                  }
-                >
-                  Agregar categoría
-                </Button>
-              </div>
-            </header>
-
-            <section
-              className="te-evento-section"
-              aria-labelledby="te-evento-cats-heading"
-            >
-              <h2 id="te-evento-cats-heading" className="te-evento-section__title">
-                Categorías
-              </h2>
-              <p className="te-evento-section__hint">
-                Cada categoría es un torneo independiente (grupos, standings y
-                eliminatoria aislados).
-              </p>
-              {categorias.length === 0 ? (
-                <div className="te-torneos-empty">
-                  <p>Sin categorías todavía.</p>
-                  <p>Agrega una: se arma igual que un torneo normal.</p>
                 </div>
-              ) : (
-                <ul className="te-eventos-list">
-                  {categorias.map((cat) => {
-                    const title = categoriaDisplayLabel(cat);
-                    const isEditing = editingCategoriaId === cat.id;
-                    const displayEstado = resolveTorneoExpressDisplayEstado({
-                      estado: cat.estado,
-                      eventFechaInicio: evento.fecha_inicio,
-                      eventTimezone: evento.timezone,
-                    });
-                    return (
-                    <li key={cat.id} className="te-evento-card">
-                      <div className="te-evento-card__main">
-                        <div className="te-evento-card__top">
-                          {isEditing ? (
-                            <div
-                              className="te-evento-cat-edit"
-                              role="group"
-                              aria-label={`Renombrar ${title}`}
-                            >
-                              <input
-                                type="text"
-                                className="te-evento-cat-edit__input"
-                                value={draftCategoriaNombre}
-                                onChange={(e) =>
-                                  setDraftCategoriaNombre(e.target.value)
-                                }
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    void commitEditCategoria(cat.id);
-                                  }
-                                  if (e.key === "Escape") {
-                                    e.preventDefault();
-                                    cancelEditCategoria();
-                                  }
-                                }}
-                                disabled={savingCategoriaId === cat.id}
-                                maxLength={80}
-                                autoFocus
-                                aria-label="Nuevo nombre de la categoría"
-                              />
-                              <button
-                                type="button"
-                                className="te-evento-cat-edit__btn te-evento-cat-edit__btn--ok"
-                                onClick={() => void commitEditCategoria(cat.id)}
-                                disabled={savingCategoriaId === cat.id}
-                                aria-label="Guardar categoría"
-                              >
-                                ✓
-                              </button>
-                              <button
-                                type="button"
-                                className="te-evento-cat-edit__btn"
-                                onClick={cancelEditCategoria}
-                                disabled={savingCategoriaId === cat.id}
-                                aria-label="Cancelar"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ) : (
-                            <>
-                              <h3 className="te-evento-card__title">{title}</h3>
-                              <button
-                                type="button"
-                                className="te-evento-cat-edit__pencil"
-                                onClick={() => startEditCategoria(cat)}
-                                aria-label={`Editar categoría ${title}`}
-                                title="Editar categoría"
-                              >
-                                <TablerIcon name="pencil" size={14} />
-                              </button>
-                            </>
-                          )}
-                          <Badge
-                            variant={
-                              displayEstado === "finalizado"
-                                ? "finished"
-                                : displayEstado === "en_curso"
-                                  ? "live"
-                                  : "pending"
-                            }
-                          >
-                            {TORNEO_ESTADO_LABEL[displayEstado] ?? cat.estado}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="te-evento-card__actions">
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() =>
+                {categorias.length === 0 ? (
+                  <div className="te-evd-empty">
+                    <p className="te-evd-empty__title">Sin categorías todavía.</p>
+                    <p className="te-evd-empty__text">
+                      Agrega una: se arma igual que un torneo normal.
+                    </p>
+                  </div>
+                ) : (
+                  <ul className="te-evd-cats">
+                    {categorias.map((cat) => {
+                      const title = categoriaDisplayLabel(cat);
+                      const displayEstado = resolveTorneoExpressDisplayEstado({
+                        estado: cat.estado,
+                        eventFechaInicio: evento.fecha_inicio,
+                        eventTimezone: evento.timezone,
+                      });
+                      return (
+                        <EventoCategoriaCard
+                          key={cat.id}
+                          title={title}
+                          displayEstado={displayEstado}
+                          fallbackEstadoLabel={cat.estado}
+                          isEditing={editingCategoriaId === cat.id}
+                          draftName={draftCategoriaNombre}
+                          saving={savingCategoriaId === cat.id}
+                          deleting={deleting}
+                          onDraftChange={setDraftCategoriaNombre}
+                          onStartEdit={() => startEditCategoria(cat)}
+                          onCommitEdit={() => void commitEditCategoria(cat.id)}
+                          onCancelEdit={cancelEditCategoria}
+                          onManage={() =>
                             navigateTorneoExpress(
                               `/torneo-express/${cat.id}/gestionar`
                             )
                           }
-                        >
-                          Gestionar
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={deleting || savingCategoriaId === cat.id}
-                          onClick={() => setDeleteTarget(cat)}
-                        >
-                          Borrar
-                        </Button>
-                      </div>
-                    </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
+                          onDelete={() => setDeleteTarget(cat)}
+                        />
+                      );
+                    })}
+                  </ul>
+                )}
+              </section>
+            </div>
 
-            <section
-              className="te-evento-section"
-              aria-labelledby="te-evento-reglas-heading"
+            <div
+              role="tabpanel"
+              id="mode-panel-reglas"
+              aria-labelledby="mode-tab-reglas"
+              className="te-evd-panel"
+              hidden={activeTab !== "reglas"}
             >
-              <h2
-                id="te-evento-reglas-heading"
-                className="te-evento-section__title"
+              <section
+                className="te-evento-section"
+                aria-labelledby="te-evento-reglas-heading"
               >
-                Reglas del evento
-              </h2>
-              <p className="te-evento-section__hint">
-                Aplican a todas las categorías y grupos de este evento.
-              </p>
-              <div className="te-evento-brand">
-                <fieldset className="te-evento-brand__source">
-                  <legend className="te-evento-field__label">
-                    Clasificación a siguiente fase
-                  </legend>
-                  {CLASIFICACION_MODO_OPTIONS.map((opt) => (
-                    <label
-                      key={opt.value}
-                      className="te-evento-radio te-evento-radio--stacked"
-                    >
-                      <span className="te-evento-radio__row">
-                        <input
-                          type="radio"
-                          name="clasificacion_modo"
-                          checked={clasificacionModo === opt.value}
-                          onChange={() => setClasificacionModo(opt.value)}
-                        />
-                        {opt.label}
-                      </span>
-                      <span className="te-evento-radio__desc">
-                        {opt.description}
-                      </span>
-                      <ol className="te-evento-radio__steps">
-                        {opt.steps.map((step) => (
-                          <li key={step}>{step.replace(/^\d+\.\s*/, "")}</li>
-                        ))}
-                      </ol>
-                    </label>
-                  ))}
-                </fieldset>
-                <fieldset className="te-evento-brand__source">
-                  <legend className="te-evento-field__label">
-                    Formato de partido
-                  </legend>
-                  {PARTIDO_FORMATO_OPTIONS.map((opt) => (
-                    <label
-                      key={opt.value}
-                      className="te-evento-radio te-evento-radio--stacked"
-                    >
-                      <span className="te-evento-radio__row">
-                        <input
-                          type="radio"
-                          name="partido_formato"
-                          checked={partidoFormato === opt.value}
-                          onChange={() => setPartidoFormato(opt.value)}
-                        />
-                        {opt.label}
-                      </span>
-                      <span className="te-evento-radio__desc">
-                        {opt.description}
-                      </span>
-                      {opt.steps && opt.steps.length > 0 ? (
-                        <ol className="te-evento-radio__steps">
-                          {opt.steps.map((step) => (
-                            <li key={step}>{step.replace(/^\d+\.\s*/, "")}</li>
-                          ))}
-                        </ol>
-                      ) : null}
-                    </label>
-                  ))}
-                </fieldset>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  loading={savingReglas}
-                  disabled={savingReglas}
-                  onClick={() => void handleSaveReglas()}
+                <h2
+                  id="te-evento-reglas-heading"
+                  className="te-evento-section__title"
                 >
-                  {savingReglas ? "Guardando…" : "Guardar reglas"}
-                </Button>
-              </div>
-            </section>
+                  Reglas del evento
+                </h2>
+                <p className="te-evento-section__hint">
+                  Aplican a todas las categorías y grupos de este evento.
+                </p>
+                <EventoReglasForm
+                  clasificacionModo={clasificacionModo}
+                  partidoFormato={partidoFormato}
+                  onClasificacionChange={setClasificacionModo}
+                  onPartidoFormatoChange={setPartidoFormato}
+                  dirty={reglasDirty}
+                  saving={savingReglas}
+                  onSave={() => void handleSaveReglas()}
+                />
+              </section>
+            </div>
 
-            <section
-              className="te-evento-section"
-              aria-labelledby="te-evento-brand-heading"
+            <div
+              role="tabpanel"
+              id="mode-panel-branding"
+              aria-labelledby="mode-tab-branding"
+              className="te-evd-panel"
+              hidden={activeTab !== "branding"}
             >
-              <h2 id="te-evento-brand-heading" className="te-evento-section__title">
-                Branding del evento
-              </h2>
-              <div className="te-evento-brand">
-                <fieldset className="te-evento-brand__source">
-                  <legend className="te-evento-field__label">Origen del logo</legend>
-                  <label className="te-evento-radio">
-                    <input
-                      type="radio"
-                      name="logo_source"
-                      checked={logoSource === "club"}
-                      onChange={() => setLogoSource("club")}
-                    />
-                    Logo del club (upgrade / Riviera)
-                  </label>
-                  <label className="te-evento-radio">
-                    <input
-                      type="radio"
-                      name="logo_source"
-                      checked={logoSource === "flyer"}
-                      onChange={() => setLogoSource("flyer")}
-                    />
-                    Flyer del evento
-                  </label>
-                </fieldset>
-                {logoSource === "flyer" ? (
-                  <div className="te-evento-flyer-tools">
-                    {flyerUrl.trim() ? (
-                      <div className="te-evento-flyer-preview">
-                        <img
-                          src={flyerUrl.trim()}
-                          alt="Vista previa del flyer"
-                          className="te-evento-flyer-preview__img"
-                        />
-                      </div>
-                    ) : null}
-                    <div className="te-evento-flyer-upload">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/*"
-                        className="te-evento-flyer-upload__input"
-                        disabled={uploadingFlyer}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0] ?? null;
-                          void handleUploadFlyer(file);
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        loading={uploadingFlyer}
-                        disabled={uploadingFlyer || !user?.id}
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        {uploadingFlyer ? "Subiendo…" : "Subir flyer"}
-                      </Button>
-                      <span className="te-evento-flyer-upload__hint">
-                        JPEG, PNG o WebP · máx. 5 MB
-                      </span>
-                    </div>
-                    <label className="te-evento-field">
-                      <span className="te-evento-field__label">
-                        O pega una URL
-                      </span>
-                      <Input
-                        value={flyerUrl}
-                        onChange={(e) => setFlyerUrl(e.target.value)}
-                        placeholder="https://…"
-                      />
-                    </label>
-                  </div>
-                ) : null}
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  loading={savingBrand}
-                  disabled={savingBrand || uploadingFlyer}
-                  onClick={() => void handleSaveBranding()}
-                >
-                  {savingBrand ? "Guardando…" : "Guardar branding"}
-                </Button>
-              </div>
-            </section>
+              <section
+                className="te-evento-section"
+                aria-labelledby="te-evento-brand-heading"
+              >
+                <h2 id="te-evento-brand-heading" className="te-evento-section__title">
+                  Branding del evento
+                </h2>
+                <p className="te-evento-section__hint">
+                  Elige la imagen que identifica a este evento.
+                </p>
+                <EventoBrandingForm
+                  logoSource={logoSource}
+                  onLogoSourceChange={setLogoSource}
+                  flyerUrl={flyerUrl}
+                  onFlyerUrlChange={setFlyerUrl}
+                  fileInputRef={fileInputRef}
+                  uploading={uploadingFlyer}
+                  uploadDisabled={!user?.id}
+                  onFileSelected={(file) => void handleUploadFlyer(file)}
+                  dirty={brandingDirty}
+                  saving={savingBrand}
+                  onSave={() => void handleSaveBranding()}
+                />
+              </section>
+            </div>
           </>
         ) : null}
       </div>
@@ -780,6 +547,15 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
         >
           {actionToast.message}
         </div>
+      ) : null}
+
+      {unsavedGuard.isPending ? (
+        <TeUnsavedChangesModal
+          kind={unsavedGuard.pendingKind ?? "navigate"}
+          sections={dirtySections}
+          onStay={unsavedGuard.stay}
+          onLeave={unsavedGuard.confirmLeave}
+        />
       ) : null}
 
       {deleteTarget ? (

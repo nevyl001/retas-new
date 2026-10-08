@@ -4,7 +4,13 @@ import type {
   TorneoExpressEvento,
 } from "../../lib/torneoExpress/types";
 import { resolveEventoEstadoFromCategorias } from "../../lib/torneoExpress/eventoEstadoFromCategorias";
-import { resolveEventoDisplayEstado } from "../../lib/torneoExpress/resolveDisplayEstado";
+import {
+  classifyEventoTemporal,
+  EVENTO_FILTROS,
+  filterEventos,
+  summarizeEventos,
+  type EventoFiltro,
+} from "../../lib/torneoExpress/eventoTemporal";
 import {
   deleteEvento,
   fetchEventosByOrganizador,
@@ -12,50 +18,30 @@ import {
   formatSupabaseError,
   syncEventoEstadoFromCategorias,
 } from "../../services/torneoExpressService";
-import { Badge, Button } from "../ui";
+import { Button } from "../ui";
+import { TablerIcon } from "../ui/TablerIcon";
 import { ActionBar } from "../platform/ActionBar";
 import { ModeHeader } from "../platform/ModeHeader";
 import { useClubModeEyebrow } from "../../club-experience";
 import { TePageShell } from "./TePageShell";
 import { CrearEventoModal } from "./CrearEventoModal";
 import { EventoDeleteModal } from "./EventoDeleteModal";
+import { EventoListaCard } from "./EventoListaCard";
 import { navigateTorneoExpress } from "./torneoExpressNav";
 import "./te-eventos.css";
 import "./te-inicio-page.css";
 import "./te-fondos.css";
+import "./te-eventos-lista.css";
 
-function formatFecha(iso: string | null): string | null {
-  if (!iso) return null;
-  try {
-    return new Date(`${iso}T12:00:00`).toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
-}
+/** Con pocos eventos el buscador sobra; aparece cuando la lista empieza a crecer. */
+const SEARCH_MIN_EVENTOS = 4;
 
-function formatFechaCard(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
-}
-
-function isEventoActivo(estado: TorneoExpressEvento["estado"]): boolean {
-  return estado === "published" || estado === "in_progress";
-}
-
-function isEventoFinalizado(estado: TorneoExpressEvento["estado"]): boolean {
-  return estado === "completed" || estado === "archived";
-}
+const FILTRO_EMPTY_LABEL: Record<Exclude<EventoFiltro, "todos">, string> = {
+  en_curso: "en curso",
+  proximo: "próximos",
+  borrador: "en borrador",
+  finalizado: "finalizados",
+};
 
 export const EventosLista: React.FC = () => {
   const modeEyebrow = useClubModeEyebrow();
@@ -70,6 +56,8 @@ export const EventosLista: React.FC = () => {
     null
   );
   const [deleting, setDeleting] = useState(false);
+  const [filtro, setFiltro] = useState<EventoFiltro>("todos");
+  const [query, setQuery] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -115,26 +103,22 @@ export const EventosLista: React.FC = () => {
     void load();
   }, [load]);
 
-  const activos = useMemo(
-    () => eventos.filter((e) => isEventoActivo(e.estado)),
-    [eventos]
-  );
-  const finalizados = useMemo(
-    () => eventos.filter((e) => isEventoFinalizado(e.estado)),
-    [eventos]
-  );
-  const otros = useMemo(
-    () =>
-      eventos.filter(
-        (e) => !isEventoActivo(e.estado) && !isEventoFinalizado(e.estado)
-      ),
-    [eventos]
+  // Clasificación temporal por zona horaria del evento (ver eventoTemporal.ts).
+  // Los contadores de los filtros y la lista salen de la misma función.
+  const resumen = useMemo(() => summarizeEventos(eventos), [eventos]);
+  const visibles = useMemo(
+    () => filterEventos(eventos, { filtro, query }),
+    [eventos, filtro, query]
   );
 
-  const empty = useMemo(
-    () => !loading && eventos.length === 0,
-    [loading, eventos.length]
-  );
+  const hasEventos = !loading && eventos.length > 0;
+  const showSearch = hasEventos && eventos.length >= SEARCH_MIN_EVENTOS;
+  const isFiltering = filtro !== "todos" || query.trim() !== "";
+
+  const clearFilters = () => {
+    setFiltro("todos");
+    setQuery("");
+  };
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
@@ -157,96 +141,8 @@ export const EventosLista: React.FC = () => {
     }
   };
 
-  const renderEventoCard = (ev: TorneoExpressEvento) => {
-    const nCat = (categoriasByEvento[ev.id] ?? []).length;
-    const displayEstado = resolveEventoDisplayEstado({
-      estado: ev.estado,
-      fecha_inicio: ev.fecha_inicio,
-      timezone: ev.timezone,
-    });
-    const activo = isEventoActivo(displayEstado);
-    const finalizado = isEventoFinalizado(displayEstado);
-    const fi = formatFecha(ev.fecha_inicio);
-    const ff = formatFecha(ev.fecha_fin);
-    const rango = [fi, ff].filter(Boolean).join(" – ");
-    const fechaTop =
-      formatFecha(ev.fecha_inicio) ||
-      formatFechaCard(ev.created_at);
-
-    return (
-      <li
-        key={ev.id}
-        className={`te-torneo-card rv-card${
-          activo ? " te-torneo-card--activo" : " te-torneo-card--finalizado"
-        }`}
-      >
-        <div className="te-torneo-card__inner">
-          <div className="te-torneo-card__body">
-            <div className="te-torneo-card__meta-top">
-              {activo ? (
-                <Badge variant="live" className="te-torneo-card__badge-live">
-                  {displayEstado === "in_progress" ? "EN CURSO" : "PUBLICADO"}
-                </Badge>
-              ) : finalizado ? (
-                <Badge variant="finished" className="te-torneo-card__badge-done">
-                  FINALIZADO
-                </Badge>
-              ) : (
-                <Badge variant="pending" className="te-torneo-card__badge-done">
-                  BORRADOR
-                </Badge>
-              )}
-              <span className="te-torneo-card__fecha">{fechaTop}</span>
-            </div>
-
-            <h3 className="te-torneo-card__nombre">{ev.nombre}</h3>
-            <p className="te-torneo-card__meta-line">
-              {rango ? (
-                <>
-                  <span>{rango}</span>
-                  <span className="te-torneo-card__meta-sep" aria-hidden>
-                    ·
-                  </span>
-                </>
-              ) : null}
-              <span>
-                {nCat === 1 ? "1 categoría" : `${nCat} categorías`}
-              </span>
-            </p>
-          </div>
-
-          <footer className="te-torneo-card__footer">
-            <div className="te-torneo-card__actions-bar">
-              <Button
-                type="button"
-                variant="primary"
-                size="sm"
-                className="te-torneo-card__btn-manage"
-                onClick={() =>
-                  navigateTorneoExpress(`/torneo-express/evento/${ev.id}`)
-                }
-              >
-                Abrir
-              </Button>
-
-              <div className="te-torneo-card__actions-end">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="te-btn-eliminar-torneo"
-                  disabled={deleting}
-                  onClick={() => setDeleteTarget(ev)}
-                >
-                  Eliminar
-                </Button>
-              </div>
-            </div>
-          </footer>
-        </div>
-      </li>
-    );
-  };
+  const countFor = (id: EventoFiltro): number =>
+    id === "todos" ? resumen.total : resumen[id];
 
   return (
     <TePageShell className="te-inicio-page te-eventos-page">
@@ -270,71 +166,154 @@ export const EventosLista: React.FC = () => {
           />
         </div>
 
-        <div className="te-eventos-toolbar">
-          <Button
-            type="button"
-            variant="primary"
-            onClick={() => setCreateOpen(true)}
-          >
-            Crear evento
-          </Button>
-        </div>
-
-        {error ? <p className="te-error">{error}</p> : null}
-
-        <section
-          className="te-torneos-section"
-          aria-labelledby="te-eventos-list-heading"
-        >
-          <div className="te-torneos-section__head">
-            <h2
-              id="te-eventos-list-heading"
-              className="te-torneos-section__title rv-section-title"
-            >
+        <section className="te-ev" aria-labelledby="te-eventos-list-heading">
+          <div className="te-ev__head">
+            <h2 id="te-eventos-list-heading" className="te-ev__title">
               Tus eventos
             </h2>
-            {!loading && activos.length > 0 ? (
-              <span className="te-torneos-section__count">
-                {activos.length} {activos.length === 1 ? "activo" : "activos"}
-              </span>
-            ) : null}
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              className="te-ev__create"
+              onClick={() => setCreateOpen(true)}
+            >
+              <TablerIcon name="plus" size={16} />
+              Crear evento
+            </Button>
           </div>
 
+          {error ? (
+            <div className="te-ev__error" role="alert">
+              <p>{error}</p>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => void load()}
+              >
+                Reintentar
+              </Button>
+            </div>
+          ) : null}
+
+          {hasEventos ? (
+            <div className="te-ev__controls">
+              <div
+                className="te-ev__filters"
+                role="group"
+                aria-label="Filtrar eventos por estado"
+              >
+                {EVENTO_FILTROS.map(({ id, label }) => {
+                  const count = countFor(id);
+                  const active = filtro === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className={`te-ev__chip${active ? " is-active" : ""}`}
+                      aria-pressed={active}
+                      onClick={() => setFiltro(id)}
+                    >
+                      {label}
+                      <span className="te-ev__chip-count">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {showSearch ? (
+                <div className="te-ev__search">
+                  <TablerIcon name="search" size={16} className="te-ev__search-icon" />
+                  <input
+                    type="search"
+                    className="te-ev__search-input"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Buscar evento"
+                    aria-label="Buscar evento por nombre"
+                    autoComplete="off"
+                  />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           {loading ? (
-            <ul className="te-torneos-skeleton" aria-busy="true">
-              <li className="te-torneos-skeleton__card" />
-              <li className="te-torneos-skeleton__card" />
+            <ul className="te-ev__grid" aria-busy="true" aria-label="Cargando eventos">
+              {[0, 1, 2].map((i) => (
+                <li key={i} className="te-ev-skeleton" aria-hidden>
+                  <div className="te-ev-skeleton__media" />
+                  <div className="te-ev-skeleton__body">
+                    <span className="te-ev-skeleton__line te-ev-skeleton__line--title" />
+                    <span className="te-ev-skeleton__line" />
+                    <span className="te-ev-skeleton__line te-ev-skeleton__line--short" />
+                  </div>
+                  <div className="te-ev-skeleton__footer" />
+                </li>
+              ))}
             </ul>
           ) : null}
 
-          {empty ? (
-            <div className="te-torneos-empty">
-              <p>Aún no tienes eventos.</p>
-              <p>Crea uno con «Crear evento» para comenzar.</p>
+          {!loading && eventos.length === 0 && !error ? (
+            <div className="te-ev__empty">
+              <TablerIcon name="trophy" size={28} className="te-ev__empty-icon" />
+              <h3 className="te-ev__empty-title">Aún no tienes eventos</h3>
+              <p className="te-ev__empty-text">
+                Crea tu primer evento para agrupar categorías bajo un mismo
+                flyer, fechas y reglas.
+              </p>
+              <Button type="button" variant="primary" onClick={() => setCreateOpen(true)}>
+                Crear evento
+              </Button>
             </div>
           ) : null}
 
-          {!loading && activos.length > 0 ? (
-            <div className="te-torneos-group">
-              <h3 className="te-torneos-group__label">En curso</h3>
-              <ul className="te-torneos-cards">{activos.map(renderEventoCard)}</ul>
+          {hasEventos && visibles.length === 0 ? (
+            <div className="te-ev__empty te-ev__empty--filtered">
+              <h3 className="te-ev__empty-title">
+                {query.trim()
+                  ? "Sin resultados"
+                  : filtro !== "todos"
+                    ? `No tienes eventos ${FILTRO_EMPTY_LABEL[filtro]}`
+                    : "Sin eventos"}
+              </h3>
+              <p className="te-ev__empty-text">
+                {query.trim()
+                  ? "Ningún evento coincide con tu búsqueda en este filtro."
+                  : "Cambia el filtro para ver el resto de tus eventos."}
+              </p>
+              {isFiltering ? (
+                <Button type="button" variant="secondary" size="sm" onClick={clearFilters}>
+                  Ver todos los eventos
+                </Button>
+              ) : null}
             </div>
           ) : null}
 
-          {!loading && otros.length > 0 ? (
-            <div className="te-torneos-group">
-              <h3 className="te-torneos-group__label">Otros</h3>
-              <ul className="te-torneos-cards">{otros.map(renderEventoCard)}</ul>
-            </div>
-          ) : null}
-
-          {!loading && finalizados.length > 0 ? (
-            <div className="te-torneos-group">
-              <h3 className="te-torneos-group__label">Finalizados</h3>
-              <ul className="te-torneos-cards">
-                {finalizados.map(renderEventoCard)}
+          {hasEventos && visibles.length > 0 ? (
+            <>
+              <p className="te-ev__sr-status" role="status" aria-live="polite">
+                {visibles.length === 1
+                  ? "1 evento"
+                  : `${visibles.length} eventos`}
+              </p>
+              <ul className="te-ev__grid">
+                {visibles.map((ev) => (
+                  <EventoListaCard
+                    key={ev.id}
+                    evento={ev}
+                    categoriaCount={(categoriasByEvento[ev.id] ?? []).length}
+                    temporal={classifyEventoTemporal(ev)}
+                    deleting={deleting}
+                    onManage={() =>
+                      navigateTorneoExpress(`/torneo-express/evento/${ev.id}`)
+                    }
+                    onDelete={() => setDeleteTarget(ev)}
+                  />
+                ))}
               </ul>
-            </div>
+            </>
           ) : null}
         </section>
       </div>
