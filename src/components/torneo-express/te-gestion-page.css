@@ -3165,3 +3165,72 @@
     transition: none;
   }
 }
+
+/* —— Nuevo grupo (con la fase de grupos ya iniciada) —— */
+.te-define-pair-dialog.te-move-pairs-dialog.te-new-group-dialog {
+  width: min(100%, 46rem);
+}
+
+.te-new-group__field {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--ro-text-muted, #a0a0a0);
+}
+
+.te-new-group__field input {
+  min-height: 2.5rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--ro-border, #2a2a2a);
+  background-color: var(--ro-bg-surface, #0f0f0f);
+  color: var(--ro-text-primary, #f4f4f4);
+  font: inherit;
+}
+
+.te-new-group__section {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.te-new-group__section h3 {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted, #a0a0a0);
+}
+
+.te-new-group__existing {
+  display: grid;
+  gap: 0.3rem;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.te-new-group__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.te-new-group__row small {
+  color: var(--ro-text-muted, #a0a0a0);
+}
+
+.te-new-group__summary {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: var(--ro-text-secondary, #c8c8c8);
+}
+
+.te-new-group__hint {
+  margin: 0;
+  font-size: 0.8rem;
+}

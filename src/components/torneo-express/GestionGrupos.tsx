@@ -40,6 +40,7 @@ import { TeProgramarGrupoModal } from "./TeProgramarGrupoModal";
 import { DefinirParejaVirtualModal } from "./DefinirParejaVirtualModal";
 import { CambiarJugadorParejaModal } from "./CambiarJugadorParejaModal";
 import { CambiarParejasGrupoModal } from "./CambiarParejasGrupoModal";
+import { NuevoGrupoModal } from "./NuevoGrupoModal";
 import { puedeReiniciarFaseDeGrupos } from "../../lib/torneoExpress/resetFaseGrupos";
 import { TeReprogramarProgramacionModal } from "./TeReprogramarProgramacionModal";
 import type { ScheduleMode } from "../../lib/torneoExpress/schedulePendingGroup";
@@ -128,6 +129,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     label: string;
   } | null>(null);
   const [pairsOpen, setPairsOpen] = useState(false);
+  const [newGroupOpen, setNewGroupOpen] = useState(false);
   const [playerChangeOpen, setPlayerChangeOpen] = useState(false);
   const [vista, setVista] = useState<"grupos" | "eliminatoria">("grupos");
   const [mobileTab, setMobileTab] = useState<TeMobileTabId>("resumen");
@@ -266,6 +268,14 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           onClick={() => setPairsOpen(true)}
         >
           Cambiar parejas
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => setNewGroupOpen(true)}
+        >
+          Nuevo grupo
         </Button>
         <Button
           type="button"
@@ -1479,6 +1489,24 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           onSaved={async () => {
             await reload({ silent: true });
             showActionToast("Parejas de grupo actualizadas.", "success");
+          }}
+        />
+      ) : null}
+
+      {newGroupOpen && bundle && user?.id ? (
+        <NuevoGrupoModal
+          open
+          torneoId={torneoId}
+          sourceTournamentId={bundle.torneo.source_tournament_id}
+          userId={user.id}
+          grupos={bundle.grupos}
+          parejasPorGrupo={bundle.parejasPorGrupo}
+          partidosPorGrupo={bundle.partidosPorGrupo}
+          occupiedPlayerIds={occupiedPlayerIds}
+          onClose={() => setNewGroupOpen(false)}
+          onCreated={async (message) => {
+            await reload({ silent: true });
+            showActionToast(message, "success");
           }}
         />
       ) : null}

@@ -215,3 +215,24 @@ describe("buildGroupReassignment", () => {
     });
   });
 });
+
+describe("buildGroupReassignment con partidos fijos", () => {
+  it("no empalma partidos nuevos con los de grupos que no se tocan", () => {
+    const slot = "2026-10-09T18:00:00.000Z";
+    const result = buildGroupReassignment({
+      grupos: [{ orden: 2, nombre: "B", parejaIds: ["b1", "b2"] }],
+      existentes: [
+        { localId: "b1", visitanteId: "b2", cancha: "1", programadoEn: slot },
+      ],
+      fixed: [{ localId: "a1", visitanteId: "a2", cancha: "1", programadoEn: slot }],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.payload.partidos).toHaveLength(1);
+    const [partido] = result.payload.partidos;
+    const same =
+      partido.cancha === "1" &&
+      new Date(partido.programado_en).getTime() === new Date(slot).getTime();
+    expect(same).toBe(false);
+  });
+});

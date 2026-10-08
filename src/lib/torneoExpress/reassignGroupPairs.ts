@@ -86,6 +86,11 @@ function hourAfter(iso: string): string | null {
 export function buildGroupReassignment(input: {
   grupos: ReassignGroupDraft[];
   existentes: ReassignExistingMatch[];
+  /**
+   * Partidos de grupos que no se tocan (ya iniciados): no se regeneran, pero
+   * sus horarios y canchas cuentan como ocupados para no empalmar.
+   */
+  fixed?: ReassignExistingMatch[];
   /** Hora de partida si ningún partido tiene día y cancha guardados. */
   anchorIso?: string;
 }): { ok: true; payload: ReassignPayload } | { ok: false; error: string } {
@@ -124,6 +129,22 @@ export function buildGroupReassignment(input: {
     })
     .filter((row): row is { key: string; slot: Slot } => row !== null);
 
+  const fixedSlots: Slot[] = (input.fixed ?? [])
+    .map((match) => {
+      const cancha = (match.cancha == null ? "" : String(match.cancha)).trim();
+      const programadoEn = (
+        match.programadoEn == null ? "" : String(match.programadoEn)
+      ).trim();
+      if (!cancha || !programadoEn) return null;
+      return {
+        cancha,
+        programadoEn,
+        localId: match.localId,
+        visitanteId: match.visitanteId,
+      };
+    })
+    .filter((slot): slot is Slot => slot !== null);
+
   const byMatchup = new Map<string, Slot>();
   for (const row of stored) {
     if (!byMatchup.has(row.key)) byMatchup.set(row.key, row.slot);
@@ -135,6 +156,9 @@ export function buildGroupReassignment(input: {
     orden: number;
   }> = [];
   const usedMatchups = new Set<string>();
+  const isTaken = (slot: Slot): boolean =>
+    fixedSlots.some((other) => collides(other, slot)) ||
+    planned.some((other) => collides(other, slot));
 
   for (const grupo of input.grupos) {
     const matches = generateBalancedRoundRobin(grupo.parejaIds);
@@ -148,7 +172,7 @@ export function buildGroupReassignment(input: {
         localId: match.localId,
         visitanteId: match.visitanteId,
       };
-      if (planned.some((placed) => collides(placed, slot))) continue;
+      if (isTaken(slot)) continue;
       usedMatchups.add(key);
       planned.push({
         ...slot,
@@ -184,13 +208,14 @@ export function buildGroupReassignment(input: {
     }
   }
 
+  const knownSlots = [...stored.map((row) => row.slot), ...fixedSlots];
   const courts =
-    stored.length > 0
-      ? Array.from(new Set(stored.map((row) => row.slot.cancha)))
+    knownSlots.length > 0
+      ? Array.from(new Set(knownSlots.map((slot) => slot.cancha)))
       : ["1"];
   let latest =
-    stored.reduce<string | null>(
-      (max, row) => laterIso(max, row.slot.programadoEn),
+    knownSlots.reduce<string | null>(
+      (max, slot) => laterIso(max, slot.programadoEn),
       null
     ) ??
     input.anchorIso?.trim() ??
@@ -199,7 +224,7 @@ export function buildGroupReassignment(input: {
   for (const match of pending) {
     const fromPool = pool.findIndex((slot) => {
       const trial: Slot = { ...slot, localId: match.localId, visitanteId: match.visitanteId };
-      return !planned.some((placed) => collides(placed, trial));
+      return !isTaken(trial);
     });
     if (fromPool >= 0) {
       const slot = pool.splice(fromPool, 1)[0]!;
@@ -228,7 +253,7 @@ export function buildGroupReassignment(input: {
           localId: match.localId,
           visitanteId: match.visitanteId,
         };
-        if (planned.some((item) => collides(item, trial))) continue;
+        if (isTaken(trial)) continue;
         planned.push({
           ...trial,
           grupoOrden: match.grupoOrden,
