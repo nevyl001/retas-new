@@ -26,10 +26,10 @@ interface GestionEliminatoriaProps {
     partidoId: string,
     sets: PartidoSetScore[]
   ) => Promise<void>;
-  onSaveCancha: (partidoId: string, cancha: string | null) => Promise<void>;
-  onSaveProgramado: (
+  onSaveProgramacion: (
     partidoId: string,
-    programadoEn: string | null
+    programadoEn: string,
+    cancha: string
   ) => Promise<void>;
   onRescheduleRonda?: (
     ronda: number,
@@ -52,8 +52,7 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
   savingEliminatoriaReprogramacion = false,
   courtCheckScope = [],
   onSaveResultado,
-  onSaveCancha,
-  onSaveProgramado,
+  onSaveProgramacion,
   onRescheduleRonda,
   onRescheduleToast,
 }) => {
@@ -120,8 +119,7 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
             partidoFormato={bundle.partido_formato}
             courtCheckScope={courtCheckScope}
             onSaveResultado={editable && !cerrado ? onSaveResultado : undefined}
-            onSaveCancha={onSaveCancha}
-            onSaveProgramado={onSaveProgramado}
+            onSaveProgramacion={onSaveProgramacion}
             onEditRoundSchedule={
               canBulkSchedule
                 ? (ronda, label) => {

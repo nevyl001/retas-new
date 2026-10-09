@@ -3661,6 +3661,72 @@ export async function saveEliminatoriaProgramado(
   return data as TorneoExpressEliminatoriaPartido;
 }
 
+export async function saveEliminatoriaProgramacion(
+  partidoId: string,
+  programadoEn: string,
+  cancha: string | null
+): Promise<TorneoExpressEliminatoriaPartido> {
+  await requireAuthUser();
+  const scope = await fetchEliminatoriaPartidosForConflictCheck(partidoId);
+  const current = scope.find((p) => p.id === partidoId);
+  if (!current) throw new Error("Partido eliminatorio no encontrado");
+
+  let plan: ScheduleSlotChangePlan;
+  try {
+    plan = planScheduleSlotChange(current, programadoEn, cancha ?? "", scope);
+  } catch (e) {
+    if (e instanceof Error && e.message === PARTIDO_CANCHA_OCUPADA_MSG) {
+      const hit = findPartidoCourtSlotConflict(
+        partidoId,
+        programadoEn,
+        cancha,
+        scope
+      );
+      if (hit) throwCourtOccupied(hit);
+    }
+    throw e instanceof Error ? e : new Error(PARTIDO_CANCHA_OCUPADA_MSG);
+  }
+
+  if (plan.kind === "noop") {
+    const { data } = await supabase
+      .from("torneo_express_eliminatoria_partidos")
+      .select("*")
+      .eq("id", partidoId)
+      .maybeSingle();
+    return (
+      (data as TorneoExpressEliminatoriaPartido) ??
+      (current as unknown as TorneoExpressEliminatoriaPartido)
+    );
+  }
+
+  if (plan.kind === "swap") {
+    const swap = plan;
+    const other = scope.find((p) => p.id === swap.swapWithId);
+    const source = getCourtCheckMeta(other!)?.source ?? "eliminatoria";
+    await updateCourtFieldBySource(swap.swapWithId, source, {
+      cancha: swap.swapCancha,
+      programado_en: swap.swapProgramadoEn,
+    });
+  }
+
+  const { data, error } = await supabase
+    .from("torneo_express_eliminatoria_partidos")
+    .update({
+      programado_en: plan.programado_en,
+      cancha: plan.cancha,
+    })
+    .eq("id", partidoId)
+    .select()
+    .single();
+
+  if (isBracketSchemaError(error)) {
+    throw new BracketSchemaMissingError();
+  }
+  throwIfError(error, "update programacion eliminatoria");
+  if (!data) throw new Error("No se pudo guardar día, hora y cancha");
+  return data as TorneoExpressEliminatoriaPartido;
+}
+
 // ---------------------------------------------------------------------------
 // Evento contenedor (Fase 2 — sin partidos / standings / career)
 // ---------------------------------------------------------------------------

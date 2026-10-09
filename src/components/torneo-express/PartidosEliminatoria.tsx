@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   canchaDraftFromStored,
   formatCanchaDisplay,
@@ -20,11 +20,9 @@ import {
 } from "../../lib/torneoExpress/courtCheckScope";
 import {
   findPartidoCourtSlotConflict,
-  planCanchaChange,
-  planProgramadoChange,
+  planScheduleSlotChange,
   PARTIDO_CANCHA_OCUPADA_MSG,
-  type CanchaChangePlan,
-  type ProgramadoChangePlan,
+  type ScheduleSlotChangePlan,
 } from "../../lib/torneoExpress/partidoCourtSlotConflict";
 import {
   formatPartidoFecha,
@@ -61,10 +59,10 @@ interface PartidosEliminatoriaProps {
     partidoId: string,
     sets: PartidoSetScore[]
   ) => Promise<void>;
-  onSaveCancha?: (partidoId: string, cancha: string | null) => Promise<void>;
-  onSaveProgramado?: (
+  onSaveProgramacion?: (
     partidoId: string,
-    programadoEn: string | null
+    programadoEn: string,
+    cancha: string
   ) => Promise<void>;
   /** Abre el editor de programación masiva de la ronda visible. */
   onEditRoundSchedule?: (ronda: number, rondaLabel: string) => void;
@@ -100,8 +98,7 @@ function EliminatoriaPartidoCard({
   matchNumber,
   courtCheckScope,
   onSave,
-  onSaveCancha,
-  onSaveProgramado,
+  onSaveProgramacion,
   partidoFormato = "flexible",
 }: {
   partido: TorneoExpressEliminatoriaPartido;
@@ -114,63 +111,86 @@ function EliminatoriaPartidoCard({
   matchNumber: number;
   courtCheckScope: Array<TorneoExpressPartido | TeCourtCheckPartido>;
   onSave?: PartidosEliminatoriaProps["onSaveResultado"];
-  onSaveCancha?: PartidosEliminatoriaProps["onSaveCancha"];
-  onSaveProgramado?: PartidosEliminatoriaProps["onSaveProgramado"];
+  onSaveProgramacion?: PartidosEliminatoriaProps["onSaveProgramacion"];
   partidoFormato?: TorneoExpressPartidoFormato;
 }) {
   const played = partido.estado === "jugado";
   const [setsModalOpen, setSetsModalOpen] = useState(false);
-  const [canchaEditOpen, setCanchaEditOpen] = useState(false);
-  const [horarioEditOpen, setHorarioEditOpen] = useState(false);
-  const [canchaDraft, setCanchaDraft] = useState(() =>
-    canchaDraftFromStored(partido.cancha)
-  );
-  const [canchaError, setCanchaError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const [horarioError, setHorarioError] = useState<string | null>(null);
   const [swapPrompt, setSwapPrompt] = useState<string | null>(null);
-  const [pendingSwapIso, setPendingSwapIso] = useState<string | null>(null);
+  const [pendingSlot, setPendingSlot] = useState<{
+    programadoEn: string;
+    cancha: string;
+  } | null>(null);
   const schedulePartido = asSchedulePartido(partido);
   const initialSchedule = programadoDraftFromPartido(schedulePartido);
   const [draftDate, setDraftDate] = useState(initialSchedule.date);
   const [draftTime, setDraftTime] = useState(initialSchedule.time);
+  const [draftCancha, setDraftCancha] = useState(() =>
+    canchaDraftFromStored(partido.cancha)
+  );
 
-  const persistHorario = (next: string | null) => {
-    if (!onSaveProgramado) return;
+  useEffect(() => {
+    if (editing) return;
+    const next = programadoDraftFromPartido(asSchedulePartido(partido));
+    setDraftDate(next.date);
+    setDraftTime(next.time);
+    setDraftCancha(canchaDraftFromStored(partido.cancha));
+  }, [editing, partido]);
+
+  const closeEdit = () => {
+    const next = programadoDraftFromPartido(schedulePartido);
+    setDraftDate(next.date);
+    setDraftTime(next.time);
+    setDraftCancha(canchaDraftFromStored(partido.cancha));
     setHorarioError(null);
     setSwapPrompt(null);
-    setPendingSwapIso(null);
-    void onSaveProgramado(partido.id, next)
-      .then(() => setHorarioEditOpen(false))
+    setPendingSlot(null);
+    setEditing(false);
+  };
+
+  const persistSlot = (programadoEn: string, cancha: string) => {
+    if (!onSaveProgramacion) return;
+    setHorarioError(null);
+    setSwapPrompt(null);
+    setPendingSlot(null);
+    void onSaveProgramacion(partido.id, programadoEn, cancha)
+      .then(() => closeEdit())
       .catch((e) => {
         setHorarioError(
-          e instanceof Error ? e.message : "No se pudo guardar fecha y hora"
+          e instanceof Error ? e.message : "No se pudo guardar día, hora y cancha"
         );
       });
   };
 
-  const guardarHorario = () => {
-    if (!onSaveProgramado) return;
+  const guardarProgramacion = () => {
+    if (!onSaveProgramacion) return;
     const next = programadoIsoFromDraft(draftDate, draftTime);
     if (!next) {
       setHorarioError("Revisa la fecha y la hora");
+      setSwapPrompt(null);
+      setPendingSlot(null);
       return;
     }
-    if (courtCheckScope.length === 0) {
-      persistHorario(next);
-      return;
-    }
-    let plan: ProgramadoChangePlan;
+    const cancha = normalizeCanchaForSave(draftCancha);
+    let plan: ScheduleSlotChangePlan;
     try {
-      plan = planProgramadoChange(schedulePartido, next, courtCheckScope);
+      plan = planScheduleSlotChange(
+        schedulePartido,
+        next,
+        cancha,
+        courtCheckScope
+      );
     } catch (e) {
       const hit = findPartidoCourtSlotConflict(
         partido.id,
         next,
-        partido.cancha,
+        cancha,
         courtCheckScope
       );
       setSwapPrompt(null);
-      setPendingSwapIso(null);
+      setPendingSlot(null);
       setHorarioError(
         hit
           ? formatCourtOccupiedError(hit)
@@ -181,73 +201,30 @@ function EliminatoriaPartidoCard({
       return;
     }
     if (plan.kind === "noop") {
-      setHorarioEditOpen(false);
+      closeEdit();
       return;
     }
     if (plan.kind === "swap") {
-      const swapWithId = plan.swapWithId;
-      const occupiedIso = plan.programado_en;
-      const freedIso = plan.swapProgramadoEn;
+      const swap = plan;
       const conflict =
-        courtCheckScope.find((p) => p.id === swapWithId) ?? schedulePartido;
+        courtCheckScope.find((p) => p.id === swap.swapWithId) ??
+        schedulePartido;
       setHorarioError(null);
-      setPendingSwapIso(occupiedIso);
+      setPendingSlot({
+        programadoEn: swap.programado_en,
+        cancha: swap.cancha,
+      });
       setSwapPrompt(
         formatCourtSwapPrompt({
-          occupiedProgramadoEn: occupiedIso,
-          freedProgramadoEn: freedIso,
+          occupiedProgramadoEn: swap.programado_en,
+          freedProgramadoEn: swap.swapProgramadoEn,
           conflict,
+          ownMatchup: `${localLabel} / ${visitLabel}`,
         })
       );
       return;
     }
-    persistHorario(plan.programado_en);
-  };
-
-  const guardarCancha = () => {
-    if (!onSaveCancha) return;
-    const next = normalizeCanchaForSave(canchaDraft);
-    if (courtCheckScope.length === 0) {
-      void onSaveCancha(partido.id, next)
-        .then(() => setCanchaEditOpen(false))
-        .catch((e) => {
-          setCanchaError(
-            e instanceof Error ? e.message : PARTIDO_CANCHA_OCUPADA_MSG
-          );
-        });
-      return;
-    }
-    let plan: CanchaChangePlan;
-    try {
-      plan = planCanchaChange(schedulePartido, next, courtCheckScope);
-    } catch (e) {
-      const hit = findPartidoCourtSlotConflict(
-        partido.id,
-        partidoScheduleIso(schedulePartido),
-        next,
-        courtCheckScope
-      );
-      setCanchaError(
-        hit
-          ? formatCourtOccupiedError(hit)
-          : e instanceof Error
-            ? e.message
-            : PARTIDO_CANCHA_OCUPADA_MSG
-      );
-      return;
-    }
-    if (plan.kind === "noop") {
-      setCanchaEditOpen(false);
-      return;
-    }
-    setCanchaError(null);
-    void onSaveCancha(partido.id, plan.cancha)
-      .then(() => setCanchaEditOpen(false))
-      .catch((e) => {
-        setCanchaError(
-          e instanceof Error ? e.message : "No se pudo guardar la cancha"
-        );
-      });
+    persistSlot(plan.programado_en, plan.cancha);
   };
 
   const winnerSide = played ? matchWinnerSideFromPartido(partido) : null;
@@ -317,14 +294,14 @@ function EliminatoriaPartidoCard({
         </div>
 
         <div className="te-partido-meta-chips">
-          {onSaveProgramado ? (
+          {onSaveProgramacion ? (
             <button
               type="button"
               className="te-partido-chip"
               disabled={metaBusy}
               onClick={(e) => {
                 e.stopPropagation();
-                setHorarioEditOpen(true);
+                setEditing(true);
               }}
             >
               <span className="te-partido-chip__icon" aria-hidden>
@@ -340,14 +317,14 @@ function EliminatoriaPartidoCard({
               {fechaLabel}
             </span>
           )}
-          {onSaveProgramado ? (
+          {onSaveProgramacion ? (
             <button
               type="button"
               className="te-partido-chip"
               disabled={metaBusy}
               onClick={(e) => {
                 e.stopPropagation();
-                setHorarioEditOpen(true);
+                setEditing(true);
               }}
             >
               <span className="te-partido-chip__icon" aria-hidden>
@@ -364,14 +341,14 @@ function EliminatoriaPartidoCard({
             </span>
           )}
           {hasCancha ? (
-            onSaveCancha ? (
+            onSaveProgramacion ? (
               <button
                 type="button"
                 className="te-partido-chip te-partido-chip--cancha"
                 disabled={metaBusy}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setCanchaEditOpen(true);
+                  setEditing(true);
                 }}
               >
                 <span className="te-partido-chip__icon" aria-hidden>
@@ -387,14 +364,14 @@ function EliminatoriaPartidoCard({
                 {canchaLabel}
               </span>
             )
-          ) : onSaveCancha ? (
+          ) : onSaveProgramacion ? (
             <button
               type="button"
               className="te-partido-chip te-partido-chip--cancha te-partido-chip--muted"
               disabled={metaBusy}
               onClick={(e) => {
                 e.stopPropagation();
-                setCanchaEditOpen(true);
+                setEditing(true);
               }}
             >
               Asignar cancha
@@ -448,152 +425,129 @@ function EliminatoriaPartidoCard({
           </span>
         </div>
 
-        {(horarioEditOpen || canchaEditOpen) && (
+        {editing && onSaveProgramacion ? (
           <div
             className="te-partido-meta-edit"
             onClick={(e) => e.stopPropagation()}
           >
-            {horarioEditOpen && onSaveProgramado ? (
-              <div className="te-partido-meta-edit__section">
-                <p className="te-partido-meta-edit__heading">Fecha y hora</p>
-                <div className="te-partido-meta-edit__row">
-                  <label className="te-partido-meta-edit__field">
-                    <span className="te-partido-meta-edit__field-label">
-                      Fecha
-                    </span>
-                    <input
-                      type="date"
-                      className="te-partido-meta-edit__input"
-                      value={draftDate}
-                      disabled={savingProgramado}
-                      onChange={(e) => setDraftDate(e.target.value)}
-                    />
-                  </label>
-                  <label className="te-partido-meta-edit__field">
-                    <span className="te-partido-meta-edit__field-label">
-                      Hora
-                    </span>
-                    <input
-                      type="time"
-                      className="te-partido-meta-edit__input"
-                      value={draftTime}
-                      disabled={savingProgramado}
-                      onChange={(e) => setDraftTime(e.target.value)}
-                    />
-                  </label>
-                </div>
-                {swapPrompt ? (
-                  <p className="te-partido-meta-edit__confirm" role="status">
-                    {swapPrompt}
-                  </p>
-                ) : null}
-                <div className="te-partido-meta-edit__actions">
-                  {swapPrompt ? (
-                    <>
-                      <Button
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        loading={savingProgramado}
-                        disabled={savingProgramado}
-                        onClick={() => {
-                          if (pendingSwapIso) persistHorario(pendingSwapIso);
-                        }}
-                      >
-                        Intercambiar
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={savingProgramado}
-                        onClick={() => {
-                          setSwapPrompt(null);
-                          setPendingSwapIso(null);
-                        }}
-                      >
-                        No intercambiar
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        loading={savingProgramado}
-                        disabled={savingProgramado}
-                        onClick={guardarHorario}
-                      >
-                        Guardar
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setHorarioEditOpen(false);
-                          setHorarioError(null);
-                          setSwapPrompt(null);
-                          setPendingSwapIso(null);
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                    </>
-                  )}
-                </div>
-                {horarioError ? (
-                  <p className="te-partido-meta-edit__error">{horarioError}</p>
-                ) : null}
-              </div>
-            ) : null}
-            {canchaEditOpen && onSaveCancha ? (
-              <div className="te-partido-meta-edit__section">
-                <p className="te-partido-meta-edit__heading">Cancha</p>
-                <label className="te-partido-meta-edit__field te-partido-meta-edit__field--full">
+            <div className="te-partido-meta-edit__section">
+              <p className="te-partido-meta-edit__heading">Día, hora y cancha</p>
+              <div className="te-partido-meta-edit__row">
+                <label className="te-partido-meta-edit__field">
+                  <span className="te-partido-meta-edit__field-label">
+                    Fecha
+                  </span>
                   <input
-                    type="text"
+                    type="date"
                     className="te-partido-meta-edit__input"
-                    value={canchaDraft}
-                    maxLength={24}
-                    disabled={savingCancha}
+                    value={draftDate}
+                    disabled={metaBusy}
                     onChange={(e) => {
-                      setCanchaDraft(e.target.value);
-                      setCanchaError(null);
+                      setDraftDate(e.target.value);
+                      setSwapPrompt(null);
+                      setPendingSlot(null);
+                      setHorarioError(null);
                     }}
                   />
                 </label>
-                <div className="te-partido-meta-edit__actions">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    loading={savingCancha}
-                    disabled={savingCancha}
-                    onClick={guardarCancha}
-                  >
-                    Guardar
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setCanchaEditOpen(false);
-                      setCanchaError(null);
+                <label className="te-partido-meta-edit__field">
+                  <span className="te-partido-meta-edit__field-label">
+                    Hora
+                  </span>
+                  <input
+                    type="time"
+                    className="te-partido-meta-edit__input"
+                    value={draftTime}
+                    disabled={metaBusy}
+                    onChange={(e) => {
+                      setDraftTime(e.target.value);
+                      setSwapPrompt(null);
+                      setPendingSlot(null);
+                      setHorarioError(null);
                     }}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-                {canchaError ? (
-                  <p className="te-partido-meta-edit__error">{canchaError}</p>
-                ) : null}
+                  />
+                </label>
               </div>
-            ) : null}
+              <label className="te-partido-meta-edit__field te-partido-meta-edit__field--full">
+                <span className="te-partido-meta-edit__field-label">Cancha</span>
+                <input
+                  type="text"
+                  className="te-partido-meta-edit__input"
+                  value={draftCancha}
+                  maxLength={24}
+                  disabled={metaBusy}
+                  onChange={(e) => {
+                    setDraftCancha(e.target.value);
+                    setSwapPrompt(null);
+                    setPendingSlot(null);
+                    setHorarioError(null);
+                  }}
+                />
+              </label>
+              {swapPrompt ? (
+                <p className="te-partido-meta-edit__confirm" role="status">
+                  {swapPrompt}
+                </p>
+              ) : null}
+              <div className="te-partido-meta-edit__actions">
+                {swapPrompt ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      loading={metaBusy}
+                      disabled={metaBusy}
+                      onClick={() => {
+                        if (pendingSlot) {
+                          persistSlot(pendingSlot.programadoEn, pendingSlot.cancha);
+                        }
+                      }}
+                    >
+                      Intercambiar
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={metaBusy}
+                      onClick={() => {
+                        setSwapPrompt(null);
+                        setPendingSlot(null);
+                      }}
+                    >
+                      No intercambiar
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      loading={metaBusy}
+                      disabled={metaBusy}
+                      onClick={guardarProgramacion}
+                    >
+                      Guardar
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={closeEdit}
+                    >
+                      Cancelar
+                    </Button>
+                  </>
+                )}
+              </div>
+              {horarioError ? (
+                <p className="te-partido-meta-edit__error">{horarioError}</p>
+              ) : null}
+            </div>
           </div>
-        )}
+        ) : null}
 
         {canEditResult && played ? (
           <div className="te-partido-actions te-partido-actions--corner">
@@ -658,8 +612,7 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
   partidoFormato = "flexible",
   courtCheckScope = [],
   onSaveResultado,
-  onSaveCancha,
-  onSaveProgramado,
+  onSaveProgramacion,
   onEditRoundSchedule,
 }) => {
   const bracketSize = eliminatoriaBracketSize(fase, bracketSlots);
@@ -746,8 +699,7 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
             matchNumber={index + 1}
             courtCheckScope={courtCheckScope}
             onSave={onSaveResultado}
-            onSaveCancha={onSaveCancha}
-            onSaveProgramado={onSaveProgramado}
+            onSaveProgramacion={onSaveProgramacion}
             partidoFormato={partidoFormato}
           />
         ))}

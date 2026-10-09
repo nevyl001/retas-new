@@ -19,6 +19,7 @@ import {
   resetEliminatoriaTorneoExpress as persistResetEliminatoria,
   saveEliminatoriaCancha as persistEliminatoriaCancha,
   saveEliminatoriaProgramado as persistEliminatoriaProgramado,
+  saveEliminatoriaProgramacion as persistEliminatoriaProgramacion,
   saveEliminatoriaResultado as persistEliminatoriaResultado,
   saveGrupoNombre as persistGrupoNombre,
   savePartidoCancha,
@@ -448,6 +449,27 @@ export function useTorneoExpress(
     [reload]
   );
 
+  const saveEliminatoriaProgramacion = useCallback(
+    async (partidoId: string, programadoEn: string, cancha: string) => {
+      setSavingEliminatoriaProgramadoId(partidoId);
+      setError(null);
+      try {
+        await persistEliminatoriaProgramacion(partidoId, programadoEn, cancha);
+        await reload();
+      } catch (e) {
+        setError(
+          e instanceof Error
+            ? e.message
+            : "No se pudo guardar día, hora y cancha"
+        );
+        throw e;
+      } finally {
+        setSavingEliminatoriaProgramadoId(null);
+      }
+    },
+    [reload]
+  );
+
   const saveEliminatoriaProgramado = useCallback(
     async (partidoId: string, programadoEn: string | null) => {
       setSavingEliminatoriaProgramadoId(partidoId);
@@ -596,6 +618,7 @@ export function useTorneoExpress(
     saveEliminatoriaResultado,
     saveEliminatoriaCancha,
     saveEliminatoriaProgramado,
+    saveEliminatoriaProgramacion,
     finalizarTorneoEliminatoria,
     resyncTorneoCareer,
     reabrirTorneoEliminatoria,
