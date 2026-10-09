@@ -15,16 +15,13 @@ import {
 import type { EliminatoriaPossibleSlot } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
 import {
-  buildEliminatoriaPreviewCards,
   matchSlotsFromFaseTimeline,
-  previewCardsFromProjectedSlots,
   projectEliminatoriaMatchSlots,
 } from "../../lib/torneoExpress/eliminatoriaPreviewBracket";
 import type { ProjectedEliminatoriaMatchSlot } from "../../lib/torneoExpress/eliminatoriaPreviewBracket";
 import type { TorneoExpressEvento } from "../../lib/torneoExpress/types";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
 import { TEPublicEliminatoria } from "./public/TEPublicEliminatoria";
-import { TEPublicEliminatoriaPreview } from "./public/TEPublicEliminatoriaPreview";
 import { PublicEventNeutralLoading } from "../../club-experience";
 import { TE_PUBLIC_POLL_INTERVAL_MS } from "../../lib/torneoExpress/publicPoll";
 import "./public/te-public-grupos.css";
@@ -131,7 +128,6 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     setTimeout(() => setCopyMsg(""), 2500);
   };
 
-  const hasElimPartidos = (bundle?.eliminatoriaPartidos.length ?? 0) > 0;
   const gruposHref = `/torneo-express/${torneoId}/grupos`;
   const categorySlot = slots.find((slot) => slot.torneoId === torneoId);
   const scheduleStartAt = useMemo(
@@ -172,36 +168,6 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     scheduleCourts,
     scheduleStartAt,
   ]);
-  const preview = useMemo(() => {
-    if (!bundle) return null;
-    const fase = inferFaseEliminacion(
-      bundle.torneo.fase_eliminacion,
-      evento?.eliminatoria_duraciones
-    );
-    if (faseSlots && faseSlots.length > 0) {
-      const projected = projectEliminatoriaMatchSlots({
-        fase,
-        duraciones: evento?.eliminatoria_duraciones,
-      });
-      return {
-        cards: previewCardsFromProjectedSlots({
-          slots: faseSlots,
-          fase,
-          totalRondas: projected.totalRondas,
-          timeZone: evento?.timezone,
-        }),
-        totalRondas: projected.totalRondas,
-        fase,
-      };
-    }
-    return buildEliminatoriaPreviewCards({
-      fase,
-      startAt: scheduleStartAt,
-      courts: scheduleCourts,
-      duraciones: evento?.eliminatoria_duraciones,
-      timeZone: evento?.timezone,
-    });
-  }, [bundle, evento, faseSlots, scheduleCourts, scheduleStartAt]);
   const phaseNav = (
     <nav className="te-phase-segment" aria-label="Fase del torneo">
       <a className="te-phase-segment__item" href={gruposHref}>
@@ -230,17 +196,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
       {!loading && !bundle ? (
         <p className="te-public-error">{error ?? "Torneo no encontrado"}</p>
       ) : null}
-      {bundle && !hasElimPartidos && preview ? (
-        <TEPublicEliminatoriaPreview
-          bundle={bundle}
-          cards={preview.cards}
-          totalRondas={preview.totalRondas}
-          gruposHref={gruposHref}
-          eventoHref={eventoHref}
-          timeZone={evento?.timezone}
-        />
-      ) : null}
-      {bundle && hasElimPartidos ? (
+      {bundle ? (
         <TEPublicEliminatoria
           bundle={bundle}
           labelMap={eliminatoriaLabelMap}

@@ -169,7 +169,19 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
       ),
     [model.activeRonda, model.allBracketCards, model.totalRondas],
   );
-  const visibleStage = presentation.visibleRound;
+  const openingStage = useMemo(() => {
+    if (presentation.visibleRound) return presentation.visibleRound;
+    return (
+      buildBracketPresentationModel(
+        model.allBracketCards,
+        model.totalRondas,
+        model.activeRonda,
+        {},
+        { includePendingSlots: true },
+      ).rounds[0] ?? null
+    );
+  }, [model.activeRonda, model.allBracketCards, model.totalRondas, presentation.visibleRound]);
+  const visibleStage = openingStage;
   const isChampionStage = Boolean(
     visibleStage?.isFinalRound && visibleStage.isCompleted,
   );
