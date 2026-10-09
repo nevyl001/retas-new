@@ -154,11 +154,26 @@ function scheduleMs(iso: string | null): number | null {
 function formatHora(iso: string | null, timeZone?: string | null): string {
   if (!iso) return "Por confirmar";
   try {
-    return new Date(iso).toLocaleTimeString("es-MX", {
-      timeZone: resolveEventoTimeZone(timeZone),
+    const tz = resolveEventoTimeZone(timeZone);
+    const date = new Date(iso);
+    const day = date
+      .toLocaleDateString("es-MX", {
+        timeZone: tz,
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      })
+      .replace(/\./g, "")
+      .replace(/,/g, "")
+      .replace(/\s+de\s+/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const time = date.toLocaleTimeString("es-MX", {
+      timeZone: tz,
       hour: "2-digit",
       minute: "2-digit",
     });
+    return `${day} · ${time}`;
   } catch {
     return "Por confirmar";
   }
@@ -494,9 +509,11 @@ function applyScheduleProjection(
     if (!slot) continue;
     if (card.scheduleMs == null && slot.startMs != null) {
       card.scheduleMs = slot.startMs;
+    }
+    if (card.scheduleMs != null) {
       card.horaDisplay = formatHora(
-        new Date(slot.startMs).toISOString(),
-        projection.timeZone
+        new Date(card.scheduleMs).toISOString(),
+        projection?.timeZone
       );
     }
     if (!card.canchaLabel && slot.cancha) {

@@ -91,6 +91,9 @@ describe("horario público de eliminatoria", () => {
     expect(qf).toHaveLength(4);
     expect(qf[0].scheduleMs).toBe(Date.parse("2026-10-09T14:00:00.000Z"));
     expect(qf[3].scheduleMs).toBe(Date.parse("2026-10-09T15:00:00.000Z"));
+    expect(qf[0].horaDisplay).toMatch(/vie/i);
+    expect(qf[0].horaDisplay).toMatch(/9/);
+    expect(qf[0].horaDisplay).toMatch(/oct/i);
     expect(qf[0].horaDisplay).toMatch(/08:00/);
     expect(qf[0].canchaLabel).toBe("Cancha 1");
     expect(qf.every((card) => card.status === "pending")).toBe(true);
