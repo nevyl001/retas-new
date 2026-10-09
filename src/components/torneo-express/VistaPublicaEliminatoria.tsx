@@ -62,22 +62,15 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     if (!hasBundle) {
       setEvento(null);
       setSlots([]);
+      setFaseSlots(null);
       return;
     }
     if (!eventoId) {
       setEvento(null);
       setFaseSlots(null);
-      setSlots([
-        {
-          torneoId,
-          label: categoriaLabel,
-          startsAt: null,
-          href: `/torneo-express/${torneoId}/eliminatoria`,
-          courts: [],
-        },
-      ]);
       return;
     }
+    setFaseSlots(null);
     let cancelled = false;
     const apply = (
       data: Awaited<ReturnType<typeof fetchEventoConCategorias>>
@@ -103,21 +96,41 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
       );
       return true;
     };
+    const giveUp = () => {
+      if (!cancelled) setFaseSlots([]);
+    };
     void fetchEventoConCategorias(eventoId, true)
       .then((data) => {
         if (apply(data)) return;
-        return fetchEventoConCategorias(eventoId, false).then(apply);
+        return fetchEventoConCategorias(eventoId, false).then((fallback) => {
+          if (!apply(fallback)) giveUp();
+        });
       })
       .catch(() => {
         if (cancelled) return;
         void fetchEventoConCategorias(eventoId, false)
-          .then(apply)
-          .catch(() => undefined);
+          .then((fallback) => {
+            if (!apply(fallback)) giveUp();
+          })
+          .catch(giveUp);
       });
     return () => {
       cancelled = true;
     };
-  }, [hasBundle, categoriaLabel, eventoId, torneoId]);
+  }, [hasBundle, eventoId, torneoId]);
+
+  useEffect(() => {
+    if (!hasBundle || eventoId) return;
+    setSlots([
+      {
+        torneoId,
+        label: categoriaLabel,
+        startsAt: null,
+        href: `/torneo-express/${torneoId}/eliminatoria`,
+        courts: [],
+      },
+    ]);
+  }, [categoriaLabel, eventoId, hasBundle, torneoId]);
 
   const copyLink = async () => {
     const play = publicEliminatoriaUrl(torneoId);
@@ -168,6 +181,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     scheduleCourts,
     scheduleStartAt,
   ]);
+  const waitingSchedule = Boolean(bundle && eventoId && faseSlots === null);
   const phaseNav = (
     <nav className="te-phase-segment" aria-label="Fase del torneo">
       <a className="te-phase-segment__item" href={gruposHref}>
@@ -187,7 +201,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
       className="te-public--eliminatoria"
       organizadorId={bundle?.torneo.organizador_id ?? null}
     >
-      {loading && !bundle ? (
+      {(loading && !bundle) || waitingSchedule ? (
         <PublicEventNeutralLoading
           className="te-pub-elim-loading"
           message="Cargando fase eliminatoria…"
@@ -196,7 +210,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
       {!loading && !bundle ? (
         <p className="te-public-error">{error ?? "Torneo no encontrado"}</p>
       ) : null}
-      {bundle ? (
+      {bundle && !waitingSchedule ? (
         <TEPublicEliminatoria
           bundle={bundle}
           labelMap={eliminatoriaLabelMap}
