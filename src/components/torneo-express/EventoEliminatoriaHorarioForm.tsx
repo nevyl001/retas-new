@@ -291,36 +291,40 @@ export const EventoEliminatoriaHorarioForm: React.FC<
           <p className="te-evd-elim-horario__empty">Sin canchas todavía.</p>
         ) : (
           <ul className="te-evd-elim-horario__courts">
-            {canchas.map((cancha, index) => (
-              <li key={`court-${index}`} className="te-evd-elim-horario__court">
-                <label className="te-evd-elim-horario__court-field">
-                  <span className="te-evd-elim-horario__court-label">
+            {canchas.map((cancha, index) => {
+              const inputId = `te-evd-elim-court-${index}`;
+              return (
+                <li key={`court-${index}`} className="te-evd-elim-horario__court">
+                  <label
+                    className="te-evd-elim-horario__court-label"
+                    htmlFor={inputId}
+                  >
                     Cancha {index + 1}
-                  </span>
+                  </label>
                   <input
+                    id={inputId}
                     type="text"
                     className="te-evd-elim-horario__input te-evd-elim-horario__input--court"
                     value={cancha}
-                    aria-label={`Nombre de cancha ${index + 1}`}
                     onChange={(event) => {
                       const next = canchas.slice();
                       next[index] = event.target.value;
                       onCanchasChange(next);
                     }}
                   />
-                </label>
-                <button
-                  type="button"
-                  className="te-evd-elim-horario__btn"
-                  aria-label={`Quitar cancha ${cancha || index + 1}`}
-                  onClick={() =>
-                    onCanchasChange(canchas.filter((_, i) => i !== index))
-                  }
-                >
-                  Quitar
-                </button>
-              </li>
-            ))}
+                  <button
+                    type="button"
+                    className="te-evd-elim-horario__court-remove"
+                    aria-label={`Quitar cancha ${cancha || index + 1}`}
+                    onClick={() =>
+                      onCanchasChange(canchas.filter((_, i) => i !== index))
+                    }
+                  >
+                    Quitar
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
         <button
