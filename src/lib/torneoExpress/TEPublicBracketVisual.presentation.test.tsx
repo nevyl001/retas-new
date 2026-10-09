@@ -609,6 +609,26 @@ describe("TEPublicBracketVisual presentation", () => {
     expect(screen.queryByRole("contentinfo")).toBeNull();
   });
 
+  it("does not show a 0-0 scoreboard on pending or live quarterfinals", () => {
+    const placeholderSets = cards.map((match, index) => ({
+      ...match,
+      status: index === 0 ? ("live" as const) : match.status,
+      sets: [{ local: 0, visitante: 0 }],
+    }));
+    render(
+      <TEPublicBracketVisual
+        allCards={placeholderSets}
+        totalRondas={3}
+        activeRonda={1}
+      />,
+    );
+
+    expect(screen.queryByText("Marcador")).toBeNull();
+    expect(
+      screen.queryByRole("group", { name: /Marcador de/ }),
+    ).toBeNull();
+  });
+
   it("keeps pending court readable without alarm styling", () => {
     const pendingCourtCards = cards.map((match, index) =>
       index === 0 ? { ...match, canchaLabel: null } : match,

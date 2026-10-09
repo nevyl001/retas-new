@@ -283,6 +283,17 @@
   margin: 0;
 }
 
+/* Cuartos/octavos: máximo 2 columnas para que nombres y horario quepan. */
+.te-elim-v2
+  .te-pb-round--current:not(.te-pb-round--semis):not(.te-pb-round--final):not(
+    .te-pb-round--third
+  )
+  .te-pb-round__stack {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
+  width: min(100%, 72rem);
+  margin-inline: auto;
+}
+
 .te-elim-v2 .te-pb-round--history {
   opacity: 1;
   container: history-stage / inline-size;
@@ -566,8 +577,8 @@
   align-items: baseline;
   gap: 0.35rem;
   margin: 0;
-  font-size: clamp(1rem, 4.2cqi, 1.1875rem);
-  font-weight: 700;
+  font-size: clamp(0.875rem, 3.2cqi, 1.0625rem);
+  font-weight: 650;
   line-height: 1.25;
 }
 
@@ -672,6 +683,12 @@
   );
 }
 
+.te-elim-v2 .te-pb-match--pending .te-pb-team,
+.te-elim-v2 .te-pb-match--bye .te-pb-team,
+.te-elim-v2 .te-pb-match:not(:has(.te-pb-team__score-rail)) .te-pb-team {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .te-elim-v2 .te-pb-team--pending,
 .te-elim-v2 .te-pb-team--bye {
   grid-template-columns: minmax(0, 1fr);
@@ -764,9 +781,9 @@
 
 .te-elim-v2 .te-pb-team__player-name {
   min-width: 0;
-  overflow: visible;
-  white-space: normal;
-  text-overflow: clip;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .te-elim-v2 .te-pb-team__rating {
@@ -3303,7 +3320,7 @@
   }
 }
 
-@container match-scoreboard (min-width: 34rem) {
+@container match-scoreboard (min-width: 24rem) {
   .te-elim-v2 .te-pb-match__head {
     grid-template-columns: auto minmax(0, 1fr);
   }

@@ -272,6 +272,17 @@ function FinalistPairHero({
   );
 }
 
+function displayScoreColumns(
+  match: BracketMatchPresentation,
+): MatchScoreDisplayColumn[] {
+  if (match.status === "pending" || match.status === "bye") return [];
+  const hasRealScore = match.sets.some(
+    (set) => set.local !== 0 || set.visitante !== 0,
+  );
+  if (!hasRealScore) return [];
+  return formatMatchScoreForDisplay(match.sets);
+}
+
 function FinalHeroScoreboard({
   match,
   pairStatsById,
@@ -282,7 +293,7 @@ function FinalHeroScoreboard({
   place?: "final" | "third";
 }) {
   const ariaTeams = [match.local.label, match.visit.label].join(" contra ");
-  const scoreColumns = formatMatchScoreForDisplay(match.sets);
+  const scoreColumns = displayScoreColumns(match);
   const hasScore = scoreColumns.length > 0;
   const isThird = place === "third";
   const statsFor = (team: BracketTeamPresentation) =>
@@ -415,7 +426,7 @@ function MatchScoreboard({
   variant?: "history" | "standard" | "semifinal" | "final" | "third";
   hideLiveStatus?: boolean;
 }) {
-  const scoreColumns = formatMatchScoreForDisplay(match.sets);
+  const scoreColumns = displayScoreColumns(match);
   const ariaTeams = [
     match.local.kind === "dependency"
       ? match.local.dependencyLabel
