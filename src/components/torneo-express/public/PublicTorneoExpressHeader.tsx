@@ -13,6 +13,7 @@ export const PublicTorneoExpressHeader: React.FC<{
   onCopyLink?: () => void;
   copyMsg?: string;
   extraActions?: React.ReactNode;
+  backHref?: string | null;
 }> = ({
   torneoNombre,
   categoria,
@@ -21,12 +22,19 @@ export const PublicTorneoExpressHeader: React.FC<{
   onCopyLink,
   copyMsg,
   extraActions,
+  backHref,
 }) => {
   const { isClubBranded } = useClubExperience();
   const organizerName = useOrganizerDisplayName();
 
   return (
     <header className="te-public-header te-pub-fade-in">
+      {backHref ? (
+        <a href={backHref} className="te-public-back">
+          ← Volver al evento
+        </a>
+      ) : null}
+      <div className="te-public-header__top">
       <div className="te-public-header__brand">
         {isClubBranded ? (
           <p className="te-public-header__kicker te-label-eyebrow">
@@ -64,6 +72,7 @@ export const PublicTorneoExpressHeader: React.FC<{
           {extraActions}
         </div>
       )}
+      </div>
     </header>
   );
 };

@@ -53,26 +53,20 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
         <p className="te-public-error">{error ?? "Torneo no encontrado"}</p>
       ) : null}
       {bundle ? (
-        <>
+        <div className="te-public-general">
           <PublicTorneoExpressHeader
             torneoNombre={displayNombre || bundle.torneo.nombre}
             categoria={bundle.torneo.categoria}
             subtitle="Tabla general · todos los grupos"
             onCopyLink={copyLink}
             copyMsg={copyMsg || undefined}
+            backHref={eventoHref}
             extraActions={
-              <>
-                {eventoHref ? (
-                  <a href={eventoHref} className="te-grupos-back-evento">
-                    ← Volver al evento
-                  </a>
-                ) : null}
-                {user ? (
-                  <Button type="button" variant="back" size="sm" onClick={goBack}>
-                    ← Regresar
-                  </Button>
-                ) : null}
-              </>
+              user ? (
+                <Button type="button" variant="back" size="sm" onClick={goBack}>
+                  ← Regresar
+                </Button>
+              ) : null
             }
           />
 
@@ -87,7 +81,7 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
             lastRefreshedAt={lastRefreshedAt}
             realtimeConnected={realtimeConnected}
           />
-        </>
+        </div>
       ) : null}
     </PublicTorneoExpressShell>
   );
