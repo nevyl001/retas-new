@@ -22,6 +22,10 @@ export const TEPublicEliminatoriaPreview: React.FC<{
 
   return (
     <div className="te-grupos-page te-elim-public te-elim-preview">
+      <p className="te-elim-schedule-note">
+        Todos los horarios son tentativos, de acuerdo con la duración de los
+        partidos o el atraso de los mismos. Favor de tomarlo en cuenta. Gracias.
+      </p>
       <header className="te-elim-public__header te-pub-fade-in">
         {eventoHref ? (
           <a
