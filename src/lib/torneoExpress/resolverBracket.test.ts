@@ -263,11 +263,11 @@ describe("resolverChoquesAutomaticos", () => {
         .sort((a, b) => a - b);
     };
 
-    // 1°B no puede caer con el 2°B. Cada 1º va a la mitad del 2º del otro grupo.
-    expect(finalSide(1)).toBe("B");
-    expect(finalSide(2)).toBe("A");
-    expect(siblingSeeds(2)).toEqual([4, 5]);
-    expect(siblingSeeds(1)).toEqual([3, 6]);
+    // El seed de la tabla no se mueve para evitar un choque de grupo.
+    expect(finalSide(1)).toBe("A");
+    expect(finalSide(2)).toBe("B");
+    expect(siblingSeeds(1)).toEqual([4, 5]);
+    expect(siblingSeeds(2)).toEqual([3, 6]);
   });
 
   it("no cruza mitades si cada 1º ya cae con el 2º del otro grupo", () => {

@@ -216,7 +216,7 @@ describe("calcularClasificadosFase", () => {
     expect(q.map((x) => x.seed)).toEqual([1, 2, 3, 4]);
   });
 
-  it("ordena primeros/segundos/terceros por FAV → DIF → PG", () => {
+  it("ordena a todos los clasificados con el criterio de la tabla", () => {
     const bundle = makeBundle({ numGrupos: 3 });
     const q = calcularClasificadosFase(bundle, "cuartos");
     const primeros = q.filter((x) => x.posEnGrupo === 1);
@@ -299,7 +299,7 @@ describe("7 grupos: primeros lugares + mejor segundo", () => {
     const extras = q.filter((x) => x.posEnGrupo === 2);
     expect(extras).toHaveLength(1);
     expect(extras[0].isMejorTercero).toBe(true);
-    expect(extras[0].seed).toBe(8);
+    expect(q.map((x) => x.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     expect(q.some((x) => x.posEnGrupo === 3)).toBe(false);
   });
 

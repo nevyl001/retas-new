@@ -592,7 +592,8 @@ export function resolverBracket(
     plazasCuadro
   );
 
-  slots = resolverChoquesAutomaticos(slots);
+  // El cuadro de la primera ronda respeta el seed de la tabla, aunque
+  // dos parejas del mismo grupo queden en el mismo cruce.
   const advertencias = validarChoques(slots);
 
   const descripcion = generarDescripcion(

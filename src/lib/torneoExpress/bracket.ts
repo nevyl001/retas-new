@@ -15,15 +15,34 @@ import {
   previsualizarResolverBracket,
   resolverBracket,
 } from "./resolverBracket";
-import type {
-  TorneoExpressBundle,
-  TorneoExpressGrupo,
+import {
+  DEFAULT_CLASIFICACION_MODO,
+  type TorneoExpressBundle,
+  type TorneoExpressClasificacionModo,
+  type TorneoExpressGrupo,
 } from "./types";
 
 export { validarChoques } from "./resolverBracket";
 
-/** Desempate entre clasificados de distintos grupos: FAV → DIF → PG → seed. */
-function compareQualifiers(a: BracketQualifier, b: BracketQualifier): number {
+/** Mismo orden que la tabla general, sin separar por puesto de grupo. */
+function compareQualifiers(
+  a: BracketQualifier,
+  b: BracketQualifier,
+  modo: TorneoExpressClasificacionModo
+): number {
+  if (modo === "setto_pg") {
+    const puntosA = a.puntos ?? a.pg * 2;
+    const puntosB = b.puntos ?? b.pg * 2;
+    if (puntosB !== puntosA) return puntosB - puntosA;
+    if (b.dif !== a.dif) return b.dif - a.dif;
+    const setsA = (a.setsFav ?? 0) - (a.setsCon ?? 0);
+    const setsB = (b.setsFav ?? 0) - (b.setsCon ?? 0);
+    if (setsB !== setsA) return setsB - setsA;
+    if ((b.setsFav ?? 0) !== (a.setsFav ?? 0)) {
+      return (b.setsFav ?? 0) - (a.setsFav ?? 0);
+    }
+    return a.seed - b.seed;
+  }
   if (b.ptsFav !== a.ptsFav) return b.ptsFav - a.ptsFav;
   if (b.dif !== a.dif) return b.dif - a.dif;
   if (b.pg !== a.pg) return b.pg - a.pg;
@@ -141,7 +160,10 @@ export function calcularResumenClasificados(
   });
 
   const mejoresExtraNec = mejoresTercerosNecesarios(numGrupos, fase);
-  const extrasOrdenados = [...extrasCandidatos].sort(compareQualifiers);
+  const modo = bundle.clasificacion_modo ?? DEFAULT_CLASIFICACION_MODO;
+  const extrasOrdenados = [...extrasCandidatos].sort((a, b) =>
+    compareQualifiers(a, b, modo)
+  );
   const mejoresExtra = extrasOrdenados.slice(0, mejoresExtraNec).map(
     (q) => ({ ...q, isMejorTercero: true })
   );
@@ -189,22 +211,19 @@ export function calcularClasificadosFase(
       "No hay clasificación. Faltan resultados o hay empates sin resolver en la fase de grupos."
     );
   }
-  const primeros = resumen.fijos
-    .filter((q) => q.posEnGrupo === 1)
-    .sort(compareQualifiers);
-  const segundos = resumen.fijos
-    .filter((q) => q.posEnGrupo === 2)
-    .sort(compareQualifiers);
+  const modo = bundle.clasificacion_modo ?? DEFAULT_CLASIFICACION_MODO;
   // Extras: mejores terceros (regla general) o mejor segundo (7 grupos).
   const maxTerceros =
     opts?.cantidadTerceros ??
     resumen.mejoresTercerosNecesarios;
-  const terceros = resumen.tercerosCandidatos
-    .sort(compareQualifiers)
+  const terceros = [...resumen.tercerosCandidatos]
+    .sort((a, b) => compareQualifiers(a, b, modo))
     .slice(0, Math.max(0, Math.min(maxTerceros, resumen.tercerosCandidatos.length)))
     .map((q) => ({ ...q, isMejorTercero: true }));
 
-  const ordenados = [...primeros, ...segundos, ...terceros];
+  const ordenados = [...resumen.fijos, ...terceros].sort((a, b) =>
+    compareQualifiers(a, b, modo)
+  );
   return ordenados.map((q, i) => ({ ...q, seed: i + 1 }));
 }
 

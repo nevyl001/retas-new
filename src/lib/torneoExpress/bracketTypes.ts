@@ -24,6 +24,9 @@ export interface BracketQualifier {
   ptsCon: number;
   dif: number;
   puntos: number;
+  /** Sets de la fase de grupos. El modo de la tabla los usa para el seed. */
+  setsFav?: number;
+  setsCon?: number;
 }
 
 export type BracketSlotEntry =
@@ -111,5 +114,7 @@ export function standingToQualifier(
     ptsCon: row.ptsCon,
     dif: row.dif,
     puntos: row.puntos,
+    setsFav: row.setsFav ?? 0,
+    setsCon: row.setsCon ?? 0,
   };
 }
