@@ -2526,42 +2526,64 @@
 }
 
 .te-elim-aviso-page {
-  width: min(100%, 40rem);
-  margin: clamp(1.5rem, 4vw, 3rem) auto clamp(3rem, 6vw, 5rem);
-  padding: 0 clamp(1rem, 3vw, 1.5rem);
+  width: min(100%, 36rem);
+  margin: clamp(2.5rem, 8vh, 4.5rem) auto clamp(3.5rem, 8vh, 5.5rem);
+  padding: 0 clamp(1.25rem, 4vw, 1.5rem);
+  text-align: center;
 }
 
 .te-elim-aviso-page__kicker {
-  margin: 0 0 0.6rem;
+  margin: 0 0 0.85rem;
   font-size: 0.6875rem;
   font-weight: 650;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 
 .te-elim-aviso-page__title {
-  margin: 0 0 1.5rem;
-  font-size: clamp(1.75rem, 4vw, 2.4rem);
+  margin: 0 auto;
+  max-width: 16ch;
+  font-family: var(--font-display, var(--font-body));
+  font-size: clamp(1.85rem, 4.2vw, 2.65rem);
   font-weight: 650;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.te-elim-aviso-page__rule {
+  display: block;
+  width: 2.5rem;
+  height: 1px;
+  margin: 1.35rem auto 1.5rem;
+  background: color-mix(
+    in srgb,
+    var(--ro-chrome-text, var(--text-primary)) 28%,
+    transparent
+  );
 }
 
 .te-elim-aviso-page__body {
   display: grid;
-  gap: 1rem;
+  gap: 1.05rem;
 }
 
 .te-elim-aviso-page__body p {
   margin: 0;
-  font-size: 1rem;
-  line-height: 1.65;
-  color: color-mix(
-    in srgb,
-    var(--ro-chrome-text, var(--text-primary)) 82%,
-    transparent
-  );
+  font-size: 0.9375rem;
+  font-weight: 450;
+  line-height: 1.7;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.72));
+}
+
+.te-elim-aviso-page__close {
+  margin: clamp(2.25rem, 5vw, 3rem) 0 0;
+  font-family: var(--font-display, var(--font-body));
+  font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--text-primary, #fff);
 }
 
 /* Footer */

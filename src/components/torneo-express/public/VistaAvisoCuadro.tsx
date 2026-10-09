@@ -12,11 +12,15 @@ export const VistaAvisoCuadro: React.FC = () => {
       <article className="te-elim-aviso-page">
         <p className="te-elim-aviso-page__kicker">Aviso de la organización</p>
         <h1 className="te-elim-aviso-page__title">{AVISO_CUADRO_TITULO}</h1>
+        <span className="te-elim-aviso-page__rule" aria-hidden />
         <div className="te-elim-aviso-page__body">
           {AVISO_CUADRO_PARRAFOS.map((parrafo) => (
             <p key={parrafo}>{parrafo}</p>
           ))}
         </div>
+        <p className="te-elim-aviso-page__close">
+          Compite. Demuestra que eres el mejor.
+        </p>
       </article>
     </PublicTorneoExpressShell>
   );
