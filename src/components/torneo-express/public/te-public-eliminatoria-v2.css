@@ -753,7 +753,7 @@
 .te-elim-v2 .te-pb-player__portrait {
   position: relative;
   display: grid;
-  width: min(100%, 8.75rem);
+  width: min(100%, 4.75rem);
   place-items: center;
   flex: none;
   isolation: isolate;
@@ -831,8 +831,8 @@
     var(--ro-chrome-deep, var(--ro-chrome-bg)) 82%,
     #ffffff 18%
   );
-  box-shadow: 0 10px 24px
-    color-mix(in srgb, #000 28%, transparent);
+  box-shadow: 0 6px 14px
+    color-mix(in srgb, #000 18%, transparent);
 }
 
 .te-elim-v2 .te-pb-team__avatar--inline .rj-avatar__img {
