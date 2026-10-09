@@ -14,7 +14,10 @@ import {
 } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import type { EliminatoriaPossibleSlot } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
-import { buildEliminatoriaPreviewCards } from "../../lib/torneoExpress/eliminatoriaPreviewBracket";
+import {
+  buildEliminatoriaPreviewCards,
+  projectEliminatoriaMatchSlots,
+} from "../../lib/torneoExpress/eliminatoriaPreviewBracket";
 import type { TorneoExpressEvento } from "../../lib/torneoExpress/types";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
 import { TEPublicEliminatoria } from "./public/TEPublicEliminatoria";
@@ -116,6 +119,38 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
   const hasElimPartidos = (bundle?.eliminatoriaPartidos.length ?? 0) > 0;
   const gruposHref = `/torneo-express/${torneoId}/grupos`;
   const categorySlot = slots.find((slot) => slot.torneoId === torneoId);
+  const scheduleStartAt = useMemo(
+    () =>
+      categorySlot?.startsAt ??
+      parseEliminatoriaInicio(evento?.eliminatoria_inicio),
+    [categorySlot?.startsAt, evento?.eliminatoria_inicio]
+  );
+  const scheduleCourts =
+    categorySlot?.courts && categorySlot.courts.length > 0
+      ? categorySlot.courts
+      : evento?.eliminatoria_canchas;
+  const scheduleProjection = useMemo(() => {
+    if (!bundle) return undefined;
+    const projected = projectEliminatoriaMatchSlots({
+      fase: inferFaseEliminacion(
+        bundle.torneo.fase_eliminacion,
+        evento?.eliminatoria_duraciones
+      ),
+      startAt: scheduleStartAt,
+      courts: scheduleCourts,
+      duraciones: evento?.eliminatoria_duraciones,
+    });
+    return {
+      slots: projected.slots,
+      timeZone: evento?.timezone,
+    };
+  }, [
+    bundle,
+    evento?.eliminatoria_duraciones,
+    evento?.timezone,
+    scheduleCourts,
+    scheduleStartAt,
+  ]);
   const preview = useMemo(
     () =>
       bundle
@@ -124,18 +159,13 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
               bundle.torneo.fase_eliminacion,
               evento?.eliminatoria_duraciones
             ),
-            startAt:
-              categorySlot?.startsAt ??
-              parseEliminatoriaInicio(evento?.eliminatoria_inicio),
-            courts:
-              categorySlot?.courts && categorySlot.courts.length > 0
-                ? categorySlot.courts
-                : evento?.eliminatoria_canchas,
+            startAt: scheduleStartAt,
+            courts: scheduleCourts,
             duraciones: evento?.eliminatoria_duraciones,
             timeZone: evento?.timezone,
           })
         : null,
-    [bundle, categorySlot, evento]
+    [bundle, evento, scheduleCourts, scheduleStartAt]
   );
   const phaseNav = (
     <nav className="te-phase-segment" aria-label="Fase del torneo">
@@ -186,6 +216,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
           gruposHref={gruposHref}
           eventoHref={eventoHref}
           schedule={phaseNav}
+          scheduleProjection={scheduleProjection}
         />
       ) : null}
     </PublicTorneoExpressShell>

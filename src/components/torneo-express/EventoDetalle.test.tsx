@@ -27,6 +27,7 @@ jest.mock("../../services/torneoExpressService", () => ({
   // Funciones planas: CRA activa resetMocks y vaciaría las implementaciones de jest.fn.
   deleteTorneoExpress: async () => undefined,
   fetchEventoConCategorias: async () => ({ evento: mockEvento, categorias: [] }),
+  applyEventoEliminatoriaHorario: async () => 0,
   formatSupabaseError: (e: unknown) => String(e),
   saveCategoriaFaseEliminacionPlan: async () => null,
   saveTorneoExpressCategoria: async () => undefined,

@@ -122,16 +122,27 @@ export function resolvePreviewFase(
   return "cuartos";
 }
 
-export function buildEliminatoriaPreviewCards(input: {
+export type ProjectedEliminatoriaMatchSlot = {
+  ronda: number;
+  cruceIndex: number;
+  startMs: number | null;
+  cancha: string | null;
+  durationMin: number;
+};
+
+export function projectEliminatoriaMatchSlots(input: {
   fase?: TorneoExpressFaseEliminacion | null;
   startAt?: Date | null;
   courts?: readonly string[] | null;
   duraciones?: unknown;
-  timeZone?: string | null;
-}): { cards: PublicMatchupCard[]; totalRondas: number; fase: TorneoExpressFaseEliminacion } {
+}): {
+  slots: ProjectedEliminatoriaMatchSlot[];
+  totalRondas: number;
+  fase: TorneoExpressFaseEliminacion;
+} {
   const fase = resolvePreviewFase(input.fase);
-  const slots = BRACKET_FASE_SLOTS[fase];
-  const totalRondas = totalRondasEliminatoria(fase, slots);
+  const bracketSlots = BRACKET_FASE_SLOTS[fase];
+  const totalRondas = totalRondasEliminatoria(fase, bracketSlots);
   const courts = normalizeEliminatoriaCanchas(input.courts);
   const courtCount = Math.max(1, courts.length);
   const duraciones = normalizeEliminatoriaDuraciones(input.duraciones);
@@ -140,36 +151,24 @@ export function buildEliminatoriaPreviewCards(input: {
       ? input.startAt.getTime()
       : null;
 
-  const cards: PublicMatchupCard[] = [];
+  const slots: ProjectedEliminatoriaMatchSlot[] = [];
   let cursor = startMs;
 
   for (let ronda = 1; ronda <= totalRondas; ronda += 1) {
-    const matchCount = Math.max(1, slots / 2 ** ronda);
+    const matchCount = Math.max(1, bracketSlots / 2 ** ronda);
     const roundLabel = labelRondaEliminatoria(fase, ronda, totalRondas);
-    const roundUpper = roundLabelUpper(fase, ronda, totalRondas);
     const durationMin = minutesForPreviewRound(roundLabel, duraciones);
     const waves = Math.ceil(matchCount / courtCount);
 
     for (let i = 0; i < matchCount; i += 1) {
       const wave = Math.floor(i / courtCount);
-      const matchStart =
-        cursor == null ? null : cursor + wave * durationMin * 60 * 1000;
-      const court = courts.length > 0 ? courts[i % courtCount] : null;
-      cards.push({
-        id: `preview-r${ronda}-${i}`,
+      slots.push({
         ronda,
         cruceIndex: i,
-        roundLabel,
-        matchTitle: matchTitle(roundUpper, i, matchCount),
-        local: { ...TBD_TEAM },
-        visit: { ...TBD_TEAM },
-        status: "pending",
-        horaDisplay: formatPreviewWindow(matchStart, durationMin, input.timeZone),
-        scheduleMs: matchStart,
-        puntosLocal: null,
-        puntosVisitante: null,
-        sets: [],
-        canchaLabel: court ? formatCanchaDisplay(court) : null,
+        startMs:
+          cursor == null ? null : cursor + wave * durationMin * 60 * 1000,
+        cancha: courts.length > 0 ? courts[i % courtCount] : null,
+        durationMin,
       });
     }
 
@@ -177,6 +176,45 @@ export function buildEliminatoriaPreviewCards(input: {
       cursor += waves * durationMin * 60 * 1000;
     }
   }
+
+  return { slots, totalRondas, fase };
+}
+
+export function buildEliminatoriaPreviewCards(input: {
+  fase?: TorneoExpressFaseEliminacion | null;
+  startAt?: Date | null;
+  courts?: readonly string[] | null;
+  duraciones?: unknown;
+  timeZone?: string | null;
+}): { cards: PublicMatchupCard[]; totalRondas: number; fase: TorneoExpressFaseEliminacion } {
+  const { slots, totalRondas, fase } = projectEliminatoriaMatchSlots(input);
+  const bracketSlots = BRACKET_FASE_SLOTS[fase];
+
+  const cards: PublicMatchupCard[] = slots.map((slot) => {
+    const roundLabel = labelRondaEliminatoria(fase, slot.ronda, totalRondas);
+    const roundUpper = roundLabelUpper(fase, slot.ronda, totalRondas);
+    const matchCount = Math.max(1, bracketSlots / 2 ** slot.ronda);
+    return {
+      id: `preview-r${slot.ronda}-${slot.cruceIndex}`,
+      ronda: slot.ronda,
+      cruceIndex: slot.cruceIndex,
+      roundLabel,
+      matchTitle: matchTitle(roundUpper, slot.cruceIndex, matchCount),
+      local: { ...TBD_TEAM },
+      visit: { ...TBD_TEAM },
+      status: "pending",
+      horaDisplay: formatPreviewWindow(
+        slot.startMs,
+        slot.durationMin,
+        input.timeZone
+      ),
+      scheduleMs: slot.startMs,
+      puntosLocal: null,
+      puntosVisitante: null,
+      sets: [],
+      canchaLabel: slot.cancha ? formatCanchaDisplay(slot.cancha) : null,
+    };
+  });
 
   return { cards, totalRondas, fase };
 }

@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { formatTorneoExpressCategoria } from "../../../lib/torneoExpress/formatCategoria";
-import { buildPublicBracketViewModel } from "../../../lib/torneoExpress/publicBracketModel";
+import {
+  buildPublicBracketViewModel,
+  type PublicBracketScheduleProjection,
+} from "../../../lib/torneoExpress/publicBracketModel";
 import { buildBracketPresentationModel } from "../../../lib/torneoExpress/publicBracketPresentation";
 import {
   buildPublicPodiumStatsForPair,
@@ -81,6 +84,8 @@ export interface TEPublicEliminatoriaProps {
   realtimeConnected?: boolean;
   /** Horarios posibles del evento (proyección; no genera el cuadro). */
   schedule?: React.ReactNode;
+  /** Horario del evento cuando el partido aún no tiene programado_en. */
+  scheduleProjection?: PublicBracketScheduleProjection;
 }
 
 export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
@@ -93,13 +98,14 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
   eventoHref,
   realtimeConnected,
   schedule,
+  scheduleProjection,
 }) => {
   const [spinning, setSpinning] = useState(false);
   const prevRefreshRef = useRef<Date | null>(null);
 
   const model = useMemo(
-    () => buildPublicBracketViewModel(bundle, labelMap),
-    [bundle, labelMap],
+    () => buildPublicBracketViewModel(bundle, labelMap, scheduleProjection),
+    [bundle, labelMap, scheduleProjection],
   );
 
   const pairPlayersById = usePublicBracketPairPlayers(

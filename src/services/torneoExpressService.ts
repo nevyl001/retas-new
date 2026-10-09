@@ -14,6 +14,13 @@ import {
   mapPersistedScheduleToPartidoUpdates,
 } from "../lib/torneoExpress/draftScheduleMatch";
 import {
+  buildEliminatoriaPossibleSchedule,
+  inferFaseEliminacion,
+  parseEliminatoriaInicio,
+} from "../lib/torneoExpress/eliminatoriaCategoriaOrden";
+import { projectEliminatoriaMatchSlots } from "../lib/torneoExpress/eliminatoriaPreviewBracket";
+import type { ProjectedEliminatoriaMatchSlot } from "../lib/torneoExpress/eliminatoriaPreviewBracket";
+import {
   buildEliminatoriaRoundScheduleMatches,
   eliminatoriaRoundPendingCount,
 } from "../lib/torneoExpress/eliminatoriaRoundSchedule";
@@ -2249,6 +2256,104 @@ export async function rescheduleTorneoExpressEliminatoriaRonda(
   return updates.length;
 }
 
+export async function applyEliminatoriaProjectedSchedule(
+  torneoId: string,
+  slots: ProjectedEliminatoriaMatchSlot[]
+): Promise<number> {
+  if (!torneoId.trim() || slots.length === 0) return 0;
+  const byKey = new Map(
+    slots.map((slot) => [`${slot.ronda}:${slot.cruceIndex}`, slot])
+  );
+  const { data, error } = await supabase
+    .from("torneo_express_eliminatoria_partidos")
+    .select("id, ronda, cruce_index, estado, es_bye")
+    .eq("torneo_id", torneoId);
+  throwIfError(error, "fetch eliminatoria para horario del evento");
+  const updates = (
+    (data ?? []) as Array<{
+      id: string;
+      ronda: number;
+      cruce_index: number;
+      estado: string;
+      es_bye: boolean;
+    }>
+  )
+    .filter((row) => !row.es_bye && row.estado !== "jugado")
+    .map((row) => {
+      const slot = byKey.get(`${row.ronda}:${row.cruce_index}`);
+      if (!slot?.startMs) return null;
+      return {
+        id: row.id,
+        programado_en: new Date(slot.startMs).toISOString(),
+        cancha: slot.cancha,
+      };
+    })
+    .filter(
+      (
+        row
+      ): row is { id: string; programado_en: string; cancha: string | null } =>
+        row != null
+    );
+
+  await Promise.all(
+    updates.map(async (row) => {
+      const { error: updateErr } = await supabase
+        .from("torneo_express_eliminatoria_partidos")
+        .update({
+          programado_en: row.programado_en,
+          cancha: row.cancha,
+        })
+        .eq("id", row.id)
+        .eq("torneo_id", torneoId);
+      if (isBracketSchemaError(updateErr)) {
+        throw new BracketSchemaMissingError();
+      }
+      throwIfError(updateErr, "apply horario eliminatoria");
+    })
+  );
+  return updates.length;
+}
+
+export async function applyEventoEliminatoriaHorario(
+  eventoId: string,
+  onlyTorneoId?: string
+): Promise<number> {
+  const data = await fetchEventoConCategorias(eventoId, false);
+  if (!data) return 0;
+  const schedule = buildEliminatoriaPossibleSchedule(
+    data.categorias,
+    data.evento.eliminatoria_categoria_orden,
+    data.evento.eliminatoria_inicio,
+    data.evento.eliminatoria_canchas,
+    data.evento.eliminatoria_duraciones
+  );
+  let stamped = 0;
+  for (const cat of data.categorias) {
+    if (onlyTorneoId && cat.id !== onlyTorneoId) continue;
+    if (cat.fase_torneo !== "eliminatoria") continue;
+    const slot = schedule.find((item) => item.torneoId === cat.id);
+    const projected = projectEliminatoriaMatchSlots({
+      fase: inferFaseEliminacion(
+        cat.fase_eliminacion,
+        data.evento.eliminatoria_duraciones
+      ),
+      startAt:
+        slot?.startsAt ??
+        parseEliminatoriaInicio(data.evento.eliminatoria_inicio),
+      courts:
+        slot?.courts && slot.courts.length > 0
+          ? slot.courts
+          : data.evento.eliminatoria_canchas,
+      duraciones: data.evento.eliminatoria_duraciones,
+    });
+    stamped += await applyEliminatoriaProjectedSchedule(
+      cat.id,
+      projected.slots
+    );
+  }
+  return stamped;
+}
+
 export async function saveGrupoNombre(
   grupoId: string,
   nombre: string
@@ -2790,7 +2895,13 @@ export async function confirmarFaseEliminatoria(
     throwIfError(pErr, "confirmarFaseEliminatoria.partidos");
   }
 
-  return torneo as TorneoExpress;
+  const mappedTorneo = torneo as TorneoExpress;
+  const eventoId = mappedTorneo.evento_id?.trim();
+  if (eventoId) {
+    await applyEventoEliminatoriaHorario(eventoId, mappedTorneo.id);
+  }
+
+  return mappedTorneo;
 }
 
 async function cerrarTorneoEliminatoria(torneoId: string): Promise<void> {
@@ -3415,6 +3526,15 @@ export async function saveEliminatoriaResultado(
     throw new Error("No se pudo guardar el resultado eliminatorio");
   }
   const saved = freshRow as TorneoExpressEliminatoriaPartido;
+
+  if (inserts.length > 0) {
+    const eventoId = torneo.evento_id?.trim();
+    if (eventoId) {
+      void applyEventoEliminatoriaHorario(eventoId, torneoId).catch((e) =>
+        console.warn("[torneo-express] horario siguiente ronda:", e)
+      );
+    }
+  }
 
   if (notifyFinalPhasePairIds) {
     const { notifyFinalPhase } = await import(

@@ -19,6 +19,7 @@ import {
   deleteTorneoExpress,
   fetchEventoConCategorias,
   formatSupabaseError,
+  applyEventoEliminatoriaHorario,
   saveCategoriaFaseEliminacionPlan,
   saveTorneoExpressCategoria,
   syncEventoEstadoFromCategorias,
@@ -436,6 +437,7 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
           ])
         )
       );
+      await applyEventoEliminatoriaHorario(evento.id);
       showActionToast("Eliminatoria del evento guardada", "success");
     } catch (e) {
       const msg = formatSupabaseError(e);

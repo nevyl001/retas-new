@@ -9,7 +9,11 @@ import {
   RONDA_TERCER_LUGAR,
   totalRondasEliminatoria,
 } from "./bracketRounds";
+import { formatCanchaDisplay } from "./canchaDisplay";
+import type { ProjectedEliminatoriaMatchSlot } from "./eliminatoriaPreviewBracket";
 import { parejaLabelFromMap } from "./eliminatoriaLabels";
+import { resolveEventoTimeZone } from "./eventoTemporal";
+import { DEFAULT_PARTIDO_EN_VIVO_DURATION_MINUTES } from "./partidoEnVivo";
 import { getPartidoSets, matchWinnerSideFromPartido } from "./partidoSets";
 import type { BracketQualifier } from "./bracketTypes";
 import type {
@@ -129,10 +133,16 @@ function teamRow(
   };
 }
 
+export type PublicBracketScheduleProjection = {
+  slots: ProjectedEliminatoriaMatchSlot[];
+  timeZone?: string | null;
+};
+
 function scheduleIsoFromPartido(
   p: TorneoExpressEliminatoriaPartido
 ): string | null {
-  return p.programado_en ?? p.created_at ?? null;
+  const stored = p.programado_en?.trim();
+  return stored || null;
 }
 
 function scheduleMs(iso: string | null): number | null {
@@ -141,10 +151,11 @@ function scheduleMs(iso: string | null): number | null {
   return Number.isNaN(t) ? null : t;
 }
 
-function formatHora(iso: string | null): string {
+function formatHora(iso: string | null, timeZone?: string | null): string {
   if (!iso) return "Por confirmar";
   try {
     return new Date(iso).toLocaleTimeString("es-MX", {
+      timeZone: resolveEventoTimeZone(timeZone),
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -456,32 +467,42 @@ function harmonizeSimultaneousStatuses(cards: PublicMatchupCard[]): void {
   });
 }
 
-/** El bloque pendiente más próximo en la ronda activa se marca EN JUEGO. */
-function markLiveBatch(cards: PublicMatchupCard[]): void {
-  const pending = cards.filter((c) => c.status === "pending");
-  if (pending.length === 0) return;
-
-  const withTime = pending.filter((c) => c.scheduleMs != null);
-  if (withTime.length === 0) {
-    pending.forEach((c) => {
-      c.status = "live";
-    });
-    return;
+/** EN JUEGO solo dentro de la ventana del horario programado. */
+function markLiveBatch(
+  cards: PublicMatchupCard[],
+  nowMs = Date.now()
+): void {
+  const durationMs = DEFAULT_PARTIDO_EN_VIVO_DURATION_MINUTES * 60_000;
+  for (const card of cards) {
+    if (card.status !== "pending" || card.scheduleMs == null) continue;
+    if (nowMs >= card.scheduleMs && nowMs < card.scheduleMs + durationMs) {
+      card.status = "live";
+    }
   }
+}
 
-  const minTime = Math.min(
-    ...withTime.map((c) => c.scheduleMs as number)
+function applyScheduleProjection(
+  cards: PublicMatchupCard[],
+  projection: PublicBracketScheduleProjection | undefined
+): void {
+  if (!projection?.slots.length) return;
+  const byKey = new Map(
+    projection.slots.map((slot) => [`${slot.ronda}:${slot.cruceIndex}`, slot])
   );
-
-  pending.forEach((c) => {
-    if (c.scheduleMs == null) {
-      c.status = "live";
-      return;
+  for (const card of cards) {
+    const slot = byKey.get(`${card.ronda}:${card.cruceIndex}`);
+    if (!slot) continue;
+    if (card.scheduleMs == null && slot.startMs != null) {
+      card.scheduleMs = slot.startMs;
+      card.horaDisplay = formatHora(
+        new Date(slot.startMs).toISOString(),
+        projection.timeZone
+      );
     }
-    if (Math.abs(c.scheduleMs - minTime) < 60_000) {
-      c.status = "live";
+    if (!card.canchaLabel && slot.cancha) {
+      card.canchaLabel = formatCanchaDisplay(slot.cancha);
     }
-  });
+  }
 }
 
 function buildRoundOneCards(
@@ -641,7 +662,8 @@ function currentPhaseUpper(
 
 export function buildPublicBracketViewModel(
   bundle: TorneoExpressBundle,
-  labelMap: Record<string, string>
+  labelMap: Record<string, string>,
+  scheduleProjection?: PublicBracketScheduleProjection
 ): PublicBracketViewModel {
   const fase = bundle.torneo.fase_eliminacion ?? "cuartos";
   const partidos = bundle.eliminatoriaPartidos;
@@ -696,6 +718,8 @@ export function buildPublicBracketViewModel(
       )
     );
   }
+
+  applyScheduleProjection(allCards, scheduleProjection);
 
   const finaleStage = isFinaleEliminatoriaStage(partidos, totalRondas);
   const currentRoundCards = finaleStage
