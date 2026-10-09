@@ -21,6 +21,10 @@ import { useTorneoPublicEventoNav } from "../../../hooks/useTorneoPublicDisplayN
 import { Badge, Button } from "../../ui";
 import { TEPublicBracketVisual } from "./TEPublicBracketVisual";
 import { usePublicBracketPairPlayers } from "../../../hooks/usePublicBracketPairPlayers";
+import {
+  AVISO_CUADRO_HREF,
+  AVISO_CUADRO_TITULO,
+} from "./avisoCuadroCopy";
 import "./te-public-grupos.css";
 import "./torneo-express-public.css";
 import "./te-public-eliminatoria.css";
@@ -266,6 +270,20 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
           pairStatsById={closingPairStatsById}
         />
       </section>
+
+      <a
+        className="te-elim-aviso"
+        href={AVISO_CUADRO_HREF}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span className="te-elim-aviso__kicker">Aviso de la organización</span>
+        <span className="te-elim-aviso__title">{AVISO_CUADRO_TITULO}</span>
+        <span className="te-elim-aviso__hint">
+          Los cruces de cada categoría los define la organización. Abrir el
+          aviso completo.
+        </span>
+      </a>
 
       <RefreshFooter
         lastRefreshedAt={lastRefreshedAt}

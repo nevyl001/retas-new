@@ -10,6 +10,7 @@ import { VistaPublicaEvento } from "./public/VistaPublicaEvento";
 import { VistaPublicaEventoEnVivo } from "./public/VistaPublicaEventoEnVivo";
 import { TePageShell } from "./TePageShell";
 import { VistaPublicaEliminatoria } from "./VistaPublicaEliminatoria";
+import { VistaAvisoCuadro } from "./public/VistaAvisoCuadro";
 import { VistaPublicaGeneral } from "./VistaPublicaGeneral";
 import { VistaPublicaGrupo } from "./VistaPublicaGrupo";
 import { VistaPublicaGrupos } from "./VistaPublicaGrupos";
@@ -28,6 +29,7 @@ export type TorneoExpressRoute =
   | { kind: "general"; torneoId: string }
   | { kind: "grupos"; torneoId: string }
   | { kind: "eliminatoria"; torneoId: string }
+  | { kind: "aviso-cuadro" }
   | { kind: "unknown" };
 
 export function parseTorneoExpressPath(pathname: string): TorneoExpressRoute {
@@ -36,6 +38,7 @@ export function parseTorneoExpressPath(pathname: string): TorneoExpressRoute {
   if (path === "/torneo-express/nuevo") return { kind: "nuevo" };
   if (path === "/torneo-express/eventos") return { kind: "eventos" };
   if (path === "/torneo-express/lista") return { kind: "lista-express" };
+  if (path === "/torneo-express/aviso-cuadro") return { kind: "aviso-cuadro" };
 
   // Público: /eventos/{slug}/en-vivo (pantalla de canchas para TV/proyector)
   const eventoEnVivo = path.match(/^\/eventos\/([^/]+)\/en-vivo$/);
@@ -78,7 +81,8 @@ export function isTorneoExpressPublicPath(pathname: string): boolean {
     route.kind === "grupo" ||
     route.kind === "general" ||
     route.kind === "grupos" ||
-    route.kind === "eliminatoria"
+    route.kind === "eliminatoria" ||
+    route.kind === "aviso-cuadro"
   );
 }
 
@@ -116,6 +120,8 @@ export const TorneoExpressRouter: React.FC<{ pathname: string }> = ({
       return <VistaPublicaGrupos torneoId={route.torneoId} />;
     case "eliminatoria":
       return <VistaPublicaEliminatoria torneoId={route.torneoId} />;
+    case "aviso-cuadro":
+      return <VistaAvisoCuadro />;
     default:
       return (
         <TePageShell>

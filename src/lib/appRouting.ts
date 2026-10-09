@@ -288,8 +288,9 @@ export function pathRequiresUserSession(pathname: string): boolean {
   if (path === "/public/ranking-puntos") return false;
   if (path.startsWith("/jugadores")) return true;
   if (
-    path.startsWith("/torneo-express/") &&
-    /\/(grupo\/[^/]+|general|grupos|eliminatoria)\/?$/i.test(path)
+    (path.startsWith("/torneo-express/") &&
+      /\/(grupo\/[^/]+|general|grupos|eliminatoria)\/?$/i.test(path)) ||
+    path === "/torneo-express/aviso-cuadro"
   ) {
     return false;
   }

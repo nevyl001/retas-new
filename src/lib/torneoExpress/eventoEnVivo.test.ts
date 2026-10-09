@@ -133,5 +133,9 @@ describe("ruta /eventos/{slug}/en-vivo", () => {
     expect(pathRequiresUserSession("/eventos/hack-padel-fest/en-vivo")).toBe(
       false
     );
+    expect(parseTorneoExpressPath("/torneo-express/aviso-cuadro")).toEqual({
+      kind: "aviso-cuadro",
+    });
+    expect(pathRequiresUserSession("/torneo-express/aviso-cuadro")).toBe(false);
   });
 });
