@@ -17,6 +17,7 @@ import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCate
 import {
   buildEliminatoriaPreviewCards,
   matchSlotsFromFaseTimeline,
+  previewCardsFromProjectedSlots,
   projectEliminatoriaMatchSlots,
 } from "../../lib/torneoExpress/eliminatoriaPreviewBracket";
 import type { ProjectedEliminatoriaMatchSlot } from "../../lib/torneoExpress/eliminatoriaPreviewBracket";
@@ -171,22 +172,36 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     scheduleCourts,
     scheduleStartAt,
   ]);
-  const preview = useMemo(
-    () =>
-      bundle
-        ? buildEliminatoriaPreviewCards({
-            fase: inferFaseEliminacion(
-              bundle.torneo.fase_eliminacion,
-              evento?.eliminatoria_duraciones
-            ),
-            startAt: scheduleStartAt,
-            courts: scheduleCourts,
-            duraciones: evento?.eliminatoria_duraciones,
-            timeZone: evento?.timezone,
-          })
-        : null,
-    [bundle, evento, scheduleCourts, scheduleStartAt]
-  );
+  const preview = useMemo(() => {
+    if (!bundle) return null;
+    const fase = inferFaseEliminacion(
+      bundle.torneo.fase_eliminacion,
+      evento?.eliminatoria_duraciones
+    );
+    if (faseSlots && faseSlots.length > 0) {
+      const projected = projectEliminatoriaMatchSlots({
+        fase,
+        duraciones: evento?.eliminatoria_duraciones,
+      });
+      return {
+        cards: previewCardsFromProjectedSlots({
+          slots: faseSlots,
+          fase,
+          totalRondas: projected.totalRondas,
+          timeZone: evento?.timezone,
+        }),
+        totalRondas: projected.totalRondas,
+        fase,
+      };
+    }
+    return buildEliminatoriaPreviewCards({
+      fase,
+      startAt: scheduleStartAt,
+      courts: scheduleCourts,
+      duraciones: evento?.eliminatoria_duraciones,
+      timeZone: evento?.timezone,
+    });
+  }, [bundle, evento, faseSlots, scheduleCourts, scheduleStartAt]);
   const phaseNav = (
     <nav className="te-phase-segment" aria-label="Fase del torneo">
       <a className="te-phase-segment__item" href={gruposHref}>

@@ -1243,6 +1243,8 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   pairStatsById = {},
   preview = false,
 }) => {
+  const showProjectedRounds =
+    preview || allCards.some((card) => card.id.startsWith("proy-"));
   const presentation = useMemo(
     () =>
       buildBracketPresentationModel(
@@ -1250,9 +1252,9 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
         totalRondas,
         activeRonda,
         pairPlayersById,
-        { includePendingSlots: preview },
+        { includePendingSlots: showProjectedRounds },
       ),
-    [allCards, totalRondas, activeRonda, pairPlayersById, preview],
+    [allCards, totalRondas, activeRonda, pairPlayersById, showProjectedRounds],
   );
   const completedChampion =
     presentation.visibleRound?.isFinalRound &&
@@ -1329,6 +1331,17 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
               round={presentation.visibleRound}
               pairStatsById={pairStatsById}
             />
+            {presentation.rounds
+              .filter((round) => round.ronda > presentation.visibleRound!.ronda)
+              .map((round) => (
+                <React.Fragment key={round.id}>
+                  <div className="te-pb-stage-progression" aria-hidden>
+                    <span />
+                    <i>●</i>
+                  </div>
+                  <BracketRoundColumn round={round} display="preview" />
+                </React.Fragment>
+              ))}
             {presentation.visibleThirdPlace ? (
               <div className="te-pb-current-stage__third">
                 <BracketRoundColumn

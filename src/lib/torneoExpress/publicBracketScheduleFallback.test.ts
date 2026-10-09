@@ -97,5 +97,11 @@ describe("horario público de eliminatoria", () => {
     expect(qf[0].horaDisplay).toMatch(/08:00/);
     expect(qf[0].canchaLabel).toBe("Cancha 1");
     expect(qf.every((card) => card.status === "pending")).toBe(true);
+    const semis = model.allBracketCards.filter((card) => card.ronda === 2);
+    const final = model.allBracketCards.filter((card) => card.ronda === 3);
+    expect(semis).toHaveLength(2);
+    expect(final).toHaveLength(1);
+    expect(semis[0].scheduleMs).toBe(Date.parse("2026-10-09T16:00:00.000Z"));
+    expect(final[0].scheduleMs).toBe(Date.parse("2026-10-09T17:00:00.000Z"));
   });
 });

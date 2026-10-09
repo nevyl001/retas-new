@@ -1,4 +1,8 @@
-import { buildEliminatoriaPreviewCards } from "./eliminatoriaPreviewBracket";
+import {
+  buildEliminatoriaPreviewCards,
+  matchSlotsFromFaseTimeline,
+  previewCardsFromProjectedSlots,
+} from "./eliminatoriaPreviewBracket";
 
 describe("buildEliminatoriaPreviewCards", () => {
   it("arma el cuadro de cuartos sin nombres de clasificados", () => {
@@ -53,6 +57,62 @@ describe("buildEliminatoriaPreviewCards", () => {
     expect(cuartos[0].scheduleMs).toBe(Date.parse("2026-10-09T14:00:00.000Z"));
     expect(cuartos[3].scheduleMs).toBe(Date.parse("2026-10-09T15:00:00.000Z"));
     expect(cuartos[0].horaDisplay).toMatch(/14:00/);
+  });
+
+  it("las semis no arrancan encima de los cuartos de otra categoría", () => {
+    const slots = matchSlotsFromFaseTimeline({
+      categorias: [
+        { id: "mix", nombre: "Mixtos", categoria: "Mixtos D" },
+        { id: "6ta", nombre: "6ta", categoria: "6ta Fuerza" },
+        { id: "5ta", nombre: "5ta", categoria: "5ta Fuerza" },
+        { id: "4ta", nombre: "4ta", categoria: "4ta Fuerza" },
+      ],
+      startAt: new Date("2026-10-10T14:00:00.000Z"),
+      courts: ["1", "2", "3"],
+      duraciones: { octavos: 60, cuartos: 60, semifinal: 60, final: 60 },
+    });
+    const occupied: { court: string; start: number; end: number }[] = [];
+    for (const torneoId of ["mix", "6ta", "5ta", "4ta"]) {
+      const cards = previewCardsFromProjectedSlots({
+        slots: slots[torneoId],
+        fase: "cuartos",
+        totalRondas: 3,
+        timeZone: "America/Mexico_City",
+      });
+      expect(cards.filter((card) => card.ronda === 2)).toHaveLength(2);
+      expect(cards.filter((card) => card.ronda === 3)).toHaveLength(1);
+      for (const card of cards) {
+        const slot = slots[torneoId].find(
+          (item) =>
+            item.ronda === card.ronda && item.cruceIndex === card.cruceIndex
+        );
+        expect(card.scheduleMs).toBe(slot?.startMs ?? null);
+        if (card.scheduleMs == null || !slot?.cancha) continue;
+        occupied.push({
+          court: slot.cancha,
+          start: card.scheduleMs,
+          end: card.scheduleMs + slot.durationMin * 60 * 1000,
+        });
+      }
+    }
+    const mixSemi = slots.mix.find((slot) => slot.ronda === 2);
+    const lastCuartos = Math.max(
+      ...["mix", "6ta", "5ta", "4ta"].flatMap((id) =>
+        slots[id]
+          .filter((slot) => slot.ronda === 1)
+          .map((slot) => (slot.startMs ?? 0) + slot.durationMin * 60 * 1000)
+      )
+    );
+    expect(mixSemi?.startMs).toBeGreaterThanOrEqual(lastCuartos);
+    for (let i = 0; i < occupied.length; i += 1) {
+      for (let j = i + 1; j < occupied.length; j += 1) {
+        if (occupied[i].court !== occupied[j].court) continue;
+        const overlaps =
+          occupied[i].start < occupied[j].end &&
+          occupied[j].start < occupied[i].end;
+        expect(overlaps).toBe(false);
+      }
+    }
   });
 
   it("arma octavos con 8 cruces en la primera ronda", () => {

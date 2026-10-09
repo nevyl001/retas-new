@@ -496,6 +496,60 @@ function markLiveBatch(
   }
 }
 
+function emptyProjectedTeam(): PublicBracketTeam {
+  return {
+    parejaId: null,
+    label: "",
+    seed: null,
+    originBadge: null,
+    isBye: false,
+    isWinner: false,
+    score: null,
+  };
+}
+
+/** Rondas que aún no existen en el cuadro, con el horario del evento. */
+function appendProjectedPlaceholders(
+  cards: PublicMatchupCard[],
+  projection: PublicBracketScheduleProjection | undefined,
+  fase: TorneoExpressFaseEliminacion,
+  totalRondas: number,
+  bracketSlotCount?: number
+): void {
+  if (!projection?.slots.length) return;
+  const have = new Set(cards.map((card) => `${card.ronda}:${card.cruceIndex}`));
+  for (const slot of projection.slots) {
+    const key = `${slot.ronda}:${slot.cruceIndex}`;
+    if (have.has(key) || isRondaTercerLugar(slot.ronda)) continue;
+    have.add(key);
+    const roundLabel = labelRondaEliminatoria(
+      fase,
+      slot.ronda,
+      totalRondas,
+      bracketSlotCount
+    );
+    cards.push({
+      id: `proy-r${slot.ronda}-${slot.cruceIndex}`,
+      ronda: slot.ronda,
+      cruceIndex: slot.cruceIndex,
+      roundLabel,
+      matchTitle: roundLabel,
+      local: emptyProjectedTeam(),
+      visit: emptyProjectedTeam(),
+      status: "pending",
+      horaDisplay: formatHora(
+        slot.startMs != null ? new Date(slot.startMs).toISOString() : null,
+        projection.timeZone
+      ),
+      scheduleMs: slot.startMs,
+      puntosLocal: null,
+      puntosVisitante: null,
+      sets: [],
+      canchaLabel: slot.cancha ? formatCanchaDisplay(slot.cancha) : null,
+    });
+  }
+}
+
 function applyScheduleProjection(
   cards: PublicMatchupCard[],
   projection: PublicBracketScheduleProjection | undefined
@@ -737,6 +791,13 @@ export function buildPublicBracketViewModel(
   }
 
   applyScheduleProjection(allCards, scheduleProjection);
+  appendProjectedPlaceholders(
+    allCards,
+    scheduleProjection,
+    fase,
+    totalRondas,
+    bracketSlotCount
+  );
 
   const finaleStage = isFinaleEliminatoriaStage(partidos, totalRondas);
   const currentRoundCards = finaleStage

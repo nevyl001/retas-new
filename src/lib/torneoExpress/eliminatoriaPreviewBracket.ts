@@ -98,6 +98,18 @@ export function formatPreviewWindow(
     const tz = resolveEventoTimeZone(timeZone);
     const start = new Date(startMs);
     const end = new Date(startMs + durationMin * 60 * 1000);
+    const day = start
+      .toLocaleDateString("es-MX", {
+        timeZone: tz,
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      })
+      .replace(/\./g, "")
+      .replace(/,/g, "")
+      .replace(/\s+de\s+/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
     const t1 = start.toLocaleTimeString("es-MX", {
       timeZone: tz,
       hour: "2-digit",
@@ -110,7 +122,7 @@ export function formatPreviewWindow(
       minute: "2-digit",
       hour12: false,
     });
-    return `${t1} – ${t2}`;
+    return `${day} · ${t1} – ${t2}`;
   } catch {
     return "";
   }
@@ -261,4 +273,43 @@ export function buildEliminatoriaPreviewCards(input: {
   });
 
   return { cards, totalRondas, fase };
+}
+
+/** Tarjetas de vista previa usando el horario ya intercalado del evento. */
+export function previewCardsFromProjectedSlots(input: {
+  slots: ProjectedEliminatoriaMatchSlot[];
+  fase: TorneoExpressFaseEliminacion;
+  totalRondas: number;
+  timeZone?: string | null;
+}): PublicMatchupCard[] {
+  const bracketSlots = BRACKET_FASE_SLOTS[input.fase];
+  return input.slots.map((slot) => {
+    const roundLabel = labelRondaEliminatoria(
+      input.fase,
+      slot.ronda,
+      input.totalRondas
+    );
+    const roundUpper = roundLabelUpper(input.fase, slot.ronda, input.totalRondas);
+    const matchCount = Math.max(1, bracketSlots / 2 ** slot.ronda);
+    return {
+      id: `preview-r${slot.ronda}-${slot.cruceIndex}`,
+      ronda: slot.ronda,
+      cruceIndex: slot.cruceIndex,
+      roundLabel,
+      matchTitle: matchTitle(roundUpper, slot.cruceIndex, matchCount),
+      local: { ...TBD_TEAM },
+      visit: { ...TBD_TEAM },
+      status: "pending" as const,
+      horaDisplay: formatPreviewWindow(
+        slot.startMs,
+        slot.durationMin,
+        input.timeZone
+      ),
+      scheduleMs: slot.startMs,
+      puntosLocal: null,
+      puntosVisitante: null,
+      sets: [],
+      canchaLabel: slot.cancha ? formatCanchaDisplay(slot.cancha) : null,
+    };
+  });
 }
