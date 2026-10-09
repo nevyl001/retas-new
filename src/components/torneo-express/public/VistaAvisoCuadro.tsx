@@ -18,9 +18,13 @@ export const VistaAvisoCuadro: React.FC = () => {
             <p key={parrafo}>{parrafo}</p>
           ))}
         </div>
-        <p className="te-elim-aviso-page__close">
-          Compite. Demuestra que eres el mejor.
-        </p>
+        <footer className="te-elim-aviso-page__close">
+          <p className="te-elim-aviso-page__close-kicker">A todos los que compiten</p>
+          <p className="te-elim-aviso-page__close-line">
+            Gracias por participar. Cada punto cuenta: compite con todo,
+            disfruta el camino y demuestra que eres el mejor.
+          </p>
+        </footer>
       </article>
     </PublicTorneoExpressShell>
   );
