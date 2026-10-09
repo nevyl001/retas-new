@@ -769,6 +769,26 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
 
   const partidosRonda = partidosDeRonda(partidos, rondaVisible);
   const rondaLabel = labelForRonda(rondaVisible);
+  const finalHalves = (() => {
+    if (isRondaTercerLugar(rondaVisible)) return null;
+    if (labelForRonda(rondaVisible + 1) !== "Semifinal") return null;
+    const round = partidosRonda.filter((p) => !p.es_bye);
+    if (round.length < 4) return null;
+    const buckets = new Map<
+      number,
+      Array<{ partido: TorneoExpressEliminatoriaPartido; number: number }>
+    >();
+    round.forEach((partido, index) => {
+      const key = nextRoundSlotForCruce(partido.cruce_index).nextCruceIndex;
+      const list = buckets.get(key) ?? [];
+      list.push({ partido, number: index + 1 });
+      buckets.set(key, list);
+    });
+    const halves = Array.from(buckets.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map((entry) => entry[1]);
+    return halves.length === 2 ? halves : null;
+  })();
   const canEditRoundSchedule =
     Boolean(onEditRoundSchedule) &&
     eliminatoriaRoundPendingCount(partidos, rondaVisible) > 0;
@@ -809,6 +829,40 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
         ) : null}
       </div>
 
+      {finalHalves ? (
+        <div className="te-elim-board">
+          {finalHalves.map((half, index) => (
+            <section className="te-elim-board__side" key={index}>
+              <header className="te-elim-board__side-head">
+                <p>Lado {index === 0 ? "A" : "B"}</p>
+                <h3>Semifinal {index + 1}</h3>
+                <span>El ganador de estos partidos va a la final.</span>
+              </header>
+              {half.map(({ partido, number }) => (
+                <EliminatoriaPartidoCard
+                  key={partido.id}
+                  partido={partido}
+                  localLabel={parejaLabelFromMap(labelMap, partido.pareja_local_id)}
+                  visitLabel={parejaLabelFromMap(labelMap, partido.pareja_visitante_id)}
+                  editable={editable}
+                  saving={savingPartidoId === partido.id}
+                  savingCancha={savingCanchaId === partido.id}
+                  savingProgramado={savingProgramadoId === partido.id}
+                  matchNumber={number}
+                  courtCheckScope={courtCheckScope}
+                  onSave={onSaveResultado}
+                  onSaveProgramacion={onSaveProgramacion}
+                  partidoFormato={partidoFormato}
+                />
+              ))}
+            </section>
+          ))}
+          <section className="te-elim-board__final">
+            <p>Final</p>
+            <h3>Ganador de la semifinal 1 contra ganador de la semifinal 2</h3>
+          </section>
+        </div>
+      ) : (
       <div className="te-partidos-list">
         {partidosRonda.map((p, index) => (
           <EliminatoriaPartidoCard
@@ -828,6 +882,7 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
           />
         ))}
       </div>
+      )}
 
       <SiguienteRondaCamino
         partidos={partidos}
