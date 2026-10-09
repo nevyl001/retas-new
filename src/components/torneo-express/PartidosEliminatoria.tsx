@@ -645,9 +645,9 @@ function SiguienteRondaCamino({
       buckets.set(slot.nextCruceIndex, bucket);
     });
 
-    return [...buckets.entries()]
+    return Array.from(buckets.entries())
       .sort((a, b) => a[0] - b[0])
-      .map(([, bucket]) => bucket);
+      .map((entry) => entry[1]);
   }, [partidos, rondaVisible, totalRondas]);
 
   if (cards.length === 0) return null;
