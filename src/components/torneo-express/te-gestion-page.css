@@ -2981,8 +2981,19 @@
   min-height: 2.35rem;
   padding: 0.5rem 0.9rem;
   border-radius: var(--ro-radius-full);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
   font-size: 0.8125rem;
   font-weight: 650;
+}
+
+.te-gestion-page .te-elim-gestion .te-elim-rondas-tabs .te-grupos-tab--active,
+.te-gestion-page .te-elim-gestion .te-elim-rondas-tabs .te-grupos-tab--active:hover,
+.te-gestion-page .te-elim-gestion .te-elim-rondas-tabs .te-grupos-tab--active:focus {
+  border-color: rgba(255, 255, 255, 0.42) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
 }
 
 .te-gestion-page .te-elim-gestion .te-partidos-list {
