@@ -7,8 +7,10 @@ import {
 import {
   isRondaTercerLugar,
   labelRondaEliminatoria,
+  nextRoundSlotForCruce,
   partidosDeRonda,
   eliminatoriaBracketSize,
+  eliminatoriaThirdPlaceMatchEnabled,
   totalRondasEliminatoria,
 } from "../../lib/torneoExpress/bracketRounds";
 import { eliminatoriaRoundPendingCount } from "../../lib/torneoExpress/eliminatoriaRoundSchedule";
@@ -600,6 +602,128 @@ function EliminatoriaPartidoCard({
   );
 }
 
+function nextRoundHeading(label: string, count: number): string {
+  if (count === 1) return label;
+  if (label === "Semifinal") return "Así se arman las semifinales";
+  if (label === "Cuartos de final") return "Así se arman los cuartos";
+  if (label === "Octavos de final") return "Así se arman los octavos";
+  return `Así se arma ${label}`;
+}
+
+function SiguienteRondaCamino({
+  partidos,
+  rondaVisible,
+  bracketSlots,
+  labelMap,
+  labelForRonda,
+  totalRondas,
+}: {
+  partidos: TorneoExpressEliminatoriaPartido[];
+  rondaVisible: number;
+  bracketSlots: unknown;
+  labelMap: Record<string, string>;
+  labelForRonda: (ronda: number) => string;
+  totalRondas: number;
+}) {
+  const cards = useMemo(() => {
+    if (isRondaTercerLugar(rondaVisible) || rondaVisible >= totalRondas) {
+      return [];
+    }
+    const nextRonda = rondaVisible + 1;
+    if (partidos.some((p) => p.ronda === nextRonda && !p.es_bye)) return [];
+
+    const round = partidosDeRonda(partidos, rondaVisible).filter((p) => !p.es_bye);
+    const buckets = new Map<
+      number,
+      { local?: TorneoExpressEliminatoriaPartido; visit?: TorneoExpressEliminatoriaPartido }
+    >();
+    round.forEach((partido) => {
+      const slot = nextRoundSlotForCruce(partido.cruce_index);
+      const bucket = buckets.get(slot.nextCruceIndex) ?? {};
+      if (slot.side === "local") bucket.local = partido;
+      else bucket.visit = partido;
+      buckets.set(slot.nextCruceIndex, bucket);
+    });
+
+    return [...buckets.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([, bucket]) => bucket);
+  }, [partidos, rondaVisible, totalRondas]);
+
+  if (cards.length === 0) return null;
+
+  const nextLabel = labelForRonda(rondaVisible + 1);
+  const showsBronze =
+    nextLabel === "Semifinal" &&
+    eliminatoriaThirdPlaceMatchEnabled(bracketSlots) &&
+    totalRondas >= 2;
+
+  const side = (
+    partido: TorneoExpressEliminatoriaPartido | undefined,
+    fallback: string
+  ) => {
+    if (!partido) return { title: fallback, detail: null as string | null };
+    const number = cards.length
+      ? partidosDeRonda(partidos, rondaVisible)
+          .filter((p) => !p.es_bye)
+          .findIndex((p) => p.id === partido.id) + 1
+      : 0;
+    const local = parejaLabelFromMap(labelMap, partido.pareja_local_id);
+    const visit = parejaLabelFromMap(labelMap, partido.pareja_visitante_id);
+    const winner = partido.ganador_id
+      ? parejaLabelFromMap(labelMap, partido.ganador_id)
+      : null;
+    return {
+      title: winner ?? `Ganador del partido ${number || fallback}`,
+      detail: winner ? null : `${local}  ·  ${visit}`,
+    };
+  };
+
+  return (
+    <section className="te-elim-next" aria-label={`Cómo se arma ${nextLabel}`}>
+      <p className="te-elim-next__kicker">Cómo sigue</p>
+      <h3 className="te-elim-next__title">
+        {nextRoundHeading(nextLabel, cards.length)}
+      </h3>
+      <p className="te-elim-next__lead">
+        {nextLabel === "Semifinal"
+          ? "Las semifinales todavía no existen. Se crean solas cuando captures los resultados de esta ronda."
+          : `${nextLabel} todavía no existe. Se crea cuando esta ronda esté completa.`}
+      </p>
+      <div className="te-elim-next__grid">
+        {cards.map((card, index) => {
+          const left = side(card.local, "Partido por definir");
+          const right = side(card.visit, "Partido por definir");
+          const heading =
+            cards.length === 1 ? nextLabel : `${nextLabel} ${index + 1}`;
+          return (
+            <article className="te-elim-next__card" key={heading}>
+              <h4>{heading}</h4>
+              <p className="te-elim-next__slot">{left.title}</p>
+              {left.detail ? (
+                <p className="te-elim-next__detail">{left.detail}</p>
+              ) : null}
+              <span className="te-elim-next__vs">contra</span>
+              <p className="te-elim-next__slot">{right.title}</p>
+              {right.detail ? (
+                <p className="te-elim-next__detail">{right.detail}</p>
+              ) : null}
+            </article>
+          );
+        })}
+      </div>
+      {nextLabel === "Semifinal" ? (
+        <p className="te-elim-next__after">
+          Los ganadores de las dos semifinales juegan la final.
+          {showsBronze
+            ? " Quienes pierdan juegan el tercer lugar."
+            : ""}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
   partidos,
   fase,
@@ -704,6 +828,15 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
           />
         ))}
       </div>
+
+      <SiguienteRondaCamino
+        partidos={partidos}
+        rondaVisible={rondaVisible}
+        bracketSlots={bracketSlots}
+        labelMap={labelMap}
+        labelForRonda={labelForRonda}
+        totalRondas={totalRondas}
+      />
     </div>
   );
 };

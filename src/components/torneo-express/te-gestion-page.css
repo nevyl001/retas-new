@@ -2990,6 +2990,93 @@
   gap: 0.8rem;
 }
 
+.te-gestion-page .te-elim-next {
+  margin-top: 1.25rem;
+  padding: 1.15rem 1.15rem 1.25rem;
+  border: 1px solid var(--ro-border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--ro-radius-md, 0.85rem);
+  background: color-mix(in srgb, var(--ro-bg-card, #141414) 88%, transparent);
+}
+
+.te-gestion-page .te-elim-next__kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.te-gestion-page .te-elim-next__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #fff);
+}
+
+.te-gestion-page .te-elim-next__lead,
+.te-gestion-page .te-elim-next__after {
+  margin: 0.45rem 0 0;
+  max-width: 46rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.72));
+}
+
+.te-gestion-page .te-elim-next__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.te-gestion-page .te-elim-next__card {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.te-gestion-page .te-elim-next__card h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.te-gestion-page .te-elim-next__slot {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  color: var(--text-primary, #fff);
+}
+
+.te-gestion-page .te-elim-next__detail {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
+}
+
+.te-gestion-page .te-elim-next__vs {
+  margin: 0.35rem 0;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+}
+
+@media (max-width: 720px) {
+  .te-gestion-page .te-elim-next__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .te-gestion-page .te-elim-gestion .te-elim-partido-card {
   display: flex;
   flex-direction: column;
