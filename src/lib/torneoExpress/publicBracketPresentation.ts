@@ -42,7 +42,7 @@ export interface BracketTeamPresentation {
   /** Full pair label from the model (for aria / fallback). */
   label: string;
   seed: number | null;
-  /** Compact origin, e.g. "3º · C". */
+  /** Compact origin, e.g. "3º · Grupo C". */
   originLabel: string | null;
   /** Pending feeder label, e.g. "Ganador Cuartos 1". */
   dependencyLabel: string | null;
@@ -167,14 +167,14 @@ function parsePairNames(label: string): string[] {
   return [parts[0], parts[1]];
 }
 
-/** Improve compact badges like "3°C" → "3º · C". */
+/** Compact badges like "3°C" become "3º · Grupo C". */
 export function formatOriginLabel(originBadge: string | null): string | null {
   if (!originBadge?.trim()) return null;
   const raw = originBadge.trim();
   const m = raw.match(/^(\d+)\s*[°ºo]?\s*([A-Za-zÁÉÍÓÚáéíóú])$/);
-  if (m) return `${m[1]}º · ${m[2].toUpperCase()}`;
+  if (m) return `${m[1]}º · Grupo ${m[2].toUpperCase()}`;
   const m2 = raw.match(/^(\d+)\s*[°ºo]?\s*[·.-]\s*([A-Za-zÁÉÍÓÚáéíóú]+)/i);
-  if (m2) return `${m2[1]}º · ${m2[2].charAt(0).toUpperCase()}`;
+  if (m2) return `${m2[1]}º · Grupo ${m2[2].charAt(0).toUpperCase()}`;
   return raw;
 }
 

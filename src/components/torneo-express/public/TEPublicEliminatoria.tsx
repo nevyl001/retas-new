@@ -271,6 +271,12 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
         />
       </section>
 
+      <p className="te-elim-thanks">
+        <span className="te-elim-thanks__kicker">{displayNombre}</span>
+        Gracias a todos por participar. Compite, disfruta cada punto y
+        demuestra que eres el mejor.
+      </p>
+
       <a
         className="te-elim-aviso"
         href={AVISO_CUADRO_HREF}

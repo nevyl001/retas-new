@@ -106,9 +106,8 @@ function buildQualifierMap(
 }
 
 function originBadgeFor(q: BracketQualifier | undefined): string | null {
-  if (!q) return null;
-  if (q.posEnGrupo === 3 || q.isMejorTercero) return grupoBadgeLabel(q);
-  return null;
+  if (!q || !q.posEnGrupo) return null;
+  return grupoBadgeLabel(q);
 }
 
 function teamRow(

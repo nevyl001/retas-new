@@ -714,8 +714,70 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem 0.5rem;
-  min-height: 0.75rem;
+  min-height: 0;
+}
+
+.te-elim-v2 .te-pb-team__origin {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 0.625rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.72));
+}
+
+.te-elim-v2 .te-pb-team__seed {
+  display: none;
+}
+
+.te-elim-v2 .te-pb-finalist__portrait {
+  position: relative;
+  display: block;
+  width: clamp(4.75rem, 8vw, 6.25rem);
+  overflow: hidden;
+  border-radius: 0.9rem;
+  aspect-ratio: 3 / 4;
+}
+
+.te-elim-v2 .te-pb-finalist__portrait .te-pb-finalist__avatar.rj-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.te-elim-v2 .te-pb-finalist__portrait .te-pb-finalist__identity {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  gap: 0.05rem;
+  padding: 1.4rem 0.4rem 0.4rem;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.82) 0%,
+    rgba(0, 0, 0, 0.28) 62%,
+    transparent 100%
+  );
+  text-align: center;
+  pointer-events: none;
+}
+
+.te-elim-v2 .te-pb-finalist__portrait .te-pb-finalist__identity strong {
+  color: #fff;
+  font-size: clamp(0.6875rem, 1.1vw, 0.8125rem);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.te-elim-v2 .te-pb-finalist__portrait .te-pb-finalist__identity span {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.te-elim-v2 .te-pb-finalist__player {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
 }
 
 .te-elim-v2 .te-pb-team__result-state {
@@ -757,6 +819,8 @@
   place-items: center;
   flex: none;
   isolation: isolate;
+  overflow: hidden;
+  border-radius: 0.9rem;
 }
 
 .te-elim-v2 .te-pb-player__portrait::before {
@@ -779,10 +843,22 @@
 }
 
 .te-elim-v2 .te-pb-player__identity {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
   display: grid;
-  align-content: center;
-  gap: 0.25rem;
+  align-content: end;
+  gap: 0.05rem;
   min-width: 0;
+  padding: 1.35rem 0.28rem 0.32rem;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.82) 0%,
+    rgba(0, 0, 0, 0.28) 62%,
+    transparent 100%
+  );
+  text-align: center;
+  pointer-events: none;
 }
 
 .te-elim-v2 .te-pb-team__player-name {
@@ -792,17 +868,24 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   white-space: normal;
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 650;
+  line-height: 1.15;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 .te-elim-v2 .te-pb-team__rating {
   display: flex;
   justify-content: center;
   align-items: baseline;
-  gap: 0.35rem;
-  font-size: clamp(0.6875rem, 2cqi, 0.75rem);
-  font-weight: 500;
-  line-height: 1.2;
-  color: var(--text-muted);
+  gap: 0.2rem;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .te-elim-v2 .te-pb-team__rating-label {

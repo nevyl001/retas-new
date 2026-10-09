@@ -2456,6 +2456,27 @@
   margin-bottom: 0.15rem;
 }
 
+.te-elim-thanks {
+  width: min(100%, 36rem);
+  margin: clamp(2.5rem, 5vw, 3.5rem) auto 0;
+  text-align: center;
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  font-weight: 500;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #fff);
+}
+
+.te-elim-thanks__kicker {
+  display: block;
+  margin-bottom: 0.55rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
+}
+
 .te-elim-aviso {
   display: grid;
   gap: 0.35rem;

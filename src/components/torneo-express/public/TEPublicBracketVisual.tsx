@@ -71,15 +71,14 @@ function PlayerRow({
           alt={player.fotoUrl ? `Foto de ${player.name}` : ""}
           className="te-pb-team__avatar te-pb-team__avatar--inline"
         />
-      </span>
-      <span className="te-pb-player__identity">
-        <span className="te-pb-team__player-name">{player.name}</span>
-        {player.rating != null ? (
-          <span className="te-pb-team__rating">
-            <span className="te-pb-team__rating-label">Rating</span>
-            {player.rating.toFixed(2)}
-          </span>
-        ) : null}
+        <span className="te-pb-player__identity">
+          <span className="te-pb-team__player-name">{player.name}</span>
+          {player.rating != null ? (
+            <span className="te-pb-team__rating">
+              {player.rating.toFixed(2)}
+            </span>
+          ) : null}
+        </span>
       </span>
     </span>
   );
@@ -128,17 +127,16 @@ function TeamBlock({
       aria-label={team.isWinner ? `Ganador: ${team.label}` : undefined}
     >
       <div className="te-pb-team__body">
-        <div className="te-pb-team__meta">
-          {team.seed != null ? (
-            <span className="te-pb-team__seed">#{team.seed}</span>
-          ) : null}
-          {team.originLabel ? (
-            <span className="te-pb-team__origin">{team.originLabel}</span>
-          ) : null}
-          {showResultState && team.isWinner ? (
-            <span className="te-pb-team__result-state">✓ GANADORES</span>
-          ) : null}
-        </div>
+        {team.originLabel || (showResultState && team.isWinner) ? (
+          <div className="te-pb-team__meta">
+            {team.originLabel ? (
+              <span className="te-pb-team__origin">{team.originLabel}</span>
+            ) : null}
+            {showResultState && team.isWinner ? (
+              <span className="te-pb-team__result-state">✓ GANADORES</span>
+            ) : null}
+          </div>
+        ) : null}
         <div className="te-pb-team__names">
           {playerRows.map((player) => (
             <PlayerRow
@@ -222,20 +220,22 @@ function FinalistPairHero({
       <div className="te-pb-finalist__players">
         {players.map((player) => (
           <div className="te-pb-finalist__player" key={player.id}>
-            <JugadorAvatar
-              fotoUrl={player.fotoUrl}
-              nombre={player.name}
-              size="xl"
-              loading="eager"
-              alt={player.fotoUrl ? `Foto de ${player.name}` : ""}
-              className="te-pb-finalist__avatar"
-            />
-            <div className="te-pb-finalist__identity">
-              <strong>{player.name}</strong>
-              {player.rating != null ? (
-                <span>Rating {player.rating.toFixed(2)}</span>
-              ) : null}
-            </div>
+            <span className="te-pb-finalist__portrait">
+              <JugadorAvatar
+                fotoUrl={player.fotoUrl}
+                nombre={player.name}
+                size="xl"
+                loading="eager"
+                alt={player.fotoUrl ? `Foto de ${player.name}` : ""}
+                className="te-pb-finalist__avatar"
+              />
+              <span className="te-pb-finalist__identity">
+                <strong>{player.name}</strong>
+                {player.rating != null ? (
+                  <span>{player.rating.toFixed(2)}</span>
+                ) : null}
+              </span>
+            </span>
           </div>
         ))}
       </div>
@@ -261,10 +261,9 @@ function FinalistPairHero({
             </div>
           </dl>
         ) : null}
-        {team.seed != null || team.originLabel ? (
+        {team.originLabel ? (
           <div className="te-pb-finalist__journey-meta">
-            {team.seed != null ? <span>Seed #{team.seed}</span> : null}
-            {team.originLabel ? <span>{team.originLabel}</span> : null}
+            <span>{team.originLabel}</span>
           </div>
         ) : null}
       </div>

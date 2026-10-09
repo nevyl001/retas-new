@@ -103,7 +103,7 @@ describe("publicBracketPresentation", () => {
   });
 
   it("formats origin badges for readability", () => {
-    expect(formatOriginLabel("3°C")).toBe("3º · C");
+    expect(formatOriginLabel("3°C")).toBe("3º · Grupo C");
     expect(formatOriginLabel(null)).toBeNull();
   });
 
