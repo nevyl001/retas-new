@@ -4,7 +4,7 @@ export type StandingsCriterionKey = "fav" | "dif" | "con" | "pg";
 
 /**
  * Americano/Reta/Express (games): FAV → DIF → PG.
- * Express setto: PTS (2 por PG) → DIF de games → H2H.
+ * Express setto: PTS (2 por PG) → DIF de games → sets → H2H.
  * Duelo equipos: FAV → CON → PG.
  */
 export type StandingsCriterionOrder =

@@ -70,8 +70,12 @@ function enrichWithSetStats(
   for (const m of matches) {
     const a = setsByPair.get(m.pairAId);
     const b = setsByPair.get(m.pairBId);
-    const setsA = m.setsA ?? 0;
-    const setsB = m.setsB ?? 0;
+    let setsA = m.setsA ?? 0;
+    let setsB = m.setsB ?? 0;
+    if (setsA === 0 && setsB === 0 && m.winnerId) {
+      if (m.winnerId === m.pairAId) setsA = 1;
+      else if (m.winnerId === m.pairBId) setsB = 1;
+    }
     if (a) {
       a.favor += setsA;
       a.contra += setsB;

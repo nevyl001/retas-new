@@ -46,9 +46,10 @@ export const CLASIFICACION_MODO_OPTIONS: readonly ClasificacionModoOption[] = [
     steps: [
       "1. Puntos (2 por partido ganado)",
       "2. Diferencia de games (a favor − en contra)",
-      "3. Cara a cara (enfrentamiento directo)",
+      "3. Sets (ganados − perdidos; si empatan, más sets ganados)",
+      "4. Cara a cara (enfrentamiento directo)",
     ],
-    orderSummary: "PTS → DIF → H2H",
+    orderSummary: "PTS → DIF → SETS → H2H",
   },
 ] as const;
 
@@ -107,7 +108,7 @@ export type ClasificacionAchievementInput = {
   dif: number;
   /** 2 por partido ganado. Si falta, se calcula como pg × 2. */
   puntos?: number;
-  /** Diferencia de sets (favor − contra). Ya no ordena setto_pg. */
+  /** Diferencia de sets (favor − contra). En setto_pg desempata después de los games. */
   setsDif?: number;
 };
 

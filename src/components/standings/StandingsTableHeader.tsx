@@ -106,6 +106,16 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
       >
         DIF
       </th>
+      {isExpressSetto ? (
+        <>
+          <th className="col-sf" title="Sets ganados (3.er criterio, junto con los perdidos)">
+            SF
+          </th>
+          <th className="col-sc" title="Sets perdidos">
+            SC
+          </th>
+        </>
+      ) : null}
       <th
         className={`${COL_PTS}${
           isExpressSetto

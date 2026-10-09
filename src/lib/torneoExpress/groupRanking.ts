@@ -6,9 +6,9 @@
  * - 2 parejas en dif_puntos: un enfrentamiento directo, o empate sin resolver.
  * - 3 o más en dif_puntos: un mini-ranking FAV → DIF → PG. Lo que siga igual
  *   no vuelve a entrar al mismo procedimiento.
- * - setto_pg ordena por puntos (2 por partido ganado) y luego por
- *   diferencia de games. El cara a cara solo separa a dos que sigan
- *   iguales. Lo que siga empatado queda sin resolver.
+ * - setto_pg ordena por puntos (2 por partido ganado), diferencia de
+ *   games y sets (diferencia, luego sets ganados). El cara a cara solo
+ *   separa a dos que sigan iguales. Lo que siga empatado queda sin resolver.
  *
  * El orden del arreglo dentro de un empate sin resolver es solo de presentación.
  * La posición deportiva es `posicion`, compartida por todo el subconjunto.
@@ -104,9 +104,14 @@ function difPrimaryKey(row: GroupStandingStats): readonly number[] {
   return [row.juegosFavor, row.diferencia, row.pg];
 }
 
-/** 2 puntos por partido ganado, luego games a favor menos en contra. */
+/** 2 puntos por partido ganado, games, y luego sets ganados contra perdidos. */
 function settoRankKey(row: GroupStandingStats): readonly number[] {
-  return [row.puntos, row.diferencia];
+  return [
+    row.puntos,
+    row.diferencia,
+    row.setsFavor - row.setsContra,
+    row.setsFavor,
+  ];
 }
 
 function matchesInside(pairIds: ReadonlySet<string>, matches: readonly MatchResult[]): MatchResult[] {

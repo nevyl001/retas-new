@@ -467,6 +467,45 @@ describe("standings setto_pg", () => {
     expect(byId(rows, "b").dif).toBe(2);
   });
 
+  it("la diferencia de sets desempata cuando los games empatan", () => {
+    const rows = table(
+      ["a", "b"],
+      [
+        jugado({
+          id: "m1",
+          local: "a",
+          visit: "b",
+          gamesLocal: 12,
+          gamesVisit: 8,
+          sets: [
+            { local: 6, visitante: 4 },
+            { local: 6, visitante: 4 },
+          ],
+          ganador: "a",
+        }),
+        jugado({
+          id: "m2",
+          local: "b",
+          visit: "a",
+          gamesLocal: 13,
+          gamesVisit: 9,
+          sets: [
+            { local: 6, visitante: 1 },
+            { local: 1, visitante: 6 },
+            { local: 6, visitante: 2 },
+          ],
+          ganador: "b",
+        }),
+      ],
+      "setto_pg"
+    );
+    expect(byId(rows, "a").dif).toBe(byId(rows, "b").dif);
+    expect((byId(rows, "a").setsFav ?? 0) - (byId(rows, "a").setsCon ?? 0)).toBe(1);
+    expect((byId(rows, "b").setsFav ?? 0) - (byId(rows, "b").setsCon ?? 0)).toBe(-1);
+    expect(rows.map((row) => row.parejaId)).toEqual(["a", "b"]);
+    expect(rows.map((row) => row.posicion)).toEqual([1, 2]);
+  });
+
   it("dos empatadas en puntos y games sin cara a cara quedan unresolved", () => {
     const rows = table(
       ["b", "a"],

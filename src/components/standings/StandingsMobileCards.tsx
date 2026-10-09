@@ -21,6 +21,8 @@ export type StandingsMobileCardRow = {
   points: number;
   pointsReceived: number;
   puntosTorneo: number;
+  setsFavor?: number;
+  setsContra?: number;
 };
 
 function positionIcon(position: number): string {
@@ -169,6 +171,22 @@ export const StandingsMobileCards: React.FC<{
                   {row.matchesPlayed}
                 </span>
               </div>
+              {row.setsFavor != null && row.setsContra != null ? (
+                <>
+                  <div className="standings-mobile-card__stat">
+                    <span className="standings-mobile-card__stat-label">SF</span>
+                    <span className="standings-mobile-card__stat-value">
+                      {row.setsFavor}
+                    </span>
+                  </div>
+                  <div className="standings-mobile-card__stat">
+                    <span className="standings-mobile-card__stat-label">SC</span>
+                    <span className="standings-mobile-card__stat-value">
+                      {row.setsContra}
+                    </span>
+                  </div>
+                </>
+              ) : null}
               <div className="standings-mobile-card__stat">
                 <span className="standings-mobile-card__stat-label">PP</span>
                 <span className="standings-mobile-card__stat-value">

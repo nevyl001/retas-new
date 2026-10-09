@@ -109,6 +109,12 @@ export const TablaGrupo: React.FC<TablaGrupoProps> = ({
                   ptsCon={row.ptsCon}
                   className=""
                 />
+                {clasificacionModo === "setto_pg" ? (
+                  <>
+                    <td className="col-sf">{row.setsFav ?? 0}</td>
+                    <td className="col-sc">{row.setsCon ?? 0}</td>
+                  </>
+                ) : null}
                 <StandingsPtsCell pts={row.puntos} className="te-standings-pts" />
               </tr>
             );

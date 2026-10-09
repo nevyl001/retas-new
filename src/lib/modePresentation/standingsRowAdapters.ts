@@ -48,6 +48,8 @@ export function teStandingRowToMobileRow(row: StandingRowExpress, index: number)
     points: row.ptsFav,
     pointsReceived: row.ptsCon,
     puntosTorneo: row.puntos,
+    setsFavor: row.setsFav ?? 0,
+    setsContra: row.setsCon ?? 0,
   };
 }
 

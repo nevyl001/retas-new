@@ -62,6 +62,8 @@ export const PublicStandingsSection: React.FC<{
               <th>FAV</th>
               <th>CON</th>
               <th>DIF</th>
+              <th title="Sets ganados">SF</th>
+              <th title="Sets perdidos">SC</th>
               <th>PTS</th>
             </tr>
           </thead>
@@ -93,6 +95,8 @@ export const PublicStandingsSection: React.FC<{
                   <td>
                     <DifPill ptsFav={row.ptsFav} ptsCon={row.ptsCon} />
                   </td>
+                  <td>{row.setsFav ?? 0}</td>
+                  <td>{row.setsCon ?? 0}</td>
                   <td className="te-pub-standings-row__pts">{row.puntos}</td>
                 </tr>
               );
@@ -152,6 +156,12 @@ export const PublicStandingsSection: React.FC<{
                 <span>
                   <small>DIF</small>{" "}
                   <DifPill ptsFav={row.ptsFav} ptsCon={row.ptsCon} />
+                </span>
+                <span>
+                  <small>SF</small> {row.setsFav ?? 0}
+                </span>
+                <span>
+                  <small>SC</small> {row.setsCon ?? 0}
                 </span>
               </div>
             </article>
