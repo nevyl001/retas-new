@@ -772,7 +772,8 @@
 }
 
 .te-elim-v2 .te-pb-finalist__portrait .te-pb-finalist__identity span {
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--brand-accent, #bfff00);
+  font-weight: 650;
 }
 
 .te-elim-v2 .te-pb-finalist__player {
@@ -815,7 +816,8 @@
 .te-elim-v2 .te-pb-player__portrait {
   position: relative;
   display: grid;
-  width: min(100%, 4.75rem);
+  width: 100%;
+  max-width: 9.25rem;
   place-items: center;
   flex: none;
   isolation: isolate;
@@ -880,12 +882,12 @@
   justify-content: center;
   align-items: baseline;
   gap: 0.2rem;
-  font-size: 0.5625rem;
-  font-weight: 600;
+  font-size: 0.625rem;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: 0.02em;
+  color: var(--brand-accent, #bfff00);
 }
 
 .te-elim-v2 .te-pb-team__rating-label {
