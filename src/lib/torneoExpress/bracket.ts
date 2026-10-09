@@ -30,12 +30,16 @@ function compareQualifiers(a: BracketQualifier, b: BracketQualifier): number {
   return a.seed - b.seed;
 }
 
+function groupToken(nombre: string, orden: number): string {
+  const trimmed = nombre.trim();
+  if (trimmed.length > 0 && trimmed.length <= 2) return trimmed.toUpperCase();
+  const tail = trimmed.match(/(?:^|\s)([A-Za-z0-9]{1,3})$/);
+  if (tail) return tail[1].toUpperCase();
+  return String.fromCharCode(65 + (Math.max(0, orden) % 26));
+}
+
 export function grupoBadgeLabel(q: BracketQualifier): string {
-  const letter =
-    q.grupoNombre?.trim().length <= 2
-      ? q.grupoNombre.trim().toUpperCase()
-      : String.fromCharCode(65 + (q.grupoOrden % 26));
-  return `${q.posEnGrupo}°${letter}`;
+  return `${q.posEnGrupo}°${groupToken(q.grupoNombre ?? "", q.grupoOrden)}`;
 }
 
 /**

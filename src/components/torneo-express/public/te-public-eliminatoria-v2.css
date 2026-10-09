@@ -3453,6 +3453,31 @@
     .te-pb-round__stack {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+
+  .te-elim-v2
+    .te-pb-round--history:not(.te-pb-round--semis)
+    .te-pb-player__portrait {
+    width: 100%;
+    max-width: none;
+  }
+
+  .te-elim-v2
+    .te-pb-round--history:not(.te-pb-round--semis)
+    .te-pb-team__names {
+    gap: 0.45rem;
+  }
+
+  .te-elim-v2
+    .te-pb-round--history:not(.te-pb-round--semis)
+    .te-pb-team__player-name {
+    font-size: 0.75rem;
+  }
+
+  .te-elim-v2
+    .te-pb-round--history:not(.te-pb-round--semis)
+    .te-pb-team__rating {
+    font-size: 0.6875rem;
+  }
 }
 
 @media (max-width: 35rem) {

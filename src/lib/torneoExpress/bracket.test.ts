@@ -2,12 +2,14 @@ import {
   calcularClasificadosFase,
   calcularBracketInicial,
   getTablaOrdenada,
+  grupoBadgeLabel,
   mejoresTercerosNecesarios,
   sugerirFaseAutomatica,
   swapBracketSlots,
   validarFaseElegible,
   validarChoques,
 } from "./bracket";
+import type { BracketQualifier } from "./bracketTypes";
 import { puestoResuelto } from "./standings";
 import type {
   TorneoExpress,
@@ -178,6 +180,32 @@ describe("drag & drop y choques", () => {
     // reordenar. Lo importante: el cuadro queda válido y los avisos coinciden.
     const choques = validarChoques(result.slots);
     expect(result.advertencias).toHaveLength(choques.length);
+  });
+});
+
+describe("grupoBadgeLabel", () => {
+  const qualifier = (grupoNombre: string, grupoOrden: number): BracketQualifier => ({
+    seed: 1,
+    parejaId: "p1",
+    parejaLabel: "A / B",
+    grupoId: "g1",
+    grupoNombre,
+    grupoOrden,
+    posEnGrupo: 1,
+    isMejorTercero: false,
+    pj: 2,
+    pg: 2,
+    pp: 0,
+    ptsFav: 24,
+    ptsCon: 8,
+    dif: 16,
+    puntos: 4,
+  });
+
+  it("toma la letra del nombre aunque el orden no coincida", () => {
+    expect(grupoBadgeLabel(qualifier("Grupo D", 4))).toBe("1°D");
+    expect(grupoBadgeLabel(qualifier("Grupo A", 1))).toBe("1°A");
+    expect(grupoBadgeLabel(qualifier("C", 2))).toBe("1°C");
   });
 });
 
