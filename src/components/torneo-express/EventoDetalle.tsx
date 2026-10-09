@@ -38,15 +38,21 @@ import { EventoEliminatoriaHorarioForm } from "./EventoEliminatoriaHorarioForm";
 import { EventoReglasForm } from "./EventoReglasForm";
 import {
   DEFAULT_ELIMINATORIA_DURACIONES,
+  defaultFaseBloques,
+  faseBloqueKey,
   faseFromRondasActivas,
   isCategoriaEliminatoriaLocked,
   normalizeEliminatoriaCanchas,
   normalizeEliminatoriaDuraciones,
   orderCategoriasForEliminatoria,
+  parseFaseOrden,
+  realignFasesToCategoriaOrden,
+  reconcileFaseBloques,
   rondasFromFase,
   serializeEliminatoriaDuraciones,
   unionEliminatoriaRondas,
   type EliminatoriaDuraciones,
+  type EliminatoriaFaseBloque,
   type EliminatoriaRondaKey,
 } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import {
@@ -59,6 +65,23 @@ import { TorneoExpressDeleteModal } from "./TorneoExpressDeleteModal";
 import { navigateTorneoExpress } from "./torneoExpressNav";
 import "./te-inicio-page.css";
 import "./te-eventos.css";
+
+function fasesForEvento(
+  evento: TorneoExpressEvento,
+  categorias: TorneoExpress[]
+): EliminatoriaFaseBloque[] {
+  const orden = orderCategoriasForEliminatoria(
+    categorias,
+    evento.eliminatoria_categoria_orden
+  ).map((cat) => cat.id);
+  const rondas = Object.fromEntries(
+    categorias.map((cat) => [cat.id, rondasFromFase(cat.fase_eliminacion)])
+  );
+  return reconcileFaseBloques(
+    parseFaseOrden(evento.eliminatoria_duraciones),
+    defaultFaseBloques(categorias, orden, rondas)
+  );
+}
 
 function isUniqueViolation(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
@@ -149,6 +172,9 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
   const [categoriaRondas, setCategoriaRondas] = useState<
     Record<string, EliminatoriaRondaKey[]>
   >({});
+  const [faseBloques, setFaseBloques] = useState<EliminatoriaFaseBloque[]>(
+    []
+  );
   const [savingEliminatoria, setSavingEliminatoria] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<TorneoExpress | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -184,9 +210,11 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       eliminatoriaCanchas,
       eliminatoriaDuraciones: serializeEliminatoriaDuraciones(
         eliminatoriaDuraciones,
-        unionEliminatoriaRondas(categoriaRondas)
+        unionEliminatoriaRondas(categoriaRondas),
+        faseBloques.map(faseBloqueKey)
       ),
       categoriaRondas,
+      faseOrden: faseBloques.map(faseBloqueKey),
     },
     defaultEliminatoriaOrden,
     categorias
@@ -262,6 +290,7 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
           data.categorias.map((cat) => [cat.id, rondasFromFase(cat.fase_eliminacion)])
         )
       );
+      setFaseBloques(fasesForEvento(data.evento, data.categorias));
       const synced = await syncEventoEstadoFromCategorias(data.evento.id).catch(
         () => null
       );
@@ -305,6 +334,7 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
         setEliminatoriaDuraciones(
           normalizeEliminatoriaDuraciones(nextEvento.eliminatoria_duraciones)
         );
+        setFaseBloques(fasesForEvento(nextEvento, data.categorias));
       }
     } catch (e) {
       setError(formatSupabaseError(e));
@@ -370,7 +400,8 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       const canchas = normalizeEliminatoriaCanchas(eliminatoriaCanchas);
       const duraciones = serializeEliminatoriaDuraciones(
         eliminatoriaDuraciones,
-        unionEliminatoriaRondas(categoriaRondas)
+        unionEliminatoriaRondas(categoriaRondas),
+        faseBloques.map(faseBloqueKey)
       );
       const inicioIso = zonedDateTimeIso(
         eliminatoriaInicioLocal,
@@ -437,6 +468,7 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
           ])
         )
       );
+      setFaseBloques(fasesForEvento(savedEvento, nextCategorias));
       await applyEventoEliminatoriaHorario(evento.id);
       showActionToast("Eliminatoria del evento guardada", "success");
     } catch (e) {
@@ -681,7 +713,7 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                       Programación de eliminatoria
                     </span>
                     <span className="te-evd-elim-jump__hint">
-                      Hora de inicio, orden de categorías y canchas disponibles.
+                      Hora de inicio, orden de las fases y canchas disponibles.
                     </span>
                   </span>
                   <span className="te-evd-elim-jump__action">Configurar</span>
@@ -716,18 +748,35 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
                   timezone={evento?.timezone}
                   categorias={categorias}
                   ordenIds={eliminatoriaOrdenIds}
-                  onOrdenIdsChange={setEliminatoriaOrdenIds}
+                  onOrdenIdsChange={(ids) => {
+                    setEliminatoriaOrdenIds(ids);
+                    setFaseBloques((current) =>
+                      realignFasesToCategoriaOrden(current, ids)
+                    );
+                  }}
                   canchas={eliminatoriaCanchas}
                   onCanchasChange={setEliminatoriaCanchas}
                   duraciones={eliminatoriaDuraciones}
                   onDuracionesChange={setEliminatoriaDuraciones}
                   categoriaRondas={categoriaRondas}
-                  onCategoriaRondasChange={(torneoId, rondas) =>
-                    setCategoriaRondas((current) => ({
-                      ...current,
-                      [torneoId]: rondas,
-                    }))
-                  }
+                  onCategoriaRondasChange={(torneoId, rondas) => {
+                    setCategoriaRondas((current) => {
+                      const next = { ...current, [torneoId]: rondas };
+                      setFaseBloques((fases) =>
+                        reconcileFaseBloques(
+                          fases.map(faseBloqueKey),
+                          defaultFaseBloques(
+                            categorias,
+                            eliminatoriaOrdenIds,
+                            next
+                          )
+                        )
+                      );
+                      return next;
+                    });
+                  }}
+                  faseBloques={faseBloques}
+                  onFaseBloquesChange={setFaseBloques}
                   footer={
                     <div className="te-evd-savebar">
                       {eliminatoriaDirty ? (

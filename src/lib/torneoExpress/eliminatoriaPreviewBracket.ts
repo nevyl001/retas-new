@@ -6,9 +6,12 @@ import {
 import { formatCanchaDisplay } from "./canchaDisplay";
 import { resolveEventoTimeZone } from "./eventoTemporal";
 import {
+  buildEliminatoriaFaseTimeline,
   normalizeEliminatoriaCanchas,
   normalizeEliminatoriaDuraciones,
+  type CategoriaOrdenable,
   type EliminatoriaDuraciones,
+  type EliminatoriaRondaKey,
 } from "./eliminatoriaCategoriaOrden";
 import type { PublicBracketTeam, PublicMatchupCard } from "./publicBracketModel";
 import type { TorneoExpressFaseEliminacion } from "./types";
@@ -178,6 +181,47 @@ export function projectEliminatoriaMatchSlots(input: {
   }
 
   return { slots, totalRondas, fase };
+}
+
+export function matchSlotsFromFaseTimeline(input: {
+  categorias: readonly CategoriaOrdenable[];
+  categoriaOrden?: readonly string[] | null;
+  rondasByCategoria?: Record<string, readonly EliminatoriaRondaKey[]>;
+  faseOrden?: readonly string[] | null;
+  startAt?: Date | null;
+  courts?: readonly string[] | null;
+  duraciones?: unknown;
+}): Record<string, ProjectedEliminatoriaMatchSlot[]> {
+  const courts = normalizeEliminatoriaCanchas(input.courts);
+  const courtCount = Math.max(1, courts.length);
+  const timeline = buildEliminatoriaFaseTimeline({
+    categorias: input.categorias,
+    categoriaOrden: input.categoriaOrden,
+    rondasByCategoria: input.rondasByCategoria,
+    faseOrden: input.faseOrden,
+    startAt: input.startAt,
+    courtCount,
+    duraciones: input.duraciones,
+  });
+  const byTorneo: Record<string, ProjectedEliminatoriaMatchSlot[]> = {};
+  for (const entry of timeline) {
+    const slots = byTorneo[entry.torneoId] ?? [];
+    for (let i = 0; i < entry.matchCount; i += 1) {
+      const wave = Math.floor(i / courtCount);
+      slots.push({
+        ronda: entry.rondaNumber,
+        cruceIndex: i,
+        startMs:
+          entry.startsAtMs == null
+            ? null
+            : entry.startsAtMs + wave * entry.durationMin * 60 * 1000,
+        cancha: courts.length > 0 ? courts[i % courtCount] : null,
+        durationMin: entry.durationMin,
+      });
+    }
+    byTorneo[entry.torneoId] = slots;
+  }
+  return byTorneo;
 }
 
 export function buildEliminatoriaPreviewCards(input: {

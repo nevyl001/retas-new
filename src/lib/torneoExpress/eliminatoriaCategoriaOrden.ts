@@ -1,3 +1,4 @@
+import { BRACKET_FASE_SLOTS } from "./bracketTypes";
 import { formatCanchaDisplay, normalizeCanchaForSave } from "./canchaDisplay";
 import { formatTorneoExpressCategoria } from "./formatCategoria";
 import { resolveEventoTimeZone } from "./eventoTemporal";
@@ -201,12 +202,24 @@ export function inferFaseEliminacion(
 
 export function serializeEliminatoriaDuraciones(
   minutes: unknown,
-  activas: readonly EliminatoriaRondaKey[]
-): EliminatoriaDuraciones & { activas: EliminatoriaRondaKey[] } {
-  return {
+  activas: readonly EliminatoriaRondaKey[],
+  faseOrden?: readonly string[] | null
+): EliminatoriaDuraciones & {
+  activas: EliminatoriaRondaKey[];
+  fase_orden?: string[];
+} {
+  const payload: EliminatoriaDuraciones & {
+    activas: EliminatoriaRondaKey[];
+    fase_orden?: string[];
+  } = {
     ...normalizeEliminatoriaDuraciones(minutes),
     activas: parseEliminatoriaRondasActivas({ activas }),
   };
+  const keys = (faseOrden ?? [])
+    .map((key) => key.trim())
+    .filter((key) => key.length > 0);
+  if (keys.length > 0) payload.fase_orden = keys;
+  return payload;
 }
 
 export function rondaPathLabel(
@@ -370,6 +383,187 @@ export function formatEliminatoriaCourtsLabel(
   return labels.join(", ");
 }
 
+export type EliminatoriaFaseBloque = {
+  torneoId: string;
+  ronda: EliminatoriaRondaKey;
+};
+
+export type EliminatoriaFaseTimelineEntry = EliminatoriaFaseBloque & {
+  rondaNumber: number;
+  matchCount: number;
+  startsAtMs: number | null;
+  durationMin: number;
+};
+
+const FASE_ORDEN_KEY =
+  /^[0-9a-f-]{8,}:(?:octavos|cuartos|semifinal|final)$/i;
+
+export function faseBloqueKey(bloque: EliminatoriaFaseBloque): string {
+  return `${bloque.torneoId}:${bloque.ronda}`;
+}
+
+export function parseFaseOrden(raw: unknown): string[] | null {
+  const obj =
+    raw && typeof raw === "object" && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : null;
+  if (!obj || !Array.isArray(obj.fase_orden)) return null;
+  const keys = obj.fase_orden
+    .map((item) => String(item ?? "").trim())
+    .filter((key) => FASE_ORDEN_KEY.test(key));
+  return keys.length > 0 ? keys : null;
+}
+
+function rondaNumberForFase(
+  fase: TorneoExpressFaseEliminacion,
+  ronda: EliminatoriaRondaKey
+): number | null {
+  const start = fase === "octavos" ? 0 : fase === "cuartos" ? 1 : 2;
+  const index = ELIMINATORIA_RONDA_FIELDS.findIndex((field) => field.key === ronda);
+  if (index < start) return null;
+  return index - start + 1;
+}
+
+function rondasForCategoria(
+  cat: CategoriaOrdenable,
+  rondasByCategoria?: Record<string, readonly EliminatoriaRondaKey[]>
+): EliminatoriaRondaKey[] {
+  const listed = rondasByCategoria?.[cat.id];
+  if (listed && listed.length > 0) {
+    return parseEliminatoriaRondasActivas({ activas: listed });
+  }
+  return rondasFromFase(cat.fase_eliminacion);
+}
+
+function faseForCategoria(
+  cat: CategoriaOrdenable,
+  rondasByCategoria?: Record<string, readonly EliminatoriaRondaKey[]>
+): TorneoExpressFaseEliminacion {
+  if (rondasByCategoria?.[cat.id]) {
+    return faseFromRondasActivas(rondasForCategoria(cat, rondasByCategoria));
+  }
+  return inferFaseEliminacion(cat.fase_eliminacion);
+}
+
+/** Por defecto: todos los cuartos, luego todas las semis, luego las finales. */
+export function defaultFaseBloques(
+  categorias: readonly CategoriaOrdenable[],
+  savedIds: readonly string[] | null | undefined,
+  rondasByCategoria?: Record<string, readonly EliminatoriaRondaKey[]>
+): EliminatoriaFaseBloque[] {
+  const ordered = orderCategoriasForEliminatoria(categorias, savedIds);
+  const bloques: EliminatoriaFaseBloque[] = [];
+  for (const field of ELIMINATORIA_RONDA_FIELDS) {
+    for (const cat of ordered) {
+      const fase = faseForCategoria(cat, rondasByCategoria);
+      if (rondaNumberForFase(fase, field.key) == null) continue;
+      if (!rondasForCategoria(cat, rondasByCategoria).includes(field.key)) {
+        continue;
+      }
+      bloques.push({ torneoId: cat.id, ronda: field.key });
+    }
+  }
+  return bloques;
+}
+
+export function reconcileFaseBloques(
+  savedKeys: readonly string[] | null | undefined,
+  canonical: readonly EliminatoriaFaseBloque[]
+): EliminatoriaFaseBloque[] {
+  const byKey = new Map(canonical.map((bloque) => [faseBloqueKey(bloque), bloque]));
+  const used = new Set<string>();
+  const out: EliminatoriaFaseBloque[] = [];
+  for (const key of savedKeys ?? []) {
+    const bloque = byKey.get(key);
+    if (!bloque || used.has(key)) continue;
+    out.push(bloque);
+    used.add(key);
+  }
+  if (out.length === 0 && (savedKeys?.length ?? 0) > 0) return [...canonical];
+  for (const bloque of canonical) {
+    const key = faseBloqueKey(bloque);
+    if (used.has(key)) continue;
+    out.push(bloque);
+  }
+  return out;
+}
+
+/** Mantiene el orden de las rondas y reordena las categorías dentro de cada una. */
+export function realignFasesToCategoriaOrden(
+  fases: readonly EliminatoriaFaseBloque[],
+  categoriaIds: readonly string[]
+): EliminatoriaFaseBloque[] {
+  const rank = new Map(categoriaIds.map((id, index) => [id, index]));
+  const result = fases.slice();
+  for (const field of ELIMINATORIA_RONDA_FIELDS) {
+    const indexes: number[] = [];
+    const blocks: EliminatoriaFaseBloque[] = [];
+    result.forEach((bloque, index) => {
+      if (bloque.ronda !== field.key) return;
+      indexes.push(index);
+      blocks.push(bloque);
+    });
+    blocks.sort(
+      (a, b) =>
+        (rank.get(a.torneoId) ?? 999) - (rank.get(b.torneoId) ?? 999)
+    );
+    indexes.forEach((index, position) => {
+      result[index] = blocks[position];
+    });
+  }
+  return result;
+}
+
+export function buildEliminatoriaFaseTimeline(input: {
+  categorias: readonly CategoriaOrdenable[];
+  categoriaOrden?: readonly string[] | null;
+  rondasByCategoria?: Record<string, readonly EliminatoriaRondaKey[]>;
+  faseOrden?: readonly string[] | null;
+  startAt?: Date | null;
+  courtCount?: number;
+  duraciones?: unknown;
+}): EliminatoriaFaseTimelineEntry[] {
+  const canonical = defaultFaseBloques(
+    input.categorias,
+    input.categoriaOrden,
+    input.rondasByCategoria
+  );
+  const bloques = reconcileFaseBloques(
+    input.faseOrden ?? parseFaseOrden(input.duraciones),
+    canonical
+  );
+  const byId = new Map(input.categorias.map((cat) => [cat.id, cat]));
+  const minutes = normalizeEliminatoriaDuraciones(input.duraciones);
+  const courts = Math.max(1, input.courtCount ?? 1);
+  const startMs = input.startAt?.getTime();
+  const hasStart = startMs != null && Number.isFinite(startMs);
+  let cursor = hasStart ? startMs : null;
+  const entries: EliminatoriaFaseTimelineEntry[] = [];
+
+  for (const bloque of bloques) {
+    const cat = byId.get(bloque.torneoId);
+    if (!cat) continue;
+    const fase = faseForCategoria(cat, input.rondasByCategoria);
+    const rondaNumber = rondaNumberForFase(fase, bloque.ronda);
+    if (rondaNumber == null) continue;
+    const matchCount = Math.max(
+      1,
+      BRACKET_FASE_SLOTS[fase] / 2 ** rondaNumber
+    );
+    const durationMin = minutes[bloque.ronda];
+    const waves = rondaWaveCount(matchCount, courts);
+    entries.push({
+      ...bloque,
+      rondaNumber,
+      matchCount,
+      startsAtMs: cursor,
+      durationMin,
+    });
+    if (cursor != null) cursor += waves * durationMin * 60 * 1000;
+  }
+  return entries;
+}
+
 export function buildEliminatoriaPossibleSchedule(
   categorias: readonly CategoriaOrdenable[],
   savedIds: readonly string[] | null | undefined,
@@ -379,25 +573,24 @@ export function buildEliminatoriaPossibleSchedule(
 ): EliminatoriaPossibleSlot[] {
   const ordered = orderCategoriasForEliminatoria(categorias, savedIds);
   const courts = normalizeEliminatoriaCanchas(canchas);
-  const startAt = parseEliminatoriaInicio(startIso);
-  const startMs = startAt?.getTime() ?? NaN;
-  const hasStart = Number.isFinite(startMs);
-  let offsetMs = 0;
+  const timeline = buildEliminatoriaFaseTimeline({
+    categorias,
+    categoriaOrden: savedIds,
+    faseOrden: parseFaseOrden(duraciones),
+    startAt: parseEliminatoriaInicio(startIso),
+    courtCount: Math.max(1, courts.length),
+    duraciones,
+  });
   return ordered.map((cat) => {
-    const slot: EliminatoriaPossibleSlot = {
+    const first = timeline.find((entry) => entry.torneoId === cat.id);
+    return {
       torneoId: cat.id,
       label: categoriaOrdenLabel(cat),
-      startsAt: hasStart ? new Date(startMs + offsetMs) : null,
+      startsAt:
+        first?.startsAtMs != null ? new Date(first.startsAtMs) : null,
       href: `/torneo-express/${cat.id}/eliminatoria`,
       courts,
     };
-    offsetMs +=
-      categoriaKnockoutMinutes(
-        cat.fase_eliminacion,
-        duraciones,
-        courts.length
-      ) * 60 * 1000;
-    return slot;
   });
 }
 

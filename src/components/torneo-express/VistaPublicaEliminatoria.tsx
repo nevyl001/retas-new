@@ -16,8 +16,10 @@ import type { EliminatoriaPossibleSlot } from "../../lib/torneoExpress/eliminato
 import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
 import {
   buildEliminatoriaPreviewCards,
+  matchSlotsFromFaseTimeline,
   projectEliminatoriaMatchSlots,
 } from "../../lib/torneoExpress/eliminatoriaPreviewBracket";
+import type { ProjectedEliminatoriaMatchSlot } from "../../lib/torneoExpress/eliminatoriaPreviewBracket";
 import type { TorneoExpressEvento } from "../../lib/torneoExpress/types";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
 import { TEPublicEliminatoria } from "./public/TEPublicEliminatoria";
@@ -47,6 +49,9 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
   const [copyMsg, setCopyMsg] = useState("");
   const [evento, setEvento] = useState<TorneoExpressEvento | null>(null);
   const [slots, setSlots] = useState<EliminatoriaPossibleSlot[]>([]);
+  const [faseSlots, setFaseSlots] = useState<
+    ProjectedEliminatoriaMatchSlot[] | null
+  >(null);
 
   const hasBundle = Boolean(bundle);
   const eventoId = bundle?.torneo.evento_id?.trim() ?? "";
@@ -63,6 +68,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     }
     if (!eventoId) {
       setEvento(null);
+      setFaseSlots(null);
       setSlots([
         {
           torneoId,
@@ -80,6 +86,14 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     ) => {
       if (cancelled || !data) return false;
       setEvento(data.evento);
+      const byTorneo = matchSlotsFromFaseTimeline({
+        categorias: data.categorias,
+        categoriaOrden: data.evento.eliminatoria_categoria_orden,
+        startAt: parseEliminatoriaInicio(data.evento.eliminatoria_inicio),
+        courts: data.evento.eliminatoria_canchas,
+        duraciones: data.evento.eliminatoria_duraciones,
+      });
+      setFaseSlots(byTorneo[torneoId] ?? []);
       setSlots(
         buildEliminatoriaPossibleSchedule(
           data.categorias,
@@ -131,6 +145,10 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
       : evento?.eliminatoria_canchas;
   const scheduleProjection = useMemo(() => {
     if (!bundle) return undefined;
+    if (eventoId) {
+      if (!faseSlots) return undefined;
+      return { slots: faseSlots, timeZone: evento?.timezone };
+    }
     const projected = projectEliminatoriaMatchSlots({
       fase: inferFaseEliminacion(
         bundle.torneo.fase_eliminacion,
@@ -148,6 +166,8 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     bundle,
     evento?.eliminatoria_duraciones,
     evento?.timezone,
+    eventoId,
+    faseSlots,
     scheduleCourts,
     scheduleStartAt,
   ]);

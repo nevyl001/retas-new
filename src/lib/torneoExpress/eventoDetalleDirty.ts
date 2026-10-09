@@ -6,7 +6,11 @@ import type {
   TorneoExpressPartidoFormato,
 } from "./types";
 import {
+  defaultFaseBloques,
+  faseBloqueKey,
   normalizeEliminatoriaCanchas,
+  parseFaseOrden,
+  reconcileFaseBloques,
   sameCategoriaRondas,
   sameEliminatoriaDuraciones,
   type EliminatoriaRondaKey,
@@ -82,10 +86,13 @@ export function isEliminatoriaConfigDirty(
     eliminatoriaCanchas?: readonly string[] | null;
     eliminatoriaDuraciones?: unknown;
     categoriaRondas?: Record<string, readonly EliminatoriaRondaKey[]>;
+    faseOrden?: readonly string[] | null;
   },
   defaultCategoriaOrden: readonly string[] = [],
   categorias: ReadonlyArray<{
     id: string;
+    nombre?: string;
+    categoria?: string | null;
     fase_eliminacion?: TorneoExpressFaseEliminacion | null;
   }> = []
 ): boolean {
@@ -99,6 +106,21 @@ export function isEliminatoriaConfigDirty(
     evento.eliminatoria_canchas
   );
   const draftCanchas = normalizeEliminatoriaCanchas(draft.eliminatoriaCanchas);
+  const faseDirty = (() => {
+    if (!draft.faseOrden) return false;
+    const expected = reconcileFaseBloques(
+      parseFaseOrden(evento.eliminatoria_duraciones),
+      defaultFaseBloques(
+        categorias.map((cat) => ({
+          ...cat,
+          nombre: cat.nombre ?? cat.id,
+        })),
+        defaultCategoriaOrden,
+        draft.categoriaRondas
+      )
+    ).map(faseBloqueKey);
+    return !sameIdList(expected, draft.faseOrden);
+  })();
   return (
     !sameInicioIso(draftInicio, savedInicio) ||
     (!ordenHydrating && !sameIdList(defaultCategoriaOrden, draftOrden)) ||
@@ -107,7 +129,8 @@ export function isEliminatoriaConfigDirty(
       evento.eliminatoria_duraciones,
       draft.eliminatoriaDuraciones
     ) ||
-    !sameCategoriaRondas(categorias, draft.categoriaRondas ?? {})
+    !sameCategoriaRondas(categorias, draft.categoriaRondas ?? {}) ||
+    faseDirty
   );
 }
 

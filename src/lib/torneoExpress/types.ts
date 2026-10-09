@@ -52,6 +52,8 @@ export interface TorneoExpressEvento {
     semifinal: number;
     final: number;
     activas?: Array<"octavos" | "cuartos" | "semifinal" | "final">;
+    /** Orden de juego: `torneoId:ronda`. NULL = misma ronda en todas las categorías. */
+    fase_orden?: string[];
   } | null;
   created_at: string;
 }

@@ -1,13 +1,18 @@
 import {
+  buildEliminatoriaFaseTimeline,
   buildEliminatoriaPossibleSchedule,
   categoriaKnockoutMinutes,
   categoriaNivelRank,
+  defaultFaseBloques,
+  faseBloqueKey,
   faseFromRondasActivas,
   inferFaseEliminacion,
   normalizeEliminatoriaCanchas,
   normalizeEliminatoriaDuraciones,
   orderCategoriasForEliminatoria,
   parseEliminatoriaRondasActivas,
+  realignFasesToCategoriaOrden,
+  reconcileFaseBloques,
   rondasFromFase,
   toggleEliminatoriaRonda,
   unionEliminatoriaRondas,
@@ -79,7 +84,7 @@ describe("categoriaKnockoutMinutes", () => {
 });
 
 describe("buildEliminatoriaPossibleSchedule", () => {
-  it("escalona con la duración real de cada categoría", () => {
+  it("arranca la siguiente categoría cuando terminan los cuartos, no el cuadro entero", () => {
     const slots = buildEliminatoriaPossibleSchedule(
       [
         {
@@ -103,8 +108,8 @@ describe("buildEliminatoriaPossibleSchedule", () => {
     expect(slots).toHaveLength(2);
     expect(slots[0].label).toBe("Mixtos D");
     expect(slots[0].startsAt?.toISOString()).toBe("2026-10-10T20:00:00.000Z");
-    // 1 cancha: 4×40 cuartos + 2×40 semis + 40 final = 280 min
-    expect(slots[1].startsAt?.toISOString()).toBe("2026-10-11T00:40:00.000Z");
+    // 1 cancha: 4 cuartos × 40 min. La 4ta espera solo esa ronda.
+    expect(slots[1].startsAt?.toISOString()).toBe("2026-10-10T22:40:00.000Z");
   });
 
   it("deja la hora vacía si el evento no fijó inicio", () => {
@@ -124,6 +129,82 @@ describe("buildEliminatoriaPossibleSchedule", () => {
       ["1", "2"]
     );
     expect(slots[0].courts).toEqual(["1", "2"]);
+  });
+});
+
+describe("orden de fases entre categorías", () => {
+  const cats = [
+    {
+      id: "mix",
+      nombre: "Mixtos D",
+      categoria: "Mixtos D",
+      fase_eliminacion: "cuartos" as const,
+    },
+    {
+      id: "6ta",
+      nombre: "6ta",
+      categoria: "6ta Fuerza",
+      fase_eliminacion: "cuartos" as const,
+    },
+  ];
+
+  it("por defecto juega la misma ronda en todas las categorías antes de avanzar", () => {
+    expect(defaultFaseBloques(cats, null).map(faseBloqueKey)).toEqual([
+      "mix:cuartos",
+      "6ta:cuartos",
+      "mix:semifinal",
+      "6ta:semifinal",
+      "mix:final",
+      "6ta:final",
+    ]);
+  });
+
+  it("respeta un orden guardado y agrega la fase que faltaba", () => {
+    const canonical = defaultFaseBloques(cats, null);
+    expect(
+      reconcileFaseBloques(
+        ["6ta:cuartos", "mix:cuartos", "mix:final"],
+        canonical
+      ).map(faseBloqueKey)
+    ).toEqual([
+      "6ta:cuartos",
+      "mix:cuartos",
+      "mix:final",
+      "mix:semifinal",
+      "6ta:semifinal",
+      "6ta:final",
+    ]);
+  });
+
+  it("al reordenar categorías, cada ronda conserva su lugar", () => {
+    const fases = defaultFaseBloques(cats, ["mix", "6ta"]);
+    expect(
+      realignFasesToCategoriaOrden(fases, ["6ta", "mix"]).map(faseBloqueKey)
+    ).toEqual([
+      "6ta:cuartos",
+      "mix:cuartos",
+      "6ta:semifinal",
+      "mix:semifinal",
+      "6ta:final",
+      "mix:final",
+    ]);
+  });
+
+  it("programa las semis después de los cuartos de todas las categorías", () => {
+    const timeline = buildEliminatoriaFaseTimeline({
+      categorias: cats,
+      startAt: new Date("2026-10-09T14:00:00.000Z"),
+      courtCount: 3,
+      duraciones: { octavos: 60, cuartos: 60, semifinal: 60, final: 60 },
+    });
+    const mixSemi = timeline.find(
+      (entry) => entry.torneoId === "mix" && entry.ronda === "semifinal"
+    );
+    const sextaCuartos = timeline.find(
+      (entry) => entry.torneoId === "6ta" && entry.ronda === "cuartos"
+    );
+    expect(sextaCuartos?.startsAtMs).toBe(Date.parse("2026-10-09T16:00:00.000Z"));
+    expect(mixSemi?.startsAtMs).toBe(Date.parse("2026-10-09T18:00:00.000Z"));
   });
 });
 

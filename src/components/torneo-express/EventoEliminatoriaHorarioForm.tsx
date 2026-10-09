@@ -10,11 +10,13 @@ import {
   ELIMINATORIA_RONDA_FIELDS,
   ELIMINATORIA_RONDA_MINUTES_MAX,
   ELIMINATORIA_RONDA_MINUTES_MIN,
+  faseBloqueKey,
   isCategoriaEliminatoriaLocked,
   rondaPathLabel,
   rondasFromFase,
   toggleEliminatoriaRonda,
   unionEliminatoriaRondas,
+  type EliminatoriaFaseBloque,
 } from "../../lib/torneoExpress/eliminatoriaCategoriaOrden";
 import "./te-evento-detalle.css";
 
@@ -34,8 +36,23 @@ export type EventoEliminatoriaHorarioFormProps = {
     torneoId: string,
     rondas: EliminatoriaRondaKey[]
   ) => void;
+  faseBloques: EliminatoriaFaseBloque[];
+  onFaseBloquesChange: (bloques: EliminatoriaFaseBloque[]) => void;
   footer?: React.ReactNode;
 };
+
+function moveBloques(
+  bloques: EliminatoriaFaseBloque[],
+  index: number,
+  delta: number
+): EliminatoriaFaseBloque[] {
+  const next = bloques.slice();
+  const target = index + delta;
+  if (target < 0 || target >= next.length) return bloques;
+  const [item] = next.splice(index, 1);
+  next.splice(target, 0, item);
+  return next;
+}
 
 function moveId(ids: string[], index: number, delta: number): string[] {
   const next = ids.slice();
@@ -80,6 +97,8 @@ export const EventoEliminatoriaHorarioForm: React.FC<
   onDuracionesChange,
   categoriaRondas,
   onCategoriaRondasChange,
+  faseBloques,
+  onFaseBloquesChange,
   footer,
 }) => {
   const byId = new Map(categorias.map((cat) => [cat.id, cat]));
@@ -137,8 +156,8 @@ export const EventoEliminatoriaHorarioForm: React.FC<
         <header className="te-evd-elim-block__head">
           <h3 className="te-evd-elim-block__title">Categorías y cuadro</h3>
           <p className="te-evd-elim-horario__hint">
-            Cada categoría elige sus rondas según cuántos grupos se junten.
-            Semis y final siempre se juegan.
+            Cada categoría elige sus rondas. Las flechas cambian quién juega
+            antes dentro de la misma fase. Semis y final siempre se juegan.
           </p>
         </header>
         {ordered.length === 0 ? (
@@ -229,6 +248,64 @@ export const EventoEliminatoriaHorarioForm: React.FC<
                       );
                     })}
                   </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </section>
+
+      <section className="te-evd-elim-block">
+        <header className="te-evd-elim-block__head">
+          <h3 className="te-evd-elim-block__title">Orden de las fases</h3>
+          <p className="te-evd-elim-horario__hint">
+            Este es el orden en que se juegan. Por ejemplo, cuartos de Mixtos
+            D, luego cuartos de 6ta, y las semis solo cuando terminen todos
+            los cuartos.
+          </p>
+        </header>
+        {faseBloques.length === 0 ? (
+          <p className="te-evd-elim-horario__empty">
+            Marca rondas en las categorías para armar el orden.
+          </p>
+        ) : (
+          <ol className="te-evd-elim-horario__list">
+            {faseBloques.map((bloque, index) => {
+              const cat = byId.get(bloque.torneoId);
+              const ronda = ELIMINATORIA_RONDA_FIELDS.find(
+                (field) => field.key === bloque.ronda
+              );
+              const label = `${ronda?.label ?? bloque.ronda} · ${
+                cat ? categoriaOrdenLabel(cat) : "Categoría"
+              }`;
+              return (
+                <li key={faseBloqueKey(bloque)} className="te-evd-elim-fase">
+                  <span className="te-evd-elim-horario__index">{index + 1}</span>
+                  <span className="te-evd-elim-horario__name">{label}</span>
+                  <span className="te-evd-elim-horario__move">
+                    <button
+                      type="button"
+                      className="te-evd-elim-horario__btn"
+                      disabled={index === 0}
+                      aria-label={`Subir ${label}`}
+                      onClick={() =>
+                        onFaseBloquesChange(moveBloques(faseBloques, index, -1))
+                      }
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      className="te-evd-elim-horario__btn"
+                      disabled={index === faseBloques.length - 1}
+                      aria-label={`Bajar ${label}`}
+                      onClick={() =>
+                        onFaseBloquesChange(moveBloques(faseBloques, index, 1))
+                      }
+                    >
+                      ↓
+                    </button>
+                  </span>
                 </li>
               );
             })}

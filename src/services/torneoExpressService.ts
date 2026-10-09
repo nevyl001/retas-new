@@ -13,12 +13,8 @@ import {
   buildScheduleMatchesFromBundle,
   mapPersistedScheduleToPartidoUpdates,
 } from "../lib/torneoExpress/draftScheduleMatch";
-import {
-  buildEliminatoriaPossibleSchedule,
-  inferFaseEliminacion,
-  parseEliminatoriaInicio,
-} from "../lib/torneoExpress/eliminatoriaCategoriaOrden";
-import { projectEliminatoriaMatchSlots } from "../lib/torneoExpress/eliminatoriaPreviewBracket";
+import { parseEliminatoriaInicio } from "../lib/torneoExpress/eliminatoriaCategoriaOrden";
+import { matchSlotsFromFaseTimeline } from "../lib/torneoExpress/eliminatoriaPreviewBracket";
 import type { ProjectedEliminatoriaMatchSlot } from "../lib/torneoExpress/eliminatoriaPreviewBracket";
 import {
   buildEliminatoriaRoundScheduleMatches,
@@ -2320,35 +2316,20 @@ export async function applyEventoEliminatoriaHorario(
 ): Promise<number> {
   const data = await fetchEventoConCategorias(eventoId, false);
   if (!data) return 0;
-  const schedule = buildEliminatoriaPossibleSchedule(
-    data.categorias,
-    data.evento.eliminatoria_categoria_orden,
-    data.evento.eliminatoria_inicio,
-    data.evento.eliminatoria_canchas,
-    data.evento.eliminatoria_duraciones
-  );
+  const slotsByTorneo = matchSlotsFromFaseTimeline({
+    categorias: data.categorias,
+    categoriaOrden: data.evento.eliminatoria_categoria_orden,
+    startAt: parseEliminatoriaInicio(data.evento.eliminatoria_inicio),
+    courts: data.evento.eliminatoria_canchas,
+    duraciones: data.evento.eliminatoria_duraciones,
+  });
   let stamped = 0;
   for (const cat of data.categorias) {
     if (onlyTorneoId && cat.id !== onlyTorneoId) continue;
     if (cat.fase_torneo !== "eliminatoria") continue;
-    const slot = schedule.find((item) => item.torneoId === cat.id);
-    const projected = projectEliminatoriaMatchSlots({
-      fase: inferFaseEliminacion(
-        cat.fase_eliminacion,
-        data.evento.eliminatoria_duraciones
-      ),
-      startAt:
-        slot?.startsAt ??
-        parseEliminatoriaInicio(data.evento.eliminatoria_inicio),
-      courts:
-        slot?.courts && slot.courts.length > 0
-          ? slot.courts
-          : data.evento.eliminatoria_canchas,
-      duraciones: data.evento.eliminatoria_duraciones,
-    });
     stamped += await applyEliminatoriaProjectedSchedule(
       cat.id,
-      projected.slots
+      slotsByTorneo[cat.id] ?? []
     );
   }
   return stamped;
@@ -3778,6 +3759,7 @@ function mapTorneoExpressEvento(row: Record<string, unknown>): TorneoExpressEven
             semifinal: number;
             final: number;
             activas?: Array<"octavos" | "cuartos" | "semifinal" | "final">;
+            fase_orden?: string[];
           })
         : null,
     created_at: String(row.created_at ?? ""),
