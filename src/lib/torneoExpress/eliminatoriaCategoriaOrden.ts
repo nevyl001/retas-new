@@ -388,12 +388,43 @@ export type EliminatoriaFaseBloque = {
   ronda: EliminatoriaRondaKey;
 };
 
+export type EliminatoriaFaseMatchSlot = {
+  cruceIndex: number;
+  startMs: number | null;
+  courtIndex: number;
+};
+
 export type EliminatoriaFaseTimelineEntry = EliminatoriaFaseBloque & {
   rondaNumber: number;
   matchCount: number;
   startsAtMs: number | null;
   durationMin: number;
+  matches: EliminatoriaFaseMatchSlot[];
 };
+
+function assignMatchesToFreeCourts(
+  matchCount: number,
+  durationMin: number,
+  courtFreeAt: number[],
+  notBefore: number
+): EliminatoriaFaseMatchSlot[] {
+  const durationMs = durationMin * 60 * 1000;
+  const matches: EliminatoriaFaseMatchSlot[] = [];
+  for (let cruceIndex = 0; cruceIndex < matchCount; cruceIndex += 1) {
+    let courtIndex = 0;
+    let startMs = Math.max(courtFreeAt[0] ?? notBefore, notBefore);
+    for (let index = 1; index < courtFreeAt.length; index += 1) {
+      const candidate = Math.max(courtFreeAt[index] ?? notBefore, notBefore);
+      if (candidate < startMs) {
+        courtIndex = index;
+        startMs = candidate;
+      }
+    }
+    matches.push({ cruceIndex, startMs, courtIndex });
+    courtFreeAt[courtIndex] = startMs + durationMs;
+  }
+  return matches;
+}
 
 const FASE_ORDEN_KEY =
   /^[0-9a-f-]{8,}:(?:octavos|cuartos|semifinal|final)$/i;
@@ -537,7 +568,10 @@ export function buildEliminatoriaFaseTimeline(input: {
   const courts = Math.max(1, input.courtCount ?? 1);
   const startMs = input.startAt?.getTime();
   const hasStart = startMs != null && Number.isFinite(startMs);
-  let cursor = hasStart ? startMs : null;
+  const courtFreeAt = Array.from({ length: courts }, () =>
+    hasStart ? startMs : 0
+  );
+  const roundEndByCategory = new Map<string, number>();
   const entries: EliminatoriaFaseTimelineEntry[] = [];
 
   for (const bloque of bloques) {
@@ -551,15 +585,42 @@ export function buildEliminatoriaFaseTimeline(input: {
       BRACKET_FASE_SLOTS[fase] / 2 ** rondaNumber
     );
     const durationMin = minutes[bloque.ronda];
-    const waves = rondaWaveCount(matchCount, courts);
+    const previousEnd = roundEndByCategory.get(
+      `${bloque.torneoId}:${rondaNumber - 1}`
+    );
+    const notBefore = hasStart ? Math.max(startMs, previousEnd ?? startMs) : null;
+    const matches =
+      notBefore == null
+        ? Array.from({ length: matchCount }, (_, cruceIndex) => ({
+            cruceIndex,
+            startMs: null,
+            courtIndex: cruceIndex % courts,
+          }))
+        : assignMatchesToFreeCourts(
+            matchCount,
+            durationMin,
+            courtFreeAt,
+            notBefore
+          );
+    if (notBefore != null) {
+      const durationMs = durationMin * 60 * 1000;
+      const roundEnd = matches.reduce(
+        (max, match) => Math.max(max, (match.startMs ?? notBefore) + durationMs),
+        notBefore
+      );
+      roundEndByCategory.set(`${bloque.torneoId}:${rondaNumber}`, roundEnd);
+    }
+    const starts = matches
+      .map((match) => match.startMs)
+      .filter((value): value is number => value != null);
     entries.push({
       ...bloque,
       rondaNumber,
       matchCount,
-      startsAtMs: cursor,
+      startsAtMs: starts.length > 0 ? Math.min(...starts) : null,
       durationMin,
+      matches,
     });
-    if (cursor != null) cursor += waves * durationMin * 60 * 1000;
   }
   return entries;
 }

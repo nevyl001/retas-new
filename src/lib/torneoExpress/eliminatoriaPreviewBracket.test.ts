@@ -96,14 +96,19 @@ describe("buildEliminatoriaPreviewCards", () => {
       }
     }
     const mixSemi = slots.mix.find((slot) => slot.ronda === 2);
-    const lastCuartos = Math.max(
-      ...["mix", "6ta", "5ta", "4ta"].flatMap((id) =>
-        slots[id]
-          .filter((slot) => slot.ronda === 1)
-          .map((slot) => (slot.startMs ?? 0) + slot.durationMin * 60 * 1000)
-      )
+    const mixQuarterEnd = Math.max(
+      ...slots.mix
+        .filter((slot) => slot.ronda === 1)
+        .map((slot) => (slot.startMs ?? 0) + slot.durationMin * 60 * 1000)
     );
-    expect(mixSemi?.startMs).toBeGreaterThanOrEqual(lastCuartos);
+    expect(mixSemi?.startMs).toBeGreaterThanOrEqual(mixQuarterEnd);
+    const sextaFirst = slots["6ta"].find((slot) => slot.ronda === 1);
+    const mixLastQuarter = slots.mix
+      .filter((slot) => slot.ronda === 1)
+      .reduce((latest, slot) => Math.max(latest, slot.startMs ?? 0), 0);
+    expect(sextaFirst?.startMs).toBeLessThan(
+      mixLastQuarter + 60 * 60 * 1000
+    );
     for (let i = 0; i < occupied.length; i += 1) {
       for (let j = i + 1; j < occupied.length; j += 1) {
         if (occupied[i].court !== occupied[j].court) continue;

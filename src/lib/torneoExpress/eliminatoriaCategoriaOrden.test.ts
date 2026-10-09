@@ -190,21 +190,37 @@ describe("orden de fases entre categorías", () => {
     ]);
   });
 
-  it("programa las semis después de los cuartos de todas las categorías", () => {
+  it("usa la cancha que se libera sin esperar a que termine el bloque", () => {
     const timeline = buildEliminatoriaFaseTimeline({
       categorias: cats,
       startAt: new Date("2026-10-09T14:00:00.000Z"),
       courtCount: 3,
       duraciones: { octavos: 60, cuartos: 60, semifinal: 60, final: 60 },
     });
-    const mixSemi = timeline.find(
-      (entry) => entry.torneoId === "mix" && entry.ronda === "semifinal"
+    const mixCuartos = timeline.find(
+      (entry) => entry.torneoId === "mix" && entry.ronda === "cuartos"
     );
     const sextaCuartos = timeline.find(
       (entry) => entry.torneoId === "6ta" && entry.ronda === "cuartos"
     );
-    expect(sextaCuartos?.startsAtMs).toBe(Date.parse("2026-10-09T16:00:00.000Z"));
-    expect(mixSemi?.startsAtMs).toBe(Date.parse("2026-10-09T18:00:00.000Z"));
+    const mixSemi = timeline.find(
+      (entry) => entry.torneoId === "mix" && entry.ronda === "semifinal"
+    );
+    expect(mixCuartos?.matches.map((match) => match.startMs)).toEqual([
+      Date.parse("2026-10-09T14:00:00.000Z"),
+      Date.parse("2026-10-09T14:00:00.000Z"),
+      Date.parse("2026-10-09T14:00:00.000Z"),
+      Date.parse("2026-10-09T15:00:00.000Z"),
+    ]);
+    expect(sextaCuartos?.startsAtMs).toBe(Date.parse("2026-10-09T15:00:00.000Z"));
+    expect(sextaCuartos?.matches[0].courtIndex).not.toBe(
+      mixCuartos?.matches[3].courtIndex
+    );
+    const mixQuarterEnd = Date.parse("2026-10-09T16:00:00.000Z");
+    expect(mixSemi?.startsAtMs).toBeGreaterThanOrEqual(mixQuarterEnd);
+    expect(mixSemi?.startsAtMs).toBeLessThan(
+      Date.parse("2026-10-09T18:00:00.000Z")
+    );
   });
 });
 
