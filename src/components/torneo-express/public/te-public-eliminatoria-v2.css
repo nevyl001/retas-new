@@ -446,9 +446,11 @@
 
 .te-elim-v2 .te-pb-match--third .te-pb-team__avatar--inline.rj-avatar,
 .te-elim-v2 .te-pb-match--third .te-pb-team__avatar--inline.rj-avatar--sm {
-  width: clamp(2.25rem, 9cqi, 2.75rem);
-  height: clamp(2.25rem, 9cqi, 2.75rem);
-  font-size: 0.75rem;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  border-radius: 0.85rem;
+  font-size: 0.95rem;
   border-color: color-mix(
     in srgb,
     var(--ro-medal-bronze) 34%,
@@ -731,23 +733,27 @@
 
 .te-elim-v2 .te-pb-team__names {
   display: grid;
-  gap: clamp(0.4rem, 1.5cqi, 0.625rem);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.5rem, 2cqi, 0.85rem);
   min-width: 0;
 }
 
 .te-elim-v2 .te-pb-team__name {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: clamp(0.5rem, 2cqi, 0.75rem);
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-items: start;
+  gap: 0.4rem;
   min-width: 0;
-  font-size: clamp(1rem, 4cqi, 1.3125rem);
+  font-size: clamp(0.8125rem, 3.2cqi, 1rem);
   line-height: 1.2;
+  text-align: center;
 }
 
 .te-elim-v2 .te-pb-player__portrait {
   position: relative;
   display: grid;
+  width: min(100%, 8.75rem);
   place-items: center;
   flex: none;
   isolation: isolate;
@@ -782,12 +788,15 @@
 .te-elim-v2 .te-pb-team__player-name {
   min-width: 0;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
 }
 
 .te-elim-v2 .te-pb-team__rating {
   display: flex;
+  justify-content: center;
   align-items: baseline;
   gap: 0.35rem;
   font-size: clamp(0.6875rem, 2cqi, 0.75rem);
@@ -807,13 +816,14 @@
 .te-elim-v2 .te-pb-team__avatar--inline.rj-avatar,
 .te-elim-v2 .te-pb-team__avatar--inline.rj-avatar--sm {
   flex: none;
-  width: var(--te-v2-active-avatar);
-  height: var(--te-v2-active-avatar);
-  aspect-ratio: 1;
-  font-size: clamp(0.875rem, 3cqi, 1.125rem);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  border-radius: 0.9rem;
+  font-size: clamp(1rem, 3.5cqi, 1.35rem);
   border-color: color-mix(
     in srgb,
-    var(--ro-chrome-text, var(--text-primary)) 34%,
+    var(--ro-chrome-text, var(--text-primary)) 28%,
     transparent
   );
   background: color-mix(
@@ -821,6 +831,12 @@
     var(--ro-chrome-deep, var(--ro-chrome-bg)) 82%,
     #ffffff 18%
   );
+  box-shadow: 0 10px 24px
+    color-mix(in srgb, #000 28%, transparent);
+}
+
+.te-elim-v2 .te-pb-team__avatar--inline .rj-avatar__img {
+  border-radius: inherit;
 }
 
 .te-elim-v2 .te-pb-round--semis.te-pb-round--current .te-pb-team__name {
@@ -895,8 +911,8 @@
 }
 
 .te-elim-v2 .te-pb-match--history .te-pb-team {
-  padding: 0.45rem 0.5rem;
-  border-radius: 0.65rem;
+  padding: 0.65rem 0.55rem 0.75rem;
+  border-radius: 0.85rem;
 }
 
 .te-elim-v2 .te-pb-match--history .te-pb-match__logistics {
@@ -905,9 +921,11 @@
 
 .te-elim-v2 .te-pb-match--history .te-pb-team__avatar--inline.rj-avatar,
 .te-elim-v2 .te-pb-match--history .te-pb-team__avatar--inline.rj-avatar--sm {
-  width: var(--te-v2-history-avatar);
-  height: var(--te-v2-history-avatar);
-  font-size: clamp(0.5625rem, 2.4cqi, 0.6875rem);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  border-radius: 0.85rem;
+  font-size: clamp(0.9rem, 3cqi, 1.15rem);
 }
 
 .te-elim-v2 .te-pb-match--history .te-pb-team__name {
@@ -1054,8 +1072,10 @@
   .te-pb-round--semis
   .te-pb-match--finished:not(.te-pb-match--final)
   .te-pb-team__avatar--inline.rj-avatar--sm {
-  width: clamp(2.125rem, 6cqi, 2.5rem);
-  height: clamp(2.125rem, 6cqi, 2.5rem);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  border-radius: 0.85rem;
 }
 
 .te-elim-v2
