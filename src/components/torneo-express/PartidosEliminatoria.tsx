@@ -835,8 +835,11 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
             <section className="te-elim-board__side" key={index}>
               <header className="te-elim-board__side-head">
                 <p>Lado {index === 0 ? "A" : "B"}</p>
-                <h3>Semifinal {index + 1}</h3>
-                <span>El ganador de estos partidos va a la final.</span>
+                <h3>Cuartos de final</h3>
+                <span>
+                  Los ganadores de estos dos partidos juegan la semifinal{" "}
+                  {index + 1}.
+                </span>
               </header>
               {half.map(({ partido, number }) => (
                 <EliminatoriaPartidoCard
