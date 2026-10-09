@@ -105,7 +105,7 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
           <p className="te-grupos-card__partidos-hint">
             {cerrado
               ? "Torneo cerrado. Los resultados ya no se pueden modificar."
-              : "Captura los resultados de la ronda que ves. Al completarla se crean los cruces siguientes, con el camino que aparece debajo de los partidos."}
+              : "Captura los resultados de la ronda que ves. Al completarla se crean los cruces siguientes."}
           </p>
           <PartidosEliminatoria
             partidos={bundle.eliminatoriaPartidos}

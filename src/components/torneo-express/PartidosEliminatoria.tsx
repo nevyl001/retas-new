@@ -884,14 +884,16 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
       </div>
       )}
 
-      <SiguienteRondaCamino
-        partidos={partidos}
-        rondaVisible={rondaVisible}
-        bracketSlots={bracketSlots}
-        labelMap={labelMap}
-        labelForRonda={labelForRonda}
-        totalRondas={totalRondas}
-      />
+      {finalHalves ? null : (
+        <SiguienteRondaCamino
+          partidos={partidos}
+          rondaVisible={rondaVisible}
+          bracketSlots={bracketSlots}
+          labelMap={labelMap}
+          labelForRonda={labelForRonda}
+          totalRondas={totalRondas}
+        />
+      )}
     </div>
   );
 };
