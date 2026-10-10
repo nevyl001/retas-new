@@ -157,11 +157,11 @@ function TeamBlock({
             .map((column) => column[scoreSide])
             .join(", ")}`}
         >
-          <span className="te-pb-team__score-label">Marcador</span>
           <div className="te-pb-team__scores">
-            {scoreColumns.map((column) => (
-              <span key={column.key} className="te-pb-team__score">
-                {column[scoreSide]}
+            {scoreColumns.map((column, index) => (
+              <span key={column.key} className="te-pb-team__score-col">
+                <span className="te-pb-team__set-label">Set {index + 1}</span>
+                <span className="te-pb-team__score">{column[scoreSide]}</span>
               </span>
             ))}
           </div>
