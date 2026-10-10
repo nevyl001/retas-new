@@ -1050,7 +1050,7 @@
 }
 
 .te-elim-v2 .te-pb-match--history .te-pb-team__score {
-  font-size: clamp(1.0625rem, 5cqi, 1.25rem);
+  font-size: clamp(1.75rem, 7cqi, 2.15rem);
 }
 
 /* Completed results use one aligned team-to-score rail — never floating numbers. */
@@ -1100,6 +1100,7 @@
 
 .te-elim-v2 .te-pb-match--finished:not(.te-pb-match--final) .te-pb-team__score {
   min-width: 1.35ch;
+  font-size: clamp(1.85rem, 7.5cqi, 2.35rem);
   font-variant-numeric: tabular-nums;
   font-weight: 750;
 }
@@ -1108,6 +1109,8 @@
   .te-pb-match--finished:not(.te-pb-match--final)
   .te-pb-team--winner {
   position: relative;
+  border-color: color-mix(in srgb, var(--te-elim-accent) 58%, transparent);
+  background: color-mix(in srgb, var(--te-elim-accent) 8%, transparent);
 }
 
 .te-elim-v2
@@ -1133,7 +1136,7 @@
   .te-pb-match--finished:not(.te-pb-match--final)
   .te-pb-team--winner
   .te-pb-team__score {
-  color: var(--text-primary);
+  color: var(--te-elim-accent);
 }
 
 .te-elim-v2
