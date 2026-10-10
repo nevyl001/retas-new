@@ -469,8 +469,8 @@
 }
 
 .te-elim-v2 .te-pb-match--third .te-pb-team__score-rail {
-  min-width: 2.5rem;
-  padding-inline-start: 0.55rem;
+  min-width: 0;
+  padding-top: 0.4rem;
 }
 
 .te-elim-v2 .te-pb-match--third .te-pb-team__score-label {
@@ -669,9 +669,9 @@
 
 .te-elim-v2 .te-pb-team {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: clamp(0.75rem, 3cqi, 1.25rem);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: clamp(0.55rem, 2cqi, 0.85rem);
   min-width: 0;
   min-height: 0;
   padding: clamp(0.7rem, 2.2cqi, 0.95rem) clamp(0.75rem, 2.4cqi, 1rem);
@@ -940,19 +940,20 @@
 .te-elim-v2 .te-pb-team__scores {
   display: grid;
   grid-auto-flow: column;
+  justify-content: center;
   align-items: center;
-  gap: clamp(0.35rem, 1.5cqi, 0.625rem);
+  gap: clamp(0.45rem, 1.8cqi, 0.75rem);
 }
 
 .te-elim-v2 .te-pb-team__score-rail {
   align-self: stretch;
   display: grid;
-  grid-template-rows: auto 1fr;
-  place-items: center;
-  gap: 0.5rem;
-  min-width: clamp(3rem, 10cqi, 4.5rem);
-  padding-inline-start: clamp(0.75rem, 2.5cqi, 1.25rem);
-  border-inline-start: 1px solid var(--te-v2-border);
+  justify-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  min-width: 0;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--te-v2-border);
 }
 
 .te-elim-v2 .te-pb-team__score-label {
@@ -1044,8 +1045,8 @@
 }
 
 .te-elim-v2 .te-pb-match--history .te-pb-team__score-rail {
-  min-width: 2.25rem;
-  padding-inline-start: 0.5rem;
+  min-width: 0;
+  padding-top: 0.4rem;
 }
 
 .te-elim-v2 .te-pb-match--history .te-pb-team__score {
@@ -1068,8 +1069,8 @@
 }
 
 .te-elim-v2 .te-pb-match--finished:not(.te-pb-match--final) .te-pb-team {
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: clamp(0.75rem, 2cqi, 1rem);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.55rem;
 }
 
 .te-elim-v2 .te-pb-match--finished:not(.te-pb-match--final) .te-pb-team__body {
@@ -1079,9 +1080,9 @@
 .te-elim-v2
   .te-pb-match--finished:not(.te-pb-match--final)
   .te-pb-team__score-rail {
-  grid-template-rows: 1fr;
-  min-width: max-content;
-  padding-inline-start: clamp(0.75rem, 1.8cqi, 1rem);
+  min-width: 0;
+  width: 100%;
+  padding-top: 0.45rem;
 }
 
 .te-elim-v2
