@@ -789,6 +789,13 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
       .map((entry) => entry[1]);
     return halves.length === 2 ? halves : null;
   })();
+  const semiSides = (() => {
+    if (finalHalves || isRondaTercerLugar(rondaVisible)) return null;
+    if (labelForRonda(rondaVisible + 1) !== "Final") return null;
+    const round = partidosRonda.filter((p) => !p.es_bye);
+    if (round.length !== 2) return null;
+    return round.map((partido, index) => ({ partido, number: index + 1 }));
+  })();
   const canEditRoundSchedule =
     Boolean(onEditRoundSchedule) &&
     eliminatoriaRoundPendingCount(partidos, rondaVisible) > 0;
@@ -829,7 +836,37 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
         ) : null}
       </div>
 
-      {finalHalves ? (
+      {semiSides ? (
+        <div className="te-elim-board">
+          {semiSides.map(({ partido, number }, index) => (
+            <section className="te-elim-board__side" key={partido.id}>
+              <header className="te-elim-board__side-head">
+                <p>Lado {index === 0 ? "A" : "B"}</p>
+                <h3>Semifinal {number}</h3>
+                <span>El ganador de este partido juega la final.</span>
+              </header>
+              <EliminatoriaPartidoCard
+                partido={partido}
+                localLabel={parejaLabelFromMap(labelMap, partido.pareja_local_id)}
+                visitLabel={parejaLabelFromMap(labelMap, partido.pareja_visitante_id)}
+                editable={editable}
+                saving={savingPartidoId === partido.id}
+                savingCancha={savingCanchaId === partido.id}
+                savingProgramado={savingProgramadoId === partido.id}
+                matchNumber={number}
+                courtCheckScope={courtCheckScope}
+                onSave={onSaveResultado}
+                onSaveProgramacion={onSaveProgramacion}
+                partidoFormato={partidoFormato}
+              />
+            </section>
+          ))}
+          <section className="te-elim-board__final">
+            <p>Final</p>
+            <h3>Ganador de la semifinal 1 contra ganador de la semifinal 2</h3>
+          </section>
+        </div>
+      ) : finalHalves ? (
         <div className="te-elim-board">
           {finalHalves.map((half, index) => (
             <section className="te-elim-board__side" key={index}>
@@ -887,7 +924,7 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
       </div>
       )}
 
-      {finalHalves ? null : (
+      {finalHalves || semiSides ? null : (
         <SiguienteRondaCamino
           partidos={partidos}
           rondaVisible={rondaVisible}
