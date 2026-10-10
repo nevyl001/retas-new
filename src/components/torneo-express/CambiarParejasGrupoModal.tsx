@@ -1,9 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  gruposBloqueados,
-  textoBloqueoGrupo,
-} from "../../lib/torneoExpress/gruposBloqueados";
+import { parejaTieneHistorial } from "../../lib/torneoExpress/partidoHistorial";
 import { planReasignacion } from "../../lib/torneoExpress/reasignacionGrupos";
 import type {
   TorneoExpressGrupo,
@@ -57,23 +54,31 @@ export const CambiarParejasGrupoModal: React.FC<
     () => [...grupos].sort((a, b) => a.orden - b.orden),
     [grupos]
   );
-  const bloqueados = useMemo(
-    () => gruposBloqueados(orderedGroups, parejasPorGrupo, partidosPorGrupo),
-    [orderedGroups, parejasPorGrupo, partidosPorGrupo]
-  );
-  const editableGroups = useMemo(
-    () => orderedGroups.filter((grupo) => !bloqueados.has(grupo.id)),
-    [orderedGroups, bloqueados]
-  );
+  const pairLock = useMemo(() => {
+    const locks = new Map<string, "resultado" | "retirada">();
+    for (const grupo of orderedGroups) {
+      const partidos = partidosPorGrupo[grupo.id] ?? [];
+      for (const pareja of parejasPorGrupo[grupo.id] ?? []) {
+        if (pareja.activa === false) {
+          locks.set(pareja.pareja_id, "retirada");
+          continue;
+        }
+        if (parejaTieneHistorial(partidos, pareja.pareja_id)) {
+          locks.set(pareja.pareja_id, "resultado");
+        }
+      }
+    }
+    return locks;
+  }, [orderedGroups, parejasPorGrupo, partidosPorGrupo]);
   const initial = useMemo(() => {
     const map = new Map<string, string>();
-    for (const grupo of editableGroups) {
+    for (const grupo of orderedGroups) {
       for (const pair of activePairs(grupo, parejasPorGrupo)) {
         map.set(pair.id, grupo.id);
       }
     }
     return map;
-  }, [editableGroups, parejasPorGrupo]);
+  }, [orderedGroups, parejasPorGrupo]);
 
   const [changes, setChanges] = useState<Map<string, string>>(new Map());
   const [error, setError] = useState("");
@@ -90,14 +95,17 @@ export const CambiarParejasGrupoModal: React.FC<
 
   if (!open) return null;
 
-  const hasEditable = editableGroups.length >= 2;
-  const blocked = !hasEditable || saving;
+  const movableCount = Array.from(initial.keys()).filter(
+    (pairId) => !pairLock.has(pairId)
+  ).length;
+  const canMove = orderedGroups.length >= 2 && movableCount > 0;
+  const blocked = !canMove || saving;
 
   const save = async () => {
-    if (savingRef.current) return;
+    if (savingRef.current || !canMove) return;
     const desired = new Map<string, string[]>();
     const currentByGroup = new Map<string, string[]>();
-    for (const grupo of editableGroups) {
+    for (const grupo of orderedGroups) {
       desired.set(grupo.id, []);
       currentByGroup.set(
         grupo.id,
@@ -162,33 +170,12 @@ export const CambiarParejasGrupoModal: React.FC<
         </header>
         <div className="te-define-pair-dialog__body">
           <p className="te-define-pair__lead">
-            Solo puedes mover parejas entre grupos que todavía no tienen
-            resultados. Los grupos que ya iniciaron no se modifican. Los partidos
-            pendientes se arman de nuevo y conservan el horario cuando el cruce
-            sigue igual.
+            Puedes cambiar de grupo a una pareja mientras no tenga resultados.
+            Las que ya jugaron se quedan en su grupo. Los partidos pendientes se
+            arman de nuevo y los resultados capturados se conservan.
           </p>
           <div className="te-move-pairs__list">
             {orderedGroups.map((grupo) => {
-              const motivo = bloqueados.get(grupo.id);
-              if (motivo) {
-                const rows = activePairs(grupo, parejasPorGrupo);
-                return (
-                  <section
-                    key={grupo.id}
-                    className="te-move-pairs__group te-move-pairs__group--locked"
-                  >
-                    <h3>{grupo.nombre}</h3>
-                    <p className="te-define-pair__empty">
-                      {textoBloqueoGrupo(motivo)}
-                    </p>
-                    {rows.map((pair) => (
-                      <div key={pair.id} className="te-move-pairs__row">
-                        <span>{pair.label}</span>
-                      </div>
-                    ))}
-                  </section>
-                );
-              }
               const rows = Array.from(current.entries())
                 .filter(([, grupoId]) => grupoId === grupo.id)
                 .map(([pairId]) => {
@@ -203,7 +190,21 @@ export const CambiarParejasGrupoModal: React.FC<
                   {rows.length === 0 ? (
                     <p className="te-define-pair__empty">Sin parejas.</p>
                   ) : (
-                    rows.map((pair) => (
+                    rows.map((pair) => {
+                      const lock = pairLock.get(pair.id);
+                      if (lock) {
+                        return (
+                          <div key={pair.id} className="te-move-pairs__row">
+                            <span>{pair.label}</span>
+                            <span className="te-define-pair__empty">
+                              {lock === "retirada"
+                                ? "Retirada."
+                                : "Ya tiene resultado."}
+                            </span>
+                          </div>
+                        );
+                      }
+                      return (
                       <label key={pair.id} className="te-move-pairs__row">
                         <span>{pair.label}</span>
                         <select
@@ -220,14 +221,15 @@ export const CambiarParejasGrupoModal: React.FC<
                             setError("");
                           }}
                         >
-                          {editableGroups.map((option) => (
+                          {orderedGroups.map((option) => (
                             <option key={option.id} value={option.id}>
                               {option.nombre}
                             </option>
                           ))}
                         </select>
                       </label>
-                    ))
+                      );
+                    })
                   )}
                 </section>
               );
@@ -235,9 +237,11 @@ export const CambiarParejasGrupoModal: React.FC<
           </div>
         </div>
         <footer className="te-define-pair-dialog__foot">
-          {!hasEditable ? (
+          {!canMove ? (
             <p className="te-error te-move-pairs__error">
-              Necesitas al menos 2 grupos sin resultados para mover parejas.
+              {orderedGroups.length < 2
+                ? "Necesitas al menos 2 grupos para mover parejas."
+                : "Todas las parejas ya tienen resultado. No se pueden mover."}
             </p>
           ) : null}
           {error ? <p className="te-error te-move-pairs__error">{error}</p> : null}

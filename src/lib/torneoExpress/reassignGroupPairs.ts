@@ -93,6 +93,8 @@ export function buildGroupReassignment(input: {
   fixed?: ReassignExistingMatch[];
   /** Hora de partida si ningún partido tiene día y cancha guardados. */
   anchorIso?: string;
+  /** Cruces que ya tienen resultado: no se regeneran. */
+  omitMatchups?: ReadonlySet<string>;
 }): { ok: true; payload: ReassignPayload } | { ok: false; error: string } {
   const seen = new Set<string>();
   for (const grupo of input.grupos) {
@@ -164,6 +166,7 @@ export function buildGroupReassignment(input: {
     const matches = generateBalancedRoundRobin(grupo.parejaIds);
     for (const match of matches) {
       const key = unorderedMatchupKey(match.localId, match.visitanteId);
+      if (input.omitMatchups?.has(key)) continue;
       const kept = byMatchup.get(key);
       if (!kept || usedMatchups.has(key)) continue;
       const slot: Slot = {
@@ -197,7 +200,7 @@ export function buildGroupReassignment(input: {
   for (const grupo of input.grupos) {
     for (const match of generateBalancedRoundRobin(grupo.parejaIds)) {
       const key = unorderedMatchupKey(match.localId, match.visitanteId);
-      if (usedMatchups.has(key)) continue;
+      if (input.omitMatchups?.has(key) || usedMatchups.has(key)) continue;
       pending.push({
         grupoOrden: grupo.orden,
         localId: match.localId,

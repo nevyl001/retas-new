@@ -1,7 +1,9 @@
+import { partidoTieneHistorial } from "./partidoHistorial";
 import {
   buildGroupReassignment,
   type ReassignExistingMatch,
 } from "./reassignGroupPairs";
+import { unorderedMatchupKey } from "./roundRobin";
 
 export type ReasignacionGrupo = { id: string; nombre: string; orden: number };
 
@@ -10,6 +12,11 @@ export type ReasignacionMatchRef = {
   pareja_visitante_id: string;
   cancha?: string | null;
   programado_en?: string | null;
+  estado?: string | null;
+  ganador_id?: string | null;
+  puntos_local?: number | null;
+  puntos_visitante?: number | null;
+  sets_resultado?: unknown;
 };
 
 export type ReasignacionPlan = {
@@ -41,11 +48,9 @@ function sameSet(a: readonly string[], b: readonly string[]): boolean {
 }
 
 /**
- * Plan para reacomodar parejas solo en grupos sin resultados.
- * - `desired`: parejas que debe tener cada grupo editable (los bloqueados no van).
- * - `current`: parejas actuales de cada grupo.
- * Solo se regeneran los grupos cuyo conjunto de parejas cambió; los demás
- * (iniciados o sin cambios) quedan intactos y sus horarios cuentan como ocupados.
+ * Plan para reacomodar parejas. Un grupo puede ya tener resultados: esos
+ * cruces no se regeneran y sus horarios quedan ocupados. Solo se rearman los
+ * partidos pendientes de los grupos cuyo conjunto de parejas cambió.
  * Devuelve `null` si no hay cambios.
  */
 export function planReasignacion(input: {
@@ -64,12 +69,24 @@ export function planReasignacion(input: {
   if (changed.length === 0) return { ok: true, plan: null };
 
   const changedIds = new Set(changed.map((g) => g.id));
-  const existentes = changed.flatMap((g) =>
-    (input.partidosPorGrupo[g.id] ?? []).map(toExisting)
-  );
-  const fixed = ordered
-    .filter((g) => !changedIds.has(g.id))
-    .flatMap((g) => (input.partidosPorGrupo[g.id] ?? []).map(toExisting));
+  const playedKeys = new Set<string>();
+  const existentes: ReassignExistingMatch[] = [];
+  const fixed: ReassignExistingMatch[] = [];
+  for (const grupo of ordered) {
+    for (const match of input.partidosPorGrupo[grupo.id] ?? []) {
+      const slot = toExisting(match);
+      if (!changedIds.has(grupo.id) || partidoTieneHistorial(match)) {
+        fixed.push(slot);
+        if (changedIds.has(grupo.id) && partidoTieneHistorial(match)) {
+          playedKeys.add(
+            unorderedMatchupKey(match.pareja_local_id, match.pareja_visitante_id)
+          );
+        }
+      } else {
+        existentes.push(slot);
+      }
+    }
+  }
 
   const built = buildGroupReassignment({
     grupos: changed.map((g) => ({
@@ -79,6 +96,7 @@ export function planReasignacion(input: {
     })),
     existentes,
     fixed,
+    omitMatchups: playedKeys,
     anchorIso: input.anchorIso ?? new Date().toISOString(),
   });
   if (!built.ok) return built;
