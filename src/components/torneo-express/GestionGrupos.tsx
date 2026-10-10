@@ -98,6 +98,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     savingProgramadoId,
     eliminatoriaLabelMap,
     saveEliminatoriaResultado,
+    moverPartidoAlOtroLado,
     saveEliminatoriaProgramacion,
     savingEliminatoriaId,
     savingEliminatoriaCanchaId,
@@ -974,6 +975,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                 savingEliminatoriaReprogramacion={savingReprogramacion}
                 courtCheckScope={courtCheckScope}
                 onSaveResultado={saveEliminatoriaResultado}
+                onMoverLado={moverPartidoAlOtroLado}
                 onSaveProgramacion={saveEliminatoriaProgramacion}
                 onRescheduleRonda={rescheduleEliminatoriaRonda}
                 onRescheduleToast={showActionToast}
@@ -1235,6 +1237,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           savingEliminatoriaReprogramacion={savingReprogramacion}
           courtCheckScope={courtCheckScope}
           onSaveResultado={saveEliminatoriaResultado}
+          onMoverLado={moverPartidoAlOtroLado}
           onSaveProgramacion={saveEliminatoriaProgramacion}
           onRescheduleRonda={rescheduleEliminatoriaRonda}
           onRescheduleToast={showActionToast}

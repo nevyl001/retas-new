@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { moverPartidoAlOtroLado as persistMoverPartidoAlOtroLado } from "../services/torneoExpressMoverLado";
 import { buildEliminatoriaLabelMap } from "../lib/torneoExpress/eliminatoriaLabels";
 import {
   buildStandingsForGrupo,
@@ -430,6 +431,25 @@ export function useTorneoExpress(
     [reload]
   );
 
+  const moverPartidoAlOtroLado = useCallback(
+    async (partidoId: string) => {
+      setSavingEliminatoriaId(partidoId);
+      setError(null);
+      try {
+        await persistMoverPartidoAlOtroLado(partidoId);
+        await reload();
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "No se pudo mover el partido."
+        );
+        throw e;
+      } finally {
+        setSavingEliminatoriaId(null);
+      }
+    },
+    [reload]
+  );
+
   const saveEliminatoriaCancha = useCallback(
     async (partidoId: string, cancha: string | null) => {
       setSavingEliminatoriaCanchaId(partidoId);
@@ -616,6 +636,7 @@ export function useTorneoExpress(
     rescheduleEliminatoriaRonda,
     saveGrupoNombre,
     saveEliminatoriaResultado,
+    moverPartidoAlOtroLado,
     saveEliminatoriaCancha,
     saveEliminatoriaProgramado,
     saveEliminatoriaProgramacion,

@@ -3041,6 +3041,32 @@
   color: var(--text-secondary, rgba(255, 255, 255, 0.68));
 }
 
+.te-gestion-page .te-elim-board__match {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.te-gestion-page .te-elim-board__move {
+  justify-self: start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.72));
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+}
+
+.te-gestion-page .te-elim-board__move:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .te-gestion-page .te-elim-board__final {
   grid-column: 1 / -1;
   padding: 0.95rem 1rem;

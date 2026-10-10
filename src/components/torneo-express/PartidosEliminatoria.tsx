@@ -68,6 +68,8 @@ interface PartidosEliminatoriaProps {
   ) => Promise<void>;
   /** Abre el editor de programación masiva de la ronda visible. */
   onEditRoundSchedule?: (ronda: number, rondaLabel: string) => void;
+  /** Mueve el partido completo al otro lado de la siguiente ronda. */
+  onMoverLado?: (partidoId: string) => Promise<void>;
 }
 
 function asSchedulePartido(
@@ -738,6 +740,7 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
   onSaveResultado,
   onSaveProgramacion,
   onEditRoundSchedule,
+  onMoverLado,
 }) => {
   const bracketSize = eliminatoriaBracketSize(fase, bracketSlots);
   const totalRondas = totalRondasEliminatoria(fase, bracketSize);
@@ -751,6 +754,7 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
   }, [partidos]);
 
   const [activeRonda, setActiveRonda] = useState<number | null>(null);
+  const [movingId, setMovingId] = useState<string | null>(null);
   const rondaVisible = activeRonda ?? rondas[rondas.length - 1] ?? 1;
 
   const labelForRonda = (r: number) =>
@@ -789,6 +793,15 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
       .map((entry) => entry[1]);
     return halves.length === 2 ? halves : null;
   })();
+  const moveMatch = (partidoId: string) => {
+    if (!onMoverLado || movingId) return;
+    const ok = window.confirm(
+      "Este partido pasa al otro lado de la semifinal. Se conservan parejas, marcador, horario y cancha."
+    );
+    if (!ok) return;
+    setMovingId(partidoId);
+    void onMoverLado(partidoId).finally(() => setMovingId(null));
+  };
   const semiSides = (() => {
     if (finalHalves || isRondaTercerLugar(rondaVisible)) return null;
     if (labelForRonda(rondaVisible + 1) !== "Final") return null;
@@ -879,21 +892,34 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
                 </span>
               </header>
               {half.map(({ partido, number }) => (
-                <EliminatoriaPartidoCard
-                  key={partido.id}
-                  partido={partido}
-                  localLabel={parejaLabelFromMap(labelMap, partido.pareja_local_id)}
-                  visitLabel={parejaLabelFromMap(labelMap, partido.pareja_visitante_id)}
-                  editable={editable}
-                  saving={savingPartidoId === partido.id}
-                  savingCancha={savingCanchaId === partido.id}
-                  savingProgramado={savingProgramadoId === partido.id}
-                  matchNumber={number}
-                  courtCheckScope={courtCheckScope}
-                  onSave={onSaveResultado}
-                  onSaveProgramacion={onSaveProgramacion}
-                  partidoFormato={partidoFormato}
-                />
+                <div className="te-elim-board__match" key={partido.id}>
+                  <EliminatoriaPartidoCard
+                    partido={partido}
+                    localLabel={parejaLabelFromMap(labelMap, partido.pareja_local_id)}
+                    visitLabel={parejaLabelFromMap(labelMap, partido.pareja_visitante_id)}
+                    editable={editable}
+                    saving={savingPartidoId === partido.id}
+                    savingCancha={savingCanchaId === partido.id}
+                    savingProgramado={savingProgramadoId === partido.id}
+                    matchNumber={number}
+                    courtCheckScope={courtCheckScope}
+                    onSave={onSaveResultado}
+                    onSaveProgramacion={onSaveProgramacion}
+                    partidoFormato={partidoFormato}
+                  />
+                  {editable && onMoverLado ? (
+                    <button
+                      type="button"
+                      className="te-elim-board__move"
+                      disabled={movingId != null}
+                      onClick={() => moveMatch(partido.id)}
+                    >
+                      {movingId === partido.id
+                        ? "Moviendo…"
+                        : "Mover a la otra semifinal"}
+                    </button>
+                  ) : null}
+                </div>
               ))}
             </section>
           ))}
