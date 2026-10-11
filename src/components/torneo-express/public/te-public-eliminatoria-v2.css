@@ -2809,7 +2809,8 @@
 }
 
 .te-elim-v2 .te-elim-recap__event,
-.te-elim-v2 .te-elim-recap__context,
+.te-elim-v2 .te-elim-recap__category,
+.te-elim-v2 .te-elim-recap__role,
 .te-elim-v2 .te-elim-recap__rank {
   margin: 0;
 }
@@ -2823,13 +2824,24 @@
   text-transform: uppercase;
 }
 
-.te-elim-v2 .te-elim-recap__context {
-  margin-top: 0.2rem;
+.te-elim-v2 .te-elim-recap__category {
+  margin-top: 0.45rem;
   color: var(--te-elim-accent);
-  font-size: 0.68rem;
+  font-size: clamp(1rem, 2vw, 1.35rem);
   font-weight: 750;
-  letter-spacing: 0.12em;
-  line-height: 1.3;
+  letter-spacing: 0.16em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.te-elim-v2 .te-elim-recap__role {
+  margin-top: 0.2rem;
+  color: var(--ro-chrome-text);
+  font-family: var(--font-display, var(--font-body));
+  font-size: clamp(1.85rem, 3.4vw, 2.65rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
   text-transform: uppercase;
 }
 
@@ -3213,8 +3225,14 @@
     letter-spacing: 0.08em;
   }
 
-  .te-elim-v2 .te-elim-recap__context {
-    font-size: 0.56rem;
+  .te-elim-v2 .te-elim-recap__category {
+    margin-top: 0.2rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+  }
+
+  .te-elim-v2 .te-elim-recap__role {
+    font-size: 1.45rem;
   }
 
   .te-elim-v2 .te-elim-recap__rank {
@@ -3381,8 +3399,18 @@
   }
 
   .te-elim-v2 .te-elim-recap__event,
-  .te-elim-v2 .te-elim-recap__context {
+  .te-elim-v2 .te-elim-recap__category,
+  .te-elim-v2 .te-elim-recap__role {
     overflow-wrap: anywhere;
+  }
+
+  .te-elim-v2 .te-elim-recap__category {
+    font-size: 1.5rem;
+    letter-spacing: 0.18em;
+  }
+
+  .te-elim-v2 .te-elim-recap__role {
+    font-size: clamp(2.15rem, 2.8vw, 2.85rem);
   }
 
   .te-elim-v2 .te-elim-recap__rank {

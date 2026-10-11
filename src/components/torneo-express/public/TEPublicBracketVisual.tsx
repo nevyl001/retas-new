@@ -811,9 +811,7 @@ function TournamentRecap({
   const isChampion = place === "first";
   const players = getTeamPlayers(team).slice(0, 2);
   const matches = championMatchLines(rounds, team.parejaId);
-  const context = [category, isChampion ? "Campeones" : "Subcampeones"]
-    .filter(Boolean)
-    .join(" · ");
+  const roleLabel = isChampion ? "Campeones" : "Subcampeones";
   const statRows: Array<
     Array<{
       label: string;
@@ -860,7 +858,8 @@ function TournamentRecap({
       <header className="te-elim-recap__header">
         <div className="te-elim-recap__heading">
           <p className="te-elim-recap__event">{tournamentName}</p>
-          {context ? <p className="te-elim-recap__context">{context}</p> : null}
+          {category ? <p className="te-elim-recap__category">{category}</p> : null}
+          <p className="te-elim-recap__role">{roleLabel}</p>
         </div>
         <p className="te-elim-recap__rank">{isChampion ? "01" : "02"}</p>
       </header>
