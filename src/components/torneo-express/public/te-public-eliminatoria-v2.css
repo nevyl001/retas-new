@@ -3164,6 +3164,148 @@
   }
 }
 
+/* Teléfono: la card completa cabe en una captura. */
+@media (max-width: 48rem) {
+  .te-elim-v2 .te-pb-closing-stack {
+    width: min(100%, 22.5rem);
+    margin: 0.35rem auto 0.6rem;
+    gap: 0.55rem;
+  }
+
+  .te-elim-v2 .te-elim-recap {
+    border-radius: 1rem;
+  }
+
+  .te-elim-v2 .te-elim-recap .te-pb-closing-card__signature {
+    gap: 0.25rem;
+    padding: 0.55rem 0.75rem 0.3rem;
+  }
+
+  .te-elim-v2 .te-elim-recap .te-pb-closing-card__signature::after {
+    margin-top: 0.4rem;
+  }
+
+  .te-elim-v2 .te-elim-recap .te-pb-closing-card__club-logo {
+    flex-basis: 1.7rem;
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+
+  .te-elim-v2 .te-elim-recap .te-pb-closing-card__club-name {
+    font-size: 0.68rem;
+  }
+
+  .te-elim-v2 .te-elim-recap .te-pb-closing-card__club-by {
+    font-size: 0.5rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__header {
+    padding: 0.4rem 0.75rem 0.25rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__event {
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+  }
+
+  .te-elim-v2 .te-elim-recap__context {
+    font-size: 0.56rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__rank {
+    font-size: 1.7rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__portraits {
+    gap: 0.4rem;
+    padding: 0.15rem 0.75rem 0;
+  }
+
+  .te-elim-v2 .te-elim-recap__player {
+    aspect-ratio: 5 / 4;
+  }
+
+  .te-elim-v2 .te-elim-recap__player p {
+    right: 0.45rem;
+    bottom: 0.35rem;
+    left: 0.45rem;
+    font-size: 0.72rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__avatar.rj-avatar {
+    font-size: 1.55rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__hero {
+    gap: 0;
+    padding: 0.45rem 0.75rem 0;
+  }
+
+  .te-elim-v2 .te-elim-recap__title {
+    font-size: 1.25rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__stats {
+    gap: 0;
+    margin: 0.4rem 0.75rem 0;
+    padding-top: 0.3rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__stats-row div {
+    gap: 0.05rem;
+    padding: 0.12rem 0.1rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__stats strong,
+  .te-elim-v2 .te-elim-recap__stats .is-primary strong {
+    font-size: 1rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__stats span {
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
+  }
+
+  .te-elim-v2 .te-elim-recap__tagline {
+    margin: 0.35rem 0.75rem 0;
+    padding-top: 0.35rem;
+    font-size: 0.78rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__matches {
+    margin: 0.35rem 0.75rem 0;
+    padding-top: 0.3rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__matches > p {
+    margin-bottom: 0.15rem;
+    font-size: 0.52rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__matches-head,
+  .te-elim-v2 .te-elim-recap__matches li {
+    grid-template-columns: minmax(0, 1.2fr) auto auto 1.6rem;
+    gap: 0.15rem 0.35rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__matches li {
+    padding: 0.12rem 0;
+    font-size: 0.64rem;
+    line-height: 1.15;
+  }
+
+  .te-elim-v2 .te-elim-recap__footer {
+    gap: 0.15rem;
+    margin: 0.4rem 0.75rem 0.55rem;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__footer p,
+  .te-elim-v2 .te-elim-recap__handle {
+    font-size: 0.58rem;
+  }
+}
+
 /* Escritorio: la misma pieza vertical de la card de grupo. */
 @media (min-width: 64rem) {
   .te-elim-v2 .te-pb-podium-share-grid,
