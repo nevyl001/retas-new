@@ -792,6 +792,9 @@ function TournamentRecap({
   place,
   tournamentName,
   category,
+  clubName,
+  clubLogoUrl,
+  showMotherAttribution,
   stats,
   rounds,
 }: {
@@ -799,92 +802,129 @@ function TournamentRecap({
   place: "first" | "second";
   tournamentName: string;
   category?: string | null;
+  clubName: string;
+  clubLogoUrl?: string | null;
+  showMotherAttribution: boolean;
   stats: PublicEliminatoriaPodiumStats | null;
   rounds: BracketRoundPresentation[];
 }) {
   const isChampion = place === "first";
   const players = getTeamPlayers(team).slice(0, 2);
   const matches = championMatchLines(rounds, team.parejaId);
-  const eyebrow = [isChampion ? "Campeones" : "Subcampeones", tournamentName, category]
+  const context = [category, isChampion ? "Campeones" : "Subcampeones"]
     .filter(Boolean)
     .join(" · ");
+  const statRows: Array<
+    Array<{
+      label: string;
+      name: string;
+      value: string;
+      primary?: boolean;
+      highlight?: boolean;
+    }>
+  > = stats
+    ? [
+        [
+          { label: "PJ", name: "Partidos jugados", value: String(stats.partidos) },
+          { label: "PG", name: "Partidos ganados", value: String(stats.victorias) },
+          { label: "PP", name: "Partidos perdidos", value: String(stats.derrotas) },
+          {
+            label: "GF",
+            name: "Games a favor",
+            value: String(stats.juegosFavor),
+            primary: true,
+          },
+        ],
+        [
+          { label: "GC", name: "Games en contra", value: String(stats.juegosContra) },
+          {
+            label: "DIF",
+            name: "Diferencia de games",
+            value: formatPublicPodiumDif(stats.dif),
+            highlight: stats.dif > 0,
+          },
+        ],
+      ]
+    : [];
 
   return (
     <section
       className={`te-elim-recap${isChampion ? " te-elim-recap--champion" : " te-elim-recap--second"}`}
       aria-label={isChampion ? "Resumen de los campeones" : "Resumen de los subcampeones"}
     >
+      <ClosingClubSignature
+        clubName={clubName}
+        clubLogoUrl={clubLogoUrl}
+        showMotherAttribution={showMotherAttribution}
+      />
       <header className="te-elim-recap__header">
-        <p className="te-elim-recap__eyebrow">{eyebrow}</p>
-        <span className="te-elim-recap__rule" aria-hidden />
-      </header>
-      <div className="te-elim-recap__stage">
-        <div
-          className="te-elim-recap__portraits"
-          aria-label={isChampion ? "Pareja campeona" : "Pareja subcampeona"}
-        >
-          {players.map((player) => (
-            <div className="te-elim-recap__player" key={player.id}>
-              <JugadorAvatar
-                fotoUrl={player.fotoUrl}
-                nombre={player.name}
-                size="xl"
-                alt={player.fotoUrl ? `Foto de ${player.name}` : ""}
-                className="te-elim-recap__avatar"
-              />
-              <p>{player.name}</p>
-            </div>
-          ))}
+        <div className="te-elim-recap__heading">
+          <p className="te-elim-recap__event">{tournamentName}</p>
+          {context ? <p className="te-elim-recap__context">{context}</p> : null}
         </div>
-        <div className="te-elim-recap__results">
-          <div className="te-elim-recap__hero">
-            <p className="te-elim-recap__badge">
-              {isChampion ? "1.er lugar" : "2.º lugar"}
-            </p>
-            <h2 className="te-elim-recap__title">
-              <TablerIcon name={isChampion ? "trophy" : "medal"} size={22} />
-              {isChampion
-                ? "¡Felicidades, campeones!"
-                : "¡Felicidades, subcampeones!"}
-            </h2>
-            <p className="te-elim-recap__message">
-              {isChampion
-                ? "Se coronaron. Este título es de ustedes, y la próxima toca defenderlo."
-                : "Llegaron a la final. Quedaron a un paso, y la próxima van por el título."}
-            </p>
+        <p className="te-elim-recap__rank">{isChampion ? "01" : "02"}</p>
+      </header>
+      <div
+        className="te-elim-recap__portraits"
+        aria-label={isChampion ? "Pareja campeona" : "Pareja subcampeona"}
+      >
+        {players.map((player) => (
+          <div className="te-elim-recap__player" key={player.id}>
+            <JugadorAvatar
+              fotoUrl={player.fotoUrl}
+              nombre={player.name}
+              size="xl"
+              alt={player.fotoUrl ? `Foto de ${player.name}` : ""}
+              className="te-elim-recap__avatar"
+            />
+            <p>{player.name}</p>
           </div>
-      {stats ? (
+        ))}
+      </div>
+      <div className="te-elim-recap__hero">
+        <h2 className="te-elim-recap__title">¡Felicidades!</h2>
+        <p className="te-elim-recap__message">
+          {isChampion
+            ? "Se coronaron. Este título es de ustedes."
+            : "Llegaron a la final. Quedaron a un paso."}
+        </p>
+      </div>
+      {statRows.length > 0 ? (
         <div
           className="te-elim-recap__stats"
           aria-label={isChampion ? "Números del campeón" : "Números del subcampeón"}
         >
-          <div>
-            <span>Games acum.</span>
-            <strong>{stats.juegosFavor}</strong>
-          </div>
-          <div>
-            <span>Dif. juegos</span>
-            <strong>{formatPublicPodiumDif(stats.dif)}</strong>
-          </div>
-          <div>
-            <span>Partidos ganados</span>
-            <strong>{stats.victorias}</strong>
-          </div>
-          <div>
-            <span>Derrotas</span>
-            <strong>{stats.derrotas}</strong>
-          </div>
+          {statRows.map((row, rowIndex) => (
+            <div
+              className={`te-elim-recap__stats-row${
+                rowIndex === 0 ? "" : " te-elim-recap__stats-row--lower"
+              }`}
+              key={row.map((item) => item.label).join("-")}
+            >
+              {row.map((item) => (
+                <div
+                  key={item.label}
+                  className={[
+                    item.primary ? "is-primary" : "",
+                    item.highlight ? "is-highlight" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  <strong>{item.value}</strong>
+                  <span title={item.name}>{item.label}</span>
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       ) : null}
+      <p className="te-elim-recap__tagline">
+        {isChampion ? "Juntos hasta lo más alto." : "A un paso de lo más alto."}
+      </p>
       {matches.length > 0 ? (
         <section className="te-elim-recap__matches" aria-label="Enfrentamientos">
           <p>Enfrentamientos</p>
-          <div className="te-elim-recap__matches-head" aria-hidden>
-            <span>Rival</span>
-            <span>Ronda</span>
-            <span>Marcador</span>
-            <span>Dif</span>
-          </div>
           <ul>
             {matches.map((line) => (
               <li key={line.id}>
@@ -902,8 +942,6 @@ function TournamentRecap({
           </ul>
         </section>
       ) : null}
-        </div>
-      </div>
       <footer className="te-elim-recap__footer">
         <span aria-hidden />
         <p>Vive Riviera Open</p>
@@ -1026,6 +1064,9 @@ function TournamentClosingStack({
         place="first"
         tournamentName={tournamentName}
         category={category}
+        clubName={clubName}
+        clubLogoUrl={clubLogoUrl}
+        showMotherAttribution={showMotherAttribution}
         stats={statsFor(champion)}
         rounds={rounds}
       />
@@ -1035,6 +1076,9 @@ function TournamentClosingStack({
           place="second"
           tournamentName={tournamentName}
           category={category}
+          clubName={clubName}
+          clubLogoUrl={clubLogoUrl}
+          showMotherAttribution={showMotherAttribution}
           stats={statsFor(runnerUp)}
           rounds={rounds}
         />
