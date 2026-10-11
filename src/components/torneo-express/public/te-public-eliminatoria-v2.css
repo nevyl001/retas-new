@@ -3150,8 +3150,12 @@
 @media (max-width: 63.99rem) {
   .te-elim-v2 .te-pb-closing-stack {
     gap: 0.9rem;
-    width: min(100%, 26rem);
+    width: 100%;
     margin: 0.85rem auto 1.25rem;
+  }
+
+  .te-elim-v2 .te-elim-recap {
+    width: 100%;
   }
 
   .te-elim-v2 .te-pb-podium-share-grid,
@@ -3167,12 +3171,13 @@
 /* Teléfono: la card completa cabe en una captura. */
 @media (max-width: 48rem) {
   .te-elim-v2 .te-pb-closing-stack {
-    width: min(100%, 22.5rem);
+    width: 100%;
     margin: 0.35rem auto 0.6rem;
     gap: 0.55rem;
   }
 
   .te-elim-v2 .te-elim-recap {
+    width: 100%;
     border-radius: 1rem;
   }
 
