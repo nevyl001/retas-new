@@ -3397,6 +3397,11 @@
     text-align: left;
   }
 
+  .te-elim-v2 .te-elim-recap__message {
+    max-width: 28rem;
+    text-align: left;
+  }
+
   .te-elim-v2 .te-elim-recap__title {
     font-size: clamp(2rem, 2.4vw, 2.6rem);
   }

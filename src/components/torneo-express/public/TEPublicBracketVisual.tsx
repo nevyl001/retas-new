@@ -883,6 +883,11 @@ function TournamentRecap({
       </div>
       <div className="te-elim-recap__hero">
         <h2 className="te-elim-recap__title">¡Felicidades!</h2>
+        <p className="te-elim-recap__message">
+          {isChampion
+            ? "Se coronaron. Este título es de ustedes, y la próxima toca defenderlo."
+            : "Llegaron a la final. Quedaron a un paso, y la próxima van por el título."}
+        </p>
       </div>
       {statRows.length > 0 ? (
         <div
