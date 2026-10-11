@@ -3306,7 +3306,7 @@
   }
 }
 
-/* Escritorio: la misma pieza vertical de la card de grupo. */
+/* Escritorio: pieza ancha, retratos a la izquierda y datos a la derecha. */
 @media (min-width: 64rem) {
   .te-elim-v2 .te-pb-podium-share-grid,
   .te-elim-v2 .te-pb-closing-community {
@@ -3314,9 +3314,99 @@
   }
 
   .te-elim-v2 .te-pb-closing-stack {
-    width: min(100%, 28rem);
+    width: min(100%, 68rem);
     margin-inline: auto;
     gap: clamp(1rem, 2vh, 1.5rem);
+  }
+
+  .te-elim-v2 .te-elim-recap {
+    width: 100%;
+    grid-template-columns: minmax(22rem, 0.92fr) minmax(0, 1.2fr);
+    column-gap: clamp(1.25rem, 2vw, 2rem);
+    align-items: center;
+    padding-bottom: 0.35rem;
+  }
+
+  .te-elim-v2 .te-elim-recap .te-pb-closing-card__signature,
+  .te-elim-v2 .te-elim-recap__footer {
+    grid-column: 1 / -1;
+  }
+
+  .te-elim-v2 .te-elim-recap__portraits {
+    grid-column: 1;
+    grid-row: 2 / span 5;
+    align-self: stretch;
+    align-content: stretch;
+    padding: 0 0 0.35rem 1.35rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__player {
+    aspect-ratio: auto;
+    min-height: 18rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__header,
+  .te-elim-v2 .te-elim-recap__hero,
+  .te-elim-v2 .te-elim-recap__stats,
+  .te-elim-v2 .te-elim-recap__tagline,
+  .te-elim-v2 .te-elim-recap__matches {
+    grid-column: 2;
+    margin-right: 1.5rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__header {
+    padding: 0.2rem 0 0.35rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__rank {
+    font-size: 3.4rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__hero {
+    justify-items: start;
+    padding: 0.35rem 0 0;
+    text-align: left;
+  }
+
+  .te-elim-v2 .te-elim-recap__title {
+    font-size: clamp(2rem, 2.4vw, 2.6rem);
+  }
+
+  .te-elim-v2 .te-elim-recap__stats {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    margin: 0.85rem 0 0;
+    padding-top: 0.75rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__stats-row,
+  .te-elim-v2 .te-elim-recap__stats-row--lower {
+    display: contents;
+  }
+
+  .te-elim-v2 .te-elim-recap__stats-row--lower > div:first-child {
+    border-left: 1px solid color-mix(in srgb, var(--ro-chrome-text) 10%, transparent);
+  }
+
+  .te-elim-v2 .te-elim-recap__stats strong,
+  .te-elim-v2 .te-elim-recap__stats .is-primary strong {
+    font-size: 1.65rem;
+  }
+
+  .te-elim-v2 .te-elim-recap__tagline {
+    margin: 0.75rem 0 0;
+    text-align: left;
+  }
+
+  .te-elim-v2 .te-elim-recap__matches {
+    margin: 0.75rem 0 0;
+  }
+
+  .te-elim-v2 .te-elim-recap__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 1rem 1.35rem 1.15rem;
   }
 
   .te-elim-v2 .te-pb-podium-share-grid {
