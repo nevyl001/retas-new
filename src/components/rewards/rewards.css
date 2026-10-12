@@ -718,6 +718,109 @@
   opacity: 0.9;
 }
 
+/* ── Grid de beneficios institucionales ── */
+.rrw-benefits-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+}
+
+.rrw-benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface-1, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.rrw-benefit-item div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.rrw-benefit-item strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.84rem;
+}
+
+.rrw-benefit-item span {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.rrw-benefit-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ── Guía autorizada de vinculación ── */
+.rrw-unlinked-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.85rem 1rem;
+  background: var(--surface-2, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-left: 3px solid var(--border-strong, #384252);
+  border-radius: var(--radius-md, 8px);
+  margin-top: 0.25rem;
+}
+
+.rrw-unlinked-guide-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
+.rrw-guide-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.rrw-unlinked-guide-text {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.rrw-unlinked-guide-subtext {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ── Nota de independencia de puntos deportivos y Rewards ── */
+.rrw-independence-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--surface-1, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.rrw-independence-disclaimer svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+
 .rrw-loyalty-header {
   display: flex;
   flex-direction: column;

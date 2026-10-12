@@ -6,6 +6,7 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { JugadorRewardsPanel } from "./JugadorRewardsPanel";
 import * as rewardsApi from "../../lib/rewards/api";
+import { rememberOrganizerDisplayName } from "../../lib/organizer/organizerDisplayName";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -247,7 +248,7 @@ describe("JugadorRewardsPanel — Experiencia de Fidelización del Jugador (Play
     expect(mockPlayerSnapshot).not.toHaveBeenCalled();
   });
 
-  test("2. Usuario con sesión pero no vinculado ve aviso de privacidad sin exponer puntos", async () => {
+  test("2. Usuario con sesión pero no vinculado ve aviso institucional sin exponer puntos", async () => {
     mockPlayerSnapshot.mockRejectedValue(new Error("Esta cuenta no está vinculada a este jugador"));
 
     root = createRoot(container);
@@ -263,8 +264,11 @@ describe("JugadorRewardsPanel — Experiencia de Fidelización del Jugador (Play
     await flush();
 
     expect(container.textContent).toContain("Riviera Rewards");
-    expect(container.textContent).toContain("Acceso restringido");
-    expect(container.textContent).toContain("Este perfil pertenece a otro jugador");
+    expect(container.textContent).toContain("Puntos y Recompensas del Club");
+    expect(container.textContent).toContain("Programa Oficial");
+    expect(container.textContent).toContain("¿Eres el propietario de este perfil?");
+    expect(container.textContent).toContain("otro@club.com");
+    expect(container.textContent).not.toContain("Acceso restringido");
     expect(container.textContent).not.toContain("Disponibles");
     expect(container.textContent).not.toContain("Próxima recompensa");
   });
@@ -868,7 +872,7 @@ describe("JugadorRewardsPanel — Fidelización Multiclub y Resolución de Ident
     expect(container.textContent).toContain("Retas en campaña");
   });
 
-  test("6. Usuario que visita el perfil de otro jugador ve Acceso Restringido", async () => {
+  test("6. Usuario que visita el perfil de otro jugador ve presentación institucional sin exponer saldos", async () => {
     mockPlayerSnapshot.mockRejectedValue(new Error("Esta cuenta no está vinculada a este jugador"));
 
     root = createRoot(container);
@@ -878,14 +882,15 @@ describe("JugadorRewardsPanel — Fidelización Multiclub y Resolución de Ident
           mode="player"
           jugadorId="maria-jug-id"
           organizadorId="org-padelito"
-          currentUser={{ id: "auth-carlos-1" }}
+          currentUser={{ id: "auth-carlos-1", email: "carlos@test.com" }}
         />
       );
     });
     await flush();
 
-    expect(container.textContent).toContain("Acceso restringido");
-    expect(container.textContent).toContain("Este perfil pertenece a otro jugador");
+    expect(container.textContent).toContain("Puntos y Recompensas del Club");
+    expect(container.textContent).toContain("Programa Oficial");
+    expect(container.textContent).not.toContain("Acceso restringido");
     expect(container.querySelector(".rrw-kpi-grid--player")).toBeNull();
   });
 
@@ -907,3 +912,336 @@ describe("JugadorRewardsPanel — Fidelización Multiclub y Resolución de Ident
     expect(mockPlayerSnapshot).not.toHaveBeenCalled();
   });
 });
+
+describe("Riviera Rewards — Verificaciones de seguridad y visibilidad multiclub (Requisito 6)", () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    mockPlayerBalance.mockResolvedValue([]);
+    mockListCampaigns.mockResolvedValue([]);
+    mockListRewards.mockResolvedValue([]);
+    mockListRedemptions.mockResolvedValue([]);
+    mockListReviews.mockResolvedValue([]);
+    mockListBenefits.mockResolvedValue([]);
+    mockListParticipaciones.mockResolvedValue([]);
+    mockAssignBenefit.mockResolvedValue(undefined);
+    rememberOrganizerDisplayName("org-padelito", "Padelito Warehouse");
+    rememberOrganizerDisplayName("org-hack", "Hack Padel");
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+    jest.clearAllMocks();
+  });
+
+  async function flush() {
+    for (let i = 0; i < 5; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+  }
+
+  test("1. Propietario autenticado y vinculado: consulta campaña, club, métricas, progreso y disclaimer", async () => {
+    mockPlayerSnapshot.mockResolvedValue({
+      organizador_id: "org-padelito",
+      saldos: [
+        {
+          campaign_id: "camp-1",
+          nombre: "Campaña Apertura",
+          fase: "canje",
+          acumulando: 80,
+          disponible: 60,
+          reservado: 20,
+          utilizado: 0,
+          cerrado: 0,
+          acumula_desde: "2026-09-01T00:00:00Z",
+          acumula_hasta: "2026-10-01T00:00:00Z",
+          canje_desde: "2026-10-01T00:00:00Z",
+          canje_hasta: "2026-11-01T00:00:00Z",
+        },
+      ],
+      premios: [
+        {
+          id: "rew-1",
+          nombre: "Gorra Oficial",
+          descripcion: "Gorra del club",
+          costo_puntos: 100,
+          tipo: "producto",
+          condiciones: null,
+          inventario_restante: 5,
+          limite_por_jugador: 1,
+          campaign_id: "camp-1",
+          campana: "Campaña Apertura",
+          canje_hasta: "2026-11-01T00:00:00Z",
+        },
+      ],
+      canjes: [],
+    });
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="j-carlos"
+          organizadorId="org-padelito"
+          clubName="Padelito Warehouse"
+          currentUser={{ id: "auth-carlos", email: "carlos@padelito.com" }}
+        />
+      );
+    });
+    await flush();
+
+    expect(container.textContent).toContain("Campaña Apertura");
+    expect(container.textContent).toContain("Padelito Warehouse");
+    expect(container.textContent).toContain("Disponibles");
+    expect(container.textContent).toContain("60");
+    expect(container.textContent).toContain("Reservados");
+    expect(container.textContent).toContain("20");
+    expect(container.textContent).toContain("Gorra Oficial");
+    expect(container.textContent).toContain("60 / 100 pts");
+    expect(container.textContent).toContain("independiente al puntaje del ranking deportivo");
+  });
+
+  test("2. Propietario sin vinculación: muestra indicación clara del procedimiento autorizado con su correo", async () => {
+    mockPlayerSnapshot.mockRejectedValue(new Error("Esta cuenta no está vinculada a este jugador"));
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="j-carlos"
+          organizadorId="org-padelito"
+          clubName="Padelito Warehouse"
+          currentUser={{ id: "auth-carlos", email: "carlos@padelito.com" }}
+        />
+      );
+    });
+    await flush();
+
+    expect(container.textContent).toContain("Programa Oficial");
+    expect(container.textContent).toContain("¿Eres el propietario de este perfil?");
+    expect(container.textContent).toContain("carlos@padelito.com");
+    expect(container.textContent).toContain("solicita en la administración o recepción del club organizador que vinculen tu cuenta");
+    expect(container.textContent).not.toContain("Acceso restringido");
+  });
+
+  test("3. Visitante anónimo: presentación institucional discreta con botón de login y sin llamar a RPC privada", async () => {
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="j-anon"
+          organizadorId="org-padelito"
+          currentUser={null}
+        />
+      );
+    });
+    await flush();
+
+    expect(container.textContent).toContain("Programa de fidelización y recompensas");
+    expect(container.textContent).toContain("Iniciar sesión para consultar tus puntos");
+    expect(mockPlayerSnapshot).not.toHaveBeenCalled();
+  });
+
+  test("4. Usuario autenticado que consulta otro perfil: sustituye mensaje agresivo por presentación institucional", async () => {
+    mockPlayerSnapshot.mockRejectedValue(new Error("Esta cuenta no está vinculada a este jugador"));
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="j-otro"
+          organizadorId="org-padelito"
+          currentUser={{ id: "auth-visitante", email: "visitante@externo.com" }}
+        />
+      );
+    });
+    await flush();
+
+    expect(container.textContent).not.toContain("Acceso restringido");
+    expect(container.textContent).not.toContain("Este perfil pertenece a otro jugador");
+    expect(container.textContent).toContain("Puntos y Recompensas del Club");
+    expect(container.querySelector(".rrw-kpi-grid--player")).toBeNull();
+  });
+
+  test("5. Jugador multiclub: conserva saldos separados por club y permite alternar entre clubes", async () => {
+    mockPlayerSnapshot.mockImplementation((_jId: string, orgId?: string) => {
+      if (orgId === "org-hack") {
+        return Promise.resolve({
+          organizador_id: "org-hack",
+          saldos: [
+            {
+              campaign_id: "camp-hack",
+              nombre: "Torneo Anual Hack",
+              fase: "acumulacion",
+              acumulando: 50,
+              disponible: 0,
+              reservado: 0,
+              utilizado: 0,
+              cerrado: 0,
+              acumula_desde: "2026-09-01T00:00:00Z",
+              acumula_hasta: "2026-12-01T00:00:00Z",
+              canje_desde: "2026-12-01T00:00:00Z",
+              canje_hasta: "2027-01-01T00:00:00Z",
+            },
+          ],
+          premios: [],
+          canjes: [],
+          clubes_autorizados: [
+            { organizador_id: "org-padelito", jugador_id: "j-pad" },
+            { organizador_id: "org-hack", jugador_id: "j-hack" },
+          ],
+        });
+      }
+      return Promise.resolve({
+        organizador_id: "org-padelito",
+        saldos: [
+          {
+            campaign_id: "camp-pad",
+            nombre: "Liga Padelito Rewards",
+            fase: "canje",
+            acumulando: 120,
+            disponible: 120,
+            reservado: 0,
+            utilizado: 0,
+            cerrado: 0,
+            acumula_desde: "2026-08-01T00:00:00Z",
+            acumula_hasta: "2026-10-01T00:00:00Z",
+            canje_desde: "2026-10-01T00:00:00Z",
+            canje_hasta: "2026-11-01T00:00:00Z",
+          },
+        ],
+        premios: [],
+        canjes: [],
+        clubes_autorizados: [
+          { organizador_id: "org-padelito", jugador_id: "j-pad" },
+          { organizador_id: "org-hack", jugador_id: "j-hack" },
+        ],
+      });
+    });
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="j-carlos"
+          organizadorId="org-padelito"
+          clubName="Padelito Warehouse"
+          currentUser={{ id: "auth-carlos", email: "carlos@test.com" }}
+          participatingClubIds={["org-padelito", "org-hack"]}
+        />
+      );
+    });
+    await flush();
+
+    expect(container.textContent).toContain("Liga Padelito Rewards");
+    expect(container.textContent).toContain("120");
+
+    const buttons = container.querySelectorAll<HTMLButtonElement>(".rrw-club-selector button");
+    expect(buttons.length).toBeGreaterThanOrEqual(2);
+    const hackBtn = Array.from(buttons).find((b) => b.textContent?.includes("Hack Padel"));
+    expect(hackBtn).toBeDefined();
+    await act(async () => {
+      hackBtn?.click();
+    });
+    await flush();
+    expect(container.textContent).toContain("Torneo Anual Hack");
+    expect(container.textContent).toContain("50");
+  });
+
+  test("6. Campaña sin puntos acreditados: muestra estado en acumulación sin errores ni valores inválidos", async () => {
+    mockPlayerSnapshot.mockResolvedValue({
+      organizador_id: "org-padelito",
+      saldos: [
+        {
+          campaign_id: "camp-vacia",
+          nombre: "Campaña Nueva",
+          fase: "acumulacion",
+          acumulando: 0,
+          disponible: 0,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+          acumula_desde: "2026-10-01T00:00:00Z",
+          acumula_hasta: "2026-11-01T00:00:00Z",
+          canje_desde: "2026-11-01T00:00:00Z",
+          canje_hasta: "2026-12-01T00:00:00Z",
+        },
+      ],
+      premios: [],
+      canjes: [],
+    });
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="j-nuevo"
+          organizadorId="org-padelito"
+          currentUser={{ id: "auth-nuevo", email: "nuevo@club.com" }}
+        />
+      );
+    });
+    await flush();
+
+    expect(container.textContent).toContain("Campaña Nueva");
+    expect(container.textContent).toContain("Acumulación activa");
+    const kpiCards = container.querySelectorAll(".rrw-kpi-card");
+    expect(kpiCards.length).toBe(4);
+    expect(container.textContent).toContain("No hay retas registradas durante la ventana de esta campaña");
+  });
+
+  test("7. Separación estricta entre puntos deportivos y Rewards", async () => {
+    mockPlayerSnapshot.mockResolvedValue({
+      organizador_id: "org-padelito",
+      saldos: [
+        {
+          campaign_id: "camp-pts",
+          nombre: "Recompensas Otoño",
+          fase: "canje",
+          acumulando: 75,
+          disponible: 75,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+          acumula_desde: "2026-09-01T00:00:00Z",
+          acumula_hasta: "2026-10-01T00:00:00Z",
+          canje_desde: "2026-10-01T00:00:00Z",
+          canje_hasta: "2026-11-01T00:00:00Z",
+        },
+      ],
+      premios: [],
+      canjes: [],
+    });
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="j-carlos"
+          organizadorId="org-padelito"
+          currentUser={{ id: "auth-carlos", email: "carlos@club.com" }}
+        />
+      );
+    });
+    await flush();
+
+    const disclaimer = container.querySelector(".rrw-independence-disclaimer");
+    expect(disclaimer).not.toBeNull();
+    expect(disclaimer?.textContent).toContain("independiente al puntaje del ranking deportivo");
+  });
+});
+

@@ -344,6 +344,31 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     }
   }, [historialCompleto, jugador?.stats]);
 
+  const participatingClubIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (viewingOrgId) ids.add(viewingOrgId);
+    if (jugador) {
+      const regOrg =
+        jugador.grantedAccess?.ownerOrganizadorId?.trim() ??
+        resolveRegistrationOrganizadorIdForPublicFicha(jugador);
+      if (regOrg) ids.add(regOrg);
+      jugador.careerPuntosByClub?.forEach((c) => {
+        if (c.organizadorId) ids.add(c.organizadorId);
+      });
+      jugador.multiclubGranteePuntos?.forEach((c) => {
+        if (c.organizadorId) ids.add(c.organizadorId);
+      });
+      jugador.pointsBreakdown?.pointsByClub?.forEach((c) => {
+        if (c.organizador_id) ids.add(c.organizador_id);
+      });
+    }
+    if (identity?.homeOrganizadorId) ids.add(identity.homeOrganizadorId);
+    identity?.linkedProfiles?.forEach((p) => {
+      if (p.organizadorId) ids.add(p.organizadorId);
+    });
+    return Array.from(ids);
+  }, [viewingOrgId, identity, jugador]);
+
   if (heroLoading && !jugador) {
     return (
       <ClubExperienceScope
@@ -614,6 +639,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
               linkedProfiles={identity?.linkedProfiles}
               linkedJugadorIds={identity?.linkedJugadorIds}
               rivieraId={identity?.rivieraId}
+              participatingClubIds={participatingClubIds}
             />
           )}
 
