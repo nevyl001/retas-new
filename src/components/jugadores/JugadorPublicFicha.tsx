@@ -597,6 +597,18 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
             </div>
           </section>
 
+          {jugador && (
+            <JugadorRewardsPanel
+              mode="player"
+              jugadorId={jugador.id}
+              organizadorId={registrationOrgId || viewingOrgId}
+              clubName={getOrganizerDisplayNameSync(registrationOrgId || viewingOrgId)}
+              className="rjp-ficha-rewards"
+              participaciones={historial}
+              currentUser={user}
+            />
+          )}
+
           <div className="rjp-ficha__col rjp-ficha__col--summary">
             <JugadorPublicFichaAside
               retas={profileStats.eventosJugados}
@@ -637,10 +649,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
             )}
           </div>
         </div>
-
-        {user && jugador ? (
-          <JugadorRewardsPanel mode="player" jugadorId={jugador.id} />
-        ) : null}
 
         <footer className="rjp-ficha-footer">
           <span className="rjp-ficha-footer__line" aria-hidden />

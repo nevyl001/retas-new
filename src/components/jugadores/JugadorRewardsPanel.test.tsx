@@ -193,3 +193,318 @@ describe("JugadorRewardsPanel — Mejoras de UX en modo admin", () => {
     });
   });
 });
+
+describe("JugadorRewardsPanel — Experiencia de Fidelización del Jugador (Player Mode)", () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  const mockPlayerSnapshot = rewardsApi.playerSnapshot as jest.Mock;
+  const mockPlayerRequestRedemption = rewardsApi.playerRequestRedemption as jest.Mock;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    mockPlayerSnapshot.mockReset();
+    mockPlayerRequestRedemption.mockReset();
+    mockListParticipaciones.mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+    jest.clearAllMocks();
+  });
+
+  async function flush() {
+    for (let i = 0; i < 5; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+  }
+
+  test("1. Visitante sin sesión ve tarjeta de fidelización e invitación sin exponer datos", async () => {
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="jug-1"
+          currentUser={null}
+        />
+      );
+    });
+    await flush();
+
+    expect(container.textContent).toContain("Riviera Rewards");
+    expect(container.textContent).toContain("Programa de fidelización y recompensas");
+    expect(container.textContent).toContain("Acumula puntos en cada reta con Riviera Rewards");
+    expect(container.textContent).toContain("Iniciar sesión");
+    // No debe llamar a playerSnapshot
+    expect(mockPlayerSnapshot).not.toHaveBeenCalled();
+  });
+
+  test("2. Usuario con sesión pero no vinculado ve aviso de privacidad sin exponer puntos", async () => {
+    mockPlayerSnapshot.mockRejectedValue(new Error("Esta cuenta no está vinculada a este jugador"));
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="jug-1"
+          currentUser={{ id: "user-otro", email: "otro@club.com" }}
+        />
+      );
+    });
+    await flush();
+
+    expect(container.textContent).toContain("Riviera Rewards");
+    expect(container.textContent).toContain("Acceso restringido");
+    expect(container.textContent).toContain("Este perfil pertenece a otro jugador");
+    expect(container.textContent).not.toContain("Disponibles");
+    expect(container.textContent).not.toContain("Próxima recompensa");
+  });
+
+  test("3. Jugador vinculado en fase de acumulación muestra narrativa, métricas y barra de progreso dinámica", async () => {
+    mockPlayerSnapshot.mockResolvedValue({
+      organizador_id: "org-padelito",
+      saldos: [
+        {
+          campaign_id: "camp-oct",
+          nombre: "Octubre Loco",
+          acumula_desde: "2026-10-01T00:00:00-06:00",
+          acumula_hasta: "2026-11-01T00:00:00-06:00",
+          canje_desde: "2026-11-01T00:00:00-06:00",
+          canje_hasta: "2026-12-01T00:00:00-06:00",
+          fase: "acumulacion",
+          acumulando: 30,
+          disponible: 0,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+        },
+      ],
+      premios: [
+        {
+          id: "rew-reta",
+          nombre: "Reta Gratuita",
+          descripcion: "Una reta sin costo",
+          costo_puntos: 50,
+          tipo: "reta_gratis",
+          condiciones: "Cancha central",
+          inventario_restante: 10,
+          limite_por_jugador: 1,
+          campaign_id: "camp-oct",
+          campana: "Octubre Loco",
+          canje_hasta: "2026-12-01T00:00:00-06:00",
+        },
+      ],
+      canjes: [],
+    });
+
+    const mockParts = [
+      {
+        id: "p1",
+        evento_id: "e1",
+        tipo_evento: "reta_equipos",
+        evento_nombre: "Reta Sabatina",
+        fecha: "2026-10-10",
+      },
+      {
+        id: "p2",
+        evento_id: "e2",
+        tipo_evento: "round_robin",
+        evento_nombre: "Reta Dominical",
+        fecha: "2026-10-11",
+      },
+      {
+        id: "p3",
+        evento_id: "e3",
+        tipo_evento: "americano",
+        evento_nombre: "Americano Nocturno",
+        fecha: "2026-10-15",
+      },
+    ];
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="jug-1"
+          clubName="Padelito Warehouse"
+          currentUser={{ id: "auth-jug-1", email: "jugador@club.com" }}
+          participaciones={mockParts}
+        />
+      );
+    });
+    await flush();
+
+    // Encabezado
+    expect(container.textContent).toContain("Octubre Loco");
+    expect(container.textContent).toContain("Padelito Warehouse");
+    expect(container.textContent).toContain("Acumulación activa");
+    expect(container.textContent).toContain("Acumula en octubre · Canjea en noviembre");
+
+    // 4 Métricas
+    expect(container.textContent).toContain("Participaciones");
+    expect(container.textContent).toContain("3"); // 3 retas elegibles
+    expect(container.textContent).toContain("Acumulando");
+    expect(container.textContent).toContain("30"); // 30 pts
+
+    // Próxima recompensa
+    expect(container.textContent).toContain("Reta Gratuita");
+    expect(container.textContent).toContain("30 / 50 pts");
+    expect(container.textContent).toContain("Te faltan 20 puntos");
+    // 30 pts entre 3 retas = 10 pts/reta -> 20 pts restantes = 2 retas válidas
+    expect(container.textContent).toContain("2 retas válidas de 10 puntos");
+
+    // Historial con modalidades legibles
+    expect(container.textContent).toContain("Reta por equipos");
+    expect(container.textContent).toContain("Round robin");
+    expect(container.textContent).toContain("Americano");
+  });
+
+  test("4. Jugador en fase de canje con saldo suficiente puede solicitar premio", async () => {
+    mockPlayerSnapshot.mockResolvedValue({
+      organizador_id: "org-padelito",
+      saldos: [
+        {
+          campaign_id: "camp-sep",
+          nombre: "Septiembre Élite",
+          acumula_desde: "2026-09-01T00:00:00-06:00",
+          acumula_hasta: "2026-10-01T00:00:00-06:00",
+          canje_desde: "2026-10-01T00:00:00-06:00",
+          canje_hasta: "2026-11-01T00:00:00-06:00",
+          fase: "canje",
+          acumulando: 0,
+          disponible: 60,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+        },
+      ],
+      premios: [
+        {
+          id: "rew-1",
+          nombre: "Tubo de Pelotas",
+          descripcion: "Tubo presurizado",
+          costo_puntos: 40,
+          tipo: "producto",
+          condiciones: "En recepción",
+          inventario_restante: 3,
+          limite_por_jugador: 1,
+          campaign_id: "camp-sep",
+          campana: "Septiembre Élite",
+          canje_hasta: "2026-11-01T00:00:00-06:00",
+        },
+      ],
+      canjes: [],
+    });
+    mockPlayerRequestRedemption.mockResolvedValue("red-99");
+    window.confirm = jest.fn(() => true);
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="jug-1"
+          clubName="Padelito Warehouse"
+          currentUser={{ id: "auth-jug-1" }}
+        />
+      );
+    });
+    await flush();
+
+    expect(container.textContent).toContain("Ventana de canje activa");
+    expect(container.textContent).toContain("60"); // 60 pts disponibles
+
+    const requestBtn = Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(
+      (btn) => btn.textContent === "Solicitar" && !btn.disabled
+    );
+    expect(requestBtn).toBeDefined();
+
+    await act(async () => {
+      requestBtn?.click();
+    });
+    await flush();
+
+    expect(mockPlayerRequestRedemption).toHaveBeenCalledWith(
+      "org-padelito",
+      "rew-1",
+      "jug-1"
+    );
+  });
+
+  test("5. Permite alternar entre múltiples campañas activas mediante el selector", async () => {
+    mockPlayerSnapshot.mockResolvedValue({
+      organizador_id: "org-padelito",
+      saldos: [
+        {
+          campaign_id: "camp-canje",
+          nombre: "Septiembre Canje",
+          acumula_desde: "2026-09-01T00:00:00-06:00",
+          acumula_hasta: "2026-10-01T00:00:00-06:00",
+          canje_desde: "2026-10-01T00:00:00-06:00",
+          canje_hasta: "2026-11-01T00:00:00-06:00",
+          fase: "canje",
+          acumulando: 0,
+          disponible: 50,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+        },
+        {
+          campaign_id: "camp-acum",
+          nombre: "Octubre Acumulación",
+          acumula_desde: "2026-10-01T00:00:00-06:00",
+          acumula_hasta: "2026-11-01T00:00:00-06:00",
+          canje_desde: "2026-11-01T00:00:00-06:00",
+          canje_hasta: "2026-12-01T00:00:00-06:00",
+          fase: "acumulacion",
+          acumulando: 20,
+          disponible: 0,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+        },
+      ],
+      premios: [],
+      canjes: [],
+    });
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="jug-1"
+          currentUser={{ id: "auth-jug-1" }}
+        />
+      );
+    });
+    await flush();
+
+    // Por defecto preselecciona la campaña en fase de canje
+    expect(container.textContent).toContain("Septiembre Canje");
+    expect(container.textContent).toContain("Ventana de canje activa");
+
+    // Buscar la píldora de Octubre Acumulación
+    const octPill = Array.from(container.querySelectorAll<HTMLButtonElement>(".rrw-campaign-pill")).find(
+      (btn) => btn.textContent?.includes("Octubre Acumulación")
+    );
+    expect(octPill).toBeDefined();
+
+    await act(async () => {
+      octPill?.click();
+    });
+    await flush();
+
+    expect(container.textContent).toContain("Octubre Acumulación");
+    expect(container.textContent).toContain("Acumulación activa");
+    expect(container.textContent).toContain("20");
+  });
+});

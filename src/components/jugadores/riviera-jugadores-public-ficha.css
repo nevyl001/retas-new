@@ -152,15 +152,19 @@
   order: 2;
 }
 
-.rjp-ficha__col--summary {
+.rjp-ficha-rewards {
   order: 3;
+}
+
+.rjp-ficha__col--summary {
+  order: 4;
   display: flex;
   flex-direction: column;
   gap: 28px;
 }
 
 .rjp-ficha__col--historial {
-  order: 4;
+  order: 5;
 }
 
 .rjp-ficha-section__eyebrow {
@@ -1160,6 +1164,7 @@
     grid-template-areas:
       "profile summary"
       "position summary"
+      "rewards summary"
       "historial historial";
     gap: 24px 36px;
     align-items: start;
@@ -1172,6 +1177,12 @@
 
   .rjp-ficha-position {
     grid-area: position;
+    order: unset;
+    margin: 0;
+  }
+
+  .rjp-ficha-rewards {
+    grid-area: rewards;
     order: unset;
     margin: 0;
   }
@@ -1266,7 +1277,8 @@
       minmax(260px, 300px);
     grid-template-areas:
       "profile historial summary"
-      "position historial summary";
+      "position historial summary"
+      "rewards historial summary";
     gap: 28px 40px;
   }
 

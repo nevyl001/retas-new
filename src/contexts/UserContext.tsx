@@ -51,7 +51,7 @@ interface UserContextType {
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any }>;
 }
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
+export const UserContext = createContext<UserContextType | undefined>(undefined);
 
 interface UserProviderProps {
   children: React.ReactNode;

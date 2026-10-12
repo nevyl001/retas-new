@@ -75,6 +75,36 @@ export function formatWindowEnd(exclusiveIso: string): string {
   return formatMexicoDate(new Date(new Date(exclusiveIso).getTime() - 1000).toISOString());
 }
 
+export function formatMonthName(iso: string | null | undefined): string {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return new Intl.DateTimeFormat("es-MX", {
+      timeZone: MX,
+      month: "long",
+    }).format(d);
+  } catch {
+    return "";
+  }
+}
+
+export function formatCampaignNarrative(balance: {
+  acumula_desde: string;
+  canje_desde: string;
+  canje_hasta: string;
+}): string {
+  const acumulaMes = formatMonthName(balance.acumula_desde);
+  const canjeMes = formatMonthName(balance.canje_desde);
+  if (acumulaMes && canjeMes) {
+    if (acumulaMes === canjeMes) {
+      return `Acumula y canjea en ${acumulaMes}.`;
+    }
+    return `Acumula en ${acumulaMes} · Canjea en ${canjeMes}.`;
+  }
+  return `Válida hasta ${formatWindowEnd(balance.canje_hasta)}.`;
+}
+
 export interface DuplicateWindowInput {
   nombre: string;
   acumulaDesde: string;

@@ -649,6 +649,347 @@
   margin: 0.85rem 0;
 }
 
+/* ── Vista de Fidelización del Jugador (Player Mode) ── */
+.rrw-player-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.25rem;
+  box-sizing: border-box;
+}
+
+.rrw-guest-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg, 12px);
+  box-sizing: border-box;
+}
+
+.rrw-guest-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rrw-guest-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+}
+
+.rrw-guest-text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.rrw-guest-action {
+  margin-top: 0.25rem;
+}
+
+.rrw-guest-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ro-text-on-accent, #ffffff);
+  background: var(--ro-accent, #15191f);
+  border: 1px solid var(--ro-accent, #15191f);
+  border-radius: var(--radius-md, 8px);
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.rrw-guest-btn:hover {
+  opacity: 0.9;
+}
+
+.rrw-loyalty-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rrw-loyalty-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rrw-loyalty-campaign {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.rrw-loyalty-club {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.rrw-loyalty-narrative {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Selector de Campaña */
+.rrw-campaign-selector {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 0.25rem;
+}
+
+.rrw-campaign-selector::-webkit-scrollbar {
+  display: none;
+}
+
+.rrw-campaign-pill {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rrw-campaign-pill:hover {
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.rrw-campaign-pill--active {
+  background: var(--ro-accent, #15191f);
+  color: var(--ro-text-on-accent, #ffffff);
+  border-color: var(--ro-accent, #15191f);
+}
+
+/* Grilla de 4 KPIs para jugador */
+.rrw-kpi-grid--player {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+}
+
+/* Próxima Recompensa y Barra de Progreso */
+.rrw-next-reward-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 10px);
+}
+
+.rrw-next-reward-headline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rrw-next-reward-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rrw-next-reward-cost {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.rrw-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full, 9999px);
+  overflow: hidden;
+}
+
+.rrw-progress-fill {
+  height: 100%;
+  background: var(--text-primary, #ffffff);
+  border-radius: var(--radius-full, 9999px);
+  transition: width 0.3s ease;
+}
+
+.rrw-next-reward-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.rrw-next-reward-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Recompensas y Canjes */
+.rrw-reward-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0.65rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rrw-reward-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius-md, 10px);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+}
+
+.rrw-reward-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rrw-reward-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rrw-reward-desc {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.rrw-reward-cond {
+  margin: 0.15rem 0 0;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.rrw-reward-cost {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.rrw-reward-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rrw-reward-stock {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Participaciones y listas */
+.rrw-sub-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.rrw-item-row--part {
+  align-items: flex-start;
+}
+
+.rrw-part-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.rrw-part-name {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rrw-part-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.rrw-toggle-btn {
+  margin-top: 0.4rem;
+  padding: 0.35rem 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+.rrw-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.rrw-empty-text {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
 /* ── Móvil compacto: inputs sin auto-zoom en iOS ── */
 @media (max-width: 479px) {
   .rrw-input,
