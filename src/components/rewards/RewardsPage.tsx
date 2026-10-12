@@ -1096,10 +1096,23 @@ function PlayersArea({
   const [benefits, setBenefits] = useState<BenefitRecord[]>([]);
   const [checked, setChecked] = useState<string[]>([]);
   const [campaignId, setCampaignId] = useState("");
+  const [manualCampaignSelection, setManualCampaignSelection] = useState(false);
   const [rewardId, setRewardId] = useState("");
   const [email, setEmail] = useState("");
   const [partId, setPartId] = useState("");
   const [parts, setParts] = useState<{ id: string; evento_id: string; tipo_evento: string; evento_nombre: string | null }[]>([]);
+
+  const activeCampaigns = useMemo(
+    () => campaigns.filter((item) => item.estado === "activa"),
+    [campaigns]
+  );
+
+  useEffect(() => {
+    if (manualCampaignSelection) return;
+    if (activeCampaigns.length === 1) {
+      setCampaignId(activeCampaigns[0].id);
+    }
+  }, [activeCampaigns, manualCampaignSelection]);
 
   const filtered = useMemo(
     () => players.filter((player) => player.nombre.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 40),
@@ -1244,7 +1257,7 @@ function PlayersArea({
                             }
                           />
                           <span>
-                            <strong>{review.modalidad}</strong> · {new Date(review.closed_at).toLocaleDateString("es-MX")}
+                            <strong>{MODALITY_LABELS[review.modalidad as keyof typeof MODALITY_LABELS] ?? review.modalidad}</strong> · {new Date(review.closed_at).toLocaleDateString("es-MX")}
                           </span>
                         </label>
                       ))}
@@ -1256,10 +1269,13 @@ function PlayersArea({
                           id="play-camp-acred"
                           className="rrw-select"
                           value={campaignId}
-                          onChange={(e) => setCampaignId(e.target.value)}
+                          onChange={(e) => {
+                            setCampaignId(e.target.value);
+                            setManualCampaignSelection(true);
+                          }}
                         >
                           <option value="">Elige campaña...</option>
-                          {campaigns.filter((item) => item.estado === "activa").map((item) => (
+                          {activeCampaigns.map((item) => (
                             <option key={item.id} value={item.id}>{item.nombre}</option>
                           ))}
                         </select>
@@ -1423,7 +1439,8 @@ function PlayersArea({
                           <option value="">Elige participación...</option>
                           {parts.map((part) => (
                             <option key={part.id} value={part.id}>
-                              {part.evento_nombre || part.tipo_evento}
+                              {part.evento_nombre ||
+                                (MODALITY_LABELS[part.tipo_evento as keyof typeof MODALITY_LABELS] ?? part.tipo_evento)}
                             </option>
                           ))}
                         </select>

@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  assignBenefit,
   cancelRedemption,
   confirmRedemption,
+  listBenefits,
   listCampaigns,
+  listParticipaciones,
   listRedemptions,
   listReviews,
   listRewards,
@@ -13,12 +16,18 @@ import {
   reserveRedemption,
   reviewParticipations,
   type BalanceRecord,
+  type BenefitRecord,
   type CampaignRecord,
   type PlayerSnapshot,
   type RedemptionRecord,
   type RewardRecord,
 } from "../../lib/rewards/api";
-import { accumulatingNow, formatWindowEnd, redeemingNow } from "../../lib/rewards/present";
+import {
+  MODALITY_LABELS,
+  accumulatingNow,
+  formatWindowEnd,
+  redeemingNow,
+} from "../../lib/rewards/present";
 import { Button } from "../ui/Button";
 import { TablerIcon } from "../ui/TablerIcon";
 import "../rewards/rewards.css";
@@ -203,11 +212,27 @@ function AdminRewardsDesk({
   const [campaigns, setCampaigns] = useState<CampaignRecord[]>([]);
   const [rewards, setRewards] = useState<RewardRecord[]>([]);
   const [redemptions, setRedemptions] = useState<RedemptionRecord[]>([]);
+  const [benefits, setBenefits] = useState<BenefitRecord[]>([]);
+  const [parts, setParts] = useState<{ id: string; evento_id: string; tipo_evento: string; evento_nombre: string | null }[]>([]);
   const [pending, setPending] = useState<string[]>([]);
   const [campaignId, setCampaignId] = useState("");
+  const [manualCampaignSelection, setManualCampaignSelection] = useState(false);
   const [rewardId, setRewardId] = useState("");
+  const [partId, setPartId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const activeCampaigns = useMemo(
+    () => campaigns.filter((item) => item.estado === "activa"),
+    [campaigns]
+  );
+
+  useEffect(() => {
+    if (manualCampaignSelection) return;
+    if (activeCampaigns.length === 1) {
+      setCampaignId(activeCampaigns[0].id);
+    }
+  }, [activeCampaigns, manualCampaignSelection]);
 
   const load = React.useCallback(
     () =>
@@ -217,7 +242,9 @@ function AdminRewardsDesk({
         listRewards(organizadorId),
         listRedemptions(organizadorId, jugadorId),
         listReviews(organizadorId, jugadorId),
-      ]).then(([nextBalances, nextCampaigns, nextRewards, nextRedemptions, reviews]) => {
+        listBenefits(organizadorId, jugadorId),
+        listParticipaciones(jugadorId),
+      ]).then(([nextBalances, nextCampaigns, nextRewards, nextRedemptions, reviews, nextBenefits, nextParts]) => {
         setBalances(nextBalances);
         setCampaigns(nextCampaigns);
         setRewards(nextRewards);
@@ -225,6 +252,8 @@ function AdminRewardsDesk({
         setPending(
           reviews.filter((review) => review.estado === "pendiente").map((review) => review.participacion_id)
         );
+        setBenefits(nextBenefits);
+        setParts(nextParts);
       }),
     [organizadorId, jugadorId]
   );
@@ -255,7 +284,8 @@ function AdminRewardsDesk({
     (redeeming?.disponible ?? 0) > 0 ||
     (redeeming?.reservado ?? 0) > 0 ||
     pending.length > 0 ||
-    redemptions.length > 0;
+    redemptions.length > 0 ||
+    benefits.some((b) => b.estado === "pendiente_asignacion");
 
   return (
     <section className="rrw-card rrw-ficha-panel" aria-label="Riviera Rewards">
@@ -303,11 +333,14 @@ function AdminRewardsDesk({
                 <select
                   className="rrw-select"
                   value={campaignId}
-                  onChange={(e) => setCampaignId(e.target.value)}
+                  onChange={(e) => {
+                    setCampaignId(e.target.value);
+                    setManualCampaignSelection(true);
+                  }}
                   aria-label="Campaña"
                 >
                   <option value="">Selecciona campaña...</option>
-                  {campaigns.filter((item) => item.estado === "activa").map((item) => (
+                  {activeCampaigns.map((item) => (
                     <option key={item.id} value={item.id}>{item.nombre}</option>
                   ))}
                 </select>
@@ -402,6 +435,59 @@ function AdminRewardsDesk({
               )}
             </ul>
           </div>
+
+          {benefits.filter((b) => b.estado === "pendiente_asignacion").length > 0 && (
+            <div className="rrw-sub-block">
+              <h3 className="rrw-sub-title">Reta Gratuita Pendiente de Asignar</h3>
+              <p style={{ margin: "0 0 0.5rem", fontSize: "0.82rem", color: "var(--text-muted)" }}>
+                Al asignarla, la participación no genera puntos Rewards pero conserva el historial deportivo íntegro.
+              </p>
+              {benefits
+                .filter((b) => b.estado === "pendiente_asignacion")
+                .map((benefit) => (
+                  <div key={benefit.id} className="rrw-fields-row rrw-fields-row--2">
+                    <div className="rrw-field">
+                      <select
+                        className="rrw-select"
+                        value={partId}
+                        onChange={(e) => setPartId(e.target.value)}
+                        aria-label="Participación para reta gratuita"
+                      >
+                        <option value="">Elige participación...</option>
+                        {parts.map((part) => (
+                          <option key={part.id} value={part.id}>
+                            {part.evento_nombre ||
+                              (MODALITY_LABELS[part.tipo_evento as keyof typeof MODALITY_LABELS] ?? part.tipo_evento)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "flex-end" }}>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        disabled={busy || !partId}
+                        onClick={() => {
+                          const part = parts.find((item) => item.id === partId);
+                          if (!part) return;
+                          act(async () => {
+                            await assignBenefit({
+                              benefitId: benefit.id,
+                              eventoId: part.evento_id,
+                              tipoEvento: part.tipo_evento,
+                              participacionId: part.id,
+                            });
+                            setPartId("");
+                          });
+                        }}
+                      >
+                        Marcar como gratuita
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
         </>
       )}
 
