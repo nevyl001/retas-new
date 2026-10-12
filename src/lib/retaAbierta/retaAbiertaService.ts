@@ -653,7 +653,9 @@ export async function cancelOpenRegistration(
   cancellationToken: string,
   entryId?: string,
   rivieraId?: string
-): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+): Promise<
+  { ok: true; message: string; promotedCount?: number } | { ok: false; error: string }
+> {
   const token = cancellationToken.trim();
   const riv = rivieraId?.trim() || "";
   // Si el usuario ya confirmó su Riviera ID, cancelar por ID (no por token
@@ -685,6 +687,7 @@ export async function cancelOpenRegistration(
   return {
     ok: true,
     message: String(row.message ?? "Inscripción cancelada."),
+    promotedCount: Number(row.promoted_count) || 0,
   };
 }
 

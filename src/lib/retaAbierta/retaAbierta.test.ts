@@ -1070,3 +1070,61 @@ describe("rate-limit Riviera ID (hotfix seguridad)", () => {
     expect(sql).not.toMatch(/p_otp|p_codigo_verificacion|p_verification_code/i);
   });
 });
+
+describe("0060_reta_abierta_waitlist_auto_promote.sql", () => {
+  const fs = require("fs");
+  const path = require("path");
+
+  it("define el helper _open_reg_auto_promote_waitlist y auto-promueve al liberar lugar", () => {
+    const migrationPath = path.resolve(
+      __dirname,
+      "../../../supabase/migrations/0060_reta_abierta_waitlist_auto_promote.sql"
+    );
+    expect(fs.existsSync(migrationPath)).toBe(true);
+    const sql = fs.readFileSync(migrationPath, "utf8");
+
+    // 1. Helper interno con seguridad y search_path estricto
+    expect(sql).toMatch(
+      /CREATE OR REPLACE FUNCTION public\._open_reg_auto_promote_waitlist\(\s*p_registration_id uuid\s*\)/
+    );
+    expect(sql).toMatch(/SECURITY DEFINER/);
+    expect(sql).toMatch(/SET search_path = public/);
+    expect(sql).toMatch(
+      /REVOKE ALL ON FUNCTION public\._open_reg_auto_promote_waitlist\(uuid\) FROM PUBLIC/
+    );
+    expect(sql).toMatch(
+      /REVOKE ALL ON FUNCTION public\._open_reg_auto_promote_waitlist\(uuid\) FROM anon, authenticated/
+    );
+
+    // 2. FIFO y bloqueo concurrente seguro (SKIP LOCKED)
+    expect(sql).toMatch(/WHERE e\.registration_id = v_cfg\.id/);
+    expect(sql).toMatch(/AND e\.status = 'waitlist'/);
+    expect(sql).toMatch(/ORDER BY e\.created_at ASC, e\.id ASC/);
+    expect(sql).toMatch(/FOR UPDATE SKIP LOCKED/);
+
+    // 3. Promoción a confirmed con timestamps
+    expect(sql).toMatch(/status = 'confirmed'/);
+    expect(sql).toMatch(/confirmed_at = coalesce\(confirmed_at, now\(\)\)/);
+    expect(sql).toMatch(/updated_at = now\(\)/);
+
+    // 4. Sincronización de entidades asociadas
+    expect(sql).toMatch(/_open_reg_sync_americano_roster\(v_cfg\.entity_id\)/);
+    expect(sql).toMatch(/_open_reg_sync_duelo_slots\(v_cfg\.entity_id\)/);
+
+    // 5. cancel_tournament_open_registration invoca auto-promoción si canceló un confirmado
+    expect(sql).toMatch(
+      /CREATE OR REPLACE FUNCTION public\.cancel_tournament_open_registration/
+    );
+    expect(sql).toMatch(/_open_reg_auto_promote_waitlist\(v_cfg\.id\)/);
+
+    // 6. remove_open_game_registration_entry invoca auto-promoción si removió un confirmado
+    expect(sql).toMatch(
+      /CREATE OR REPLACE FUNCTION public\.remove_open_game_registration_entry/
+    );
+
+    // 7. Bloque de saneamiento inicial para convocatorias activas
+    expect(sql).toMatch(/DO \$\$/);
+    expect(sql).toMatch(/SELECT DISTINCT e\.registration_id/);
+  });
+});
+
