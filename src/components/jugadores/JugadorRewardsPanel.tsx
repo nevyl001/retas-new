@@ -19,6 +19,8 @@ import {
   type RewardRecord,
 } from "../../lib/rewards/api";
 import { accumulatingNow, formatWindowEnd, redeemingNow } from "../../lib/rewards/present";
+import { Button } from "../ui/Button";
+import { TablerIcon } from "../ui/TablerIcon";
 import "../rewards/rewards.css";
 
 interface JugadorRewardsPanelProps {
@@ -75,69 +77,115 @@ export const JugadorRewardsPanel: React.FC<JugadorRewardsPanelProps> = ({
   const next = snapshot.premios.find((reward) => (redeeming?.disponible ?? 0) < reward.costo_puntos);
 
   return (
-    <section className="rrw-card rrw-ficha" aria-label="Riviera Rewards">
-      <p className="rrw-kicker">Riviera Rewards</p>
-      <h2 className="rrw-title" style={{ fontSize: "1.35rem" }}>Tus puntos del club</h2>
-      <div className="rrw-balances">
-        <div className="rrw-balance">
-          <span>Acumulando este mes</span>
-          <strong>{accruing?.acumulando ?? 0}</strong>
-          <p className="rrw-meta">{accruing ? `Para los premios de ${accruing.nombre}.` : "No hay una campaña acumulando."}</p>
+    <section className="rrw-card rrw-ficha-panel" aria-label="Riviera Rewards">
+      <div className="rrw-card-header">
+        <div>
+          <p className="rrw-kicker">Riviera Rewards</p>
+          <h2 className="rrw-card-title" style={{ fontSize: "1.25rem" }}>Tus puntos del club</h2>
         </div>
-        <div className="rrw-balance">
-          <span>Disponibles para canjear</span>
-          <strong>{redeeming?.disponible ?? 0}</strong>
-          <p className="rrw-meta">
+      </div>
+
+      <div className="rrw-kpi-grid">
+        <div className="rrw-kpi-card">
+          <span className="rrw-kpi-label">Acumulando este mes</span>
+          <span className="rrw-kpi-value">{accruing?.acumulando ?? 0}</span>
+          <p className="rrw-kpi-note">{accruing ? `Para ${accruing.nombre}` : "No hay campaña acumulando"}</p>
+        </div>
+        <div className="rrw-kpi-card">
+          <span className="rrw-kpi-label">Disponibles para canjear</span>
+          <span className="rrw-kpi-value">{redeeming?.disponible ?? 0}</span>
+          <p className="rrw-kpi-note">
             {redeeming
-              ? `${redeeming.nombre}. Fecha límite: ${formatWindowEnd(redeeming.canje_hasta)}.`
-              : "No hay puntos en ventana de canje."}
+              ? `${redeeming.nombre} · Hasta ${formatWindowEnd(redeeming.canje_hasta)}`
+              : "Sin ventana de canje activa"}
           </p>
         </div>
       </div>
+
       {next && redeeming && (
-        <p className="rrw-meta">
-          Te faltan {next.costo_puntos - redeeming.disponible} puntos para {next.nombre}.
+        <p style={{ margin: "0.65rem 0", fontSize: "0.82rem", color: "var(--text-muted)" }}>
+          Te faltan {next.costo_puntos - redeeming.disponible} puntos para <strong>{next.nombre}</strong>.
         </p>
       )}
-      <h3>Recompensas</h3>
-      {snapshot.premios.length === 0 && <p className="rrw-meta">El club no tiene premios abiertos este mes.</p>}
-      <ul className="rrw-list">
-        {snapshot.premios.map((reward) => (
-          <li key={reward.id}>
-            <span>{reward.nombre} · {reward.costo_puntos} pts</span>
-            <button
-              type="button"
-              className="rrw-btn"
-              disabled={busy || (redeeming?.disponible ?? 0) < reward.costo_puntos}
-              onClick={() => {
-                setBusy(true);
-                setError(null);
-                playerRequestRedemption(snapshot.organizador_id, reward.id, jugadorId)
-                  .then(() => playerSnapshot(jugadorId))
-                  .then(setSnapshot)
-                  .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "No se pudo solicitar"))
-                  .finally(() => setBusy(false));
-              }}
-            >
-              Solicitar
-            </button>
-          </li>
-        ))}
-      </ul>
-      <h3>Historial</h3>
-      {snapshot.canjes.length === 0 && <p className="rrw-meta">Todavía no hay canjes.</p>}
-      <ul className="rrw-list">
-        {snapshot.canjes.map((item) => (
-          <li key={item.id}><span>{item.nombre}</span><span>{item.estado}</span></li>
-        ))}
-      </ul>
-      {snapshot.saldos.filter((row) => row.fase === "cerrada").slice(0, 4).map((row) => (
-        <p key={row.campaign_id} className="rrw-meta">
-          {row.nombre}: {row.utilizado} utilizados, {row.cerrado} cerrados.
-        </p>
-      ))}
-      <p className="rrw-meta">Seguir jugando no descuenta puntos. Solo una solicitud confirmada por el club los reserva.</p>
-      {error && <p className="rrw-error">{error}</p>}
+
+      <div className="rrw-sub-block">
+        <h3 className="rrw-sub-title">Recompensas del Club</h3>
+        {snapshot.premios.length === 0 ? (
+          <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-muted)" }}>
+            El club no tiene premios abiertos este mes.
+          </p>
+        ) : (
+          <ul className="rrw-item-list">
+            {snapshot.premios.map((reward) => {
+              const canRedeem = (redeeming?.disponible ?? 0) >= reward.costo_puntos;
+              return (
+                <li key={reward.id} className="rrw-item-row">
+                  <div>
+                    <strong>{reward.nombre}</strong>
+                    <span style={{ margin: "0 0.35rem", color: "var(--text-muted)" }}>·</span>
+                    <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>{reward.costo_puntos} pts</span>
+                  </div>
+                  <Button
+                    variant={canRedeem ? "primary" : "secondary"}
+                    size="sm"
+                    disabled={busy || !canRedeem}
+                    onClick={() => {
+                      setBusy(true);
+                      setError(null);
+                      playerRequestRedemption(snapshot.organizador_id, reward.id, jugadorId)
+                        .then(() => playerSnapshot(jugadorId))
+                        .then(setSnapshot)
+                        .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "No se pudo solicitar"))
+                        .finally(() => setBusy(false));
+                    }}
+                  >
+                    Solicitar
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div className="rrw-sub-block">
+        <h3 className="rrw-sub-title">Historial de Canjes</h3>
+        {snapshot.canjes.length === 0 ? (
+          <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-muted)" }}>
+            Todavía no hay canjes registrados.
+          </p>
+        ) : (
+          <ul className="rrw-item-list">
+            {snapshot.canjes.map((item) => (
+              <li key={item.id} className="rrw-item-row">
+                <span>{item.nombre}</span>
+                <span className="rrw-badge rrw-badge--neutral">{item.estado}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {snapshot.saldos.filter((row) => row.fase === "cerrada").length > 0 && (
+        <div style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--text-muted)" }}>
+          {snapshot.saldos.filter((row) => row.fase === "cerrada").slice(0, 4).map((row) => (
+            <span key={row.campaign_id} style={{ marginRight: "0.75rem" }}>
+              {row.nombre}: {row.utilizado} utilizados, {row.cerrado} cerrados.
+            </span>
+          ))}
+        </div>
+      )}
+
+      <p style={{ margin: "0.85rem 0 0", fontSize: "0.76rem", color: "var(--text-muted)" }}>
+        Seguir jugando no descuenta puntos. Solo una solicitud confirmada por el club los reserva.
+      </p>
+
+      {error && (
+        <div className="rrw-error-banner" style={{ marginTop: "0.75rem" }}>
+          <TablerIcon name="alert-triangle" size={16} />
+          <span className="rrw-error-text">{error}</span>
+        </div>
+      )}
     </section>
   );
 };
@@ -210,97 +258,159 @@ function AdminRewardsDesk({
     redemptions.length > 0;
 
   return (
-    <section className="rrw-card rrw-ficha" aria-label="Riviera Rewards">
-      <p className="rrw-kicker">Riviera Rewards</p>
-      <h2 className="rrw-title" style={{ fontSize: "1.25rem" }}>Puntos del jugador</h2>
-      <p className="rrw-meta">Independientes del ranking deportivo. Seguir acumulando no descuenta puntos.</p>
-      <div className="rrw-balances">
+    <section className="rrw-card rrw-ficha-panel" aria-label="Riviera Rewards">
+      <div className="rrw-card-header">
         <div>
-          <span>Acumulando</span>
-          <strong>{accruing?.acumulando ?? 0}</strong>
+          <p className="rrw-kicker">Riviera Rewards</p>
+          <h2 className="rrw-card-title" style={{ fontSize: "1.2rem" }}>Puntos del jugador</h2>
+          <p style={{ margin: "0.15rem 0 0", fontSize: "0.78rem", color: "var(--text-muted)" }}>
+            Independientes del ranking deportivo. Seguir acumulando no descuenta puntos.
+          </p>
         </div>
-        <div>
-          <span>Disponibles</span>
-          <strong>{redeeming?.disponible ?? 0}</strong>
-          {redeeming && <p className="rrw-meta">Hasta {formatWindowEnd(redeeming.canje_hasta)}</p>}
+      </div>
+
+      <div className="rrw-kpi-grid rrw-kpi-grid--3">
+        <div className="rrw-kpi-card">
+          <span className="rrw-kpi-label">Acumulando</span>
+          <span className="rrw-kpi-value">{accruing?.acumulando ?? 0}</span>
         </div>
-        <div>
-          <span>Reservados</span>
-          <strong>{redeeming?.reservado ?? 0}</strong>
+        <div className="rrw-kpi-card">
+          <span className="rrw-kpi-label">Disponibles</span>
+          <span className="rrw-kpi-value">{redeeming?.disponible ?? 0}</span>
+          {redeeming && (
+            <p className="rrw-kpi-note">Hasta {formatWindowEnd(redeeming.canje_hasta)}</p>
+          )}
+        </div>
+        <div className="rrw-kpi-card">
+          <span className="rrw-kpi-label">Reservados</span>
+          <span className="rrw-kpi-value">{redeeming?.reservado ?? 0}</span>
         </div>
       </div>
 
       {isGrantedReadOnly && !hasLocalActivity ? (
-        <p className="rrw-meta" style={{ marginTop: "0.85rem" }}>
+        <p style={{ marginTop: "0.85rem", fontSize: "0.82rem", color: "var(--text-muted)" }}>
           Jugador vinculado desde otro club sin participaciones ni saldo en este club. Los puntos de su club de origen son privados.
         </p>
       ) : (
         <>
-          <p className="rrw-meta">Pendientes de validar: {pending.length}</p>
-          <label className="rrw-fields">Campaña
-            <select value={campaignId} onChange={(event) => setCampaignId(event.target.value)}>
-              <option value="">Elige</option>
-              {campaigns.filter((item) => item.estado === "activa").map((item) => (
-                <option key={item.id} value={item.id}>{item.nombre}</option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            className="rrw-btn"
-            disabled={busy || pending.length === 0 || !campaignId}
-            onClick={() =>
-              act(() =>
-                reviewParticipations({
-                  organizadorId,
-                  participacionIds: pending,
-                  decision: "aprobada",
-                  campaignId,
-                })
-              )
-            }
-          >
-            Aprobar pendientes
-          </button>
-          <label className="rrw-fields">Premio en canje
-            <select value={rewardId} onChange={(event) => setRewardId(event.target.value)}>
-              <option value="">Elige</option>
-              {openRewards.map((reward) => (
-                <option key={reward.id} value={reward.id}>{reward.nombre} · {reward.costo_puntos}</option>
-              ))}
-            </select>
-          </label>
-          {rewardId && selectedReward && !canRequest && (
-            <p className="rrw-meta">
-              Puntos insuficientes ({redeeming?.disponible ?? 0} de {selectedReward.costo_puntos} pts necesarios).
+          <div className="rrw-sub-block">
+            <h3 className="rrw-sub-title">Acreditación de Participaciones</h3>
+            <p style={{ margin: "0 0 0.5rem", fontSize: "0.82rem", color: "var(--text-muted)" }}>
+              Pendientes de validar: <strong>{pending.length}</strong>
             </p>
-          )}
-          <button
-            type="button"
-            className="rrw-btn--ghost"
-            disabled={busy || !canRequest}
-            onClick={() => act(() => requestRedemption(organizadorId, rewardId, jugadorId))}
-          >
-            Solicitar
-          </button>
-          <ul className="rrw-list">
-            {redemptions.map((item) => (
-              <li key={item.id}>
-                <span>{item.snapshot?.nombre ?? "Premio"} · {item.estado}</span>
-                <span>
-                  {item.estado === "solicitado" && <button type="button" className="rrw-btn--ghost" disabled={busy} onClick={() => act(() => reserveRedemption(item.id))}>Reservar</button>}
-                  {item.estado === "reservado" && <button type="button" className="rrw-btn--ghost" disabled={busy} onClick={() => act(() => confirmRedemption(item.id))}>Entregar</button>}
-                  {(item.estado === "solicitado" || item.estado === "reservado") && (
-                    <button type="button" className="rrw-btn--danger" disabled={busy} onClick={() => act(() => cancelRedemption(item.id))}>Cancelar</button>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
+            <div className="rrw-fields-row rrw-fields-row--2">
+              <div className="rrw-field">
+                <select
+                  className="rrw-select"
+                  value={campaignId}
+                  onChange={(e) => setCampaignId(e.target.value)}
+                  aria-label="Campaña"
+                >
+                  <option value="">Selecciona campaña...</option>
+                  {campaigns.filter((item) => item.estado === "activa").map((item) => (
+                    <option key={item.id} value={item.id}>{item.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-end" }}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={busy || pending.length === 0 || !campaignId}
+                  onClick={() =>
+                    act(() =>
+                      reviewParticipations({
+                        organizadorId,
+                        participacionIds: pending,
+                        decision: "aprobada",
+                        campaignId,
+                      })
+                    )
+                  }
+                >
+                  Aprobar pendientes
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="rrw-sub-block">
+            <h3 className="rrw-sub-title">Canjes de Premios</h3>
+            <div className="rrw-fields-row rrw-fields-row--2">
+              <div className="rrw-field">
+                <select
+                  className="rrw-select"
+                  value={rewardId}
+                  onChange={(e) => setRewardId(e.target.value)}
+                  aria-label="Premio en canje"
+                >
+                  <option value="">Selecciona premio...</option>
+                  {openRewards.map((reward) => (
+                    <option key={reward.id} value={reward.id}>{reward.nombre} · {reward.costo_puntos} pts</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-end" }}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={busy || !canRequest}
+                  onClick={() => act(() => requestRedemption(organizadorId, rewardId, jugadorId))}
+                >
+                  Solicitar
+                </Button>
+              </div>
+            </div>
+
+            {rewardId && selectedReward && !canRequest && (
+              <p style={{ margin: "0.35rem 0 0", fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                Puntos insuficientes ({redeeming?.disponible ?? 0} de {selectedReward.costo_puntos} pts necesarios).
+              </p>
+            )}
+
+            <ul className="rrw-item-list">
+              {redemptions.map((item) => (
+                <li key={item.id} className="rrw-item-row">
+                  <div>
+                    <strong>{item.snapshot?.nombre ?? "Premio"}</strong>
+                    <span style={{ margin: "0 0.35rem", color: "var(--text-muted)" }}>·</span>
+                    <span className="rrw-badge rrw-badge--neutral">{item.estado}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.35rem" }}>
+                    {item.estado === "solicitado" && (
+                      <Button variant="secondary" size="sm" disabled={busy} onClick={() => act(() => reserveRedemption(item.id))}>
+                        Reservar
+                      </Button>
+                    )}
+                    {item.estado === "reservado" && (
+                      <Button variant="primary" size="sm" disabled={busy} onClick={() => act(() => confirmRedemption(item.id))}>
+                        Entregar
+                      </Button>
+                    )}
+                    {(item.estado === "solicitado" || item.estado === "reservado") && (
+                      <Button variant="danger" size="sm" disabled={busy} onClick={() => act(() => cancelRedemption(item.id))}>
+                        Cancelar
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              ))}
+              {redemptions.length === 0 && (
+                <li style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>
+                  Sin canjes activos.
+                </li>
+              )}
+            </ul>
+          </div>
         </>
       )}
 
-      {error && <p className="rrw-error">{error}</p>}
+      {error && (
+        <div className="rrw-error-banner" style={{ marginTop: "0.75rem" }}>
+          <TablerIcon name="alert-triangle" size={16} />
+          <span className="rrw-error-text">{error}</span>
+        </div>
+      )}
     </section>
   );
 }
