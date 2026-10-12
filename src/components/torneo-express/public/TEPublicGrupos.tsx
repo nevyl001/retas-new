@@ -729,20 +729,26 @@ function GrupoStandings({
                 clasificacionModo,
                 rowInput
               );
-              const position = index + 1;
+              const position = row.posicion;
+              const tied = row.tie.status === "unresolved";
               return (
                 <li
                   key={`${row.grupoId}-${row.parejaId}`}
                   className={`te-standing-row${
-                    index === 0 ? " te-standing-row--leader" : ""
-                  }${clasifica ? " te-standing-row--qualifies" : ""}`}
+                    position === 1 ? " te-standing-row--leader" : ""
+                  }${clasifica ? " te-standing-row--qualifies" : ""}${
+                    tied ? " te-standing-row--tied" : ""
+                  }`}
                 >
                   <span
                     className="te-standing-row__position"
+                    title={tied ? "Empate sin resolver" : undefined}
                     aria-label={
-                      clasifica
-                        ? `Posición ${position}, clasificado`
-                        : `Posición ${position}`
+                      tied
+                        ? `Posición ${position}, empate sin resolver`
+                        : clasifica
+                          ? `Posición ${position}, clasificado`
+                          : `Posición ${position}`
                     }
                   >
                     {position}

@@ -113,6 +113,26 @@ export function setWinnerSide(set: PartidoSetScore): PartidoSetsSide | null {
   return null;
 }
 
+/**
+ * Set cerrado: llegó a 5-5, fue tie-break (7-6) o es súper tie-break.
+ * 7-5 es cerrado y no es tie-break. 6-4 no es cerrado.
+ * El súper tie-break cuenta como un set cerrado aunque su marcador no sea de games.
+ * Un set sin ganador no cuenta.
+ */
+export function isClosedSet(set: PartidoSetScore): boolean {
+  if (set.local === set.visitante) return false;
+  if (set.super_muerte === true) return true;
+  return Math.min(set.local, set.visitante) >= 5;
+}
+
+export function countClosedSets(sets: PartidoSetScore[]): number {
+  let closed = 0;
+  for (const set of sets) {
+    if (isClosedSet(set)) closed += 1;
+  }
+  return closed;
+}
+
 export function countSetWins(sets: PartidoSetScore[]): {
   local: number;
   visitante: number;
@@ -167,6 +187,7 @@ export function partidoToMatchResult(partido: {
       gamesB: games.visitante,
       setsA: sets.local,
       setsB: sets.visitante,
+      closedSets: countClosedSets(stored),
       winnerId: partido.ganador_id,
     };
   }
@@ -183,6 +204,7 @@ export function partidoToMatchResult(partido: {
       gamesB: 0,
       setsA: pl,
       setsB: pv,
+      closedSets: 0,
       winnerId: partido.ganador_id,
     };
   }
@@ -194,6 +216,7 @@ export function partidoToMatchResult(partido: {
     gamesB: pv,
     setsA: 0,
     setsB: 0,
+    closedSets: isClosedSet({ local: pl, visitante: pv }) ? 1 : 0,
     winnerId: partido.ganador_id,
   };
 }

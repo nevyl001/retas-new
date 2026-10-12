@@ -3894,6 +3894,10 @@
   text-align: center;
 }
 
+.te-standing-row--tied .te-standing-row__position {
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.45);
+}
+
 .te-public.te-public--grupos-wide
   .te-grupos-page
   .te-standings-board

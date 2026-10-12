@@ -86,8 +86,9 @@ describe("buildStandingsForGrupo clasificacion modes", () => {
     ];
     const rows = buildStandingsForGrupo(grupo, parejas, partidos, "setto_pg");
     expect(rows.every((r) => r.puntos === 2)).toBe(true);
-    // Mismos puntos. DIF: B +1, C +1, A -2. B y C empatan y el cara a cara lo gana B.
-    expect(rows.map((r) => r.parejaId)).toEqual(["b", "c", "a"]);
+    // Mismos puntos y misma diferencia de sets. DIF de games: B +1, C +1, A -2.
+    // B y C empatan en DIF; C recibió menos games, así que queda arriba de B.
+    expect(rows.map((r) => r.parejaId)).toEqual(["c", "b", "a"]);
   });
 
   it("setto_pg usa H2H cuando empatan en puntos y en diferencia de games", () => {

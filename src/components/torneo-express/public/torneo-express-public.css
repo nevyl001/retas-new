@@ -972,6 +972,11 @@
   opacity: 0.85;
 }
 
+.te-pub-standings-row--tied .te-pub-standings-row__pos-num,
+.te-pub-standing-card--tied .te-pub-standing-card__pos {
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.45);
+}
+
 .te-pub-standings-row__name {
   text-align: left !important;
   font-weight: 600;

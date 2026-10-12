@@ -7,7 +7,8 @@
  * - 3 o más en dif_puntos: un mini-ranking FAV → DIF → PG. Lo que siga igual
  *   no vuelve a entrar al mismo procedimiento.
  * - setto_pg ordena por puntos (2 por partido ganado), diferencia de
- *   games y sets (diferencia, luego sets ganados). El cara a cara solo
+ *   sets, menos sets perdidos, diferencia de games, menos sets cerrados,
+ *   menos games recibidos y más games ganados. El cara a cara solo
  *   separa a dos que sigan iguales. Lo que siga empatado queda sin resolver.
  *
  * El orden del arreglo dentro de un empate sin resolver es solo de presentación.
@@ -37,6 +38,8 @@ export type GroupStandingStats = {
   puntos: number;
   setsFavor: number;
   setsContra: number;
+  /** Sets que llegaron a 5-5, tie-break o súper tie-break. Desempate, no puntos. */
+  setsCerrados: number;
 };
 
 export type RankedGroupStanding = GroupStandingStats & {
@@ -104,13 +107,19 @@ function difPrimaryKey(row: GroupStandingStats): readonly number[] {
   return [row.juegosFavor, row.diferencia, row.pg];
 }
 
-/** 2 puntos por partido ganado, games, y luego sets ganados contra perdidos. */
+/**
+ * Mayor es mejor. Los criterios "menos" van en negativo.
+ * No suma puntos por contundencia: el set cerrado solo desempata.
+ */
 function settoRankKey(row: GroupStandingStats): readonly number[] {
   return [
     row.puntos,
-    row.diferencia,
     row.setsFavor - row.setsContra,
-    row.setsFavor,
+    -row.setsContra,
+    row.diferencia,
+    -(row.setsCerrados ?? 0),
+    -row.juegosContra,
+    row.juegosFavor,
   ];
 }
 

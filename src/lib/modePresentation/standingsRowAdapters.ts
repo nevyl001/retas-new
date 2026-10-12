@@ -37,10 +37,11 @@ export function ligaEquipoRankingItemToMobileRow(
   };
 }
 
-export function teStandingRowToMobileRow(row: StandingRowExpress, index: number): StandingsMobileCardRow {
+export function teStandingRowToMobileRow(row: StandingRowExpress, _index: number): StandingsMobileCardRow {
   return {
     key: `${row.grupoId}-${row.parejaId}`,
-    position: index + 1,
+    position: row.posicion,
+    tied: row.tie.status === "unresolved",
     label: row.parejaLabel,
     matchesPlayed: row.pj,
     pg: row.pg,

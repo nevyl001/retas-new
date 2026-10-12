@@ -359,7 +359,7 @@ describe("resolveTwoWayTie", () => {
 });
 
 describe("standings setto_pg", () => {
-  it("ordena por puntos, diferencia de games y cara a cara", () => {
+  it("ordena por puntos y, si la diferencia de games empata, por menos games recibidos", () => {
     const three = table(
       ["a", "b", "c"],
       [
@@ -394,7 +394,7 @@ describe("standings setto_pg", () => {
       "setto_pg"
     );
     expect(three.every((row) => row.puntos === 2)).toBe(true);
-    expect(three.map((row) => row.parejaId)).toEqual(["b", "c", "a"]);
+    expect(three.map((row) => row.parejaId)).toEqual(["c", "b", "a"]);
     expect(three.map((row) => row.posicion)).toEqual([1, 2, 3]);
 
     const two = table(
@@ -436,7 +436,7 @@ describe("standings setto_pg", () => {
     );
   });
 
-  it("la diferencia de games manda antes que el cara a cara", () => {
+  it("la diferencia de sets manda antes que la de games y el cara a cara", () => {
     const rows = table(
       ["a", "b", "c"],
       [
@@ -461,7 +461,7 @@ describe("standings setto_pg", () => {
       ],
       "setto_pg"
     );
-    expect(rows.map((row) => row.parejaId)).toEqual(["a", "b", "c"]);
+    expect(rows.map((row) => row.parejaId)).toEqual(["b", "a", "c"]);
     expect(byId(rows, "a").puntos).toBe(2);
     expect(byId(rows, "a").dif).toBe(4);
     expect(byId(rows, "b").dif).toBe(2);

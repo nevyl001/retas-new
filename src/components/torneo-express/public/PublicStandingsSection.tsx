@@ -69,17 +69,28 @@ export const PublicStandingsSection: React.FC<{
           </thead>
           <tbody>
             {rows.map((row, index) => {
-              const isLeader = index === 0;
+              const isLeader = row.posicion === 1;
+              const tied = row.tie.status === "unresolved";
               return (
                 <tr
                   key={`${row.grupoId}-${row.parejaId}`}
                   className={`te-pub-standings-row te-pub-fade-in-up${
                     isLeader ? " te-pub-standings-row--leader" : ""
-                  }`}
+                  }${tied ? " te-pub-standings-row--tied" : ""}`}
                   style={{ animationDelay: `${0.08 + index * staggerBase}s` }}
                 >
                   <td className="te-pub-standings-row__pos">
-                    <span className="te-pub-standings-row__pos-num">{index + 1}</span>
+                    <span
+                      className="te-pub-standings-row__pos-num"
+                      title={tied ? "Empate sin resolver" : undefined}
+                      aria-label={
+                        tied
+                          ? `Posición ${row.posicion}, empate sin resolver`
+                          : `Posición ${row.posicion}`
+                      }
+                    >
+                      {row.posicion}
+                    </span>
                   </td>
                   <td className="te-pub-standings-row__name">{row.parejaLabel}</td>
                   {showGrupoColumn && (
@@ -107,7 +118,8 @@ export const PublicStandingsSection: React.FC<{
 
       <div className="te-pub-standings-cards">
         {rows.map((row, index) => {
-          const isLeader = index === 0;
+          const isLeader = row.posicion === 1;
+          const tied = row.tie.status === "unresolved";
           const hero = clasificacionStandingHighlight(clasificacionModo, {
             pg: row.pg,
             ptsFav: row.ptsFav,
@@ -119,14 +131,24 @@ export const PublicStandingsSection: React.FC<{
               key={`m-${row.grupoId}-${row.parejaId}`}
               className={`te-pub-standing-card te-pub-fade-in-up${
                 isLeader ? " te-pub-standing-card--leader" : ""
-              }`}
+              }${tied ? " te-pub-standing-card--tied" : ""}`}
               style={{ animationDelay: `${0.1 + index * staggerBase}s` }}
             >
               <span className="te-pub-standing-card__pos-bg" aria-hidden>
-                {index + 1}
+                {row.posicion}
               </span>
               <div className="te-pub-standing-card__head">
-                <span className="te-pub-standing-card__pos">{index + 1}</span>
+                <span
+                  className="te-pub-standing-card__pos"
+                  title={tied ? "Empate sin resolver" : undefined}
+                  aria-label={
+                    tied
+                      ? `Posición ${row.posicion}, empate sin resolver`
+                      : `Posición ${row.posicion}`
+                  }
+                >
+                  {row.posicion}
+                </span>
                 <div className="te-pub-standing-card__name-wrap">
                   <p className="te-pub-standing-card__name">{row.parejaLabel}</p>
                   {showGrupoColumn && (

@@ -45,11 +45,15 @@ export const CLASIFICACION_MODO_OPTIONS: readonly ClasificacionModoOption[] = [
       "Cada partido ganado vale 2 puntos. Si empatan, se desempata así:",
     steps: [
       "1. Puntos (2 por partido ganado)",
-      "2. Diferencia de games (a favor − en contra)",
-      "3. Sets (ganados − perdidos; si empatan, más sets ganados)",
-      "4. Cara a cara (enfrentamiento directo)",
+      "2. Diferencia de sets",
+      "3. Menos sets perdidos",
+      "4. Diferencia de games",
+      "5. Menos sets cerrados (llegaron a 5-5, tie-break o súper tie-break)",
+      "6. Menos games recibidos",
+      "7. Más games ganados",
+      "8. Cara a cara, solo si es concluyente",
     ],
-    orderSummary: "PTS → DIF → SETS → H2H",
+    orderSummary: "PTS → SETS → SC → DIF → CERR → CON → FAV → H2H",
   },
 ] as const;
 
@@ -108,7 +112,7 @@ export type ClasificacionAchievementInput = {
   dif: number;
   /** 2 por partido ganado. Si falta, se calcula como pg × 2. */
   puntos?: number;
-  /** Diferencia de sets (favor − contra). En setto_pg desempata después de los games. */
+  /** Diferencia de sets (favor − contra). En setto_pg desempata después de los puntos. */
   setsDif?: number;
 };
 

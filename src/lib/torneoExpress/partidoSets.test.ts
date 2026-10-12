@@ -3,11 +3,13 @@ import {
   buildPersistPayload,
   canAddAnotherSet,
   canAddSuperMuerte,
+  countClosedSets,
   countSetWins,
   detectMatchWinner,
   formatSetWinsForWinner,
   getPartidoSets,
   getSetsValidationMessage,
+  isClosedSet,
   isLegalSetScore,
   isLegalSetScoreAtIndex,
   isLegalSuperTieBreakScore,
@@ -141,6 +143,7 @@ describe("partidoSets", () => {
       gamesA: 6,
       setsA: 0,
       setsB: 0,
+      closedSets: 0,
       gamesB: 2,
       winnerId: "a",
     });
@@ -178,7 +181,41 @@ describe("partidoSets", () => {
     });
     expect(match?.gamesA).toBe(16);
     expect(match?.gamesB).toBe(15);
+    expect(match?.closedSets).toBe(1);
     expect(match?.winnerId).toBe("a");
+  });
+
+  it("7-5 y 7-6 son sets cerrados; 6-4 no, y el súper tie-break no se mezcla con un set normal", () => {
+    expect(isClosedSet({ local: 7, visitante: 5 })).toBe(true);
+    expect(isClosedSet({ local: 5, visitante: 7 })).toBe(true);
+    expect(isClosedSet({ local: 7, visitante: 6 })).toBe(true);
+    expect(isClosedSet({ local: 6, visitante: 4 })).toBe(false);
+    expect(isClosedSet({ local: 6, visitante: 2 })).toBe(false);
+    expect(isClosedSet({ local: 5, visitante: 5 })).toBe(false);
+    expect(isClosedSet({ local: 10, visitante: 4, super_muerte: true })).toBe(true);
+    expect(isClosedSet({ local: 10, visitante: 4 })).toBe(false);
+
+    const match = partidoToMatchResult({
+      pareja_local_id: "a",
+      pareja_visitante_id: "b",
+      sets_resultado: [
+        { local: 6, visitante: 4 },
+        { local: 4, visitante: 6 },
+        { local: 10, visitante: 7, super_muerte: true },
+      ],
+      ganador_id: "a",
+      estado: "jugado",
+    });
+    expect(countClosedSets([
+      { local: 6, visitante: 4 },
+      { local: 4, visitante: 6 },
+      { local: 10, visitante: 7, super_muerte: true },
+    ])).toBe(1);
+    expect(match?.closedSets).toBe(1);
+    expect(match?.gamesA).toBe(20);
+    expect(match?.gamesB).toBe(17);
+    expect(match?.setsA).toBe(2);
+    expect(match?.setsB).toBe(1);
   });
 
   it("cambio de ganador: detectMatchWinner refleja sets corregidos", () => {

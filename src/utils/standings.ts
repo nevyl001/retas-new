@@ -17,6 +17,11 @@ export interface MatchResult {
   setsA?: number;
   /** Sets ganados por B (Torneo Express multi-set); opcional. */
   setsB?: number;
+  /**
+   * Sets cerrados del partido (5-5, tie-break o súper tie-break).
+   * Los dos lados los jugaron; no altera games ni puntos.
+   */
+  closedSets?: number;
   /** Ganador explícito (p. ej. ganador_id en torneo express). */
   winnerId?: string | null;
   /** Orden de ronda (americano); si falta, se usa el orden del array. */

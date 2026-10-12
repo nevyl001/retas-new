@@ -23,6 +23,7 @@ export type StandingsMobileCardRow = {
   puntosTorneo: number;
   setsFavor?: number;
   setsContra?: number;
+  tied?: boolean;
 };
 
 function positionIcon(position: number): string {
@@ -93,7 +94,18 @@ export const StandingsMobileCards: React.FC<{
             role="listitem"
           >
             <header className="standings-mobile-card__head">
-              <span className="standings-mobile-card__pos" aria-hidden>
+              <span
+                className={`standings-mobile-card__pos${
+                  row.tied ? " standings-mobile-card__pos--tied" : ""
+                }`}
+                title={row.tied ? "Empate sin resolver" : undefined}
+                aria-hidden={row.tied ? undefined : true}
+                aria-label={
+                  row.tied
+                    ? `Posición ${row.position}, empate sin resolver`
+                    : undefined
+                }
+              >
                 {positionIcon(row.position) || row.position}
               </span>
               <h3 className="standings-mobile-card__name">{row.label}</h3>

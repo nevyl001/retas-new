@@ -73,22 +73,32 @@ export const TablaGrupo: React.FC<TablaGrupoProps> = ({
             />
           </thead>
           <tbody>
-            {rows.map((row, index) => {
+            {rows.map((row) => {
+              const place = row.posicion;
+              const tied = row.tie.status === "unresolved";
               const posMedalClass =
-                index === 0
+                place === 1
                   ? " te-standings-pos__badge--gold"
-                  : index === 1
+                  : place === 2
                     ? " te-standings-pos__badge--silver"
-                    : index === 2
+                    : place === 3
                       ? " te-standings-pos__badge--bronze"
                       : "";
               return (
               <tr key={`${row.grupoId}-${row.parejaId}`}>
                 <td className={COL_POS}>
                   <span
-                    className={`te-standings-pos__badge${posMedalClass}`}
+                    className={`te-standings-pos__badge${posMedalClass}${
+                      tied ? " te-standings-pos__badge--tied" : ""
+                    }`}
+                    title={tied ? "Empate sin resolver" : undefined}
+                    aria-label={
+                      tied
+                        ? `Posición ${place}, empate sin resolver`
+                        : `Posición ${place}`
+                    }
                   >
-                    {index + 1}°
+                    {place}°
                   </span>
                 </td>
                 <td className={`te-cell-name ${COL_ENTITY}`}>

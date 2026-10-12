@@ -20,6 +20,7 @@ import { remapPartidoToSlot, slotsFromParejas } from "./groupRoster";
 type ExpressPairStanding = PairStanding & {
   setsFavor: number;
   setsContra: number;
+  setsCerrados: number;
 };
 
 function standingToExpressRow(
@@ -63,9 +64,12 @@ function enrichWithSetStats(
   stats: PairStanding[],
   matches: MatchResult[]
 ): ExpressPairStanding[] {
-  const setsByPair = new Map<string, { favor: number; contra: number }>();
+  const setsByPair = new Map<
+    string,
+    { favor: number; contra: number; cerrados: number }
+  >();
   for (const s of stats) {
-    setsByPair.set(s.pairId, { favor: 0, contra: 0 });
+    setsByPair.set(s.pairId, { favor: 0, contra: 0, cerrados: 0 });
   }
   for (const m of matches) {
     const a = setsByPair.get(m.pairAId);
@@ -76,21 +80,25 @@ function enrichWithSetStats(
       if (m.winnerId === m.pairAId) setsA = 1;
       else if (m.winnerId === m.pairBId) setsB = 1;
     }
+    const closed = m.closedSets ?? 0;
     if (a) {
       a.favor += setsA;
       a.contra += setsB;
+      a.cerrados += closed;
     }
     if (b) {
       b.favor += setsB;
       b.contra += setsA;
+      b.cerrados += closed;
     }
   }
   return stats.map((s) => {
-    const sets = setsByPair.get(s.pairId) ?? { favor: 0, contra: 0 };
+    const sets = setsByPair.get(s.pairId) ?? { favor: 0, contra: 0, cerrados: 0 };
     return {
       ...s,
       setsFavor: sets.favor,
       setsContra: sets.contra,
+      setsCerrados: sets.cerrados,
     };
   });
 }
@@ -109,6 +117,7 @@ function toGroupStats(row: ExpressPairStanding): GroupStandingStats {
     puntos: row.puntos,
     setsFavor: row.setsFavor,
     setsContra: row.setsContra,
+    setsCerrados: row.setsCerrados,
   };
 }
 

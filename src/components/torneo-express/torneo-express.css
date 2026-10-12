@@ -420,6 +420,10 @@
   background: var(--te-gold-muted);
 }
 
+.te-standings-pos__badge--tied {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
 .te-pareja-pool {
   display: flex;
   flex-wrap: wrap;
