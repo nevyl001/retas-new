@@ -57,6 +57,12 @@ interface JugadorRewardsPanelProps {
   }[];
   /** Usuario autenticado opcional para verificar sesión */
   currentUser?: { id: string; email?: string } | null;
+  /** Perfiles vinculados por identidad global multiclub */
+  linkedProfiles?: Array<{ jugadorId: string; organizadorId: string }>;
+  /** Lista completa de UUIDs vinculados a esta identidad */
+  linkedJugadorIds?: string[];
+  /** Riviera ID oficial */
+  rivieraId?: string | null;
 }
 
 export const JugadorRewardsPanel: React.FC<JugadorRewardsPanelProps> = ({
@@ -68,6 +74,9 @@ export const JugadorRewardsPanel: React.FC<JugadorRewardsPanelProps> = ({
   className,
   participaciones,
   currentUser,
+  linkedProfiles,
+  linkedJugadorIds,
+  rivieraId,
 }) => {
   if (mode === "admin") {
     if (!organizadorId) return null;
@@ -88,6 +97,9 @@ export const JugadorRewardsPanel: React.FC<JugadorRewardsPanelProps> = ({
       className={className}
       participaciones={participaciones}
       currentUser={currentUser}
+      linkedProfiles={linkedProfiles}
+      linkedJugadorIds={linkedJugadorIds}
+      rivieraId={rivieraId}
     />
   );
 };
@@ -96,10 +108,12 @@ const FallbackUserContext = React.createContext<{ user: any } | undefined>(undef
 
 function PlayerRewardsView({
   jugadorId,
-  clubName,
+  organizadorId: initialOrganizadorId,
+  clubName: propClubName,
   className,
   participaciones: propParticipaciones,
   currentUser,
+  linkedProfiles,
 }: {
   jugadorId: string;
   organizadorId?: string | null;
@@ -113,9 +127,67 @@ function PlayerRewardsView({
     fecha: string | null;
   }[];
   currentUser?: { id: string; email?: string } | null;
+  linkedProfiles?: Array<{ jugadorId: string; organizadorId: string }>;
+  linkedJugadorIds?: string[];
+  rivieraId?: string | null;
 }) {
   const userContext = React.useContext(UserContext || FallbackUserContext);
   const user = currentUser !== undefined ? currentUser : (userContext?.user ?? null);
+
+  // Lista de clubes disponibles donde el jugador tiene identidad o perfil
+  const availableClubs = useMemo(() => {
+    const list: Array<{ organizadorId: string; jugadorId: string; displayName: string }> = [];
+    const seen = new Set<string>();
+
+    // 1. Perfiles vinculados por identidad multiclub
+    if (linkedProfiles && linkedProfiles.length > 0) {
+      for (const p of linkedProfiles) {
+        if (p.organizadorId && !seen.has(p.organizadorId)) {
+          seen.add(p.organizadorId);
+          list.push({
+            organizadorId: p.organizadorId,
+            jugadorId: p.jugadorId || jugadorId,
+            displayName: getOrganizerDisplayNameSync(p.organizadorId),
+          });
+        }
+      }
+    }
+
+    // 2. Club inicial del prop si no estaba ya en la lista
+    if (initialOrganizadorId && !seen.has(initialOrganizadorId)) {
+      seen.add(initialOrganizadorId);
+      list.push({
+        organizadorId: initialOrganizadorId,
+        jugadorId,
+        displayName: propClubName || getOrganizerDisplayNameSync(initialOrganizadorId),
+      });
+    }
+
+    // 3. Fallback: al menos el club del jugador si no hay nada
+    if (list.length === 0 && initialOrganizadorId) {
+      list.push({
+        organizadorId: initialOrganizadorId,
+        jugadorId,
+        displayName: propClubName || getOrganizerDisplayNameSync(initialOrganizadorId),
+      });
+    }
+
+    return list;
+  }, [linkedProfiles, initialOrganizadorId, propClubName, jugadorId]);
+
+  // Club actualmente seleccionado
+  const [activeOrgId, setActiveOrgId] = useState<string>(() => {
+    if (initialOrganizadorId && availableClubs.some((c) => c.organizadorId === initialOrganizadorId)) {
+      return initialOrganizadorId;
+    }
+    return availableClubs[0]?.organizadorId || initialOrganizadorId || "";
+  });
+
+  const activeClub = useMemo(() => {
+    return availableClubs.find((c) => c.organizadorId === activeOrgId) || availableClubs[0] || null;
+  }, [availableClubs, activeOrgId]);
+
+  const activeJugadorId = activeClub?.jugadorId || jugadorId;
 
   const [snapshot, setSnapshot] = useState<PlayerSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -128,6 +200,13 @@ function PlayerRewardsView({
   const [partsExpanded, setPartsExpanded] = useState(false);
   const [busyRewardId, setBusyRewardId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const hasTriedFallbackRef = React.useRef(false);
+
+  useEffect(() => {
+    if (initialOrganizadorId && availableClubs.some((c) => c.organizadorId === initialOrganizadorId)) {
+      setActiveOrgId(initialOrganizadorId);
+    }
+  }, [initialOrganizadorId, availableClubs]);
 
   useEffect(() => {
     if (propParticipaciones && propParticipaciones.length > 0) {
@@ -147,7 +226,7 @@ function PlayerRewardsView({
     setUnlinked(false);
     setError(null);
 
-    playerSnapshot(jugadorId)
+    playerSnapshot(activeJugadorId, activeOrgId || undefined)
       .then((data) => {
         if (!active) return;
         setSnapshot(data);
@@ -167,6 +246,14 @@ function PlayerRewardsView({
           msg.includes("Sin sesión") ||
           msg.includes("Sin permiso")
         ) {
+          // Si falló este club pero hay otros clubes disponibles en la identidad del jugador,
+          // intentamos con el siguiente club antes de marcar unlinked definitivo
+          const otherClubs = availableClubs.filter((c) => c.organizadorId !== activeOrgId);
+          if (otherClubs.length > 0 && !hasTriedFallbackRef.current) {
+            hasTriedFallbackRef.current = true;
+            setActiveOrgId(otherClubs[0].organizadorId);
+            return;
+          }
           setUnlinked(true);
         } else {
           setError(msg);
@@ -179,7 +266,7 @@ function PlayerRewardsView({
     return () => {
       active = false;
     };
-  }, [jugadorId, user]);
+  }, [activeJugadorId, activeOrgId, user, availableClubs]);
 
   useEffect(() => {
     if (!snapshot || (propParticipaciones && propParticipaciones.length > 0)) return;
@@ -290,16 +377,21 @@ function PlayerRewardsView({
   const selectedBalance =
     snapshot.saldos.find((s) => s.campaign_id === selectedCampaignId) || snapshot.saldos[0];
   const displayClubName =
-    clubName || getOrganizerDisplayNameSync(snapshot.organizador_id);
+    activeClub?.displayName || propClubName || getOrganizerDisplayNameSync(snapshot.organizador_id);
   const narrative = formatCampaignNarrative(selectedBalance);
 
-  // Participaciones dentro de la ventana de la campaña
+  // Participaciones dentro de la ventana de la campaña con aislamiento por club
   const startMs = new Date(selectedBalance.acumula_desde).getTime();
   const endMs = new Date(selectedBalance.acumula_hasta).getTime();
   const campaignParts = parts.filter((p) => {
     if (!p.fecha) return false;
     const d = new Date(p.fecha).getTime();
-    return d >= startMs && d <= endMs;
+    const inWindow = d >= startMs && d <= endMs;
+    const partOrg = (p as { metadata?: { organizador_id?: string } })?.metadata?.organizador_id;
+    if (partOrg && snapshot.organizador_id && partOrg !== snapshot.organizador_id) {
+      return false;
+    }
+    return inWindow;
   });
 
   const elegiblesCount = campaignParts.length;
@@ -342,8 +434,9 @@ function PlayerRewardsView({
     setBusyRewardId(reward.id);
     setActionMessage(null);
     try {
-      await playerRequestRedemption(snapshot.organizador_id, reward.id, jugadorId);
-      const updated = await playerSnapshot(jugadorId);
+      const redemptionJugadorId = snapshot.jugador_id || activeJugadorId;
+      await playerRequestRedemption(snapshot.organizador_id, reward.id, redemptionJugadorId);
+      const updated = await playerSnapshot(redemptionJugadorId, snapshot.organizador_id);
       setSnapshot(updated);
       setActionMessage({
         type: "success",
@@ -362,6 +455,36 @@ function PlayerRewardsView({
   return (
     <section className={`rjp-ficha-surface rjp-ficha-rewards ${className ?? ""}`} aria-label="Riviera Rewards">
       <div className="rrw-player-panel">
+        {/* Selector de club si el jugador participa en múltiples clubes */}
+        {availableClubs.length > 1 && (
+          <div className="rrw-club-selector" role="tablist" aria-label="Clubes de Rewards">
+            <span className="rrw-club-selector-label">Club:</span>
+            {availableClubs.map((club) => {
+              const isSelected = club.organizadorId === activeOrgId;
+              return (
+                <button
+                  key={club.organizadorId}
+                  type="button"
+                  role="tab"
+                  aria-selected={isSelected}
+                  className={`rrw-campaign-pill ${isSelected ? "rrw-campaign-pill--active" : ""}`}
+                  onClick={() => {
+                    if (club.organizadorId !== activeOrgId) {
+                      hasTriedFallbackRef.current = true;
+                      setActiveOrgId(club.organizadorId);
+                      setSnapshot(null);
+                      setActionMessage(null);
+                    }
+                  }}
+                >
+                  <TablerIcon name="building-community" size={13} />
+                  {club.displayName}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Selector de campaña si hay más de una */}
         {snapshot.saldos.length > 1 && (
           <div className="rrw-campaign-selector" role="tablist" aria-label="Campañas disponibles">

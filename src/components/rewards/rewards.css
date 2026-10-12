@@ -754,6 +754,26 @@
   line-height: 1.4;
 }
 
+/* Selector Multiclub */
+.rrw-club-selector {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.rrw-club-selector-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-right: 0.25rem;
+}
+
 /* Selector de Campaña */
 .rrw-campaign-selector {
   display: flex;

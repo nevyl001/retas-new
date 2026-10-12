@@ -36,6 +36,7 @@ import type {
   RivieraJugadorWithStats,
 } from "../../lib/rivieraJugadores/types";
 import type { JugadorParticipacion } from "../../lib/rivieraJugadores/types";
+import type { ResolvedPlayerIdentity } from "../../lib/rivieraJugadores/playerIdentityService";
 import { TablerIcon } from "../ui/TablerIcon";
 import { PublicModeShell } from "../platform/PublicModeShell";
 import { JugadorAvatarHero } from "./JugadorAvatarHero";
@@ -156,6 +157,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const [hasOrgContext, setHasOrgContext] = useState(Boolean(viewingOrgId?.trim()));
   const [rankingPos, setRankingPos] = useState<number | null>(null);
   const [historialRating, setHistorialRating] = useState<RatingHistorialEntry[]>([]);
+  const [identity, setIdentity] = useState<ResolvedPlayerIdentity | null>(null);
   /** Hero aún no tiene fila base (ni handoff). */
   const [heroLoading, setHeroLoading] = useState(true);
   /** Carrera / rating / historial aún en vuelo. */
@@ -180,6 +182,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     } else {
       setHeroLoading(true);
       setJugador(null);
+      setIdentity(null);
       setRankingPos(null);
       setHistorial([]);
       setHistorialOtrosClubes([]);
@@ -218,6 +221,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       if (!profile) {
         if (!handoff) {
           setJugador(null);
+          setIdentity(null);
           setRankingPos(null);
         }
         setHistorial([]);
@@ -229,6 +233,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       }
 
       setJugador(profile.jugador);
+      setIdentity(profile.identity);
       setHasOrgContext(profile.hasOrgContext);
       setHistorial(profile.historialMain);
       setHistorialOtrosClubes(profile.historialOtrosClubes);
@@ -601,11 +606,14 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
             <JugadorRewardsPanel
               mode="player"
               jugadorId={jugador.id}
-              organizadorId={registrationOrgId || viewingOrgId}
-              clubName={getOrganizerDisplayNameSync(registrationOrgId || viewingOrgId)}
+              organizadorId={viewingOrgId || registrationOrgId}
+              clubName={getOrganizerDisplayNameSync(viewingOrgId || registrationOrgId)}
               className="rjp-ficha-rewards"
-              participaciones={historial}
+              participaciones={historialCompleto}
               currentUser={user}
+              linkedProfiles={identity?.linkedProfiles}
+              linkedJugadorIds={identity?.linkedJugadorIds}
+              rivieraId={identity?.rivieraId}
             />
           )}
 

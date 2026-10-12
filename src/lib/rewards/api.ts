@@ -333,6 +333,11 @@ export async function linkPlayer(organizadorId: string, jugadorId: string, email
 
 export interface PlayerSnapshot {
   organizador_id: string;
+  jugador_id?: string;
+  clubes_autorizados?: Array<{
+    organizador_id: string;
+    jugador_id: string;
+  }>;
   saldos: BalanceRecord[];
   premios: {
     id: string;
@@ -357,8 +362,18 @@ export interface PlayerSnapshot {
   }[];
 }
 
-export async function playerSnapshot(jugadorId: string): Promise<PlayerSnapshot> {
-  const { data, error } = await supabase.rpc("rewards_player_snapshot", { p_jugador_id: jugadorId });
+/**
+ * Requiere la migración 0059 (firma única `rewards_player_snapshot(uuid, uuid DEFAULT NULL)`).
+ * Sin reintentos: si el esquema no coincide, el error de PostgREST se propaga.
+ */
+export async function playerSnapshot(
+  jugadorId: string,
+  organizadorId?: string | null
+): Promise<PlayerSnapshot> {
+  const { data, error } = await supabase.rpc("rewards_player_snapshot", {
+    p_jugador_id: jugadorId,
+    p_organizador_id: organizadorId ?? null,
+  });
   fail(error, "No se pudo consultar Riviera Rewards");
   return data as PlayerSnapshot;
 }

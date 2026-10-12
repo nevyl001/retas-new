@@ -39,6 +39,8 @@ const mockListReviews = rewardsApi.listReviews as jest.Mock;
 const mockListBenefits = rewardsApi.listBenefits as jest.Mock;
 const mockListParticipaciones = rewardsApi.listParticipaciones as jest.Mock;
 const mockAssignBenefit = rewardsApi.assignBenefit as jest.Mock;
+const mockPlayerSnapshot = rewardsApi.playerSnapshot as jest.Mock;
+const mockPlayerRequestRedemption = rewardsApi.playerRequestRedemption as jest.Mock;
 
 describe("JugadorRewardsPanel — Mejoras de UX en modo admin", () => {
   let container: HTMLDivElement;
@@ -506,5 +508,402 @@ describe("JugadorRewardsPanel — Experiencia de Fidelización del Jugador (Play
     expect(container.textContent).toContain("Octubre Acumulación");
     expect(container.textContent).toContain("Acumulación activa");
     expect(container.textContent).toContain("20");
+  });
+});
+
+describe("JugadorRewardsPanel — Fidelización Multiclub y Resolución de Identidad", () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    mockPlayerSnapshot.mockReset();
+    mockPlayerRequestRedemption.mockReset();
+  });
+
+  afterEach(() => {
+    act(() => {
+      if (root) root.unmount();
+    });
+    container.remove();
+    jest.clearAllMocks();
+  });
+
+  async function flush() {
+    for (let i = 0; i < 5; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+  }
+
+  test("1. Jugador registrado en Hack Padel que participa en Padelito consulta saldo de Padelito sin error", async () => {
+    mockPlayerSnapshot.mockResolvedValue({
+      organizador_id: "org-padelito",
+      jugador_id: "padel-jug-id",
+      saldos: [
+        {
+          campaign_id: "camp-padelito",
+          nombre: "Padelito Rewards Octubre",
+          acumula_desde: "2026-10-01T00:00:00-06:00",
+          acumula_hasta: "2026-11-01T00:00:00-06:00",
+          canje_desde: "2026-11-01T00:00:00-06:00",
+          canje_hasta: "2026-12-01T00:00:00-06:00",
+          fase: "acumulacion",
+          acumulando: 85,
+          disponible: 0,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+        },
+      ],
+      premios: [],
+      canjes: [],
+    });
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="hack-jug-id"
+          organizadorId="org-padelito"
+          clubName="Padelito Warehouse"
+          currentUser={{ id: "auth-carlos-1" }}
+          linkedProfiles={[
+            { jugadorId: "hack-jug-id", organizadorId: "org-hack" },
+            { jugadorId: "padel-jug-id", organizadorId: "org-padelito" },
+          ]}
+        />
+      );
+    });
+    await flush();
+
+    // Debe invocar snapshot con el jugador local de Padelito y el org de Padelito
+    expect(mockPlayerSnapshot).toHaveBeenCalledWith("padel-jug-id", "org-padelito");
+    expect(container.textContent).toContain("Padelito Rewards Octubre");
+    expect(container.textContent).toContain("85");
+    expect(container.textContent).not.toContain("Acceso restringido");
+  });
+
+  test("2. Fallback automático multiclub si el club de origen no tiene vinculación pero el club activo sí", async () => {
+    // Primera llamada (hack-jug-id en org-hack): falla con cuenta no vinculada
+    mockPlayerSnapshot.mockRejectedValueOnce(new Error("Esta cuenta no está vinculada a este jugador"));
+    // Segunda llamada (fallback a padel-jug-id en org-padelito): éxito
+    mockPlayerSnapshot.mockResolvedValueOnce({
+      organizador_id: "org-padelito",
+      jugador_id: "padel-jug-id",
+      saldos: [
+        {
+          campaign_id: "camp-padelito",
+          nombre: "Padelito Fidelidad",
+          acumula_desde: "2026-10-01T00:00:00-06:00",
+          acumula_hasta: "2026-11-01T00:00:00-06:00",
+          canje_desde: "2026-11-01T00:00:00-06:00",
+          canje_hasta: "2026-12-01T00:00:00-06:00",
+          fase: "acumulacion",
+          acumulando: 45,
+          disponible: 0,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+        },
+      ],
+      premios: [],
+      canjes: [],
+    });
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="hack-jug-id"
+          organizadorId="org-hack"
+          clubName="Hack Padel"
+          currentUser={{ id: "auth-carlos-1" }}
+          linkedProfiles={[
+            { jugadorId: "hack-jug-id", organizadorId: "org-hack" },
+            { jugadorId: "padel-jug-id", organizadorId: "org-padelito" },
+          ]}
+        />
+      );
+    });
+    await flush();
+
+    // Comprobar que reintentó con Padelito y mostró los datos en vez de bloquear
+    expect(mockPlayerSnapshot).toHaveBeenCalledTimes(2);
+    expect(mockPlayerSnapshot).toHaveBeenLastCalledWith("padel-jug-id", "org-padelito");
+    expect(container.textContent).toContain("Padelito Fidelidad");
+    expect(container.textContent).not.toContain("Acceso restringido");
+  });
+
+  test("3. Jugador con participación en dos clubes puede alternar entre ellos mediante el selector de club", async () => {
+    mockPlayerSnapshot.mockImplementation((jugId: string, orgId?: string) => {
+      if (orgId === "org-hack") {
+        return Promise.resolve({
+          organizador_id: "org-hack",
+          jugador_id: "hack-jug-id",
+          saldos: [
+            {
+              campaign_id: "camp-hack",
+              nombre: "Hack Padel Campaña",
+              acumula_desde: "2026-10-01T00:00:00-06:00",
+              acumula_hasta: "2026-11-01T00:00:00-06:00",
+              canje_desde: "2026-11-01T00:00:00-06:00",
+              canje_hasta: "2026-12-01T00:00:00-06:00",
+              fase: "acumulacion",
+              acumulando: 30,
+              disponible: 0,
+              reservado: 0,
+              utilizado: 0,
+              cerrado: 0,
+            },
+          ],
+          premios: [],
+          canjes: [],
+        });
+      }
+      return Promise.resolve({
+        organizador_id: "org-padelito",
+        jugador_id: "padel-jug-id",
+        saldos: [
+          {
+            campaign_id: "camp-padelito",
+            nombre: "Padelito Campaña",
+            acumula_desde: "2026-10-01T00:00:00-06:00",
+            acumula_hasta: "2026-11-01T00:00:00-06:00",
+            canje_desde: "2026-11-01T00:00:00-06:00",
+            canje_hasta: "2026-12-01T00:00:00-06:00",
+            fase: "acumulacion",
+            acumulando: 70,
+            disponible: 0,
+            reservado: 0,
+            utilizado: 0,
+            cerrado: 0,
+          },
+        ],
+        premios: [],
+        canjes: [],
+      });
+    });
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="hack-jug-id"
+          organizadorId="org-hack"
+          currentUser={{ id: "auth-carlos-1" }}
+          linkedProfiles={[
+            { jugadorId: "hack-jug-id", organizadorId: "org-hack" },
+            { jugadorId: "padel-jug-id", organizadorId: "org-padelito" },
+          ]}
+        />
+      );
+    });
+    await flush();
+
+    // Inicialmente cargó Hack Padel (30 pts)
+    expect(container.textContent).toContain("Hack Padel Campaña");
+    expect(container.textContent).toContain("30");
+
+    // Existe el selector multiclub
+    const clubSelector = container.querySelector(".rrw-club-selector");
+    expect(clubSelector).not.toBeNull();
+
+    // Buscar botón del segundo club (Padelito)
+    const clubBtns = Array.from(container.querySelectorAll<HTMLButtonElement>(".rrw-club-selector button"));
+    expect(clubBtns.length).toBe(2);
+
+    await act(async () => {
+      clubBtns[1].click();
+    });
+    await flush();
+
+    // Ahora muestra Padelito Campaña con 70 pts separados
+    expect(mockPlayerSnapshot).toHaveBeenLastCalledWith("padel-jug-id", "org-padelito");
+    expect(container.textContent).toContain("Padelito Campaña");
+    expect(container.textContent).toContain("70");
+  });
+
+  test("4. Solicitud de premio se ejecuta estrictamente contra el club correspondiente y con su ID local", async () => {
+    mockPlayerSnapshot.mockResolvedValue({
+      organizador_id: "org-padelito",
+      jugador_id: "padel-jug-id",
+      saldos: [
+        {
+          campaign_id: "camp-padelito-canje",
+          nombre: "Padelito Canje",
+          acumula_desde: "2026-09-01T00:00:00-06:00",
+          acumula_hasta: "2026-10-01T00:00:00-06:00",
+          canje_desde: "2026-10-01T00:00:00-06:00",
+          canje_hasta: "2026-11-01T00:00:00-06:00",
+          fase: "canje",
+          acumulando: 0,
+          disponible: 100,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+        },
+      ],
+      premios: [
+        {
+          id: "rew-bote",
+          nombre: "Tubo de Pelotas Bullpadel",
+          descripcion: null,
+          costo_puntos: 40,
+          tipo: "fisico",
+          condiciones: null,
+          inventario_restante: 5,
+          limite_por_jugador: 2,
+          campaign_id: "camp-padelito-canje",
+          campana: "Padelito Canje",
+          canje_hasta: "2026-11-01T00:00:00-06:00",
+        },
+      ],
+      canjes: [],
+    });
+    mockPlayerRequestRedemption.mockResolvedValue("red-777");
+    window.confirm = jest.fn(() => true);
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="hack-jug-id"
+          organizadorId="org-padelito"
+          currentUser={{ id: "auth-carlos-1" }}
+          linkedProfiles={[
+            { jugadorId: "hack-jug-id", organizadorId: "org-hack" },
+            { jugadorId: "padel-jug-id", organizadorId: "org-padelito" },
+          ]}
+        />
+      );
+    });
+    await flush();
+
+    const solicitBtn = Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(
+      (b) => b.textContent === "Solicitar" && !b.disabled
+    );
+    expect(solicitBtn).toBeDefined();
+
+    await act(async () => {
+      solicitBtn?.click();
+    });
+    await flush();
+
+    // La solicitud se emite con org-padelito y padel-jug-id
+    expect(mockPlayerRequestRedemption).toHaveBeenCalledWith(
+      "org-padelito",
+      "rew-bote",
+      "padel-jug-id"
+    );
+  });
+
+  test("5. Aislamiento estricto: participaciones de otro club no se cuentan en la campaña del club activo", async () => {
+    mockPlayerSnapshot.mockResolvedValue({
+      organizador_id: "org-padelito",
+      jugador_id: "padel-jug-id",
+      saldos: [
+        {
+          campaign_id: "camp-padelito",
+          nombre: "Campaña Padelito",
+          acumula_desde: "2026-10-01T00:00:00-06:00",
+          acumula_hasta: "2026-11-01T00:00:00-06:00",
+          canje_desde: "2026-11-01T00:00:00-06:00",
+          canje_hasta: "2026-12-01T00:00:00-06:00",
+          fase: "acumulacion",
+          acumulando: 25,
+          disponible: 0,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+        },
+      ],
+      premios: [],
+      canjes: [],
+    });
+
+    const participacionesMixtas = [
+      {
+        id: "part-1",
+        evento_id: "ev-1",
+        tipo_evento: "reta",
+        evento_nombre: "Reta Padelito",
+        fecha: "2026-10-10T18:00:00Z",
+        metadata: { organizador_id: "org-padelito" },
+      },
+      {
+        id: "part-2",
+        evento_id: "ev-2",
+        tipo_evento: "reta",
+        evento_nombre: "Reta Hack Padel",
+        fecha: "2026-10-12T18:00:00Z",
+        metadata: { organizador_id: "org-hack" }, // Pertenece a otro club
+      },
+    ];
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="padel-jug-id"
+          organizadorId="org-padelito"
+          currentUser={{ id: "auth-carlos-1" }}
+          participaciones={participacionesMixtas}
+        />
+      );
+    });
+    await flush();
+
+    // Solo debe listar la reta de Padelito
+    expect(container.textContent).toContain("Reta Padelito");
+    expect(container.textContent).not.toContain("Reta Hack Padel");
+    expect(container.textContent).toContain("Retas en campaña");
+  });
+
+  test("6. Usuario que visita el perfil de otro jugador ve Acceso Restringido", async () => {
+    mockPlayerSnapshot.mockRejectedValue(new Error("Esta cuenta no está vinculada a este jugador"));
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="maria-jug-id"
+          organizadorId="org-padelito"
+          currentUser={{ id: "auth-carlos-1" }}
+        />
+      );
+    });
+    await flush();
+
+    expect(container.textContent).toContain("Acceso restringido");
+    expect(container.textContent).toContain("Este perfil pertenece a otro jugador");
+    expect(container.querySelector(".rrw-kpi-grid--player")).toBeNull();
+  });
+
+  test("7. Visitante sin sesión ve tarjeta de fidelización con botón de iniciar sesión", async () => {
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="jug-anon"
+          currentUser={null}
+        />
+      );
+    });
+    await flush();
+
+    expect(container.textContent).toContain("Programa de fidelización y recompensas");
+    expect(container.textContent).toContain("Iniciar sesión");
+    expect(mockPlayerSnapshot).not.toHaveBeenCalled();
   });
 });
