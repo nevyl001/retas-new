@@ -26,12 +26,15 @@ interface JugadorRewardsPanelProps {
   organizadorId?: string | null;
   /** El perfil público solo muestra datos si la sesión está vinculada a este jugador. */
   mode: "admin" | "player";
+  /** Si el jugador es concedido/vinculado desde otro club con solo lectura en ficha */
+  isGrantedReadOnly?: boolean;
 }
 
 export const JugadorRewardsPanel: React.FC<JugadorRewardsPanelProps> = ({
   jugadorId,
   organizadorId,
   mode,
+  isGrantedReadOnly,
 }) => {
   const [snapshot, setSnapshot] = useState<PlayerSnapshot | null>(null);
   const [hidden, setHidden] = useState(mode === "player");
@@ -57,7 +60,13 @@ export const JugadorRewardsPanel: React.FC<JugadorRewardsPanelProps> = ({
 
   if (mode === "admin") {
     if (!organizadorId) return null;
-    return <AdminRewardsDesk organizadorId={organizadorId} jugadorId={jugadorId} />;
+    return (
+      <AdminRewardsDesk
+        organizadorId={organizadorId}
+        jugadorId={jugadorId}
+        isGrantedReadOnly={isGrantedReadOnly}
+      />
+    );
   }
 
   if (hidden || !snapshot) return null;
@@ -136,9 +145,11 @@ export const JugadorRewardsPanel: React.FC<JugadorRewardsPanelProps> = ({
 function AdminRewardsDesk({
   organizadorId,
   jugadorId,
+  isGrantedReadOnly,
 }: {
   organizadorId: string;
   jugadorId: string;
+  isGrantedReadOnly?: boolean;
 }) {
   const [balances, setBalances] = useState<BalanceRecord[]>([]);
   const [campaigns, setCampaigns] = useState<CampaignRecord[]>([]);
@@ -188,6 +199,15 @@ function AdminRewardsDesk({
   const accruing = accumulatingNow(balances);
   const redeeming = redeemingNow(balances);
   const openRewards = rewards.filter((reward) => reward.estado === "activo" && reward.campaign_id === redeeming?.campaign_id);
+  const selectedReward = openRewards.find((reward) => reward.id === rewardId);
+  const canRequest = Boolean(selectedReward && (redeeming?.disponible ?? 0) >= selectedReward.costo_puntos);
+
+  const hasLocalActivity =
+    (accruing?.acumulando ?? 0) > 0 ||
+    (redeeming?.disponible ?? 0) > 0 ||
+    (redeeming?.reservado ?? 0) > 0 ||
+    pending.length > 0 ||
+    redemptions.length > 0;
 
   return (
     <section className="rrw-card rrw-ficha" aria-label="Riviera Rewards">
@@ -209,57 +229,77 @@ function AdminRewardsDesk({
           <strong>{redeeming?.reservado ?? 0}</strong>
         </div>
       </div>
-      <p className="rrw-meta">Pendientes de validar: {pending.length}</p>
-      <label className="rrw-fields">Campaña
-        <select value={campaignId} onChange={(event) => setCampaignId(event.target.value)}>
-          <option value="">Elige</option>
-          {campaigns.filter((item) => item.estado === "activa").map((item) => (
-            <option key={item.id} value={item.id}>{item.nombre}</option>
-          ))}
-        </select>
-      </label>
-      <button
-        type="button"
-        className="rrw-btn"
-        disabled={busy || pending.length === 0 || !campaignId}
-        onClick={() =>
-          act(() =>
-            reviewParticipations({
-              organizadorId,
-              participacionIds: pending,
-              decision: "aprobada",
-              campaignId,
-            })
-          )
-        }
-      >
-        Aprobar pendientes
-      </button>
-      <label className="rrw-fields">Premio en canje
-        <select value={rewardId} onChange={(event) => setRewardId(event.target.value)}>
-          <option value="">Elige</option>
-          {openRewards.map((reward) => (
-            <option key={reward.id} value={reward.id}>{reward.nombre} · {reward.costo_puntos}</option>
-          ))}
-        </select>
-      </label>
-      <button type="button" className="rrw-btn--ghost" disabled={busy || !rewardId} onClick={() => act(() => requestRedemption(organizadorId, rewardId, jugadorId))}>
-        Solicitar
-      </button>
-      <ul className="rrw-list">
-        {redemptions.map((item) => (
-          <li key={item.id}>
-            <span>{item.snapshot?.nombre ?? "Premio"} · {item.estado}</span>
-            <span>
-              {item.estado === "solicitado" && <button type="button" className="rrw-btn--ghost" disabled={busy} onClick={() => act(() => reserveRedemption(item.id))}>Reservar</button>}
-              {item.estado === "reservado" && <button type="button" className="rrw-btn--ghost" disabled={busy} onClick={() => act(() => confirmRedemption(item.id))}>Entregar</button>}
-              {(item.estado === "solicitado" || item.estado === "reservado") && (
-                <button type="button" className="rrw-btn--danger" disabled={busy} onClick={() => act(() => cancelRedemption(item.id))}>Cancelar</button>
-              )}
-            </span>
-          </li>
-        ))}
-      </ul>
+
+      {isGrantedReadOnly && !hasLocalActivity ? (
+        <p className="rrw-meta" style={{ marginTop: "0.85rem" }}>
+          Jugador vinculado desde otro club sin participaciones ni saldo en este club. Los puntos de su club de origen son privados.
+        </p>
+      ) : (
+        <>
+          <p className="rrw-meta">Pendientes de validar: {pending.length}</p>
+          <label className="rrw-fields">Campaña
+            <select value={campaignId} onChange={(event) => setCampaignId(event.target.value)}>
+              <option value="">Elige</option>
+              {campaigns.filter((item) => item.estado === "activa").map((item) => (
+                <option key={item.id} value={item.id}>{item.nombre}</option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="rrw-btn"
+            disabled={busy || pending.length === 0 || !campaignId}
+            onClick={() =>
+              act(() =>
+                reviewParticipations({
+                  organizadorId,
+                  participacionIds: pending,
+                  decision: "aprobada",
+                  campaignId,
+                })
+              )
+            }
+          >
+            Aprobar pendientes
+          </button>
+          <label className="rrw-fields">Premio en canje
+            <select value={rewardId} onChange={(event) => setRewardId(event.target.value)}>
+              <option value="">Elige</option>
+              {openRewards.map((reward) => (
+                <option key={reward.id} value={reward.id}>{reward.nombre} · {reward.costo_puntos}</option>
+              ))}
+            </select>
+          </label>
+          {rewardId && selectedReward && !canRequest && (
+            <p className="rrw-meta">
+              Puntos insuficientes ({redeeming?.disponible ?? 0} de {selectedReward.costo_puntos} pts necesarios).
+            </p>
+          )}
+          <button
+            type="button"
+            className="rrw-btn--ghost"
+            disabled={busy || !canRequest}
+            onClick={() => act(() => requestRedemption(organizadorId, rewardId, jugadorId))}
+          >
+            Solicitar
+          </button>
+          <ul className="rrw-list">
+            {redemptions.map((item) => (
+              <li key={item.id}>
+                <span>{item.snapshot?.nombre ?? "Premio"} · {item.estado}</span>
+                <span>
+                  {item.estado === "solicitado" && <button type="button" className="rrw-btn--ghost" disabled={busy} onClick={() => act(() => reserveRedemption(item.id))}>Reservar</button>}
+                  {item.estado === "reservado" && <button type="button" className="rrw-btn--ghost" disabled={busy} onClick={() => act(() => confirmRedemption(item.id))}>Entregar</button>}
+                  {(item.estado === "solicitado" || item.estado === "reservado") && (
+                    <button type="button" className="rrw-btn--danger" disabled={busy} onClick={() => act(() => cancelRedemption(item.id))}>Cancelar</button>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
       {error && <p className="rrw-error">{error}</p>}
     </section>
   );

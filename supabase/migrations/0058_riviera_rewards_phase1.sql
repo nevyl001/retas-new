@@ -1186,6 +1186,7 @@ DECLARE
   v_campaign public.rewards_campaigns%ROWTYPE;
   v_id uuid;
   v_used integer;
+  v_available integer;
 BEGIN
   PERFORM public.rewards_assert_can_request(p_organizador_id, p_jugador_id);
   SELECT * INTO v_reward
@@ -1208,6 +1209,15 @@ BEGIN
     IF v_used >= v_reward.limite_por_jugador THEN
       RAISE EXCEPTION 'Este jugador ya alcanzó el límite del premio';
     END IF;
+  END IF;
+
+  SELECT COALESCE(SUM(puntos_restantes), 0) INTO v_available
+  FROM public.rewards_lots
+  WHERE campaign_id = v_campaign.id
+    AND jugador_id = p_jugador_id
+    AND NOT anulado;
+  IF v_available < v_reward.costo_puntos THEN
+    RAISE EXCEPTION 'Saldo insuficiente para solicitar este premio';
   END IF;
 
   INSERT INTO public.rewards_redemptions (

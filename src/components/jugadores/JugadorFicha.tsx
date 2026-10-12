@@ -751,6 +751,15 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           </div>
         )}
 
+        {activeOrgId && jugador ? (
+          <JugadorRewardsPanel
+            mode="admin"
+            organizadorId={activeOrgId}
+            jugadorId={jugador.id}
+            isGrantedReadOnly={isGrantedReadOnly}
+          />
+        ) : null}
+
         <JugadorAvatarPhotoWelcomeModal
           open={welcomePhotoOpen}
           playerName={jugador.nombre}
