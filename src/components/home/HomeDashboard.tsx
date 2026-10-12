@@ -17,6 +17,7 @@ import { navigateAppTo } from "../../lib/appRouting";
 import { buildRankingComoFuncionaPath } from "../jugadores/jugadoresPublicNav";
 import { navigateJugadores } from "../jugadores/jugadoresNav";
 import { navigateCoaching } from "../coaching/coachingNav";
+import { navigateRewards } from "../rewards/rewardsNav";
 import { TablerIcon } from "../ui/TablerIcon";
 import { type GameModeId } from "./gameModesConfig";
 import {
@@ -244,6 +245,23 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               <span className="home-access-card__title">Riviera Coaching</span>
               <span className="home-access-card__desc">
                 Coaches, jugadores y agenda del club.
+              </span>
+            </span>
+            <TablerIcon name="chevron-right" size={20} className="home-access-card__go" />
+          </button>
+
+          <button
+            type="button"
+            className="home-access-card"
+            onClick={() => navigateRewards("/rewards")}
+          >
+            <span className="home-access-card__icon" aria-hidden>
+              <TablerIcon name="gift" size={26} />
+            </span>
+            <span className="home-access-card__body">
+              <span className="home-access-card__title">Riviera Rewards</span>
+              <span className="home-access-card__desc">
+                Campañas, puntos, premios y canjes.
               </span>
             </span>
             <TablerIcon name="chevron-right" size={20} className="home-access-card__go" />

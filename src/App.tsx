@@ -110,6 +110,11 @@ const JugadoresRouter = lazy(() =>
     default: module.JugadoresRouter,
   }))
 );
+const RewardsRouter = lazy(() =>
+  import("./components/rewards/RewardsRouter").then((module) => ({
+    default: module.RewardsRouter,
+  }))
+);
 const CoachingRouter = lazy(() =>
   import("./components/coaching/CoachingRouter").then((module) => ({
     default: module.CoachingRouter,
@@ -943,6 +948,14 @@ function AppContent() {
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <JugadoresRouter key={appPathname} pathname={appPathname} />
+            </Suspense>
+          </ErrorBoundary>
+        )}
+
+        {currentView === "rewards" && (
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <RewardsRouter key={appPathname} pathname={appPathname} />
             </Suspense>
           </ErrorBoundary>
         )}

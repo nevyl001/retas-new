@@ -16,6 +16,7 @@ export type AppView =
   | "duelo-2v2"
   | "jugadores"
   | "coaching"
+  | "rewards"
   | "reta-abierta"
   | "auth-callback"
   | "auth-reset-password"
@@ -240,6 +241,8 @@ export function resolveAppViewFromPath(pathname: string): AppView {
     return "liga";
   if (currentPath === "/coaching" || currentPath.startsWith("/coaching/"))
     return "coaching";
+  if (currentPath === "/rewards" || currentPath.startsWith("/rewards/"))
+    return "rewards";
   if (
     currentPath.startsWith("/duelo-2v2") ||
     /^\/public\/duelo-2v2\//i.test(currentPath)
@@ -281,6 +284,7 @@ export function pathRequiresUserSession(pathname: string): boolean {
   if (path.includes("/public/")) return false;
   if (path.startsWith("/liga")) return true;
   if (path.startsWith("/coaching")) return true;
+  if (path.startsWith("/rewards")) return true;
   if (path.startsWith("/duelo-2v2")) return true;
   if (path.startsWith("/public/jugadores")) return false;
   if (path === "/ranking" || path.startsWith("/ranking/")) return false;

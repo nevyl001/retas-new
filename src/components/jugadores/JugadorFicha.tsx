@@ -46,6 +46,7 @@ import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
 import { RivieraIdShareBlock } from "./RivieraIdShareBlock";
 import { JugadorHistorialList } from "./JugadorHistorialList";
 import { RatingNivel } from "./RatingNivel";
+import { JugadorRewardsPanel } from "./JugadorRewardsPanel";
 import { navigateJugadorFicha, navigateJugadores } from "./jugadoresNav";
 import { Button, Input } from "../ui";
 import "./riviera-jugadores.css";

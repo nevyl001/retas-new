@@ -159,6 +159,8 @@ describe("home presentation", () => {
       // Accesos rápidos: sección propia y visible, no franja de enlaces.
       expect(view).toContain("home-access");
       expect(view).toContain("Accesos rápidos");
+      expect(view).toContain("Riviera Rewards");
+      expect(view).toContain("Campañas, puntos, premios y canjes.");
       expect(view).toContain("Registro de jugadores");
       expect(view).toContain("Cómo funciona el ranking");
       expect(view).toContain("Historial");

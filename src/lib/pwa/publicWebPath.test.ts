@@ -42,6 +42,7 @@ describe("isPublicWebPath", () => {
     "/duelo-2v2/abc/gestionar",
     "/jugadores",
     "/coaching",
+    "/rewards",
     "/reta/abc",
     "/americano-dinamico",
     "/admin-dashboard",

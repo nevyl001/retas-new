@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useUser } from "../../contexts/UserContext";
 import {
   ClubExperienceScope,
   getOrganizerCelebrateTagline,
@@ -44,6 +45,7 @@ import { RivieraIdBadge } from "./RivieraIdBadge";
 import { JugadorPuntosBreakdown } from "./JugadorPuntosBreakdown";
 import { JugadorOfficialRomcPuntos } from "./JugadorOfficialRomcPuntos";
 import { JugadorPublicHistorial } from "./JugadorPublicHistorial";
+import { JugadorRewardsPanel } from "./JugadorRewardsPanel";
 import { RatingNivel } from "./RatingNivel";
 import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
@@ -144,6 +146,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   slug,
   playerId,
 }) => {
+  const { user } = useUser();
   const viewingOrgId = getPublicOrganizadorIdWithoutUser(
     typeof window !== "undefined" ? window.location.pathname : undefined
   );
@@ -634,6 +637,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
             )}
           </div>
         </div>
+
+        {user && jugador ? (
+          <JugadorRewardsPanel mode="player" jugadorId={jugador.id} />
+        ) : null}
 
         <footer className="rjp-ficha-footer">
           <span className="rjp-ficha-footer__line" aria-hidden />

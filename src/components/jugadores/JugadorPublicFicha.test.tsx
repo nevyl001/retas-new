@@ -27,6 +27,10 @@ jest.mock("../../lib/rivieraJugadores/grantedRankingDisplay", () => ({
   prefetchOrganizerDisplayNames: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock("../../contexts/UserContext", () => ({
+  useUser: () => ({ user: null }),
+}));
+
 jest.mock("../../club-experience", () => ({
   ClubExperienceScope: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
