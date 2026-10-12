@@ -30,7 +30,11 @@ import {
   formatWindowEnd,
   redeemingNow,
 } from "../../lib/rewards/present";
-import { getOrganizerDisplayNameSync } from "../../lib/organizer/organizerDisplayName";
+import {
+  getCachedOrganizerDisplayName,
+  getOrganizerDisplayNameSync,
+  resolveOrganizerDisplayName,
+} from "../../lib/organizer/organizerDisplayName";
 import { UserContext } from "../../contexts/UserContext";
 import { Button } from "../ui/Button";
 import { TablerIcon } from "../ui/TablerIcon";
@@ -110,6 +114,19 @@ export const JugadorRewardsPanel: React.FC<JugadorRewardsPanelProps> = ({
 
 const FallbackUserContext = React.createContext<{ user: any } | undefined>(undefined);
 
+export function isValidClubDisplayName(name: string | null | undefined): boolean {
+  if (!name) return false;
+  const trimmed = name.trim().toLowerCase();
+  return (
+    trimmed !== "" &&
+    trimmed !== "club" &&
+    trimmed !== "organizador" &&
+    trimmed !== "pendiente" &&
+    trimmed !== "undefined" &&
+    trimmed !== "null"
+  );
+}
+
 function PlayerRewardsView({
   jugadorId,
   organizadorId: initialOrganizadorId,
@@ -144,22 +161,72 @@ function PlayerRewardsView({
 
   // Clubes autorizados devueltos por el snapshot RPC (máxima fidelidad)
   const [authorizedClubs, setAuthorizedClubs] = useState<Array<{ organizadorId: string; jugadorId: string }>>([]);
+  const [resolvedNames, setResolvedNames] = useState<Record<string, string>>({});
 
-  // Lista de clubes disponibles donde el jugador tiene identidad, participaciones o perfil
+  // Resolver asíncronamente nombres de clubes candidatos para no mostrar "Club"
+  useEffect(() => {
+    const orgIds: string[] = [];
+    if (initialOrganizadorId) orgIds.push(initialOrganizadorId);
+    if (participatingClubIds) orgIds.push(...participatingClubIds);
+    if (linkedProfiles) {
+      for (const p of linkedProfiles) {
+        if (p.organizadorId) orgIds.push(p.organizadorId);
+      }
+    }
+    for (const ac of authorizedClubs) {
+      if (ac.organizadorId) orgIds.push(ac.organizadorId);
+    }
+    const unique = Array.from(new Set(orgIds.filter(Boolean)));
+    let active = true;
+
+    const fetchOrgName = (orgId: string) => {
+      resolveOrganizerDisplayName(orgId)
+        .then((name) => {
+          if (active && isValidClubDisplayName(name)) {
+            setResolvedNames((prev) => (prev[orgId] === name ? prev : { ...prev, [orgId]: name }));
+          }
+        })
+        .catch(() => {});
+    };
+
+    for (const orgId of unique) {
+      const cached = getCachedOrganizerDisplayName(orgId);
+      if (cached && isValidClubDisplayName(cached)) {
+        setResolvedNames((prev) => (prev[orgId] === cached ? prev : { ...prev, [orgId]: cached }));
+        continue;
+      }
+      fetchOrgName(orgId);
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [initialOrganizadorId, participatingClubIds, linkedProfiles, authorizedClubs]);
+
+  // Lista de clubes disponibles con nombres REALES filtrados (cero "Club")
   const availableClubs = useMemo(() => {
     const list: Array<{ organizadorId: string; jugadorId: string; displayName: string }> = [];
     const seen = new Set<string>();
 
     const addClub = (orgId: string, jId?: string) => {
       if (!orgId || seen.has(orgId)) return;
+
+      const name =
+        resolvedNames[orgId] ||
+        (orgId === initialOrganizadorId && isValidClubDisplayName(propClubName) ? propClubName! : "") ||
+        getCachedOrganizerDisplayName(orgId) ||
+        getOrganizerDisplayNameSync(orgId);
+
+      // Descartar placeholders genéricos como "Club"
+      if (!isValidClubDisplayName(name)) {
+        return;
+      }
+
       seen.add(orgId);
       list.push({
         organizadorId: orgId,
         jugadorId: jId || jugadorId,
-        displayName:
-          orgId === initialOrganizadorId && propClubName
-            ? propClubName
-            : getOrganizerDisplayNameSync(orgId),
+        displayName: name,
       });
     };
 
@@ -182,18 +249,21 @@ function PlayerRewardsView({
       }
     }
 
-    // 4. Club inicial del prop si no estaba ya en la lista
+    // 4. Club inicial del prop
     if (initialOrganizadorId) {
       addClub(initialOrganizadorId, jugadorId);
     }
 
-    // 5. Fallback si la lista está vacía
-    if (list.length === 0 && initialOrganizadorId) {
-      addClub(initialOrganizadorId, jugadorId);
-    }
-
     return list;
-  }, [authorizedClubs, linkedProfiles, participatingClubIds, initialOrganizadorId, propClubName, jugadorId]);
+  }, [
+    authorizedClubs,
+    linkedProfiles,
+    participatingClubIds,
+    initialOrganizadorId,
+    propClubName,
+    jugadorId,
+    resolvedNames,
+  ]);
 
   // Club actualmente seleccionado
   const [activeOrgId, setActiveOrgId] = useState<string>(() => {
@@ -208,6 +278,28 @@ function PlayerRewardsView({
   }, [availableClubs, activeOrgId]);
 
   const activeJugadorId = activeClub?.jugadorId || jugadorId;
+
+  const currentClubDisplayName = useMemo(() => {
+    if (activeClub?.displayName && isValidClubDisplayName(activeClub.displayName)) {
+      return activeClub.displayName;
+    }
+    if (propClubName && isValidClubDisplayName(propClubName)) {
+      return propClubName;
+    }
+    const fromResolved = activeOrgId ? resolvedNames[activeOrgId] : "";
+    if (isValidClubDisplayName(fromResolved)) {
+      return fromResolved;
+    }
+    const fromCache = activeOrgId ? getCachedOrganizerDisplayName(activeOrgId) : null;
+    if (isValidClubDisplayName(fromCache)) {
+      return fromCache!;
+    }
+    const sync = getOrganizerDisplayNameSync(activeOrgId);
+    if (isValidClubDisplayName(sync)) {
+      return sync;
+    }
+    return "";
+  }, [activeClub, propClubName, activeOrgId, resolvedNames]);
 
   const [snapshot, setSnapshot] = useState<PlayerSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -253,10 +345,50 @@ function PlayerRewardsView({
     setUnlinked(false);
     setError(null);
 
-    playerSnapshot(activeJugadorId, activeOrgId || undefined)
-      .then((data) => {
+    const loadData = async () => {
+      try {
+        let data: PlayerSnapshot;
+        try {
+          data = await playerSnapshot(activeJugadorId, activeOrgId || undefined);
+        } catch (initialErr: unknown) {
+          const msg = initialErr instanceof Error ? initialErr.message : String(initialErr);
+          const isLinkError =
+            msg.includes("no está vinculada") ||
+            msg.includes("Sin sesión") ||
+            msg.includes("Sin permiso");
+
+          if (isLinkError) {
+            // 1. Si el perfil tiene otros clubes vinculados en availableClubs, intentar con el siguiente
+            const otherClub = availableClubsRef.current.find((c) => c.organizadorId !== activeOrgId);
+            if (otherClub && otherClub.organizadorId && !hasTriedFallbackRef.current) {
+              hasTriedFallbackRef.current = true;
+              setActiveOrgId(otherClub.organizadorId);
+              return;
+            }
+
+            // 2. Si no hay otro club o ya se intentó, consultar globalmente sin org (RPC 0059 multiclub)
+            if (activeOrgId) {
+              try {
+                data = await playerSnapshot(activeJugadorId, undefined);
+              } catch {
+                throw initialErr;
+              }
+            } else {
+              throw initialErr;
+            }
+          } else {
+            throw initialErr;
+          }
+        }
+
         if (!active) return;
         setSnapshot(data);
+
+        // Si el snapshot devolvió un club autorizado y activo distinto, sincronizamos
+        if (data.organizador_id && data.organizador_id !== activeOrgId) {
+          setActiveOrgId(data.organizador_id);
+        }
+
         if (data.clubes_autorizados && data.clubes_autorizados.length > 0) {
           setAuthorizedClubs((prev) => {
             const next = data.clubes_autorizados!.map((c) => ({
@@ -276,15 +408,15 @@ function PlayerRewardsView({
             return next;
           });
         }
-        if (data.saldos.length > 0) {
+
+        if (data.saldos && data.saldos.length > 0) {
           const activeCamp =
             data.saldos.find((s) => s.fase === "canje") ||
             data.saldos.find((s) => s.fase === "acumulacion") ||
             data.saldos[0];
           setSelectedCampaignId(activeCamp.campaign_id);
         }
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (!active) return;
         const msg = err instanceof Error ? err.message : String(err);
         if (
@@ -292,22 +424,16 @@ function PlayerRewardsView({
           msg.includes("Sin sesión") ||
           msg.includes("Sin permiso")
         ) {
-          // Si falló este club pero hay otros clubes disponibles en la identidad del jugador,
-          // intentamos con el siguiente club antes de marcar unlinked definitivo
-          const otherClubs = availableClubsRef.current.filter((c) => c.organizadorId !== activeOrgId);
-          if (otherClubs.length > 0 && !hasTriedFallbackRef.current) {
-            hasTriedFallbackRef.current = true;
-            setActiveOrgId(otherClubs[0].organizadorId);
-            return;
-          }
           setUnlinked(true);
         } else {
           setError(msg);
         }
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    loadData();
 
     return () => {
       active = false;
@@ -347,11 +473,9 @@ function PlayerRewardsView({
 
   // 1. Visitante sin sesión iniciada
   if (!user) {
-    const clubDisplayName =
-      activeClub?.displayName || propClubName || getOrganizerDisplayNameSync(activeOrgId);
     return (
       <section className={`rjp-ficha-surface rjp-ficha-rewards ${className ?? ""}`} aria-label="Riviera Rewards">
-        <div className="rrw-guest-card">
+        <div className="rrw-compact-card rrw-guest-card">
           {availableClubs.length > 1 && (
             <div className="rrw-club-selector" role="tablist" aria-label="Clubes de Rewards">
               <span className="rrw-club-selector-label">Club:</span>
@@ -374,42 +498,39 @@ function PlayerRewardsView({
             </div>
           )}
 
-          <div className="rrw-guest-badge">
+          <div className="rrw-compact-header rrw-guest-badge">
             <span className="rrw-kicker">Riviera Rewards</span>
             <span className="rrw-badge rrw-badge--neutral">Programa Oficial</span>
           </div>
-          <h2 className="rrw-guest-title">Programa de fidelización y recompensas</h2>
-          <p className="rrw-guest-text">
+          <h2 className="rrw-compact-title rrw-guest-title">Programa de fidelización y recompensas</h2>
+          <p className="rrw-compact-lead rrw-guest-text">
             Acumula puntos en cada reta con Riviera Rewards. Los jugadores acumulan beneficios exclusivos organizados por los clubes sede, de forma independiente al ranking deportivo.
           </p>
 
-          <div className="rrw-benefits-grid">
-            <div className="rrw-benefit-item">
-              <TablerIcon name="award" size={16} className="rrw-benefit-icon" />
+          <ul className="rrw-compact-benefits">
+            <li>
+              <TablerIcon name="award" size={14} className="rrw-bullet-icon" />
               <div>
-                <strong>Puntos en retas</strong>
-                <span>Acumula en eventos oficiales de {clubDisplayName || "cada club"}.</span>
+                <strong>Puntos en retas</strong> · Acumula en eventos oficiales de {currentClubDisplayName || "cada club"}.
               </div>
-            </div>
-            <div className="rrw-benefit-item">
-              <TablerIcon name="gift" size={16} className="rrw-benefit-icon" />
+            </li>
+            <li>
+              <TablerIcon name="gift" size={14} className="rrw-bullet-icon" />
               <div>
-                <strong>Premios y experiencias</strong>
-                <span>Catálogo de recompensas canjeables administrado por el club sede.</span>
+                <strong>Premios y experiencias</strong> · Catálogo de recompensas canjeables administrado por el club sede.
               </div>
-            </div>
-            <div className="rrw-benefit-item">
-              <TablerIcon name="device-gamepad-2" size={16} className="rrw-benefit-icon" />
+            </li>
+            <li>
+              <TablerIcon name="device-gamepad-2" size={14} className="rrw-bullet-icon" />
               <div>
-                <strong>Independiente del ranking</strong>
-                <span>Tus puntos deportivos y tus puntos Rewards no se mezclan.</span>
+                <strong>Independiente del ranking</strong> · Tus puntos deportivos y tus puntos Rewards no se mezclan.
               </div>
-            </div>
-          </div>
+            </li>
+          </ul>
 
-          <div className="rrw-guest-action">
-            <a href="/login" className="rrw-guest-btn">
-              <TablerIcon name="user-circle" size={16} />
+          <div className="rrw-compact-cta-wrap rrw-guest-action">
+            <a href="/login" className="rrw-compact-btn rrw-guest-btn">
+              <TablerIcon name="user-circle" size={15} />
               Iniciar sesión para consultar tus puntos
             </a>
           </div>
@@ -420,11 +541,9 @@ function PlayerRewardsView({
 
   // 2. Usuario con sesión pero no vinculado al jugador del perfil
   if (unlinked) {
-    const clubDisplayName =
-      activeClub?.displayName || propClubName || getOrganizerDisplayNameSync(activeOrgId);
     return (
       <section className={`rjp-ficha-surface rjp-ficha-rewards ${className ?? ""}`} aria-label="Riviera Rewards">
-        <div className="rrw-guest-card">
+        <div className="rrw-compact-card rrw-guest-card">
           {availableClubs.length > 1 && (
             <div className="rrw-club-selector" role="tablist" aria-label="Clubes de Rewards">
               <span className="rrw-club-selector-label">Club:</span>
@@ -447,46 +566,43 @@ function PlayerRewardsView({
             </div>
           )}
 
-          <div className="rrw-guest-badge">
+          <div className="rrw-compact-header rrw-guest-badge">
             <span className="rrw-kicker">Riviera Rewards</span>
             <span className="rrw-badge rrw-badge--neutral">Programa Oficial</span>
           </div>
-          <h2 className="rrw-guest-title">Puntos y Recompensas del Club</h2>
-          <p className="rrw-guest-text">
+          <h2 className="rrw-compact-title rrw-guest-title">Puntos y Recompensas del Club</h2>
+          <p className="rrw-compact-lead rrw-guest-text">
             Los saldos y canjes de Riviera Rewards son personales y se acumulan en retas y torneos oficiales organizados por cada club sede, de forma independiente al ranking deportivo.
           </p>
 
-          <div className="rrw-benefits-grid">
-            <div className="rrw-benefit-item">
-              <TablerIcon name="award" size={16} className="rrw-benefit-icon" />
+          <ul className="rrw-compact-benefits">
+            <li>
+              <TablerIcon name="award" size={14} className="rrw-bullet-icon" />
               <div>
-                <strong>Puntos por participación</strong>
-                <span>Acumula en cada reta oficial de {clubDisplayName || "tu club sede"}.</span>
+                <strong>Puntos por participación</strong> · Acumula en cada reta oficial de {currentClubDisplayName || "tu club sede"}.
               </div>
-            </div>
-            <div className="rrw-benefit-item">
-              <TablerIcon name="gift" size={16} className="rrw-benefit-icon" />
+            </li>
+            <li>
+              <TablerIcon name="gift" size={14} className="rrw-bullet-icon" />
               <div>
-                <strong>Premios exclusivos</strong>
-                <span>Canjea equipamiento, accesos y beneficios del club.</span>
+                <strong>Premios exclusivos</strong> · Canjea equipamiento, accesos y beneficios del club.
               </div>
-            </div>
-            <div className="rrw-benefit-item">
-              <TablerIcon name="shield-check" size={16} className="rrw-benefit-icon" />
+            </li>
+            <li>
+              <TablerIcon name="shield-check" size={14} className="rrw-bullet-icon" />
               <div>
-                <strong>Saldos por club</strong>
-                <span>Puntos separados por organizador, sin alterar tu puntaje deportivo.</span>
+                <strong>Saldos por club</strong> · Puntos separados por organizador, sin alterar tu puntaje deportivo.
               </div>
-            </div>
-          </div>
+            </li>
+          </ul>
 
-          <div className="rrw-unlinked-guide">
-            <div className="rrw-unlinked-guide-header">
-              <TablerIcon name="user-check" size={16} className="rrw-guide-icon" />
+          <div className="rrw-compact-guide rrw-unlinked-guide">
+            <div className="rrw-compact-guide-head rrw-unlinked-guide-header">
+              <TablerIcon name="user-check" size={15} className="rrw-guide-icon" />
               <strong>¿Eres el propietario de este perfil?</strong>
             </div>
-            <p className="rrw-unlinked-guide-text">
-              Para consultar tu saldo de puntos y solicitar premios en {clubDisplayName || "este club"}, solicita en la administración o recepción del club organizador que vinculen tu cuenta ({user?.email || "tu correo"}) a tu perfil de Riviera Rewards.
+            <p className="rrw-compact-guide-body rrw-unlinked-guide-text">
+              Para consultar tu saldo de puntos y solicitar premios en {currentClubDisplayName || "este club"}, solicita en la administración o recepción del club organizador que vinculen tu cuenta ({user?.email || "tu correo"}) a tu perfil de Riviera Rewards.
             </p>
             <span className="rrw-unlinked-guide-subtext">
               Procedimiento oficial de vinculación verificado por el club sede.
@@ -501,9 +617,9 @@ function PlayerRewardsView({
   if (loading && !snapshot) {
     return (
       <section className={`rjp-ficha-surface rjp-ficha-rewards ${className ?? ""}`} aria-label="Riviera Rewards">
-        <div className="rrw-card" style={{ padding: "1.25rem" }}>
+        <div className="rrw-compact-card rrw-compact-card--loading">
           <p className="rrw-kicker">Riviera Rewards</p>
-          <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-muted)" }}>
+          <p className="rrw-compact-loading-text">
             Consultando recompensas y balance del club…
           </p>
         </div>
@@ -515,7 +631,7 @@ function PlayerRewardsView({
   if (error && !snapshot) {
     return (
       <section className={`rjp-ficha-surface rjp-ficha-rewards ${className ?? ""}`} aria-label="Riviera Rewards">
-        <div className="rrw-card">
+        <div className="rrw-compact-card">
           <div className="rrw-error-banner">
             <TablerIcon name="alert-triangle" size={16} />
             <span className="rrw-error-text">{error}</span>
@@ -529,10 +645,10 @@ function PlayerRewardsView({
   if (!snapshot || snapshot.saldos.length === 0) {
     return (
       <section className={`rjp-ficha-surface rjp-ficha-rewards ${className ?? ""}`} aria-label="Riviera Rewards">
-        <div className="rrw-card">
+        <div className="rrw-compact-card">
           <p className="rrw-kicker">Riviera Rewards</p>
-          <h2 className="rrw-card-title">Club de Recompensas</h2>
-          <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+          <h2 className="rrw-compact-title rrw-card-title">Club de Recompensas</h2>
+          <p style={{ margin: "0.5rem 0 0", fontSize: "0.82rem", color: "var(--text-muted)" }}>
             El club no tiene campañas activas de Riviera Rewards en este momento.
           </p>
         </div>
@@ -621,7 +737,7 @@ function PlayerRewardsView({
 
   return (
     <section className={`rjp-ficha-surface rjp-ficha-rewards ${className ?? ""}`} aria-label="Riviera Rewards">
-      <div className="rrw-player-panel">
+      <div className="rrw-compact-card rrw-player-panel">
         {/* Selector de club si el jugador participa en múltiples clubes */}
         {availableClubs.length > 1 && (
           <div className="rrw-club-selector" role="tablist" aria-label="Clubes de Rewards">

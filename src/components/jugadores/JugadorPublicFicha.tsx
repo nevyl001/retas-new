@@ -629,6 +629,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
 
           {jugador && (
             <JugadorRewardsPanel
+              key={`rewards-${clubLabelsEpoch}`}
               mode="player"
               jugadorId={jugador.id}
               organizadorId={viewingOrgId || registrationOrgId}

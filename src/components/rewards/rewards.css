@@ -1122,3 +1122,359 @@
     font-size: 16px !important;
   }
 }
+
+/* ============================================================
+   RIVIERA REWARDS — Perfil de Ranking Compacto & Premium
+   Diseño sobrio, oscuro, monocromático sin tonos dorados.
+   ============================================================ */
+
+.rrw-compact-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.95rem 1rem;
+  background: var(--bg-card, #0f1318);
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-lg, 12px);
+  box-sizing: border-box;
+  color: var(--text-primary, #ffffff);
+}
+
+.rrw-compact-card--loading {
+  padding: 1rem;
+}
+
+.rrw-compact-loading-text {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted, #64748b);
+}
+
+.rrw-compact-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rrw-compact-club-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary, #94a3b8);
+  background: var(--surface-1, rgba(255, 255, 255, 0.04));
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.rrw-compact-title {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text-primary, #ffffff);
+  line-height: 1.25;
+}
+
+.rrw-compact-lead {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.rrw-compact-campaign-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: -0.2rem;
+}
+
+.rrw-compact-campaign-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary, #cbd5e1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Lista de beneficios compacta (1 línea por beneficio) */
+.rrw-compact-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0.15rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rrw-compact-benefits li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: var(--text-secondary, #cbd5e1);
+}
+
+.rrw-bullet-icon {
+  color: var(--text-muted, #64748b);
+  flex-shrink: 0;
+}
+
+/* CTA institucional sobrio */
+.rrw-compact-cta-wrap {
+  margin-top: 0.2rem;
+}
+
+.rrw-compact-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--surface-2, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-md, 8px);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.rrw-compact-btn:hover {
+  background: var(--surface-3, rgba(255, 255, 255, 0.14));
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Guía compacta para dueño no vinculado */
+.rrw-compact-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.65rem 0.8rem;
+  background: var(--surface-1, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  border-radius: var(--radius-md, 8px);
+  margin-top: 0.15rem;
+}
+
+.rrw-compact-guide-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--text-primary, #ffffff);
+}
+
+.rrw-compact-guide-head svg {
+  color: var(--text-muted, #64748b);
+  flex-shrink: 0;
+}
+
+.rrw-compact-guide-body {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--text-secondary, #94a3b8);
+}
+
+/* Métrica principal destacada: Puntos disponibles */
+.rrw-compact-hero-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--surface-1, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  border-radius: var(--radius-md, 8px);
+  margin: 0.15rem 0;
+}
+
+.rrw-hero-metric-val {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary, #ffffff);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.rrw-hero-metric-label {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.rrw-hero-metric-label strong {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary, #e2e8f0);
+}
+
+.rrw-hero-metric-label span {
+  font-size: 0.7rem;
+  color: var(--text-muted, #64748b);
+}
+
+/* Métricas secundarias en 3 columnas compactas */
+.rrw-compact-sub-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+}
+
+.rrw-sub-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0.45rem 0.3rem;
+  background: var(--surface-1, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.04));
+  border-radius: var(--radius-sm, 6px);
+}
+
+.rrw-sub-metric-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary, #ffffff);
+  line-height: 1;
+}
+
+.rrw-sub-metric-lbl {
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: var(--text-muted, #64748b);
+  margin-top: 0.2rem;
+  white-space: nowrap;
+}
+
+/* Barra de progreso de la próxima recompensa */
+.rrw-compact-progress-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--surface-1, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+  border-radius: var(--radius-md, 8px);
+}
+
+.rrw-compact-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.74rem;
+}
+
+.rrw-progress-reward-name {
+  font-weight: 600;
+  color: var(--text-primary, #e2e8f0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rrw-progress-reward-pts {
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.rrw-progress-track {
+  height: 4px;
+  background: var(--surface-2, rgba(255, 255, 255, 0.08));
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.rrw-progress-fill {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+/* ── Ajustes proporcionales y compactos para el perfil público de ranking ── */
+.rjp-ficha-rewards .rrw-guest-card,
+.rjp-ficha-rewards .rrw-player-panel {
+  padding: 0.85rem 0.95rem;
+  gap: 0.6rem;
+  background: var(--bg-card, #0f1318);
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-lg, 12px);
+  box-sizing: border-box;
+}
+
+.rjp-ficha-rewards .rrw-kpi-grid {
+  gap: 0.4rem;
+}
+
+.rjp-ficha-rewards .rrw-kpi-card {
+  padding: 0.5rem 0.65rem;
+  gap: 0.15rem;
+  background: var(--surface-1, rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+  border-radius: var(--radius-sm, 6px);
+}
+
+.rjp-ficha-rewards .rrw-kpi-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+}
+
+.rjp-ficha-rewards .rrw-kpi-value {
+  font-size: 1.25rem;
+}
+
+.rjp-ficha-rewards .rrw-kpi-note {
+  font-size: 0.68rem;
+  display: none;
+}
+
+.rjp-ficha-rewards .rrw-next-reward-box {
+  padding: 0.6rem 0.75rem;
+  gap: 0.35rem;
+  background: var(--surface-1, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+  border-radius: var(--radius-md, 8px);
+}
+
+.rjp-ficha-rewards .rrw-independence-disclaimer {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.72rem;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+}
+
+.rjp-ficha-rewards .rrw-sub-block {
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+}
+
+.rjp-ficha-rewards .rrw-sub-title {
+  font-size: 0.82rem;
+  margin-bottom: 0.35rem;
+}
+
+.rjp-ficha-rewards .rrw-item-row {
+  padding: 0.4rem 0.55rem;
+}
+
+.rjp-ficha-rewards .rrw-reward-item {
+  padding: 0.55rem 0.7rem;
+}
+
+

@@ -4,7 +4,7 @@
 /* eslint-disable testing-library/no-unnecessary-act */
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { JugadorRewardsPanel } from "./JugadorRewardsPanel";
+import { JugadorRewardsPanel, isValidClubDisplayName } from "./JugadorRewardsPanel";
 import * as rewardsApi from "../../lib/rewards/api";
 import { rememberOrganizerDisplayName } from "../../lib/organizer/organizerDisplayName";
 
@@ -524,6 +524,8 @@ describe("JugadorRewardsPanel — Fidelización Multiclub y Resolución de Ident
     document.body.appendChild(container);
     mockPlayerSnapshot.mockReset();
     mockPlayerRequestRedemption.mockReset();
+    rememberOrganizerDisplayName("org-padelito", "Padelito Warehouse");
+    rememberOrganizerDisplayName("org-hack", "Hack Padel");
   });
 
   afterEach(() => {
@@ -1244,4 +1246,217 @@ describe("Riviera Rewards — Verificaciones de seguridad y visibilidad multiclu
     expect(disclaimer?.textContent).toContain("independiente al puntaje del ranking deportivo");
   });
 });
+
+describe("Riviera Rewards — Corrección Definitiva: Selector Limpio, Fallback y Experiencia Premium", () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    mockPlayerSnapshot.mockReset();
+    mockPlayerRequestRedemption.mockReset();
+    mockListParticipaciones.mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    act(() => {
+      if (root) root.unmount();
+    });
+    container.remove();
+    jest.clearAllMocks();
+  });
+
+  async function flush() {
+    for (let i = 0; i < 5; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+  }
+
+  test("1. Helper isValidClubDisplayName descarta opciones basura y valida nombres reales", () => {
+    expect(isValidClubDisplayName("Club")).toBe(false);
+    expect(isValidClubDisplayName("club")).toBe(false);
+    expect(isValidClubDisplayName("")).toBe(false);
+    expect(isValidClubDisplayName(null)).toBe(false);
+    expect(isValidClubDisplayName(undefined)).toBe(false);
+    expect(isValidClubDisplayName("pendiente")).toBe(false);
+    expect(isValidClubDisplayName("organizador")).toBe(false);
+    expect(isValidClubDisplayName("Padelito Warehouse")).toBe(true);
+    expect(isValidClubDisplayName("Hack Padel")).toBe(true);
+    expect(isValidClubDisplayName("Riviera Open")).toBe(true);
+  });
+
+  test("2. Si solo hay 1 club válido, NO se renderiza selector de clubes", async () => {
+    rememberOrganizerDisplayName("org-padelito", "Padelito Warehouse");
+    mockPlayerSnapshot.mockResolvedValue({
+      organizador_id: "org-padelito",
+      saldos: [
+        {
+          campaign_id: "camp-1",
+          nombre: "Campaña Única",
+          fase: "acumulacion",
+          acumulando: 50,
+          disponible: 0,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+          acumula_desde: "2026-10-01T00:00:00Z",
+          acumula_hasta: "2026-11-01T00:00:00Z",
+          canje_desde: "2026-11-01T00:00:00Z",
+          canje_hasta: "2026-12-01T00:00:00Z",
+        },
+      ],
+      premios: [],
+      canjes: [],
+    });
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="j-1"
+          organizadorId="org-padelito"
+          clubName="Padelito Warehouse"
+          currentUser={{ id: "auth-1", email: "user@test.com" }}
+        />
+      );
+    });
+    await flush();
+
+    // No debe haber selector de clubes cuando hay <= 1 club
+    expect(container.querySelector(".rrw-club-selector")).toBeNull();
+    // Pero sí muestra el club en la ficha
+    expect(container.textContent).toContain("Padelito Warehouse");
+  });
+
+  test("3. Si un club candidato tiene fallback genérico 'Club', se descarta del selector", async () => {
+    // Solo Padelito tiene nombre real recordado, 'org-desconocido' no tiene nombre y devolverá 'Club'
+    rememberOrganizerDisplayName("org-padelito", "Padelito Warehouse");
+    mockPlayerSnapshot.mockResolvedValue({
+      organizador_id: "org-padelito",
+      saldos: [
+        {
+          campaign_id: "camp-1",
+          nombre: "Campaña Activa",
+          fase: "acumulacion",
+          acumulando: 25,
+          disponible: 0,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+          acumula_desde: "2026-10-01T00:00:00Z",
+          acumula_hasta: "2026-11-01T00:00:00Z",
+          canje_desde: "2026-11-01T00:00:00Z",
+          canje_hasta: "2026-12-01T00:00:00Z",
+        },
+      ],
+      premios: [],
+      canjes: [],
+    });
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="j-1"
+          organizadorId="org-padelito"
+          clubName="Padelito Warehouse"
+          currentUser={{ id: "auth-1", email: "user@test.com" }}
+          participatingClubIds={["org-padelito", "org-desconocido"]}
+        />
+      );
+    });
+    await flush();
+
+    // Como org-desconocido tiene nombre inválido ('Club'), solo queda Padelito -> no selector de clubes
+    expect(container.querySelector(".rrw-club-selector")).toBeNull();
+    // Y ningún botón dice 'Club'
+    const allButtons = Array.from(container.querySelectorAll("button"));
+    const clubGenericButtons = allButtons.filter((b) => b.textContent?.trim() === "Club");
+    expect(clubGenericButtons.length).toBe(0);
+  });
+
+  test("4. NUNCA renderiza 'ACCESO RESTRINGIDO' ni 'Este perfil pertenece a otro jugador'", async () => {
+    mockPlayerSnapshot.mockRejectedValue(new Error("Esta cuenta no está vinculada a este jugador"));
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="j-otro"
+          organizadorId="org-padelito"
+          currentUser={{ id: "auth-visitante", email: "visitante@externo.com" }}
+        />
+      );
+    });
+    await flush();
+
+    expect(container.textContent).not.toContain("ACCESO RESTRINGIDO");
+    expect(container.textContent).not.toContain("Acceso restringido");
+    expect(container.textContent).not.toContain("Este perfil pertenece a otro jugador");
+    expect(container.textContent).toContain("Puntos y Recompensas del Club");
+  });
+
+  test("5. Fallback automático multiclub via RPC snapshot sin organizador (0059)", async () => {
+    // 1er intento con org-riviera falla porque el usuario solo tiene cuenta en Padelito
+    mockPlayerSnapshot.mockImplementation((_jId: string, orgId?: string) => {
+      if (orgId === "org-riviera") {
+        return Promise.reject(new Error("Esta cuenta no está vinculada a este jugador"));
+      }
+      // Consulta sin orgId (fallback 0059) resuelve exitosamente Padelito
+      return Promise.resolve({
+        organizador_id: "org-padelito",
+        saldos: [
+          {
+            campaign_id: "camp-pad",
+            nombre: "Padelito Rewards 2026",
+            fase: "acumulacion",
+            acumulando: 90,
+            disponible: 0,
+            reservado: 0,
+            utilizado: 0,
+            cerrado: 0,
+            acumula_desde: "2026-10-01T00:00:00Z",
+            acumula_hasta: "2026-11-01T00:00:00Z",
+            canje_desde: "2026-11-01T00:00:00Z",
+            canje_hasta: "2026-12-01T00:00:00Z",
+          },
+        ],
+        premios: [],
+        canjes: [],
+      });
+    });
+
+    rememberOrganizerDisplayName("org-padelito", "Padelito Warehouse");
+    rememberOrganizerDisplayName("org-riviera", "Riviera Open");
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="j-carlos"
+          organizadorId="org-riviera"
+          currentUser={{ id: "auth-carlos", email: "carlos@test.com" }}
+        />
+      );
+    });
+    await flush();
+
+    // Se ejecutó primero con org-riviera y luego con undefined (fallback)
+    expect(mockPlayerSnapshot).toHaveBeenCalledWith("j-carlos", "org-riviera");
+    expect(mockPlayerSnapshot).toHaveBeenCalledWith("j-carlos", undefined);
+    // Muestra los puntos de Padelito sin marcar desvinculado
+    expect(container.textContent).toContain("Padelito Rewards 2026");
+    expect(container.textContent).toContain("90");
+    expect(container.textContent).not.toContain("ACCESO RESTRINGIDO");
+  });
+});
+
 
