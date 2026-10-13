@@ -2,7 +2,7 @@ import { accrualKey, type RewardsModality } from "./campaigns";
 
 export type ReviewEstado = "pendiente" | "aprobada" | "rechazada";
 export type QueueEstado = "pendiente" | "acreditada" | "omitida" | "error";
-export type ValidationSource = "admin" | "payment";
+export type ValidationSource = "admin" | "payment" | "automatic";
 
 export interface Candidate {
   participacionId: string;
@@ -26,7 +26,7 @@ export interface CampaignRule {
   canjeHasta: Date;
   timeZone: string;
   modalidades: readonly RewardsModality[];
-  /** Hoy solo `admin` acredita. `payment` queda reservado. */
+  /** Hoy admin o automático acreditan. payment queda reservado. */
   validationMode: ValidationSource;
 }
 
@@ -42,6 +42,7 @@ export interface AccrualLot {
   canjeado: number;
   anulado: boolean;
   earnedAt: Date;
+  expiresAt: Date;
 }
 
 export interface Obligation {
@@ -259,6 +260,7 @@ export function processQueue(
       continue;
     }
     const earnedAt = candidate.closedAt;
+    const expiresAt = campaign.canjeHasta;
     const lot: AccrualLot = {
       id: `lot-${item.key}`,
       key: item.key,
@@ -270,6 +272,7 @@ export function processQueue(
       canjeado: 0,
       anulado: false,
       earnedAt,
+      expiresAt,
     };
     state.lots.push(lot);
     state.ledger.push({
@@ -414,3 +417,61 @@ export function redeem(
     });
   }
 }
+
+/**
+ * Acreditación automática integral de una participación comprobada.
+ * Si cumple las condiciones de la campaña activa, se aprueba y encola de inmediato
+ * sin intervención manual.
+ */
+export function autoAccrueCandidate(
+  state: EngineState,
+  input: {
+    candidate: Candidate;
+    campaigns: readonly CampaignRule[];
+    isFreeReta?: boolean;
+  }
+): QueueItem | null {
+  const { candidate, campaigns, isFreeReta } = input;
+  const campaign = campaigns.find(
+    (c) =>
+      c.organizadorId === candidate.organizadorId &&
+      c.estado === "activa" &&
+      c.modalidades.includes(candidate.modalidad) &&
+      inWindow(candidate, c)
+  );
+
+  if (!campaign) {
+    enqueueCandidate(state, candidate);
+    return null;
+  }
+
+  enqueueCandidate(state, candidate);
+
+  if (isFreeReta) {
+    state.reviews.set(candidate.participacionId, {
+      participacionId: candidate.participacionId,
+      estado: "aprobada",
+      campaignId: campaign.id,
+      validationSource: "automatic",
+    });
+    const queueItem: QueueItem = {
+      id: `q-${candidate.participacionId}`,
+      key: keyOf(candidate),
+      participacionId: candidate.participacionId,
+      campaignId: campaign.id,
+      estado: "omitida",
+      attempts: 1,
+      lastError: "Reta gratuita de Rewards",
+      validationSource: "automatic",
+    };
+    state.queue.push(queueItem);
+    return queueItem;
+  }
+
+  return approveParticipations(state, {
+    candidates: [candidate],
+    campaign,
+    source: "automatic",
+  })[0] ?? null;
+}
+

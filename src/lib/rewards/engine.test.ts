@@ -1,6 +1,7 @@
 import {
   approveParticipations,
   assignFreeReta,
+  autoAccrueCandidate,
   campaignBalance,
   closeCampaign,
   emptyEngine,
@@ -239,5 +240,22 @@ describe("saldos por campaña", () => {
     expect(state.obligations[0].pending).toBe(0);
     expect(campaignBalance(state, "oswaldo", nov, new Date("2026-11-20T00:00:00.000Z")).acumulando).toBe(0);
     expect(state.ledger.filter((line) => line.tipo === "canje")).toHaveLength(1);
+  });
+
+  it("acreditación automática integral: asigna expiresAt con canjeHasta y no requiere paso manual", () => {
+    const state = emptyEngine();
+    const row = candidate("auto-1", { closedAt: new Date("2026-10-12T19:00:00.000Z") });
+    const rule = october();
+
+    const queueItem = autoAccrueCandidate(state, { candidate: row, campaigns: [rule] });
+    expect(queueItem).not.toBeNull();
+    expect(queueItem?.estado).toBe("acreditada");
+
+    // Lote creado automáticamente con expiresAt = canjeHasta
+    expect(state.lots).toHaveLength(1);
+    expect(state.lots[0].points).toBe(10);
+    expect(state.lots[0].expiresAt.toISOString()).toBe(rule.canjeHasta.toISOString());
+    expect(state.reviews.get("auto-1")?.estado).toBe("aprobada");
+    expect(state.reviews.get("auto-1")?.validationSource).toBe("automatic");
   });
 });

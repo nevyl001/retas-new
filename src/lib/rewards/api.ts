@@ -142,6 +142,17 @@ export async function saveReward(payload: Record<string, unknown>): Promise<stri
 }
 
 export async function listPlayers(organizadorId: string): Promise<{ id: string; nombre: string }[]> {
+  try {
+    const { data, error } = await supabase.rpc("rewards_list_players", {
+      p_organizador_id: organizadorId,
+    });
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return data as { id: string; nombre: string }[];
+    }
+  } catch {
+    // Fallback si la RPC aún no está disponible
+  }
+
   const { data, error } = await supabase
     .from("riviera_jugadores")
     .select("id, nombre")
@@ -149,6 +160,33 @@ export async function listPlayers(organizadorId: string): Promise<{ id: string; 
     .order("nombre", { ascending: true });
   fail(error, "No se pudieron leer los jugadores");
   return (data ?? []) as { id: string; nombre: string }[];
+}
+
+export async function recoverParticipations(options?: {
+  organizadorId?: string;
+  campaignId?: string;
+  eventoId?: string;
+  participacionIds?: string[];
+} | string): Promise<{
+  recovered_queue_errors: number;
+  recovered_pending_reviews: number;
+  recovered_missing_participations: number;
+  errors: number;
+}> {
+  const opts = typeof options === "string" ? { organizadorId: options } : (options ?? {});
+  const { data, error } = await supabase.rpc("rewards_recover_participaciones", {
+    p_organizador_id: opts.organizadorId ?? null,
+    p_campaign_id: opts.campaignId ?? null,
+    p_evento_id: opts.eventoId ?? null,
+    p_participacion_ids: opts.participacionIds ?? null,
+  });
+  fail(error, "No se pudo recuperar las participaciones");
+  return data as {
+    recovered_queue_errors: number;
+    recovered_pending_reviews: number;
+    recovered_missing_participations: number;
+    errors: number;
+  };
 }
 
 export async function playerBalance(
