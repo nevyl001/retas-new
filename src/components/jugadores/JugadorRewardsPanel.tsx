@@ -10,6 +10,7 @@ import {
   listReviews,
   listRewards,
   playerBalance,
+  playerPublicSummary,
   playerRequestRedemption,
   playerSnapshot,
   requestRedemption,
@@ -18,6 +19,7 @@ import {
   type BalanceRecord,
   type BenefitRecord,
   type CampaignRecord,
+  type PlayerPublicSummaryItem,
   type PlayerSnapshot,
   type RedemptionRecord,
   type RewardRecord,
@@ -316,7 +318,29 @@ function PlayerRewardsView({
   const [partsExpanded, setPartsExpanded] = useState(false);
   const [busyRewardId, setBusyRewardId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [publicSummary, setPublicSummary] = useState<PlayerPublicSummaryItem[] | null>(null);
   const hasTriedFallbackRef = React.useRef(false);
+
+  useEffect(() => {
+    let active = true;
+    try {
+      const p = playerPublicSummary(activeJugadorId, activeOrgId || undefined);
+      if (p && typeof p.then === "function") {
+        p.then((items) => {
+          if (active) setPublicSummary(items || []);
+        }).catch(() => {
+          if (active) setPublicSummary([]);
+        });
+      } else {
+        setPublicSummary([]);
+      }
+    } catch {
+      if (active) setPublicSummary([]);
+    }
+    return () => {
+      active = false;
+    };
+  }, [activeJugadorId, activeOrgId]);
 
   const prevInitialOrgRef = React.useRef(initialOrganizadorId);
   useEffect(() => {
@@ -492,7 +516,143 @@ function PlayerRewardsView({
     };
   }, [jugadorId, propParticipaciones, snapshot]);
 
-  // 1. Visitante sin sesión iniciada
+  // 1. Resumen público de puntos (solo lectura) cuando no hay sesión o está desvinculado,
+  // pero el jugador tiene puntos registrados en la campaña/club (ej. Lalo B en Padelito Warehouse)
+  if ((!user || unlinked) && publicSummary && publicSummary.length > 0) {
+    const selectedPublic =
+      publicSummary.find((p) => p.campaign_id === selectedCampaignId) || publicSummary[0];
+    const displayClub =
+      selectedPublic.club_nombre || currentClubDisplayName || "Club sede";
+
+    return (
+      <section className={`rjp-ficha-surface rjp-ficha-rewards ${className ?? ""}`} aria-label="Riviera Rewards">
+        <div className="rrw-compact-card rrw-player-panel">
+          {availableClubs.length > 1 && (
+            <div className="rrw-club-selector" role="tablist" aria-label="Clubes de Rewards">
+              <span className="rrw-club-selector-label">Club:</span>
+              {availableClubs.map((club) => {
+                const isSelected = club.organizadorId === activeOrgId;
+                return (
+                  <button
+                    key={club.organizadorId}
+                    type="button"
+                    role="tab"
+                    aria-selected={isSelected}
+                    className={`rrw-campaign-pill ${isSelected ? "rrw-campaign-pill--active" : ""}`}
+                    onClick={() => handleSelectClub(club.organizadorId)}
+                  >
+                    <TablerIcon name="building-community" size={13} />
+                    {club.displayName}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="rrw-compact-header">
+            <div>
+              <span className="rrw-kicker">Riviera Rewards</span>
+              <h2 className="rrw-compact-title">{selectedPublic.campaign_nombre}</h2>
+            </div>
+            <span className="rrw-badge rrw-badge--neutral">
+              {selectedPublic.fase === "canje" ? "Ventana de canje abierta" : "Fase de acumulación"}
+            </span>
+          </div>
+
+          {publicSummary.length > 1 && (
+            <div className="rrw-campaign-selector" style={{ display: "flex", gap: "0.4rem", margin: "0.35rem 0" }}>
+              {publicSummary.map((c) => (
+                <button
+                  key={c.campaign_id}
+                  type="button"
+                  className={`rrw-campaign-pill ${c.campaign_id === selectedPublic.campaign_id ? "rrw-campaign-pill--active" : ""}`}
+                  onClick={() => setSelectedCampaignId(c.campaign_id)}
+                >
+                  {c.campaign_nombre}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="rrw-kpi-grid">
+            <div className="rrw-kpi-card">
+              <span className="rrw-kpi-label">Puntos acumulados</span>
+              <strong className="rrw-kpi-value">{selectedPublic.puntos_acumulados}</strong>
+              <span className="rrw-kpi-hint">Generados en retas de {displayClub}</span>
+            </div>
+            <div className="rrw-kpi-card">
+              <span className="rrw-kpi-label">Saldo canjeable</span>
+              <strong className="rrw-kpi-value">{selectedPublic.puntos_disponibles}</strong>
+              <span className="rrw-kpi-hint">
+                {selectedPublic.fase === "canje" ? "Disponible para premios" : "Habilitado al abrir canje"}
+              </span>
+            </div>
+          </div>
+
+          <div
+            className="rrw-public-dates-box"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.35rem",
+              padding: "0.6rem 0.8rem",
+              background: "var(--surface-1, rgba(255, 255, 255, 0.025))",
+              border: "1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))",
+              borderRadius: "var(--radius-md, 8px)",
+              fontSize: "0.76rem",
+              color: "var(--text-secondary, #b0b7c3)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Período de acumulación:</span>
+              <strong style={{ color: "var(--text-primary, #ffffff)" }}>
+                {formatMexicoDate(selectedPublic.acumula_desde)} al {formatMexicoDate(selectedPublic.acumula_hasta)}
+              </strong>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Ventana de canje:</span>
+              <strong style={{ color: "var(--text-primary, #ffffff)" }}>
+                {formatMexicoDate(selectedPublic.canje_desde)} al {formatMexicoDate(selectedPublic.canje_hasta)}
+              </strong>
+            </div>
+          </div>
+
+          <div
+            className="rrw-independence-disclaimer"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.5rem 0.65rem",
+              borderRadius: "var(--radius-sm, 6px)",
+              background: "var(--surface-2, rgba(255, 255, 255, 0.04))",
+              fontSize: "0.72rem",
+              color: "var(--text-muted, #8e95a0)",
+              marginTop: "0.35rem",
+            }}
+          >
+            <TablerIcon name="shield-lock" size={15} />
+            <span>
+              {user
+                ? `Solo lectura: Para solicitar canjes de premios en ${displayClub}, solicita en recepción vincular tu cuenta a este perfil.`
+                : `Solo lectura: Inicia sesión con la cuenta vinculada a este jugador para solicitar canjes de premios en ${displayClub}.`}
+            </span>
+          </div>
+
+          {!user && (
+            <div className="rrw-compact-cta-wrap rrw-guest-action" style={{ marginTop: "0.4rem" }}>
+              <a href="/login" className="rrw-compact-btn rrw-guest-btn">
+                <TablerIcon name="user-circle" size={15} />
+                Iniciar sesión para gestionar canjes
+              </a>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // 2. Visitante sin sesión iniciada (sin puntos públicos)
   if (!user) {
     return (
       <section className={`rjp-ficha-surface rjp-ficha-rewards ${className ?? ""}`} aria-label="Riviera Rewards">

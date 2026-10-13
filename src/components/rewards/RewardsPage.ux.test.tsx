@@ -38,6 +38,9 @@ jest.mock("../../lib/rewards/api", () => {
     listParticipaciones: jest.fn(),
     assignBenefit: jest.fn(),
     reviewParticipations: jest.fn(),
+    listAdminPlayersRewards: jest.fn(),
+    listAdminIncidents: jest.fn(),
+    recoverParticipations: jest.fn(),
   };
 });
 
@@ -50,6 +53,9 @@ const mockListReviews = rewardsApi.listReviews as jest.Mock;
 const mockListRedemptions = rewardsApi.listRedemptions as jest.Mock;
 const mockListBenefits = rewardsApi.listBenefits as jest.Mock;
 const mockListParticipaciones = rewardsApi.listParticipaciones as jest.Mock;
+const mockListAdminPlayersRewards = rewardsApi.listAdminPlayersRewards as jest.Mock;
+const mockListAdminIncidents = rewardsApi.listAdminIncidents as jest.Mock;
+const mockRecoverParticipations = rewardsApi.recoverParticipations as jest.Mock;
 
 describe("RewardsPage — Mejoras de UX en Jugadores y Canjes", () => {
   let container: HTMLDivElement;
@@ -72,6 +78,37 @@ describe("RewardsPage — Mejoras de UX en Jugadores y Canjes", () => {
     mockListRedemptions.mockResolvedValue([]);
     mockListBenefits.mockResolvedValue([]);
     mockListParticipaciones.mockResolvedValue([]);
+    mockListAdminPlayersRewards.mockResolvedValue({
+      players: [
+        {
+          jugador_id: "jug-1",
+          nombre: "Carlos Alcaraz",
+          codigo_riviera: "RIV-00000001",
+          puntos_acumulados: 20,
+          puntos_disponibles: 20,
+          puntos_reservados: 0,
+          participaciones_acreditadas: 2,
+          ultima_participacion: "2026-10-10T12:00:00Z",
+          campaign_id: "camp-1",
+          campaign_nombre: "Campaña Única",
+          campaign_fase: "acumulacion",
+        },
+      ],
+      total_count: 1,
+      page: 1,
+      pageSize: 25,
+      total_pages: 1,
+    });
+    mockListAdminIncidents.mockResolvedValue({
+      incidents: [],
+      total_count: 0,
+      page: 1,
+      limit: 25,
+    });
+    mockRecoverParticipations.mockResolvedValue({
+      recovered_count: 0,
+      recovered_points: 0,
+    });
   });
 
   afterEach(() => {
@@ -97,9 +134,11 @@ describe("RewardsPage — Mejoras de UX en Jugadores y Canjes", () => {
     await flush();
 
     // Seleccionar al jugador en la lista
-    const playerBtn = Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(
-      (btn) => btn.textContent?.includes("Carlos Alcaraz")
+    const row = Array.from(container.querySelectorAll("tr")).find(
+      (tr) => tr.textContent?.includes("Carlos Alcaraz")
     );
+    expect(row).toBeDefined();
+    const playerBtn = row?.querySelector<HTMLButtonElement>("button");
     expect(playerBtn).toBeDefined();
 
     await act(async () => {
@@ -115,6 +154,87 @@ describe("RewardsPage — Mejoras de UX en Jugadores y Canjes", () => {
     const campSelect = container.querySelector<HTMLSelectElement>("#play-camp-acred");
     expect(campSelect).not.toBeNull();
     expect(campSelect?.value).toBe("camp-1");
+  });
+
+  test("Carga automáticamente el directorio de jugadores con puntos en vista predeterminada 'Con puntos'", async () => {
+    root = createRoot(container);
+    await act(async () => {
+      root.render(<RewardsPage pathname="/rewards/jugadores" />);
+    });
+    await flush();
+
+    // Comprueba que listAdminPlayersRewards se llamó con el club organizador y paginación
+    expect(mockListAdminPlayersRewards).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizadorId: "org-1",
+        page: 1,
+        pageSize: 25,
+      })
+    );
+
+    // Muestra los puntos vigentes y saldo disponible en la tabla
+    expect(container.textContent).toContain("Carlos Alcaraz");
+    expect(container.textContent).toContain("RIV-00000001");
+    expect(container.textContent).toContain("20 pts");
+    expect(container.textContent).toContain("Campaña Única");
+  });
+
+  test("Permite alternar a la pestaña 'Con incidencias' y muestra las incidencias del club", async () => {
+    mockListAdminIncidents.mockResolvedValue({
+      incidents: [
+        {
+          id: "part-inc-1",
+          evento_id: "ev-1",
+          tipo_evento: "americano",
+          campaign_id: "camp-1",
+          campaign_nombre: "Octubre Loco",
+          jugador_id: "jug-2",
+          jugador_nombre: "Jesús Fernando",
+          codigo_riviera: "RIV-00000099",
+          puntos_esperados: 10,
+          created_at: "2026-10-12T10:00:00Z",
+          tipo_incidencia: "acreditacion_error",
+          error_mensaje: "null value in column expires_at",
+          attempts: 1,
+        },
+      ],
+      total_count: 1,
+      error_count: 1,
+      pending_count: 0,
+      page: 1,
+      page_size: 50,
+      total_pages: 1,
+    });
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(<RewardsPage pathname="/rewards/jugadores" />);
+    });
+    await flush();
+
+    // Clic en la pestaña 'Con incidencias'
+    const incidentsTab = Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(
+      (btn) => btn.textContent?.includes("Con incidencias")
+    );
+    expect(incidentsTab).toBeDefined();
+
+    await act(async () => {
+      incidentsTab?.click();
+    });
+    await flush();
+
+    expect(mockListAdminIncidents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizadorId: "org-1",
+        page: 1,
+        pageSize: 50,
+      })
+    );
+
+    // Debe mostrar la incidencia de Jesús Fernando con su causa
+    expect(container.textContent).toContain("Jesús Fernando");
+    expect(container.textContent).toContain("null value in column expires_at");
+    expect(container.textContent).toContain("Octubre Loco");
   });
 });
 

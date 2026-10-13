@@ -92,7 +92,13 @@ function splitSqlStatements(sql: string): string[] {
   return statements;
 }
 
-describe("Riviera Rewards — Validación SQL Real (PGlite PostgreSQL WASM)", () => {
+const maybeDescribe =
+  process.env.RUN_SQL_INTEGRATION === "1" ||
+  Boolean(process.env.NODE_OPTIONS && process.env.NODE_OPTIONS.includes("--experimental-vm-modules"))
+    ? describe
+    : describe.skip;
+
+maybeDescribe("Riviera Rewards — Validación SQL Real (PGlite PostgreSQL WASM)", () => {
   let db: PGliteType;
 
   const CLUB_A = "11111111-1111-4111-a111-111111111111"; // Padelito

@@ -35,10 +35,13 @@ FROM public.rewards_campaigns c
 WHERE l.campaign_id = c.id
   AND l.expires_at IS NULL;
 
--- Fallback seguro para cualquier lote sin campaña asociada
-UPDATE public.rewards_lots
-SET expires_at = earned_at + interval '60 days'
-WHERE expires_at IS NULL;
+-- Backfill de lotes asociados a la cola si no tenían campaña directa
+UPDATE public.rewards_lots l
+SET expires_at = c.canje_hasta
+FROM public.rewards_accrual_queue q
+JOIN public.rewards_campaigns c ON c.id = q.campaign_id
+WHERE l.queue_id = q.id
+  AND l.expires_at IS NULL;
 
 -- Asegurar restricción NOT NULL
 ALTER TABLE public.rewards_lots
@@ -842,12 +845,415 @@ BEGIN
 END;
 $$;
 
--- ── 7. Permisos de funciones ─────────────────────────────────────────────────
+-- ── 7. Listado administrativo paginado de jugadores con puntos ────────────────
+
+CREATE OR REPLACE FUNCTION public.rewards_admin_players_list(
+  p_organizador_id uuid,
+  p_campaign_id uuid DEFAULT NULL,
+  p_query text DEFAULT NULL,
+  p_sort_by text DEFAULT 'acumulado',
+  p_sort_dir text DEFAULT 'desc',
+  p_page integer DEFAULT 1,
+  p_page_size integer DEFAULT 25
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_page int := GREATEST(COALESCE(p_page, 1), 1);
+  v_limit int := GREATEST(COALESCE(p_page_size, 25), 1);
+  v_offset int := (v_page - 1) * v_limit;
+  v_query text := NULLIF(trim(p_query), '');
+  v_total int := 0;
+  v_players jsonb := '[]'::jsonb;
+BEGIN
+  PERFORM public.rewards_assert_club_admin(p_organizador_id);
+
+  WITH player_campaign_stats AS (
+    SELECT 
+      l.jugador_id,
+      c.id AS campaign_id,
+      c.nombre AS campaign_nombre,
+      CASE 
+        WHEN now() < c.acumula_hasta THEN 'acumulacion'
+        WHEN now() >= c.canje_desde AND now() < c.canje_hasta THEN 'canje'
+        ELSE 'cerrada'
+      END AS campaign_fase,
+      c.canje_desde,
+      c.canje_hasta,
+      SUM(l.puntos_originales)::int AS puntos_acumulados,
+      SUM(l.puntos_restantes)::int AS puntos_restantes,
+      COALESCE((
+        SELECT SUM(r.costo_puntos)::int
+        FROM public.rewards_redemptions r
+        WHERE r.organizador_id = p_organizador_id
+          AND r.jugador_id = l.jugador_id
+          AND r.campaign_id = c.id
+          AND r.estado = 'reservado'
+      ), 0) AS puntos_reservados,
+      COUNT(DISTINCT l.participacion_id)::int AS participaciones_count,
+      MAX(l.earned_at) AS ultima_participacion
+    FROM public.rewards_lots l
+    JOIN public.rewards_campaigns c ON c.id = l.campaign_id
+    WHERE l.organizador_id = p_organizador_id
+      AND NOT l.anulado
+      AND (p_campaign_id IS NULL OR c.id = p_campaign_id)
+    GROUP BY l.jugador_id, c.id, c.nombre, c.acumula_hasta, c.canje_desde, c.canje_hasta
+  ),
+  aggregated_players AS (
+    SELECT 
+      pcs.jugador_id,
+      rj.nombre AS jugador_nombre,
+      COALESCE(
+        NULLIF(trim(rj.categoria), ''),
+        ''
+      ) AS codigo_riviera,
+      (ARRAY_AGG(pcs.campaign_id ORDER BY (pcs.campaign_fase IN ('canje', 'acumulacion')) DESC, pcs.puntos_acumulados DESC))[1] AS primary_campaign_id,
+      (ARRAY_AGG(pcs.campaign_nombre ORDER BY (pcs.campaign_fase IN ('canje', 'acumulacion')) DESC, pcs.puntos_acumulados DESC))[1] AS primary_campaign_nombre,
+      (ARRAY_AGG(pcs.campaign_fase ORDER BY (pcs.campaign_fase IN ('canje', 'acumulacion')) DESC, pcs.puntos_acumulados DESC))[1] AS primary_campaign_fase,
+      (ARRAY_AGG(pcs.canje_desde ORDER BY (pcs.campaign_fase IN ('canje', 'acumulacion')) DESC, pcs.puntos_acumulados DESC))[1] AS primary_canje_desde,
+      (ARRAY_AGG(pcs.canje_hasta ORDER BY (pcs.campaign_fase IN ('canje', 'acumulacion')) DESC, pcs.puntos_acumulados DESC))[1] AS primary_canje_hasta,
+      SUM(pcs.puntos_acumulados)::int AS total_acumulado,
+      SUM(GREATEST(pcs.puntos_restantes - pcs.puntos_reservados, 0))::int AS total_disponible,
+      SUM(pcs.puntos_reservados)::int AS total_reservado,
+      SUM(pcs.participaciones_count)::int AS total_participaciones,
+      MAX(pcs.ultima_participacion) AS ultima_participacion,
+      jsonb_agg(jsonb_build_object(
+        'campaign_id', pcs.campaign_id,
+        'campaign_nombre', pcs.campaign_nombre,
+        'fase', pcs.campaign_fase,
+        'puntos_acumulados', pcs.puntos_acumulados,
+        'puntos_disponibles', GREATEST(pcs.puntos_restantes - pcs.puntos_reservados, 0),
+        'puntos_reservados', pcs.puntos_reservados,
+        'participaciones_count', pcs.participaciones_count,
+        'ultima_participacion', pcs.ultima_participacion,
+        'canje_desde', pcs.canje_desde,
+        'canje_hasta', pcs.canje_hasta
+      ) ORDER BY pcs.puntos_acumulados DESC) AS campanas_detalle
+    FROM player_campaign_stats pcs
+    JOIN public.riviera_jugadores rj ON rj.id = pcs.jugador_id
+    WHERE (pcs.puntos_acumulados > 0 OR pcs.puntos_restantes > 0)
+      AND (
+        v_query IS NULL 
+        OR rj.nombre ILIKE '%' || v_query || '%'
+        OR COALESCE(rj.categoria, '') ILIKE '%' || v_query || '%'
+      )
+    GROUP BY pcs.jugador_id, rj.nombre, rj.categoria
+  ),
+  counted AS (
+    SELECT COUNT(*)::int AS cnt FROM aggregated_players
+  ),
+  sorted_players AS (
+    SELECT ap.*
+    FROM aggregated_players ap
+    ORDER BY
+      CASE WHEN p_sort_by = 'acumulado' AND p_sort_dir = 'asc' THEN ap.total_acumulado END ASC,
+      CASE WHEN p_sort_by = 'acumulado' AND (p_sort_dir = 'desc' OR p_sort_dir IS NULL) THEN ap.total_acumulado END DESC,
+      CASE WHEN p_sort_by = 'disponible' AND p_sort_dir = 'asc' THEN ap.total_disponible END ASC,
+      CASE WHEN p_sort_by = 'disponible' AND (p_sort_dir = 'desc' OR p_sort_dir IS NULL) THEN ap.total_disponible END DESC,
+      CASE WHEN p_sort_by = 'nombre' AND p_sort_dir = 'desc' THEN ap.jugador_nombre END DESC,
+      CASE WHEN p_sort_by = 'nombre' AND (p_sort_dir = 'asc' OR p_sort_dir IS NULL) THEN ap.jugador_nombre END ASC,
+      CASE WHEN p_sort_by = 'reciente' AND p_sort_dir = 'asc' THEN ap.ultima_participacion END ASC,
+      CASE WHEN p_sort_by = 'reciente' AND (p_sort_dir = 'desc' OR p_sort_dir IS NULL) THEN ap.ultima_participacion END DESC,
+      ap.total_acumulado DESC,
+      ap.jugador_nombre ASC
+    LIMIT v_limit
+    OFFSET v_offset
+  )
+  SELECT 
+    COALESCE((SELECT cnt FROM counted), 0),
+    COALESCE(jsonb_agg(jsonb_build_object(
+      'jugador_id', sp.jugador_id,
+      'nombre', sp.jugador_nombre,
+      'codigo_riviera', sp.codigo_riviera,
+      'campaign_id', sp.primary_campaign_id,
+      'campaign_nombre', sp.primary_campaign_nombre,
+      'campaign_fase', sp.primary_campaign_fase,
+      'canje_desde', sp.primary_canje_desde,
+      'canje_hasta', sp.primary_canje_hasta,
+      'puntos_acumulados', sp.total_acumulado,
+      'puntos_disponibles', sp.total_disponible,
+      'puntos_reservados', sp.total_reservado,
+      'participaciones_acreditadas', sp.total_participaciones,
+      'ultima_participacion', sp.ultima_participacion,
+      'campanas', sp.campanas_detalle
+    )), '[]'::jsonb)
+  INTO v_total, v_players
+  FROM sorted_players sp;
+
+  RETURN jsonb_build_object(
+    'total_count', v_total,
+    'page', v_page,
+    'page_size', v_limit,
+    'total_pages', CEIL(v_total::numeric / GREATEST(v_limit, 1)::numeric)::int,
+    'players', v_players
+  );
+END;
+$$;
+
+-- ── 8. Listado de incidencias y participaciones pendientes ─────────────────────
+
+CREATE OR REPLACE FUNCTION public.rewards_admin_incidents_list(
+  p_organizador_id uuid,
+  p_page integer DEFAULT 1,
+  p_page_size integer DEFAULT 50
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_page int := GREATEST(COALESCE(p_page, 1), 1);
+  v_limit int := GREATEST(COALESCE(p_page_size, 50), 1);
+  v_offset int := (v_page - 1) * v_limit;
+  v_total int := 0;
+  v_error_count int := 0;
+  v_pending_count int := 0;
+  v_incidents jsonb := '[]'::jsonb;
+BEGIN
+  PERFORM public.rewards_assert_club_admin(p_organizador_id);
+
+  WITH raw_incidents AS (
+    SELECT 
+      q.id AS incident_id,
+      'acreditacion_error' AS tipo_incidencia,
+      q.participacion_id,
+      q.jugador_id,
+      q.tipo_evento,
+      q.evento_id,
+      q.campaign_id,
+      c.nombre AS campaign_nombre,
+      c.puntos_por_participacion AS puntos_esperados,
+      q.last_error AS error_mensaje,
+      q.attempts,
+      q.created_at
+    FROM public.rewards_accrual_queue q
+    LEFT JOIN public.rewards_campaigns c ON c.id = q.campaign_id
+    WHERE q.organizador_id = p_organizador_id
+      AND q.estado = 'error'
+
+    UNION ALL
+
+    SELECT 
+      r.id AS incident_id,
+      'revision_pendiente' AS tipo_incidencia,
+      r.participacion_id,
+      r.jugador_id,
+      r.tipo_evento,
+      r.evento_id,
+      r.campaign_id,
+      c.nombre AS campaign_nombre,
+      COALESCE(c.puntos_por_participacion, 10) AS puntos_esperados,
+      COALESCE(r.motivo, 'Participación en revisión / pendiente de acreditación automática') AS error_mensaje,
+      1 AS attempts,
+      r.created_at
+    FROM public.rewards_participation_reviews r
+    LEFT JOIN public.rewards_campaigns c ON c.id = r.campaign_id
+    WHERE r.organizador_id = p_organizador_id
+      AND r.estado = 'pendiente'
+      AND NOT EXISTS (
+        SELECT 1 FROM public.rewards_accrual_queue q
+        WHERE q.participacion_id = r.participacion_id
+          AND q.organizador_id = p_organizador_id
+          AND q.estado = 'error'
+      )
+
+    UNION ALL
+
+    SELECT 
+      ef.id AS incident_id,
+      'fallo_inicial' AS tipo_incidencia,
+      ef.participacion_id,
+      jp.jugador_id,
+      jp.tipo_evento::text,
+      jp.evento_id,
+      NULL::uuid AS campaign_id,
+      'Sin asignar' AS campaign_nombre,
+      10 AS puntos_esperados,
+      ef.error AS error_mensaje,
+      ef.attempts,
+      ef.created_at
+    FROM public.rewards_enqueue_failures ef
+    JOIN public.jugador_participaciones jp ON jp.id = ef.participacion_id
+    WHERE ef.resolved_at IS NULL
+      AND COALESCE(
+        NULLIF(trim(jp.metadata->>'organizador_id'), '')::uuid,
+        public.riviera_participacion_expected_host_org(jp.tipo_evento::text, jp.evento_id::text)
+      ) = p_organizador_id
+      AND NOT EXISTS (
+        SELECT 1 FROM public.rewards_accrual_queue q WHERE q.participacion_id = ef.participacion_id
+      )
+  ),
+  enriched AS (
+    SELECT 
+      ri.*,
+      rj.nombre AS jugador_nombre,
+      COALESCE(rj.categoria, '') AS codigo_riviera
+    FROM raw_incidents ri
+    LEFT JOIN public.riviera_jugadores rj ON rj.id = ri.jugador_id
+  ),
+  counts AS (
+    SELECT 
+      COUNT(*)::int AS total_cnt,
+      COUNT(*) FILTER (WHERE tipo_incidencia IN ('acreditacion_error', 'fallo_inicial'))::int AS err_cnt,
+      COUNT(*) FILTER (WHERE tipo_incidencia = 'revision_pendiente')::int AS pend_cnt
+    FROM enriched
+  ),
+  paged AS (
+    SELECT * FROM enriched
+    ORDER BY created_at DESC
+    LIMIT v_limit OFFSET v_offset
+  )
+  SELECT 
+    COALESCE((SELECT total_cnt FROM counts), 0),
+    COALESCE((SELECT err_cnt FROM counts), 0),
+    COALESCE((SELECT pend_cnt FROM counts), 0),
+    COALESCE(jsonb_agg(jsonb_build_object(
+      'id', p.incident_id,
+      'tipo_incidencia', p.tipo_incidencia,
+      'participacion_id', p.participacion_id,
+      'jugador_id', p.jugador_id,
+      'jugador_nombre', p.jugador_nombre,
+      'codigo_riviera', p.codigo_riviera,
+      'tipo_evento', p.tipo_evento,
+      'evento_id', p.evento_id,
+      'campaign_id', p.campaign_id,
+      'campaign_nombre', p.campaign_nombre,
+      'puntos_esperados', p.puntos_esperados,
+      'error_mensaje', p.error_mensaje,
+      'attempts', p.attempts,
+      'created_at', p.created_at
+    )), '[]'::jsonb)
+  INTO v_total, v_error_count, v_pending_count, v_incidents
+  FROM paged p;
+
+  RETURN jsonb_build_object(
+    'total_count', v_total,
+    'error_count', v_error_count,
+    'pending_count', v_pending_count,
+    'page', v_page,
+    'page_size', v_limit,
+    'total_pages', CEIL(v_total::numeric / GREATEST(v_limit, 1)::numeric)::int,
+    'incidents', v_incidents
+  );
+END;
+$$;
+
+-- ── 9. Resumen público de solo lectura para la ficha del jugador ─────────────
+
+CREATE OR REPLACE FUNCTION public.rewards_player_public_summary(
+  p_jugador_id uuid,
+  p_organizador_id uuid DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_res jsonb;
+BEGIN
+  WITH target_players AS (
+    SELECT DISTINCT p_jugador_id AS id
+    UNION
+    SELECT DISTINCT l.jugador_id AS id
+    FROM public.rewards_player_links l
+    WHERE public.rewards_same_player(l.jugador_id, p_jugador_id)
+  ),
+  player_lots AS (
+    SELECT 
+      l.organizador_id,
+      l.campaign_id,
+      SUM(l.puntos_originales)::int AS acumulados,
+      SUM(l.puntos_restantes)::int AS restantes,
+      COUNT(DISTINCT l.participacion_id)::int AS part_count,
+      MAX(l.earned_at) AS last_earned
+    FROM public.rewards_lots l
+    JOIN target_players tp ON tp.id = l.jugador_id
+    WHERE NOT l.anulado
+      AND (p_organizador_id IS NULL OR l.organizador_id = p_organizador_id)
+    GROUP BY l.organizador_id, l.campaign_id
+  ),
+  active_camps AS (
+    SELECT 
+      c.id AS campaign_id,
+      c.organizador_id,
+      c.nombre AS campaign_nombre,
+      c.acumula_desde,
+      c.acumula_hasta,
+      c.canje_desde,
+      c.canje_hasta,
+      c.visible_jugadores,
+      CASE 
+        WHEN now() < c.acumula_hasta THEN 'acumulacion'
+        WHEN now() >= c.canje_desde AND now() < c.canje_hasta THEN 'canje'
+        ELSE 'cerrada'
+      END AS fase,
+      COALESCE(pl.acumulados, 0) AS puntos_acumulados,
+      COALESCE(pl.restantes, 0) AS puntos_restantes,
+      COALESCE((
+        SELECT SUM(r.costo_puntos)::int
+        FROM public.rewards_redemptions r
+        JOIN target_players tp ON tp.id = r.jugador_id
+        WHERE r.organizador_id = c.organizador_id
+          AND r.campaign_id = c.id
+          AND r.estado = 'reservado'
+      ), 0) AS puntos_reservados,
+      COALESCE(pl.part_count, 0) AS participaciones_count,
+      pl.last_earned
+    FROM public.rewards_campaigns c
+    LEFT JOIN player_lots pl ON pl.campaign_id = c.id AND pl.organizador_id = c.organizador_id
+    WHERE (p_organizador_id IS NULL OR c.organizador_id = p_organizador_id)
+      AND c.estado IN ('activa', 'programada', 'pausada')
+      AND (c.visible_jugadores OR COALESCE(pl.acumulados, 0) > 0)
+      AND (
+        COALESCE(pl.acumulados, 0) > 0 
+        OR c.organizador_id = p_organizador_id
+      )
+  )
+  SELECT COALESCE(jsonb_agg(jsonb_build_object(
+    'organizador_id', ac.organizador_id,
+    'campaign_id', ac.campaign_id,
+    'campaign_nombre', ac.campaign_nombre,
+    'fase', ac.fase,
+    'puntos_acumulados', ac.puntos_acumulados,
+    'puntos_disponibles', GREATEST(ac.puntos_restantes - ac.puntos_reservados, 0),
+    'puntos_reservados', ac.puntos_reservados,
+    'participaciones_count', ac.participaciones_count,
+    'acumula_desde', ac.acumula_desde,
+    'acumula_hasta', ac.acumula_hasta,
+    'canje_desde', ac.canje_desde,
+    'canje_hasta', ac.canje_hasta,
+    'is_canje_open', (now() >= ac.canje_desde AND now() < ac.canje_hasta)
+  ) ORDER BY (ac.organizador_id = p_organizador_id) DESC, ac.puntos_acumulados DESC), '[]'::jsonb)
+  INTO v_res
+  FROM active_camps ac;
+
+  RETURN v_res;
+END;
+$$;
+
+-- ── 10. Permisos de funciones ────────────────────────────────────────────────
 
 REVOKE ALL ON FUNCTION public.rewards_recover_participaciones(uuid, uuid, uuid, uuid[]) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rewards_recover_participaciones(uuid, uuid, uuid, uuid[]) TO authenticated;
 
 REVOKE ALL ON FUNCTION public.rewards_list_players(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rewards_list_players(uuid) TO authenticated;
+
+REVOKE ALL ON FUNCTION public.rewards_admin_players_list(uuid, uuid, text, text, text, integer, integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.rewards_admin_players_list(uuid, uuid, text, text, text, integer, integer) TO authenticated;
+
+REVOKE ALL ON FUNCTION public.rewards_admin_incidents_list(uuid, integer, integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.rewards_admin_incidents_list(uuid, integer, integer) TO authenticated;
+
+REVOKE ALL ON FUNCTION public.rewards_player_public_summary(uuid, uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rewards_player_public_summary(uuid, uuid) TO anon, authenticated;
 
 COMMIT;

@@ -98,7 +98,13 @@ function splitSqlStatements(sql: string): string[] {
   return statements;
 }
 
-describe("Riviera Rewards 0061 — Acreditación Automática, expires_at y Recuperación", () => {
+const maybeDescribe =
+  process.env.RUN_SQL_INTEGRATION === "1" ||
+  Boolean(process.env.NODE_OPTIONS && process.env.NODE_OPTIONS.includes("--experimental-vm-modules"))
+    ? describe
+    : describe.skip;
+
+maybeDescribe("Riviera Rewards 0061 — Acreditación Automática, expires_at y Recuperación", () => {
   let db: PGliteType;
 
   const CLUB_PADELITO = "11111111-1111-4111-a111-111111111111"; // Club anfitrión (Padelito Warehouse)
@@ -980,5 +986,96 @@ describe("Riviera Rewards 0061 — Acreditación Automática, expires_at y Recup
       SELECT count(*)::int as count FROM public.rewards_lots WHERE participacion_id = '${rejId}';
     `);
     expect(lotCheck.rows[0].count).toBe(0);
+  });
+
+  it("15. rewards_admin_players_list devuelve el directorio paginado con puntos ordenados descendentemente", async () => {
+    await setAuthSession(CLUB_PADELITO);
+
+    const res = await db.query<{
+      rewards_admin_players_list: {
+        total_count: number;
+        players: Array<{
+          jugador_id: string;
+          nombre: string;
+          puntos_acumulados: number;
+          puntos_disponibles: number;
+        }>;
+      };
+    }>(`
+      SELECT public.rewards_admin_players_list('${CLUB_PADELITO}'::uuid, NULL, NULL, 'acumulado', 'desc', 1, 25);
+    `);
+
+    const data = res.rows[0].rewards_admin_players_list;
+    expect(data.total_count).toBeGreaterThan(0);
+    expect(data.players.length).toBeGreaterThan(0);
+    for (const r of data.players) {
+      expect(Number(r.puntos_acumulados) > 0 || Number(r.puntos_disponibles) > 0).toBe(true);
+    }
+  });
+
+  it("16. rewards_admin_incidents_list lista incidencias no resueltas con detalle del error", async () => {
+    await setAuthSession(CLUB_PADELITO);
+
+    // Insertar una incidencia en cola con estado error
+    const dummyPart = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    const revRes = await db.query<{ id: string }>(`
+      INSERT INTO public.rewards_participation_reviews (
+        organizador_id, campaign_id, participacion_id, jugador_id, tipo_evento, modalidad, evento_id, estado, motivo, closed_at
+      ) VALUES (
+        '${CLUB_PADELITO}', (SELECT id FROM public.rewards_campaigns LIMIT 1), '${dummyPart}', '${PLAYERS[0].id}', 'americano', 'americano', '${AMERICANO_ID}', 'pendiente', 'test error: timeout connecting', now()
+      ) RETURNING id;
+    `);
+    const reviewId = revRes.rows[0].id;
+    await db.exec(`
+      INSERT INTO public.rewards_accrual_queue (
+        organizador_id, review_id, campaign_id, participacion_id, jugador_id, tipo_evento, evento_id, idempotency_key, estado, last_error, attempts
+      ) VALUES (
+        '${CLUB_PADELITO}', '${reviewId}', (SELECT id FROM public.rewards_campaigns LIMIT 1), '${dummyPart}', '${PLAYERS[0].id}', 'americano', '${AMERICANO_ID}', 'test-key-incident-1', 'error', 'test error: timeout connecting', 2
+      ) ON CONFLICT DO NOTHING;
+    `);
+
+    const res = await db.query<{
+      rewards_admin_incidents_list: {
+        total_count: number;
+        incidents: Array<{
+          participacion_id: string;
+          error_mensaje: string;
+          attempts: number;
+        }>;
+      };
+    }>(`
+      SELECT public.rewards_admin_incidents_list('${CLUB_PADELITO}'::uuid, 1, 25);
+    `);
+
+    const data = res.rows[0].rewards_admin_incidents_list;
+    expect(data.total_count).toBeGreaterThan(0);
+    const inc = data.incidents.find((r) => r.participacion_id === dummyPart);
+    expect(inc).toBeDefined();
+    expect(inc?.error_mensaje).toContain("timeout connecting");
+    expect(inc?.attempts).toBe(2);
+  });
+
+  it("17. rewards_player_public_summary devuelve resumen de solo lectura de puntos sin exigir sesión privada", async () => {
+    // Sesión anónima o visitante sin autenticar
+    await setAuthSession(null);
+
+    const res = await db.query<{
+      rewards_player_public_summary: Array<{
+        organizador_id: string;
+        campaign_nombre: string;
+        puntos_acumulados: number;
+        puntos_disponibles: number;
+        fase: string;
+      }>;
+    }>(`
+      SELECT public.rewards_player_public_summary('${PLAYERS[0].id}'::uuid, '${CLUB_PADELITO}'::uuid);
+    `);
+
+    const list = res.rows[0].rewards_player_public_summary;
+    expect(list.length).toBeGreaterThan(0);
+    const item = list[0];
+    expect(item.organizador_id).toBe(CLUB_PADELITO);
+    expect(item.campaign_nombre).toBe('Octubre Loco');
+    expect(Number(item.puntos_acumulados)).toBeGreaterThanOrEqual(10);
   });
 });

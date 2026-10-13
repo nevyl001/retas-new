@@ -1477,4 +1477,184 @@
   padding: 0.55rem 0.7rem;
 }
 
+/* ── Directorio Administrativo de Jugadores y Canjes ── */
+.rrw-directory-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.rrw-directory-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.rrw-directory-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-muted, #8e95a0);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rrw-directory-tab:hover {
+  color: var(--text-primary, #ffffff);
+  background: var(--surface-1, rgba(255, 255, 255, 0.04));
+}
+
+.rrw-directory-tab.is-active {
+  color: var(--text-primary, #ffffff);
+  background: var(--surface-2, rgba(255, 255, 255, 0.08));
+  border-color: var(--border-default, rgba(255, 255, 255, 0.15));
+}
+
+.rrw-tab-count {
+  font-size: 0.72rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary, #b0b7c3);
+}
+
+.rrw-tab-count--alert {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.rrw-directory-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rrw-toolbar-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  flex: 1;
+  min-width: 280px;
+}
+
+.rrw-toolbar-right {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.rrw-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-card, #0f1318);
+}
+
+.rrw-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.rrw-data-table th {
+  padding: 0.65rem 0.85rem;
+  background: var(--surface-1, rgba(255, 255, 255, 0.03));
+  color: var(--text-muted, #8e95a0);
+  font-weight: 600;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  white-space: nowrap;
+}
+
+.rrw-data-table td {
+  padding: 0.75rem 0.85rem;
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+  vertical-align: middle;
+}
+
+.rrw-data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.rrw-data-table tr.is-clickable {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.rrw-data-table tr.is-clickable:hover {
+  background: var(--surface-1, rgba(255, 255, 255, 0.035));
+}
+
+.rrw-data-table tr.is-selected {
+  background: var(--surface-2, rgba(255, 255, 255, 0.07));
+}
+
+.rrw-player-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.rrw-player-name {
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+}
+
+.rrw-player-code {
+  font-size: 0.72rem;
+  color: var(--text-muted, #8e95a0);
+  font-family: monospace;
+}
+
+.rrw-pts-highlight {
+  font-weight: 700;
+  color: var(--text-primary, #ffffff);
+  font-size: 0.95rem;
+}
+
+.rrw-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.25rem;
+  font-size: 0.82rem;
+  color: var(--text-muted, #8e95a0);
+}
+
+.rrw-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ro-accent, #e5a93c);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.3rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.rrw-back-link:hover {
+  text-decoration: underline;
+}
+
+
 

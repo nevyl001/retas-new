@@ -458,3 +458,148 @@ export async function statsRows(organizadorId: string) {
     campaigns: campaigns.data ?? [],
   };
 }
+
+export interface AdminPlayerCampaignItem {
+  campaign_id: string;
+  campaign_nombre: string;
+  fase: "acumulacion" | "canje" | "cerrada";
+  puntos_acumulados: number;
+  puntos_disponibles: number;
+  puntos_reservados: number;
+  participaciones_count: number;
+  ultima_participacion: string | null;
+  canje_desde: string;
+  canje_hasta: string;
+}
+
+export interface AdminPlayerRewardsRow {
+  jugador_id: string;
+  nombre: string;
+  codigo_riviera: string;
+  campaign_id: string;
+  campaign_nombre: string;
+  campaign_fase: "acumulacion" | "canje" | "cerrada";
+  canje_desde: string;
+  canje_hasta: string;
+  puntos_acumulados: number;
+  puntos_disponibles: number;
+  puntos_reservados: number;
+  participaciones_acreditadas: number;
+  ultima_participacion: string | null;
+  campanas?: AdminPlayerCampaignItem[];
+}
+
+export interface AdminPlayersRewardsResponse {
+  total_count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  players: AdminPlayerRewardsRow[];
+}
+
+export interface AdminIncidentRow {
+  id: string;
+  tipo_incidencia: "acreditacion_error" | "revision_pendiente" | "fallo_inicial";
+  participacion_id: string;
+  jugador_id: string;
+  jugador_nombre: string;
+  codigo_riviera: string;
+  tipo_evento: string;
+  evento_id: string;
+  campaign_id: string | null;
+  campaign_nombre: string;
+  puntos_esperados: number;
+  error_mensaje: string;
+  attempts: number;
+  created_at: string;
+}
+
+export interface AdminIncidentsResponse {
+  total_count: number;
+  error_count: number;
+  pending_count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  incidents: AdminIncidentRow[];
+}
+
+export interface PlayerPublicSummaryItem {
+  organizador_id: string;
+  club_nombre?: string;
+  campaign_id: string;
+  campaign_nombre: string;
+  fase: "acumulacion" | "canje" | "cerrada";
+  puntos_acumulados: number;
+  puntos_disponibles: number;
+  puntos_reservados: number;
+  participaciones_count: number;
+  acumula_desde: string;
+  acumula_hasta: string;
+  canje_desde: string;
+  canje_hasta: string;
+  is_canje_open: boolean;
+}
+
+export async function listAdminPlayersRewards(options: {
+  organizadorId: string;
+  campaignId?: string;
+  query?: string;
+  sortBy?: "acumulado" | "disponible" | "nombre" | "reciente";
+  sortDir?: "asc" | "desc";
+  page?: number;
+  pageSize?: number;
+}): Promise<AdminPlayersRewardsResponse> {
+  const { data, error } = await supabase.rpc("rewards_admin_players_list", {
+    p_organizador_id: options.organizadorId,
+    p_campaign_id: options.campaignId ?? null,
+    p_query: options.query?.trim() ? options.query.trim() : null,
+    p_sort_by: options.sortBy ?? "acumulado",
+    p_sort_dir: options.sortDir ?? "desc",
+    p_page: options.page ?? 1,
+    p_page_size: options.pageSize ?? 25,
+  });
+  fail(error, "No se pudo consultar el listado de jugadores con puntos");
+  return (data ?? {
+    total_count: 0,
+    page: 1,
+    page_size: 25,
+    total_pages: 0,
+    players: [],
+  }) as AdminPlayersRewardsResponse;
+}
+
+export async function listAdminIncidents(options: {
+  organizadorId: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<AdminIncidentsResponse> {
+  const { data, error } = await supabase.rpc("rewards_admin_incidents_list", {
+    p_organizador_id: options.organizadorId,
+    p_page: options.page ?? 1,
+    p_page_size: options.pageSize ?? 50,
+  });
+  fail(error, "No se pudieron consultar las incidencias de Rewards");
+  return (data ?? {
+    total_count: 0,
+    error_count: 0,
+    pending_count: 0,
+    page: 1,
+    page_size: 50,
+    total_pages: 0,
+    incidents: [],
+  }) as AdminIncidentsResponse;
+}
+
+export async function playerPublicSummary(
+  jugadorId: string,
+  organizadorId?: string | null
+): Promise<PlayerPublicSummaryItem[]> {
+  const { data, error } = await supabase.rpc("rewards_player_public_summary", {
+    p_jugador_id: jugadorId,
+    p_organizador_id: organizadorId ?? null,
+  });
+  fail(error, "No se pudo consultar el resumen público de Rewards");
+  return (data ?? []) as PlayerPublicSummaryItem[];
+}
+

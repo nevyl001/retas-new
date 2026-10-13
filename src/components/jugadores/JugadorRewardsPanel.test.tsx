@@ -29,6 +29,7 @@ jest.mock("../../lib/rewards/api", () => {
     cancelRedemption: jest.fn(),
     playerSnapshot: jest.fn(),
     playerRequestRedemption: jest.fn(),
+    playerPublicSummary: jest.fn(),
   };
 });
 
@@ -42,6 +43,7 @@ const mockListParticipaciones = rewardsApi.listParticipaciones as jest.Mock;
 const mockAssignBenefit = rewardsApi.assignBenefit as jest.Mock;
 const mockPlayerSnapshot = rewardsApi.playerSnapshot as jest.Mock;
 const mockPlayerRequestRedemption = rewardsApi.playerRequestRedemption as jest.Mock;
+const mockPlayerPublicSummary = rewardsApi.playerPublicSummary as jest.Mock;
 
 describe("JugadorRewardsPanel — Mejoras de UX en modo admin", () => {
   let container: HTMLDivElement;
@@ -59,6 +61,7 @@ describe("JugadorRewardsPanel — Mejoras de UX en modo admin", () => {
     mockListBenefits.mockResolvedValue([]);
     mockListParticipaciones.mockResolvedValue([]);
     mockAssignBenefit.mockResolvedValue(undefined);
+    mockPlayerPublicSummary.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -524,6 +527,7 @@ describe("JugadorRewardsPanel — Fidelización Multiclub y Resolución de Ident
     document.body.appendChild(container);
     mockPlayerSnapshot.mockReset();
     mockPlayerRequestRedemption.mockReset();
+    mockPlayerPublicSummary.mockResolvedValue([]);
     rememberOrganizerDisplayName("org-padelito", "Padelito Warehouse");
     rememberOrganizerDisplayName("org-hack", "Hack Padel");
   });
@@ -1257,6 +1261,7 @@ describe("Riviera Rewards — Corrección Definitiva: Selector Limpio, Fallback 
     mockPlayerSnapshot.mockReset();
     mockPlayerRequestRedemption.mockReset();
     mockListParticipaciones.mockResolvedValue([]);
+    mockPlayerPublicSummary.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -1524,6 +1529,60 @@ describe("Riviera Rewards — Corrección Definitiva: Selector Limpio, Fallback 
     // No debe ofrecer selector ni opciones para Hackpadel o Riviera Open porque ahí no están habilitados
     expect(container.querySelector(".rrw-club-selector")).toBeNull();
     expect(container.textContent).not.toContain("Hackpadel");
+  });
+
+  test("7. Balance de Rewards en el perfil público (Lalo B RIV-00000119 en Padelito Warehouse): muestra resumen de puntos de solo lectura", async () => {
+    rememberOrganizerDisplayName("org-padelito", "Padelito Warehouse");
+
+    mockPlayerPublicSummary.mockResolvedValue([
+      {
+        organizador_id: "org-padelito",
+        club_nombre: "Padelito Warehouse",
+        campaign_id: "camp-octubre-loco",
+        campaign_nombre: "Octubre Loco",
+        puntos_acumulados: 10,
+        puntos_disponibles: 10,
+        puntos_reservados: 0,
+        participaciones_count: 1,
+        fase: "acumulacion",
+        acumula_desde: "2026-10-01T00:00:00Z",
+        acumula_hasta: "2026-10-31T23:59:59Z",
+        canje_desde: "2026-11-01T00:00:00Z",
+        canje_hasta: "2026-11-30T23:59:59Z",
+        is_canje_open: false,
+      },
+    ]);
+
+    // Simula perfil no vinculado en sesión de invitado
+    mockPlayerSnapshot.mockRejectedValue(new Error("La cuenta no está vinculada a este jugador"));
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="jug-lalo"
+          organizadorId="org-padelito"
+          clubName="Padelito Warehouse"
+          rivieraId="RIV-00000119"
+          currentUser={null}
+        />
+      );
+    });
+    await flush();
+
+    // Comprueba que se consultó el resumen público
+    expect(mockPlayerPublicSummary).toHaveBeenCalledWith("jug-lalo", "org-padelito");
+
+    // Muestra los puntos reales de Rewards de la campaña Octubre Loco
+    expect(container.textContent).toContain("Octubre Loco");
+    expect(container.textContent).toContain("10");
+    expect(container.textContent).toContain("Puntos acumulados");
+    expect(container.textContent).toContain("Padelito Warehouse");
+
+    // Conserva las acciones de canje protegidas mediante aviso de solo lectura
+    expect(container.textContent).toContain("Solo lectura");
+    expect(container.textContent).not.toContain("ACCESO RESTRINGIDO");
   });
 });
 

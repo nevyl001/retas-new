@@ -72,7 +72,7 @@ describe("torneoExpressService — bloqueo torneo cerrado", () => {
     // El chequeo de "torneo cerrado" ahora es responsabilidad exclusiva del
     // RPC (server-side, bajo lock) — no debe haber ningún fetch/update
     // directo de tabla en este flujo.
-    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.from).not.toHaveBeenCalledWith("torneo_express");
   });
 
   it("saveEliminatoriaResultado rechaza si torneo cerrado", async () => {

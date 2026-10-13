@@ -26,6 +26,9 @@ import {
   saveReward,
   statsRows,
   syncCandidates,
+  listAdminPlayersRewards,
+  listAdminIncidents,
+  recoverParticipations,
   type BalanceRecord,
   type BenefitRecord,
   type CampaignRecord,
@@ -33,6 +36,9 @@ import {
   type RedemptionRecord,
   type ReviewRecord,
   type RewardRecord,
+  type AdminPlayersRewardsResponse,
+  type AdminPlayerRewardsRow,
+  type AdminIncidentsResponse,
 } from "../../lib/rewards/api";
 import {
   CAMPAIGN_STATE_LABELS,
@@ -1088,8 +1094,27 @@ function PlayersArea({
   ask: (title: string, body: string, task: () => Promise<void>) => void;
   onNotice: (message: string) => void;
 }) {
+  const [tab, setTab] = useState<"con_puntos" | "incidencias">("con_puntos");
+
+  // Estado del listado "Con puntos"
+  const [playersData, setPlayersData] = useState<AdminPlayersRewardsResponse | null>(null);
+  const [loadingPlayers, setLoadingPlayers] = useState(true);
+  const [playersError, setPlayersError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [campaignFilter, setCampaignFilter] = useState("");
+  const [sortBy, setSortBy] = useState<"acumulado" | "disponible" | "nombre" | "reciente">("acumulado");
+  const [page, setPage] = useState(1);
+
+  // Estado de la pestaña "Con incidencias"
+  const [incidentsData, setIncidentsData] = useState<AdminIncidentsResponse | null>(null);
+  const [loadingIncidents, setLoadingIncidents] = useState(false);
+  const [incidentsError, setIncidentsError] = useState<string | null>(null);
+  const [incidentsPage, setIncidentsPage] = useState(1);
+
+  // Estado de detalle del jugador seleccionado
   const [selected, setSelected] = useState<string>("");
+  const [selectedPlayerName, setSelectedPlayerName] = useState("");
+  const [selectedPlayerCode, setSelectedPlayerCode] = useState("");
   const [balances, setBalances] = useState<BalanceRecord[]>([]);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
   const [redemptions, setRedemptions] = useState<RedemptionRecord[]>([]);
@@ -1114,16 +1139,59 @@ function PlayersArea({
     }
   }, [activeCampaigns, manualCampaignSelection]);
 
-  const filtered = useMemo(
-    () => players.filter((player) => player.nombre.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 40),
-    [players, query]
-  );
-  const pending = reviews.filter((review) => review.estado === "pendiente");
-  const openRewards = rewards.filter((reward) => {
-    const campaign = campaigns.find((item) => item.id === reward.campaign_id);
-    return reward.estado === "activo" && campaign && campaignPhase(campaign) === "canje" && campaign.estado === "activa";
-  });
+  // Carga del listado con puntos
+  const loadDirectory = useCallback(async () => {
+    if (!orgId) return;
+    setLoadingPlayers(true);
+    setPlayersError(null);
+    try {
+      const res = await listAdminPlayersRewards({
+        organizadorId: orgId,
+        campaignId: campaignFilter || undefined,
+        query: query.trim() || undefined,
+        sortBy,
+        sortDir: sortBy === "nombre" ? "asc" : "desc",
+        page,
+        pageSize: 25,
+      });
+      setPlayersData(res);
+    } catch (err: unknown) {
+      setPlayersError(err instanceof Error ? err.message : "Error al consultar jugadores con puntos");
+    } finally {
+      setLoadingPlayers(false);
+    }
+  }, [orgId, campaignFilter, query, sortBy, page]);
 
+  // Carga de incidencias
+  const loadIncidents = useCallback(async () => {
+    if (!orgId) return;
+    setLoadingIncidents(true);
+    setIncidentsError(null);
+    try {
+      const res = await listAdminIncidents({
+        organizadorId: orgId,
+        page: incidentsPage,
+        pageSize: 50,
+      });
+      setIncidentsData(res);
+    } catch (err: unknown) {
+      setIncidentsError(err instanceof Error ? err.message : "Error al consultar incidencias");
+    } finally {
+      setLoadingIncidents(false);
+    }
+  }, [orgId, incidentsPage]);
+
+  // Cargar directorio al cambiar filtros
+  useEffect(() => {
+    loadDirectory();
+  }, [loadDirectory]);
+
+  // Cargar incidencias al montar o cambiar página de incidencias
+  useEffect(() => {
+    loadIncidents();
+  }, [loadIncidents]);
+
+  // Detalle de un jugador específico
   const loadPlayer = useCallback(async (jugadorId: string) => {
     const [nextBalances, nextReviews, nextRedemptions, nextBenefits, nextParts] = await Promise.all([
       playerBalance(orgId, jugadorId),
@@ -1142,75 +1210,131 @@ function PlayersArea({
 
   useEffect(() => {
     if (!selected) return;
-    loadPlayer(selected).catch((reason: unknown) => onNotice(reason instanceof Error ? reason.message : "No se pudo cargar el jugador"));
+    loadPlayer(selected).catch((reason: unknown) =>
+      onNotice(reason instanceof Error ? reason.message : "No se pudo cargar el jugador")
+    );
   }, [selected, loadPlayer, onNotice]);
+
+  const openRewards = rewards.filter((reward) => {
+    const campaign = campaigns.find((item) => item.id === reward.campaign_id);
+    return reward.estado === "activo" && campaign && campaignPhase(campaign) === "canje" && campaign.estado === "activa";
+  });
 
   const accruing = accumulatingNow(balances);
   const redeeming = redeemingNow(balances);
-  const selectedPlayer = players.find((p) => p.id === selected);
+  const pendingReviews = reviews.filter((review) => review.estado === "pendiente");
+
+  const handleSelectPlayer = (row: AdminPlayerRewardsRow) => {
+    setSelected(row.jugador_id);
+    setSelectedPlayerName(row.nombre);
+    setSelectedPlayerCode(row.codigo_riviera);
+  };
+
+  const handleRetryAllIncidents = () => {
+    ask(
+      "Reintentar todas las incidencias",
+      "El sistema reprocesará las participaciones elegibles pendientes o con error en este club.",
+      async () => {
+        const res = await recoverParticipations({ organizadorId: orgId });
+        onNotice(
+          `Reconciliación completada: ${res.recovered_queue_errors} errores reintentados, ${res.recovered_pending_reviews} pendientes acreditados, ${res.recovered_missing_participations} faltantes recuperados.`
+        );
+        await Promise.all([loadIncidents(), loadDirectory()]);
+      }
+    );
+  };
+
+  const handleRetrySingleIncident = (participacionId: string) => {
+    void run(async () => {
+      const res = await recoverParticipations({
+        organizadorId: orgId,
+        participacionIds: [participacionId],
+      });
+      onNotice(
+        res.errors > 0
+          ? "No se pudo acreditar la participación; revisa el mensaje de error."
+          : "Participación reintentada y acreditada exitosamente."
+      );
+      await Promise.all([loadIncidents(), loadDirectory()]);
+      if (selected) await loadPlayer(selected);
+    });
+  };
 
   return (
     <section>
       <div className="rrw-area-toolbar">
         <div>
           <h2 className="rrw-area-title">Jugadores y Canjes</h2>
-          <p className="rrw-area-sub">Administra acreditaciones de puntos, validaciones y entregas de premios</p>
+          <p className="rrw-area-sub">Listado de puntos Riviera Rewards y gestión de canjes del club</p>
         </div>
       </div>
 
-      <div className="rrw-split-layout">
-        <aside className="rrw-master-panel">
-          <div className="rrw-search-wrap">
-            <input
-              className="rrw-search-input"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar jugador del club..."
-              aria-label="Buscar jugador"
-            />
-          </div>
-          <div className="rrw-player-list">
-            {filtered.map((player) => (
-              <button
-                key={player.id}
-                type="button"
-                className={`rrw-player-btn${selected === player.id ? " is-selected" : ""}`}
-                onClick={() => setSelected(player.id)}
-              >
-                <span>{player.nombre}</span>
-                <TablerIcon name="chevron-right" size={14} />
-              </button>
-            ))}
-            {filtered.length === 0 && (
-              <p style={{ margin: "0.5rem 0", fontSize: "0.82rem", color: "var(--text-muted)", textAlign: "center" }}>
-                Sin resultados
-              </p>
-            )}
-          </div>
-        </aside>
+      <div className="rrw-directory-container">
+        {/* Pestañas: Con puntos vs Con incidencias */}
+        <div className="rrw-directory-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "con_puntos"}
+            className={`rrw-directory-tab ${tab === "con_puntos" ? "is-active" : ""}`}
+            onClick={() => {
+              setTab("con_puntos");
+              setSelected("");
+            }}
+          >
+            <TablerIcon name="users" size={15} />
+            <span>Con puntos</span>
+            {playersData && <span className="rrw-tab-count">{playersData.total_count}</span>}
+          </button>
 
-        <main className="rrw-detail-panel">
-          {!selected ? (
-            <div className="rrw-empty-card">
-              <TablerIcon name="user" size={32} />
-              <p>Selecciona un jugador del listado para gestionar sus puntos y canjes.</p>
-            </div>
-          ) : (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "incidencias"}
+            className={`rrw-directory-tab ${tab === "incidencias" ? "is-active" : ""}`}
+            onClick={() => {
+              setTab("incidencias");
+              setSelected("");
+            }}
+          >
+            <TablerIcon name="alert-triangle" size={15} />
+            <span>Con incidencias</span>
+            {incidentsData && incidentsData.total_count > 0 ? (
+              <span className="rrw-tab-count rrw-tab-count--alert">{incidentsData.total_count}</span>
+            ) : (
+              <span className="rrw-tab-count">0</span>
+            )}
+          </button>
+        </div>
+
+        {/* ── VISTA DETALLE DEL JUGADOR SELECCIONADO ── */}
+        {selected ? (
+          <div>
+            <button
+              type="button"
+              className="rrw-back-link"
+              onClick={() => setSelected("")}
+            >
+              <TablerIcon name="arrow-left" size={15} /> Volver al listado de jugadores
+            </button>
+
             <div className="rrw-card">
               <div className="rrw-card-header">
                 <div>
-                  <h3 className="rrw-card-title" style={{ fontSize: "1.15rem" }}>{selectedPlayer?.nombre}</h3>
+                  <h3 className="rrw-card-title" style={{ fontSize: "1.15rem" }}>
+                    {selectedPlayerName || players.find((p) => p.id === selected)?.nombre || "Jugador"}
+                  </h3>
                   <p style={{ margin: "0.15rem 0 0", fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                    Ficha de puntos independiente del ranking deportivo
+                    {selectedPlayerCode ? `Código: ${selectedPlayerCode} · ` : ""}Ficha de Rewards en este club
                   </p>
                 </div>
               </div>
 
               <div className="rrw-kpi-grid">
                 <div className="rrw-kpi-card">
-                  <span className="rrw-kpi-label">Acumulando este mes</span>
+                  <span className="rrw-kpi-label">Puntos acumulados</span>
                   <span className="rrw-kpi-value">{accruing?.acumulando ?? 0}</span>
-                  <p className="rrw-kpi-note">{accruing ? accruing.nombre : "Sin campaña activa acumulando"}</p>
+                  <p className="rrw-kpi-note">{accruing ? accruing.nombre : "Sin campaña acumulando"}</p>
                 </div>
                 <div className="rrw-kpi-card">
                   <span className="rrw-kpi-label">Disponibles para canjear</span>
@@ -1225,25 +1349,27 @@ function PlayersArea({
 
               {balances.filter((row) => row.fase === "cerrada" && (row.utilizado > 0 || row.cerrado > 0)).length > 0 && (
                 <div style={{ marginTop: "0.65rem", fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                  {balances.filter((row) => row.fase === "cerrada" && (row.utilizado > 0 || row.cerrado > 0)).map((row) => (
-                    <span key={row.campaign_id} style={{ marginRight: "0.75rem" }}>
-                      {row.nombre}: {row.utilizado} utilizados, {row.cerrado} cerrados.
-                    </span>
-                  ))}
+                  {balances
+                    .filter((row) => row.fase === "cerrada" && (row.utilizado > 0 || row.cerrado > 0))
+                    .map((row) => (
+                      <span key={row.campaign_id} style={{ marginRight: "0.75rem" }}>
+                        {row.nombre}: {row.utilizado} utilizados, {row.cerrado} cerrados.
+                      </span>
+                    ))}
                 </div>
               )}
 
               {/* Sub-sección: Participaciones pendientes */}
               <div className="rrw-sub-block">
                 <h4 className="rrw-sub-title">Participaciones Pendientes de Validar</h4>
-                {pending.length === 0 ? (
+                {pendingReviews.length === 0 ? (
                   <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-muted)" }}>
                     No hay participaciones por validar para este jugador.
                   </p>
                 ) : (
                   <div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", margin: "0.5rem 0" }}>
-                      {pending.map((review) => (
+                      {pendingReviews.map((review) => (
                         <label key={review.id} className="rrw-chip-toggle" style={{ borderRadius: "8px" }}>
                           <input
                             type="checkbox"
@@ -1268,6 +1394,7 @@ function PlayersArea({
                         <select
                           id="play-camp-acred"
                           className="rrw-select"
+                          aria-label="Campaña"
                           value={campaignId}
                           onChange={(e) => {
                             setCampaignId(e.target.value);
@@ -1293,8 +1420,8 @@ function PlayersArea({
                                 decision: "aprobada",
                                 campaignId,
                               });
-                              onNotice(`Se validaron ${count} participaciones y se intentó acreditar.`);
-                              await loadPlayer(selected);
+                              onNotice(`Se validaron ${count} participaciones y se acreditaron puntos.`);
+                              await Promise.all([loadPlayer(selected), loadDirectory(), loadIncidents()]);
                             })
                           }
                         >
@@ -1314,7 +1441,7 @@ function PlayersArea({
                                 motivo: "Rechazada por el club",
                               });
                               onNotice("Participaciones rechazadas.");
-                              await loadPlayer(selected);
+                              await Promise.all([loadPlayer(selected), loadDirectory(), loadIncidents()]);
                             })
                           }
                         >
@@ -1355,7 +1482,7 @@ function PlayersArea({
                         run(async () => {
                           await requestRedemption(orgId, rewardId, selected);
                           onNotice("Solicitud creada. Los puntos se descuentan al reservar.");
-                          await loadPlayer(selected);
+                          await Promise.all([loadPlayer(selected), loadDirectory()]);
                         })
                       }
                     >
@@ -1380,7 +1507,12 @@ function PlayersArea({
                             variant="secondary"
                             size="sm"
                             disabled={busy}
-                            onClick={() => run(async () => { await reserveRedemption(redemption.id); await loadPlayer(selected); })}
+                            onClick={() =>
+                              run(async () => {
+                                await reserveRedemption(redemption.id);
+                                await Promise.all([loadPlayer(selected), loadDirectory()]);
+                              })
+                            }
                           >
                             Reservar
                           </Button>
@@ -1390,7 +1522,12 @@ function PlayersArea({
                             variant="primary"
                             size="sm"
                             disabled={busy}
-                            onClick={() => run(async () => { await confirmRedemption(redemption.id); await loadPlayer(selected); })}
+                            onClick={() =>
+                              run(async () => {
+                                await confirmRedemption(redemption.id);
+                                await Promise.all([loadPlayer(selected), loadDirectory()]);
+                              })
+                            }
                           >
                             Entregar
                           </Button>
@@ -1403,7 +1540,7 @@ function PlayersArea({
                             onClick={() =>
                               ask("Cancelar canje", "Si la ventana ya cerró, los puntos reservados no vuelven al saldo.", async () => {
                                 await cancelRedemption(redemption.id);
-                                await loadPlayer(selected);
+                                await Promise.all([loadPlayer(selected), loadDirectory()]);
                               })
                             }
                           >
@@ -1428,48 +1565,50 @@ function PlayersArea({
                   <p style={{ margin: "0 0 0.5rem", fontSize: "0.82rem", color: "var(--text-secondary)" }}>
                     Al asignarla, la participación no genera puntos Rewards pero conserva el historial deportivo íntegro.
                   </p>
-                  {benefits.filter((b) => b.estado === "pendiente_asignacion").map((benefit) => (
-                    <div key={benefit.id} className="rrw-fields-row rrw-fields-row--2">
-                      <div className="rrw-field">
-                        <select
-                          className="rrw-select"
-                          value={partId}
-                          onChange={(e) => setPartId(e.target.value)}
-                        >
-                          <option value="">Elige participación...</option>
-                          {parts.map((part) => (
-                            <option key={part.id} value={part.id}>
-                              {part.evento_nombre ||
-                                (MODALITY_LABELS[part.tipo_evento as keyof typeof MODALITY_LABELS] ?? part.tipo_evento)}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "flex-end" }}>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          disabled={busy || !partId}
-                          onClick={() => {
-                            const part = parts.find((item) => item.id === partId);
-                            if (!part) return;
-                            void run(async () => {
-                              await assignBenefit({
-                                benefitId: benefit.id,
-                                eventoId: part.evento_id,
-                                tipoEvento: part.tipo_evento,
-                                participacionId: part.id,
+                  {benefits
+                    .filter((b) => b.estado === "pendiente_asignacion")
+                    .map((benefit) => (
+                      <div key={benefit.id} className="rrw-fields-row rrw-fields-row--2">
+                        <div className="rrw-field">
+                          <select
+                            className="rrw-select"
+                            value={partId}
+                            onChange={(e) => setPartId(e.target.value)}
+                          >
+                            <option value="">Elige participación...</option>
+                            {parts.map((part) => (
+                              <option key={part.id} value={part.id}>
+                                {part.evento_nombre ||
+                                  (MODALITY_LABELS[part.tipo_evento as keyof typeof MODALITY_LABELS] ?? part.tipo_evento)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "flex-end" }}>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            disabled={busy || !partId}
+                            onClick={() => {
+                              const part = parts.find((item) => item.id === partId);
+                              if (!part) return;
+                              void run(async () => {
+                                await assignBenefit({
+                                  benefitId: benefit.id,
+                                  eventoId: part.evento_id,
+                                  tipoEvento: part.tipo_evento,
+                                  participacionId: part.id,
+                                });
+                                onNotice("Participación marcada como reta gratuita.");
+                                await Promise.all([loadPlayer(selected), loadDirectory()]);
                               });
-                              onNotice("Participación marcada como reta gratuita.");
-                              await loadPlayer(selected);
-                            });
-                          }}
-                        >
-                          Marcar como gratuita
-                        </Button>
+                            }}
+                          >
+                            Marcar como gratuita
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               )}
 
@@ -1494,7 +1633,12 @@ function PlayersArea({
                       variant="secondary"
                       size="sm"
                       disabled={busy || !email}
-                      onClick={() => run(async () => { await linkPlayer(orgId, selected, email); onNotice("Cuenta vinculada exitosamente."); })}
+                      onClick={() =>
+                        run(async () => {
+                          await linkPlayer(orgId, selected, email);
+                          onNotice("Cuenta vinculada exitosamente.");
+                        })
+                      }
                     >
                       Vincular cuenta
                     </Button>
@@ -1502,8 +1646,388 @@ function PlayersArea({
                 </div>
               </div>
             </div>
-          )}
-        </main>
+          </div>
+        ) : tab === "con_puntos" ? (
+          /* ── TABLA PRINCIPAL: JUGADORES CON PUNTOS ── */
+          <div>
+            <div className="rrw-directory-toolbar">
+              <div className="rrw-toolbar-left">
+                <input
+                  className="rrw-search-input"
+                  style={{ maxWidth: "320px" }}
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Buscar por nombre o código..."
+                  aria-label="Buscar jugador"
+                />
+
+                {campaigns.length > 0 && (
+                  <select
+                    className="rrw-select"
+                    style={{ maxWidth: "220px" }}
+                    value={campaignFilter}
+                    onChange={(e) => {
+                      setCampaignFilter(e.target.value);
+                      setPage(1);
+                    }}
+                    aria-label="Filtrar por campaña"
+                  >
+                    <option value="">Todas las campañas</option>
+                    {campaigns.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nombre}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div className="rrw-toolbar-right">
+                <select
+                  className="rrw-select"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  aria-label="Ordenar listado"
+                >
+                  <option value="acumulado">Mayor acumulación</option>
+                  <option value="disponible">Mayor saldo canjeable</option>
+                  <option value="nombre">Nombre (A-Z)</option>
+                  <option value="reciente">Última reta reciente</option>
+                </select>
+              </div>
+            </div>
+
+            {playersError && (
+              <div className="rrw-error-banner" style={{ marginTop: "0.75rem" }}>
+                <TablerIcon name="alert-triangle" size={16} />
+                <span className="rrw-error-text">{playersError}</span>
+                <Button size="sm" variant="ghost" onClick={loadDirectory}>
+                  Reintentar
+                </Button>
+              </div>
+            )}
+
+            <div className="rrw-table-wrapper" style={{ marginTop: "0.75rem" }}>
+              <table className="rrw-data-table">
+                <thead>
+                  <tr>
+                    <th>Jugador</th>
+                    <th>Campaña</th>
+                    <th style={{ textAlign: "right" }}>Puntos Acumulados</th>
+                    <th style={{ textAlign: "right" }}>Saldo Canjeable</th>
+                    <th style={{ textAlign: "center" }}>Participaciones</th>
+                    <th>Última Reta</th>
+                    <th style={{ textAlign: "right" }}>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingPlayers ? (
+                    <tr>
+                      <td colSpan={7} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                        Cargando jugadores con puntos Rewards…
+                      </td>
+                    </tr>
+                  ) : !playersData || playersData.players.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ textAlign: "center", padding: "2.5rem", color: "var(--text-muted)" }}>
+                        {query || campaignFilter
+                          ? "No se encontraron jugadores que coincidan con los filtros aplicados."
+                          : "No hay jugadores con puntos acumulados ni saldo canjeable en este club."}
+                      </td>
+                    </tr>
+                  ) : (
+                    playersData.players.map((row) => (
+                      <tr
+                        key={row.jugador_id}
+                        className="is-clickable"
+                        onClick={() => handleSelectPlayer(row)}
+                      >
+                        <td>
+                          <div className="rrw-player-cell">
+                            <span className="rrw-player-name">{row.nombre}</span>
+                            {row.codigo_riviera && (
+                              <span className="rrw-player-code">{row.codigo_riviera}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <div>
+                            <strong>{row.campaign_nombre}</strong>
+                            <div style={{ marginTop: "0.15rem" }}>
+                              <span
+                                className={`rrw-badge ${
+                                  row.campaign_fase === "canje"
+                                    ? "rrw-badge--active"
+                                    : row.campaign_fase === "acumulacion"
+                                    ? "rrw-badge--neutral"
+                                    : "rrw-badge--ghost"
+                                }`}
+                              >
+                                {row.campaign_fase === "acumulacion"
+                                  ? "Acumulando"
+                                  : row.campaign_fase === "canje"
+                                  ? "Canje abierto"
+                                  : "Cerrada"}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <span className="rrw-pts-highlight">{row.puntos_acumulados} pts</span>
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <span
+                            className="rrw-pts-highlight"
+                            style={{
+                              color: row.puntos_disponibles > 0 ? "var(--ro-accent, #e5a93c)" : "var(--text-muted)",
+                            }}
+                          >
+                            {row.puntos_disponibles} pts
+                          </span>
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <span>{row.participaciones_acreditadas} retas</span>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+                            {row.ultima_participacion
+                              ? new Date(row.ultima_participacion).toLocaleDateString("es-MX", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })
+                              : "—"}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectPlayer(row);
+                            }}
+                          >
+                            Ver detalle
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {playersData && playersData.total_count > 0 && (
+              <div className="rrw-pagination">
+                <span>
+                  Mostrando {playersData.players.length} de {playersData.total_count} jugadores (Página {page} de{" "}
+                  {playersData.total_pages || 1})
+                </span>
+                <div style={{ display: "flex", gap: "0.4rem" }}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={page <= 1 || loadingPlayers}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={page >= playersData.total_pages || loadingPlayers}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Siguiente
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ── PESTAÑA: CON INCIDENCIAS ── */
+          <div>
+            <div className="rrw-directory-toolbar" style={{ marginBottom: "0.75rem" }}>
+              <div>
+                <p style={{ margin: 0, fontSize: "0.86rem", color: "var(--text-secondary)" }}>
+                  {incidentsData
+                    ? `Total: ${incidentsData.total_count} incidencias (${incidentsData.error_count} errores, ${incidentsData.pending_count} pendientes)`
+                    : "Cargando incidencias…"}
+                </p>
+              </div>
+              <div>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  disabled={busy || loadingIncidents || !incidentsData || incidentsData.total_count === 0}
+                  onClick={handleRetryAllIncidents}
+                >
+                  <TablerIcon name="refresh" size={14} /> Reintentar todas las incidencias
+                </Button>
+              </div>
+            </div>
+
+            {incidentsError && (
+              <div className="rrw-error-banner" style={{ marginBottom: "0.75rem" }}>
+                <TablerIcon name="alert-triangle" size={16} />
+                <span className="rrw-error-text">{incidentsError}</span>
+                <Button size="sm" variant="ghost" onClick={loadIncidents}>
+                  Reintentar
+                </Button>
+              </div>
+            )}
+
+            <div className="rrw-table-wrapper">
+              <table className="rrw-data-table">
+                <thead>
+                  <tr>
+                    <th>Jugador</th>
+                    <th>Evento</th>
+                    <th>Campaña</th>
+                    <th>Estado / Error</th>
+                    <th style={{ textAlign: "center" }}>Intentos</th>
+                    <th style={{ textAlign: "right" }}>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingIncidents ? (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                        Consultando incidencias del club…
+                      </td>
+                    </tr>
+                  ) : !incidentsData || incidentsData.incidents.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: "center", padding: "2.5rem", color: "var(--text-muted)" }}>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem", color: "var(--success, #10b981)" }}>
+                          <TablerIcon name="circle-check" size={28} />
+                          <span style={{ color: "var(--text-muted)" }}>Todo en orden. No hay incidencias pendientes ni errores en este club.</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    incidentsData.incidents.map((inc) => (
+                      <tr key={inc.id}>
+                        <td>
+                          <div className="rrw-player-cell">
+                            <span className="rrw-player-name">{inc.jugador_nombre || "Jugador"}</span>
+                            {inc.codigo_riviera && (
+                              <span className="rrw-player-code">{inc.codigo_riviera}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <div>
+                            <strong>
+                              {MODALITY_LABELS[inc.tipo_evento as keyof typeof MODALITY_LABELS] ?? inc.tipo_evento}
+                            </strong>
+                            <div style={{ fontSize: "0.76rem", color: "var(--text-muted)" }}>
+                              {new Date(inc.created_at).toLocaleDateString("es-MX")}
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div>
+                            <span>{inc.campaign_nombre}</span>
+                            <div style={{ fontSize: "0.76rem", color: "var(--ro-accent, #e5a93c)" }}>
+                              +{inc.puntos_esperados} pts esperados
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div>
+                            <span
+                              className={`rrw-badge ${
+                                inc.tipo_incidencia === "acreditacion_error" || inc.tipo_incidencia === "fallo_inicial"
+                                  ? "rrw-tab-count--alert"
+                                  : "rrw-badge--neutral"
+                              }`}
+                            >
+                              {inc.tipo_incidencia === "acreditacion_error"
+                                ? "Error de acreditación"
+                                : inc.tipo_incidencia === "fallo_inicial"
+                                ? "Fallo inicial de encolamiento"
+                                : "Pendiente de validación"}
+                            </span>
+                            <div
+                              style={{
+                                fontSize: "0.78rem",
+                                color: "var(--text-secondary)",
+                                marginTop: "0.25rem",
+                                maxWidth: "360px",
+                                wordBreak: "break-word",
+                              }}
+                            >
+                              {inc.error_mensaje}
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>{inc.attempts}</span>
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          {inc.tipo_incidencia === "revision_pendiente" ? (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              disabled={busy}
+                              onClick={() => {
+                                setSelected(inc.jugador_id);
+                                setSelectedPlayerName(inc.jugador_nombre);
+                              }}
+                            >
+                              Revisar
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="primary"
+                              disabled={busy}
+                              onClick={() => handleRetrySingleIncident(inc.participacion_id)}
+                            >
+                              Reintentar
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {incidentsData && incidentsData.total_count > 0 && (
+              <div className="rrw-pagination">
+                <span>
+                  Mostrando {incidentsData.incidents.length} de {incidentsData.total_count} incidencias (Página{" "}
+                  {incidentsPage} de {incidentsData.total_pages || 1})
+                </span>
+                <div style={{ display: "flex", gap: "0.4rem" }}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={incidentsPage <= 1 || loadingIncidents}
+                    onClick={() => setIncidentsPage((p) => Math.max(1, p - 1))}
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={incidentsPage >= incidentsData.total_pages || loadingIncidents}
+                    onClick={() => setIncidentsPage((p) => p + 1)}
+                  >
+                    Siguiente
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

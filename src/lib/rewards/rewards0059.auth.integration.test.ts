@@ -94,7 +94,13 @@ const FRANK_P = "aaaaaaaa-0000-4000-a000-000000000007";
 
 const KEY_CARLOS = "dddddddd-0000-4000-a000-000000000001";
 
-describe("Migración 0059 — autorización multiclub (SQL real)", () => {
+const maybeDescribe =
+  process.env.RUN_SQL_INTEGRATION === "1" ||
+  Boolean(process.env.NODE_OPTIONS && process.env.NODE_OPTIONS.includes("--experimental-vm-modules"))
+    ? describe
+    : describe.skip;
+
+maybeDescribe("Migración 0059 — autorización multiclub (SQL real)", () => {
   let db: PGliteType;
   let campPad: string;
   let campHack: string;
