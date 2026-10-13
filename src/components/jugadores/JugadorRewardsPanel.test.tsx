@@ -1457,6 +1457,75 @@ describe("Riviera Rewards — Corrección Definitiva: Selector Limpio, Fallback 
     expect(container.textContent).toContain("90");
     expect(container.textContent).not.toContain("ACCESO RESTRINGIDO");
   });
+
+  test("6. Los premios son únicamente donde estén habilitados: restringe el selector exclusivamente al club habilitado", async () => {
+    rememberOrganizerDisplayName("org-padelito", "Padelito Warehouse");
+    rememberOrganizerDisplayName("org-hackpadel", "Hackpadel");
+    rememberOrganizerDisplayName("org-riviera", "Riviera Open");
+
+    mockPlayerSnapshot.mockResolvedValue({
+      organizador_id: "org-padelito",
+      jugador_id: "j-carlos",
+      clubes_autorizados: [
+        { organizador_id: "org-padelito", jugador_id: "j-carlos" },
+      ],
+      saldos: [
+        {
+          campaign_id: "camp-pad",
+          nombre: "Padelito Rewards 2026",
+          fase: "canje",
+          acumulando: 0,
+          disponible: 120,
+          reservado: 0,
+          utilizado: 0,
+          cerrado: 0,
+          acumula_desde: "2026-10-01T00:00:00Z",
+          acumula_hasta: "2026-11-01T00:00:00Z",
+          canje_desde: "2026-11-01T00:00:00Z",
+          canje_hasta: "2026-12-01T00:00:00Z",
+        },
+      ],
+      premios: [
+        {
+          id: "rew-1",
+          nombre: "Bolsa de Pelotas",
+          descripcion: "Tubo de pelotas oficiales",
+          costo_puntos: 100,
+          tipo: "articulo",
+          condiciones: null,
+          inventario_restante: 5,
+          limite_por_jugador: 1,
+          campaign_id: "camp-pad",
+          campana: "Padelito Rewards 2026",
+          canje_hasta: "2026-12-01T00:00:00Z",
+        },
+      ],
+      canjes: [],
+    });
+
+    root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <JugadorRewardsPanel
+          mode="player"
+          jugadorId="j-carlos"
+          organizadorId="org-hackpadel"
+          participatingClubIds={["org-hackpadel", "org-riviera", "org-padelito"]}
+          currentUser={{ id: "auth-carlos", email: "carlos@test.com" }}
+        />
+      );
+    });
+    await flush();
+
+    // Solo debe mostrar Padelito Warehouse donde tiene premios habilitados
+    expect(container.textContent).toContain("Padelito Warehouse");
+    expect(container.textContent).toContain("Bolsa de Pelotas");
+    expect(container.textContent).toContain("100 pts");
+    // No debe ofrecer selector ni opciones para Hackpadel o Riviera Open porque ahí no están habilitados
+    expect(container.querySelector(".rrw-club-selector")).toBeNull();
+    expect(container.textContent).not.toContain("Hackpadel");
+  });
 });
+
 
 

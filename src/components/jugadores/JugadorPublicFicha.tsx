@@ -46,7 +46,7 @@ import { RivieraIdBadge } from "./RivieraIdBadge";
 import { JugadorPuntosBreakdown } from "./JugadorPuntosBreakdown";
 import { JugadorOfficialRomcPuntos } from "./JugadorOfficialRomcPuntos";
 import { JugadorPublicHistorial } from "./JugadorPublicHistorial";
-import { JugadorRewardsPanel } from "./JugadorRewardsPanel";
+import { JugadorRewardsPanel, isValidClubDisplayName } from "./JugadorRewardsPanel";
 import { RatingNivel } from "./RatingNivel";
 import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
@@ -417,6 +417,9 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const registrationOrgId =
     jugador.grantedAccess?.ownerOrganizadorId?.trim() ??
     resolveRegistrationOrganizadorIdForPublicFicha(jugador);
+  const registrationClubName = registrationOrgId
+    ? getOrganizerDisplayNameSync(registrationOrgId)
+    : null;
   const viewingClubName = viewingOrgId
     ? getOrganizerDisplayNameSync(viewingOrgId)
     : null;
@@ -535,6 +538,13 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                   <p className="rjp-ficha-hero__cat-pill">
                     {JUGADOR_CATEGORIA_LABELS[jugador.categoria]}
                   </p>
+
+                  {registrationClubName && isValidClubDisplayName(registrationClubName) ? (
+                    <p className="rjp-ficha-hero__home-club" aria-label={`Club: ${registrationClubName}`}>
+                      <TablerIcon name="building-community" size={13} className="rjp-ficha-hero__home-club-icon" />
+                      <span>Club: <strong>{registrationClubName}</strong></span>
+                    </p>
+                  ) : null}
 
                   {hasOrgContext &&
                   viewingClubName &&

@@ -15,6 +15,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { getPublicPlayerProfileData } from "../../lib/rivieraJugadores/getPublicPlayerProfileData";
 import { prefetchOrganizerDisplayNames } from "../../lib/rivieraJugadores/grantedRankingDisplay";
+import { rememberOrganizerDisplayName } from "../../lib/organizer/organizerDisplayName";
 import { JugadorPublicFicha } from "./JugadorPublicFicha";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 
@@ -180,5 +181,20 @@ describe("JugadorPublicFicha — resiliencia de carga (incidente 2026-08-05)", (
     });
     expect(mockGetProfile).toHaveBeenCalledTimes(1);
     expect(prefetchOrganizerDisplayNames).toHaveBeenCalledTimes(1);
+  });
+
+  it("muestra claramente el club de origen del jugador en el hero si tiene nombre válido", async () => {
+    rememberOrganizerDisplayName("org-1", "Hackpadel");
+    mockGetProfile.mockResolvedValueOnce(profileFixture());
+
+    render(<JugadorPublicFicha slug="luis-miguel" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Luis Miguel")).toBeInTheDocument();
+    });
+
+    const homeClubBadge = screen.getByLabelText("Club: Hackpadel");
+    expect(homeClubBadge).toBeInTheDocument();
+    expect(homeClubBadge).toHaveTextContent("Club: Hackpadel");
   });
 });

@@ -231,8 +231,12 @@ function PlayerRewardsView({
     };
 
     // 1. Clubes explícitamente autorizados por la RPC snapshot (máxima prioridad)
-    for (const ac of authorizedClubs) {
-      addClub(ac.organizadorId, ac.jugadorId);
+    // Los premios son ÚNICAMENTE donde estén habilitados para el jugador
+    if (authorizedClubs && authorizedClubs.length > 0) {
+      for (const ac of authorizedClubs) {
+        addClub(ac.organizadorId, ac.jugadorId);
+      }
+      return list;
     }
 
     // 2. Perfiles vinculados por identidad multiclub
@@ -366,13 +370,30 @@ function PlayerRewardsView({
               return;
             }
 
+            let fallbackData: PlayerSnapshot | null = null;
+
             // 2. Si no hay otro club o ya se intentó, consultar globalmente sin org (RPC 0059 multiclub)
-            if (activeOrgId) {
-              try {
-                data = await playerSnapshot(activeJugadorId, undefined);
-              } catch {
-                throw initialErr;
+            try {
+              fallbackData = await playerSnapshot(activeJugadorId, undefined);
+            } catch {
+              // Continuar con perfiles vinculados
+            }
+
+            // 3. Probar con perfiles vinculados por identidad multiclub si aún no se tiene
+            if (!fallbackData && linkedProfiles && linkedProfiles.length > 0) {
+              for (const lp of linkedProfiles) {
+                if (lp.organizadorId === activeOrgId) continue;
+                try {
+                  fallbackData = await playerSnapshot(lp.jugadorId, lp.organizadorId);
+                  if (fallbackData) break;
+                } catch {
+                  // Continuar
+                }
               }
+            }
+
+            if (fallbackData) {
+              data = fallbackData;
             } else {
               throw initialErr;
             }
@@ -438,7 +459,7 @@ function PlayerRewardsView({
     return () => {
       active = false;
     };
-  }, [activeJugadorId, activeOrgId, user]);
+  }, [activeJugadorId, activeOrgId, user, linkedProfiles]);
 
   const handleSelectClub = (orgId: string) => {
     if (orgId !== activeOrgId) {
