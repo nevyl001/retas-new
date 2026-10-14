@@ -125,7 +125,7 @@ export const PublicAmericanoMatchCard: React.FC<{
 
   return (
     <article
-      className={`te-pub-match te-pub-match--wide te-pub-match--americano am-pub-match reta-sb-card reta-sb-card--split-vs te-pub-fade-in-up${
+      className={`te-pub-match te-pub-match--wide te-pub-match--americano am-pub-match am-pub-match--split-vs reta-sb-card reta-sb-card--split-vs te-pub-fade-in-up${
         isTie ? " te-pub-match--tie" : ""
       }${matchState === "live" ? " reta-sb-card--live" : ""}`}
       data-match-state={matchState}

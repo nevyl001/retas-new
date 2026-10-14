@@ -24,8 +24,8 @@
   max-width: none;
   margin-left: auto;
   margin-right: auto;
-  padding-left: clamp(1rem, 3vw, 2.5rem);
-  padding-right: clamp(1rem, 3vw, 2.5rem);
+  padding-left: clamp(0.65rem, 1.8vw, 1.4rem);
+  padding-right: clamp(0.65rem, 1.8vw, 1.4rem);
   box-sizing: border-box;
 }
 
@@ -3559,17 +3559,18 @@
 .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair,
 .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact {
   width: 100%;
-  max-width: min(100%, 18rem);
-  margin-inline: auto;
+  max-width: none;
+  margin-inline: 0;
 }
 
 .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel,
 .te-public--americano .am-pub-match--split-vs .pub-split-vs-panel.pub-split-vs-panel {
-  aspect-ratio: 5 / 4;
-  max-width: 10.75rem;
+  aspect-ratio: 16 / 9.6;
+  width: 100%;
+  max-width: none;
   max-height: none;
   height: auto;
-  margin-inline: auto;
+  margin-inline: 0;
   border-radius: 12px;
 }
 
@@ -3622,7 +3623,8 @@
 
   .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair,
   .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact {
-    max-width: min(100%, 15.5rem);
+    max-width: none;
+    width: 100%;
   }
 
   .te-public--americano
@@ -3640,53 +3642,320 @@
 
   .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair,
   .te-public--americano .am-pub-match--split-vs .pub-split-vs-pair--compact {
-    max-width: min(100%, 14.5rem);
+    max-width: none;
+    width: 100%;
   }
 }
 
-/* Paridad con Reta Split VS: cards Americano usan reta-sb-card */
-.te-public--americano .am-pub-match.reta-sb-card.te-pub-match--wide,
-.te-public--americano.te-public--americano-wide
-  .am-pub-match.reta-sb-card.te-pub-match--wide {
-  padding: 0.95rem 1rem 0.85rem;
+/* ══════════════════════════════════════════════════════════════════════════════
+   DISEÑO PREMIUM Y ELEGANTE: MATCH CARDS EXPANSIVOS EN AMERICANO PÚBLICO
+   Las cards de jugador ocupan casi todo el espacio útil, eliminando márgenes
+   laterales vacíos y logrando presencia visual deportiva de transmisión.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.te-public--americano .am-pub-match.reta-sb-card,
+.te-public--americano.te-public--americano-wide .am-pub-match.reta-sb-card {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: clamp(0.75rem, 1.2vw, 1.15rem) clamp(0.75rem, 1.2vw, 1.25rem) clamp(0.75rem, 1vw, 1.05rem) !important;
+  background: rgba(11, 14, 20, 0.72) !important;
+  backdrop-filter: blur(24px) saturate(1.25);
+  -webkit-backdrop-filter: blur(24px) saturate(1.25);
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.te-public--americano .am-pub-match.reta-sb-card.te-pub-match--wide:hover {
-  transform: none;
+.te-public--americano .am-pub-match.reta-sb-card:hover,
+.te-public--americano.te-public--americano-wide .am-pub-match.reta-sb-card:hover {
+  transform: none !important;
+  border-color: rgba(229, 193, 88, 0.35) !important;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.6), 0 0 28px rgba(229, 193, 88, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+  background: rgba(14, 18, 26, 0.82) !important;
 }
 
-.te-public--americano .am-pub-match.reta-sb-card .te-pub-status--pending {
+.te-public--americano .am-pub-match .te-pub-status--pending {
   background: rgba(229, 193, 88, 0.1) !important;
   color: #e5c158 !important;
   border: 1px solid rgba(229, 193, 88, 0.3) !important;
 }
 
-@media (min-width: 769px) {
-  .te-public--americano.te-public--americano-wide
-    .am-pub-match.reta-sb-card.te-pub-match--wide,
-  .te-public--americano .am-pub-match.reta-sb-card.te-pub-match--wide {
-    padding: clamp(1rem, 1.4vw, 1.45rem) clamp(1.05rem, 1.6vw, 1.6rem)
-      clamp(0.9rem, 1.2vw, 1.25rem);
-  }
-
-  .te-public--americano.te-public--americano-wide
-    .te-pub-matches-grid--wide:has(.reta-sb-card--split-vs) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: clamp(1rem, 2vw, 1.75rem);
-    max-width: none;
-  }
+.te-public--americano .am-pub-match .reta-sb-card__meta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  margin-bottom: clamp(0.6rem, 1vw, 0.85rem) !important;
+  padding-bottom: 0.45rem !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
 }
 
-@media (min-width: 1100px) {
-  .te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel__given {
-    font-size: clamp(0.9rem, 0.55vw + 0.7rem, 1.1rem);
-  }
+.te-public--americano .am-pub-match .reta-sb-card__meta-line {
+  font-size: clamp(0.72rem, 0.9vw, 0.85rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  text-transform: uppercase !important;
+}
 
-  .te-public--americano
-    .am-pub-match.reta-sb-card--split-vs
-    .reta-sb-card__score-faceoff
-    .te-pub-score__num {
-    font-size: clamp(1.75rem, 2.4vw, 2.75rem);
+.te-public--americano .am-pub-match .te-pub-status {
+  font-size: 0.65rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  padding: 0.28rem 0.65rem !important;
+  border-radius: 999px !important;
+  text-transform: uppercase !important;
+}
+
+/* Tablero fluido que entrega todo el ancho disponible a los dos equipos */
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-card__board {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: clamp(0.4rem, 1.1vw, 0.85rem) !important;
+  width: 100% !important;
+}
+
+/* Equipos a ancho completo sin restricciones */
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-team--split-vs,
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-team__body,
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-team__main,
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-team__players--split-vs {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+}
+
+/* Parejas ocupando todo el ancho de su mitad de cancha */
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair,
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair--compact {
+  width: 100% !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+  border-radius: 14px !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s ease;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair__grid,
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-pair__grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: clamp(0.35rem, 0.75vw, 0.6rem) !important;
+  width: 100% !important;
+}
+
+/* Pareja ganadora con halo dorado premium */
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair--win {
+  padding: clamp(0.28rem, 0.55vw, 0.48rem) !important;
+  background: linear-gradient(155deg, rgba(229, 193, 88, 0.12) 0%, rgba(18, 22, 30, 0.78) 100%) !important;
+  border: 1.5px solid rgba(229, 193, 88, 0.6) !important;
+  box-shadow:
+    0 0 0 1px rgba(229, 193, 88, 0.22) inset,
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 0 28px rgba(229, 193, 88, 0.16) !important;
+}
+
+/* Pareja contrincante simétrica para mantener equilibrio visual perfecto */
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair:not(.pub-split-vs-pair--win) {
+  padding: clamp(0.28rem, 0.55vw, 0.48rem) !important;
+  border: 1.5px solid transparent !important;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair--loss {
+  opacity: 0.86 !important;
+}
+
+/* ── CARDS DE JUGADOR EXPANSIVAS (OCUPAN CASI TODO EL ESPACIO) ── */
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair--compact .pub-split-vs-panel,
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel {
+  position: relative !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+  aspect-ratio: 16 / 9.6 !important;
+  min-height: clamp(105px, 12.5vw, 155px) !important;
+  max-height: clamp(140px, 16vw, 190px) !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  overflow: hidden !important;
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease !important;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair--win .pub-split-vs-panel {
+  border-color: rgba(229, 193, 88, 0.35) !important;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 245, 215, 0.2) !important;
+}
+
+/* Badge con corona central entre jugadores ganadores */
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair__badge {
+  min-width: 1.85rem !important;
+  height: 1.65rem !important;
+  border: 1px solid rgba(229, 193, 88, 0.8) !important;
+  background: linear-gradient(180deg, #fceda7 0%, #caa227 100%) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), 0 0 16px rgba(229, 193, 88, 0.4) !important;
+}
+
+/* Marca de agua de iniciales deportivas */
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__watermark {
+  font-size: clamp(3.2rem, 17cqi, 5.2rem) !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.05em !important;
+  opacity: 0.13 !important;
+  transform: rotate(-5deg) scale(1.05) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Degradado inferior para legibilidad cinematográfica */
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__scrim {
+  height: 54% !important;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(6, 8, 12, 0.35) 30%,
+    rgba(6, 8, 12, 0.82) 75%,
+    rgba(6, 8, 12, 0.97) 100%
+  ) !important;
+}
+
+/* Identidad del jugador */
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__identity {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__given {
+  position: absolute !important;
+  left: clamp(0.6rem, 1.2vw, 0.95rem) !important;
+  right: 3.5rem !important;
+  bottom: clamp(1.2rem, 2.2vw, 1.55rem) !important;
+  font-family: var(--font-display, var(--ro-font-heading), -apple-system, sans-serif) !important;
+  font-size: clamp(0.92rem, 5.4cqi, 1.28rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.1 !important;
+  color: #ffffff !important;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.95),
+    0 4px 14px rgba(0, 0, 0, 0.65) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__given:not(:has(+ .pub-split-vs-panel__family)) {
+  bottom: clamp(0.45rem, 0.9vw, 0.65rem) !important;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__family {
+  position: absolute !important;
+  left: clamp(0.6rem, 1.2vw, 0.95rem) !important;
+  right: 3.5rem !important;
+  bottom: clamp(0.35rem, 0.8vw, 0.48rem) !important;
+  font-size: clamp(0.66rem, 3.8cqi, 0.82rem) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  color: rgba(255, 255, 255, 0.84) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__rating.jugador-rating-chip {
+  position: absolute !important;
+  right: clamp(0.45rem, 1vw, 0.7rem) !important;
+  bottom: clamp(0.35rem, 0.8vw, 0.48rem) !important;
+  top: auto !important;
+  padding: 0.12rem 0.42rem !important;
+  font-size: clamp(0.62rem, 3.2cqi, 0.74rem) !important;
+  font-weight: 800 !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(163, 230, 53, 0.5) !important;
+  background: rgba(6, 12, 6, 0.88) !important;
+  color: #bef264 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.65) !important;
+}
+
+/* Separador VS central */
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-vs {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+  min-width: clamp(1.8rem, 2.5vw, 2.3rem) !important;
+  align-self: center !important;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-vs__line {
+  width: 1px !important;
+  height: clamp(0.8rem, 2vw, 1.4rem) !important;
+  background: linear-gradient(180deg, transparent, rgba(229, 193, 88, 0.45), transparent) !important;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-vs__badge {
+  width: clamp(1.8rem, 2.4vw, 2.2rem) !important;
+  height: clamp(1.8rem, 2.4vw, 2.2rem) !important;
+  font-size: clamp(0.6rem, 0.85vw, 0.72rem) !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.08em !important;
+  border-radius: 50% !important;
+  border: 1.5px solid rgba(229, 193, 88, 0.55) !important;
+  background: rgba(16, 18, 24, 0.95) !important;
+  color: #e5c158 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), 0 0 14px rgba(229, 193, 88, 0.22) !important;
+}
+
+/* Marcador inferior de alta presencia deportiva */
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-card__scoreboard {
+  margin-top: clamp(0.65rem, 1.2vw, 0.95rem) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-card__score-faceoff {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: clamp(0.45rem, 1vw, 0.75rem) !important;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__num {
+  font-family: var(--font-display, var(--ro-font-heading), -apple-system, sans-serif) !important;
+  font-size: clamp(2rem, 3.2vw, 2.85rem) !important;
+  font-weight: 900 !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1 !important;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__num--win {
+  color: #e5c158 !important;
+  text-shadow: 0 0 20px rgba(229, 193, 88, 0.45) !important;
+}
+
+.te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-card__score-faceoff .te-pub-score__sep {
+  font-size: clamp(1.4rem, 2vw, 1.8rem) !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+  font-weight: 600 !important;
+}
+
+@media (min-width: 769px) {
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide:has(.reta-sb-card--split-vs) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: clamp(1rem, 2vw, 1.75rem) !important;
+    max-width: none !important;
+    width: 100% !important;
   }
 }
 
