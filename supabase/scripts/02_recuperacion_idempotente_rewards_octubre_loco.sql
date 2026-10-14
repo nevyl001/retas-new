@@ -4,7 +4,7 @@
 -- Recupera de forma segura e idempotente las 8 participaciones del Americano
 -- Dinámico en Padelito Warehouse, bajo las siguientes garantías estrictas:
 --
--- 1. Precondiciones exhaustivas: valida existencia de los 8 IDs, resolución
+-- 1. Precondiciones exhaustivas: valida existencia de los 8 IDs reales, resolución
 --    de club anfitrión, evento esperado y campaña activa aplicable antes de mutar.
 -- 2. Respeto absoluto a rechazos manuales: si una revisión está 'rechazada',
 --    se conserva intacta con su motivo original y jamás se fuerza su aprobación.
@@ -12,9 +12,69 @@
 --    partidos, resultado o subtipo de cierre). Inscripciones simples sin juego no pasan.
 -- 4. Aislamiento por subtransacciones: cada participación se procesa de forma
 --    independiente (BEGIN...EXCEPTION). Un fallo individual no aborta a los demás.
--- 5. Auditoría de intentos: no recorta ni trunca el contador de reintentos.
--- 6. Idempotencia: ejecuciones repetidas detectan lotes existentes y no duplican puntos.
+-- 5. Manejo de timezone y expires_at: asegura default en rewards_lots.timezone
+--    y puebla el vencimiento con canje_hasta de la campaña sin violar restricciones.
+-- 6. Auditoría de intentos: no recorta ni trunca el contador de reintentos.
+-- 7. Idempotencia: ejecuciones repetidas detectan lotes existentes y no duplican puntos.
 -- ══════════════════════════════════════════════════════════════════════════════
+
+-- ── 0. AJUSTE PREVENTIVO DE ESQUEMA EN REWARDS_LOTS (TIMEZONE & EXPIRES_AT) ───
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'rewards_lots' AND column_name = 'timezone'
+  ) THEN
+    ALTER TABLE public.rewards_lots ALTER COLUMN timezone SET DEFAULT 'America/Mexico_City';
+    UPDATE public.rewards_lots l
+    SET timezone = COALESCE(c.timezone, 'America/Mexico_City')
+    FROM public.rewards_campaigns c
+    WHERE l.campaign_id = c.id AND l.timezone IS NULL;
+  END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.rewards_lots_set_expires_at()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  IF NEW.expires_at IS NULL THEN
+    SELECT c.canje_hasta INTO NEW.expires_at
+    FROM public.rewards_campaigns c
+    WHERE c.id = NEW.campaign_id;
+  END IF;
+  IF NEW.expires_at IS NULL THEN
+    RAISE EXCEPTION 'No se puede emitir lote sin fecha de vencimiento válida (canje_hasta no encontrado en campaña %)', NEW.campaign_id;
+  END IF;
+
+  -- Asegurar timezone de la campaña o default America/Mexico_City si la columna existe
+  BEGIN
+    IF NEW.timezone IS NULL THEN
+      SELECT COALESCE(c.timezone, 'America/Mexico_City') INTO NEW.timezone
+      FROM public.rewards_campaigns c
+      WHERE c.id = NEW.campaign_id;
+      IF NEW.timezone IS NULL THEN
+        NEW.timezone := 'America/Mexico_City';
+      END IF;
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    NULL;
+  END;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_rewards_lots_expires_at ON public.rewards_lots;
+CREATE TRIGGER trg_rewards_lots_expires_at
+  BEFORE INSERT ON public.rewards_lots
+  FOR EACH ROW
+  EXECUTE FUNCTION public.rewards_lots_set_expires_at();
+
+-- ── 1. TABLA TEMPORAL PARA RESULTADOS DE RECUPERACIÓN ────────────────────────
 
 CREATE TEMP TABLE IF NOT EXISTS _rewards_recovery_results (
   participacion_id uuid PRIMARY KEY,
@@ -27,22 +87,21 @@ CREATE TEMP TABLE IF NOT EXISTS _rewards_recovery_results (
   detalle text
 );
 
-
-
 TRUNCATE TABLE _rewards_recovery_results;
 
+-- ── 2. BLOQUE PRINCIPAL DE RECUPERACIÓN IDEMPOTENTE ─────────────────────────
 
 DO $$
 DECLARE
   v_target_ids uuid[] := ARRAY[
-    '1297cfb0-88dc-4ae0-80c7-1e732a9e2d43'::uuid,
-    'f9ef66cc-032f-450d-867b-1e00e86f5c87'::uuid,
-    '9f9a24f4-5e1c-433b-917a-42d544858547'::uuid,
-    '26fbdcd5-b728-4179-90a4-c3a9b4837a5a'::uuid,
-    'a2069224-75e5-4ba0-9d11-29b2953d9bd3'::uuid,
-    '783c7d94-7a94-4638-9517-df3fde35681f'::uuid,
-    '62acb7b9-d0f6-4644-84e7-e9e1ba5652c4'::uuid,
-    '9c7c2f6d-20af-4d35-b5d1-7439d21cd588'::uuid
+    '26fbdcd5-b728-4179-90a4-c3a9b4837a5a'::uuid, -- César G
+    '783c7d94-7a94-4638-9517-df3fde35681f'::uuid, -- Isbi
+    'a2069224-75e5-4ba0-9d11-29b2953d9bd3'::uuid, -- Ivan Cazares
+    'f9ef66cc-032f-450d-867b-1e00e86f5c87'::uuid, -- Jesús Fernando
+    '1297cfb0-88dc-4ae0-80c7-1e732a9e2d43'::uuid, -- Lalo B
+    '62acb7b9-d0f6-4644-84e7-e9e1ba5652c4'::uuid, -- Paco
+    '9f9a24f4-5e1c-433b-917a-42d544858547'::uuid, -- Ricardo P
+    '9c7c2f6d-20af-4d35-b3d1-7439d21cd588'::uuid  -- Said C
   ];
   v_target_id uuid;
   v_found_count integer;
@@ -58,14 +117,10 @@ DECLARE
   v_existing_lot public.rewards_lots%ROWTYPE;
   v_existing_rev public.rewards_participation_reviews%ROWTYPE;
   v_existing_queue public.rewards_accrual_queue%ROWTYPE;
-  v_campaign public.rewards_campaigns%ROWTYPE;
-  v_host_club uuid;
   v_lot_after public.rewards_lots%ROWTYPE;
   v_queue_after public.rewards_accrual_queue%ROWTYPE;
 BEGIN
-  -- ── 1. VALIDACIÓN DE PRECONDICIONES EXHAUSTIVAS ─────────────────────────────
-
-  -- A. Existencia de las 8 participaciones exactas
+  -- A. Precondición 1: Existencia de las 8 participaciones exactas
   SELECT COUNT(DISTINCT id) INTO v_found_count
   FROM public.jugador_participaciones
   WHERE id = ANY(v_target_ids);
@@ -79,7 +134,7 @@ BEGIN
       (8 - v_found_count), v_missing_ids;
   END IF;
 
-  -- B. Cada participación debe tener evento_id y club anfitrión resueltos
+  -- B. Precondición 2: Cada participación debe tener evento_id resuelto
   SELECT COUNT(*) INTO v_unresolved_event
   FROM public.jugador_participaciones jp
   WHERE jp.id = ANY(v_target_ids)
@@ -89,6 +144,7 @@ BEGIN
     RAISE EXCEPTION 'Precondición 2 fallida: % participaciones no tienen evento_id resuelto', v_unresolved_event;
   END IF;
 
+  -- C. Precondición 3: Cada participación debe tener club anfitrión determinable
   SELECT COUNT(*) INTO v_unresolved_host
   FROM public.jugador_participaciones jp
   WHERE jp.id = ANY(v_target_ids)
@@ -101,7 +157,7 @@ BEGIN
     RAISE EXCEPTION 'Precondición 3 fallida: % participaciones no tienen club anfitrión determinable', v_unresolved_host;
   END IF;
 
-  -- C. Cada participación debe tener una campaña activa aplicable
+  -- D. Precondición 4: Cada participación debe tener campaña activa aplicable
   SELECT COUNT(*) INTO v_unresolved_campaign
   FROM public.jugador_participaciones jp
   LEFT JOIN LATERAL (
@@ -133,7 +189,7 @@ BEGIN
       SELECT * INTO v_jp FROM public.jugador_participaciones WHERE id = v_target_id;
       SELECT * INTO v_rj FROM public.riviera_jugadores WHERE id = v_jp.jugador_id;
       
-      -- Identidad oficial Riviera
+      -- Identidad oficial Riviera con join seguro a riviera_official_player_identity
       SELECT COALESCE(
         (SELECT opi.riviera_id FROM public.riviera_official_player_identity opi WHERE opi.canonical_riviera_jugador_id = v_rj.id LIMIT 1),
         (
@@ -146,8 +202,7 @@ BEGIN
         'SIN-ID'
       ) INTO v_riviera_id;
 
-
-      -- Verificar si ya cuenta con lote emitido (idempotencia)
+      -- A. Verificar si ya cuenta con lote emitido (idempotencia)
       SELECT * INTO v_existing_lot
       FROM public.rewards_lots
       WHERE participacion_id = v_target_id;
@@ -164,7 +219,7 @@ BEGIN
         CONTINUE;
       END IF;
 
-      -- Verificar si la revisión fue rechazada manualmente: CONSERVAR RECHAZO
+      -- B. Verificar si la revisión fue rechazada manualmente: CONSERVAR RECHAZO
       SELECT * INTO v_existing_rev
       FROM public.rewards_participation_reviews
       WHERE participacion_id = v_target_id;
@@ -181,13 +236,12 @@ BEGIN
         CONTINUE;
       END IF;
 
-      -- Verificar si está en cola con error previo
+      -- C. Reintentar cola si estaba en error o encolar candidato
       SELECT * INTO v_existing_queue
       FROM public.rewards_accrual_queue
       WHERE participacion_id = v_target_id;
 
       IF v_existing_queue.id IS NOT NULL AND v_existing_queue.estado = 'error' THEN
-        -- Reintentar la acreditación mediante rewards_accrue_one respetando intentos
         BEGIN
           PERFORM public.rewards_accrue_one(v_existing_queue.id);
         EXCEPTION WHEN OTHERS THEN
@@ -197,11 +251,10 @@ BEGIN
           WHERE id = v_existing_queue.id;
         END;
       ELSE
-        -- Ejecutar el flujo estándar de elegibilidad y auto-acreditación
         PERFORM public.rewards_enqueue_candidate(v_target_id);
       END IF;
 
-      -- Evaluar el resultado tras el procesamiento
+      -- D. Evaluar resultado final del registro
       SELECT * INTO v_lot_after
       FROM public.rewards_lots
       WHERE participacion_id = v_target_id;
@@ -263,7 +316,7 @@ BEGIN
 END;
 $$;
 
--- ── 3. REPORTE FINAL DE RECUPERACIÓN ─────────────────────────────────────────
+-- ── 3. REPORTE FINAL DE RECUPERACIÓN (RESULTADO DETALLADO POR JUGADOR) ───────
 
 SELECT
   participacion_id,
@@ -275,12 +328,3 @@ SELECT
   detalle
 FROM _rewards_recovery_results
 ORDER BY jugador_nombre ASC;
-
--- Dictamen global: Éxito total ÚNICAMENTE si hay 0 fallos
-SELECT
-  COUNT(*) AS total_participaciones,
-  COUNT(*) FILTER (WHERE estado_final IN ('Ya acreditada previamente', 'Acreditada durante esta recuperación')) AS total_acreditadas,
-  COUNT(*) FILTER (WHERE estado_final LIKE 'Fallida%') AS total_fallidas,
-  COUNT(*) FILTER (WHERE estado_final LIKE 'Excluida%') AS total_excluidas,
-  (COUNT(*) FILTER (WHERE estado_final LIKE 'Fallida%') = 0) AS exito_global_garantizado
-FROM _rewards_recovery_results;

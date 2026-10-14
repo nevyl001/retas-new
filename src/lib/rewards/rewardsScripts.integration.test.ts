@@ -126,8 +126,9 @@ maybeDescribe("Verificación de Scripts SQL de Riviera Rewards (01, 02, 03)", ()
     { id: "a2069224-75e5-4ba0-9d11-29b2953d9bd3", jugador_id: "a1111111-0000-4000-8000-000000000005", nombre: "Ivan Cazares", riviera_id: "RIV-00000005" },
     { id: "783c7d94-7a94-4638-9517-df3fde35681f", jugador_id: "a1111111-0000-4000-8000-000000000006", nombre: "Isbi", riviera_id: "RIV-00000006" },
     { id: "62acb7b9-d0f6-4644-84e7-e9e1ba5652c4", jugador_id: "a1111111-0000-4000-8000-000000000007", nombre: "Paco", riviera_id: "RIV-00000007" },
-    { id: "9c7c2f6d-20af-4d35-b5d1-7439d21cd588", jugador_id: "a1111111-0000-4000-8000-000000000008", nombre: "Said C", riviera_id: "RIV-00000008" },
+    { id: "9c7c2f6d-20af-4d35-b3d1-7439d21cd588", jugador_id: "a1111111-0000-4000-8000-000000000008", nombre: "Said C", riviera_id: "RIV-00000008" },
   ];
+
 
   beforeAll(async () => {
     const { PGlite } = await import("@electric-sql/pglite");
@@ -314,11 +315,12 @@ maybeDescribe("Verificación de Scripts SQL de Riviera Rewards (01, 02, 03)", ()
       }
     }
 
-    expect(lastRows.length).toBe(1);
-    expect(Number(lastRows[0].total_participaciones)).toBe(8);
-    expect(Number(lastRows[0].total_acreditadas)).toBe(8);
-    expect(Number(lastRows[0].total_fallidas)).toBe(0);
-    expect(Boolean(lastRows[0].exito_global_garantizado)).toBe(true);
+    expect(lastRows.length).toBe(8);
+    for (const row of lastRows) {
+      expect(row.estado_final).toBe("Acreditada durante esta recuperación");
+      expect(Number(row.puntos_emitidos)).toBe(10);
+      expect(row.vencimiento_lote).toBeDefined();
+    }
 
     // Verificar que los 8 lotes fueron creados
     const lotsRes = await db.query<{ count: number; sum_puntos: number }>(`
@@ -351,9 +353,12 @@ maybeDescribe("Verificación de Scripts SQL de Riviera Rewards (01, 02, 03)", ()
       }
     }
 
-    expect(Number(lastRows[0].total_participaciones)).toBe(8);
-    expect(Number(lastRows[0].total_acreditadas)).toBe(8);
-    expect(Number(lastRows[0].total_fallidas)).toBe(0);
+    expect(lastRows.length).toBe(8);
+    for (const row of lastRows) {
+      expect(row.estado_final).toBe("Ya acreditada previamente");
+      expect(Number(row.puntos_emitidos)).toBe(10);
+    }
+
 
 
     // Verificar que SIGUEN siendo exactamente 8 lotes y 80 puntos totales (cero duplicados)
@@ -431,9 +436,10 @@ maybeDescribe("Verificación de Scripts SQL de Riviera Rewards (01, 02, 03)", ()
 
   it("6. Rechazos manuales: Script 2 respeta y no sobreescribe una revisión 'rechazada' ni borra motivo", async () => {
     // Tomar una de las participaciones, por ejemplo Said C, y marcar su revisión como 'rechazada' manualmente
-    const saidPid = "9c7c2f6d-20af-4d35-b5d1-7439d21cd588";
+    const saidPid = "9c7c2f6d-20af-4d35-b3d1-7439d21cd588";
     
     // Limpiar lote previo de Said para simular que no tenía lote y fue rechazado por el administrador
+
     await db.exec(`
       DELETE FROM public.rewards_ledger WHERE lot_id IN (SELECT id FROM public.rewards_lots WHERE participacion_id = '${saidPid}');
       DELETE FROM public.rewards_lots WHERE participacion_id = '${saidPid}';

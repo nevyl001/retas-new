@@ -47,6 +47,22 @@ WHERE l.queue_id = q.id
 ALTER TABLE public.rewards_lots
   ALTER COLUMN expires_at SET NOT NULL;
 
+-- Asegurar DEFAULT en columna timezone si existe en rewards_lots
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'rewards_lots' AND column_name = 'timezone'
+  ) THEN
+    ALTER TABLE public.rewards_lots ALTER COLUMN timezone SET DEFAULT 'America/Mexico_City';
+    UPDATE public.rewards_lots l
+    SET timezone = COALESCE(c.timezone, 'America/Mexico_City')
+    FROM public.rewards_campaigns c
+    WHERE l.campaign_id = c.id AND l.timezone IS NULL;
+  END IF;
+END $$;
+
+
 -- Permitir 'automatic' como origen de validación en revisiones de participación
 ALTER TABLE public.rewards_participation_reviews
   DROP CONSTRAINT IF EXISTS rewards_reviews_source_chk;
@@ -89,7 +105,23 @@ BEGIN
   IF NEW.expires_at IS NULL THEN
     RAISE EXCEPTION 'No se puede emitir lote sin fecha de vencimiento válida (canje_hasta no encontrado en campaña %)', NEW.campaign_id;
   END IF;
+
+  -- Asegurar timezone de la campaña o default America/Mexico_City
+  BEGIN
+    IF NEW.timezone IS NULL THEN
+      SELECT COALESCE(c.timezone, 'America/Mexico_City') INTO NEW.timezone
+      FROM public.rewards_campaigns c
+      WHERE c.id = NEW.campaign_id;
+      IF NEW.timezone IS NULL THEN
+        NEW.timezone := 'America/Mexico_City';
+      END IF;
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    NULL;
+  END;
+
   RETURN NEW;
+
 END;
 $$;
 

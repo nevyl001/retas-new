@@ -14,8 +14,9 @@ WITH target_ids AS (
     'a2069224-75e5-4ba0-9d11-29b2953d9bd3'::uuid,
     '783c7d94-7a94-4638-9517-df3fde35681f'::uuid,
     '62acb7b9-d0f6-4644-84e7-e9e1ba5652c4'::uuid,
-    '9c7c2f6d-20af-4d35-b5d1-7439d21cd588'::uuid
+    '9c7c2f6d-20af-4d35-b3d1-7439d21cd588'::uuid
   ]) AS participacion_id
+
 ),
 part_data AS (
   SELECT
