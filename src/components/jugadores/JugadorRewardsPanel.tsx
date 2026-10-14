@@ -633,20 +633,9 @@ function PlayerRewardsView({
           >
             <TablerIcon name="shield-lock" size={15} />
             <span>
-              {user
-                ? `Solo lectura: Para solicitar canjes de premios en ${displayClub}, solicita en recepción vincular tu cuenta a este perfil.`
-                : `Solo lectura: Inicia sesión con la cuenta vinculada a este jugador para solicitar canjes de premios en ${displayClub}.`}
+              {`Solo lectura: Aquí puedes ver cuántos puntos has acumulado en la campaña. Solicita a ${displayClub} cambiar tus puntos por las promociones vigentes.`}
             </span>
           </div>
-
-          {!user && (
-            <div className="rrw-compact-cta-wrap rrw-guest-action" style={{ marginTop: "0.4rem" }}>
-              <a href="/login" className="rrw-compact-btn rrw-guest-btn">
-                <TablerIcon name="user-circle" size={15} />
-                Iniciar sesión para gestionar canjes
-              </a>
-            </div>
-          )}
         </div>
       </section>
     );

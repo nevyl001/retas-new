@@ -1581,7 +1581,7 @@ describe("Riviera Rewards — Corrección Definitiva: Selector Limpio, Fallback 
     expect(container.textContent).toContain("Padelito Warehouse");
 
     // Conserva las acciones de canje protegidas mediante aviso de solo lectura
-    expect(container.textContent).toContain("Solo lectura");
+    expect(container.textContent).toContain("Solo lectura: Aquí puedes ver cuántos puntos has acumulado en la campaña. Solicita a Padelito Warehouse cambiar tus puntos por las promociones vigentes.");
     expect(container.textContent).not.toContain("ACCESO RESTRINGIDO");
   });
 });
