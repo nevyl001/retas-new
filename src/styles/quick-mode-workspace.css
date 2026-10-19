@@ -999,6 +999,7 @@
   }
 
   .qm-ws__details-inline .reta-details-form__row--primary .reta-details-form__field--cancha .home-sheet__input,
+  .qm-ws__details-inline .reta-details-form__row--primary .reta-details-form__field--cancha .reta-details-form__stepper,
   .qm-ws__details-inline .reta-details-form__row--primary .reta-details-form__field--courts .reta-details-form__stepper,
   .qm-ws__details-inline .reta-details-form__row--primary .reta-details-form__field--duration .reta-details-form__stepper {
     width: 100%;
@@ -1375,6 +1376,7 @@
   }
 
   .qm-ws__details-inline .reta-details-form__field--cancha .home-sheet__input,
+  .qm-ws__details-inline .reta-details-form__field--cancha .reta-details-form__stepper,
   .qm-ws__details-inline .reta-details-form__field--courts .reta-details-form__stepper {
     width: 100%;
     max-width: none;

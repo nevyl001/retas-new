@@ -1,5 +1,6 @@
 import React from "react";
 import { RETA_DURATION_MAX, clampRetaDurationMinutes } from "../../lib/reta/retaConfigValidation";
+import { CANCHA_DEFAULT_VALUE } from "../../lib/torneoExpress/canchaDisplay";
 import { DurationMinutesField } from "../reta/DurationMinutesField";
 import { addMinutesToTimeInput } from "../../lib/duelo2v2/schedule";
 
@@ -232,16 +233,63 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
             htmlFor={`${idPrefix}-cancha`}
           >
             <span className="home-sheet__field-label">Cancha</span>
-            <input
-              id={`${idPrefix}-cancha`}
-              type="text"
-              className="home-sheet__input riviera-input"
-              placeholder="Ej. 1"
-              value={values.cancha}
-              disabled={disabled}
-              onChange={(e) => patch({ cancha: e.target.value })}
-              required
-            />
+            <div className="reta-details-form__stepper reta-details-form__stepper--typeable">
+              <button
+                type="button"
+                className="home-sheet__stepper-btn"
+                aria-label="Menos cancha"
+                disabled={
+                  disabled ||
+                  (Number.isFinite(Number(values.cancha.trim())) &&
+                    Number(values.cancha.trim()) <= 1)
+                }
+                onClick={(e) => {
+                  e.preventDefault();
+                  const num = parseInt(values.cancha.replace(/\D/g, ""), 10);
+                  const next = Number.isFinite(num) ? Math.max(1, num - 1) : 1;
+                  patch({ cancha: String(next) });
+                }}
+              >
+                −
+              </button>
+              <input
+                id={`${idPrefix}-cancha`}
+                name={`${idPrefix}-cancha`}
+                type="text"
+                autoComplete="off"
+                className="reta-details-form__stepper-input"
+                placeholder="1"
+                value={values.cancha}
+                disabled={disabled}
+                aria-label="Cancha"
+                onChange={(e) => patch({ cancha: e.target.value })}
+                onBlur={() => {
+                  const trimmed = values.cancha.trim();
+                  if (!trimmed) {
+                    patch({ cancha: CANCHA_DEFAULT_VALUE });
+                  }
+                }}
+                required
+              />
+              <button
+                type="button"
+                className="home-sheet__stepper-btn"
+                aria-label="Más cancha"
+                disabled={
+                  disabled ||
+                  (Number.isFinite(Number(values.cancha.trim())) &&
+                    Number(values.cancha.trim()) >= 99)
+                }
+                onClick={(e) => {
+                  e.preventDefault();
+                  const num = parseInt(values.cancha.replace(/\D/g, ""), 10);
+                  const next = Number.isFinite(num) ? Math.min(99, num + 1) : 1;
+                  patch({ cancha: String(next) });
+                }}
+              >
+                +
+              </button>
+            </div>
             {guided ? (
               <span className="reta-details-form__field-help">
                 Indica la cancha asignada al partido.

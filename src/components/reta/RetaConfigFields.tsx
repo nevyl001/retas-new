@@ -127,26 +127,52 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       htmlFor={retaConfigFieldId("courts")}
     >
       <span className="home-sheet__field-label">Canchas</span>
-      <input
-        id={retaConfigFieldId("courts")}
-        name={retaConfigFieldId("courts")}
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        autoComplete="off"
-        className="home-sheet__input riviera-input"
-        value={String(values.courts)}
-        disabled={courtsEd.locked}
-        aria-label="Número de canchas"
-        onChange={(e) => {
-          const digits = e.target.value.replace(/[^\d]/g, "").slice(0, 2);
-          if (digits === "") return;
-          const n = Number(digits);
-          if (!Number.isFinite(n)) return;
-          patch({ courts: Math.min(RETA_COURTS_MAX, Math.max(0, n)) });
-        }}
-        onBlur={() => patch({ courts: clampRetaCourts(values.courts) })}
-      />
+      <div className="reta-details-form__stepper reta-details-form__stepper--typeable">
+        <button
+          type="button"
+          className="home-sheet__stepper-btn"
+          aria-label="Menos canchas"
+          disabled={courtsEd.locked || values.courts <= 1}
+          onClick={(e) => {
+            e.preventDefault();
+            patch({ courts: Math.max(1, values.courts - 1) });
+          }}
+        >
+          −
+        </button>
+        <input
+          id={retaConfigFieldId("courts")}
+          name={retaConfigFieldId("courts")}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
+          className="reta-details-form__stepper-input"
+          value={String(values.courts)}
+          disabled={courtsEd.locked}
+          aria-label="Número de canchas"
+          onChange={(e) => {
+            const digits = e.target.value.replace(/[^\d]/g, "").slice(0, 2);
+            if (digits === "") return;
+            const n = Number(digits);
+            if (!Number.isFinite(n)) return;
+            patch({ courts: Math.min(RETA_COURTS_MAX, Math.max(0, n)) });
+          }}
+          onBlur={() => patch({ courts: clampRetaCourts(values.courts) })}
+        />
+        <button
+          type="button"
+          className="home-sheet__stepper-btn"
+          aria-label="Más canchas"
+          disabled={courtsEd.locked || values.courts >= RETA_COURTS_MAX}
+          onClick={(e) => {
+            e.preventDefault();
+            patch({ courts: Math.min(RETA_COURTS_MAX, values.courts + 1) });
+          }}
+        >
+          +
+        </button>
+      </div>
       {essentials ? (
         <span className="reta-details-form__field-help">
           Indica cuántas canchas usarás para organizar mejor la dinámica.

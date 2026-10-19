@@ -182,6 +182,24 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
     await user.type(screen.getByLabelText(/Nivel/i), "4ta Fuerza");
     expect(stepItems[1]).toHaveClass("is-done");
     expect(container.textContent).toContain("4ta Fuerza · 4 jugadores");
+
+    // Stepper de Cancha con botones - y +
+    const canchaInput = screen.getByLabelText(/^Cancha$/i) as HTMLInputElement;
+    expect(canchaInput.value).toBe("1");
+    const minusBtn = screen.getByRole("button", { name: "Menos cancha" });
+    const plusBtn = screen.getByRole("button", { name: "Más cancha" });
+    expect(minusBtn).toBeDisabled();
+    expect(plusBtn).not.toBeDisabled();
+
+    await user.click(plusBtn);
+    expect(canchaInput.value).toBe("2");
+    expect(container.textContent).toContain("Cancha 2 · Duelo 2 vs 2");
+    expect(minusBtn).not.toBeDisabled();
+
+    await user.click(minusBtn);
+    expect(canchaInput.value).toBe("1");
+    expect(container.textContent).toContain("Cancha 1 · Duelo 2 vs 2");
+    expect(minusBtn).toBeDisabled();
   });
 
   it("no llama get_open_game_registration al montar", async () => {
