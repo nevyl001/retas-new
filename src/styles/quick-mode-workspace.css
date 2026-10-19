@@ -748,7 +748,8 @@
 
 .qm-ws__details-inline .home-sheet__input,
 .qm-ws__details-inline .riviera-input,
-.qm-ws__details-inline input:not([type="checkbox"]):not([type="radio"]),
+.qm-ws__details-inline
+  input:not([type="checkbox"]):not([type="radio"]):not(.reta-details-form__stepper-input),
 .qm-ws__details-inline textarea,
 .qm-ws__details-inline select {
   flex: 0 0 auto;
@@ -3038,7 +3039,8 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   }
 
   /* 16px evita zoom iOS; altura táctil densa */
-  .qm-ws input:not([type="checkbox"]):not([type="radio"]),
+  .qm-ws
+    input:not([type="checkbox"]):not([type="radio"]):not(.reta-details-form__stepper-input),
   .qm-ws select,
   .qm-ws textarea {
     font-size: 16px;
@@ -3046,7 +3048,7 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   }
 
   .qm-ws__details-inline
-    input:not([type="checkbox"]):not([type="radio"]):not([type="date"]):not([type="time"]):not([type="datetime-local"]),
+    input:not([type="checkbox"]):not([type="radio"]):not([type="date"]):not([type="time"]):not([type="datetime-local"]):not(.reta-details-form__stepper-input),
   .qm-ws__details-inline select,
   .qm-ws__details-inline textarea {
     min-height: var(--rd-input-h);
@@ -3106,12 +3108,12 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   color: var(--qm-ink-muted, var(--ro-chrome-text-muted));
 }
 
-/* —— Create compose: alta rápida guiada (QuickStart / Duelo Nuevo) —— */
+/* —— Create compose: alta rápida guiada a ancho completo (QuickStart / Duelo Nuevo) —— */
 .qm-ws.qm-ws--create-compose {
   --rd-input-h: 2.5rem; /* 40px: compacto y táctil */
-  max-width: 1120px;
+  max-width: none;
   width: 100%;
-  margin-inline: auto;
+  margin-inline: 0;
   box-sizing: border-box;
   gap: 0.75rem;
 }
@@ -3122,7 +3124,7 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   align-items: center;
   justify-content: space-between;
   gap: 0.35rem 0.75rem;
-  padding: 0.25rem 0.1rem 0.15rem;
+  padding: 0.15rem 0;
   border: none;
   border-radius: 0;
   background: transparent;
@@ -3171,6 +3173,35 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   transform: none;
 }
 
+/* Desbloquea cualquier max-width de contenedores padres (.home-inner, .rv-page, .duelo2v2-page__inner) */
+.main-layout > .home-inner.rv-page:has(.qm-ws--create-compose),
+.main-layout > .home-inner:has(.qm-ws--create-compose),
+.home-inner.rv-page:has(.qm-ws--create-compose),
+.home-create-details.home-create-details--qm.rv-page,
+.home-create-details.home-create-details--qm,
+.duelo2v2-page:has(.qm-ws--create-compose) .duelo2v2-page__inner.rv-page.rv-shell,
+.duelo2v2-page:has(.qm-ws--create-compose) .duelo2v2-page__inner {
+  max-width: none;
+  width: 100%;
+  margin-inline: 0;
+}
+
+/* Márgenes exteriores uniformes de 24–32 px en escritorio (alineados con el header superior) */
+@media (min-width: 769px) {
+  .main-layout:has(.qm-ws--create-compose),
+  .duelo2v2-page:has(.qm-ws--create-compose):not(.duelo2v2-page--public) {
+    --mode-shell-pad-x: clamp(1.5rem, 2vw, 2rem); /* 24px–32px */
+    --mode-shell-pad-y: clamp(1.25rem, 1.8vw, 1.75rem); /* 20px–28px */
+    padding: var(--mode-shell-pad-y) var(--mode-shell-pad-x)
+      var(--mode-shell-pad-bottom, 2.5rem);
+  }
+
+  body:has(.qm-ws--create-compose) .user-header .user-header-content {
+    max-width: none;
+    padding-inline: clamp(1.5rem, 2vw, 2rem);
+  }
+}
+
 @media (max-width: 959px) {
   .qm-ws.qm-ws--create-compose {
     padding-bottom: calc(
@@ -3213,9 +3244,11 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 
 @media (min-width: 960px) {
   .qm-ws.qm-ws--create-compose {
+    --qm-module-pad-x: clamp(1.1rem, 1.5vw, 1.45rem);
     display: grid;
-    grid-template-columns: minmax(0, 2.1fr) minmax(268px, 0.82fr);
-    column-gap: 1.15rem;
+    /* ~76.7% formulario principal (75–78%) / ~23.3% resumen lateral (22–25%) */
+    grid-template-columns: minmax(0, 3.3fr) minmax(268px, 1fr);
+    column-gap: clamp(1.25rem, 1.6vw, 1.5rem); /* 20–24 px */
     row-gap: 0.65rem;
     align-items: start;
     padding-bottom: var(--ro-space-4, 1rem);
@@ -3228,6 +3261,7 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   .qm-ws--create-compose > .qm-ws__details {
     grid-column: 1;
     grid-row: 2;
+    min-width: 0;
   }
 
   .qm-ws--create-compose > .qm-ws__body {
@@ -3235,6 +3269,7 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
     grid-row: 2;
     display: block;
     margin: 0;
+    min-width: 0;
     position: sticky;
     top: 0.85rem;
   }
@@ -3570,6 +3605,8 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: var(--rd-input-h);
   height: var(--rd-input-h);
   padding: 0 0.2rem;
@@ -3578,6 +3615,26 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   background: var(--qm-ink-input);
   box-sizing: border-box;
   gap: 0.15rem;
+  overflow: hidden;
+}
+
+.qm-ws--create-compose .qm-ws__details-inline .reta-details-form__stepper .reta-details-form__stepper-input {
+  flex: 1 1 0%;
+  min-width: 0;
+  width: auto;
+  max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0 0.15rem;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--qm-ink-text);
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .qm-ws--create-compose .qm-ws__details-inline .reta-details-form__stepper .home-sheet__stepper-btn {
@@ -4037,8 +4094,8 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
-  max-width: 1120px;
-  margin-inline: auto;
+  max-width: none;
+  margin-inline: 0;
 }
 
 .qm-ws__compose-mobile-status {
