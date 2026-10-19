@@ -91,7 +91,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       className="home-sheet__field reta-details-form__field reta-details-form__field--name"
       htmlFor={retaConfigFieldId("name")}
     >
-      <span className="home-sheet__field-label">Nombre</span>
+      <div className="reta-details-form__label-row">
+        <span className="home-sheet__field-label">Nombre</span>
+        {essentials ? (
+          <span className="reta-details-form__field-help">
+            Pon un nombre fácil de identificar para tu reta.
+          </span>
+        ) : null}
+      </div>
       <input
         id={retaConfigFieldId("name")}
         name={retaConfigFieldId("name")}
@@ -140,6 +147,11 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         }}
         onBlur={() => patch({ courts: clampRetaCourts(values.courts) })}
       />
+      {essentials ? (
+        <span className="reta-details-form__field-help">
+          Indica cuántas canchas usarás para organizar mejor la dinámica.
+        </span>
+      ) : null}
       {courtsEd.reason ? <FieldLock reason={courtsEd.reason} /> : null}
     </label>
   );
@@ -187,6 +199,11 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             disabled={schedEd.locked}
             onChange={(e) => patchSchedule({ date: e.target.value })}
           />
+          {essentials ? (
+            <span className="reta-details-form__field-help">
+              Define cuándo se jugará la reta.
+            </span>
+          ) : null}
           {schedEd.locked ? <FieldLock reason={schedEd.reason} /> : null}
         </label>
         <label
@@ -203,6 +220,11 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             disabled={schedEd.locked}
             onChange={(e) => patchSchedule({ time: e.target.value })}
           />
+          {essentials ? (
+            <span className="reta-details-form__field-help">
+              Hora de inicio citada.
+            </span>
+          ) : null}
         </label>
         <label
           className="home-sheet__field reta-details-form__field reta-details-form__field--duration"
@@ -219,6 +241,11 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             onChange={(minutes) => patch({ duration_minutes: minutes })}
             onCommit={(minutes) => patch({ duration_minutes: minutes })}
           />
+          {essentials ? (
+            <span className="reta-details-form__field-help">
+              La duración ayuda a calcular la estructura del juego.
+            </span>
+          ) : null}
           {durEd.locked ? <FieldLock reason={durEd.reason} /> : null}
         </label>
       </div>
@@ -230,7 +257,12 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       className="home-sheet__field reta-details-form__field reta-details-form__field--desc"
       htmlFor={retaConfigFieldId("description")}
     >
-      <span className="home-sheet__field-label">Descripción</span>
+      <div className="reta-details-form__label-row">
+        <span className="home-sheet__field-label">Descripción</span>
+        <span className="reta-details-form__field-help">
+          Agrega notas breves, formato de pelotas o indicaciones para los jugadores.
+        </span>
+      </div>
       <textarea
         id={retaConfigFieldId("description")}
         name={retaConfigFieldId("description")}
@@ -238,7 +270,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         placeholder="Juega, compite y disfruta una reta diferente…"
         value={values.description}
         disabled={descEd.locked}
-        rows={3}
+        rows={2}
         maxLength={DESC_MAX}
         onChange={(e) => {
           const v = e.target.value.slice(0, DESC_MAX);
@@ -291,7 +323,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       className="home-sheet__field reta-details-form__field reta-details-form__field--nivel"
       htmlFor={retaConfigFieldId("nivel")}
     >
-      <span className="home-sheet__field-label">Nivel</span>
+      <div className="reta-details-form__label-row">
+        <span className="home-sheet__field-label">Nivel</span>
+        {essentials ? (
+          <span className="reta-details-form__field-help">
+            Especifica la fuerza o categoría que jugará.
+          </span>
+        ) : null}
+      </div>
       <input
         id={retaConfigFieldId("nivel")}
         name={retaConfigFieldId("nivel")}
@@ -348,11 +387,11 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           />
           {values.mostrar_lugar ? (
             <span className="reta-details-form__visibility-hint">
-              Visible.
+              Visible en ficha y enlace.
             </span>
           ) : (
             <span className="reta-details-form__visibility-hint reta-details-form__visibility-hint--muted">
-              Oculto.
+              Oculto al público.
             </span>
           )}
           {lugarEd.locked ? <FieldLock reason={lugarEd.reason} /> : null}
@@ -426,11 +465,11 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           />
           {values.mostrar_costo ? (
             <span className="reta-details-form__visibility-hint">
-              Visible.
+              Visible en ficha y enlace.
             </span>
           ) : (
             <span className="reta-details-form__visibility-hint reta-details-form__visibility-hint--muted">
-              Oculto.
+              Oculto al público.
             </span>
           )}
           {costoEd.locked ? <FieldLock reason={costoEd.reason} /> : null}
@@ -506,11 +545,11 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           />
           {values.mostrar_premio ? (
             <span className="reta-details-form__visibility-hint">
-              Visible.
+              Visible en ficha y enlace.
             </span>
           ) : (
             <span className="reta-details-form__visibility-hint reta-details-form__visibility-hint--muted">
-              Oculto.
+              Oculto al público.
             </span>
           )}
           {premioEd.locked ? <FieldLock reason={premioEd.reason} /> : null}
@@ -551,7 +590,14 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   const ramaField =
     showScheduleMeta ? (
       <div className="home-sheet__field reta-details-form__field reta-details-form__field--rama">
-        <span className="home-sheet__field-label">Rama</span>
+        <div className="reta-details-form__label-row">
+          <span className="home-sheet__field-label">Rama</span>
+          {essentials ? (
+            <span className="reta-details-form__field-help">
+              Selecciona si la reta es varonil, femenil o mixta.
+            </span>
+          ) : null}
+        </div>
         <div
           className="reta-details-form__rama-options"
           role="group"
@@ -706,12 +752,20 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           className="reta-details-form__section reta-details-form__section--essential"
           aria-labelledby="reta-details-sec-essential"
         >
-          <h3
-            id="reta-details-sec-essential"
-            className="reta-details-form__section-title"
-          >
-            Información principal
-          </h3>
+          <div className="reta-details-form__section-head">
+            <span className="reta-details-form__step-badge">Paso 1</span>
+            <div className="reta-details-form__section-head-copy">
+              <h3
+                id="reta-details-sec-essential"
+                className="reta-details-form__section-title"
+              >
+                Información principal
+              </h3>
+              <p className="reta-details-form__section-lead">
+                Define el nombre, la fecha, el horario y las canchas para organizar tu reta.
+              </p>
+            </div>
+          </div>
           <div className="reta-details-form__row reta-details-form__row--name">
             {nameField}
           </div>
@@ -719,48 +773,79 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             {scheduleField}
             {courtsField}
           </div>
-          <div className="reta-details-form__row reta-details-form__row--nivel">
-            {nivelField}
+        </section>
+
+        <section
+          className="reta-details-form__section reta-details-form__section--sport"
+          aria-labelledby="reta-details-sec-sport"
+        >
+          <div className="reta-details-form__section-head">
+            <span className="reta-details-form__step-badge">Paso 2</span>
+            <div className="reta-details-form__section-head-copy">
+              <h3
+                id="reta-details-sec-sport"
+                className="reta-details-form__section-title"
+              >
+                Configuración deportiva
+              </h3>
+              <p className="reta-details-form__section-lead">
+                Establece la categoría, la rama y las reglas de cierre competitivo.
+              </p>
+            </div>
           </div>
-          {ramaField ? (
-            <div className="reta-details-form__row reta-details-form__row--rama">
-              {ramaField}
+          <div className="reta-details-form__sport-grid">
+            <div className="reta-details-form__row reta-details-form__row--nivel">
+              {nivelField}
+            </div>
+            {ramaField ? (
+              <div className="reta-details-form__row reta-details-form__row--rama">
+                {ramaField}
+              </div>
+            ) : null}
+          </div>
+          {championshipField ? (
+            <div
+              className="reta-details-form__subsection reta-details-form__section--champ"
+              aria-labelledby="reta-details-sec-champ"
+            >
+              <h3
+                id="reta-details-sec-champ"
+                className="reta-details-form__section-title reta-details-form__section-title--sub"
+              >
+                Remontada final
+              </h3>
+              <div className="reta-details-form__row reta-details-form__row--champ">
+                {championshipField}
+              </div>
             </div>
           ) : null}
         </section>
-
-        {championshipField ? (
-          <section
-            className="reta-details-form__section reta-details-form__section--champ"
-            aria-labelledby="reta-details-sec-champ"
-          >
-            <h3
-              id="reta-details-sec-champ"
-              className="reta-details-form__section-title"
-            >
-              Remontada final
-            </h3>
-            <div className="reta-details-form__row reta-details-form__row--champ">
-              {championshipField}
-            </div>
-          </section>
-        ) : null}
 
         <section
           className="reta-details-form__section reta-details-form__section--optional"
           aria-labelledby="reta-details-sec-optional"
         >
-          <h3
-            id="reta-details-sec-optional"
-            className="reta-details-form__section-title"
-          >
-            Detalles opcionales
-          </h3>
+          <div className="reta-details-form__section-head">
+            <span className="reta-details-form__step-badge">Paso 3</span>
+            <div className="reta-details-form__section-head-copy">
+              <h3
+                id="reta-details-sec-optional"
+                className="reta-details-form__section-title"
+              >
+                Detalles opcionales
+              </h3>
+              <p className="reta-details-form__section-lead">
+                Elige qué información verán los jugadores en la ficha pública y el enlace.
+              </p>
+            </div>
+          </div>
           <div className="reta-details-form__row reta-details-form__row--public">
             {descriptionField}
-            {lugarField}
-            {costoField}
-            {premioField}
+            <div className="reta-details-form__row--meta">
+              {lugarField}
+              {costoField}
+              {premioField}
+            </div>
           </div>
         </section>
       </div>

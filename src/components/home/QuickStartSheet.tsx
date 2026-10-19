@@ -116,13 +116,30 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
   const isRoundRobin = modeId === "round-robin";
   const schedule = splitProgramado(values.programado_en);
 
-  const encuentroOk =
-    values.name.trim().length > 0 && values.courts >= 1;
-  const horarioOk =
-    schedule.date.length > 0 &&
-    schedule.time.length > 0 &&
-    (!values.mostrar_lugar || values.lugar.trim().length > 0);
+  const nameReady = values.name.trim().length > 0;
+  const courtsReady = values.courts >= 1;
+  const whenReady = schedule.date.length > 0 && schedule.time.length > 0;
+  const lugarReady = !values.mostrar_lugar || values.lugar.trim().length > 0;
+  const sportConfigured = Boolean(
+    values.nivel.trim() || values.rama || values.championshipEnabled
+  );
+
+  const encuentroOk = nameReady && courtsReady;
+  const horarioOk = whenReady && lugarReady;
   const canSubmit = encuentroOk && horarioOk;
+
+  const readyCount = [nameReady, whenReady, courtsReady, lugarReady].filter(
+    Boolean
+  ).length;
+
+  const ramaLabel =
+    values.rama === "varonil"
+      ? "Varonil"
+      : values.rama === "femenil"
+        ? "Femenil"
+        : values.rama === "mixta"
+          ? "Mixta"
+          : "Rama libre";
 
   const blockReason = !values.name.trim()
     ? "Agrega un nombre para continuar."
@@ -158,18 +175,17 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
     onSubmit(buildPayload());
   };
 
-  const ctaHint = blockReason ?? "Al guardar entras a preparar jugadores y convocatoria";
+  const step1Done = nameReady && whenReady && courtsReady;
+  const step2Done = step1Done && sportConfigured;
+  const step3Done = step1Done && lugarReady;
+  const step4Done = canSubmit;
 
   const ctaProps = {
     variant: "sidebar" as const,
-    label: submitting
-      ? "Guardando…"
-      : canSubmit
-        ? "Guardar y continuar"
-        : "Guardar y continuar",
+    label: submitting ? "Guardando…" : "Guardar y continuar",
     disabled: !canSubmit || submitting,
     loading: submitting,
-    hint: canSubmit ? undefined : ctaHint,
+    hint: undefined,
     testId: "guardar-reta",
     onClick: handleSave,
   };
@@ -181,14 +197,84 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
       aria-label="Detalles de la reta"
     >
       <div className="reta-config-panel reta-config-panel--inline reta-config-panel--compose">
-        <header className="reta-config-panel__toolbar">
-          <div className="reta-config-panel__toolbar-copy">
-            <h2 className="reta-config-panel__title">Nueva reta</h2>
-            <p className="reta-config-panel__subtitle">
-              Configura lo esencial para empezar.
-            </p>
+        <header className="reta-config-panel__toolbar reta-config-panel__toolbar--guided">
+          <div className="reta-config-panel__toolbar-top">
+            <div className="reta-config-panel__toolbar-copy">
+              <span className="reta-config-panel__eyebrow">
+                Asistente de creación · {mode.title}
+              </span>
+              <h2 className="reta-config-panel__title">
+                Configura tu reta paso a paso
+              </h2>
+              <p className="reta-config-panel__subtitle">
+                Configura lo esencial para empezar y deja lista su publicación.
+              </p>
+            </div>
+            <span
+              className={`reta-config-panel__progress-pill${
+                canSubmit ? " is-complete" : ""
+              }`}
+              aria-live="polite"
+            >
+              {canSubmit
+                ? "✓ 4 de 4 listos"
+                : `${readyCount} de 4 esenciales`}
+            </span>
           </div>
+
+          <ol
+            className="qm-compose-steps"
+            aria-label="Pasos para crear tu reta"
+          >
+            <li
+              className={`qm-compose-steps__item${
+                step1Done ? " is-done" : " is-current"
+              }`}
+            >
+              <span className="qm-compose-steps__num">
+                {step1Done ? "✓" : "1"}
+              </span>
+              <span className="qm-compose-steps__label">
+                Información básica
+              </span>
+            </li>
+            <li
+              className={`qm-compose-steps__item${
+                step2Done ? " is-done" : step1Done ? " is-current" : ""
+              }`}
+            >
+              <span className="qm-compose-steps__num">
+                {step2Done ? "✓" : "2"}
+              </span>
+              <span className="qm-compose-steps__label">
+                Configuración deportiva
+              </span>
+            </li>
+            <li
+              className={`qm-compose-steps__item${
+                step3Done ? " is-done" : ""
+              }`}
+            >
+              <span className="qm-compose-steps__num">
+                {step3Done ? "✓" : "3"}
+              </span>
+              <span className="qm-compose-steps__label">
+                Detalles y enlace
+              </span>
+            </li>
+            <li
+              className={`qm-compose-steps__item${
+                step4Done ? " is-done" : ""
+              }`}
+            >
+              <span className="qm-compose-steps__num">
+                {step4Done ? "✓" : "4"}
+              </span>
+              <span className="qm-compose-steps__label">Revisión final</span>
+            </li>
+          </ol>
         </header>
+
         <RetaConfigFields
           mode="create"
           phase="draft"
@@ -199,39 +285,45 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
           showChampionship={isRoundRobin}
         />
         {isAmericano ? (
-          <p className="home-sheet__field-hint" role="note">
+          <p className="home-sheet__field-hint reta-config-panel__mode-note" role="note">
             En Americano solo juegan tantos partidos como canchas; el resto
             descansa esa ronda.
           </p>
         ) : null}
-      </div>
-      <div
-        id="reta-nuevo-convocatoria-inline"
-        className="reta-config-panel__conv reta-config-panel__conv--compose"
-      >
-        <div className="reta-config-panel__conv-head">
-          <h3 className="reta-config-panel__conv-title">Convocatoria pública</h3>
-          <p className="reta-config-panel__conv-desc">
-            Permite que jugadores se registren mediante enlace.
-          </p>
-        </div>
-        <QuickModeConvocatoriaGate
-          open={wantConvocatoria}
-          live={false}
-          panelId="reta-nuevo-convocatoria-panel"
-          titleOn="Activa"
-          titleOff="Inactiva"
-          hintOn="Panel abierto — guarda la reta para configurar cupo."
-          hintOff="Opcional"
-          onToggle={() => setWantConvocatoria((v) => !v)}
+
+        <div
+          id="reta-nuevo-convocatoria-inline"
+          className="reta-config-panel__conv reta-config-panel__conv--compose"
         >
-          <div className="qm-ws__conv-prelaunch-note" role="note">
-            <p>
-              Primero guarda la reta. Después podrás lanzar la convocatoria con
-              enlace público y WhatsApp.
-            </p>
+          <div className="reta-config-panel__conv-head">
+            <div className="reta-config-panel__conv-copy">
+              <h4 className="reta-config-panel__conv-title">
+                Convocatoria pública
+              </h4>
+              <p className="reta-config-panel__conv-desc">
+                Actívala si quieres que los jugadores puedan registrarse mediante
+                enlace.
+              </p>
+            </div>
           </div>
-        </QuickModeConvocatoriaGate>
+          <QuickModeConvocatoriaGate
+            open={wantConvocatoria}
+            live={false}
+            panelId="reta-nuevo-convocatoria-panel"
+            titleOn="Activa"
+            titleOff="Inactiva"
+            hintOn="Al guardar podrás compartir el enlace público y por WhatsApp."
+            hintOff="Opcional · Puedes activarla ahora o después"
+            onToggle={() => setWantConvocatoria((v) => !v)}
+          >
+            <div className="qm-ws__conv-prelaunch-note" role="note">
+              <p>
+                Primero guarda la reta. En el siguiente paso podrás configurar el
+                cupo y compartir el enlace de inscripción por WhatsApp.
+              </p>
+            </div>
+          </QuickModeConvocatoriaGate>
+        </div>
       </div>
     </section>
   );
@@ -239,28 +331,138 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
   const sidebarPanel = (
     <div className="qm-ws-panel qm-ws-panel--compose">
       <section className="qm-ws-panel__compose-summary" aria-label="Resumen">
-        <p className="qm-ws-panel__compose-kicker">Resumen</p>
-        <p className="qm-ws-panel__compose-format">{mode.title}</p>
-        <p className="qm-ws-panel__compose-when">
-          {formatSidebarWhen(schedule.date, schedule.time)}
-        </p>
-        <p className="qm-ws-panel__compose-meta">
-          {values.duration_minutes} MIN · {values.courts} CANCHA
-          {values.courts === 1 ? "" : "S"}
-        </p>
-        {values.mostrar_lugar && values.lugar.trim() ? (
-          <p className="qm-ws-panel__compose-lugar">{values.lugar.trim()}</p>
-        ) : null}
-        <p className="qm-ws-panel__compose-nivel">
-          {values.nivel.trim() || "Sin definir"}
-        </p>
+        <div className="qm-ws-panel__compose-head">
+          <div>
+            <span className="qm-ws-panel__compose-step">
+              Paso 4 · Revisión final
+            </span>
+            <p className="qm-ws-panel__compose-kicker">Resumen</p>
+          </div>
+          <span
+            className={`qm-ws-panel__compose-badge${
+              canSubmit ? " is-ready" : ""
+            }`}
+          >
+            {canSubmit ? "Lista" : `${readyCount}/4`}
+          </span>
+        </div>
+
+        <div
+          className="qm-ws-panel__compose-progress"
+          role="progressbar"
+          aria-valuenow={readyCount}
+          aria-valuemin={0}
+          aria-valuemax={4}
+          aria-label="Progreso de datos esenciales"
+        >
+          <div
+            className="qm-ws-panel__compose-progress-fill"
+            style={{ width: `${(readyCount / 4) * 100}%` }}
+          />
+        </div>
+
+        <ul className="qm-ws-panel__compose-checklist">
+          <li
+            className={`qm-ws-panel__compose-check${
+              nameReady ? " is-done" : " is-missing"
+            }`}
+          >
+            <span className="qm-ws-panel__compose-check-icon" aria-hidden>
+              {nameReady ? "✓" : "○"}
+            </span>
+            <div className="qm-ws-panel__compose-check-body">
+              <span className="qm-ws-panel__compose-check-label">
+                Nombre de la reta
+              </span>
+              <span className="qm-ws-panel__compose-check-val">
+                {nameReady
+                  ? values.name.trim()
+                  : "Pendiente — escribe un nombre"}
+              </span>
+            </div>
+          </li>
+
+          <li
+            className={`qm-ws-panel__compose-check${
+              whenReady ? " is-done" : " is-missing"
+            }`}
+          >
+            <span className="qm-ws-panel__compose-check-icon" aria-hidden>
+              {whenReady ? "✓" : "○"}
+            </span>
+            <div className="qm-ws-panel__compose-check-body">
+              <span className="qm-ws-panel__compose-check-label">
+                Fecha y horario
+              </span>
+              <span className="qm-ws-panel__compose-check-val">
+                {whenReady
+                  ? `${formatSidebarWhen(schedule.date, schedule.time)} · ${values.duration_minutes} min`
+                  : "Pendiente — define día y hora"}
+              </span>
+            </div>
+          </li>
+
+          <li
+            className={`qm-ws-panel__compose-check${
+              courtsReady ? " is-done" : " is-missing"
+            }`}
+          >
+            <span className="qm-ws-panel__compose-check-icon" aria-hidden>
+              {courtsReady ? "✓" : "○"}
+            </span>
+            <div className="qm-ws-panel__compose-check-body">
+              <span className="qm-ws-panel__compose-check-label">
+                Dinámica y canchas
+              </span>
+              <span className="qm-ws-panel__compose-check-val">
+                {values.courts} {values.courts === 1 ? "cancha" : "canchas"} ·{" "}
+                {mode.title}
+              </span>
+            </div>
+          </li>
+
+          <li
+            className={`qm-ws-panel__compose-check${
+              lugarReady ? " is-done" : " is-missing"
+            }`}
+          >
+            <span className="qm-ws-panel__compose-check-icon" aria-hidden>
+              {lugarReady ? "✓" : "○"}
+            </span>
+            <div className="qm-ws-panel__compose-check-body">
+              <span className="qm-ws-panel__compose-check-label">
+                Sede del encuentro
+              </span>
+              <span className="qm-ws-panel__compose-check-val">
+                {lugarReady
+                  ? values.mostrar_lugar
+                    ? values.lugar.trim()
+                    : "Oculto en ficha pública"
+                  : "Pendiente — indica el lugar"}
+              </span>
+            </div>
+          </li>
+        </ul>
+
+        <div className="qm-ws-panel__compose-tags">
+          <span className="qm-ws-panel__compose-tag">
+            {values.nivel.trim() || "Categoría abierta"} · {ramaLabel}
+          </span>
+          <span className="qm-ws-panel__compose-tag">
+            {wantConvocatoria
+              ? "Convocatoria por enlace"
+              : "Inscripción manual"}
+          </span>
+        </div>
       </section>
 
       <div className="qm-ws-panel__compose-rule" aria-hidden />
 
       <section className="qm-ws-panel__compose-status" aria-live="polite">
         {canSubmit ? (
-          <p className="qm-ws-panel__compose-ready">✓ Todo listo para continuar</p>
+          <p className="qm-ws-panel__compose-ready">
+            ✓ Todo listo para continuar
+          </p>
         ) : (
           <>
             <p className="qm-ws-panel__compose-blocked">● Faltan datos</p>
@@ -273,6 +475,9 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
 
       <section className="qm-ws-panel__block qm-ws-panel__cta-desktop">
         <QuickModePrimaryCta {...ctaProps} />
+        <p className="qm-ws-panel__compose-next-hint">
+          En el siguiente paso podrás agregar jugadores y publicar el enlace.
+        </p>
       </section>
     </div>
   );
@@ -310,10 +515,10 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
           <div className="qm-ws__compose-mobile-bar">
             <span className="qm-ws__compose-mobile-status">
               {canSubmit
-                ? "✓ Lista"
+                ? "✓ Lista para guardar"
                 : blockReason?.replace(/\.$/, "") || "Faltan datos"}
             </span>
-            <QuickModePrimaryCta {...ctaProps} />
+            <QuickModePrimaryCta {...ctaProps} testId={undefined} />
           </div>
         }
       />

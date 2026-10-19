@@ -340,13 +340,14 @@
 }
 
 .qm-ws__details-inline .reta-details-form__visibility-hint {
+  flex: 0 0 auto;
   font-size: 0.6875rem;
   font-weight: 500;
   color: var(--qm-ink-muted);
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.4;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .qm-ws__details-inline .reta-details-form__visibility-hint--muted {
@@ -750,6 +751,7 @@
 .qm-ws__details-inline input:not([type="checkbox"]):not([type="radio"]),
 .qm-ws__details-inline textarea,
 .qm-ws__details-inline select {
+  flex: 0 0 auto;
   width: 100%;
   min-height: var(--rd-input-h);
   height: var(--rd-input-h);
@@ -1410,8 +1412,7 @@
     max-width: none;
   }
 
-  /* Compose: Nombre está fuera de primary — forzar 2×2, no la fila de 5 cols. */
-  .qm-ws--create-compose .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary,
+  /* Duelo: Nombre está fuera de primary — mantener 2×2. */
   .qm-ws--create-compose .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -3105,30 +3106,34 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   color: var(--qm-ink-muted, var(--ro-chrome-text-muted));
 }
 
-/* —— Create compose: alta rápida (QuickStart / Duelo Nuevo) —— */
-.qm-ws--create-compose {
-  --rd-input-h: 2.625rem; /* 42px */
-  max-width: 1440px;
+/* —— Create compose: alta rápida guiada (QuickStart / Duelo Nuevo) —— */
+.qm-ws.qm-ws--create-compose {
+  --rd-input-h: 2.5rem; /* 40px: compacto y táctil */
+  max-width: 1120px;
   width: 100%;
   margin-inline: auto;
   box-sizing: border-box;
+  gap: 0.75rem;
 }
 
 .qm-ws--create-compose .qm-event-header--create-min {
-  display: block;
-  padding: 0.55rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+  padding: 0.25rem 0.1rem 0.15rem;
   border: none;
   border-radius: 0;
   background: transparent;
-  /* Canvas claro: chrome-text es blanco (para header oscuro) — no usarlo aquí */
   color: var(--ro-text-primary, #14161a);
   box-shadow: none;
 }
 
 .qm-ws--create-compose .qm-event-header--create-min .qm-event-header__title {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ro-text-primary, #14161a);
 }
@@ -3156,17 +3161,64 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 .qm-ws--create-compose .qm-ws__body {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.25rem;
+  gap: 1rem;
   align-items: start;
 }
 
-@media (min-width: 1024px) {
-  .qm-ws--create-compose {
+/* Evita que transform de fadeInUp en .main-layout rompa position:fixed del sticky CTA en Nueva Reta */
+.main-layout:has(.qm-ws--create-compose) {
+  animation: none;
+  transform: none;
+}
+
+@media (max-width: 959px) {
+  .qm-ws.qm-ws--create-compose {
+    padding-bottom: calc(
+      5.5rem + var(--mobile-app-navigation-height, 0px) +
+        env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  .qm-ws--create-compose .qm-ws__sidebar {
+    display: block !important;
+    width: 100%;
+  }
+
+  .qm-ws--create-compose .qm-ws-panel__cta-desktop {
+    display: none !important;
+  }
+
+  .qm-ws--create-compose .qm-ws__sticky-cta {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--mobile-app-navigation-height, 0px);
+    z-index: var(--ro-z-sticky, 40);
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    padding: 0.5rem var(--qm-prep-pad-x, 0.85rem);
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--ro-chrome-bg, #12161b) 96%, transparent);
+    border-top: 1px solid var(--ro-chrome-border, #262b33);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .has-mobile-app-navigation .qm-ws--create-compose .qm-ws__sticky-cta {
+    padding-bottom: 0.5rem;
+  }
+}
+
+@media (min-width: 960px) {
+  .qm-ws.qm-ws--create-compose {
     display: grid;
-    grid-template-columns: minmax(0, 1.72fr) minmax(15.5rem, 0.72fr);
-    column-gap: 1.35rem;
-    row-gap: 1rem;
+    grid-template-columns: minmax(0, 2.1fr) minmax(268px, 0.82fr);
+    column-gap: 1.15rem;
+    row-gap: 0.65rem;
     align-items: start;
+    padding-bottom: var(--ro-space-4, 1rem);
   }
 
   .qm-ws--create-compose > .qm-event-header {
@@ -3183,55 +3235,266 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
     grid-row: 2;
     display: block;
     margin: 0;
+    position: sticky;
+    top: 0.85rem;
   }
 
   .qm-ws--create-compose > .qm-ws__sticky-cta {
+    display: none !important;
     grid-column: 1 / -1;
   }
 
   .qm-ws--create-compose .qm-ws__sidebar {
+    display: block;
     width: 100%;
-    position: sticky;
-    top: 0.85rem;
   }
 }
 
 .qm-ws--create-compose .qm-ws__details-inline--compose,
 .qm-ws--create-compose .qm-ws__details-inline {
-  border: 1px solid color-mix(in srgb, var(--qm-ink-border) 55%, transparent);
-  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--qm-ink-border) 65%, transparent);
+  border-radius: 14px;
   background: var(--qm-ink-bg, #12161b);
-  /* El toolbar tiene fondo elevado cuadrado; sin esto se ven esquinas puntiagudas */
   overflow: hidden;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
 }
 
+/* —— Toolbar guiado y barra de 4 pasos —— */
 .qm-ws--create-compose .reta-config-panel__toolbar {
-  background: transparent;
-  border-bottom-color: color-mix(in srgb, var(--qm-ink-border) 45%, transparent);
+  padding: 0.85rem var(--qm-module-pad-x, 1.1rem) 0.75rem;
+  background: color-mix(in srgb, var(--qm-ink-elevated) 55%, var(--qm-ink-bg));
+  border-bottom: 1px solid color-mix(in srgb, var(--qm-ink-border) 60%, transparent);
 }
 
-.qm-ws--create-compose .reta-config-panel__toolbar {
-  padding: 0.55rem var(--qm-module-pad-x, 1rem);
+.qm-ws--create-compose .reta-config-panel__toolbar--guided {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
 }
 
-.qm-ws--create-compose .reta-details-form--compose .reta-details-form__section {
-  padding: 0.85rem var(--qm-module-pad-x, 1rem) 0.75rem;
-  border-bottom: none;
+.qm-ws--create-compose .reta-config-panel__toolbar-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem 0.85rem;
 }
 
-.qm-ws--create-compose .reta-details-form--compose .reta-details-form__section-title {
+.qm-ws--create-compose .reta-config-panel__eyebrow {
+  display: inline-block;
+  margin: 0 0 0.15rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--qm-ink-muted);
+}
+
+.qm-ws--create-compose .reta-config-panel__toolbar--guided .reta-config-panel__title {
+  margin: 0;
+  font-size: clamp(1rem, 2.2vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--qm-ink-text);
+  line-height: 1.25;
+}
+
+.qm-ws--create-compose .reta-config-panel__toolbar--guided .reta-config-panel__subtitle {
+  margin: 0.15rem 0 0;
   font-size: 0.8125rem;
-  margin-bottom: 0.55rem;
-  padding-bottom: 0.3rem;
+  font-weight: 500;
+  color: var(--qm-ink-muted);
+  line-height: 1.35;
+}
+
+.qm-ws--create-compose .reta-config-panel__progress-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--qm-ink-border);
+  background: var(--qm-ink-elevated);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--qm-ink-muted);
+  white-space: nowrap;
+}
+
+.qm-ws--create-compose .reta-config-panel__progress-pill.is-complete {
+  border-color: color-mix(in srgb, var(--ro-success, #2f7d53) 55%, var(--qm-ink-border));
+  background: color-mix(in srgb, var(--ro-success, #2f7d53) 14%, var(--qm-ink-elevated));
+  color: var(--qm-ink-text);
+}
+
+.qm-compose-steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 640px) {
+  .qm-compose-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.qm-compose-steps__item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--qm-ink-border) 65%, transparent);
+  background: color-mix(in srgb, var(--qm-ink-inset) 65%, transparent);
+  color: var(--qm-ink-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.qm-compose-steps__item.is-current {
+  border-color: var(--qm-ink-border-strong);
+  background: var(--qm-ink-elevated);
+  color: var(--qm-ink-text);
+}
+
+.qm-compose-steps__item.is-done {
+  border-color: color-mix(in srgb, var(--ro-success, #2f7d53) 45%, var(--qm-ink-border));
+  background: color-mix(in srgb, var(--ro-success, #2f7d53) 10%, var(--qm-ink-elevated));
+  color: var(--qm-ink-text);
+}
+
+.qm-compose-steps__num {
+  flex: 0 0 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--qm-ink-text);
+}
+
+.qm-compose-steps__item.is-done .qm-compose-steps__num {
+  background: var(--ro-success, #2f7d53);
+  color: #ffffff;
+}
+
+.qm-compose-steps__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* —— Secciones guiadas por pasos (Paso 1, Paso 2, Paso 3) —— */
+.qm-ws__details-inline .reta-details-form--compose .reta-details-form__section {
+  padding: 0.9rem var(--qm-module-pad-x, 1.1rem) 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--qm-ink-border) 50%, transparent);
+}
+
+.qm-ws__details-inline .reta-details-form--compose .reta-details-form__section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0.5rem;
+}
+
+.qm-ws__details-inline .reta-details-form__section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-bottom: 0.7rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--qm-ink-border) 38%, transparent);
+}
+
+.qm-ws__details-inline .reta-details-form__step-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.05rem;
+  padding: 0.18rem 0.48rem;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--qm-ink-border-strong) 90%, transparent);
+  background: var(--qm-ink-elevated);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--qm-ink-text);
+  line-height: 1.2;
+}
+
+.qm-ws__details-inline .reta-details-form__section-head-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.qm-ws__details-inline .reta-details-form__section-head .reta-details-form__section-title {
+  margin: 0;
+  padding: 0;
+  border-bottom: none;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--qm-ink-text);
+  line-height: 1.25;
+}
+
+.qm-ws__details-inline .reta-details-form__section-lead {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--qm-ink-muted);
+  line-height: 1.35;
+}
+
+.qm-ws__details-inline .reta-details-form__label-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.15rem 0.5rem;
+  width: 100%;
+}
+
+.qm-ws__details-inline .reta-details-form__field-help {
+  flex: 0 0 auto;
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--qm-ink-muted);
+  line-height: 1.35;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* En campos de horario/canchas el texto de ayuda va debajo del input */
+.qm-ws__details-inline .reta-details-form__field--date .reta-details-form__field-help,
+.qm-ws__details-inline .reta-details-form__field--time .reta-details-form__field-help,
+.qm-ws__details-inline .reta-details-form__field--duration .reta-details-form__field-help,
+.qm-ws__details-inline .reta-details-form__field--courts .reta-details-form__field-help {
+  margin-top: 0.05rem;
+  font-size: 0.675rem;
 }
 
 .qm-ws--create-compose .reta-details-form__row--name {
   display: grid;
   grid-template-columns: 1fr;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.65rem;
 }
 
-/* Alta: Nombre aparte; Día/Hora | Duración/Canchas siempre en 2×2 (sin 4 cols apretadas). */
+/* Alta: Nombre aparte; Día/Hora/Duración/Canchas en 2×2 en móvil y 4 columnas desde 680px */
 .qm-ws--create-compose .reta-details-form--compose .reta-details-form__row--primary,
 .qm-ws--create-compose .reta-details-form--duelo .reta-details-form__row--primary,
 .qm-ws--create-compose .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary {
@@ -3240,11 +3503,24 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   grid-template-areas:
     "date time"
     "duration courts" !important;
-  gap: 0.85rem 0.75rem !important;
-  margin-bottom: 0.75rem;
+  gap: 0.7rem 0.75rem !important;
+  margin-bottom: 0.15rem;
   align-items: start;
   width: 100%;
   min-width: 0;
+}
+
+@media (min-width: 680px) {
+  .qm-ws--create-compose .reta-details-form--compose .reta-details-form__row--primary,
+  .qm-ws--create-compose .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary {
+    grid-template-columns:
+      minmax(0, 1.15fr)
+      minmax(0, 1fr)
+      minmax(0, 1.05fr)
+      minmax(0, 0.85fr) !important;
+    grid-template-areas: "date time duration courts" !important;
+    gap: 0.65rem !important;
+  }
 }
 
 .qm-ws--create-compose .reta-details-form--compose .reta-details-form__row--primary > .reta-details-form__schedule-split,
@@ -3265,7 +3541,7 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   max-width: 100% !important;
   position: relative;
   z-index: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .qm-ws--create-compose .reta-details-form--compose .reta-details-form__field--date,
@@ -3286,6 +3562,39 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 .qm-ws--create-compose .reta-details-form--compose .reta-details-form__field--courts,
 .qm-ws--create-compose .reta-details-form--duelo .reta-details-form__field--cancha {
   grid-area: courts !important;
+}
+
+/* Stepper de duración sin doble borde (solo el borde del contenedor padre) */
+.qm-ws--create-compose .qm-ws__details-inline .reta-details-form__stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: var(--rd-input-h);
+  height: var(--rd-input-h);
+  padding: 0 0.2rem;
+  border: 1px solid var(--qm-ink-input-border);
+  border-radius: 8px;
+  background: var(--qm-ink-input);
+  box-sizing: border-box;
+  gap: 0.15rem;
+}
+
+.qm-ws--create-compose .qm-ws__details-inline .reta-details-form__stepper .home-sheet__stepper-btn {
+  border: none !important;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--qm-ink-text);
+  width: 2rem;
+  min-width: 2rem;
+  max-width: 2rem;
+  height: calc(var(--rd-input-h) - 6px);
+  min-height: 0;
+  flex: 0 0 2rem;
+}
+
+.qm-ws--create-compose .qm-ws__details-inline .reta-details-form__stepper .home-sheet__stepper-btn:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .qm-ws--create-compose .reta-details-form--compose .reta-details-form__field--date .riviera-input,
@@ -3325,6 +3634,48 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   z-index: 1;
 }
 
+/* —— Paso 2: Configuración deportiva compacta en 2 columnas —— */
+.qm-ws__details-inline .reta-details-form__sport-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+@media (min-width: 680px) {
+  .qm-ws__details-inline .reta-details-form__sport-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 0.85rem;
+  }
+}
+
+.qm-ws--create-compose .reta-details-form__row--nivel,
+.qm-ws--create-compose .reta-details-form__row--rama {
+  margin-bottom: 0;
+}
+
+.qm-ws__details-inline .reta-details-form__subsection.reta-details-form__section--champ {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed color-mix(in srgb, var(--qm-ink-border) 60%, transparent);
+}
+
+.qm-ws__details-inline .reta-details-form__section-title--sub {
+  margin: 0 0 0.4rem !important;
+  padding: 0 !important;
+  border-bottom: none !important;
+  font-size: 0.75rem !important;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--qm-ink-muted);
+}
+
+.qm-ws--create-compose .reta-details-form__row--champ {
+  margin-top: 0;
+}
+
+/* —— Paso 3: Detalles opcionales + Meta cards (Lugar / Costo / Premio) —— */
 .reta-details-form__optional {
   padding: 0.15rem var(--qm-module-pad-x, 1rem) 0.85rem;
 }
@@ -3338,216 +3689,388 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 }
 
 .qm-ws--create-compose .reta-details-form--compose .reta-details-form__section--optional {
-  margin-top: 0.15rem;
-  padding-top: 0.95rem;
-  border-top: 1px solid color-mix(in srgb, var(--qm-ink-border) 45%, transparent);
-}
-
-.qm-ws--create-compose .reta-details-form__row--nivel {
-  margin-bottom: 0.85rem;
-}
-
-.qm-ws--create-compose .reta-details-form__row--rama {
-  margin-bottom: 0.15rem;
-}
-
-.qm-ws--create-compose .reta-details-form__row--champ {
-  margin-top: 0.85rem;
-}
-
-.qm-ws--create-compose .reta-config-panel__conv--compose {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.65rem 1rem;
-  min-height: 3.5rem;
-  max-height: none;
-  margin: 0;
-  padding: 0.55rem var(--qm-module-pad-x, 1rem) 0.65rem;
+  margin-top: 0;
+  padding-top: 0.85rem;
   border-top: 1px solid color-mix(in srgb, var(--qm-ink-border) 50%, transparent);
 }
 
-.qm-ws--create-compose .reta-config-panel__conv--compose .qm-ws__details-conv {
-  grid-column: 2;
-  grid-row: 1;
-  padding: 0;
-  border: none;
+.qm-ws__details-inline .reta-details-form__row--public > .reta-details-form__row--meta {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+  margin-top: 0.15rem;
+}
+
+@media (min-width: 680px) {
+  .qm-ws__details-inline .reta-details-form__row--public > .reta-details-form__row--meta {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+}
+
+.qm-ws__details-inline .reta-details-form__row--meta > .reta-details-form__visibility {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.38rem;
+  padding: 0.6rem 0.65rem;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  border-radius: 8px;
+  border: 1px solid var(--qm-ink-border);
+  background: var(--qm-ink-elevated);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.qm-ws__details-inline .reta-details-form__visibility-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Switch tipo pastilla: anula padding global de theme.css (input { padding: var(--space-md) }) */
+.qm-ws__details-inline .reta-details-form__visibility-toggle input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.85rem !important;
+  height: 1.05rem !important;
+  min-width: 1.85rem !important;
+  min-height: 1.05rem !important;
+  max-width: 1.85rem !important;
+  max-height: 1.05rem !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 999px !important;
+  border: 1px solid var(--qm-ink-input-border) !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  position: relative;
+  flex: 0 0 1.85rem !important;
+  box-sizing: border-box !important;
+  cursor: pointer;
+  order: 2;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.qm-ws__details-inline .reta-details-form__visibility-toggle .reta-details-form__visibility-title {
+  order: 1;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--qm-ink-text);
+}
+
+.qm-ws__details-inline .reta-details-form__visibility-toggle input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.15s ease;
+}
+
+.qm-ws__details-inline .reta-details-form__visibility-toggle input[type="checkbox"]:checked {
+  background: var(--ro-success, #2f7d53) !important;
+  border-color: var(--ro-success, #2f7d53) !important;
+}
+
+.qm-ws__details-inline .reta-details-form__visibility-toggle input[type="checkbox"]:checked::after {
+  transform: translateX(0.78rem);
+}
+
+/* —— Convocatoria pública integrada en Paso 3 —— */
+.qm-ws--create-compose .reta-config-panel__conv--compose {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0 var(--qm-module-pad-x, 1.1rem) 0.9rem;
+  padding: 0.75rem 0 0;
+  border-top: 1px dashed color-mix(in srgb, var(--qm-ink-border) 55%, transparent);
   background: transparent;
 }
 
-.qm-ws--create-compose .reta-config-panel__conv--compose .qm-ws__details-conv.is-open {
-  grid-column: 1 / -1;
-  grid-row: 2;
+.qm-ws--create-compose .reta-config-panel__conv-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+}
+
+.qm-ws--create-compose .reta-config-panel__conv-copy {
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
+.qm-ws--create-compose .reta-config-panel__conv--compose .qm-ws__details-conv {
+  padding: 0;
+  border: none;
+  background: transparent;
+  width: 100%;
 }
 
 .qm-ws--create-compose .reta-config-panel__conv--compose .qm-ws__conv-gate {
-  min-height: 2.75rem;
+  min-height: 2.65rem;
   max-height: none;
-  padding: 0.35rem 0.55rem;
+  padding: 0.45rem 0.7rem;
 }
 
 .qm-ws--create-compose .reta-config-panel__conv--compose .qm-ws__conv-gate-chevron {
   display: none;
 }
 
-.qm-ws--create-compose .reta-config-panel__conv--compose .qm-ws__conv-gate-hint {
-  white-space: nowrap;
+.qm-ws--create-compose .reta-config-panel__mode-note {
+  margin: 0;
+  padding: 0 1.1rem 0.75rem;
 }
 
+/* —— Paso 4: Revisión final / Resumen inteligente —— */
 .qm-ws-panel--compose {
-  padding: 1rem 1.05rem 1.1rem;
-  border: 1px solid color-mix(in srgb, var(--qm-ink-border) 55%, transparent);
-  border-radius: 12px;
+  padding: 0.95rem 1rem 1.05rem;
+  border: 1px solid color-mix(in srgb, var(--qm-ink-border) 65%, transparent);
+  border-radius: 14px;
   background: var(--qm-ink-elevated, #15191f);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.qm-ws-panel__compose-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.qm-ws-panel__compose-step {
+  display: block;
+  margin: 0 0 0.1rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--qm-ink-muted);
 }
 
 .qm-ws-panel__compose-kicker {
-  margin: 0 0 0.35rem;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--qm-ink-text);
+}
+
+.qm-ws-panel__compose-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--qm-ink-border);
+  background: var(--qm-ink-inset);
   font-size: 0.6875rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--qm-ink-muted);
 }
 
-.qm-ws-panel__compose-format {
-  margin: 0 0 0.55rem;
-  font-size: 1.05rem;
+.qm-ws-panel__compose-badge.is-ready {
+  border-color: color-mix(in srgb, var(--ro-success, #2f7d53) 55%, var(--qm-ink-border));
+  background: color-mix(in srgb, var(--ro-success, #2f7d53) 15%, var(--qm-ink-inset));
+  color: var(--qm-ink-text);
+}
+
+.qm-ws-panel__compose-progress {
+  width: 100%;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--qm-ink-inset);
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.qm-ws-panel__compose-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ro-success, #2f7d53);
+  transition: width 0.22s ease;
+}
+
+.qm-ws-panel__compose-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.qm-ws-panel__compose-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.42rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--qm-ink-border) 55%, transparent);
+  background: color-mix(in srgb, var(--qm-ink-inset) 65%, transparent);
+}
+
+.qm-ws-panel__compose-check.is-done {
+  border-color: color-mix(in srgb, var(--ro-success, #2f7d53) 35%, var(--qm-ink-border));
+}
+
+.qm-ws-panel__compose-check-icon {
+  flex: 0 0 1.15rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.05rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
   font-weight: 700;
-  color: var(--qm-ink-text);
-  line-height: 1.25;
-}
-
-.qm-ws-panel__compose-when,
-.qm-ws-panel__compose-meta,
-.qm-ws-panel__compose-lugar,
-.qm-ws-panel__compose-nivel {
-  margin: 0 0 0.2rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--qm-ink-text);
-  line-height: 1.35;
-}
-
-.qm-ws-panel__compose-meta,
-.qm-ws-panel__compose-nivel {
+  background: rgba(255, 255, 255, 0.08);
   color: var(--qm-ink-muted);
-  letter-spacing: 0.04em;
+}
+
+.qm-ws-panel__compose-check.is-done .qm-ws-panel__compose-check-icon {
+  background: color-mix(in srgb, var(--ro-success, #2f7d53) 22%, transparent);
+  color: var(--ro-success, #2f7d53);
+}
+
+.qm-ws-panel__compose-check-body {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.qm-ws-panel__compose-check-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  font-size: 0.75rem;
+  color: var(--qm-ink-muted);
+}
+
+.qm-ws-panel__compose-check-val {
+  font-size: 0.78rem;
   font-weight: 600;
+  color: var(--qm-ink-text);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.qm-ws-panel__compose-check.is-missing .qm-ws-panel__compose-check-val {
+  color: var(--qm-ink-muted);
+  font-weight: 500;
+}
+
+.qm-ws-panel__compose-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.qm-ws-panel__compose-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--qm-ink-border) 65%, transparent);
+  background: var(--qm-ink-inset);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--qm-ink-muted);
 }
 
 .qm-ws-panel__compose-rule {
   height: 1px;
-  margin: 0.85rem 0;
+  margin: 0.75rem 0;
   background: color-mix(in srgb, var(--qm-ink-border) 70%, transparent);
 }
 
 .qm-ws-panel__compose-ready {
   margin: 0;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 650;
   color: var(--qm-ink-text);
 }
 
 .qm-ws-panel__compose-blocked {
-  margin: 0 0 0.2rem;
-  font-size: 0.875rem;
-  font-weight: 600;
+  margin: 0 0 0.15rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
   color: var(--qm-ink-text);
 }
 
 .qm-ws-panel__compose-reason,
-.qm-ws-panel__compose-cta-hint {
+.qm-ws-panel__compose-cta-hint,
+.qm-ws-panel__compose-next-hint {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 500;
   color: var(--qm-ink-muted);
   line-height: 1.35;
 }
 
 .qm-ws-panel--compose .qm-ws-panel__cta-desktop {
-  margin-top: 0.85rem;
+  margin-top: 0.75rem;
 }
 
-.qm-ws-panel__compose-cta-hint {
+.qm-ws-panel__compose-next-hint {
   margin-top: 0.45rem;
+  text-align: center;
 }
 
 .qm-ws__compose-mobile-bar {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  justify-content: space-between;
+  gap: 0.75rem;
   width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
 }
 
 .qm-ws__compose-mobile-status {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 0.8125rem;
+  font-size: 0.78rem;
   font-weight: 600;
+  line-height: 1.25;
   color: var(--qm-ink-text, #f5f2eb);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.qm-ws__compose-mobile-bar .qm-primary-cta {
+.qm-ws__compose-mobile-bar .qm-primary-cta,
+.qm-ws__sticky-cta .qm-ws__compose-mobile-bar .qm-primary-cta--sidebar {
   flex: 0 0 auto;
+  width: auto;
+  margin: 0;
 }
 
-/* Visibility as compact pill toggles */
-.qm-ws__details-inline .reta-details-form__visibility-toggle input[type="checkbox"] {
-  appearance: none;
-  width: 1.7rem;
-  height: 0.95rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
-  position: relative;
-  flex: 0 0 auto;
-  cursor: pointer;
-}
-
-.qm-ws__details-inline .reta-details-form__visibility-toggle input[type="checkbox"]::after {
-  content: "";
-  position: absolute;
-  top: 0.12rem;
-  left: 0.12rem;
-  width: 0.7rem;
-  height: 0.7rem;
-  border-radius: 50%;
-  background: #fff;
-  transition: transform 0.15s ease;
-}
-
-.qm-ws__details-inline .reta-details-form__visibility-toggle input[type="checkbox"]:checked {
-  background: var(--ro-success, #2f7d53);
-}
-
-.qm-ws__details-inline .reta-details-form__visibility-toggle input[type="checkbox"]:checked::after {
-  transform: translateX(0.7rem);
-}
-
-@media (max-width: 768px) {
-  .qm-ws--create-compose .reta-config-panel__conv--compose {
-    grid-template-columns: 1fr;
-  }
-
-  .qm-ws--create-compose .reta-config-panel__conv--compose .qm-ws__details-conv {
-    grid-column: 1;
-    grid-row: auto;
-  }
-
-  .qm-ws--create-compose .qm-ws__compose-mobile-bar .qm-primary-cta__btn {
-    min-height: 2.75rem;
-  }
+.qm-ws__compose-mobile-bar .qm-primary-cta__btn,
+.qm-ws__sticky-cta .qm-ws__compose-mobile-bar .qm-primary-cta__btn {
+  width: auto;
+  min-height: 2.625rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 /*
  * Compose (alta + edición Detalles): el nombre vive en row--name aparte.
- * Evita la fila de 5 cols (pensada cuando nombre iba dentro de primary),
- * que hacía “chocar” Día/Hora/Duración/Cancha con el ancho del nombre.
  */
 .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--name,
 .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--name {
@@ -3555,7 +4078,7 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   grid-template-columns: minmax(0, 1fr);
   width: 100%;
   max-width: 100%;
-  margin-bottom: 1.1rem;
+  margin-bottom: 0.75rem;
   position: relative;
   z-index: 2;
 }
@@ -3574,49 +4097,12 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 
 .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary,
 .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary {
-  margin-top: 0.15rem;
-  padding-top: 0.15rem;
+  margin-top: 0.1rem;
+  padding-top: 0.1rem;
   position: relative;
   z-index: 1;
   clear: both;
 }
-
-@media (min-width: 640px) {
-  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary,
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    grid-template-areas: none !important;
-    gap: var(--rd-gap, 0.75rem) !important;
-    width: 100%;
-    max-width: 100%;
-    align-items: start;
-  }
-
-  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary > .reta-details-form__schedule-split,
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary > .reta-details-form__schedule-split {
-    display: contents !important;
-  }
-
-  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary .reta-details-form__field--date,
-  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary .reta-details-form__field--time,
-  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary .reta-details-form__field--duration,
-  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary > .reta-details-form__field--courts,
-  .qm-ws__details-inline .reta-details-form--compose .reta-details-form__row--primary > .reta-details-form__field--cancha,
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary .reta-details-form__field--date,
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary .reta-details-form__field--time,
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary .reta-details-form__field--duration,
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary > .reta-details-form__field--courts,
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--primary > .reta-details-form__field--cancha {
-    grid-area: auto !important;
-    min-width: 0 !important;
-    max-width: none !important;
-    width: 100%;
-  }
-}
-
-/* En móvil se mantiene el 2×2 del bloque max-width:768 (date/time | duration/courts). */
-
 
 /* Roster de la reta (Americano): quién llevo registrado */
 .qm-ws__workbench .americano-registration__roster {
@@ -3679,36 +4165,40 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   color: var(--qm-ink-text);
 }
 
-/* Remontada final: sección propia, visible y con descripción (solo Detalles/alta). */
+/* Remontada final: sub-bloque compacto dentro de Configuración deportiva */
 .qm-ws__details-inline .reta-details-form__field--champ-compact .reta-details-form__champ-control {
   height: auto;
   min-height: var(--rd-input-h);
-  align-items: flex-start;
-  padding: 0.65rem 0.75rem;
-  gap: 0.65rem;
+  align-items: center;
+  padding: 0.55rem 0.7rem;
+  gap: 0.6rem;
 }
 
 .qm-ws__details-inline .reta-details-form__field--champ-compact .reta-details-form__champ-control input[type="checkbox"] {
-  width: 1.1rem;
-  height: 1.1rem;
-  margin-top: 0.1rem;
+  width: 1.05rem !important;
+  height: 1.05rem !important;
+  min-width: 1.05rem !important;
+  min-height: 1.05rem !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  flex: 0 0 1.05rem !important;
 }
 
 .qm-ws__details-inline .reta-details-form__champ-copy {
   display: grid;
-  gap: 0.15rem;
+  gap: 0.1rem;
   min-width: 0;
 }
 
 .qm-ws__details-inline .reta-details-form__champ-copy strong {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
 .qm-ws__details-inline .reta-details-form__champ-copy small {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 500;
-  line-height: 1.35;
+  line-height: 1.3;
   color: var(--qm-ink-muted);
 }
 

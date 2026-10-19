@@ -204,4 +204,87 @@ describe("QuickStartSheet shared form", () => {
     });
     expect(input.value).toBe("105");
   });
+
+  it("19. flujo guiado por pasos muestra microcopy contextual y actualiza el checklist de revisión final", () => {
+    const onSubmit = jest.fn();
+    act(() => {
+      root.render(
+        <QuickStartSheet
+          modeId="americano"
+          onClose={() => {}}
+          onSubmit={onSubmit}
+        />
+      );
+    });
+
+    const scope = document.body;
+    expect(scope.textContent).toMatch(/Configura tu reta paso a paso/);
+    expect(scope.textContent).toMatch(/Paso 1/);
+    expect(scope.textContent).toMatch(/Paso 2/);
+    expect(scope.textContent).toMatch(/Paso 3/);
+    expect(scope.textContent).toMatch(/Paso 4 · Revisión final/);
+
+    // Microcopy contextual integrado
+    expect(scope.textContent).toMatch(
+      /Pon un nombre fácil de identificar para tu reta\./
+    );
+    expect(scope.textContent).toMatch(/Define cuándo se jugará la reta\./);
+    expect(scope.textContent).toMatch(
+      /La duración ayuda a calcular la estructura del juego\./
+    );
+    expect(scope.textContent).toMatch(
+      /Indica cuántas canchas usarás para organizar mejor la dinámica\./
+    );
+    expect(scope.textContent).toMatch(
+      /Especifica la fuerza o categoría que jugará\./
+    );
+    expect(scope.textContent).toMatch(
+      /Selecciona si la reta es varonil, femenil o mixta\./
+    );
+    expect(scope.textContent).toMatch(
+      /Actívala si quieres que los jugadores puedan registrarse mediante enlace\./
+    );
+
+    const saveBtn = scope.querySelector(
+      '[data-testid="guardar-reta"]'
+    ) as HTMLButtonElement;
+    expect(saveBtn.disabled).toBe(true);
+    expect(scope.textContent).toMatch(/3 de 4 esenciales/);
+    expect(scope.textContent).not.toMatch(/Paso 3 · Registro/);
+    expect(scope.textContent).not.toMatch(/Solo manual/);
+    expect(scope.querySelector(".qm-primary-cta__hint")).toBeNull();
+
+    const stepNumsBefore = Array.from(
+      scope.querySelectorAll(".qm-compose-steps__num")
+    ).map((el) => el.textContent?.trim());
+    expect(stepNumsBefore).toEqual(["1", "2", "3", "4"]);
+
+    const nameInput = scope.querySelector(
+      'input[placeholder="Reta del domingo…"]'
+    ) as HTMLInputElement;
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value"
+    )?.set;
+
+    act(() => {
+      setter?.call(nameInput, "Reta Nocturna Riviera");
+      nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    const stepNumsAfter = Array.from(
+      scope.querySelectorAll(".qm-compose-steps__num")
+    ).map((el) => el.textContent?.trim());
+    expect(stepNumsAfter).toEqual(["✓", "2", "✓", "✓"]);
+
+    expect(scope.textContent).toMatch(/✓ 4 de 4 listos/);
+    expect(scope.textContent).toMatch(/✓ Todo listo para continuar/);
+    expect(saveBtn.disabled).toBe(false);
+
+    act(() => {
+      saveBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0].name).toBe("Reta Nocturna Riviera");
+  });
 });
