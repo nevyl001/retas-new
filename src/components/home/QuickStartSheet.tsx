@@ -513,11 +513,6 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
         sidebar={sidebarPanel}
         stickyCta={
           <div className="qm-ws__compose-mobile-bar">
-            <span className="qm-ws__compose-mobile-status">
-              {canSubmit
-                ? "✓ Lista para guardar"
-                : blockReason?.replace(/\.$/, "") || "Faltan datos"}
-            </span>
             <QuickModePrimaryCta {...ctaProps} testId={undefined} />
           </div>
         }

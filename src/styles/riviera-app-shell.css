@@ -8,7 +8,7 @@
   --mobile-app-navigation-offset: calc(
     var(--mobile-app-nav-total-height) + 1.25rem
   );
-  --qm-ws-sticky-cta-height: 58px;
+  --qm-ws-sticky-cta-height: 60px;
 }
 
 .has-mobile-app-navigation {

@@ -3186,6 +3186,12 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   margin-inline: 0;
 }
 
+/* En HomeDashboard (Nueva Reta), el footer posterior gestiona el clearance final; el workspace no debe añadir padding inferior */
+.home-inner .qm-ws.qm-ws--create-compose,
+.home-create-details .qm-ws.qm-ws--create-compose {
+  padding-bottom: 0 !important;
+}
+
 /* Márgenes exteriores uniformes de 24–32 px en escritorio (alineados con el header superior) */
 @media (min-width: 769px) {
   .main-layout:has(.qm-ws--create-compose),
@@ -3207,23 +3213,24 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   .qm-ws.qm-ws--create-compose {
     padding-bottom: calc(
       var(--mobile-app-nav-total-height, 0px) +
-        var(--qm-ws-sticky-cta-height, 58px) +
+        var(--qm-ws-sticky-cta-height, 60px) +
         var(--ro-safe-bottom) +
-        1.25rem
+        1rem
     );
   }
 
   .has-mobile-app-navigation .qm-ws.qm-ws--create-compose {
     padding-bottom: calc(
       var(--mobile-app-nav-total-height, 56px) +
-        var(--qm-ws-sticky-cta-height, 58px) +
-        1.25rem
+        var(--qm-ws-sticky-cta-height, 60px) +
+        1rem
     );
   }
 
   /* En HomeDashboard (Nueva Reta), el footer posterior gestiona el clearance final para no generar hueco excesivo */
-  .home-inner:has(.qm-ws--create-compose) > .qm-ws.qm-ws--create-compose {
-    padding-bottom: 0.75rem;
+  .home-inner .qm-ws.qm-ws--create-compose,
+  .home-create-details .qm-ws.qm-ws--create-compose {
+    padding-bottom: 0 !important;
   }
 
   .qm-ws--create-compose .qm-ws__sidebar {
@@ -4134,38 +4141,29 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
 .qm-ws__compose-mobile-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  justify-content: center;
   width: 100%;
-  max-width: none;
-  margin-inline: 0;
-}
-
-.qm-ws__compose-mobile-status {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  line-height: 1.25;
-  color: var(--qm-ink-text, #f5f2eb);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: 480px;
+  margin-inline: auto;
 }
 
 .qm-ws__compose-mobile-bar .qm-primary-cta,
 .qm-ws__sticky-cta .qm-ws__compose-mobile-bar .qm-primary-cta--sidebar {
-  flex: 0 0 auto;
-  width: auto;
+  flex: 1 1 auto;
+  width: 100%;
   margin: 0;
 }
 
 .qm-ws__compose-mobile-bar .qm-primary-cta__btn,
 .qm-ws__sticky-cta .qm-ws__compose-mobile-bar .qm-primary-cta__btn {
-  width: auto;
-  min-height: 2.625rem;
-  padding: 0.55rem 1rem;
-  font-size: 0.875rem;
+  width: 100%;
+  min-height: 44px;
+  height: 44px;
+  padding: 0.55rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  border-radius: var(--ro-radius-md, 8px);
   white-space: nowrap;
 }
 

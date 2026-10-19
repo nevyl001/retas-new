@@ -161,10 +161,10 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
     expect(
       within(container).queryByText("Agrega un nombre para continuar.")
     ).toBeNull();
-    // El motivo aparece únicamente en el resumen y en la barra móvil (sin duplicar bajo el CTA)
+    // El motivo aparece únicamente en el resumen (sin duplicar en la barra móvil ni bajo el CTA)
     expect(
       within(container).getAllByText("Agrega un nombre para continuar")
-    ).toHaveLength(2);
+    ).toHaveLength(1);
 
     // Al escribir el nombre, se completan Paso 1, Paso 3 y Paso 4; Paso 2 requiere Nivel
     await user.type(

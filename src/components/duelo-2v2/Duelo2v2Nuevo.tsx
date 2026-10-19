@@ -670,12 +670,6 @@ export const Duelo2v2Nuevo: React.FC = () => {
             sidebar={sidebarPanel}
             stickyCta={
               <div className="qm-ws__compose-mobile-bar">
-                <span className="qm-ws__compose-mobile-status">
-                  {canSubmit
-                    ? "✓ Listo para guardar"
-                    : blockReason?.replace(/\.$/, "") ||
-                      "Completa los datos esenciales"}
-                </span>
                 <QuickModePrimaryCta {...ctaProps} testId={undefined} />
               </div>
             }

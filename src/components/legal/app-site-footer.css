@@ -17,22 +17,25 @@
 
 /* En pantalla de creación de reta (HomeDashboard), el footer respeta el CTA sticky y la navegación móvil sin huecos excesivos */
 @media (max-width: 959px) {
-  .home-inner:has(.qm-ws--create-compose) .app-site-foot {
-    margin-top: clamp(1.25rem, 3vw, 2rem);
+  .home-inner:has(.qm-ws--create-compose) .app-site-foot,
+  .home-inner:has(.home-create-details) .app-site-foot {
+    margin-top: 1.5rem;
     margin-bottom: 0;
+    padding-top: 1rem;
     padding-bottom: calc(
       var(--mobile-app-nav-total-height, 0px) +
-        var(--qm-ws-sticky-cta-height, 58px) +
+        var(--qm-ws-sticky-cta-height, 60px) +
         var(--ro-safe-bottom) +
-        1.25rem
+        1rem
     );
   }
 
-  .has-mobile-app-navigation .home-inner:has(.qm-ws--create-compose) .app-site-foot {
+  .has-mobile-app-navigation .home-inner:has(.qm-ws--create-compose) .app-site-foot,
+  .has-mobile-app-navigation .home-inner:has(.home-create-details) .app-site-foot {
     padding-bottom: calc(
       var(--mobile-app-nav-total-height, 56px) +
-        var(--qm-ws-sticky-cta-height, 58px) +
-        1.25rem
+        var(--qm-ws-sticky-cta-height, 60px) +
+        1rem
     );
   }
 }
