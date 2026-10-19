@@ -10,8 +10,29 @@
     margin-bottom: 0;
     /* El footer carga el clearance: nav fija + safe-area + aire legible. */
     padding-bottom: calc(
-      var(--mobile-app-navigation-height, 56px) + env(safe-area-inset-bottom, 0px) +
-        2rem
+      var(--mobile-app-nav-total-height, 56px) + 2rem
+    );
+  }
+}
+
+/* En pantalla de creación de reta (HomeDashboard), el footer respeta el CTA sticky y la navegación móvil sin huecos excesivos */
+@media (max-width: 959px) {
+  .home-inner:has(.qm-ws--create-compose) .app-site-foot {
+    margin-top: clamp(1.25rem, 3vw, 2rem);
+    margin-bottom: 0;
+    padding-bottom: calc(
+      var(--mobile-app-nav-total-height, 0px) +
+        var(--qm-ws-sticky-cta-height, 58px) +
+        var(--ro-safe-bottom) +
+        1.25rem
+    );
+  }
+
+  .has-mobile-app-navigation .home-inner:has(.qm-ws--create-compose) .app-site-foot {
+    padding-bottom: calc(
+      var(--mobile-app-nav-total-height, 56px) +
+        var(--qm-ws-sticky-cta-height, 58px) +
+        1.25rem
     );
   }
 }

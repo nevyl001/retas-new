@@ -4,13 +4,30 @@
   /* 0 por defecto: en gestionar evento la nav inferior se oculta.
      Si queda en 56px el CTA sticky “flota” y deja un hueco blanco. */
   --mobile-app-navigation-height: 0px;
+  --mobile-app-nav-total-height: 0px;
   --mobile-app-navigation-offset: calc(
-    var(--mobile-app-navigation-height) + var(--ro-safe-bottom) + 1.25rem
+    var(--mobile-app-nav-total-height) + 1.25rem
   );
+  --qm-ws-sticky-cta-height: 58px;
 }
 
 .has-mobile-app-navigation {
   --mobile-app-navigation-height: 56px;
+  --mobile-app-nav-total-height: calc(
+    var(--mobile-app-navigation-height) + var(--ro-safe-bottom, env(safe-area-inset-bottom, 0px))
+  );
+  --mobile-app-navigation-offset: calc(
+    var(--mobile-app-nav-total-height) + 1.25rem
+  );
+}
+
+@media (min-width: 768px) {
+  :root,
+  .has-mobile-app-navigation {
+    --mobile-app-navigation-height: 0px;
+    --mobile-app-nav-total-height: 0px;
+    --mobile-app-navigation-offset: 0px;
+  }
 }
 
 .main-layout,
@@ -168,5 +185,11 @@
 
   .has-mobile-app-navigation .main-layout > .home-inner {
     padding-bottom: 0.5rem;
+  }
+
+  /* Evita doble padding en Nueva Reta y Nuevo Duelo 2v2 donde el workspace o footer gestionan su propio clearance */
+  .has-mobile-app-navigation .main-layout:has(.qm-ws--create-compose),
+  .has-mobile-app-navigation .duelo2v2-page:has(.qm-ws--create-compose) {
+    padding-bottom: 0 !important;
   }
 }
