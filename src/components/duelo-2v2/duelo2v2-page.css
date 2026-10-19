@@ -97,6 +97,24 @@
   max-width: min(1280px, 100%);
 }
 
+/* Nuevo Duelo 2v2: ancho útil completo con márgenes exteriores discretos (24–32px en escritorio). */
+.duelo2v2-page.duelo2v2-nuevo .duelo2v2-page__inner,
+.duelo2v2-page.duelo2v2-nuevo .duelo2v2-page__inner.duelo2v2-page__inner--wide {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 769px) {
+  .duelo2v2-page.duelo2v2-nuevo:not(.duelo2v2-page--public) {
+    --qm-prep-pad-x: clamp(1.5rem, 2vw, 2rem);
+    --qm-prep-pad-y: clamp(1.25rem, 1.8vw, 1.75rem);
+    padding-inline: clamp(1.5rem, 2vw, 2rem);
+    padding-top: clamp(1.25rem, 1.8vw, 1.75rem);
+  }
+}
+
 /* Fix de especificidad: .rv-page (--ro-page-max, 1120px) y la red de
    seguridad anti-overflow .duelo2v2-page__inner.rv-shell (max-width:100%
    en riviera-open-mobile-polish.css) empatan o ganan en especificidad a
@@ -570,44 +588,12 @@
   gap: 0;
 }
 
-/* Duelo: misma densidad que Reta (secciones + fila pública desc+lugar) */
-.qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--game {
+/* Duelo: misma densidad que Reta (Descripción a 100% + 3 tarjetas meta debajo) */
+.qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--game,
+.qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--public {
   grid-template-columns: 1fr;
-}
-
-@media (min-width: 640px) {
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--game {
-    grid-template-columns: minmax(12rem, 1fr);
-    max-width: 28rem;
-  }
-
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--public {
-    grid-template-columns: minmax(0, 1.35fr) minmax(11rem, 0.95fr);
-    align-items: start;
-  }
-
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--public > .reta-details-form__field--desc {
-    grid-column: 1;
-    grid-row: 1 / span 3;
-  }
-
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--public > .reta-details-form__field--lugar,
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--public > .reta-details-form__field--costo,
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--public > .reta-details-form__field--premio {
-    grid-column: 2;
-  }
-}
-
-@media (max-width: 768px) {
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--game,
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--public {
-    grid-template-columns: 1fr;
-    max-width: none;
-  }
-
-  .qm-ws__details-inline .reta-details-form--duelo .reta-details-form__row--public > .reta-details-form__field--desc {
-    grid-column: auto;
-  }
+  max-width: none;
+  align-items: start;
 }
 
 /* Detalles colapsables cuando el duelo ya está en juego */

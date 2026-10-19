@@ -124,7 +124,7 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
   it("no renderiza ConvocatoriaWhatsAppPanel ni 4/4 al montar", async () => {
     await renderNuevo();
 
-    expect(container.textContent).toContain("Nueva reta");
+    expect(container.textContent).toContain("Nuevo Duelo 2v2");
     expect(container.textContent).toContain("Duelo 2 vs 2");
     expect(screen.queryByTestId("convocatoria-whatsapp-panel")).toBeNull();
     expect(screen.queryByTestId("lanzar-por-whatsapp")).toBeNull();
@@ -135,6 +135,53 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
     expect(container.textContent).toContain("Convocatoria pública");
     expect(container.textContent).toContain("Guardar y continuar");
     expect(container.textContent).not.toMatch(/Lanzar por WhatsApp/);
+  });
+
+  it("renderiza estructura guiada de 4 pasos, resumen con checklist y fin automático sin duplicar motivo de bloqueo", async () => {
+    const user = userEvent.setup();
+    await renderNuevo();
+
+    const stepsList = within(container).getByRole("list", {
+      name: /Pasos para crear tu duelo/i,
+    });
+    const stepItems = within(stepsList).getAllByRole("listitem");
+    expect(stepItems).toHaveLength(4);
+    expect(stepItems[0]).toHaveTextContent("Información básica");
+    expect(stepItems[1]).toHaveTextContent("Configuración deportiva");
+    expect(stepItems[2]).toHaveTextContent("Detalles y convocatoria");
+    expect(stepItems[3]).toHaveTextContent("Revisión final");
+
+    // Al montar sin nombre, ningún paso debe marcarse como completado y el motivo aparece una sola vez en el resumen
+    expect(stepItems[0]).not.toHaveClass("is-done");
+    expect(stepItems[1]).not.toHaveClass("is-done");
+    expect(stepItems[2]).not.toHaveClass("is-done");
+    expect(stepItems[3]).not.toHaveClass("is-done");
+    expect(container.textContent).toContain("3 de 4 esenciales");
+    expect(container.textContent).toContain("· fin 17:00");
+    expect(
+      within(container).queryByText("Agrega un nombre para continuar.")
+    ).toBeNull();
+    // El motivo aparece únicamente en el resumen y en la barra móvil (sin duplicar bajo el CTA)
+    expect(
+      within(container).getAllByText("Agrega un nombre para continuar")
+    ).toHaveLength(2);
+
+    // Al escribir el nombre, se completan Paso 1, Paso 3 y Paso 4; Paso 2 requiere Nivel
+    await user.type(
+      screen.getByLabelText(/^Nombre$/i),
+      "Duelo Estelar"
+    );
+    expect(stepItems[0]).toHaveClass("is-done");
+    expect(stepItems[1]).not.toHaveClass("is-done");
+    expect(stepItems[2]).toHaveClass("is-done");
+    expect(stepItems[3]).toHaveClass("is-done");
+    expect(container.textContent).toContain("✓ Esenciales listos");
+    expect(container.textContent).toContain("✓ Todo listo para continuar");
+
+    // Al definir Nivel, se completa también Paso 2
+    await user.type(screen.getByLabelText(/Nivel/i), "4ta Fuerza");
+    expect(stepItems[1]).toHaveClass("is-done");
+    expect(container.textContent).toContain("4ta Fuerza · 4 jugadores");
   });
 
   it("no llama get_open_game_registration al montar", async () => {

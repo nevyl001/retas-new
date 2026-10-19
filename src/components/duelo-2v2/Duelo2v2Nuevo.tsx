@@ -99,15 +99,31 @@ export const Duelo2v2Nuevo: React.FC = () => {
   const saveLock = useRef(false);
   const pendingProbeStarted = useRef(false);
 
-  const encuentroOk =
-    nombre.trim().length > 0 && cancha.trim().length > 0;
-  const horarioOk =
-    (!mostrarLugar || lugar.trim().length > 0) &&
+  const nameReady = nombre.trim().length > 0;
+  const canchaReady = cancha.trim().length > 0;
+  const whenReady =
     draftDate.trim().length > 0 &&
     draftTimeStart.trim().length > 0 &&
-    draftTimeEnd.trim().length > 0;
-  const canSubmit =
-    encuentroOk && horarioOk && Boolean(user?.id);
+    draftTimeEnd.trim().length > 0 &&
+    durationMinutes > 0;
+  const lugarReady = !mostrarLugar || lugar.trim().length > 0;
+  const sportConfigured = nivel.trim().length > 0;
+
+  const encuentroOk = nameReady && canchaReady;
+  const horarioOk = lugarReady && whenReady;
+  const canSubmit = encuentroOk && horarioOk && Boolean(user?.id);
+
+  const readyCount = [
+    nameReady,
+    whenReady,
+    canchaReady,
+    lugarReady,
+  ].filter(Boolean).length;
+
+  const step1Done = nameReady && whenReady && canchaReady;
+  const step2Done = step1Done && sportConfigured;
+  const step3Done = step1Done && lugarReady;
+  const step4Done = canSubmit;
 
   /**
    * Al montar Nuevo:
@@ -251,14 +267,12 @@ export const Duelo2v2Nuevo: React.FC = () => {
               ? "Agrega el lugar para continuar."
               : null;
 
-  const ctaHint = blockReason ?? "Luego podrás lanzar la convocatoria por WhatsApp";
-
   const ctaProps = {
     variant: "sidebar" as const,
     label: busy ? "Guardando…" : "Guardar y continuar",
     disabled: !canSubmit || busy,
     loading: busy,
-    hint: canSubmit ? undefined : ctaHint,
+    hint: undefined,
     testId: "guardar-duelo",
     onClick: () => void handleSubmit(),
   };
@@ -267,19 +281,90 @@ export const Duelo2v2Nuevo: React.FC = () => {
     <section
       id="duelo-nuevo-detalles-inline"
       className="qm-ws__details-inline qm-ws__details-inline--compose"
-      aria-label="Detalles de la reta"
+      aria-label="Detalles del duelo"
     >
       <div className="reta-config-panel reta-config-panel--inline reta-config-panel--compose">
-        <header className="reta-config-panel__toolbar">
-          <div className="reta-config-panel__toolbar-copy">
-            <h2 className="reta-config-panel__title">Nuevo duelo</h2>
-            <p className="reta-config-panel__subtitle">
-              Configura lo esencial para empezar.
-            </p>
+        <header className="reta-config-panel__toolbar reta-config-panel__toolbar--guided">
+          <div className="reta-config-panel__toolbar-top">
+            <div className="reta-config-panel__toolbar-copy">
+              <span className="reta-config-panel__eyebrow">
+                Asistente de creación · Duelo 2 vs 2
+              </span>
+              <h2 className="reta-config-panel__title">
+                Configura tu duelo paso a paso
+              </h2>
+              <p className="reta-config-panel__subtitle">
+                Configura lo esencial para empezar y deja lista su publicación.
+              </p>
+            </div>
+            <span
+              className={`reta-config-panel__progress-pill${
+                canSubmit ? " is-complete" : ""
+              }`}
+              aria-live="polite"
+            >
+              {canSubmit
+                ? "✓ Esenciales listos"
+                : `${readyCount} de 4 esenciales`}
+            </span>
           </div>
+
+          <ol
+            className="qm-compose-steps"
+            aria-label="Pasos para crear tu duelo"
+          >
+            <li
+              className={`qm-compose-steps__item${
+                step1Done ? " is-done" : " is-current"
+              }`}
+            >
+              <span className="qm-compose-steps__num">
+                {step1Done ? "✓" : "1"}
+              </span>
+              <span className="qm-compose-steps__label">
+                Información básica
+              </span>
+            </li>
+            <li
+              className={`qm-compose-steps__item${
+                step2Done ? " is-done" : step1Done ? " is-current" : ""
+              }`}
+            >
+              <span className="qm-compose-steps__num">
+                {step2Done ? "✓" : "2"}
+              </span>
+              <span className="qm-compose-steps__label">
+                Configuración deportiva
+              </span>
+            </li>
+            <li
+              className={`qm-compose-steps__item${
+                step3Done ? " is-done" : ""
+              }`}
+            >
+              <span className="qm-compose-steps__num">
+                {step3Done ? "✓" : "3"}
+              </span>
+              <span className="qm-compose-steps__label">
+                Detalles y convocatoria
+              </span>
+            </li>
+            <li
+              className={`qm-compose-steps__item${
+                step4Done ? " is-done" : ""
+              }`}
+            >
+              <span className="qm-compose-steps__num">
+                {step4Done ? "✓" : "4"}
+              </span>
+              <span className="qm-compose-steps__label">Revisión final</span>
+            </li>
+          </ol>
         </header>
+
         <Duelo2v2ConfigFields
           idPrefix="duelo"
+          guided
           values={{
             nombre,
             cancha,
@@ -314,34 +399,40 @@ export const Duelo2v2Nuevo: React.FC = () => {
           }}
           disabled={busy}
         />
-      </div>
-      <div
-        id="duelo-nuevo-convocatoria-inline"
-        className="reta-config-panel__conv reta-config-panel__conv--compose"
-      >
-        <div className="reta-config-panel__conv-head">
-          <h3 className="reta-config-panel__conv-title">Convocatoria pública</h3>
-          <p className="reta-config-panel__conv-desc">
-            Permite que jugadores se registren mediante enlace.
-          </p>
-        </div>
-        <QuickModeConvocatoriaGate
-          open={wantConvocatoria}
-          live={false}
-          panelId="duelo-nuevo-convocatoria-panel"
-          titleOn="Activa"
-          titleOff="Inactiva"
-          hintOn="Panel abierto — guarda el duelo para configurar cupo."
-          hintOff="Opcional"
-          onToggle={() => setWantConvocatoria((v) => !v)}
+
+        <div
+          id="duelo-nuevo-convocatoria-inline"
+          className="reta-config-panel__conv reta-config-panel__conv--compose"
         >
-          <div className="qm-ws__conv-prelaunch-note" role="note">
-            <p>
-              Primero guarda el duelo. Después podrás lanzar la convocatoria
-              con «Lanzar y copiar» para WhatsApp (cupo fijo de 4).
-            </p>
+          <div className="reta-config-panel__conv-head">
+            <div className="reta-config-panel__conv-copy">
+              <h4 className="reta-config-panel__conv-title">
+                Convocatoria pública
+              </h4>
+              <p className="reta-config-panel__conv-desc">
+                Actívala si quieres que los jugadores puedan registrarse mediante
+                enlace.
+              </p>
+            </div>
           </div>
-        </QuickModeConvocatoriaGate>
+          <QuickModeConvocatoriaGate
+            open={wantConvocatoria}
+            live={false}
+            panelId="duelo-nuevo-convocatoria-panel"
+            titleOn="Activa"
+            titleOff="Inactiva"
+            hintOn="Al guardar podrás lanzar la convocatoria con cupo fijo de 4 jugadores."
+            hintOff="Opcional · Puedes activarla ahora o después"
+            onToggle={() => setWantConvocatoria((v) => !v)}
+          >
+            <div className="qm-ws__conv-prelaunch-note" role="note">
+              <p>
+                Primero guarda el duelo. Después podrás lanzar la convocatoria
+                con «Lanzar y copiar» para WhatsApp (cupo fijo de 4).
+              </p>
+            </div>
+          </QuickModeConvocatoriaGate>
+        </div>
       </div>
     </section>
   );
@@ -349,32 +440,153 @@ export const Duelo2v2Nuevo: React.FC = () => {
   const sidebarPanel = (
     <div className="qm-ws-panel qm-ws-panel--compose">
       <section className="qm-ws-panel__compose-summary" aria-label="Resumen">
-        <p className="qm-ws-panel__compose-kicker">Resumen</p>
-        <p className="qm-ws-panel__compose-format">Duelo 2 vs 2</p>
-        <p className="qm-ws-panel__compose-when">
-          {formatSidebarWhen(draftDate, draftTimeStart)}
-        </p>
-        <p className="qm-ws-panel__compose-meta">
-          {durationMinutes} MIN · CANCHA {cancha.trim() || "—"}
-        </p>
-        {mostrarLugar && lugar.trim() ? (
-          <p className="qm-ws-panel__compose-lugar">{lugar.trim()}</p>
-        ) : null}
-        <p className="qm-ws-panel__compose-nivel">
-          {nivel.trim() || "Sin definir"}
-        </p>
+        <div className="qm-ws-panel__compose-head">
+          <div>
+            <span className="qm-ws-panel__compose-step">
+              Paso 4 · Revisión final
+            </span>
+            <p className="qm-ws-panel__compose-kicker">Resumen</p>
+          </div>
+          <span
+            className={`qm-ws-panel__compose-badge${
+              canSubmit ? " is-ready" : ""
+            }`}
+          >
+            {canSubmit ? "Listo" : `${readyCount}/4`}
+          </span>
+        </div>
+
+        <div
+          className="qm-ws-panel__compose-progress"
+          role="progressbar"
+          aria-valuenow={readyCount}
+          aria-valuemin={0}
+          aria-valuemax={4}
+          aria-label="Progreso de datos esenciales"
+        >
+          <div
+            className="qm-ws-panel__compose-progress-fill"
+            style={{ width: `${(readyCount / 4) * 100}%` }}
+          />
+        </div>
+
+        <ul className="qm-ws-panel__compose-checklist">
+          <li
+            className={`qm-ws-panel__compose-check${
+              nameReady ? " is-done" : " is-missing"
+            }`}
+          >
+            <span className="qm-ws-panel__compose-check-icon" aria-hidden>
+              {nameReady ? "✓" : "○"}
+            </span>
+            <div className="qm-ws-panel__compose-check-body">
+              <span className="qm-ws-panel__compose-check-label">
+                Nombre del duelo
+              </span>
+              <span className="qm-ws-panel__compose-check-val">
+                {nameReady
+                  ? nombre.trim()
+                  : "Pendiente — escribe un nombre"}
+              </span>
+            </div>
+          </li>
+
+          <li
+            className={`qm-ws-panel__compose-check${
+              whenReady ? " is-done" : " is-missing"
+            }`}
+          >
+            <span className="qm-ws-panel__compose-check-icon" aria-hidden>
+              {whenReady ? "✓" : "○"}
+            </span>
+            <div className="qm-ws-panel__compose-check-body">
+              <span className="qm-ws-panel__compose-check-label">
+                Fecha y horario
+              </span>
+              <span className="qm-ws-panel__compose-check-val">
+                {whenReady
+                  ? `${formatSidebarWhen(draftDate, draftTimeStart)} · ${durationMinutes} min${
+                      draftTimeEnd.trim() ? ` (fin ${draftTimeEnd.trim()})` : ""
+                    }`
+                  : "Pendiente — define día y hora"}
+              </span>
+            </div>
+          </li>
+
+          <li
+            className={`qm-ws-panel__compose-check${
+              canchaReady ? " is-done" : " is-missing"
+            }`}
+          >
+            <span className="qm-ws-panel__compose-check-icon" aria-hidden>
+              {canchaReady ? "✓" : "○"}
+            </span>
+            <div className="qm-ws-panel__compose-check-body">
+              <span className="qm-ws-panel__compose-check-label">
+                Cancha y modalidad
+              </span>
+              <span className="qm-ws-panel__compose-check-val">
+                {canchaReady
+                  ? `Cancha ${cancha.trim()} · Duelo 2 vs 2`
+                  : "Pendiente — indica la cancha"}
+              </span>
+            </div>
+          </li>
+
+          <li
+            className={`qm-ws-panel__compose-check${
+              lugarReady ? " is-done" : " is-missing"
+            }`}
+          >
+            <span className="qm-ws-panel__compose-check-icon" aria-hidden>
+              {lugarReady ? "✓" : "○"}
+            </span>
+            <div className="qm-ws-panel__compose-check-body">
+              <span className="qm-ws-panel__compose-check-label">
+                Sede del encuentro
+              </span>
+              <span className="qm-ws-panel__compose-check-val">
+                {mostrarLugar
+                  ? lugarReady
+                    ? lugar.trim()
+                    : "Pendiente — indica el club o sede"
+                  : "Oculto en la ficha pública"}
+              </span>
+            </div>
+          </li>
+        </ul>
+
+        <div className="qm-ws-panel__compose-tags">
+          <span className="qm-ws-panel__compose-tag">
+            {nivel.trim() || "Categoría abierta"} · 4 jugadores
+          </span>
+          <span className="qm-ws-panel__compose-tag">
+            {wantConvocatoria ? "Convocatoria por enlace" : "Registro manual"}
+          </span>
+        </div>
       </section>
 
       <div className="qm-ws-panel__compose-rule" aria-hidden />
 
       <section className="qm-ws-panel__compose-status" aria-live="polite">
         {canSubmit ? (
-          <p className="qm-ws-panel__compose-ready">✓ Todo listo para continuar</p>
+          <>
+            <p className="qm-ws-panel__compose-ready">
+              ✓ Todo listo para continuar
+            </p>
+            <p className="qm-ws-panel__compose-cta-hint">
+              Al guardar pasarás a armar las parejas o lanzar la convocatoria por
+              WhatsApp.
+            </p>
+          </>
         ) : (
           <>
-            <p className="qm-ws-panel__compose-blocked">● Faltan datos</p>
+            <p className="qm-ws-panel__compose-blocked">
+              ● Faltan datos esenciales
+            </p>
             <p className="qm-ws-panel__compose-reason">
-              {blockReason?.replace(/\.$/, "") || "Completa lo esencial"}
+              {blockReason?.replace(/\.$/, "") ||
+                "Completa los campos marcados para continuar"}
             </p>
           </>
         )}
@@ -446,7 +658,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
               <QuickModeEventHeader
                 className="qm-event-header--create-min"
                 club={modeEyebrow}
-                title="Nueva reta"
+                title="Nuevo Duelo 2v2"
                 modality="Duelo 2 vs 2"
                 statusLabel="Pendiente"
                 phaseLabel=""
@@ -460,10 +672,11 @@ export const Duelo2v2Nuevo: React.FC = () => {
               <div className="qm-ws__compose-mobile-bar">
                 <span className="qm-ws__compose-mobile-status">
                   {canSubmit
-                    ? "✓ Lista"
-                    : blockReason?.replace(/\.$/, "") || "Faltan datos"}
+                    ? "✓ Listo para guardar"
+                    : blockReason?.replace(/\.$/, "") ||
+                      "Completa los datos esenciales"}
                 </span>
-                <QuickModePrimaryCta {...ctaProps} />
+                <QuickModePrimaryCta {...ctaProps} testId={undefined} />
               </div>
             }
           />

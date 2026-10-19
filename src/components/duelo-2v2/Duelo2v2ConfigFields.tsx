@@ -29,17 +29,20 @@ export type Duelo2v2ConfigFieldsProps = {
   disabled?: boolean;
   /** Prefijo para ids (accesibilidad / tests). */
   idPrefix?: string;
+  /** Activa cabeceras guiadas por pasos y ayudas contextuales en el asistente de alta. */
+  guided?: boolean;
 };
 
 /**
  * Campos densos del duelo — mismo chrome y ritmo que RetaConfigFields essentials.
- * Horario: Día + Hora + Duración en una fila; fin automático en la etiqueta.
+ * Horario: Día + Hora + Duración + Cancha en una fila en escritorio; fin automático en la etiqueta.
  */
 export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
   values,
   onChange,
   disabled = false,
   idPrefix = "duelo",
+  guided = false,
 }) => {
   const applySchedule = (
     partial: Partial<
@@ -89,20 +92,45 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
         className="reta-details-form__section reta-details-form__section--essential"
         aria-labelledby={`${idPrefix}-sec-essential`}
       >
-        <h3
-          id={`${idPrefix}-sec-essential`}
-          className="reta-details-form__section-title"
-        >
-          Información principal
-        </h3>
+        {guided ? (
+          <div className="reta-details-form__section-head">
+            <span className="reta-details-form__step-badge">Paso 1</span>
+            <div className="reta-details-form__section-head-copy">
+              <h3
+                id={`${idPrefix}-sec-essential`}
+                className="reta-details-form__section-title"
+              >
+                Información principal
+              </h3>
+              <p className="reta-details-form__section-lead">
+                Define el nombre, la fecha, el horario y la cancha donde se jugará el duelo.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <h3
+            id={`${idPrefix}-sec-essential`}
+            className="reta-details-form__section-title"
+          >
+            Información principal
+          </h3>
+        )}
         <div className="reta-details-form__row reta-details-form__row--name">
           <label
             className="home-sheet__field reta-details-form__field reta-details-form__field--name"
             htmlFor={`${idPrefix}-nombre`}
           >
-            <span className="home-sheet__field-label">Nombre</span>
+            <div className="reta-details-form__label-row">
+              <span className="home-sheet__field-label">Nombre</span>
+              {guided ? (
+                <span className="reta-details-form__field-help">
+                  Pon un nombre fácil de identificar para el encuentro.
+                </span>
+              ) : null}
+            </div>
             <input
               id={`${idPrefix}-nombre`}
+              aria-label="Nombre"
               type="text"
               className="home-sheet__input riviera-input"
               placeholder="Ej. Encuentro Riviera Open — Sábado"
@@ -133,6 +161,11 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
                 onChange={(e) => applySchedule({ draftDate: e.target.value })}
                 required
               />
+              {guided ? (
+                <span className="reta-details-form__field-help">
+                  Define cuándo se jugará el duelo.
+                </span>
+              ) : null}
             </label>
             <label
               className="home-sheet__field reta-details-form__field reta-details-form__field--time"
@@ -150,6 +183,11 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
                 }
                 required
               />
+              {guided ? (
+                <span className="reta-details-form__field-help">
+                  Hora de inicio citada.
+                </span>
+              ) : null}
             </label>
             <label
               className="home-sheet__field reta-details-form__field reta-details-form__field--duration"
@@ -181,12 +219,21 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
                   })
                 }
               />
+              {guided ? (
+                <span className="reta-details-form__field-help">
+                  El horario de cierre se calcula automáticamente.
+                </span>
+              ) : null}
             </label>
           </div>
 
-          <label className="home-sheet__field reta-details-form__field reta-details-form__field--cancha">
+          <label
+            className="home-sheet__field reta-details-form__field reta-details-form__field--cancha"
+            htmlFor={`${idPrefix}-cancha`}
+          >
             <span className="home-sheet__field-label">Cancha</span>
             <input
+              id={`${idPrefix}-cancha`}
               type="text"
               className="home-sheet__input riviera-input"
               placeholder="Ej. 1"
@@ -195,12 +242,57 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
               onChange={(e) => patch({ cancha: e.target.value })}
               required
             />
+            {guided ? (
+              <span className="reta-details-form__field-help">
+                Indica la cancha asignada al partido.
+              </span>
+            ) : null}
           </label>
         </div>
+      </section>
+
+      <section
+        className="reta-details-form__section reta-details-form__section--sport"
+        aria-labelledby={`${idPrefix}-sec-sport`}
+      >
+        {guided ? (
+          <div className="reta-details-form__section-head">
+            <span className="reta-details-form__step-badge">Paso 2</span>
+            <div className="reta-details-form__section-head-copy">
+              <h3
+                id={`${idPrefix}-sec-sport`}
+                className="reta-details-form__section-title"
+              >
+                Configuración deportiva
+              </h3>
+              <p className="reta-details-form__section-lead">
+                Establece la fuerza o categoría competitiva del encuentro 2 vs 2.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <h3
+            id={`${idPrefix}-sec-sport`}
+            className="reta-details-form__section-title"
+          >
+            Configuración deportiva
+          </h3>
+        )}
         <div className="reta-details-form__row reta-details-form__row--game">
-          <label className="home-sheet__field reta-details-form__field reta-details-form__field--nivel">
-            <span className="home-sheet__field-label">Nivel</span>
+          <label
+            className="home-sheet__field reta-details-form__field reta-details-form__field--nivel"
+            htmlFor={`${idPrefix}-nivel`}
+          >
+            <div className="reta-details-form__label-row">
+              <span className="home-sheet__field-label">Nivel</span>
+              {guided ? (
+                <span className="reta-details-form__field-help">
+                  Especifica la fuerza o categoría que jugará (ej. 5ta Fuerza, Open).
+                </span>
+              ) : null}
+            </div>
             <input
+              id={`${idPrefix}-nivel`}
               type="text"
               className="home-sheet__input riviera-input"
               placeholder="Fuerza: 5ta Fuerza, Open…"
@@ -227,16 +319,44 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
         className="reta-details-form__section reta-details-form__section--optional"
         aria-labelledby={`${idPrefix}-details-sec-optional`}
       >
-        <h3
-          id={`${idPrefix}-details-sec-optional`}
-          className="reta-details-form__section-title"
-        >
-          Detalles opcionales
-        </h3>
+        {guided ? (
+          <div className="reta-details-form__section-head">
+            <span className="reta-details-form__step-badge">Paso 3</span>
+            <div className="reta-details-form__section-head-copy">
+              <h3
+                id={`${idPrefix}-details-sec-optional`}
+                className="reta-details-form__section-title"
+              >
+                Detalles opcionales
+              </h3>
+              <p className="reta-details-form__section-lead">
+                Elige qué información verán los jugadores en la ficha pública y el enlace.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <h3
+            id={`${idPrefix}-details-sec-optional`}
+            className="reta-details-form__section-title"
+          >
+            Detalles opcionales
+          </h3>
+        )}
         <div className="reta-details-form__row reta-details-form__row--public">
-          <label className="home-sheet__field reta-details-form__field reta-details-form__field--desc">
-            <span className="home-sheet__field-label">Descripción</span>
+          <label
+            className="home-sheet__field reta-details-form__field reta-details-form__field--desc"
+            htmlFor={`${idPrefix}-descripcion`}
+          >
+            <div className="reta-details-form__label-row">
+              <span className="home-sheet__field-label">Descripción</span>
+              {guided ? (
+                <span className="reta-details-form__field-help">
+                  Agrega notas breves, formato de pelotas o indicaciones para los jugadores.
+                </span>
+              ) : null}
+            </div>
             <textarea
+              id={`${idPrefix}-descripcion`}
               className="home-sheet__input riviera-input reta-details-form__textarea"
               placeholder="Ej. mixta, verano, amigos…"
               value={values.categoria}
@@ -257,122 +377,124 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
             </span>
           </label>
 
-          <div
-            className={`home-sheet__field reta-details-form__field reta-details-form__field--lugar reta-details-form__visibility${
-              values.mostrarLugar ? " is-shown" : " is-hidden-public"
-            }`}
-          >
-            <label
-              className="reta-details-form__visibility-toggle"
-              htmlFor={`${idPrefix}-mostrar-lugar`}
+          <div className="reta-details-form__row--meta">
+            <div
+              className={`home-sheet__field reta-details-form__field reta-details-form__field--lugar reta-details-form__visibility${
+                values.mostrarLugar ? " is-shown" : " is-hidden-public"
+              }`}
             >
+              <label
+                className="reta-details-form__visibility-toggle"
+                htmlFor={`${idPrefix}-mostrar-lugar`}
+              >
+                <input
+                  id={`${idPrefix}-mostrar-lugar`}
+                  type="checkbox"
+                  checked={values.mostrarLugar}
+                  disabled={disabled}
+                  onChange={(e) => patch({ mostrarLugar: e.target.checked })}
+                />
+                <span className="reta-details-form__visibility-title">
+                  Mostrar lugar
+                </span>
+              </label>
               <input
-                id={`${idPrefix}-mostrar-lugar`}
-                type="checkbox"
-                checked={values.mostrarLugar}
+                type="text"
+                className="home-sheet__input riviera-input reta-details-form__visibility-value"
+                placeholder="Club, sede…"
+                value={values.lugar}
                 disabled={disabled}
-                onChange={(e) => patch({ mostrarLugar: e.target.checked })}
+                onChange={(e) => patch({ lugar: e.target.value })}
+                required={values.mostrarLugar}
               />
-              <span className="reta-details-form__visibility-title">
-                Mostrar lugar
-              </span>
-            </label>
-            <input
-              type="text"
-              className="home-sheet__input riviera-input reta-details-form__visibility-value"
-              placeholder="Club, sede…"
-              value={values.lugar}
-              disabled={disabled}
-              onChange={(e) => patch({ lugar: e.target.value })}
-              required={values.mostrarLugar}
-            />
-            {values.mostrarLugar ? (
-              <span className="reta-details-form__visibility-hint">
-                Visible.
-              </span>
-            ) : (
-              <span className="reta-details-form__visibility-hint reta-details-form__visibility-hint--muted">
-                Oculto.
-              </span>
-            )}
-          </div>
+              {values.mostrarLugar ? (
+                <span className="reta-details-form__visibility-hint">
+                  Visible en ficha y enlace.
+                </span>
+              ) : (
+                <span className="reta-details-form__visibility-hint reta-details-form__visibility-hint--muted">
+                  Oculto al público.
+                </span>
+              )}
+            </div>
 
-          <div
-            className={`home-sheet__field reta-details-form__field reta-details-form__field--costo reta-details-form__visibility${
-              values.mostrarCosto ? " is-shown" : " is-hidden-public"
-            }`}
-          >
-            <label
-              className="reta-details-form__visibility-toggle"
-              htmlFor={`${idPrefix}-mostrar-precio`}
+            <div
+              className={`home-sheet__field reta-details-form__field reta-details-form__field--costo reta-details-form__visibility${
+                values.mostrarCosto ? " is-shown" : " is-hidden-public"
+              }`}
             >
+              <label
+                className="reta-details-form__visibility-toggle"
+                htmlFor={`${idPrefix}-mostrar-precio`}
+              >
+                <input
+                  id={`${idPrefix}-mostrar-precio`}
+                  type="checkbox"
+                  checked={values.mostrarCosto}
+                  disabled={disabled}
+                  onChange={(e) => patch({ mostrarCosto: e.target.checked })}
+                />
+                <span className="reta-details-form__visibility-title">
+                  Mostrar precio
+                </span>
+              </label>
               <input
-                id={`${idPrefix}-mostrar-precio`}
-                type="checkbox"
-                checked={values.mostrarCosto}
+                type="text"
+                className="home-sheet__input riviera-input reta-details-form__visibility-value"
+                placeholder="$200 por jugador"
+                value={values.costo}
                 disabled={disabled}
-                onChange={(e) => patch({ mostrarCosto: e.target.checked })}
+                onChange={(e) => patch({ costo: e.target.value })}
               />
-              <span className="reta-details-form__visibility-title">
-                Mostrar precio
-              </span>
-            </label>
-            <input
-              type="text"
-              className="home-sheet__input riviera-input reta-details-form__visibility-value"
-              placeholder="$200 por jugador"
-              value={values.costo}
-              disabled={disabled}
-              onChange={(e) => patch({ costo: e.target.value })}
-            />
-            {values.mostrarCosto ? (
-              <span className="reta-details-form__visibility-hint">
-                Visible.
-              </span>
-            ) : (
-              <span className="reta-details-form__visibility-hint reta-details-form__visibility-hint--muted">
-                Oculto.
-              </span>
-            )}
-          </div>
+              {values.mostrarCosto ? (
+                <span className="reta-details-form__visibility-hint">
+                  Visible en ficha y enlace.
+                </span>
+              ) : (
+                <span className="reta-details-form__visibility-hint reta-details-form__visibility-hint--muted">
+                  Oculto al público.
+                </span>
+              )}
+            </div>
 
-          <div
-            className={`home-sheet__field reta-details-form__field reta-details-form__field--premio reta-details-form__visibility${
-              values.mostrarPremio ? " is-shown" : " is-hidden-public"
-            }`}
-          >
-            <label
-              className="reta-details-form__visibility-toggle"
-              htmlFor={`${idPrefix}-mostrar-premio`}
+            <div
+              className={`home-sheet__field reta-details-form__field reta-details-form__field--premio reta-details-form__visibility${
+                values.mostrarPremio ? " is-shown" : " is-hidden-public"
+              }`}
             >
+              <label
+                className="reta-details-form__visibility-toggle"
+                htmlFor={`${idPrefix}-mostrar-premio`}
+              >
+                <input
+                  id={`${idPrefix}-mostrar-premio`}
+                  type="checkbox"
+                  checked={values.mostrarPremio}
+                  disabled={disabled}
+                  onChange={(e) => patch({ mostrarPremio: e.target.checked })}
+                />
+                <span className="reta-details-form__visibility-title">
+                  Mostrar premio
+                </span>
+              </label>
               <input
-                id={`${idPrefix}-mostrar-premio`}
-                type="checkbox"
-                checked={values.mostrarPremio}
+                type="text"
+                className="home-sheet__input riviera-input reta-details-form__visibility-value"
+                placeholder="Trofeo + pelotas"
+                value={values.premio}
                 disabled={disabled}
-                onChange={(e) => patch({ mostrarPremio: e.target.checked })}
+                onChange={(e) => patch({ premio: e.target.value })}
               />
-              <span className="reta-details-form__visibility-title">
-                Mostrar premio
-              </span>
-            </label>
-            <input
-              type="text"
-              className="home-sheet__input riviera-input reta-details-form__visibility-value"
-              placeholder="Trofeo + pelotas"
-              value={values.premio}
-              disabled={disabled}
-              onChange={(e) => patch({ premio: e.target.value })}
-            />
-            {values.mostrarPremio ? (
-              <span className="reta-details-form__visibility-hint">
-                Visible.
-              </span>
-            ) : (
-              <span className="reta-details-form__visibility-hint reta-details-form__visibility-hint--muted">
-                Oculto.
-              </span>
-            )}
+              {values.mostrarPremio ? (
+                <span className="reta-details-form__visibility-hint">
+                  Visible en ficha y enlace.
+                </span>
+              ) : (
+                <span className="reta-details-form__visibility-hint reta-details-form__visibility-hint--muted">
+                  Oculto al público.
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </section>
