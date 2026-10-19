@@ -1656,5 +1656,106 @@
   text-decoration: underline;
 }
 
+/* ── Catálogo visible y bloqueado en Jugadores y Canjes ── */
+.rrw-catalog-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.65rem;
+}
 
+.rrw-catalog-context {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
 
+.rrw-catalog-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  margin: 0 0 0.85rem;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 720px) {
+  .rrw-catalog-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.rrw-catalog-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  box-sizing: border-box;
+}
+
+.rrw-catalog-item--available {
+  border-color: var(--border-strong);
+}
+
+.rrw-catalog-item--locked {
+  opacity: 0.92;
+}
+
+.rrw-catalog-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rrw-catalog-title-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.rrw-catalog-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.rrw-catalog-cost {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rrw-catalog-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.rrw-badge--warning {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+}
+
+.rrw-badge--danger {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px dashed var(--border-default);
+}

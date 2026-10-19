@@ -46,6 +46,7 @@ import {
   REWARD_TYPE_LABELS,
   REWARD_TYPES,
   accumulatingNow,
+  formatMexicoDate,
   formatWindowEnd,
   mexicoDateInput,
   mexicoDayAfter,
@@ -56,6 +57,14 @@ import {
   summarizeRewards,
   type RewardType,
 } from "../../lib/rewards/present";
+import {
+  REWARD_STATUS_LABELS,
+  buildCampaignCatalog,
+  catalogCampaigns,
+  formatRewardOptionLabel,
+  formatRewardProgressNote,
+  rewardStatusBadgeClass,
+} from "../../lib/rewards/rewardCatalog";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
 import { TablerIcon } from "../ui/TablerIcon";
@@ -1115,6 +1124,8 @@ function PlayersArea({
   const [selected, setSelected] = useState<string>("");
   const [selectedPlayerName, setSelectedPlayerName] = useState("");
   const [selectedPlayerCode, setSelectedPlayerCode] = useState("");
+  const [selectedPlayerRow, setSelectedPlayerRow] = useState<AdminPlayerRewardsRow | null>(null);
+  const [catalogCampaignId, setCatalogCampaignId] = useState<string>("");
   const [balances, setBalances] = useState<BalanceRecord[]>([]);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
   const [redemptions, setRedemptions] = useState<RedemptionRecord[]>([]);
@@ -1131,6 +1142,59 @@ function PlayersArea({
     () => campaigns.filter((item) => item.estado === "activa"),
     [campaigns]
   );
+
+  const visibleCampaigns = useMemo(
+    () => catalogCampaigns(campaigns, orgId),
+    [campaigns, orgId]
+  );
+
+  const activeCatalogCampaign = useMemo(() => {
+    if (catalogCampaignId) {
+      const explicit = visibleCampaigns.find((item) => item.id === catalogCampaignId);
+      if (explicit) return explicit;
+    }
+    if (selectedPlayerRow?.campaign_id) {
+      const fromPlayer = visibleCampaigns.find((item) => item.id === selectedPlayerRow.campaign_id);
+      if (fromPlayer) return fromPlayer;
+    }
+    return visibleCampaigns[0] ?? null;
+  }, [catalogCampaignId, selectedPlayerRow, visibleCampaigns]);
+
+  const catalog = useMemo(() => {
+    if (!activeCatalogCampaign) return null;
+    return buildCampaignCatalog({
+      campaign: activeCatalogCampaign,
+      rewards,
+      balances,
+      fallbackBalance:
+        selectedPlayerRow && selectedPlayerRow.jugador_id === selected
+          ? {
+              campaign_id: selectedPlayerRow.campaign_id,
+              acumulando: selectedPlayerRow.puntos_acumulados,
+              disponible: selectedPlayerRow.puntos_disponibles,
+              fase: selectedPlayerRow.campaign_fase,
+            }
+          : null,
+      redemptions,
+      organizadorId: orgId,
+    });
+  }, [activeCatalogCampaign, rewards, balances, selectedPlayerRow, selected, redemptions, orgId]);
+
+  const selectedCatalogItem = useMemo(
+    () => catalog?.items.find((item) => item.reward.id === rewardId) ?? null,
+    [catalog, rewardId]
+  );
+
+  useEffect(() => {
+    setRewardId("");
+  }, [selected, orgId, activeCatalogCampaign?.id]);
+
+  useEffect(() => {
+    if (!rewardId) return;
+    if (!selectedCatalogItem || !selectedCatalogItem.canRedeem) {
+      setRewardId("");
+    }
+  }, [rewardId, selectedCatalogItem]);
 
   useEffect(() => {
     if (manualCampaignSelection) return;
@@ -1215,11 +1279,6 @@ function PlayersArea({
     );
   }, [selected, loadPlayer, onNotice]);
 
-  const openRewards = rewards.filter((reward) => {
-    const campaign = campaigns.find((item) => item.id === reward.campaign_id);
-    return reward.estado === "activo" && campaign && campaignPhase(campaign) === "canje" && campaign.estado === "activa";
-  });
-
   const accruing = accumulatingNow(balances);
   const redeeming = redeemingNow(balances);
   const pendingReviews = reviews.filter((review) => review.estado === "pendiente");
@@ -1228,6 +1287,9 @@ function PlayersArea({
     setSelected(row.jugador_id);
     setSelectedPlayerName(row.nombre);
     setSelectedPlayerCode(row.codigo_riviera);
+    setSelectedPlayerRow(row);
+    setCatalogCampaignId(row.campaign_id ?? "");
+    setRewardId("");
   };
 
   const handleRetryAllIncidents = () => {
@@ -1333,12 +1395,28 @@ function PlayersArea({
               <div className="rrw-kpi-grid">
                 <div className="rrw-kpi-card">
                   <span className="rrw-kpi-label">Puntos acumulados</span>
-                  <span className="rrw-kpi-value">{accruing?.acumulando ?? 0}</span>
-                  <p className="rrw-kpi-note">{accruing ? accruing.nombre : "Sin campaña acumulando"}</p>
+                  <span className="rrw-kpi-value">
+                    {accruing?.acumulando ??
+                      (selectedPlayerRow?.campaign_fase === "acumulacion"
+                        ? selectedPlayerRow.puntos_acumulados
+                        : 0)}
+                  </span>
+                  <p className="rrw-kpi-note">
+                    {accruing
+                      ? accruing.nombre
+                      : selectedPlayerRow?.campaign_fase === "acumulacion" && selectedPlayerRow.campaign_nombre
+                      ? selectedPlayerRow.campaign_nombre
+                      : "Sin campaña acumulando"}
+                  </p>
                 </div>
                 <div className="rrw-kpi-card">
                   <span className="rrw-kpi-label">Disponibles para canjear</span>
-                  <span className="rrw-kpi-value">{redeeming?.disponible ?? 0}</span>
+                  <span className="rrw-kpi-value">
+                    {redeeming?.disponible ??
+                      (selectedPlayerRow?.campaign_fase === "canje"
+                        ? selectedPlayerRow.puntos_disponibles
+                        : 0)}
+                  </span>
                   <p className="rrw-kpi-note">
                     {redeeming
                       ? `Hasta ${formatWindowEnd(redeeming.canje_hasta)} · Reservados: ${redeeming.reservado}`
@@ -1455,7 +1533,87 @@ function PlayersArea({
 
               {/* Sub-sección: Canjes y Premios */}
               <div className="rrw-sub-block">
-                <h4 className="rrw-sub-title">Canjes de Premios</h4>
+                <div className="rrw-catalog-head">
+                  <div>
+                    <h4 className="rrw-sub-title" style={{ marginBottom: "0.15rem" }}>Canjes de Premios</h4>
+                    {catalog && (
+                      <p className="rrw-catalog-context">
+                        <strong>{catalog.campaign.nombre}</strong>
+                        {" · "}
+                        {catalog.phase === "canje"
+                          ? `Ventana de canje abierta (${catalog.points} pts disponibles)`
+                          : catalog.campaign.canje_desde && !Number.isNaN(new Date(catalog.campaign.canje_desde).getTime())
+                          ? `En acumulación (${catalog.points} pts acumulados · Canje desde ${formatMexicoDate(catalog.campaign.canje_desde)})`
+                          : `En acumulación (${catalog.points} pts acumulados)`}
+                      </p>
+                    )}
+                  </div>
+                  {visibleCampaigns.length > 1 && (
+                    <div className="rrw-campaign-selector" role="tablist" aria-label="Campaña del catálogo">
+                      {visibleCampaigns.map((camp) => (
+                        <button
+                          key={camp.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={activeCatalogCampaign?.id === camp.id}
+                          className={`rrw-campaign-pill ${activeCatalogCampaign?.id === camp.id ? "rrw-campaign-pill--active" : ""}`}
+                          onClick={() => {
+                            setCatalogCampaignId(camp.id);
+                            setRewardId("");
+                          }}
+                        >
+                          {camp.nombre}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {!catalog || catalog.items.length === 0 ? (
+                  <p className="rrw-empty-text" style={{ marginBottom: "0.75rem" }}>
+                    No hay premios activos registrados para esta campaña.
+                  </p>
+                ) : (
+                  <ul className="rrw-catalog-list" aria-label="Catálogo de premios de la campaña">
+                    {catalog.items.map((item) => (
+                      <li
+                        key={item.reward.id}
+                        className={`rrw-catalog-item ${item.canRedeem ? "rrw-catalog-item--available" : "rrw-catalog-item--locked"}`}
+                      >
+                        <div className="rrw-catalog-row">
+                          <div className="rrw-catalog-title-group">
+                            <strong className="rrw-catalog-name">{item.reward.nombre}</strong>
+                            <span className="rrw-catalog-cost">{item.reward.costo_puntos} pts</span>
+                          </div>
+                          <span className={rewardStatusBadgeClass(item.status)}>
+                            {REWARD_STATUS_LABELS[item.status]}
+                          </span>
+                        </div>
+                        <div
+                          className="rrw-progress-track"
+                          role="progressbar"
+                          aria-label={`Progreso para ${item.reward.nombre}`}
+                          aria-valuenow={item.progressPct}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                        >
+                          <div
+                            className="rrw-progress-fill"
+                            style={{ width: `${item.progressPct}%` }}
+                          />
+                        </div>
+                        <div className="rrw-catalog-meta">
+                          <span>
+                            {item.points} / {item.reward.costo_puntos} pts{" "}
+                            {catalog.pointsSource === "acumulando" ? "acumulados" : "disponibles"}
+                          </span>
+                          <span>{formatRewardProgressNote(item, catalog.phase)}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
                 <div className="rrw-fields-row rrw-fields-row--2" style={{ marginBottom: "0.75rem" }}>
                   <div className="rrw-field">
                     <label className="rrw-label" htmlFor="play-prem-disp">Premio en canje abierto</label>
@@ -1463,12 +1621,20 @@ function PlayersArea({
                       id="play-prem-disp"
                       className="rrw-select"
                       value={rewardId}
-                      onChange={(e) => setRewardId(e.target.value)}
+                      onChange={(e) => {
+                        const nextId = e.target.value;
+                        const target = catalog?.items.find((entry) => entry.reward.id === nextId);
+                        setRewardId(target?.canRedeem ? nextId : "");
+                      }}
                     >
                       <option value="">Selecciona un premio disponible...</option>
-                      {openRewards.map((reward) => (
-                        <option key={reward.id} value={reward.id}>
-                          {reward.nombre} ({reward.costo_puntos} pts)
+                      {(catalog?.items ?? []).map((item) => (
+                        <option
+                          key={item.reward.id}
+                          value={item.reward.id}
+                          disabled={!item.canRedeem}
+                        >
+                          {formatRewardOptionLabel(item)}
                         </option>
                       ))}
                     </select>
@@ -1477,14 +1643,15 @@ function PlayersArea({
                     <Button
                       variant="primary"
                       size="sm"
-                      disabled={busy || !rewardId}
-                      onClick={() =>
-                        run(async () => {
-                          await requestRedemption(orgId, rewardId, selected);
+                      disabled={busy || !selectedCatalogItem || !selectedCatalogItem.canRedeem}
+                      onClick={() => {
+                        if (!selectedCatalogItem || !selectedCatalogItem.canRedeem) return;
+                        void run(async () => {
+                          await requestRedemption(orgId, selectedCatalogItem.reward.id, selected);
                           onNotice("Solicitud creada. Los puntos se descuentan al reservar.");
                           await Promise.all([loadPlayer(selected), loadDirectory()]);
-                        })
-                      }
+                        });
+                      }}
                     >
                       Solicitar beneficio
                     </Button>
