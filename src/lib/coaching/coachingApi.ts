@@ -20,6 +20,13 @@ import type {
   AssignStudentToClubCoachResult,
   FinalizeCoachRemovalResult,
   ReassignStudentCoachResult,
+  AdjustCoachStudentClassesResult,
+  RevertCoachClassSessionResult,
+  ScheduleCoachClassResult,
+  RescheduleCoachClassResult,
+  CancelCoachClassResult,
+  CoachScheduledSession,
+  StudentCoachingUpcomingSession,
 } from "./types";
 
 function mapEdgeError(data: unknown, fallbackMessage: string): string {
@@ -706,7 +713,7 @@ export async function recordCoachClassSession(
     effectiveMotivationalMessage = relationshipIdOrInput.motivationalMessage ?? null;
     effectiveDurationMinutes = relationshipIdOrInput.durationMinutes ?? 60;
   } else {
-    relId = relationshipIdOrInput;
+    relId = typeof relationshipIdOrInput === "string" ? relationshipIdOrInput : "";
     effectiveNotas = notas ?? null;
     effectiveSessionId = sessionId ?? null;
     effectiveKey = idempotencyKey ?? null;
@@ -994,6 +1001,7 @@ export interface StudentCoachingRelationship {
     totalClassesGiven: number;
     updatedAt?: string | null;
   };
+  upcomingSessions?: StudentCoachingUpcomingSession[];
   ledger: StudentCoachingLedgerEntry[];
 }
 
@@ -1058,6 +1066,17 @@ export async function fetchStudentCoachingOverview(): Promise<StudentCoachingOve
       totalClassesGiven: Number(item.balance?.total_classes_given ?? 0),
       updatedAt: item.balance?.updated_at ? String(item.balance.updated_at) : null,
     },
+    upcomingSessions: Array.isArray(item.upcoming_sessions)
+      ? item.upcoming_sessions.map((sch: any) => ({
+          id: String(sch.id ?? ""),
+          startsAt: String(sch.starts_at ?? ""),
+          endsAt: String(sch.ends_at ?? ""),
+          durationMinutes: Number(sch.duration_minutes ?? 60),
+          court: sch.court ? String(sch.court) : null,
+          focus: sch.focus ? String(sch.focus) : null,
+          status: String(sch.status ?? "SCHEDULED"),
+        }))
+      : [],
     ledger: Array.isArray(item.ledger)
       ? item.ledger.map((entry: any) => ({
           id: String(entry.id ?? ""),
@@ -1666,3 +1685,259 @@ export async function reassignStudentCoach(
 
   return res;
 }
+
+/**
+ * Realiza un ajuste compensatorio inmutable sobre el saldo de un alumno con un coach.
+ * - delta positivo suma clases, delta negativo resta clases.
+ * - Validación atómica: no permite que el saldo resulte negativo.
+ * - Idempotente y auditable en coach_audit_log y coach_class_ledger.
+ */
+export async function adjustCoachStudentClasses(
+  organizadorId: string,
+  coachId: string,
+  studentId: string,
+  delta: number,
+  motivo: string,
+  referenceLedgerId?: string | null,
+  idempotencyKey?: string
+): Promise<AdjustCoachStudentClassesResult> {
+  const key = idempotencyKey || generateCoachingIdempotencyKey("adjust");
+
+  const { data, error } = await supabase.rpc("adjust_coach_student_classes", {
+    p_organizador_id: organizadorId,
+    p_coach_id: coachId,
+    p_student_id: studentId,
+    p_delta: delta,
+    p_motivo: motivo,
+    p_reference_ledger_id: referenceLedgerId || null,
+    p_idempotency_key: key,
+  });
+
+  if (error) {
+    console.error("[coaching] error adjusting classes:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(res?.error || "No se pudo realizar el ajuste de saldo.");
+  }
+
+  return {
+    ok: true,
+    adjustmentId: res.adjustment_id ? String(res.adjustment_id) : undefined,
+    delta: res.delta != null ? Number(res.delta) : undefined,
+    newBalance: res.new_balance != null ? Number(res.new_balance) : undefined,
+    message: String(res.message ?? "Saldo ajustado correctamente."),
+    idempotent: Boolean(res.idempotent),
+  };
+}
+
+/**
+ * Revierte una clase impartida por error.
+ * - Restaura 1 clase al saldo disponible (+1).
+ * - Decrementa el contador de clases impartidas (-1).
+ * - Registra movimiento compensatorio inmutable con referencia a la sesión.
+ * - Marca la sesión como revertida (reverted_at, reverted_by).
+ */
+export async function revertCoachClassSession(
+  organizadorId: string,
+  sessionId: string,
+  motivo: string,
+  idempotencyKey?: string
+): Promise<RevertCoachClassSessionResult> {
+  const key = idempotencyKey || generateCoachingIdempotencyKey("revert-session");
+
+  const { data, error } = await supabase.rpc("revert_coach_class_session", {
+    p_organizador_id: organizadorId,
+    p_session_id: sessionId,
+    p_motivo: motivo,
+    p_idempotency_key: key,
+  });
+
+  if (error) {
+    console.error("[coaching] error reverting session:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(res?.error || "No se pudo revertir la sesión de clase.");
+  }
+
+  return {
+    ok: true,
+    adjustmentId: res.adjustment_id ? String(res.adjustment_id) : undefined,
+    newBalance: res.new_balance != null ? Number(res.new_balance) : undefined,
+    totalClassesGiven: res.total_classes_given != null ? Number(res.total_classes_given) : undefined,
+    message: String(res.message ?? "Clase revertida y devuelta al saldo del alumno."),
+  };
+}
+
+/**
+ * Agenda una nueva clase en el calendario del club.
+ */
+export async function scheduleCoachClass(params: {
+  organizadorId: string;
+  coachId: string;
+  studentId: string;
+  startsAt: string;
+  durationMinutes?: number;
+  court?: string | null;
+  focus?: string | null;
+  notes?: string | null;
+}): Promise<ScheduleCoachClassResult> {
+  const { data, error } = await supabase.rpc("schedule_coach_class", {
+    p_organizador_id: params.organizadorId,
+    p_coach_id: params.coachId,
+    p_student_id: params.studentId,
+    p_starts_at: params.startsAt,
+    p_duration_minutes: params.durationMinutes ?? 60,
+    p_court: params.court || null,
+    p_focus: params.focus || null,
+    p_notes: params.notes || null,
+  });
+
+  if (error) {
+    console.error("[coaching] error scheduling class:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(res?.error || "No se pudo agendar la clase.");
+  }
+
+  return {
+    ok: true,
+    sessionId: res.session_id ? String(res.session_id) : undefined,
+    startsAt: res.starts_at ? String(res.starts_at) : undefined,
+    endsAt: res.ends_at ? String(res.ends_at) : undefined,
+    durationMinutes: res.duration_minutes != null ? Number(res.duration_minutes) : undefined,
+    court: res.court ? String(res.court) : null,
+    message: String(res.message ?? "Clase agendada exitosamente."),
+  };
+}
+
+/**
+ * Reprograma una clase agendada (cambio de fecha/hora o cancha).
+ */
+export async function rescheduleCoachClass(params: {
+  organizadorId: string;
+  sessionId: string;
+  newStartsAt: string;
+  durationMinutes?: number;
+  court?: string | null;
+  reason?: string | null;
+}): Promise<RescheduleCoachClassResult> {
+  const { data, error } = await supabase.rpc("reschedule_coach_class", {
+    p_organizador_id: params.organizadorId,
+    p_session_id: params.sessionId,
+    p_new_starts_at: params.newStartsAt,
+    p_duration_minutes: params.durationMinutes ?? null,
+    p_court: params.court || null,
+    p_reason: params.reason || null,
+  });
+
+  if (error) {
+    console.error("[coaching] error rescheduling class:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(res?.error || "No se pudo reprogramar la clase.");
+  }
+
+  return {
+    ok: true,
+    sessionId: res.session_id ? String(res.session_id) : undefined,
+    startsAt: res.starts_at ? String(res.starts_at) : undefined,
+    endsAt: res.ends_at ? String(res.ends_at) : undefined,
+    durationMinutes: res.duration_minutes != null ? Number(res.duration_minutes) : undefined,
+    court: res.court ? String(res.court) : null,
+    message: String(res.message ?? "Clase reprogramada exitosamente."),
+  };
+}
+
+/**
+ * Cancela una clase agendada con motivo obligatorio.
+ */
+export async function cancelCoachClass(params: {
+  organizadorId: string;
+  sessionId: string;
+  reason: string;
+}): Promise<CancelCoachClassResult> {
+  const { data, error } = await supabase.rpc("cancel_coach_class", {
+    p_organizador_id: params.organizadorId,
+    p_session_id: params.sessionId,
+    p_reason: params.reason,
+  });
+
+  if (error) {
+    console.error("[coaching] error cancelling class:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(res?.error || "No se pudo cancelar la clase.");
+  }
+
+  return {
+    ok: true,
+    sessionId: res.session_id ? String(res.session_id) : undefined,
+    message: String(res.message ?? "Clase cancelada exitosamente."),
+  };
+}
+
+/**
+ * Consulta la agenda real de clases del club con filtros opcionales.
+ */
+export async function fetchClubCoachingAgenda(params: {
+  organizadorId: string;
+  coachId?: string | null;
+  fromDate?: string | null;
+  toDate?: string | null;
+  statusFilter?: string | null;
+}): Promise<CoachScheduledSession[]> {
+  const { data, error } = await supabase.rpc("fetch_club_coaching_agenda", {
+    p_organizador_id: params.organizadorId,
+    p_coach_id: params.coachId || null,
+    p_from_date: params.fromDate || null,
+    p_to_date: params.toDate || null,
+    p_status_filter: params.statusFilter || null,
+  });
+
+  if (error) {
+    console.error("[coaching] error fetching club coaching agenda:", error);
+    throw new Error("No se pudo cargar la agenda de coaching: " + error.message);
+  }
+
+  const rawList = Array.isArray(data) ? data : [];
+  return rawList.map((row: any): CoachScheduledSession => ({
+    id: String(row.id ?? ""),
+    coachId: String(row.coach_id ?? ""),
+    coachNombre: row.coach_nombre ? String(row.coach_nombre) : undefined,
+    coachCode: row.coach_code ? String(row.coach_code) : undefined,
+    coachFoto: row.coach_foto ? String(row.coach_foto) : null,
+    jugadorId: String(row.jugador_id ?? ""),
+    jugadorNombre: row.jugador_nombre ? String(row.jugador_nombre) : undefined,
+    jugadorFoto: row.jugador_foto ? String(row.jugador_foto) : null,
+    rivieraId: row.riviera_id ? String(row.riviera_id) : undefined,
+    relationshipId: row.relationship_id ? String(row.relationship_id) : null,
+    startsAt: String(row.starts_at ?? ""),
+    endsAt: String(row.ends_at ?? ""),
+    durationMinutes: Number(row.duration_minutes ?? 60),
+    court: row.court ? String(row.court) : null,
+    focus: row.focus ? String(row.focus) : null,
+    notesSummary: row.notes_summary ? String(row.notes_summary) : null,
+    status: row.status as any,
+    workedOn: Array.isArray(row.worked_on) ? row.worked_on : [],
+    cancellationReason: row.cancellation_reason ? String(row.cancellation_reason) : null,
+    revertedAt: row.reverted_at ? String(row.reverted_at) : null,
+    balanceClasses: row.balance_classes != null ? Number(row.balance_classes) : undefined,
+    createdAt: String(row.created_at ?? ""),
+  }));
+}
+

@@ -14,10 +14,16 @@ import {
   fetchCurrentCoachProfile,
   removeCoachFromClub,
   finalizeCoachRemovalFromClub,
+  fetchClubCoachingAgenda,
 } from "../../lib/coaching/coachingApi";
 import { ClubCoachDetailView } from "./ClubCoachDetailView";
 import { AddStudentToCoachModal } from "./AddStudentToCoachModal";
 import { ReassignCoachModal } from "./ReassignCoachModal";
+import { AdjustClassBalanceModal } from "./AdjustClassBalanceModal";
+import { RevertClassSessionModal } from "./RevertClassSessionModal";
+import { ScheduleClassModal } from "./ScheduleClassModal";
+import { RescheduleClassModal } from "./RescheduleClassModal";
+import { CancelClassModal } from "./CancelClassModal";
 import {
   COACH_ESPECIALIDADES_ORDER,
   COACH_FUERZAS_ORDER,
@@ -29,6 +35,7 @@ import type {
   CoachingPlayerLink,
   CoachClassLedgerEntry,
   CoachMembershipStatus,
+  CoachScheduledSession,
 } from "../../lib/coaching/types";
 import type {
   EnCancha,
@@ -130,6 +137,61 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   const [ledgerEntries, setLedgerEntries] = useState<CoachClassLedgerEntry[]>([]);
   const [loadingLedger, setLoadingLedger] = useState(false);
   const [ledgerError, setLedgerError] = useState<string | null>(null);
+
+  // Ajustes de saldo y reversiones compensatorias
+  const [adjustingBalance, setAdjustingBalance] = useState<{
+    coachId: string;
+    coachNombre: string;
+    studentId: string;
+    studentNombre: string;
+    rivieraId?: string;
+    currentBalance: number;
+    referenceLedgerId?: string | null;
+  } | null>(null);
+
+  const [revertingSession, setRevertingSession] = useState<{
+    id: string;
+    startsAt: string;
+    jugadorNombre?: string;
+    coachNombre?: string;
+    durationMinutes?: number | null;
+    focus?: string | null;
+  } | null>(null);
+
+  // Agenda real de coaching
+  const [agendaSessions, setAgendaSessions] = useState<CoachScheduledSession[]>([]);
+  const [agendaLoading, setAgendaLoading] = useState(false);
+  const [agendaError, setAgendaError] = useState<string | null>(null);
+  const [agendaCoachFilter, setAgendaCoachFilter] = useState<string>("ALL");
+  const [agendaStatusFilter, setAgendaStatusFilter] = useState<string>("ALL");
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [reschedulingSession, setReschedulingSession] = useState<CoachScheduledSession | null>(null);
+  const [cancellingSession, setCancellingSession] = useState<CoachScheduledSession | null>(null);
+
+  const loadAgenda = useCallback(async (orgId: string, coachFilter?: string, statusFilter?: string) => {
+    if (!orgId) return;
+    setAgendaLoading(true);
+    setAgendaError(null);
+    try {
+      const data = await fetchClubCoachingAgenda({
+        organizadorId: orgId,
+        coachId: coachFilter && coachFilter !== "ALL" ? coachFilter : null,
+        statusFilter: statusFilter && statusFilter !== "ALL" ? statusFilter : null,
+      });
+      setAgendaSessions(data);
+    } catch (e: any) {
+      console.error("[coaching] error loading agenda:", e);
+      setAgendaError(e?.message || "No se pudo cargar la agenda del club.");
+    } finally {
+      setAgendaLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (organizadorId && tab === "agenda") {
+      void loadAgenda(organizadorId, agendaCoachFilter, agendaStatusFilter);
+    }
+  }, [organizadorId, tab, agendaCoachFilter, agendaStatusFilter, loadAgenda]);
 
   const loadLedger = useCallback(async (orgId: string) => {
     if (!orgId) return;
@@ -1615,6 +1677,26 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                     </button>
                     <button
                       type="button"
+                      className="coaching-btn coaching-btn--secondary"
+                      disabled={busy}
+                      onClick={() => {
+                        setAdjustingBalance({
+                          coachId: l.coachId,
+                          coachNombre: l.coachNombre,
+                          studentId: l.jugadorId,
+                          studentNombre: l.jugadorNombre,
+                          rivieraId: l.rivieraId,
+                          currentBalance: l.balanceClasses ?? 0,
+                          referenceLedgerId: null,
+                        });
+                      }}
+                      title="Corregir o ajustar saldo de clases"
+                    >
+                      <TablerIcon name="adjustments" size={14} />
+                      Corregir saldo
+                    </button>
+                    <button
+                      type="button"
                       className="coaching-btn coaching-btn--ghost"
                       disabled={busy}
                       onClick={() => void handleStatus(l.id, "ENDED")}
@@ -1682,6 +1764,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                       <th style={{ padding: "0.6rem 0.75rem" }}>Movimiento</th>
                       <th style={{ padding: "0.6rem 0.75rem" }}>Notas / Referencia</th>
                       <th style={{ padding: "0.6rem 0.75rem" }}>Responsable</th>
+                      <th style={{ padding: "0.6rem 0.75rem", textAlign: "right" }}>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1795,6 +1878,85 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                           <td style={{ padding: "0.6rem 0.75rem", fontSize: "0.8rem", color: "var(--ro-text-muted)" }}>
                             {entry.tipo === "CLASS_DEBIT" ? "Coach" : "Club"}
                           </td>
+                          <td style={{ padding: "0.6rem 0.75rem", textAlign: "right", whiteSpace: "nowrap" }}>
+                            {(entry.tipo === "PACKAGE_CREDIT" ||
+                              entry.tipo === "ADJUSTMENT") && (
+                              <button
+                                type="button"
+                                className="coaching-btn coaching-btn--secondary"
+                                style={{
+                                  fontSize: "0.75rem",
+                                  padding: "0.25rem 0.55rem",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "0.25rem",
+                                }}
+                                onClick={() => {
+                                  const link = snapshot?.links.find(
+                                    (l) => l.jugadorId === entry.jugadorId && l.coachId === entry.coachId
+                                  );
+                                  setAdjustingBalance({
+                                    coachId: entry.coachId,
+                                    coachNombre: entry.coachNombre || "Coach",
+                                    studentId: entry.jugadorId,
+                                    studentNombre: entry.jugadorNombre || "Alumno",
+                                    rivieraId: link?.rivieraId,
+                                    currentBalance: link?.balanceClasses ?? 0,
+                                    referenceLedgerId: entry.id,
+                                  });
+                                }}
+                                title="Corregir saldo de clases para este alumno"
+                              >
+                                <TablerIcon name="adjustments" size={13} />
+                                Corregir
+                              </button>
+                            )}
+                            {entry.tipo === "CLASS_DEBIT" && (
+                              <button
+                                type="button"
+                                className="coaching-btn"
+                                style={{
+                                  fontSize: "0.75rem",
+                                  padding: "0.25rem 0.55rem",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "0.25rem",
+                                  background: "rgba(245, 158, 11, 0.15)",
+                                  color: "#fbbf24",
+                                  border: "1px solid rgba(245, 158, 11, 0.35)",
+                                }}
+                                onClick={() => {
+                                  if (entry.sessionId) {
+                                    setRevertingSession({
+                                      id: entry.sessionId,
+                                      startsAt: entry.createdAt,
+                                      jugadorNombre: entry.jugadorNombre,
+                                      coachNombre: entry.coachNombre,
+                                      durationMinutes: 60,
+                                      focus: entry.notas || "Clase impartida",
+                                    });
+                                  } else {
+                                    const link = snapshot?.links.find(
+                                      (l) => l.jugadorId === entry.jugadorId && l.coachId === entry.coachId
+                                    );
+                                    setAdjustingBalance({
+                                      coachId: entry.coachId,
+                                      coachNombre: entry.coachNombre || "Coach",
+                                      studentId: entry.jugadorId,
+                                      studentNombre: entry.jugadorNombre || "Alumno",
+                                      rivieraId: link?.rivieraId,
+                                      currentBalance: link?.balanceClasses ?? 0,
+                                      referenceLedgerId: entry.id,
+                                    });
+                                  }
+                                }}
+                                title="Revertir clase impartida por error (+1 clase)"
+                              >
+                                <TablerIcon name="rotate-2" size={13} />
+                                Revertir
+                              </button>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
@@ -1808,57 +1970,338 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
 
       {!loading && tab === "agenda" ? (
         <section className="coaching-panel" aria-label="Agenda">
-          <div className="coaching-agenda-card">
-            <div className="coaching-agenda-icon" aria-hidden>
-              <TablerIcon name="calendar-time" size={32} />
-            </div>
+          {/* Header de la Agenda */}
+          <div
+            className="coaching-section-header"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              flexWrap: "wrap",
+              gap: "1rem",
+              marginBottom: "1.25rem",
+            }}
+          >
             <div>
-              <h2>Agenda y sesiones de clase</h2>
-              <p>
-                La programación de horarios, canchas de entrenamiento y
-                seguimiento de objetivos para coaches y alumnos estará disponible
-                en la siguiente entrega de Riviera Coaching.
+              <h2 className="coaching-section-title">Agenda Real de Coaching</h2>
+              <p className="coaching-section-desc">
+                Programación de clases, asignación de canchas y control operativo en {clubName || "el club"}.
               </p>
             </div>
-
-            <div className="coaching-agenda-pillars">
-              <div className="coaching-agenda-pillar">
-                <h4>
-                  <TablerIcon name="calendar-event" size={16} />
-                  Programación deportiva
-                </h4>
-                <p>
-                  Horarios de entrenamiento por coach y gestión de canchas del
-                  club.
-                </p>
-              </div>
-              <div className="coaching-agenda-pillar">
-                <h4>
-                  <TablerIcon name="check" size={16} />
-                  Asistencia y alumnos
-                </h4>
-                <p>
-                  Registro de alumnos asistentes a sesiones individuales o
-                  grupales.
-                </p>
-              </div>
-              <div className="coaching-agenda-pillar">
-                <h4>
-                  <TablerIcon name="notes" size={16} />
-                  Notas y evolución
-                </h4>
-                <p>
-                  Anotaciones técnicas y tácticas protegidas con privacidad
-                  exclusiva del coach.
-                </p>
-              </div>
-            </div>
-
-            <div className="coaching-agenda-status-pill">
-              <TablerIcon name="clock" size={14} />
-              <span>Próximamente en la Entrega D de Riviera Coaching</span>
-            </div>
+            <button
+              type="button"
+              className="coaching-btn coaching-btn--primary"
+              onClick={() => setIsScheduleModalOpen(true)}
+              style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+            >
+              <TablerIcon name="calendar-plus" size={16} />
+              Agendar Clase
+            </button>
           </div>
+
+          {/* Filtros de la Agenda */}
+          <div
+            style={{
+              display: "flex",
+              gap: "0.75rem",
+              flexWrap: "wrap",
+              alignItems: "center",
+              marginBottom: "1.25rem",
+              padding: "0.75rem 1rem",
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid rgba(255, 255, 255, 0.06)",
+              borderRadius: "10px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <TablerIcon name="filter" size={16} style={{ color: "var(--ro-text-muted)" }} />
+              <span style={{ fontSize: "0.82rem", color: "var(--ro-text-muted)" }}>Filtrar:</span>
+            </div>
+
+            {/* Selector de Coach */}
+            <select
+              className="coaching-input"
+              style={{ width: "auto", minWidth: "180px", padding: "0.35rem 0.6rem", fontSize: "0.82rem" }}
+              value={agendaCoachFilter}
+              onChange={(e) => setAgendaCoachFilter(e.target.value)}
+            >
+              <option value="ALL">Todos los entrenadores</option>
+              {(snapshot?.coaches ?? [])
+                .filter((c) => c.membershipStatus === "ACTIVE")
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nombre} {c.coachCode ? `(${c.coachCode})` : ""}
+                  </option>
+                ))}
+            </select>
+
+            {/* Selector de Estado */}
+            <select
+              className="coaching-input"
+              style={{ width: "auto", minWidth: "150px", padding: "0.35rem 0.6rem", fontSize: "0.82rem" }}
+              value={agendaStatusFilter}
+              onChange={(e) => setAgendaStatusFilter(e.target.value)}
+            >
+              <option value="ALL">Todos los estados</option>
+              <option value="SCHEDULED">Agendadas (Pendientes)</option>
+              <option value="COMPLETED">Impartidas</option>
+              <option value="CANCELLED">Canceladas</option>
+            </select>
+
+            <button
+              type="button"
+              className="coaching-btn coaching-btn--ghost"
+              style={{ fontSize: "0.8rem", padding: "0.35rem 0.6rem" }}
+              onClick={() => void loadAgenda(organizadorId, agendaCoachFilter, agendaStatusFilter)}
+              disabled={agendaLoading}
+            >
+              <TablerIcon name="refresh" size={14} className={agendaLoading ? "spin" : ""} />
+              Actualizar
+            </button>
+          </div>
+
+          {/* Contenido de la Agenda */}
+          {agendaLoading ? (
+            <div style={{ padding: "3rem", textAlign: "center", color: "var(--ro-text-muted)" }}>
+              <TablerIcon name="loader" size={28} className="spin" />
+              <p style={{ marginTop: "0.75rem", fontSize: "0.88rem" }}>Cargando agenda de clases...</p>
+            </div>
+          ) : agendaError ? (
+            <div
+              style={{
+                padding: "1rem",
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                borderRadius: "10px",
+                color: "#fca5a5",
+                fontSize: "0.88rem",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span>{agendaError}</span>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--secondary"
+                onClick={() => void loadAgenda(organizadorId, agendaCoachFilter, agendaStatusFilter)}
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : agendaSessions.length === 0 ? (
+            <div className="coaching-empty-card">
+              <TablerIcon name="calendar-event" size={44} className="coaching-empty-icon" />
+              <h3>No hay clases registradas con los filtros actuales</h3>
+              <p>Programa la primera clase entre un entrenador activo y sus alumnos para administrar la agenda de tu academia.</p>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--primary"
+                style={{ marginTop: "1rem" }}
+                onClick={() => setIsScheduleModalOpen(true)}
+              >
+                <TablerIcon name="calendar-plus" size={16} />
+                Agendar Primera Clase
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+              {agendaSessions.map((session) => {
+                const isScheduled = session.status === "SCHEDULED";
+                const isCompleted = session.status === "COMPLETED";
+                const isCancelled = session.status === "CANCELLED";
+
+                const formattedDateTime = (() => {
+                  try {
+                    return new Date(session.startsAt).toLocaleString("es-MX", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+                  } catch {
+                    return session.startsAt;
+                  }
+                })();
+
+                return (
+                  <div
+                    key={session.id}
+                    style={{
+                      background: "rgba(255, 255, 255, 0.025)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      borderRadius: "12px",
+                      padding: "1rem 1.25rem",
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: "1rem",
+                      transition: "border-color 0.15s ease",
+                    }}
+                  >
+                    {/* Izquierda: Info de horario, coach, alumno */}
+                    <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
+                      <div
+                        style={{
+                          background: isScheduled
+                            ? "rgba(16, 185, 129, 0.1)"
+                            : isCompleted
+                            ? "rgba(59, 130, 246, 0.1)"
+                            : "rgba(239, 68, 68, 0.1)",
+                          border: `1px solid ${
+                            isScheduled
+                              ? "rgba(16, 185, 129, 0.3)"
+                              : isCompleted
+                              ? "rgba(59, 130, 246, 0.3)"
+                              : "rgba(239, 68, 68, 0.3)"
+                          }`,
+                          borderRadius: "10px",
+                          padding: "0.6rem 0.85rem",
+                          textAlign: "center",
+                          minWidth: "110px",
+                        }}
+                      >
+                        <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--ro-text-main, #f8fafc)" }}>
+                          {formattedDateTime}
+                        </div>
+                        <div style={{ fontSize: "0.72rem", color: "var(--ro-text-muted, #94a3b8)", marginTop: "2px" }}>
+                          {session.durationMinutes} min {session.court ? `• ${session.court}` : ""}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                          <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--ro-text-main, #f8fafc)" }}>
+                            {session.jugadorNombre || "Alumno"}
+                          </span>
+                          {session.rivieraId && (
+                            <span style={{ fontSize: "0.75rem", color: "var(--ro-primary, #10b981)", fontFamily: "monospace" }}>
+                              {session.rivieraId}
+                            </span>
+                          )}
+                          <span style={{ fontSize: "0.78rem", color: "var(--ro-text-muted)" }}>
+                            con <strong>{session.coachNombre || "Coach"}</strong>
+                          </span>
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.35rem", flexWrap: "wrap" }}>
+                          {session.focus && (
+                            <span style={{ fontSize: "0.78rem", color: "var(--ro-brand, #38bdf8)", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                              <TablerIcon name="target" size={13} />
+                              {session.focus}
+                            </span>
+                          )}
+                          {isCancelled && session.cancellationReason && (
+                            <span style={{ fontSize: "0.75rem", color: "#fca5a5" }}>
+                              Motivo: {session.cancellationReason}
+                            </span>
+                          )}
+                          {session.balanceClasses !== undefined && isScheduled && (
+                            <span
+                              style={{
+                                fontSize: "0.72rem",
+                                padding: "0.15rem 0.45rem",
+                                borderRadius: "4px",
+                                background: session.balanceClasses > 0 ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
+                                color: session.balanceClasses > 0 ? "#34d399" : "#fbbf24",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {session.balanceClasses} clases disp.
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Derecha: Badge de estado y Acciones */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+                      <span
+                        className="coaching-badge"
+                        style={{
+                          background: isScheduled
+                            ? "rgba(16, 185, 129, 0.15)"
+                            : isCompleted
+                            ? "rgba(59, 130, 246, 0.15)"
+                            : "rgba(239, 68, 68, 0.15)",
+                          color: isScheduled ? "#34d399" : isCompleted ? "#60a5fa" : "#fca5a5",
+                          border: `1px solid ${
+                            isScheduled
+                              ? "rgba(16, 185, 129, 0.35)"
+                              : isCompleted
+                              ? "rgba(59, 130, 246, 0.35)"
+                              : "rgba(239, 68, 68, 0.35)"
+                          }`,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {isScheduled ? "Agendada" : isCompleted ? "Impartida" : "Cancelada"}
+                      </span>
+
+                      {isScheduled && (
+                        <>
+                          <button
+                            type="button"
+                            className="coaching-btn coaching-btn--secondary"
+                            style={{ fontSize: "0.78rem", padding: "0.3rem 0.6rem" }}
+                            onClick={() => setReschedulingSession(session)}
+                          >
+                            <TablerIcon name="calendar" size={13} />
+                            Reprogramar
+                          </button>
+                          <button
+                            type="button"
+                            className="coaching-btn coaching-btn--ghost"
+                            style={{ fontSize: "0.78rem", padding: "0.3rem 0.6rem", color: "#f87171" }}
+                            onClick={() => setCancellingSession(session)}
+                          >
+                            <TablerIcon name="calendar-x" size={13} />
+                            Cancelar
+                          </button>
+                        </>
+                      )}
+
+                      {isCompleted && !session.revertedAt && (
+                        <button
+                          type="button"
+                          className="coaching-btn"
+                          style={{
+                            fontSize: "0.78rem",
+                            padding: "0.3rem 0.6rem",
+                            background: "rgba(245, 158, 11, 0.15)",
+                            color: "#fbbf24",
+                            border: "1px solid rgba(245, 158, 11, 0.35)",
+                          }}
+                          onClick={() => {
+                            setRevertingSession({
+                              id: session.id,
+                              startsAt: session.startsAt,
+                              jugadorNombre: session.jugadorNombre,
+                              coachNombre: session.coachNombre,
+                              durationMinutes: session.durationMinutes,
+                              focus: session.focus,
+                            });
+                          }}
+                        >
+                          <TablerIcon name="rotate-2" size={13} />
+                          Revertir
+                        </button>
+                      )}
+
+                      {isCompleted && session.revertedAt && (
+                        <span style={{ fontSize: "0.75rem", color: "var(--ro-text-muted)" }}>
+                          Revertida
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       ) : null}
 
@@ -2297,6 +2740,98 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
           if (organizadorId) void loadLedger(organizadorId);
         }}
       />
+
+      {/* Modal: Ajuste Compensatorio de Saldo de Clases */}
+      {adjustingBalance && (
+        <AdjustClassBalanceModal
+          open={Boolean(adjustingBalance)}
+          onClose={() => setAdjustingBalance(null)}
+          organizadorId={organizadorId}
+          coachId={adjustingBalance.coachId}
+          coachNombre={adjustingBalance.coachNombre}
+          studentId={adjustingBalance.studentId}
+          studentNombre={adjustingBalance.studentNombre}
+          rivieraId={adjustingBalance.rivieraId}
+          currentBalance={adjustingBalance.currentBalance}
+          referenceLedgerId={adjustingBalance.referenceLedgerId}
+          onSuccess={(newBalance, delta) => {
+            setSuccessMessage(
+              `Saldo ajustado exitosamente (${delta >= 0 ? `+${delta}` : delta} clases). Nuevo saldo: ${newBalance} clases.`
+            );
+            void refresh();
+            if (organizadorId) void loadLedger(organizadorId);
+          }}
+        />
+      )}
+
+      {/* Modal: Revertir Clase Impartida */}
+      {revertingSession && (
+        <RevertClassSessionModal
+          open={Boolean(revertingSession)}
+          onClose={() => setRevertingSession(null)}
+          organizadorId={organizadorId}
+          session={revertingSession}
+          onSuccess={(_sessionId, newBalance) => {
+            setSuccessMessage(
+              `Clase revertida y devuelta al saldo del alumno exitosamente.${
+                newBalance !== undefined ? ` Nuevo saldo: ${newBalance} clases.` : ""
+              }`
+            );
+            void refresh();
+            if (organizadorId) {
+              void loadLedger(organizadorId);
+              void loadAgenda(organizadorId, agendaCoachFilter, agendaStatusFilter);
+            }
+          }}
+        />
+      )}
+
+      {/* Modal: Agendar Clase */}
+      <ScheduleClassModal
+        open={isScheduleModalOpen}
+        onClose={() => setIsScheduleModalOpen(false)}
+        organizadorId={organizadorId}
+        coaches={snapshot?.coaches ?? []}
+        onSuccess={(_sessionId) => {
+          setSuccessMessage("Clase agendada exitosamente en el calendario.");
+          void refresh();
+          if (organizadorId) {
+            void loadAgenda(organizadorId, agendaCoachFilter, agendaStatusFilter);
+          }
+        }}
+      />
+
+      {/* Modal: Reprogramar Clase */}
+      {reschedulingSession && (
+        <RescheduleClassModal
+          open={Boolean(reschedulingSession)}
+          onClose={() => setReschedulingSession(null)}
+          organizadorId={organizadorId}
+          session={reschedulingSession}
+          onSuccess={(_sessionId) => {
+            setSuccessMessage("Clase reprogramada exitosamente.");
+            if (organizadorId) {
+              void loadAgenda(organizadorId, agendaCoachFilter, agendaStatusFilter);
+            }
+          }}
+        />
+      )}
+
+      {/* Modal: Cancelar Clase */}
+      {cancellingSession && (
+        <CancelClassModal
+          open={Boolean(cancellingSession)}
+          onClose={() => setCancellingSession(null)}
+          organizadorId={organizadorId}
+          session={cancellingSession}
+          onSuccess={(_sessionId) => {
+            setSuccessMessage("Clase cancelada exitosamente.");
+            if (organizadorId) {
+              void loadAgenda(organizadorId, agendaCoachFilter, agendaStatusFilter);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

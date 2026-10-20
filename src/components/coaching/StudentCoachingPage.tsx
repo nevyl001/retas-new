@@ -443,7 +443,97 @@ export const StudentCoachingPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 3. Historial Inmutable de Sesiones (Ledger) */}
+                {/* 3. Próximas Clases Agendadas */}
+                {rel.upcomingSessions && rel.upcomingSessions.length > 0 && (
+                  <div className="coaching-student-agenda-section" style={{ marginBottom: "1.5rem" }}>
+                    <div className="coaching-ledger-header">
+                      <div>
+                        <h3 className="coaching-ledger-title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <TablerIcon name="calendar-event" size={20} style={{ color: "var(--ro-primary, #10b981)" }} />
+                          Próximas Clases Agendadas
+                        </h3>
+                        <p className="coaching-ledger-desc">
+                          Horarios confirmados de entrenamiento con {rel.coach.nombre} en {rel.club.nombre}.
+                        </p>
+                      </div>
+                      <span className="coaching-badge coaching-badge--active" style={{ fontWeight: 600 }}>
+                        {rel.upcomingSessions.length}{" "}
+                        {rel.upcomingSessions.length === 1 ? "sesión programada" : "sesiones programadas"}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                        gap: "1rem",
+                        marginTop: "1rem",
+                      }}
+                    >
+                      {rel.upcomingSessions.map((sch) => (
+                        <div
+                          key={sch.id}
+                          style={{
+                            background: "rgba(16, 185, 129, 0.05)",
+                            border: "1px solid rgba(16, 185, 129, 0.2)",
+                            borderRadius: "12px",
+                            padding: "1rem 1.25rem",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--ro-text-main, #f8fafc)" }}>
+                              {formatDate(sch.startsAt)}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                padding: "0.2rem 0.5rem",
+                                borderRadius: "6px",
+                                background: "rgba(16, 185, 129, 0.2)",
+                                color: "#34d399",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {sch.durationMinutes} min
+                            </span>
+                          </div>
+                          {sch.court && (
+                            <div
+                              style={{
+                                fontSize: "0.82rem",
+                                color: "var(--ro-text-muted, #94a3b8)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.3rem",
+                              }}
+                            >
+                              <TablerIcon name="map-pin" size={14} /> Cancha:{" "}
+                              <strong style={{ color: "var(--ro-text-main)" }}>{sch.court}</strong>
+                            </div>
+                          )}
+                          {sch.focus && (
+                            <div
+                              style={{
+                                fontSize: "0.82rem",
+                                color: "var(--ro-brand, #38bdf8)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.3rem",
+                              }}
+                            >
+                              <TablerIcon name="target" size={14} /> Tema: {sch.focus}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Historial Inmutable de Sesiones (Ledger) */}
                 <div className="coaching-student-ledger-section">
                   <div className="coaching-ledger-header">
                     <div>

@@ -4,6 +4,7 @@ interface TablerIconProps {
   name: string;
   size?: number;
   className?: string;
+  style?: React.CSSProperties;
   "aria-hidden"?: boolean;
 }
 
@@ -12,6 +13,7 @@ export const TablerIcon: React.FC<TablerIconProps> = ({
   name,
   size = 16,
   className = "",
+  style = {},
   "aria-hidden": ariaHidden = true,
 }) => (
   <i
@@ -24,6 +26,7 @@ export const TablerIcon: React.FC<TablerIconProps> = ({
       display: "inline-flex",
       alignItems: "center",
       justifyContent: "center",
+      ...style,
     }}
     aria-hidden={ariaHidden}
   />

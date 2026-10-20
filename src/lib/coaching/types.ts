@@ -104,6 +104,7 @@ export type CoachClassLedgerEntry = {
     | "TRANSFER_IN"
     | "TRANSFER_OUT";
   notas: string | null;
+  referenceLedgerId?: string | null;
   idempotencyKey: string | null;
   recordedBy: string;
   createdAt: string;
@@ -241,8 +242,19 @@ export type ClubCoachDetailLedgerEntry = {
   delta: number;
   tipo: string;
   notas: string | null;
+  referenceLedgerId?: string | null;
   recordedBy: string;
   createdAt: string;
+};
+
+export type StudentCoachingUpcomingSession = {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  durationMinutes: number;
+  court?: string | null;
+  focus?: string | null;
+  status: string;
 };
 
 export type ClubCoachAuditEntry = {
@@ -346,3 +358,77 @@ export type ReassignStudentCoachResult = {
   message: string;
   error?: string;
 };
+
+export type CoachScheduledSession = {
+  id: string;
+  coachId: string;
+  coachNombre?: string;
+  coachCode?: string;
+  coachFoto?: string | null;
+  jugadorId: string;
+  jugadorNombre?: string;
+  jugadorFoto?: string | null;
+  rivieraId?: string;
+  relationshipId: string | null;
+  startsAt: string;
+  endsAt: string;
+  durationMinutes: number;
+  court: string | null;
+  focus: string | null;
+  notesSummary: string | null;
+  status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  workedOn?: string[];
+  cancellationReason?: string | null;
+  revertedAt?: string | null;
+  balanceClasses?: number;
+  createdAt: string;
+};
+
+export type AdjustCoachStudentClassesResult = {
+  ok: boolean;
+  adjustmentId?: string;
+  delta?: number;
+  newBalance?: number;
+  message?: string;
+  idempotent?: boolean;
+  error?: string;
+};
+
+export type RevertCoachClassSessionResult = {
+  ok: boolean;
+  adjustmentId?: string;
+  newBalance?: number;
+  totalClassesGiven?: number;
+  message?: string;
+  error?: string;
+};
+
+export type ScheduleCoachClassResult = {
+  ok: boolean;
+  sessionId?: string;
+  startsAt?: string;
+  endsAt?: string;
+  durationMinutes?: number;
+  court?: string | null;
+  message?: string;
+  error?: string;
+};
+
+export type RescheduleCoachClassResult = {
+  ok: boolean;
+  sessionId?: string;
+  startsAt?: string;
+  endsAt?: string;
+  durationMinutes?: number;
+  court?: string | null;
+  message?: string;
+  error?: string;
+};
+
+export type CancelCoachClassResult = {
+  ok: boolean;
+  sessionId?: string;
+  message?: string;
+  error?: string;
+};
+
