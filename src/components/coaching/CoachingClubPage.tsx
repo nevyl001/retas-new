@@ -11,7 +11,9 @@ import {
   assignCoachClasses,
   fetchClubClassLedger,
   generateCoachingIdempotencyKey,
+  fetchCurrentCoachProfile,
 } from "../../lib/coaching/coachingApi";
+import { ClubCoachDetailView } from "./ClubCoachDetailView";
 import {
   COACH_ESPECIALIDADES_ORDER,
   COACH_FUERZAS_ORDER,
@@ -21,6 +23,7 @@ import type {
   CoachingClubSnapshot,
   CoachingPlayerLink,
   CoachClassLedgerEntry,
+  CoachMembershipStatus,
 } from "../../lib/coaching/types";
 import type {
   EnCancha,
@@ -89,6 +92,11 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   const [coachModalTab, setCoachModalTab] = useState<"nuevo" | "vincular">(
     "nuevo"
   );
+  const [selectedCoachId, setSelectedCoachId] = useState<string | null>(null);
+  const [coachStatusFilter, setCoachStatusFilter] = useState<
+    "ALL" | CoachMembershipStatus
+  >("ALL");
+  const [isCoachUser, setIsCoachUser] = useState<boolean>(false);
 
   // Control de clases y saldos de alumnos
   const [assigningLink, setAssigningLink] = useState<CoachingPlayerLink | null>(null);
@@ -198,6 +206,26 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    let active = true;
+    void fetchCurrentCoachProfile()
+      .then((p) => {
+        if (active) setIsCoachUser(Boolean(p));
+      })
+      .catch(() => {
+        if (active) setIsCoachUser(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (tab !== "coaches") {
+      setSelectedCoachId(null);
+    }
+  }, [tab]);
+
   const stats = useMemo(() => {
     const coaches = snapshot?.coaches.length ?? 0;
     const activeLinks =
@@ -206,6 +234,45 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
       snapshot?.links.filter((l) => l.status === "PAUSED").length ?? 0;
     return { coaches, activeLinks, paused };
   }, [snapshot]);
+
+  const coachCounts = useMemo(() => {
+    const all = snapshot?.coaches ?? [];
+    return {
+      ALL: all.filter((c) => c.membershipStatus !== "ARCHIVED").length,
+      ACTIVE: all.filter((c) => c.membershipStatus === "ACTIVE").length,
+      PENDING: all.filter((c) => c.membershipStatus === "PENDING").length,
+      INACTIVE: all.filter(
+        (c) =>
+          c.membershipStatus === "INACTIVE" ||
+          c.membershipStatus === "CANCELLED"
+      ).length,
+      ARCHIVED: all.filter((c) => c.membershipStatus === "ARCHIVED").length,
+    };
+  }, [snapshot]);
+
+  const filteredCoaches = useMemo(() => {
+    const all = snapshot?.coaches ?? [];
+    if (coachStatusFilter === "ALL") {
+      return all.filter((c) => c.membershipStatus !== "ARCHIVED");
+    }
+    if (coachStatusFilter === "ACTIVE") {
+      return all.filter((c) => c.membershipStatus === "ACTIVE");
+    }
+    if (coachStatusFilter === "PENDING") {
+      return all.filter((c) => c.membershipStatus === "PENDING");
+    }
+    if (coachStatusFilter === "INACTIVE") {
+      return all.filter(
+        (c) =>
+          c.membershipStatus === "INACTIVE" ||
+          c.membershipStatus === "CANCELLED"
+      );
+    }
+    if (coachStatusFilter === "ARCHIVED") {
+      return all.filter((c) => c.membershipStatus === "ARCHIVED");
+    }
+    return all;
+  }, [snapshot, coachStatusFilter]);
 
   const resetCoachForm = () => {
     setCoachNombre("");
@@ -389,15 +456,17 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
             <TablerIcon name="arrow-left" size={16} />
             Inicio
           </button>
-          <button
-            type="button"
-            className="coaching-back"
-            style={{ margin: 0 }}
-            onClick={() => navigateCoachPortal()}
-          >
-            <TablerIcon name="user-circle" size={16} />
-            Espacio del Coach
-          </button>
+          {isCoachUser ? (
+            <button
+              type="button"
+              className="coaching-back"
+              style={{ margin: 0 }}
+              onClick={() => navigateCoachPortal()}
+            >
+              <TablerIcon name="user-circle" size={16} />
+              Espacio del Coach
+            </button>
+          ) : null}
         </div>
         <p className="coaching-kicker">Riviera Coaching · {clubName || "Club"}</p>
         <h1 className="coaching-title">Riviera Coaching</h1>
@@ -563,169 +632,338 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
       ) : null}
 
       {!loading && tab === "coaches" ? (
-        <section className="coaching-panel" aria-label="Coaches">
-          <div className="coaching-section-header">
-            <div>
-              <h2 className="coaching-section-title">Coaches del club</h2>
-              <p className="coaching-section-desc">
-                Entrenadores dados de alta en la academia deportiva.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="coaching-btn coaching-btn--primary"
-              onClick={() => setIsCoachModalOpen(true)}
-            >
-              <TablerIcon name="plus" size={16} />
-              Nuevo coach
-            </button>
-          </div>
-
-          {(snapshot?.coaches ?? []).length === 0 ? (
-            <div className="coaching-empty-card">
-              <TablerIcon name="user-star" size={44} className="coaching-empty-icon" />
-              <h3>No hay coaches registrados</h3>
-              <p>
-                Comienza agregando el primer entrenador para asignarle alumnos y
-                organizar la academia de pádel.
-              </p>
+        selectedCoachId ? (
+          <ClubCoachDetailView
+            organizadorId={organizadorId}
+            coachId={selectedCoachId}
+            clubName={clubName || "Club"}
+            onBack={() => setSelectedCoachId(null)}
+            onCoachUpdated={async () => {
+              await refresh();
+            }}
+          />
+        ) : (
+          <section className="coaching-panel" aria-label="Coaches">
+            <div className="coaching-section-header">
+              <div>
+                <h2 className="coaching-section-title">Coaches del club</h2>
+                <p className="coaching-section-desc">
+                  Entrenadores dados de alta en la academia deportiva.
+                </p>
+              </div>
               <button
                 type="button"
                 className="coaching-btn coaching-btn--primary"
                 onClick={() => setIsCoachModalOpen(true)}
               >
                 <TablerIcon name="plus" size={16} />
-                Registrar primer coach
+                Nuevo coach
               </button>
             </div>
-          ) : (
-            <div className="coaching-grid">
-              {(snapshot?.coaches ?? []).map((c) => (
-                <article key={c.id} className="coaching-card">
-                  <div className="coaching-card__top">
-                    <div className="coaching-card__avatar" aria-hidden>
-                      {c.nombre.slice(0, 1).toUpperCase()}
-                    </div>
-                    <div className="coaching-card__identity">
-                      <h3 className="coaching-card__title">{c.nombre}</h3>
-                      <span className="coaching-card__code">
-                        {c.coachCode || "Código pendiente"}
-                      </span>
-                      <div className="coaching-card__meta">
-                        {c.categoria ? (
-                          <span className="coaching-card__meta-item">
-                            {JUGADOR_CATEGORIA_LABELS[c.categoria]}
-                          </span>
-                        ) : null}
-                        {c.paisCodigo ? (
-                          <span className="coaching-card__meta-item">
-                            · {c.paisCodigo}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                    {c.membershipStatus === "ACTIVE" ? (
-                      <span className="coaching-badge coaching-badge--active">
-                        Activo
-                      </span>
-                    ) : c.membershipStatus === "PENDING" ? (
-                      <span className="coaching-badge coaching-badge--pending">
-                        Invitación pendiente
-                      </span>
-                    ) : (
-                      <span className="coaching-badge coaching-badge--inactive">
-                        Inactivo
-                      </span>
-                    )}
-                  </div>
 
-                  {c.fuerzas.length > 0 ? (
-                    <div className="coaching-card__tags-section">
-                      <span className="coaching-card__tag-label">
-                        Entrena fuerzas
-                      </span>
-                      <div className="coaching-card__tags">
-                        {c.fuerzas.map((f) => (
-                          <span key={f} className="coaching-tag">
-                            {JUGADOR_CATEGORIA_LABELS[f] || f}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {c.especialidades.length > 0 ? (
-                    <div className="coaching-card__tags-section">
-                      <span className="coaching-card__tag-label">
-                        Especialidades
-                      </span>
-                      <div className="coaching-card__tags">
-                        {c.especialidades.map((esp) => (
-                          <span key={esp} className="coaching-tag">
-                            {esp}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="coaching-card__actions">
-                    {c.membershipStatus === "ACTIVE" ? (
-                      <button
-                        type="button"
-                        className="coaching-btn coaching-btn--secondary"
-                        onClick={() => {
-                          navigateCoaching(coachingTabPath("jugadores"));
-                        }}
-                      >
-                        <TablerIcon name="users" size={15} />
-                        Ver alumnos
-                      </button>
-                    ) : null}
-                    {c.membershipStatus === "ACTIVE" ? (
-                      <button
-                        type="button"
-                        className="coaching-btn coaching-btn--ghost"
-                        onClick={() =>
-                          handleToggleCoachStatus(c.id, "INACTIVE")
-                        }
-                        disabled={busy}
-                      >
-                        <TablerIcon name="user-off" size={15} />
-                        Desactivar
-                      </button>
-                    ) : c.membershipStatus === "PENDING" ? (
-                      <span
-                        className="coaching-badge coaching-badge--pending"
-                        style={{
-                          fontSize: "0.8rem",
-                          padding: "0.4rem 0.65rem",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.3rem",
-                        }}
-                      >
-                        <TablerIcon name="clock" size={14} />
-                        Pendiente de aceptación
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        className="coaching-btn coaching-btn--ghost"
-                        onClick={() =>
-                          handleToggleCoachStatus(c.id, "ACTIVE")
-                        }
-                        disabled={busy}
-                      >
-                        <TablerIcon name="user-check" size={15} />
-                        Reincorporar
-                      </button>
-                    )}
-                  </div>
-                </article>
+            {/* Filtros de estado */}
+            <div
+              style={{
+                display: "flex",
+                gap: "0.5rem",
+                flexWrap: "wrap",
+                marginBottom: "0.5rem",
+              }}
+            >
+              {[
+                { id: "ALL", label: "Todos", count: coachCounts.ALL },
+                { id: "ACTIVE", label: "Activos", count: coachCounts.ACTIVE },
+                {
+                  id: "PENDING",
+                  label: "Invitaciones pendientes",
+                  count: coachCounts.PENDING,
+                },
+                {
+                  id: "INACTIVE",
+                  label: "Inactivos",
+                  count: coachCounts.INACTIVE,
+                },
+                {
+                  id: "ARCHIVED",
+                  label: "Archivados",
+                  count: coachCounts.ARCHIVED,
+                },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  className={`coaching-chip${
+                    coachStatusFilter === f.id ? " is-on" : ""
+                  }`}
+                  onClick={() => setCoachStatusFilter(f.id as any)}
+                  style={{
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.45rem",
+                    padding: "0.35rem 0.8rem",
+                    fontSize: "0.82rem",
+                  }}
+                >
+                  <span>{f.label}</span>
+                  <span
+                    style={{
+                      fontSize: "0.72rem",
+                      padding: "0.1rem 0.45rem",
+                      borderRadius: "999px",
+                      background:
+                        coachStatusFilter === f.id
+                          ? "rgba(255,255,255,0.25)"
+                          : "rgba(255,255,255,0.08)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {f.count}
+                  </span>
+                </button>
               ))}
             </div>
-          )}
+
+            {filteredCoaches.length === 0 ? (
+              <div className="coaching-empty-card">
+                <TablerIcon
+                  name="user-star"
+                  size={44}
+                  className="coaching-empty-icon"
+                />
+                <h3>
+                  {coachStatusFilter === "ARCHIVED"
+                    ? "No hay entrenadores archivados"
+                    : coachStatusFilter === "PENDING"
+                    ? "No hay invitaciones pendientes"
+                    : coachStatusFilter === "INACTIVE"
+                    ? "No hay entrenadores inactivos"
+                    : "No hay coaches registrados"}
+                </h3>
+                <p>
+                  {coachStatusFilter === "ARCHIVED"
+                    ? "Los entrenadores archivados aparecerán aquí cuando decidas archivar membresías inactivas para limpiar la lista operativa."
+                    : coachStatusFilter === "PENDING"
+                    ? "Las invitaciones pendientes de aceptación aparecerán aquí."
+                    : coachStatusFilter === "INACTIVE"
+                    ? "Los entrenadores desactivados aparecerán aquí."
+                    : "Comienza agregando el primer entrenador para asignarle alumnos y organizar la academia de pádel."}
+                </p>
+                {coachStatusFilter !== "ARCHIVED" ? (
+                  <button
+                    type="button"
+                    className="coaching-btn coaching-btn--primary"
+                    onClick={() => setIsCoachModalOpen(true)}
+                  >
+                    <TablerIcon name="plus" size={16} />
+                    Registrar primer coach
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <div className="coaching-grid">
+                {filteredCoaches.map((c) => {
+                  const displayFuerzas =
+                    c.clubFuerzas && c.clubFuerzas.length > 0
+                      ? c.clubFuerzas
+                      : c.fuerzas;
+                  const displayEspecialidades =
+                    c.clubEspecialidades && c.clubEspecialidades.length > 0
+                      ? c.clubEspecialidades
+                      : c.especialidades;
+
+                  return (
+                    <article key={c.id} className="coaching-card">
+                      <div className="coaching-card__top">
+                        <div className="coaching-card__avatar" aria-hidden>
+                          {c.nombre.slice(0, 1).toUpperCase()}
+                        </div>
+                        <div className="coaching-card__identity">
+                          <h3 className="coaching-card__title">{c.nombre}</h3>
+                          <span className="coaching-card__code">
+                            {c.coachCode || "Código pendiente"}
+                          </span>
+                          <div className="coaching-card__meta">
+                            {c.categoria ? (
+                              <span className="coaching-card__meta-item">
+                                {JUGADOR_CATEGORIA_LABELS[c.categoria]}
+                              </span>
+                            ) : null}
+                            {c.paisCodigo ? (
+                              <span className="coaching-card__meta-item">
+                                · {c.paisCodigo}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                        {c.membershipStatus === "ACTIVE" ? (
+                          <span className="coaching-badge coaching-badge--active">
+                            Activo
+                          </span>
+                        ) : c.membershipStatus === "PENDING" ? (
+                          <span className="coaching-badge coaching-badge--pending">
+                            Invitación pendiente
+                          </span>
+                        ) : c.membershipStatus === "ARCHIVED" ? (
+                          <span
+                            className="coaching-badge"
+                            style={{
+                              background: "rgba(255, 255, 255, 0.06)",
+                              border: "1px solid rgba(255, 255, 255, 0.12)",
+                              color: "var(--ro-text-muted, #94a3b8)",
+                            }}
+                          >
+                            Archivado
+                          </span>
+                        ) : c.membershipStatus === "CANCELLED" ? (
+                          <span
+                            className="coaching-badge"
+                            style={{
+                              background: "rgba(239, 68, 68, 0.1)",
+                              border: "1px solid rgba(239, 68, 68, 0.25)",
+                              color: "#fca5a5",
+                            }}
+                          >
+                            Cancelado
+                          </span>
+                        ) : (
+                          <span className="coaching-badge coaching-badge--inactive">
+                            Inactivo
+                          </span>
+                        )}
+                      </div>
+
+                      {displayFuerzas.length > 0 ? (
+                        <div className="coaching-card__tags-section">
+                          <span className="coaching-card__tag-label">
+                            Entrena fuerzas
+                          </span>
+                          <div className="coaching-card__tags">
+                            {displayFuerzas.map((f) => (
+                              <span key={f} className="coaching-tag">
+                                {JUGADOR_CATEGORIA_LABELS[f] || f}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {displayEspecialidades.length > 0 ? (
+                        <div className="coaching-card__tags-section">
+                          <span className="coaching-card__tag-label">
+                            Especialidades
+                          </span>
+                          <div className="coaching-card__tags">
+                            {displayEspecialidades.map((esp) => (
+                              <span key={esp} className="coaching-tag">
+                                {esp}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {c.clubNotas ? (
+                        <div
+                          style={{
+                            fontSize: "0.8rem",
+                            color: "var(--ro-text-muted)",
+                            fontStyle: "italic",
+                            padding: "0.35rem 0.5rem",
+                            background: "rgba(255,255,255,0.03)",
+                            borderRadius: "6px",
+                          }}
+                        >
+                          "{c.clubNotas}"
+                        </div>
+                      ) : null}
+
+                      <div
+                        className="coaching-card__actions"
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "0.5rem",
+                        }}
+                      >
+                        <button
+                          type="button"
+                          className="coaching-btn coaching-btn--primary"
+                          onClick={() => setSelectedCoachId(c.id)}
+                        >
+                          <TablerIcon name="user-circle" size={16} />
+                          Ver panel del coach
+                        </button>
+
+                        {c.membershipStatus === "ACTIVE" ? (
+                          <>
+                            <button
+                              type="button"
+                              className="coaching-btn coaching-btn--secondary"
+                              onClick={() => {
+                                navigateCoaching(coachingTabPath("jugadores"));
+                              }}
+                            >
+                              <TablerIcon name="users" size={15} />
+                              Ver alumnos
+                            </button>
+                            <button
+                              type="button"
+                              className="coaching-btn coaching-btn--ghost"
+                              onClick={() =>
+                                handleToggleCoachStatus(c.id, "INACTIVE")
+                              }
+                              disabled={busy}
+                            >
+                              <TablerIcon name="user-off" size={15} />
+                              Desactivar
+                            </button>
+                          </>
+                        ) : c.membershipStatus === "PENDING" ? (
+                          <span
+                            className="coaching-badge coaching-badge--pending"
+                            style={{
+                              fontSize: "0.8rem",
+                              padding: "0.4rem 0.65rem",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.3rem",
+                            }}
+                          >
+                            <TablerIcon name="clock" size={14} />
+                            Pendiente de aceptación
+                          </span>
+                        ) : c.membershipStatus === "ARCHIVED" ? (
+                          <span
+                            className="coaching-badge"
+                            style={{
+                              fontSize: "0.8rem",
+                              padding: "0.4rem 0.65rem",
+                              background: "rgba(255,255,255,0.05)",
+                              color: "var(--ro-text-muted)",
+                            }}
+                          >
+                            Membresía archivada
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="coaching-btn coaching-btn--ghost"
+                            onClick={() =>
+                              handleToggleCoachStatus(c.id, "ACTIVE")
+                            }
+                            disabled={busy}
+                          >
+                            <TablerIcon name="user-check" size={15} />
+                            Reincorporar
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
 
           <Modal
             open={isCoachModalOpen}
@@ -1070,6 +1308,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
             )}
           </Modal>
         </section>
+        )
       ) : null}
 
       {!loading && tab === "jugadores" ? (

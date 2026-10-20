@@ -13,6 +13,7 @@ import type {
   CurrentCoachClubMembership,
   CurrentCoachProfile,
   InviteCoachResult,
+  ClubCoachDetail,
 } from "./types";
 
 function mapEdgeError(data: unknown, fallbackMessage: string): string {
@@ -35,6 +36,16 @@ export async function loadCoachingClubSnapshot(
       .select(
         `
         status,
+        invited_at,
+        activated_at,
+        deactivated_at,
+        cancelled_at,
+        archived_at,
+        club_fuerzas,
+        club_especialidades,
+        club_notas,
+        club_disponibilidad,
+        last_edited_at,
         coach:riviera_coaches (
           id,
           coach_code,
@@ -64,10 +75,19 @@ export async function loadCoachingClubSnapshot(
       .map((row) => {
         const coach = Array.isArray(row.coach) ? row.coach[0] : row.coach;
         if (!coach) return null;
-        const status: CoachMembershipStatus =
-          row.status === "ACTIVE" || row.status === "PENDING"
-            ? (row.status as CoachMembershipStatus)
-            : "INACTIVE";
+        const validStatuses: CoachMembershipStatus[] = [
+          "ACTIVE",
+          "PENDING",
+          "INACTIVE",
+          "CANCELLED",
+          "ARCHIVED",
+        ];
+        const status: CoachMembershipStatus = validStatuses.includes(
+          row.status as CoachMembershipStatus
+        )
+          ? (row.status as CoachMembershipStatus)
+          : "INACTIVE";
+
         return {
           id: String(coach.id),
           coachCode: String(coach.coach_code ?? ""),
@@ -81,6 +101,24 @@ export async function loadCoachingClubSnapshot(
             ? (coach.fuerzas as RivieraJugadorCategoria[])
             : [],
           membershipStatus: status,
+          clubFuerzas: Array.isArray(row.club_fuerzas)
+            ? (row.club_fuerzas as RivieraJugadorCategoria[])
+            : null,
+          clubEspecialidades: Array.isArray(row.club_especialidades)
+            ? (row.club_especialidades as string[])
+            : null,
+          clubNotas:
+            typeof row.club_notas === "string" ? row.club_notas : null,
+          clubDisponibilidad:
+            typeof row.club_disponibilidad === "string"
+              ? row.club_disponibilidad
+              : null,
+          invitedAt: row.invited_at ? String(row.invited_at) : null,
+          activatedAt: row.activated_at ? String(row.activated_at) : null,
+          deactivatedAt: row.deactivated_at ? String(row.deactivated_at) : null,
+          cancelledAt: row.cancelled_at ? String(row.cancelled_at) : null,
+          archivedAt: row.archived_at ? String(row.archived_at) : null,
+          lastEditedAt: row.last_edited_at ? String(row.last_edited_at) : null,
         };
       })
       .filter(Boolean) as CoachingClubSnapshot["coaches"];
@@ -1066,6 +1104,314 @@ export async function linkCoachStudentByClub(
     authUserId: typeof res.auth_user_id === "string" ? res.auth_user_id : undefined,
     nombre: typeof res.nombre === "string" ? res.nombre : undefined,
     message: typeof res.message === "string" ? res.message : undefined,
+  };
+}
+
+/**
+ * Consulta el detalle administrativo completo de un coach para un club específico.
+ * Devuelve identidad, configuración local, alumnos vinculados, historial de clases y sesiones.
+ */
+export async function fetchClubCoachDetail(
+  organizadorId: string,
+  coachId: string
+): Promise<ClubCoachDetail> {
+  const { data, error } = await supabase.rpc("get_club_coach_detail", {
+    p_organizador_id: organizadorId,
+    p_coach_id: coachId,
+  });
+
+  if (error) {
+    console.error("[coaching] error fetching club coach detail:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(
+      typeof res?.error === "string"
+        ? res.error
+        : "No se pudo cargar el panel del coach."
+    );
+  }
+
+  return {
+    ok: true,
+    coach: {
+      id: String(res.coach?.id ?? ""),
+      coachCode: String(res.coach?.coach_code ?? ""),
+      nombre: String(res.coach?.nombre ?? "Coach"),
+      email: res.coach?.email ? String(res.coach.email) : null,
+      fotoUrl: res.coach?.foto_url ? String(res.coach.foto_url) : null,
+      bio: res.coach?.bio ? String(res.coach.bio) : null,
+      filosofia: res.coach?.filosofia ? String(res.coach.filosofia) : null,
+      certificaciones: res.coach?.certificaciones
+        ? String(res.coach.certificaciones)
+        : null,
+      experiencia: res.coach?.experiencia
+        ? String(res.coach.experiencia)
+        : null,
+      especialidades: Array.isArray(res.coach?.especialidades)
+        ? res.coach.especialidades
+        : [],
+      fuerzas: Array.isArray(res.coach?.fuerzas)
+        ? (res.coach.fuerzas as RivieraJugadorCategoria[])
+        : [],
+      createdAt: String(res.coach?.created_at ?? ""),
+    },
+    membership: {
+      id: String(res.membership?.id ?? ""),
+      status: (res.membership?.status as CoachMembershipStatus) || "INACTIVE",
+      invitedAt: res.membership?.invited_at
+        ? String(res.membership.invited_at)
+        : null,
+      activatedAt: res.membership?.activated_at
+        ? String(res.membership.activated_at)
+        : null,
+      deactivatedAt: res.membership?.deactivated_at
+        ? String(res.membership.deactivated_at)
+        : null,
+      cancelledAt: res.membership?.cancelled_at
+        ? String(res.membership.cancelled_at)
+        : null,
+      archivedAt: res.membership?.archived_at
+        ? String(res.membership.archived_at)
+        : null,
+      clubFuerzas: Array.isArray(res.membership?.club_fuerzas)
+        ? (res.membership.club_fuerzas as RivieraJugadorCategoria[])
+        : null,
+      clubEspecialidades: Array.isArray(res.membership?.club_especialidades)
+        ? (res.membership.club_especialidades as string[])
+        : null,
+      clubNotas:
+        typeof res.membership?.club_notas === "string"
+          ? res.membership.club_notas
+          : null,
+      clubDisponibilidad:
+        typeof res.membership?.club_disponibilidad === "string"
+          ? res.membership.club_disponibilidad
+          : null,
+      lastEditedAt: res.membership?.last_edited_at
+        ? String(res.membership.last_edited_at)
+        : null,
+      createdAt: String(res.membership?.created_at ?? ""),
+    },
+    club: {
+      id: String(res.club?.id ?? organizadorId),
+      nombre: String(res.club?.nombre ?? "Club"),
+      brandingKey: res.club?.branding_key
+        ? String(res.club.branding_key)
+        : null,
+    },
+    students: Array.isArray(res.students)
+      ? res.students.map((s: any) => ({
+          relationshipId: String(s.relationship_id ?? ""),
+          jugadorId: String(s.jugador_id ?? ""),
+          nombre: String(s.nombre ?? "Alumno"),
+          fotoUrl: s.foto_url ? String(s.foto_url) : null,
+          categoria: s.categoria ? String(s.categoria) : null,
+          rama: s.rama ? String(s.rama) : null,
+          genero: s.genero ? String(s.genero) : null,
+          rivieraId: String(s.riviera_id ?? ""),
+          isPrimary: Boolean(s.is_primary),
+          status: String(s.status ?? "ACTIVE"),
+          startedAt: String(s.started_at ?? ""),
+          balanceClasses: Number(s.balance_classes ?? 0),
+          totalClassesGiven: Number(s.total_classes_given ?? 0),
+          updatedAt: s.updated_at ? String(s.updated_at) : null,
+        }))
+      : [],
+    sessions: Array.isArray(res.sessions)
+      ? res.sessions.map((s: any) => ({
+          id: String(s.id ?? ""),
+          relationshipId: s.relationship_id ? String(s.relationship_id) : null,
+          jugadorNombre: String(s.jugador_nombre ?? "Alumno"),
+          startsAt: String(s.starts_at ?? ""),
+          endsAt: s.ends_at ? String(s.ends_at) : null,
+          durationMinutes:
+            s.duration_minutes != null ? Number(s.duration_minutes) : null,
+          focus: s.focus ? String(s.focus) : null,
+          workedOn: Array.isArray(s.worked_on) ? s.worked_on : [],
+          notesSummary: s.notes_summary ? String(s.notes_summary) : null,
+          status: String(s.status ?? "COMPLETED"),
+          createdAt: String(s.created_at ?? ""),
+        }))
+      : [],
+    ledger: Array.isArray(res.ledger)
+      ? res.ledger.map((l: any) => ({
+          id: String(l.id ?? ""),
+          relationshipId: l.relationship_id ? String(l.relationship_id) : null,
+          jugadorId: String(l.jugador_id ?? ""),
+          jugadorNombre: String(l.jugador_nombre ?? "Alumno"),
+          delta: Number(l.delta ?? 0),
+          tipo: String(l.tipo ?? ""),
+          notas: l.notas ? String(l.notas) : null,
+          recordedBy: String(l.recorded_by ?? ""),
+          createdAt: String(l.created_at ?? ""),
+        }))
+      : [],
+    auditLog: Array.isArray(res.audit_log)
+      ? res.audit_log.map((a: any) => ({
+          id: String(a.id ?? ""),
+          action: String(a.action ?? ""),
+          previousStatus: a.previous_status ? String(a.previous_status) : null,
+          newStatus: a.new_status ? String(a.new_status) : null,
+          details:
+            a.details && typeof a.details === "object" ? a.details : {},
+          createdAt: String(a.created_at ?? ""),
+        }))
+      : [],
+    stats: {
+      totalStudents: Number(res.stats?.total_students ?? 0),
+      activeStudents: Number(res.stats?.active_students ?? 0),
+      totalClassesAssigned: Number(res.stats?.total_classes_assigned ?? 0),
+      totalClassesGiven: Number(res.stats?.total_classes_given ?? 0),
+      currentBalance: Number(res.stats?.current_balance ?? 0),
+    },
+  };
+}
+
+/**
+ * Actualiza la configuración propia del club para un coach.
+ * Modifica exclusivamente los campos de la relación local sin alterar la identidad global.
+ */
+export async function updateCoachClubMembershipSettings(
+  organizadorId: string,
+  coachId: string,
+  settings: {
+    fuerzas?: RivieraJugadorCategoria[];
+    especialidades?: string[];
+    notas?: string;
+    disponibilidad?: string;
+  }
+): Promise<{ ok: boolean; message: string }> {
+  const { data, error } = await supabase.rpc(
+    "update_coach_club_membership_settings",
+    {
+      p_organizador_id: organizadorId,
+      p_coach_id: coachId,
+      p_club_fuerzas: settings.fuerzas || null,
+      p_club_especialidades: settings.especialidades || null,
+      p_club_notas: settings.notas || null,
+      p_club_disponibilidad: settings.disponibilidad || null,
+    }
+  );
+
+  if (error) {
+    console.error("[coaching] error updating membership settings:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(
+      typeof res?.error === "string"
+        ? res.error
+        : "No se pudo actualizar la configuración del entrenador."
+    );
+  }
+
+  return {
+    ok: true,
+    message: String(res.message ?? "Configuración actualizada exitosamente."),
+  };
+}
+
+/**
+ * Cancela una invitación pendiente de un coach a este club.
+ */
+export async function cancelCoachClubInvitation(
+  organizadorId: string,
+  coachId: string
+): Promise<{ ok: boolean; message: string; status: CoachMembershipStatus }> {
+  const { data, error } = await supabase.rpc("cancel_coach_club_invitation", {
+    p_organizador_id: organizadorId,
+    p_coach_id: coachId,
+  });
+
+  if (error) {
+    console.error("[coaching] error cancelling invitation:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(
+      typeof res?.error === "string"
+        ? res.error
+        : "No se pudo cancelar la invitación."
+    );
+  }
+
+  return {
+    ok: true,
+    status: (res.status as CoachMembershipStatus) || "CANCELLED",
+    message: String(res.message ?? "Invitación cancelada exitosamente."),
+  };
+}
+
+/**
+ * Archiva a un entrenador inactivo o cancelado para ocultarlo de la lista principal.
+ */
+export async function archiveCoachFromClub(
+  organizadorId: string,
+  coachId: string
+): Promise<{ ok: boolean; message: string; status: CoachMembershipStatus }> {
+  const { data, error } = await supabase.rpc("archive_coach_from_club", {
+    p_organizador_id: organizadorId,
+    p_coach_id: coachId,
+  });
+
+  if (error) {
+    console.error("[coaching] error archiving coach:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(
+      typeof res?.error === "string"
+        ? res.error
+        : "No se pudo archivar al entrenador."
+    );
+  }
+
+  return {
+    ok: true,
+    status: (res.status as CoachMembershipStatus) || "ARCHIVED",
+    message: String(res.message ?? "Entrenador archivado exitosamente."),
+  };
+}
+
+/**
+ * Restaura a un entrenador archivado a la lista de inactivos.
+ */
+export async function unarchiveCoachFromClub(
+  organizadorId: string,
+  coachId: string
+): Promise<{ ok: boolean; message: string; status: CoachMembershipStatus }> {
+  const { data, error } = await supabase.rpc("unarchive_coach_from_club", {
+    p_organizador_id: organizadorId,
+    p_coach_id: coachId,
+  });
+
+  if (error) {
+    console.error("[coaching] error unarchiving coach:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(
+      typeof res?.error === "string"
+        ? res.error
+        : "No se pudo desarchivar al entrenador."
+    );
+  }
+
+  return {
+    ok: true,
+    status: (res.status as CoachMembershipStatus) || "INACTIVE",
+    message: String(res.message ?? "Entrenador desarchivado exitosamente."),
   };
 }
 

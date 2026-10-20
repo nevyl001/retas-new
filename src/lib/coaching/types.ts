@@ -5,7 +5,12 @@ import type {
 } from "../rivieraJugadores/types";
 import type { RivieraJugadorGenero } from "../rivieraJugadores/genero";
 
-export type CoachMembershipStatus = "ACTIVE" | "INACTIVE" | "PENDING";
+export type CoachMembershipStatus =
+  | "ACTIVE"
+  | "INACTIVE"
+  | "PENDING"
+  | "CANCELLED"
+  | "ARCHIVED";
 export type CoachPlayerStatus = "ACTIVE" | "PAUSED" | "ENDED";
 
 /** Alta / edición de coach (mismo núcleo que jugador + campos coach). */
@@ -44,6 +49,16 @@ export type CoachingCoach = {
   especialidades: string[];
   fuerzas: RivieraJugadorCategoria[];
   membershipStatus: CoachMembershipStatus;
+  clubFuerzas?: RivieraJugadorCategoria[] | null;
+  clubEspecialidades?: string[] | null;
+  clubNotas?: string | null;
+  clubDisponibilidad?: string | null;
+  invitedAt?: string | null;
+  activatedAt?: string | null;
+  deactivatedAt?: string | null;
+  cancelledAt?: string | null;
+  archivedAt?: string | null;
+  lastEditedAt?: string | null;
 };
 
 export type CoachingPlayerLink = {
@@ -151,5 +166,107 @@ export type CurrentCoachProfile = {
   especialidades: string[];
   fuerzas: RivieraJugadorCategoria[];
   memberships: CurrentCoachClubMembership[];
+};
+
+export type ClubCoachDetailStudent = {
+  relationshipId: string;
+  jugadorId: string;
+  nombre: string;
+  fotoUrl: string | null;
+  categoria: string | null;
+  rama: string | null;
+  genero: string | null;
+  rivieraId: string;
+  isPrimary: boolean;
+  status: string;
+  startedAt: string;
+  balanceClasses: number;
+  totalClassesGiven: number;
+  updatedAt: string | null;
+};
+
+export type ClubCoachDetailSession = {
+  id: string;
+  relationshipId: string | null;
+  jugadorNombre: string;
+  startsAt: string;
+  endsAt: string | null;
+  durationMinutes: number | null;
+  focus: string | null;
+  workedOn: string[];
+  notesSummary: string | null;
+  status: string;
+  createdAt: string;
+};
+
+export type ClubCoachDetailLedgerEntry = {
+  id: string;
+  relationshipId: string | null;
+  jugadorId: string;
+  jugadorNombre: string;
+  delta: number;
+  tipo: string;
+  notas: string | null;
+  recordedBy: string;
+  createdAt: string;
+};
+
+export type ClubCoachAuditEntry = {
+  id: string;
+  action: string;
+  previousStatus: string | null;
+  newStatus: string | null;
+  details: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type ClubCoachDetail = {
+  ok: boolean;
+  error?: string;
+  coach: {
+    id: string;
+    coachCode: string;
+    nombre: string;
+    email: string | null;
+    fotoUrl: string | null;
+    bio: string | null;
+    filosofia: string | null;
+    certificaciones: string | null;
+    experiencia: string | null;
+    especialidades: string[];
+    fuerzas: RivieraJugadorCategoria[];
+    createdAt: string;
+  };
+  membership: {
+    id: string;
+    status: CoachMembershipStatus;
+    invitedAt: string | null;
+    activatedAt: string | null;
+    deactivatedAt: string | null;
+    cancelledAt: string | null;
+    archivedAt: string | null;
+    clubFuerzas: RivieraJugadorCategoria[] | null;
+    clubEspecialidades: string[] | null;
+    clubNotas: string | null;
+    clubDisponibilidad: string | null;
+    lastEditedAt: string | null;
+    createdAt: string;
+  };
+  club: {
+    id: string;
+    nombre: string;
+    brandingKey: string | null;
+  };
+  students: ClubCoachDetailStudent[];
+  sessions: ClubCoachDetailSession[];
+  ledger: ClubCoachDetailLedgerEntry[];
+  auditLog: ClubCoachAuditEntry[];
+  stats: {
+    totalStudents: number;
+    activeStudents: number;
+    totalClassesAssigned: number;
+    totalClassesGiven: number;
+    currentBalance: number;
+  };
 };
 
