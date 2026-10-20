@@ -147,6 +147,7 @@ export type InviteCoachResult = {
   coachCode: string;
   isNewUser: boolean;
   initialPassword?: string | null;
+  verificationUrl?: string | null;
   membershipStatus: CoachMembershipStatus;
   message?: string;
   alreadyMember?: boolean;

@@ -53,6 +53,7 @@ import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import { buildMarketingOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
 import { buildPublicRankingUrl, navigatePublicJugadores } from "./jugadoresPublicNav";
+import { fetchStudentCoachingOverview } from "../../lib/coaching/coachingApi";
 import "./riviera-jugadores-public-ficha.css";
 
 interface JugadorPublicFichaProps {
@@ -165,6 +166,12 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   /** Sube tras prefetch de nombres de club para refrescar labels (Hackpadel ≠ Riviera Open). */
   const [clubLabelsEpoch, setClubLabelsEpoch] = useState(0);
+  const [coachingBannerInfo, setCoachingBannerInfo] = useState<{
+    active: boolean;
+    coachName?: string;
+    clubName?: string;
+    balance?: number;
+  } | null>(null);
   const nextLoadToken = useLatestGuard();
 
   const load = useCallback(async () => {
@@ -285,6 +292,68 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    if (!user || !jugador) {
+      setCoachingBannerInfo(null);
+      return;
+    }
+
+    const checkCoaching = async () => {
+      try {
+        const overview = await fetchStudentCoachingOverview();
+        if (isCancelled) return;
+        if (
+          !overview.ok ||
+          !overview.linked ||
+          !overview.relationships ||
+          overview.relationships.length === 0
+        ) {
+          setCoachingBannerInfo(null);
+          return;
+        }
+
+        // Titularidad comprobada: solo se muestra si el usuario autenticado es el titular de la ficha
+        const isTitular =
+          (Boolean(overview.rivieraId) && Boolean(jugador.riviera_id) && overview.rivieraId === jugador.riviera_id) ||
+          overview.relationships.some(
+            (r) =>
+              r.player.id === jugador.id ||
+              (Boolean(r.player.rivieraId) && Boolean(jugador.riviera_id) && r.player.rivieraId === jugador.riviera_id)
+          ) ||
+          (Boolean(identity?.rivieraId) && overview.rivieraId === identity?.rivieraId) ||
+          (identity?.linkedJugadorIds?.some((lid) =>
+            overview.relationships.some((r) => r.player.id === lid)
+          ) ?? false);
+
+        if (!isTitular) {
+          setCoachingBannerInfo(null);
+          return;
+        }
+
+        const primaryRel =
+          overview.relationships.find((r) => r.isPrimary) ||
+          overview.relationships[0];
+
+        setCoachingBannerInfo({
+          active: true,
+          coachName: primaryRel?.coach.nombre,
+          clubName: primaryRel?.club.nombre,
+          balance: primaryRel?.balance.balanceClasses,
+        });
+      } catch {
+        if (!isCancelled) {
+          setCoachingBannerInfo(null);
+        }
+      }
+    };
+
+    void checkCoaching();
+    return () => {
+      isCancelled = true;
+    };
+  }, [user, jugador, identity]);
 
   const rankingUrl = hasOrgContext
     ? buildPublicRankingUrl(
@@ -636,6 +705,121 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
               />
             </div>
           </section>
+
+          {/* BANNER PRIVADO Y VERIFICADO: RIVIERA COACHING */}
+          {coachingBannerInfo && (
+            <section
+              className="rjp-ficha-coaching-banner"
+              aria-label="Acceso privado a Riviera Coaching"
+              style={{
+                margin: "1.25rem 0",
+                background: "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.98) 100%)",
+                border: "1px solid rgba(56, 189, 248, 0.4)",
+                borderRadius: "12px",
+                padding: "1.25rem 1.5rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "1rem",
+                boxShadow: "0 8px 24px rgba(0, 0, 0, 0.35)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "1rem", minWidth: "260px", flex: 1 }}>
+                <div
+                  style={{
+                    width: "48px",
+                    height: "48px",
+                    borderRadius: "10px",
+                    background: "linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(14, 165, 233, 0.35) 100%)",
+                    border: "1px solid rgba(56, 189, 248, 0.45)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#38bdf8",
+                    flexShrink: 0,
+                  }}
+                >
+                  <TablerIcon name="certificate" size={26} />
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                    <span
+                      style={{
+                        fontSize: "0.75rem",
+                        fontWeight: 800,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
+                        color: "#38bdf8",
+                      }}
+                    >
+                      RIVIERA COACHING • VER MI COACHING
+                    </span>
+                    {coachingBannerInfo.balance != null && (
+                      <span
+                        style={{
+                          fontSize: "0.72rem",
+                          padding: "0.15rem 0.55rem",
+                          borderRadius: "12px",
+                          background: coachingBannerInfo.balance > 0 ? "rgba(16, 185, 129, 0.2)" : "rgba(245, 158, 11, 0.2)",
+                          color: coachingBannerInfo.balance > 0 ? "#34d399" : "#fbbf24",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {coachingBannerInfo.balance} {coachingBannerInfo.balance === 1 ? "clase disponible" : "clases disponibles"}
+                      </span>
+                    )}
+                  </div>
+                  <h3
+                    style={{
+                      margin: "0.25rem 0 0.15rem",
+                      fontSize: "1.05rem",
+                      fontWeight: 700,
+                      color: "#ffffff",
+                    }}
+                  >
+                    {coachingBannerInfo.coachName
+                      ? `Entrenador: ${coachingBannerInfo.coachName}${coachingBannerInfo.clubName ? ` • ${coachingBannerInfo.clubName}` : ""}`
+                      : "Tu seguimiento deportivo oficial"}
+                  </h3>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "0.85rem",
+                      color: "var(--ro-text-secondary, #94a3b8)",
+                    }}
+                  >
+                    Consulta tus clases asignadas, historial de sesiones impartidas y notas de seguimiento.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--primary"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "0.65rem 1.35rem",
+                  fontSize: "0.9rem",
+                  fontWeight: 700,
+                  borderRadius: "8px",
+                  background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+                  color: "#ffffff",
+                  border: "none",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 14px rgba(14, 165, 233, 0.35)",
+                }}
+                onClick={() => {
+                  window.location.href = "/coaching/mi-coaching";
+                }}
+              >
+                <TablerIcon name="arrow-right" size={16} />
+                Ver Mi Coaching
+              </button>
+            </section>
+          )}
 
           {jugador && (
             <JugadorRewardsPanel

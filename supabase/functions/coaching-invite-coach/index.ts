@@ -251,12 +251,19 @@ Deno.serve(async (req: Request) => {
     let targetUserId = "";
     let isNewUser = false;
     let initialPassword: string | null = null;
+    let verificationUrl: string | null = null;
 
     if (existingUser?.id) {
       targetUserId = existingUser.id;
       isNewUser = false;
     } else {
-      // 5. Crear cuenta con contraseña criptográfica definitiva en Supabase Auth
+      const siteUrl = (
+        Deno.env.get("SITE_URL") ||
+        Deno.env.get("PUBLIC_SITE_URL") ||
+        req.headers.get("origin") ||
+        "https://appriviera.rivieraopen.com"
+      ).replace(/\/$/, "");
+
       const generatedPassword = generateSecurePassword();
 
       const { data: createData, error: initialCreateError } =
@@ -264,6 +271,11 @@ Deno.serve(async (req: Request) => {
           email,
           password: generatedPassword,
           email_confirm: true,
+          app_metadata: {
+            role: "coach",
+            account_type: "COACH_ONLY",
+            roles: ["coach"],
+          },
           user_metadata: {
             name: nombre,
             account_type: "COACH_ONLY",
@@ -310,6 +322,40 @@ Deno.serve(async (req: Request) => {
         targetUserId = createData.user.id;
         isNewUser = true;
         initialPassword = generatedPassword;
+
+        try {
+          const { data: mlData, error: mlErr } =
+            await supabaseAdmin.auth.admin.generateLink({
+              type: "magiclink",
+              email,
+              options: {
+                redirectTo: `${siteUrl}/auth/callback?next=/coaching/mi-espacio`,
+              },
+            });
+          if (!mlErr && mlData?.properties?.action_link) {
+            verificationUrl = mlData.properties.action_link;
+          } else {
+            const { data: suData } =
+              await supabaseAdmin.auth.admin.generateLink({
+                type: "signup",
+                email,
+                password: generatedPassword,
+                options: {
+                  redirectTo: `${siteUrl}/auth/callback?next=/coaching/mi-espacio`,
+                },
+              });
+            if (suData?.properties?.action_link) {
+              verificationUrl = suData.properties.action_link;
+            }
+          }
+        } catch (linkEx) {
+          logWarn({
+            correlationId,
+            module: MODULE,
+            event: "generate_link_warn",
+            detail: String(linkEx),
+          });
+        }
       }
 
       // Sincronizar o crear fila en public.users de forma idempotente
@@ -514,6 +560,7 @@ Deno.serve(async (req: Request) => {
       coachCode: coachRecord.coach_code,
       isNewUser,
       initialPassword: isNewUser ? initialPassword : null,
+      verificationUrl: isNewUser ? verificationUrl : null,
       membershipStatus: "PENDING",
       message: isNewUser
         ? `Cuenta creada exitosamente para ${email}. Código de coach oficial asignado: ${coachRecord.coach_code}.`

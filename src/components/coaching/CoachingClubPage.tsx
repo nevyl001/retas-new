@@ -106,8 +106,10 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     coachCode: string;
     email: string;
     password: string;
+    verificationUrl?: string | null;
   } | null>(null);
   const [copiedPassword, setCopiedPassword] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
 
   // Eliminación de coach del club (desde cualquier estado)
@@ -354,6 +356,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
           coachCode: res.coachCode,
           email,
           password: res.initialPassword,
+          verificationUrl: res.verificationUrl ?? null,
         });
       } else {
         setSuccessMessage(
@@ -1885,6 +1888,54 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                   </button>
                 </div>
               </div>
+
+              {createdCoachCredentials.verificationUrl && (
+                <div>
+                  <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ro-text-muted)", letterSpacing: "0.05em" }}>
+                    Enlace de activación rápida (acceso directo)
+                  </span>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      background: "rgba(0, 0, 0, 0.35)",
+                      padding: "0.5rem 0.75rem",
+                      borderRadius: "6px",
+                      marginTop: "0.25rem",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "monospace",
+                        fontSize: "0.8rem",
+                        color: "#38bdf8",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        flex: 1,
+                      }}
+                      title={createdCoachCredentials.verificationUrl}
+                    >
+                      {createdCoachCredentials.verificationUrl}
+                    </span>
+                    <button
+                      type="button"
+                      className="coaching-btn coaching-btn--secondary"
+                      style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem", flexShrink: 0 }}
+                      onClick={() => {
+                        navigator.clipboard.writeText(createdCoachCredentials.verificationUrl!);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                    >
+                      <TablerIcon name={copiedLink ? "check" : "copy"} size={14} />
+                      {copiedLink ? "Copiado" : "Copiar"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
@@ -1892,7 +1943,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                 type="button"
                 className="coaching-btn coaching-btn--secondary"
                 onClick={() => {
-                  const text = `Credenciales de Riviera Coaching:\nNombre: ${createdCoachCredentials.nombre}\nCódigo: ${createdCoachCredentials.coachCode}\nEmail: ${createdCoachCredentials.email}\nContraseña: ${createdCoachCredentials.password}\nAcceso: https://appriviera.rivieraopen.com/coaching/mi-espacio`;
+                  const text = `Credenciales de Riviera Coaching:\nNombre: ${createdCoachCredentials.nombre}\nCódigo: ${createdCoachCredentials.coachCode}\nEmail: ${createdCoachCredentials.email}\nContraseña: ${createdCoachCredentials.password}\nAcceso: https://appriviera.rivieraopen.com/coaching/mi-espacio${createdCoachCredentials.verificationUrl ? `\nEnlace directo: ${createdCoachCredentials.verificationUrl}` : ""}`;
                   navigator.clipboard.writeText(text);
                   setCopiedAll(true);
                   setTimeout(() => setCopiedAll(false), 2000);

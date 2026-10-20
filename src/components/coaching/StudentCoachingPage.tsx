@@ -93,6 +93,16 @@ export const StudentCoachingPage: React.FC = () => {
     }
   };
 
+  const handleBack = () => {
+    if (overview?.rivieraId) {
+      window.location.href = `/ranking/jugador/${overview.rivieraId}`;
+    } else if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigateToAppHome();
+    }
+  };
+
   // 1. Estado de carga
   if (userLoading || loading) {
     return (
@@ -101,10 +111,10 @@ export const StudentCoachingPage: React.FC = () => {
           <button
             type="button"
             className="coaching-back"
-            onClick={() => navigateToAppHome()}
+            onClick={handleBack}
           >
             <TablerIcon name="arrow-left" size={16} />
-            Inicio
+            {overview?.rivieraId ? "Volver a mi Ficha" : "Inicio"}
           </button>
           <p className="coaching-kicker">Riviera Coaching</p>
           <h1 className="coaching-title">Mi Coaching</h1>
@@ -122,10 +132,10 @@ export const StudentCoachingPage: React.FC = () => {
           <button
             type="button"
             className="coaching-back"
-            onClick={() => navigateToAppHome()}
+            onClick={handleBack}
           >
             <TablerIcon name="arrow-left" size={16} />
-            Inicio
+            {overview?.rivieraId ? "Volver a mi Ficha" : "Inicio"}
           </button>
           <p className="coaching-kicker">Riviera Coaching</p>
           <h1 className="coaching-title">Mi Coaching</h1>
@@ -159,10 +169,10 @@ export const StudentCoachingPage: React.FC = () => {
           <button
             type="button"
             className="coaching-back"
-            onClick={() => navigateToAppHome()}
+            onClick={handleBack}
           >
             <TablerIcon name="arrow-left" size={16} />
-            Inicio
+            {overview?.rivieraId ? "Volver a mi Ficha" : "Inicio"}
           </button>
           <p className="coaching-kicker">Riviera Coaching</p>
           <h1 className="coaching-title">Mi Coaching</h1>
@@ -187,6 +197,9 @@ export const StudentCoachingPage: React.FC = () => {
   }
 
   const relationships = overview?.relationships ?? [];
+  const primaryRel = relationships.find((r) => r.isPrimary) || relationships[0];
+  const primaryPlayer = primaryRel?.player;
+  const effectiveRivieraId = overview?.rivieraId || primaryPlayer?.rivieraId;
 
   return (
     <div className="coaching-page rv-page">
@@ -194,35 +207,89 @@ export const StudentCoachingPage: React.FC = () => {
         <button
           type="button"
           className="coaching-back"
-          onClick={() => navigateToAppHome()}
+          onClick={handleBack}
         >
           <TablerIcon name="arrow-left" size={16} />
-          Inicio
+          {effectiveRivieraId ? "Volver a mi Ficha" : "Inicio"}
         </button>
         <p className="coaching-kicker">Riviera Coaching • Experiencia del Alumno</p>
-        <div className="coaching-header-row">
-          <div>
-            <h1 className="coaching-title">Mi Coaching</h1>
-            <p className="coaching-lead">
-              Supervisa tus paquetes de clases, consulta los comentarios de tu
-              entrenador y revisa el registro oficial de cada sesión impartida.
-            </p>
+        <div className="coaching-header-row" style={{ marginTop: "0.75rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", flex: 1, minWidth: "260px" }}>
+            {primaryPlayer?.fotoUrl ? (
+              <img
+                src={primaryPlayer.fotoUrl}
+                alt={primaryPlayer.nombre}
+                style={{
+                  width: "56px",
+                  height: "56px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid #38bdf8",
+                  boxShadow: "0 4px 12px rgba(56, 189, 248, 0.25)",
+                  flexShrink: 0,
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: "56px",
+                  height: "56px",
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
+                  color: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1.25rem",
+                  fontWeight: 700,
+                  border: "2px solid #38bdf8",
+                  flexShrink: 0,
+                }}
+              >
+                {(primaryPlayer?.nombre || user?.email || "A").slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <h1 className="coaching-title" style={{ margin: 0, fontSize: "1.6rem" }}>
+                {primaryPlayer?.nombre || "Mi Coaching"}
+              </h1>
+              <p className="coaching-lead" style={{ margin: "0.2rem 0 0", fontSize: "0.9rem" }}>
+                Supervisa tus paquetes de clases, consulta los comentarios de tu
+                entrenador y revisa el registro oficial de cada sesión impartida.
+              </p>
+            </div>
           </div>
 
-          {overview?.rivieraId && (
-            <div className="coaching-student-badge-pill" title="Tu Riviera ID Oficial">
-              <span className="coaching-student-badge-label">Riviera ID</span>
-              <strong className="coaching-student-badge-val">{overview.rivieraId}</strong>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+            {effectiveRivieraId && (
+              <div className="coaching-student-badge-pill" title="Tu Riviera ID Oficial">
+                <span className="coaching-student-badge-label">Riviera ID</span>
+                <strong className="coaching-student-badge-val">{effectiveRivieraId}</strong>
+                <button
+                  type="button"
+                  className="coaching-badge-copy-btn"
+                  onClick={() => handleCopyRivieraId(effectiveRivieraId)}
+                  aria-label="Copiar Riviera ID"
+                >
+                  <TablerIcon name={copiedRivieraId ? "check" : "copy"} size={14} />
+                </button>
+              </div>
+            )}
+
+            {effectiveRivieraId && (
               <button
                 type="button"
-                className="coaching-badge-copy-btn"
-                onClick={() => handleCopyRivieraId(overview.rivieraId!)}
-                aria-label="Copiar Riviera ID"
+                className="coaching-btn coaching-btn--secondary"
+                style={{ fontSize: "0.82rem", padding: "0.35rem 0.75rem", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+                onClick={() => {
+                  window.location.href = `/ranking/jugador/${effectiveRivieraId}`;
+                }}
               >
-                <TablerIcon name={copiedRivieraId ? "check" : "copy"} size={14} />
+                <TablerIcon name="user" size={15} />
+                Ver mi Ficha de Ranking
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </header>
 

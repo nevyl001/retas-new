@@ -269,6 +269,7 @@ export async function inviteClubCoach(
     coachCode?: string;
     isNewUser?: boolean;
     initialPassword?: string | null;
+    verificationUrl?: string | null;
     membershipStatus?: CoachMembershipStatus;
     message?: string;
     alreadyMember?: boolean;
@@ -322,6 +323,7 @@ export async function inviteClubCoach(
     coachCode: res.coachCode || "",
     isNewUser: res.isNewUser ?? false,
     initialPassword: res.initialPassword ?? null,
+    verificationUrl: res.verificationUrl ?? null,
     membershipStatus,
     message: res.message,
     alreadyMember: res.alreadyMember,
@@ -980,6 +982,7 @@ export interface StudentCoachingRelationship {
   player: {
     id: string;
     nombre: string;
+    fotoUrl?: string | null;
     rivieraId?: string | null;
   };
   balance: {
@@ -1043,6 +1046,7 @@ export async function fetchStudentCoachingOverview(): Promise<StudentCoachingOve
     player: {
       id: String(item.player?.id ?? ""),
       nombre: String(item.player?.nombre ?? "Alumno"),
+      fotoUrl: item.player?.foto_url ? String(item.player.foto_url) : null,
       rivieraId: item.player?.riviera_id ? String(item.player.riviera_id) : null,
     },
     balance: {
