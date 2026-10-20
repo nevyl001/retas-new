@@ -205,6 +205,21 @@ describe("coachingApi - Entrega B", () => {
       expect(snapshot.coaches[0].membershipStatus).toBe("ACTIVE");
       expect(snapshot.coaches[1].membershipStatus).toBe("INACTIVE");
     });
+
+    it("throws a real error when Supabase query fails, without falling back to demo", async () => {
+      (supabase.from as jest.Mock).mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({
+            data: null,
+            error: { code: "42501", message: "permission denied for table coach_club_memberships" },
+          }),
+        }),
+      });
+
+      await expect(loadCoachingClubSnapshot("org-123")).rejects.toThrow(
+        "No se pudieron cargar los coaches del club: permission denied for table coach_club_memberships"
+      );
+    });
   });
 
   describe("fetchCurrentCoachProfile", () => {
@@ -287,6 +302,22 @@ describe("coachingApi - Entrega B", () => {
   });
 
   describe("updateCoachMembershipStatus", () => {
+    beforeEach(() => {
+      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+        if (table === "coach_club_memberships") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({
+                data: [],
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+    });
+
     it("deactivates coach membership via deactivate_coach_from_club RPC", async () => {
       (supabase.rpc as jest.Mock).mockResolvedValueOnce({
         data: { ok: true, status: "INACTIVE" },
@@ -304,6 +335,7 @@ describe("coachingApi - Entrega B", () => {
         p_organizador_id: "org-123",
       });
       expect(snapshot).toBeDefined();
+      expect(snapshot.source).toBe("live");
     });
 
     it("requests coach re-incorporation via link_existing_coach_to_club RPC", async () => {
@@ -322,6 +354,29 @@ describe("coachingApi - Entrega B", () => {
         p_coach_id: "coach-1",
       });
       expect(snapshot).toBeDefined();
+      expect(snapshot.source).toBe("live");
+    });
+
+    it("throws a real error when deactivate RPC returns an error, without fallback to demo", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: null,
+        error: { message: "database rpc failure" },
+      });
+
+      await expect(
+        updateCoachMembershipStatus("org-123", "coach-1", "INACTIVE")
+      ).rejects.toThrow("No se pudo desactivar al coach del club: database rpc failure");
+    });
+
+    it("throws a real error when link_existing_coach_to_club RPC returns an error, without fallback to demo", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: null,
+        error: { message: "database rpc failure" },
+      });
+
+      await expect(
+        updateCoachMembershipStatus("org-123", "coach-1", "ACTIVE")
+      ).rejects.toThrow("No se pudo solicitar la reincorporación del coach: database rpc failure");
     });
   });
 

@@ -36,12 +36,16 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-async function rollbackAuthUser(
+async function rollbackNewUser(
   admin: SupabaseClient,
   userId: string
-): Promise<boolean> {
-  const { error } = await admin.auth.admin.deleteUser(userId);
-  return !error;
+): Promise<void> {
+  try {
+    await admin.from("users").delete().eq("id", userId);
+  } catch (_) {
+    // Ignore users cleanup error
+  }
+  await admin.auth.admin.deleteUser(userId);
 }
 
 Deno.serve(async (req: Request) => {
@@ -217,7 +221,7 @@ Deno.serve(async (req: Request) => {
       const siteUrl =
         Deno.env.get("SITE_URL") ||
         Deno.env.get("APP_URL") ||
-        "https://appriviera.com";
+        "https://appriviera.rivieraopen.com";
 
       const { data: inviteData, error: initialInviteError } =
         await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
@@ -231,7 +235,7 @@ Deno.serve(async (req: Request) => {
         (inviteError.message?.toLowerCase().includes("already") ||
           inviteError.message?.toLowerCase().includes("registered"))
       ) {
-        // En caso de reintento o cuenta ya registrada en auth.users, recuperar el usuario existente sin alterar sus credenciales
+        // En caso de cuenta ya registrada previamente en auth.users, recuperar el usuario existente sin alterar sus credenciales
         const { data: authLookup } = await supabaseAdmin.auth.admin.listUsers();
         const foundUser = (authLookup?.users ?? []).find(
           (u) => u.email?.trim().toLowerCase() === email
@@ -240,54 +244,54 @@ Deno.serve(async (req: Request) => {
           targetUserId = foundUser.id;
           isNewUser = false;
           inviteError = null;
-
-          await supabaseAdmin.from("users").upsert(
-            {
-              id: targetUserId,
-              email,
-              name: nombre,
-            },
-            { onConflict: "id" }
-          );
         }
       }
 
-      if (inviteError || !targetUserId) {
-        if (inviteError || !inviteData?.user) {
-          logError({
-            correlationId,
-            module: MODULE,
-            errorType: "auth_user_invite_failed",
-            detail: inviteError?.message ?? "Desconocido",
-          });
-          return jsonResponse(400, {
-            ok: false,
-            error:
-              "No se pudo enviar la invitación oficial al coach: " +
-              (inviteError?.message ||
-                "error en el servicio de autenticación"),
-          });
-        }
+      if (inviteError || (!targetUserId && !inviteData?.user)) {
+        logError({
+          correlationId,
+          module: MODULE,
+          errorType: "auth_user_invite_failed",
+          detail: inviteError?.message ?? "Desconocido",
+        });
+        return jsonResponse(400, {
+          ok: false,
+          error:
+            "No se pudo enviar la invitación oficial al coach: " +
+            (inviteError?.message ||
+              "error en el servicio de autenticación"),
+        });
+      }
+
+      if (!targetUserId && inviteData?.user) {
         targetUserId = inviteData.user.id;
+        isNewUser = true;
       }
 
-      if (isNewUser !== false) {
-        isNewUser = true;
-
-        // Crear fila en public.users
-        const { error: profileError } = await supabaseAdmin.from("users").insert({
+      // Sincronizar o crear fila en public.users de forma idempotente
+      const { error: profileError } = await supabaseAdmin.from("users").upsert(
+        {
           id: targetUserId,
           email,
           name: nombre,
-        });
+        },
+        { onConflict: "id" }
+      );
 
-        if (profileError) {
-          await rollbackAuthUser(supabaseAdmin, targetUserId);
-          return jsonResponse(500, {
-            ok: false,
-            error: "No se pudo crear el perfil de usuario del coach.",
-          });
+      if (profileError) {
+        logError({
+          correlationId,
+          module: MODULE,
+          errorType: "user_profile_insert_failed",
+          detail: internalErrorDetail(profileError),
+        });
+        if (isNewUser) {
+          await rollbackNewUser(supabaseAdmin, targetUserId);
         }
+        return jsonResponse(500, {
+          ok: false,
+          error: "No se pudo crear el perfil de usuario del coach.",
+        });
       }
     }
 
@@ -343,7 +347,7 @@ Deno.serve(async (req: Request) => {
           detail: internalErrorDetail(coachInsertError),
         });
         if (isNewUser) {
-          await rollbackAuthUser(supabaseAdmin, targetUserId);
+          await rollbackNewUser(supabaseAdmin, targetUserId);
         }
         return jsonResponse(500, {
           ok: false,

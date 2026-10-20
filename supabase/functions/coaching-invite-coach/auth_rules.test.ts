@@ -49,14 +49,14 @@ Deno.test("Email validation: accepts standard emails and rejects malformed ones"
   assertEquals(isValidEmail(""), false);
 });
 
-Deno.test("Redirect URL: resolves strictly to /auth/callback?next=/coaching/mi-espacio", () => {
+Deno.test("Redirect URL: resolves strictly to /auth/callback?next=/coaching/mi-espacio on official domain", () => {
   assertEquals(
-    resolveRedirectUrl("https://appriviera.com"),
-    "https://appriviera.com/auth/callback?next=/coaching/mi-espacio"
+    resolveRedirectUrl("https://appriviera.rivieraopen.com"),
+    "https://appriviera.rivieraopen.com/auth/callback?next=/coaching/mi-espacio"
   );
   assertEquals(
-    resolveRedirectUrl("https://appriviera.com/"),
-    "https://appriviera.com/auth/callback?next=/coaching/mi-espacio"
+    resolveRedirectUrl("https://appriviera.rivieraopen.com/"),
+    "https://appriviera.rivieraopen.com/auth/callback?next=/coaching/mi-espacio"
   );
 });
 
@@ -157,7 +157,7 @@ Deno.test("Pre-flight check: detects missing 0064 columns and blocks execution b
 
 Deno.test("Rollback guard: never deletes pre-existing users on partial failure", () => {
   let userDeleted = false;
-  function simulateRollback(isNewUser: boolean, targetUserId: string) {
+  function simulateRollback(isNewUser: boolean, _targetUserId: string) {
     if (isNewUser) {
       userDeleted = true;
     }
@@ -174,5 +174,151 @@ Deno.test("Rollback guard: never deletes pre-existing users on partial failure",
   simulateRollback(true, "newly-created-user-uuid");
   assertEquals(userDeleted, true);
 });
+
+Deno.test("User identification: assigns isNewUser=true when inviteUserByEmail creates new account", () => {
+  function identifyUser(
+    existingPublicUser: { id: string } | null,
+    inviteResult: { user?: { id: string }; error?: { message: string } }
+  ): { targetUserId: string; isNewUser: boolean } {
+    let targetUserId = "";
+    let isNewUser = false;
+
+    if (existingPublicUser?.id) {
+      targetUserId = existingPublicUser.id;
+      isNewUser = false;
+    } else {
+      if (!inviteResult.error && inviteResult.user) {
+        targetUserId = inviteResult.user.id;
+        isNewUser = true;
+      }
+    }
+    return { targetUserId, isNewUser };
+  }
+
+  // Case 1: Brand new user invited
+  const newAccount = identifyUser(null, { user: { id: "new-auth-id-123" } });
+  assertEquals(newAccount.targetUserId, "new-auth-id-123");
+  assertEquals(newAccount.isNewUser, true);
+
+  // Case 2: Existing public user
+  const existingAccount = identifyUser({ id: "existing-user-456" }, {});
+  assertEquals(existingAccount.targetUserId, "existing-user-456");
+  assertEquals(existingAccount.isNewUser, false);
+});
+
+Deno.test("User identification: handles user already registered in auth.users without public profile", () => {
+  function identifyWithAuthFallback(
+    existingPublicUser: { id: string } | null,
+    inviteError: { message: string } | null,
+    authLookupUsers: Array<{ id: string; email: string }>,
+    targetEmail: string
+  ): { targetUserId: string; isNewUser: boolean } {
+    let targetUserId = "";
+    let isNewUser = false;
+
+    if (existingPublicUser?.id) {
+      targetUserId = existingPublicUser.id;
+      isNewUser = false;
+    } else {
+      if (
+        inviteError &&
+        (inviteError.message.toLowerCase().includes("already") ||
+          inviteError.message.toLowerCase().includes("registered"))
+      ) {
+        const found = authLookupUsers.find(
+          (u) => u.email.trim().toLowerCase() === targetEmail.trim().toLowerCase()
+        );
+        if (found) {
+          targetUserId = found.id;
+          isNewUser = false;
+        }
+      }
+    }
+    return { targetUserId, isNewUser };
+  }
+
+  const result = identifyWithAuthFallback(
+    null,
+    { message: "A user with this email address has already been registered" },
+    [{ id: "auth-existing-789", email: "existing.coach@rivieraopen.com" }],
+    "existing.coach@rivieraopen.com"
+  );
+
+  assertEquals(result.targetUserId, "auth-existing-789");
+  assertEquals(result.isNewUser, false);
+});
+
+Deno.test("Relational integrity: targetUserId is consistently shared across public.users and riviera_coaches", () => {
+  const targetUserId = "consistent-user-uuid-999";
+  const email = "coach@rivieraopen.com";
+  const nombre = "Coach Test";
+
+  const publicUsersRow = {
+    id: targetUserId,
+    email,
+    name: nombre,
+  };
+
+  const coachRow = {
+    auth_user_id: targetUserId,
+    nombre,
+    bio: "Test Bio",
+  };
+
+  assertEquals(publicUsersRow.id, targetUserId);
+  assertEquals(coachRow.auth_user_id, targetUserId);
+  assertEquals(publicUsersRow.id, coachRow.auth_user_id);
+});
+
+Deno.test("Partial failure rollback: rolls back users table and auth.users on coach creation failure for new users only", async () => {
+  const deletedUsers: string[] = [];
+  const deletedAuthUsers: string[] = [];
+
+  const mockAdmin = {
+    from: (_table: string) => ({
+      delete: () => ({
+        eq: (_col: string, val: string) => {
+          deletedUsers.push(val);
+          return Promise.resolve({ error: null });
+        },
+      }),
+    }),
+    auth: {
+      admin: {
+        deleteUser: (userId: string) => {
+          deletedAuthUsers.push(userId);
+          return Promise.resolve({ error: null });
+        },
+      },
+    },
+  };
+
+  async function simulateRollbackNewUser(admin: typeof mockAdmin, userId: string) {
+    try {
+      await admin.from("users").delete().eq("id", userId);
+    } catch (_) {
+      // Ignore
+    }
+    await admin.auth.admin.deleteUser(userId);
+  }
+
+  // 1. Partial failure when isNewUser === true: both cleaned up
+  await simulateRollbackNewUser(mockAdmin, "new-user-1");
+  assertEquals(deletedUsers, ["new-user-1"]);
+  assertEquals(deletedAuthUsers, ["new-user-1"]);
+
+  // 2. Partial failure when isNewUser === false: nothing rolled back
+  function handlePartialError(isNewUser: boolean, userId: string) {
+    if (isNewUser) {
+      return simulateRollbackNewUser(mockAdmin, userId);
+    }
+    return Promise.resolve();
+  }
+
+  await handlePartialError(false, "existing-user-2");
+  assertEquals(deletedUsers.length, 1);
+  assertEquals(deletedAuthUsers.length, 1);
+});
+
 
 

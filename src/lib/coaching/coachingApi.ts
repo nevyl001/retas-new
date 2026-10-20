@@ -2,7 +2,6 @@ import { supabase } from "../supabaseClient";
 import { normalizeRivieraIdInput } from "../rivieraJugadores/playerMembership";
 import { fetchRivieraIdMapForJugadorIds } from "../rivieraJugadores/rivieraIdDisplay";
 import type { RivieraJugadorCategoria } from "../rivieraJugadores/types";
-import { loadCoachingDemo } from "./demoStore";
 import type {
   CoachMembershipStatus,
   CoachSearchResult,
@@ -13,22 +12,6 @@ import type {
   CurrentCoachProfile,
   InviteCoachResult,
 } from "./types";
-
-function isMissingRelationError(error: {
-  code?: string;
-  message?: string;
-} | null): boolean {
-  if (!error) return false;
-  const msg = (error.message ?? "").toLowerCase();
-  return (
-    error.code === "42P01" ||
-    error.code === "PGRST205" ||
-    error.code === "PGRST116" ||
-    msg.includes("does not exist") ||
-    msg.includes("riviera_coaches") ||
-    msg.includes("coach_club_memberships")
-  );
-}
 
 function mapEdgeError(data: unknown, fallbackMessage: string): string {
   if (!data || typeof data !== "object") return fallbackMessage;
@@ -64,11 +47,10 @@ export async function loadCoachingClubSnapshot(
       .eq("organizador_id", organizadorId);
 
     if (error) {
-      if (isMissingRelationError(error)) {
-        return loadCoachingDemo(organizadorId);
-      }
-      console.warn("[coaching] memberships load error", error.message);
-      return loadCoachingDemo(organizadorId);
+      console.error("[coaching] memberships load error", error.message);
+      throw new Error(
+        "No se pudieron cargar los coaches del club: " + error.message
+      );
     }
 
     // Si la tabla existe y no hay coaches, se devuelve estado vacío legítimo
@@ -151,8 +133,10 @@ export async function loadCoachingClubSnapshot(
 
     return { coaches, links, source: "live" };
   } catch (e) {
-    console.warn("[coaching] load fallback demo", e);
-    return loadCoachingDemo(organizadorId);
+    console.error("[coaching] load snapshot error", e);
+    throw e instanceof Error
+      ? e
+      : new Error("No se pudo cargar la información de coaching del club.");
   }
 }
 
@@ -252,9 +236,6 @@ export async function updateCoachMembershipStatus(
     });
 
     if (error) {
-      if (isMissingRelationError(error)) {
-        return loadCoachingDemo(organizadorId);
-      }
       throw new Error(
         "No se pudo desactivar al coach del club: " + error.message
       );
@@ -270,9 +251,6 @@ export async function updateCoachMembershipStatus(
     });
 
     if (error) {
-      if (isMissingRelationError(error)) {
-        return loadCoachingDemo(organizadorId);
-      }
       throw new Error(
         "No se pudo solicitar la reincorporación del coach: " + error.message
       );
