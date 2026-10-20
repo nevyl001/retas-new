@@ -272,8 +272,6 @@ export const Duelo2v2Nuevo: React.FC = () => {
     label: busy ? "Guardando…" : "Guardar y continuar",
     disabled: !canSubmit || busy,
     loading: busy,
-    hint: undefined,
-    testId: "guardar-duelo",
     onClick: () => void handleSubmit(),
   };
 
@@ -593,7 +591,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
       </section>
 
       <section className="qm-ws-panel__block qm-ws-panel__cta-desktop">
-        <QuickModePrimaryCta {...ctaProps} />
+        <QuickModePrimaryCta {...ctaProps} testId="guardar-duelo" />
       </section>
     </div>
   );
@@ -670,7 +668,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
             sidebar={sidebarPanel}
             stickyCta={
               <div className="qm-ws__compose-mobile-bar">
-                <QuickModePrimaryCta {...ctaProps} testId={undefined} />
+                <QuickModePrimaryCta {...ctaProps} />
               </div>
             }
           />

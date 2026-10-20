@@ -197,14 +197,63 @@ export function participacionCuentaComoDerrota(
 
 function resolveCategoriaLabel(
   meta: Record<string, unknown>,
-  fallback?: RivieraJugadorCategoria
+  fallback?: RivieraJugadorCategoria,
+  tipoEvento?: JugadorTipoEvento
 ): string | undefined {
+  if (tipoEvento === "torneo_express") {
+    // La categoría real del torneo tiene prioridad absoluta y nunca se
+    // sustituye por la categoría general del perfil del jugador.
+    const torneoRaw = metaStr(meta, "categoria");
+    if (!torneoRaw) return undefined;
+    if (torneoRaw in JUGADOR_CATEGORIA_LABELS) {
+      return JUGADOR_CATEGORIA_LABELS[torneoRaw as RivieraJugadorCategoria];
+    }
+    // Categoría personalizada del torneo (p. ej. "Mixtos D", "Femenil C").
+    return torneoRaw;
+  }
+
   const raw = metaStr(meta, "jugador_categoria") ?? metaStr(meta, "categoria");
   if (raw && raw in JUGADOR_CATEGORIA_LABELS) {
     return JUGADOR_CATEGORIA_LABELS[raw as RivieraJugadorCategoria];
   }
   if (fallback) return JUGADOR_CATEGORIA_LABELS[fallback];
   return undefined;
+}
+
+/** Normaliza texto para comparar categoría vs. nombre (sin acentos/puntuación). */
+function normalizeForCategoriaMatch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\bfza\b/g, "fuerza")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/** ¿El nombre del evento ya incluye la categoría? (evita duplicados en el título). */
+function eventoNombreIncludesCategoria(
+  eventoNombre: string,
+  categoria: string
+): boolean {
+  const nombre = normalizeForCategoriaMatch(eventoNombre);
+  const cat = normalizeForCategoriaMatch(categoria);
+  if (!cat) return true;
+  return ` ${nombre} `.includes(` ${cat} `);
+}
+
+/**
+ * Título de torneo express: "{Evento} — {Categoría}" sin duplicar la categoría
+ * si el organizador ya la incluyó en el nombre del evento.
+ */
+function composeTorneoExpressTitulo(
+  eventoNombre: string,
+  categoriaLabel: string | undefined
+): string {
+  const nombre = eventoNombre.trim();
+  if (!categoriaLabel) return eventoNombre;
+  if (eventoNombreIncludesCategoria(nombre, categoriaLabel)) return eventoNombre;
+  return `${nombre} — ${categoriaLabel}`;
 }
 
 /** Victorias y derrotas en partidos del evento (no confundir con V/D del marcador de sets). */
@@ -277,7 +326,15 @@ export function participacionToHistorialItem(
   const lugarLabel = resolveLugarLabel(row);
   const ligaNombre = metaStr(meta, "liga_nombre");
   const jornadaNum = metaNum(meta, "jornada_numero");
-  const categoriaLabel = resolveCategoriaLabel(meta, opts?.categoriaFallback);
+  const categoriaLabel = resolveCategoriaLabel(
+    meta,
+    opts?.categoriaFallback,
+    row.tipo_evento
+  );
+  const esTorneoExpress = row.tipo_evento === "torneo_express";
+  const eventoNombre = esTorneoExpress
+    ? composeTorneoExpressTitulo(row.evento_nombre, categoriaLabel)
+    : row.evento_nombre;
   const eventoDescripcion =
     metaStr(meta, "evento_descripcion") ??
     metaStr(meta, "reta_descripcion") ??
@@ -285,7 +342,8 @@ export function participacionToHistorialItem(
   const balanceLabel = formatBalanceParticipacion(meta, row);
 
   const detalleParts: string[] = [];
-  if (categoriaLabel) detalleParts.push(categoriaLabel);
+  // En torneos express la categoría ya forma parte del título.
+  if (categoriaLabel && !esTorneoExpress) detalleParts.push(categoriaLabel);
   if (
     row.tipo_evento === "reta" &&
     metaStr(meta, "formato") === "round_robin"
@@ -318,7 +376,7 @@ export function participacionToHistorialItem(
     modalidadId,
     modalidadLabel,
     modalidadIcon: MODALIDAD_ICONS[modalidadId] ?? "🏆",
-    eventoNombre: row.evento_nombre,
+    eventoNombre,
     fecha: toMexicoCalendarDate(fechaInstant),
     lugarLabel,
     detalle,

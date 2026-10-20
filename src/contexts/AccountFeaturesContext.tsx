@@ -15,6 +15,7 @@ interface AccountFeaturesContextType {
   enabledModes: Record<GameModeId, boolean> | null;
   permiteAjustePuntosManuales: boolean;
   visibleRankingOficial: boolean;
+  coachingEnabled: boolean;
   loading: boolean;
   isModeEnabled: (modeId: GameModeId) => boolean;
   refreshModes: () => Promise<void>;
@@ -63,6 +64,7 @@ export const AccountFeaturesProvider: React.FC<{ children: React.ReactNode }> = 
   const [permiteAjustePuntosManuales, setPermiteAjustePuntosManuales] =
     useState(true);
   const [visibleRankingOficial, setVisibleRankingOficial] = useState(false);
+  const [coachingEnabled, setCoachingEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
 
   const refreshModes = useCallback(async () => {
@@ -70,6 +72,7 @@ export const AccountFeaturesProvider: React.FC<{ children: React.ReactNode }> = 
       setEnabledModes(null);
       setPermiteAjustePuntosManuales(true);
       setVisibleRankingOficial(false);
+      setCoachingEnabled(true);
       setLoading(false);
       return;
     }
@@ -84,11 +87,13 @@ export const AccountFeaturesProvider: React.FC<{ children: React.ReactNode }> = 
       writeCachedModes(user.id, settings.modes);
       setPermiteAjustePuntosManuales(settings.permiteAjustePuntosManuales);
       setVisibleRankingOficial(settings.visibleRankingOficial);
+      setCoachingEnabled(settings.coachingEnabled ?? true);
     } catch {
       // Mantener caché/previo si existe; null solo si nunca hubo dato.
       setEnabledModes((prev) => prev ?? readCachedModes(user.id));
       setPermiteAjustePuntosManuales(true);
       setVisibleRankingOficial(false);
+      setCoachingEnabled(true);
     } finally {
       setLoading(false);
     }
@@ -108,6 +113,7 @@ export const AccountFeaturesProvider: React.FC<{ children: React.ReactNode }> = 
       enabledModes,
       permiteAjustePuntosManuales,
       visibleRankingOficial,
+      coachingEnabled,
       loading,
       isModeEnabled: isModeEnabledFn,
       refreshModes,
@@ -116,6 +122,7 @@ export const AccountFeaturesProvider: React.FC<{ children: React.ReactNode }> = 
       enabledModes,
       permiteAjustePuntosManuales,
       visibleRankingOficial,
+      coachingEnabled,
       loading,
       isModeEnabledFn,
       refreshModes,

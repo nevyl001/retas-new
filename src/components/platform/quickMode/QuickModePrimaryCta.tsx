@@ -8,10 +8,10 @@ export type QuickModePrimaryCtaProps = {
   /** Texto mientras calcula (default: Calculando partidos…). */
   loadingLabel?: string;
   className?: string;
-  hint?: string | null;
+  hint?: string | null | undefined;
   /** sidebar = tamaño normal (~48–52px), no full-bleed */
   variant?: "default" | "sidebar";
-  testId?: string;
+  testId?: string | undefined;
 };
 
 /** CTA primario de preparación. */

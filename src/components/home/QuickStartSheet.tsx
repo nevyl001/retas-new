@@ -155,10 +155,11 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
 
   const buildPayload = (): QuickStartPayload => {
     const name = values.name.trim() || `Reta ${mode.title}`;
+    const desc = values.description.trim();
     return {
       modeId,
       name,
-      description: values.description.trim() || undefined,
+      ...(desc ? { description: desc } : {}),
       courts: values.courts,
       values: { ...values, name },
       ...(isRoundRobin
@@ -185,8 +186,6 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
     label: submitting ? "Guardando…" : "Guardar y continuar",
     disabled: !canSubmit || submitting,
     loading: submitting,
-    hint: undefined,
-    testId: "guardar-reta",
     onClick: handleSave,
   };
 
@@ -474,7 +473,7 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
       </section>
 
       <section className="qm-ws-panel__block qm-ws-panel__cta-desktop">
-        <QuickModePrimaryCta {...ctaProps} />
+        <QuickModePrimaryCta {...ctaProps} testId="guardar-reta" />
         <p className="qm-ws-panel__compose-next-hint">
           En el siguiente paso podrás agregar jugadores y publicar el enlace.
         </p>
@@ -513,7 +512,7 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
         sidebar={sidebarPanel}
         stickyCta={
           <div className="qm-ws__compose-mobile-bar">
-            <QuickModePrimaryCta {...ctaProps} testId={undefined} />
+            <QuickModePrimaryCta {...ctaProps} />
           </div>
         }
       />

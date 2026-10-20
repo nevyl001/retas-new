@@ -22,6 +22,7 @@ export interface OrganizadorGameModesRow {
   visible_ranking_oficial: boolean;
   premium_branding_enabled: boolean;
   branding_key: string | null;
+  coaching_enabled?: boolean;
   updated_at?: string;
 }
 
@@ -36,6 +37,7 @@ export interface OrganizadorAccountSettings {
   visibleRankingOficial: boolean;
   premiumBrandingEnabled: boolean;
   brandingKey: string | null;
+  coachingEnabled?: boolean;
 }
 
 /** Defaults para cuentas nuevas sin fila en BD (coincide con column DEFAULT de SQL). */
@@ -50,6 +52,7 @@ export const DEFAULT_ORGANIZADOR_GAME_MODES: OrganizadorGameModesInput = {
   visible_ranking_oficial: false,
   premium_branding_enabled: false,
   branding_key: null,
+  coaching_enabled: true,
 };
 
 export const GAME_MODE_LABELS: Record<GameModeId, string> = {
@@ -116,5 +119,6 @@ export function rowToAccountSettings(
     visibleRankingOficial: base.visible_ranking_oficial === true,
     premiumBrandingEnabled: base.premium_branding_enabled === true,
     brandingKey: base.branding_key?.trim() || null,
+    coachingEnabled: base.coaching_enabled !== false,
   };
 }

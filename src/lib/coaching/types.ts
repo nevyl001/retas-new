@@ -63,3 +63,15 @@ export type CoachingClubSnapshot = {
   links: CoachingPlayerLink[];
   source: "live" | "demo";
 };
+
+export type CoachSearchResult = {
+  coachId: string;
+  coachCode: string;
+  nombre: string;
+  fotoUrl: string | null;
+  bio: string | null;
+  especialidades: string[];
+  fuerzas: RivieraJugadorCategoria[];
+  alreadyMember: boolean;
+  membershipStatus: string | null;
+};

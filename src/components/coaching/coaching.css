@@ -635,6 +635,75 @@
   line-height: 1.45;
 }
 
+/* ── Modal Tabs & Búsqueda de Coach Existente ─────────────── */
+.coaching-modal-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--ro-border-subtle, rgba(255, 255, 255, 0.1));
+  padding-bottom: 0.5rem;
+}
+
+.coaching-modal-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--ro-radius-md, 8px);
+  border: none;
+  background: transparent;
+  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.65));
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.coaching-modal-tab:hover {
+  color: var(--ro-text-primary, #f5f2eb);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.coaching-modal-tab.is-active {
+  color: var(--ro-text-primary, #f5f2eb);
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 750;
+}
+
+.coaching-search-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: stretch;
+}
+
+.coaching-search-row input {
+  flex: 1;
+}
+
+.coaching-coach-preview {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: var(--ro-radius-md, 8px);
+  background: var(--ro-bg-surface, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--ro-border, rgba(255, 255, 255, 0.15));
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.coaching-success-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--ro-radius-md, 8px);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #a7f3d0;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
 .coaching-modal-form {
   display: grid;
   gap: 1.25rem;

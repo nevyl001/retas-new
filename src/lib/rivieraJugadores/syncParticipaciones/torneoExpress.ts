@@ -288,7 +288,9 @@ async function flushTorneoExpressPlayerAgg(
   clasificadosPlayerIds: Set<string>,
   excludeJugadorIds?: string[],
   eventoEn?: string,
-  identityCache?: CloseIdentityCache
+  identityCache?: CloseIdentityCache,
+  categoria?: string | null,
+  torneoEventoId?: string | null
 ): Promise<CareerEventSyncOutcome> {
   const excluded = toExcludedJugadorIdSet(excludeJugadorIds);
   const parallelOutcome = await runParallelPlayerParticipacionSync(
@@ -376,6 +378,10 @@ async function flushTorneoExpressPlayerAgg(
             pareja_campeon_id: campeonParejaId,
             pareja_subcampeon_id: subcampeonParejaId,
             torneo_express_id: torneoId,
+            ...(categoria?.trim() ? { categoria: categoria.trim() } : {}),
+            ...(torneoEventoId?.trim()
+              ? { evento_id: torneoEventoId.trim() }
+              : {}),
           },
           eventoEn,
         });
@@ -544,7 +550,9 @@ export async function syncTorneoExpressParticipaciones(
       clasificadosPlayerIds,
       options?.excludeJugadorIds,
       eventoEn,
-      options?.identityCache
+      options?.identityCache,
+      bundle.torneo.categoria,
+      bundle.torneo.evento_id
     );
     return {
       touchedJugadorIds: expressOutcome.touchedJugadorIds,

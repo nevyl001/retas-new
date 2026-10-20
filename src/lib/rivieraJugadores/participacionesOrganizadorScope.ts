@@ -227,9 +227,66 @@ async function fetchEventOrganizadorMaps(
   return { dueloOrgById, torneoOrgById };
 }
 
+function hasTorneoCategoriaMetadata(row: JugadorParticipacion): boolean {
+  const meta = row.metadata ?? {};
+  const raw = meta.categoria;
+  return typeof raw === "string" && raw.trim().length > 0;
+}
+
+/**
+ * Categoría real de cada torneo_express (id -> categoria) en UNA consulta por
+ * lote (sin N+1). Solo lectura: no modifica datos históricos.
+ */
+async function fetchTorneoCategoriaMap(
+  torneoIds: string[]
+): Promise<Map<string, string>> {
+  const categoriaById = new Map<string, string>();
+  const torneoUuidList = parseUuidList(torneoIds);
+  if (torneoUuidList.length === 0) return categoriaById;
+
+  for (const client of [supabasePublicRead, supabase]) {
+    const { data, error } = await client
+      .from("torneo_express")
+      .select("id, categoria")
+      .in("id", torneoUuidList);
+    if (!error) {
+      for (const row of data ?? []) {
+        const id = String((row as { id?: string }).id ?? "").trim();
+        const categoria = String(
+          (row as { categoria?: string | null }).categoria ?? ""
+        ).trim();
+        if (id && categoria && !categoriaById.has(id)) {
+          categoriaById.set(id, categoria);
+        }
+      }
+    }
+    if (categoriaById.size >= torneoUuidList.length) break;
+  }
+
+  return categoriaById;
+}
+
+function withCategoriaMetadata(
+  row: JugadorParticipacion,
+  categoria: string
+): JugadorParticipacion {
+  return {
+    ...row,
+    metadata: {
+      ...(row.metadata ?? {}),
+      categoria,
+    },
+  };
+}
+
 /**
  * Completa metadata.organizador_id desde duelos_2v2 / torneo_express cuando falta.
  * Usa RPC SECURITY DEFINER para duelos de otros clubes (RLS cross-club).
+ *
+ * Además completa metadata.categoria de las participaciones de torneo_express
+ * (histórico sin categoría guardada) leyendo la categoría real del torneo por
+ * su id, aunque metadata.organizador_id ya exista. No altera la atribución por
+ * club ni ningún otro metadato.
  */
 export async function enrichParticipacionesOrganizadorFromEvents(
   rows: JugadorParticipacion[]
@@ -248,30 +305,58 @@ export async function enrichParticipacionesOrganizadorFromEvents(
       !String(r.metadata?.organizador_id ?? "").trim() &&
       r.evento_id?.trim()
   );
+  const needsTorneoCategoria = rows.filter(
+    (r) =>
+      r.tipo_evento === "torneo_express" &&
+      !hasTorneoCategoriaMetadata(r) &&
+      r.evento_id?.trim()
+  );
 
   const dueloIds = Array.from(new Set(needsDuelo.map((r) => r.evento_id.trim())));
   const torneoIds = Array.from(
     new Set(needsTorneo.map((r) => r.evento_id.trim()))
   );
-
-  const { dueloOrgById, torneoOrgById } = await fetchEventOrganizadorMaps(
-    dueloIds,
-    torneoIds
+  const torneoCategoriaIds = Array.from(
+    new Set(needsTorneoCategoria.map((r) => r.evento_id.trim()))
   );
 
-  if (dueloOrgById.size === 0 && torneoOrgById.size === 0) return rows;
+  const [{ dueloOrgById, torneoOrgById }, torneoCategoriaById] =
+    await Promise.all([
+      fetchEventOrganizadorMaps(dueloIds, torneoIds),
+      fetchTorneoCategoriaMap(torneoCategoriaIds),
+    ]);
+
+  if (
+    dueloOrgById.size === 0 &&
+    torneoOrgById.size === 0 &&
+    torneoCategoriaById.size === 0
+  ) {
+    return rows;
+  }
 
   return rows.map((row) => {
-    if (String(row.metadata?.organizador_id ?? "").trim()) return row;
+    let next = row;
     const eventoId = row.evento_id.trim();
-    if (row.tipo_evento === "duelo_2v2") {
-      const org = dueloOrgById.get(eventoId);
-      if (org) return withOrganizadorMetadata(row, org);
+    const hasOrg = Boolean(String(row.metadata?.organizador_id ?? "").trim());
+
+    if (!hasOrg) {
+      if (row.tipo_evento === "duelo_2v2") {
+        const org = dueloOrgById.get(eventoId);
+        if (org) next = withOrganizadorMetadata(next, org);
+      } else if (row.tipo_evento === "torneo_express") {
+        const org = torneoOrgById.get(eventoId);
+        if (org) next = withOrganizadorMetadata(next, org);
+      }
     }
-    if (row.tipo_evento === "torneo_express") {
-      const org = torneoOrgById.get(eventoId);
-      if (org) return withOrganizadorMetadata(row, org);
+
+    if (
+      row.tipo_evento === "torneo_express" &&
+      !hasTorneoCategoriaMetadata(row)
+    ) {
+      const categoria = torneoCategoriaById.get(eventoId);
+      if (categoria) next = withCategoriaMetadata(next, categoria);
     }
-    return row;
+
+    return next;
   });
 }

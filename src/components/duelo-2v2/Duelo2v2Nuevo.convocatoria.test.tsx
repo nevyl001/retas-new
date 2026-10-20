@@ -1,10 +1,8 @@
 /**
  * Nuevo duelo: sin panel de convocatoria; hint informativo; Guardar crea fila nueva.
  */
-/* eslint-disable testing-library/no-unnecessary-act */
 import React, { act } from "react";
-import { createRoot, type Root } from "react-dom/client";
-import { screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { Duelo2v2Nuevo } from "./Duelo2v2Nuevo";
@@ -80,13 +78,9 @@ jest.mock("./duelo2v2Nav", () => ({
 }));
 
 describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
-  let container: HTMLDivElement;
-  let root: Root;
+  let container: HTMLElement;
 
   beforeEach(() => {
-    container = document.createElement("div");
-    document.body.appendChild(container);
-    root = createRoot(container);
     jest.clearAllMocks();
     (getDuelos2v2 as jest.Mock).mockResolvedValue([]);
     sessionStorage.clear();
@@ -104,21 +98,17 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
     sessionStorage.clear();
   });
 
   async function renderNuevo() {
-    await act(async () => {
-      root.render(<Duelo2v2Nuevo />);
-    });
+    const view = render(<Duelo2v2Nuevo />);
+    container = view.container;
     await act(async () => {
       await Promise.resolve();
       await Promise.resolve();
     });
+    return view;
   }
 
   it("no renderiza ConvocatoriaWhatsAppPanel ni 4/4 al montar", async () => {
@@ -237,9 +227,7 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
     expect(container.textContent).toContain("Encontramos un duelo pendiente");
     expect(screen.getByLabelText(/^Nombre$/i)).toHaveValue("");
 
-    await act(async () => {
-      await userEvent.click(screen.getByTestId("continuar-borrador"));
-    });
+    await userEvent.click(screen.getByTestId("continuar-borrador"));
     expect(navigateDuelo2v2).toHaveBeenCalledWith(
       "/duelo-2v2/cfg-1/gestionar"
     );
@@ -280,9 +268,7 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
       openDueloId: "cfg-1",
     });
 
-    await act(async () => {
-      await userEvent.click(screen.getByTestId("descartar-borrador"));
-    });
+    await userEvent.click(screen.getByTestId("descartar-borrador"));
 
     expect(sessionStorage.getItem("duelo-2v2-draft:org-1")).toBeNull();
     expect(screen.queryByTestId("duelo-pending-draft-card")).toBeNull();

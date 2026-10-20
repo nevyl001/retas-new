@@ -2,16 +2,21 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { useBranding } from "../../club-experience";
 import {
-  createClubCoachDemo,
+  inviteClubCoach,
+  linkExistingCoach,
   linkPlayerByRivieraId,
   loadCoachingClubSnapshot,
-  updateLinkStatusDemo,
+  searchCoachForInvitation,
+  updateLinkStatus,
 } from "../../lib/coaching/coachingApi";
 import {
   COACH_ESPECIALIDADES_ORDER,
   COACH_FUERZAS_ORDER,
 } from "../../lib/coaching/constants";
-import type { CoachingClubSnapshot } from "../../lib/coaching/types";
+import type {
+  CoachSearchResult,
+  CoachingClubSnapshot,
+} from "../../lib/coaching/types";
 import type {
   EnCancha,
   ManoDominante,
@@ -73,8 +78,12 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [isCoachModalOpen, setIsCoachModalOpen] = useState(false);
+  const [coachModalTab, setCoachModalTab] = useState<"nuevo" | "vincular">(
+    "nuevo"
+  );
 
   // Coach form (mismos datos base que jugador + fuerzas/especialidades)
   const [coachNombre, setCoachNombre] = useState("");
@@ -93,6 +102,13 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   const [coachEspecialidades, setCoachEspecialidades] = useState<string[]>([
     "Técnica",
   ]);
+
+  // Coach search & link
+  const [coachSearchQuery, setCoachSearchQuery] = useState("");
+  const [coachSearchResult, setCoachSearchResult] =
+    useState<CoachSearchResult | null>(null);
+  const [coachSearchError, setCoachSearchError] = useState<string | null>(null);
+  const [coachSearchLoading, setCoachSearchLoading] = useState(false);
 
   // Link by Riviera ID
   const [selectedCoachId, setSelectedCoachId] = useState("");
@@ -143,6 +159,9 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     setCoachFuerzas(["3ra_fuerza"]);
     setCoachEspecialidades(["Técnica"]);
     setFormError(null);
+    setCoachSearchQuery("");
+    setCoachSearchResult(null);
+    setCoachSearchError(null);
   };
 
   const handleAddCoach = async (e: React.FormEvent) => {
@@ -164,7 +183,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     setBusy(true);
     setFormError(null);
     try {
-      const next = await createClubCoachDemo(organizadorId, {
+      const res = await inviteClubCoach(organizadorId, {
         nombre: coachNombre.trim(),
         email,
         telefono: coachTelefono.trim() || undefined,
@@ -177,10 +196,70 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
         fuerzas: coachFuerzas,
         especialidades: coachEspecialidades,
       });
-      setSnapshot(next);
-      if (next.coaches[0]) setSelectedCoachId(next.coaches[0].id);
+      setSnapshot(res.snapshot);
+      if (res.snapshot.coaches[0]) {
+        setSelectedCoachId(res.snapshot.coaches[0].id);
+      }
       resetCoachForm();
       setIsCoachModalOpen(false);
+      setSuccessMessage(
+        res.isNewUser
+          ? `Coach registrado exitosamente con código ${res.coachCode}.`
+          : `Coach vinculado exitosamente a tu club con código ${res.coachCode}.`
+      );
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : "No se pudo registrar el coach."
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSearchCoach = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = coachSearchQuery.trim();
+    if (!query) return;
+    setCoachSearchLoading(true);
+    setCoachSearchError(null);
+    setCoachSearchResult(null);
+    try {
+      const found = await searchCoachForInvitation(query);
+      if (!found) {
+        setCoachSearchError(
+          "No se encontró ningún coach registrado con ese código oficial o correo."
+        );
+      } else {
+        setCoachSearchResult(found);
+      }
+    } catch (err) {
+      setCoachSearchError(
+        err instanceof Error ? err.message : "Error al buscar coach."
+      );
+    } finally {
+      setCoachSearchLoading(false);
+    }
+  };
+
+  const handleLinkExistingCoach = async () => {
+    if (!organizadorId || !coachSearchResult) return;
+    setBusy(true);
+    setCoachSearchError(null);
+    try {
+      const next = await linkExistingCoach(
+        organizadorId,
+        coachSearchResult.coachId
+      );
+      setSnapshot(next);
+      setIsCoachModalOpen(false);
+      resetCoachForm();
+      setSuccessMessage(
+        `Coach ${coachSearchResult.nombre} vinculado exitosamente a tu club.`
+      );
+    } catch (err) {
+      setCoachSearchError(
+        err instanceof Error ? err.message : "No se pudo vincular el coach."
+      );
     } finally {
       setBusy(false);
     }
@@ -206,9 +285,10 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
       );
       setSnapshot(next);
       setRivieraIdInput("");
+      setSuccessMessage(`Alumno con Riviera ID ${normalized} vinculado.`);
     } catch (err) {
       setFormError(
-        err instanceof Error ? err.message : "No se pudo vincular el jugador"
+        err instanceof Error ? err.message : "No se pudo vincular el jugador."
       );
     } finally {
       setBusy(false);
@@ -222,8 +302,13 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     if (!organizadorId) return;
     setBusy(true);
     try {
-      const next = await updateLinkStatusDemo(organizadorId, linkId, status);
+      const next = await updateLinkStatus(organizadorId, linkId, status);
       setSnapshot(next);
+      setSuccessMessage("Estado del alumno actualizado.");
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : "No se pudo actualizar el estado."
+      );
     } finally {
       setBusy(false);
     }
@@ -286,6 +371,12 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
         </nav>
       </div>
 
+      {successMessage ? (
+        <div className="coaching-success-banner">
+          <TablerIcon name="check" size={18} />
+          <span>{successMessage}</span>
+        </div>
+      ) : null}
       {error ? <p className="coaching-error">{error}</p> : null}
       {formError ? <p className="coaching-error">{formError}</p> : null}
       {loading ? <p className="coaching-muted">Cargando datos de coaching…</p> : null}
@@ -412,7 +503,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
               onClick={() => setIsCoachModalOpen(true)}
             >
               <TablerIcon name="plus" size={16} />
-              Agregar coach (demo)
+              Nuevo coach
             </button>
           </div>
 
@@ -430,7 +521,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                 onClick={() => setIsCoachModalOpen(true)}
               >
                 <TablerIcon name="plus" size={16} />
-                Agregar coach (demo)
+                Registrar primer coach
               </button>
             </div>
           ) : (
@@ -518,213 +609,322 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
               setIsCoachModalOpen(false);
               resetCoachForm();
             }}
-            title="Agregar coach (demo)"
+            title={
+              coachModalTab === "nuevo"
+                ? "Registrar nuevo coach"
+                : "Vincular coach existente"
+            }
             size="lg"
           >
-            <div className="coaching-demo-banner" style={{ marginTop: 0, marginBottom: "1rem" }}>
-              <span className="coaching-demo-pill">Demostración</span>
-              <span className="coaching-demo-text">
-                Este formulario crea un perfil en almacenamiento local del
-                navegador. No envía correos ni genera cuentas en Supabase.
-              </span>
+            <div className="coaching-modal-nav">
+              <button
+                type="button"
+                className={`coaching-modal-tab${
+                  coachModalTab === "nuevo" ? " is-active" : ""
+                }`}
+                onClick={() => setCoachModalTab("nuevo")}
+              >
+                <TablerIcon name="user-plus" size={16} />
+                Nuevo coach
+              </button>
+              <button
+                type="button"
+                className={`coaching-modal-tab${
+                  coachModalTab === "vincular" ? " is-active" : ""
+                }`}
+                onClick={() => setCoachModalTab("vincular")}
+              >
+                <TablerIcon name="search" size={16} />
+                Buscar coach existente
+              </button>
             </div>
 
-            <form className="coaching-modal-form" onSubmit={handleAddCoach}>
-              <div className="coaching-modal-grid">
-                <label className="coaching-field">
-                  <span>Nombre del coach *</span>
-                  <input
-                    value={coachNombre}
-                    onChange={(e) => setCoachNombre(e.target.value)}
-                    placeholder="Ej. Rodrigo Pádel"
-                    disabled={busy}
-                    required
-                  />
-                </label>
-                <label className="coaching-field">
-                  <span>Email de contacto *</span>
-                  <input
-                    type="email"
-                    value={coachEmail}
-                    onChange={(e) => setCoachEmail(e.target.value)}
-                    placeholder="coach@club.com"
-                    disabled={busy}
-                    required
-                  />
-                </label>
-                <label className="coaching-field">
-                  <span>Teléfono / WhatsApp</span>
-                  <input
-                    value={coachTelefono}
-                    onChange={(e) => setCoachTelefono(e.target.value)}
-                    placeholder="+52 998 123 4567"
-                    disabled={busy}
-                  />
-                </label>
-                <label className="coaching-field">
-                  <span>País</span>
-                  <select
-                    value={coachPais}
-                    onChange={(e) => setCoachPais(e.target.value)}
-                    disabled={busy}
-                  >
-                    <option value="">— Sin especificar —</option>
-                    {PAISES_RIVIERA.map((p) => (
-                      <option key={p.codigo} value={p.codigo}>
-                        {paisSelectLabel(p)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="coaching-field">
-                  <span>Género</span>
-                  <select
-                    value={coachGenero}
-                    onChange={(e) =>
-                      setCoachGenero(e.target.value as RivieraJugadorGenero)
-                    }
-                    disabled={busy}
-                  >
-                    {RIVIERA_GENERO_ORDER.map((g) => (
-                      <option key={g} value={g}>
-                        {RIVIERA_GENERO_LABELS[g]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="coaching-field">
-                  <span>Fuerza deportiva propia</span>
-                  <select
-                    value={coachCategoria}
-                    onChange={(e) =>
-                      setCoachCategoria(
-                        e.target.value as RivieraJugadorCategoria
-                      )
-                    }
-                    disabled={busy}
-                  >
-                    {JUGADOR_CATEGORIAS_ORDER.map((n) => (
-                      <option key={n} value={n}>
-                        {JUGADOR_CATEGORIA_LABELS[n]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="coaching-field">
-                  <span>Edad</span>
-                  <input
-                    type="number"
-                    min={14}
-                    max={99}
-                    value={coachEdad}
-                    onChange={(e) => setCoachEdad(e.target.value)}
-                    placeholder="30"
-                    disabled={busy}
-                  />
-                </label>
-                <label className="coaching-field">
-                  <span>Mano dominante</span>
-                  <select
-                    value={coachMano}
-                    onChange={(e) =>
-                      setCoachMano(e.target.value as ManoDominante | "")
-                    }
-                    disabled={busy}
-                  >
-                    <option value="">— Sin especificar —</option>
-                    {(
-                      Object.keys(MANO_DOMINANTE_LABELS) as ManoDominante[]
-                    ).map((m) => (
-                      <option key={m} value={m}>
-                        {MANO_DOMINANTE_LABELS[m]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="coaching-field">
-                  <span>Posición en cancha</span>
-                  <select
-                    value={coachEnCancha}
-                    onChange={(e) =>
-                      setCoachEnCancha(e.target.value as EnCancha | "")
-                    }
-                    disabled={busy}
-                  >
-                    <option value="">— Sin especificar —</option>
-                    {EN_CANCHA_ORDER.map((c) => (
-                      <option key={c} value={c}>
-                        {EN_CANCHA_LABELS[c]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+            {coachModalTab === "vincular" ? (
+              <div className="coaching-modal-form">
+                <p className="coaching-modal-desc">
+                  Busca a un entrenador por su código oficial de coach (ej.{" "}
+                  <strong>RIV-C-00042</strong>) o por su correo registrado para
+                  vincularlo a este club.
+                </p>
 
-              <fieldset className="coaching-chips" disabled={busy}>
-                <legend>Fuerzas que entrena *</legend>
-                <div className="coaching-chips__row">
-                  {COACH_FUERZAS_ORDER.map((f) => {
-                    const on = coachFuerzas.includes(f);
-                    return (
-                      <button
-                        key={f}
-                        type="button"
-                        className={`coaching-chip${on ? " is-on" : ""}`}
-                        onClick={() =>
-                          setCoachFuerzas((prev) => toggleInList(prev, f))
-                        }
-                      >
-                        {JUGADOR_CATEGORIA_LABELS[f]}
-                      </button>
-                    );
-                  })}
-                </div>
-              </fieldset>
-
-              <fieldset className="coaching-chips" disabled={busy}>
-                <legend>Especialidades</legend>
-                <div className="coaching-chips__row">
-                  {COACH_ESPECIALIDADES_ORDER.map((esp) => {
-                    const on = coachEspecialidades.includes(esp);
-                    return (
-                      <button
-                        key={esp}
-                        type="button"
-                        className={`coaching-chip${on ? " is-on" : ""}`}
-                        onClick={() =>
-                          setCoachEspecialidades((prev) =>
-                            toggleInList(prev, esp)
-                          )
-                        }
-                      >
-                        {esp}
-                      </button>
-                    );
-                  })}
-                </div>
-              </fieldset>
-
-              <div className="coaching-modal-footer">
-                <button
-                  type="button"
-                  className="coaching-btn coaching-btn--ghost"
-                  onClick={() => {
-                    setIsCoachModalOpen(false);
-                    resetCoachForm();
-                  }}
-                  disabled={busy}
+                <form
+                  className="coaching-search-row"
+                  onSubmit={handleSearchCoach}
                 >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="coaching-btn coaching-btn--primary"
-                  disabled={busy || !coachNombre.trim()}
-                >
-                  {busy ? "Guardando…" : "Guardar coach (demo)"}
-                </button>
+                  <input
+                    value={coachSearchQuery}
+                    onChange={(e) => setCoachSearchQuery(e.target.value)}
+                    placeholder="Código RIV-C-##### o correo..."
+                    disabled={coachSearchLoading || busy}
+                  />
+                  <button
+                    type="submit"
+                    className="coaching-btn coaching-btn--secondary"
+                    disabled={coachSearchLoading || !coachSearchQuery.trim()}
+                  >
+                    <TablerIcon name="search" size={16} />
+                    {coachSearchLoading ? "Buscando…" : "Buscar"}
+                  </button>
+                </form>
+
+                {coachSearchError ? (
+                  <p className="coaching-error">{coachSearchError}</p>
+                ) : null}
+
+                {coachSearchResult ? (
+                  <div className="coaching-coach-preview">
+                    <div className="coaching-card__top">
+                      <div className="coaching-card__avatar" aria-hidden>
+                        {coachSearchResult.nombre.slice(0, 1).toUpperCase()}
+                      </div>
+                      <div className="coaching-card__identity">
+                        <h3 className="coaching-card__title">
+                          {coachSearchResult.nombre}
+                        </h3>
+                        <span className="coaching-card__code">
+                          {coachSearchResult.coachCode}
+                        </span>
+                        {coachSearchResult.especialidades.length > 0 ? (
+                          <div className="coaching-card__meta">
+                            <span className="coaching-card__meta-item">
+                              {coachSearchResult.especialidades.join(", ")}
+                            </span>
+                          </div>
+                        ) : null}
+                      </div>
+                      {coachSearchResult.alreadyMember ? (
+                        <span className="coaching-badge coaching-badge--active">
+                          Ya en tu club
+                        </span>
+                      ) : null}
+                    </div>
+
+                    {!coachSearchResult.alreadyMember ? (
+                      <button
+                        type="button"
+                        className="coaching-btn coaching-btn--primary"
+                        onClick={handleLinkExistingCoach}
+                        disabled={busy}
+                      >
+                        <TablerIcon name="link" size={16} />
+                        {busy ? "Vinculando…" : "Vincular a este club"}
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <div className="coaching-modal-footer">
+                  <button
+                    type="button"
+                    className="coaching-btn coaching-btn--ghost"
+                    onClick={() => {
+                      setIsCoachModalOpen(false);
+                      resetCoachForm();
+                    }}
+                    disabled={busy}
+                  >
+                    Cerrar
+                  </button>
+                </div>
               </div>
-            </form>
+            ) : (
+              <form className="coaching-modal-form" onSubmit={handleAddCoach}>
+                <div className="coaching-modal-grid">
+                  <label className="coaching-field">
+                    <span>Nombre del coach *</span>
+                    <input
+                      value={coachNombre}
+                      onChange={(e) => setCoachNombre(e.target.value)}
+                      placeholder="Ej. Rodrigo Pádel"
+                      disabled={busy}
+                      required
+                    />
+                  </label>
+                  <label className="coaching-field">
+                    <span>Email de contacto *</span>
+                    <input
+                      type="email"
+                      value={coachEmail}
+                      onChange={(e) => setCoachEmail(e.target.value)}
+                      placeholder="coach@club.com"
+                      disabled={busy}
+                      required
+                    />
+                  </label>
+                  <label className="coaching-field">
+                    <span>Teléfono / WhatsApp</span>
+                    <input
+                      value={coachTelefono}
+                      onChange={(e) => setCoachTelefono(e.target.value)}
+                      placeholder="+52 998 123 4567"
+                      disabled={busy}
+                    />
+                  </label>
+                  <label className="coaching-field">
+                    <span>País</span>
+                    <select
+                      value={coachPais}
+                      onChange={(e) => setCoachPais(e.target.value)}
+                      disabled={busy}
+                    >
+                      <option value="">— Sin especificar —</option>
+                      {PAISES_RIVIERA.map((p) => (
+                        <option key={p.codigo} value={p.codigo}>
+                          {paisSelectLabel(p)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="coaching-field">
+                    <span>Género</span>
+                    <select
+                      value={coachGenero}
+                      onChange={(e) =>
+                        setCoachGenero(e.target.value as RivieraJugadorGenero)
+                      }
+                      disabled={busy}
+                    >
+                      {RIVIERA_GENERO_ORDER.map((g) => (
+                        <option key={g} value={g}>
+                          {RIVIERA_GENERO_LABELS[g]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="coaching-field">
+                    <span>Fuerza deportiva propia</span>
+                    <select
+                      value={coachCategoria}
+                      onChange={(e) =>
+                        setCoachCategoria(
+                          e.target.value as RivieraJugadorCategoria
+                        )
+                      }
+                      disabled={busy}
+                    >
+                      {JUGADOR_CATEGORIAS_ORDER.map((n) => (
+                        <option key={n} value={n}>
+                          {JUGADOR_CATEGORIA_LABELS[n]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="coaching-field">
+                    <span>Edad</span>
+                    <input
+                      type="number"
+                      min={14}
+                      max={99}
+                      value={coachEdad}
+                      onChange={(e) => setCoachEdad(e.target.value)}
+                      placeholder="30"
+                      disabled={busy}
+                    />
+                  </label>
+                  <label className="coaching-field">
+                    <span>Mano dominante</span>
+                    <select
+                      value={coachMano}
+                      onChange={(e) =>
+                        setCoachMano(e.target.value as ManoDominante | "")
+                      }
+                      disabled={busy}
+                    >
+                      <option value="">— Sin especificar —</option>
+                      {(
+                        Object.keys(MANO_DOMINANTE_LABELS) as ManoDominante[]
+                      ).map((m) => (
+                        <option key={m} value={m}>
+                          {MANO_DOMINANTE_LABELS[m]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="coaching-field">
+                    <span>Posición en cancha</span>
+                    <select
+                      value={coachEnCancha}
+                      onChange={(e) =>
+                        setCoachEnCancha(e.target.value as EnCancha | "")
+                      }
+                      disabled={busy}
+                    >
+                      <option value="">— Sin especificar —</option>
+                      {EN_CANCHA_ORDER.map((c) => (
+                        <option key={c} value={c}>
+                          {EN_CANCHA_LABELS[c]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <fieldset className="coaching-chips" disabled={busy}>
+                  <legend>Fuerzas que entrena *</legend>
+                  <div className="coaching-chips__row">
+                    {COACH_FUERZAS_ORDER.map((f) => {
+                      const on = coachFuerzas.includes(f);
+                      return (
+                        <button
+                          key={f}
+                          type="button"
+                          className={`coaching-chip${on ? " is-on" : ""}`}
+                          onClick={() =>
+                            setCoachFuerzas((prev) => toggleInList(prev, f))
+                          }
+                        >
+                          {JUGADOR_CATEGORIA_LABELS[f]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+
+                <fieldset className="coaching-chips" disabled={busy}>
+                  <legend>Especialidades</legend>
+                  <div className="coaching-chips__row">
+                    {COACH_ESPECIALIDADES_ORDER.map((esp) => {
+                      const on = coachEspecialidades.includes(esp);
+                      return (
+                        <button
+                          key={esp}
+                          type="button"
+                          className={`coaching-chip${on ? " is-on" : ""}`}
+                          onClick={() =>
+                            setCoachEspecialidades((prev) =>
+                              toggleInList(prev, esp)
+                            )
+                          }
+                        >
+                          {esp}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+
+                <div className="coaching-modal-footer">
+                  <button
+                    type="button"
+                    className="coaching-btn coaching-btn--ghost"
+                    onClick={() => {
+                      setIsCoachModalOpen(false);
+                      resetCoachForm();
+                    }}
+                    disabled={busy}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="coaching-btn coaching-btn--primary"
+                    disabled={busy || !coachNombre.trim()}
+                  >
+                    {busy ? "Guardando…" : "Registrar e invitar coach"}
+                  </button>
+                </div>
+              </form>
+            )}
           </Modal>
         </section>
       ) : null}
@@ -777,7 +977,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                 disabled={busy || !rivieraIdInput.trim() || !selectedCoachId}
               >
                 <TablerIcon name="link" size={16} />
-                Vincular alumno (demo)
+                {busy ? "Vinculando…" : "Vincular alumno"}
               </button>
             </form>
           </div>
