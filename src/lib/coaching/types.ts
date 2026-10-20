@@ -390,6 +390,7 @@ export type AdjustCoachStudentClassesResult = {
   ok: boolean;
   adjustmentId?: string;
   delta?: number;
+  previousBalance?: number;
   newBalance?: number;
   message?: string;
   idempotent?: boolean;

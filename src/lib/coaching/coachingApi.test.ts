@@ -15,6 +15,8 @@ import {
   fetchStudentCoachingOverview,
   linkStudentAccountByRivieraId,
   linkCoachStudentByClub,
+  adjustCoachStudentClasses,
+  revertCoachClassSession,
 } from "./coachingApi";
 import type { CreateCoachInput } from "./types";
 import { supabase } from "../supabaseClient";
@@ -814,12 +816,15 @@ describe("coachingApi - Entrega B", () => {
       });
 
       const res = await recordCoachClassSession("rel-123", "Clase técnica", "sess-custom");
-      expect(supabase.rpc).toHaveBeenCalledWith("record_coach_class_session", {
-        p_relationship_id: "rel-123",
-        p_notas: "Clase técnica",
-        p_idempotency_key: expect.stringMatching(/^session-/),
-        p_session_id: "sess-custom",
-      });
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        "record_coach_class_session",
+        expect.objectContaining({
+          p_relationship_id: "rel-123",
+          p_notas: "Clase técnica",
+          p_idempotency_key: expect.stringMatching(/^session-/),
+          p_session_id: "sess-custom",
+        })
+      );
       expect(res.remainingBalance).toBe(9);
       expect(res.totalClassesGiven).toBe(1);
       expect(res.sessionId).toBe("sess-abc-123");
@@ -1112,5 +1117,152 @@ describe("coachingApi - Entrega B", () => {
       expect(supabase.rpc).not.toHaveBeenCalled();
     });
   });
+
+  describe("adjustCoachStudentClasses and revertCoachClassSession - Hotfix 0078", () => {
+    it("adjustCoachStudentClasses sends exact canonical RPC signature and returns parsed balances", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          adjustment_id: "adj-999",
+          delta: -9,
+          previous_balance: 19,
+          new_balance: 10,
+          message: "Saldo corregido exitosamente.",
+          idempotent: false,
+        },
+        error: null,
+      });
+
+      const res = await adjustCoachStudentClasses(
+        "org-hack",
+        "coach-1",
+        "student-zaid",
+        -9,
+        "Corrección por error de captura al abonar clases",
+        null,
+        "custom-key-123",
+        19
+      );
+
+      expect(supabase.rpc).toHaveBeenCalledWith("adjust_coach_student_classes", {
+        p_organizador_id: "org-hack",
+        p_coach_id: "coach-1",
+        p_student_id: "student-zaid",
+        p_delta: -9,
+        p_motivo: "Corrección por error de captura al abonar clases",
+        p_reference_ledger_id: null,
+        p_idempotency_key: "custom-key-123",
+        p_expected_current_balance: 19,
+      });
+
+      expect(res).toEqual({
+        ok: true,
+        adjustmentId: "adj-999",
+        delta: -9,
+        previousBalance: 19,
+        newBalance: 10,
+        message: "Saldo corregido exitosamente.",
+        idempotent: false,
+      });
+    });
+
+    it("adjustCoachStudentClasses supports referenceLedgerId when correcting specific ledger entry", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          adjustment_id: "adj-ref-888",
+          delta: 5,
+          previous_balance: 10,
+          new_balance: 15,
+          message: "Saldo corregido exitosamente.",
+        },
+        error: null,
+      });
+
+      const res = await adjustCoachStudentClasses(
+        "org-hack",
+        "coach-1",
+        "student-zaid",
+        5,
+        "Bonificación autorizada",
+        "ledger-orig-456",
+        "key-bonus-1"
+      );
+
+      expect(supabase.rpc).toHaveBeenCalledWith("adjust_coach_student_classes", {
+        p_organizador_id: "org-hack",
+        p_coach_id: "coach-1",
+        p_student_id: "student-zaid",
+        p_delta: 5,
+        p_motivo: "Bonificación autorizada",
+        p_reference_ledger_id: "ledger-orig-456",
+        p_idempotency_key: "key-bonus-1",
+        p_expected_current_balance: null,
+      });
+
+      expect(res.newBalance).toBe(15);
+      expect(res.previousBalance).toBe(10);
+    });
+
+    it("adjustCoachStudentClasses throws and captures currentBalance on optimistic concurrency conflict", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: false,
+          error: "El saldo actual en el servidor (22) difiere del saldo esperado (19).",
+          current_balance: 22,
+        },
+        error: null,
+      });
+
+      await expect(
+        adjustCoachStudentClasses(
+          "org-hack",
+          "coach-1",
+          "student-zaid",
+          -9,
+          "Corrección",
+          null,
+          "key-1",
+          19
+        )
+      ).rejects.toThrow("El saldo actual en el servidor (22) difiere del saldo esperado (19)");
+    });
+
+    it("revertCoachClassSession sends p_motivo matching the updated SQL RPC signature", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          adjustment_id: "adj-rev-1",
+          new_balance: 11,
+          total_classes_given: 4,
+          message: "Clase impartida revertida correctamente. Se restauró 1 clase disponible al alumno.",
+        },
+        error: null,
+      });
+
+      const res = await revertCoachClassSession(
+        "org-hack",
+        "sess-123",
+        "Sesión marcada como completada por error",
+        "revert-key-456"
+      );
+
+      expect(supabase.rpc).toHaveBeenCalledWith("revert_coach_class_session", {
+        p_organizador_id: "org-hack",
+        p_session_id: "sess-123",
+        p_motivo: "Sesión marcada como completada por error",
+        p_idempotency_key: "revert-key-456",
+      });
+
+      expect(res).toEqual({
+        ok: true,
+        adjustmentId: "adj-rev-1",
+        newBalance: 11,
+        totalClassesGiven: 4,
+        message: "Clase impartida revertida correctamente. Se restauró 1 clase disponible al alumno.",
+      });
+    });
+  });
 });
+
 

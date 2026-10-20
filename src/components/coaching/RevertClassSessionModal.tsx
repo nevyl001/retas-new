@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Modal } from "../ui/Modal";
 import { TablerIcon } from "../ui/TablerIcon";
-import { revertCoachClassSession } from "../../lib/coaching/coachingApi";
+import {
+  revertCoachClassSession,
+  generateCoachingIdempotencyKey,
+} from "../../lib/coaching/coachingApi";
 
 export interface RevertClassSessionModalProps {
   open: boolean;
@@ -39,17 +42,27 @@ export const RevertClassSessionModal: React.FC<RevertClassSessionModalProps> = (
   const [error, setError] = useState<string | null>(null);
 
   const wasOpenRef = useRef(false);
+  const idempotencyKeyRef = useRef<string>("");
+  const lastParamSignatureRef = useRef<string>("");
 
   useEffect(() => {
     if (open && !wasOpenRef.current) {
       setError(null);
       setSelectedPreset(REVERT_PRESETS[0]);
       setCustomReason("");
+      idempotencyKeyRef.current = generateCoachingIdempotencyKey("revert-session");
+      lastParamSignatureRef.current = "";
     }
     wasOpenRef.current = open;
   }, [open]);
 
   if (!session) return null;
+
+  const currentSig = `${selectedPreset}:${customReason.trim()}`;
+  if (open && lastParamSignatureRef.current !== currentSig) {
+    lastParamSignatureRef.current = currentSig;
+    idempotencyKeyRef.current = generateCoachingIdempotencyKey("revert-session");
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +83,12 @@ export const RevertClassSessionModal: React.FC<RevertClassSessionModalProps> = (
     setError(null);
 
     try {
-      const res = await revertCoachClassSession(organizadorId, session.id, finalReason);
+      const res = await revertCoachClassSession(
+        organizadorId,
+        session.id,
+        finalReason,
+        idempotencyKeyRef.current
+      );
       onSuccess(session.id, res.newBalance);
       onClose();
     } catch (err: any) {

@@ -1881,9 +1881,11 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
           rivieraId={adjustingBalance.rivieraId}
           currentBalance={adjustingBalance.currentBalance}
           referenceLedgerId={adjustingBalance.referenceLedgerId}
-          onSuccess={(newBalance, delta) => {
+          onSuccess={(newBalance, delta, prevBalance) => {
+            const pText = prevBalance != null ? `Saldo anterior: ${prevBalance} clases. ` : "";
+            const dText = delta >= 0 ? `+${delta}` : `${delta}`;
             setActionSuccess(
-              `Saldo ajustado exitosamente (${delta >= 0 ? `+${delta}` : delta} clases). Nuevo saldo: ${newBalance} clases.`
+              `Saldo corregido correctamente. ${pText}Ajuste: ${dText} clases. Saldo actual: ${newBalance} clases.`
             );
             void loadData();
             if (onCoachUpdated) onCoachUpdated();

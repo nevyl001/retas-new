@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Modal } from "../ui/Modal";
 import { TablerIcon } from "../ui/TablerIcon";
-import { adjustCoachStudentClasses } from "../../lib/coaching/coachingApi";
+import {
+  adjustCoachStudentClasses,
+  generateCoachingIdempotencyKey,
+} from "../../lib/coaching/coachingApi";
 
 export interface AdjustClassBalanceModalProps {
   open: boolean;
@@ -14,7 +17,7 @@ export interface AdjustClassBalanceModalProps {
   rivieraId?: string;
   currentBalance: number;
   referenceLedgerId?: string | null;
-  onSuccess: (newBalance: number, delta: number) => void;
+  onSuccess: (newBalance: number, delta: number, previousBalance?: number) => void;
 }
 
 const PRESET_REASONS = [
@@ -46,37 +49,53 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
   const [customReason, setCustomReason] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [serverCurrentBalance, setServerCurrentBalance] = useState<number>(currentBalance);
 
   const wasOpenRef = useRef(false);
+  const idempotencyKeyRef = useRef<string>("");
+  const lastParamSignatureRef = useRef<string>("");
 
   useEffect(() => {
     if (open && !wasOpenRef.current) {
       setError(null);
       setMode("target");
+      setServerCurrentBalance(currentBalance);
       setTargetBalanceInput(String(Math.max(0, currentBalance)));
       setDeltaInput("0");
       setSelectedPreset(PRESET_REASONS[0]);
       setCustomReason("");
+      idempotencyKeyRef.current = generateCoachingIdempotencyKey("adjust");
+      lastParamSignatureRef.current = "";
     }
     wasOpenRef.current = open;
   }, [open, currentBalance]);
 
   // Cálculo de delta y saldo final según el modo
+  const effectiveCurrent = serverCurrentBalance;
   let computedDelta = 0;
-  let computedNewBalance = currentBalance;
+  let computedNewBalance = effectiveCurrent;
 
   if (mode === "target") {
     const parsedTarget = parseInt(targetBalanceInput, 10);
     if (!isNaN(parsedTarget)) {
       computedNewBalance = parsedTarget;
-      computedDelta = parsedTarget - currentBalance;
+      computedDelta = parsedTarget - effectiveCurrent;
     }
   } else {
     const parsedDelta = parseInt(deltaInput, 10);
     if (!isNaN(parsedDelta)) {
       computedDelta = parsedDelta;
-      computedNewBalance = currentBalance + parsedDelta;
+      computedNewBalance = effectiveCurrent + parsedDelta;
     }
+  }
+
+  // Si los parámetros del ajuste cambian, regenerar la clave de idempotencia
+  // para que una corrección con valores distintos no choque, pero mantener la
+  // misma clave durante reintentos por pérdida de conexión.
+  const currentSignature = `${mode}:${computedDelta}:${selectedPreset}:${customReason.trim()}`;
+  if (open && lastParamSignatureRef.current !== currentSignature) {
+    lastParamSignatureRef.current = currentSignature;
+    idempotencyKeyRef.current = generateCoachingIdempotencyKey("adjust");
   }
 
   const isNegativeResult = computedNewBalance < 0;
@@ -115,15 +134,26 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
         studentId,
         computedDelta,
         finalReason,
-        referenceLedgerId || null
+        referenceLedgerId || null,
+        idempotencyKeyRef.current,
+        effectiveCurrent
       );
 
       const resolvedBalance = res.newBalance ?? computedNewBalance;
-      onSuccess(resolvedBalance, computedDelta);
+      const prevBalance = res.previousBalance ?? effectiveCurrent;
+      onSuccess(resolvedBalance, computedDelta, prevBalance);
       onClose();
     } catch (err: any) {
       console.error("[coaching] error submitting balance adjustment:", err);
-      setError(err?.message || "No se pudo realizar el ajuste de saldo.");
+      // Si el servidor detectó que el saldo cambió concurrentemente
+      if (err?.currentBalance != null && typeof err.currentBalance === "number") {
+        setServerCurrentBalance(err.currentBalance);
+        setError(
+          `El saldo del alumno cambió concurrentemente en el club (ahora es ${err.currentBalance} clases). Hemos actualizado la vista previa. Por favor verifica y confirma nuevamente.`
+        );
+      } else {
+        setError(err?.message || "No se pudo realizar el ajuste de saldo.");
+      }
     } finally {
       setSaving(false);
     }
@@ -145,7 +175,7 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
           }}
         >
           <div>
-            <span style={{ fontSize: "0.72rem", color: "var(--ro-text-muted, #94a3b8)", textTransform: "uppercase" }}>
+            <span style={{ fontSize: "0.72rem", color: "var(--ro-text-muted, #94a3b8)", textTransform: "uppercase", fontWeight: 600 }}>
               Alumno
             </span>
             <div style={{ fontWeight: 600, color: "var(--ro-text-main, #f8fafc)", fontSize: "0.95rem" }}>
@@ -158,7 +188,7 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
             )}
           </div>
           <div>
-            <span style={{ fontSize: "0.72rem", color: "var(--ro-text-muted, #94a3b8)", textTransform: "uppercase" }}>
+            <span style={{ fontSize: "0.72rem", color: "var(--ro-text-muted, #94a3b8)", textTransform: "uppercase", fontWeight: 600 }}>
               Entrenador
             </span>
             <div style={{ fontWeight: 600, color: "var(--ro-text-main, #f8fafc)", fontSize: "0.95rem" }}>
@@ -186,7 +216,7 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
             </span>
           </div>
           <span style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--ro-primary, #10b981)" }}>
-            {currentBalance} {currentBalance === 1 ? "clase" : "clases"}
+            {effectiveCurrent} {effectiveCurrent === 1 ? "clase" : "clases"}
           </span>
         </div>
 
@@ -197,13 +227,13 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
             onClick={() => setMode("target")}
             style={{
               flex: 1,
-              padding: "0.5rem 0.75rem",
+              padding: "0.6rem 0.75rem",
               borderRadius: "8px",
-              fontSize: "0.82rem",
+              fontSize: "0.85rem",
               fontWeight: 600,
               cursor: "pointer",
               border: mode === "target" ? "1px solid var(--ro-primary, #10b981)" : "1px solid rgba(255,255,255,0.1)",
-              background: mode === "target" ? "rgba(16, 185, 129, 0.15)" : "transparent",
+              background: mode === "target" ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.02)",
               color: mode === "target" ? "var(--ro-primary, #10b981)" : "var(--ro-text-muted, #94a3b8)",
               transition: "all 0.15s ease",
             }}
@@ -215,13 +245,13 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
             onClick={() => setMode("delta")}
             style={{
               flex: 1,
-              padding: "0.5rem 0.75rem",
+              padding: "0.6rem 0.75rem",
               borderRadius: "8px",
-              fontSize: "0.82rem",
+              fontSize: "0.85rem",
               fontWeight: 600,
               cursor: "pointer",
               border: mode === "delta" ? "1px solid var(--ro-primary, #10b981)" : "1px solid rgba(255,255,255,0.1)",
-              background: mode === "delta" ? "rgba(16, 185, 129, 0.15)" : "transparent",
+              background: mode === "delta" ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.02)",
               color: mode === "delta" ? "var(--ro-primary, #10b981)" : "var(--ro-text-muted, #94a3b8)",
               transition: "all 0.15s ease",
             }}
@@ -232,8 +262,8 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
 
         {/* Inputs numéricos según modo */}
         {mode === "target" ? (
-          <div className="coaching-form-group">
-            <label className="coaching-label" htmlFor="target-balance-input">
+          <div className="coaching-form-group" style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+            <label className="coaching-label" htmlFor="target-balance-input" style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--ro-text-main, #f8fafc)" }}>
               ¿Cuál debe ser el saldo real correcto? *
             </label>
             <input
@@ -254,8 +284,8 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
             </span>
           </div>
         ) : (
-          <div className="coaching-form-group">
-            <label className="coaching-label" htmlFor="delta-balance-input">
+          <div className="coaching-form-group" style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+            <label className="coaching-label" htmlFor="delta-balance-input" style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--ro-text-main, #f8fafc)" }}>
               Ajuste de clases (+ sumar, - restar) *
             </label>
             <input
@@ -265,7 +295,7 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
               className="coaching-input"
               value={deltaInput}
               onChange={(e) => setDeltaInput(e.target.value)}
-              placeholder="ej. -5 o +3"
+              placeholder="ej. -9 o +5"
               disabled={saving}
               required
               autoFocus
@@ -299,19 +329,19 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
           }}
         >
           <div>
-            <div style={{ fontSize: "0.75rem", color: "var(--ro-text-muted, #94a3b8)", textTransform: "uppercase" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--ro-text-muted, #94a3b8)", textTransform: "uppercase", fontWeight: 600 }}>
               Previsualización
             </div>
-            <div style={{ fontSize: "0.88rem", color: "var(--ro-text-main, #f8fafc)" }}>
-              {currentBalance} {computedDelta >= 0 ? `+ ${computedDelta}` : `- ${Math.abs(computedDelta)}`} ={" "}
-              <strong>{computedNewBalance} clases</strong>
+            <div style={{ fontSize: "0.92rem", color: "var(--ro-text-main, #f8fafc)", marginTop: "0.2rem" }}>
+              {effectiveCurrent} {computedDelta >= 0 ? `+ ${computedDelta}` : `- ${Math.abs(computedDelta)}`} ={" "}
+              <strong style={{ color: "var(--ro-text-main, #fff)" }}>{computedNewBalance} clases</strong>
             </div>
           </div>
           <div
             style={{
-              padding: "0.3rem 0.65rem",
+              padding: "0.35rem 0.75rem",
               borderRadius: "6px",
-              fontSize: "0.82rem",
+              fontSize: "0.88rem",
               fontWeight: 700,
               background: isNegativeResult
                 ? "rgba(239, 68, 68, 0.2)"
@@ -334,8 +364,8 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
         </div>
 
         {/* Motivo Obligatorio */}
-        <div className="coaching-form-group">
-          <label className="coaching-label" htmlFor="adjust-reason-preset">
+        <div className="coaching-form-group" style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+          <label className="coaching-label" htmlFor="adjust-reason-preset" style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--ro-text-main, #f8fafc)" }}>
             Motivo de corrección (Auditable) *
           </label>
           <select
@@ -353,15 +383,17 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
           </select>
         </div>
 
-        <div className="coaching-form-group">
-          <label className="coaching-label" htmlFor="adjust-reason-custom">
+        {/* Detalle adicional con textarea */}
+        <div className="coaching-form-group" style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+          <label className="coaching-label" htmlFor="adjust-reason-custom" style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--ro-text-main, #f8fafc)" }}>
             Detalle adicional / Referencia (Opcional)
           </label>
-          <input
+          <textarea
             id="adjust-reason-custom"
-            type="text"
+            rows={2}
             className="coaching-input"
-            placeholder="ej. Se registraron 19 clases en lugar de 10 por doble clic al crear paquete"
+            style={{ width: "100%", resize: "vertical", fontFamily: "inherit" }}
+            placeholder="ej. Se registraron 19 clases en lugar de 10 por error al abonar paquete"
             value={customReason}
             onChange={(e) => setCustomReason(e.target.value)}
             disabled={saving}
@@ -377,12 +409,13 @@ export const AdjustClassBalanceModal: React.FC<AdjustClassBalanceModalProps> = (
         {error && (
           <div
             style={{
-              padding: "0.75rem",
-              background: "rgba(239, 68, 68, 0.1)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
+              padding: "0.85rem",
+              background: "rgba(239, 68, 68, 0.12)",
+              border: "1px solid rgba(239, 68, 68, 0.35)",
               borderRadius: "8px",
               color: "#fca5a5",
               fontSize: "0.85rem",
+              lineHeight: 1.4,
             }}
           >
             {error}

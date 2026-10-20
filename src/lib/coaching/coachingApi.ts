@@ -1699,7 +1699,8 @@ export async function adjustCoachStudentClasses(
   delta: number,
   motivo: string,
   referenceLedgerId?: string | null,
-  idempotencyKey?: string
+  idempotencyKey?: string,
+  expectedCurrentBalance?: number | null
 ): Promise<AdjustCoachStudentClassesResult> {
   const key = idempotencyKey || generateCoachingIdempotencyKey("adjust");
 
@@ -1711,6 +1712,8 @@ export async function adjustCoachStudentClasses(
     p_motivo: motivo,
     p_reference_ledger_id: referenceLedgerId || null,
     p_idempotency_key: key,
+    p_expected_current_balance:
+      expectedCurrentBalance != null ? expectedCurrentBalance : null,
   });
 
   if (error) {
@@ -1720,15 +1723,21 @@ export async function adjustCoachStudentClasses(
 
   const res = data as Record<string, any> | null;
   if (!res || res.ok === false) {
-    throw new Error(res?.error || "No se pudo realizar el ajuste de saldo.");
+    const err = new Error(res?.error || "No se pudo realizar el ajuste de saldo.");
+    if (res?.current_balance != null) {
+      (err as any).currentBalance = res.current_balance;
+    }
+    throw err;
   }
 
   return {
     ok: true,
     adjustmentId: res.adjustment_id ? String(res.adjustment_id) : undefined,
     delta: res.delta != null ? Number(res.delta) : undefined,
+    previousBalance:
+      res.previous_balance != null ? Number(res.previous_balance) : undefined,
     newBalance: res.new_balance != null ? Number(res.new_balance) : undefined,
-    message: String(res.message ?? "Saldo ajustado correctamente."),
+    message: String(res.message ?? "Saldo corregido correctamente."),
     idempotent: Boolean(res.idempotent),
   };
 }
