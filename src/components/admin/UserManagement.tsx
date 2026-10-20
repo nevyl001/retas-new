@@ -115,6 +115,10 @@ interface User {
   express_finished?: number;
   activity_total?: number;
   last_activity?: string;
+  coach_info?: {
+    coach_code: string;
+    club_count: number;
+  } | null;
 }
 
 interface UserManagementProps {
@@ -137,7 +141,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     | "activity_total"
   >("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [filterBy, setFilterBy] = useState<"all" | "active" | "inactive">(
+  const [filterBy, setFilterBy] = useState<"all" | "active" | "inactive" | "coaches">(
     "all"
   );
   const [authCleanupNotice, setAuthCleanupNotice] = useState<string | null>(
@@ -168,12 +172,16 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         { data: tournamentsData, error: tournamentsError },
         { data: expressData, error: expressError },
         { data: publicConfigData, error: publicConfigError },
+        { data: coachesData, error: coachesError },
+        { data: membershipsData, error: membershipsError },
       ] = await Promise.all([
         supabase
           .from("tournaments")
           .select("id, user_id, is_finished, name, description"),
         supabase.from("torneo_express").select("organizador_id, estado"),
         supabase.from("tournament_public_config").select("*"),
+        supabase.from("riviera_coaches").select("id, auth_user_id, coach_code"),
+        supabase.from("coach_club_memberships").select("coach_id, organizador_id"),
       ]);
 
       if (tournamentsError) {
@@ -184,6 +192,33 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       }
       if (publicConfigError) {
         console.warn("tournament_public_config (americano):", publicConfigError);
+      }
+      if (coachesError) {
+        console.warn("riviera_coaches query warning:", coachesError);
+      }
+      if (membershipsError) {
+        console.warn("coach_club_memberships query warning:", membershipsError);
+      }
+
+      const coachClubCountMap = new Map<string, number>();
+      for (const m of membershipsData ?? []) {
+        const cid = String((m as { coach_id?: string }).coach_id ?? "");
+        if (cid) {
+          coachClubCountMap.set(cid, (coachClubCountMap.get(cid) || 0) + 1);
+        }
+      }
+
+      const authCoachMap = new Map<string, { coach_code: string; club_count: number }>();
+      for (const c of coachesData ?? []) {
+        const aid = (c as { auth_user_id?: string }).auth_user_id;
+        const code = (c as { coach_code?: string }).coach_code;
+        const cid = (c as { id?: string }).id;
+        if (aid && code) {
+          authCoachMap.set(aid, {
+            coach_code: code,
+            club_count: cid ? coachClubCountMap.get(cid) || 0 : 0,
+          });
+        }
       }
 
       const americanTournamentIds = americanIdsFromPublicConfig(
@@ -248,6 +283,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           const exT = expressTotal[uid] || 0;
           const exA = expressActive[uid] || 0;
           const exF = expressFinished[uid] || 0;
+          const coachInfo = authCoachMap.get(uid) || null;
 
           return {
             ...user,
@@ -268,6 +304,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             express_finished: exF,
             activity_total: c.total + exT,
             last_activity: user.updated_at,
+            coach_info: coachInfo,
           };
         })
         .filter((u) => u.id !== adminUser?.user_id);
@@ -298,6 +335,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
       const matchesFilter =
         filterBy === "all" ||
+        (filterBy === "coaches" && Boolean(user.coach_info)) ||
         (filterBy === "active" && (hasClassicActive || hasExpressActive)) ||
         (filterBy === "inactive" && !hasClassicActive && !hasExpressActive);
 
@@ -472,10 +510,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         <div className="filter-controls">
           <select
             value={filterBy}
-            onChange={(e) => setFilterBy(e.target.value as "all" | "active" | "inactive")}
+            onChange={(e) => setFilterBy(e.target.value as "all" | "active" | "inactive" | "coaches")}
             className="riviera-input"
           >
             <option value="all">Todos los usuarios</option>
+            <option value="coaches">Solo coaches oficiales</option>
             <option value="active">Con actividad en curso</option>
             <option value="inactive">Sin actividad en curso</option>
           </select>
@@ -542,7 +581,31 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 </div>
 
                 <div className="user-info">
-                  <h3 className="user-name">{user.name || user.email}</h3>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                    <h3 className="user-name" style={{ margin: 0 }}>{user.name || user.email}</h3>
+                    {user.coach_info ? (
+                      <span
+                        style={{
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          padding: "0.15rem 0.5rem",
+                          borderRadius: "4px",
+                          background: "rgba(16, 185, 129, 0.15)",
+                          color: "#34d399",
+                          border: "1px solid rgba(16, 185, 129, 0.3)",
+                          letterSpacing: "0.03em",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        COACH · {user.coach_info.coach_code}
+                        {user.coach_info.club_count > 0 ? (
+                          <span style={{ opacity: 0.85 }}>({user.coach_info.club_count} {user.coach_info.club_count === 1 ? "club" : "clubes"})</span>
+                        ) : null}
+                      </span>
+                    ) : null}
+                  </div>
                   <p className="user-email">{user.email}</p>
                   <div className="user-stats">
                     <span className="stat-item stat-item--strong">

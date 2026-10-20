@@ -431,20 +431,93 @@ export const StudentCoachingPage: React.FC = () => {
                               )}
 
                               {entry.session && (
-                                <div className="coaching-session-box">
-                                  {entry.session.focus && (
-                                    <p className="coaching-session-focus">
-                                      <TablerIcon name="target" size={14} />
-                                      <strong>Enfoque técnico:</strong> {entry.session.focus}
-                                    </p>
+                                <div className="coaching-session-box" style={{ marginTop: "0.5rem", gap: "0.5rem" }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+                                    {entry.session.durationMinutes && (
+                                      <span className="coaching-session-dur">
+                                        <TablerIcon name="clock" size={13} />
+                                        {entry.session.durationMinutes} min
+                                      </span>
+                                    )}
+                                    {entry.session.focus && (
+                                      <span style={{ fontSize: "0.8rem", color: "var(--ro-text-primary)", fontWeight: 600 }}>
+                                        {entry.session.focus}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Chips de temas trabajados */}
+                                  {entry.session.workedOn && entry.session.workedOn.length > 0 && (
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", marginTop: "0.2rem" }}>
+                                      {entry.session.workedOn.map((t) => (
+                                        <span
+                                          key={t}
+                                          style={{
+                                            padding: "0.15rem 0.5rem",
+                                            borderRadius: "12px",
+                                            fontSize: "0.72rem",
+                                            background: "rgba(56, 189, 248, 0.12)",
+                                            color: "#7dd3fc",
+                                            border: "1px solid rgba(56, 189, 248, 0.25)",
+                                          }}
+                                        >
+                                          {t}
+                                        </span>
+                                      ))}
+                                    </div>
                                   )}
-                                  {entry.session.durationMinutes && (
-                                    <span className="coaching-session-dur">
-                                      <TablerIcon name="clock" size={13} />
-                                      {entry.session.durationMinutes} min
-                                    </span>
+
+                                  {/* Mejoras observadas */}
+                                  {entry.session.improvements && (
+                                    <div style={{ fontSize: "0.8rem", color: "var(--ro-text-secondary)" }}>
+                                      <span style={{ color: "#34d399", fontWeight: 600, marginRight: "0.35rem" }}>
+                                        ✓ Mejoras:
+                                      </span>
+                                      {entry.session.improvements}
+                                    </div>
                                   )}
-                                  {entry.session.notesSummary && (
+
+                                  {/* Próximos objetivos */}
+                                  {entry.session.nextGoals && (
+                                    <div style={{ fontSize: "0.8rem", color: "var(--ro-text-secondary)" }}>
+                                      <span style={{ color: "#fbbf24", fontWeight: 600, marginRight: "0.35rem" }}>
+                                        🎯 Próximos objetivos:
+                                      </span>
+                                      {entry.session.nextGoals}
+                                    </div>
+                                  )}
+
+                                  {/* Mensaje motivacional / Feedback personal */}
+                                  {entry.session.motivationalMessage && (
+                                    <div
+                                      style={{
+                                        marginTop: "0.25rem",
+                                        padding: "0.6rem 0.85rem",
+                                        background: "rgba(255, 255, 255, 0.04)",
+                                        borderRadius: "6px",
+                                        borderLeft: "3px solid #10b981",
+                                        fontSize: "0.82rem",
+                                        color: "var(--ro-text-primary)",
+                                      }}
+                                    >
+                                      <span
+                                        style={{
+                                          display: "block",
+                                          fontSize: "0.7rem",
+                                          textTransform: "uppercase",
+                                          letterSpacing: "0.05em",
+                                          color: "#34d399",
+                                          fontWeight: 700,
+                                          marginBottom: "0.2rem",
+                                        }}
+                                      >
+                                        Mensaje de tu coach ({rel.coach.nombre})
+                                      </span>
+                                      "{entry.session.motivationalMessage}"
+                                    </div>
+                                  )}
+
+                                  {entry.session.notesSummary && !entry.session.motivationalMessage && (
                                     <p className="coaching-session-feedback">
                                       {entry.session.notesSummary}
                                     </p>

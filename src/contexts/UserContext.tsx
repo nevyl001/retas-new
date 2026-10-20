@@ -23,6 +23,7 @@ import {
   confirmSessionExit,
   normalizeAppPathname,
   resetProtectedPathToAppHome,
+  PATH_SYNC_EVENT,
 } from "../lib/appRouting";
 
 interface UserProfile {
@@ -164,6 +165,10 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       ) {
         const masterAdminEarly = await fetchMasterAdminByAuthId(nextUserId);
         if (!masterAdminEarly) {
+          const isCoachOnly = nextSession.user.user_metadata?.account_type === "COACH_ONLY";
+          if (isCoachOnly) {
+            clearTenantBranding();
+          }
           setSession(nextSession);
           setUser(nextSession.user);
           userIdRef.current = nextUserId;
@@ -173,8 +178,17 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             nextSession.user.email,
             nextSession.user.user_metadata?.name
           );
+          const atAppHome =
+            typeof window !== "undefined" &&
+            normalizeAppPathname(window.location.pathname) === "/";
+          if (isCoachOnly && atAppHome) {
+            window.history.replaceState({}, "", "/coaching/mi-espacio");
+            window.dispatchEvent(new PopStateEvent("popstate"));
+            window.dispatchEvent(new Event(PATH_SYNC_EVENT));
+          }
           debugLog("[branding] UserContext.applySession:skip-init-restored", {
             orgId: nextUserId,
+            isCoachOnly,
           });
           return;
         }
@@ -232,12 +246,14 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
               navigateToAdminDashboard();
             }
           } else {
+            const isCoachOnly = nextSession.user.user_metadata?.account_type === "COACH_ONLY";
             const path =
               typeof window !== "undefined" ? window.location.pathname : "/";
-            if (shouldKeepDocumentMotherBrand(path)) {
+            if (isCoachOnly || shouldKeepDocumentMotherBrand(path)) {
               clearTenantBranding();
-              debugLog("[branding] UserContext.applySession:mother-public-path", {
+              debugLog("[branding] UserContext.applySession:coach-or-mother-path", {
                 orgId: nextUserId,
+                isCoachOnly,
                 path,
               });
             } else {
@@ -264,6 +280,19 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
               nextSession.user.email,
               nextSession.user.user_metadata?.name
             );
+
+            const atAppHome =
+              typeof window !== "undefined" &&
+              normalizeAppPathname(window.location.pathname) === "/";
+            if (
+              isCoachOnly &&
+              atAppHome &&
+              (event === "SIGNED_IN" || event === "init")
+            ) {
+              window.history.replaceState({}, "", "/coaching/mi-espacio");
+              window.dispatchEvent(new PopStateEvent("popstate"));
+              window.dispatchEvent(new Event(PATH_SYNC_EVENT));
+            }
           }
         } else {
           clearTenantBranding();

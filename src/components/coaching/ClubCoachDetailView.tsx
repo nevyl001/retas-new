@@ -7,6 +7,8 @@ import {
   archiveCoachFromClub,
   unarchiveCoachFromClub,
   assignCoachClasses,
+  removeCoachFromClub,
+  generateCoachingIdempotencyKey,
 } from "../../lib/coaching/coachingApi";
 import {
   COACH_ESPECIALIDADES_ORDER,
@@ -50,9 +52,12 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
   // Modales
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [detailRemovalReason, setDetailRemovalReason] = useState("");
   const [assigningStudent, setAssigningStudent] = useState<ClubCoachDetailStudent | null>(null);
   const [assignClassesCount, setAssignClassesCount] = useState<number>(10);
   const [assignClassesNotes, setAssignClassesNotes] = useState<string>("");
+  const [assignIdempotencyKey, setAssignIdempotencyKey] = useState<string>("");
 
   // Campos de edición local
   const [editFuerzas, setEditFuerzas] = useState<RivieraJugadorCategoria[]>([]);
@@ -240,6 +245,13 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
     }
   };
 
+  const openAssignModal = (st: ClubCoachDetailStudent) => {
+    setAssigningStudent(st);
+    setAssignClassesCount(10);
+    setAssignClassesNotes("");
+    setAssignIdempotencyKey(generateCoachingIdempotencyKey("assign"));
+  };
+
   // Asignar clases a un alumno desde el panel
   const handleAssignClasses = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,7 +264,8 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
         organizadorId,
         assigningStudent.relationshipId,
         assignClassesCount,
-        assignClassesNotes.trim() || undefined
+        assignClassesNotes.trim() || undefined,
+        assignIdempotencyKey || undefined
       );
       setActionSuccess(
         `Se asignaron +${assignClassesCount} clases a ${assigningStudent.nombre} exitosamente.`
@@ -260,11 +273,38 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
       setAssigningStudent(null);
       setAssignClassesCount(10);
       setAssignClassesNotes("");
+      setAssignIdempotencyKey("");
       await loadData();
       if (onCoachUpdated) onCoachUpdated();
     } catch (err) {
       setActionError(
         err instanceof Error ? err.message : "Error al asignar clases."
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Eliminar coach de mi club de forma atómica e irreversible para el club
+  const handleRemoveCoach = async () => {
+    if (!organizadorId || !coachId) return;
+    setBusy(true);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const res = await removeCoachFromClub(
+        organizadorId,
+        coachId,
+        detailRemovalReason.trim() || undefined
+      );
+      setActionSuccess(res.message || "Coach eliminado exitosamente del club.");
+      setIsRemoveModalOpen(false);
+      setDetailRemovalReason("");
+      await loadData();
+      if (onCoachUpdated) onCoachUpdated();
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Error al eliminar coach de este club."
       );
     } finally {
       setBusy(false);
@@ -304,6 +344,20 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
         return <span className="coaching-badge coaching-badge--inactive">Invitación cancelada</span>;
       case "ARCHIVED":
         return <span className="coaching-badge coaching-badge--neutral">Archivado</span>;
+      case "REMOVED":
+        return (
+          <span
+            className="coaching-badge"
+            style={{
+              background: "rgba(239, 68, 68, 0.12)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              color: "#fca5a5",
+            }}
+          >
+            <TablerIcon name="user-x" size={13} />
+            Eliminado del club
+          </span>
+        );
       default:
         return <span className="coaching-badge coaching-badge--neutral">{status}</span>;
     }
@@ -385,10 +439,48 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
               onClick={() => setIsManageModalOpen(true)}
             >
               <TablerIcon name="settings" size={15} />
-              Gestionar asociación
+              Gestionar acceso
             </button>
+            {membership.status !== "REMOVED" ? (
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--ghost"
+                style={{ color: "#f87171", borderColor: "rgba(239, 68, 68, 0.3)" }}
+                onClick={() => setIsRemoveModalOpen(true)}
+                title="Eliminar este coach de mi club"
+              >
+                <TablerIcon name="trash" size={15} />
+                Eliminar coach de mi club
+              </button>
+            ) : null}
           </div>
         </div>
+
+        {/* Banner si el coach fue eliminado de este club */}
+        {membership.status === "REMOVED" && (
+          <div
+            style={{
+              background: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "8px",
+              padding: "0.85rem 1.25rem",
+              marginBottom: "1rem",
+              color: "#fca5a5",
+              fontSize: "0.88rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.6rem",
+            }}
+          >
+            <TablerIcon name="alert-circle" size={20} />
+            <div>
+              <strong>Entrenador eliminado de este club.</strong> Desvinculado el{" "}
+              {formatDate(membership.removedAt)}
+              {membership.removalReason ? ` (Motivo: "${membership.removalReason}")` : ""}.
+              El historial de sesiones, alumnos y balances permanece íntegro y protegido.
+            </div>
+          </div>
+        )}
 
         {/* Notificaciones de acción */}
         {actionSuccess && (
@@ -707,7 +799,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                       type="button"
                       className="coaching-btn coaching-btn--primary"
                       style={{ flex: 1, padding: "0.45rem 0.75rem", fontSize: "0.82rem" }}
-                      onClick={() => setAssigningStudent(st)}
+                      onClick={() => openAssignModal(st)}
                     >
                       <TablerIcon name="plus" size={14} />
                       Asignar clases
@@ -755,7 +847,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                         type="button"
                         className="coaching-btn coaching-btn--secondary"
                         style={{ padding: "0.35rem 0.65rem", fontSize: "0.78rem" }}
-                        onClick={() => setAssigningStudent(st)}
+                        onClick={() => openAssignModal(st)}
                       >
                         <TablerIcon name="plus" size={13} />
                         Recargar
@@ -782,7 +874,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
           <div className="coaching-section-header" style={{ marginBottom: "1rem" }}>
             <div>
               <h2 className="coaching-section-title" style={{ fontSize: "1.2rem" }}>Agenda de Clases</h2>
-              <p className="coaching-section-desc">Historial de sesiones impartidas por el entrenador en tus canchas.</p>
+              <p className="coaching-section-desc">Historial y control de sesiones impartidas por el entrenador en tus canchas.</p>
             </div>
           </div>
 
@@ -794,40 +886,44 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-              {sessions.map((ses) => (
-                <div key={ses.id} className="coaching-ledger-row">
-                  <div className="coaching-ledger-row__left">
-                    <span className="coaching-ledger-badge badge--session">
-                      <TablerIcon name="check" size={13} />
-                      Clase Impartida
-                    </span>
-                    <span className="coaching-ledger-date">{formatDate(ses.startsAt)}</span>
-                    {ses.durationMinutes && (
-                      <span style={{ fontSize: "0.75rem", color: "var(--ro-text-muted)" }}>
-                        Duración: {ses.durationMinutes} min
+              {sessions.map((ses) => {
+                const isCompleted = ses.status === "COMPLETED";
+                const isScheduled = ses.status === "SCHEDULED";
+                return (
+                  <div key={ses.id} className="coaching-ledger-row">
+                    <div className="coaching-ledger-row__left">
+                      <span className={`coaching-ledger-badge ${isCompleted ? "badge--session" : isScheduled ? "badge--assign" : "badge--neutral"}`}>
+                        <TablerIcon name={isCompleted ? "check" : isScheduled ? "calendar" : "clock"} size={13} />
+                        {isCompleted ? "Clase Impartida" : isScheduled ? "Clase Agendada" : "Sesión"}
                       </span>
-                    )}
-                  </div>
-                  <div className="coaching-ledger-row__details">
-                    <p style={{ margin: "0 0 0.25rem", fontWeight: 700, fontSize: "0.92rem" }}>
-                      Alumno: {ses.jugadorNombre}
-                    </p>
-                    {ses.focus && (
-                      <p className="coaching-session-focus" style={{ marginBottom: "0.25rem" }}>
-                        <TablerIcon name="target" size={14} />
-                        Enfoque técnico: {ses.focus}
+                      <span className="coaching-ledger-date">{formatDate(ses.startsAt)}</span>
+                      {ses.durationMinutes && (
+                        <span style={{ fontSize: "0.75rem", color: "var(--ro-text-muted)" }}>
+                          Duración: {ses.durationMinutes} min
+                        </span>
+                      )}
+                    </div>
+                    <div className="coaching-ledger-row__details">
+                      <p style={{ margin: "0 0 0.25rem", fontWeight: 700, fontSize: "0.92rem" }}>
+                        Alumno: {ses.jugadorNombre}
                       </p>
-                    )}
-                    {ses.notesSummary && <p className="coaching-session-feedback">{ses.notesSummary}</p>}
+                      {ses.focus && (
+                        <p className="coaching-session-focus" style={{ marginBottom: "0.25rem" }}>
+                          <TablerIcon name="target" size={14} />
+                          Enfoque técnico: {ses.focus}
+                        </p>
+                      )}
+                      {ses.notesSummary && <p className="coaching-session-feedback">{ses.notesSummary}</p>}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
       )}
 
-      {/* 5. SEGUIMIENTO */}
+      {/* 5. SEGUIMIENTO DEPORTIVO */}
       {activeTab === "seguimiento" && (
         <section className="coaching-panel" style={{ padding: "1.25rem", background: "rgba(255,255,255,0.02)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)" }}>
           <div className="coaching-section-header" style={{ marginBottom: "1rem" }}>
@@ -837,36 +933,84 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
             </div>
           </div>
 
-          {sessions.filter((s) => Boolean(s.focus || s.notesSummary)).length === 0 ? (
+          {sessions.filter((s) => Boolean(s.focus || s.notesSummary || s.improvements || s.nextGoals || s.motivationalMessage || (s.workedOn && s.workedOn.length > 0))).length === 0 ? (
             <div className="coaching-empty-card">
               <TablerIcon name="target" size={40} className="coaching-empty-icon" />
               <h3>Sin observaciones técnicas registradas</h3>
-              <p>A medida que el coach registre clases con enfoque técnico y retroalimentación, aparecerán en este panel de supervisión.</p>
+              <p>A medida que el coach registre clases con enfoque técnico, temas trabajados y retroalimentación, aparecerán en este panel de supervisión.</p>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
               {sessions
-                .filter((s) => Boolean(s.focus || s.notesSummary))
+                .filter((s) => Boolean(s.focus || s.notesSummary || s.improvements || s.nextGoals || s.motivationalMessage || (s.workedOn && s.workedOn.length > 0)))
                 .map((ses) => (
-                  <div key={ses.id} className="coaching-session-box" style={{ background: "rgba(255,255,255,0.03)", padding: "0.85rem 1rem", borderLeft: "3px solid #38bdf8" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
-                      <strong>{ses.jugadorNombre}</strong>
-                      <span style={{ fontSize: "0.75rem", color: "var(--ro-text-muted)" }}>{formatDate(ses.startsAt)}</span>
+                  <div key={ses.id} className="coaching-session-box" style={{ background: "rgba(255,255,255,0.03)", padding: "1rem 1.25rem", borderLeft: "3px solid #38bdf8", borderRadius: "8px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                      <strong style={{ fontSize: "1rem", color: "var(--ro-text-main)" }}>{ses.jugadorNombre}</strong>
+                      <span style={{ fontSize: "0.78rem", color: "var(--ro-text-muted)" }}>{formatDate(ses.startsAt)}</span>
                     </div>
+
                     {ses.focus && (
-                      <div className="coaching-session-focus">
+                      <div className="coaching-session-focus" style={{ marginBottom: "0.4rem" }}>
                         <TablerIcon name="target" size={14} />
                         <span>{ses.focus}</span>
                       </div>
                     )}
+
                     {ses.workedOn && ses.workedOn.length > 0 && (
-                      <div style={{ display: "flex", gap: "0.35rem", margin: "0.3rem 0", flexWrap: "wrap" }}>
-                        {ses.workedOn.map((w) => (
-                          <span key={w} className="coaching-tag" style={{ fontSize: "0.72rem" }}>{w}</span>
-                        ))}
+                      <div style={{ margin: "0.4rem 0" }}>
+                        <span style={{ fontSize: "0.74rem", textTransform: "uppercase", color: "var(--ro-text-muted)", letterSpacing: "0.05em", display: "block", marginBottom: "0.2rem" }}>
+                          Temas trabajados:
+                        </span>
+                        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                          {ses.workedOn.map((w) => (
+                            <span key={w} className="coaching-tag" style={{ fontSize: "0.75rem", background: "rgba(56, 189, 248, 0.15)", color: "#38bdf8", border: "1px solid rgba(56, 189, 248, 0.3)" }}>
+                              {w}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
-                    {ses.notesSummary && <p className="coaching-session-feedback">{ses.notesSummary}</p>}
+
+                    {ses.improvements && (
+                      <div style={{ marginTop: "0.45rem", fontSize: "0.85rem", lineHeight: 1.45 }}>
+                        <strong style={{ color: "#4ade80" }}>Mejoras observadas:</strong>{" "}
+                        <span style={{ color: "var(--ro-text-main)" }}>{ses.improvements}</span>
+                      </div>
+                    )}
+
+                    {ses.nextGoals && (
+                      <div style={{ marginTop: "0.35rem", fontSize: "0.85rem", lineHeight: 1.45 }}>
+                        <strong style={{ color: "#facc15" }}>Próximos objetivos:</strong>{" "}
+                        <span style={{ color: "var(--ro-text-main)" }}>{ses.nextGoals}</span>
+                      </div>
+                    )}
+
+                    {ses.motivationalMessage && (
+                      <div
+                        style={{
+                          marginTop: "0.6rem",
+                          padding: "0.6rem 0.85rem",
+                          background: "rgba(168, 85, 247, 0.08)",
+                          borderLeft: "3px solid #a855f7",
+                          borderRadius: "4px",
+                          fontSize: "0.85rem",
+                          fontStyle: "italic",
+                          color: "#f3e8ff",
+                        }}
+                      >
+                        <span style={{ fontWeight: 700, fontStyle: "normal", display: "block", marginBottom: "0.2rem", color: "#c084fc", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                          Mensaje motivante para el alumno:
+                        </span>
+                        &quot;{ses.motivationalMessage}&quot;
+                      </div>
+                    )}
+
+                    {ses.notesSummary && (
+                      <p className="coaching-session-feedback" style={{ marginTop: "0.5rem" }}>
+                        {ses.notesSummary}
+                      </p>
+                    )}
                   </div>
                 ))}
             </div>
@@ -1238,6 +1382,80 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* ── MODAL: ELIMINAR COACH DE MI CLUB ──────────────────────────── */}
+      <Modal
+        open={isRemoveModalOpen}
+        onClose={() => {
+          setIsRemoveModalOpen(false);
+          setDetailRemovalReason("");
+        }}
+        title="Eliminar coach de mi club"
+        size="md"
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div
+            style={{
+              background: "rgba(239, 68, 68, 0.12)",
+              border: "1px solid rgba(239, 68, 68, 0.35)",
+              borderRadius: "8px",
+              padding: "1rem",
+              color: "#fca5a5",
+              fontSize: "0.88rem",
+              lineHeight: 1.5,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 700, marginBottom: "0.35rem" }}>
+              <TablerIcon name="alert-triangle" size={18} />
+              <span>Desvincular a {coach.nombre} ({coach.coachCode}) de {club.nombre}</span>
+            </div>
+            <p style={{ margin: 0 }}>
+              Esta acción desvinculará al entrenador de tu club y pausará las relaciones activas de alumnos en este club.
+            </p>
+            <p style={{ margin: "0.5rem 0 0", color: "#fecaca" }}>
+              <strong>Se conservará íntegramente</strong> todo el historial de clases impartidas, ledger de movimientos, sesiones y saldos disponibles para efectos de balance y auditoría. La identidad deportiva del coach no será destruida.
+            </p>
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.35rem" }}>
+              Motivo de la baja en este club (opcional):
+            </label>
+            <input
+              type="text"
+              className="coaching-input"
+              placeholder="Ej. Conclusión de periodo laboral, mutuo acuerdo..."
+              value={detailRemovalReason}
+              onChange={(e) => setDetailRemovalReason(e.target.value)}
+              disabled={busy}
+            />
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+            <button
+              type="button"
+              className="coaching-btn coaching-btn--secondary"
+              onClick={() => {
+                setIsRemoveModalOpen(false);
+                setDetailRemovalReason("");
+              }}
+              disabled={busy}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="coaching-btn coaching-btn--danger"
+              style={{ background: "#dc2626", borderColor: "#ef4444", color: "#ffffff" }}
+              onClick={handleRemoveCoach}
+              disabled={busy}
+            >
+              <TablerIcon name="trash" size={16} />
+              {busy ? "Eliminando…" : "Eliminar coach de mi club"}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

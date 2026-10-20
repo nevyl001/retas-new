@@ -12,6 +12,7 @@ import {
   fetchClubClassLedger,
   generateCoachingIdempotencyKey,
   fetchCurrentCoachProfile,
+  removeCoachFromClub,
 } from "../../lib/coaching/coachingApi";
 import { ClubCoachDetailView } from "./ClubCoachDetailView";
 import {
@@ -21,6 +22,7 @@ import {
 import type {
   CoachSearchResult,
   CoachingClubSnapshot,
+  CoachingCoach,
   CoachingPlayerLink,
   CoachClassLedgerEntry,
   CoachMembershipStatus,
@@ -97,6 +99,20 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     "ALL" | CoachMembershipStatus
   >("ALL");
   const [isCoachUser, setIsCoachUser] = useState<boolean>(false);
+
+  // Credenciales generadas para nuevo coach
+  const [createdCoachCredentials, setCreatedCoachCredentials] = useState<{
+    nombre: string;
+    coachCode: string;
+    email: string;
+    password: string;
+  } | null>(null);
+  const [copiedPassword, setCopiedPassword] = useState(false);
+  const [copiedAll, setCopiedAll] = useState(false);
+
+  // Eliminación de coach del club (desde cualquier estado)
+  const [coachToRemove, setCoachToRemove] = useState<CoachingCoach | null>(null);
+  const [removalReasonInput, setRemovalReasonInput] = useState("");
 
   // Control de clases y saldos de alumnos
   const [assigningLink, setAssigningLink] = useState<CoachingPlayerLink | null>(null);
@@ -238,7 +254,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   const coachCounts = useMemo(() => {
     const all = snapshot?.coaches ?? [];
     return {
-      ALL: all.filter((c) => c.membershipStatus !== "ARCHIVED").length,
+      ALL: all.filter((c) => c.membershipStatus !== "ARCHIVED" && c.membershipStatus !== "REMOVED").length,
       ACTIVE: all.filter((c) => c.membershipStatus === "ACTIVE").length,
       PENDING: all.filter((c) => c.membershipStatus === "PENDING").length,
       INACTIVE: all.filter(
@@ -247,13 +263,14 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
           c.membershipStatus === "CANCELLED"
       ).length,
       ARCHIVED: all.filter((c) => c.membershipStatus === "ARCHIVED").length,
+      REMOVED: all.filter((c) => c.membershipStatus === "REMOVED").length,
     };
   }, [snapshot]);
 
   const filteredCoaches = useMemo(() => {
     const all = snapshot?.coaches ?? [];
     if (coachStatusFilter === "ALL") {
-      return all.filter((c) => c.membershipStatus !== "ARCHIVED");
+      return all.filter((c) => c.membershipStatus !== "ARCHIVED" && c.membershipStatus !== "REMOVED");
     }
     if (coachStatusFilter === "ACTIVE") {
       return all.filter((c) => c.membershipStatus === "ACTIVE");
@@ -270,6 +287,9 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     }
     if (coachStatusFilter === "ARCHIVED") {
       return all.filter((c) => c.membershipStatus === "ARCHIVED");
+    }
+    if (coachStatusFilter === "REMOVED") {
+      return all.filter((c) => c.membershipStatus === "REMOVED");
     }
     return all;
   }, [snapshot, coachStatusFilter]);
@@ -327,17 +347,52 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
       setSnapshot(res.snapshot);
       resetCoachForm();
       setIsCoachModalOpen(false);
-      setSuccessMessage(
-        res.message ||
-        (res.isNewUser
-          ? `Invitación oficial enviada a ${email}. Código de coach oficial: ${res.coachCode}. El coach figurará con invitación pendiente hasta su activación.`
-          : `Coach incorporado exitosamente a tu club con código oficial ${res.coachCode}.`)
-      );
+
+      if (res.isNewUser && res.initialPassword) {
+        setCreatedCoachCredentials({
+          nombre: coachNombre.trim(),
+          coachCode: res.coachCode,
+          email,
+          password: res.initialPassword,
+        });
+      } else {
+        setSuccessMessage(
+          res.message ||
+          (res.isNewUser
+            ? `Invitación oficial enviada a ${email}. Código de coach oficial: ${res.coachCode}.`
+            : `Coach incorporado exitosamente a tu club con código oficial ${res.coachCode}.`)
+        );
+      }
     } catch (err) {
       setFormError(
         err instanceof Error
           ? err.message
           : "Error de incorporación: no se pudo registrar el coach."
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleConfirmRemoveCoach = async () => {
+    if (!organizadorId || !coachToRemove) return;
+    setBusy(true);
+    setFormError(null);
+    try {
+      const res = await removeCoachFromClub(
+        organizadorId,
+        coachToRemove.id,
+        removalReasonInput.trim() || undefined
+      );
+      setSuccessMessage(res.message || "Coach eliminado exitosamente del club.");
+      setCoachToRemove(null);
+      setRemovalReasonInput("");
+      await refresh();
+    } catch (err) {
+      setFormError(
+        err instanceof Error
+          ? err.message
+          : "Error al eliminar al entrenador del club."
       );
     } finally {
       setBusy(false);
@@ -688,6 +743,11 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                   label: "Archivados",
                   count: coachCounts.ARCHIVED,
                 },
+                {
+                  id: "REMOVED",
+                  label: "Eliminados",
+                  count: coachCounts.REMOVED,
+                },
               ].map((f) => (
                 <button
                   key={f.id}
@@ -945,6 +1005,19 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                           >
                             Membresía archivada
                           </span>
+                        ) : c.membershipStatus === "REMOVED" ? (
+                          <span
+                            className="coaching-badge"
+                            style={{
+                              fontSize: "0.8rem",
+                              padding: "0.4rem 0.65rem",
+                              background: "rgba(239, 68, 68, 0.12)",
+                              border: "1px solid rgba(239, 68, 68, 0.3)",
+                              color: "#fca5a5",
+                            }}
+                          >
+                            Eliminado del club
+                          </span>
                         ) : (
                           <button
                             type="button"
@@ -958,6 +1031,20 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                             Reincorporar
                           </button>
                         )}
+
+                        {c.membershipStatus !== "REMOVED" ? (
+                          <button
+                            type="button"
+                            className="coaching-btn coaching-btn--ghost"
+                            style={{ color: "#f87171" }}
+                            onClick={() => setCoachToRemove(c)}
+                            disabled={busy}
+                            title="Eliminar este coach de mi club"
+                          >
+                            <TablerIcon name="trash" size={15} />
+                            Eliminar de mi club
+                          </button>
+                        ) : null}
                       </div>
                     </article>
                   );
@@ -1702,6 +1789,206 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
             </div>
           </form>
         ) : null}
+      </Modal>
+
+      {/* Modal: Credenciales Generadas para Nuevo Coach */}
+      <Modal
+        open={Boolean(createdCoachCredentials)}
+        onClose={() => setCreatedCoachCredentials(null)}
+        title="Credenciales de acceso para el entrenador"
+        size="md"
+      >
+        {createdCoachCredentials && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            <div
+              style={{
+                background: "rgba(16, 185, 129, 0.12)",
+                border: "1px solid rgba(16, 185, 129, 0.35)",
+                borderRadius: "8px",
+                padding: "1rem",
+                color: "#6ee7b7",
+                fontSize: "0.88rem",
+                lineHeight: 1.5,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 700, marginBottom: "0.25rem" }}>
+                <TablerIcon name="shield-check" size={18} />
+                <span>¡Cuenta creada con éxito!</span>
+              </div>
+              <p style={{ margin: 0 }}>
+                Comparte estas credenciales con tu entrenador. <strong>Esta contraseña solo se mostrará una vez.</strong>
+              </p>
+            </div>
+
+            <div
+              style={{
+                background: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: "8px",
+                padding: "1rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.85rem",
+              }}
+            >
+              <div>
+                <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ro-text-muted)", letterSpacing: "0.05em" }}>
+                  Nombre del Coach
+                </span>
+                <div style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--ro-text-main)" }}>
+                  {createdCoachCredentials.nombre}{" "}
+                  <span style={{ color: "#38bdf8", fontSize: "0.85rem", fontFamily: "monospace" }}>
+                    ({createdCoachCredentials.coachCode})
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ro-text-muted)", letterSpacing: "0.05em" }}>
+                  Correo electrónico de acceso
+                </span>
+                <div style={{ fontSize: "0.95rem", fontFamily: "monospace", color: "var(--ro-text-main)" }}>
+                  {createdCoachCredentials.email}
+                </div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ro-text-muted)", letterSpacing: "0.05em" }}>
+                  Contraseña definitiva asignada
+                </span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    background: "rgba(0, 0, 0, 0.35)",
+                    padding: "0.5rem 0.75rem",
+                    borderRadius: "6px",
+                    marginTop: "0.25rem",
+                  }}
+                >
+                  <span style={{ fontFamily: "monospace", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.05em", color: "#38bdf8" }}>
+                    {createdCoachCredentials.password}
+                  </span>
+                  <button
+                    type="button"
+                    className="coaching-btn coaching-btn--secondary"
+                    style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdCoachCredentials.password);
+                      setCopiedPassword(true);
+                      setTimeout(() => setCopiedPassword(false), 2000);
+                    }}
+                  >
+                    <TablerIcon name={copiedPassword ? "check" : "copy"} size={14} />
+                    {copiedPassword ? "Copiada" : "Copiar"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--secondary"
+                onClick={() => {
+                  const text = `Credenciales de Riviera Coaching:\nNombre: ${createdCoachCredentials.nombre}\nCódigo: ${createdCoachCredentials.coachCode}\nEmail: ${createdCoachCredentials.email}\nContraseña: ${createdCoachCredentials.password}\nAcceso: https://appriviera.rivieraopen.com/coaching/mi-espacio`;
+                  navigator.clipboard.writeText(text);
+                  setCopiedAll(true);
+                  setTimeout(() => setCopiedAll(false), 2000);
+                }}
+              >
+                <TablerIcon name={copiedAll ? "check" : "copy"} size={16} />
+                {copiedAll ? "¡Credenciales copiadas!" : "Copiar credenciales completas"}
+              </button>
+
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--primary"
+                onClick={() => setCreatedCoachCredentials(null)}
+              >
+                <TablerIcon name="check" size={16} />
+                Entendido, ya guardé las credenciales
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal: Confirmación de Eliminación Atómica de Coach */}
+      <Modal
+        open={Boolean(coachToRemove)}
+        onClose={() => {
+          setCoachToRemove(null);
+          setRemovalReasonInput("");
+        }}
+        title="Eliminar coach de mi club"
+        size="md"
+      >
+        {coachToRemove && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div
+              style={{
+                background: "rgba(239, 68, 68, 0.12)",
+                border: "1px solid rgba(239, 68, 68, 0.35)",
+                borderRadius: "8px",
+                padding: "1rem",
+                color: "#fca5a5",
+                fontSize: "0.88rem",
+                lineHeight: 1.5,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 700, marginBottom: "0.35rem" }}>
+                <TablerIcon name="alert-triangle" size={18} />
+                <span>Atención: Desvinculación de {coachToRemove.nombre} ({coachToRemove.coachCode})</span>
+              </div>
+              <p style={{ margin: 0 }}>
+                Esta acción desvinculará permanentemente al entrenador de tu club y suspenderá las relaciones activas de alumnos en este club.
+              </p>
+              <p style={{ margin: "0.5rem 0 0", color: "#fecaca" }}>
+                <strong>Se conservará íntegramente</strong> todo el historial de clases impartidas, sesiones y movimientos para efectos de auditoría y balance. Su cuenta global como coach no será eliminada.
+              </p>
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.35rem" }}>
+                Motivo de la eliminación (opcional):
+              </label>
+              <input
+                type="text"
+                className="coaching-input"
+                placeholder="Ej: Fin de ciclo laboral, acuerdo mutuo..."
+                value={removalReasonInput}
+                onChange={(e) => setRemovalReasonInput(e.target.value)}
+                disabled={busy}
+              />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--secondary"
+                onClick={() => {
+                  setCoachToRemove(null);
+                  setRemovalReasonInput("");
+                }}
+                disabled={busy}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--danger"
+                style={{ background: "#dc2626", borderColor: "#ef4444", color: "#ffffff" }}
+                onClick={handleConfirmRemoveCoach}
+                disabled={busy}
+              >
+                <TablerIcon name="trash" size={16} />
+                {busy ? "Eliminando…" : "Eliminar coach de mi club"}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

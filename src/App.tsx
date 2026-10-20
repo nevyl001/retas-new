@@ -251,6 +251,25 @@ function AppContent() {
     }
   }, [isAdminLoggedIn, adminLoading, currentView]);
 
+  // Redirección para cuenta tipo COACH_ONLY: hacia /coaching/mi-espacio
+  useEffect(() => {
+    if (authLoading || !user) return;
+    if (user.user_metadata?.account_type === "COACH_ONLY") {
+      const currentPath = normalizeAppPathname(window.location.pathname);
+      if (
+        currentPath === "/" ||
+        currentPath === "/coaching" ||
+        currentPath.startsWith("/coaching/coaches") ||
+        currentPath.startsWith("/coaching/jugadores") ||
+        currentPath.startsWith("/coaching/club")
+      ) {
+        window.history.replaceState({}, "", "/coaching/mi-espacio");
+        setCurrentView("coaching");
+        window.dispatchEvent(new CustomEvent(PATH_SYNC_EVENT));
+      }
+    }
+  }, [user, authLoading, currentView]);
+
   // Inicializar ID de vista pública desde la URL para no hacer peticiones con null
   const [publicTournamentId, setPublicTournamentId] = useState<string | null>(
     () => {

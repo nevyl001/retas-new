@@ -10,7 +10,8 @@ export type CoachMembershipStatus =
   | "INACTIVE"
   | "PENDING"
   | "CANCELLED"
-  | "ARCHIVED";
+  | "ARCHIVED"
+  | "REMOVED";
 export type CoachPlayerStatus = "ACTIVE" | "PAUSED" | "ENDED";
 
 /** Alta / edición de coach (mismo núcleo que jugador + campos coach). */
@@ -114,6 +115,9 @@ export type CoachSessionItem = {
   durationMinutes: number | null;
   focus: string | null;
   workedOn: string[];
+  improvements?: string | null;
+  nextGoals?: string | null;
+  motivationalMessage?: string | null;
   notesSummary: string | null;
   status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
   createdAt: string;
@@ -142,9 +146,30 @@ export type InviteCoachResult = {
   snapshot: CoachingClubSnapshot;
   coachCode: string;
   isNewUser: boolean;
+  initialPassword?: string | null;
   membershipStatus: CoachMembershipStatus;
   message?: string;
   alreadyMember?: boolean;
+};
+
+export type RemoveCoachResult = {
+  ok: boolean;
+  idempotent?: boolean;
+  status?: CoachMembershipStatus;
+  message?: string;
+  error?: string;
+};
+
+export type RecordCoachClassSessionInput = {
+  relationshipId: string;
+  notas?: string | null;
+  sessionId?: string | null;
+  idempotencyKey?: string;
+  workedOn?: string[];
+  improvements?: string | null;
+  nextGoals?: string | null;
+  motivationalMessage?: string | null;
+  durationMinutes?: number;
 };
 
 export type CurrentCoachClubMembership = {
@@ -194,6 +219,9 @@ export type ClubCoachDetailSession = {
   durationMinutes: number | null;
   focus: string | null;
   workedOn: string[];
+  improvements?: string | null;
+  nextGoals?: string | null;
+  motivationalMessage?: string | null;
   notesSummary: string | null;
   status: string;
   createdAt: string;
@@ -245,6 +273,8 @@ export type ClubCoachDetail = {
     deactivatedAt: string | null;
     cancelledAt: string | null;
     archivedAt: string | null;
+    removedAt?: string | null;
+    removalReason?: string | null;
     clubFuerzas: RivieraJugadorCategoria[] | null;
     clubEspecialidades: string[] | null;
     clubNotas: string | null;

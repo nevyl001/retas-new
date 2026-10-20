@@ -4,15 +4,30 @@ import {
   fetchCurrentCoachProfile,
   acceptCoachClubInvitation,
   fetchCoachAssignedStudents,
-  linkPlayerByRivieraId,
   recordCoachClassSession,
   generateCoachingIdempotencyKey,
 } from "../../lib/coaching/coachingApi";
 import type { CurrentCoachProfile, CoachingPlayerLink } from "../../lib/coaching/types";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import { TablerIcon } from "../ui/TablerIcon";
+import { Modal } from "../ui/Modal";
 import { navigateToAppHome } from "../../lib/appRouting";
 import "./coaching.css";
+
+const DEFAULT_PADEL_TOPICS = [
+  "Bandeja",
+  "Víbora",
+  "Volea de derecha",
+  "Volea de revés",
+  "Smash / Remate",
+  "Globo defensivo",
+  "Salida de pared",
+  "Doble pared",
+  "Saque y resto",
+  "Táctica y posicionamiento",
+  "Transición defensa-ataque",
+  "Bloqueo en la red",
+];
 
 export const CoachPortalPage: React.FC = () => {
   const { user, loading: userLoading } = useUser();
@@ -26,11 +41,19 @@ export const CoachPortalPage: React.FC = () => {
   const [students, setStudents] = useState<CoachingPlayerLink[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [studentsError, setStudentsError] = useState<string | null>(null);
-  const [rivieraIdInput, setRivieraIdInput] = useState("");
-  const [linkingStudent, setLinkingStudent] = useState(false);
-  const [recordingId, setRecordingId] = useState<string | null>(null);
-  const [sessionNotes, setSessionNotes] = useState("");
-  const [sessionKeys, setSessionKeys] = useState<Record<string, string>>({});
+
+  // Modal: Registrar Clase Impartida
+  const [modalStudent, setModalStudent] = useState<CoachingPlayerLink | null>(null);
+  const [workedOnList, setWorkedOnList] = useState<string[]>([]);
+  const [customTopic, setCustomTopic] = useState("");
+  const [improvements, setImprovements] = useState("");
+  const [nextGoals, setNextGoals] = useState("");
+  const [motivationalMessage, setMotivationalMessage] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState(60);
+  const [classNotes, setClassNotes] = useState("");
+  const [modalKey, setModalKey] = useState("");
+  const [modalBusy, setModalBusy] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   const loadStudents = React.useCallback(async (coachId: string, clubId: string) => {
     if (!coachId || !clubId) return;
@@ -115,67 +138,66 @@ export const CoachPortalPage: React.FC = () => {
     }
   };
 
-  const handleLinkStudent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!profile || !selectedClubId || !rivieraIdInput.trim()) return;
-    setLinkingStudent(true);
-    setActionError(null);
-    setSuccessMessage(null);
-    try {
-      await linkPlayerByRivieraId(selectedClubId, profile.id, rivieraIdInput.trim());
-      setRivieraIdInput("");
-      setSuccessMessage("¡Alumno vinculado exitosamente al club!");
-      await loadStudents(profile.id, selectedClubId);
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Error al vincular alumno");
-    } finally {
-      setLinkingStudent(false);
-    }
+  const openRecordClassModal = (st: CoachingPlayerLink) => {
+    setModalStudent(st);
+    setWorkedOnList([]);
+    setCustomTopic("");
+    setImprovements("");
+    setNextGoals("");
+    setMotivationalMessage("");
+    setDurationMinutes(60);
+    setClassNotes("");
+    setModalError(null);
+    setModalKey(generateCoachingIdempotencyKey("session"));
   };
 
-  const handleRecordClass = async (relationshipId: string) => {
-    setRecordingId(relationshipId);
-    setActionError(null);
-    setSuccessMessage(null);
+  const toggleTopic = (topic: string) => {
+    setWorkedOnList((prev) =>
+      prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic]
+    );
+  };
 
-    // Conservar clave de idempotencia para la misma operación en caso de reintento
-    const key =
-      sessionKeys[relationshipId] ||
-      generateCoachingIdempotencyKey("session");
-    if (!sessionKeys[relationshipId]) {
-      setSessionKeys((prev) => ({ ...prev, [relationshipId]: key }));
+  const addCustomTopic = () => {
+    const trimmed = customTopic.trim();
+    if (!trimmed) return;
+    if (!workedOnList.includes(trimmed)) {
+      setWorkedOnList((prev) => [...prev, trimmed]);
     }
+    setCustomTopic("");
+  };
 
+  const handleConfirmClassRecord = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modalStudent) return;
+    setModalBusy(true);
+    setModalError(null);
     try {
-      const res = await recordCoachClassSession(
-        relationshipId,
-        sessionNotes.trim() || undefined,
-        undefined,
-        key
-      );
-
-      // Limpiar clave únicamente al confirmar con éxito
-      setSessionKeys((prev) => {
-        const next = { ...prev };
-        delete next[relationshipId];
-        return next;
+      const res = await recordCoachClassSession({
+        relationshipId: modalStudent.id,
+        notas: classNotes.trim() || undefined,
+        workedOn: workedOnList,
+        improvements: improvements.trim() || undefined,
+        nextGoals: nextGoals.trim() || undefined,
+        motivationalMessage: motivationalMessage.trim() || undefined,
+        durationMinutes,
+        idempotencyKey: modalKey,
       });
 
       setSuccessMessage(
         res.idempotent
-          ? `Operación ya registrada previamente. Saldo disponible: ${res.remainingBalance} clase(s).`
-          : `¡Clase registrada exitosamente! Saldo restante: ${res.remainingBalance} clase(s).`
+          ? `Clase ya registrada previamente. Saldo restante: ${res.remainingBalance} clase(s).`
+          : `¡Clase registrada exitosamente para ${modalStudent.jugadorNombre}! Saldo restante: ${res.remainingBalance} clase(s).`
       );
-      setSessionNotes("");
+      setModalStudent(null);
       if (profile && selectedClubId) {
         await loadStudents(profile.id, selectedClubId);
       }
     } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Error al registrar clase"
+      setModalError(
+        err instanceof Error ? err.message : "Error al registrar la clase impartida."
       );
     } finally {
-      setRecordingId(null);
+      setModalBusy(false);
     }
   };
 
@@ -522,31 +544,10 @@ export const CoachPortalPage: React.FC = () => {
           <div>
             <h2 className="coaching-section-title">Alumnos y Control de Clases</h2>
             <p className="coaching-section-desc">
-              Vincula a tus alumnos por su Riviera ID oficial y registra las clases impartidas para descontar su saldo automáticamente.
+              Consulta los alumnos asignados por el club y registra las clases impartidas para descontar su saldo automáticamente.
             </p>
           </div>
         </div>
-
-        {/* Formulario para vincular alumno por Riviera ID */}
-        <form onSubmit={handleLinkStudent} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
-          <input
-            type="text"
-            className="coaching-input"
-            style={{ maxWidth: "260px" }}
-            placeholder="Riviera ID (ej. RIV-00000308)"
-            value={rivieraIdInput}
-            onChange={(e) => setRivieraIdInput(e.target.value.toUpperCase())}
-            disabled={linkingStudent || !selectedClubId}
-          />
-          <button
-            type="submit"
-            className="coaching-btn coaching-btn--primary"
-            disabled={linkingStudent || !rivieraIdInput.trim() || !selectedClubId}
-          >
-            <TablerIcon name="user-plus" size={16} />
-            {linkingStudent ? "Vinculando…" : "Vincular Alumno"}
-          </button>
-        </form>
 
         {loadingStudents ? (
           <p className="coaching-muted">Cargando alumnos y saldos…</p>
@@ -585,16 +586,16 @@ export const CoachPortalPage: React.FC = () => {
         ) : students.length === 0 ? (
           <div className="coaching-empty-card">
             <TablerIcon name="users" size={36} className="coaching-empty-icon" />
-            <h3>Sin alumnos vinculados en este club</h3>
+            <h3>Sin alumnos asignados en este club</h3>
             <p>
-              Ingresa el Riviera ID de tu alumno para vincularlo a tu perfil en este club.
+              El administrador del club te asignará los alumnos con paquetes de clases activos para impartir sesiones.
             </p>
           </div>
         ) : (
           <div className="coaching-grid">
             {students.map((s) => {
               const hasBalance = (s.balanceClasses ?? 0) > 0;
-              const isRecording = recordingId === s.id;
+              const isModalOpenForThis = modalStudent?.id === s.id;
 
               return (
                 <article key={s.id} className="coaching-card">
@@ -634,11 +635,11 @@ export const CoachPortalPage: React.FC = () => {
                     <button
                       type="button"
                       className="coaching-btn coaching-btn--primary"
-                      disabled={!hasBalance || isRecording}
-                      onClick={() => handleRecordClass(s.id)}
+                      disabled={!hasBalance || modalBusy}
+                      onClick={() => openRecordClassModal(s)}
                     >
                       <TablerIcon name="check" size={15} />
-                      {isRecording ? "Registrando…" : "Registrar clase impartida (-1)"}
+                      {modalBusy && isModalOpenForThis ? "Registrando…" : "Registrar clase impartida (-1)"}
                     </button>
                     {!hasBalance ? (
                       <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block", marginTop: "0.25rem" }}>
@@ -652,6 +653,277 @@ export const CoachPortalPage: React.FC = () => {
           </div>
         )}
       </section>
+
+      {/* Modal: Registrar Clase Impartida con Seguimiento Deportivo */}
+      <Modal
+        open={Boolean(modalStudent)}
+        onClose={() => {
+          if (!modalBusy) setModalStudent(null);
+        }}
+        title={`Registrar clase impartida · ${modalStudent?.jugadorNombre || ""}`}
+        size="lg"
+      >
+        {modalStudent ? (
+          <form onSubmit={handleConfirmClassRecord} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            {modalError ? (
+              <div
+                className="coaching-panel"
+                style={{
+                  padding: "0.75rem 1rem",
+                  background: "rgba(239, 68, 68, 0.12)",
+                  border: "1px solid rgba(239, 68, 68, 0.35)",
+                  borderRadius: "8px",
+                  color: "#fca5a5",
+                  fontSize: "0.85rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                <TablerIcon name="alert-circle" size={18} />
+                {modalError}
+              </div>
+            ) : null}
+
+            <div style={{ background: "rgba(255, 255, 255, 0.04)", borderRadius: "8px", padding: "0.85rem 1rem", border: "1px solid var(--ro-border, rgba(255, 255, 255, 0.08))" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                <div>
+                  <span style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ro-text-muted)" }}>
+                    Alumno
+                  </span>
+                  <p style={{ margin: "0.2rem 0 0", fontWeight: 600, color: "var(--ro-text-primary)" }}>
+                    {modalStudent.jugadorNombre} ({modalStudent.rivieraId})
+                  </p>
+                </div>
+                <div>
+                  <span style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ro-text-muted)" }}>
+                    Saldo actual
+                  </span>
+                  <p style={{ margin: "0.2rem 0 0", fontWeight: 700, color: "#10b981", textAlign: "right" }}>
+                    {modalStudent.balanceClasses ?? 0} clase(s)
+                  </p>
+                </div>
+              </div>
+              <p style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", color: "var(--ro-text-secondary)" }}>
+                Al confirmar, se descontará automáticamente <strong>1 clase</strong> del saldo del alumno y la sesión quedará registrada en su historial deportivo.
+              </p>
+            </div>
+
+            {/* Duración */}
+            <div className="coaching-form-group">
+              <label className="coaching-form-label" htmlFor="class-duration">
+                Duración de la sesión
+              </label>
+              <select
+                id="class-duration"
+                className="coaching-input"
+                value={durationMinutes}
+                onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                disabled={modalBusy}
+              >
+                <option value={30}>30 minutos</option>
+                <option value={45}>45 minutos</option>
+                <option value={60}>60 minutos (Estándar)</option>
+                <option value={90}>90 minutos (Clase y partido)</option>
+                <option value={120}>120 minutos (Intensivo)</option>
+              </select>
+            </div>
+
+            {/* Chips de temas técnicos */}
+            <div className="coaching-form-group">
+              <label className="coaching-form-label">
+                Temas técnicos trabajados (Pádel)
+              </label>
+              <p style={{ margin: "0 0 0.5rem", fontSize: "0.8rem", color: "var(--ro-text-muted)" }}>
+                Selecciona uno o más conceptos trabajados durante la clase:
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "0.6rem" }}>
+                {DEFAULT_PADEL_TOPICS.map((topic) => {
+                  const selected = workedOnList.includes(topic);
+                  return (
+                    <button
+                      key={topic}
+                      type="button"
+                      onClick={() => toggleTopic(topic)}
+                      disabled={modalBusy}
+                      style={{
+                        padding: "0.35rem 0.7rem",
+                        borderRadius: "20px",
+                        fontSize: "0.8rem",
+                        fontWeight: selected ? 600 : 400,
+                        border: selected
+                          ? "1px solid #10b981"
+                          : "1px solid var(--ro-border, rgba(255, 255, 255, 0.15))",
+                        background: selected ? "rgba(16, 185, 129, 0.2)" : "rgba(255, 255, 255, 0.05)",
+                        color: selected ? "#34d399" : "var(--ro-text-secondary)",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {selected ? "✓ " : "+ "}
+                      {topic}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Tema personalizado */}
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <input
+                  type="text"
+                  className="coaching-input"
+                  style={{ flex: 1 }}
+                  placeholder="Otro tema específico (ej. Bajada de pared paralela)…"
+                  value={customTopic}
+                  onChange={(e) => setCustomTopic(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addCustomTopic();
+                    }
+                  }}
+                  disabled={modalBusy}
+                />
+                <button
+                  type="button"
+                  className="coaching-btn coaching-btn--secondary"
+                  onClick={addCustomTopic}
+                  disabled={modalBusy || !customTopic.trim()}
+                >
+                  Agregar
+                </button>
+              </div>
+
+              {workedOnList.length > 0 ? (
+                <div style={{ marginTop: "0.5rem", display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                  <span style={{ fontSize: "0.75rem", color: "var(--ro-text-muted)", alignSelf: "center", marginRight: "0.25rem" }}>
+                    Seleccionados ({workedOnList.length}):
+                  </span>
+                  {workedOnList.map((t) => (
+                    <span
+                      key={t}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.25rem",
+                        padding: "0.2rem 0.5rem",
+                        borderRadius: "12px",
+                        fontSize: "0.75rem",
+                        background: "rgba(16, 185, 129, 0.15)",
+                        color: "#a7f3d0",
+                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                      }}
+                    >
+                      {t}
+                      <button
+                        type="button"
+                        onClick={() => toggleTopic(t)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#a7f3d0",
+                          cursor: "pointer",
+                          padding: 0,
+                          fontSize: "0.85rem",
+                          lineHeight: 1,
+                        }}
+                        aria-label={`Eliminar ${t}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            {/* Mejoras observadas */}
+            <div className="coaching-form-group">
+              <label className="coaching-form-label" htmlFor="improvements-field">
+                Mejoras observadas (Seguimiento técnico)
+              </label>
+              <textarea
+                id="improvements-field"
+                className="coaching-input"
+                rows={2}
+                placeholder="¿Qué avances notaste hoy? (ej. Mayor consistencia en voleas profundas, mejor ajuste de piernas antes del impacto)…"
+                value={improvements}
+                onChange={(e) => setImprovements(e.target.value)}
+                disabled={modalBusy}
+              />
+            </div>
+
+            {/* Próximos objetivos */}
+            <div className="coaching-form-group">
+              <label className="coaching-form-label" htmlFor="next-goals-field">
+                Próximos objetivos para el alumno
+              </label>
+              <textarea
+                id="next-goals-field"
+                className="coaching-input"
+                rows={2}
+                placeholder="¿Qué trabajarán en la siguiente sesión? (ej. Transición red-defensa tras globo rival, bajada de pared)…"
+                value={nextGoals}
+                onChange={(e) => setNextGoals(e.target.value)}
+                disabled={modalBusy}
+              />
+            </div>
+
+            {/* Mensaje motivacional / Feedback personal */}
+            <div className="coaching-form-group">
+              <label className="coaching-form-label" htmlFor="motivational-field">
+                Mensaje motivacional / Feedback personal
+              </label>
+              <textarea
+                id="motivational-field"
+                className="coaching-input"
+                rows={2}
+                placeholder="Mensaje que verá tu alumno en su app (ej. ¡Gran intensidad hoy! Mantén esa concentración en los puntos de quiebre)…"
+                value={motivationalMessage}
+                onChange={(e) => setMotivationalMessage(e.target.value)}
+                disabled={modalBusy}
+              />
+            </div>
+
+            {/* Notas internas del coach */}
+            <div className="coaching-form-group">
+              <label className="coaching-form-label" htmlFor="class-notes">
+                Notas internas del coach (opcional)
+              </label>
+              <input
+                id="class-notes"
+                type="text"
+                className="coaching-input"
+                placeholder="Observaciones adicionales o recordatorio personal…"
+                value={classNotes}
+                onChange={(e) => setClassNotes(e.target.value)}
+                disabled={modalBusy}
+              />
+            </div>
+
+            {/* Acciones */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--secondary"
+                disabled={modalBusy}
+                onClick={() => setModalStudent(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="coaching-btn coaching-btn--primary"
+                disabled={modalBusy}
+              >
+                <TablerIcon name="check" size={16} />
+                {modalBusy ? "Registrando clase…" : "Confirmar clase impartida (-1)"}
+              </button>
+            </div>
+          </form>
+        ) : null}
+      </Modal>
     </div>
   );
 };
+

@@ -36,6 +36,44 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function generateSecurePassword(): string {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghjkmnpqrstuvwxyz";
+  const numbers = "23456789";
+  const symbols = "!@#$%&*";
+  const all = upper + lower + numbers + symbols;
+
+  const cryptoArr = new Uint8Array(16);
+  crypto.getRandomValues(cryptoArr);
+
+  const pwdChars = [
+    upper[cryptoArr[0] % upper.length],
+    upper[cryptoArr[1] % upper.length],
+    lower[cryptoArr[2] % lower.length],
+    lower[cryptoArr[3] % lower.length],
+    numbers[cryptoArr[4] % numbers.length],
+    numbers[cryptoArr[5] % numbers.length],
+    symbols[cryptoArr[6] % symbols.length],
+    symbols[cryptoArr[7] % symbols.length],
+  ];
+
+  for (let i = 8; i < 16; i++) {
+    pwdChars.push(all[cryptoArr[i] % all.length]);
+  }
+
+  // Shuffle with Fisher-Yates
+  const shuffleBytes = new Uint8Array(pwdChars.length);
+  crypto.getRandomValues(shuffleBytes);
+  for (let i = pwdChars.length - 1; i > 0; i--) {
+    const j = shuffleBytes[i] % (i + 1);
+    const temp = pwdChars[i];
+    pwdChars[i] = pwdChars[j];
+    pwdChars[j] = temp;
+  }
+
+  return "Riviera!" + pwdChars.join("");
+}
+
 async function rollbackNewUser(
   admin: SupabaseClient,
   userId: string
@@ -210,62 +248,68 @@ Deno.serve(async (req: Request) => {
       .eq("email", email)
       .maybeSingle();
 
-    let targetUserId: string;
+    let targetUserId = "";
     let isNewUser = false;
+    let initialPassword: string | null = null;
 
     if (existingUser?.id) {
       targetUserId = existingUser.id;
       isNewUser = false;
     } else {
-      // 5. Invitar mediante invitación oficial de Supabase Auth con callback oficial validado
-      const siteUrl =
-        Deno.env.get("SITE_URL") ||
-        Deno.env.get("APP_URL") ||
-        "https://appriviera.rivieraopen.com";
+      // 5. Crear cuenta con contraseña criptográfica definitiva en Supabase Auth
+      const generatedPassword = generateSecurePassword();
 
-      const { data: inviteData, error: initialInviteError } =
-        await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-          data: { name: nombre },
-          redirectTo: `${siteUrl}/auth/callback?next=/coaching/mi-espacio`,
+      const { data: createData, error: initialCreateError } =
+        await supabaseAdmin.auth.admin.createUser({
+          email,
+          password: generatedPassword,
+          email_confirm: true,
+          user_metadata: {
+            name: nombre,
+            account_type: "COACH_ONLY",
+          },
         });
 
-      let inviteError = initialInviteError;
+      let createError = initialCreateError;
       if (
-        inviteError &&
-        (inviteError.message?.toLowerCase().includes("already") ||
-          inviteError.message?.toLowerCase().includes("registered"))
+        createError &&
+        (createError.message?.toLowerCase().includes("already") ||
+          createError.message?.toLowerCase().includes("registered") ||
+          createError.message?.toLowerCase().includes("exists"))
       ) {
         // En caso de cuenta ya registrada previamente en auth.users, recuperar el usuario existente sin alterar sus credenciales
         const { data: authLookup } = await supabaseAdmin.auth.admin.listUsers();
         const foundUser = (authLookup?.users ?? []).find(
           (u) => u.email?.trim().toLowerCase() === email
         );
-        if (foundUser) {
+        if (foundUser?.id) {
           targetUserId = foundUser.id;
           isNewUser = false;
-          inviteError = null;
+          createError = null;
+          initialPassword = null;
         }
       }
 
-      if (inviteError || (!targetUserId && !inviteData?.user)) {
+      if (createError || (!targetUserId && !createData?.user)) {
         logError({
           correlationId,
           module: MODULE,
-          errorType: "auth_user_invite_failed",
-          detail: inviteError?.message ?? "Desconocido",
+          errorType: "auth_user_create_failed",
+          detail: createError?.message ?? "Desconocido",
         });
         return jsonResponse(400, {
           ok: false,
           error:
-            "No se pudo enviar la invitación oficial al coach: " +
-            (inviteError?.message ||
+            "No se pudo crear la cuenta de acceso del coach: " +
+            (createError?.message ||
               "error en el servicio de autenticación"),
         });
       }
 
-      if (!targetUserId && inviteData?.user) {
-        targetUserId = inviteData.user.id;
+      if (!targetUserId && createData?.user) {
+        targetUserId = createData.user.id;
         isNewUser = true;
+        initialPassword = generatedPassword;
       }
 
       // Sincronizar o crear fila en public.users de forma idempotente
@@ -469,9 +513,10 @@ Deno.serve(async (req: Request) => {
       coach: coachRecord,
       coachCode: coachRecord.coach_code,
       isNewUser,
+      initialPassword: isNewUser ? initialPassword : null,
       membershipStatus: "PENDING",
       message: isNewUser
-        ? `Invitación oficial enviada exitosamente a ${email}. Código de coach oficial asignado: ${coachRecord.coach_code}. Pendiente de activación por el entrenador.`
+        ? `Cuenta creada exitosamente para ${email}. Código de coach oficial asignado: ${coachRecord.coach_code}.`
         : `Solicitud de vinculación enviada al coach ${coachRecord.nombre} (${coachRecord.coach_code}). Pendiente de aceptación desde su cuenta oficial.`,
     });
   } catch (err) {

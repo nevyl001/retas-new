@@ -14,6 +14,8 @@ import type {
   CurrentCoachProfile,
   InviteCoachResult,
   ClubCoachDetail,
+  RecordCoachClassSessionInput,
+  RemoveCoachResult,
 } from "./types";
 
 function mapEdgeError(data: unknown, fallbackMessage: string): string {
@@ -81,6 +83,7 @@ export async function loadCoachingClubSnapshot(
           "INACTIVE",
           "CANCELLED",
           "ARCHIVED",
+          "REMOVED",
         ];
         const status: CoachMembershipStatus = validStatuses.includes(
           row.status as CoachMembershipStatus
@@ -265,6 +268,7 @@ export async function inviteClubCoach(
     error?: string;
     coachCode?: string;
     isNewUser?: boolean;
+    initialPassword?: string | null;
     membershipStatus?: CoachMembershipStatus;
     message?: string;
     alreadyMember?: boolean;
@@ -317,6 +321,7 @@ export async function inviteClubCoach(
     snapshot,
     coachCode: res.coachCode || "",
     isNewUser: res.isNewUser ?? false,
+    initialPassword: res.initialPassword ?? null,
     membershipStatus,
     message: res.message,
     alreadyMember: res.alreadyMember,
@@ -653,13 +658,20 @@ export async function assignCoachClasses(
 /**
  * Registra una clase impartida, descontando exactamente 1 clase del saldo disponible.
  * REGLA DEFINITIVA: Genera sesión real en coach_sessions y vínculo en el ledger.
+ * Soporta registro detallado de seguimiento: temas trabajados, mejoras observadas,
+ * próximos objetivos y mensaje motivante para el alumno.
  * Conserva la clave de idempotencia entre reintentos para no duplicar deducciones.
  */
 export async function recordCoachClassSession(
-  relationshipId: string,
+  relationshipIdOrInput: string | RecordCoachClassSessionInput,
   notas?: string,
   sessionId?: string,
-  idempotencyKey?: string
+  idempotencyKey?: string,
+  workedOn?: string[],
+  improvements?: string | null,
+  nextGoals?: string | null,
+  motivationalMessage?: string | null,
+  durationMinutes?: number
 ): Promise<{
   ok: boolean;
   remainingBalance: number;
@@ -667,15 +679,52 @@ export async function recordCoachClassSession(
   sessionId: string;
   idempotent?: boolean;
 }> {
-  const key = idempotencyKey || generateCoachingIdempotencyKey("session");
+  let relId: string;
+  let effectiveNotas: string | null = null;
+  let effectiveSessionId: string | null = null;
+  let effectiveKey: string | null = null;
+  let effectiveWorkedOn: string[] = [];
+  let effectiveImprovements: string | null = null;
+  let effectiveNextGoals: string | null = null;
+  let effectiveMotivationalMessage: string | null = null;
+  let effectiveDurationMinutes: number = 60;
+
+  if (typeof relationshipIdOrInput === "object" && relationshipIdOrInput !== null) {
+    relId = relationshipIdOrInput.relationshipId;
+    effectiveNotas = relationshipIdOrInput.notas ?? null;
+    effectiveSessionId = relationshipIdOrInput.sessionId ?? null;
+    effectiveKey = relationshipIdOrInput.idempotencyKey ?? null;
+    effectiveWorkedOn = relationshipIdOrInput.workedOn ?? [];
+    effectiveImprovements = relationshipIdOrInput.improvements ?? null;
+    effectiveNextGoals = relationshipIdOrInput.nextGoals ?? null;
+    effectiveMotivationalMessage = relationshipIdOrInput.motivationalMessage ?? null;
+    effectiveDurationMinutes = relationshipIdOrInput.durationMinutes ?? 60;
+  } else {
+    relId = relationshipIdOrInput;
+    effectiveNotas = notas ?? null;
+    effectiveSessionId = sessionId ?? null;
+    effectiveKey = idempotencyKey ?? null;
+    effectiveWorkedOn = workedOn ?? [];
+    effectiveImprovements = improvements ?? null;
+    effectiveNextGoals = nextGoals ?? null;
+    effectiveMotivationalMessage = motivationalMessage ?? null;
+    effectiveDurationMinutes = durationMinutes ?? 60;
+  }
+
+  const key = effectiveKey || generateCoachingIdempotencyKey("session");
 
   return retryTransient(
     async () => {
       const { data, error } = await supabase.rpc("record_coach_class_session", {
-        p_relationship_id: relationshipId,
-        p_notas: notas || null,
+        p_relationship_id: relId,
+        p_notas: effectiveNotas,
         p_idempotency_key: key,
-        p_session_id: sessionId || null,
+        p_session_id: effectiveSessionId,
+        p_worked_on: effectiveWorkedOn,
+        p_improvements: effectiveImprovements,
+        p_next_goals: effectiveNextGoals,
+        p_motivational_message: effectiveMotivationalMessage,
+        p_duration_minutes: effectiveDurationMinutes,
       });
 
       if (error) {
@@ -895,6 +944,9 @@ export interface StudentCoachingSessionInfo {
   durationMinutes?: number | null;
   focus?: string | null;
   workedOn?: string[] | null;
+  improvements?: string | null;
+  nextGoals?: string | null;
+  motivationalMessage?: string | null;
   notesSummary?: string | null;
 }
 
@@ -1012,6 +1064,9 @@ export async function fetchStudentCoachingOverview(): Promise<StudentCoachingOve
                 durationMinutes: entry.session.duration_minutes != null ? Number(entry.session.duration_minutes) : null,
                 focus: entry.session.focus ? String(entry.session.focus) : null,
                 workedOn: Array.isArray(entry.session.worked_on) ? entry.session.worked_on : [],
+                improvements: entry.session.improvements ? String(entry.session.improvements) : null,
+                nextGoals: entry.session.next_goals ? String(entry.session.next_goals) : null,
+                motivationalMessage: entry.session.motivational_message ? String(entry.session.motivational_message) : null,
                 notesSummary: entry.session.notes_summary ? String(entry.session.notes_summary) : null,
               }
             : null,
@@ -1176,6 +1231,12 @@ export async function fetchClubCoachDetail(
       archivedAt: res.membership?.archived_at
         ? String(res.membership.archived_at)
         : null,
+      removedAt: res.membership?.removed_at
+        ? String(res.membership.removed_at)
+        : null,
+      removalReason: res.membership?.removal_reason
+        ? String(res.membership.removal_reason)
+        : null,
       clubFuerzas: Array.isArray(res.membership?.club_fuerzas)
         ? (res.membership.club_fuerzas as RivieraJugadorCategoria[])
         : null,
@@ -1231,6 +1292,11 @@ export async function fetchClubCoachDetail(
             s.duration_minutes != null ? Number(s.duration_minutes) : null,
           focus: s.focus ? String(s.focus) : null,
           workedOn: Array.isArray(s.worked_on) ? s.worked_on : [],
+          improvements: s.improvements ? String(s.improvements) : null,
+          nextGoals: s.next_goals ? String(s.next_goals) : null,
+          motivationalMessage: s.motivational_message
+            ? String(s.motivational_message)
+            : null,
           notesSummary: s.notes_summary ? String(s.notes_summary) : null,
           status: String(s.status ?? "COMPLETED"),
           createdAt: String(s.created_at ?? ""),
@@ -1414,4 +1480,45 @@ export async function unarchiveCoachFromClub(
     message: String(res.message ?? "Entrenador desarchivado exitosamente."),
   };
 }
+
+/**
+ * Elimina a un entrenador de este club desde cualquier estado (ACTIVE, PENDING, INACTIVE, CANCELLED, ARCHIVED).
+ * Operación atómica e irreversible para la membresía en este club:
+ * - Pone status en REMOVED
+ * - Suspende relaciones activas de alumnos en este club
+ * - Conserva íntegramente: balances, ledger, historial de sesiones y la cuenta global del coach
+ */
+export async function removeCoachFromClub(
+  organizadorId: string,
+  coachId: string,
+  motivo?: string
+): Promise<RemoveCoachResult> {
+  const { data, error } = await supabase.rpc("remove_coach_from_club", {
+    p_organizador_id: organizadorId,
+    p_coach_id: coachId,
+    p_motivo: motivo || null,
+  });
+
+  if (error) {
+    console.error("[coaching] error removing coach from club:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(
+      typeof res?.error === "string"
+        ? res.error
+        : "No se pudo eliminar al entrenador del club."
+    );
+  }
+
+  return {
+    ok: true,
+    status: (res.status as CoachMembershipStatus) || "REMOVED",
+    message: String(res.message ?? "Entrenador eliminado de tu club exitosamente."),
+    idempotent: Boolean(res.idempotent),
+  };
+}
+
 
