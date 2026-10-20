@@ -10,7 +10,8 @@
 -- 4. La RPC de clase impartida comprueba que el coach tiene membresía ACTIVE con el club.
 -- 5. Saldos estrictamente separados por club, coach y alumno.
 -- 6. Ledger inmutable (coach_class_ledger) para auditoría de movimientos.
--- 7. CERO manejo de dinero, pagos, pasarelas, precios ni suscripciones monetarias.
+-- 7. Protección contra doble clic y reintentos mediante clave de idempotencia.
+-- 8. CERO manejo de dinero, pagos, pasarelas, precios ni suscripciones monetarias.
 -- =============================================================================
 
 -- ── 1) Tabla de Saldo por Club, Coach y Alumno ───────────────────────────────
@@ -46,6 +47,7 @@ CREATE TABLE IF NOT EXISTS public.coach_class_ledger (
   delta integer NOT NULL CHECK (delta <> 0),
   tipo text NOT NULL CHECK (tipo IN ('PACKAGE_CREDIT', 'CLASS_DEBIT', 'ADJUSTMENT')),
   notas text NULL,
+  idempotency_key text NULL,
   recorded_by uuid NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
   created_at timestamptz NOT NULL DEFAULT now()
 );
@@ -58,6 +60,11 @@ CREATE INDEX IF NOT EXISTS idx_ccl_org_created
 
 CREATE INDEX IF NOT EXISTS idx_ccl_coach_created
   ON public.coach_class_ledger(coach_id, created_at DESC);
+
+-- Índice único parcial para evitar duplicados en reintentos o doble clic
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ccl_idempotency
+  ON public.coach_class_ledger(idempotency_key)
+  WHERE idempotency_key IS NOT NULL;
 
 COMMENT ON TABLE public.coach_class_ledger IS
   'Riviera Coaching: Historial inmutable de asignaciones y deducciones de clases.';
@@ -72,15 +79,17 @@ REVOKE INSERT, UPDATE, DELETE ON public.coach_player_class_balances FROM anon, a
 REVOKE INSERT, UPDATE, DELETE ON public.coach_class_ledger FROM anon, authenticated;
 
 -- Balances: Admin Maestro y Organizador del Club (solo su club)
+DROP POLICY IF EXISTS cpcb_organizador_select ON public.coach_player_class_balances;
 CREATE POLICY cpcb_organizador_select ON public.coach_player_class_balances
   FOR SELECT
   TO authenticated
   USING (
     organizador_id = auth.uid()
-    OR (SELECT is_master_admin FROM public.users WHERE id = auth.uid()) IS TRUE
+    OR COALESCE(public.is_master_admin(), false)
   );
 
 -- Balances: Coach asignado puede consultar saldos de sus alumnos
+DROP POLICY IF EXISTS cpcb_coach_select ON public.coach_player_class_balances;
 CREATE POLICY cpcb_coach_select ON public.coach_player_class_balances
   FOR SELECT
   TO authenticated
@@ -90,26 +99,18 @@ CREATE POLICY cpcb_coach_select ON public.coach_player_class_balances
     )
   );
 
--- Balances: Alumno puede consultar su propio saldo
-CREATE POLICY cpcb_player_select ON public.coach_player_class_balances
-  FOR SELECT
-  TO authenticated
-  USING (
-    jugador_id IN (
-      SELECT id FROM public.riviera_jugadores WHERE user_id = auth.uid()
-    )
-  );
-
 -- Ledger: Admin Maestro y Organizador (solo su club)
+DROP POLICY IF EXISTS ccl_organizador_select ON public.coach_class_ledger;
 CREATE POLICY ccl_organizador_select ON public.coach_class_ledger
   FOR SELECT
   TO authenticated
   USING (
     organizador_id = auth.uid()
-    OR (SELECT is_master_admin FROM public.users WHERE id = auth.uid()) IS TRUE
+    OR COALESCE(public.is_master_admin(), false)
   );
 
 -- Ledger: Coach asignado puede consultar su historial
+DROP POLICY IF EXISTS ccl_coach_select ON public.coach_class_ledger;
 CREATE POLICY ccl_coach_select ON public.coach_class_ledger
   FOR SELECT
   TO authenticated
@@ -119,21 +120,12 @@ CREATE POLICY ccl_coach_select ON public.coach_class_ledger
     )
   );
 
--- Ledger: Alumno puede consultar su propio historial
-CREATE POLICY ccl_player_select ON public.coach_class_ledger
-  FOR SELECT
-  TO authenticated
-  USING (
-    jugador_id IN (
-      SELECT id FROM public.riviera_jugadores WHERE user_id = auth.uid()
-    )
-  );
-
 -- ── 4) RPC: Asignar Clases Disponibles (Exclusivo del Club) ─────────────────
 CREATE OR REPLACE FUNCTION public.assign_coach_classes(
   p_relationship_id uuid,
   p_class_count integer,
-  p_notas text DEFAULT NULL
+  p_notas text DEFAULT NULL,
+  p_idempotency_key text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -143,9 +135,10 @@ AS $$
 DECLARE
   v_caller uuid := auth.uid();
   v_rel record;
-  v_is_master boolean := false;
+  v_is_master boolean := COALESCE(public.is_master_admin(), false);
   v_membership record;
   v_new_balance integer;
+  v_trimmed_key text := NULLIF(trim(p_idempotency_key), '');
 BEGIN
   IF v_caller IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'error', 'No autenticado');
@@ -155,9 +148,27 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'La cantidad de clases debe ser mayor a cero.');
   END IF;
 
-  SELECT is_master_admin INTO v_is_master FROM public.users WHERE id = v_caller;
+  -- 1. Protección de idempotencia contra doble clic / reintento de red
+  IF v_trimmed_key IS NOT NULL THEN
+    IF EXISTS (
+      SELECT 1 FROM public.coach_class_ledger
+      WHERE idempotency_key = v_trimmed_key
+    ) THEN
+      SELECT balance_classes INTO v_new_balance
+      FROM public.coach_player_class_balances
+      WHERE relationship_id = p_relationship_id;
 
-  -- 1. Obtener relación coach-alumno
+      RETURN jsonb_build_object(
+        'ok', true,
+        'idempotent', true,
+        'new_balance', COALESCE(v_new_balance, 0),
+        'assigned_classes', p_class_count,
+        'message', 'Operación idempotente: las clases ya fueron asignadas previamente.'
+      );
+    END IF;
+  END IF;
+
+  -- 2. Obtener relación coach-alumno
   SELECT r.id, r.organizador_id, r.coach_id, r.jugador_id, r.status
   INTO v_rel
   FROM public.coach_player_relationships r
@@ -171,7 +182,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'No se pueden asignar clases a una relación inactiva o finalizada.');
   END IF;
 
-  -- 2. REGLA DEFINITIVA: El único que puede asignar clases es el club propietario de la cuenta o Admin Maestro.
+  -- 3. REGLA DEFINITIVA: El único que puede asignar clases es el club propietario de la cuenta o Admin Maestro.
   -- El coach es un empleado del club y tiene estrictamente prohibido asignar o recargar saldo.
   IF v_rel.organizador_id <> v_caller AND v_is_master IS NOT TRUE THEN
     RETURN jsonb_build_object(
@@ -180,7 +191,7 @@ BEGIN
     );
   END IF;
 
-  -- 3. Comprobar que el club tiene coaching habilitado
+  -- 4. Comprobar que el club tiene coaching habilitado
   IF NOT EXISTS (
     SELECT 1 FROM public.organizador_game_modes
     WHERE organizador_id = v_rel.organizador_id AND coaching_enabled = true
@@ -191,7 +202,7 @@ BEGIN
     );
   END IF;
 
-  -- 4. Comprobar que el coach tiene membresía ACTIVE en este club
+  -- 5. Comprobar que el coach tiene membresía ACTIVE en este club
   SELECT id, status INTO v_membership
   FROM public.coach_club_memberships
   WHERE coach_id = v_rel.coach_id AND organizador_id = v_rel.organizador_id;
@@ -203,7 +214,7 @@ BEGIN
     );
   END IF;
 
-  -- 5. Upsert atómico del saldo con bloqueo
+  -- 6. Upsert atómico del saldo con bloqueo
   INSERT INTO public.coach_player_class_balances (
     relationship_id,
     organizador_id,
@@ -227,7 +238,7 @@ BEGIN
         updated_at = now()
   RETURNING balance_classes INTO v_new_balance;
 
-  -- 6. Registro inmutable en el ledger
+  -- 7. Registro inmutable en el ledger
   INSERT INTO public.coach_class_ledger (
     relationship_id,
     organizador_id,
@@ -236,6 +247,7 @@ BEGIN
     delta,
     tipo,
     notas,
+    idempotency_key,
     recorded_by
   )
   VALUES (
@@ -246,11 +258,13 @@ BEGIN
     p_class_count,
     'PACKAGE_CREDIT',
     p_notas,
+    v_trimmed_key,
     v_caller
   );
 
   RETURN jsonb_build_object(
     'ok', true,
+    'idempotent', false,
     'new_balance', v_new_balance,
     'assigned_classes', p_class_count
   );
@@ -261,7 +275,8 @@ $$;
 CREATE OR REPLACE FUNCTION public.credit_coach_class_package(
   p_relationship_id uuid,
   p_class_count integer,
-  p_notas text DEFAULT NULL
+  p_notas text DEFAULT NULL,
+  p_idempotency_key text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -269,14 +284,15 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  RETURN public.assign_coach_classes(p_relationship_id, p_class_count, p_notas);
+  RETURN public.assign_coach_classes(p_relationship_id, p_class_count, p_notas, p_idempotency_key);
 END;
 $$;
 
 -- ── 5) RPC: Registrar Clase Impartida (Deducción Atómica de Saldo) ────────────
 CREATE OR REPLACE FUNCTION public.record_coach_class_session(
   p_relationship_id uuid,
-  p_notas text DEFAULT NULL
+  p_notas text DEFAULT NULL,
+  p_idempotency_key text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -288,18 +304,37 @@ DECLARE
   v_rel record;
   v_coach record;
   v_membership record;
-  v_is_master boolean := false;
+  v_is_master boolean := COALESCE(public.is_master_admin(), false);
   v_balance record;
   v_new_balance integer;
   v_new_total integer;
+  v_trimmed_key text := NULLIF(trim(p_idempotency_key), '');
 BEGIN
   IF v_caller IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'error', 'No autenticado');
   END IF;
 
-  SELECT is_master_admin INTO v_is_master FROM public.users WHERE id = v_caller;
+  -- 1. Protección de idempotencia contra doble clic / reintento de red
+  IF v_trimmed_key IS NOT NULL THEN
+    IF EXISTS (
+      SELECT 1 FROM public.coach_class_ledger
+      WHERE idempotency_key = v_trimmed_key
+    ) THEN
+      SELECT balance_classes, total_classes_given INTO v_balance
+      FROM public.coach_player_class_balances
+      WHERE relationship_id = p_relationship_id;
 
-  -- 1. Obtener relación coach-alumno
+      RETURN jsonb_build_object(
+        'ok', true,
+        'idempotent', true,
+        'remaining_balance', COALESCE(v_balance.balance_classes, 0),
+        'total_classes_given', COALESCE(v_balance.total_classes_given, 0),
+        'message', 'Operación idempotente: esta clase ya había sido registrada previamente.'
+      );
+    END IF;
+  END IF;
+
+  -- 2. Obtener relación coach-alumno
   SELECT r.id, r.organizador_id, r.coach_id, r.jugador_id, r.status
   INTO v_rel
   FROM public.coach_player_relationships r
@@ -313,7 +348,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'No se puede registrar una clase en una relación inactiva o finalizada.');
   END IF;
 
-  -- 2. Obtener datos del coach asignado
+  -- 3. Obtener datos del coach asignado
   SELECT id, auth_user_id, nombre INTO v_coach
   FROM public.riviera_coaches
   WHERE id = v_rel.coach_id;
@@ -322,12 +357,12 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'Perfil de coach no encontrado.');
   END IF;
 
-  -- 3. Autorización: El coach que imparte la clase, el organizador del club o Master Admin
+  -- 4. Autorización: El coach que imparte la clase, el organizador del club o Master Admin
   IF v_coach.auth_user_id <> v_caller AND v_rel.organizador_id <> v_caller AND v_is_master IS NOT TRUE THEN
     RETURN jsonb_build_object('ok', false, 'error', 'No tienes autorización para registrar clases para este alumno.');
   END IF;
 
-  -- 4. OBLIGATORIO: Comprobar que el coach tiene una asociación ACTIVE con el club correspondiente
+  -- 5. OBLIGATORIO: Comprobar que el coach tiene una asociación ACTIVE con el club correspondiente
   SELECT id, status INTO v_membership
   FROM public.coach_club_memberships
   WHERE coach_id = v_rel.coach_id AND organizador_id = v_rel.organizador_id;
@@ -339,7 +374,7 @@ BEGIN
     );
   END IF;
 
-  -- 5. Comprobar que el club tiene coaching habilitado
+  -- 6. Comprobar que el club tiene coaching habilitado
   IF NOT EXISTS (
     SELECT 1 FROM public.organizador_game_modes
     WHERE organizador_id = v_rel.organizador_id AND coaching_enabled = true
@@ -350,7 +385,7 @@ BEGIN
     );
   END IF;
 
-  -- 6. Bloquear y verificar saldo disponible (FOR UPDATE previene condiciones de carrera)
+  -- 7. Bloquear y verificar saldo disponible (FOR UPDATE previene condiciones de carrera)
   SELECT id, balance_classes, total_classes_given
   INTO v_balance
   FROM public.coach_player_class_balances
@@ -364,7 +399,7 @@ BEGIN
     );
   END IF;
 
-  -- 7. Descontar exactamente 1 clase e incrementar total impartidas
+  -- 8. Descontar exactamente 1 clase e incrementar total impartidas
   UPDATE public.coach_player_class_balances
   SET balance_classes = balance_classes - 1,
       total_classes_given = total_classes_given + 1,
@@ -372,7 +407,7 @@ BEGIN
   WHERE id = v_balance.id
   RETURNING balance_classes, total_classes_given INTO v_new_balance, v_new_total;
 
-  -- 8. Registrar movimiento inmutable en el ledger
+  -- 9. Registrar movimiento inmutable en el ledger
   INSERT INTO public.coach_class_ledger (
     relationship_id,
     organizador_id,
@@ -381,6 +416,7 @@ BEGIN
     delta,
     tipo,
     notas,
+    idempotency_key,
     recorded_by
   )
   VALUES (
@@ -391,11 +427,13 @@ BEGIN
     -1,
     'CLASS_DEBIT',
     p_notas,
+    v_trimmed_key,
     v_caller
   );
 
   RETURN jsonb_build_object(
     'ok', true,
+    'idempotent', false,
     'remaining_balance', v_new_balance,
     'total_classes_given', v_new_total
   );
@@ -403,15 +441,15 @@ END;
 $$;
 
 -- Permisos RPC
-REVOKE ALL ON FUNCTION public.assign_coach_classes(uuid, integer, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.credit_coach_class_package(uuid, integer, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.record_coach_class_session(uuid, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.assign_coach_classes(uuid, integer, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.credit_coach_class_package(uuid, integer, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.record_coach_class_session(uuid, text, text) FROM PUBLIC;
 
-GRANT EXECUTE ON FUNCTION public.assign_coach_classes(uuid, integer, text) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.assign_coach_classes(uuid, integer, text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.assign_coach_classes(uuid, integer, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.assign_coach_classes(uuid, integer, text, text) TO service_role;
 
-GRANT EXECUTE ON FUNCTION public.credit_coach_class_package(uuid, integer, text) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.credit_coach_class_package(uuid, integer, text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.credit_coach_class_package(uuid, integer, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.credit_coach_class_package(uuid, integer, text, text) TO service_role;
 
-GRANT EXECUTE ON FUNCTION public.record_coach_class_session(uuid, text) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.record_coach_class_session(uuid, text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.record_coach_class_session(uuid, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.record_coach_class_session(uuid, text, text) TO service_role;
