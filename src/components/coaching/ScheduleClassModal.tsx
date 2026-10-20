@@ -4,6 +4,7 @@ import { TablerIcon } from "../ui/TablerIcon";
 import {
   scheduleCoachClass,
   fetchClubCoachDetail,
+  generateCoachingIdempotencyKey,
 } from "../../lib/coaching/coachingApi";
 import type { ClubCoachDetailStudent } from "../../lib/coaching/types";
 
@@ -35,13 +36,12 @@ const FOCUS_PRESETS = [
   "Sesión de evaluación y técnica",
 ];
 
-const COURT_PRESETS = [
+const COURT_SUGGESTIONS = [
+  "Cancha Central",
+  "Cancha Techada",
   "Cancha 1",
   "Cancha 2",
   "Cancha 3",
-  "Cancha 4",
-  "Cancha Central",
-  "Cancha Techada",
 ];
 
 export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
@@ -66,7 +66,7 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
   const [date, setDate] = useState<string>("");
   const [time, setTime] = useState<string>("09:00");
   const [durationMinutes, setDurationMinutes] = useState<number>(60);
-  const [court, setCourt] = useState<string>("Cancha 1");
+  const [court, setCourt] = useState<string>("");
   const [focus, setFocus] = useState<string>(FOCUS_PRESETS[0]);
   const [customFocus, setCustomFocus] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
@@ -75,11 +75,13 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const wasOpenRef = useRef(false);
+  const idempotencyKeyRef = useRef<string>("");
 
   // Inicialización al abrir
   useEffect(() => {
     if (open && !wasOpenRef.current) {
       setError(null);
+      idempotencyKeyRef.current = generateCoachingIdempotencyKey("sched");
       const initialCoach =
         preselectedCoachId && activeCoaches.some((c) => c.id === preselectedCoachId)
           ? preselectedCoachId
@@ -101,7 +103,7 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
       setTime(`${String(nextHour).padStart(2, "0")}:00`);
 
       setDurationMinutes(60);
-      setCourt("Cancha 1");
+      setCourt("");
       setFocus(FOCUS_PRESETS[0]);
       setCustomFocus("");
       setNotes("");
@@ -186,6 +188,7 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
         court: court.trim() || null,
         focus: effectiveFocus || null,
         notes: notes.trim() || null,
+        idempotencyKey: idempotencyKeyRef.current || null,
       });
 
       if (res.sessionId) {
@@ -277,18 +280,22 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
             </select>
           )}
 
-          {selectedStudent && selectedStudent.balanceClasses === 0 && (
+          {selectedStudent && selectedStudent.balanceClasses <= 0 && (
             <div
               style={{
-                fontSize: "0.78rem",
-                color: "#fbbf24",
-                marginTop: "0.25rem",
+                fontSize: "0.8rem",
+                color: "#fca5a5",
+                background: "rgba(239, 68, 68, 0.12)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                borderRadius: "8px",
+                padding: "0.6rem 0.8rem",
+                marginTop: "0.5rem",
                 display: "flex",
                 alignItems: "center",
-                gap: "0.3rem",
+                gap: "0.4rem",
               }}
             >
-              <TablerIcon name="info-circle" size={14} /> El alumno tiene 0 clases disponibles. Puedes agendarla y abonarle clases después.
+              <TablerIcon name="alert-circle" size={16} /> El alumno no cuenta con clases disponibles para agendar. Asigna o abona clases antes de programar una cita.
             </div>
           )}
         </div>
@@ -360,14 +367,14 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
         {/* Cancha */}
         <div className="coaching-form-group">
           <label className="coaching-label" htmlFor="schedule-court-input">
-            Cancha asignada
+            Cancha asignada (Opcional)
           </label>
           <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.4rem" }}>
-            {COURT_PRESETS.map((c) => (
+            {COURT_SUGGESTIONS.map((c) => (
               <button
                 key={c}
                 type="button"
-                onClick={() => setCourt(c)}
+                onClick={() => setCourt(court === c ? "" : c)}
                 style={{
                   padding: "0.3rem 0.6rem",
                   borderRadius: "6px",
@@ -389,7 +396,7 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
             className="coaching-input"
             value={court}
             onChange={(e) => setCourt(e.target.value)}
-            placeholder="ej. Cancha 1, Central, etc."
+            placeholder="Escribe el nombre de la cancha (ej. Central, Techada 1, Cancha 2…)"
             disabled={saving}
           />
         </div>
@@ -473,7 +480,13 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
           <button
             type="submit"
             className="coaching-btn-primary"
-            disabled={saving || !coachId || !studentId || coachStudents.length === 0}
+            disabled={
+              saving ||
+              !coachId ||
+              !studentId ||
+              coachStudents.length === 0 ||
+              (selectedStudent?.balanceClasses ?? 0) <= 0
+            }
             style={{
               display: "inline-flex",
               alignItems: "center",

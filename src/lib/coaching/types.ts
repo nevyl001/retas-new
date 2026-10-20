@@ -370,6 +370,8 @@ export type CoachScheduledSession = {
   jugadorFoto?: string | null;
   rivieraId?: string;
   relationshipId: string | null;
+  organizadorId?: string;
+  clubNombre?: string;
   startsAt: string;
   endsAt: string;
   durationMinutes: number;
@@ -411,6 +413,7 @@ export type ScheduleCoachClassResult = {
   durationMinutes?: number;
   court?: string | null;
   message?: string;
+  idempotent?: boolean;
   error?: string;
 };
 

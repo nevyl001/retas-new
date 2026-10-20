@@ -1786,6 +1786,7 @@ export async function scheduleCoachClass(params: {
   court?: string | null;
   focus?: string | null;
   notes?: string | null;
+  idempotencyKey?: string | null;
 }): Promise<ScheduleCoachClassResult> {
   const { data, error } = await supabase.rpc("schedule_coach_class", {
     p_organizador_id: params.organizadorId,
@@ -1796,6 +1797,7 @@ export async function scheduleCoachClass(params: {
     p_court: params.court || null,
     p_focus: params.focus || null,
     p_notes: params.notes || null,
+    p_idempotency_key: params.idempotencyKey || null,
   });
 
   if (error) {
@@ -1815,6 +1817,7 @@ export async function scheduleCoachClass(params: {
     endsAt: res.ends_at ? String(res.ends_at) : undefined,
     durationMinutes: res.duration_minutes != null ? Number(res.duration_minutes) : undefined,
     court: res.court ? String(res.court) : null,
+    idempotent: Boolean(res.idempotent),
     message: String(res.message ?? "Clase agendada exitosamente."),
   };
 }
@@ -1914,7 +1917,12 @@ export async function fetchClubCoachingAgenda(params: {
     throw new Error("No se pudo cargar la agenda de coaching: " + error.message);
   }
 
-  const rawList = Array.isArray(data) ? data : [];
+  const rawList = Array.isArray(data)
+    ? data
+    : data && typeof data === "object" && Array.isArray((data as any).sessions)
+    ? (data as any).sessions
+    : [];
+
   return rawList.map((row: any): CoachScheduledSession => ({
     id: String(row.id ?? ""),
     coachId: String(row.coach_id ?? ""),
@@ -1926,6 +1934,63 @@ export async function fetchClubCoachingAgenda(params: {
     jugadorFoto: row.jugador_foto ? String(row.jugador_foto) : null,
     rivieraId: row.riviera_id ? String(row.riviera_id) : undefined,
     relationshipId: row.relationship_id ? String(row.relationship_id) : null,
+    organizadorId: row.organizador_id ? String(row.organizador_id) : undefined,
+    clubNombre: row.club_nombre ? String(row.club_nombre) : undefined,
+    startsAt: String(row.starts_at ?? ""),
+    endsAt: String(row.ends_at ?? ""),
+    durationMinutes: Number(row.duration_minutes ?? 60),
+    court: row.court ? String(row.court) : null,
+    focus: row.focus ? String(row.focus) : null,
+    notesSummary: row.notes_summary ? String(row.notes_summary) : null,
+    status: row.status as any,
+    workedOn: Array.isArray(row.worked_on) ? row.worked_on : [],
+    cancellationReason: row.cancellation_reason ? String(row.cancellation_reason) : null,
+    revertedAt: row.reverted_at ? String(row.reverted_at) : null,
+    balanceClasses: row.balance_classes != null ? Number(row.balance_classes) : undefined,
+    createdAt: String(row.created_at ?? ""),
+  }));
+}
+
+/**
+ * Consulta la agenda del coach autenticado (próximas clases programadas).
+ */
+export async function fetchCoachAgenda(params?: {
+  organizadorId?: string | null;
+  statusFilter?: string | null;
+  fromDate?: string | null;
+  toDate?: string | null;
+}): Promise<CoachScheduledSession[]> {
+  const { data, error } = await supabase.rpc("fetch_coach_agenda", {
+    p_organizador_id: params?.organizadorId || null,
+    p_status_filter: params?.statusFilter || null,
+    p_from_date: params?.fromDate || null,
+    p_to_date: params?.toDate || null,
+  });
+
+  if (error) {
+    console.error("[coaching] error fetching coach agenda:", error);
+    throw new Error("No se pudo cargar la agenda del coach: " + error.message);
+  }
+
+  const rawList = Array.isArray(data)
+    ? data
+    : data && typeof data === "object" && Array.isArray((data as any).sessions)
+    ? (data as any).sessions
+    : [];
+
+  return rawList.map((row: any): CoachScheduledSession => ({
+    id: String(row.id ?? ""),
+    coachId: String(row.coach_id ?? ""),
+    coachNombre: row.coach_nombre ? String(row.coach_nombre) : undefined,
+    coachCode: row.coach_code ? String(row.coach_code) : undefined,
+    coachFoto: row.coach_foto ? String(row.coach_foto) : null,
+    jugadorId: String(row.jugador_id ?? ""),
+    jugadorNombre: row.jugador_nombre ? String(row.jugador_nombre) : undefined,
+    jugadorFoto: row.jugador_foto ? String(row.jugador_foto) : null,
+    rivieraId: row.riviera_id ? String(row.riviera_id) : undefined,
+    relationshipId: row.relationship_id ? String(row.relationship_id) : null,
+    organizadorId: row.organizador_id ? String(row.organizador_id) : undefined,
+    clubNombre: row.club_nombre ? String(row.club_nombre) : undefined,
     startsAt: String(row.starts_at ?? ""),
     endsAt: String(row.ends_at ?? ""),
     durationMinutes: Number(row.duration_minutes ?? 60),
