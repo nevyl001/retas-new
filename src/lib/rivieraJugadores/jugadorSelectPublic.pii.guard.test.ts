@@ -104,4 +104,16 @@ describe("listRivieraJugadores — select PUBLIC (pin de fuente)", () => {
     expect(fn).toContain('"riviera_jugador_privado_por_id"');
     expect(fn).not.toMatch(/from\("riviera_jugadores"\)/);
   });
+
+  it("jugadorSelectWithStats usa por defecto getJugadorSelectColumnsPublic (sin PII)", () => {
+    const fs = require("fs") as typeof import("fs");
+    const path = require("path") as typeof import("path");
+    const src = fs.readFileSync(
+      path.join(__dirname, "rivieraJugadoresService.ts"),
+      "utf8"
+    );
+    expect(src).toMatch(
+      /function jugadorSelectWithStats\(\s*cols\s*=\s*getJugadorSelectColumnsPublic\(\)\s*\)/
+    );
+  });
 });

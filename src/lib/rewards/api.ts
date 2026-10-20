@@ -141,25 +141,49 @@ export async function saveReward(payload: Record<string, unknown>): Promise<stri
   return data as string;
 }
 
+const MISSING_REWARDS_LIST_PLAYERS_42883_REGEX =
+  /function\s+(?:(?:public|"public")\.)?"?rewards_list_players"?\s*(?:\([^)]*\))?\s+does not exist/i;
+
+function isMissingRpcError(error: { code?: string; message?: string; status?: number } | null): boolean {
+  if (!error) return false;
+  if (error.code === "PGRST202") {
+    return !error.message || error.message.includes("rewards_list_players");
+  }
+  if (error.code === "42883") {
+    // Si la RPC existe pero falló internamente invocando otra función inexistente (ej. assert_club_active),
+    // o el mensaje menciona rewards_list_players en el stack/contexto sin ser la función faltante,
+    // el error 42883 NO debe activar el fallback. Solo se reconoce si la función ausente es estrictamente rewards_list_players.
+    return typeof error.message === "string" && MISSING_REWARDS_LIST_PLAYERS_42883_REGEX.test(error.message);
+  }
+  return false;
+}
+
+
+
 export async function listPlayers(organizadorId: string): Promise<{ id: string; nombre: string }[]> {
-  try {
-    const { data, error } = await supabase.rpc("rewards_list_players", {
-      p_organizador_id: organizadorId,
-    });
-    if (!error && Array.isArray(data) && data.length > 0) {
-      return data as { id: string; nombre: string }[];
-    }
-  } catch {
-    // Fallback si la RPC aún no está disponible
+  const { data, error } = await supabase.rpc("rewards_list_players", {
+    p_organizador_id: organizadorId,
+  });
+
+  // Respuesta exitosa de la RPC: válida incluso si data es [] (club sin jugadores).
+  if (!error && Array.isArray(data)) {
+    return data as { id: string; nombre: string }[];
   }
 
-  const { data, error } = await supabase
+  // Si falló por cualquier motivo distinto a función no desplegada (permisos 42501, auth, club assert),
+  // se propaga el error de inmediato. Prohibido ejecutar consultas alternativas o simular [].
+  if (error && !isMissingRpcError(error)) {
+    fail(error, "No se pudieron leer los jugadores");
+  }
+
+  // Fallback estrictamente necesario solo si la RPC no existe en la base de datos (compatibilidad sin migración).
+  const { data: fallbackData, error: fallbackError } = await supabase
     .from("riviera_jugadores")
     .select("id, nombre")
     .eq("organizador_id", organizadorId)
     .order("nombre", { ascending: true });
-  fail(error, "No se pudieron leer los jugadores");
-  return (data ?? []) as { id: string; nombre: string }[];
+  fail(fallbackError, "No se pudieron leer los jugadores");
+  return (fallbackData ?? []) as { id: string; nombre: string }[];
 }
 
 export async function recoverParticipations(options?: {

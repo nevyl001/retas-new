@@ -88,11 +88,6 @@ const JUGADOR_RATING_COLS = "rating,rating_partidos,rating_fiabilidad";
 /** null = aún no probado; false = columnas rating no existen en riviera_jugadores */
 let jugadorRatingColsInDb: boolean | null = null;
 
-/** Select privado (+ rating si existe). Default actual de todos los callers. */
-function getJugadorSelectColumns(): string {
-  if (jugadorRatingColsInDb === false) return JUGADOR_SELECT_PRIVATE;
-  return `${JUGADOR_SELECT_PRIVATE},${JUGADOR_RATING_COLS}`;
-}
 
 /** Select público (+ rating si existe). Listo para migraciones; sin callers de producto aún. */
 export function getJugadorSelectColumnsPublic(): string {
@@ -134,7 +129,7 @@ async function withJugadorSelectPublicFallback<T>(
 const STATS_SELECT =
   "jugador_id,total_partidos,victorias,derrotas,empates,participaciones_solo,pct_victorias,total_retas,total_torneos_express,total_ligas,total_americanos,sets_favor_total,sets_contra_total,racha_actual,ultima_actividad,puntos_totales,updated_at";
 
-function jugadorSelectWithStats(cols = getJugadorSelectColumns()): string {
+function jugadorSelectWithStats(cols = getJugadorSelectColumnsPublic()): string {
   return `${cols}, stats:jugador_stats(${STATS_SELECT})`;
 }
 
