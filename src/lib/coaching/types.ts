@@ -97,7 +97,12 @@ export type CoachClassLedgerEntry = {
   jugadorNombre?: string;
   sessionId: string | null;
   delta: number;
-  tipo: "PACKAGE_CREDIT" | "CLASS_DEBIT" | "ADJUSTMENT";
+  tipo:
+    | "PACKAGE_CREDIT"
+    | "CLASS_DEBIT"
+    | "ADJUSTMENT"
+    | "TRANSFER_IN"
+    | "TRANSFER_OUT";
   notas: string | null;
   idempotencyKey: string | null;
   recordedBy: string;
@@ -301,3 +306,43 @@ export type ClubCoachDetail = {
   };
 };
 
+export type StudentLookupResult = {
+  id: string;
+  nombre: string;
+  fotoUrl: string | null;
+  categoria: string | null;
+  genero: string | null;
+  clubNombre: string | null;
+  rivieraId: string;
+};
+
+export type AssignStudentToClubCoachResult = {
+  ok: boolean;
+  relationshipId: string;
+  student: {
+    id: string;
+    nombre: string;
+    fotoUrl?: string | null;
+    categoria?: string | null;
+    rivieraId: string;
+  };
+  initialClasses: number;
+  balanceClasses: number;
+  message: string;
+  idempotent?: boolean;
+  error?: string;
+};
+
+export type FinalizeCoachRemovalResult = {
+  ok: boolean;
+  message: string;
+  error?: string;
+};
+
+export type ReassignStudentCoachResult = {
+  ok: boolean;
+  transferredClasses: number;
+  newTargetBalance: number;
+  message: string;
+  error?: string;
+};

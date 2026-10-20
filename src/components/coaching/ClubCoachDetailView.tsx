@@ -23,6 +23,7 @@ import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import { TablerIcon } from "../ui/TablerIcon";
 import { Modal } from "../ui/Modal";
+import { AddStudentToCoachModal } from "./AddStudentToCoachModal";
 
 interface ClubCoachDetailViewProps {
   organizadorId: string;
@@ -53,6 +54,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [detailRemovalReason, setDetailRemovalReason] = useState("");
   const [assigningStudent, setAssigningStudent] = useState<ClubCoachDetailStudent | null>(null);
   const [assignClassesCount, setAssignClassesCount] = useState<number>(10);
@@ -752,18 +754,40 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
       {/* 2. ALUMNOS */}
       {activeTab === "alumnos" && (
         <section className="coaching-panel" style={{ padding: "1.25rem", background: "rgba(255,255,255,0.02)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="coaching-section-header" style={{ marginBottom: "1rem" }}>
+          <div className="coaching-section-header" style={{ marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
             <div>
               <h2 className="coaching-section-title" style={{ fontSize: "1.2rem" }}>Alumnos en {club.nombre}</h2>
               <p className="coaching-section-desc">Jugadores vinculados oficialmente a este entrenador dentro de tu academia.</p>
             </div>
+            {membership.status === "ACTIVE" ? (
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--primary"
+                style={{ fontSize: "0.85rem" }}
+                onClick={() => setIsAddStudentModalOpen(true)}
+              >
+                <TablerIcon name="user-plus" size={15} />
+                Agregar alumno
+              </button>
+            ) : null}
           </div>
 
           {students.length === 0 ? (
             <div className="coaching-empty-card">
               <TablerIcon name="users" size={40} className="coaching-empty-icon" />
               <h3>Sin alumnos vinculados en este club</h3>
-              <p>El entrenador aún no tiene alumnos vinculados en tu club. El coach puede vincularlos personalmente desde su espacio usando el Riviera ID oficial del jugador.</p>
+              <p>El entrenador aún no tiene alumnos asignados en tu club. Como administrador, puedes asignarle un alumno mediante su Riviera ID oficial y recargar su paquete de clases.</p>
+              {membership.status === "ACTIVE" ? (
+                <button
+                  type="button"
+                  className="coaching-btn coaching-btn--primary"
+                  style={{ marginTop: "1rem", fontSize: "0.85rem" }}
+                  onClick={() => setIsAddStudentModalOpen(true)}
+                >
+                  <TablerIcon name="user-plus" size={15} />
+                  Asignar alumno a este coach
+                </button>
+              ) : null}
             </div>
           ) : (
             <div className="coaching-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
@@ -1457,6 +1481,35 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
           </div>
         </div>
       </Modal>
+
+      {/* Modal: Asignar Alumno a este Coach */}
+      <AddStudentToCoachModal
+        open={isAddStudentModalOpen}
+        onClose={() => setIsAddStudentModalOpen(false)}
+        organizadorId={organizadorId}
+        coaches={
+          detail
+            ? [
+                {
+                  id: detail.coach.id,
+                  nombre: detail.coach.nombre,
+                  coachCode: detail.coach.coachCode,
+                  membershipStatus: detail.membership.status,
+                  fuerzas: detail.coach.fuerzas,
+                  especialidades: detail.coach.especialidades,
+                } as any,
+              ]
+            : []
+        }
+        defaultCoachId={coachId}
+        onSuccess={(studentName, coachName, classes) => {
+          setActionSuccess(
+            `Alumno ${studentName} asignado a ${coachName} con ${classes} clases disponibles exitosamente.`
+          );
+          void loadData();
+          if (onCoachUpdated) onCoachUpdated();
+        }}
+      />
     </div>
   );
 };

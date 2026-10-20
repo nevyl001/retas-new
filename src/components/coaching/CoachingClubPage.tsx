@@ -13,8 +13,10 @@ import {
   generateCoachingIdempotencyKey,
   fetchCurrentCoachProfile,
   removeCoachFromClub,
+  finalizeCoachRemovalFromClub,
 } from "../../lib/coaching/coachingApi";
 import { ClubCoachDetailView } from "./ClubCoachDetailView";
+import { AddStudentToCoachModal } from "./AddStudentToCoachModal";
 import {
   COACH_ESPECIALIDADES_ORDER,
   COACH_FUERZAS_ORDER,
@@ -115,8 +117,10 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   // Eliminación de coach del club (desde cualquier estado)
   const [coachToRemove, setCoachToRemove] = useState<CoachingCoach | null>(null);
   const [removalReasonInput, setRemovalReasonInput] = useState("");
+  const [coachToFinalizeRemoval, setCoachToFinalizeRemoval] = useState<CoachingCoach | null>(null);
 
   // Control de clases y saldos de alumnos
+  const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [assigningLink, setAssigningLink] = useState<CoachingPlayerLink | null>(null);
   const [classCountInput, setClassCountInput] = useState<number>(10);
   const [classNotesInput, setClassNotesInput] = useState<string>("");
@@ -245,7 +249,11 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   }, [tab]);
 
   const stats = useMemo(() => {
-    const coaches = snapshot?.coaches.length ?? 0;
+    const coaches =
+      snapshot?.coaches.filter(
+        (c) =>
+          c.membershipStatus !== "ARCHIVED" && c.membershipStatus !== "REMOVED"
+      ).length ?? 0;
     const activeLinks =
       snapshot?.links.filter((l) => l.status === "ACTIVE").length ?? 0;
     const paused =
@@ -396,6 +404,29 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
         err instanceof Error
           ? err.message
           : "Error al eliminar al entrenador del club."
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleConfirmFinalizeRemoval = async () => {
+    if (!organizadorId || !coachToFinalizeRemoval) return;
+    setBusy(true);
+    setFormError(null);
+    try {
+      const res = await finalizeCoachRemovalFromClub(
+        organizadorId,
+        coachToFinalizeRemoval.id
+      );
+      setSuccessMessage(res.message || "Entrenador eliminado definitivamente de tu club.");
+      setCoachToFinalizeRemoval(null);
+      await refresh();
+    } catch (err) {
+      setFormError(
+        err instanceof Error
+          ? err.message
+          : "Error al eliminar definitivamente al entrenador del club."
       );
     } finally {
       setBusy(false);
@@ -1035,7 +1066,19 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                           </button>
                         )}
 
-                        {c.membershipStatus !== "REMOVED" ? (
+                        {c.membershipStatus === "REMOVED" ? (
+                          <button
+                            type="button"
+                            className="coaching-btn coaching-btn--ghost"
+                            style={{ color: "#ef4444" }}
+                            onClick={() => setCoachToFinalizeRemoval(c)}
+                            disabled={busy}
+                            title="Borrar definitivamente a este coach de la lista de mi club"
+                          >
+                            <TablerIcon name="trash-x" size={15} />
+                            Eliminar definitivamente
+                          </button>
+                        ) : (
                           <button
                             type="button"
                             className="coaching-btn coaching-btn--ghost"
@@ -1047,7 +1090,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                             <TablerIcon name="trash" size={15} />
                             Eliminar de mi club
                           </button>
-                        ) : null}
+                        )}
                       </div>
                     </article>
                   );
@@ -1403,13 +1446,21 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
 
       {!loading && tab === "jugadores" ? (
         <section className="coaching-panel" aria-label="Jugadores">
-          <div className="coaching-section-header">
+          <div className="coaching-section-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
             <div>
               <h2 className="coaching-section-title">Alumnos vinculados</h2>
               <p className="coaching-section-desc">
-                Jugadores asociados a un coach mediante su Riviera ID oficial.
+                Jugadores asociados a tus entrenadores con control de clases y seguimiento deportivo.
               </p>
             </div>
+            <button
+              type="button"
+              className="coaching-btn coaching-btn--primary"
+              onClick={() => setIsAddStudentModalOpen(true)}
+            >
+              <TablerIcon name="user-plus" size={16} />
+              Agregar alumno
+            </button>
           </div>
 
           <div
@@ -1443,13 +1494,9 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                   marginBottom: "0.25rem",
                 }}
               >
-                Control y asignación de clases
+                Gestión y control de clases de la academia
               </strong>
-              Los coaches vinculan directamente a sus alumnos mediante su{" "}
-              <strong>Riviera ID</strong> desde su espacio personal. Como
-              administrador del club, aquí puedes supervisar a los alumnos
-              vinculados a cada coach, asignar paquetes de clases disponibles y
-              auditar el registro histórico de sesiones.
+              Como administrador del club, tú registras y asignas alumnos a tus entrenadores mediante su <strong>Riviera ID</strong> oficial. Desde este panel autorizas paquetes de clases disponibles, mientras los coaches se encargan exclusivamente de impartir las clases y registrar su seguimiento deportivo.
             </div>
           </div>
 
@@ -1458,10 +1505,17 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
               <TablerIcon name="users" size={44} className="coaching-empty-icon" />
               <h3>Sin alumnos vinculados en la academia</h3>
               <p>
-                Tus coaches podrán vincular a sus alumnos por Riviera ID desde su
-                portal personal. Una vez vinculados, podrás asignarles paquetes
-                de clases aquí.
+                Agrega y asigna alumnos a tus entrenadores activos mediante su Riviera ID oficial para comenzar a gestionar sus paquetes de clases.
               </p>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--primary"
+                style={{ marginTop: "1rem" }}
+                onClick={() => setIsAddStudentModalOpen(true)}
+              >
+                <TablerIcon name="user-plus" size={16} />
+                Agregar primer alumno
+              </button>
             </div>
           ) : (
             <div className="coaching-grid">
@@ -2041,6 +2095,76 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
           </div>
         )}
       </Modal>
+
+      {/* Modal: Confirmación de Eliminación Definitiva de Coach (desde REMOVED) */}
+      <Modal
+        open={Boolean(coachToFinalizeRemoval)}
+        onClose={() => setCoachToFinalizeRemoval(null)}
+        title="Eliminar definitivamente del club"
+        size="md"
+      >
+        {coachToFinalizeRemoval && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div
+              style={{
+                background: "rgba(239, 68, 68, 0.12)",
+                border: "1px solid rgba(239, 68, 68, 0.35)",
+                borderRadius: "8px",
+                padding: "1rem",
+                color: "#fca5a5",
+                fontSize: "0.88rem",
+                lineHeight: 1.5,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 700, marginBottom: "0.35rem" }}>
+                <TablerIcon name="alert-triangle" size={18} />
+                <span>Borrado definitivo de {coachToFinalizeRemoval.nombre} ({coachToFinalizeRemoval.coachCode})</span>
+              </div>
+              <p style={{ margin: 0 }}>
+                ¿Estás seguro de que deseas borrar definitivamente a este entrenador de la lista de tu club?
+              </p>
+              <p style={{ margin: "0.5rem 0 0", color: "#fecaca" }}>
+                Esta acción lo retirará por completo del panel de tu club. <strong>Se conservará la bitácora de auditoría inmutable</strong> y todo registro deportivo previo.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--secondary"
+                onClick={() => setCoachToFinalizeRemoval(null)}
+                disabled={busy}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--danger"
+                style={{ background: "#dc2626", borderColor: "#ef4444", color: "#ffffff" }}
+                onClick={handleConfirmFinalizeRemoval}
+                disabled={busy}
+              >
+                <TablerIcon name="trash-x" size={16} />
+                {busy ? "Eliminando…" : "Eliminar definitivamente"}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal: Asignar Alumno a Coach */}
+      <AddStudentToCoachModal
+        open={isAddStudentModalOpen}
+        onClose={() => setIsAddStudentModalOpen(false)}
+        organizadorId={organizadorId}
+        coaches={snapshot?.coaches ?? []}
+        onSuccess={(studentName, coachName, classes) => {
+          setSuccessMessage(
+            `Alumno ${studentName} asignado a ${coachName} con ${classes} clases disponibles exitosamente.`
+          );
+          void refresh();
+        }}
+      />
     </div>
   );
 };

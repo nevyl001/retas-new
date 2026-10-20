@@ -16,6 +16,10 @@ import type {
   ClubCoachDetail,
   RecordCoachClassSessionInput,
   RemoveCoachResult,
+  StudentLookupResult,
+  AssignStudentToClubCoachResult,
+  FinalizeCoachRemovalResult,
+  ReassignStudentCoachResult,
 } from "./types";
 
 function mapEdgeError(data: unknown, fallbackMessage: string): string {
@@ -608,7 +612,7 @@ export async function linkPlayerByRivieraId(
  * Genera una clave de idempotencia única para operaciones de coaching.
  */
 export function generateCoachingIdempotencyKey(
-  prefix: "assign" | "session" = "session"
+  prefix: "assign" | "session" | "assign-student" | string = "session"
 ): string {
   const uuid =
     typeof crypto !== "undefined" && crypto.randomUUID
@@ -1525,4 +1529,135 @@ export async function removeCoachFromClub(
   };
 }
 
+/**
+ * Consulta y verifica los datos oficiales de un alumno por su Riviera ID.
+ * Permite previsualizar su identidad deportiva antes de asignarlo a un entrenador.
+ */
+export async function lookupStudentByRivieraId(
+  rivieraId: string
+): Promise<StudentLookupResult> {
+  const normId = normalizeRivieraIdInput(rivieraId);
+  if (!normId) {
+    throw new Error("Ingresa un Riviera ID válido (ej. RIV-00000278).");
+  }
 
+  const { data, error } = await supabase.rpc("lookup_student_by_riviera_id", {
+    p_riviera_id: normId,
+  });
+
+  if (error) {
+    console.error("[coaching] error looking up student:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as { ok?: boolean; error?: string; student?: StudentLookupResult };
+  if (!res || res.ok === false || !res.student) {
+    throw new Error(res?.error || `No se encontró ningún jugador con el Riviera ID ${normId}.`);
+  }
+
+  return res.student;
+}
+
+/**
+ * Asigna un alumno existente a un entrenador del club y le abona opcionalmente clases iniciales.
+ * REGLA DEFINITIVA: Exclusivo del club organizador.
+ * Es idempotente para evitar duplicación de clases por reintentos de red.
+ */
+export async function assignStudentToClubCoach(
+  organizadorId: string,
+  coachId: string,
+  rivieraId: string,
+  initialClasses: number = 0,
+  reference?: string,
+  idempotencyKey?: string
+): Promise<AssignStudentToClubCoachResult> {
+  const key = idempotencyKey || generateCoachingIdempotencyKey("assign-student");
+
+  return await retryTransient(
+    async () => {
+      const { data, error } = await supabase.rpc("assign_student_to_club_coach", {
+        p_organizador_id: organizadorId,
+        p_coach_id: coachId,
+        p_riviera_id: rivieraId,
+        p_initial_classes: initialClasses,
+        p_idempotency_key: key,
+        p_reference: reference || null,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      const res = data as AssignStudentToClubCoachResult;
+      if (!res || res.ok === false) {
+        throw new Error(res?.error || "No se pudo asignar el alumno al entrenador.");
+      }
+
+      return res;
+    },
+    { label: "assignStudentToClubCoach" }
+  );
+}
+
+/**
+ * Borra definitivamente a un entrenador de la lista del club (estado REMOVED).
+ * Preserva todo el historial de auditoría y registros deportivos pasados,
+ * pero elimina la fila de membresía para que desaparezca de las listas del club.
+ */
+export async function finalizeCoachRemovalFromClub(
+  organizadorId: string,
+  coachId: string,
+  motivo?: string
+): Promise<FinalizeCoachRemovalResult> {
+  const { data, error } = await supabase.rpc("finalize_coach_removal_from_club", {
+    p_organizador_id: organizadorId,
+    p_coach_id: coachId,
+    p_motivo: motivo || null,
+  });
+
+  if (error) {
+    console.error("[coaching] error finalizing coach removal:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as { ok?: boolean; error?: string; message?: string };
+  if (!res || res.ok === false) {
+    throw new Error(res?.error || "No se pudo eliminar definitivamente al entrenador del club.");
+  }
+
+  return {
+    ok: true,
+    message: String(res.message ?? "Entrenador eliminado definitivamente de tu club."),
+  };
+}
+
+/**
+ * Reasigna un alumno y su saldo restante de clases desde un entrenador a otro en el mismo club.
+ */
+export async function reassignStudentCoach(
+  organizadorId: string,
+  studentId: string,
+  fromCoachId: string,
+  toCoachId: string,
+  notes?: string
+): Promise<ReassignStudentCoachResult> {
+  const { data, error } = await supabase.rpc("reassign_student_coach", {
+    p_organizador_id: organizadorId,
+    p_student_id: studentId,
+    p_from_coach_id: fromCoachId,
+    p_to_coach_id: toCoachId,
+    p_notes: notes || null,
+  });
+
+  if (error) {
+    console.error("[coaching] error reassigning student coach:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as ReassignStudentCoachResult;
+  if (!res || res.ok === false) {
+    throw new Error(res?.error || "No se pudo reasignar el alumno.");
+  }
+
+  return res;
+}
