@@ -8,6 +8,10 @@ import {
   linkPlayerByRivieraId,
   updateLinkStatus,
   acceptCoachClubInvitation,
+  assignCoachClasses,
+  recordCoachClassSession,
+  fetchClubClassLedger,
+  fetchCoachAssignedStudents,
 } from "./coachingApi";
 import type { CreateCoachInput } from "./types";
 import { supabase } from "../supabaseClient";
@@ -651,6 +655,7 @@ describe("coachingApi - Entrega B", () => {
       expect(supabase.rpc).toHaveBeenCalledWith("link_player_to_coach_by_riviera_id", {
         p_coach_id: "coach-1",
         p_riviera_id: "RIV-00000042",
+        p_organizador_id: "org-1",
       });
       expect(snapshot.source).toBe("live");
     });
@@ -768,6 +773,64 @@ describe("coachingApi - Entrega B", () => {
       const res = await acceptCoachClubInvitation("mem-pending-1");
       expect(res.success).toBe(false);
       expect(res.error).toContain("Row level security denied update");
+    });
+  });
+
+  describe("Entrega C - Control de Clases, Sesiones e Idempotencia", () => {
+    it("assignCoachClasses calls assign_coach_classes RPC with idempotency key and returns snapshot", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: { ok: true, new_balance: 10, assigned_classes: 10 },
+        error: null,
+      });
+
+      (supabase.from as jest.Mock).mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      });
+
+      const snap = await assignCoachClasses("org-padelito", "rel-123", 10, "Paquete 10");
+      expect(supabase.rpc).toHaveBeenCalledWith("assign_coach_classes", {
+        p_relationship_id: "rel-123",
+        p_class_count: 10,
+        p_notas: "Paquete 10",
+        p_idempotency_key: expect.stringMatching(/^assign-/),
+      });
+      expect(snap.source).toBe("live");
+    });
+
+    it("recordCoachClassSession calls record_coach_class_session RPC and returns session and balance", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          session_id: "sess-abc-123",
+          remaining_balance: 9,
+          total_classes_given: 1,
+        },
+        error: null,
+      });
+
+      const res = await recordCoachClassSession("rel-123", "Clase técnica", "sess-custom");
+      expect(supabase.rpc).toHaveBeenCalledWith("record_coach_class_session", {
+        p_relationship_id: "rel-123",
+        p_notas: "Clase técnica",
+        p_idempotency_key: expect.stringMatching(/^session-/),
+        p_session_id: "sess-custom",
+      });
+      expect(res.remainingBalance).toBe(9);
+      expect(res.totalClassesGiven).toBe(1);
+      expect(res.sessionId).toBe("sess-abc-123");
+    });
+
+    it("recordCoachClassSession fails controlled when RPC returns error", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: { ok: false, error: "El alumno no tiene clases disponibles" },
+        error: null,
+      });
+
+      await expect(recordCoachClassSession("rel-123")).rejects.toThrow(
+        "El alumno no tiene clases disponibles"
+      );
     });
   });
 });

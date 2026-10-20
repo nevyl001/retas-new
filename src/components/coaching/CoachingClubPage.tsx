@@ -9,6 +9,8 @@ import {
   searchCoachForInvitation,
   updateCoachMembershipStatus,
   updateLinkStatus,
+  assignCoachClasses,
+  fetchClubClassLedger,
 } from "../../lib/coaching/coachingApi";
 import {
   COACH_ESPECIALIDADES_ORDER,
@@ -17,6 +19,8 @@ import {
 import type {
   CoachSearchResult,
   CoachingClubSnapshot,
+  CoachingPlayerLink,
+  CoachClassLedgerEntry,
 } from "../../lib/coaching/types";
 import type {
   EnCancha,
@@ -86,6 +90,56 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   const [coachModalTab, setCoachModalTab] = useState<"nuevo" | "vincular">(
     "nuevo"
   );
+
+  // Control de clases y saldos de alumnos
+  const [assigningLink, setAssigningLink] = useState<CoachingPlayerLink | null>(null);
+  const [classCountInput, setClassCountInput] = useState<number>(10);
+  const [classNotesInput, setClassNotesInput] = useState<string>("");
+  const [ledgerEntries, setLedgerEntries] = useState<CoachClassLedgerEntry[]>([]);
+  const [loadingLedger, setLoadingLedger] = useState(false);
+
+  const loadLedger = useCallback(async (orgId: string) => {
+    if (!orgId) return;
+    setLoadingLedger(true);
+    try {
+      const data = await fetchClubClassLedger(orgId);
+      setLedgerEntries(data);
+    } catch (e) {
+      console.error("[coaching] error loading ledger", e);
+    } finally {
+      setLoadingLedger(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (organizadorId && tab === "jugadores") {
+      void loadLedger(organizadorId);
+    }
+  }, [organizadorId, tab, loadLedger]);
+
+  const handleAssignClasses = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!organizadorId || !assigningLink || classCountInput <= 0) return;
+    setBusy(true);
+    setFormError(null);
+    try {
+      const snap = await assignCoachClasses(
+        organizadorId,
+        assigningLink.id,
+        classCountInput,
+        classNotesInput.trim() || undefined
+      );
+      setSnapshot(snap);
+      setSuccessMessage(`Se asignaron ${classCountInput} clases a ${assigningLink.jugadorNombre} exitosamente.`);
+      setAssigningLink(null);
+      setClassNotesInput("");
+      await loadLedger(organizadorId);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Error al asignar clases.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // Coach form (mismos datos base que jugador + fuerzas/especialidades)
   const [coachNombre, setCoachNombre] = useState("");
@@ -1130,6 +1184,19 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                           </span>
                         ) : null}
                       </div>
+
+                      {/* Saldo de clases disponibles */}
+                      <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+                        <span className="coaching-badge coaching-badge--primary" style={{ fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <TablerIcon name="calendar-event" size={13} />
+                          {l.balanceClasses ?? 0} clases disponibles
+                        </span>
+                        {(l.totalClassesGiven ?? 0) > 0 ? (
+                          <span className="coaching-badge" style={{ background: "rgba(255, 255, 255, 0.08)", color: "var(--ro-text-muted)" }}>
+                            {l.totalClassesGiven} impartidas
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                     <span
                       className={`coaching-badge coaching-badge--${l.status.toLowerCase()}`}
@@ -1143,6 +1210,19 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                   </div>
 
                   <div className="coaching-card__actions">
+                    <button
+                      type="button"
+                      className="coaching-btn coaching-btn--primary"
+                      disabled={busy || l.status !== "ACTIVE"}
+                      onClick={() => {
+                        setAssigningLink(l);
+                        setClassCountInput(10);
+                        setClassNotesInput("");
+                      }}
+                    >
+                      <TablerIcon name="plus" size={14} />
+                      Asignar clases
+                    </button>
                     {l.status !== "ACTIVE" ? (
                       <button
                         type="button"
@@ -1178,6 +1258,65 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
               ))}
             </div>
           )}
+
+          {/* Historial de Movimientos de Clases del Club */}
+          <div style={{ marginTop: "2.5rem", borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "1.5rem" }}>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "0.35rem" }}>
+              Historial de Clases y Movimientos
+            </h3>
+            <p className="coaching-muted" style={{ fontSize: "0.85rem", marginBottom: "1rem" }}>
+              Registro inmutable de asignaciones y deducciones de clases realizadas en tu club.
+            </p>
+
+            {loadingLedger ? (
+              <p className="coaching-muted">Cargando historial…</p>
+            ) : ledgerEntries.length === 0 ? (
+              <p className="coaching-muted">Aún no hay movimientos de clases registrados en el club.</p>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", textAlign: "left" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.1)", color: "var(--ro-text-muted)" }}>
+                      <th style={{ padding: "0.6rem 0.75rem" }}>Fecha</th>
+                      <th style={{ padding: "0.6rem 0.75rem" }}>Alumno</th>
+                      <th style={{ padding: "0.6rem 0.75rem" }}>Coach</th>
+                      <th style={{ padding: "0.6rem 0.75rem" }}>Movimiento</th>
+                      <th style={{ padding: "0.6rem 0.75rem" }}>Notas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ledgerEntries.map((entry) => {
+                      const isCredit = entry.delta > 0;
+                      return (
+                        <tr key={entry.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                          <td style={{ padding: "0.6rem 0.75rem", whiteSpace: "nowrap" }}>
+                            {new Date(entry.createdAt).toLocaleDateString()} {new Date(entry.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem", fontWeight: 500 }}>
+                            {entry.jugadorNombre || "Alumno"}
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem" }}>
+                            {entry.coachNombre || "Coach"}
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem" }}>
+                            <span
+                              className={`coaching-badge ${isCredit ? "coaching-badge--active" : "coaching-badge--primary"}`}
+                              style={{ fontWeight: 600 }}
+                            >
+                              {isCredit ? `+${entry.delta} Asignación` : `${entry.delta} Clase impartida`}
+                            </span>
+                          </td>
+                          <td style={{ padding: "0.6rem 0.75rem", color: "var(--ro-text-muted)" }}>
+                            {entry.notas || "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </section>
       ) : null}
 
@@ -1236,6 +1375,91 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
           </div>
         </section>
       ) : null}
+
+      {/* Modal de Asignación de Clases */}
+      <Modal
+        open={Boolean(assigningLink)}
+        onClose={() => setAssigningLink(null)}
+        title={assigningLink ? `Asignar clases a ${assigningLink.jugadorNombre}` : ""}
+      >
+        {assigningLink ? (
+          <form onSubmit={handleAssignClasses} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <p className="coaching-muted" style={{ fontSize: "0.85rem", margin: 0 }}>
+              Coach responsable: <strong>{assigningLink.coachNombre}</strong> · Riviera ID: <strong>{assigningLink.rivieraId}</strong>
+            </p>
+            <p className="coaching-muted" style={{ fontSize: "0.85rem", margin: 0 }}>
+              Saldo disponible actual: <strong>{assigningLink.balanceClasses ?? 0} clases</strong>
+            </p>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 500 }}>Cantidad de clases a agregar *</span>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  className="coaching-input"
+                  style={{ width: "100px" }}
+                  value={classCountInput}
+                  onChange={(e) => setClassCountInput(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                  required
+                />
+                <button
+                  type="button"
+                  className="coaching-btn coaching-btn--secondary"
+                  onClick={() => setClassCountInput(5)}
+                >
+                  +5
+                </button>
+                <button
+                  type="button"
+                  className="coaching-btn coaching-btn--secondary"
+                  onClick={() => setClassCountInput(10)}
+                >
+                  +10
+                </button>
+                <button
+                  type="button"
+                  className="coaching-btn coaching-btn--secondary"
+                  onClick={() => setClassCountInput(20)}
+                >
+                  +20
+                </button>
+              </div>
+            </label>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 500 }}>Notas de asignación (opcional)</span>
+              <input
+                type="text"
+                className="coaching-input"
+                placeholder="Ej. Paquete 10 clases individuales"
+                value={classNotesInput}
+                onChange={(e) => setClassNotesInput(e.target.value)}
+              />
+            </label>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "0.5rem" }}>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--ghost"
+                onClick={() => setAssigningLink(null)}
+                disabled={busy}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="coaching-btn coaching-btn--primary"
+                disabled={busy || classCountInput <= 0}
+              >
+                <TablerIcon name="check" size={16} />
+                {busy ? "Asignando…" : `Confirmar (+${classCountInput} clases)`}
+              </button>
+            </div>
+          </form>
+        ) : null}
+      </Modal>
     </div>
   );
 };

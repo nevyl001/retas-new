@@ -3,8 +3,11 @@ import { useUser } from "../../contexts/UserContext";
 import {
   fetchCurrentCoachProfile,
   acceptCoachClubInvitation,
+  fetchCoachAssignedStudents,
+  linkPlayerByRivieraId,
+  recordCoachClassSession,
 } from "../../lib/coaching/coachingApi";
-import type { CurrentCoachProfile } from "../../lib/coaching/types";
+import type { CurrentCoachProfile, CoachingPlayerLink } from "../../lib/coaching/types";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import { TablerIcon } from "../ui/TablerIcon";
 import { navigateToAppHome } from "../../lib/appRouting";
@@ -17,6 +20,35 @@ export const CoachPortalPage: React.FC = () => {
   const [selectedClubId, setSelectedClubId] = useState<string>("");
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const [students, setStudents] = useState<CoachingPlayerLink[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [rivieraIdInput, setRivieraIdInput] = useState("");
+  const [linkingStudent, setLinkingStudent] = useState(false);
+  const [recordingId, setRecordingId] = useState<string | null>(null);
+  const [sessionNotes, setSessionNotes] = useState("");
+
+  const loadStudents = React.useCallback(async (coachId: string, clubId: string) => {
+    if (!coachId || !clubId) return;
+    setLoadingStudents(true);
+    try {
+      const data = await fetchCoachAssignedStudents(coachId, clubId);
+      setStudents(data);
+    } catch (err) {
+      console.error("[coaching] error loading students", err);
+    } finally {
+      setLoadingStudents(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (profile && selectedClubId) {
+      void loadStudents(profile.id, selectedClubId);
+    } else {
+      setStudents([]);
+    }
+  }, [profile, selectedClubId, loadStudents]);
 
   useEffect(() => {
     let isMounted = true;
@@ -71,6 +103,42 @@ export const CoachPortalPage: React.FC = () => {
       );
     } finally {
       setAcceptingId(null);
+    }
+  };
+
+  const handleLinkStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile || !selectedClubId || !rivieraIdInput.trim()) return;
+    setLinkingStudent(true);
+    setActionError(null);
+    setSuccessMessage(null);
+    try {
+      await linkPlayerByRivieraId(selectedClubId, profile.id, rivieraIdInput.trim());
+      setRivieraIdInput("");
+      setSuccessMessage("¡Alumno vinculado exitosamente al club!");
+      await loadStudents(profile.id, selectedClubId);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Error al vincular alumno");
+    } finally {
+      setLinkingStudent(false);
+    }
+  };
+
+  const handleRecordClass = async (relationshipId: string) => {
+    setRecordingId(relationshipId);
+    setActionError(null);
+    setSuccessMessage(null);
+    try {
+      const res = await recordCoachClassSession(relationshipId, sessionNotes.trim() || undefined);
+      setSuccessMessage(`¡Clase registrada exitosamente! Saldo restante: ${res.remainingBalance} clase(s).`);
+      setSessionNotes("");
+      if (profile && selectedClubId) {
+        await loadStudents(profile.id, selectedClubId);
+      }
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Error al registrar clase");
+    } finally {
+      setRecordingId(null);
     }
   };
 
@@ -389,42 +457,132 @@ export const CoachPortalPage: React.FC = () => {
         )}
       </section>
 
-      {/* Próximas Entregas (Entrega C y D) */}
-      <div className="coaching-guide-card">
-        <div className="coaching-guide-card__header">
-          <h2 className="coaching-guide-card__title">
-            Gestión de alumnos y clases
-          </h2>
-          <p className="coaching-guide-card__desc">
-            Próximamente en las Entregas C y D de Riviera Coaching.
-          </p>
+      {/* Mensajes de éxito de operaciones */}
+      {successMessage ? (
+        <div
+          className="coaching-panel"
+          style={{
+            padding: "0.75rem 1rem",
+            background: "rgba(34, 197, 94, 0.12)",
+            border: "1px solid rgba(34, 197, 94, 0.35)",
+            borderRadius: "8px",
+            color: "#86efac",
+            marginBottom: "1.5rem",
+            fontSize: "0.85rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+          }}
+        >
+          <TablerIcon name="check" size={18} />
+          {successMessage}
         </div>
+      ) : null}
 
-        <div className="coaching-guide-steps">
-          <div className="coaching-guide-step">
-            <div className="coaching-guide-step__badge">C</div>
-            <div className="coaching-guide-step__body">
-              <h4>Vinculación de alumnos por Riviera ID</h4>
-              <p>
-                Asocia alumnos mediante su código canónico (RIV-########).
-                Sin datos duplicados y con aislamiento total por club.
-              </p>
-            </div>
-          </div>
-
-          <div className="coaching-guide-step">
-            <div className="coaching-guide-step__badge">D</div>
-            <div className="coaching-guide-step__body">
-              <h4>Control de clases y descuento automático</h4>
-              <p>
-                Asigna clases disponibles a cada alumno. Al marcar una clase
-                como impartida, el sistema descuenta automáticamente del saldo y
-                registra la sesión en el historial deportivo del alumno.
-              </p>
-            </div>
+      {/* Gestión de Alumnos y Clases del Coach */}
+      <section className="coaching-panel" style={{ marginBottom: "1.5rem" }}>
+        <div className="coaching-section-header">
+          <div>
+            <h2 className="coaching-section-title">Alumnos y Control de Clases</h2>
+            <p className="coaching-section-desc">
+              Vincula a tus alumnos por su Riviera ID oficial y registra las clases impartidas para descontar su saldo automáticamente.
+            </p>
           </div>
         </div>
-      </div>
+
+        {/* Formulario para vincular alumno por Riviera ID */}
+        <form onSubmit={handleLinkStudent} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+          <input
+            type="text"
+            className="coaching-input"
+            style={{ maxWidth: "260px" }}
+            placeholder="Riviera ID (ej. RIV-00000308)"
+            value={rivieraIdInput}
+            onChange={(e) => setRivieraIdInput(e.target.value.toUpperCase())}
+            disabled={linkingStudent || !selectedClubId}
+          />
+          <button
+            type="submit"
+            className="coaching-btn coaching-btn--primary"
+            disabled={linkingStudent || !rivieraIdInput.trim() || !selectedClubId}
+          >
+            <TablerIcon name="user-plus" size={16} />
+            {linkingStudent ? "Vinculando…" : "Vincular Alumno"}
+          </button>
+        </form>
+
+        {loadingStudents ? (
+          <p className="coaching-muted">Cargando alumnos y saldos…</p>
+        ) : students.length === 0 ? (
+          <div className="coaching-empty-card">
+            <TablerIcon name="users" size={36} className="coaching-empty-icon" />
+            <h3>Sin alumnos vinculados en este club</h3>
+            <p>
+              Ingresa el Riviera ID de tu alumno para vincularlo a tu perfil en este club.
+            </p>
+          </div>
+        ) : (
+          <div className="coaching-grid">
+            {students.map((s) => {
+              const hasBalance = (s.balanceClasses ?? 0) > 0;
+              const isRecording = recordingId === s.id;
+
+              return (
+                <article key={s.id} className="coaching-card">
+                  <div className="coaching-card__top">
+                    <div className="coaching-card__avatar" aria-hidden>
+                      {s.jugadorNombre.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="coaching-card__identity">
+                      <h3 className="coaching-card__title">{s.jugadorNombre}</h3>
+                      <span className="coaching-card__code">{s.rivieraId}</span>
+                    </div>
+                    <span className="coaching-badge coaching-badge--active">
+                      Activo
+                    </span>
+                  </div>
+
+                  {/* Estado de Clases Disponibles */}
+                  <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+                    <span
+                      className={`coaching-badge ${hasBalance ? "coaching-badge--primary" : "coaching-badge--inactive"}`}
+                      style={{ fontWeight: 600, padding: "0.35rem 0.65rem", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                    >
+                      <TablerIcon name="calendar-event" size={14} />
+                      {s.balanceClasses ?? 0} clases disponibles
+                    </span>
+                    {(s.totalClassesGiven ?? 0) > 0 ? (
+                      <span
+                        className="coaching-badge"
+                        style={{ background: "rgba(255, 255, 255, 0.08)", color: "var(--ro-text-muted)" }}
+                      >
+                        {s.totalClassesGiven} impartidas
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="coaching-card__actions" style={{ marginTop: "1rem" }}>
+                    <button
+                      type="button"
+                      className="coaching-btn coaching-btn--primary"
+                      disabled={!hasBalance || isRecording}
+                      onClick={() => handleRecordClass(s.id)}
+                    >
+                      <TablerIcon name="check" size={15} />
+                      {isRecording ? "Registrando…" : "Registrar clase impartida (-1)"}
+                    </button>
+                    {!hasBalance ? (
+                      <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block", marginTop: "0.25rem" }}>
+                        Sin saldo. Solicita recarga al administrador del club.
+                      </span>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 };

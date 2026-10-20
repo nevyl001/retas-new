@@ -56,6 +56,53 @@ export type CoachingPlayerLink = {
   rivieraId: string;
   status: CoachPlayerStatus;
   isPrimary: boolean;
+  balanceClasses?: number;
+  totalClassesGiven?: number;
+};
+
+export type CoachPlayerClassBalance = {
+  id: string;
+  relationshipId: string;
+  organizadorId: string;
+  coachId: string;
+  jugadorId: string;
+  balanceClasses: number;
+  totalClassesGiven: number;
+  updatedAt: string;
+};
+
+export type CoachClassLedgerEntry = {
+  id: string;
+  relationshipId: string | null;
+  organizadorId: string;
+  coachId: string;
+  coachNombre?: string;
+  jugadorId: string;
+  jugadorNombre?: string;
+  sessionId: string | null;
+  delta: number;
+  tipo: "PACKAGE_CREDIT" | "CLASS_DEBIT" | "ADJUSTMENT";
+  notas: string | null;
+  idempotencyKey: string | null;
+  recordedBy: string;
+  createdAt: string;
+};
+
+export type CoachSessionItem = {
+  id: string;
+  coachId: string;
+  relationshipId: string | null;
+  organizadorId: string;
+  jugadorId: string | null;
+  startsAt: string;
+  endsAt: string;
+  durationMinutes: number | null;
+  focus: string | null;
+  workedOn: string[];
+  notesSummary: string | null;
+  status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type CoachingClubSnapshot = {
