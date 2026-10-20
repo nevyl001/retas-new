@@ -7,6 +7,7 @@ import {
   linkPlayerByRivieraId,
   loadCoachingClubSnapshot,
   searchCoachForInvitation,
+  updateCoachMembershipStatus,
   updateLinkStatus,
 } from "../../lib/coaching/coachingApi";
 import {
@@ -47,6 +48,7 @@ import { Modal } from "../ui/Modal";
 import { navigateToAppHome } from "../../lib/appRouting";
 import {
   coachingTabPath,
+  navigateCoachPortal,
   navigateCoaching,
   parseCoachingTab,
   type CoachingTab,
@@ -204,12 +206,44 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
       setIsCoachModalOpen(false);
       setSuccessMessage(
         res.isNewUser
-          ? `Coach registrado exitosamente con código ${res.coachCode}.`
-          : `Coach vinculado exitosamente a tu club con código ${res.coachCode}.`
+          ? `Invitación oficial enviada a ${email}. Código de coach oficial: ${res.coachCode}. El coach figurará con invitación pendiente hasta su activación.`
+          : `Coach incorporado exitosamente a tu club con código oficial ${res.coachCode}.`
       );
     } catch (err) {
       setFormError(
-        err instanceof Error ? err.message : "No se pudo registrar el coach."
+        err instanceof Error
+          ? err.message
+          : "Error de incorporación: no se pudo registrar el coach."
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleToggleCoachStatus = async (
+    coachId: string,
+    nextStatus: "ACTIVE" | "INACTIVE"
+  ) => {
+    if (!organizadorId) return;
+    setBusy(true);
+    setFormError(null);
+    try {
+      const next = await updateCoachMembershipStatus(
+        organizadorId,
+        coachId,
+        nextStatus
+      );
+      setSnapshot(next);
+      setSuccessMessage(
+        nextStatus === "ACTIVE"
+          ? "Solicitud de incorporación registrada. El coach debe aceptarla desde su cuenta para activarse."
+          : "Membresía del coach desactivada en el club."
+      );
+    } catch (err) {
+      setFormError(
+        err instanceof Error
+          ? err.message
+          : "No se pudo actualizar el estado de la membresía del coach."
       );
     } finally {
       setBusy(false);
@@ -317,14 +351,26 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   return (
     <div className="coaching-page rv-page">
       <header className="coaching-hero">
-        <button
-          type="button"
-          className="coaching-back"
-          onClick={() => navigateToAppHome()}
-        >
-          <TablerIcon name="arrow-left" size={16} />
-          Inicio
-        </button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.85rem", flexWrap: "wrap", gap: "0.5rem" }}>
+          <button
+            type="button"
+            className="coaching-back"
+            style={{ margin: 0 }}
+            onClick={() => navigateToAppHome()}
+          >
+            <TablerIcon name="arrow-left" size={16} />
+            Inicio
+          </button>
+          <button
+            type="button"
+            className="coaching-back"
+            style={{ margin: 0 }}
+            onClick={() => navigateCoachPortal()}
+          >
+            <TablerIcon name="user-circle" size={16} />
+            Espacio del Coach
+          </button>
+        </div>
         <p className="coaching-kicker">Riviera Coaching · {clubName || "Club"}</p>
         <h1 className="coaching-title">Riviera Coaching</h1>
         <p className="coaching-lead">
@@ -535,7 +581,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                     <div className="coaching-card__identity">
                       <h3 className="coaching-card__title">{c.nombre}</h3>
                       <span className="coaching-card__code">
-                        {c.coachCode || "RIV-C-00000"}
+                        {c.coachCode || "Código pendiente"}
                       </span>
                       <div className="coaching-card__meta">
                         {c.categoria ? (
@@ -550,9 +596,19 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                         ) : null}
                       </div>
                     </div>
-                    <span className="coaching-badge coaching-badge--active">
-                      {c.membershipStatus === "ACTIVE" ? "Activo" : "Inactivo"}
-                    </span>
+                    {c.membershipStatus === "ACTIVE" ? (
+                      <span className="coaching-badge coaching-badge--active">
+                        Activo
+                      </span>
+                    ) : c.membershipStatus === "PENDING" ? (
+                      <span className="coaching-badge coaching-badge--pending">
+                        Invitación pendiente
+                      </span>
+                    ) : (
+                      <span className="coaching-badge coaching-badge--inactive">
+                        Inactivo
+                      </span>
+                    )}
                   </div>
 
                   {c.fuerzas.length > 0 ? (
@@ -586,17 +642,58 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                   ) : null}
 
                   <div className="coaching-card__actions">
-                    <button
-                      type="button"
-                      className="coaching-btn coaching-btn--secondary"
-                      onClick={() => {
-                        setSelectedCoachId(c.id);
-                        navigateCoaching(coachingTabPath("jugadores"));
-                      }}
-                    >
-                      <TablerIcon name="user-plus" size={15} />
-                      Vincular alumno
-                    </button>
+                    {c.membershipStatus === "ACTIVE" ? (
+                      <button
+                        type="button"
+                        className="coaching-btn coaching-btn--secondary"
+                        onClick={() => {
+                          setSelectedCoachId(c.id);
+                          navigateCoaching(coachingTabPath("jugadores"));
+                        }}
+                      >
+                        <TablerIcon name="user-plus" size={15} />
+                        Vincular alumno
+                      </button>
+                    ) : null}
+                    {c.membershipStatus === "ACTIVE" ? (
+                      <button
+                        type="button"
+                        className="coaching-btn coaching-btn--ghost"
+                        onClick={() =>
+                          handleToggleCoachStatus(c.id, "INACTIVE")
+                        }
+                        disabled={busy}
+                      >
+                        <TablerIcon name="user-off" size={15} />
+                        Desactivar
+                      </button>
+                    ) : c.membershipStatus === "PENDING" ? (
+                      <span
+                        className="coaching-badge coaching-badge--pending"
+                        style={{
+                          fontSize: "0.8rem",
+                          padding: "0.4rem 0.65rem",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.3rem",
+                        }}
+                      >
+                        <TablerIcon name="clock" size={14} />
+                        Pendiente de aceptación
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="coaching-btn coaching-btn--ghost"
+                        onClick={() =>
+                          handleToggleCoachStatus(c.id, "ACTIVE")
+                        }
+                        disabled={busy}
+                      >
+                        <TablerIcon name="user-check" size={15} />
+                        Reincorporar
+                      </button>
+                    )}
                   </div>
                 </article>
               ))}
@@ -729,6 +826,25 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
               </div>
             ) : (
               <form className="coaching-modal-form" onSubmit={handleAddCoach}>
+                {formError ? (
+                  <div
+                    className="coaching-error"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      padding: "0.75rem 1rem",
+                      borderRadius: "8px",
+                      marginBottom: "1rem",
+                      background: "rgba(255, 71, 87, 0.12)",
+                      border: "1px solid rgba(255, 71, 87, 0.3)",
+                      color: "#ff6b81",
+                    }}
+                  >
+                    <TablerIcon name="alert-circle" size={18} />
+                    <span>{formError}</span>
+                  </div>
+                ) : null}
                 <div className="coaching-modal-grid">
                   <label className="coaching-field">
                     <span>Nombre del coach *</span>

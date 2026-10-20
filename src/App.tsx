@@ -58,6 +58,7 @@ import { PrivacidadTerminosPage } from "./components/legal/PrivacidadTerminosPag
 import { useSyncPathname } from "./components/torneo-express/torneoExpressNav";
 import { syncPwaInstallabilityForSession } from "./lib/pwa/pwaInstallability";
 import {
+  navigateAppTo,
   navigateToAppHome,
   navigateToReta,
   normalizeAppPathname,
@@ -1099,7 +1100,15 @@ function AppContent() {
           )}
 
         {currentView === "auth-callback" && (
-          <AuthCallback onSuccess={() => setCurrentView("main")} />
+          <AuthCallback
+            onSuccess={(destination) => {
+              if (destination && destination !== "/") {
+                navigateAppTo(destination);
+              } else {
+                setCurrentView("main");
+              }
+            }}
+          />
         )}
 
         {currentView === "auth-reset-password" && <ResetPasswordPage />}

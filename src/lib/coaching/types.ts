@@ -5,7 +5,7 @@ import type {
 } from "../rivieraJugadores/types";
 import type { RivieraJugadorGenero } from "../rivieraJugadores/genero";
 
-export type CoachMembershipStatus = "ACTIVE" | "INACTIVE";
+export type CoachMembershipStatus = "ACTIVE" | "INACTIVE" | "PENDING";
 export type CoachPlayerStatus = "ACTIVE" | "PAUSED" | "ENDED";
 
 /** Alta / edición de coach (mismo núcleo que jugador + campos coach). */
@@ -75,3 +75,34 @@ export type CoachSearchResult = {
   alreadyMember: boolean;
   membershipStatus: string | null;
 };
+
+export type InviteCoachResult = {
+  snapshot: CoachingClubSnapshot;
+  coachCode: string;
+  isNewUser: boolean;
+  membershipStatus: CoachMembershipStatus;
+  message?: string;
+  alreadyMember?: boolean;
+};
+
+export type CurrentCoachClubMembership = {
+  membershipId: string;
+  organizadorId: string;
+  clubNombre?: string;
+  status: CoachMembershipStatus;
+  createdAt: string;
+};
+
+export type CurrentCoachProfile = {
+  id: string;
+  authUserId: string;
+  coachCode: string;
+  nombre: string;
+  fotoUrl: string | null;
+  bio: string | null;
+  filosofia?: string | null;
+  especialidades: string[];
+  fuerzas: RivieraJugadorCategoria[];
+  memberships: CurrentCoachClubMembership[];
+};
+

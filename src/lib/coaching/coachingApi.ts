@@ -1,21 +1,17 @@
 import { supabase } from "../supabaseClient";
-import {
-  normalizeRivieraIdInput,
-  resolvePlayerByRivieraId,
-} from "../rivieraJugadores/playerMembership";
+import { normalizeRivieraIdInput } from "../rivieraJugadores/playerMembership";
 import { fetchRivieraIdMapForJugadorIds } from "../rivieraJugadores/rivieraIdDisplay";
 import type { RivieraJugadorCategoria } from "../rivieraJugadores/types";
-import {
-  addDemoCoach,
-  addDemoPlayerLinkByRivieraId,
-  loadCoachingDemo,
-  setDemoLinkStatus,
-} from "./demoStore";
+import { loadCoachingDemo } from "./demoStore";
 import type {
+  CoachMembershipStatus,
   CoachSearchResult,
   CoachingClubSnapshot,
   CoachingPlayerLink,
   CreateCoachInput,
+  CurrentCoachClubMembership,
+  CurrentCoachProfile,
+  InviteCoachResult,
 } from "./types";
 
 function isMissingRelationError(error: {
@@ -65,8 +61,7 @@ export async function loadCoachingClubSnapshot(
         )
       `
       )
-      .eq("organizador_id", organizadorId)
-      .eq("status", "ACTIVE");
+      .eq("organizador_id", organizadorId);
 
     if (error) {
       if (isMissingRelationError(error)) {
@@ -85,6 +80,10 @@ export async function loadCoachingClubSnapshot(
       .map((row) => {
         const coach = Array.isArray(row.coach) ? row.coach[0] : row.coach;
         if (!coach) return null;
+        const status: CoachMembershipStatus =
+          row.status === "ACTIVE" || row.status === "PENDING"
+            ? (row.status as CoachMembershipStatus)
+            : "INACTIVE";
         return {
           id: String(coach.id),
           coachCode: String(coach.coach_code ?? ""),
@@ -97,7 +96,7 @@ export async function loadCoachingClubSnapshot(
           fuerzas: Array.isArray(coach.fuerzas)
             ? (coach.fuerzas as RivieraJugadorCategoria[])
             : [],
-          membershipStatus: "ACTIVE" as const,
+          membershipStatus: status,
         };
       })
       .filter(Boolean) as CoachingClubSnapshot["coaches"];
@@ -164,11 +163,7 @@ export async function loadCoachingClubSnapshot(
 export async function inviteClubCoach(
   organizadorId: string,
   input: CreateCoachInput
-): Promise<{
-  snapshot: CoachingClubSnapshot;
-  coachCode: string;
-  isNewUser: boolean;
-}> {
+): Promise<InviteCoachResult> {
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -203,21 +198,10 @@ export async function inviteClubCoach(
   );
 
   if (error) {
-    const errorMsg = mapEdgeError(data, error.message || "No se pudo invitar al coach.");
-    // Si la función no está desplegada en el entorno de desarrollo, fallback a demo
-    if (
-      errorMsg.includes("not found") ||
-      errorMsg.includes("Failed to send") ||
-      error.message?.includes("Failed to send")
-    ) {
-      console.warn("[coaching] Edge function not deployed, fallback demo store");
-      const demoSnapshot = await addDemoCoach(organizadorId, input);
-      return {
-        snapshot: demoSnapshot,
-        coachCode: demoSnapshot.coaches[demoSnapshot.coaches.length - 1]?.coachCode || "RIV-C-00000",
-        isNewUser: true,
-      };
-    }
+    const errorMsg = mapEdgeError(
+      data,
+      error.message || "No se pudo registrar ni invitar al coach en el servidor."
+    );
     throw new Error(errorMsg);
   }
 
@@ -226,6 +210,9 @@ export async function inviteClubCoach(
     error?: string;
     coachCode?: string;
     isNewUser?: boolean;
+    membershipStatus?: CoachMembershipStatus;
+    message?: string;
+    alreadyMember?: boolean;
   };
 
   if (!res || res.ok !== true) {
@@ -235,11 +222,182 @@ export async function inviteClubCoach(
   }
 
   const snapshot = await loadCoachingClubSnapshot(organizadorId);
+  const membershipStatus: CoachMembershipStatus =
+    res.membershipStatus || (res.isNewUser ? "PENDING" : "ACTIVE");
+
   return {
     snapshot,
     coachCode: res.coachCode || "",
     isNewUser: res.isNewUser ?? false,
+    membershipStatus,
+    message: res.message,
+    alreadyMember: res.alreadyMember,
   };
+}
+
+/**
+ * Actualiza el estado de la membresía de un coach en el club.
+ * Desactivación (INACTIVE) mediante la RPC autorizada deactivate_coach_from_club.
+ * Activación/Reincorporación mediante la RPC link_existing_coach_to_club (registra en PENDING).
+ */
+export async function updateCoachMembershipStatus(
+  organizadorId: string,
+  coachId: string,
+  status: "ACTIVE" | "INACTIVE"
+): Promise<CoachingClubSnapshot> {
+  if (status === "INACTIVE") {
+    const { data, error } = await supabase.rpc("deactivate_coach_from_club", {
+      p_coach_id: coachId,
+      p_organizador_id: organizadorId,
+    });
+
+    if (error) {
+      if (isMissingRelationError(error)) {
+        return loadCoachingDemo(organizadorId);
+      }
+      throw new Error(
+        "No se pudo desactivar al coach del club: " + error.message
+      );
+    }
+
+    const res = data as { ok?: boolean; error?: string };
+    if (res && res.ok === false) {
+      throw new Error(res.error || "No se pudo desactivar al coach.");
+    }
+  } else {
+    const { data, error } = await supabase.rpc("link_existing_coach_to_club", {
+      p_coach_id: coachId,
+    });
+
+    if (error) {
+      if (isMissingRelationError(error)) {
+        return loadCoachingDemo(organizadorId);
+      }
+      throw new Error(
+        "No se pudo solicitar la reincorporación del coach: " + error.message
+      );
+    }
+
+    const res = data as { ok?: boolean; error?: string };
+    if (res && res.ok === false) {
+      throw new Error(res.error || "No se pudo registrar la solicitud.");
+    }
+  }
+
+  return loadCoachingClubSnapshot(organizadorId);
+}
+
+/**
+ * Obtiene el perfil de coach del usuario actualmente autenticado (si está registrado como coach).
+ * Valida sesión real mediante Supabase Auth sin depender de parámetros manipulables.
+ */
+export async function fetchCurrentCoachProfile(): Promise<CurrentCoachProfile | null> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  const { data: coach, error: coachError } = await supabase
+    .from("riviera_coaches")
+    .select(
+      `
+      id,
+      auth_user_id,
+      coach_code,
+      nombre,
+      foto_url,
+      bio,
+      filosofia,
+      especialidades,
+      fuerzas
+    `
+    )
+    .eq("auth_user_id", session.user.id)
+    .maybeSingle();
+
+  if (coachError || !coach) {
+    return null;
+  }
+
+  const { data: memberships } = await supabase
+    .from("coach_club_memberships")
+    .select("id, organizador_id, status, created_at")
+    .eq("coach_id", coach.id);
+
+  const clubMemberships: CurrentCoachClubMembership[] = (
+    memberships ?? []
+  ).map((m) => ({
+    membershipId: String(m.id),
+    organizadorId: String(m.organizador_id),
+    status: (m.status === "ACTIVE" || m.status === "PENDING"
+      ? m.status
+      : "INACTIVE") as CoachMembershipStatus,
+    createdAt: String(m.created_at ?? ""),
+  }));
+
+  return {
+    id: String(coach.id),
+    authUserId: String(coach.auth_user_id),
+    coachCode: String(coach.coach_code ?? ""),
+    nombre: String(coach.nombre ?? ""),
+    fotoUrl: (coach.foto_url as string | null) ?? null,
+    bio: (coach.bio as string | null) ?? null,
+    filosofia: (coach.filosofia as string | null) ?? null,
+    especialidades: Array.isArray(coach.especialidades)
+      ? coach.especialidades
+      : [],
+    fuerzas: Array.isArray(coach.fuerzas)
+      ? (coach.fuerzas as RivieraJugadorCategoria[])
+      : [],
+    memberships: clubMemberships,
+  };
+}
+
+/**
+ * Permite al coach autenticado aceptar formalmente una invitación pendiente para afiliarse a un club.
+ */
+export async function acceptCoachClubInvitation(
+  membershipId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { data, error } = await supabase.rpc("accept_coach_club_invitation", {
+      p_membership_id: membershipId,
+    });
+
+    if (!error) {
+      const res = data as { ok?: boolean; error?: string };
+      if (res && res.ok === false) {
+        return { success: false, error: res.error || "No se pudo aceptar la invitación." };
+      }
+      return { success: true };
+    }
+
+    // Fallback directo vía RLS si la migración de la función aún no se aplica
+    const { error: updateError } = await supabase
+      .from("coach_club_memberships")
+      .update({
+        status: "ACTIVE",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", membershipId);
+
+    if (updateError) {
+      return {
+        success: false,
+        error: "No se pudo aceptar la invitación: " + updateError.message,
+      };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Error inesperado",
+    };
+  }
 }
 
 /** Alias para compatibilidad con código existente */
@@ -293,7 +451,8 @@ export async function searchCoachForInvitation(
 }
 
 /**
- * Vincula un coach existente a este club.
+ * Vincula un coach existente a este club mediante la RPC autorizada link_existing_coach_to_club.
+ * Falla de forma controlada si no existe la RPC o si no se cuenta con los permisos correspondientes.
  */
 export async function linkExistingCoach(
   organizadorId: string,
@@ -304,37 +463,22 @@ export async function linkExistingCoach(
   });
 
   if (error) {
-    // Si la función RPC aún no está creada, intentar inserción directa en membresías
-    const { error: insertError } = await supabase
-      .from("coach_club_memberships")
-      .upsert(
-        {
-          coach_id: coachId,
-          organizador_id: organizadorId,
-          status: "ACTIVE",
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "coach_id,organizador_id" }
-      );
+    throw new Error(
+      "No se pudo vincular el coach al club: " + error.message
+    );
+  }
 
-    if (insertError) {
-      throw new Error(
-        "No se pudo vincular el coach al club: " + insertError.message
-      );
-    }
-  } else {
-    const res = data as { ok?: boolean; error?: string };
-    if (res && res.ok === false) {
-      throw new Error(res.error || "No se pudo vincular el coach al club.");
-    }
+  const res = data as { ok?: boolean; error?: string };
+  if (res && res.ok === false) {
+    throw new Error(res.error || "No se pudo vincular el coach al club.");
   }
 
   return loadCoachingClubSnapshot(organizadorId);
 }
 
 /**
- * Vincula un jugador al coach por Riviera ID exacto.
- * Resuelve la identidad real del jugador y registra la relación en la base de datos.
+ * Vincula un jugador al coach por Riviera ID exacto mediante la RPC autorizada link_player_to_coach_by_riviera_id.
+ * Falla de forma controlada si la RPC falla o el jugador no existe.
  */
 export async function linkPlayerByRivieraId(
   organizadorId: string,
@@ -348,7 +492,6 @@ export async function linkPlayerByRivieraId(
     );
   }
 
-  // Intentar la función RPC transaccional segura
   const { data, error } = await supabase.rpc(
     "link_player_to_coach_by_riviera_id",
     {
@@ -358,53 +501,14 @@ export async function linkPlayerByRivieraId(
   );
 
   if (error) {
-    // Fallback: resolución de jugador e inserción directa
-    const resolved = await resolvePlayerByRivieraId(rivieraId);
-    if (!resolved?.found || !resolved.localJugadorId) {
-      // Si estamos en ambiente puramente demo sin tablas, persistir en demoStore
-      if (isMissingRelationError(error)) {
-        return addDemoPlayerLinkByRivieraId(organizadorId, coachId, {
-          rivieraId,
-          jugadorId: `demo_${rivieraId}`,
-          jugadorNombre: `Jugador ${rivieraId}`,
-        });
-      }
-      throw new Error(
-        `No se encontró un jugador oficial registrado con el Riviera ID ${rivieraId}.`
-      );
-    }
+    throw new Error(
+      "No se pudo vincular el alumno al coach: " + error.message
+    );
+  }
 
-    const { error: insertError } = await supabase
-      .from("coach_player_relationships")
-      .upsert(
-        {
-          coach_id: coachId,
-          jugador_id: resolved.localJugadorId,
-          organizador_id: organizadorId,
-          status: "ACTIVE",
-          ended_at: null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "coach_id,jugador_id,organizador_id" }
-      );
-
-    if (insertError) {
-      if (isMissingRelationError(insertError)) {
-        return addDemoPlayerLinkByRivieraId(organizadorId, coachId, {
-          rivieraId,
-          jugadorId: resolved.localJugadorId,
-          jugadorNombre: resolved.displayName?.trim() || `Jugador ${rivieraId}`,
-        });
-      }
-      throw new Error(
-        "No se pudo vincular el jugador al coach: " + insertError.message
-      );
-    }
-  } else {
-    const res = data as { ok?: boolean; error?: string };
-    if (res && res.ok === false) {
-      throw new Error(res.error || "No se pudo vincular el jugador.");
-    }
+  const res = data as { ok?: boolean; error?: string };
+  if (res && res.ok === false) {
+    throw new Error(res.error || "No se pudo vincular el alumno.");
   }
 
   return loadCoachingClubSnapshot(organizadorId);
@@ -429,10 +533,7 @@ export async function updateLinkStatus(
     .eq("organizador_id", organizadorId);
 
   if (error) {
-    if (isMissingRelationError(error)) {
-      return setDemoLinkStatus(organizadorId, linkId, status);
-    }
-    throw new Error("No se pudo actualizar el estado: " + error.message);
+    throw new Error("No se pudo actualizar el estado de la relación: " + error.message);
   }
 
   return loadCoachingClubSnapshot(organizadorId);

@@ -497,6 +497,12 @@
   color: var(--ro-text-muted, rgba(255, 255, 255, 0.45));
 }
 
+.coaching-badge--pending {
+  background: rgba(255, 179, 0, 0.12);
+  border: 1px solid rgba(255, 179, 0, 0.32);
+  color: #ffb300;
+}
+
 .coaching-badge--primary {
   background: var(--ro-bg-elevated, rgba(255, 255, 255, 0.12));
   border: 1px solid var(--ro-border-strong, rgba(255, 255, 255, 0.22));

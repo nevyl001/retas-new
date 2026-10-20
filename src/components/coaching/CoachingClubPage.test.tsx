@@ -148,13 +148,13 @@ describe("CoachingClubPage UX/UI Redesign", () => {
     expect(guide?.textContent).toContain("Flujo operativo de la academia");
   });
 
-  it("renders Coaches tab with protagonist cards and modal trigger button", async () => {
+  it("renders Coaches tab with protagonist cards, authentic codes, status badges and modal trigger button", async () => {
     await act(async () => {
       root.render(<CoachingClubPage pathname="/coaching/coaches" />);
     });
 
     const addCoachBtn = container.querySelector(".coaching-btn--primary");
-    expect(addCoachBtn?.textContent).toContain("Agregar coach (demo)");
+    expect(addCoachBtn?.textContent).toContain("Nuevo coach");
 
     const coachTitle = container.querySelector(".coaching-card__title");
     expect(coachTitle?.textContent).toBe("Coach Rodrigo");
@@ -162,18 +162,67 @@ describe("CoachingClubPage UX/UI Redesign", () => {
     const coachCode = container.querySelector(".coaching-card__code");
     expect(coachCode?.textContent).toBe("RIV-C-00001");
 
+    // Status badge is Activo
+    const badge = container.querySelector(".coaching-badge--active");
+    expect(badge?.textContent).toBe("Activo");
+
     // Click to open modal
     await act(async () => {
       (addCoachBtn as HTMLButtonElement).click();
     });
 
     const modalTitle = document.querySelector(".riviera-modal__title");
-    expect(modalTitle?.textContent).toBe("Agregar coach (demo)");
+    expect(modalTitle?.textContent).toBe("Registrar nuevo coach");
 
     const modalClose = document.querySelector(".riviera-modal__close");
     await act(async () => {
       (modalClose as HTMLButtonElement).click();
     });
+  });
+
+  it("renders coach cards with pending and inactive statuses accurately", async () => {
+    const multiStatusSnapshot: CoachingClubSnapshot = {
+      source: "live",
+      coaches: [
+        {
+          id: "coach-active",
+          coachCode: "RIV-C-00010",
+          nombre: "Coach Activo",
+          membershipStatus: "ACTIVE",
+          especialidades: ["Técnica"],
+          fuerzas: ["2da_fuerza"],
+        },
+        {
+          id: "coach-pending",
+          coachCode: "RIV-C-00011",
+          nombre: "Coach Invitado",
+          membershipStatus: "PENDING",
+          especialidades: ["Táctica"],
+          fuerzas: ["3ra_fuerza"],
+        },
+        {
+          id: "coach-inactive",
+          coachCode: "RIV-C-00012",
+          nombre: "Coach Desactivado",
+          membershipStatus: "INACTIVE",
+          especialidades: [],
+          fuerzas: [],
+        },
+      ],
+      links: [],
+    };
+
+    jest.spyOn(coachingApi, "loadCoachingClubSnapshot").mockResolvedValueOnce(multiStatusSnapshot);
+
+    await act(async () => {
+      root.render(<CoachingClubPage pathname="/coaching/coaches" />);
+    });
+
+    const badges = container.querySelectorAll(".coaching-badge");
+    const badgeTexts = Array.from(badges).map((b) => b.textContent?.trim());
+    expect(badgeTexts).toContain("Activo");
+    expect(badgeTexts).toContain("Invitación pendiente");
+    expect(badgeTexts).toContain("Inactivo");
   });
 
   it("renders Jugadores tab with canonical Riviera ID form and player link cards", async () => {
