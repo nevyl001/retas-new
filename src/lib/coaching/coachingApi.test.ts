@@ -14,6 +14,7 @@ import {
   fetchCoachAssignedStudents,
   fetchStudentCoachingOverview,
   linkStudentAccountByRivieraId,
+  linkCoachStudentByClub,
 } from "./coachingApi";
 import type { CreateCoachInput } from "./types";
 import { supabase } from "../supabaseClient";
@@ -1073,6 +1074,41 @@ describe("coachingApi - Entrega B", () => {
       await expect(linkStudentAccountByRivieraId("invalido")).rejects.toThrow(
         "Formato de Riviera ID inválido"
       );
+      expect(supabase.rpc).not.toHaveBeenCalled();
+    });
+
+    it("linkCoachStudentByClub validates required parameters and invokes RPC", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          jugador_id: "j-123",
+          auth_user_id: "user-456",
+          nombre: "Diego Palomares",
+          message: "Alumno vinculado exitosamente por el club.",
+        },
+        error: null,
+      });
+
+      const res = await linkCoachStudentByClub(
+        "org-hack",
+        "j-123",
+        "diego@gmail.com"
+      );
+
+      expect(supabase.rpc).toHaveBeenCalledWith("link_coach_student_by_club", {
+        p_organizador_id: "org-hack",
+        p_jugador_id: "j-123",
+        p_student_email: "diego@gmail.com",
+      });
+      expect(res.ok).toBe(true);
+      expect(res.jugadorId).toBe("j-123");
+      expect(res.authUserId).toBe("user-456");
+    });
+
+    it("linkCoachStudentByClub throws if email is empty", async () => {
+      await expect(
+        linkCoachStudentByClub("org-hack", "j-123", "   ")
+      ).rejects.toThrow("El correo electrónico del alumno es obligatorio.");
       expect(supabase.rpc).not.toHaveBeenCalled();
     });
   });

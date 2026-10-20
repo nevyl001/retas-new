@@ -291,3 +291,4 @@ GRANT EXECUTE ON FUNCTION public.link_student_by_riviera_id(text) TO authenticat
 GRANT EXECUTE ON FUNCTION public.link_student_by_riviera_id(text) TO service_role;
 
 COMMIT;
+

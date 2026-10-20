@@ -989,3 +989,50 @@ export async function linkStudentAccountByRivieraId(
   };
 }
 
+/**
+ * Permite al administrador del club vincular autorizadamente a un alumno mediante su correo verificado.
+ * Utilizado cuando el alumno no cuenta con correo en su perfil de club o requiere asistencia administrativa.
+ */
+export async function linkCoachStudentByClub(
+  organizadorId: string,
+  jugadorId: string,
+  studentEmail: string
+): Promise<{
+  ok: boolean;
+  jugadorId?: string;
+  authUserId?: string;
+  nombre?: string;
+  message?: string;
+}> {
+  const emailNorm = studentEmail.trim().toLowerCase();
+  if (!emailNorm) {
+    throw new Error("El correo electrónico del alumno es obligatorio.");
+  }
+
+  const { data, error } = await supabase.rpc("link_coach_student_by_club", {
+    p_organizador_id: organizadorId,
+    p_jugador_id: jugadorId,
+    p_student_email: emailNorm,
+  });
+
+  if (error) {
+    console.error("[coaching] error linking student by club:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, unknown> | null;
+  if (!res || res.ok === false) {
+    throw new Error(
+      typeof res?.error === "string" ? res.error : "No se pudo vincular el alumno."
+    );
+  }
+
+  return {
+    ok: true,
+    jugadorId: String(res.jugador_id ?? jugadorId),
+    authUserId: typeof res.auth_user_id === "string" ? res.auth_user_id : undefined,
+    nombre: typeof res.nombre === "string" ? res.nombre : undefined,
+    message: typeof res.message === "string" ? res.message : undefined,
+  };
+}
+

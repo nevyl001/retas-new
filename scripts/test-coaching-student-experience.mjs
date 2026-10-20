@@ -522,3 +522,4 @@ runStudentExperienceTests().catch((e) => {
   console.error("❌ ERROR EN PRUEBAS:", e);
   process.exit(1);
 });
+
