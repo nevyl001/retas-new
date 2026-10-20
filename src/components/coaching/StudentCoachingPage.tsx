@@ -467,24 +467,89 @@ export const StudentCoachingPage: React.FC = () => {
                   ) : (
                     <div className="coaching-ledger-timeline">
                       {rel.ledger.map((entry) => {
-                        const isAssign = entry.tipo === "ASSIGN";
+                        const renderStudentLedgerBadge = () => {
+                          switch (entry.tipo) {
+                            case "PACKAGE_CREDIT":
+                            case "ASSIGN":
+                              return (
+                                <span className="coaching-ledger-badge badge--assign">
+                                  <TablerIcon name="plus" size={13} />
+                                  +{entry.delta} Clases (Club)
+                                </span>
+                              );
+                            case "CLASS_DEBIT":
+                              return (
+                                <span className="coaching-ledger-badge badge--session">
+                                  <TablerIcon name="check" size={13} />
+                                  {entry.delta} Clase (Coach)
+                                </span>
+                              );
+                            case "TRANSFER_OUT":
+                              return (
+                                <span
+                                  className="coaching-ledger-badge"
+                                  style={{
+                                    background: "rgba(245, 158, 11, 0.15)",
+                                    color: "#f59e0b",
+                                    border: "1px solid rgba(245, 158, 11, 0.35)",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "0.25rem",
+                                  }}
+                                >
+                                  <TablerIcon name="arrow-right" size={13} />
+                                  {entry.delta} Clases transferidas
+                                </span>
+                              );
+                            case "TRANSFER_IN":
+                              return (
+                                <span
+                                  className="coaching-ledger-badge"
+                                  style={{
+                                    background: "rgba(6, 182, 212, 0.15)",
+                                    color: "#22d3ee",
+                                    border: "1px solid rgba(6, 182, 212, 0.35)",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "0.25rem",
+                                  }}
+                                >
+                                  <TablerIcon name="arrow-left" size={13} />
+                                  +{entry.delta} Clases recibidas
+                                </span>
+                              );
+                            case "ADJUSTMENT":
+                              return (
+                                <span
+                                  className="coaching-ledger-badge"
+                                  style={{
+                                    background: "rgba(148, 163, 184, 0.15)",
+                                    color: "#cbd5e1",
+                                    border: "1px solid rgba(148, 163, 184, 0.35)",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "0.25rem",
+                                  }}
+                                >
+                                  <TablerIcon name="adjustments" size={13} />
+                                  {entry.delta > 0 ? `+${entry.delta}` : entry.delta} Ajuste
+                                </span>
+                              );
+                            default:
+                              return (
+                                <span
+                                  className={`coaching-ledger-badge ${entry.delta > 0 ? "badge--assign" : "badge--session"}`}
+                                >
+                                  {entry.delta > 0 ? `+${entry.delta}` : entry.delta} {entry.tipo}
+                                </span>
+                              );
+                          }
+                        };
 
                         return (
                           <div key={entry.id} className="coaching-ledger-row">
                             <div className="coaching-ledger-row__left">
-                              <span className={`coaching-ledger-badge ${isAssign ? "badge--assign" : "badge--session"}`}>
-                                {isAssign ? (
-                                  <>
-                                    <TablerIcon name="plus" size={13} />
-                                    +{entry.delta} Clases (Club)
-                                  </>
-                                ) : (
-                                  <>
-                                    <TablerIcon name="check" size={13} />
-                                    {entry.delta} Clase (Coach)
-                                  </>
-                                )}
-                              </span>
+                              {renderStudentLedgerBadge()}
                               <span className="coaching-ledger-date">
                                 {formatDate(entry.createdAt)}
                               </span>
