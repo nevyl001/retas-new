@@ -928,3 +928,467 @@
   font-size: 0.9rem;
   padding: 1rem 0;
 }
+
+/* ============================================================
+   EXPERIENCIA DEL ALUMNO ("MI COACHING")
+   ============================================================ */
+
+.coaching-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.coaching-student-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--ro-radius-pill, 999px);
+  backdrop-filter: blur(8px);
+}
+
+.coaching-student-badge-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+  font-weight: 700;
+}
+
+.coaching-student-badge-val {
+  font-size: 0.875rem;
+  color: var(--brand-accent, #38bdf8);
+  font-family: monospace;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.coaching-badge-copy-btn {
+  background: transparent;
+  border: none;
+  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.7));
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.coaching-badge-copy-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.coaching-student-empty-state {
+  margin-top: 1rem;
+}
+
+.coaching-riviera-share-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--ro-radius-md, 8px);
+  margin-top: 1rem;
+}
+
+.coaching-riviera-share-label {
+  font-size: 0.85rem;
+  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+.coaching-riviera-share-code {
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-family: monospace;
+  color: var(--brand-accent, #38bdf8);
+  letter-spacing: 0.06em;
+}
+
+.coaching-link-help-card {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: var(--ro-radius-md, 8px);
+  text-align: left;
+}
+
+.coaching-link-help-text {
+  font-size: 0.85rem;
+  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.7));
+  margin-bottom: 0.85rem;
+  line-height: 1.45;
+}
+
+.coaching-link-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.coaching-student-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.coaching-student-relation-card {
+  background: var(--ro-bg-surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--ro-border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: var(--ro-radius-lg, 12px);
+  padding: clamp(1.25rem, 2vw, 1.75rem);
+  backdrop-filter: blur(12px);
+}
+
+.coaching-student-header-grid {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.coaching-student-coach-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.coaching-student-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.coaching-student-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.coaching-student-coach-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--brand-accent, #38bdf8);
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.coaching-code-pill {
+  font-size: 0.68rem;
+  font-family: monospace;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.8));
+}
+
+.coaching-student-coach-name {
+  margin: 0 0 0.4rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--ro-text-primary, #f5f2eb);
+}
+
+.coaching-student-spec-tags {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.coaching-student-spec-tag {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--ro-radius-pill, 999px);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.8));
+}
+
+.coaching-student-club-info {
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .coaching-student-club-info {
+    text-align: left;
+  }
+}
+
+.coaching-student-club-eyebrow {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+}
+
+.coaching-student-club-name {
+  margin: 0.2rem 0;
+  font-size: 1.15rem;
+  font-weight: 750;
+  color: var(--ro-text-primary, #f5f2eb);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .coaching-student-club-name {
+    justify-content: flex-start;
+  }
+}
+
+.coaching-student-member-since {
+  font-size: 0.78rem;
+  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+}
+
+/* Métricas del Alumno */
+.coaching-student-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.coaching-student-metric-card {
+  padding: 1.25rem;
+  border-radius: var(--ro-radius-md, 8px);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.coaching-metric--active {
+  background: linear-gradient(145deg, rgba(34, 197, 94, 0.08), rgba(255, 255, 255, 0.02));
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.coaching-metric--empty {
+  background: linear-gradient(145deg, rgba(234, 179, 8, 0.08), rgba(255, 255, 255, 0.02));
+  border-color: rgba(234, 179, 8, 0.25);
+}
+
+.coaching-metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.coaching-metric-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+.coaching-metric-value {
+  font-size: 2.75rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ro-text-primary, #f5f2eb);
+  margin-bottom: 0.5rem;
+  font-family: monospace;
+}
+
+.coaching-metric-desc {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--ro-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.coaching-status-pill {
+  font-size: 0.72rem;
+  font-weight: 750;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--ro-radius-pill, 999px);
+  text-transform: uppercase;
+}
+
+.pill--success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.pill--warning {
+  background: rgba(234, 179, 8, 0.15);
+  color: #facc15;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+/* Ledger Historial */
+.coaching-student-ledger-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 1.25rem;
+}
+
+.coaching-ledger-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.coaching-ledger-title {
+  margin: 0 0 0.2rem;
+  font-size: 1.1rem;
+  font-weight: 750;
+  color: var(--ro-text-primary, #f5f2eb);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.coaching-ledger-subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+}
+
+.coaching-ledger-count {
+  font-size: 0.75rem;
+  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.6));
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.coaching-ledger-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.875rem;
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: var(--ro-radius-md, 8px);
+}
+
+.coaching-ledger-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.coaching-ledger-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  border-radius: var(--ro-radius-md, 8px);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.coaching-ledger-row__left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 170px;
+}
+
+.coaching-ledger-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.badge--assign {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.badge--session {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.coaching-ledger-date {
+  font-size: 0.75rem;
+  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+}
+
+.coaching-ledger-row__details {
+  flex: 1;
+  min-width: 240px;
+}
+
+.coaching-ledger-notes {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.85));
+}
+
+.coaching-session-box {
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 2px solid var(--brand-accent, #38bdf8);
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.coaching-session-focus {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--ro-text-primary, #f5f2eb);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.coaching-session-dur {
+  font-size: 0.72rem;
+  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.coaching-session-feedback {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.7));
+  font-style: italic;
+}
+

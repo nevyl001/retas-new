@@ -38,3 +38,18 @@ export function navigateCoachPortal(): void {
   navigateCoaching("/coaching/mi-espacio");
 }
 
+export function isStudentCoachingPath(pathname: string): boolean {
+  const path = normalizeAppPathname(pathname);
+  return (
+    path === "/coaching/mi-coaching" ||
+    path.startsWith("/coaching/mi-coaching/") ||
+    path === "/coaching/alumno" ||
+    path.startsWith("/coaching/alumno/")
+  );
+}
+
+export function navigateStudentCoaching(): void {
+  navigateCoaching("/coaching/mi-coaching");
+}
+
+

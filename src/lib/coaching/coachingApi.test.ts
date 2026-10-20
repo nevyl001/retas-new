@@ -12,6 +12,8 @@ import {
   recordCoachClassSession,
   fetchClubClassLedger,
   fetchCoachAssignedStudents,
+  fetchStudentCoachingOverview,
+  linkStudentAccountByRivieraId,
 } from "./coachingApi";
 import type { CreateCoachInput } from "./types";
 import { supabase } from "../supabaseClient";
@@ -962,4 +964,117 @@ describe("coachingApi - Entrega B", () => {
       );
     });
   });
+
+  describe("Experiencia del Alumno (Mi Coaching)", () => {
+    it("fetchStudentCoachingOverview maps server response accurately", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          linked: true,
+          riviera_id: "RIV-00000356",
+          relationships: [
+            {
+              relationship_id: "rel-1",
+              status: "ACTIVE",
+              is_primary: true,
+              started_at: "2026-10-19T10:00:00Z",
+              club: {
+                organizador_id: "org-hack",
+                nombre: "Hackpadel",
+                branding_key: "hack-padel",
+              },
+              coach: {
+                id: "coach-1",
+                nombre: "Roberto M",
+                coach_code: "COACH-001",
+                foto_url: null,
+                especialidades: ["Volea"],
+              },
+              player: {
+                id: "j-1",
+                nombre: "Diego P",
+                riviera_id: "RIV-00000356",
+              },
+              balance: {
+                balance_classes: 4,
+                total_classes_given: 1,
+                updated_at: "2026-10-19T11:00:00Z",
+              },
+              ledger: [
+                {
+                  id: "led-1",
+                  delta: -1,
+                  tipo: "CLASS_SESSION",
+                  notas: "Clase 1",
+                  created_at: "2026-10-19T11:00:00Z",
+                  session: {
+                    id: "ses-1",
+                    starts_at: "2026-10-19T10:00:00Z",
+                    duration_minutes: 60,
+                    focus: "Bandeja profunda",
+                    worked_on: ["Bandeja"],
+                    notes_summary: "Buen progreso",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        error: null,
+      });
+
+      const overview = await fetchStudentCoachingOverview();
+      expect(supabase.rpc).toHaveBeenCalledWith("get_student_coaching_overview");
+      expect(overview.ok).toBe(true);
+      expect(overview.linked).toBe(true);
+      expect(overview.rivieraId).toBe("RIV-00000356");
+      expect(overview.relationships).toHaveLength(1);
+
+      const r = overview.relationships[0];
+      expect(r.club.nombre).toBe("Hackpadel");
+      expect(r.coach.nombre).toBe("Roberto M");
+      expect(r.balance.balanceClasses).toBe(4);
+      expect(r.balance.totalClassesGiven).toBe(1);
+      expect(r.ledger).toHaveLength(1);
+      expect(r.ledger[0].session?.focus).toBe("Bandeja profunda");
+    });
+
+    it("fetchStudentCoachingOverview propagates database errors without masking", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: null,
+        error: { message: "No autenticado" },
+      });
+
+      await expect(fetchStudentCoachingOverview()).rejects.toThrow(
+        "No se pudo cargar la información de Mi Coaching: No autenticado"
+      );
+    });
+
+    it("linkStudentAccountByRivieraId validates Riviera ID format and calls RPC", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          jugador_id: "j-123",
+          nombre: "Diego Palomares",
+          riviera_id: "RIV-00000356",
+        },
+        error: null,
+      });
+
+      const res = await linkStudentAccountByRivieraId("riv-00000356");
+      expect(supabase.rpc).toHaveBeenCalledWith("link_student_by_riviera_id", {
+        p_riviera_id: "RIV-00000356",
+      });
+      expect(res.ok).toBe(true);
+      expect(res.rivieraId).toBe("RIV-00000356");
+    });
+
+    it("linkStudentAccountByRivieraId rejects invalid format before calling server", async () => {
+      await expect(linkStudentAccountByRivieraId("invalido")).rejects.toThrow(
+        "Formato de Riviera ID inválido"
+      );
+      expect(supabase.rpc).not.toHaveBeenCalled();
+    });
+  });
 });
+

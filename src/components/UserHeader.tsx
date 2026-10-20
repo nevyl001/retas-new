@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ClubIdentity } from "../club-experience";
 import { useUser } from "../contexts/UserContext";
+import { navigateStudentCoaching } from "./coaching/coachingNav";
 import "./UserHeader.css";
 
 export const UserHeader: React.FC = () => {
@@ -107,6 +108,16 @@ export const UserHeader: React.FC = () => {
 
               {showDropdown && (
                 <div ref={dropdownRef} className="user-dropdown-menu">
+                  <button
+                    className="user-dropdown-item"
+                    onClick={() => {
+                      setShowDropdown(false);
+                      navigateStudentCoaching();
+                    }}
+                  >
+                    <span>🎾</span>
+                    <span>Mi Coaching</span>
+                  </button>
                   <button
                     className="logout-button"
                     onClick={handleSignOut}

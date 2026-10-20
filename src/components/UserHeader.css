@@ -198,6 +198,33 @@ body:has(.torneo-express-page:not(.te-public)) .user-header-content {
   box-shadow: var(--shadow-elevated);
 }
 
+.user-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-md);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-md);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  transition: border-color var(--transition-fast), background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.user-dropdown-item:hover {
+  border-color: var(--border-accent);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
 .logout-button {
   display: flex;
   align-items: center;

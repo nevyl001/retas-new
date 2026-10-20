@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ClubIdentity } from "../club-experience";
 import { useUser } from "../contexts/UserContext";
+import { navigateStudentCoaching } from "./coaching/coachingNav";
 import "./MobileUserMenu.css";
 
 export const MobileUserMenu: React.FC<{
@@ -57,6 +58,16 @@ export const MobileUserMenu: React.FC<{
       </div>
 
       <div className="mobile-menu-options">
+        <button
+          type="button"
+          className="mobile-menu-option"
+          onClick={() => {
+            navigateStudentCoaching();
+          }}
+        >
+          <span className="mobile-menu-icon">🎾</span>
+          <span className="mobile-menu-text">Mi Coaching</span>
+        </button>
         <button
           type="button"
           className="mobile-menu-option mobile-menu-logout"

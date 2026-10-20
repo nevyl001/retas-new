@@ -813,3 +813,179 @@ export async function updateLinkStatusDemo(
 ): Promise<CoachingClubSnapshot> {
   return updateLinkStatus(organizadorId, linkId, status);
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EXPERIENCIA PRIVADA DEL ALUMNO ("MI COACHING")
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface StudentCoachingSessionInfo {
+  id: string;
+  startsAt: string;
+  durationMinutes?: number | null;
+  focus?: string | null;
+  workedOn?: string[] | null;
+  notesSummary?: string | null;
+}
+
+export interface StudentCoachingLedgerEntry {
+  id: string;
+  delta: number;
+  tipo: string;
+  notas?: string | null;
+  createdAt: string;
+  session?: StudentCoachingSessionInfo | null;
+}
+
+export interface StudentCoachingRelationship {
+  relationshipId: string;
+  status: "ACTIVE" | "PAUSED" | "ENDED";
+  isPrimary: boolean;
+  startedAt: string;
+  endedAt?: string | null;
+  club: {
+    organizadorId: string;
+    nombre: string;
+    brandingKey?: string | null;
+  };
+  coach: {
+    id: string;
+    nombre: string;
+    coachCode?: string | null;
+    fotoUrl?: string | null;
+    especialidades?: string[] | null;
+  };
+  player: {
+    id: string;
+    nombre: string;
+    rivieraId?: string | null;
+  };
+  balance: {
+    balanceClasses: number;
+    totalClassesGiven: number;
+    updatedAt?: string | null;
+  };
+  ledger: StudentCoachingLedgerEntry[];
+}
+
+export interface StudentCoachingOverview {
+  ok: boolean;
+  linked: boolean;
+  rivieraId: string | null;
+  relationships: StudentCoachingRelationship[];
+  error?: string;
+}
+
+/**
+ * Consulta el resumen de coaching del alumno autenticado.
+ * Aislamiento estricto: solo devuelve los saldos, coach, club e historial del usuario en sesión.
+ */
+export async function fetchStudentCoachingOverview(): Promise<StudentCoachingOverview> {
+  const { data, error } = await supabase.rpc("get_student_coaching_overview");
+
+  if (error) {
+    console.error("[coaching] error fetching student overview:", error);
+    throw new Error("No se pudo cargar la información de Mi Coaching: " + error.message);
+  }
+
+  const raw = data as Record<string, unknown> | null;
+  if (!raw || raw.ok === false) {
+    return {
+      ok: false,
+      linked: false,
+      rivieraId: null,
+      relationships: [],
+      error: typeof raw?.error === "string" ? raw.error : "Error desconocido",
+    };
+  }
+
+  const rawRels = Array.isArray(raw.relationships) ? raw.relationships : [];
+  const relationships: StudentCoachingRelationship[] = rawRels.map((item: any) => ({
+    relationshipId: String(item.relationship_id ?? ""),
+    status: (item.status === "PAUSED" || item.status === "ENDED" ? item.status : "ACTIVE"),
+    isPrimary: Boolean(item.is_primary),
+    startedAt: String(item.started_at ?? ""),
+    endedAt: item.ended_at ? String(item.ended_at) : null,
+    club: {
+      organizadorId: String(item.club?.organizador_id ?? ""),
+      nombre: String(item.club?.nombre ?? "Club"),
+      brandingKey: item.club?.branding_key ? String(item.club.branding_key) : null,
+    },
+    coach: {
+      id: String(item.coach?.id ?? ""),
+      nombre: String(item.coach?.nombre ?? "Coach"),
+      coachCode: item.coach?.coach_code ? String(item.coach.coach_code) : null,
+      fotoUrl: item.coach?.foto_url ? String(item.coach.foto_url) : null,
+      especialidades: Array.isArray(item.coach?.especialidades) ? item.coach.especialidades : [],
+    },
+    player: {
+      id: String(item.player?.id ?? ""),
+      nombre: String(item.player?.nombre ?? "Alumno"),
+      rivieraId: item.player?.riviera_id ? String(item.player.riviera_id) : null,
+    },
+    balance: {
+      balanceClasses: Number(item.balance?.balance_classes ?? 0),
+      totalClassesGiven: Number(item.balance?.total_classes_given ?? 0),
+      updatedAt: item.balance?.updated_at ? String(item.balance.updated_at) : null,
+    },
+    ledger: Array.isArray(item.ledger)
+      ? item.ledger.map((entry: any) => ({
+          id: String(entry.id ?? ""),
+          delta: Number(entry.delta ?? 0),
+          tipo: String(entry.tipo ?? ""),
+          notas: entry.notas ? String(entry.notas) : null,
+          createdAt: String(entry.created_at ?? ""),
+          session: entry.session
+            ? {
+                id: String(entry.session.id ?? ""),
+                startsAt: String(entry.session.starts_at ?? ""),
+                durationMinutes: entry.session.duration_minutes != null ? Number(entry.session.duration_minutes) : null,
+                focus: entry.session.focus ? String(entry.session.focus) : null,
+                workedOn: Array.isArray(entry.session.worked_on) ? entry.session.worked_on : [],
+                notesSummary: entry.session.notes_summary ? String(entry.session.notes_summary) : null,
+              }
+            : null,
+        }))
+      : [],
+  }));
+
+  return {
+    ok: true,
+    linked: Boolean(raw.linked),
+    rivieraId: raw.riviera_id ? String(raw.riviera_id) : null,
+    relationships,
+  };
+}
+
+/**
+ * Permite al alumno vincular su cuenta con su Riviera ID oficial.
+ */
+export async function linkStudentAccountByRivieraId(
+  rivieraIdRaw: string
+): Promise<{ ok: boolean; jugadorId?: string; nombre?: string; rivieraId?: string; error?: string }> {
+  const norm = normalizeRivieraIdInput(rivieraIdRaw.trim().toUpperCase());
+  if (!norm) {
+    throw new Error("Formato de Riviera ID inválido. Debe tener la estructura RIV-########");
+  }
+
+  const { data, error } = await supabase.rpc("link_student_by_riviera_id", {
+    p_riviera_id: norm,
+  });
+
+  if (error) {
+    console.error("[coaching] error linking student by riviera id:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, unknown> | null;
+  if (!res || res.ok === false) {
+    throw new Error(typeof res?.error === "string" ? res.error : "No se pudo vincular el perfil.");
+  }
+
+  return {
+    ok: true,
+    jugadorId: String(res.jugador_id ?? ""),
+    nombre: String(res.nombre ?? ""),
+    rivieraId: String(res.riviera_id ?? norm),
+  };
+}
+
