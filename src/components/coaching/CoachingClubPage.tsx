@@ -261,9 +261,10 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
       resetCoachForm();
       setIsCoachModalOpen(false);
       setSuccessMessage(
-        res.isNewUser
+        res.message ||
+        (res.isNewUser
           ? `Invitación oficial enviada a ${email}. Código de coach oficial: ${res.coachCode}. El coach figurará con invitación pendiente hasta su activación.`
-          : `Coach incorporado exitosamente a tu club con código oficial ${res.coachCode}.`
+          : `Coach incorporado exitosamente a tu club con código oficial ${res.coachCode}.`)
       );
     } catch (err) {
       setFormError(

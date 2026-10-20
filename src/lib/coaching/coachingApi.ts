@@ -238,9 +238,42 @@ export async function inviteClubCoach(
     );
   }
 
-  const snapshot = await loadCoachingClubSnapshot(organizadorId);
   const membershipStatus: CoachMembershipStatus =
     res.membershipStatus || (res.isNewUser ? "PENDING" : "ACTIVE");
+
+  let snapshot: CoachingClubSnapshot;
+  try {
+    snapshot = await loadCoachingClubSnapshot(organizadorId);
+  } catch (refreshErr) {
+    console.warn(
+      "[coaching] coach registrado en backend pero falló la recarga del snapshot:",
+      refreshErr
+    );
+    snapshot = {
+      coaches: [
+        {
+          id: "",
+          coachCode: res.coachCode || "",
+          nombre: input.nombre.trim(),
+          email: input.email.trim(),
+          telefono: input.telefono?.trim() || null,
+          paisCodigo: input.paisCodigo || null,
+          genero: input.genero,
+          categoria: input.categoria,
+          edad: input.edad ?? null,
+          manoDominante: input.manoDominante || null,
+          enCancha: input.enCancha || null,
+          fotoUrl: null,
+          bio: input.bio || null,
+          especialidades: input.especialidades || [],
+          fuerzas: input.fuerzas || [],
+          membershipStatus,
+        },
+      ],
+      links: [],
+      source: "live",
+    };
+  }
 
   return {
     snapshot,
