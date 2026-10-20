@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Modal } from "../ui/Modal";
 import { TablerIcon } from "../ui/TablerIcon";
 import {
@@ -31,8 +31,10 @@ export const AddStudentToCoachModal: React.FC<AddStudentToCoachModalProps> = ({
   defaultCoachId,
   onSuccess,
 }) => {
-  const activeCoaches = coaches.filter(
-    (c) => c.membershipStatus === "ACTIVE"
+  // 1. Estabilizar lista de coaches activos mediante useMemo para evitar render loops
+  const activeCoaches = useMemo(
+    () => coaches.filter((c) => c.membershipStatus === "ACTIVE"),
+    [coaches]
   );
 
   const [rivieraIdInput, setRivieraIdInput] = useState("");
@@ -44,12 +46,23 @@ export const AddStudentToCoachModal: React.FC<AddStudentToCoachModalProps> = ({
   const [selectedCoachId, setSelectedCoachId] = useState<string>("");
   const [initialClasses, setInitialClasses] = useState<number>(10);
   const [reference, setReference] = useState<string>("");
+  const [operationKey, setOperationKey] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Sincronizar coach por defecto al abrir
+  // 2. Control de apertura: inicializar el formulario SOLAMENTE al abrir el modal
+  const wasOpenRef = useRef(false);
+
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpenRef.current) {
+      setRivieraIdInput("");
+      setVerifiedStudent(null);
+      setSearchError(null);
+      setSaveError(null);
+      setInitialClasses(10);
+      setReference("");
+      setOperationKey(generateCoachingIdempotencyKey("assign-student"));
+
       if (
         defaultCoachId &&
         activeCoaches.some((c) => c.id === defaultCoachId)
@@ -57,15 +70,23 @@ export const AddStudentToCoachModal: React.FC<AddStudentToCoachModalProps> = ({
         setSelectedCoachId(defaultCoachId);
       } else if (activeCoaches.length > 0) {
         setSelectedCoachId(activeCoaches[0].id);
+      } else {
+        setSelectedCoachId("");
       }
-      setRivieraIdInput("");
-      setVerifiedStudent(null);
-      setSearchError(null);
-      setSaveError(null);
-      setInitialClasses(10);
-      setReference("");
     }
+    wasOpenRef.current = open;
   }, [open, defaultCoachId, activeCoaches]);
+
+  // Si no había coach seleccionado y los coaches cargaron después
+  useEffect(() => {
+    if (open && !selectedCoachId && activeCoaches.length > 0) {
+      const fallbackId =
+        defaultCoachId && activeCoaches.some((c) => c.id === defaultCoachId)
+          ? defaultCoachId
+          : activeCoaches[0].id;
+      setSelectedCoachId(fallbackId);
+    }
+  }, [open, selectedCoachId, activeCoaches, defaultCoachId]);
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -81,7 +102,7 @@ export const AddStudentToCoachModal: React.FC<AddStudentToCoachModalProps> = ({
     setSearching(true);
     setSearchError(null);
     try {
-      const student = await lookupStudentByRivieraId(norm);
+      const student = await lookupStudentByRivieraId(organizadorId, norm);
       setVerifiedStudent(student);
     } catch (err) {
       setVerifiedStudent(null);
@@ -119,14 +140,17 @@ export const AddStudentToCoachModal: React.FC<AddStudentToCoachModalProps> = ({
     setSaving(true);
     setSaveError(null);
     try {
-      const idempotencyKey = generateCoachingIdempotencyKey("assign-student");
+      // Reutiliza la misma clave de operación para reintentos por errores de red
+      const effectiveKey =
+        operationKey || generateCoachingIdempotencyKey("assign-student");
+
       const res = await assignStudentToClubCoach(
         organizadorId,
         selectedCoachId,
         verifiedStudent.rivieraId,
         initialClasses,
         reference.trim() || undefined,
-        idempotencyKey
+        effectiveKey
       );
 
       onSuccess(
@@ -408,4 +432,3 @@ export const AddStudentToCoachModal: React.FC<AddStudentToCoachModalProps> = ({
     </Modal>
   );
 };
-

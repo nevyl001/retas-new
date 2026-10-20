@@ -17,6 +17,7 @@ import {
 } from "../../lib/coaching/coachingApi";
 import { ClubCoachDetailView } from "./ClubCoachDetailView";
 import { AddStudentToCoachModal } from "./AddStudentToCoachModal";
+import { ReassignCoachModal } from "./ReassignCoachModal";
 import {
   COACH_ESPECIALIDADES_ORDER,
   COACH_FUERZAS_ORDER,
@@ -122,6 +123,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   // Control de clases y saldos de alumnos
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [assigningLink, setAssigningLink] = useState<CoachingPlayerLink | null>(null);
+  const [reassigningLink, setReassigningLink] = useState<CoachingPlayerLink | null>(null);
   const [classCountInput, setClassCountInput] = useState<number>(10);
   const [classNotesInput, setClassNotesInput] = useState<string>("");
   const [assignIdempotencyKey, setAssignIdempotencyKey] = useState<string>("");
@@ -1603,6 +1605,16 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                     )}
                     <button
                       type="button"
+                      className="coaching-btn coaching-btn--secondary"
+                      disabled={busy}
+                      onClick={() => setReassigningLink(l)}
+                      title="Cambiar a otro entrenador del club"
+                    >
+                      <TablerIcon name="arrows-exchange" size={14} />
+                      Cambiar entrenador
+                    </button>
+                    <button
+                      type="button"
                       className="coaching-btn coaching-btn--ghost"
                       disabled={busy}
                       onClick={() => void handleStatus(l.id, "ENDED")}
@@ -2163,6 +2175,39 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
             `Alumno ${studentName} asignado a ${coachName} con ${classes} clases disponibles exitosamente.`
           );
           void refresh();
+        }}
+      />
+
+      {/* Modal: Cambiar Entrenador del Alumno */}
+      <ReassignCoachModal
+        open={Boolean(reassigningLink)}
+        onClose={() => setReassigningLink(null)}
+        organizadorId={organizadorId}
+        student={
+          reassigningLink
+            ? {
+                id: reassigningLink.jugadorId,
+                nombre: reassigningLink.jugadorNombre,
+                rivieraId: reassigningLink.rivieraId,
+              }
+            : null
+        }
+        fromCoach={
+          reassigningLink
+            ? {
+                id: reassigningLink.coachId,
+                nombre: reassigningLink.coachNombre,
+              }
+            : null
+        }
+        balanceClasses={reassigningLink?.balanceClasses ?? 0}
+        coaches={snapshot?.coaches ?? []}
+        onSuccess={(studentName, toCoachName, transferredClasses) => {
+          setSuccessMessage(
+            `Se transfirió a ${studentName} con ${transferredClasses} clases a ${toCoachName} exitosamente.`
+          );
+          void refresh();
+          if (organizadorId) void loadLedger(organizadorId);
         }}
       />
     </div>

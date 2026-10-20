@@ -9,6 +9,7 @@ import {
   assignCoachClasses,
   removeCoachFromClub,
   generateCoachingIdempotencyKey,
+  loadCoachingClubSnapshot,
 } from "../../lib/coaching/coachingApi";
 import {
   COACH_ESPECIALIDADES_ORDER,
@@ -18,12 +19,14 @@ import type {
   ClubCoachDetail,
   ClubCoachDetailStudent,
   CoachMembershipStatus,
+  CoachingCoach,
 } from "../../lib/coaching/types";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import { TablerIcon } from "../ui/TablerIcon";
 import { Modal } from "../ui/Modal";
 import { AddStudentToCoachModal } from "./AddStudentToCoachModal";
+import { ReassignCoachModal } from "./ReassignCoachModal";
 
 interface ClubCoachDetailViewProps {
   organizadorId: string;
@@ -57,6 +60,8 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [detailRemovalReason, setDetailRemovalReason] = useState("");
   const [assigningStudent, setAssigningStudent] = useState<ClubCoachDetailStudent | null>(null);
+  const [reassigningStudent, setReassigningStudent] = useState<ClubCoachDetailStudent | null>(null);
+  const [clubCoaches, setClubCoaches] = useState<CoachingCoach[]>([]);
   const [assignClassesCount, setAssignClassesCount] = useState<number>(10);
   const [assignClassesNotes, setAssignClassesNotes] = useState<string>("");
   const [assignIdempotencyKey, setAssignIdempotencyKey] = useState<string>("");
@@ -71,8 +76,12 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchClubCoachDetail(organizadorId, coachId);
+      const [data, snap] = await Promise.all([
+        fetchClubCoachDetail(organizadorId, coachId),
+        loadCoachingClubSnapshot(organizadorId),
+      ]);
       setDetail(data);
+      setClubCoaches(snap.coaches);
 
       // Precargar datos de edición local
       const mem = data.membership;
@@ -828,6 +837,16 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                       <TablerIcon name="plus" size={14} />
                       Asignar clases
                     </button>
+                    <button
+                      type="button"
+                      className="coaching-btn coaching-btn--secondary"
+                      style={{ padding: "0.45rem 0.75rem", fontSize: "0.82rem" }}
+                      onClick={() => setReassigningStudent(st)}
+                      title="Cambiar a otro entrenador del club"
+                    >
+                      <TablerIcon name="arrows-exchange" size={14} />
+                      Cambiar
+                    </button>
                   </div>
                 </div>
               ))}
@@ -866,15 +885,25 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                       {st.balanceClasses}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "center" }}>{st.totalClassesGiven}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", whiteSpace: "nowrap" }}>
                       <button
                         type="button"
                         className="coaching-btn coaching-btn--secondary"
-                        style={{ padding: "0.35rem 0.65rem", fontSize: "0.78rem" }}
+                        style={{ padding: "0.35rem 0.65rem", fontSize: "0.78rem", marginRight: "0.4rem" }}
                         onClick={() => openAssignModal(st)}
                       >
                         <TablerIcon name="plus" size={13} />
                         Recargar
+                      </button>
+                      <button
+                        type="button"
+                        className="coaching-btn coaching-btn--secondary"
+                        style={{ padding: "0.35rem 0.65rem", fontSize: "0.78rem" }}
+                        onClick={() => setReassigningStudent(st)}
+                        title="Cambiar a otro entrenador del club"
+                      >
+                        <TablerIcon name="arrows-exchange" size={13} />
+                        Cambiar
                       </button>
                     </td>
                   </tr>
@@ -1488,7 +1517,9 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
         onClose={() => setIsAddStudentModalOpen(false)}
         organizadorId={organizadorId}
         coaches={
-          detail
+          clubCoaches.length > 0
+            ? clubCoaches
+            : detail
             ? [
                 {
                   id: detail.coach.id,
@@ -1506,6 +1537,41 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
           setActionSuccess(
             `Alumno ${studentName} asignado a ${coachName} con ${classes} clases disponibles exitosamente.`
           );
+          void loadData();
+          if (onCoachUpdated) onCoachUpdated();
+        }}
+      />
+
+      {/* Modal: Cambiar Entrenador del Alumno */}
+      <ReassignCoachModal
+        open={Boolean(reassigningStudent)}
+        onClose={() => setReassigningStudent(null)}
+        organizadorId={organizadorId}
+        student={
+          reassigningStudent
+            ? {
+                id: reassigningStudent.jugadorId,
+                nombre: reassigningStudent.nombre,
+                rivieraId: reassigningStudent.rivieraId,
+              }
+            : null
+        }
+        fromCoach={
+          detail
+            ? {
+                id: detail.coach.id,
+                nombre: detail.coach.nombre,
+                coachCode: detail.coach.coachCode,
+              }
+            : null
+        }
+        balanceClasses={reassigningStudent?.balanceClasses ?? 0}
+        coaches={clubCoaches}
+        onSuccess={(studentName, toCoachName, transferredClasses) => {
+          setActionSuccess(
+            `Se transfirió a ${studentName} con ${transferredClasses} clases a ${toCoachName} exitosamente.`
+          );
+          setReassigningStudent(null);
           void loadData();
           if (onCoachUpdated) onCoachUpdated();
         }}

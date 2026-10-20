@@ -1531,9 +1531,11 @@ export async function removeCoachFromClub(
 
 /**
  * Consulta y verifica los datos oficiales de un alumno por su Riviera ID.
+ * Requiere contexto del club organizador y que el club tenga Coaching habilitado.
  * Permite previsualizar su identidad deportiva antes de asignarlo a un entrenador.
  */
 export async function lookupStudentByRivieraId(
+  organizadorId: string,
   rivieraId: string
 ): Promise<StudentLookupResult> {
   const normId = normalizeRivieraIdInput(rivieraId);
@@ -1542,6 +1544,7 @@ export async function lookupStudentByRivieraId(
   }
 
   const { data, error } = await supabase.rpc("lookup_student_by_riviera_id", {
+    p_organizador_id: organizadorId,
     p_riviera_id: normId,
   });
 
@@ -1639,7 +1642,8 @@ export async function reassignStudentCoach(
   studentId: string,
   fromCoachId: string,
   toCoachId: string,
-  notes?: string
+  notes?: string,
+  idempotencyKey?: string
 ): Promise<ReassignStudentCoachResult> {
   const { data, error } = await supabase.rpc("reassign_student_coach", {
     p_organizador_id: organizadorId,
@@ -1647,6 +1651,7 @@ export async function reassignStudentCoach(
     p_from_coach_id: fromCoachId,
     p_to_coach_id: toCoachId,
     p_notes: notes || null,
+    p_idempotency_key: idempotencyKey || null,
   });
 
   if (error) {
