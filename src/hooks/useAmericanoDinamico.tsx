@@ -337,23 +337,37 @@ export function useAmericanoDinamico(
     if (phase !== "registration") return;
     setPlayers((prev) => {
       const prevById = new Map(prev.map((p) => [p.id, p]));
-      return next.map(
-        (p) =>
+      const seenIds = new Set<string>();
+      const result: AmericanoPlayer[] = [];
+      for (const p of next) {
+        if (!p.id || seenIds.has(p.id)) continue;
+        seenIds.add(p.id);
+        result.push(
           prevById.get(p.id) ?? {
             id: p.id,
             name: p.name,
             stats: createEmptyStats(),
           }
-      );
+        );
+      }
+      return result;
     });
   };
 
   const startTournament = useCallback(
     async (totalRounds: number, courts: number = 1): Promise<boolean> => {
-      if (players.length < 4 || totalRounds < 1) return false;
+      // Deduplicar jugadores antes de iniciar para proteger el generador de rondas
+      const uniquePlayersMap = new Map<string, AmericanoPlayer>();
+      for (const p of players) {
+        if (p.id && !uniquePlayersMap.has(p.id)) {
+          uniquePlayersMap.set(p.id, p);
+        }
+      }
+      const uniquePlayers = Array.from(uniquePlayersMap.values());
+      if (uniquePlayers.length < 4 || totalRounds < 1) return false;
       const safeCourts = Math.max(1, Math.floor(courts) || 1);
 
-      const seededPlayers = players.map((p) => ({
+      const seededPlayers = uniquePlayers.map((p) => ({
         ...p,
         stats: createEmptyStats(),
       }));

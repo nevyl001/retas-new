@@ -441,6 +441,25 @@ describe("validateAmericanoRound", () => {
     const result = validateAmericanoRound(round, ps, pm, rm);
     expect(result.ok).toBe(false);
   });
+
+  test("generateAmericanoRound throws if duplicate player IDs exist in input", () => {
+    const ps = makePlayers(4);
+    const pm = initializeMatrix(ps);
+    const rm = initializeMatrix(ps);
+    const duplicates = [ps[0], ps[1], ps[2], { ...ps[0], name: "Duplicate" }];
+
+    expect(() =>
+      generateAmericanoRound({
+        allPlayers: duplicates,
+        roundNumber: 1,
+        totalRounds: 3,
+        courts: 1,
+        partnerMatrix: pm,
+        rivalMatrix: rm,
+        lastBenchPlayerIds: new Set(),
+      })
+    ).toThrow(/jugador duplicado/);
+  });
 });
 
 describe("computeAmericanoLayoutMetrics", () => {

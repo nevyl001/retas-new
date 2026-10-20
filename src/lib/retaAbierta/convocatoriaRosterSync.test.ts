@@ -1,6 +1,7 @@
 import type { OpenRegistrationOrganizerEntry } from "./types";
 import {
   buildRosterFromConvocatoriaEntries,
+  dedupeAmericanoRoster,
   mergeConvocatoriaIntoRoster,
   sameConvocatoriaRoster,
 } from "./convocatoriaRosterSync";
@@ -148,5 +149,80 @@ describe("mergeConvocatoriaIntoRoster", () => {
       [p("conv1")]
     );
     expect(merged.map((x) => x.id)).toEqual(["conv1", "manual1"]);
+  });
+
+  it("elimina duplicados cuando current contiene IDs foráneos y confirmed contiene locales", () => {
+    const pool = [
+      { id: "local-1", name: "Humberto Escalante", email: "", created_at: "", riviera_id: "RIV-00000384" },
+      { id: "local-2", name: "Javier Muñoz", email: "", created_at: "", riviera_id: "RIV-00000569" },
+    ];
+    // current has foreign ID for Humberto, and local for Javier
+    const current = [
+      { id: "foreign-humberto", name: "Humberto Escalante" },
+      { id: "local-2", name: "Javier Muñoz" },
+    ];
+    // confirmed has local ID for Humberto
+    const confirmed = [
+      { id: "local-1", name: "Humberto Escalante" },
+      { id: "local-2", name: "Javier Muñoz" },
+    ];
+    const merged = mergeConvocatoriaIntoRoster(current, null, confirmed, pool);
+    expect(merged).toHaveLength(2);
+    expect(merged.map((m) => m.id)).toEqual(["local-2", "local-1"]);
+  });
+});
+
+describe("dedupeAmericanoRoster", () => {
+  it("reduce exactamente 18 registros (10 jugadores con 8 duplicados foráneos) a 10 jugadores locales", () => {
+    const pool = [
+      { id: "loc-javier", name: "Javier Muñoz", email: "", created_at: "", riviera_id: "RIV-00000569" },
+      { id: "loc-humberto", name: "Humberto Escalante", email: "", created_at: "", riviera_id: "RIV-00000384" },
+      { id: "loc-oswaldo", name: "Oswaldo M", email: "", created_at: "", riviera_id: "RIV-00000050" },
+      { id: "loc-luis", name: "Luis Osorio", email: "", created_at: "", riviera_id: "RIV-00000314" },
+      { id: "loc-fernando", name: "Fernando Q", email: "", created_at: "", riviera_id: "RIV-00000357" },
+      { id: "loc-quique", name: "Quique Lara", email: "", created_at: "", riviera_id: "RIV-00000324" },
+      { id: "loc-yusuke", name: "Yusuke", email: "", created_at: "", riviera_id: "RIV-00000046" },
+      { id: "loc-roman", name: "Roman León", email: "", created_at: "", riviera_id: "RIV-00000410" },
+      { id: "loc-roberto", name: "Roberto A", email: "", created_at: "", riviera_id: "RIV-00000032" },
+      { id: "loc-dany", name: "Dany Nash", email: "", created_at: "", riviera_id: "RIV-00000321" },
+    ];
+
+    // 10 foreign/mixed + 8 local = 18 records exactly like in the incident
+    const eighteenRecords = [
+      { id: "loc-javier", name: "Javier Muñoz" },
+      { id: "for-humberto", name: "Humberto Escalante" },
+      { id: "for-oswaldo", name: "Oswaldo M" },
+      { id: "loc-luis", name: "Luis Osorio" },
+      { id: "for-fernando", name: "Fernando Q" },
+      { id: "for-quique", name: "Quique Lara" },
+      { id: "for-yusuke", name: "Yusuke" },
+      { id: "for-roman", name: "Roman León" },
+      { id: "for-roberto", name: "Roberto A" },
+      { id: "for-dany", name: "Dany Nash" },
+      { id: "loc-humberto", name: "Humberto Escalante" },
+      { id: "loc-oswaldo", name: "Oswaldo M" },
+      { id: "loc-fernando", name: "Fernando Q" },
+      { id: "loc-quique", name: "Quique Lara" },
+      { id: "loc-yusuke", name: "Yusuke" },
+      { id: "loc-roman", name: "Roman León" },
+      { id: "loc-roberto", name: "Roberto A" },
+      { id: "loc-dany", name: "Dany Nash" },
+    ];
+
+    const deduped = dedupeAmericanoRoster(eighteenRecords, pool);
+    expect(deduped).toHaveLength(10);
+    // All IDs must be the canonical local pool IDs
+    expect(deduped.map((d) => d.id)).toEqual([
+      "loc-javier",
+      "loc-humberto",
+      "loc-oswaldo",
+      "loc-luis",
+      "loc-fernando",
+      "loc-quique",
+      "loc-yusuke",
+      "loc-roman",
+      "loc-roberto",
+      "loc-dany",
+    ]);
   });
 });

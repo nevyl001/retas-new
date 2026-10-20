@@ -624,6 +624,16 @@ export function generateAmericanoRound(
     throw new Error("Americano requiere al menos 4 jugadores.");
   }
 
+  const seenPlayerIds = new Set<string>();
+  for (const p of allPlayers) {
+    if (seenPlayerIds.has(p.id)) {
+      throw new Error(
+        `Americano: jugador duplicado en lista de entrada (${p.name || p.id}).`
+      );
+    }
+    seenPlayerIds.add(p.id);
+  }
+
   const rivalMatrix =
     params.rivalMatrix ??
     buildMatricesFromScoredRounds(allPlayers, scoredRounds).rivalMatrix;

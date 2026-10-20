@@ -79,6 +79,8 @@ export type LegacyPlayerContact = Player & {
   foto_url?: string | null;
   /** Solo presentación/copia en cards del pool — no altera matching/permisos. */
   riviera_id?: string | null;
+  /** UUID canónico del perfil en riviera_jugadores — para matching seguro sin duplicados. */
+  riviera_jugador_id?: string | null;
 };
 
 /** Datos de contacto del registro Riviera sobre la fila legacy (para torneos/retas). */
@@ -112,6 +114,7 @@ export function mergeRivieraContactIntoLegacyPlayer(
     categoria: rj.categoria ?? legacyRow.categoria ?? null,
     foto_url: rivieraFoto ?? legacyRow.foto_url ?? null,
     riviera_id: rivieraId ?? legacyRow.riviera_id ?? null,
+    riviera_jugador_id: rj.id ?? legacyRow.riviera_jugador_id ?? null,
   };
 }
 
@@ -191,6 +194,12 @@ export async function buildLegacyPlayersFromRivieraRegistry(
     skipCareerEnrich: true,
   });
 
+  const { fetchRivieraIdMapForJugadorIds } = await import("./rivieraIdDisplay");
+  const rivieraIdMap = await fetchRivieraIdMapForJugadorIds(
+    registry.map((row) => row.id),
+    { ensureLimit: 0 }
+  );
+
   const linkedIds = registry
     .map((row) => row.legacy_player_id?.trim())
     .filter((id): id is string => Boolean(id));
@@ -199,7 +208,8 @@ export async function buildLegacyPlayersFromRivieraRegistry(
   const seenLegacyIds = new Set<string>();
   const resolved = await Promise.all(
     registry.map(async (row) => {
-      let canonical = row;
+      const rid = rivieraIdMap.get(row.id);
+      let canonical = rid ? { ...row, riviera_id: rid } : row;
       let legacy: Player | null = null;
 
       if (canonical.legacy_player_id) {

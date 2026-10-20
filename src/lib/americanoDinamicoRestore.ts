@@ -143,13 +143,18 @@ export function applyAmericanoSnapshotToState(
       snap.tournamentPhase !== "playing" &&
       snap.tournamentPhase !== "finished"
     ) {
-      setPlayers(
-        snap.ranking.map((p) => ({
+      const seenIds = new Set<string>();
+      const uniquePlayers: AmericanoPlayer[] = [];
+      for (const p of snap.ranking) {
+        if (!p.id || seenIds.has(p.id)) continue;
+        seenIds.add(p.id);
+        uniquePlayers.push({
           id: p.id,
           name: p.name,
           stats: { ...createEmptyStats(), ...p.stats },
-        }))
-      );
+        });
+      }
+      setPlayers(uniquePlayers);
       setRounds([]);
       setCurrentRoundIndex(0);
       setPhase("registration");

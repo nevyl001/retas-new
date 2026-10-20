@@ -26,6 +26,7 @@ import {
 } from "../../lib/americanoDinamicoSync";
 import {
   buildRosterFromConvocatoriaEntries,
+  dedupeAmericanoRoster,
   mergeConvocatoriaIntoRoster,
   sameConvocatoriaRoster,
 } from "../../lib/retaAbierta/convocatoriaRosterSync";
@@ -240,22 +241,60 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
 
   const selectedPlayers = useMemo<Player[]>(() => {
     const byId = new Map(availablePlayers.map((p) => [p.id, p]));
-    return players.map(
-      (p) =>
-        byId.get(p.id) ?? {
-          id: p.id,
-          name: p.name,
-          email: "",
-          created_at: "",
-        }
+    const byRivieraId = new Map(
+      availablePlayers
+        .filter((p) => (p as { riviera_id?: string | null }).riviera_id)
+        .map((p) => [(p as { riviera_id?: string | null }).riviera_id!, p])
     );
+    const byNormName = new Map<string, Player>();
+    const nameCounts = new Map<string, number>();
+    availablePlayers.forEach((p) => {
+      const n = p.name.trim().toLowerCase();
+      nameCounts.set(n, (nameCounts.get(n) ?? 0) + 1);
+      if (!byNormName.has(n)) byNormName.set(n, p);
+    });
+
+    const seenKeys = new Set<string>();
+    const out: Player[] = [];
+
+    for (const p of players) {
+      const pRivieraId = (p as { riviera_id?: string | null }).riviera_id?.trim();
+      const match =
+        byId.get(p.id) ??
+        (pRivieraId ? byRivieraId.get(pRivieraId) : undefined) ??
+        (nameCounts.get(p.name.trim().toLowerCase()) === 1
+          ? byNormName.get(p.name.trim().toLowerCase())
+          : undefined);
+
+      const resolved = match ?? {
+        id: p.id,
+        name: p.name,
+        email: "",
+        created_at: "",
+      };
+
+      const key = (resolved as { riviera_id?: string | null }).riviera_id
+        ? `riv:${(resolved as { riviera_id?: string | null }).riviera_id}`
+        : `id:${resolved.id}`;
+
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        out.push(resolved);
+      }
+    }
+
+    return out;
   }, [players, availablePlayers]);
 
   const handlePlayerSelect = useCallback(
     (next: Player[]) => {
-      onSyncPlayers(next.map((p) => ({ id: p.id, name: p.name })));
+      const deduped = dedupeAmericanoRoster(
+        next.map((p) => ({ id: p.id, name: p.name })),
+        availablePlayers
+      );
+      onSyncPlayers(deduped);
     },
-    [onSyncPlayers]
+    [onSyncPlayers, availablePlayers]
   );
 
   const refreshConvSummary = useCallback(async () => {
@@ -307,7 +346,12 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         if (roster.length > 0 || (previous && previous.size > 0)) {
           // Los jugadores sumados a mano se conservan: solo cambian los de la
           // convocatoria (nuevos confirmados / cancelados).
-          const merged = mergeConvocatoriaIntoRoster(current, previous, roster);
+          const merged = mergeConvocatoriaIntoRoster(
+            current,
+            previous,
+            roster,
+            availablePlayers
+          );
           convConfirmedIdsRef.current = new Set(roster.map((p) => p.id));
           if (!sameConvocatoriaRoster(merged, current)) {
             onSyncPlayers(merged);
@@ -456,11 +500,17 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
                     type="button"
                     className="americano-registration__roster-remove"
                     aria-label={`Quitar a ${player.name}`}
-                    onClick={() =>
+                    onClick={() => {
+                      const toRemoveRid = (player as { riviera_id?: string | null }).riviera_id;
                       handlePlayerSelect(
-                        selectedPlayers.filter((p) => p.id !== player.id)
-                      )
-                    }
+                        selectedPlayers.filter(
+                          (p) =>
+                            p.id !== player.id &&
+                            (!toRemoveRid ||
+                              (p as { riviera_id?: string | null }).riviera_id !== toRemoveRid)
+                        )
+                      );
+                    }}
                   >
                     ×
                   </button>

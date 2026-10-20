@@ -143,9 +143,24 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
 
     if (onPlayerSelect) {
       if (allowMultipleSelection) {
-        const isSelected = selectedPlayers.some((p) => p.id === player.id);
+        const pRivieraId = (player as PoolPlayer).riviera_id?.trim();
+        const isSelected = selectedPlayers.some(
+          (p) =>
+            p.id === player.id ||
+            (Boolean(pRivieraId && (p as PoolPlayer).riviera_id) &&
+              (p as PoolPlayer).riviera_id === pRivieraId)
+        );
         if (isSelected) {
-          onPlayerSelect(selectedPlayers.filter((p) => p.id !== player.id));
+          onPlayerSelect(
+            selectedPlayers.filter(
+              (p) =>
+                !(
+                  p.id === player.id ||
+                  (Boolean(pRivieraId && (p as PoolPlayer).riviera_id) &&
+                    (p as PoolPlayer).riviera_id === pRivieraId)
+                )
+            )
+          );
         } else {
           onPlayerSelect([...selectedPlayers, player]);
         }
@@ -274,7 +289,10 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
                     ? poolPlayer.riviera_id.trim()
                     : null;
                 const isSelected = selectedPlayers.some(
-                  (p) => p.id === player.id
+                  (p) =>
+                    p.id === player.id ||
+                    (Boolean(rivieraId && (p as PoolPlayer).riviera_id) &&
+                      (p as PoolPlayer).riviera_id === rivieraId)
                 );
                 const isInPair = playersInPairs.includes(player.id);
                 const statusLabel = isInPair
