@@ -225,18 +225,23 @@ describe("CoachingClubPage UX/UI Redesign", () => {
     expect(badgeTexts).toContain("Inactivo");
   });
 
-  it("renders Jugadores tab with canonical Riviera ID form and player link cards", async () => {
+  it("renders Jugadores tab with information banner, player cards and class assignment actions", async () => {
     await act(async () => {
       root.render(<CoachingClubPage pathname="/coaching/jugadores" />);
     });
 
-    const input = container.querySelector("input[placeholder='RIV-00000001']");
-    expect(input).not.toBeNull();
+    expect(container.textContent).toContain("Control y asignación de clases");
+    expect(container.textContent).toContain(
+      "Los coaches vinculan directamente a sus alumnos mediante su Riviera ID"
+    );
 
     const linkTitles = container.querySelectorAll(".coaching-card__title");
     expect(linkTitles.length).toBe(2);
     expect(linkTitles[0].textContent).toBe("Carlos Alumno");
     expect(linkTitles[1].textContent).toBe("Laura Pausada");
+
+    // Asignar clases button
+    expect(container.textContent).toContain("Asignar clases");
 
     // Badges
     const badges = container.querySelectorAll(".coaching-badge");

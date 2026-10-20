@@ -832,5 +832,134 @@ describe("coachingApi - Entrega B", () => {
         "El alumno no tiene clases disponibles"
       );
     });
+
+    it("recordCoachClassSession reuses the SAME idempotency key on transient network failure, returning confirmed discount without duplicate charge", async () => {
+      // Intento 1: El servidor procesó el descuento, pero la respuesta se perdió por un fallo de red transitorio
+      (supabase.rpc as jest.Mock).mockRejectedValueOnce(
+        new Error("Failed to fetch")
+      );
+
+      // Intento 2: El reintento con la misma clave recibe la respuesta idempotente
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          idempotent: true,
+          session_id: "sess-idem-123",
+          remaining_balance: 9,
+          total_classes_given: 1,
+          message: "Operación idempotente: esta clase ya había sido registrada previamente.",
+        },
+        error: null,
+      });
+
+      const res = await recordCoachClassSession("rel-123", "Clase de práctica");
+
+      expect(supabase.rpc).toHaveBeenCalledTimes(2);
+
+      // Ambas llamadas deben haber usado exactamente la misma clave de idempotencia
+      const call1Args = (supabase.rpc as jest.Mock).mock.calls[0][1];
+      const call2Args = (supabase.rpc as jest.Mock).mock.calls[1][1];
+
+      expect(call1Args.p_idempotency_key).toBeDefined();
+      expect(call1Args.p_idempotency_key).toBe(call2Args.p_idempotency_key);
+
+      // Comprobar que no hay duplicación y devuelve el saldo descontado
+      expect(res.remainingBalance).toBe(9);
+      expect(res.totalClassesGiven).toBe(1);
+      expect(res.sessionId).toBe("sess-idem-123");
+      expect(res.idempotent).toBe(true);
+    });
+
+    it("recordCoachClassSession respects explicit idempotencyKey provided by the caller across UI retries", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          session_id: "sess-custom-123",
+          remaining_balance: 4,
+          total_classes_given: 6,
+        },
+        error: null,
+      });
+
+      const explicitKey = "session-custom-ui-retry-001";
+      const res = await recordCoachClassSession(
+        "rel-123",
+        "Clase volea",
+        undefined,
+        explicitKey
+      );
+
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        "record_coach_class_session",
+        expect.objectContaining({
+          p_idempotency_key: explicitKey,
+        })
+      );
+      expect(res.sessionId).toBe("sess-custom-123");
+    });
+
+    it("assignCoachClasses respects explicit idempotencyKey provided by the caller across UI retries", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: { ok: true, new_balance: 20, assigned_classes: 10 },
+        error: null,
+      });
+
+      (supabase.from as jest.Mock).mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      });
+
+      const explicitKey = "assign-custom-ui-retry-001";
+      await assignCoachClasses(
+        "org-1",
+        "rel-123",
+        10,
+        "Recarga de 10",
+        explicitKey
+      );
+
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        "assign_coach_classes",
+        expect.objectContaining({
+          p_idempotency_key: explicitKey,
+        })
+      );
+    });
+
+    it("fetchClubClassLedger throws clear error on permission or database failure instead of masking as empty list", async () => {
+      (supabase.from as jest.Mock).mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({
+              data: null,
+              error: { message: "permission denied for table coach_class_ledger" },
+            }),
+          }),
+        }),
+      });
+
+      await expect(fetchClubClassLedger("org-padelito")).rejects.toThrow(
+        "No se pudo cargar el historial de clases del club: permission denied for table coach_class_ledger"
+      );
+    });
+
+    it("fetchCoachAssignedStudents throws clear error on failure instead of masking as empty list", async () => {
+      const mockResult = Promise.resolve({
+        data: null,
+        error: { message: "permission denied for table coach_player_relationships" },
+      });
+      const builder: any = {
+        eq: jest.fn().mockImplementation(() => builder),
+        neq: jest.fn().mockImplementation(() => mockResult),
+      };
+      (supabase.from as jest.Mock).mockReturnValue({
+        select: jest.fn().mockReturnValue(builder),
+      });
+
+      await expect(fetchCoachAssignedStudents("coach-1", "org-1")).rejects.toThrow(
+        "No se pudieron cargar los alumnos vinculados: permission denied for table coach_player_relationships"
+      );
+    });
   });
 });

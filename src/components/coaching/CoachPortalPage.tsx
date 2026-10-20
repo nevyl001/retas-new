@@ -6,6 +6,7 @@ import {
   fetchCoachAssignedStudents,
   linkPlayerByRivieraId,
   recordCoachClassSession,
+  generateCoachingIdempotencyKey,
 } from "../../lib/coaching/coachingApi";
 import type { CurrentCoachProfile, CoachingPlayerLink } from "../../lib/coaching/types";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
@@ -24,19 +25,27 @@ export const CoachPortalPage: React.FC = () => {
 
   const [students, setStudents] = useState<CoachingPlayerLink[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
+  const [studentsError, setStudentsError] = useState<string | null>(null);
   const [rivieraIdInput, setRivieraIdInput] = useState("");
   const [linkingStudent, setLinkingStudent] = useState(false);
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [sessionNotes, setSessionNotes] = useState("");
+  const [sessionKeys, setSessionKeys] = useState<Record<string, string>>({});
 
   const loadStudents = React.useCallback(async (coachId: string, clubId: string) => {
     if (!coachId || !clubId) return;
     setLoadingStudents(true);
+    setStudentsError(null);
     try {
       const data = await fetchCoachAssignedStudents(coachId, clubId);
       setStudents(data);
     } catch (err) {
       console.error("[coaching] error loading students", err);
+      setStudentsError(
+        err instanceof Error
+          ? err.message
+          : "No se pudieron cargar los alumnos vinculados."
+      );
     } finally {
       setLoadingStudents(false);
     }
@@ -128,15 +137,43 @@ export const CoachPortalPage: React.FC = () => {
     setRecordingId(relationshipId);
     setActionError(null);
     setSuccessMessage(null);
+
+    // Conservar clave de idempotencia para la misma operación en caso de reintento
+    const key =
+      sessionKeys[relationshipId] ||
+      generateCoachingIdempotencyKey("session");
+    if (!sessionKeys[relationshipId]) {
+      setSessionKeys((prev) => ({ ...prev, [relationshipId]: key }));
+    }
+
     try {
-      const res = await recordCoachClassSession(relationshipId, sessionNotes.trim() || undefined);
-      setSuccessMessage(`¡Clase registrada exitosamente! Saldo restante: ${res.remainingBalance} clase(s).`);
+      const res = await recordCoachClassSession(
+        relationshipId,
+        sessionNotes.trim() || undefined,
+        undefined,
+        key
+      );
+
+      // Limpiar clave únicamente al confirmar con éxito
+      setSessionKeys((prev) => {
+        const next = { ...prev };
+        delete next[relationshipId];
+        return next;
+      });
+
+      setSuccessMessage(
+        res.idempotent
+          ? `Operación ya registrada previamente. Saldo disponible: ${res.remainingBalance} clase(s).`
+          : `¡Clase registrada exitosamente! Saldo restante: ${res.remainingBalance} clase(s).`
+      );
       setSessionNotes("");
       if (profile && selectedClubId) {
         await loadStudents(profile.id, selectedClubId);
       }
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Error al registrar clase");
+      setActionError(
+        err instanceof Error ? err.message : "Error al registrar clase"
+      );
     } finally {
       setRecordingId(null);
     }
@@ -513,6 +550,38 @@ export const CoachPortalPage: React.FC = () => {
 
         {loadingStudents ? (
           <p className="coaching-muted">Cargando alumnos y saldos…</p>
+        ) : studentsError ? (
+          <div
+            className="coaching-panel"
+            style={{
+              padding: "0.75rem 1rem",
+              background: "rgba(239, 68, 68, 0.12)",
+              border: "1px solid rgba(239, 68, 68, 0.35)",
+              borderRadius: "8px",
+              color: "#fca5a5",
+              marginBottom: "1rem",
+              fontSize: "0.85rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "0.5rem",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <TablerIcon name="alert-circle" size={18} />
+              <span>{studentsError}</span>
+            </div>
+            <button
+              type="button"
+              className="coaching-btn coaching-btn--secondary"
+              style={{ fontSize: "0.8rem", padding: "0.3rem 0.6rem" }}
+              onClick={() =>
+                profile && selectedClubId && void loadStudents(profile.id, selectedClubId)
+              }
+            >
+              Reintentar
+            </button>
+          </div>
         ) : students.length === 0 ? (
           <div className="coaching-empty-card">
             <TablerIcon name="users" size={36} className="coaching-empty-icon" />

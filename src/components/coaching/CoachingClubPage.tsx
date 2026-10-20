@@ -4,13 +4,13 @@ import { useBranding } from "../../club-experience";
 import {
   inviteClubCoach,
   linkExistingCoach,
-  linkPlayerByRivieraId,
   loadCoachingClubSnapshot,
   searchCoachForInvitation,
   updateCoachMembershipStatus,
   updateLinkStatus,
   assignCoachClasses,
   fetchClubClassLedger,
+  generateCoachingIdempotencyKey,
 } from "../../lib/coaching/coachingApi";
 import {
   COACH_ESPECIALIDADES_ORDER,
@@ -46,7 +46,6 @@ import {
   isValidEmailFormat,
   normalizeEmailInput,
 } from "../../lib/rivieraJugadores/emailValidation";
-import { normalizeRivieraIdInput } from "../../lib/rivieraJugadores/playerMembership";
 import { TablerIcon } from "../ui/TablerIcon";
 import { Modal } from "../ui/Modal";
 import { navigateToAppHome } from "../../lib/appRouting";
@@ -95,17 +94,25 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   const [assigningLink, setAssigningLink] = useState<CoachingPlayerLink | null>(null);
   const [classCountInput, setClassCountInput] = useState<number>(10);
   const [classNotesInput, setClassNotesInput] = useState<string>("");
+  const [assignIdempotencyKey, setAssignIdempotencyKey] = useState<string>("");
   const [ledgerEntries, setLedgerEntries] = useState<CoachClassLedgerEntry[]>([]);
   const [loadingLedger, setLoadingLedger] = useState(false);
+  const [ledgerError, setLedgerError] = useState<string | null>(null);
 
   const loadLedger = useCallback(async (orgId: string) => {
     if (!orgId) return;
     setLoadingLedger(true);
+    setLedgerError(null);
     try {
       const data = await fetchClubClassLedger(orgId);
       setLedgerEntries(data);
     } catch (e) {
       console.error("[coaching] error loading ledger", e);
+      setLedgerError(
+        e instanceof Error
+          ? e.message
+          : "No se pudo cargar el historial de clases del club."
+      );
     } finally {
       setLoadingLedger(false);
     }
@@ -127,12 +134,14 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
         organizadorId,
         assigningLink.id,
         classCountInput,
-        classNotesInput.trim() || undefined
+        classNotesInput.trim() || undefined,
+        assignIdempotencyKey || undefined
       );
       setSnapshot(snap);
       setSuccessMessage(`Se asignaron ${classCountInput} clases a ${assigningLink.jugadorNombre} exitosamente.`);
       setAssigningLink(null);
       setClassNotesInput("");
+      setAssignIdempotencyKey("");
       await loadLedger(organizadorId);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Error al asignar clases.");
@@ -166,9 +175,6 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   const [coachSearchError, setCoachSearchError] = useState<string | null>(null);
   const [coachSearchLoading, setCoachSearchLoading] = useState(false);
 
-  // Link by Riviera ID
-  const [selectedCoachId, setSelectedCoachId] = useState("");
-  const [rivieraIdInput, setRivieraIdInput] = useState("");
 
   const refresh = useCallback(async () => {
     if (!organizadorId) {
@@ -181,7 +187,6 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     try {
       const data = await loadCoachingClubSnapshot(organizadorId);
       setSnapshot(data);
-      setSelectedCoachId((prev) => prev || data.coaches[0]?.id || "");
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar Coaching");
     } finally {
@@ -253,9 +258,6 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
         especialidades: coachEspecialidades,
       });
       setSnapshot(res.snapshot);
-      if (res.snapshot.coaches[0]) {
-        setSelectedCoachId(res.snapshot.coaches[0].id);
-      }
       resetCoachForm();
       setIsCoachModalOpen(false);
       setSuccessMessage(
@@ -353,35 +355,6 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     }
   };
 
-  const handleLinkPlayer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!organizadorId || !selectedCoachId) return;
-    const normalized = normalizeRivieraIdInput(rivieraIdInput);
-    if (!normalized) {
-      setFormError(
-        "Formato inválido. Usa el Riviera ID exacto, por ejemplo RIV-00000001."
-      );
-      return;
-    }
-    setBusy(true);
-    setFormError(null);
-    try {
-      const next = await linkPlayerByRivieraId(
-        organizadorId,
-        selectedCoachId,
-        normalized
-      );
-      setSnapshot(next);
-      setRivieraIdInput("");
-      setSuccessMessage(`Alumno con Riviera ID ${normalized} vinculado.`);
-    } catch (err) {
-      setFormError(
-        err instanceof Error ? err.message : "No se pudo vincular el jugador."
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const handleStatus = async (
     linkId: string,
@@ -701,12 +674,11 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                         type="button"
                         className="coaching-btn coaching-btn--secondary"
                         onClick={() => {
-                          setSelectedCoachId(c.id);
                           navigateCoaching(coachingTabPath("jugadores"));
                         }}
                       >
-                        <TablerIcon name="user-plus" size={15} />
-                        Vincular alumno
+                        <TablerIcon name="users" size={15} />
+                        Ver alumnos
                       </button>
                     ) : null}
                     {c.membershipStatus === "ACTIVE" ? (
@@ -1110,55 +1082,55 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
             </div>
           </div>
 
-          <div className="coaching-link-form-card">
-            <form className="coaching-link-form" onSubmit={handleLinkPlayer}>
-              <label className="coaching-field">
-                <span>Coach asignado *</span>
-                <select
-                  value={selectedCoachId}
-                  onChange={(e) => setSelectedCoachId(e.target.value)}
-                  disabled={busy || !snapshot?.coaches.length}
-                >
-                  {(snapshot?.coaches ?? []).map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nombre} ({c.coachCode || "RIV-C"})
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="coaching-field">
-                <span>Riviera ID del alumno *</span>
-                <input
-                  value={rivieraIdInput}
-                  onChange={(e) =>
-                    setRivieraIdInput(e.target.value.toUpperCase())
-                  }
-                  placeholder="RIV-00000001"
-                  autoCapitalize="characters"
-                  spellCheck={false}
-                  disabled={busy}
-                />
-              </label>
-
-              <button
-                type="submit"
-                className="coaching-btn coaching-btn--primary"
-                disabled={busy || !rivieraIdInput.trim() || !selectedCoachId}
+          <div
+            className="coaching-panel"
+            style={{
+              padding: "1rem 1.25rem",
+              background: "rgba(59, 130, 246, 0.08)",
+              border: "1px solid rgba(59, 130, 246, 0.25)",
+              borderRadius: "10px",
+              marginBottom: "1.5rem",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "0.75rem",
+            }}
+          >
+            <span
+              style={{
+                color: "var(--ro-brand, #38bdf8)",
+                flexShrink: 0,
+                marginTop: "2px",
+                display: "inline-flex",
+              }}
+            >
+              <TablerIcon name="info-circle" size={20} />
+            </span>
+            <div style={{ fontSize: "0.85rem", lineHeight: 1.5 }}>
+              <strong
+                style={{
+                  color: "#fff",
+                  display: "block",
+                  marginBottom: "0.25rem",
+                }}
               >
-                <TablerIcon name="link" size={16} />
-                {busy ? "Vinculando…" : "Vincular alumno"}
-              </button>
-            </form>
+                Control y asignación de clases
+              </strong>
+              Los coaches vinculan directamente a sus alumnos mediante su{" "}
+              <strong>Riviera ID</strong> desde su espacio personal. Como
+              administrador del club, aquí puedes supervisar a los alumnos
+              vinculados a cada coach, asignar paquetes de clases disponibles y
+              auditar el registro histórico de sesiones.
+            </div>
           </div>
 
           {(snapshot?.links ?? []).length === 0 ? (
             <div className="coaching-empty-card">
               <TablerIcon name="users" size={44} className="coaching-empty-icon" />
-              <h3>Sin alumnos vinculados</h3>
+              <h3>Sin alumnos vinculados en la academia</h3>
               <p>
-                Ingresa el Riviera ID de un jugador para vincularlo a uno de los
-                coaches de la academia.
+                Tus coaches podrán vincular a sus alumnos por Riviera ID desde su
+                portal personal. Una vez vinculados, podrás asignarles paquetes
+                de clases aquí.
               </p>
             </div>
           ) : (
@@ -1218,6 +1190,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                         setAssigningLink(l);
                         setClassCountInput(10);
                         setClassNotesInput("");
+                        setAssignIdempotencyKey(generateCoachingIdempotencyKey("assign"));
                       }}
                     >
                       <TablerIcon name="plus" size={14} />
@@ -1270,6 +1243,36 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
 
             {loadingLedger ? (
               <p className="coaching-muted">Cargando historial…</p>
+            ) : ledgerError ? (
+              <div
+                className="coaching-panel"
+                style={{
+                  padding: "0.75rem 1rem",
+                  background: "rgba(239, 68, 68, 0.12)",
+                  border: "1px solid rgba(239, 68, 68, 0.35)",
+                  borderRadius: "8px",
+                  color: "#fca5a5",
+                  marginBottom: "1rem",
+                  fontSize: "0.85rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "0.5rem",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <TablerIcon name="alert-circle" size={18} />
+                  <span>{ledgerError}</span>
+                </div>
+                <button
+                  type="button"
+                  className="coaching-btn coaching-btn--secondary"
+                  style={{ fontSize: "0.8rem", padding: "0.3rem 0.6rem" }}
+                  onClick={() => organizadorId && void loadLedger(organizadorId)}
+                >
+                  Reintentar
+                </button>
+              </div>
             ) : ledgerEntries.length === 0 ? (
               <p className="coaching-muted">Aún no hay movimientos de clases registrados en el club.</p>
             ) : (

@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient";
+import { retryTransient } from "../errors/retryTransient";
 import { normalizeRivieraIdInput } from "../rivieraJugadores/playerMembership";
 import { fetchRivieraIdMapForJugadorIds } from "../rivieraJugadores/rivieraIdDisplay";
 import type { RivieraJugadorCategoria } from "../rivieraJugadores/types";
@@ -105,7 +106,14 @@ export async function loadCoachingClubSnapshot(
         .in("coach_id", coachIds)
         .neq("status", "ENDED");
 
-      if (!relError && rels && rels.length > 0) {
+      if (relError) {
+        console.error("[coaching] relationships load error", relError.message);
+        throw new Error(
+          "No se pudieron cargar los alumnos del club: " + relError.message
+        );
+      }
+
+      if (rels && rels.length > 0) {
         // Resolver los Riviera IDs canónicos oficiales
         const jugadorIds = rels
           .map((r) => String(r.jugador_id))
@@ -113,10 +121,17 @@ export async function loadCoachingClubSnapshot(
         const rivieraIdMap = await fetchRivieraIdMapForJugadorIds(jugadorIds);
 
         // Consultar saldos de clases por relación
-        const { data: balances } = await supabase
+        const { data: balances, error: balanceError } = await supabase
           .from("coach_player_class_balances")
           .select("relationship_id, balance_classes, total_classes_given")
           .eq("organizador_id", organizadorId);
+
+        if (balanceError) {
+          console.error("[coaching] balances load error", balanceError.message);
+          throw new Error(
+            "No se pudieron cargar los saldos de clases: " + balanceError.message
+          );
+        }
 
         const balanceMap = new Map<string, { balanceClasses: number; totalClassesGiven: number }>();
         for (const b of balances ?? []) {
@@ -512,31 +527,54 @@ export async function linkPlayerByRivieraId(
 }
 
 /**
+ * Genera una clave de idempotencia única para operaciones de coaching.
+ */
+export function generateCoachingIdempotencyKey(
+  prefix: "assign" | "session" = "session"
+): string {
+  const uuid =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  return `${prefix}-${uuid}`;
+}
+
+/**
  * Asigna o agrega clases disponibles a un alumno vinculado.
  * REGLA DEFINITIVA: Exclusivo del club organizador.
+ * Conserva la clave de idempotencia entre reintentos por fallos de red.
  */
 export async function assignCoachClasses(
   organizadorId: string,
   relationshipId: string,
   classCount: number,
-  notas?: string
+  notas?: string,
+  idempotencyKey?: string
 ): Promise<CoachingClubSnapshot> {
-  const idempotencyKey = "assign-" + (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
-  const { data, error } = await supabase.rpc("assign_coach_classes", {
-    p_relationship_id: relationshipId,
-    p_class_count: classCount,
-    p_notas: notas || null,
-    p_idempotency_key: idempotencyKey,
-  });
+  const key = idempotencyKey || generateCoachingIdempotencyKey("assign");
 
-  if (error) {
-    throw new Error("No se pudieron asignar las clases: " + error.message);
-  }
+  await retryTransient(
+    async () => {
+      const { data, error } = await supabase.rpc("assign_coach_classes", {
+        p_relationship_id: relationshipId,
+        p_class_count: classCount,
+        p_notas: notas || null,
+        p_idempotency_key: key,
+      });
 
-  const res = data as { ok?: boolean; error?: string };
-  if (res && res.ok === false) {
-    throw new Error(res.error || "No se pudieron asignar las clases.");
-  }
+      if (error) {
+        throw error;
+      }
+
+      const res = data as { ok?: boolean; error?: string };
+      if (res && res.ok === false) {
+        throw new Error(res.error || "No se pudieron asignar las clases.");
+      }
+
+      return res;
+    },
+    { label: "assignCoachClasses" }
+  );
 
   return loadCoachingClubSnapshot(organizadorId);
 }
@@ -544,53 +582,73 @@ export async function assignCoachClasses(
 /**
  * Registra una clase impartida, descontando exactamente 1 clase del saldo disponible.
  * REGLA DEFINITIVA: Genera sesión real en coach_sessions y vínculo en el ledger.
+ * Conserva la clave de idempotencia entre reintentos para no duplicar deducciones.
  */
 export async function recordCoachClassSession(
   relationshipId: string,
   notas?: string,
-  sessionId?: string
-): Promise<{ ok: boolean; remainingBalance: number; totalClassesGiven: number; sessionId: string }> {
-  const idempotencyKey = "session-" + (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
-  const { data, error } = await supabase.rpc("record_coach_class_session", {
-    p_relationship_id: relationshipId,
-    p_notas: notas || null,
-    p_idempotency_key: idempotencyKey,
-    p_session_id: sessionId || null,
-  });
+  sessionId?: string,
+  idempotencyKey?: string
+): Promise<{
+  ok: boolean;
+  remainingBalance: number;
+  totalClassesGiven: number;
+  sessionId: string;
+  idempotent?: boolean;
+}> {
+  const key = idempotencyKey || generateCoachingIdempotencyKey("session");
 
-  if (error) {
-    throw new Error("No se pudo registrar la clase impartida: " + error.message);
-  }
+  return retryTransient(
+    async () => {
+      const { data, error } = await supabase.rpc("record_coach_class_session", {
+        p_relationship_id: relationshipId,
+        p_notas: notas || null,
+        p_idempotency_key: key,
+        p_session_id: sessionId || null,
+      });
 
-  const res = data as {
-    ok?: boolean;
-    error?: string;
-    remaining_balance?: number;
-    total_classes_given?: number;
-    session_id?: string;
-  };
+      if (error) {
+        throw error;
+      }
 
-  if (!res || res.ok !== true) {
-    throw new Error(res?.error || "No se pudo registrar la clase impartida.");
-  }
+      const res = data as {
+        ok?: boolean;
+        error?: string;
+        remaining_balance?: number;
+        total_classes_given?: number;
+        session_id?: string;
+        idempotent?: boolean;
+      };
 
-  return {
-    ok: true,
-    remainingBalance: Number(res.remaining_balance ?? 0),
-    totalClassesGiven: Number(res.total_classes_given ?? 0),
-    sessionId: String(res.session_id ?? ""),
-  };
+      if (!res || res.ok !== true) {
+        throw new Error(
+          res?.error || "No se pudo registrar la clase impartida."
+        );
+      }
+
+      return {
+        ok: true,
+        remainingBalance: Number(res.remaining_balance ?? 0),
+        totalClassesGiven: Number(res.total_classes_given ?? 0),
+        sessionId: String(res.session_id ?? ""),
+        idempotent: Boolean(res.idempotent),
+      };
+    },
+    { label: "recordCoachClassSession" }
+  );
 }
 
 /**
  * Consulta el historial de movimientos de clases del club (asignaciones y deducciones).
+ * No oculta errores de permisos o conexión como listas vacías.
  */
 export async function fetchClubClassLedger(
   organizadorId: string
 ): Promise<CoachClassLedgerEntry[]> {
   const { data, error } = await supabase
     .from("coach_class_ledger")
-    .select(`
+    .select(
+      `
       id,
       relationship_id,
       organizador_id,
@@ -605,13 +663,16 @@ export async function fetchClubClassLedger(
       created_at,
       coach:riviera_coaches(nombre),
       jugador:riviera_jugadores(nombre)
-    `)
+    `
+    )
     .eq("organizador_id", organizadorId)
     .order("created_at", { ascending: false });
 
   if (error) {
     console.error("[coaching] error fetching ledger", error);
-    return [];
+    throw new Error(
+      "No se pudo cargar el historial de clases del club: " + error.message
+    );
   }
 
   return (data ?? []).map((row: any) => ({
@@ -634,6 +695,7 @@ export async function fetchClubClassLedger(
 
 /**
  * Consulta los alumnos vinculados a un coach, incluyendo su saldo disponible actual.
+ * No oculta errores de RLS o conectividad como listas vacías.
  */
 export async function fetchCoachAssignedStudents(
   coachId: string,
@@ -641,7 +703,8 @@ export async function fetchCoachAssignedStudents(
 ): Promise<CoachingPlayerLink[]> {
   let query = supabase
     .from("coach_player_relationships")
-    .select(`
+    .select(
+      `
       id,
       coach_id,
       jugador_id,
@@ -650,26 +713,45 @@ export async function fetchCoachAssignedStudents(
       is_primary,
       coach:riviera_coaches(nombre),
       jugador:riviera_jugadores(nombre)
-    `)
-    .eq("coach_id", coachId)
-    .neq("status", "ENDED");
+    `
+    )
+    .eq("coach_id", coachId);
 
   if (organizadorId) {
     query = query.eq("organizador_id", organizadorId);
   }
 
-  const { data: rels, error } = await query;
-  if (error || !rels || rels.length === 0) return [];
+  const { data: rels, error } = await query.neq("status", "ENDED");
+  if (error) {
+    console.error("[coaching] error loading coach player relationships", error);
+    throw new Error(
+      "No se pudieron cargar los alumnos vinculados: " + error.message
+    );
+  }
+  if (!rels || rels.length === 0) return [];
 
   const jugadorIds = rels.map((r: any) => String(r.jugador_id)).filter(Boolean);
   const rivieraIdMap = await fetchRivieraIdMapForJugadorIds(jugadorIds);
 
-  const { data: balances } = await supabase
+  const { data: balances, error: balanceError } = await supabase
     .from("coach_player_class_balances")
     .select("relationship_id, balance_classes, total_classes_given")
-    .in("relationship_id", rels.map((r: any) => r.id));
+    .in(
+      "relationship_id",
+      rels.map((r: any) => r.id)
+    );
 
-  const balanceMap = new Map<string, { balanceClasses: number; totalClassesGiven: number }>();
+  if (balanceError) {
+    console.error("[coaching] error loading class balances", balanceError);
+    throw new Error(
+      "No se pudieron consultar los saldos de clases: " + balanceError.message
+    );
+  }
+
+  const balanceMap = new Map<
+    string,
+    { balanceClasses: number; totalClassesGiven: number }
+  >();
   for (const b of balances ?? []) {
     balanceMap.set(String(b.relationship_id), {
       balanceClasses: Number(b.balance_classes ?? 0),
