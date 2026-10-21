@@ -27,6 +27,10 @@ import type {
   CancelCoachClassResult,
   CoachScheduledSession,
   StudentCoachingUpcomingSession,
+  StudentAccessInfo,
+  StudentAccessStatus,
+  StudentInvitationVerification,
+  StudentActivationResult,
 } from "./types";
 
 function mapEdgeError(data: unknown, fallbackMessage: string): string {
@@ -2013,5 +2017,239 @@ export async function fetchCoachAgenda(params?: {
     balanceClasses: row.balance_classes != null ? Number(row.balance_classes) : undefined,
     createdAt: String(row.created_at ?? ""),
   }));
+}
+
+/**
+ * Consulta el estado de acceso de un alumno para el club.
+ */
+export async function getClubStudentAccessStatus(
+  organizadorId: string,
+  jugadorId: string
+): Promise<StudentAccessInfo> {
+  const { data, error } = await supabase.rpc("get_club_student_access_status", {
+    p_organizador_id: organizadorId,
+    p_jugador_id: jugadorId,
+  });
+
+  if (error) {
+    console.error("[coaching] error getting student access status:", error);
+    throw new Error(error.message);
+  }
+
+  const res = (data as Record<string, any>) || {};
+  if (!res.ok) {
+    return {
+      ok: false,
+      status: "NO_ACCESS",
+      error: res.error || "No se pudo obtener el estado de acceso",
+    };
+  }
+
+  return {
+    ok: true,
+    status: (res.status as StudentAccessStatus) || "NO_ACCESS",
+    email: res.email || null,
+    authUserId: res.auth_user_id || null,
+    isActive: res.is_active !== undefined ? Boolean(res.is_active) : undefined,
+    deactivatedAt: res.deactivated_at || null,
+    createdAt: res.created_at || null,
+    invitedAt: res.invited_at || null,
+    expiresAt: res.expires_at || null,
+    invitationToken: res.invitation_token || null,
+    accountType: res.account_type || null,
+    verificationMethod: res.verification_method || null,
+    message: res.message || undefined,
+  };
+}
+
+/**
+ * Crea o invita a un alumno para su acceso exclusivo a Riviera Coaching.
+ */
+export async function createOrInviteStudentAccess(
+  organizadorId: string,
+  jugadorId: string,
+  studentEmail: string,
+  coachId?: string
+): Promise<StudentAccessInfo> {
+  const { data, error } = await supabase.rpc("create_or_invite_student_access", {
+    p_organizador_id: organizadorId,
+    p_jugador_id: jugadorId,
+    p_student_email: studentEmail.trim().toLowerCase(),
+    p_coach_id: coachId || null,
+  });
+
+  if (error) {
+    console.error("[coaching] error creating student access:", error);
+    throw new Error(error.message);
+  }
+
+  const res = (data as Record<string, any>) || {};
+  if (!res.ok) {
+    throw new Error(res.error || "No se pudo generar el acceso para el alumno.");
+  }
+
+  return {
+    ok: true,
+    status: (res.status as StudentAccessStatus) || "INVITATION_PENDING",
+    email: res.email || studentEmail,
+    authUserId: res.auth_user_id || null,
+    invitationToken: res.invitation_token || null,
+    expiresAt: res.expires_at || null,
+    message: res.message || undefined,
+  };
+}
+
+/**
+ * Reenvía o renueva una invitación para un alumno.
+ */
+export async function resendStudentInvitation(
+  organizadorId: string,
+  jugadorId: string
+): Promise<StudentAccessInfo> {
+  const { data, error } = await supabase.rpc("resend_student_invitation", {
+    p_organizador_id: organizadorId,
+    p_jugador_id: jugadorId,
+  });
+
+  if (error) {
+    console.error("[coaching] error resending student invitation:", error);
+    throw new Error(error.message);
+  }
+
+  const res = (data as Record<string, any>) || {};
+  if (!res.ok) {
+    throw new Error(res.error || "No se pudo reenviar la invitación.");
+  }
+
+  return {
+    ok: true,
+    status: "INVITATION_PENDING",
+    email: res.email || null,
+    invitationToken: res.invitation_token || null,
+    expiresAt: res.expires_at || null,
+    message: res.message || undefined,
+  };
+}
+
+/**
+ * Desactiva el acceso de un alumno a Riviera Coaching sin borrar su Riviera ID ni saldos.
+ */
+export async function deactivateStudentAccess(
+  organizadorId: string,
+  jugadorId: string
+): Promise<{ ok: boolean; status: StudentAccessStatus; message: string }> {
+  const { data, error } = await supabase.rpc("deactivate_student_access", {
+    p_organizador_id: organizadorId,
+    p_jugador_id: jugadorId,
+  });
+
+  if (error) {
+    console.error("[coaching] error deactivating student access:", error);
+    throw new Error(error.message);
+  }
+
+  const res = (data as Record<string, any>) || {};
+  if (!res.ok) {
+    throw new Error(res.error || "No se pudo desactivar el acceso del alumno.");
+  }
+
+  return {
+    ok: true,
+    status: "DEACTIVATED",
+    message: res.message || "Acceso desactivado.",
+  };
+}
+
+/**
+ * Reactiva el acceso de un alumno previamente desactivado.
+ */
+export async function reactivateStudentAccess(
+  organizadorId: string,
+  jugadorId: string
+): Promise<{ ok: boolean; status: StudentAccessStatus; message: string }> {
+  const { data, error } = await supabase.rpc("reactivate_student_access", {
+    p_organizador_id: organizadorId,
+    p_jugador_id: jugadorId,
+  });
+
+  if (error) {
+    console.error("[coaching] error reactivating student access:", error);
+    throw new Error(error.message);
+  }
+
+  const res = (data as Record<string, any>) || {};
+  if (!res.ok) {
+    throw new Error(res.error || "No se pudo reactivar el acceso del alumno.");
+  }
+
+  return {
+    ok: true,
+    status: "ACTIVE",
+    message: res.message || "Acceso reactivado exitosamente.",
+  };
+}
+
+/**
+ * Verifica públicamente un token de invitación antes de activar la cuenta.
+ */
+export async function verifyStudentInvitation(
+  token: string
+): Promise<StudentInvitationVerification> {
+  const { data, error } = await supabase.rpc("verify_student_invitation", {
+    p_token: token.trim(),
+  });
+
+  if (error) {
+    console.error("[coaching] error verifying student invitation:", error);
+    return { ok: false, error: error.message };
+  }
+
+  const res = (data as Record<string, any>) || {};
+  if (!res.ok) {
+    return { ok: false, error: res.error || "Invitación no válida o expirada." };
+  }
+
+  return {
+    ok: true,
+    invitationId: res.invitation_id,
+    email: res.email,
+    studentName: res.student_name,
+    rivieraId: res.riviera_id,
+    clubName: res.club_name,
+    coachName: res.coach_name,
+    expiresAt: res.expires_at,
+  };
+}
+
+/**
+ * Activa la cuenta del alumno con su contraseña definitiva.
+ */
+export async function activateStudentInvitation(
+  token: string,
+  password: string
+): Promise<StudentActivationResult> {
+  const { data, error } = await supabase.rpc("activate_student_invitation", {
+    p_token: token.trim(),
+    p_password: password,
+  });
+
+  if (error) {
+    console.error("[coaching] error activating student invitation:", error);
+    throw new Error(error.message);
+  }
+
+  const res = (data as Record<string, any>) || {};
+  if (!res.ok) {
+    throw new Error(res.error || "No se pudo activar la cuenta del alumno.");
+  }
+
+  return {
+    ok: true,
+    email: res.email,
+    studentName: res.student_name,
+    rivieraId: res.riviera_id,
+    authUserId: res.auth_user_id,
+    message: res.message || "Cuenta activada exitosamente.",
+  };
 }
 

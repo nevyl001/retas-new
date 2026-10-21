@@ -1,0 +1,277 @@
+/* ManageStudentAccessModal.css — Gestión de Acceso Exclusivo para Alumnos */
+
+.student-access-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.student-access-modal {
+  background: #0f172a;
+  border: 1px solid rgba(200, 170, 110, 0.3);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 35px rgba(200, 170, 110, 0.1);
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+.student-access-modal-header {
+  padding: 1.5rem 1.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(200, 170, 110, 0.08) 0%, transparent 100%);
+}
+
+.student-access-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.student-access-modal-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.student-access-modal-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.student-access-modal-content {
+  padding: 1.5rem 1.75rem;
+}
+
+/* Ficha del alumno */
+.student-access-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.student-access-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+  font-size: 0.875rem;
+}
+
+.student-access-card-row:last-child {
+  margin-bottom: 0;
+}
+
+.student-access-card-label {
+  color: #94a3b8;
+}
+
+.student-access-card-value {
+  font-weight: 600;
+  color: #ffffff;
+  text-align: right;
+}
+
+/* Badges de estado */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.775rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-pill-no-access {
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #cbd5e1;
+}
+
+.status-pill-pending {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fcd34d;
+}
+
+.status-pill-active {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.status-pill-deactivated {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+/* Token / Enlace de invitación */
+.invitation-link-box {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(200, 170, 110, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1.25rem 0;
+}
+
+.invitation-link-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #dfc187;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.invitation-link-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.invitation-link-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-copy-link {
+  padding: 0.5rem 1rem;
+  background: rgba(200, 170, 110, 0.15);
+  border: 1px solid rgba(200, 170, 110, 0.4);
+  border-radius: 6px;
+  color: #dfc187;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btn-copy-link:hover {
+  background: rgba(200, 170, 110, 0.25);
+  color: #ffffff;
+}
+
+.btn-copy-link.copied {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #34d399;
+}
+
+/* Acciones en modal */
+.modal-actions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.btn-action-primary {
+  padding: 0.8rem 1.25rem;
+  background: linear-gradient(135deg, #d4af37 0%, #aa8c2c 100%);
+  border: none;
+  border-radius: 8px;
+  color: #0b0f19;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+}
+
+.btn-action-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn-action-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-action-danger {
+  padding: 0.8rem 1.25rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
+}
+
+.btn-action-secondary {
+  padding: 0.8rem 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.modal-info-note {
+  font-size: 0.775rem;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 6px;
+  border-left: 3px solid #dfc187;
+}
+

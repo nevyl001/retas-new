@@ -40,6 +40,8 @@ interface UserContextType {
   userProfile: UserProfile | null;
   session: Session | null;
   loading: boolean;
+  isStudentOnly: boolean;
+  isCoachOnly: boolean;
   signUp: (
     email: string,
     password: string,
@@ -246,14 +248,23 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
               navigateToAdminDashboard();
             }
           } else {
-            const isCoachOnly = nextSession.user.user_metadata?.account_type === "COACH_ONLY";
+            const isCoachOnly =
+              nextSession.user.user_metadata?.account_type === "COACH_ONLY" ||
+              nextSession.user.app_metadata?.account_type === "COACH_ONLY" ||
+              nextSession.user.app_metadata?.role === "coach";
+            const isStudentOnly =
+              nextSession.user.user_metadata?.account_type === "STUDENT_ONLY" ||
+              nextSession.user.app_metadata?.account_type === "STUDENT_ONLY" ||
+              nextSession.user.app_metadata?.role === "student";
+
             const path =
               typeof window !== "undefined" ? window.location.pathname : "/";
-            if (isCoachOnly || shouldKeepDocumentMotherBrand(path)) {
+            if (isCoachOnly || isStudentOnly || shouldKeepDocumentMotherBrand(path)) {
               clearTenantBranding();
-              debugLog("[branding] UserContext.applySession:coach-or-mother-path", {
+              debugLog("[branding] UserContext.applySession:restricted-or-mother-path", {
                 orgId: nextUserId,
                 isCoachOnly,
+                isStudentOnly,
                 path,
               });
             } else {
@@ -284,12 +295,24 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             const atAppHome =
               typeof window !== "undefined" &&
               normalizeAppPathname(window.location.pathname) === "/";
+            const atStudentAccess =
+              typeof window !== "undefined" &&
+              normalizeAppPathname(window.location.pathname).startsWith("/coaching/acceso-alumno");
+
             if (
               isCoachOnly &&
               atAppHome &&
               (event === "SIGNED_IN" || event === "init")
             ) {
               window.history.replaceState({}, "", "/coaching/mi-espacio");
+              window.dispatchEvent(new PopStateEvent("popstate"));
+              window.dispatchEvent(new Event(PATH_SYNC_EVENT));
+            } else if (
+              isStudentOnly &&
+              (atAppHome || atStudentAccess) &&
+              (event === "SIGNED_IN" || event === "init")
+            ) {
+              window.history.replaceState({}, "", "/coaching/mi-coaching");
               window.dispatchEvent(new PopStateEvent("popstate"));
               window.dispatchEvent(new Event(PATH_SYNC_EVENT));
             }
@@ -464,11 +487,25 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   };
 
+  const isCoachOnly = Boolean(
+    user?.user_metadata?.account_type === "COACH_ONLY" ||
+    user?.app_metadata?.account_type === "COACH_ONLY" ||
+    user?.app_metadata?.role === "coach"
+  );
+
+  const isStudentOnly = Boolean(
+    user?.user_metadata?.account_type === "STUDENT_ONLY" ||
+    user?.app_metadata?.account_type === "STUDENT_ONLY" ||
+    user?.app_metadata?.role === "student"
+  );
+
   const value = {
     user,
     userProfile,
     session,
     loading,
+    isStudentOnly,
+    isCoachOnly,
     signUp,
     signIn,
     signOut,

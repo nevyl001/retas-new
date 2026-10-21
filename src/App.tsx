@@ -172,9 +172,28 @@ function parsePublicAmericanoBoardTournamentId(pathname: string): string | null 
 }
 
 function AppContent() {
-  const { user, loading: authLoading } = useUser();
+  const { user, loading: authLoading, isStudentOnly } = useUser();
   const { isAdminLoggedIn, loading: adminLoading } = useAdmin();
   const appPathname = useSyncPathname();
+
+  useEffect(() => {
+    if (authLoading || !user || !isStudentOnly) return;
+    const path = normalizeAppPathname(appPathname);
+    if (
+      path === "/" ||
+      path.startsWith("/reta/") ||
+      path.startsWith("/liga") ||
+      path.startsWith("/torneo-express") ||
+      path.startsWith("/duelo-2v2") ||
+      path.startsWith("/rewards") ||
+      (path.startsWith("/coaching") &&
+        !path.startsWith("/coaching/mi-coaching") &&
+        !path.startsWith("/coaching/alumno") &&
+        !path.startsWith("/coaching/acceso-alumno"))
+    ) {
+      navigateAppTo("/coaching/mi-coaching");
+    }
+  }, [authLoading, user, isStudentOnly, appPathname]);
 
   useEffect(() => {
     syncPwaInstallabilityForSession({
@@ -897,6 +916,7 @@ function AppContent() {
   const showMobileAppNav =
     !authLoading &&
     Boolean(user) &&
+    !isStudentOnly &&
     shouldShowMobileAppNavigation({
       pathname: appPathname,
       currentView,

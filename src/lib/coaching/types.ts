@@ -436,3 +436,47 @@ export type CancelCoachClassResult = {
   error?: string;
 };
 
+export type StudentAccessStatus =
+  | "NO_ACCESS"
+  | "INVITATION_PENDING"
+  | "ACTIVE"
+  | "DEACTIVATED";
+
+export type StudentAccessInfo = {
+  ok: boolean;
+  status: StudentAccessStatus;
+  email?: string | null;
+  authUserId?: string | null;
+  isActive?: boolean;
+  deactivatedAt?: string | null;
+  createdAt?: string | null;
+  invitedAt?: string | null;
+  expiresAt?: string | null;
+  invitationToken?: string | null;
+  accountType?: string | null;
+  verificationMethod?: string | null;
+  message?: string;
+  error?: string;
+};
+
+export type StudentInvitationVerification = {
+  ok: boolean;
+  invitationId?: string;
+  email?: string;
+  studentName?: string;
+  rivieraId?: string;
+  clubName?: string;
+  coachName?: string;
+  expiresAt?: string;
+  error?: string;
+};
+
+export type StudentActivationResult = {
+  ok: boolean;
+  email?: string;
+  studentName?: string;
+  rivieraId?: string;
+  authUserId?: string;
+  message?: string;
+  error?: string;
+};

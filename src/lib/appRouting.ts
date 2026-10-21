@@ -282,6 +282,7 @@ export function resolveAppViewFromPath(pathname: string): AppView {
 export function pathRequiresUserSession(pathname: string): boolean {
   const path = normalizeAppPathname(pathname);
   if (path.includes("/public/")) return false;
+  if (path === "/coaching/acceso-alumno" || path.startsWith("/coaching/acceso-alumno")) return false;
   if (path.startsWith("/liga")) return true;
   if (path.startsWith("/coaching")) return true;
   if (path.startsWith("/rewards")) return true;

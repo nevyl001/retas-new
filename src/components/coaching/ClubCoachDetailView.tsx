@@ -34,6 +34,7 @@ import { RevertClassSessionModal } from "./RevertClassSessionModal";
 import { ScheduleClassModal } from "./ScheduleClassModal";
 import { RescheduleClassModal } from "./RescheduleClassModal";
 import { CancelClassModal } from "./CancelClassModal";
+import { ManageStudentAccessModal } from "./ManageStudentAccessModal";
 
 interface ClubCoachDetailViewProps {
   organizadorId: string;
@@ -91,6 +92,15 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
     coachNombre?: string;
     durationMinutes?: number | null;
     focus?: string | null;
+  } | null>(null);
+
+  // Gestión de acceso de alumnos por Riviera ID
+  const [managingAccessStudent, setManagingAccessStudent] = useState<{
+    jugadorId: string;
+    studentName: string;
+    rivieraId?: string;
+    coachId?: string;
+    coachName?: string;
   } | null>(null);
 
   // Agenda del coach
@@ -882,7 +892,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                     <span>Vinculado: <strong>{formatDate(st.startedAt).split(",")[0]}</strong></span>
                   </div>
 
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
                     <button
                       type="button"
                       className="coaching-btn coaching-btn--primary"
@@ -901,6 +911,24 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                     >
                       <TablerIcon name="arrows-exchange" size={14} />
                       Cambiar
+                    </button>
+                    <button
+                      type="button"
+                      className="coaching-btn coaching-btn--secondary"
+                      style={{ padding: "0.45rem 0.75rem", fontSize: "0.82rem" }}
+                      onClick={() =>
+                        setManagingAccessStudent({
+                          jugadorId: st.jugadorId,
+                          studentName: st.nombre,
+                          rivieraId: st.rivieraId,
+                          coachId: coachId,
+                          coachName: coach.nombre,
+                        })
+                      }
+                      title="Gestionar acceso exclusivo del alumno por Riviera ID"
+                    >
+                      <TablerIcon name="key" size={14} />
+                      Acceso
                     </button>
                   </div>
                 </div>
@@ -980,6 +1008,24 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                       >
                         <TablerIcon name="arrows-exchange" size={13} />
                         Cambiar
+                      </button>
+                      <button
+                        type="button"
+                        className="coaching-btn coaching-btn--secondary"
+                        style={{ padding: "0.35rem 0.65rem", fontSize: "0.78rem", marginLeft: "0.4rem" }}
+                        onClick={() =>
+                          setManagingAccessStudent({
+                            jugadorId: st.jugadorId,
+                            studentName: st.nombre,
+                            rivieraId: st.rivieraId,
+                            coachId: detail?.coach.id || coachId,
+                            coachName: detail?.coach.nombre || coach.nombre,
+                          })
+                        }
+                        title="Gestionar acceso exclusivo del alumno por Riviera ID"
+                      >
+                        <TablerIcon name="key" size={13} />
+                        Acceso
                       </button>
                     </td>
                   </tr>
@@ -1966,6 +2012,22 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
             setActionSuccess("Clase cancelada exitosamente.");
             void loadCoachAgenda();
           }}
+        />
+      )}
+
+      {/* Modal: Gestionar Acceso del Alumno */}
+      {managingAccessStudent && (
+        <ManageStudentAccessModal
+          isOpen={Boolean(managingAccessStudent)}
+          onClose={() => setManagingAccessStudent(null)}
+          organizadorId={organizadorId}
+          jugadorId={managingAccessStudent.jugadorId}
+          studentName={managingAccessStudent.studentName}
+          rivieraId={managingAccessStudent.rivieraId}
+          coachId={managingAccessStudent.coachId || coachId}
+          coachName={managingAccessStudent.coachName || coach.nombre}
+          clubName={clubName}
+          onAccessUpdated={() => void loadData()}
         />
       )}
     </div>

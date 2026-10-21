@@ -52,4 +52,19 @@ export function navigateStudentCoaching(): void {
   navigateCoaching("/coaching/mi-coaching");
 }
 
+export function isStudentAccessPath(pathname: string): boolean {
+  const path = normalizeAppPathname(pathname);
+  return (
+    path === "/coaching/acceso-alumno" ||
+    path.startsWith("/coaching/acceso-alumno/")
+  );
+}
+
+export function navigateStudentAccess(token?: string): void {
+  const target = token
+    ? `/coaching/acceso-alumno?token=${encodeURIComponent(token)}`
+    : "/coaching/acceso-alumno";
+  navigateCoaching(target);
+}
+
 

@@ -24,6 +24,7 @@ import { RevertClassSessionModal } from "./RevertClassSessionModal";
 import { ScheduleClassModal } from "./ScheduleClassModal";
 import { RescheduleClassModal } from "./RescheduleClassModal";
 import { CancelClassModal } from "./CancelClassModal";
+import { ManageStudentAccessModal } from "./ManageStudentAccessModal";
 import {
   COACH_ESPECIALIDADES_ORDER,
   COACH_FUERZAS_ORDER,
@@ -147,6 +148,15 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     rivieraId?: string;
     currentBalance: number;
     referenceLedgerId?: string | null;
+  } | null>(null);
+
+  // Gestión de acceso exclusivo de alumnos
+  const [managingAccessStudent, setManagingAccessStudent] = useState<{
+    jugadorId: string;
+    studentName: string;
+    rivieraId?: string;
+    coachId?: string;
+    coachNombre?: string;
   } | null>(null);
 
   const [revertingSession, setRevertingSession] = useState<{
@@ -1697,6 +1707,24 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                     </button>
                     <button
                       type="button"
+                      className="coaching-btn coaching-btn--secondary"
+                      disabled={busy}
+                      onClick={() => {
+                        setManagingAccessStudent({
+                          jugadorId: l.jugadorId,
+                          studentName: l.jugadorNombre,
+                          rivieraId: l.rivieraId,
+                          coachId: l.coachId,
+                          coachNombre: l.coachNombre,
+                        });
+                      }}
+                      title="Gestionar acceso exclusivo del alumno por Riviera ID"
+                    >
+                      <TablerIcon name="key" size={14} />
+                      Gestionar acceso
+                    </button>
+                    <button
+                      type="button"
                       className="coaching-btn coaching-btn--ghost"
                       disabled={busy}
                       onClick={() => void handleStatus(l.id, "ENDED")}
@@ -2831,6 +2859,24 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
             if (organizadorId) {
               void loadAgenda(organizadorId, agendaCoachFilter, agendaStatusFilter);
             }
+          }}
+        />
+      )}
+
+      {/* Modal: Gestionar Acceso del Alumno */}
+      {managingAccessStudent && (
+        <ManageStudentAccessModal
+          isOpen={Boolean(managingAccessStudent)}
+          onClose={() => setManagingAccessStudent(null)}
+          organizadorId={organizadorId}
+          jugadorId={managingAccessStudent.jugadorId}
+          studentName={managingAccessStudent.studentName}
+          rivieraId={managingAccessStudent.rivieraId}
+          coachId={managingAccessStudent.coachId}
+          coachName={managingAccessStudent.coachNombre}
+          clubName={clubName}
+          onAccessUpdated={() => {
+            void refresh();
           }}
         />
       )}
