@@ -697,40 +697,63 @@ describe("coachingApi - Entrega B", () => {
   });
 
   describe("updateLinkStatus", () => {
-    it("updates status in coach_player_relationships and reloads snapshot", async () => {
-      const mockEq2 = jest.fn().mockResolvedValue({ error: null });
-      const mockEq1 = jest.fn().mockReturnValue({ eq: mockEq2 });
-      const mockUpdate = jest.fn().mockReturnValue({ eq: mockEq1 });
+    it("invokes update_coach_student_relationship_status RPC and reloads snapshot", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          success: true,
+          relationship_id: "rel-1",
+          status: "ENDED",
+          previous_status: "ACTIVE",
+          cancelled_scheduled_count: 2,
+          remaining_balance: 5,
+        },
+        error: null,
+      });
 
       (supabase.from as jest.Mock).mockReturnValue({
-        update: mockUpdate,
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockResolvedValue({ data: [], error: null }),
         }),
       });
 
-      const snapshot = await updateLinkStatus("org-1", "rel-1", "ENDED");
-      expect(mockUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: "ENDED",
-        })
+      const snapshot = await updateLinkStatus("org-1", "rel-1", "ENDED", "Fin del curso", "key-123");
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        "update_coach_student_relationship_status",
+        {
+          p_organizador_id: "org-1",
+          p_relationship_id: "rel-1",
+          p_new_status: "ENDED",
+          p_reason: "Fin del curso",
+          p_idempotency_key: "key-123",
+        }
       );
-      expect(mockEq1).toHaveBeenCalledWith("id", "rel-1");
-      expect(mockEq2).toHaveBeenCalledWith("organizador_id", "org-1");
       expect(snapshot.source).toBe("live");
     });
 
-    it("throws controlled error when update fails", async () => {
-      const mockEq2 = jest.fn().mockResolvedValue({
-        error: { message: "RLS check violated" },
+    it("throws controlled error when RPC returns an error", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: null,
+        error: { message: "permission denied for function update_coach_student_relationship_status" },
       });
-      const mockEq1 = jest.fn().mockReturnValue({ eq: mockEq2 });
-      const mockUpdate = jest.fn().mockReturnValue({ eq: mockEq1 });
 
-      (supabase.from as jest.Mock).mockReturnValue({ update: mockUpdate });
+      await expect(
+        updateLinkStatus("org-1", "rel-1", "ACTIVE")
+      ).rejects.toThrow(
+        "No se pudo actualizar el estado de la relación: permission denied for function update_coach_student_relationship_status"
+      );
+    });
 
-      await expect(updateLinkStatus("org-1", "rel-1", "ACTIVE")).rejects.toThrow(
-        "No se pudo actualizar el estado de la relación: RLS check violated"
+    it("throws controlled error when RPC returns { ok: false, error: ... }", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: { ok: false, error: "No autorizado: solo la administración del club puede modificar el estado de sus alumnos." },
+        error: null,
+      });
+
+      await expect(
+        updateLinkStatus("org-1", "rel-1", "ENDED")
+      ).rejects.toThrow(
+        "No autorizado: solo la administración del club puede modificar el estado de sus alumnos."
       );
     });
   });

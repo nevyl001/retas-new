@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { ClubIdentity } from "../club-experience";
 import { useUser } from "../contexts/UserContext";
-import { navigateStudentCoaching } from "./coaching/coachingNav";
+import {
+  navigateCoaching,
+  navigateCoachPortal,
+  navigateStudentCoaching,
+} from "./coaching/coachingNav";
+import { useCoachingNavRoles } from "./coaching/useCoachingNavRoles";
 import "./MobileUserMenu.css";
 
 export const MobileUserMenu: React.FC<{
@@ -9,6 +14,11 @@ export const MobileUserMenu: React.FC<{
   isSigningOut?: boolean;
 }> = ({ onLogout, isSigningOut = false }) => {
   const { user, userProfile, signOut } = useUser();
+  const {
+    canAccessClubCoaching,
+    canAccessCoachPortal,
+    canAccessStudentCoaching,
+  } = useCoachingNavRoles();
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
 
   useEffect(() => {
@@ -58,16 +68,42 @@ export const MobileUserMenu: React.FC<{
       </div>
 
       <div className="mobile-menu-options">
-        <button
-          type="button"
-          className="mobile-menu-option"
-          onClick={() => {
-            navigateStudentCoaching();
-          }}
-        >
-          <span className="mobile-menu-icon">🎾</span>
-          <span className="mobile-menu-text">Mi Coaching</span>
-        </button>
+        {canAccessClubCoaching && (
+          <button
+            type="button"
+            className="mobile-menu-option"
+            onClick={() => {
+              navigateCoaching("/coaching");
+            }}
+          >
+            <span className="mobile-menu-icon">🎾</span>
+            <span className="mobile-menu-text">Riviera Coaching</span>
+          </button>
+        )}
+        {canAccessCoachPortal && (
+          <button
+            type="button"
+            className="mobile-menu-option"
+            onClick={() => {
+              navigateCoachPortal();
+            }}
+          >
+            <span className="mobile-menu-icon">📋</span>
+            <span className="mobile-menu-text">Mi Espacio</span>
+          </button>
+        )}
+        {canAccessStudentCoaching && (
+          <button
+            type="button"
+            className="mobile-menu-option"
+            onClick={() => {
+              navigateStudentCoaching();
+            }}
+          >
+            <span className="mobile-menu-icon">🎾</span>
+            <span className="mobile-menu-text">Mi Coaching</span>
+          </button>
+        )}
         <button
           type="button"
           className="mobile-menu-option mobile-menu-logout"

@@ -177,6 +177,10 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [reschedulingSession, setReschedulingSession] = useState<CoachScheduledSession | null>(null);
   const [cancellingSession, setCancellingSession] = useState<CoachScheduledSession | null>(null);
+  // Control de estado y finalización de alumnos
+  const [studentStatusFilter, setStudentStatusFilter] = useState<"ACTIVE" | "PAUSED" | "ENDED" | "ALL">("ACTIVE");
+  const [endingLink, setEndingLink] = useState<CoachingPlayerLink | null>(null);
+  const [endingReason, setEndingReason] = useState<string>("");
 
   const loadAgenda = useCallback(async (orgId: string, coachFilter?: string, statusFilter?: string) => {
     if (!orgId) return;
@@ -377,6 +381,22 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     }
     return all;
   }, [snapshot, coachStatusFilter]);
+
+  const studentCounts = useMemo(() => {
+    const all = snapshot?.links ?? [];
+    return {
+      ACTIVE: all.filter((l) => l.status === "ACTIVE").length,
+      PAUSED: all.filter((l) => l.status === "PAUSED").length,
+      ENDED: all.filter((l) => l.status === "ENDED").length,
+      ALL: all.length,
+    };
+  }, [snapshot]);
+
+  const filteredLinks = useMemo(() => {
+    const all = snapshot?.links ?? [];
+    if (studentStatusFilter === "ALL") return all;
+    return all.filter((l) => l.status === studentStatusFilter);
+  }, [snapshot, studentStatusFilter]);
 
   const resetCoachForm = () => {
     setCoachNombre("");
@@ -589,14 +609,22 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
 
   const handleStatus = async (
     linkId: string,
-    status: "ACTIVE" | "PAUSED" | "ENDED"
+    status: "ACTIVE" | "PAUSED" | "ENDED",
+    reason?: string
   ) => {
     if (!organizadorId) return;
     setBusy(true);
+    setFormError(null);
     try {
-      const next = await updateLinkStatus(organizadorId, linkId, status);
+      const next = await updateLinkStatus(organizadorId, linkId, status, reason);
       setSnapshot(next);
-      setSuccessMessage("Estado del alumno actualizado.");
+      setSuccessMessage(
+        status === "ENDED"
+          ? "El alumno ha sido desvinculado del entrenador. Las clases futuras fueron canceladas y el saldo se conservó."
+          : status === "PAUSED"
+          ? "El alumno ha sido pausado. No se podrán registrar nuevas clases hasta reactivarlo."
+          : "El alumno ha sido reactivado."
+      );
     } catch (err) {
       setFormError(
         err instanceof Error ? err.message : "No se pudo actualizar el estado."
@@ -1574,6 +1602,55 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
             </div>
           </div>
 
+          {/* Filtros de estado de alumnos */}
+          <div
+            style={{
+              display: "flex",
+              gap: "0.5rem",
+              marginBottom: "1.25rem",
+              flexWrap: "wrap",
+            }}
+          >
+            {[
+              { id: "ACTIVE", label: "Activos", count: studentCounts.ACTIVE },
+              { id: "PAUSED", label: "En pausa", count: studentCounts.PAUSED },
+              { id: "ENDED", label: "Historial / Terminados", count: studentCounts.ENDED },
+              { id: "ALL", label: "Todos", count: studentCounts.ALL },
+            ].map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                className={`coaching-chip${
+                  studentStatusFilter === f.id ? " is-on" : ""
+                }`}
+                onClick={() => setStudentStatusFilter(f.id as any)}
+                style={{
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.45rem",
+                  padding: "0.35rem 0.8rem",
+                  fontSize: "0.82rem",
+                }}
+              >
+                <span>{f.label}</span>
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    padding: "0.1rem 0.45rem",
+                    borderRadius: "999px",
+                    background:
+                      studentStatusFilter === f.id
+                        ? "rgba(255, 255, 255, 0.25)"
+                        : "rgba(255, 255, 255, 0.08)",
+                  }}
+                >
+                  {f.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
           {(snapshot?.links ?? []).length === 0 ? (
             <div className="coaching-empty-card">
               <TablerIcon name="users" size={44} className="coaching-empty-icon" />
@@ -1591,9 +1668,23 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                 Agregar primer alumno
               </button>
             </div>
+          ) : filteredLinks.length === 0 ? (
+            <div className="coaching-empty-card" style={{ padding: "2rem" }}>
+              <TablerIcon name="users" size={36} className="coaching-empty-icon" />
+              <h3>No hay alumnos en esta categoría</h3>
+              <p>No se encontraron alumnos con el filtro seleccionado ({
+                studentStatusFilter === "ACTIVE"
+                  ? "Activos"
+                  : studentStatusFilter === "PAUSED"
+                  ? "En pausa"
+                  : studentStatusFilter === "ENDED"
+                  ? "Historial / Terminados"
+                  : "Todos"
+              }).</p>
+            </div>
           ) : (
             <div className="coaching-grid">
-              {(snapshot?.links ?? []).map((l) => (
+              {filteredLinks.map((l) => (
                 <article key={l.id} className="coaching-card">
                   <div className="coaching-card__top">
                     <div className="coaching-card__avatar" aria-hidden>
@@ -1640,31 +1731,24 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                   </div>
 
                   <div className="coaching-card__actions">
-                    <button
-                      type="button"
-                      className="coaching-btn coaching-btn--primary"
-                      disabled={busy || l.status !== "ACTIVE"}
-                      onClick={() => {
-                        setAssigningLink(l);
-                        setClassCountInput(10);
-                        setClassNotesInput("");
-                        setAssignIdempotencyKey(generateCoachingIdempotencyKey("assign"));
-                      }}
-                    >
-                      <TablerIcon name="plus" size={14} />
-                      Asignar clases
-                    </button>
-                    {l.status !== "ACTIVE" ? (
+                    {l.status === "ACTIVE" && (
                       <button
                         type="button"
-                        className="coaching-btn coaching-btn--secondary"
+                        className="coaching-btn coaching-btn--primary"
                         disabled={busy}
-                        onClick={() => void handleStatus(l.id, "ACTIVE")}
+                        onClick={() => {
+                          setAssigningLink(l);
+                          setClassCountInput(10);
+                          setClassNotesInput("");
+                          setAssignIdempotencyKey(generateCoachingIdempotencyKey("assign"));
+                        }}
                       >
-                        <TablerIcon name="play" size={14} />
-                        Activar
+                        <TablerIcon name="plus" size={14} />
+                        Asignar clases
                       </button>
-                    ) : (
+                    )}
+
+                    {l.status === "ACTIVE" ? (
                       <button
                         type="button"
                         className="coaching-btn coaching-btn--secondary"
@@ -1674,7 +1758,18 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                         <TablerIcon name="player-pause" size={14} />
                         Pausar
                       </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="coaching-btn coaching-btn--secondary"
+                        disabled={busy}
+                        onClick={() => void handleStatus(l.id, "ACTIVE")}
+                      >
+                        <TablerIcon name="play" size={14} />
+                        {l.status === "ENDED" ? "Reactivar" : "Activar"}
+                      </button>
                     )}
+
                     <button
                       type="button"
                       className="coaching-btn coaching-btn--secondary"
@@ -1723,15 +1818,20 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                       <TablerIcon name="key" size={14} />
                       Gestionar acceso
                     </button>
-                    <button
-                      type="button"
-                      className="coaching-btn coaching-btn--ghost"
-                      disabled={busy}
-                      onClick={() => void handleStatus(l.id, "ENDED")}
-                    >
-                      <TablerIcon name="x" size={14} />
-                      Terminar
-                    </button>
+                    {l.status !== "ENDED" && (
+                      <button
+                        type="button"
+                        className="coaching-btn coaching-btn--ghost"
+                        disabled={busy}
+                        onClick={() => {
+                          setEndingLink(l);
+                          setEndingReason("");
+                        }}
+                      >
+                        <TablerIcon name="x" size={14} />
+                        Terminar
+                      </button>
+                    )}
                   </div>
                 </article>
               ))}
@@ -2880,6 +2980,119 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
           }}
         />
       )}
+
+      {/* Modal: Confirmación de Desvinculación de Alumno */}
+      <Modal
+        open={Boolean(endingLink)}
+        onClose={() => {
+          setEndingLink(null);
+          setEndingReason("");
+        }}
+        title="Desvincular alumno de entrenador"
+      >
+        {endingLink && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--ro-text-muted, #94a3b8)" }}>
+              ¿Estás seguro de que deseas desvincular a <strong style={{ color: "#fff" }}>{endingLink.jugadorNombre}</strong> ({endingLink.rivieraId}) del entrenador <strong style={{ color: "#fff" }}>{endingLink.coachNombre}</strong>?
+            </p>
+
+            {(endingLink.balanceClasses ?? 0) > 0 ? (
+              <div
+                style={{
+                  padding: "0.85rem 1rem",
+                  background: "rgba(245, 158, 11, 0.12)",
+                  border: "1px solid rgba(245, 158, 11, 0.35)",
+                  borderRadius: "8px",
+                  color: "#fbbf24",
+                  fontSize: "0.85rem",
+                  display: "flex",
+                  gap: "0.6rem",
+                  alignItems: "flex-start",
+                }}
+              >
+                <TablerIcon name="alert-triangle" size={20} style={{ flexShrink: 0, marginTop: "2px" }} />
+                <div>
+                  <strong>Saldo pendiente conservado:</strong> Este alumno cuenta con <strong>{endingLink.balanceClasses} clases disponibles</strong>. El saldo y el historial deportivo no se eliminarán y permanecerán registrados en el club.
+                </div>
+              </div>
+            ) : null}
+
+            <div
+              style={{
+                padding: "0.85rem 1rem",
+                background: "rgba(59, 130, 246, 0.08)",
+                border: "1px solid rgba(59, 130, 246, 0.25)",
+                borderRadius: "8px",
+                fontSize: "0.83rem",
+                color: "#93c5fd",
+                display: "flex",
+                gap: "0.6rem",
+                alignItems: "flex-start",
+              }}
+            >
+              <TablerIcon name="info-circle" size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
+              <div>
+                Las clases futuras programadas (SCHEDULED) con este coach se cancelarán automáticamente. El alumno será retirado del roster activo del entrenador y de la vista activa de la academia.
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="ending-reason-input"
+                style={{
+                  display: "block",
+                  fontSize: "0.85rem",
+                  fontWeight: 500,
+                  marginBottom: "0.35rem",
+                  color: "#e2e8f0",
+                }}
+              >
+                Motivo de la desvinculación (opcional):
+              </label>
+              <input
+                id="ending-reason-input"
+                type="text"
+                className="coaching-input"
+                placeholder="Ej. Cambio de horario, mudanza, fin de ciclo..."
+                value={endingReason}
+                onChange={(e) => setEndingReason(e.target.value)}
+                maxLength={200}
+                style={{ width: "100%" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--secondary"
+                onClick={() => {
+                  setEndingLink(null);
+                  setEndingReason("");
+                }}
+                disabled={busy}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--danger"
+                style={{ background: "#dc2626", borderColor: "#ef4444", color: "#ffffff" }}
+                disabled={busy}
+                onClick={async () => {
+                  const link = endingLink;
+                  const reason = endingReason.trim();
+                  setEndingLink(null);
+                  setEndingReason("");
+                  await handleStatus(link.id, "ENDED", reason || undefined);
+                }}
+              >
+                <TablerIcon name="user-off" size={16} />
+                {busy ? "Desvinculando…" : "Confirmar desvinculación"}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

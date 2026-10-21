@@ -230,18 +230,30 @@ describe("CoachingClubPage UX/UI Redesign", () => {
       root.render(<CoachingClubPage pathname="/coaching/jugadores" />);
     });
 
-    expect(container.textContent).toContain("Control y asignación de clases");
+    expect(container.textContent).toContain("Gestión y control de clases de la academia");
     expect(container.textContent).toContain(
-      "Los coaches vinculan directamente a sus alumnos mediante su Riviera ID"
+      "Como administrador del club, tú registras y asignas alumnos"
     );
+
+    // Initial default filter is "Activos", so Carlos Alumno is shown
+    expect(container.textContent).toContain("Carlos Alumno");
+    expect(container.textContent).toContain("Asignar clases");
+    expect(container.textContent).toContain("Pausar");
+    expect(container.textContent).toContain("Terminar");
+
+    // Click "Todos" filter
+    const chips = Array.from(container.querySelectorAll(".coaching-chip"));
+    const todosChip = chips.find((c) => c.textContent?.includes("Todos"));
+    expect(todosChip).toBeDefined();
+
+    await act(async () => {
+      todosChip?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
 
     const linkTitles = container.querySelectorAll(".coaching-card__title");
     expect(linkTitles.length).toBe(2);
     expect(linkTitles[0].textContent).toBe("Carlos Alumno");
     expect(linkTitles[1].textContent).toBe("Laura Pausada");
-
-    // Asignar clases button
-    expect(container.textContent).toContain("Asignar clases");
 
     // Badges
     const badges = container.querySelectorAll(".coaching-badge");
@@ -250,15 +262,13 @@ describe("CoachingClubPage UX/UI Redesign", () => {
     expect(badgeTexts).toContain("En pausa");
   });
 
-  it("renders Agenda tab with premium informative upcoming feature card", async () => {
+  it("renders Agenda tab with schedule controls and filters", async () => {
     await act(async () => {
       root.render(<CoachingClubPage pathname="/coaching/agenda" />);
     });
 
-    const agendaCard = container.querySelector(".coaching-agenda-card");
-    expect(agendaCard).not.toBeNull();
-    expect(agendaCard?.textContent).toContain("Agenda y sesiones de clase");
-    expect(agendaCard?.textContent).toContain("Próximamente en la Entrega D de Riviera Coaching");
+    expect(container.textContent).toContain("Agenda Real de Coaching");
+    expect(container.textContent).toContain("Agendar Clase");
   });
 });
 

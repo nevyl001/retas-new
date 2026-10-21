@@ -167,6 +167,17 @@ export type RemoveCoachResult = {
   error?: string;
 };
 
+export type UpdateRelationshipStatusResult = {
+  ok: boolean;
+  success: boolean;
+  relationshipId: string;
+  status: CoachingPlayerLink["status"];
+  previousStatus: CoachingPlayerLink["status"];
+  cancelledScheduledCount: number;
+  remainingBalance: number;
+  message?: string;
+};
+
 export type RecordCoachClassSessionInput = {
   relationshipId: string;
   notas?: string | null;

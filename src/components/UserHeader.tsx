@@ -1,11 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ClubIdentity } from "../club-experience";
 import { useUser } from "../contexts/UserContext";
-import { navigateStudentCoaching } from "./coaching/coachingNav";
+import {
+  navigateCoaching,
+  navigateCoachPortal,
+  navigateStudentCoaching,
+} from "./coaching/coachingNav";
+import { useCoachingNavRoles } from "./coaching/useCoachingNavRoles";
 import "./UserHeader.css";
 
 export const UserHeader: React.FC = () => {
   const { user, userProfile, signOut } = useUser();
+  const {
+    canAccessClubCoaching,
+    canAccessCoachPortal,
+    canAccessStudentCoaching,
+  } = useCoachingNavRoles();
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
@@ -108,16 +118,42 @@ export const UserHeader: React.FC = () => {
 
               {showDropdown && (
                 <div ref={dropdownRef} className="user-dropdown-menu">
-                  <button
-                    className="user-dropdown-item"
-                    onClick={() => {
-                      setShowDropdown(false);
-                      navigateStudentCoaching();
-                    }}
-                  >
-                    <span>🎾</span>
-                    <span>Mi Coaching</span>
-                  </button>
+                  {canAccessClubCoaching && (
+                    <button
+                      className="user-dropdown-item"
+                      onClick={() => {
+                        setShowDropdown(false);
+                        navigateCoaching("/coaching");
+                      }}
+                    >
+                      <span>🎾</span>
+                      <span>Riviera Coaching</span>
+                    </button>
+                  )}
+                  {canAccessCoachPortal && (
+                    <button
+                      className="user-dropdown-item"
+                      onClick={() => {
+                        setShowDropdown(false);
+                        navigateCoachPortal();
+                      }}
+                    >
+                      <span>📋</span>
+                      <span>Mi Espacio</span>
+                    </button>
+                  )}
+                  {canAccessStudentCoaching && (
+                    <button
+                      className="user-dropdown-item"
+                      onClick={() => {
+                        setShowDropdown(false);
+                        navigateStudentCoaching();
+                      }}
+                    >
+                      <span>🎾</span>
+                      <span>Mi Coaching</span>
+                    </button>
+                  )}
                   <button
                     className="logout-button"
                     onClick={handleSignOut}

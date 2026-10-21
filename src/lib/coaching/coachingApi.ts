@@ -31,6 +31,7 @@ import type {
   StudentAccessStatus,
   StudentInvitationVerification,
   StudentActivationResult,
+  UpdateRelationshipStatusResult,
 } from "./types";
 
 function mapEdgeError(data: unknown, fallbackMessage: string): string {
@@ -918,27 +919,73 @@ export async function fetchCoachAssignedStudents(
 }
 
 /**
- * Actualiza el estado de la relación alumno-coach (ACTIVE, PAUSED, ENDED).
+ * Invoca la RPC update_coach_student_relationship_status para cambiar de forma autorizada
+ * el estado de la relación alumno-coach (ACTIVE, PAUSED, ENDED).
+ */
+export async function updateCoachStudentRelationshipStatus(
+  organizadorId: string,
+  linkId: string,
+  status: CoachingPlayerLink["status"],
+  reason?: string,
+  idempotencyKey?: string
+): Promise<UpdateRelationshipStatusResult> {
+  const { data, error } = await supabase.rpc(
+    "update_coach_student_relationship_status",
+    {
+      p_organizador_id: organizadorId,
+      p_relationship_id: linkId,
+      p_new_status: status,
+      p_reason: reason ?? null,
+      p_idempotency_key: idempotencyKey ?? null,
+    }
+  );
+
+  if (error) {
+    console.error("[coaching] error updating relationship status:", error);
+    throw new Error(
+      "No se pudo actualizar el estado de la relación: " + error.message
+    );
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(
+      typeof res?.error === "string"
+        ? res.error
+        : "No se pudo actualizar el estado de la relación."
+    );
+  }
+
+  return {
+    ok: true,
+    success: true,
+    relationshipId: String(res.relationship_id ?? linkId),
+    status: (res.status ?? status) as CoachingPlayerLink["status"],
+    previousStatus: (res.previous_status ?? status) as CoachingPlayerLink["status"],
+    cancelledScheduledCount: Number(res.cancelled_scheduled_count ?? 0),
+    remainingBalance: Number(res.remaining_balance ?? 0),
+    message: typeof res.message === "string" ? res.message : undefined,
+  };
+}
+
+/**
+ * Actualiza el estado de la relación alumno-coach (ACTIVE, PAUSED, ENDED)
+ * y recarga el snapshot completo del club.
  */
 export async function updateLinkStatus(
   organizadorId: string,
   linkId: string,
-  status: CoachingPlayerLink["status"]
+  status: CoachingPlayerLink["status"],
+  reason?: string,
+  idempotencyKey?: string
 ): Promise<CoachingClubSnapshot> {
-  const { error } = await supabase
-    .from("coach_player_relationships")
-    .update({
-      status,
-      ended_at: status === "ENDED" ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", linkId)
-    .eq("organizador_id", organizadorId);
-
-  if (error) {
-    throw new Error("No se pudo actualizar el estado de la relación: " + error.message);
-  }
-
+  await updateCoachStudentRelationshipStatus(
+    organizadorId,
+    linkId,
+    status,
+    reason,
+    idempotencyKey
+  );
   return loadCoachingClubSnapshot(organizadorId);
 }
 
@@ -946,9 +993,11 @@ export async function updateLinkStatus(
 export async function updateLinkStatusDemo(
   organizadorId: string,
   linkId: string,
-  status: CoachingPlayerLink["status"]
+  status: CoachingPlayerLink["status"],
+  reason?: string,
+  idempotencyKey?: string
 ): Promise<CoachingClubSnapshot> {
-  return updateLinkStatus(organizadorId, linkId, status);
+  return updateLinkStatus(organizadorId, linkId, status, reason, idempotencyKey);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

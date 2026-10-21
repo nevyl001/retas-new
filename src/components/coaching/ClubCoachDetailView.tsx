@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   fetchClubCoachDetail,
   updateCoachClubMembershipSettings,
@@ -11,6 +11,7 @@ import {
   generateCoachingIdempotencyKey,
   loadCoachingClubSnapshot,
   fetchClubCoachingAgenda,
+  updateCoachStudentRelationshipStatus,
 } from "../../lib/coaching/coachingApi";
 import {
   COACH_ESPECIALIDADES_ORDER,
@@ -102,6 +103,21 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
     coachId?: string;
     coachName?: string;
   } | null>(null);
+
+  // Filtro y finalización de alumnos del coach
+  const [studentFilter, setStudentFilter] = useState<"ACTIVE" | "ENDED">("ACTIVE");
+  const [endingStudent, setEndingStudent] = useState<ClubCoachDetailStudent | null>(null);
+  const [endingReason, setEndingReason] = useState<string>("");
+
+  const activeStudents = useMemo(() => {
+    return (detail?.students ?? []).filter((s) => s.status !== "ENDED");
+  }, [detail?.students]);
+
+  const endedStudents = useMemo(() => {
+    return (detail?.students ?? []).filter((s) => s.status === "ENDED");
+  }, [detail?.students]);
+
+  const displayedStudents = studentFilter === "ACTIVE" ? activeStudents : endedStudents;
 
   // Agenda del coach
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -387,6 +403,43 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
     }
   };
 
+  const handleUpdateStudentStatus = async (
+    relationshipId: string,
+    newStatus: "ACTIVE" | "PAUSED" | "ENDED",
+    reason?: string
+  ) => {
+    if (!organizadorId) return;
+    setBusy(true);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const res = await updateCoachStudentRelationshipStatus(
+        organizadorId,
+        relationshipId,
+        newStatus,
+        reason
+      );
+      if (!res.ok) {
+        throw new Error(res.message || "No se pudo actualizar el estado del alumno.");
+      }
+      setActionSuccess(
+        newStatus === "ENDED"
+          ? "El alumno ha sido desvinculado del entrenador. Las clases futuras fueron canceladas y el saldo se conservó."
+          : newStatus === "PAUSED"
+          ? "El alumno ha sido pausado. No se podrán registrar nuevas clases hasta reactivarlo."
+          : "El alumno ha sido reactivado."
+      );
+      await loadData();
+      if (onCoachUpdated) onCoachUpdated();
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Error al actualizar el estado del alumno."
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const formatDate = (isoString?: string | null) => {
     if (!isoString) return "—";
     try {
@@ -482,6 +535,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
   }
 
   const { coach, membership, club, students, sessions, ledger, auditLog, stats } = detail;
+
   const effectiveFuerzas =
     membership.clubFuerzas && membership.clubFuerzas.length > 0
       ? membership.clubFuerzas
@@ -846,6 +900,53 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
             ) : null}
           </div>
 
+          {/* Toggle de Alumnos Activos vs Terminados */}
+          <div
+            style={{
+              display: "flex",
+              gap: "0.5rem",
+              marginBottom: "1.25rem",
+              flexWrap: "wrap",
+            }}
+          >
+            {[
+              { id: "ACTIVE", label: "Alumnos activos", count: activeStudents.length },
+              { id: "ENDED", label: "Historial / Terminados", count: endedStudents.length },
+            ].map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                className={`coaching-chip${
+                  studentFilter === f.id ? " is-on" : ""
+                }`}
+                onClick={() => setStudentFilter(f.id as any)}
+                style={{
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.45rem",
+                  padding: "0.35rem 0.8rem",
+                  fontSize: "0.82rem",
+                }}
+              >
+                <span>{f.label}</span>
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    padding: "0.1rem 0.45rem",
+                    borderRadius: "999px",
+                    background:
+                      studentFilter === f.id
+                        ? "rgba(255, 255, 255, 0.25)"
+                        : "rgba(255, 255, 255, 0.08)",
+                  }}
+                >
+                  {f.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
           {students.length === 0 ? (
             <div className="coaching-empty-card">
               <TablerIcon name="users" size={40} className="coaching-empty-icon" />
@@ -863,9 +964,23 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                 </button>
               ) : null}
             </div>
+          ) : displayedStudents.length === 0 ? (
+            <div className="coaching-empty-card" style={{ padding: "2rem" }}>
+              <TablerIcon name="users" size={36} className="coaching-empty-icon" />
+              <h3>
+                {studentFilter === "ACTIVE"
+                  ? "Sin alumnos activos"
+                  : "Sin alumnos en historial"}
+              </h3>
+              <p>
+                {studentFilter === "ACTIVE"
+                  ? "Este entrenador no tiene alumnos con relación activa o en pausa actualmente."
+                  : "No hay alumnos terminados o en el historial con este entrenador."}
+              </p>
+            </div>
           ) : (
             <div className="coaching-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
-              {students.map((st) => (
+              {displayedStudents.map((st) => (
                 <div key={st.relationshipId} className="coaching-card" style={{ padding: "1.1rem" }}>
                   <div className="coaching-card__top">
                     <div className="coaching-card__avatar">
@@ -881,6 +996,24 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                       <span className="coaching-card__meta-item">
                         {st.categoria ? JUGADOR_CATEGORIA_LABELS[st.categoria as RivieraJugadorCategoria] || st.categoria : "Sin categoría"}
                       </span>
+                      <div style={{ marginTop: "0.25rem" }}>
+                        <span
+                          className={`coaching-badge coaching-badge--${
+                            st.status === "ACTIVE"
+                              ? "active"
+                              : st.status === "PAUSED"
+                              ? "pending"
+                              : "neutral"
+                          }`}
+                          style={{ fontSize: "0.72rem", padding: "0.15rem 0.45rem" }}
+                        >
+                          {st.status === "ACTIVE"
+                            ? "Activo"
+                            : st.status === "PAUSED"
+                            ? "En pausa"
+                            : "Terminado"}
+                        </span>
+                      </div>
                     </div>
                     <span className={`coaching-status-pill ${st.balanceClasses > 0 ? "pill--success" : "pill--warning"}`}>
                       {st.balanceClasses > 0 ? `${st.balanceClasses} clases disp.` : "Sin saldo"}
@@ -892,30 +1025,60 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                     <span>Vinculado: <strong>{formatDate(st.startedAt).split(",")[0]}</strong></span>
                   </div>
 
-                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                    <button
-                      type="button"
-                      className="coaching-btn coaching-btn--primary"
-                      style={{ flex: 1, padding: "0.45rem 0.75rem", fontSize: "0.82rem" }}
-                      onClick={() => openAssignModal(st)}
-                    >
-                      <TablerIcon name="plus" size={14} />
-                      Asignar clases
-                    </button>
+                  <div className="coaching-card__actions" style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
+                    {st.status === "ACTIVE" && (
+                      <button
+                        type="button"
+                        className="coaching-btn coaching-btn--primary"
+                        style={{ padding: "0.4rem 0.65rem", fontSize: "0.8rem" }}
+                        disabled={busy}
+                        onClick={() => openAssignModal(st)}
+                      >
+                        <TablerIcon name="plus" size={13} />
+                        Asignar clases
+                      </button>
+                    )}
+
+                    {st.status === "ACTIVE" ? (
+                      <button
+                        type="button"
+                        className="coaching-btn coaching-btn--secondary"
+                        style={{ padding: "0.4rem 0.65rem", fontSize: "0.8rem" }}
+                        disabled={busy}
+                        onClick={() => void handleUpdateStudentStatus(st.relationshipId, "PAUSED")}
+                      >
+                        <TablerIcon name="player-pause" size={13} />
+                        Pausar
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="coaching-btn coaching-btn--secondary"
+                        style={{ padding: "0.4rem 0.65rem", fontSize: "0.8rem" }}
+                        disabled={busy}
+                        onClick={() => void handleUpdateStudentStatus(st.relationshipId, "ACTIVE")}
+                      >
+                        <TablerIcon name="play" size={13} />
+                        {st.status === "ENDED" ? "Reactivar" : "Activar"}
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       className="coaching-btn coaching-btn--secondary"
-                      style={{ padding: "0.45rem 0.75rem", fontSize: "0.82rem" }}
+                      style={{ padding: "0.4rem 0.65rem", fontSize: "0.8rem" }}
+                      disabled={busy}
                       onClick={() => setReassigningStudent(st)}
                       title="Cambiar a otro entrenador del club"
                     >
-                      <TablerIcon name="arrows-exchange" size={14} />
+                      <TablerIcon name="arrows-exchange" size={13} />
                       Cambiar
                     </button>
                     <button
                       type="button"
                       className="coaching-btn coaching-btn--secondary"
-                      style={{ padding: "0.45rem 0.75rem", fontSize: "0.82rem" }}
+                      style={{ padding: "0.4rem 0.65rem", fontSize: "0.8rem" }}
+                      disabled={busy}
                       onClick={() =>
                         setManagingAccessStudent({
                           jugadorId: st.jugadorId,
@@ -927,9 +1090,25 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                       }
                       title="Gestionar acceso exclusivo del alumno por Riviera ID"
                     >
-                      <TablerIcon name="key" size={14} />
+                      <TablerIcon name="key" size={13} />
                       Acceso
                     </button>
+                    {st.status !== "ENDED" && (
+                      <button
+                        type="button"
+                        className="coaching-btn coaching-btn--ghost"
+                        style={{ padding: "0.4rem 0.65rem", fontSize: "0.8rem", color: "#f87171" }}
+                        disabled={busy}
+                        onClick={() => {
+                          setEndingStudent(st);
+                          setEndingReason("");
+                        }}
+                        title="Desvincular alumno del entrenador"
+                      >
+                        <TablerIcon name="user-off" size={13} />
+                        Terminar
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -2030,6 +2209,119 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
           onAccessUpdated={() => void loadData()}
         />
       )}
+
+      {/* Modal: Confirmación de Desvinculación de Alumno desde Coach */}
+      <Modal
+        open={Boolean(endingStudent)}
+        onClose={() => {
+          setEndingStudent(null);
+          setEndingReason("");
+        }}
+        title="Desvincular alumno de entrenador"
+      >
+        {endingStudent && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--ro-text-muted, #94a3b8)" }}>
+              ¿Estás seguro de que deseas desvincular a <strong style={{ color: "#fff" }}>{endingStudent.nombre}</strong> ({endingStudent.rivieraId}) del entrenador <strong style={{ color: "#fff" }}>{coach.nombre}</strong>?
+            </p>
+
+            {endingStudent.balanceClasses > 0 ? (
+              <div
+                style={{
+                  padding: "0.85rem 1rem",
+                  background: "rgba(245, 158, 11, 0.12)",
+                  border: "1px solid rgba(245, 158, 11, 0.35)",
+                  borderRadius: "8px",
+                  color: "#fbbf24",
+                  fontSize: "0.85rem",
+                  display: "flex",
+                  gap: "0.6rem",
+                  alignItems: "flex-start",
+                }}
+              >
+                <TablerIcon name="alert-triangle" size={20} style={{ flexShrink: 0, marginTop: "2px" }} />
+                <div>
+                  <strong>Saldo pendiente conservado:</strong> Este alumno cuenta con <strong>{endingStudent.balanceClasses} clases disponibles</strong>. El saldo y el historial deportivo no se eliminarán y permanecerán registrados en el club.
+                </div>
+              </div>
+            ) : null}
+
+            <div
+              style={{
+                padding: "0.85rem 1rem",
+                background: "rgba(59, 130, 246, 0.08)",
+                border: "1px solid rgba(59, 130, 246, 0.25)",
+                borderRadius: "8px",
+                fontSize: "0.83rem",
+                color: "#93c5fd",
+                display: "flex",
+                gap: "0.6rem",
+                alignItems: "flex-start",
+              }}
+            >
+              <TablerIcon name="info-circle" size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
+              <div>
+                Las clases futuras programadas (SCHEDULED) con este coach se cancelarán automáticamente. El alumno será retirado del roster activo del entrenador.
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="coach-ending-reason-input"
+                style={{
+                  display: "block",
+                  fontSize: "0.85rem",
+                  fontWeight: 500,
+                  marginBottom: "0.35rem",
+                  color: "#e2e8f0",
+                }}
+              >
+                Motivo de la desvinculación (opcional):
+              </label>
+              <input
+                id="coach-ending-reason-input"
+                type="text"
+                className="coaching-input"
+                placeholder="Ej. Cambio de horario, mudanza, fin de ciclo..."
+                value={endingReason}
+                onChange={(e) => setEndingReason(e.target.value)}
+                maxLength={200}
+                style={{ width: "100%" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--secondary"
+                onClick={() => {
+                  setEndingStudent(null);
+                  setEndingReason("");
+                }}
+                disabled={busy}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--danger"
+                style={{ background: "#dc2626", borderColor: "#ef4444", color: "#ffffff" }}
+                disabled={busy}
+                onClick={async () => {
+                  const st = endingStudent;
+                  const reason = endingReason.trim();
+                  setEndingStudent(null);
+                  setEndingReason("");
+                  await handleUpdateStudentStatus(st.relationshipId, "ENDED", reason || undefined);
+                }}
+              >
+                <TablerIcon name="user-off" size={16} />
+                {busy ? "Desvinculando…" : "Confirmar desvinculación"}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

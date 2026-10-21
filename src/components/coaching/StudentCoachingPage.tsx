@@ -7,10 +7,11 @@ import {
 } from "../../lib/coaching/coachingApi";
 import { TablerIcon } from "../ui/TablerIcon";
 import { navigateToAppHome } from "../../lib/appRouting";
+import { navigateCoaching } from "./coachingNav";
 import "./coaching.css";
 
 export const StudentCoachingPage: React.FC = () => {
-  const { user, loading: userLoading } = useUser();
+  const { user, isStudentOnly, isCoachOnly, loading: userLoading } = useUser();
   const [overview, setOverview] = useState<StudentCoachingOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +33,13 @@ export const StudentCoachingPage: React.FC = () => {
     try {
       const res = await fetchStudentCoachingOverview();
       setOverview(res);
+
+      // Si el usuario es administrador de club y no tiene perfil legítimo de alumno vinculado,
+      // redirigirlo de inmediato a su panel de administración de Riviera Coaching
+      if (res && res.linked === false && !isStudentOnly && !isCoachOnly) {
+        navigateCoaching("/coaching");
+        return;
+      }
     } catch (err) {
       setError(
         err instanceof Error
@@ -41,7 +49,7 @@ export const StudentCoachingPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, isStudentOnly, isCoachOnly]);
 
   useEffect(() => {
     if (!userLoading) {
@@ -196,6 +204,31 @@ export const StudentCoachingPage: React.FC = () => {
     );
   }
 
+  // 3b. Si es una sesión de administrador sin perfil de alumno legítimo, mostrar redirección segura
+  if (user && overview && !overview.linked && !isStudentOnly && !isCoachOnly) {
+    return (
+      <div className="coaching-page rv-page">
+        <header className="coaching-hero">
+          <p className="coaching-kicker">Riviera Coaching • Panel de Administración</p>
+          <h1 className="coaching-title">Mi Coaching</h1>
+          <p className="coaching-lead">
+            Has iniciado sesión como <strong>Administrador de Club</strong>. La sección de «Mi Coaching» está reservada para el seguimiento deportivo de alumnos.
+          </p>
+          <div style={{ marginTop: "1rem" }}>
+            <button
+              type="button"
+              className="coaching-btn coaching-btn--primary"
+              onClick={() => navigateCoaching("/coaching")}
+            >
+              <TablerIcon name="arrow-left" size={16} />
+              Ir al panel de administración de Coaching
+            </button>
+          </div>
+        </header>
+      </div>
+    );
+  }
+
   const relationships = overview?.relationships ?? [];
   const primaryRel = relationships.find((r) => r.isPrimary) || relationships[0];
   const primaryPlayer = primaryRel?.player;
@@ -250,6 +283,9 @@ export const StudentCoachingPage: React.FC = () => {
               </div>
             )}
             <div>
+              <p style={{ margin: "0 0 0.2rem", fontSize: "0.82rem", fontWeight: 700, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Mi Coaching
+              </p>
               <h1 className="coaching-title" style={{ margin: 0, fontSize: "1.6rem" }}>
                 {primaryPlayer?.nombre || "Mi Coaching"}
               </h1>
@@ -364,33 +400,36 @@ export const StudentCoachingPage: React.FC = () => {
         /* CASO B: Con relaciones de coaching activas */
         <div className="coaching-student-dashboard">
           {relationships.map((rel) => {
-            const hasAvailable = rel.balance.balanceClasses > 0;
+            const currentBalance = rel.balance?.balanceClasses ?? 0;
+            const hasAvailable = currentBalance > 0;
+            const coachName = rel.coach?.nombre ?? "Coach";
+            const clubName = rel.club?.nombre ?? "Club Riviera";
             return (
               <section key={rel.relationshipId} className="coaching-student-relation-card">
                 {/* 1. Header de Club y Coach */}
                 <div className="coaching-student-header-grid">
                   <div className="coaching-student-coach-info">
                     <div className="coaching-student-avatar">
-                      {rel.coach.fotoUrl ? (
+                      {rel.coach?.fotoUrl ? (
                         <img
                           src={rel.coach.fotoUrl}
-                          alt={rel.coach.nombre}
+                          alt={coachName}
                           className="coaching-student-avatar-img"
                         />
                       ) : (
-                        <span>{rel.coach.nombre.slice(0, 2).toUpperCase()}</span>
+                        <span>{coachName.slice(0, 2).toUpperCase()}</span>
                       )}
                     </div>
                     <div>
                       <div className="coaching-student-coach-badge">
                         <TablerIcon name="certificate" size={13} />
                         <span>Entrenador Certificado</span>
-                        {rel.coach.coachCode && (
+                        {rel.coach?.coachCode && (
                           <span className="coaching-code-pill">{rel.coach.coachCode}</span>
                         )}
                       </div>
-                      <h2 className="coaching-student-coach-name">{rel.coach.nombre}</h2>
-                      {rel.coach.especialidades && rel.coach.especialidades.length > 0 && (
+                      <h2 className="coaching-student-coach-name">{coachName}</h2>
+                      {rel.coach?.especialidades && rel.coach.especialidades.length > 0 && (
                         <div className="coaching-student-spec-tags">
                           {rel.coach.especialidades.map((spec) => (
                             <span key={spec} className="coaching-student-spec-tag">
@@ -406,7 +445,7 @@ export const StudentCoachingPage: React.FC = () => {
                     <span className="coaching-student-club-eyebrow">Club de Entrenamiento</span>
                     <h3 className="coaching-student-club-name">
                       <TablerIcon name="building-community" size={16} />
-                      {rel.club.nombre}
+                      {clubName}
                     </h3>
                     <span className="coaching-student-member-since">
                       Vinculado desde: {formatDate(rel.startedAt)}
@@ -423,7 +462,7 @@ export const StudentCoachingPage: React.FC = () => {
                         {hasAvailable ? "Paquete Vigente" : "Sin Saldo Restante"}
                       </span>
                     </div>
-                    <div className="coaching-metric-value">{rel.balance.balanceClasses}</div>
+                    <div className="coaching-metric-value">{currentBalance}</div>
                     <p className="coaching-metric-desc">
                       {hasAvailable
                         ? "Clases listas para impartir o tomar en cancha."
@@ -436,7 +475,7 @@ export const StudentCoachingPage: React.FC = () => {
                       <span className="coaching-metric-label">Clases Impartidas</span>
                       <TablerIcon name="history" size={18} className="coaching-metric-icon" />
                     </div>
-                    <div className="coaching-metric-value">{rel.balance.totalClassesGiven}</div>
+                    <div className="coaching-metric-value">{rel.balance?.totalClassesGiven ?? 0}</div>
                     <p className="coaching-metric-desc">
                       Total de sesiones presenciales impartidas y descontadas por tu coach.
                     </p>
@@ -453,7 +492,7 @@ export const StudentCoachingPage: React.FC = () => {
                           Próximas Clases Agendadas
                         </h3>
                         <p className="coaching-ledger-desc">
-                          Horarios confirmados de entrenamiento con {rel.coach.nombre} en {rel.club.nombre}.
+                          Horarios confirmados de entrenamiento con {coachName} en {clubName}.
                         </p>
                       </div>
                       <span className="coaching-badge coaching-badge--active" style={{ fontWeight: 600 }}>
@@ -546,17 +585,17 @@ export const StudentCoachingPage: React.FC = () => {
                       </p>
                     </div>
                     <span className="coaching-ledger-count">
-                      {rel.ledger.length} movimiento(s)
+                      {(rel.ledger ?? []).length} movimiento(s)
                     </span>
                   </div>
 
-                  {rel.ledger.length === 0 ? (
+                  {(rel.ledger ?? []).length === 0 ? (
                     <div className="coaching-ledger-empty">
                       <p>Aún no se registran movimientos ni clases en este paquete.</p>
                     </div>
                   ) : (
                     <div className="coaching-ledger-timeline">
-                      {rel.ledger.map((entry) => {
+                      {(rel.ledger ?? []).map((entry) => {
                         const renderStudentLedgerBadge = () => {
                           switch (entry.tipo) {
                             case "PACKAGE_CREDIT":
@@ -568,6 +607,7 @@ export const StudentCoachingPage: React.FC = () => {
                                 </span>
                               );
                             case "CLASS_DEBIT":
+                            case "CLASS_SESSION":
                               return (
                                 <span className="coaching-ledger-badge badge--session">
                                   <TablerIcon name="check" size={13} />
@@ -733,7 +773,7 @@ export const StudentCoachingPage: React.FC = () => {
                                           marginBottom: "0.2rem",
                                         }}
                                       >
-                                        Mensaje de tu coach ({rel.coach.nombre})
+                                        Mensaje de tu coach ({coachName})
                                       </span>
                                       "{entry.session.motivationalMessage}"
                                     </div>
