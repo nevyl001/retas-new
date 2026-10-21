@@ -7,13 +7,21 @@ import { createClient } from "@supabase/supabase-js";
 import { execSync } from "child_process";
 import crypto from "crypto";
 
-const SUPABASE_URL = "https://giswxhmjgjepoobdoljb.supabase.co";
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ||
+  process.env.REACT_APP_SUPABASE_URL ||
+  "https://giswxhmjgjepoobdoljb.supabase.co";
 const SUPABASE_ANON_KEY =
   process.env.REACT_APP_SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdpc3d4aG1qZ2plcG9vYmRvbGpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTY1MTIsImV4cCI6MjA2OTQ3MjUxMn0.QVwTLhC3cWJORTlFFek60koVRQN8AD_FN663ZdsOpIw";
-const SUPABASE_SERVICE_ROLE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdpc3d4aG1qZ2plcG9vYmRvbGpiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg5NjUxMiwiZXhwIjoyMDY5NDcyNTEyfQ.S-xDeo3-uHCg2FQ_PE3JFslo8BeB9jP4VaQBabnR62E";
+  process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SUPABASE_ANON_KEY) {
+  throw new Error("REACT_APP_SUPABASE_ANON_KEY o SUPABASE_ANON_KEY requerida en entorno.");
+}
+if (!SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error("SUPABASE_SERVICE_ROLE_KEY requerida en variables de entorno para pruebas administrativas.");
+}
 
 const RUN_ID = Date.now().toString().slice(-6);
 const ORG_EMAIL = `hackpadel_0081_${RUN_ID}@test.com`;

@@ -22,12 +22,16 @@ export const StudentAccessPage: React.FC = () => {
   // Estados de formulario login
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // Estados de activación (nueva cuenta)
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [activating, setActivating] = useState(false);
   const [activateError, setActivateError] = useState<string | null>(null);
   const [activateSuccess, setActivateSuccess] = useState(false);
@@ -35,6 +39,7 @@ export const StudentAccessPage: React.FC = () => {
 
   // Estados para vinculación de cuenta existente
   const [existingPassword, setExistingPassword] = useState("");
+  const [showExistingPassword, setShowExistingPassword] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
 
@@ -59,7 +64,7 @@ export const StudentAccessPage: React.FC = () => {
     }
   }, []);
 
-  // Escuchar cambios de autenticación para capturar verificación instantánea (móvil / Safari)
+  // Escuchar cambios de autenticación para capturar verificación instantánea (móvil / Safari / hash GoTrue)
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -138,7 +143,6 @@ export const StudentAccessPage: React.FC = () => {
       }
 
       if (data.session) {
-        // Redirigir a Mi Coaching
         navigateStudentCoaching();
       }
     } catch (err: any) {
@@ -148,17 +152,38 @@ export const StudentAccessPage: React.FC = () => {
     }
   };
 
-  const handleActivationSubmit = async (e: React.FormEvent) => {
+  // Paso 1: Validar política de contraseña y abrir modal de confirmación sin guardar
+  const handleOpenConfirmStep = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) return;
-
     if (!newPassword || newPassword.length < 8) {
       setActivateError("La contraseña debe tener al menos 8 caracteres.");
       return;
     }
 
+    setActivateError(null);
+    setConfirmPassword("");
+    setShowConfirmModal(true);
+  };
+
+  // Cancelar confirmación: regresar a Pantalla 1 sin alterar Auth
+  const handleCancelConfirm = () => {
+    setShowConfirmModal(false);
+    setConfirmPassword("");
+    setActivateError(null);
+  };
+
+  // Paso 2: Validar coincidencia de contraseña y ejecutar activación en Supabase
+  const handleFinalActivationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) return;
+
+    if (!confirmPassword) {
+      setActivateError("Confirma tu contraseña para continuar.");
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
-      setActivateError("Las contraseñas no coinciden.");
+      setActivateError("Las contraseñas no coinciden. Verifica e intenta nuevamente.");
       return;
     }
 
@@ -172,6 +197,7 @@ export const StudentAccessPage: React.FC = () => {
 
       if (!currentSession?.user) {
         setIsEmailVerified(false);
+        setShowConfirmModal(false);
         setActivateError(
           "Se requiere sesión autenticada del alumno. Abre el enlace enviado a tu correo electrónico para verificar tu identidad."
         );
@@ -180,6 +206,7 @@ export const StudentAccessPage: React.FC = () => {
 
       if (!currentSession.user.email_confirmed_at) {
         setIsEmailVerified(false);
+        setShowConfirmModal(false);
         setActivateError(
           "El correo electrónico no ha sido verificado aún. Por favor abre el enlace recibido en tu correo electrónico."
         );
@@ -203,6 +230,8 @@ export const StudentAccessPage: React.FC = () => {
         return;
       }
 
+      // 4. Éxito: cerrar modal, mostrar confirmación y entrar a Mi Coaching
+      setShowConfirmModal(false);
       setActivateSuccess(true);
       setTimeout(() => {
         navigateStudentCoaching();
@@ -237,7 +266,7 @@ export const StudentAccessPage: React.FC = () => {
       if (signInErr || !authData.session) {
         setClaimError(
           signInErr?.message.includes("Invalid login credentials")
-            ? "Contraseña incorrecta. Ingresa la contraseña de tu cuenta AppRiviera."
+            ? "Contraseña incorrecta. Ingresa la contraseña de tu cuenta de alumno."
             : signInErr?.message || "Error al autenticar con tu cuenta."
         );
         return;
@@ -310,14 +339,14 @@ export const StudentAccessPage: React.FC = () => {
           <div className="student-access-badge">Riviera Coaching</div>
           <h1 className="student-access-title">
             {mode === "activate"
-              ? "Activa tu Acceso de Alumno"
+              ? "Crea tu contraseña"
               : mode === "recovery"
               ? "Recuperar Contraseña"
               : "Acceso de Alumno"}
           </h1>
           <p className="student-access-subtitle">
             {mode === "activate"
-              ? "Crea tu contraseña definitiva para consultar tus clases y entrenamientos vinculados a tu Riviera ID."
+              ? "Define tu contraseña de acceso exclusivo a Riviera Coaching."
               : mode === "recovery"
               ? "Te enviaremos un enlace a tu correo para restablecer tu contraseña."
               : "Consulta tus clases, entrenamientos y seguimiento deportivo."}
@@ -396,6 +425,7 @@ export const StudentAccessPage: React.FC = () => {
                       <strong>¡Cuenta vinculada exitosamente!</strong> Entrando a tu espacio deportivo...
                     </div>
                   ) : invitationData.isExistingAccount ? (
+                    /* Alumno con cuenta ya activada previamente en otro club */
                     <form onSubmit={handleClaimExistingSubmit}>
                       <div
                         className="student-alert"
@@ -407,7 +437,7 @@ export const StudentAccessPage: React.FC = () => {
                           lineHeight: "1.4",
                         }}
                       >
-                        <strong>Cuenta de alumno detectada:</strong> Ya cuentas con un registro de alumno con este correo. Ingresa tu contraseña para vincular este club a tu perfil de Riviera Coaching sin modificar tus credenciales.
+                        <strong>Cuenta de alumno activa detectada:</strong> Ya cuentas con un perfil de alumno activo en Riviera Coaching. Ingresa tu contraseña actual para vincular este nuevo club sin modificar tus credenciales.
                       </div>
 
                       {claimError && (
@@ -420,15 +450,25 @@ export const StudentAccessPage: React.FC = () => {
                         <label className="student-form-label">
                           Contraseña de tu Cuenta de Alumno
                         </label>
-                        <input
-                          type="password"
-                          className="student-form-input"
-                          placeholder="Tu contraseña habitual"
-                          value={existingPassword}
-                          onChange={(e) => setExistingPassword(e.target.value)}
-                          disabled={claiming}
-                          required
-                        />
+                        <div className="student-input-wrap">
+                          <input
+                            type={showExistingPassword ? "text" : "password"}
+                            className="student-form-input"
+                            placeholder="Tu contraseña habitual"
+                            value={existingPassword}
+                            onChange={(e) => setExistingPassword(e.target.value)}
+                            disabled={claiming}
+                            required
+                          />
+                          <button
+                            type="button"
+                            className="student-input-toggle"
+                            onClick={() => setShowExistingPassword(!showExistingPassword)}
+                            aria-label={showExistingPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                          >
+                            {showExistingPassword ? "Ocultar" : "Mostrar"}
+                          </button>
+                        </div>
                       </div>
 
                       <button
@@ -442,6 +482,7 @@ export const StudentAccessPage: React.FC = () => {
                       </button>
                     </form>
                   ) : !isEmailVerified ? (
+                    /* Verificación de correo requerida */
                     <div>
                       <div
                         className="student-alert"
@@ -455,7 +496,7 @@ export const StudentAccessPage: React.FC = () => {
                       >
                         <strong>Verificación de Correo Requerida</strong>
                         <p style={{ marginTop: "6px", marginBottom: "0" }}>
-                          Hemos enviado un enlace de confirmación a <strong>{invitationData.email}</strong>. Por seguridad y para verificar la posesión de tu correo, debes abrir el enlace en tu correo antes de definir tu contraseña.
+                          Hemos enviado un enlace de confirmación a <strong>{invitationData.email}</strong>. Por seguridad y para verificar la posesión de tu correo, abre el enlace en tu correo para verificar tu cuenta y definir tu contraseña.
                         </p>
                       </div>
 
@@ -480,8 +521,9 @@ export const StudentAccessPage: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <form onSubmit={handleActivationSubmit}>
-                      {activateError && (
+                    /* PANTALLA 1: GENERA TU CONTRASEÑA (UN SOLO CAMPO) */
+                    <form onSubmit={handleOpenConfirmStep}>
+                      {activateError && !showConfirmModal && (
                         <div className="student-alert student-alert-error">
                           {activateError}
                         </div>
@@ -489,44 +531,40 @@ export const StudentAccessPage: React.FC = () => {
 
                       <div className="student-form-group">
                         <label className="student-form-label">
-                          Crea tu Contraseña Definitiva
+                          Nueva contraseña
                         </label>
-                        <input
-                          type="password"
-                          className="student-form-input"
-                          placeholder="Mínimo 8 caracteres (mayúscula, minúscula, número)"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          disabled={activating}
-                          required
-                          minLength={8}
-                        />
-                      </div>
-
-                      <div className="student-form-group">
-                        <label className="student-form-label">
-                          Confirma tu Contraseña
-                        </label>
-                        <input
-                          type="password"
-                          className="student-form-input"
-                          placeholder="Repite tu contraseña"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          disabled={activating}
-                          required
-                          minLength={8}
-                        />
+                        <div className="student-input-wrap">
+                          <input
+                            type={showNewPassword ? "text" : "password"}
+                            className="student-form-input"
+                            placeholder="••••••••"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            disabled={activating}
+                            required
+                            minLength={8}
+                            autoComplete="new-password"
+                          />
+                          <button
+                            type="button"
+                            className="student-input-toggle"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            aria-label={showNewPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                          >
+                            {showNewPassword ? "Ocultar" : "Mostrar"}
+                          </button>
+                        </div>
+                        <div className="student-form-hint">
+                          Mínimo 8 caracteres.
+                        </div>
                       </div>
 
                       <button
                         type="submit"
                         className="student-btn-primary"
-                        disabled={activating}
+                        disabled={activating || !newPassword}
                       >
-                        {activating
-                          ? "Activando cuenta..."
-                          : "Activar Mi Cuenta y Entrar"}
+                        Continuar
                       </button>
                     </form>
                   )}
@@ -555,6 +593,7 @@ export const StudentAccessPage: React.FC = () => {
                     onChange={(e) => setLoginEmail(e.target.value)}
                     disabled={loginLoading}
                     required
+                    autoComplete="email"
                   />
                 </div>
 
@@ -585,15 +624,26 @@ export const StudentAccessPage: React.FC = () => {
                       ¿Olvidaste tu contraseña?
                     </button>
                   </div>
-                  <input
-                    type="password"
-                    className="student-form-input"
-                    placeholder="••••••••"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    disabled={loginLoading}
-                    required
-                  />
+                  <div className="student-input-wrap">
+                    <input
+                      type={showLoginPassword ? "text" : "password"}
+                      className="student-form-input"
+                      placeholder="••••••••"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      disabled={loginLoading}
+                      required
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      className="student-input-toggle"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      aria-label={showLoginPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    >
+                      {showLoginPassword ? "Ocultar" : "Mostrar"}
+                    </button>
+                  </div>
                 </div>
 
                 <button
@@ -606,31 +656,28 @@ export const StudentAccessPage: React.FC = () => {
               </form>
 
               <div className="student-help-box">
-                <strong>¿Eres alumno nuevo?</strong>
-                <p style={{ margin: "0.35rem 0 0" }}>
-                  Tu club debe invitarte directamente para vincular tu Riviera ID oficial y saldo de clases contratadas.
-                </p>
+                ¿No tienes acceso todavía? Contacta a la administración de tu club para que registre tu Riviera ID y te envíe una invitación de alumno.
               </div>
             </div>
           )}
 
-          {/* MODO RECUPERAR CONTRASEÑA */}
+          {/* MODO RECUPERACIÓN DE CONTRASEÑA */}
           {mode === "recovery" && (
             <div>
               {recoverySent ? (
                 <div>
                   <div className="student-alert student-alert-success">
-                    <strong>Correo enviado:</strong> Te hemos enviado las instrucciones para restablecer tu contraseña a <strong>{recoveryEmail}</strong>.
+                    <strong>Correo enviado:</strong> Si tu cuenta de alumno está registrada, recibirás un enlace para restablecer tu contraseña.
                   </div>
                   <button
                     type="button"
-                    className="student-btn-secondary"
+                    className="student-btn-primary"
                     onClick={() => {
                       setMode("login");
                       setRecoverySent(false);
                     }}
                   >
-                    Volver a Iniciar Sesión
+                    Volver al Inicio de Sesión
                   </button>
                 </div>
               ) : (
@@ -662,7 +709,7 @@ export const StudentAccessPage: React.FC = () => {
                     disabled={recoveryLoading}
                   >
                     {recoveryLoading
-                      ? "Enviando correo..."
+                      ? "Enviando enlace..."
                       : "Enviar Enlace de Recuperación"}
                   </button>
 
@@ -680,7 +727,74 @@ export const StudentAccessPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* PANTALLA 2 — MODAL DE CONFIRMACIÓN DE CONTRASEÑA */}
+      {showConfirmModal && (
+        <div className="student-modal-overlay" role="dialog" aria-modal="true">
+          <div className="student-modal-dialog">
+            <div className="student-modal-header">
+              <h2 className="student-modal-title">Confirma tu contraseña</h2>
+              <p className="student-modal-subtitle">
+                Ingresa de nuevo la contraseña para asegurar que no haya errores de escritura.
+              </p>
+            </div>
+
+            <form onSubmit={handleFinalActivationSubmit}>
+              {activateError && (
+                <div className="student-alert student-alert-error">
+                  {activateError}
+                </div>
+              )}
+
+              <div className="student-form-group">
+                <label className="student-form-label">
+                  Confirmar contraseña
+                </label>
+                <div className="student-input-wrap">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    className="student-form-input"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={activating}
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="student-input-toggle"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  >
+                    {showConfirmPassword ? "Ocultar" : "Mostrar"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="student-modal-actions">
+                <button
+                  type="button"
+                  className="student-btn-secondary"
+                  onClick={handleCancelConfirm}
+                  disabled={activating}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="student-btn-primary"
+                  disabled={activating || !confirmPassword}
+                >
+                  {activating ? "Activando..." : "Confirmar contraseña"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
