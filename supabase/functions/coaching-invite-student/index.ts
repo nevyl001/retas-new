@@ -198,13 +198,20 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Obtener nombres para emails y vistas
+    // Obtener nombres para emails y vistas con resolución de nombre comercial
+    const { data: displayName } = await supabaseAdmin.rpc(
+      "get_organizador_display_name",
+      { p_organizador_id: organizadorId }
+    );
     const { data: orgUser } = await supabaseAdmin
       .from("users")
       .select("name")
       .eq("id", organizadorId)
       .maybeSingle();
-    const clubName = orgUser?.name || "Riviera Coaching";
+    const clubName =
+      typeof displayName === "string" && displayName.trim().length > 0
+        ? displayName.trim()
+        : orgUser?.name?.trim() || "Club Deportivo Riviera";
 
     const { data: coachRow } = await supabaseAdmin
       .from("riviera_coaches")
@@ -409,16 +416,16 @@ Deno.serve(async (req: Request) => {
           email,
           `Riviera Coaching — Vinculación con ${clubName}`,
           `Hola ${jugador.nombre},\n\nEl club ${clubName} te ha invitado a consultar tus clases con el coach ${coachName} en Riviera Coaching.\n\nPara vincular tu perfil a tu cuenta existente de AppRiviera, ingresa aquí:\n${invitationUrl}`,
-          `<div style="font-family: sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; color: #1e293b; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <div style="font-size: 14px; color: #0284c7; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">🎾 Riviera Coaching</div>
-            <h2 style="color: #0f172a; margin-top: 0;">Vinculación de Perfil Deportivo</h2>
-            <p>Hola <strong>${jugador.nombre}</strong>,</p>
-            <p><strong>${clubName}</strong> te ha registrado como alumno del coach <strong>${coachName}</strong> en Riviera Coaching con tu identificador oficial <strong>${officialRivieraId || "N/A"}</strong>.</p>
-            <p>Ya tienes una cuenta registrada en AppRiviera con este correo. Inicia sesión con tu contraseña habitual para vincular tu perfil de coaching sin modificar tus credenciales:</p>
-            <div style="margin: 24px 0;">
-              <a href="${invitationUrl}" style="background-color: #0284c7; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">Vincular Perfil Deportivo</a>
+          `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #09090b; background: #ffffff; border-radius: 8px; border: 1px solid #e4e4e7;">
+            <div style="font-size: 11px; letter-spacing: 0.1em; color: #71717a; font-weight: 700; text-transform: uppercase; margin-bottom: 12px;">Riviera Coaching</div>
+            <h2 style="color: #09090b; margin-top: 0; font-size: 20px; font-weight: 700;">Vinculación de Perfil Deportivo</h2>
+            <p style="font-size: 14px; line-height: 1.6; color: #27272a;">Hola <strong>${jugador.nombre}</strong>,</p>
+            <p style="font-size: 14px; line-height: 1.6; color: #27272a;"><strong>${clubName}</strong> te ha registrado como alumno del coach <strong>${coachName}</strong> en Riviera Coaching con tu identificador oficial <strong>${officialRivieraId || "N/A"}</strong>.</p>
+            <p style="font-size: 14px; line-height: 1.6; color: #27272a;">Ya tienes una cuenta registrada en AppRiviera con este correo. Inicia sesión con tu contraseña habitual para vincular tu perfil de coaching sin modificar tus credenciales:</p>
+            <div style="margin: 28px 0;">
+              <a href="${invitationUrl}" style="background-color: #09090b; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-block;">Vincular Perfil Deportivo</a>
             </div>
-            <p style="color: #64748b; font-size: 12px; margin-top: 24px;">Si no solicitaste este acceso, puedes ignorar este correo.</p>
+            <p style="color: #71717a; font-size: 12px; margin-top: 28px; border-top: 1px solid #f4f4f5; padding-top: 16px;">Si no solicitaste este acceso, puedes ignorar este correo.</p>
           </div>`,
           { correlationId, module: MODULE, jugadorId }
         );
@@ -441,16 +448,16 @@ Deno.serve(async (req: Request) => {
           email,
           `Invitación a Riviera Coaching — ${clubName}`,
           `Hola ${jugador.nombre},\n\nEl club ${clubName} te ha registrado como alumno con el coach ${coachName} en Riviera Coaching (Riviera ID: ${officialRivieraId || "N/A"}).\n\nPara verificar la propiedad de tu correo y establecer tu contraseña de acceso, haz clic en el siguiente enlace:\n${directVerifyUrl}`,
-          `<div style="font-family: sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; color: #1e293b; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <div style="font-size: 14px; color: #0284c7; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">🎾 Riviera Coaching</div>
-            <h2 style="color: #0f172a; margin-top: 0;">Verificación de Acceso de Alumno</h2>
-            <p>Hola <strong>${jugador.nombre}</strong>,</p>
-            <p><strong>${clubName}</strong> te ha registrado como alumno con el coach <strong>${coachName}</strong> en Riviera Coaching con tu identificador oficial <strong>${officialRivieraId || "N/A"}</strong>.</p>
-            <p>Por seguridad y para comprobar la posesión de tu correo electrónico, haz clic en el siguiente botón para verificar tu cuenta y definir tu contraseña:</p>
-            <div style="margin: 24px 0;">
-              <a href="${directVerifyUrl}" style="background-color: #0284c7; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">Verificar Correo y Activar Cuenta</a>
+          `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #09090b; background: #ffffff; border-radius: 8px; border: 1px solid #e4e4e7;">
+            <div style="font-size: 11px; letter-spacing: 0.1em; color: #71717a; font-weight: 700; text-transform: uppercase; margin-bottom: 12px;">Riviera Coaching</div>
+            <h2 style="color: #09090b; margin-top: 0; font-size: 20px; font-weight: 700;">Verificación de Acceso de Alumno</h2>
+            <p style="font-size: 14px; line-height: 1.6; color: #27272a;">Hola <strong>${jugador.nombre}</strong>,</p>
+            <p style="font-size: 14px; line-height: 1.6; color: #27272a;"><strong>${clubName}</strong> te ha registrado como alumno con el coach <strong>${coachName}</strong> en Riviera Coaching con tu identificador oficial <strong>${officialRivieraId || "N/A"}</strong>.</p>
+            <p style="font-size: 14px; line-height: 1.6; color: #27272a;">Por seguridad y para comprobar la posesión de tu correo electrónico, haz clic en el siguiente botón para verificar tu cuenta y definir tu contraseña:</p>
+            <div style="margin: 28px 0;">
+              <a href="${directVerifyUrl}" style="background-color: #09090b; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-block;">Verificar Correo y Activar Cuenta</a>
             </div>
-            <p style="color: #64748b; font-size: 12px; margin-top: 24px;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br/><a href="${directVerifyUrl}">${directVerifyUrl}</a></p>
+            <p style="color: #71717a; font-size: 12px; margin-top: 28px; border-top: 1px solid #f4f4f5; padding-top: 16px;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br/><a href="${directVerifyUrl}" style="color: #09090b; word-break: break-all;">${directVerifyUrl}</a></p>
           </div>`,
           { correlationId, module: MODULE, jugadorId }
         );

@@ -166,7 +166,6 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
       >
         <div className="student-access-modal-header">
           <h2 className="student-access-modal-title">
-            <span>🎾</span>
             <span>Gestionar Acceso del Alumno</span>
           </h2>
           <button
@@ -216,22 +215,22 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
               <span className="student-access-card-value">
                 {currentStatus === "ACTIVE" && (
                   <span className="status-pill status-pill-active">
-                    ● Acceso Activo
+                    Acceso Activo
                   </span>
                 )}
                 {currentStatus === "INVITATION_PENDING" && (
                   <span className="status-pill status-pill-pending">
-                    ⏳ Invitación Pendiente
+                    Invitación Pendiente
                   </span>
                 )}
                 {currentStatus === "DEACTIVATED" && (
                   <span className="status-pill status-pill-deactivated">
-                    ✕ Acceso Desactivado
+                    Acceso Desactivado
                   </span>
                 )}
                 {currentStatus === "NO_ACCESS" && (
                   <span className="status-pill status-pill-no-access">
-                    ○ Sin Acceso
+                    Sin Acceso
                   </span>
                 )}
               </span>
@@ -312,7 +311,7 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
                       lineHeight: "1.4",
                     }}
                   >
-                    🔒 <strong>Enlace enviado al buzón del alumno:</strong> El enlace oficial de verificación y activación fue enviado exclusivamente al correo <strong>{accessInfo?.email || emailInput}</strong>. Por política de seguridad, los administradores no tienen acceso a los enlaces de verificación ni pueden modificar la contraseña del jugador.
+                    <strong>Enlace enviado al buzón del alumno:</strong> El enlace oficial de verificación y activación fue enviado exclusivamente al correo <strong>{accessInfo?.email || emailInput}</strong>. Por política de seguridad, los administradores no tienen acceso a los enlaces de verificación ni pueden modificar la contraseña del jugador.
                   </div>
 
                   <div className="modal-actions-container">

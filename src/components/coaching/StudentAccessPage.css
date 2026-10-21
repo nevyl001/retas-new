@@ -6,74 +6,70 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 2rem 1rem;
-  background: radial-gradient(circle at top, #131d2e 0%, #080d16 100%);
-  color: #f8fafc;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  padding: 2.5rem 1rem;
+  background-color: #09090b;
+  color: #fafafa;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   box-sizing: border-box;
 }
 
 .student-access-container {
   width: 100%;
-  max-width: 460px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(200, 170, 110, 0.25);
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(200, 170, 110, 0.08);
+  max-width: 440px;
+  background: #121215;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
 
 .student-access-header {
-  padding: 2.25rem 2rem 1.5rem;
+  padding: 2rem 1.75rem 1.25rem;
   text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: linear-gradient(180deg, rgba(200, 170, 110, 0.06) 0%, transparent 100%);
+  border-bottom: 1px solid #27272a;
 }
 
 .student-access-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.85rem;
-  background: rgba(200, 170, 110, 0.15);
-  border: 1px solid rgba(200, 170, 110, 0.35);
-  color: #dfc187;
-  font-size: 0.75rem;
-  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  background: #18181b;
+  border: 1px solid #27272a;
+  color: #a1a1aa;
+  font-size: 0.72rem;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   border-radius: 9999px;
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
 }
 
 .student-access-title {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: #ffffff;
-  margin: 0 0 0.5rem;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #fafafa;
+  margin: 0 0 0.4rem;
   letter-spacing: -0.02em;
 }
 
 .student-access-subtitle {
-  font-size: 0.875rem;
-  color: #94a3b8;
+  font-size: 0.85rem;
+  color: #a1a1aa;
   margin: 0;
   line-height: 1.45;
 }
 
 .student-access-body {
-  padding: 2rem;
+  padding: 1.75rem;
 }
 
 /* Card del alumno en modo activación */
 .student-activation-card {
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(200, 170, 110, 0.2);
-  border-radius: 12px;
-  padding: 1.25rem;
-  margin-bottom: 1.75rem;
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  padding: 1.15rem;
+  margin-bottom: 1.5rem;
 }
 
 .student-activation-card-header {
@@ -84,21 +80,21 @@
 }
 
 .student-activation-name {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fafafa;
 }
 
 .student-riviera-badge {
   display: inline-block;
-  padding: 0.25rem 0.6rem;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  color: #34d399;
+  padding: 0.2rem 0.55rem;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  color: #fafafa;
   font-size: 0.75rem;
-  font-weight: 700;
-  font-family: monospace;
-  border-radius: 6px;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  border-radius: 4px;
 }
 
 .student-activation-details {
@@ -106,13 +102,13 @@
   flex-direction: column;
   gap: 0.4rem;
   font-size: 0.825rem;
-  color: #cbd5e1;
+  color: #a1a1aa;
 }
 
 .student-activation-row {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid #27272a;
   padding-bottom: 0.35rem;
 }
 
@@ -122,12 +118,12 @@
 }
 
 .student-activation-label {
-  color: #94a3b8;
+  color: #71717a;
 }
 
 .student-activation-val {
-  font-weight: 600;
-  color: #f1f5f9;
+  font-weight: 500;
+  color: #fafafa;
 }
 
 /* Formulario */
@@ -138,32 +134,32 @@
 .student-form-label {
   display: block;
   font-size: 0.825rem;
-  font-weight: 600;
-  color: #cbd5e1;
-  margin-bottom: 0.45rem;
+  font-weight: 500;
+  color: #d4d4d8;
+  margin-bottom: 0.4rem;
   letter-spacing: 0.01em;
 }
 
 .student-form-input {
   width: 100%;
-  padding: 0.8rem 1rem;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 0.925rem;
+  padding: 0.75rem 0.9rem;
+  background: #09090b;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  color: #fafafa;
+  font-size: 0.9rem;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   box-sizing: border-box;
 }
 
 .student-form-input:focus {
   outline: none;
-  border-color: #dfc187;
-  box-shadow: 0 0 0 3px rgba(200, 170, 110, 0.2);
+  border-color: #fafafa;
+  box-shadow: 0 0 0 2px rgba(250, 250, 250, 0.12);
 }
 
 .student-form-input::placeholder {
-  color: #64748b;
+  color: #52525b;
 }
 
 .student-form-input:disabled {
@@ -173,79 +169,75 @@
 
 .student-btn-primary {
   width: 100%;
-  padding: 0.9rem 1.25rem;
-  background: linear-gradient(135deg, #d4af37 0%, #aa8c2c 100%);
+  padding: 0.85rem 1.25rem;
+  background: #fafafa;
   border: none;
-  border-radius: 8px;
-  color: #0b0f19;
-  font-size: 0.95rem;
-  font-weight: 700;
+  border-radius: 6px;
+  color: #09090b;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+  transition: background-color 0.15s ease, opacity 0.15s ease;
   margin-top: 0.5rem;
 }
 
 .student-btn-primary:hover:not(:disabled) {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.35);
+  background: #e4e4e7;
 }
 
 .student-btn-primary:active:not(:disabled) {
-  transform: translateY(0);
+  opacity: 0.9;
 }
 
 .student-btn-primary:disabled {
-  opacity: 0.6;
+  opacity: 0.4;
   cursor: not-allowed;
-  filter: grayscale(0.5);
 }
 
 .student-btn-secondary {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  color: #cbd5e1;
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  color: #d4d4d8;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
   margin-top: 0.75rem;
 }
 
 .student-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: #27272a;
+  color: #fafafa;
 }
 
 /* Alert boxes */
 .student-alert {
-  padding: 0.85rem 1rem;
-  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
   font-size: 0.85rem;
   margin-bottom: 1.25rem;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .student-alert-error {
-  background: rgba(239, 68, 68, 0.12);
+  background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: #fca5a5;
 }
 
 .student-alert-success {
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #6ee7b7;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #86efac;
 }
 
 .student-alert-warning {
-  background: rgba(245, 158, 11, 0.12);
+  background: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.3);
-  color: #fcd34d;
+  color: #fde047;
 }
 
 /* Links & Help text */
@@ -253,14 +245,14 @@
   margin-top: 1.5rem;
   text-align: center;
   font-size: 0.825rem;
-  color: #94a3b8;
+  color: #71717a;
 }
 
 .student-text-btn {
   background: none;
   border: none;
-  color: #dfc187;
-  font-weight: 600;
+  color: #a1a1aa;
+  font-weight: 500;
   cursor: pointer;
   padding: 0;
   font-size: inherit;
@@ -269,17 +261,17 @@
 }
 
 .student-text-btn:hover {
-  color: #f0d59e;
+  color: #fafafa;
 }
 
 .student-help-box {
   margin-top: 1.5rem;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px dashed rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 6px;
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: #a1a1aa;
   line-height: 1.45;
   text-align: center;
 }
@@ -287,14 +279,14 @@
 .student-loading-box {
   text-align: center;
   padding: 2.5rem 1rem;
-  color: #cbd5e1;
+  color: #a1a1aa;
 }
 
 .student-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid rgba(200, 170, 110, 0.2);
-  border-top-color: #dfc187;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #27272a;
+  border-top-color: #fafafa;
   border-radius: 50%;
   animation: student-spin 0.8s linear infinite;
   margin: 0 auto 1rem;
@@ -305,4 +297,3 @@
     transform: rotate(360deg);
   }
 }
-

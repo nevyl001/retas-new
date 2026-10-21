@@ -60,6 +60,28 @@ export const StudentAccessPage: React.FC = () => {
     }
   }, []);
 
+  // Escuchar cambios de autenticación para capturar verificación instantánea (móvil / Safari)
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user?.email_confirmed_at) {
+          if (
+            invitationData?.email &&
+            session.user.email?.toLowerCase() === invitationData.email.toLowerCase()
+          ) {
+            setIsEmailVerified(true);
+            setActivateError(null);
+          } else if (!invitationData?.email) {
+            setIsEmailVerified(true);
+          }
+        }
+      }
+    );
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [invitationData?.email]);
+
   const handleVerifyToken = async (tok: string) => {
     setVerifyingToken(true);
     setTokenError(null);
@@ -290,7 +312,7 @@ export const StudentAccessPage: React.FC = () => {
     <div className="student-access-page">
       <div className="student-access-container">
         <div className="student-access-header">
-          <div className="student-access-badge">🎾 Riviera Coaching</div>
+          <div className="student-access-badge">Riviera Coaching</div>
           <h1 className="student-access-title">
             {mode === "activate"
               ? "Activa tu Acceso de Alumno"
@@ -436,7 +458,7 @@ export const StudentAccessPage: React.FC = () => {
                           fontSize: "0.88rem",
                         }}
                       >
-                        <strong>✉️ Verificación de Correo Requerida:</strong>
+                        <strong>Verificación de Correo Requerida</strong>
                         <p style={{ marginTop: "6px", marginBottom: "0" }}>
                           Hemos enviado un enlace de confirmación a <strong>{invitationData.email}</strong>. Por seguridad y para verificar la posesión de tu correo, debes abrir el enlace en tu correo antes de definir tu contraseña.
                         </p>
@@ -458,7 +480,7 @@ export const StudentAccessPage: React.FC = () => {
                           onClick={() => token && handleVerifyToken(token)}
                           disabled={verifyingToken}
                         >
-                          {verifyingToken ? "Comprobando..." : "🔄 Comprobar Estado de Verificación"}
+                          {verifyingToken ? "Comprobando..." : "Comprobar Estado de Verificación"}
                         </button>
                       </div>
                     </div>

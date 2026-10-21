@@ -7,7 +7,7 @@ import {
 } from "../../lib/coaching/coachingApi";
 import { TablerIcon } from "../ui/TablerIcon";
 import { navigateToAppHome } from "../../lib/appRouting";
-import { navigateCoaching } from "./coachingNav";
+import { navigateCoaching, navigateStudentAccess } from "./coachingNav";
 import "./coaching.css";
 
 export const StudentCoachingPage: React.FC = () => {
@@ -159,10 +159,10 @@ export const StudentCoachingPage: React.FC = () => {
           <button
             type="button"
             className="coaching-btn coaching-btn--primary"
-            onClick={() => navigateToAppHome()}
+            onClick={() => navigateStudentAccess()}
           >
             <TablerIcon name="login" size={16} />
-            Iniciar sesión
+            Iniciar sesión como alumno
           </button>
         </div>
       </div>
