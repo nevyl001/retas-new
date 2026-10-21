@@ -13,10 +13,11 @@ const MAX_BODY_BYTES = 10_000;
 const MODULE = "coaching-activate-student";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY =
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("Missing Supabase env vars.");
 }
 
@@ -65,6 +66,46 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(413, { ok: false, error: "Solicitud demasiado grande" });
   }
 
+  // =========================================================================
+  // REGLA FUNDAMENTAL DE SEGURIDAD 0081:
+  // ELIMINAR CAPACIDAD ANÓNIMA DE CAMBIO DE CONTRASEÑA.
+  // Nunca permitir que un token de invitación por sí solo modifique contraseñas.
+  // Toda definición de contraseña exige una sesión autenticada del alumno.
+  // =========================================================================
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return jsonResponse(401, {
+      ok: false,
+      error:
+        "Se requiere sesión autenticada del alumno para definir la contraseña. Las operaciones anónimas de cambio de contraseña están desactivadas por seguridad.",
+    });
+  }
+
+  const supabaseCaller = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: authHeader } },
+  });
+
+  const {
+    data: { user: caller },
+    error: callerError,
+  } = await supabaseCaller.auth.getUser();
+
+  if (callerError || !caller) {
+    return jsonResponse(401, {
+      ok: false,
+      error: "Sesión de alumno inválida o expirada. Por favor abre el enlace enviado a tu correo.",
+    });
+  }
+
+  if (!caller.email_confirmed_at) {
+    return jsonResponse(400, {
+      ok: false,
+      needsEmailVerification: true,
+      error:
+        "El correo electrónico no ha sido verificado. Por favor abre el enlace enviado a tu correo antes de definir tu contraseña.",
+    });
+  }
+
   let body: RequestBody;
   try {
     body = (await req.json()) as RequestBody;
@@ -84,12 +125,10 @@ Deno.serve(async (req: Request) => {
 
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // 1. Rate limiting por IP contra ataques de fuerza bruta
-  const clientIp =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown-ip";
-  const rl = await checkRateLimit(supabaseAdmin, `${MODULE}:${clientIp}`, 15, 600);
+  // 1. Rate limiting por IP o usuario contra abusos
+  const rl = await checkRateLimit(supabaseAdmin, `${MODULE}:${caller.id}`, 10, 600);
   if (!rl.allowed) {
-    logWarn({ correlationId, module: MODULE, event: "rate_limited", actorId: clientIp });
+    logWarn({ correlationId, module: MODULE, event: "rate_limited", actorId: caller.id });
     return rateLimitedResponse(rl, cors);
   }
 
@@ -149,7 +188,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Comprobación de intentos contra fuerza bruta
     if (invitation.attempts_count >= 5) {
       await supabaseAdmin
         .from("coach_student_invitations")
@@ -162,7 +200,18 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 3. Comprobar datos de jugador
+    // 3. Comprobar que la sesión autenticada coincide con el correo invitado
+    const callerEmail = (caller.email || "").toLowerCase().trim();
+    const invitationEmail = (invitation.email || "").toLowerCase().trim();
+
+    if (callerEmail !== invitationEmail) {
+      return jsonResponse(403, {
+        ok: false,
+        error: `La cuenta autenticada (${callerEmail}) no coincide con el correo de la invitación (${invitationEmail}).`,
+      });
+    }
+
+    // 4. Comprobar datos de jugador
     const { data: jugador } = await supabaseAdmin
       .from("riviera_jugadores")
       .select("id, nombre, email")
@@ -184,159 +233,74 @@ Deno.serve(async (req: Request) => {
 
     const officialRivieraId = idRow?.riviera_id || null;
 
-    // 4. Comprobar si ya existe cuenta Auth previa con contraseña
-    // En tal caso, el usuario debe INICIAR SESIÓN y llamar a claim_student_invitation
-    let targetAuthUserId: string | null = invitation.auth_user_id || null;
+    // 5. Validar política de contraseñas si se proporciona
+    if (password) {
+      const pwdValidation = validatePasswordPolicy(password);
+      if (!pwdValidation.valid) {
+        await supabaseAdmin
+          .from("coach_student_invitations")
+          .update({
+            attempts_count: (invitation.attempts_count || 0) + 1,
+            last_attempt_at: new Date().toISOString(),
+          })
+          .eq("id", invitation.id);
 
-    if (!targetAuthUserId) {
-      const { data: userLookup } = await supabaseAdmin
-        .from("users")
-        .select("id, email")
-        .eq("email", invitation.email.toLowerCase())
-        .maybeSingle();
+        return jsonResponse(400, {
+          ok: false,
+          error: pwdValidation.message,
+        });
+      }
 
-      if (userLookup?.id) {
-        targetAuthUserId = userLookup.id;
+      // Actualizar contraseña mediante sesión autenticada
+      const { error: updateAuthErr } =
+        await supabaseAdmin.auth.admin.updateUserById(caller.id, {
+          password: password,
+          app_metadata: {
+            role: "student",
+            account_type: "STUDENT_ONLY",
+            roles: ["student"],
+          },
+          user_metadata: {
+            name: jugador.nombre,
+            account_type: "STUDENT_ONLY",
+          },
+        });
+
+      if (updateAuthErr) {
+        logError({
+          correlationId,
+          module: MODULE,
+          errorType: "update_user_password_failed",
+          detail: updateAuthErr.message,
+        });
+        return jsonResponse(500, {
+          ok: false,
+          error: "No se pudo actualizar la contraseña de la cuenta.",
+        });
       }
     }
 
-    if (!targetAuthUserId) {
-      const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 50,
-      });
-      const match = (authUsers?.users ?? []).find(
-        (u) => u.email?.trim().toLowerCase() === invitation.email.toLowerCase()
-      );
-      if (match?.id) {
-        targetAuthUserId = match.id;
-      }
-    }
-
-    if (!targetAuthUserId) {
-      return jsonResponse(404, {
-        ok: false,
-        error: "No se encontró el registro de autenticación para esta invitación. Solicita al club reenviar la invitación.",
-      });
-    }
-
-    const { data: authUserData, error: getUserErr } =
-      await supabaseAdmin.auth.admin.getUserById(targetAuthUserId);
-
-    if (getUserErr || !authUserData?.user) {
-      return jsonResponse(404, {
-        ok: false,
-        error: "Usuario de autenticación no encontrado.",
-      });
-    }
-
-    const targetUser = authUserData.user;
-
-    // Si el usuario ya contaba con contraseña establecida antes de esta invitación,
-    // DEBE iniciar sesión y vincular mediante claim_student_invitation sin sobrescribir contraseña.
-    if (
-      targetUser.encrypted_password &&
-      targetUser.encrypted_password.length > 0 &&
-      invitation.invited_at &&
-      targetUser.created_at &&
-      new Date(targetUser.created_at) < new Date(invitation.invited_at)
-    ) {
-      return jsonResponse(400, {
-        ok: false,
-        isExistingAccount: true,
-        error:
-          "Ya existe una cuenta en AppRiviera registrada con este correo. Por favor inicia sesión con tu contraseña habitual para vincular tu perfil.",
-      });
-    }
-
-    // 5. REGLA FUNDAMENTAL DE SEGURIDAD 0081:
-    // El usuario DEBE haber verificado su correo electrónico previamente (email_confirmed_at IS NOT NULL)
-    // a través del enlace enviado a su correo. La activación NO debe confirmar artificialmente correos no verificados.
-    if (!targetUser.email_confirmed_at) {
-      // Incrementar contador de intentos no autorizados
-      await supabaseAdmin
-        .from("coach_student_invitations")
-        .update({
-          attempts_count: (invitation.attempts_count || 0) + 1,
-          last_attempt_at: new Date().toISOString(),
-        })
-        .eq("id", invitation.id);
-
-      return jsonResponse(400, {
-        ok: false,
-        needsEmailVerification: true,
-        error:
-          "El correo electrónico no ha sido verificado. Por favor haz clic en el enlace enviado a tu correo antes de definir tu contraseña.",
-      });
-    }
-
-    // 6. Validar política de contraseñas
-    const pwdValidation = validatePasswordPolicy(password);
-    if (!pwdValidation.valid) {
-      await supabaseAdmin
-        .from("coach_student_invitations")
-        .update({
-          attempts_count: (invitation.attempts_count || 0) + 1,
-          last_attempt_at: new Date().toISOString(),
-        })
-        .eq("id", invitation.id);
-
-      return jsonResponse(400, {
-        ok: false,
-        error: pwdValidation.message,
-      });
-    }
-
-    // 7. Establecer contraseña definitiva y blindar rol exclusivo STUDENT_ONLY
-    // NOTA: No se pasa email_confirm: true — el correo ya fue legítimamente confirmado por el usuario.
-    const { error: updateAuthErr } =
-      await supabaseAdmin.auth.admin.updateUserById(targetUser.id, {
-        password: password,
-        app_metadata: {
-          role: "student",
-          account_type: "STUDENT_ONLY",
-          roles: ["student"],
-        },
-        user_metadata: {
-          name: jugador.nombre,
-          account_type: "STUDENT_ONLY",
-        },
-      });
-
-    if (updateAuthErr) {
-      logError({
-        correlationId,
-        module: MODULE,
-        errorType: "update_user_password_failed",
-        detail: updateAuthErr.message,
-      });
-      return jsonResponse(500, {
-        ok: false,
-        error: "No se pudo actualizar la contraseña de la cuenta.",
-      });
-    }
-
-    // 8. Sincronizar en public.users
+    // 6. Sincronizar en public.users
     await supabaseAdmin.from("users").upsert(
       {
-        id: targetUser.id,
-        email: invitation.email.toLowerCase(),
+        id: caller.id,
+        email: callerEmail,
         name: jugador.nombre,
       },
       { onConflict: "id" }
     );
 
-    // 9. Crear vínculo multiclub en coach_student_account_links
+    // 7. Crear vínculo multiclub en coach_student_account_links
     const { error: linkError } = await supabaseAdmin
       .from("coach_student_account_links")
       .upsert(
         {
           organizador_id: invitation.organizador_id,
           jugador_id: invitation.jugador_id,
-          auth_user_id: targetUser.id,
-          verification_method: "EMAIL_VERIFIED",
+          auth_user_id: caller.id,
+          verification_method: "STUDENT_AUTH_VERIFIED",
           is_active: true,
-          student_email: invitation.email.toLowerCase(),
+          student_email: callerEmail,
           deactivated_at: null,
           deactivated_by: null,
           updated_at: new Date().toISOString(),
@@ -357,20 +321,20 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 10. Marcar invitación como aceptada
+    // 8. Marcar invitación como aceptada
     await supabaseAdmin
       .from("coach_student_invitations")
       .update({
         status: "ACCEPTED",
         accepted_at: new Date().toISOString(),
-        accepted_by: targetUser.id,
+        accepted_by: caller.id,
         updated_at: new Date().toISOString(),
       })
       .eq("id", invitation.id);
 
     return jsonResponse(200, {
       ok: true,
-      email: invitation.email.toLowerCase(),
+      email: callerEmail,
       studentName: jugador.nombre,
       rivieraId: officialRivieraId,
       message: "¡Cuenta activada y vinculada exitosamente a Riviera Coaching!",

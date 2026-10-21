@@ -42,7 +42,6 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
   const [emailInput, setEmailInput] = useState(initialEmail || "");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
 
   const loadStatus = useCallback(async () => {
@@ -92,7 +91,7 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
       setSuccessMsg(
         res.status === "ACTIVE"
           ? "¡Cuenta vinculada exitosamente!"
-          : "¡Invitación generada exitosamente!"
+          : "¡Invitación enviada por correo al alumno exitosamente!"
       );
       if (onAccessUpdated) onAccessUpdated();
     } catch (err: any) {
@@ -113,7 +112,7 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
         ...res,
         status: "INVITATION_PENDING",
       }));
-      setSuccessMsg("Invitación renovada exitosamente.");
+      setSuccessMsg("Invitación reenviada por correo exitosamente.");
       if (onAccessUpdated) onAccessUpdated();
     } catch (err: any) {
       setErrorMsg(err.message || "Error al reenviar la invitación.");
@@ -153,21 +152,6 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
     } finally {
       setActionLoading(false);
     }
-  };
-
-  const getInvitationUrl = (token?: string | null) => {
-    if (accessInfo?.invitationUrl) return accessInfo.invitationUrl;
-    if (!token) return "";
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    return `${origin}/coaching/acceso-alumno?token=${encodeURIComponent(token)}`;
-  };
-
-  const handleCopyLink = () => {
-    const url = getInvitationUrl(accessInfo?.invitationToken);
-    if (!url) return;
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
   };
 
   if (!isOpen) return null;
@@ -315,31 +299,20 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
                     </span>
                   </div>
 
-                  {accessInfo?.invitationToken && (
-                    <div className="invitation-link-box">
-                      <div className="invitation-link-title">
-                        Enlace de Activación Directo
-                      </div>
-                      <div className="invitation-link-container">
-                        <input
-                          type="text"
-                          readOnly
-                          className="invitation-link-input"
-                          value={getInvitationUrl(accessInfo.invitationToken)}
-                        />
-                        <button
-                          type="button"
-                          className={`btn-copy-link ${copied ? "copied" : ""}`}
-                          onClick={handleCopyLink}
-                        >
-                          {copied ? "✓ Copiado" : "Copiar Enlace"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="modal-info-note">
-                    Comparte este enlace con el alumno para que establezca su contraseña definitiva y acceda a su portal de Riviera Coaching.
+                  <div
+                    className="modal-info-note"
+                    style={{
+                      background: "#f0fdf4",
+                      border: "1px solid #bbf7d0",
+                      padding: "12px",
+                      borderRadius: "8px",
+                      margin: "12px 0",
+                      color: "#166534",
+                      fontSize: "0.875rem",
+                      lineHeight: "1.4",
+                    }}
+                  >
+                    🔒 <strong>Enlace enviado al buzón del alumno:</strong> El enlace oficial de verificación y activación fue enviado exclusivamente al correo <strong>{accessInfo?.email || emailInput}</strong>. Por política de seguridad, los administradores no tienen acceso a los enlaces de verificación ni pueden modificar la contraseña del jugador.
                   </div>
 
                   <div className="modal-actions-container">
@@ -350,8 +323,8 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
                       disabled={actionLoading}
                     >
                       {actionLoading
-                        ? "Renovando..."
-                        : "Reenviar / Renovar Invitación"}
+                        ? "Reenviando..."
+                        : "Reenviar Invitación por Correo"}
                     </button>
 
                     <button

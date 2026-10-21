@@ -452,8 +452,6 @@ export type StudentAccessInfo = {
   createdAt?: string | null;
   invitedAt?: string | null;
   expiresAt?: string | null;
-  invitationToken?: string | null;
-  invitationUrl?: string | null;
   isExistingAccount?: boolean;
   accountType?: string | null;
   verificationMethod?: string | null;

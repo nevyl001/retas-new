@@ -1271,17 +1271,15 @@ describe("coachingApi - Entrega B", () => {
   });
 
   describe("Acceso Exclusivo de Alumnos - Entrega 0080", () => {
-    it("createOrInviteStudentAccess invokes coaching-invite-student Edge Function", async () => {
+    it("createOrInviteStudentAccess invokes coaching-invite-student Edge Function without exposing sensitive tokens or links", async () => {
       (supabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           ok: true,
           invitationId: "inv-0080",
-          invitationToken: "tok-sec-80",
-          invitationUrl: "https://appriviera.rivieraopen.com/coaching/acceso-alumno?token=tok-sec-80",
           isExistingAccount: false,
           email: "student@test.com",
           expiresAt: "2026-10-28T00:00:00Z",
-          message: "Invitación generada exitosamente.",
+          message: "Invitación enviada por correo al alumno.",
         },
         error: null,
       });
@@ -1302,8 +1300,8 @@ describe("coachingApi - Entrega B", () => {
 
       expect(res.ok).toBe(true);
       expect(res.status).toBe("INVITATION_PENDING");
-      expect(res.invitationToken).toBe("tok-sec-80");
-      expect(res.invitationUrl).toBe("https://appriviera.rivieraopen.com/coaching/acceso-alumno?token=tok-sec-80");
+      expect((res as any).invitationToken).toBeUndefined();
+      expect((res as any).invitationUrl).toBeUndefined();
       expect(res.isExistingAccount).toBe(false);
     });
 

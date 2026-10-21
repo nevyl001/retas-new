@@ -145,38 +145,51 @@ export const StudentAccessPage: React.FC = () => {
     setActivateError(null);
 
     try {
-      const res = await activateStudentInvitation(token, newPassword);
-      if (!res.ok) {
-        if (res.needsEmailVerification) {
-          setIsEmailVerified(false);
-        }
-        setActivateError(res.error || "No se pudo activar la cuenta.");
+      // 1. Validar que exista sesión autenticada del alumno (establecida por GoTrue al abrir el enlace)
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentSession = sessionData?.session;
+
+      if (!currentSession?.user) {
+        setIsEmailVerified(false);
+        setActivateError(
+          "Se requiere sesión autenticada del alumno. Abre el enlace enviado a tu correo electrónico para verificar tu identidad."
+        );
         return;
       }
 
-      setActivateSuccess(true);
+      if (!currentSession.user.email_confirmed_at) {
+        setIsEmailVerified(false);
+        setActivateError(
+          "El correo electrónico no ha sido verificado aún. Por favor abre el enlace recibido en tu correo electrónico."
+        );
+        return;
+      }
 
-      // Iniciar sesión automáticamente
-      const targetEmail = res.email || invitationData?.email || loginEmail;
-      if (targetEmail) {
-        const { error: signInErr } = await supabase.auth.signInWithPassword({
-          email: targetEmail.trim().toLowerCase(),
-          password: newPassword,
-        });
+      // 2. Definir contraseña definitiva mediante supabase.auth.updateUser con la sesión autenticada
+      const { error: updateErr } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
 
-        if (!signInErr) {
-          setTimeout(() => {
-            navigateStudentCoaching();
-          }, 1000);
+      if (updateErr) {
+        setActivateError(updateErr.message || "No se pudo establecer la contraseña.");
+        return;
+      }
+
+      // 3. Vincular el Riviera ID mediante claim_student_invitation
+      const claimRes = await claimStudentInvitation(token);
+      if (!claimRes.ok) {
+        // Si el claim RPC directo fallara, intentar con la Edge Function autenticada
+        const edgeRes = await activateStudentInvitation(token, newPassword);
+        if (!edgeRes.ok) {
+          setActivateError(claimRes.error || edgeRes.error || "No se pudo vincular tu perfil de alumno.");
           return;
         }
       }
 
-      // Si falla el auto-login, cambiar a modo login
+      setActivateSuccess(true);
       setTimeout(() => {
-        setMode("login");
-        setActivateSuccess(false);
-      }, 2000);
+        navigateStudentCoaching();
+      }, 1000);
     } catch (err: any) {
       setActivateError(err.message || "Error al activar la cuenta.");
     } finally {
