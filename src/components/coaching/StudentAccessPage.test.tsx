@@ -150,6 +150,7 @@ describe("StudentAccessPage Component Tests", () => {
 
     jest.spyOn(coachingApi, "verifyStudentInvitation").mockResolvedValueOnce({
       ok: true,
+      email: "student@test.com",
       studentName: "Alumno Zaid",
       rivieraId: "RIV-00000107",
       clubName: "Hack Pádel",
@@ -208,6 +209,7 @@ describe("StudentAccessPage Component Tests", () => {
 
     jest.spyOn(coachingApi, "verifyStudentInvitation").mockResolvedValueOnce({
       ok: true,
+      email: "student@test.com",
       studentName: "Alumno Zaid",
       rivieraId: "RIV-00000107",
       clubName: "Hack Pádel",
@@ -254,6 +256,7 @@ describe("StudentAccessPage Component Tests", () => {
 
     jest.spyOn(coachingApi, "verifyStudentInvitation").mockResolvedValueOnce({
       ok: true,
+      email: "student@test.com",
       studentName: "Alumno Zaid",
       rivieraId: "RIV-00000107",
       clubName: "Hack Pádel",
@@ -298,6 +301,7 @@ describe("StudentAccessPage Component Tests", () => {
 
     jest.spyOn(coachingApi, "verifyStudentInvitation").mockResolvedValueOnce({
       ok: true,
+      email: "student@test.com",
       studentName: "Alumno Zaid",
       rivieraId: "RIV-00000107",
       clubName: "Hack Pádel",
@@ -350,5 +354,119 @@ describe("StudentAccessPage Component Tests", () => {
     // Modal cerrado y mensaje de éxito visible
     expect(document.querySelector(".student-modal-overlay")).toBeNull();
     expect(container.textContent).toContain("¡Cuenta vinculada exitosamente!");
+  });
+
+  it("7. Prueba negativa: Sesión con correo diferente es rechazada y deja la contraseña intacta", async () => {
+    window.history.replaceState({}, "", "/coaching/acceso-alumno?token=test-valid-token-123");
+
+    // Mock sesión activa con correo distinto al del alumno invitado
+    jest.spyOn(supabase.auth, "getSession").mockResolvedValue({
+      data: {
+        session: {
+          user: {
+            id: "different-user-uuid",
+            email: "other_person@example.com",
+            email_confirmed_at: "2026-10-21T00:00:00Z",
+            app_metadata: { role: "student", account_type: "STUDENT_ONLY" },
+          },
+        } as any,
+      },
+      error: null,
+    });
+
+    jest.spyOn(coachingApi, "verifyStudentInvitation").mockResolvedValueOnce({
+      ok: true,
+      email: "legitimate_student@test.com",
+      studentName: "Alumno Zaid",
+      rivieraId: "RIV-00000107",
+      clubName: "Hack Pádel",
+      coachName: "Gabriel Duran",
+      isExistingAccount: false,
+      isEmailVerified: true,
+    });
+
+    const claimSpy = jest.spyOn(coachingApi, "claimStudentInvitation");
+
+    await act(async () => {
+      root.render(<StudentAccessPage />);
+    });
+
+    const input = container.querySelector("input[type='password']") as HTMLInputElement;
+    await act(async () => {
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      nativeSetter?.call(input, "SecurePass123!");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    // Intentar avanzar a confirmación
+    await act(async () => {
+      (container.querySelector("button[type='submit']") as HTMLButtonElement).click();
+    });
+
+    // Debe mostrar error de disparidad de correo y bloquear
+    expect(container.textContent).toContain("no coincide con el correo invitado");
+    // La contraseña jamás se modifica
+    expect(supabase.auth.updateUser).not.toHaveBeenCalled();
+    // La invitación jamás se consume
+    expect(claimSpy).not.toHaveBeenCalled();
+    // El modal de confirmación no se abre
+    expect(document.querySelector(".student-modal-overlay")).toBeNull();
+  });
+
+  it("8. Prueba negativa: Sesión de administrador o entrenador es rechazada y deja la contraseña intacta", async () => {
+    window.history.replaceState({}, "", "/coaching/acceso-alumno?token=test-valid-token-123");
+
+    // Mock sesión activa con rol administrativo
+    jest.spyOn(supabase.auth, "getSession").mockResolvedValue({
+      data: {
+        session: {
+          user: {
+            id: "admin-organizer-uuid",
+            email: "admin_user@test.com",
+            email_confirmed_at: "2026-10-21T00:00:00Z",
+            app_metadata: { role: "admin", account_type: "CLUB_ADMIN" },
+          },
+        } as any,
+      },
+      error: null,
+    });
+
+    jest.spyOn(coachingApi, "verifyStudentInvitation").mockResolvedValueOnce({
+      ok: true,
+      email: "admin_user@test.com", // Mismo email pero cuenta administrativa
+      studentName: "Alumno Zaid",
+      rivieraId: "RIV-00000107",
+      clubName: "Hack Pádel",
+      coachName: "Gabriel Duran",
+      isExistingAccount: false,
+      isEmailVerified: true,
+    });
+
+    const claimSpy = jest.spyOn(coachingApi, "claimStudentInvitation");
+
+    await act(async () => {
+      root.render(<StudentAccessPage />);
+    });
+
+    const input = container.querySelector("input[type='password']") as HTMLInputElement;
+    await act(async () => {
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      nativeSetter?.call(input, "SecurePass123!");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    // Intentar avanzar
+    await act(async () => {
+      (container.querySelector("button[type='submit']") as HTMLButtonElement).click();
+    });
+
+    // Debe mostrar error de cuenta administrativa/entrenador
+    expect(container.textContent).toContain("cuenta administrativa o de entrenador");
+    // La contraseña de la cuenta administrativa jamás se modifica
+    expect(supabase.auth.updateUser).not.toHaveBeenCalled();
+    // La invitación jamás se consume
+    expect(claimSpy).not.toHaveBeenCalled();
+    // El modal de confirmación no se abre
+    expect(document.querySelector(".student-modal-overlay")).toBeNull();
   });
 });

@@ -153,11 +153,48 @@ export const StudentAccessPage: React.FC = () => {
   };
 
   // Paso 1: Validar política de contraseña y abrir modal de confirmación sin guardar
-  const handleOpenConfirmStep = (e: React.FormEvent) => {
+  const handleOpenConfirmStep = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || newPassword.length < 8) {
       setActivateError("La contraseña debe tener al menos 8 caracteres.");
       return;
+    }
+
+    // Comprobar preventivamente la identidad de la sesión activa
+    const { data: sessionData } = await supabase.auth.getSession();
+    const currentSession = sessionData?.session;
+
+    if (currentSession?.user) {
+      const sessionEmail = currentSession.user.email?.trim().toLowerCase();
+      const targetEmail = invitationData?.email?.trim().toLowerCase();
+
+      if (targetEmail && sessionEmail && sessionEmail !== targetEmail) {
+        setActivateError(
+          `La sesión activa (${sessionEmail}) no coincide con el correo invitado (${targetEmail}). Cierra sesión e ingresa desde el enlace enviado al correo del alumno.`
+        );
+        return;
+      }
+
+      const appMeta = currentSession.user.app_metadata || {};
+      const userMeta = currentSession.user.user_metadata || {};
+      const accountType = appMeta.account_type || userMeta.account_type;
+      const role = appMeta.role || userMeta.role;
+      const roles: string[] = Array.isArray(appMeta.roles) ? appMeta.roles : [];
+
+      const isPrivileged =
+        accountType === "CLUB_ADMIN" ||
+        accountType === "COACH_ONLY" ||
+        role === "admin" ||
+        role === "coach" ||
+        roles.includes("admin") ||
+        roles.includes("coach");
+
+      if (isPrivileged) {
+        setActivateError(
+          "Esta sesión pertenece a una cuenta administrativa o de entrenador. No puede activarse como acceso de alumno. Cierra sesión e ingresa con el correo particular del alumno."
+        );
+        return;
+      }
     }
 
     setActivateError(null);
@@ -213,7 +250,42 @@ export const StudentAccessPage: React.FC = () => {
         return;
       }
 
-      // 2. Definir contraseña definitiva mediante supabase.auth.updateUser con la sesión autenticada
+      // 2. VALIDACIÓN OBLIGATORIA: Comprobar identidad de la sesión contra el correo invitado
+      const sessionEmail = currentSession.user.email?.trim().toLowerCase();
+      const targetEmail = invitationData?.email?.trim().toLowerCase();
+
+      if (!sessionEmail || !targetEmail || sessionEmail !== targetEmail) {
+        setShowConfirmModal(false);
+        setActivateError(
+          `La sesión activa (${sessionEmail || "desconocida"}) no coincide con el correo invitado (${targetEmail || "desconocido"}). Cierra sesión e ingresa desde el enlace enviado al correo del alumno.`
+        );
+        return;
+      }
+
+      // 3. VALIDACIÓN OBLIGATORIA: Rechazar cuentas con privilegios (administradores o entrenadores)
+      const appMeta = currentSession.user.app_metadata || {};
+      const userMeta = currentSession.user.user_metadata || {};
+      const accountType = appMeta.account_type || userMeta.account_type;
+      const role = appMeta.role || userMeta.role;
+      const roles: string[] = Array.isArray(appMeta.roles) ? appMeta.roles : [];
+
+      const isPrivileged =
+        accountType === "CLUB_ADMIN" ||
+        accountType === "COACH_ONLY" ||
+        role === "admin" ||
+        role === "coach" ||
+        roles.includes("admin") ||
+        roles.includes("coach");
+
+      if (isPrivileged) {
+        setShowConfirmModal(false);
+        setActivateError(
+          "Esta sesión pertenece a una cuenta administrativa o de entrenador. No puede activarse como acceso de alumno. Cierra sesión e ingresa con el correo particular del alumno."
+        );
+        return;
+      }
+
+      // 4. Definir contraseña definitiva ÚNICAMENTE después de validar identidad y permisos
       const { error: updateErr } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -223,14 +295,14 @@ export const StudentAccessPage: React.FC = () => {
         return;
       }
 
-      // 3. Vincular el Riviera ID mediante claim_student_invitation
+      // 5. Vincular el Riviera ID mediante claim_student_invitation
       const claimRes = await claimStudentInvitation(token);
       if (!claimRes.ok) {
         setActivateError(claimRes.error || "No se pudo vincular tu perfil de alumno.");
         return;
       }
 
-      // 4. Éxito: cerrar modal, mostrar confirmación y entrar a Mi Coaching
+      // 6. Éxito: cerrar modal, mostrar confirmación y entrar a Mi Coaching
       setShowConfirmModal(false);
       setActivateSuccess(true);
       setTimeout(() => {
