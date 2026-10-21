@@ -40,21 +40,28 @@ export function useCoachingNavRoles(): CoachingNavRoles {
         return;
       }
 
-      // 1. Roles por metadata explícita
-      let clubAccess = !isStudentOnly && !isCoachOnly;
+      // 1. Roles por metadata explícita y verificaciones estrictas (sin fallbacks optimistas)
+      let clubAccess = false;
       let coachAccess = isCoachOnly;
       let studentAccess = isStudentOnly;
 
       try {
         // Verificar configuración de coaching para Club Admin
-        if (clubAccess) {
+        // No asumir permisos si no es organizador o si la llamada falla
+        if (!isStudentOnly && !isCoachOnly) {
           try {
             const settings = await fetchOrganizadorAccountSettings(user.id);
-            if (settings.coachingEnabled === false) {
+            if (settings?.coachingEnabled === true) {
+              clubAccess = true;
+            } else {
               clubAccess = false;
             }
-          } catch {
-            // Default: club coaching habilitado si no hay restricción
+          } catch (settingsErr) {
+            console.warn(
+              "[coachingNav] No se pudo verificar configuracion de organizador, denegando acceso administrativo por seguridad:",
+              settingsErr
+            );
+            clubAccess = false;
           }
         }
 

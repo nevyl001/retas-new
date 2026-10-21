@@ -188,6 +188,12 @@ export const CoachPortalPage: React.FC = () => {
   };
 
   const openRecordClassModal = (st: CoachingPlayerLink) => {
+    if (st.status === "PAUSED") {
+      setStudentsError(
+        "El alumno está en pausa. El administrador del club debe reactivar la relación para registrar clases."
+      );
+      return;
+    }
     setModalStudent(st);
     setModalSessionId(null);
     setWorkedOnList([]);
@@ -203,6 +209,12 @@ export const CoachPortalPage: React.FC = () => {
 
   const openRecordClassForScheduled = (sess: CoachScheduledSession) => {
     const matched = students.find((st) => st.jugadorId === sess.jugadorId);
+    if (matched && matched.status === "PAUSED") {
+      setUpcomingError(
+        "No se puede registrar una clase para un alumno en pausa. El administrador debe reactivar la relación."
+      );
+      return;
+    }
     const studentLink: CoachingPlayerLink = matched || {
       id: sess.relationshipId || "",
       coachId: sess.coachId,
@@ -882,8 +894,20 @@ export const CoachPortalPage: React.FC = () => {
                       <h3 className="coaching-card__title">{s.jugadorNombre}</h3>
                       <span className="coaching-card__code">{s.rivieraId}</span>
                     </div>
-                    <span className="coaching-badge coaching-badge--active">
-                      Activo
+                    <span
+                      className={`coaching-badge coaching-badge--${
+                        s.status === "ACTIVE"
+                          ? "active"
+                          : s.status === "PAUSED"
+                          ? "pending"
+                          : "inactive"
+                      }`}
+                    >
+                      {s.status === "ACTIVE"
+                        ? "Activo"
+                        : s.status === "PAUSED"
+                        ? "En pausa"
+                        : "Inactivo"}
                     </span>
                   </div>
 
@@ -910,13 +934,17 @@ export const CoachPortalPage: React.FC = () => {
                     <button
                       type="button"
                       className="coaching-btn coaching-btn--primary"
-                      disabled={!hasBalance || modalBusy}
+                      disabled={!hasBalance || modalBusy || s.status === "PAUSED"}
                       onClick={() => openRecordClassModal(s)}
                     >
                       <TablerIcon name="check" size={15} />
                       {modalBusy && isModalOpenForThis ? "Registrando…" : "Registrar clase impartida (-1)"}
                     </button>
-                    {!hasBalance ? (
+                    {s.status === "PAUSED" ? (
+                      <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block", marginTop: "0.25rem", color: "#fbbf24" }}>
+                        Alumno en pausa. El administrador del club debe reactivarlo para registrar clases.
+                      </span>
+                    ) : !hasBalance ? (
                       <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block", marginTop: "0.25rem" }}>
                         Sin saldo. Solicita recarga al administrador del club.
                       </span>

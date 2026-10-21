@@ -105,19 +105,28 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
   } | null>(null);
 
   // Filtro y finalización de alumnos del coach
-  const [studentFilter, setStudentFilter] = useState<"ACTIVE" | "ENDED">("ACTIVE");
+  const [studentFilter, setStudentFilter] = useState<"ACTIVE" | "PAUSED" | "ENDED" | "ALL">("ACTIVE");
   const [endingStudent, setEndingStudent] = useState<ClubCoachDetailStudent | null>(null);
   const [endingReason, setEndingReason] = useState<string>("");
 
   const activeStudents = useMemo(() => {
-    return (detail?.students ?? []).filter((s) => s.status !== "ENDED");
+    return (detail?.students ?? []).filter((s) => s.status === "ACTIVE");
+  }, [detail?.students]);
+
+  const pausedStudents = useMemo(() => {
+    return (detail?.students ?? []).filter((s) => s.status === "PAUSED");
   }, [detail?.students]);
 
   const endedStudents = useMemo(() => {
     return (detail?.students ?? []).filter((s) => s.status === "ENDED");
   }, [detail?.students]);
 
-  const displayedStudents = studentFilter === "ACTIVE" ? activeStudents : endedStudents;
+  const displayedStudents = useMemo(() => {
+    if (studentFilter === "ACTIVE") return activeStudents;
+    if (studentFilter === "PAUSED") return pausedStudents;
+    if (studentFilter === "ENDED") return endedStudents;
+    return detail?.students ?? [];
+  }, [studentFilter, activeStudents, pausedStudents, endedStudents, detail?.students]);
 
   // Agenda del coach
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -338,6 +347,12 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
   };
 
   const openAssignModal = (st: ClubCoachDetailStudent) => {
+    if (st.status !== "ACTIVE") {
+      setActionError(
+        "Solo se pueden asignar paquetes de clases a alumnos activos. Reactiva la relación antes de sumar saldo."
+      );
+      return;
+    }
     setAssigningStudent(st);
     setAssignClassesCount(10);
     setAssignClassesNotes("");
@@ -348,6 +363,12 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
   const handleAssignClasses = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!assigningStudent || assignClassesCount <= 0) return;
+    if (assigningStudent.status !== "ACTIVE") {
+      setActionError(
+        "No se pueden asignar clases a alumnos en pausa o terminados. Reactiva la relación primero."
+      );
+      return;
+    }
     setBusy(true);
     setActionError(null);
     setActionSuccess(null);
@@ -413,11 +434,15 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
     setActionError(null);
     setActionSuccess(null);
     try {
+      const idempotencyKey = generateCoachingIdempotencyKey(
+        `coach-student-status-${relationshipId}-${newStatus}`
+      );
       const res = await updateCoachStudentRelationshipStatus(
         organizadorId,
         relationshipId,
         newStatus,
-        reason
+        reason,
+        idempotencyKey
       );
       if (!res.ok) {
         throw new Error(res.message || "No se pudo actualizar el estado del alumno.");
@@ -426,7 +451,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
         newStatus === "ENDED"
           ? "El alumno ha sido desvinculado del entrenador. Las clases futuras fueron canceladas y el saldo se conservó."
           : newStatus === "PAUSED"
-          ? "El alumno ha sido pausado. No se podrán registrar nuevas clases hasta reactivarlo."
+          ? "El alumno ha sido pausado. No se podrán registrar nuevas clases ni asignar paquetes hasta reactivarlo."
           : "El alumno ha sido reactivado."
       );
       await loadData();
@@ -900,7 +925,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
             ) : null}
           </div>
 
-          {/* Toggle de Alumnos Activos vs Terminados */}
+          {/* Toggle de Alumnos: Activos vs En pausa vs Historial / Terminados vs Todos */}
           <div
             style={{
               display: "flex",
@@ -910,8 +935,10 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
             }}
           >
             {[
-              { id: "ACTIVE", label: "Alumnos activos", count: activeStudents.length },
+              { id: "ACTIVE", label: "Activos", count: activeStudents.length },
+              { id: "PAUSED", label: "En pausa", count: pausedStudents.length },
               { id: "ENDED", label: "Historial / Terminados", count: endedStudents.length },
+              { id: "ALL", label: "Todos", count: (detail?.students ?? []).length },
             ].map((f) => (
               <button
                 key={f.id}
@@ -970,12 +997,20 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
               <h3>
                 {studentFilter === "ACTIVE"
                   ? "Sin alumnos activos"
-                  : "Sin alumnos en historial"}
+                  : studentFilter === "PAUSED"
+                  ? "Sin alumnos en pausa"
+                  : studentFilter === "ENDED"
+                  ? "Sin alumnos en historial"
+                  : "Sin alumnos"}
               </h3>
               <p>
                 {studentFilter === "ACTIVE"
-                  ? "Este entrenador no tiene alumnos con relación activa o en pausa actualmente."
-                  : "No hay alumnos terminados o en el historial con este entrenador."}
+                  ? "Este entrenador no tiene alumnos con relación activa actualmente."
+                  : studentFilter === "PAUSED"
+                  ? "No hay alumnos en pausa con este entrenador."
+                  : studentFilter === "ENDED"
+                  ? "No hay alumnos terminados o en el historial con este entrenador."
+                  : "No se encontraron alumnos registrados."}
               </p>
             </div>
           ) : (
@@ -1014,6 +1049,25 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                             : "Terminado"}
                         </span>
                       </div>
+                      {st.status === "PAUSED" && (
+                        <div
+                          style={{
+                            marginTop: "0.4rem",
+                            padding: "0.25rem 0.5rem",
+                            background: "rgba(245, 158, 11, 0.12)",
+                            border: "1px solid rgba(245, 158, 11, 0.3)",
+                            borderRadius: "6px",
+                            fontSize: "0.72rem",
+                            color: "#fbbf24",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.3rem",
+                          }}
+                        >
+                          <TablerIcon name="info-circle" size={12} />
+                          <span>Pausado: reactivar para impartir clases</span>
+                        </div>
+                      )}
                     </div>
                     <span className={`coaching-status-pill ${st.balanceClasses > 0 ? "pill--success" : "pill--warning"}`}>
                       {st.balanceClasses > 0 ? `${st.balanceClasses} clases disp.` : "Sin saldo"}
@@ -1141,7 +1195,27 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
               <tbody>
                 {students.map((st) => (
                   <tr key={st.relationshipId} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                    <td style={{ padding: "0.75rem 1rem", fontWeight: 600 }}>{st.nombre}</td>
+                    <td style={{ padding: "0.75rem 1rem", fontWeight: 600 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
+                        <span>{st.nombre}</span>
+                        <span
+                          className={`coaching-badge coaching-badge--${
+                            st.status === "ACTIVE"
+                              ? "active"
+                              : st.status === "PAUSED"
+                              ? "pending"
+                              : "neutral"
+                          }`}
+                          style={{ fontSize: "0.68rem", padding: "0.1rem 0.35rem" }}
+                        >
+                          {st.status === "ACTIVE"
+                            ? "Activo"
+                            : st.status === "PAUSED"
+                            ? "En pausa"
+                            : "Terminado"}
+                        </span>
+                      </div>
+                    </td>
                     <td style={{ padding: "0.75rem 1rem", fontFamily: "monospace" }}>{st.rivieraId || "—"}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontWeight: 700, color: st.balanceClasses > 0 ? "#4ade80" : "#ffb86c" }}>
                       {st.balanceClasses}
@@ -1152,6 +1226,12 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                         type="button"
                         className="coaching-btn coaching-btn--secondary"
                         style={{ padding: "0.35rem 0.65rem", fontSize: "0.78rem", marginRight: "0.4rem" }}
+                        disabled={st.status !== "ACTIVE"}
+                        title={
+                          st.status !== "ACTIVE"
+                            ? "Solo se pueden recargar clases a alumnos activos"
+                            : "Recargar paquete de clases"
+                        }
                         onClick={() => openAssignModal(st)}
                       >
                         <TablerIcon name="plus" size={13} />

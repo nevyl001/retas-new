@@ -160,8 +160,7 @@ export async function loadCoachingClubSnapshot(
         `
         )
         .eq("organizador_id", organizadorId)
-        .in("coach_id", coachIds)
-        .neq("status", "ENDED");
+        .in("coach_id", coachIds);
 
       if (relError) {
         console.error("[coaching] relationships load error", relError.message);

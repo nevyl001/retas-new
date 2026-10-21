@@ -616,7 +616,8 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     setBusy(true);
     setFormError(null);
     try {
-      const next = await updateLinkStatus(organizadorId, linkId, status, reason);
+      const idempKey = generateCoachingIdempotencyKey(`status-${linkId}-${status}`);
+      const next = await updateLinkStatus(organizadorId, linkId, status, reason, idempKey);
       setSnapshot(next);
       setSuccessMessage(
         status === "ENDED"
