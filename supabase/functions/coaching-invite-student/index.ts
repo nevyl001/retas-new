@@ -246,59 +246,53 @@ Deno.serve(async (req: Request) => {
 
     const officialRivieraId = idRow?.riviera_id || null;
 
-    // 7. Comprobar si ya existe una cuenta Auth previa para este correo
-    // REGLA FUNDAMENTAL DE SEGURIDAD: Nunca sobrescribir contraseña ni roles de cuentas existentes
-    let existingAuthUserId: string | null = null;
-    let isExistingAccount = false;
-
-    const { data: existingUser } = await supabaseAdmin
-      .from("users")
-      .select("id, email")
-      .eq("email", email)
-      .maybeSingle();
-
-    if (existingUser?.id) {
-      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(existingUser.id);
-      if (authUser?.user && authUser.user.email_confirmed_at) {
-        existingAuthUserId = existingUser.id;
-        isExistingAccount = true;
+    // 7. Comprobación exhaustiva y autorizada de cuentas en auth.users mediante RPC
+    const { data: acctCheck, error: acctCheckErr } = await supabaseAdmin.rpc(
+      "check_student_invitation_account",
+      {
+        p_email: email,
+        p_target_jugador_id: jugadorId,
       }
-    }
+    );
 
-    if (!existingAuthUserId) {
-      const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 50,
+    if (acctCheckErr || !acctCheck || acctCheck.ok !== true) {
+      logError({
+        correlationId,
+        module: MODULE,
+        errorType: "account_check_failed",
+        detail: acctCheckErr?.message || "Error al verificar cuenta de correo",
       });
-      const match = (authUsers?.users ?? []).find(
-        (u) => u.email?.trim().toLowerCase() === email
-      );
-      if (match?.id && match.email_confirmed_at) {
-        existingAuthUserId = match.id;
-        isExistingAccount = true;
-      }
+      return jsonResponse(500, {
+        ok: false,
+        error: "Error interno al verificar la cuenta de correo para la invitación.",
+      });
     }
+
+    if (acctCheck.can_invite === false) {
+      return jsonResponse(400, {
+        ok: false,
+        isPrivileged: Boolean(acctCheck.is_privileged),
+        isOtherStudent: Boolean(acctCheck.is_other_student),
+        error: acctCheck.error || "El correo ingresado no puede ser utilizado para esta invitación.",
+      });
+    }
+
+    const isExistingAccount = Boolean(acctCheck.exists);
+    const existingAuthUserId: string | null = acctCheck.user_id || null;
 
     // 8. Generar token criptográfico y su hash SHA-256
     const token = generateSecureToken();
     const tokenHash = await sha256Hex(token);
     const expiresAt = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
 
-    const siteUrl = (
-      Deno.env.get("SITE_URL") ||
-      Deno.env.get("PUBLIC_SITE_URL") ||
-      req.headers.get("origin") ||
-      "https://appriviera.rivieraopen.com"
-    ).replace(/\/$/, "");
-
+    // DOMINIO EXCLUSIVO DE PRODUCCIÓN (Nunca req.headers.get("origin"), nunca localhost)
+    const siteUrl = "https://appriviera.rivieraopen.com";
     const invitationUrl = `${siteUrl}/coaching/acceso-alumno?token=${token}`;
 
     let authUserId: string | null = existingAuthUserId;
     let verificationUrl: string | null = null;
 
     // 9. Si es una cuenta nueva, generar enlace de verificación oficial mediante Supabase Auth
-    // Esto crea el usuario en auth.users con email_confirmed_at = null y genera el enlace
-    // de confirmación para que la posesión del correo sea obligatoria antes de activar.
     if (!isExistingAccount) {
       const { data: linkData, error: linkError } =
         await supabaseAdmin.auth.admin.generateLink({
@@ -314,40 +308,47 @@ Deno.serve(async (req: Request) => {
         });
 
       if (linkError) {
-        if (
-          linkError.message?.toLowerCase().includes("already") ||
-          linkError.message?.toLowerCase().includes("exists")
-        ) {
-          isExistingAccount = true;
-        } else {
-          logError({
-            correlationId,
-            module: MODULE,
-            errorType: "generate_invite_link_failed",
-            detail: internalErrorDetail(linkError),
-          });
-          return jsonResponse(500, {
-            ok: false,
-            error: "No se pudo generar el enlace de verificación para el correo.",
-          });
-        }
-      } else if (linkData?.user) {
-        authUserId = linkData.user.id;
-        verificationUrl = linkData.properties?.action_link || null;
-
-        // Proteger app_metadata con rol exclusivo STUDENT_ONLY
-        await supabaseAdmin.auth.admin.updateUserById(linkData.user.id, {
-          app_metadata: {
-            role: "student",
-            account_type: "STUDENT_ONLY",
-            roles: ["student"],
-          },
-          user_metadata: {
-            name: jugador.nombre,
-            account_type: "STUDENT_ONLY",
-          },
+        logError({
+          correlationId,
+          module: MODULE,
+          errorType: "generate_invite_link_failed",
+          detail: internalErrorDetail(linkError),
+        });
+        return jsonResponse(500, {
+          ok: false,
+          error: "No se pudo generar el enlace oficial de verificación para el correo.",
         });
       }
+
+      const actionLink = linkData?.properties?.action_link;
+      if (!actionLink) {
+        logError({
+          correlationId,
+          module: MODULE,
+          errorType: "missing_action_link",
+          detail: "GoTrue no devolvió action_link de verificación para la invitación.",
+        });
+        return jsonResponse(500, {
+          ok: false,
+          error: "No se pudo generar el enlace oficial de verificación de correo para el alumno.",
+        });
+      }
+
+      authUserId = linkData.user.id;
+      verificationUrl = actionLink;
+
+      // Proteger app_metadata con rol exclusivo STUDENT_ONLY
+      await supabaseAdmin.auth.admin.updateUserById(linkData.user.id, {
+        app_metadata: {
+          role: "student",
+          account_type: "STUDENT_ONLY",
+          roles: ["student"],
+        },
+        user_metadata: {
+          name: jugador.nombre,
+          account_type: "STUDENT_ONLY",
+        },
+      });
     }
 
     // Revocar invitaciones anteriores pendientes para este club y alumno
@@ -443,11 +444,22 @@ Deno.serve(async (req: Request) => {
           });
         }
       } else {
-        const directVerifyUrl = verificationUrl || invitationUrl;
+        if (!verificationUrl) {
+          logError({
+            correlationId,
+            module: MODULE,
+            errorType: "missing_verification_url",
+            detail: "verificationUrl no disponible para cuenta nueva.",
+          });
+          return jsonResponse(500, {
+            ok: false,
+            error: "No se pudo obtener el enlace de verificación oficial para el alumno.",
+          });
+        }
         const sendResult = await sendByResend(
           email,
           `Invitación a Riviera Coaching — ${clubName}`,
-          `Hola ${jugador.nombre},\n\nEl club ${clubName} te ha registrado como alumno con el coach ${coachName} en Riviera Coaching (Riviera ID: ${officialRivieraId || "N/A"}).\n\nPara verificar la propiedad de tu correo y establecer tu contraseña de acceso, haz clic en el siguiente enlace:\n${directVerifyUrl}`,
+          `Hola ${jugador.nombre},\n\nEl club ${clubName} te ha registrado como alumno con el coach ${coachName} en Riviera Coaching (Riviera ID: ${officialRivieraId || "N/A"}).\n\nPara verificar la propiedad de tu correo y establecer tu contraseña de acceso, haz clic en el siguiente enlace:\n${verificationUrl}`,
           `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #09090b; background: #ffffff; border-radius: 8px; border: 1px solid #e4e4e7;">
             <div style="font-size: 11px; letter-spacing: 0.1em; color: #71717a; font-weight: 700; text-transform: uppercase; margin-bottom: 12px;">Riviera Coaching</div>
             <h2 style="color: #09090b; margin-top: 0; font-size: 20px; font-weight: 700;">Verificación de Acceso de Alumno</h2>
@@ -455,9 +467,9 @@ Deno.serve(async (req: Request) => {
             <p style="font-size: 14px; line-height: 1.6; color: #27272a;"><strong>${clubName}</strong> te ha registrado como alumno con el coach <strong>${coachName}</strong> en Riviera Coaching con tu identificador oficial <strong>${officialRivieraId || "N/A"}</strong>.</p>
             <p style="font-size: 14px; line-height: 1.6; color: #27272a;">Por seguridad y para comprobar la posesión de tu correo electrónico, haz clic en el siguiente botón para verificar tu cuenta y definir tu contraseña:</p>
             <div style="margin: 28px 0;">
-              <a href="${directVerifyUrl}" style="background-color: #09090b; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-block;">Verificar Correo y Activar Cuenta</a>
+              <a href="${verificationUrl}" style="background-color: #09090b; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-block;">Verificar Correo y Activar Cuenta</a>
             </div>
-            <p style="color: #71717a; font-size: 12px; margin-top: 28px; border-top: 1px solid #f4f4f5; padding-top: 16px;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br/><a href="${directVerifyUrl}" style="color: #09090b; word-break: break-all;">${directVerifyUrl}</a></p>
+            <p style="color: #71717a; font-size: 12px; margin-top: 28px; border-top: 1px solid #f4f4f5; padding-top: 16px;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br/><a href="${verificationUrl}" style="color: #09090b; word-break: break-all;">${verificationUrl}</a></p>
           </div>`,
           { correlationId, module: MODULE, jugadorId }
         );

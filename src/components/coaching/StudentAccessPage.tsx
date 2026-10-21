@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import {
   verifyStudentInvitation,
-  activateStudentInvitation,
   claimStudentInvitation,
 } from "../../lib/coaching/coachingApi";
 import type { StudentInvitationVerification } from "../../lib/coaching/types";
@@ -200,12 +199,8 @@ export const StudentAccessPage: React.FC = () => {
       // 3. Vincular el Riviera ID mediante claim_student_invitation
       const claimRes = await claimStudentInvitation(token);
       if (!claimRes.ok) {
-        // Si el claim RPC directo fallara, intentar con la Edge Function autenticada
-        const edgeRes = await activateStudentInvitation(token, newPassword);
-        if (!edgeRes.ok) {
-          setActivateError(claimRes.error || edgeRes.error || "No se pudo vincular tu perfil de alumno.");
-          return;
-        }
+        setActivateError(claimRes.error || "No se pudo vincular tu perfil de alumno.");
+        return;
       }
 
       setActivateSuccess(true);
@@ -412,7 +407,7 @@ export const StudentAccessPage: React.FC = () => {
                           lineHeight: "1.4",
                         }}
                       >
-                        <strong>Cuenta detectada:</strong> Ya tienes una cuenta en AppRiviera con este correo. Ingresa tu contraseña actual para vincular tu perfil de coaching sin modificar tus credenciales.
+                        <strong>Cuenta de alumno detectada:</strong> Ya cuentas con un registro de alumno con este correo. Ingresa tu contraseña para vincular este club a tu perfil de Riviera Coaching sin modificar tus credenciales.
                       </div>
 
                       {claimError && (
@@ -423,7 +418,7 @@ export const StudentAccessPage: React.FC = () => {
 
                       <div className="student-form-group">
                         <label className="student-form-label">
-                          Contraseña de tu Cuenta AppRiviera
+                          Contraseña de tu Cuenta de Alumno
                         </label>
                         <input
                           type="password"
