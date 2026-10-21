@@ -57,11 +57,13 @@
   }
 }
 
-@media (min-width: 960px) {
+@media (min-width: 768px) {
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide.te-pub-matches-grid--three,
   .te-public--americano.te-public--americano-wide
     .te-pub-matches-grid--wide:has(> :nth-child(3):last-child),
   .te-public--americano.te-public--americano-wide
-    .te-pub-matches-grid--wide:has(> :nth-child(4)) {
+    .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
@@ -3949,14 +3951,115 @@
   font-weight: 600 !important;
 }
 
-@media (min-width: 769px) {
+@media (min-width: 768px) {
+  /* Caso general 2 canchas / fallback para Split VS */
   .te-public--americano.te-public--americano-wide
-    .te-pub-matches-grid--wide:has(.reta-sb-card--split-vs) {
+    .te-pub-matches-grid--wide:has(.reta-sb-card--split-vs),
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide.te-pub-matches-grid--two {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: clamp(1rem, 2vw, 1.75rem) !important;
+    gap: clamp(0.65rem, 1.4vw, 1.25rem) !important;
     max-width: none !important;
     width: 100% !important;
   }
+
+  /* 1 cancha: centrada y sin estirarse desproporcionadamente */
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide:has(.reta-sb-card--split-vs):has(> :only-child),
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide.te-pub-matches-grid--one {
+    grid-template-columns: minmax(0, 1fr) !important;
+    max-width: min(100%, 48rem) !important;
+    margin-inline: auto !important;
+  }
+
+  /* 3 canchas: OBLIGATORIAMENTE LAS 3 CANCHAS EN UNA SOLA FILA HORIZONTAL
+     (Cancha 1, Cancha 2, Cancha 3 lado a lado, nunca se manda la 3 abajo) */
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide.te-pub-matches-grid--three,
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide:has(> :nth-child(3):last-child),
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))),
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide:has(.reta-sb-card--split-vs):has(> :nth-child(3):last-child),
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide:has(.reta-sb-card--split-vs):has(> :nth-child(3):not(:nth-child(4))) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: clamp(0.45rem, 1.1vw, 0.95rem) !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+}
+
+/* En pantallas amplias (1280px+), 4 canchas ocupan los 4 carriles completos */
+@media (min-width: 1280px) {
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide.te-pub-matches-grid--many,
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide:has(> :nth-child(4)) {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: clamp(0.45rem, 1vw, 0.85rem) !important;
+  }
+}
+
+/* Proporciones optimizadas cuando hay 3 canchas en una fila */
+.te-public--americano .te-pub-matches-grid--three .am-pub-match.reta-sb-card--split-vs,
+.te-public--americano .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))) .am-pub-match.reta-sb-card--split-vs {
+  padding: clamp(0.4rem, 0.75vw, 0.65rem) !important;
+}
+
+.te-public--americano .te-pub-matches-grid--three .am-pub-match.reta-sb-card--split-vs .reta-sb-card__board,
+.te-public--americano .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))) .am-pub-match.reta-sb-card--split-vs .reta-sb-card__board {
+  gap: clamp(0.2rem, 0.5vw, 0.45rem) !important;
+}
+
+.te-public--americano .te-pub-matches-grid--three .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel,
+.te-public--americano .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))) .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel {
+  min-height: clamp(80px, 9.5vw, 140px) !important;
+}
+
+.te-public--americano .te-pub-matches-grid--three .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__given,
+.te-public--americano .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))) .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__given {
+  font-size: clamp(0.78rem, 4.6cqi, 1.15rem) !important;
+  right: clamp(1.8rem, 4vw, 2.6rem) !important;
+  left: clamp(0.4rem, 0.7vw, 0.65rem) !important;
+  bottom: clamp(1.05rem, 1.8vw, 1.35rem) !important;
+}
+
+.te-public--americano .te-pub-matches-grid--three .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__given:not(:has(+ .pub-split-vs-panel__family)),
+.te-public--americano .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))) .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__given:not(:has(+ .pub-split-vs-panel__family)) {
+  bottom: clamp(0.35rem, 0.7vw, 0.55rem) !important;
+}
+
+.te-public--americano .te-pub-matches-grid--three .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__family,
+.te-public--americano .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))) .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__family {
+  font-size: clamp(0.55rem, 3cqi, 0.72rem) !important;
+  right: clamp(1.8rem, 4vw, 2.6rem) !important;
+  left: clamp(0.4rem, 0.7vw, 0.65rem) !important;
+  bottom: clamp(0.25rem, 0.6vw, 0.4rem) !important;
+}
+
+.te-public--americano .te-pub-matches-grid--three .am-pub-match.reta-sb-card--split-vs .reta-sb-vs,
+.te-public--americano .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))) .am-pub-match.reta-sb-card--split-vs .reta-sb-vs {
+  min-width: clamp(1.3rem, 1.6vw, 1.75rem) !important;
+}
+
+.te-public--americano .te-pub-matches-grid--three .am-pub-match.reta-sb-card--split-vs .reta-sb-vs__badge,
+.te-public--americano .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))) .am-pub-match.reta-sb-card--split-vs .reta-sb-vs__badge {
+  width: clamp(1.35rem, 1.6vw, 1.75rem) !important;
+  height: clamp(1.35rem, 1.6vw, 1.75rem) !important;
+  font-size: clamp(0.5rem, 0.65vw, 0.62rem) !important;
+}
+
+.te-public--americano .te-pub-matches-grid--three .am-pub-match.reta-sb-card--split-vs .reta-sb-card__meta,
+.te-public--americano .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))) .am-pub-match.reta-sb-card--split-vs .reta-sb-card__meta {
+  margin-bottom: 0.35rem !important;
+}
+
+.te-public--americano .te-pub-matches-grid--three .am-pub-match.reta-sb-card--split-vs .reta-sb-card__scoreboard,
+.te-public--americano .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))) .am-pub-match.reta-sb-card--split-vs .reta-sb-card__scoreboard {
+  margin-top: 0.35rem !important;
 }
 
 /* —— Podio Americano público: retratos grandes con presencia ——

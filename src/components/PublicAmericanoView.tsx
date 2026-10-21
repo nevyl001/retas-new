@@ -731,11 +731,22 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                     </p>
                   )}
 
-                  <div className="te-pub-matches-grid te-pub-matches-grid--wide">
-                    {matches.map((m, matchIdx) => {
-                      const played =
-                        typeof m.scoreA === "number" &&
-                        typeof m.scoreB === "number";
+                  {(() => {
+                    const matchCount = matches.length;
+                    const matchGridCountClass =
+                      matchCount === 1
+                        ? "te-pub-matches-grid--one te-pub-matches-grid--few"
+                        : matchCount === 2
+                        ? "te-pub-matches-grid--two te-pub-matches-grid--few"
+                        : matchCount === 3
+                        ? "te-pub-matches-grid--three"
+                        : "te-pub-matches-grid--many";
+                    return (
+                      <div className={`te-pub-matches-grid te-pub-matches-grid--wide ${matchGridCountClass}`}>
+                        {matches.map((m, matchIdx) => {
+                          const played =
+                            typeof m.scoreA === "number" &&
+                            typeof m.scoreB === "number";
                       const matchScheduleStatus = played
                         ? "played"
                         : resolvePublicMatchStatusVariant({
@@ -756,9 +767,11 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                       );
                     })}
                   </div>
-                </section>
-              );
-            })}
+                );
+              })()}
+            </section>
+          );
+        })}
 
           {showFinishedPodium && (
             <section
