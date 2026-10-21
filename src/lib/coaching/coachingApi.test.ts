@@ -17,6 +17,12 @@ import {
   linkCoachStudentByClub,
   adjustCoachStudentClasses,
   revertCoachClassSession,
+  createOrInviteStudentAccess,
+  verifyStudentInvitation,
+  activateStudentInvitation,
+  claimStudentInvitation,
+  deactivateStudentAccess,
+  reactivateStudentAccess,
 } from "./coachingApi";
 import type { CreateCoachInput } from "./types";
 import { supabase } from "../supabaseClient";
@@ -1261,6 +1267,160 @@ describe("coachingApi - Entrega B", () => {
         totalClassesGiven: 4,
         message: "Clase impartida revertida correctamente. Se restauró 1 clase disponible al alumno.",
       });
+    });
+  });
+
+  describe("Acceso Exclusivo de Alumnos - Entrega 0080", () => {
+    it("createOrInviteStudentAccess invokes coaching-invite-student Edge Function", async () => {
+      (supabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          invitationId: "inv-0080",
+          invitationToken: "tok-sec-80",
+          invitationUrl: "https://appriviera.rivieraopen.com/coaching/acceso-alumno?token=tok-sec-80",
+          isExistingAccount: false,
+          email: "student@test.com",
+          expiresAt: "2026-10-28T00:00:00Z",
+          message: "Invitación generada exitosamente.",
+        },
+        error: null,
+      });
+
+      const res = await createOrInviteStudentAccess(
+        "org-hack",
+        "student-123",
+        "STUDENT@TEST.COM"
+      );
+
+      expect(supabase.functions.invoke).toHaveBeenCalledWith("coaching-invite-student", {
+        body: {
+          organizadorId: "org-hack",
+          jugadorId: "student-123",
+          email: "student@test.com",
+        },
+      });
+
+      expect(res.ok).toBe(true);
+      expect(res.status).toBe("INVITATION_PENDING");
+      expect(res.invitationToken).toBe("tok-sec-80");
+      expect(res.invitationUrl).toBe("https://appriviera.rivieraopen.com/coaching/acceso-alumno?token=tok-sec-80");
+      expect(res.isExistingAccount).toBe(false);
+    });
+
+    it("verifyStudentInvitation calls verify_student_invitation RPC and detects isExistingAccount", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          invitation_id: "inv-1",
+          email: "zaid@test.com",
+          student_name: "Zaid Test",
+          riviera_id: "RIV-00000107",
+          club_name: "Hack Pádel",
+          coach_name: "Coach Pro",
+          expires_at: "2026-10-28T00:00:00Z",
+          is_existing_account: true,
+        },
+        error: null,
+      });
+
+      const res = await verifyStudentInvitation("valid-token-123");
+
+      expect(supabase.rpc).toHaveBeenCalledWith("verify_student_invitation", {
+        p_token: "valid-token-123",
+      });
+
+      expect(res).toEqual({
+        ok: true,
+        invitationId: "inv-1",
+        email: "zaid@test.com",
+        studentName: "Zaid Test",
+        rivieraId: "RIV-00000107",
+        clubName: "Hack Pádel",
+        coachName: "Coach Pro",
+        expiresAt: "2026-10-28T00:00:00Z",
+        isExistingAccount: true,
+      });
+    });
+
+    it("activateStudentInvitation invokes coaching-activate-student Edge Function", async () => {
+      (supabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          email: "newstudent@test.com",
+          studentName: "Nuevo Alumno",
+          rivieraId: "RIV-00000108",
+          message: "¡Cuenta activada exitosamente!",
+        },
+        error: null,
+      });
+
+      const res = await activateStudentInvitation("token-abc", "SecurePass123!");
+
+      expect(supabase.functions.invoke).toHaveBeenCalledWith("coaching-activate-student", {
+        body: {
+          token: "token-abc",
+          password: "SecurePass123!",
+        },
+      });
+
+      expect(res.ok).toBe(true);
+      expect(res.studentName).toBe("Nuevo Alumno");
+    });
+
+    it("claimStudentInvitation calls claim_student_invitation RPC for existing users", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          student_name: "Alumno Existente",
+          riviera_id: "RIV-00000109",
+          message: "Perfil vinculado exitosamente.",
+        },
+        error: null,
+      });
+
+      const res = await claimStudentInvitation("claim-token-xyz");
+
+      expect(supabase.rpc).toHaveBeenCalledWith("claim_student_invitation", {
+        p_token: "claim-token-xyz",
+      });
+
+      expect(res.ok).toBe(true);
+      expect(res.studentName).toBe("Alumno Existente");
+      expect(res.rivieraId).toBe("RIV-00000109");
+    });
+
+    it("deactivateStudentAccess and reactivateStudentAccess call club-isolated RPCs", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          status: "DEACTIVATED",
+          message: "Acceso pausado en este club.",
+        },
+        error: null,
+      });
+
+      const deactRes = await deactivateStudentAccess("org-1", "student-1");
+      expect(supabase.rpc).toHaveBeenCalledWith("deactivate_student_access", {
+        p_organizador_id: "org-1",
+        p_jugador_id: "student-1",
+      });
+      expect(deactRes.status).toBe("DEACTIVATED");
+
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          status: "ACTIVE",
+          message: "Acceso reactivado.",
+        },
+        error: null,
+      });
+
+      const reactRes = await reactivateStudentAccess("org-1", "student-1");
+      expect(supabase.rpc).toHaveBeenCalledWith("reactivate_student_access", {
+        p_organizador_id: "org-1",
+        p_jugador_id: "student-1",
+      });
+      expect(reactRes.status).toBe("ACTIVE");
     });
   });
 });

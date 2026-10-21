@@ -453,6 +453,8 @@ export type StudentAccessInfo = {
   invitedAt?: string | null;
   expiresAt?: string | null;
   invitationToken?: string | null;
+  invitationUrl?: string | null;
+  isExistingAccount?: boolean;
   accountType?: string | null;
   verificationMethod?: string | null;
   message?: string;
@@ -468,6 +470,7 @@ export type StudentInvitationVerification = {
   clubName?: string;
   coachName?: string;
   expiresAt?: string;
+  isExistingAccount?: boolean;
   error?: string;
 };
 
@@ -477,6 +480,7 @@ export type StudentActivationResult = {
   studentName?: string;
   rivieraId?: string;
   authUserId?: string;
+  isExistingAccount?: boolean;
   message?: string;
   error?: string;
 };

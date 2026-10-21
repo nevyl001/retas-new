@@ -2063,24 +2063,25 @@ export async function getClubStudentAccessStatus(
 }
 
 /**
- * Crea o invita a un alumno para su acceso exclusivo a Riviera Coaching.
+ * Crea o invita a un alumno para su acceso exclusivo a Riviera Coaching mediante Edge Function segura.
  */
 export async function createOrInviteStudentAccess(
   organizadorId: string,
   jugadorId: string,
   studentEmail: string,
-  coachId?: string
+  _coachId?: string
 ): Promise<StudentAccessInfo> {
-  const { data, error } = await supabase.rpc("create_or_invite_student_access", {
-    p_organizador_id: organizadorId,
-    p_jugador_id: jugadorId,
-    p_student_email: studentEmail.trim().toLowerCase(),
-    p_coach_id: coachId || null,
+  const { data, error } = await supabase.functions.invoke("coaching-invite-student", {
+    body: {
+      organizadorId,
+      jugadorId,
+      email: studentEmail.trim().toLowerCase(),
+    },
   });
 
   if (error) {
     console.error("[coaching] error creating student access:", error);
-    throw new Error(error.message);
+    throw new Error(error.message || "Error al invocar la función de invitación.");
   }
 
   const res = (data as Record<string, any>) || {};
@@ -2090,45 +2091,35 @@ export async function createOrInviteStudentAccess(
 
   return {
     ok: true,
-    status: (res.status as StudentAccessStatus) || "INVITATION_PENDING",
+    status: (res.alreadyActive ? "ACTIVE" : "INVITATION_PENDING") as StudentAccessStatus,
     email: res.email || studentEmail,
-    authUserId: res.auth_user_id || null,
-    invitationToken: res.invitation_token || null,
-    expiresAt: res.expires_at || null,
+    invitationToken: res.invitationToken || null,
+    invitationUrl: res.invitationUrl || null,
+    isExistingAccount: Boolean(res.isExistingAccount),
+    expiresAt: res.expiresAt || null,
     message: res.message || undefined,
   };
 }
 
 /**
- * Reenvía o renueva una invitación para un alumno.
+ * Reenvía o renueva una invitación para un alumno utilizando la Edge Function de invitación.
  */
 export async function resendStudentInvitation(
   organizadorId: string,
-  jugadorId: string
+  jugadorId: string,
+  studentEmail?: string
 ): Promise<StudentAccessInfo> {
-  const { data, error } = await supabase.rpc("resend_student_invitation", {
-    p_organizador_id: organizadorId,
-    p_jugador_id: jugadorId,
-  });
-
-  if (error) {
-    console.error("[coaching] error resending student invitation:", error);
-    throw new Error(error.message);
+  let email = studentEmail?.trim().toLowerCase();
+  if (!email) {
+    const status = await getClubStudentAccessStatus(organizadorId, jugadorId);
+    email = status.email?.trim().toLowerCase();
   }
 
-  const res = (data as Record<string, any>) || {};
-  if (!res.ok) {
-    throw new Error(res.error || "No se pudo reenviar la invitación.");
+  if (!email) {
+    throw new Error("No se encontró el correo del alumno para reenviar la invitación.");
   }
 
-  return {
-    ok: true,
-    status: "INVITATION_PENDING",
-    email: res.email || null,
-    invitationToken: res.invitation_token || null,
-    expiresAt: res.expires_at || null,
-    message: res.message || undefined,
-  };
+  return createOrInviteStudentAccess(organizadorId, jugadorId, email);
 }
 
 /**
@@ -2218,38 +2209,75 @@ export async function verifyStudentInvitation(
     clubName: res.club_name,
     coachName: res.coach_name,
     expiresAt: res.expires_at,
+    isExistingAccount: Boolean(res.is_existing_account),
   };
 }
 
 /**
- * Activa la cuenta del alumno con su contraseña definitiva.
+ * Activa la cuenta del alumno mediante Edge Function segura con credenciales administradas por GoTrue.
  */
 export async function activateStudentInvitation(
   token: string,
-  password: string
+  password?: string
 ): Promise<StudentActivationResult> {
-  const { data, error } = await supabase.rpc("activate_student_invitation", {
-    p_token: token.trim(),
-    p_password: password,
+  const { data, error } = await supabase.functions.invoke("coaching-activate-student", {
+    body: {
+      token: token.trim(),
+      password,
+    },
   });
 
   if (error) {
     console.error("[coaching] error activating student invitation:", error);
-    throw new Error(error.message);
+    return {
+      ok: false,
+      error: error.message || "Error de comunicación al activar la cuenta.",
+    };
   }
 
   const res = (data as Record<string, any>) || {};
   if (!res.ok) {
-    throw new Error(res.error || "No se pudo activar la cuenta del alumno.");
+    return {
+      ok: false,
+      error: res.error || "No se pudo activar la cuenta del alumno.",
+      isExistingAccount: Boolean(res.isExistingAccount),
+    };
   }
 
   return {
     ok: true,
     email: res.email,
+    studentName: res.studentName,
+    rivieraId: res.rivieraId,
+    message: res.message || "Cuenta activada exitosamente.",
+  };
+}
+
+/**
+ * Reclama y vincula una invitación para un usuario que ya cuenta con sesión Auth activa en AppRiviera.
+ */
+export async function claimStudentInvitation(
+  token: string
+): Promise<{ ok: boolean; studentName?: string; rivieraId?: string; message?: string; error?: string }> {
+  const { data, error } = await supabase.rpc("claim_student_invitation", {
+    p_token: token.trim(),
+  });
+
+  if (error) {
+    console.error("[coaching] error claiming student invitation:", error);
+    return { ok: false, error: error.message };
+  }
+
+  const res = (data as Record<string, any>) || {};
+  if (!res.ok) {
+    return { ok: false, error: res.error || "No se pudo vincular la cuenta." };
+  }
+
+  return {
+    ok: true,
     studentName: res.student_name,
     rivieraId: res.riviera_id,
-    authUserId: res.auth_user_id,
-    message: res.message || "Cuenta activada exitosamente.",
+    message: res.message || "Perfil vinculado exitosamente.",
   };
 }
 

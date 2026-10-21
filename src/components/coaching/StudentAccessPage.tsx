@@ -3,6 +3,7 @@ import { supabase } from "../../lib/supabaseClient";
 import {
   verifyStudentInvitation,
   activateStudentInvitation,
+  claimStudentInvitation,
 } from "../../lib/coaching/coachingApi";
 import type { StudentInvitationVerification } from "../../lib/coaching/types";
 import { navigateStudentCoaching } from "./coachingNav";
@@ -25,12 +26,17 @@ export const StudentAccessPage: React.FC = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Estados de activación
+  // Estados de activación (nueva cuenta)
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [activating, setActivating] = useState(false);
   const [activateError, setActivateError] = useState<string | null>(null);
   const [activateSuccess, setActivateSuccess] = useState(false);
+
+  // Estados para vinculación de cuenta existente
+  const [existingPassword, setExistingPassword] = useState("");
+  const [claiming, setClaiming] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
   // Estados de recuperación
   const [recoveryEmail, setRecoveryEmail] = useState("");
@@ -160,6 +166,53 @@ export const StudentAccessPage: React.FC = () => {
       setActivateError(err.message || "Error al activar la cuenta.");
     } finally {
       setActivating(false);
+    }
+  };
+
+  const handleClaimExistingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !invitationData?.email) return;
+
+    if (!existingPassword) {
+      setClaimError("Ingresa la contraseña de tu cuenta.");
+      return;
+    }
+
+    setClaiming(true);
+    setClaimError(null);
+
+    try {
+      // 1. Autenticar con la cuenta existente sin alterar contraseñas ni roles
+      const { data: authData, error: signInErr } =
+        await supabase.auth.signInWithPassword({
+          email: invitationData.email.trim().toLowerCase(),
+          password: existingPassword,
+        });
+
+      if (signInErr || !authData.session) {
+        setClaimError(
+          signInErr?.message.includes("Invalid login credentials")
+            ? "Contraseña incorrecta. Ingresa la contraseña de tu cuenta AppRiviera."
+            : signInErr?.message || "Error al autenticar con tu cuenta."
+        );
+        return;
+      }
+
+      // 2. Reclamar y vincular la invitación
+      const claimRes = await claimStudentInvitation(token);
+      if (!claimRes.ok) {
+        setClaimError(claimRes.error || "No se pudo vincular tu perfil.");
+        return;
+      }
+
+      setActivateSuccess(true);
+      setTimeout(() => {
+        navigateStudentCoaching();
+      }, 1000);
+    } catch (err: any) {
+      setClaimError(err.message || "Error al vincular tu cuenta.");
+    } finally {
+      setClaiming(false);
     }
   };
 
@@ -295,8 +348,54 @@ export const StudentAccessPage: React.FC = () => {
 
                   {activateSuccess ? (
                     <div className="student-alert student-alert-success">
-                      <strong>¡Cuenta activada exitosamente!</strong> Entrando a tu espacio deportivo...
+                      <strong>¡Cuenta vinculada exitosamente!</strong> Entrando a tu espacio deportivo...
                     </div>
+                  ) : invitationData.isExistingAccount ? (
+                    <form onSubmit={handleClaimExistingSubmit}>
+                      <div
+                        className="student-alert"
+                        style={{
+                          background: "rgba(59, 130, 246, 0.12)",
+                          border: "1px solid rgba(59, 130, 246, 0.3)",
+                          color: "#93c5fd",
+                          fontSize: "0.85rem",
+                          lineHeight: "1.4",
+                        }}
+                      >
+                        <strong>Cuenta detectada:</strong> Ya tienes una cuenta en AppRiviera con este correo. Ingresa tu contraseña actual para vincular tu perfil de coaching sin modificar tus credenciales.
+                      </div>
+
+                      {claimError && (
+                        <div className="student-alert student-alert-error">
+                          {claimError}
+                        </div>
+                      )}
+
+                      <div className="student-form-group">
+                        <label className="student-form-label">
+                          Contraseña de tu Cuenta AppRiviera
+                        </label>
+                        <input
+                          type="password"
+                          className="student-form-input"
+                          placeholder="Tu contraseña habitual"
+                          value={existingPassword}
+                          onChange={(e) => setExistingPassword(e.target.value)}
+                          disabled={claiming}
+                          required
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="student-btn-primary"
+                        disabled={claiming}
+                      >
+                        {claiming
+                          ? "Vinculando perfil..."
+                          : "Vincular a Mi Cuenta y Entrar"}
+                      </button>
+                    </form>
                   ) : (
                     <form onSubmit={handleActivationSubmit}>
                       {activateError && (
@@ -312,12 +411,12 @@ export const StudentAccessPage: React.FC = () => {
                         <input
                           type="password"
                           className="student-form-input"
-                          placeholder="Mínimo 6 caracteres"
+                          placeholder="Mínimo 8 caracteres (mayúscula, minúscula, número)"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           disabled={activating}
                           required
-                          minLength={6}
+                          minLength={8}
                         />
                       </div>
 
@@ -333,7 +432,7 @@ export const StudentAccessPage: React.FC = () => {
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           disabled={activating}
                           required
-                          minLength={6}
+                          minLength={8}
                         />
                       </div>
 

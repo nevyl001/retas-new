@@ -156,6 +156,7 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
   };
 
   const getInvitationUrl = (token?: string | null) => {
+    if (accessInfo?.invitationUrl) return accessInfo.invitationUrl;
     if (!token) return "";
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     return `${origin}/coaching/acceso-alumno?token=${encodeURIComponent(token)}`;
