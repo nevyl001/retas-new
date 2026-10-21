@@ -2210,6 +2210,7 @@ export async function verifyStudentInvitation(
     coachName: res.coach_name,
     expiresAt: res.expires_at,
     isExistingAccount: Boolean(res.is_existing_account),
+    isEmailVerified: Boolean(res.is_email_verified),
   };
 }
 
@@ -2241,6 +2242,7 @@ export async function activateStudentInvitation(
       ok: false,
       error: res.error || "No se pudo activar la cuenta del alumno.",
       isExistingAccount: Boolean(res.isExistingAccount),
+      needsEmailVerification: Boolean(res.needsEmailVerification),
     };
   }
 

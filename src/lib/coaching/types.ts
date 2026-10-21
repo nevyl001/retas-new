@@ -471,6 +471,7 @@ export type StudentInvitationVerification = {
   coachName?: string;
   expiresAt?: string;
   isExistingAccount?: boolean;
+  isEmailVerified?: boolean;
   error?: string;
 };
 
@@ -481,6 +482,7 @@ export type StudentActivationResult = {
   rivieraId?: string;
   authUserId?: string;
   isExistingAccount?: boolean;
+  needsEmailVerification?: boolean;
   message?: string;
   error?: string;
 };

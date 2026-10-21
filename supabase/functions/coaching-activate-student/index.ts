@@ -84,7 +84,7 @@ Deno.serve(async (req: Request) => {
 
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // 1. Rate limiting por IP o hash contra ataques de fuerza bruta
+  // 1. Rate limiting por IP contra ataques de fuerza bruta
   const clientIp =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown-ip";
   const rl = await checkRateLimit(supabaseAdmin, `${MODULE}:${clientIp}`, 15, 600);
@@ -186,10 +186,9 @@ Deno.serve(async (req: Request) => {
 
     // 4. Comprobar si ya existe cuenta Auth previa con contraseña
     // En tal caso, el usuario debe INICIAR SESIÓN y llamar a claim_student_invitation
-    let existingAuthUserId: string | null = invitation.auth_user_id || null;
-    let hasExistingPassword = false;
+    let targetAuthUserId: string | null = invitation.auth_user_id || null;
 
-    if (!existingAuthUserId) {
+    if (!targetAuthUserId) {
       const { data: userLookup } = await supabaseAdmin
         .from("users")
         .select("id, email")
@@ -197,21 +196,51 @@ Deno.serve(async (req: Request) => {
         .maybeSingle();
 
       if (userLookup?.id) {
-        existingAuthUserId = userLookup.id;
+        targetAuthUserId = userLookup.id;
       }
     }
 
-    if (existingAuthUserId) {
-      const { data: authUser, error: getUserErr } =
-        await supabaseAdmin.auth.admin.getUserById(existingAuthUserId);
-
-      if (!getUserErr && authUser?.user) {
-        // Si el usuario ya existe en Auth, no permitir sobrescribir su contraseña desde un enlace sin autenticación previa
-        hasExistingPassword = true;
+    if (!targetAuthUserId) {
+      const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 50,
+      });
+      const match = (authUsers?.users ?? []).find(
+        (u) => u.email?.trim().toLowerCase() === invitation.email.toLowerCase()
+      );
+      if (match?.id) {
+        targetAuthUserId = match.id;
       }
     }
 
-    if (hasExistingPassword) {
+    if (!targetAuthUserId) {
+      return jsonResponse(404, {
+        ok: false,
+        error: "No se encontró el registro de autenticación para esta invitación. Solicita al club reenviar la invitación.",
+      });
+    }
+
+    const { data: authUserData, error: getUserErr } =
+      await supabaseAdmin.auth.admin.getUserById(targetAuthUserId);
+
+    if (getUserErr || !authUserData?.user) {
+      return jsonResponse(404, {
+        ok: false,
+        error: "Usuario de autenticación no encontrado.",
+      });
+    }
+
+    const targetUser = authUserData.user;
+
+    // Si el usuario ya contaba con contraseña establecida antes de esta invitación,
+    // DEBE iniciar sesión y vincular mediante claim_student_invitation sin sobrescribir contraseña.
+    if (
+      targetUser.encrypted_password &&
+      targetUser.encrypted_password.length > 0 &&
+      invitation.invited_at &&
+      targetUser.created_at &&
+      new Date(targetUser.created_at) < new Date(invitation.invited_at)
+    ) {
       return jsonResponse(400, {
         ok: false,
         isExistingAccount: true,
@@ -220,10 +249,30 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 5. Para nueva cuenta: validar contraseña
+    // 5. REGLA FUNDAMENTAL DE SEGURIDAD 0081:
+    // El usuario DEBE haber verificado su correo electrónico previamente (email_confirmed_at IS NOT NULL)
+    // a través del enlace enviado a su correo. La activación NO debe confirmar artificialmente correos no verificados.
+    if (!targetUser.email_confirmed_at) {
+      // Incrementar contador de intentos no autorizados
+      await supabaseAdmin
+        .from("coach_student_invitations")
+        .update({
+          attempts_count: (invitation.attempts_count || 0) + 1,
+          last_attempt_at: new Date().toISOString(),
+        })
+        .eq("id", invitation.id);
+
+      return jsonResponse(400, {
+        ok: false,
+        needsEmailVerification: true,
+        error:
+          "El correo electrónico no ha sido verificado. Por favor haz clic en el enlace enviado a tu correo antes de definir tu contraseña.",
+      });
+    }
+
+    // 6. Validar política de contraseñas
     const pwdValidation = validatePasswordPolicy(password);
     if (!pwdValidation.valid) {
-      // Incrementar contador de intentos en la invitación
       await supabaseAdmin
         .from("coach_student_invitations")
         .update({
@@ -238,14 +287,11 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 6. Crear cuenta en Auth usando Supabase Admin API con rol exclusivo STUDENT_ONLY
-    let authUserId: string;
-
-    const { data: createData, error: createError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email: invitation.email.toLowerCase(),
+    // 7. Establecer contraseña definitiva y blindar rol exclusivo STUDENT_ONLY
+    // NOTA: No se pasa email_confirm: true — el correo ya fue legítimamente confirmado por el usuario.
+    const { error: updateAuthErr } =
+      await supabaseAdmin.auth.admin.updateUserById(targetUser.id, {
         password: password,
-        email_confirm: true,
         app_metadata: {
           role: "student",
           account_type: "STUDENT_ONLY",
@@ -257,54 +303,38 @@ Deno.serve(async (req: Request) => {
         },
       });
 
-    if (createError || !createData?.user) {
-      // Si la cuenta existía pero no fue detectada, actualizarla con seguridad
-      if (
-        createError?.message?.toLowerCase().includes("already") ||
-        createError?.message?.toLowerCase().includes("exists")
-      ) {
-        return jsonResponse(400, {
-          ok: false,
-          isExistingAccount: true,
-          error:
-            "Ya existe una cuenta con este correo. Por favor inicia sesión con tu contraseña para vincular tu perfil.",
-        });
-      }
-
+    if (updateAuthErr) {
       logError({
         correlationId,
         module: MODULE,
-        errorType: "auth_user_create_failed",
-        detail: createError?.message ?? "Desconocido",
+        errorType: "update_user_password_failed",
+        detail: updateAuthErr.message,
       });
-
       return jsonResponse(500, {
         ok: false,
-        error: "No se pudo crear la cuenta de acceso del alumno.",
+        error: "No se pudo actualizar la contraseña de la cuenta.",
       });
     }
 
-    authUserId = createData.user.id;
-
-    // 7. Sincronizar en public.users
+    // 8. Sincronizar en public.users
     await supabaseAdmin.from("users").upsert(
       {
-        id: authUserId,
+        id: targetUser.id,
         email: invitation.email.toLowerCase(),
         name: jugador.nombre,
       },
       { onConflict: "id" }
     );
 
-    // 8. Crear vínculo multiclub en coach_student_account_links
+    // 9. Crear vínculo multiclub en coach_student_account_links
     const { error: linkError } = await supabaseAdmin
       .from("coach_student_account_links")
       .upsert(
         {
           organizador_id: invitation.organizador_id,
           jugador_id: invitation.jugador_id,
-          auth_user_id: authUserId,
-          verification_method: "INVITATION_LINK",
+          auth_user_id: targetUser.id,
+          verification_method: "EMAIL_VERIFIED",
           is_active: true,
           student_email: invitation.email.toLowerCase(),
           deactivated_at: null,
@@ -323,29 +353,27 @@ Deno.serve(async (req: Request) => {
       });
       return jsonResponse(500, {
         ok: false,
-        error: "No se pudo vincular la cuenta al perfil de coaching del club.",
+        error: "No se pudo vincular el perfil deportivo al club.",
       });
     }
 
-    // 9. Marcar invitación como ACCEPTED
+    // 10. Marcar invitación como aceptada
     await supabaseAdmin
       .from("coach_student_invitations")
       .update({
         status: "ACCEPTED",
         accepted_at: new Date().toISOString(),
-        accepted_by: authUserId,
-        auth_user_id: authUserId,
+        accepted_by: targetUser.id,
         updated_at: new Date().toISOString(),
       })
       .eq("id", invitation.id);
 
     return jsonResponse(200, {
       ok: true,
-      email: invitation.email,
+      email: invitation.email.toLowerCase(),
       studentName: jugador.nombre,
       rivieraId: officialRivieraId,
-      message:
-        "¡Cuenta creada y perfil vinculado exitosamente! Ya puedes acceder a Mi Coaching.",
+      message: "¡Cuenta activada y vinculada exitosamente a Riviera Coaching!",
     });
   } catch (err) {
     logError({

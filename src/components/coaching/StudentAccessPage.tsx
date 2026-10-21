@@ -32,6 +32,7 @@ export const StudentAccessPage: React.FC = () => {
   const [activating, setActivating] = useState(false);
   const [activateError, setActivateError] = useState<string | null>(null);
   const [activateSuccess, setActivateSuccess] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   // Estados para vinculación de cuenta existente
   const [existingPassword, setExistingPassword] = useState("");
@@ -71,6 +72,17 @@ export const StudentAccessPage: React.FC = () => {
         if (res.email) {
           setLoginEmail(res.email);
         }
+
+        let verified = Boolean(res.isEmailVerified);
+        const { data: sessionData } = await supabase.auth.getSession();
+        const currentSession = sessionData?.session;
+        if (
+          currentSession?.user?.email?.toLowerCase() === res.email?.toLowerCase() &&
+          currentSession?.user?.email_confirmed_at
+        ) {
+          verified = true;
+        }
+        setIsEmailVerified(verified);
       }
     } catch (err: any) {
       setTokenError(err.message || "Error al verificar la invitación.");
@@ -119,8 +131,8 @@ export const StudentAccessPage: React.FC = () => {
     e.preventDefault();
     if (!token) return;
 
-    if (!newPassword || newPassword.length < 6) {
-      setActivateError("La contraseña debe tener al menos 6 caracteres.");
+    if (!newPassword || newPassword.length < 8) {
+      setActivateError("La contraseña debe tener al menos 8 caracteres.");
       return;
     }
 
@@ -135,6 +147,9 @@ export const StudentAccessPage: React.FC = () => {
     try {
       const res = await activateStudentInvitation(token, newPassword);
       if (!res.ok) {
+        if (res.needsEmailVerification) {
+          setIsEmailVerified(false);
+        }
         setActivateError(res.error || "No se pudo activar la cuenta.");
         return;
       }
@@ -396,6 +411,44 @@ export const StudentAccessPage: React.FC = () => {
                           : "Vincular a Mi Cuenta y Entrar"}
                       </button>
                     </form>
+                  ) : !isEmailVerified ? (
+                    <div>
+                      <div
+                        className="student-alert"
+                        style={{
+                          background: "rgba(245, 158, 11, 0.12)",
+                          border: "1px solid rgba(245, 158, 11, 0.3)",
+                          color: "#fcd34d",
+                          lineHeight: "1.5",
+                          fontSize: "0.88rem",
+                        }}
+                      >
+                        <strong>✉️ Verificación de Correo Requerida:</strong>
+                        <p style={{ marginTop: "6px", marginBottom: "0" }}>
+                          Hemos enviado un enlace de confirmación a <strong>{invitationData.email}</strong>. Por seguridad y para verificar la posesión de tu correo, debes abrir el enlace en tu correo antes de definir tu contraseña.
+                        </p>
+                      </div>
+
+                      {activateError && (
+                        <div className="student-alert student-alert-error" style={{ marginTop: "12px" }}>
+                          {activateError}
+                        </div>
+                      )}
+
+                      <div style={{ textAlign: "center", margin: "24px 0" }}>
+                        <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginBottom: "12px" }}>
+                          ¿Ya abriste el enlace en tu correo? Comprueba el estado de tu verificación:
+                        </p>
+                        <button
+                          type="button"
+                          className="student-btn-secondary"
+                          onClick={() => token && handleVerifyToken(token)}
+                          disabled={verifyingToken}
+                        >
+                          {verifyingToken ? "Comprobando..." : "🔄 Comprobar Estado de Verificación"}
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     <form onSubmit={handleActivationSubmit}>
                       {activateError && (

@@ -1319,6 +1319,7 @@ describe("coachingApi - Entrega B", () => {
           coach_name: "Coach Pro",
           expires_at: "2026-10-28T00:00:00Z",
           is_existing_account: true,
+          is_email_verified: true,
         },
         error: null,
       });
@@ -1339,6 +1340,7 @@ describe("coachingApi - Entrega B", () => {
         coachName: "Coach Pro",
         expiresAt: "2026-10-28T00:00:00Z",
         isExistingAccount: true,
+        isEmailVerified: true,
       });
     });
 
