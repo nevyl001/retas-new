@@ -84,13 +84,14 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Rate limiting contra fuerza bruta por IP y por identificador
+    // Rate limiting contra fuerza bruta por IP y por identificador (failClosed: true para seguridad estricta)
     const normalizedIdentifier = rawIdentifier.toLowerCase();
     const ipRl = await checkRateLimit(
       supabaseAdmin,
       `${MODULE}:login:ip:${clientIp}`,
       20,
-      600
+      600,
+      { failClosed: true }
     );
     if (!ipRl.allowed) {
       logWarn({
@@ -109,7 +110,8 @@ Deno.serve(async (req: Request) => {
       supabaseAdmin,
       `${MODULE}:login:id:${normalizedIdentifier}`,
       8,
-      600
+      600,
+      { failClosed: true }
     );
     if (!idRl.allowed) {
       logWarn({
@@ -231,7 +233,8 @@ Deno.serve(async (req: Request) => {
       supabaseAdmin,
       `${MODULE}:reset:${clientIp}`,
       5,
-      600
+      600,
+      { failClosed: true }
     );
     if (!resetRl.allowed) {
       return jsonResponse(429, {
@@ -306,24 +309,12 @@ Deno.serve(async (req: Request) => {
         .limit(1)
         .maybeSingle();
 
-      if (invErr || !inv) {
-        return jsonResponse(404, {
-          ok: false,
-          error: "Invitación no encontrada o token inválido.",
-        });
-      }
-
-      if (inv.status !== "PENDING") {
-        return jsonResponse(400, {
-          ok: false,
-          error: "Esta invitación ya no está pendiente de activación.",
-        });
-      }
-
-      if (new Date(inv.expires_at) < new Date()) {
-        return jsonResponse(400, {
-          ok: false,
-          error: "Esta invitación ha expirado. Solicita a tu club una nueva invitación.",
+      if (invErr || !inv || inv.status !== "PENDING" || new Date(inv.expires_at) < new Date()) {
+        // Respuesta genérica que no revela la existencia ni el estado de cuentas
+        return jsonResponse(200, {
+          ok: true,
+          message:
+            "Si la invitación es válida y está activa, se ha enviado un enlace de acceso a tu correo registrado.",
         });
       }
 
@@ -331,7 +322,8 @@ Deno.serve(async (req: Request) => {
         supabaseAdmin,
         `${MODULE}:resend_link:${inv.id}`,
         3,
-        600
+        600,
+        { failClosed: true }
       );
       if (!linkRl.allowed) {
         return jsonResponse(429, {
@@ -341,29 +333,88 @@ Deno.serve(async (req: Request) => {
       }
 
       const siteUrl = "https://appriviera.rivieraopen.com";
-      const invitationUrl = `${siteUrl}/coaching/acceso-alumno?token=${token}`;
+      const invitationUrl = `${siteUrl}/coaching/acceso-alumno?token=${encodeURIComponent(token)}`;
 
-      const { data: linkData, error: linkErr } =
+      let actionLink: string | null = null;
+      const { data: inviteData, error: inviteErr } =
         await supabaseAdmin.auth.admin.generateLink({
           type: "invite",
           email: inv.email,
           options: { redirectTo: invitationUrl },
         });
 
-      if (!linkErr && linkData?.properties?.action_link && resendApiKeyConfigured()) {
-        const actionLink = linkData.properties.action_link;
-        await sendByResend(
-          inv.email,
-          "Enlace de Verificación y Acceso — Riviera Coaching",
-          `Hola,\n\nPara verificar tu correo y acceder a tu cuenta de alumno, haz clic en el siguiente enlace:\n${actionLink}`,
-          `<p>Para verificar tu correo y acceder a tu cuenta de alumno, haz clic en el siguiente botón:</p><p><a href="${actionLink}" style="background:#09090b;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;">Verificar y Acceder</a></p>`,
-          { correlationId, module: MODULE, invitationId: inv.id }
-        );
+      if (!inviteErr && inviteData?.properties?.action_link) {
+        actionLink = inviteData.properties.action_link;
+      } else {
+        // Si el usuario ya existe en Supabase Auth, GoTrue rechaza "invite"; generamos "magiclink"
+        const { data: magicData, error: magicErr } =
+          await supabaseAdmin.auth.admin.generateLink({
+            type: "magiclink",
+            email: inv.email,
+            options: { redirectTo: invitationUrl },
+          });
+        if (!magicErr && magicData?.properties?.action_link) {
+          actionLink = magicData.properties.action_link;
+        } else {
+          logError({
+            correlationId,
+            module: MODULE,
+            errorType: "generate_access_link_failed",
+            detail: internalErrorDetail(magicErr || inviteErr),
+          });
+          return jsonResponse(500, {
+            ok: false,
+            error: "No se pudo generar el enlace de verificación en el servidor.",
+          });
+        }
+      }
+
+      if (!resendApiKeyConfigured()) {
+        logError({
+          correlationId,
+          module: MODULE,
+          errorType: "resend_not_configured",
+          detail: "RESEND_API_KEY no configurada",
+        });
+        return jsonResponse(500, {
+          ok: false,
+          error: "El servicio de correo electrónico no está configurado.",
+        });
+      }
+
+      const sendResult = await sendByResend(
+        inv.email,
+        "Enlace de Verificación y Acceso — Riviera Coaching",
+        `Hola,\n\nPara verificar tu correo y acceder a tu cuenta de alumno desde cualquier dispositivo, haz clic en el siguiente enlace:\n${actionLink}`,
+        `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #09090b; background: #ffffff; border-radius: 8px; border: 1px solid #e4e4e7;">
+          <div style="font-size: 11px; letter-spacing: 0.1em; color: #71717a; font-weight: 700; text-transform: uppercase; margin-bottom: 12px;">Riviera Coaching</div>
+          <h2 style="color: #09090b; margin-top: 0; font-size: 20px; font-weight: 700;">Verificación y Acceso de Alumno</h2>
+          <p style="font-size: 14px; line-height: 1.6; color: #27272a;">Para verificar tu correo y continuar con la activación de tu cuenta de alumno en este u otro dispositivo, haz clic en el siguiente botón:</p>
+          <div style="margin: 28px 0;">
+            <a href="${actionLink}" style="background-color: #09090b; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-block;">Verificar y Activar Cuenta</a>
+          </div>
+          <p style="color: #71717a; font-size: 12px; margin-top: 28px; border-top: 1px solid #f4f4f5; padding-top: 16px;">Si no solicitaste este acceso, puedes ignorar este mensaje.</p>
+        </div>`,
+        { correlationId, module: MODULE, invitationId: inv.id }
+      );
+
+      if (!sendResult.ok) {
+        logError({
+          correlationId,
+          module: MODULE,
+          errorType: "resend_send_failed",
+          detail: sendResult.error || sendResult.responseBody,
+        });
+        return jsonResponse(502, {
+          ok: false,
+          error: "No se pudo enviar el correo de verificación. Por favor intenta de nuevo.",
+        });
       }
 
       return jsonResponse(200, {
         ok: true,
-        message: "Enlace de acceso enviado a tu correo electrónico registrado.",
+        message:
+          "Si la invitación es válida y está activa, se ha enviado un enlace de acceso a tu correo registrado.",
       });
     } catch (resendErr) {
       logError({
@@ -439,12 +490,13 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // Rate limiting por usuario contra abusos
+  // Rate limiting por usuario contra abusos (failClosed: true para proteger activación)
   const rl = await checkRateLimit(
     supabaseAdmin,
     `${MODULE}:${caller.id}`,
     10,
-    600
+    600,
+    { failClosed: true }
   );
   if (!rl.allowed) {
     logWarn({

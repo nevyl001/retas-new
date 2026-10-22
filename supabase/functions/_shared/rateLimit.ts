@@ -15,16 +15,23 @@ export interface RateLimitResult {
   retryAfterSeconds: number;
 }
 
+export interface RateLimitOptions {
+  /** Si es true, una falla de la RPC bloquea la solicitud (allowed=false) por seguridad */
+  failClosed?: boolean;
+}
+
 /**
- * Falla abierto (permite la request) si la RPC en sí falla — un error de
- * infraestructura del rate limiter no debe tumbar la función completa. Se
- * loguea como warning para que quede visible en observabilidad.
+ * Por defecto falla abierto (permite la request) si la RPC en sí falla — un error de
+ * infraestructura del rate limiter no debe tumbar la función completa.
+ * Para flujos de alta sensibilidad (p. ej. autenticación de alumnos), se puede especificar
+ * options.failClosed = true para bloquear preventivamente en caso de degradación.
  */
 export async function checkRateLimit(
   admin: SupabaseClient,
   bucketKey: string,
   maxRequests: number,
-  windowSeconds: number
+  windowSeconds: number,
+  options?: RateLimitOptions
 ): Promise<RateLimitResult> {
   const { data, error } = await admin.rpc("check_rate_limit", {
     p_bucket_key: bucketKey,
@@ -37,10 +44,22 @@ export async function checkRateLimit(
       JSON.stringify({
         level: "warn",
         module: "rateLimit",
-        message: "check_rate_limit RPC failed, failing open",
+        message: options?.failClosed
+          ? "check_rate_limit RPC failed, failing closed for security"
+          : "check_rate_limit RPC failed, failing open",
         detail: error?.message,
       })
     );
+    if (options?.failClosed) {
+      return {
+        allowed: false,
+        count: maxRequests,
+        limit: maxRequests,
+        remaining: 0,
+        resetAt: new Date(Date.now() + 60 * 1000).toISOString(),
+        retryAfterSeconds: 60,
+      };
+    }
     return {
       allowed: true,
       count: 0,
