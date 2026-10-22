@@ -15,6 +15,10 @@ import type {
   InviteCoachResult,
   ClubCoachDetail,
   RecordCoachClassSessionInput,
+  ClassFollowupInput,
+  CoachClassFollowup,
+  CoachFollowupDigest,
+  StudentTrainingSession,
   RemoveCoachResult,
   StudentLookupResult,
   AssignStudentToClubCoachResult,
@@ -775,6 +779,115 @@ export async function recordCoachClassSession(
   );
 }
 
+function followupText(value: unknown): string | null {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text || null;
+}
+
+/** El alumno nunca recibe notas privadas ni notes_summary, aunque el payload las traiga. */
+export function mapStudentTrainingSession(raw: Record<string, unknown>): StudentTrainingSession {
+  return {
+    id: String(raw.id ?? ""),
+    startsAt: String(raw.starts_at ?? ""),
+    durationMinutes: raw.duration_minutes != null ? Number(raw.duration_minutes) : null,
+    workedOn: Array.isArray(raw.worked_on) ? raw.worked_on.map(String) : [],
+    improvements: followupText(raw.improvements),
+    areasToImprove: followupText(raw.areas_to_improve),
+    recommendations: followupText(raw.recommendations),
+    nextGoals: followupText(raw.next_goals),
+    motivationalMessage: followupText(raw.motivational_message),
+    followupUpdatedAt: raw.followup_updated_at ? String(raw.followup_updated_at) : null,
+    coachNombre: String(raw.coach_nombre ?? "Coach"),
+    clubNombre: String(raw.club_nombre ?? "Club"),
+    nextScheduledAt: raw.next_scheduled_at ? String(raw.next_scheduled_at) : null,
+  };
+}
+
+export async function updateCoachClassFollowup(input: ClassFollowupInput): Promise<void> {
+  const { data, error } = await supabase.rpc("update_coach_class_followup", {
+    p_session_id: input.sessionId,
+    p_worked_on: input.workedOn,
+    p_improvements: input.improvements ?? null,
+    p_areas_to_improve: input.areasToImprove ?? null,
+    p_recommendations: input.recommendations ?? null,
+    p_next_goals: input.nextGoals ?? null,
+    p_motivational_message: input.motivationalMessage ?? null,
+    p_private_notes: input.privateNotes ?? null,
+  });
+  if (error) throw error;
+  const res = data as { ok?: boolean; error?: string } | null;
+  if (!res || res.ok !== true) {
+    throw new Error(res?.error || "No se pudo guardar el seguimiento.");
+  }
+}
+
+export async function fetchCoachClassFollowup(
+  relationshipId: string
+): Promise<CoachClassFollowup[]> {
+  const { data, error } = await supabase.rpc("get_coach_class_followup", {
+    p_relationship_id: relationshipId,
+  });
+  if (error) throw error;
+  const res = data as { ok?: boolean; error?: string; sessions?: unknown[] } | null;
+  if (!res || res.ok !== true) {
+    throw new Error(res?.error || "No se pudo consultar el seguimiento.");
+  }
+  return (res.sessions ?? []).map((item) => {
+    const raw = item as Record<string, unknown>;
+    return {
+      id: String(raw.id ?? ""),
+      startsAt: String(raw.starts_at ?? ""),
+      durationMinutes: raw.duration_minutes != null ? Number(raw.duration_minutes) : null,
+      status: String(raw.status ?? "COMPLETED"),
+      workedOn: Array.isArray(raw.worked_on) ? raw.worked_on.map(String) : [],
+      improvements: followupText(raw.improvements),
+      areasToImprove: followupText(raw.areas_to_improve),
+      recommendations: followupText(raw.recommendations),
+      nextGoals: followupText(raw.next_goals),
+      motivationalMessage: followupText(raw.motivational_message),
+      followupUpdatedAt: raw.followup_updated_at ? String(raw.followup_updated_at) : null,
+      privateNotes: followupText(raw.private_notes),
+    };
+  });
+}
+
+export async function fetchCoachFollowupDigest(
+  organizadorId: string
+): Promise<CoachFollowupDigest[]> {
+  const { data, error } = await supabase.rpc("get_coach_followup_digest", {
+    p_organizador_id: organizadorId,
+  });
+  if (error) throw error;
+  const res = data as { ok?: boolean; error?: string; students?: unknown[] } | null;
+  if (!res || res.ok !== true) {
+    throw new Error(res?.error || "No se pudo consultar el resumen de alumnos.");
+  }
+  return (res.students ?? []).map((item) => {
+    const raw = item as Record<string, unknown>;
+    return {
+      relationshipId: String(raw.relationship_id ?? ""),
+      fotoUrl: raw.foto_url ? String(raw.foto_url) : null,
+      categoria: raw.categoria ? String(raw.categoria) : null,
+      lastSessionAt: raw.last_session_at ? String(raw.last_session_at) : null,
+      lastGoal: followupText(raw.last_goal),
+      nextSessionAt: raw.next_session_at ? String(raw.next_session_at) : null,
+    };
+  });
+}
+
+export async function fetchStudentTrainingTimeline(): Promise<StudentTrainingSession[]> {
+  const { data, error } = await supabase.rpc("get_student_training_timeline");
+  if (error) throw error;
+  const res = data as { ok?: boolean; error?: string; sessions?: unknown[] } | null;
+  if (!res || res.ok !== true) {
+    throw new Error(res?.error || "No se pudo consultar tu seguimiento.");
+  }
+  return (res.sessions ?? []).map((item) =>
+    mapStudentTrainingSession(item as Record<string, unknown>)
+  );
+}
+
 /**
  * Consulta el historial de movimientos de clases del club (asignaciones y deducciones).
  * No oculta errores de permisos o conexión como listas vacías.
@@ -1146,7 +1259,7 @@ export async function fetchStudentCoachingOverview(): Promise<StudentCoachingOve
                 improvements: entry.session.improvements ? String(entry.session.improvements) : null,
                 nextGoals: entry.session.next_goals ? String(entry.session.next_goals) : null,
                 motivationalMessage: entry.session.motivational_message ? String(entry.session.motivational_message) : null,
-                notesSummary: entry.session.notes_summary ? String(entry.session.notes_summary) : null,
+                notesSummary: null,
               }
             : null,
         }))

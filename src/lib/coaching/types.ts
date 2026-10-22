@@ -190,6 +190,57 @@ export type RecordCoachClassSessionInput = {
   durationMinutes?: number;
 };
 
+export type ClassFollowupInput = {
+  sessionId: string;
+  workedOn: string[];
+  improvements?: string | null;
+  areasToImprove?: string | null;
+  recommendations?: string | null;
+  nextGoals?: string | null;
+  motivationalMessage?: string | null;
+  privateNotes?: string | null;
+};
+
+export type CoachClassFollowup = {
+  id: string;
+  startsAt: string;
+  durationMinutes: number | null;
+  status: string;
+  workedOn: string[];
+  improvements: string | null;
+  areasToImprove: string | null;
+  recommendations: string | null;
+  nextGoals: string | null;
+  motivationalMessage: string | null;
+  followupUpdatedAt: string | null;
+  privateNotes: string | null;
+};
+
+export type CoachFollowupDigest = {
+  relationshipId: string;
+  fotoUrl: string | null;
+  categoria: string | null;
+  lastSessionAt: string | null;
+  lastGoal: string | null;
+  nextSessionAt: string | null;
+};
+
+export type StudentTrainingSession = {
+  id: string;
+  startsAt: string;
+  durationMinutes: number | null;
+  workedOn: string[];
+  improvements: string | null;
+  areasToImprove: string | null;
+  recommendations: string | null;
+  nextGoals: string | null;
+  motivationalMessage: string | null;
+  followupUpdatedAt: string | null;
+  coachNombre: string;
+  clubNombre: string;
+  nextScheduledAt: string | null;
+};
+
 export type CurrentCoachClubMembership = {
   membershipId: string;
   organizadorId: string;

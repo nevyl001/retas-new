@@ -7,11 +7,16 @@ import {
   recordCoachClassSession,
   generateCoachingIdempotencyKey,
   fetchCoachAgenda,
+  fetchCoachClassFollowup,
+  fetchCoachFollowupDigest,
+  updateCoachClassFollowup,
 } from "../../lib/coaching/coachingApi";
 import type {
   CurrentCoachProfile,
   CoachingPlayerLink,
   CoachScheduledSession,
+  CoachClassFollowup,
+  CoachFollowupDigest,
 } from "../../lib/coaching/types";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import { TablerIcon } from "../ui/TablerIcon";
@@ -32,6 +37,11 @@ const DEFAULT_PADEL_TOPICS = [
   "Táctica y posicionamiento",
   "Transición defensa-ataque",
   "Bloqueo en la red",
+  "Derecha y revés",
+  "Defensa de fondo",
+  "Desplazamiento",
+  "Condición física",
+  "Toma de decisiones",
 ];
 
 export const CoachPortalPage: React.FC = () => {
@@ -63,9 +73,19 @@ export const CoachPortalPage: React.FC = () => {
   const [motivationalMessage, setMotivationalMessage] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [classNotes, setClassNotes] = useState("");
+  const [areasToImprove, setAreasToImprove] = useState("");
+  const [recommendations, setRecommendations] = useState("");
+  const [editingFollowup, setEditingFollowup] = useState(false);
+  const [digestByRelationship, setDigestByRelationship] = useState<
+    Record<string, CoachFollowupDigest>
+  >({});
+  const [followupStudent, setFollowupStudent] = useState<CoachingPlayerLink | null>(null);
+  const [followupSessions, setFollowupSessions] = useState<CoachClassFollowup[]>([]);
+  const [followupError, setFollowupError] = useState<string | null>(null);
   const [modalKey, setModalKey] = useState("");
   const [modalBusy, setModalBusy] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [followupBaseline, setFollowupBaseline] = useState("");
 
   const loadStudents = React.useCallback(async (coachId: string, clubId: string) => {
     if (!coachId || !clubId) return;
@@ -74,6 +94,15 @@ export const CoachPortalPage: React.FC = () => {
     try {
       const data = await fetchCoachAssignedStudents(coachId, clubId);
       setStudents(data);
+      try {
+        const digest = await fetchCoachFollowupDigest(clubId);
+        const map: Record<string, CoachFollowupDigest> = {};
+        for (const row of digest) map[row.relationshipId] = row;
+        setDigestByRelationship(map);
+      } catch (digestErr) {
+        console.error("[coaching] followup digest", digestErr);
+        setDigestByRelationship({});
+      }
     } catch (err) {
       console.error("[coaching] error loading students", err);
       setStudentsError(
@@ -199,10 +228,24 @@ export const CoachPortalPage: React.FC = () => {
     setWorkedOnList([]);
     setCustomTopic("");
     setImprovements("");
+    setAreasToImprove("");
+    setRecommendations("");
     setNextGoals("");
     setMotivationalMessage("");
     setDurationMinutes(60);
     setClassNotes("");
+    setEditingFollowup(false);
+    setFollowupBaseline(
+      JSON.stringify({
+        workedOn: [] as string[],
+        improvements: "",
+        areas: "",
+        recommendations: "",
+        nextGoals: "",
+        message: "",
+        notes: "",
+      })
+    );
     setModalError(null);
     setModalKey(generateCoachingIdempotencyKey("session"));
   };
@@ -233,10 +276,24 @@ export const CoachPortalPage: React.FC = () => {
     setWorkedOnList(sess.focus ? [sess.focus] : []);
     setCustomTopic("");
     setImprovements("");
+    setAreasToImprove("");
+    setRecommendations("");
     setNextGoals("");
     setMotivationalMessage("");
     setDurationMinutes(sess.durationMinutes || 60);
-    setClassNotes(sess.notesSummary || "");
+    setClassNotes("");
+    setEditingFollowup(false);
+    setFollowupBaseline(
+      JSON.stringify({
+        workedOn: sess.focus ? [sess.focus] : [],
+        improvements: "",
+        areas: "",
+        recommendations: "",
+        nextGoals: "",
+        message: "",
+        notes: "",
+      })
+    );
     setModalError(null);
     setModalKey(generateCoachingIdempotencyKey("session"));
     setDetailsSession(null);
@@ -246,6 +303,63 @@ export const CoachPortalPage: React.FC = () => {
     setWorkedOnList((prev) =>
       prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic]
     );
+  };
+
+  const openStudentFollowup = async (student: CoachingPlayerLink) => {
+    setFollowupStudent(student);
+    setFollowupSessions([]);
+    setFollowupError(null);
+    try {
+      setFollowupSessions(await fetchCoachClassFollowup(student.id));
+    } catch (err) {
+      setFollowupError(err instanceof Error ? err.message : "No se pudo abrir el seguimiento.");
+    }
+  };
+
+  const openEditFollowup = (session: CoachClassFollowup) => {
+    if (!followupStudent) return;
+    setModalStudent(followupStudent);
+    setModalSessionId(session.id);
+    setEditingFollowup(true);
+    setWorkedOnList(session.workedOn);
+    setCustomTopic("");
+    setImprovements(session.improvements ?? "");
+    setAreasToImprove(session.areasToImprove ?? "");
+    setRecommendations(session.recommendations ?? "");
+    setNextGoals(session.nextGoals ?? "");
+    setMotivationalMessage(session.motivationalMessage ?? "");
+    setClassNotes(session.privateNotes ?? "");
+    setDurationMinutes(session.durationMinutes || 60);
+    setFollowupBaseline(
+      JSON.stringify({
+        workedOn: session.workedOn,
+        improvements: session.improvements ?? "",
+        areas: session.areasToImprove ?? "",
+        recommendations: session.recommendations ?? "",
+        nextGoals: session.nextGoals ?? "",
+        message: session.motivationalMessage ?? "",
+        notes: session.privateNotes ?? "",
+      })
+    );
+    setModalError(null);
+  };
+
+  const closeClassModal = () => {
+    if (modalBusy) return;
+    const dirty =
+      JSON.stringify({
+        workedOn: workedOnList,
+        improvements,
+        areas: areasToImprove,
+        recommendations,
+        nextGoals,
+        message: motivationalMessage,
+        notes: classNotes,
+      }) !== followupBaseline;
+    if (dirty && !window.confirm("Hay cambios sin guardar. ¿Salir sin guardar?")) return;
+    setModalStudent(null);
+    setModalSessionId(null);
+    setEditingFollowup(false);
   };
 
   const addCustomTopic = () => {
@@ -263,10 +377,31 @@ export const CoachPortalPage: React.FC = () => {
     setModalBusy(true);
     setModalError(null);
     try {
+      const followup = {
+        workedOn: workedOnList,
+        improvements: improvements.trim() || null,
+        areasToImprove: areasToImprove.trim() || null,
+        recommendations: recommendations.trim() || null,
+        nextGoals: nextGoals.trim() || null,
+        motivationalMessage: motivationalMessage.trim() || null,
+        privateNotes: classNotes.trim() || null,
+      };
+      if (editingFollowup && modalSessionId) {
+        await updateCoachClassFollowup({ sessionId: modalSessionId, ...followup });
+        setSuccessMessage("Seguimiento actualizado. No se descontó otra clase.");
+        setModalStudent(null);
+        setEditingFollowup(false);
+        if (followupStudent) {
+          setFollowupSessions(await fetchCoachClassFollowup(followupStudent.id));
+        }
+        if (profile && selectedClubId) {
+          await loadStudents(profile.id, selectedClubId);
+        }
+        return;
+      }
       const res = await recordCoachClassSession({
         relationshipId: modalStudent.id,
         sessionId: modalSessionId || undefined,
-        notas: classNotes.trim() || undefined,
         workedOn: workedOnList,
         improvements: improvements.trim() || undefined,
         nextGoals: nextGoals.trim() || undefined,
@@ -274,6 +409,18 @@ export const CoachPortalPage: React.FC = () => {
         durationMinutes,
         idempotencyKey: modalKey,
       });
+      if (res.sessionId) {
+        try {
+          await updateCoachClassFollowup({ sessionId: res.sessionId, ...followup });
+        } catch (followErr) {
+          setModalError(
+            followErr instanceof Error
+              ? `La clase se registró una sola vez. El seguimiento no se guardó: ${followErr.message}`
+              : "La clase se registró una sola vez. El seguimiento no se guardó."
+          );
+          return;
+        }
+      }
 
       setSuccessMessage(
         res.idempotent
@@ -883,12 +1030,21 @@ export const CoachPortalPage: React.FC = () => {
             {students.map((s) => {
               const hasBalance = (s.balanceClasses ?? 0) > 0;
               const isModalOpenForThis = modalStudent?.id === s.id;
+              const card = digestByRelationship[s.id];
+              const categoryLabel = card?.categoria
+                ? JUGADOR_CATEGORIA_LABELS[card.categoria as keyof typeof JUGADOR_CATEGORIA_LABELS] ||
+                  card.categoria
+                : null;
 
               return (
                 <article key={s.id} className="coaching-card">
                   <div className="coaching-card__top">
                     <div className="coaching-card__avatar" aria-hidden>
-                      {s.jugadorNombre.slice(0, 1).toUpperCase()}
+                      {card?.fotoUrl ? (
+                        <img src={card.fotoUrl} alt="" />
+                      ) : (
+                        s.jugadorNombre.slice(0, 1).toUpperCase()
+                      )}
                     </div>
                     <div className="coaching-card__identity">
                       <h3 className="coaching-card__title">{s.jugadorNombre}</h3>
@@ -930,7 +1086,22 @@ export const CoachPortalPage: React.FC = () => {
                     ) : null}
                   </div>
 
+                  <p className="coaching-follow__meta">
+                    {categoryLabel ? `Categoría: ${categoryLabel}. ` : ""}
+                    Última sesión: {card?.lastSessionAt ? formatSessionDate(card.lastSessionAt) : "sin clases impartidas"}.
+                    {" "}
+                    Próxima: {card?.nextSessionAt ? formatSessionDate(card.nextSessionAt) : "sin clase agendada"}.
+                    {card?.lastGoal ? ` Objetivo: ${card.lastGoal}` : ""}
+                  </p>
+
                   <div className="coaching-card__actions" style={{ marginTop: "1rem" }}>
+                    <button
+                      type="button"
+                      className="coaching-btn coaching-btn--secondary"
+                      onClick={() => void openStudentFollowup(s)}
+                    >
+                      Ver seguimiento
+                    </button>
                     <button
                       type="button"
                       className="coaching-btn coaching-btn--primary"
@@ -960,14 +1131,11 @@ export const CoachPortalPage: React.FC = () => {
       {/* Modal: Registrar Clase Impartida con Seguimiento Deportivo */}
       <Modal
         open={Boolean(modalStudent)}
-        onClose={() => {
-          if (!modalBusy) {
-            setModalStudent(null);
-            setModalSessionId(null);
-          }
-        }}
+        onClose={closeClassModal}
         title={
-          modalSessionId
+          editingFollowup
+            ? `Editar seguimiento · ${modalStudent?.jugadorNombre || ""}`
+            : modalSessionId
             ? `Registrar clase agendada impartida · ${modalStudent?.jugadorNombre || ""}`
             : `Registrar clase impartida · ${modalStudent?.jugadorNombre || ""}`
         }
@@ -975,7 +1143,7 @@ export const CoachPortalPage: React.FC = () => {
       >
         {modalStudent ? (
           <form onSubmit={handleConfirmClassRecord} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            {modalSessionId && (
+            {modalSessionId && !editingFollowup && (
               <div
                 style={{
                   background: "rgba(16, 185, 129, 0.12)",
@@ -1036,7 +1204,9 @@ export const CoachPortalPage: React.FC = () => {
                 </div>
               </div>
               <p style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", color: "var(--ro-text-secondary)" }}>
-                Al confirmar, se descontará automáticamente <strong>1 clase</strong> del saldo del alumno y la sesión quedará registrada en su historial deportivo.
+                {editingFollowup
+                  ? "Guardar cambia solo el seguimiento. No descuenta otra clase ni modifica la fecha."
+                  : "Al confirmar, se descontará automáticamente 1 clase del saldo del alumno y la sesión quedará registrada en su historial deportivo."}
               </p>
             </div>
 
@@ -1050,7 +1220,7 @@ export const CoachPortalPage: React.FC = () => {
                 className="coaching-input"
                 value={durationMinutes}
                 onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                disabled={modalBusy}
+                disabled={modalBusy || editingFollowup}
               >
                 <option value={30}>30 minutos</option>
                 <option value={45}>45 minutos</option>
@@ -1184,6 +1354,36 @@ export const CoachPortalPage: React.FC = () => {
               />
             </div>
 
+            <div className="coaching-form-group">
+              <label className="coaching-form-label" htmlFor="areas-field">
+                Qué necesita mejorar
+              </label>
+              <textarea
+                id="areas-field"
+                className="coaching-input"
+                rows={3}
+                placeholder="Aspectos que el alumno debe seguir trabajando…"
+                value={areasToImprove}
+                onChange={(e) => setAreasToImprove(e.target.value)}
+                disabled={modalBusy}
+              />
+            </div>
+
+            <div className="coaching-form-group">
+              <label className="coaching-form-label" htmlFor="recommendations-field">
+                Recomendaciones para practicar
+              </label>
+              <textarea
+                id="recommendations-field"
+                className="coaching-input"
+                rows={3}
+                placeholder="Ejercicios o indicaciones concretas del entrenador…"
+                value={recommendations}
+                onChange={(e) => setRecommendations(e.target.value)}
+                disabled={modalBusy}
+              />
+            </div>
+
             {/* Próximos objetivos */}
             <div className="coaching-form-group">
               <label className="coaching-form-label" htmlFor="next-goals-field">
@@ -1219,13 +1419,13 @@ export const CoachPortalPage: React.FC = () => {
             {/* Notas internas del coach */}
             <div className="coaching-form-group">
               <label className="coaching-form-label" htmlFor="class-notes">
-                Notas internas del coach (opcional)
+                Notas privadas del coach
               </label>
-              <input
+              <textarea
                 id="class-notes"
-                type="text"
                 className="coaching-input"
-                placeholder="Observaciones adicionales o recordatorio personal…"
+                rows={2}
+                placeholder="Solo las ve el entrenador. El alumno no las consulta."
                 value={classNotes}
                 onChange={(e) => setClassNotes(e.target.value)}
                 disabled={modalBusy}
@@ -1233,15 +1433,23 @@ export const CoachPortalPage: React.FC = () => {
             </div>
 
             {/* Acciones */}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem", alignItems: "center" }}>
+              {JSON.stringify({
+                workedOn: workedOnList,
+                improvements,
+                areas: areasToImprove,
+                recommendations,
+                nextGoals,
+                message: motivationalMessage,
+                notes: classNotes,
+              }) !== followupBaseline ? (
+                <span className="coaching-follow__meta">Cambios sin guardar</span>
+              ) : null}
               <button
                 type="button"
                 className="coaching-btn coaching-btn--secondary"
                 disabled={modalBusy}
-                onClick={() => {
-                  setModalStudent(null);
-                  setModalSessionId(null);
-                }}
+                onClick={closeClassModal}
               >
                 Cancelar
               </button>
@@ -1251,11 +1459,51 @@ export const CoachPortalPage: React.FC = () => {
                 disabled={modalBusy}
               >
                 <TablerIcon name="check" size={16} />
-                {modalBusy ? "Registrando clase…" : "Confirmar clase impartida (-1)"}
+                {modalBusy
+                  ? "Guardando…"
+                  : editingFollowup
+                  ? "Guardar seguimiento"
+                  : "Confirmar clase impartida (-1)"}
               </button>
             </div>
           </form>
         ) : null}
+      </Modal>
+
+      <Modal
+        open={Boolean(followupStudent)}
+        onClose={() => setFollowupStudent(null)}
+        title={`Seguimiento · ${followupStudent?.jugadorNombre || ""}`}
+        size="lg"
+      >
+        {followupError ? <p className="coaching-follow__empty">{followupError}</p> : null}
+        {followupSessions.length === 0 && !followupError ? (
+          <p className="coaching-follow__empty">Todavía no hay clases impartidas para este alumno.</p>
+        ) : (
+          <ul className="coaching-follow__list">
+            {followupSessions.map((session) => (
+              <li key={session.id}>
+                <strong>{formatSessionDate(session.startsAt)}</strong>
+                <span>
+                  {session.durationMinutes ? `${session.durationMinutes} min. ` : ""}
+                  {session.workedOn.join(" · ") || "Sin temas registrados"}
+                </span>
+                {session.improvements ? <span>Mejoró: {session.improvements}</span> : null}
+                {session.areasToImprove ? <span>Por mejorar: {session.areasToImprove}</span> : null}
+                {session.recommendations ? <span>Recomendación: {session.recommendations}</span> : null}
+                {session.nextGoals ? <span>Siguiente objetivo: {session.nextGoals}</span> : null}
+                {session.privateNotes ? <span>Nota privada: {session.privateNotes}</span> : null}
+                <button
+                  type="button"
+                  className="coaching-btn coaching-btn--secondary"
+                  onClick={() => openEditFollowup(session)}
+                >
+                  Editar seguimiento de clase
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </Modal>
 
       {/* Modal: Detalles de la Clase Programada */}

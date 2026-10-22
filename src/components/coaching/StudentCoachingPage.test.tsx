@@ -36,6 +36,7 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     root = createRoot(container);
     mockCurrentUser = mockUser;
     jest.clearAllMocks();
+    jest.spyOn(coachingApi, "fetchStudentTrainingTimeline").mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -73,6 +74,23 @@ describe("StudentCoachingPage & CoachingRouter", () => {
   });
 
   it("renders active coaching relationship with club, coach, class balance, and ledger history", async () => {
+    jest.spyOn(coachingApi, "fetchStudentTrainingTimeline").mockResolvedValue([
+      {
+        id: "ses-1",
+        startsAt: "2026-10-19T17:00:00Z",
+        durationMinutes: 60,
+        workedOn: ["Bandeja"],
+        improvements: "Mejor control en la volea",
+        areasToImprove: "Anticipar el globo",
+        recommendations: "Diez minutos de desplazamiento",
+        nextGoals: "Defensa de pared",
+        motivationalMessage: "Buen trabajo hoy",
+        followupUpdatedAt: null,
+        coachNombre: "Prof. Roberto Morales",
+        clubNombre: "Hack Pádel",
+        nextScheduledAt: null,
+      },
+    ]);
     jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockResolvedValueOnce({
       ok: true,
       linked: true,
@@ -158,7 +176,10 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     // Validar historial y ledger
     expect(container.textContent).toContain("Historial de Sesiones y Asignaciones");
     expect(container.textContent).toContain("Armado de bandeja profunda");
-    expect(container.textContent).toContain("Gran mejoría en posición de espera");
+    expect(container.textContent).toContain("Mejor control en la volea");
+    expect(container.textContent).toContain("Anticipar el globo");
+    expect(container.textContent).not.toContain("Gran mejoría en posición de espera");
+    expect(container.textContent).not.toContain("Clase presencial 1");
     expect(container.textContent).toContain("+5 Clases (Club)");
     expect(container.textContent).toContain("-1 Clase (Coach)");
   });

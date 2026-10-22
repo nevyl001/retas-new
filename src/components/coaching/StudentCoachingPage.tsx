@@ -2,9 +2,12 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useUser } from "../../contexts/UserContext";
 import {
   fetchStudentCoachingOverview,
+  fetchStudentTrainingTimeline,
   linkStudentAccountByRivieraId,
   type StudentCoachingOverview,
 } from "../../lib/coaching/coachingApi";
+import type { StudentTrainingSession } from "../../lib/coaching/types";
+import { StudentTrainingSection } from "./StudentTrainingSection";
 import { TablerIcon } from "../ui/TablerIcon";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { navigatePublicJugadorByRivieraId } from "../jugadores/jugadoresPublicNav";
@@ -23,6 +26,8 @@ export const StudentCoachingPage: React.FC = () => {
   const [manualRivieraId, setManualRivieraId] = useState("");
   const [linking, setLinking] = useState(false);
   const [copiedRivieraId, setCopiedRivieraId] = useState(false);
+  const [training, setTraining] = useState<StudentTrainingSession[]>([]);
+  const [trainingError, setTrainingError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!user) {
@@ -31,8 +36,18 @@ export const StudentCoachingPage: React.FC = () => {
     }
     setLoading(true);
     setError(null);
+    setTrainingError(null);
     try {
-      const res = await fetchStudentCoachingOverview();
+      const [res, timeline] = await Promise.all([
+        fetchStudentCoachingOverview(),
+        fetchStudentTrainingTimeline().catch((err: unknown) => {
+          setTrainingError(
+            err instanceof Error ? err.message : "No se pudo cargar tu seguimiento."
+          );
+          return [] as StudentTrainingSession[];
+        }),
+      ]);
+      setTraining(timeline);
       setOverview(res);
 
       // Si el usuario es administrador de club y no tiene perfil legítimo de alumno vinculado,
@@ -400,6 +415,7 @@ export const StudentCoachingPage: React.FC = () => {
       ) : (
         /* CASO B: Con relaciones de coaching activas */
         <div className="coaching-student-dashboard">
+          <StudentTrainingSection sessions={training} error={trainingError} />
           {relationships.map((rel) => {
             const currentBalance = rel.balance?.balanceClasses ?? 0;
             const hasAvailable = currentBalance > 0;
@@ -687,11 +703,6 @@ export const StudentCoachingPage: React.FC = () => {
                             </div>
 
                             <div className="coaching-ledger-row__details">
-                              {entry.notas && (
-                                <p className="coaching-ledger-notes">
-                                  <strong>Detalle:</strong> {entry.notas}
-                                </p>
-                              )}
 
                               {entry.session && (
                                 <div className="coaching-session-box" style={{ marginTop: "0.5rem", gap: "0.5rem" }}>
@@ -780,11 +791,6 @@ export const StudentCoachingPage: React.FC = () => {
                                     </div>
                                   )}
 
-                                  {entry.session.notesSummary && !entry.session.motivationalMessage && (
-                                    <p className="coaching-session-feedback">
-                                      {entry.session.notesSummary}
-                                    </p>
-                                  )}
                                 </div>
                               )}
                             </div>
