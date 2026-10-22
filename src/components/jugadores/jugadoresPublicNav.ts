@@ -123,6 +123,11 @@ export function navigatePublicJugadorByRivieraId(rivieraId: string): void {
   navigateAppTo(buildPublicJugadorByRivieraIdPath(rivieraId));
 }
 
+export function openPublicJugadorByRivieraIdInNewWindow(rivieraId: string): void {
+  const path = buildPublicJugadorByRivieraIdPath(rivieraId);
+  window.open(path, "_blank", "noopener,noreferrer");
+}
+
 export function navigatePublicJugadorFicha(
   slug: string,
   orgId?: string | null

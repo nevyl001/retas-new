@@ -10,7 +10,10 @@ import type { StudentTrainingSession } from "../../lib/coaching/types";
 import { StudentTrainingSection } from "./StudentTrainingSection";
 import { TablerIcon } from "../ui/TablerIcon";
 import { navigateToAppHome } from "../../lib/appRouting";
-import { navigatePublicJugadorByRivieraId } from "../jugadores/jugadoresPublicNav";
+import {
+  navigatePublicJugadorByRivieraId,
+  openPublicJugadorByRivieraIdInNewWindow,
+} from "../jugadores/jugadoresPublicNav";
 import { navigateCoaching, navigateStudentAccess } from "./coachingNav";
 import "./coaching.css";
 
@@ -334,7 +337,7 @@ export const StudentCoachingPage: React.FC = () => {
                 className="coaching-btn coaching-btn--secondary"
                 style={{ fontSize: "0.82rem", padding: "0.35rem 0.75rem", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
                 onClick={() => {
-                  navigatePublicJugadorByRivieraId(effectiveRivieraId);
+                  openPublicJugadorByRivieraIdInNewWindow(effectiveRivieraId);
                 }}
               >
                 <TablerIcon name="user" size={15} />
