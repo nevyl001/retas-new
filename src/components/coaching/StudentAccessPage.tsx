@@ -40,6 +40,8 @@ export const StudentAccessPage: React.FC = () => {
   const [activateError, setActivateError] = useState<string | null>(null);
   const [activateSuccess, setActivateSuccess] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [hasMatchingSession, setHasMatchingSession] = useState(false);
+  const [sessionEmailMismatch, setSessionEmailMismatch] = useState(false);
   const [resendingLink, setResendingLink] = useState(false);
   const [resendLinkMessage, setResendLinkMessage] = useState<string | null>(null);
 
@@ -105,16 +107,15 @@ export const StudentAccessPage: React.FC = () => {
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (session?.user?.email_confirmed_at) {
-          if (
-            invitationData?.email &&
-            session.user.email?.toLowerCase() === invitationData.email.toLowerCase()
-          ) {
-            setIsEmailVerified(true);
-            setActivateError(null);
-          } else if (!invitationData?.email) {
-            setIsEmailVerified(true);
-          }
+        if (
+          session?.user?.email_confirmed_at &&
+          invitationData?.email &&
+          session.user.email?.toLowerCase() === invitationData.email.toLowerCase()
+        ) {
+          setIsEmailVerified(true);
+          setHasMatchingSession(true);
+          setSessionEmailMismatch(false);
+          setActivateError(null);
         }
       }
     );
@@ -145,7 +146,17 @@ export const StudentAccessPage: React.FC = () => {
         ) {
           verified = true;
         }
+        const sessionEmail = currentSession?.user?.email?.toLowerCase();
+        const invitedEmail = res.email?.toLowerCase();
+        const matching = Boolean(
+          currentSession?.user?.email_confirmed_at &&
+            sessionEmail &&
+            invitedEmail &&
+            sessionEmail === invitedEmail
+        );
         setIsEmailVerified(verified);
+        setHasMatchingSession(matching);
+        setSessionEmailMismatch(Boolean(sessionEmail && invitedEmail && sessionEmail !== invitedEmail));
       }
     } catch (err: any) {
       setTokenError(err.message || "Error al verificar la invitación.");
@@ -636,6 +647,37 @@ export const StudentAccessPage: React.FC = () => {
                           : "Vincular a Mi Cuenta y Entrar"}
                       </button>
                     </form>
+                  ) : isEmailVerified && !hasMatchingSession ? (
+                    <div>
+                      <div className="student-alert student-alert-warning">
+                        <strong>
+                          {sessionEmailMismatch
+                            ? "La sesión no coincide con el correo invitado"
+                            : "Falta la sesión en este navegador"}
+                        </strong>
+                        <p style={{ marginTop: "6px", marginBottom: "0" }}>
+                          {sessionEmailMismatch
+                            ? `La sesión activa no coincide con el correo invitado (${invitationData.email}). Ciérrala, solicita un nuevo enlace y ábrelo en este navegador.`
+                            : `El correo ${invitationData.email} ya está verificado, pero este dispositivo no tiene una sesión de esa cuenta. Solicita un nuevo enlace y ábrelo aquí.`}
+                          {" "}No se puede crear la contraseña sin esa sesión.
+                        </p>
+                      </div>
+                      <div style={{ textAlign: "center", margin: "24px 0" }}>
+                        <button
+                          type="button"
+                          className="student-btn-secondary"
+                          onClick={handleResendLink}
+                          disabled={resendingLink}
+                        >
+                          {resendingLink ? "Enviando..." : "Solicitar nuevo enlace de acceso"}
+                        </button>
+                        {resendLinkMessage && (
+                          <p style={{ color: "#38bdf8", fontSize: "0.85rem", marginTop: "12px" }}>
+                            {resendLinkMessage}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   ) : !isEmailVerified ? (
                     /* Verificación de correo requerida */
                     <div>

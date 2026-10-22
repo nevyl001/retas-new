@@ -428,20 +428,9 @@ describe("StudentAccessPage Component Tests", () => {
       root.render(<StudentAccessPage />);
     });
 
-    const input = container.querySelector("input[type='password']") as HTMLInputElement;
-    await act(async () => {
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-      nativeSetter?.call(input, "SecurePass123!");
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
-    // Intentar avanzar a confirmación
-    await act(async () => {
-      (container.querySelector("button[type='submit']") as HTMLButtonElement).click();
-    });
-
-    // Debe mostrar error de disparidad de correo y bloquear
+    expect(container.querySelector("input[type='password']")).toBeNull();
     expect(container.textContent).toContain("no coincide con el correo invitado");
+    expect(container.textContent).toContain("Solicitar nuevo enlace de acceso");
     // La contraseña jamás se modifica
     expect(supabase.auth.updateUser).not.toHaveBeenCalled();
     // La invitación jamás se consume
@@ -528,28 +517,31 @@ describe("StudentAccessPage Component Tests", () => {
     });
 
     const claimSpy = jest.spyOn(coachingApi, "claimStudentInvitation");
+    const resendSpy = jest.spyOn(coachingApi, "requestStudentAccessLink").mockResolvedValueOnce({
+      ok: true,
+      message: "Enlace enviado a tu correo electrónico. Ábrelo en este navegador.",
+    });
 
     await act(async () => {
       root.render(<StudentAccessPage />);
     });
 
-    // Ingresar nueva contraseña
-    const input = container.querySelector("input[type='password']") as HTMLInputElement;
-    await act(async () => {
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-      nativeSetter?.call(input, "SecurePass123!");
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    });
+    expect(container.querySelector("input[type='password']")).toBeNull();
+    expect(container.textContent).toContain("Falta la sesión en este navegador");
+    expect(container.textContent).not.toContain("Nueva contraseña");
+
+    const resendBtn = Array.from(container.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("Solicitar nuevo enlace de acceso")
+    );
+    expect(resendBtn).toBeDefined();
 
     await act(async () => {
-      (container.querySelector("button[type='submit']") as HTMLButtonElement).click();
+      resendBtn?.click();
     });
 
-    // Debe bloquear inmediatamente y exigir sesión legítima en este navegador
-    expect(container.textContent).toContain("Se requiere sesión autenticada del alumno");
-    // Jamás modifica contraseñas
+    expect(resendSpy).toHaveBeenCalledWith("test-valid-token-123");
     expect(supabase.auth.updateUser).not.toHaveBeenCalled();
-    // Jamás consume la invitación
+    expect(supabase.auth.signInWithPassword).not.toHaveBeenCalled();
     expect(claimSpy).not.toHaveBeenCalled();
   });
 
