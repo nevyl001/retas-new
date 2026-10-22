@@ -147,7 +147,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.update_coach_class_followup(uuid, text[], text, text, text, text, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.update_coach_class_followup(uuid, text[], text, text, text, text, text, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.update_coach_class_followup(uuid, text[], text, text, text, text, text, text) TO authenticated, service_role;
 
 CREATE OR REPLACE FUNCTION public.get_coach_class_followup(p_relationship_id uuid)
@@ -212,7 +212,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.get_coach_class_followup(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.get_coach_class_followup(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_coach_class_followup(uuid) TO authenticated, service_role;
 
 CREATE OR REPLACE FUNCTION public.get_coach_followup_digest(p_organizador_id uuid)
@@ -273,7 +273,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.get_coach_followup_digest(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.get_coach_followup_digest(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_coach_followup_digest(uuid) TO authenticated, service_role;
 
 CREATE OR REPLACE FUNCTION public.get_student_training_timeline()
@@ -337,7 +337,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.get_student_training_timeline() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.get_student_training_timeline() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_student_training_timeline() TO authenticated, service_role;
 
 NOTIFY pgrst, 'reload schema';
