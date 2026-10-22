@@ -3,11 +3,14 @@ import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { newCorrelationId, logError, logWarn } from "../_shared/logger.ts";
 import { safeClientMessage, internalErrorDetail } from "../_shared/errors.ts";
 import { checkRateLimit, rateLimitedResponse } from "../_shared/rateLimit.ts";
+import { sendByResend, resendApiKeyConfigured } from "../_shared/resendEmail.ts";
 
 interface RequestBody {
-  action?: "resolve_session" | "claim";
+  action?: "student_login" | "request_password_reset" | "request_student_access_link" | "claim";
   token?: string;
+  identifier?: string;
   password?: string;
+  redirectTo?: string;
 }
 
 const MAX_BODY_BYTES = 10_000;
@@ -58,142 +61,110 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(400, { ok: false, error: "Cuerpo de solicitud inválido" });
   }
 
-  // =========================================================================
-  // REGLA FUNDAMENTAL DE SEGURIDAD:
-  // UNA SOLA ACTIVACIÓN DE CONTRASEÑA MEDIANTE GOTRUE CLIENTE.
-  // Toda definición de contraseña se realiza mediante supabase.auth.updateUser({ password }).
-  // Este endpoint NUNCA modifica contraseñas anónimamente.
-  // =========================================================================
-  if (body.password !== undefined && body.password !== null && body.password !== "") {
-    return jsonResponse(400, {
-      ok: false,
-      error:
-        "La modificación de contraseñas mediante este endpoint ha sido desactivada por seguridad. Toda contraseña debe ser definida directamente mediante supabase.auth.updateUser() con una sesión verificada del alumno.",
-    });
-  }
-
-  const token = (body.token ?? "").trim();
-  if (!token) {
-    return jsonResponse(400, {
-      ok: false,
-      error: "Token de invitación no proporcionado.",
-    });
-  }
+  const clientIp =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("cf-connecting-ip")?.trim() ||
+    "anonymous";
 
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   // =========================================================================
-  // FLUJO 1: RESOLUCIÓN / RECUPERACIÓN SEGURA DE SESIÓN DEL ALUMNO
-  // Si el alumno llega con correo verificado pero sin sesión en el navegador,
-  // validar token e inicializar la sesión GoTrue legítima para permitir updateUser.
+  // FLUJO 1: LOGIN SEGURO DE ALUMNO (Correo o Riviera ID)
+  // Resuelve el Riviera ID internamente mediante service_role sin exponer correos.
+  // Autentica con GoTrue cliente sin privilegios (SUPABASE_ANON_KEY).
   // =========================================================================
-  if (body.action === "resolve_session") {
+  if (body.action === "student_login") {
+    const rawIdentifier = (body.identifier ?? "").trim();
+    const rawPassword = body.password ?? "";
+
+    if (!rawIdentifier || !rawPassword) {
+      return jsonResponse(400, {
+        ok: false,
+        error: "Ingresa tu identificador (correo o Riviera ID) y tu contraseña.",
+      });
+    }
+
+    // Rate limiting contra fuerza bruta por IP y por identificador
+    const normalizedIdentifier = rawIdentifier.toLowerCase();
+    const ipRl = await checkRateLimit(
+      supabaseAdmin,
+      `${MODULE}:login:ip:${clientIp}`,
+      20,
+      600
+    );
+    if (!ipRl.allowed) {
+      logWarn({
+        correlationId,
+        module: MODULE,
+        event: "rate_limited_login_ip",
+        ip: clientIp,
+      });
+      return jsonResponse(429, {
+        ok: false,
+        error: "Demasiados intentos de acceso desde esta conexión. Espera unos minutos antes de intentar de nuevo.",
+      });
+    }
+
+    const idRl = await checkRateLimit(
+      supabaseAdmin,
+      `${MODULE}:login:id:${normalizedIdentifier}`,
+      8,
+      600
+    );
+    if (!idRl.allowed) {
+      logWarn({
+        correlationId,
+        module: MODULE,
+        event: "rate_limited_login_identifier",
+        identifier: normalizedIdentifier,
+      });
+      return jsonResponse(429, {
+        ok: false,
+        error: "Demasiados intentos fallidos con esta cuenta. Espera unos minutos antes de intentar de nuevo.",
+      });
+    }
+
     try {
-      const tokenHash = await sha256Hex(token);
+      let emailToAuth = normalizedIdentifier;
 
-      const { data: inv, error: invErr } = await supabaseAdmin
-        .from("coach_student_invitations")
-        .select(
-          "id, organizador_id, coach_id, jugador_id, email, token_hash, invitation_token, auth_user_id, status, expires_at, attempts_count"
-        )
-        .or(`token_hash.eq.${tokenHash},invitation_token.eq.${token}`)
-        .limit(1)
-        .maybeSingle();
-
-      if (invErr || !inv) {
-        return jsonResponse(404, {
-          ok: false,
-          error: "Invitación no encontrada o token inválido.",
-        });
-      }
-
-      if (inv.status === "ACCEPTED") {
-        return jsonResponse(400, {
-          ok: false,
-          isAlreadyAccepted: true,
-          error:
-            "Esta invitación ya fue activada previamente. Inicia sesión con tu correo o Riviera ID.",
-        });
-      }
-
-      if (inv.status === "REVOKED") {
-        return jsonResponse(400, {
-          ok: false,
-          error:
-            "Esta invitación fue cancelada por el club. Solicita una nueva invitación.",
-        });
-      }
-
-      if (new Date(inv.expires_at) < new Date()) {
-        return jsonResponse(400, {
-          ok: false,
-          error:
-            "Esta invitación ha expirado. Solicita a tu club una nueva invitación.",
-        });
-      }
-
-      if (Number(inv.attempts_count ?? 0) >= 10) {
-        return jsonResponse(429, {
-          ok: false,
-          error:
-            "Demasiados intentos fallidos. Por seguridad, la invitación fue bloqueada.",
-        });
-      }
-
-      // Rate limit por invitación contra fuerza bruta
-      const rl = await checkRateLimit(
-        supabaseAdmin,
-        `${MODULE}:resolve:${inv.id}`,
-        15,
-        600
-      );
-      if (!rl.allowed) {
-        logWarn({
-          correlationId,
-          module: MODULE,
-          event: "rate_limited_resolve",
-          invitationId: inv.id,
-        });
-        return rateLimitedResponse(rl, cors);
-      }
-
-      // Validar identidad del usuario en auth.users
-      let authUser: any = null;
-      if (inv.auth_user_id) {
-        const { data: uData } = await supabaseAdmin.auth.admin.getUserById(
-          inv.auth_user_id
+      // Si no contiene '@', resolver internamente mediante la RPC protegida
+      if (!rawIdentifier.includes("@")) {
+        const { data: rpcRes, error: rpcErr } = await supabaseAdmin.rpc(
+          "resolve_student_login_identifier",
+          { p_identifier: rawIdentifier }
         );
-        authUser = uData?.user;
+
+        if (rpcErr || !rpcRes || rpcRes.ok !== true || !rpcRes.email) {
+          // Error genérico sin revelar si el Riviera ID existe
+          return jsonResponse(401, {
+            ok: false,
+            error: "Credenciales incorrectas. Verifica tu identificador y contraseña.",
+          });
+        }
+        emailToAuth = String(rpcRes.email).trim().toLowerCase();
       }
 
-      if (!authUser && inv.email) {
-        const { data: uList } = await supabaseAdmin.auth.admin.listUsers();
-        authUser = uList?.users?.find(
-          (u) => u.email?.toLowerCase() === inv.email.toLowerCase()
-        );
-      }
+      // Validar contraseña con cliente GoTrue estándar sin privilegios administrativos
+      const supabaseAnonAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
 
-      if (!authUser) {
-        return jsonResponse(404, {
+      const { data: authData, error: authError } =
+        await supabaseAnonAuth.auth.signInWithPassword({
+          email: emailToAuth,
+          password: rawPassword,
+        });
+
+      if (authError || !authData?.session || !authData.user) {
+        return jsonResponse(401, {
           ok: false,
-          error:
-            "No se encontró la cuenta de autenticación asociada a esta invitación.",
+          error: "Credenciales incorrectas. Verifica tu identificador y contraseña.",
         });
       }
 
-      // Comprobar estrictamente posesión de correo
-      if (!authUser.email_confirmed_at) {
-        return jsonResponse(400, {
-          ok: false,
-          needsEmailVerification: true,
-          error:
-            "El correo electrónico no ha sido verificado aún. Por favor abre el enlace enviado a tu correo antes de continuar.",
-        });
-      }
-
-      // Blindaje contra privilegios administrativos o de entrenador
-      const appMeta = (authUser.app_metadata as Record<string, any>) || {};
-      const userMeta = (authUser.user_metadata as Record<string, any>) || {};
+      // Blindaje de portal: Rechazar cuentas de organizador o entrenador que intenten entrar al portal de alumno
+      const appMeta = (authData.user.app_metadata as Record<string, any>) || {};
+      const userMeta = (authData.user.user_metadata as Record<string, any>) || {};
       const accountType = appMeta.account_type || userMeta.account_type;
       const role = appMeta.role || userMeta.role;
       const roles: string[] = Array.isArray(appMeta.roles) ? appMeta.roles : [];
@@ -209,82 +180,31 @@ Deno.serve(async (req: Request) => {
       if (isPrivileged) {
         return jsonResponse(403, {
           ok: false,
-          error:
-            "Esta cuenta pertenece a un organizador o entrenador. No puede activarse como acceso de alumno.",
+          error: "Esta cuenta pertenece a un organizador o entrenador. Inicia sesión en el portal correspondiente.",
         });
-      }
-
-      // Generar sesión oficial GoTrue para el alumno verificado
-      const siteUrl = "https://appriviera.rivieraopen.com";
-      const { data: linkData, error: linkErr } =
-        await supabaseAdmin.auth.admin.generateLink({
-          type: "magiclink",
-          email: inv.email,
-          options: {
-            redirectTo: `${siteUrl}/coaching/acceso-alumno?token=${token}`,
-          },
-        });
-
-      if (linkErr || !linkData?.properties) {
-        logError({
-          correlationId,
-          module: MODULE,
-          errorType: "generate_magiclink_failed",
-          detail: internalErrorDetail(linkErr),
-        });
-        return jsonResponse(500, {
-          ok: false,
-          error: "No se pudo inicializar la sesión oficial de acceso para el alumno.",
-        });
-      }
-
-      const actionLink = linkData.properties.action_link;
-      let sessionPayload: { access_token: string; refresh_token: string } | null =
-        null;
-
-      if (actionLink) {
-        try {
-          const verifyRes = await fetch(actionLink, {
-            method: "GET",
-            redirect: "manual",
-          });
-          const redirectLoc = verifyRes.headers.get("location");
-          if (redirectLoc) {
-            const hashPart = redirectLoc.split("#")[1] || "";
-            const hashParams = new URLSearchParams(hashPart);
-            const at = hashParams.get("access_token");
-            const rt = hashParams.get("refresh_token");
-            if (at) {
-              sessionPayload = {
-                access_token: at,
-                refresh_token: rt || "",
-              };
-            }
-          }
-        } catch (fetchErr) {
-          logWarn({
-            correlationId,
-            module: MODULE,
-            event: "action_link_exchange_fallback",
-            detail: String(fetchErr),
-          });
-        }
       }
 
       return jsonResponse(200, {
         ok: true,
-        email: inv.email,
-        studentName: authUser.user_metadata?.name || "",
-        session: sessionPayload,
-        tokenHash: linkData.properties.hashed_token || null,
-        message: "Sesión del alumno resuelta exitosamente.",
+        session: {
+          access_token: authData.session.access_token,
+          refresh_token: authData.session.refresh_token,
+          expires_in: authData.session.expires_in,
+          token_type: authData.session.token_type,
+          user: {
+            id: authData.user.id,
+            email: authData.user.email,
+            user_metadata: authData.user.user_metadata,
+            app_metadata: authData.user.app_metadata,
+          },
+        },
       });
-    } catch (err) {
+    } catch (loginErr) {
       logError({
         correlationId,
         module: MODULE,
-        errorType: "resolve_session_exception",
-        detail: err instanceof Error ? err.stack ?? err.message : String(err),
+        errorType: "student_login_exception",
+        detail: loginErr instanceof Error ? loginErr.stack ?? loginErr.message : String(loginErr),
       });
       return jsonResponse(500, {
         ok: false,
@@ -294,8 +214,196 @@ Deno.serve(async (req: Request) => {
   }
 
   // =========================================================================
-  // FLUJO 2: VINCULACIÓN CON SESIÓN AUTENTICADA (claim_student_invitation)
+  // FLUJO 2: RECUPERACIÓN SEGURA DE CONTRASEÑA (Correo o Riviera ID)
+  // No revela correos ni indica si el identificador existe.
+  // Envía el enlace de recuperación únicamente al correo registrado del alumno.
   // =========================================================================
+  if (body.action === "request_password_reset") {
+    const rawIdentifier = (body.identifier ?? "").trim();
+    if (!rawIdentifier) {
+      return jsonResponse(400, {
+        ok: false,
+        error: "Ingresa tu correo o Riviera ID registrado.",
+      });
+    }
+
+    const resetRl = await checkRateLimit(
+      supabaseAdmin,
+      `${MODULE}:reset:${clientIp}`,
+      5,
+      600
+    );
+    if (!resetRl.allowed) {
+      return jsonResponse(429, {
+        ok: false,
+        error: "Demasiadas solicitudes de recuperación. Espera unos minutos.",
+      });
+    }
+
+    try {
+      let emailToSend: string | null = null;
+      if (rawIdentifier.includes("@")) {
+        emailToSend = rawIdentifier.toLowerCase();
+      } else {
+        const { data: rpcRes } = await supabaseAdmin.rpc(
+          "resolve_student_login_identifier",
+          { p_identifier: rawIdentifier }
+        );
+        if (rpcRes?.ok && rpcRes.email) {
+          emailToSend = String(rpcRes.email).trim().toLowerCase();
+        }
+      }
+
+      if (emailToSend) {
+        const siteUrl = "https://appriviera.rivieraopen.com";
+        const redirectTo = body.redirectTo || `${siteUrl}/auth/reset-password`;
+        await supabaseAdmin.auth.resetPasswordForEmail(emailToSend, {
+          redirectTo,
+        });
+      }
+
+      // Respuesta siempre idéntica para evitar enumeración de cuentas
+      return jsonResponse(200, {
+        ok: true,
+        message:
+          "Si existe una cuenta de alumno asociada a este identificador, se ha enviado un enlace de recuperación a su correo electrónico registrado.",
+      });
+    } catch (resetErr) {
+      logError({
+        correlationId,
+        module: MODULE,
+        errorType: "password_reset_exception",
+        detail: resetErr instanceof Error ? resetErr.stack ?? resetErr.message : String(resetErr),
+      });
+      return jsonResponse(200, {
+        ok: true,
+        message:
+          "Si existe una cuenta de alumno asociada a este identificador, se ha enviado un enlace de recuperación a su correo electrónico registrado.",
+      });
+    }
+  }
+
+  // =========================================================================
+  // FLUJO 3: REENVÍO DE ENLACE DE ACCESO (Cross-device / Verificación de correo)
+  // Si el alumno perdió su enlace o está en otro dispositivo, se envía un nuevo
+  // enlace oficial a su correo privado. NUNCA se entregan tokens ni sesiones al cliente.
+  // =========================================================================
+  if (body.action === "request_student_access_link") {
+    const token = (body.token ?? "").trim();
+    if (!token) {
+      return jsonResponse(400, {
+        ok: false,
+        error: "Token de invitación no proporcionado.",
+      });
+    }
+
+    try {
+      const tokenHash = await sha256Hex(token);
+      const { data: inv, error: invErr } = await supabaseAdmin
+        .from("coach_student_invitations")
+        .select("id, email, status, expires_at, jugador_id")
+        .eq("token_hash", tokenHash)
+        .limit(1)
+        .maybeSingle();
+
+      if (invErr || !inv) {
+        return jsonResponse(404, {
+          ok: false,
+          error: "Invitación no encontrada o token inválido.",
+        });
+      }
+
+      if (inv.status !== "PENDING") {
+        return jsonResponse(400, {
+          ok: false,
+          error: "Esta invitación ya no está pendiente de activación.",
+        });
+      }
+
+      if (new Date(inv.expires_at) < new Date()) {
+        return jsonResponse(400, {
+          ok: false,
+          error: "Esta invitación ha expirado. Solicita a tu club una nueva invitación.",
+        });
+      }
+
+      const linkRl = await checkRateLimit(
+        supabaseAdmin,
+        `${MODULE}:resend_link:${inv.id}`,
+        3,
+        600
+      );
+      if (!linkRl.allowed) {
+        return jsonResponse(429, {
+          ok: false,
+          error: "Ya se envió un enlace recientemente. Por favor revisa tu bandeja de entrada o spam.",
+        });
+      }
+
+      const siteUrl = "https://appriviera.rivieraopen.com";
+      const invitationUrl = `${siteUrl}/coaching/acceso-alumno?token=${token}`;
+
+      const { data: linkData, error: linkErr } =
+        await supabaseAdmin.auth.admin.generateLink({
+          type: "invite",
+          email: inv.email,
+          options: { redirectTo: invitationUrl },
+        });
+
+      if (!linkErr && linkData?.properties?.action_link && resendApiKeyConfigured()) {
+        const actionLink = linkData.properties.action_link;
+        await sendByResend(
+          inv.email,
+          "Enlace de Verificación y Acceso — Riviera Coaching",
+          `Hola,\n\nPara verificar tu correo y acceder a tu cuenta de alumno, haz clic en el siguiente enlace:\n${actionLink}`,
+          `<p>Para verificar tu correo y acceder a tu cuenta de alumno, haz clic en el siguiente botón:</p><p><a href="${actionLink}" style="background:#09090b;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;">Verificar y Acceder</a></p>`,
+          { correlationId, module: MODULE, invitationId: inv.id }
+        );
+      }
+
+      return jsonResponse(200, {
+        ok: true,
+        message: "Enlace de acceso enviado a tu correo electrónico registrado.",
+      });
+    } catch (resendErr) {
+      logError({
+        correlationId,
+        module: MODULE,
+        errorType: "request_access_link_exception",
+        detail: resendErr instanceof Error ? resendErr.stack ?? resendErr.message : String(resendErr),
+      });
+      return jsonResponse(500, {
+        ok: false,
+        error: safeClientMessage(correlationId),
+      });
+    }
+  }
+
+  // =========================================================================
+  // REGLA FUNDAMENTAL DE SEGURIDAD:
+  // UNA SOLA ACTIVACIÓN DE CONTRASEÑA MEDIANTE GOTRUE CLIENTE.
+  // Este endpoint NUNCA modifica contraseñas anónimamente.
+  // =========================================================================
+  if (body.password !== undefined && body.password !== null && body.password !== "") {
+    return jsonResponse(400, {
+      ok: false,
+      error:
+        "La modificación de contraseñas mediante este endpoint ha sido desactivada por seguridad. Toda contraseña debe ser definida directamente mediante supabase.auth.updateUser() con una sesión verificada del alumno.",
+    });
+  }
+
+  // =========================================================================
+  // FLUJO 4: VINCULACIÓN CON SESIÓN AUTENTICADA (claim_student_invitation)
+  // El alumno ya debe contar con una sesión verificada en Supabase Auth.
+  // =========================================================================
+  const token = (body.token ?? "").trim();
+  if (!token) {
+    return jsonResponse(400, {
+      ok: false,
+      error: "Token de invitación no proporcionado.",
+    });
+  }
+
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return jsonResponse(401, {

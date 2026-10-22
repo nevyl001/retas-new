@@ -71,18 +71,22 @@ describe("StudentAccessPage Component Tests", () => {
       error: null,
     });
 
-    jest.spyOn(coachingApi, "resolveStudentSession").mockResolvedValue({
+    jest.spyOn(coachingApi, "loginStudentWithIdentifier").mockResolvedValue({
       ok: true,
-      email: "student@test.com",
-      studentName: "Alumno Zaid",
       session: {
-        user: {
-          id: "student-user-uuid",
-          email: "student@test.com",
-          email_confirmed_at: "2026-10-21T00:00:00Z",
-          app_metadata: { role: "student", account_type: "STUDENT_ONLY" },
-        },
+        access_token: "mock-access-token",
+        user: { id: "student-user-uuid", email: "student@test.com" },
       } as any,
+    });
+
+    jest.spyOn(coachingApi, "requestStudentPasswordReset").mockResolvedValue({
+      ok: true,
+      message: "Enlace de recuperación enviado.",
+    });
+
+    jest.spyOn(coachingApi, "requestStudentAccessLink").mockResolvedValue({
+      ok: true,
+      message: "Enlace de acceso enviado a tu correo.",
     });
 
     jest.spyOn(coachingApi, "resolveStudentLoginIdentifier").mockResolvedValue({
@@ -503,11 +507,11 @@ describe("StudentAccessPage Component Tests", () => {
     expect(document.querySelector(".student-modal-overlay")).toBeNull();
   });
 
-  it("9. Recuperación segura de sesión: Si no hay sesión inicial pero el correo está confirmado, la recupera y completa la activación", async () => {
+  it("9. Seguridad: Si no hay sesión autenticada en el navegador, bloquea la definición de contraseña sin crear sesiones automáticas por mero token", async () => {
     window.history.replaceState({}, "", "/coaching/acceso-alumno?token=test-valid-token-123");
 
-    // Simular que el navegador NO tiene sesión activa inicialmente (ej. abierto en navegador distinto)
-    jest.spyOn(supabase.auth, "getSession").mockResolvedValueOnce({
+    // Simular que el navegador NO tiene sesión activa (ej. abierto sin haber hecho clic en el enlace en este navegador)
+    jest.spyOn(supabase.auth, "getSession").mockResolvedValue({
       data: { session: null },
       error: null,
     });
@@ -523,31 +527,208 @@ describe("StudentAccessPage Component Tests", () => {
       isEmailVerified: true,
     });
 
-    const recoverSpy = jest.spyOn(coachingApi, "resolveStudentSession").mockResolvedValue({
-      ok: true,
-      email: "student@test.com",
-      studentName: "Alumno Zaid",
-      session: {
-        user: {
-          id: "student-user-uuid",
-          email: "student@test.com",
-          email_confirmed_at: "2026-10-21T00:00:00Z",
-          app_metadata: { role: "student", account_type: "STUDENT_ONLY" },
-        },
-      } as any,
-    });
-
-    const claimSpy = jest.spyOn(coachingApi, "claimStudentInvitation").mockResolvedValueOnce({
-      ok: true,
-      message: "¡Perfil vinculado!",
-      rivieraId: "RIV-00000107",
-    });
+    const claimSpy = jest.spyOn(coachingApi, "claimStudentInvitation");
 
     await act(async () => {
       root.render(<StudentAccessPage />);
     });
 
     // Ingresar nueva contraseña
+    const input = container.querySelector("input[type='password']") as HTMLInputElement;
+    await act(async () => {
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      nativeSetter?.call(input, "SecurePass123!");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    await act(async () => {
+      (container.querySelector("button[type='submit']") as HTMLButtonElement).click();
+    });
+
+    // Debe bloquear inmediatamente y exigir sesión legítima en este navegador
+    expect(container.textContent).toContain("Se requiere sesión autenticada del alumno");
+    // Jamás modifica contraseñas
+    expect(supabase.auth.updateUser).not.toHaveBeenCalled();
+    // Jamás consume la invitación
+    expect(claimSpy).not.toHaveBeenCalled();
+  });
+
+  it("10. Login con Riviera ID: Alumno ingresa 'RIV-00000107', invoca loginStudentWithIdentifier y entra sin exponer correos", async () => {
+    window.history.replaceState({}, "", "/coaching/acceso-alumno");
+
+    const loginSpy = jest.spyOn(coachingApi, "loginStudentWithIdentifier").mockResolvedValueOnce({
+      ok: true,
+      session: {
+        access_token: "mock-valid-token",
+        user: { id: "student-user-uuid", email: "student@test.com" },
+      } as any,
+    });
+
+    await act(async () => {
+      root.render(<StudentAccessPage />);
+    });
+
+    const idInput = container.querySelector("input[type='text']") as HTMLInputElement;
+    const passInput = container.querySelector("input[type='password']") as HTMLInputElement;
+    const submitBtn = container.querySelector("button[type='submit']") as HTMLButtonElement;
+
+    expect(container.textContent).toContain("Correo Electrónico o Riviera ID");
+
+    await act(async () => {
+      const nativeSetterText = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      nativeSetterText?.call(idInput, "RIV-00000107");
+      idInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+      const nativeSetterPass = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      nativeSetterPass?.call(passInput, "SecurePass123!");
+      passInput.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    await act(async () => {
+      submitBtn.click();
+    });
+
+    expect(loginSpy).toHaveBeenCalledWith("RIV-00000107", "SecurePass123!");
+  });
+
+  it("11. Login con credenciales incorrectas muestra error genérico sin revelar existencia de cuentas", async () => {
+    window.history.replaceState({}, "", "/coaching/acceso-alumno");
+
+    jest.spyOn(coachingApi, "loginStudentWithIdentifier").mockResolvedValueOnce({
+      ok: false,
+      error: "Credenciales incorrectas. Verifica tu identificador y contraseña.",
+    });
+
+    await act(async () => {
+      root.render(<StudentAccessPage />);
+    });
+
+    const idInput = container.querySelector("input[type='text']") as HTMLInputElement;
+    const passInput = container.querySelector("input[type='password']") as HTMLInputElement;
+    const submitBtn = container.querySelector("button[type='submit']") as HTMLButtonElement;
+
+    await act(async () => {
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      nativeSetter?.call(idInput, "RIV-99999999");
+      idInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+      nativeSetter?.call(passInput, "WrongPass123!");
+      passInput.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    await act(async () => {
+      submitBtn.click();
+    });
+
+    expect(container.textContent).toContain("Credenciales incorrectas. Verifica tu identificador y contraseña.");
+  });
+
+  it("12. Recuperación de contraseña: Permite ingresar Riviera ID y utiliza requestStudentPasswordReset sin filtrar correos", async () => {
+    window.history.replaceState({}, "", "/coaching/acceso-alumno");
+
+    const resetSpy = jest.spyOn(coachingApi, "requestStudentPasswordReset").mockResolvedValueOnce({
+      ok: true,
+      message: "Si existe una cuenta asociada, se ha enviado un enlace de recuperación.",
+    });
+
+    await act(async () => {
+      root.render(<StudentAccessPage />);
+    });
+
+    // Hacer clic en "¿Olvidaste tu contraseña?"
+    const forgotBtn = container.querySelector(".student-text-btn") as HTMLButtonElement;
+    await act(async () => {
+      forgotBtn.click();
+    });
+
+    expect(container.textContent).toContain("Recuperar Contraseña");
+
+    const recoveryInput = container.querySelector("input[type='text']") as HTMLInputElement;
+    const submitBtn = container.querySelector("button[type='submit']") as HTMLButtonElement;
+
+    await act(async () => {
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+      nativeSetter?.call(recoveryInput, "RIV-00000107");
+      recoveryInput.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    await act(async () => {
+      submitBtn.click();
+    });
+
+    expect(resetSpy).toHaveBeenCalledWith("RIV-00000107", expect.anything());
+    expect(container.textContent).toContain("Correo enviado");
+  });
+
+  it("13. Reenvío seguro de enlace de acceso: Permite al alumno solicitar enlace a su correo", async () => {
+    window.history.replaceState({}, "", "/coaching/acceso-alumno?token=test-valid-token-123");
+
+    jest.spyOn(supabase.auth, "getSession").mockResolvedValue({
+      data: { session: null },
+      error: null,
+    });
+
+    jest.spyOn(coachingApi, "verifyStudentInvitation").mockResolvedValueOnce({
+      ok: true,
+      email: "student@test.com",
+      studentName: "Alumno Zaid",
+      rivieraId: "RIV-00000107",
+      clubName: "Hack Pádel",
+      coachName: "Gabriel Duran",
+      isExistingAccount: false,
+      isEmailVerified: false,
+    });
+
+    const resendSpy = jest.spyOn(coachingApi, "requestStudentAccessLink").mockResolvedValueOnce({
+      ok: true,
+      message: "Enlace enviado a tu correo.",
+    });
+
+    await act(async () => {
+      root.render(<StudentAccessPage />);
+    });
+
+    expect(container.textContent).toContain("Verificación de Correo Requerida");
+
+    const resendBtn = Array.from(container.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("Reenviar Enlace")
+    );
+    expect(resendBtn).toBeDefined();
+
+    await act(async () => {
+      resendBtn?.click();
+    });
+
+    expect(resendSpy).toHaveBeenCalledWith("test-valid-token-123");
+  });
+
+  it("14. Flujo del alumno (Paso 4-5): Al activar y vincular Riviera ID, pasa a login con su Riviera ID previamente completado sin pedir correo", async () => {
+    jest.useFakeTimers();
+    window.history.replaceState({}, "", "/coaching/acceso-alumno?token=test-valid-token-123");
+
+    jest.spyOn(coachingApi, "verifyStudentInvitation").mockResolvedValueOnce({
+      ok: true,
+      email: "student@test.com",
+      studentName: "Alumno Zaid",
+      rivieraId: "RIV-00000107",
+      clubName: "Hack Pádel",
+      coachName: "Gabriel Duran",
+      isExistingAccount: false,
+      isEmailVerified: true,
+    });
+
+    jest.spyOn(coachingApi, "claimStudentInvitation").mockResolvedValueOnce({
+      ok: true,
+      studentName: "Alumno Zaid",
+      rivieraId: "RIV-00000107",
+      message: "¡Cuenta activada!",
+    });
+
+    await act(async () => {
+      root.render(<StudentAccessPage />);
+    });
+
+    // Ingresar contraseña
     const input = container.querySelector("input[type='password']") as HTMLInputElement;
     await act(async () => {
       const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
@@ -571,185 +752,23 @@ describe("StudentAccessPage Component Tests", () => {
       (document.querySelector(".student-modal-dialog button[type='submit']") as HTMLButtonElement).click();
     });
 
-    // Se invocó la recuperación de sesión
-    expect(recoverSpy).toHaveBeenCalledWith("test-valid-token-123");
-    // Se actualizó la contraseña
     expect(supabase.auth.updateUser).toHaveBeenCalledWith({ password: "SecurePass123!" });
-    // Se vinculó la cuenta
-    expect(claimSpy).toHaveBeenCalledWith("test-valid-token-123");
-    expect(container.textContent).toContain("¡Cuenta vinculada exitosamente!");
-  });
+    expect(coachingApi.claimStudentInvitation).toHaveBeenCalledWith("test-valid-token-123");
 
-  it("10. Login con Riviera ID: Alumno ingresa 'RIV-00000107', se resuelve el correo y se inicia sesión con signInWithPassword", async () => {
-    window.history.replaceState({}, "", "/coaching/acceso-alumno");
-
-    const resolveSpy = jest.spyOn(coachingApi, "resolveStudentLoginIdentifier").mockResolvedValueOnce({
-      ok: true,
-      email: "student@test.com",
-      rivieraId: "RIV-00000107",
-    });
-
+    // Avanzar timer de transición a login
     await act(async () => {
-      root.render(<StudentAccessPage />);
+      jest.advanceTimersByTime(2000);
     });
 
-    // Formulario de login
-    const idInput = container.querySelector("input[type='text']") as HTMLInputElement;
-    const passInput = container.querySelector("input[type='password']") as HTMLInputElement;
-    const submitBtn = container.querySelector("button[type='submit']") as HTMLButtonElement;
+    // Modo login activo
+    expect(container.textContent).toContain("Acceso de Alumno");
+    expect(container.textContent).toContain("RIV-00000107");
+    // El input de usuario tiene completado el Riviera ID
+    const loginIdInput = container.querySelector("input[type='text']") as HTMLInputElement;
+    expect(loginIdInput.value).toBe("RIV-00000107");
 
-    expect(container.textContent).toContain("Correo Electrónico o Riviera ID");
-
-    await act(async () => {
-      const nativeSetterText = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-      nativeSetterText?.call(idInput, "RIV-00000107");
-      idInput.dispatchEvent(new Event("input", { bubbles: true }));
-
-      const nativeSetterPass = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-      nativeSetterPass?.call(passInput, "SecurePass123!");
-      passInput.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
-    await act(async () => {
-      submitBtn.click();
-    });
-
-    expect(resolveSpy).toHaveBeenCalledWith("RIV-00000107");
-    expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
-      email: "student@test.com",
-      password: "SecurePass123!",
-    });
-  });
-
-  it("11. Login con Riviera ID inválido o inexistente muestra mensaje de error claro sin llamar a signInWithPassword", async () => {
-    window.history.replaceState({}, "", "/coaching/acceso-alumno");
-
-    jest.spyOn(coachingApi, "resolveStudentLoginIdentifier").mockResolvedValueOnce({
-      ok: false,
-      error: "No se encontró ninguna cuenta de alumno activa asociada al Riviera ID RIV-99999999.",
-    });
-
-    await act(async () => {
-      root.render(<StudentAccessPage />);
-    });
-
-    const idInput = container.querySelector("input[type='text']") as HTMLInputElement;
-    const passInput = container.querySelector("input[type='password']") as HTMLInputElement;
-    const submitBtn = container.querySelector("button[type='submit']") as HTMLButtonElement;
-
-    await act(async () => {
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-      nativeSetter?.call(idInput, "RIV-99999999");
-      idInput.dispatchEvent(new Event("input", { bubbles: true }));
-
-      nativeSetter?.call(passInput, "SomePass123!");
-      passInput.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
-    await act(async () => {
-      submitBtn.click();
-    });
-
-    expect(container.textContent).toContain("No se encontró ninguna cuenta de alumno activa asociada al Riviera ID RIV-99999999");
-    expect(supabase.auth.signInWithPassword).not.toHaveBeenCalled();
-  });
-
-  it("12. Recuperación de contraseña: Permite ingresar Riviera ID, lo resuelve y envía el enlace al correo oficial", async () => {
-    window.history.replaceState({}, "", "/coaching/acceso-alumno");
-
-    const resolveSpy = jest.spyOn(coachingApi, "resolveStudentLoginIdentifier").mockResolvedValueOnce({
-      ok: true,
-      email: "student@test.com",
-      rivieraId: "RIV-00000107",
-    });
-
-    await act(async () => {
-      root.render(<StudentAccessPage />);
-    });
-
-    // Hacer clic en "¿Olvidaste tu contraseña?"
-    const forgotBtn = container.querySelector(".student-text-btn") as HTMLButtonElement;
-    await act(async () => {
-      forgotBtn.click();
-    });
-
-    expect(container.textContent).toContain("Recuperar Contraseña");
-    expect(container.textContent).toContain("Correo Electrónico Registrado o Riviera ID");
-
-    const recoveryInput = container.querySelector("input[type='text']") as HTMLInputElement;
-    const submitBtn = container.querySelector("button[type='submit']") as HTMLButtonElement;
-
-    await act(async () => {
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-      nativeSetter?.call(recoveryInput, "RIV-00000107");
-      recoveryInput.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
-    await act(async () => {
-      submitBtn.click();
-    });
-
-    expect(resolveSpy).toHaveBeenCalledWith("RIV-00000107");
-    expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-      "student@test.com",
-      expect.anything()
-    );
-    expect(container.textContent).toContain("Correo enviado");
-  });
-
-  it("13. Si la recuperación de sesión indica needsEmailVerification, bloquea la activación y solicita abrir el enlace", async () => {
-    window.history.replaceState({}, "", "/coaching/acceso-alumno?token=test-valid-token-123");
-
-    jest.spyOn(supabase.auth, "getSession").mockResolvedValue({
-      data: { session: null },
-      error: null,
-    });
-
-    jest.spyOn(coachingApi, "verifyStudentInvitation").mockResolvedValueOnce({
-      ok: true,
-      email: "student@test.com",
-      studentName: "Alumno Zaid",
-      rivieraId: "RIV-00000107",
-      clubName: "Hack Pádel",
-      coachName: "Gabriel Duran",
-      isExistingAccount: false,
-      isEmailVerified: true,
-    });
-
-    jest.spyOn(coachingApi, "resolveStudentSession").mockResolvedValue({
-      ok: false,
-      needsEmailVerification: true,
-      error: "El correo electrónico no ha sido verificado aún.",
-    });
-
-    await act(async () => {
-      root.render(<StudentAccessPage />);
-    });
-
-    const input = container.querySelector("input[type='password']") as HTMLInputElement;
-    await act(async () => {
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-      nativeSetter?.call(input, "SecurePass123!");
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
-    await act(async () => {
-      (container.querySelector("button[type='submit']") as HTMLButtonElement).click();
-    });
-
-    const confirmInput = document.querySelector(".student-modal-dialog input") as HTMLInputElement;
-    await act(async () => {
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-      nativeSetter?.call(confirmInput, "SecurePass123!");
-      confirmInput.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
-    await act(async () => {
-      (document.querySelector(".student-modal-dialog button[type='submit']") as HTMLButtonElement).click();
-    });
-
-    expect(container.textContent).toContain("El correo electrónico no ha sido verificado aún");
-    expect(supabase.auth.updateUser).not.toHaveBeenCalled();
+    jest.useRealTimers();
   });
 });
+
 

@@ -23,6 +23,9 @@ import {
   claimStudentInvitation,
   deactivateStudentAccess,
   reactivateStudentAccess,
+  loginStudentWithIdentifier,
+  requestStudentPasswordReset,
+  requestStudentAccessLink,
   resolveStudentLoginIdentifier,
   resolveStudentSession,
 } from "./coachingApi";
@@ -1450,63 +1453,93 @@ describe("coachingApi - Entrega B", () => {
       expect(reactRes.status).toBe("ACTIVE");
     });
 
-    it("resolveStudentLoginIdentifier returns email directly if contains @", async () => {
-      const res = await resolveStudentLoginIdentifier("alumno@test.com");
-      expect(res.ok).toBe(true);
-      expect(res.email).toBe("alumno@test.com");
-    });
-
-    it("resolveStudentLoginIdentifier calls RPC when identifier is Riviera ID", async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
-        data: {
-          ok: true,
-          email: "zaid@test.com",
-          riviera_id: "RIV-00000107",
-        },
-        error: null,
-      });
-
-      const res = await resolveStudentLoginIdentifier("RIV-00000107");
-      expect(supabase.rpc).toHaveBeenCalledWith("resolve_student_login_identifier", {
-        p_identifier: "RIV-00000107",
-      });
-      expect(res.ok).toBe(true);
-      expect(res.email).toBe("zaid@test.com");
-      expect(res.rivieraId).toBe("RIV-00000107");
-    });
-
-    it("resolveStudentSession invokes coaching-activate-student and sets session if returned", async () => {
+    it("loginStudentWithIdentifier invokes coaching-activate-student with action student_login and sets session", async () => {
       (supabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           ok: true,
-          email: "student@test.com",
-          studentName: "Alumno Zaid",
           session: {
-            access_token: "recovered-access-token",
-            refresh_token: "recovered-refresh-token",
+            access_token: "student-access-token-xyz",
+            refresh_token: "student-refresh-token-xyz",
+            user: { id: "student-uuid", email: "zaid@test.com" },
           },
         },
         error: null,
       });
 
       (supabase.auth.setSession as jest.Mock).mockResolvedValueOnce({
-        data: { session: { access_token: "recovered-access-token" } } as any,
+        data: { session: { access_token: "student-access-token-xyz" } } as any,
         error: null,
       });
 
-      const res = await resolveStudentSession("valid-tok-123");
+      const res = await loginStudentWithIdentifier("RIV-00000107", "SecurePass123!");
       expect(supabase.functions.invoke).toHaveBeenCalledWith("coaching-activate-student", {
         body: {
-          action: "resolve_session",
-          token: "valid-tok-123",
+          action: "student_login",
+          identifier: "RIV-00000107",
+          password: "SecurePass123!",
         },
       });
       expect(supabase.auth.setSession).toHaveBeenCalledWith({
-        access_token: "recovered-access-token",
-        refresh_token: "recovered-refresh-token",
+        access_token: "student-access-token-xyz",
+        refresh_token: "student-refresh-token-xyz",
       });
       expect(res.ok).toBe(true);
-      expect(res.email).toBe("student@test.com");
+      expect(res.session.access_token).toBe("student-access-token-xyz");
+    });
+
+    it("loginStudentWithIdentifier returns error when credentials fail", async () => {
+      (supabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: false,
+          error: "Credenciales incorrectas. Verifica tu identificador y contraseña.",
+        },
+        error: null,
+      });
+
+      const res = await loginStudentWithIdentifier("RIV-00000107", "WrongPass!");
+      expect(res.ok).toBe(false);
+      expect(res.error).toBe("Credenciales incorrectas. Verifica tu identificador y contraseña.");
+    });
+
+    it("requestStudentPasswordReset invokes coaching-activate-student and returns generic message", async () => {
+      (supabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          message: "Si existe una cuenta asociada a este identificador, se ha enviado un enlace de recuperación.",
+        },
+        error: null,
+      });
+
+      const res = await requestStudentPasswordReset("RIV-00000107");
+      expect(supabase.functions.invoke).toHaveBeenCalledWith("coaching-activate-student", {
+        body: {
+          action: "request_password_reset",
+          identifier: "RIV-00000107",
+          redirectTo: undefined,
+        },
+      });
+      expect(res.ok).toBe(true);
+      expect(res.message).toContain("Si existe una cuenta asociada");
+    });
+
+    it("requestStudentAccessLink invokes coaching-activate-student with token", async () => {
+      (supabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          message: "Enlace de acceso enviado a tu correo.",
+        },
+        error: null,
+      });
+
+      const res = await requestStudentAccessLink("valid-token-xyz");
+      expect(supabase.functions.invoke).toHaveBeenCalledWith("coaching-activate-student", {
+        body: {
+          action: "request_student_access_link",
+          token: "valid-token-xyz",
+        },
+      });
+      expect(res.ok).toBe(true);
+      expect(res.message).toBe("Enlace de acceso enviado a tu correo.");
     });
   });
 });

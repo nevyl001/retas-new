@@ -2329,7 +2329,171 @@ export async function claimStudentInvitation(
 }
 
 /**
- * Resuelve el correo oficial asociado a un identificador de login (correo o Riviera ID oficial).
+ * Inicia sesión de alumno de forma segura mediante la Edge Function coaching-activate-student.
+ * Admite tanto correo electrónico como Riviera ID oficial (ej. RIV-00000107).
+ * La resolución del Riviera ID se realiza internamente en el backend sin revelar correos
+ * y la validación de contraseña se ejecuta con el cliente GoTrue sin privilegios.
+ */
+export async function loginStudentWithIdentifier(
+  identifier: string,
+  password: string
+): Promise<{ ok: boolean; session?: any; error?: string }> {
+  const cleanId = identifier.trim();
+  const cleanPass = password;
+
+  if (!cleanId || !cleanPass) {
+    return {
+      ok: false,
+      error: "Ingresa tu correo o Riviera ID y tu contraseña.",
+    };
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke("coaching-activate-student", {
+      body: {
+        action: "student_login",
+        identifier: cleanId,
+        password: cleanPass,
+      },
+    });
+
+    if (error) {
+      console.error("[coaching] error in student_login:", error);
+      return {
+        ok: false,
+        error: error.message || "Error al iniciar sesión. Intenta nuevamente.",
+      };
+    }
+
+    const res = (data as Record<string, any>) || {};
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: res.error || "Credenciales incorrectas. Verifica tu identificador y contraseña.",
+      };
+    }
+
+    if (res.session?.access_token) {
+      const { data: sessionData, error: setSessionErr } = await supabase.auth.setSession({
+        access_token: res.session.access_token,
+        refresh_token: res.session.refresh_token || "",
+      });
+
+      if (setSessionErr) {
+        console.error("[coaching] error setting session after student login:", setSessionErr);
+        return {
+          ok: false,
+          error: "Error al registrar la sesión de alumno.",
+        };
+      }
+
+      return {
+        ok: true,
+        session: sessionData.session || res.session,
+      };
+    }
+
+    return {
+      ok: true,
+      session: res.session,
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      error: err.message || "Error de conexión al iniciar sesión.",
+    };
+  }
+}
+
+/**
+ * Solicita la recuperación de contraseña de forma segura mediante la Edge Function.
+ * Admite correo o Riviera ID, resolviendo el email en el backend sin exponerlo al cliente.
+ */
+export async function requestStudentPasswordReset(
+  identifier: string,
+  redirectTo?: string
+): Promise<{ ok: boolean; message?: string; error?: string }> {
+  const cleanId = identifier.trim();
+  if (!cleanId) {
+    return { ok: false, error: "Ingresa tu correo o Riviera ID registrado." };
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke("coaching-activate-student", {
+      body: {
+        action: "request_password_reset",
+        identifier: cleanId,
+        redirectTo,
+      },
+    });
+
+    if (error) {
+      console.error("[coaching] error in request_password_reset:", error);
+      return {
+        ok: false,
+        error: error.message || "Error al solicitar la recuperación de contraseña.",
+      };
+    }
+
+    const res = (data as Record<string, any>) || {};
+    return {
+      ok: Boolean(res.ok),
+      message:
+        res.message ||
+        "Si existe una cuenta asociada a este identificador, se ha enviado un enlace de recuperación.",
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      error: err.message || "Error al solicitar la recuperación de contraseña.",
+    };
+  }
+}
+
+/**
+ * Solicita el reenvío seguro de un enlace de acceso al correo del alumno (cross-device).
+ * El enlace se envía exclusivamente al correo registrado y nunca entrega tokens al cliente.
+ */
+export async function requestStudentAccessLink(
+  token: string
+): Promise<{ ok: boolean; message?: string; error?: string }> {
+  const cleanTok = token.trim();
+  if (!cleanTok) {
+    return { ok: false, error: "Token de activación no proporcionado." };
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke("coaching-activate-student", {
+      body: {
+        action: "request_student_access_link",
+        token: cleanTok,
+      },
+    });
+
+    if (error) {
+      console.error("[coaching] error in request_student_access_link:", error);
+      return {
+        ok: false,
+        error: error.message || "Error al solicitar enlace de acceso.",
+      };
+    }
+
+    const res = (data as Record<string, any>) || {};
+    return {
+      ok: Boolean(res.ok),
+      message: res.message || "Enlace de acceso enviado a tu correo.",
+      error: res.error,
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      error: err.message || "Error al solicitar enlace de acceso.",
+    };
+  }
+}
+
+/**
+ * @deprecated Utilizar loginStudentWithIdentifier para login seguro.
  */
 export async function resolveStudentLoginIdentifier(
   identifier: string
@@ -2338,53 +2502,20 @@ export async function resolveStudentLoginIdentifier(
   if (!clean) {
     return { ok: false, error: "Ingresa tu correo o tu Riviera ID." };
   }
-
-  // Si ya es un correo electrónico, devolver directamente
   if (clean.includes("@")) {
     return { ok: true, email: clean.toLowerCase() };
   }
-
-  try {
-    const { data, error } = await supabase.rpc("resolve_student_login_identifier", {
-      p_identifier: clean,
-    });
-
-    if (error) {
-      console.error("[coaching] error resolving student login identifier:", error);
-      return {
-        ok: false,
-        error: error.message || "Error al verificar el Riviera ID ingresado.",
-      };
-    }
-
-    const res = (data as Record<string, any>) || {};
-    if (!res.ok) {
-      return {
-        ok: false,
-        error: res.error || "No se encontró ninguna cuenta de alumno asociada a ese Riviera ID.",
-      };
-    }
-
-    return {
-      ok: true,
-      email: res.email,
-      rivieraId: res.riviera_id,
-    };
-  } catch (err: any) {
-    return {
-      ok: false,
-      error: err.message || "Error al resolver el identificador de alumno.",
-    };
-  }
+  return {
+    ok: true,
+    rivieraId: clean.toUpperCase(),
+  };
 }
 
 /**
- * Recupera o inicializa la sesión autenticada de un alumno legítimo con correo verificado.
- * Permite completar la activación en navegadores distintos o tras pérdida de sesión,
- * sin permitir modificaciones anónimas de contraseñas.
+ * @deprecated Utilizar requestStudentAccessLink para soporte cross-device seguro.
  */
 export async function resolveStudentSession(
-  token: string
+  _token: string
 ): Promise<{
   ok: boolean;
   session?: any;
@@ -2393,88 +2524,11 @@ export async function resolveStudentSession(
   needsEmailVerification?: boolean;
   error?: string;
 }> {
-  try {
-    const { data, error } = await supabase.functions.invoke("coaching-activate-student", {
-      body: {
-        action: "resolve_session",
-        token: token.trim(),
-      },
-    });
-
-    if (error) {
-      console.error("[coaching] error resolving student session:", error);
-      return {
-        ok: false,
-        error: error.message || "Error al resolver la sesión del alumno.",
-      };
-    }
-
-    const res = (data as Record<string, any>) || {};
-    if (!res.ok) {
-      return {
-        ok: false,
-        error: res.error || "No se pudo recuperar la sesión del alumno.",
-        needsEmailVerification: Boolean(res.needsEmailVerification),
-      };
-    }
-
-    // 1. Si devolvió sesión con tokens (extraídos del magic link oficial)
-    if (res.session?.access_token) {
-      const { data: sessionData, error: setSessionErr } = await supabase.auth.setSession({
-        access_token: res.session.access_token,
-        refresh_token: res.session.refresh_token || "",
-      });
-
-      if (setSessionErr) {
-        console.error("[coaching] error setting recovered session:", setSessionErr);
-        return {
-          ok: false,
-          error: setSessionErr.message || "Error al establecer la sesión del alumno.",
-        };
-      }
-
-      return {
-        ok: true,
-        session: sessionData.session,
-        email: res.email,
-        studentName: res.studentName,
-      };
-    }
-
-    // 2. Si devolvió token_hash, verificar OTP mediante el cliente GoTrue
-    if (res.tokenHash) {
-      const { data: otpData, error: otpErr } = await supabase.auth.verifyOtp({
-        token_hash: res.tokenHash,
-        type: "magiclink",
-      });
-
-      if (otpErr) {
-        console.error("[coaching] error verifying OTP token_hash:", otpErr);
-        return {
-          ok: false,
-          error: otpErr.message || "Error al verificar la sesión del alumno.",
-        };
-      }
-
-      return {
-        ok: true,
-        session: otpData.session,
-        email: res.email,
-        studentName: res.studentName,
-      };
-    }
-
-    return {
-      ok: true,
-      email: res.email,
-      studentName: res.studentName,
-    };
-  } catch (err: any) {
-    return {
-      ok: false,
-      error: err.message || "Error de comunicación al restaurar la sesión del alumno.",
-    };
-  }
+  return {
+    ok: false,
+    error: "resolveStudentSession ha sido reemplazado por autenticación GoTrue verificada.",
+  };
 }
+
 
 

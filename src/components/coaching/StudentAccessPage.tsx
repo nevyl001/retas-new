@@ -3,8 +3,9 @@ import { supabase } from "../../lib/supabaseClient";
 import {
   verifyStudentInvitation,
   claimStudentInvitation,
-  resolveStudentLoginIdentifier,
-  resolveStudentSession,
+  loginStudentWithIdentifier,
+  requestStudentPasswordReset,
+  requestStudentAccessLink,
 } from "../../lib/coaching/coachingApi";
 import type { StudentInvitationVerification } from "../../lib/coaching/types";
 import { navigateStudentCoaching } from "./coachingNav";
@@ -27,6 +28,7 @@ export const StudentAccessPage: React.FC = () => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginBanner, setLoginBanner] = useState<string | null>(null);
 
   // Estados de activación (nueva cuenta)
   const [newPassword, setNewPassword] = useState("");
@@ -38,6 +40,8 @@ export const StudentAccessPage: React.FC = () => {
   const [activateError, setActivateError] = useState<string | null>(null);
   const [activateSuccess, setActivateSuccess] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [resendingLink, setResendingLink] = useState(false);
+  const [resendLinkMessage, setResendLinkMessage] = useState<string | null>(null);
 
   // Estados para vinculación de cuenta existente
   const [existingPassword, setExistingPassword] = useState("");
@@ -140,14 +144,6 @@ export const StudentAccessPage: React.FC = () => {
           currentSession?.user?.email_confirmed_at
         ) {
           verified = true;
-        } else if (
-          verified &&
-          (!currentSession?.user ||
-            currentSession.user.email?.toLowerCase() !== res.email?.toLowerCase())
-        ) {
-          // Si el correo ya está verificado en base de datos pero este navegador aún no tiene sesión,
-          // inicializar proactivamente la sesión legítima del alumno para agilizar el flujo.
-          void resolveStudentSession(tok).catch(() => {});
         }
         setIsEmailVerified(verified);
       }
@@ -155,6 +151,26 @@ export const StudentAccessPage: React.FC = () => {
       setTokenError(err.message || "Error al verificar la invitación.");
     } finally {
       setVerifyingToken(false);
+    }
+  };
+
+  const handleResendLink = async () => {
+    if (!token) return;
+    setResendingLink(true);
+    setResendLinkMessage(null);
+    try {
+      const res = await requestStudentAccessLink(token);
+      if (res.ok) {
+        setResendLinkMessage(
+          res.message || "Enlace enviado a tu correo electrónico. Ábrelo en este navegador."
+        );
+      } else {
+        setResendLinkMessage(res.error || "No se pudo reenviar el enlace de acceso.");
+      }
+    } catch (err: any) {
+      setResendLinkMessage(err.message || "Error al solicitar enlace de acceso.");
+    } finally {
+      setResendingLink(false);
     }
   };
 
@@ -168,41 +184,18 @@ export const StudentAccessPage: React.FC = () => {
 
     setLoginLoading(true);
     setLoginError(null);
+    setLoginBanner(null);
 
     try {
-      let emailToAuth = rawIdentifier.toLowerCase();
-
-      // Si no contiene '@', resolver mediante Riviera ID oficial
-      if (!rawIdentifier.includes("@")) {
-        const resolveRes = await resolveStudentLoginIdentifier(rawIdentifier);
-        if (!resolveRes.ok || !resolveRes.email) {
-          setLoginError(
-            resolveRes.error ||
-              `No se encontró una cuenta de alumno activa asociada al Riviera ID "${rawIdentifier}".`
-          );
-          setLoginLoading(false);
-          return;
-        }
-        emailToAuth = resolveRes.email;
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailToAuth,
-        password: loginPassword,
-      });
-
-      if (error) {
+      const res = await loginStudentWithIdentifier(rawIdentifier, loginPassword);
+      if (!res.ok) {
         setLoginError(
-          error.message.includes("Invalid login credentials")
-            ? "Credenciales incorrectas. Verifica tu correo/Riviera ID y tu contraseña."
-            : error.message
+          res.error || "Credenciales incorrectas. Verifica tu correo/Riviera ID y tu contraseña."
         );
         return;
       }
 
-      if (data.session) {
-        navigateStudentCoaching();
-      }
+      navigateStudentCoaching();
     } catch (err: any) {
       setLoginError(err.message || "Error al iniciar sesión.");
     } finally {
@@ -219,31 +212,24 @@ export const StudentAccessPage: React.FC = () => {
     }
 
     // Comprobar preventivamente la identidad de la sesión activa
-    let { data: sessionData } = await supabase.auth.getSession();
-    let currentSession = sessionData?.session;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const currentSession = sessionData?.session;
     const targetEmail = invitationData?.email?.trim().toLowerCase();
 
-    // Si no hay sesión activa en este navegador y tenemos token, intentar resolverla de forma segura
-    if (!currentSession?.user && token) {
-      try {
-        const recoverRes = await resolveStudentSession(token);
-        if (recoverRes.ok && recoverRes.session) {
-          currentSession = recoverRes.session;
-        }
-      } catch (e) {
-        // Silencioso aquí; se validará estrictamente en submit final
-      }
+    if (!currentSession?.user) {
+      setActivateError(
+        "Se requiere sesión autenticada del alumno. Abre el enlace enviado a tu correo en este navegador para verificar tu identidad."
+      );
+      return;
     }
 
-    if (currentSession?.user) {
-      const sessionEmail = currentSession.user.email?.trim().toLowerCase();
-
-      if (targetEmail && sessionEmail && sessionEmail !== targetEmail) {
-        setActivateError(
-          `La sesión activa (${sessionEmail}) no coincide con el correo invitado (${targetEmail}). Cierra sesión e ingresa desde el enlace enviado al correo del alumno.`
-        );
-        return;
-      }
+    const sessionEmail = currentSession.user.email?.trim().toLowerCase();
+    if (targetEmail && sessionEmail && sessionEmail !== targetEmail) {
+      setActivateError(
+        `La sesión activa (${sessionEmail}) no coincide con el correo invitado (${targetEmail}). Cierra sesión e ingresa desde el enlace enviado al correo del alumno.`
+      );
+      return;
+    }
 
       const appMeta = currentSession.user.app_metadata || {};
       const userMeta = currentSession.user.user_metadata || {};
@@ -265,7 +251,6 @@ export const StudentAccessPage: React.FC = () => {
         );
         return;
       }
-    }
 
     setActivateError(null);
     setConfirmPassword("");
@@ -298,28 +283,10 @@ export const StudentAccessPage: React.FC = () => {
     setActivateError(null);
 
     try {
-      // 1. Obtener sesión autenticada o recuperarla de forma segura mediante el token
-      let { data: sessionData } = await supabase.auth.getSession();
-      let currentSession = sessionData?.session;
+      // 1. Validar estrictamente la sesión autenticada activa del alumno
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentSession = sessionData?.session;
       const targetEmail = invitationData?.email?.trim().toLowerCase();
-
-      // Recuperación segura de sesión si el alumno verificó pero no tiene sesión activa en este navegador
-      if (
-        !currentSession?.user ||
-        (targetEmail && currentSession.user.email?.trim().toLowerCase() !== targetEmail)
-      ) {
-        const recoverRes = await resolveStudentSession(token);
-        if (recoverRes.ok && recoverRes.session) {
-          currentSession = recoverRes.session;
-        } else if (recoverRes.needsEmailVerification) {
-          setIsEmailVerified(false);
-          setShowConfirmModal(false);
-          setActivateError(
-            "El correo electrónico no ha sido verificado aún. Por favor abre el enlace recibido en tu correo electrónico."
-          );
-          return;
-        }
-      }
 
       if (!currentSession?.user) {
         setIsEmailVerified(false);
@@ -390,12 +357,29 @@ export const StudentAccessPage: React.FC = () => {
         return;
       }
 
-      // 6. Éxito: cerrar modal, mostrar confirmación y entrar a Mi Coaching
+      // 6. Flujo del alumno: Cuenta activada, vincular Riviera ID oficial y
+      // llegar al formulario de inicio de sesión con el Riviera ID previamente completado.
+      const officialRivieraId = claimRes.rivieraId || invitationData?.rivieraId || "";
       setShowConfirmModal(false);
       setActivateSuccess(true);
+
+      // Limpiar URL de token para no recargar modo activación
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", "/coaching/acceso-alumno");
+      }
+
       setTimeout(() => {
-        navigateStudentCoaching();
-      }, 1000);
+        setMode("login");
+        setToken(null);
+        if (officialRivieraId) {
+          setLoginEmail(officialRivieraId);
+        }
+        setLoginPassword("");
+        setLoginBanner(
+          `¡Cuenta activada y vinculada exitosamente! Tu acceso oficial es con tu Riviera ID: ${officialRivieraId}. Ingresa tu contraseña recién creada para acceder a Mi Coaching.`
+        );
+        setActivateSuccess(false);
+      }, 1500);
     } catch (err: any) {
       setActivateError(err.message || "Error al activar la cuenta.");
     } finally {
@@ -439,10 +423,24 @@ export const StudentAccessPage: React.FC = () => {
         return;
       }
 
+      const officialRivieraId = claimRes.rivieraId || invitationData?.rivieraId || "";
       setActivateSuccess(true);
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", "/coaching/acceso-alumno");
+      }
+
       setTimeout(() => {
-        navigateStudentCoaching();
-      }, 1000);
+        setMode("login");
+        setToken(null);
+        if (officialRivieraId) {
+          setLoginEmail(officialRivieraId);
+        }
+        setLoginPassword("");
+        setLoginBanner(
+          `¡Perfil vinculado exitosamente! Tu acceso oficial es con tu Riviera ID: ${officialRivieraId}. Ingresa tu contraseña para acceder.`
+        );
+        setActivateSuccess(false);
+      }, 1500);
     } catch (err: any) {
       setClaimError(err.message || "Error al vincular tu cuenta.");
     } finally {
@@ -462,38 +460,20 @@ export const StudentAccessPage: React.FC = () => {
     setRecoveryError(null);
 
     try {
-      let emailToSend = rawInput.toLowerCase();
-      if (!rawInput.includes("@")) {
-        const resolveRes = await resolveStudentLoginIdentifier(rawInput);
-        if (!resolveRes.ok || !resolveRes.email) {
-          setRecoveryError(
-            resolveRes.error ||
-              `No se encontró ninguna cuenta de alumno asociada al Riviera ID "${rawInput}".`
-          );
-          setRecoveryLoading(false);
-          return;
-        }
-        emailToSend = resolveRes.email;
-      }
-
       const redirectTo =
         typeof window !== "undefined"
           ? `${window.location.origin}/auth/reset-password`
           : undefined;
 
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        emailToSend,
-        { redirectTo }
-      );
-
-      if (error) {
-        setRecoveryError(error.message);
+      const res = await requestStudentPasswordReset(rawInput, redirectTo);
+      if (!res.ok) {
+        setRecoveryError(res.error || "No se pudo procesar la solicitud de recuperación.");
         return;
       }
 
       setRecoverySent(true);
     } catch (err: any) {
-      setRecoveryError(err.message || "Error al enviar correo de recuperación.");
+      setRecoveryError(err.message || "Error al solicitar la recuperación.");
     } finally {
       setRecoveryLoading(false);
     }
@@ -683,16 +663,31 @@ export const StudentAccessPage: React.FC = () => {
 
                       <div style={{ textAlign: "center", margin: "24px 0" }}>
                         <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginBottom: "12px" }}>
-                          ¿Ya abriste el enlace en tu correo? Comprueba el estado de tu verificación:
+                          ¿Ya abriste el enlace en tu correo? Comprueba el estado o solicita un nuevo enlace:
                         </p>
-                        <button
-                          type="button"
-                          className="student-btn-secondary"
-                          onClick={() => token && handleVerifyToken(token)}
-                          disabled={verifyingToken}
-                        >
-                          {verifyingToken ? "Comprobando..." : "Comprobar Estado de Verificación"}
-                        </button>
+                        <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            className="student-btn-secondary"
+                            onClick={() => token && handleVerifyToken(token)}
+                            disabled={verifyingToken}
+                          >
+                            {verifyingToken ? "Comprobando..." : "Comprobar Verificación"}
+                          </button>
+                          <button
+                            type="button"
+                            className="student-btn-secondary"
+                            onClick={handleResendLink}
+                            disabled={resendingLink}
+                          >
+                            {resendingLink ? "Enviando..." : "Reenviar Enlace a mi Correo"}
+                          </button>
+                        </div>
+                        {resendLinkMessage && (
+                          <p style={{ color: "#38bdf8", fontSize: "0.85rem", marginTop: "12px" }}>
+                            {resendLinkMessage}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -752,6 +747,15 @@ export const StudentAccessPage: React.FC = () => {
           {mode === "login" && (
             <div>
               <form onSubmit={handleLoginSubmit}>
+                {loginBanner && (
+                  <div
+                    className="student-alert student-alert-success"
+                    style={{ marginBottom: "16px", lineHeight: "1.4" }}
+                  >
+                    {loginBanner}
+                  </div>
+                )}
+
                 {loginError && (
                   <div className="student-alert student-alert-error">
                     {loginError}
