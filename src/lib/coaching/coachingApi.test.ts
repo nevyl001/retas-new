@@ -23,6 +23,8 @@ import {
   claimStudentInvitation,
   deactivateStudentAccess,
   reactivateStudentAccess,
+  resolveStudentLoginIdentifier,
+  resolveStudentSession,
 } from "./coachingApi";
 import type { CreateCoachInput } from "./types";
 import { supabase } from "../supabaseClient";
@@ -31,6 +33,8 @@ jest.mock("../supabaseClient", () => ({
   supabase: {
     auth: {
       getSession: jest.fn(),
+      setSession: jest.fn(),
+      verifyOtp: jest.fn(),
     },
     functions: {
       invoke: jest.fn(),
@@ -1444,6 +1448,65 @@ describe("coachingApi - Entrega B", () => {
         p_jugador_id: "student-1",
       });
       expect(reactRes.status).toBe("ACTIVE");
+    });
+
+    it("resolveStudentLoginIdentifier returns email directly if contains @", async () => {
+      const res = await resolveStudentLoginIdentifier("alumno@test.com");
+      expect(res.ok).toBe(true);
+      expect(res.email).toBe("alumno@test.com");
+    });
+
+    it("resolveStudentLoginIdentifier calls RPC when identifier is Riviera ID", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          email: "zaid@test.com",
+          riviera_id: "RIV-00000107",
+        },
+        error: null,
+      });
+
+      const res = await resolveStudentLoginIdentifier("RIV-00000107");
+      expect(supabase.rpc).toHaveBeenCalledWith("resolve_student_login_identifier", {
+        p_identifier: "RIV-00000107",
+      });
+      expect(res.ok).toBe(true);
+      expect(res.email).toBe("zaid@test.com");
+      expect(res.rivieraId).toBe("RIV-00000107");
+    });
+
+    it("resolveStudentSession invokes coaching-activate-student and sets session if returned", async () => {
+      (supabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          email: "student@test.com",
+          studentName: "Alumno Zaid",
+          session: {
+            access_token: "recovered-access-token",
+            refresh_token: "recovered-refresh-token",
+          },
+        },
+        error: null,
+      });
+
+      (supabase.auth.setSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { access_token: "recovered-access-token" } } as any,
+        error: null,
+      });
+
+      const res = await resolveStudentSession("valid-tok-123");
+      expect(supabase.functions.invoke).toHaveBeenCalledWith("coaching-activate-student", {
+        body: {
+          action: "resolve_session",
+          token: "valid-tok-123",
+        },
+      });
+      expect(supabase.auth.setSession).toHaveBeenCalledWith({
+        access_token: "recovered-access-token",
+        refresh_token: "recovered-refresh-token",
+      });
+      expect(res.ok).toBe(true);
+      expect(res.email).toBe("student@test.com");
     });
   });
 });

@@ -3,6 +3,8 @@ import { supabase } from "../../lib/supabaseClient";
 import {
   verifyStudentInvitation,
   claimStudentInvitation,
+  resolveStudentLoginIdentifier,
+  resolveStudentSession,
 } from "../../lib/coaching/coachingApi";
 import type { StudentInvitationVerification } from "../../lib/coaching/types";
 import { navigateStudentCoaching } from "./coachingNav";
@@ -19,7 +21,7 @@ export const StudentAccessPage: React.FC = () => {
     useState<StudentInvitationVerification | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
 
-  // Estados de formulario login
+  // Estados de formulario login (Correo o Riviera ID)
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -49,12 +51,43 @@ export const StudentAccessPage: React.FC = () => {
   const [recoverySent, setRecoverySent] = useState(false);
   const [recoveryError, setRecoveryError] = useState<string | null>(null);
 
-  // Leer query params
+  // Leer query params y capturar hash/PKCE de GoTrue
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const searchParams = new URLSearchParams(window.location.search);
-    const paramToken = searchParams.get("token");
 
+    // 1. Capturar tokens directos del URL hash si GoTrue redirigió con fragmento
+    if (window.location.hash) {
+      const hash = window.location.hash.substring(1);
+      const hashParams = new URLSearchParams(hash);
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      if (accessToken) {
+        void supabase.auth
+          .setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || "",
+          })
+          .then(() => {
+            const cleanUrl = window.location.pathname + window.location.search;
+            window.history.replaceState(null, "", cleanUrl);
+          })
+          .catch((err) => {
+            console.warn("[StudentAccess] Error restaurando sesión desde hash:", err);
+          });
+      }
+    }
+
+    // 2. Capturar código PKCE (?code=...) si estuviera presente
+    const searchParams = new URLSearchParams(window.location.search);
+    const code = searchParams.get("code");
+    if (code) {
+      void supabase.auth.exchangeCodeForSession(code).catch((err) => {
+        console.warn("[StudentAccess] Error en intercambio de código PKCE:", err);
+      });
+    }
+
+    // 3. Procesar token de invitación
+    const paramToken = searchParams.get("token");
     if (paramToken && paramToken.trim()) {
       setToken(paramToken.trim());
       setMode("activate");
@@ -64,7 +97,7 @@ export const StudentAccessPage: React.FC = () => {
     }
   }, []);
 
-  // Escuchar cambios de autenticación para capturar verificación instantánea (móvil / Safari / hash GoTrue)
+  // Escuchar cambios de autenticación para capturar verificación instantánea
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -107,6 +140,14 @@ export const StudentAccessPage: React.FC = () => {
           currentSession?.user?.email_confirmed_at
         ) {
           verified = true;
+        } else if (
+          verified &&
+          (!currentSession?.user ||
+            currentSession.user.email?.toLowerCase() !== res.email?.toLowerCase())
+        ) {
+          // Si el correo ya está verificado en base de datos pero este navegador aún no tiene sesión,
+          // inicializar proactivamente la sesión legítima del alumno para agilizar el flujo.
+          void resolveStudentSession(tok).catch(() => {});
         }
         setIsEmailVerified(verified);
       }
@@ -119,8 +160,9 @@ export const StudentAccessPage: React.FC = () => {
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginEmail.trim() || !loginPassword.trim()) {
-      setLoginError("Ingresa tu correo y contraseña.");
+    const rawIdentifier = loginEmail.trim();
+    if (!rawIdentifier || !loginPassword.trim()) {
+      setLoginError("Ingresa tu correo o Riviera ID y tu contraseña.");
       return;
     }
 
@@ -128,15 +170,31 @@ export const StudentAccessPage: React.FC = () => {
     setLoginError(null);
 
     try {
+      let emailToAuth = rawIdentifier.toLowerCase();
+
+      // Si no contiene '@', resolver mediante Riviera ID oficial
+      if (!rawIdentifier.includes("@")) {
+        const resolveRes = await resolveStudentLoginIdentifier(rawIdentifier);
+        if (!resolveRes.ok || !resolveRes.email) {
+          setLoginError(
+            resolveRes.error ||
+              `No se encontró una cuenta de alumno activa asociada al Riviera ID "${rawIdentifier}".`
+          );
+          setLoginLoading(false);
+          return;
+        }
+        emailToAuth = resolveRes.email;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: loginEmail.trim().toLowerCase(),
+        email: emailToAuth,
         password: loginPassword,
       });
 
       if (error) {
         setLoginError(
           error.message.includes("Invalid login credentials")
-            ? "Correo o contraseña incorrectos. Verifica tus datos o solicita un restablecimiento."
+            ? "Credenciales incorrectas. Verifica tu correo/Riviera ID y tu contraseña."
             : error.message
         );
         return;
@@ -161,12 +219,24 @@ export const StudentAccessPage: React.FC = () => {
     }
 
     // Comprobar preventivamente la identidad de la sesión activa
-    const { data: sessionData } = await supabase.auth.getSession();
-    const currentSession = sessionData?.session;
+    let { data: sessionData } = await supabase.auth.getSession();
+    let currentSession = sessionData?.session;
+    const targetEmail = invitationData?.email?.trim().toLowerCase();
+
+    // Si no hay sesión activa en este navegador y tenemos token, intentar resolverla de forma segura
+    if (!currentSession?.user && token) {
+      try {
+        const recoverRes = await resolveStudentSession(token);
+        if (recoverRes.ok && recoverRes.session) {
+          currentSession = recoverRes.session;
+        }
+      } catch (e) {
+        // Silencioso aquí; se validará estrictamente en submit final
+      }
+    }
 
     if (currentSession?.user) {
       const sessionEmail = currentSession.user.email?.trim().toLowerCase();
-      const targetEmail = invitationData?.email?.trim().toLowerCase();
 
       if (targetEmail && sessionEmail && sessionEmail !== targetEmail) {
         setActivateError(
@@ -228,9 +298,28 @@ export const StudentAccessPage: React.FC = () => {
     setActivateError(null);
 
     try {
-      // 1. Validar que exista sesión autenticada del alumno (establecida por GoTrue al abrir el enlace)
-      const { data: sessionData } = await supabase.auth.getSession();
-      const currentSession = sessionData?.session;
+      // 1. Obtener sesión autenticada o recuperarla de forma segura mediante el token
+      let { data: sessionData } = await supabase.auth.getSession();
+      let currentSession = sessionData?.session;
+      const targetEmail = invitationData?.email?.trim().toLowerCase();
+
+      // Recuperación segura de sesión si el alumno verificó pero no tiene sesión activa en este navegador
+      if (
+        !currentSession?.user ||
+        (targetEmail && currentSession.user.email?.trim().toLowerCase() !== targetEmail)
+      ) {
+        const recoverRes = await resolveStudentSession(token);
+        if (recoverRes.ok && recoverRes.session) {
+          currentSession = recoverRes.session;
+        } else if (recoverRes.needsEmailVerification) {
+          setIsEmailVerified(false);
+          setShowConfirmModal(false);
+          setActivateError(
+            "El correo electrónico no ha sido verificado aún. Por favor abre el enlace recibido en tu correo electrónico."
+          );
+          return;
+        }
+      }
 
       if (!currentSession?.user) {
         setIsEmailVerified(false);
@@ -252,7 +341,6 @@ export const StudentAccessPage: React.FC = () => {
 
       // 2. VALIDACIÓN OBLIGATORIA: Comprobar identidad de la sesión contra el correo invitado
       const sessionEmail = currentSession.user.email?.trim().toLowerCase();
-      const targetEmail = invitationData?.email?.trim().toLowerCase();
 
       if (!sessionEmail || !targetEmail || sessionEmail !== targetEmail) {
         setShowConfirmModal(false);
@@ -364,8 +452,9 @@ export const StudentAccessPage: React.FC = () => {
 
   const handleRecoverySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!recoveryEmail.trim()) {
-      setRecoveryError("Ingresa tu correo electrónico registrado.");
+    const rawInput = recoveryEmail.trim();
+    if (!rawInput) {
+      setRecoveryError("Ingresa tu correo electrónico registrado o Riviera ID.");
       return;
     }
 
@@ -373,13 +462,27 @@ export const StudentAccessPage: React.FC = () => {
     setRecoveryError(null);
 
     try {
+      let emailToSend = rawInput.toLowerCase();
+      if (!rawInput.includes("@")) {
+        const resolveRes = await resolveStudentLoginIdentifier(rawInput);
+        if (!resolveRes.ok || !resolveRes.email) {
+          setRecoveryError(
+            resolveRes.error ||
+              `No se encontró ninguna cuenta de alumno asociada al Riviera ID "${rawInput}".`
+          );
+          setRecoveryLoading(false);
+          return;
+        }
+        emailToSend = resolveRes.email;
+      }
+
       const redirectTo =
         typeof window !== "undefined"
           ? `${window.location.origin}/auth/reset-password`
           : undefined;
 
       const { error } = await supabase.auth.resetPasswordForEmail(
-        recoveryEmail.trim().toLowerCase(),
+        emailToSend,
         { redirectTo }
       );
 
@@ -656,16 +759,16 @@ export const StudentAccessPage: React.FC = () => {
                 )}
 
                 <div className="student-form-group">
-                  <label className="student-form-label">Correo Electrónico</label>
+                  <label className="student-form-label">Correo Electrónico o Riviera ID</label>
                   <input
-                    type="email"
+                    type="text"
                     className="student-form-input"
-                    placeholder="alumno@ejemplo.com"
+                    placeholder="alumno@ejemplo.com o RIV-00000107"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     disabled={loginLoading}
                     required
-                    autoComplete="email"
+                    autoComplete="username"
                   />
                 </div>
 
@@ -762,12 +865,12 @@ export const StudentAccessPage: React.FC = () => {
 
                   <div className="student-form-group">
                     <label className="student-form-label">
-                      Correo Electrónico Registrado
+                      Correo Electrónico Registrado o Riviera ID
                     </label>
                     <input
-                      type="email"
+                      type="text"
                       className="student-form-input"
-                      placeholder="alumno@ejemplo.com"
+                      placeholder="alumno@ejemplo.com o RIV-00000107"
                       value={recoveryEmail}
                       onChange={(e) => setRecoveryEmail(e.target.value)}
                       disabled={recoveryLoading}

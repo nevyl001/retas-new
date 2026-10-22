@@ -298,6 +298,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             const atStudentAccess =
               typeof window !== "undefined" &&
               normalizeAppPathname(window.location.pathname).startsWith("/coaching/acceso-alumno");
+            const hasStudentActivationToken =
+              typeof window !== "undefined" &&
+              new URLSearchParams(window.location.search).has("token");
 
             if (
               isCoachOnly &&
@@ -309,7 +312,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
               window.dispatchEvent(new Event(PATH_SYNC_EVENT));
             } else if (
               isStudentOnly &&
-              (atAppHome || atStudentAccess) &&
+              (atAppHome || (atStudentAccess && !hasStudentActivationToken)) &&
               (event === "SIGNED_IN" || event === "init")
             ) {
               window.history.replaceState({}, "", "/coaching/mi-coaching");

@@ -2328,3 +2328,153 @@ export async function claimStudentInvitation(
   };
 }
 
+/**
+ * Resuelve el correo oficial asociado a un identificador de login (correo o Riviera ID oficial).
+ */
+export async function resolveStudentLoginIdentifier(
+  identifier: string
+): Promise<{ ok: boolean; email?: string; rivieraId?: string; error?: string }> {
+  const clean = identifier.trim();
+  if (!clean) {
+    return { ok: false, error: "Ingresa tu correo o tu Riviera ID." };
+  }
+
+  // Si ya es un correo electrónico, devolver directamente
+  if (clean.includes("@")) {
+    return { ok: true, email: clean.toLowerCase() };
+  }
+
+  try {
+    const { data, error } = await supabase.rpc("resolve_student_login_identifier", {
+      p_identifier: clean,
+    });
+
+    if (error) {
+      console.error("[coaching] error resolving student login identifier:", error);
+      return {
+        ok: false,
+        error: error.message || "Error al verificar el Riviera ID ingresado.",
+      };
+    }
+
+    const res = (data as Record<string, any>) || {};
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: res.error || "No se encontró ninguna cuenta de alumno asociada a ese Riviera ID.",
+      };
+    }
+
+    return {
+      ok: true,
+      email: res.email,
+      rivieraId: res.riviera_id,
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      error: err.message || "Error al resolver el identificador de alumno.",
+    };
+  }
+}
+
+/**
+ * Recupera o inicializa la sesión autenticada de un alumno legítimo con correo verificado.
+ * Permite completar la activación en navegadores distintos o tras pérdida de sesión,
+ * sin permitir modificaciones anónimas de contraseñas.
+ */
+export async function resolveStudentSession(
+  token: string
+): Promise<{
+  ok: boolean;
+  session?: any;
+  email?: string;
+  studentName?: string;
+  needsEmailVerification?: boolean;
+  error?: string;
+}> {
+  try {
+    const { data, error } = await supabase.functions.invoke("coaching-activate-student", {
+      body: {
+        action: "resolve_session",
+        token: token.trim(),
+      },
+    });
+
+    if (error) {
+      console.error("[coaching] error resolving student session:", error);
+      return {
+        ok: false,
+        error: error.message || "Error al resolver la sesión del alumno.",
+      };
+    }
+
+    const res = (data as Record<string, any>) || {};
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: res.error || "No se pudo recuperar la sesión del alumno.",
+        needsEmailVerification: Boolean(res.needsEmailVerification),
+      };
+    }
+
+    // 1. Si devolvió sesión con tokens (extraídos del magic link oficial)
+    if (res.session?.access_token) {
+      const { data: sessionData, error: setSessionErr } = await supabase.auth.setSession({
+        access_token: res.session.access_token,
+        refresh_token: res.session.refresh_token || "",
+      });
+
+      if (setSessionErr) {
+        console.error("[coaching] error setting recovered session:", setSessionErr);
+        return {
+          ok: false,
+          error: setSessionErr.message || "Error al establecer la sesión del alumno.",
+        };
+      }
+
+      return {
+        ok: true,
+        session: sessionData.session,
+        email: res.email,
+        studentName: res.studentName,
+      };
+    }
+
+    // 2. Si devolvió token_hash, verificar OTP mediante el cliente GoTrue
+    if (res.tokenHash) {
+      const { data: otpData, error: otpErr } = await supabase.auth.verifyOtp({
+        token_hash: res.tokenHash,
+        type: "magiclink",
+      });
+
+      if (otpErr) {
+        console.error("[coaching] error verifying OTP token_hash:", otpErr);
+        return {
+          ok: false,
+          error: otpErr.message || "Error al verificar la sesión del alumno.",
+        };
+      }
+
+      return {
+        ok: true,
+        session: otpData.session,
+        email: res.email,
+        studentName: res.studentName,
+      };
+    }
+
+    return {
+      ok: true,
+      email: res.email,
+      studentName: res.studentName,
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      error: err.message || "Error de comunicación al restaurar la sesión del alumno.",
+    };
+  }
+}
+
+
