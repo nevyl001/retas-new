@@ -7,6 +7,7 @@ import {
 } from "../../lib/coaching/coachingApi";
 import { TablerIcon } from "../ui/TablerIcon";
 import { navigateToAppHome } from "../../lib/appRouting";
+import { navigatePublicJugadorByRivieraId } from "../jugadores/jugadoresPublicNav";
 import { navigateCoaching, navigateStudentAccess } from "./coachingNav";
 import "./coaching.css";
 
@@ -103,7 +104,7 @@ export const StudentCoachingPage: React.FC = () => {
 
   const handleBack = () => {
     if (overview?.rivieraId) {
-      window.location.href = `/ranking/jugador/${overview.rivieraId}`;
+      navigatePublicJugadorByRivieraId(overview.rivieraId);
     } else if (typeof window !== "undefined" && window.history.length > 1) {
       window.history.back();
     } else {
@@ -318,7 +319,7 @@ export const StudentCoachingPage: React.FC = () => {
                 className="coaching-btn coaching-btn--secondary"
                 style={{ fontSize: "0.82rem", padding: "0.35rem 0.75rem", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
                 onClick={() => {
-                  window.location.href = `/ranking/jugador/${effectiveRivieraId}`;
+                  navigatePublicJugadorByRivieraId(effectiveRivieraId);
                 }}
               >
                 <TablerIcon name="user" size={15} />

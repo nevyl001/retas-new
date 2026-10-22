@@ -59,6 +59,7 @@ import "./riviera-jugadores-public-ficha.css";
 interface JugadorPublicFichaProps {
   slug?: string;
   playerId?: string;
+  rivieraId?: string;
   /** @deprecated El contexto de club viene de ?org= o /ranking/o/ en la URL. */
   internalClub?: boolean;
 }
@@ -147,6 +148,7 @@ function handoffToJugador(
 export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   slug,
   playerId,
+  rivieraId,
 }) => {
   const { user } = useUser();
   const viewingOrgId = getPublicOrganizadorIdWithoutUser(
@@ -201,6 +203,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         getPublicPlayerProfileData({
           playerId,
           slug,
+          rivieraId,
           viewingOrgId,
           ratingRpc: viewingOrgId ? PUBLIC_ORGANIZER_RPC_FALLBACK : undefined,
           onHeroReady: (heroJugador) => {
@@ -287,7 +290,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       setHeroLoading(false);
       setDetailLoading(false);
     }
-  }, [slug, viewingOrgId, playerId, nextLoadToken]);
+  }, [slug, viewingOrgId, playerId, rivieraId, nextLoadToken]);
 
   useEffect(() => {
     void load();

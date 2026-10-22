@@ -21,7 +21,7 @@ export type JugadoresRoute =
   | { kind: "lista"; genero: RivieraJugadorGenero }
   | { kind: "ficha"; slug: string }
   | { kind: "publicRanking"; organizadorId?: string; genero: RivieraJugadorGenero }
-  | { kind: "publicFicha"; slug?: string; playerId?: string; internalClub?: boolean }
+  | { kind: "publicFicha"; slug?: string; playerId?: string; rivieraId?: string; internalClub?: boolean }
   | { kind: "officialPlayer"; playerId: string }
   | { kind: "rankingComoFunciona" }
   | { kind: "unknown" };
@@ -81,6 +81,17 @@ export function parseJugadoresPath(pathname: string): JugadoresRoute {
 
   const rankingRoute = parseRankingRoute(path);
   if (rankingRoute) return rankingRoute;
+
+  const byRivieraId = path.match(/^\/ranking\/jugador\/([^/]+)$/i);
+  if (byRivieraId) {
+    let segment = byRivieraId[1];
+    try {
+      segment = decodeURIComponent(segment);
+    } catch {
+      segment = byRivieraId[1];
+    }
+    return { kind: "publicFicha", rivieraId: segment.trim().toUpperCase() };
+  }
 
   const playerById = path.match(/^\/players\/([^/]+)$/i);
   if (playerById) {
@@ -173,6 +184,7 @@ export const JugadoresRouter: React.FC<{ pathname: string }> = ({ pathname }) =>
         <JugadorPublicFicha
           slug={route.slug}
           playerId={route.playerId}
+          rivieraId={route.rivieraId}
           internalClub={route.internalClub}
         />
       );

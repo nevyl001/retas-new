@@ -115,6 +115,14 @@ export function buildInternalClubJugadorPath(
   return buildPublicJugadorPath(jugadorId.trim(), orgId.trim());
 }
 
+export function buildPublicJugadorByRivieraIdPath(rivieraId: string): string {
+  return `/ranking/jugador/${encodeURIComponent(rivieraId.trim().toUpperCase())}`;
+}
+
+export function navigatePublicJugadorByRivieraId(rivieraId: string): void {
+  navigateAppTo(buildPublicJugadorByRivieraIdPath(rivieraId));
+}
+
 export function navigatePublicJugadorFicha(
   slug: string,
   orgId?: string | null

@@ -13,6 +13,7 @@ describe("isPublicWebPath", () => {
     "/public/ranking-puntos",
     "/ranking",
     "/ranking/femenil",
+    "/ranking/jugador/RIV-00000011",
     "/ranking/o/org-1",
     "/ranking/o/org-1/varonil",
     "/ranking/o/org-1/femenil",
