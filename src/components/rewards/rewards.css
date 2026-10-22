@@ -1418,6 +1418,27 @@
   box-sizing: border-box;
 }
 
+/* En la ficha pública el acento de Riviera Open es #15191F: el club activo
+   se fundía con la tarjeta y los demás nombres quedaban en gris bajo. */
+.rjp-public .rjp-ficha-rewards .rrw-campaign-pill {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4f1eb;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+}
+
+.rjp-public .rjp-ficha-rewards .rrw-campaign-pill:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.rjp-public .rjp-ficha-rewards .rrw-campaign-pill--active,
+.rjp-public .rjp-ficha-rewards .rrw-campaign-pill--active:hover {
+  background: #f4f1eb;
+  color: #15191f;
+  border-color: #f4f1eb;
+}
+
 .rjp-ficha-rewards .rrw-kpi-grid {
   gap: 0.4rem;
 }

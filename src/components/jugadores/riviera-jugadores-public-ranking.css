@@ -1510,6 +1510,17 @@
   }
 }
 
+/* El nombre del club no puede heredar el acento #15191F de Riviera Open. */
+.rjp-public--ranking .rjp-pts-breakdown__club,
+.rjp-public--ranking .rjp-ranking-card .rjp-pts-breakdown__club,
+.rjp-public--ranking .rjp-podio .rjp-pts-breakdown__club {
+  color: #f4f1eb;
+}
+
+.rjp-public--ranking .rjp-ranking-hero__meta {
+  color: #e7e2da;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rjp-ranking-hero,
   .rjp-sk {
