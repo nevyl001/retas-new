@@ -57,6 +57,10 @@
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  border-radius: 12px;
+  background: var(--rv-bg-card-soft, var(--ro-bg-inset, transparent));
 }
 
 .americano-history__match-top {
@@ -71,6 +75,61 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.americano-history__sides {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: stretch;
+}
+
+.americano-history__side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--ro-border, var(--border-subtle));
+}
+
+.americano-history__side.is-win {
+  border-color: color-mix(in srgb, var(--ro-success) 55%, var(--ro-border, var(--border-subtle)));
+}
+
+.americano-history__side-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.americano-history__side .am-pair-line {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.americano-history__side .am-pair-line__name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.americano-history__points {
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.americano-history__vs {
+  align-self: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
 }
 
 .americano-history__edit {
@@ -142,6 +201,39 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+.americano-history__form-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--ro-border, var(--border-subtle));
+}
+
+.americano-history__form-side .am-pair-line {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.americano-history__form-side .am-pair-line__name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+@media (max-width: 640px) {
+  .americano-history__sides,
+  .americano-history__form-scores {
+    grid-template-columns: 1fr;
+  }
+
+  .americano-history__vs {
+    justify-self: center;
+  }
 }
 
 .americano-history__confirm {
