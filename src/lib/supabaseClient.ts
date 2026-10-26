@@ -1,4 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
+import {
+  headersForApiKey,
+  sanitizeSupabaseFetch,
+  sessionTokenForRealtime,
+} from "./supabaseApiKey";
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
@@ -21,7 +26,17 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
   },
+  global: {
+    fetch: sanitizeSupabaseFetch(resolvedSupabaseAnonKey),
+  },
 });
+
+const realtime = supabase.realtime as {
+  accessToken?: (() => Promise<string | null>) | null;
+};
+const readRealtimeToken = realtime.accessToken?.bind(supabase.realtime);
+realtime.accessToken = async () =>
+  sessionTokenForRealtime(readRealtimeToken ? await readRealtimeToken() : null);
 
 /** Alias del singleton — evita múltiples GoTrueClient en el mismo browser context. */
 export const supabasePublicRead = supabase;
@@ -40,11 +55,7 @@ export async function anonRestGet<T extends Record<string, unknown>>(
     const response = await fetch(
       `${resolvedSupabaseUrl}/rest/v1/${table}?${query}`,
       {
-        headers: {
-          apikey: resolvedSupabaseAnonKey,
-          Authorization: `Bearer ${resolvedSupabaseAnonKey}`,
-          Accept: "application/json",
-        },
+        headers: headersForApiKey(resolvedSupabaseAnonKey),
       }
     );
     if (!response.ok) return null;
