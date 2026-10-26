@@ -74,6 +74,7 @@
   padding: 12px 14px 14px;
   width: 100%;
   min-width: 0;
+  overflow: hidden;
   transition: border-color var(--motion-micro), background var(--motion-micro);
   animation: fadeInUp var(--motion-enter) both;
   animation-delay: calc(var(--motion-stagger) * var(--i, 0));
@@ -93,21 +94,59 @@
 }
 
 .americano-match-card__court {
-  font-size: 0.6875rem;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: var(--text-muted, var(--text-secondary));
   padding: 0;
   border: none;
   border-radius: 0;
   background: transparent;
 }
 
-.americano-round .am-pair-line__name {
+.americano-court {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.americano-court .am-pair-line {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  gap: 6px;
+}
+
+.americano-court .am-pair-line__player {
+  min-width: 0;
+}
+
+.americano-court .am-pair-line__name {
+  min-width: 0;
   white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.americano-court__score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 0;
+  border-top: 1px solid var(--ro-border, var(--border-subtle));
+  border-bottom: 1px solid var(--ro-border, var(--border-subtle));
+}
+
+.americano-round .americano-court .am-match-board__score {
+  border-color: var(--ro-border, var(--border-subtle));
+  background: var(--bg-card, var(--rv-bg-card));
 }
 
 /* Tablero Split VS: pareja | VS | pareja, marcador abajo */
