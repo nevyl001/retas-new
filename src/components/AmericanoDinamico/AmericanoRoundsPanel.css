@@ -5,31 +5,64 @@
   min-width: 0;
 }
 
-.am-rounds__tabs,
+.am-rounds__tabs {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  background: var(--rv-bg-card, var(--bg-card));
+}
+
+.am-rounds__tabs button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.am-rounds__tabs button.is-active {
+  background: var(--bg-elevated, var(--rv-bg-card-soft));
+  color: var(--text-primary);
+}
+
 .am-rounds__nav {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.am-rounds__tabs button,
 .am-rounds__nav button {
   display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  min-height: 36px;
-  padding: 6px 12px;
-  border-radius: 999px;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 8px;
   border: 1px solid var(--ro-border, var(--border-subtle));
   background: transparent;
   color: var(--text-primary);
   font: inherit;
   font-size: 13px;
+  line-height: 1.2;
   cursor: pointer;
 }
 
-.am-rounds__tabs button.is-active,
+.am-rounds__nav button span {
+  font-weight: 700;
+}
+
 .am-rounds__nav button.is-active {
   background: var(--rv-bg-card, var(--bg-elevated));
   border-color: var(--text-primary);

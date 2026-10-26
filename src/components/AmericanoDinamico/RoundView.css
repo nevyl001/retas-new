@@ -104,6 +104,12 @@
   background: transparent;
 }
 
+.americano-round .am-pair-line__name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
 /* Tablero Split VS: pareja | VS | pareja, marcador abajo */
 .am-match-board--split-vs {
   display: grid;
