@@ -5,10 +5,13 @@
   font-family: var(--font-body);
   color: var(--text-primary);
   min-height: 100vh;
-  padding: var(--space-5) var(--space-6) var(--space-12);
+  width: 100%;
+  padding: 16px clamp(12px, 3vw, 24px) 24px;
   max-width: 1100px;
   margin: 0 auto;
   box-sizing: border-box;
+  font-variant-numeric: tabular-nums;
+  overflow-x: clip;
 }
 
 /* Prep workspace: misma caja e inset que Round Robin / Duelo */
@@ -16,6 +19,7 @@
   max-width: none;
   width: 100%;
   margin: 0;
+  overflow-x: visible;
   padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
     max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom));
 }
@@ -141,7 +145,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-top: 8px;
+  margin-top: 24px;
   padding: 18px 24px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
@@ -626,7 +630,7 @@
 .americano-screen__jugadores-pos {
   flex-shrink: 0;
   width: 1.5rem;
-  font-size: 0.72rem;
+  font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--text-muted, rgba(255, 255, 255, 0.45));
@@ -638,6 +642,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 13px;
 }
 
 .americano-screen__jugadores-avatar.rj-avatar {
@@ -662,4 +667,20 @@
   .americano-screen__jugadores-list {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+@media (min-width: 1200px) {
+  .americano-screen__jugadores-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.americano-screen .americano-share {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.americano-screen .americano-share h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
 }

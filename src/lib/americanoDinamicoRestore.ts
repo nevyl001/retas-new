@@ -192,6 +192,7 @@ export function applyAmericanoSnapshotToState(
           court: sm.court,
           scoreA: sm.scoreA,
           scoreB: sm.scoreB,
+          scoreRevision: sm.scoreRevision,
           teamA: [a0, a1] as [AmericanoPlayer, AmericanoPlayer],
           teamB: [b0, b1] as [AmericanoPlayer, AmericanoPlayer],
         };

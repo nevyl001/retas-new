@@ -141,6 +141,12 @@ export interface AmericanoSnapshotMatch {
   court: number;
   scoreA?: number;
   scoreB?: number;
+  /** Presente solo si el marcador se corrigió. Ausente en snapshots viejos. */
+  scoreRevision?: {
+    previousScoreA: number;
+    previousScoreB: number;
+    editedAt: string;
+  };
   teamA: [AmericanoSnapshotPlayer, AmericanoSnapshotPlayer];
   teamB: [AmericanoSnapshotPlayer, AmericanoSnapshotPlayer];
 }
@@ -258,6 +264,7 @@ export function buildAmericanoSnapshotRound(r: AmericanoRound): AmericanoSnapsho
       court: m.court,
       scoreA: m.scoreA,
       scoreB: m.scoreB,
+      scoreRevision: m.scoreRevision,
       teamA: [miniPlayer(m.teamA[0]), miniPlayer(m.teamA[1])],
       teamB: [miniPlayer(m.teamB[0]), miniPlayer(m.teamB[1])],
     })),
