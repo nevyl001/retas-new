@@ -371,6 +371,11 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+# Solo este webhook. La autorización es x-notificaciones-secret, comprobada
+# antes de leer la cola. El resto de funciones conserva verify_jwt.
+[functions.procesar-notificaciones-evento]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

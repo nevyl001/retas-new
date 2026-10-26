@@ -1,5 +1,11 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
+import {
+  createCredentialClient,
+  logCredentialSelection,
+  readPublishableCredential,
+  readSecretCredential,
+} from "../_shared/supabaseCredentials.ts";
 import { newCorrelationId, logError, logWarn } from "../_shared/logger.ts";
 import { safeClientMessage, internalErrorDetail } from "../_shared/errors.ts";
 import { checkRateLimit, rateLimitedResponse } from "../_shared/rateLimit.ts";
@@ -24,11 +30,11 @@ const MAX_BODY_BYTES = 12_000;
 const MODULE = "coaching-invite-coach";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY =
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const publishableKey = readPublishableCredential();
+const secretKey = readSecretCredential();
+logCredentialSelection({ module: MODULE, secret: secretKey, publishable: publishableKey });
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
+if (!SUPABASE_URL) {
   throw new Error("Missing Supabase env vars.");
 }
 
@@ -146,9 +152,11 @@ Deno.serve(async (req: Request) => {
   }
 
   // 1. Validar la identidad del caller (organizador del club)
-  const supabaseCaller = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-  });
+  const supabaseCaller = createCredentialClient(
+    SUPABASE_URL,
+    publishableKey,
+    authHeader,
+  );
 
   const {
     data: { user: caller },
@@ -162,7 +170,7 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const supabaseAdmin = createCredentialClient(SUPABASE_URL, secretKey);
 
   // 2. Rate limit por organizador autenticado (10 llamadas por 10 min)
   const rl = await checkRateLimit(supabaseAdmin, `${MODULE}:${caller.id}`, 10, 600);

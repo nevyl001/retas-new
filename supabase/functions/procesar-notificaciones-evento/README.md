@@ -4,7 +4,13 @@ Cola automática de emails (bienvenida, asignación de grupo, clasificación eli
 
 ## Secreto de webhook (`NOTIFICACIONES_WEBHOOK_SECRET`)
 
-La función **rechaza** cualquier `POST` sin el header `x-notificaciones-secret` correcto (respuesta `401`).
+La función **rechaza** cualquier `POST` sin el header `x-notificaciones-secret` correcto (respuesta `401`), antes de leer la cola.
+
+El cuerpo aceptado es exactamente `{"record":{"id":"<uuid>"}}`. Un id ausente o que no sea UUID responde 400 y no consulta la cola. `id` o `queue_id` sueltos no sirven.
+
+Nivel A, contra producción: 401 sin secreto, 401 con secreto distinto, y `skipped` con un UUID que no existe. No inserta, no actualiza, no borra y no envía correos. Nivel B está en `queueClaim.test.ts`: simula cola y destinatario. No hay entorno aislado, así que no cuenta como validación de producción. El primer evento real después de `0092` espera una autorización aparte. El rollback de `0092` vuelve al trigger que falla; no recupera la cola.
+
+La versión desplegada el 2026-06-02 no hace esa comprobación. El trigger en producción manda `Authorization` con la anon key legacy y el cuerpo `{}`, así que no entrega `record.id`. No desplegar este archivo ni aplicar `supabase/manual/0092_notificaciones_webhook_vault.sql` hasta tener los secretos en Vault y en la función. `verify_jwt = false` queda solo en `config.toml` para ese despliegue; no está activo en producción. No activar ese flag sobre la función vieja: sin la comprobación del secreto, el trigger nuevo enviaría correos.
 
 ### 1. Generar un valor seguro
 

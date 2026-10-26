@@ -6,16 +6,14 @@
  *   ?dest=<pathname>     → cualquier vista pública SPA
  *
  * Deploy: supabase functions deploy share-reta-og
- * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, PUBLIC_APP_ORIGIN
+ * Env: SUPABASE_URL, SUPABASE_SECRET_KEYS o SUPABASE_SERVICE_ROLE_KEY, PUBLIC_APP_ORIGIN
  * No redirect inmediato (meta refresh 8s + enlace).
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
-// Import de solo-tipo sin pin de versión — coincide con el que usa
-// _shared/rateLimit.ts. Esta función es la única que fija "@2.57.4" (el
-// resto usa "@2" sin fijar), así que esm.sh resuelve dos clases
-// nominalmente distintas para el mismo cliente; el cast de abajo reconcilia
-// eso sin introducir "any" ni ocultar un error real.
+import {
+  createCredentialClient,
+  readSecretCredential,
+} from "../_shared/supabaseCredentials.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit } from "../_shared/rateLimit.ts";
 import { newCorrelationId, logWarn } from "../_shared/logger.ts";
@@ -79,7 +77,7 @@ type BrandCtx = {
 };
 
 async function applyPremiumBrand(
-  sb: ReturnType<typeof createClient>,
+  sb: ReturnType<typeof createCredentialClient>,
   ctx: BrandCtx
 ): Promise<{ title: string; description: string; image: string }> {
   let image = RIVIERA_OG_IMAGE;
@@ -110,7 +108,7 @@ async function applyPremiumBrand(
 }
 
 async function resolveFromSlug(
-  sb: ReturnType<typeof createClient>,
+  sb: ReturnType<typeof createCredentialClient>,
   slug: string
 ): Promise<BrandCtx | Response> {
   const { data: reg, error: regErr } = await sb
@@ -160,7 +158,7 @@ async function resolveFromSlug(
 }
 
 async function resolveFromDest(
-  sb: ReturnType<typeof createClient>,
+  sb: ReturnType<typeof createCredentialClient>,
   dest: string
 ): Promise<BrandCtx | Response> {
   const path = dest.split("?")[0] || "";
@@ -294,8 +292,8 @@ serve(async (req) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const sb = createClient(supabaseUrl, serviceKey);
+  const serviceKey = readSecretCredential();
+  const sb = createCredentialClient(supabaseUrl, serviceKey);
 
   // Endpoint público sin sesión (crawlers de WhatsApp/Facebook/Twitter) — el
   // rate limit es por IP, generoso (varios crawlers pueden compartir salida

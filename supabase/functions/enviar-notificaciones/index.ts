@@ -1,4 +1,9 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  createCredentialClient,
+  logCredentialSelection,
+  readPublishableCredential,
+  readSecretCredential,
+} from "../_shared/supabaseCredentials.ts";
 import {
   companeroFromPair,
   fetchGrupoContextForPair,
@@ -62,11 +67,11 @@ const MODULE = "enviar-notificaciones";
 const MAX_BODY_BYTES = 5_000;
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY =
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const publishableKey = readPublishableCredential();
+const secretKey = readSecretCredential();
+logCredentialSelection({ module: MODULE, secret: secretKey, publishable: publishableKey });
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
+if (!SUPABASE_URL) {
   throw new Error("Missing Supabase env vars.");
 }
 
@@ -78,7 +83,7 @@ function isFakeEmail(email: string | null | undefined): boolean {
 }
 
 async function buildPlayerEmail(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: ReturnType<typeof createCredentialClient>,
   tipo: NotifTipo,
   torneoId: string,
   torneoNombre: string,
@@ -181,10 +186,12 @@ Deno.serve(async (req) => {
 
   // Autenticación ANTES de leer el body (Fase B) — antes se validaba el JWT
   // después de parsear/validar el body.
-  const supabaseAuthed = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const supabaseAuthed = createCredentialClient(
+    SUPABASE_URL,
+    publishableKey,
+    authHeader,
+  );
+  const supabaseAdmin = createCredentialClient(SUPABASE_URL, secretKey);
 
   const { data: userData, error: userError } =
     await supabaseAuthed.auth.getUser();

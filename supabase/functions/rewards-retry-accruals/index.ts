@@ -1,5 +1,8 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
+import {
+  createCredentialClient,
+  readSecretCredential,
+} from "../_shared/supabaseCredentials.ts";
 
 /**
  * Supabase Edge Function: rewards-retry-accruals
@@ -13,16 +16,21 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    let secretKey = "";
+    try {
+      secretKey = readSecretCredential();
+    } catch {
+      secretKey = "";
+    }
 
-    if (!supabaseUrl || !serviceRoleKey) {
+    if (!supabaseUrl || !secretKey) {
       return new Response(
         JSON.stringify({ ok: false, error: "Variables de entorno de Supabase no configuradas" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const supabase = createCredentialClient(supabaseUrl, secretKey);
 
     const { data, error } = await supabase.rpc("rewards_retry_accruals", { p_limit: 100 });
 
