@@ -43,7 +43,7 @@ describe("RoundHistory", () => {
     });
     render(<RoundHistory rounds={rounds} onEditScore={onEditScore} />);
     await user.click(screen.getByRole("button", { name: /corregir/i }));
-    const scoreA = screen.getByRole("textbox", { name: "Pareja A" });
+    const scoreA = screen.getByRole("textbox", { name: "Marcador de Ana y Ana" });
     await user.clear(scoreA);
     await user.type(scoreA, "1");
     await user.click(screen.getByRole("button", { name: "Guardar corrección" }));
