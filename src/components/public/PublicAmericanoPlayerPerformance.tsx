@@ -68,6 +68,8 @@ export const PublicAmericanoPlayerPerformance: React.FC<{
   pointsFor: number;
   pointsAgainst: number;
   history: AmericanoPublicMatchHistoryEntry[];
+  restRounds?: number[];
+  pendingRounds?: number[];
 }> = ({
   open,
   onClose,
@@ -82,6 +84,8 @@ export const PublicAmericanoPlayerPerformance: React.FC<{
   pointsFor,
   pointsAgainst,
   history,
+  restRounds = [],
+  pendingRounds = [],
 }) => {
   const isMobile = useMobileViewport(900);
   const initials = useMemo(
@@ -302,6 +306,16 @@ export const PublicAmericanoPlayerPerformance: React.FC<{
               ))}
             </ul>
           )}
+          {restRounds.length > 0 ? (
+            <p className="am-pub-perf__history-empty">
+              Descansó en {restRounds.map((round) => `R${round}`).join(", ")}.
+            </p>
+          ) : null}
+          {pendingRounds.length > 0 ? (
+            <p className="am-pub-perf__history-empty">
+              Pendiente: {pendingRounds.map((round) => `R${round}`).join(", ")}.
+            </p>
+          ) : null}
         </section>
       </article>
     </Modal>

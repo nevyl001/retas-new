@@ -1,68 +1,159 @@
-.americano-history {
-  border: 1px solid var(--color-border-subtle, var(--ro-border-strong));
-  border-radius: 12px;
-  padding: 16px;
-  background: var(--color-bg-surface, var(--ro-bg-inset));
+.americano-history h3 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
 }
 
-.americano-history h3 {
+.americano-history__help,
+.americano-history__empty,
+.americano-history__notice {
   margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.americano-history__notice {
+  color: var(--ro-success);
 }
 
 .americano-history__round {
-  border-top: 1px solid var(--color-border-subtle, var(--ro-border-strong));
-  padding-top: 12px;
-  margin-top: 12px;
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  border-radius: 12px;
+  background: var(--rv-bg-card, var(--bg-card));
 }
 
-.americano-history__toggle {
-  width: 100%;
-  text-align: left;
-  border: 1px solid var(--color-border-subtle, var(--ro-border-strong));
-  border-radius: 10px;
-  padding: 10px 12px;
-  background: var(--color-bg-elevated, var(--ro-bg-card));
-  color: var(--color-text-primary, var(--ro-text-primary));
-  font-weight: 600;
-  cursor: pointer;
+.americano-history__round-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.americano-history__toggle:hover {
-  border-color: var(--ro-border-strong, var(--ro-border));
+.americano-history__round-head h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.americano-history__of,
+.americano-history__phase,
+.americano-history__capture,
+.americano-history__outcome {
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 .americano-history__matches {
-  display: grid;
-  gap: 10px;
-  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .americano-history__match {
-  border: 1px solid var(--color-border-subtle, var(--ro-border-strong));
-  border-radius: 10px;
-  padding: 12px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  background: var(--color-bg-elevated, var(--ro-bg-card));
+  min-width: 0;
 }
 
-.americano-history__match > span:first-of-type {
-  font-size: 14px;
-  line-height: 1.45;
+.americano-history__match-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
-.americano-history__match > strong {
-  font-size: 18px;
-  color: var(--ro-text-primary);
+.americano-history__court {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .americano-history__edit {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.americano-history__edited {
+  position: relative;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  color: var(--text-secondary);
+}
+
+.americano-history__edited-tip {
+  display: none;
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  top: calc(100% + 4px);
+  width: max-content;
+  max-width: 220px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--bg-elevated, var(--bg-card));
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.americano-history__edited:hover .americano-history__edited-tip,
+.americano-history__edited:focus .americano-history__edited-tip {
+  display: block;
+}
+
+.americano-history__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.americano-history__form-meta,
+.americano-history__form-teams {
+  margin: 0;
+  font-size: 13px;
+}
+
+.americano-history__form-teams {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  align-items: center;
 }
 
-.americano-history__edit .riviera-field {
-  width: 72px;
+.americano-history__form-scores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.americano-history__confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.americano-history__form-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ro-error, var(--color-danger));
 }

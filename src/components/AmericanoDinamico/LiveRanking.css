@@ -35,7 +35,7 @@
 }
 
 .americano-ranking .tabla-ranking th {
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-muted);
@@ -157,4 +157,85 @@
   font-size: 1.2rem;
   color: var(--text-muted);
   width: 40px;
+}
+
+.americano-ranking__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.americano-ranking__legend li {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.americano-ranking__legend abbr {
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.americano-ranking__empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.americano-ranking__mobile {
+  display: none;
+}
+
+.americano-ranking__mobile-row button {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 0;
+  border: 0;
+  border-bottom: 1px solid var(--ro-border, var(--border-subtle));
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.americano-ranking__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.americano-ranking__mobile-row dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 8px 0 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.americano-ranking__mobile-row dt {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.americano-ranking__mobile-row dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .americano-ranking__mobile {
+    display: flex;
+    flex-direction: column;
+  }
 }

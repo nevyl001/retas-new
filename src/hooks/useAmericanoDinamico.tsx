@@ -34,6 +34,10 @@ import {
   resetAmericanoDinamicoRemote,
 } from "../lib/americanoDinamicoSync";
 import { aplicarRatingAmericanoPartido } from "../lib/rivieraJugadores/aplicarRatingPartido";
+import {
+  parseAmericanoScore,
+  type AmericanoEditScoreResult,
+} from "../lib/americanoScoreEdit";
 
 type AmericanoPhase = "registration" | "playing" | "finished";
 
@@ -612,67 +616,130 @@ export function useAmericanoDinamico(
   );
 
   const editScore = useCallback(
-    (roundIndex: number, matchId: string, scoreA: number, scoreB: number) => {
-      if (
-        !Number.isFinite(scoreA) ||
-        !Number.isFinite(scoreB) ||
-        scoreA < 0 ||
-        scoreB < 0
-      ) {
-        return;
+    async (
+      roundIndex: number,
+      matchId: string,
+      rawScoreA: number,
+      rawScoreB: number
+    ): Promise<AmericanoEditScoreResult> => {
+      const scoreA = parseAmericanoScore(rawScoreA);
+      const scoreB = parseAmericanoScore(rawScoreB);
+      if (scoreA == null || scoreB == null) {
+        return {
+          ok: false,
+          error: "El marcador debe ser un número entero, finito y no negativo.",
+        };
       }
+
       const prevRounds = roundsRef.current;
       const previous = findMatchInRounds(prevRounds, matchId);
+      if (!previous || !prevRounds[roundIndex]) {
+        return { ok: false, error: "No se encontró el partido." };
+      }
+
+      const hadScore = matchAlreadyHasScore(previous);
       const nextRounds = prevRounds.map((round, idx) => {
         if (idx !== roundIndex) return round;
         return {
           ...round,
-          matches: round.matches.map((match) =>
-            match.id === matchId ? { ...match, scoreA, scoreB } : match
-          ),
+          matches: round.matches.map((match) => {
+            if (match.id !== matchId) return match;
+            return {
+              ...match,
+              scoreA,
+              scoreB,
+              scoreRevision: hadScore
+                ? {
+                    previousScoreA: previous.scoreA as number,
+                    previousScoreB: previous.scoreB as number,
+                    editedAt: new Date().toISOString(),
+                  }
+                : match.scoreRevision,
+            };
+          }),
         };
       });
-      persistRebuiltState(nextRounds);
 
-      // Corrección desde Historial: siempre force si ya había marcador.
-      // Sin esto solo se actualiza localStorage y Supabase vuelve a pisar el valor viejo.
-      if (resolvedTournamentId) {
-        const force = previous ? matchAlreadyHasScore(previous) : true;
-        void persistAmericanoDinamicoMatchScore({
+      // Sin torneo persistible no hay servidor que confirmar. El estado local
+      // se reconstruye desde las rondas (no se acumula sobre el ranking previo).
+      if (!resolvedTournamentId) {
+        persistRebuiltState(nextRounds);
+        return { ok: true };
+      }
+
+      try {
+        const result = await persistAmericanoDinamicoMatchScore({
           tournamentId: resolvedTournamentId,
           matchId,
           scoreA,
           scoreB,
-          force,
-        })
-          .then((result) => {
-            if (result.status === "conflict") {
-              console.warn(
-                "[americano-live] conflicto al corregir partido, reconciliando:",
-                matchId
-              );
-              reconcileMatchScore(matchId, result.scoreA, result.scoreB);
-            }
-          })
-          .catch((e) => console.warn("[americano-live] editScore:", e));
-      }
+          // Corrección: force solo si ya había marcador. El RPC es idempotente
+          // si el marcador coincide y rechaza un valor distinto sin force.
+          force: hadScore,
+        });
 
-      if (options?.organizadorId) {
-        const round = nextRounds[roundIndex];
-        const m = round?.matches.find((match) => match.id === matchId);
-        if (m) {
-          void aplicarRatingAmericanoPartido(options.organizadorId, m).catch(
-            (e) => console.warn("[rating] americano edit:", e)
-          );
+        if (result.status === "conflict") {
+          const restored = roundsRef.current.map((round) => ({
+            ...round,
+            matches: round.matches.map((match) =>
+              match.id === matchId
+                ? {
+                    ...match,
+                    scoreA: result.scoreA,
+                    scoreB: result.scoreB,
+                    scoreRevision: undefined,
+                  }
+                : match
+            ),
+          }));
+          persistRebuiltState(restored);
+          return {
+            ok: false,
+            conflict: true,
+            error:
+              "Otro dispositivo guardó un marcador distinto. Se restauró el valor confirmado.",
+          };
         }
+
+        if (result.status !== "ok") {
+          return {
+            ok: false,
+            error:
+              result.status === "invalid"
+                ? "El servidor rechazó el marcador."
+                : result.status === "not_found"
+                  ? "No se encontró el partido en el servidor."
+                  : result.message || "No se pudo guardar la corrección.",
+          };
+        }
+
+        // Solo después de la confirmación del servidor. rebuildStateFromRounds
+        // pone las estadísticas en cero y vuelve a aplicar cada marcador vigente.
+        persistRebuiltState(nextRounds);
+
+        // El RPC de rating compara el resultado registrado y, si cambió,
+        // revierte y reaplica ese partido. No se vuelve a cerrar la carrera:
+        // finalizeCareerEvent corre una sola vez al finalizar y repetirlo
+        // acreditaría participaciones otra vez.
+        if (options?.organizadorId) {
+          const corrected = nextRounds[roundIndex]?.matches.find(
+            (match) => match.id === matchId
+          );
+          if (corrected) {
+            void aplicarRatingAmericanoPartido(
+              options.organizadorId,
+              corrected
+            ).catch((e) => console.warn("[rating] americano edit:", e));
+          }
+        }
+
+        return { ok: true };
+      } catch (e) {
+        console.warn("[americano-live] editScore:", e);
+        return { ok: false, error: "No se pudo guardar la corrección." };
       }
     },
-    [
-      persistRebuiltState,
-      resolvedTournamentId,
-      reconcileMatchScore,
-      options?.organizadorId,
-    ]
+    [persistRebuiltState, resolvedTournamentId, options?.organizadorId]
   );
 
   const nextRound = useCallback(async (): Promise<boolean> => {

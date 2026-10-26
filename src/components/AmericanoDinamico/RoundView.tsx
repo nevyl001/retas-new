@@ -5,7 +5,7 @@ import { formatMatchCourtLabel, sortByMatchCourt } from "../../lib/matchCourt";
 import { ActionBar } from "../platform/ActionBar";
 import { Button } from "../ui";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
-import { PublicSplitVsPairHalf } from "../public/split-vs";
+import { AmericanoPairLine } from "../americano/AmericanoPairLine";
 import "../jugadores/riviera-jugadores.css";
 import "./RoundView.css";
 
@@ -20,8 +20,10 @@ interface RoundViewProps {
   /** Total de rondas del torneo (para mostrar "Final" en la última). */
   totalRounds?: number;
   /** Persiste ranking + servidor solo al pulsar Confirmar (borrador local hasta entonces). */
-  onCommitRound: (scores: RoundScorePayload[]) => void;
-  onRoundFinalized: () => void;
+  onCommitRound?: (scores: RoundScorePayload[]) => void;
+  onRoundFinalized?: () => void;
+  /** Ronda histórica: marcador visible, sin captura. */
+  readOnly?: boolean;
   /** FC-01 (Fase C1): true mientras la ronda siguiente se confirma con el servidor. */
   roundSyncPending?: boolean;
   /** Mensaje si el servidor rechazó/no confirmó el avance de ronda — reintentar es seguro (idempotente). */
@@ -114,6 +116,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
   totalRounds = 0,
   onCommitRound,
   onRoundFinalized,
+  readOnly = false,
   roundSyncPending = false,
   roundSyncError = null,
   playerFotos = {},
@@ -150,7 +153,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
       const { a, b } = readDraft(m, draftScores);
       return { matchId: m.id, scoreA: Number(a), scoreB: Number(b) };
     });
-    onCommitRound(scores);
+    onCommitRound?.(scores);
     setDraftScores({});
   };
 
@@ -176,9 +179,9 @@ export const RoundView: React.FC<RoundViewProps> = ({
           </span>
         </div>
         <p className="americano-round__hint">
-          Captura los juegos de cada pareja. No se guardan ni suman al ranking
-          hasta que pulses <strong>Confirmar resultados</strong>. Luego{" "}
-          <strong>Ronda finalizada</strong>.
+          {readOnly
+            ? "Resultado de una ronda anterior, solo lectura."
+            : "Captura los juegos de cada pareja. No se guardan ni suman al ranking hasta que pulses Confirmar resultados."}
         </p>
       </header>
 
@@ -187,8 +190,16 @@ export const RoundView: React.FC<RoundViewProps> = ({
           const { a, b } = readDraft(match, draftScores);
           const teamALabel = teamPlayersLabel(match.teamA);
           const teamBLabel = teamPlayersLabel(match.teamB);
-          const [a1, a2] = match.teamA;
-          const [b1, b2] = match.teamB;
+          const scoreA = a === "" ? null : Number(a);
+          const scoreB = b === "" ? null : Number(b);
+          const scored =
+            scoreA != null &&
+            scoreB != null &&
+            !Number.isNaN(scoreA) &&
+            !Number.isNaN(scoreB);
+          const aWins = scored && scoreA > scoreB;
+          const bWins = scored && scoreB > scoreA;
+          const tie = scored && scoreA === scoreB;
           const patchScore = (side: "a" | "b", raw: string) => {
             const sanitized = raw.replace(/\D/g, "").slice(0, 2);
             setDraftScores((prev) => ({
@@ -197,10 +208,17 @@ export const RoundView: React.FC<RoundViewProps> = ({
             }));
           };
 
+          const toLine = (players: AmericanoMatch["teamA"]) =>
+            players.map((player) => ({
+              id: player.id,
+              name: player.name,
+              fotoUrl: playerFotos[player.id] ?? null,
+            }));
+
           return (
             <article
               key={match.id}
-              className="americano-match-card americano-match-card--split-vs rv-card rv-match-card"
+              className="americano-match-card rv-card rv-match-card"
             >
               <div className="americano-match-card__top">
                 <span className="americano-match-card__court">
@@ -208,62 +226,40 @@ export const RoundView: React.FC<RoundViewProps> = ({
                 </span>
               </div>
 
-              <div className="am-match-board am-match-board--split-vs">
-                <PublicSplitVsPairHalf
-                  player1={{
-                    name: a1?.name ?? "",
-                    foto: a1 ? playerFotos[a1.id] ?? null : null,
-                  }}
-                  player2={
-                    a2
-                      ? {
-                          name: a2.name,
-                          foto: playerFotos[a2.id] ?? null,
-                        }
-                      : null
-                  }
+              <div className="am-match-lineup">
+                <AmericanoPairLine
                   label={teamALabel}
-                  className="pub-split-vs-pair--compact am-match-board__pair"
+                  highlight={aWins ? "win" : tie ? "tie" : scored ? "loss" : undefined}
+                  players={toLine(match.teamA)}
                 />
-
-                <div className="am-match-board__vs" role="separator" aria-label="versus">
-                  <span className="am-match-board__vs-line" />
-                  <span className="am-match-board__vs-text">VS</span>
-                  <span className="am-match-board__vs-line" />
+                <div className="am-match-lineup__score">
+                  {readOnly ? (
+                    <span aria-label={`Marcador ${a || "sin juegos"} a ${b || "sin juegos"}`}>
+                      {a || "—"} – {b || "—"}
+                    </span>
+                  ) : (
+                    <>
+                      <ScoreField
+                        value={a}
+                        ariaLabel={`Juegos ${teamALabel}`}
+                        onChange={(raw) => patchScore("a", raw)}
+                      />
+                      <span className="am-match-board__score-sep" aria-hidden>
+                        -
+                      </span>
+                      <ScoreField
+                        value={b}
+                        ariaLabel={`Juegos ${teamBLabel}`}
+                        onChange={(raw) => patchScore("b", raw)}
+                      />
+                    </>
+                  )}
                 </div>
-
-                <PublicSplitVsPairHalf
-                  player1={{
-                    name: b1?.name ?? "",
-                    foto: b1 ? playerFotos[b1.id] ?? null : null,
-                  }}
-                  player2={
-                    b2
-                      ? {
-                          name: b2.name,
-                          foto: playerFotos[b2.id] ?? null,
-                        }
-                      : null
-                  }
+                <AmericanoPairLine
                   label={teamBLabel}
-                  className="pub-split-vs-pair--compact am-match-board__pair"
+                  highlight={bWins ? "win" : tie ? "tie" : scored ? "loss" : undefined}
+                  players={toLine(match.teamB)}
                 />
-
-                <div className="am-match-board__scoreboard">
-                  <ScoreField
-                    value={a}
-                    ariaLabel={`Juegos ${teamALabel}`}
-                    onChange={(raw) => patchScore("a", raw)}
-                  />
-                  <span className="am-match-board__score-sep" aria-hidden>
-                    -
-                  </span>
-                  <ScoreField
-                    value={b}
-                    ariaLabel={`Juegos ${teamBLabel}`}
-                    onChange={(raw) => patchScore("b", raw)}
-                  />
-                </div>
               </div>
             </article>
           );
@@ -275,7 +271,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
         <div className="americano-round__bench-list">
           {round.benchPlayers.length === 0 ? (
             <span className="americano-round__bench-empty">
-              Sin descanso esta ronda
+              Nadie descansa esta ronda
             </span>
           ) : (
             round.benchPlayers.map((player) => (
@@ -293,44 +289,41 @@ export const RoundView: React.FC<RoundViewProps> = ({
         </div>
       </div>
 
-      <ActionBar className="americano-round__actions">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={handleConfirm}
-          disabled={!draftComplete}
-        >
-          Confirmar resultados
-        </Button>
-        <Button
-          type="button"
-          variant="primary"
-          onClick={onRoundFinalized}
-          disabled={!canFinalizeRound}
-          loading={roundSyncPending}
-        >
-          {roundSyncPending ? "Guardando…" : "Ronda finalizada"}
-        </Button>
-      </ActionBar>
-      {!draftComplete && (
-        <p className="americano-round__footer-hint">
-          Completa todos los marcadores (≥ 0). Nada se guarda hasta{" "}
-          <strong>Confirmar resultados</strong>.
-        </p>
+      {readOnly ? null : (
+        <>
+          <ActionBar className="americano-round__actions">
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleConfirm}
+              disabled={!draftComplete}
+            >
+              Confirmar resultados
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => onRoundFinalized?.()}
+              disabled={!canFinalizeRound}
+              loading={roundSyncPending}
+            >
+              {roundSyncPending ? "Guardando…" : "Ronda finalizada"}
+            </Button>
+          </ActionBar>
+          {!draftComplete && (
+            <p className="americano-round__footer-hint">
+              Faltan marcadores por capturar
+            </p>
+          )}
+          {draftComplete && (!committed || dirty) && (
+            <p className="americano-round__footer-hint">Listo para confirmar</p>
+          )}
+          {committed && !dirty && (
+            <p className="americano-round__footer-hint">Resultados confirmados</p>
+          )}
+        </>
       )}
-      {draftComplete && !committed && (
-        <p className="americano-round__footer-hint">
-          Marcadores listos. Pulsa <strong>Confirmar resultados</strong> para
-          guardarlos y actualizar el ranking.
-        </p>
-      )}
-      {dirty && (
-        <p className="americano-round__footer-hint">
-          Hay cambios sin confirmar. Pulsa <strong>Confirmar resultados</strong>{" "}
-          antes de finalizar la ronda.
-        </p>
-      )}
-      {roundSyncError && (
+      {roundSyncError && !readOnly && (
         <p className="americano-round__footer-hint americano-round__footer-hint--error">
           {roundSyncError} Puedes volver a pulsar «Ronda finalizada» — reintentar es seguro.
         </p>

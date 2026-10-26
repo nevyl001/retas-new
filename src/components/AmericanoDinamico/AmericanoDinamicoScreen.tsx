@@ -11,7 +11,7 @@ import {
 } from "../../lib/modePresentation/americanoNextAction";
 import { useAmericanoDinamico } from "../../hooks/useAmericanoDinamico";
 import { PlayerRegistration } from "./PlayerRegistration";
-import { RoundView } from "./RoundView";
+import { AmericanoRoundsPanel } from "./AmericanoRoundsPanel";
 import { LiveRanking } from "./LiveRanking";
 import { RoundHistory } from "./RoundHistory";
 import {
@@ -92,6 +92,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   const {
     players,
     rounds,
+    currentRoundIndex,
     phase,
     ranking,
     rosterForUi,
@@ -542,10 +543,10 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
               <JugadorAvatar
                 fotoUrl={playerFotos[p.id]}
                 nombre={p.name}
-                size="md"
+                size="sm"
                 className="americano-screen__jugadores-avatar"
               />
-              <span className="americano-screen__jugadores-name">{p.name}</span>
+              <span className="americano-screen__jugadores-name" title={p.name}>{p.name}</span>
             </li>
           ))}
         </ul>
@@ -634,26 +635,26 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           ariaLabel="Secciones del americano"
         />
         <ModeSectionPanel id="ronda" activeId={playingTab}>
-          {currentRound ? (
-            <RoundView
-              key={currentRound.roundNumber}
-              round={currentRound}
-              totalRounds={totalRounds}
-              onCommitRound={commitRoundScores}
-              onRoundFinalized={nextRound}
-              roundSyncPending={roundSyncPending}
-              roundSyncError={roundSyncError}
-              playerFotos={playerFotos}
-            />
-          ) : (
-            <p className="americano-screen__loading">Preparando ronda…</p>
-          )}
+          <AmericanoRoundsPanel
+            rounds={rounds}
+            currentRoundIndex={currentRoundIndex}
+            totalRounds={totalRounds}
+            phase={phase}
+            roster={rosterForUi}
+            playerFotos={playerFotos}
+            onCommitRound={commitRoundScores}
+            onRoundFinalized={() => void nextRound()}
+            roundSyncPending={roundSyncPending}
+            roundSyncError={roundSyncError}
+          />
           {roundsConfigPanel}
         </ModeSectionPanel>
         <ModeSectionPanel id="partidos" activeId={playingTab}>
           <RoundHistory
             rounds={rounds}
             totalRounds={totalRounds}
+            phase={phase}
+            playerFotos={playerFotos}
             onEditScore={editScore}
           />
         </ModeSectionPanel>
@@ -672,18 +673,18 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     ) : (
       <>
         {roundsConfigPanel}
-        {currentRound && (
-          <RoundView
-            key={currentRound.roundNumber}
-            round={currentRound}
-            totalRounds={totalRounds}
-            onCommitRound={commitRoundScores}
-            onRoundFinalized={nextRound}
-            roundSyncPending={roundSyncPending}
-            roundSyncError={roundSyncError}
-            playerFotos={playerFotos}
-          />
-        )}
+        <AmericanoRoundsPanel
+          rounds={rounds}
+          currentRoundIndex={currentRoundIndex}
+          totalRounds={totalRounds}
+          phase={phase}
+          roster={rosterForUi}
+          playerFotos={playerFotos}
+          onCommitRound={commitRoundScores}
+          onRoundFinalized={() => void nextRound()}
+          roundSyncPending={roundSyncPending}
+          roundSyncError={roundSyncError}
+        />
         <div className="americano-screen__block americano-screen__block--inscritos">
           {jugadoresPanel}
         </div>
@@ -699,6 +700,8 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           <RoundHistory
             rounds={rounds}
             totalRounds={totalRounds}
+            phase={phase}
+            playerFotos={playerFotos}
             onEditScore={editScore}
           />
         </div>
@@ -714,6 +717,10 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           <PublicShareSection
             publicUrl={publicAmericanoUrl}
             title="Enlace público"
+            copyButtonLabel="Copiar enlace"
+            copiedLabel="¡Copiado!"
+            previewLabel="Ver vista pública"
+            className="americano-share"
             infoLines={[
               "Comparte el enlace para ver marcador y emparejamientos en vivo.",
             ]}
@@ -752,6 +759,10 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         <PublicShareSection
           publicUrl={publicAmericanoUrl}
           title="Enlace público"
+          copyButtonLabel="Copiar enlace"
+          copiedLabel="¡Copiado!"
+          previewLabel="Ver vista pública"
+          className="americano-share"
           infoLines={["Comparte el enlace para ver podio y ranking del americano."]}
         />
       ) : null}
@@ -823,10 +834,10 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
                 <JugadorAvatar
                   fotoUrl={playerFotos[p.id]}
                   nombre={p.name}
-                  size="md"
+                  size="sm"
                   className="americano-screen__jugadores-avatar"
                 />
-                <span className="americano-screen__jugadores-name">{p.name}</span>
+                <span className="americano-screen__jugadores-name" title={p.name}>{p.name}</span>
               </li>
             ))}
           </ul>
@@ -837,6 +848,8 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         <RoundHistory
           rounds={rounds}
           totalRounds={totalRounds}
+          phase="finished"
+          playerFotos={playerFotos}
           onEditScore={editScore}
         />
       </div>

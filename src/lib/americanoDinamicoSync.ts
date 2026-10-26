@@ -13,6 +13,7 @@ import {
 } from "./database";
 import type {
   AmericanoDinamicoSnapshotV1,
+  AmericanoSnapshotMatch,
   AmericanoSnapshotPlayer,
   AmericanoSnapshotRosterEntry,
   AmericanoSnapshotRound,
@@ -39,6 +40,46 @@ export function pickNewerAmericanoSnapshot(
   if (!local) return remote;
   if (!remote) return local;
   return snapshotSavedAtMs(remote) >= snapshotSavedAtMs(local) ? remote : local;
+}
+
+/**
+ * Conserva el badge "Editado" cuando el snapshot ganador (suele ser el remoto,
+ * que el RPC reescribe sin esa clave) trae el mismo marcador que la copia local.
+ * No pisa un marcador distinto: si otro dispositivo ganó el conflicto, no se
+ * muestra un tooltip de un marcador que ya no está vigente.
+ */
+export function mergeAmericanoScoreRevisions(
+  chosen: AmericanoDinamicoSnapshotV1,
+  other: AmericanoDinamicoSnapshotV1 | null
+): AmericanoDinamicoSnapshotV1 {
+  if (!other) return chosen;
+  const donors = new Map<string, NonNullable<AmericanoSnapshotMatch["scoreRevision"]>>();
+  const donorScores = new Map<string, { scoreA?: number; scoreB?: number }>();
+  for (const round of other.rounds) {
+    for (const match of round.matches) {
+      if (!match.scoreRevision) continue;
+      donors.set(match.id, match.scoreRevision);
+      donorScores.set(match.id, { scoreA: match.scoreA, scoreB: match.scoreB });
+    }
+  }
+  if (donors.size === 0) return chosen;
+
+  let changed = false;
+  const rounds = chosen.rounds.map((round) => ({
+    ...round,
+    matches: round.matches.map((match) => {
+      if (match.scoreRevision) return match;
+      const revision = donors.get(match.id);
+      const scores = donorScores.get(match.id);
+      if (!revision || !scores) return match;
+      if (scores.scoreA !== match.scoreA || scores.scoreB !== match.scoreB) {
+        return match;
+      }
+      changed = true;
+      return { ...match, scoreRevision: revision };
+    }),
+  }));
+  return changed ? { ...chosen, rounds } : chosen;
 }
 
 /** En prep, combina metadata (rondas/canchas) aunque gane el snapshot más nuevo. */
@@ -105,10 +146,12 @@ export async function loadAmericanoDinamicoSnapshotMerged(
   const remote =
     remoteResult.status === "ok" ? remoteResult.snapshot : null;
 
-  const chosen = mergeAmericanoPrepSnapshots(local, remote);
-  if (!chosen) {
+  const base = mergeAmericanoPrepSnapshots(local, remote);
+  if (!base) {
     return { snapshot: null, source: "none", remoteAvailable };
   }
+  const revisionDonor = base === local ? remote : local;
+  const chosen = mergeAmericanoScoreRevisions(base, revisionDonor);
 
   const source: "local" | "remote" | "none" =
     remote && pickNewerAmericanoSnapshot(local, remote) === remote

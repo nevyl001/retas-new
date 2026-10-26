@@ -1,5 +1,6 @@
 import {
   mergeAmericanoPrepSnapshots,
+  mergeAmericanoScoreRevisions,
   pickNewerAmericanoSnapshot,
   snapshotSavedAtMs,
 } from "./americanoDinamicoSync";
@@ -41,5 +42,66 @@ describe("americanoDinamicoSync", () => {
     expect(merged?.totalRounds).toBe(5);
     expect(merged?.plannedCourts).toBe(3);
     expect(merged?.savedAt).toBe(remote.savedAt);
+  });
+
+  it("conserva Editado local si el remoto trae el mismo marcador sin la clave", () => {
+    const player = snap("x").ranking[0];
+    const pair = [player, player] as [
+      typeof player,
+      typeof player
+    ];
+    const match = {
+      id: "m1",
+      court: 1,
+      scoreA: 3,
+      scoreB: 6,
+      teamA: pair,
+      teamB: pair,
+    };
+    const local = snap("2026-01-01T10:00:00Z", {
+      rounds: [
+        {
+          roundNumber: 1,
+          phase: 1,
+          benchPlayers: [],
+          matches: [
+            {
+              ...match,
+              scoreRevision: {
+                previousScoreA: 6,
+                previousScoreB: 3,
+                editedAt: "2026-01-01T09:00:00Z",
+              },
+            },
+          ],
+        },
+      ],
+    });
+    const remote = snap("2026-01-02T10:00:00Z", {
+      rounds: [
+        {
+          roundNumber: 1,
+          phase: 1,
+          benchPlayers: [],
+          matches: [match],
+        },
+      ],
+    });
+    const merged = mergeAmericanoScoreRevisions(remote, local);
+    expect(merged.rounds[0].matches[0].scoreRevision?.previousScoreA).toBe(6);
+    const conflict = mergeAmericanoScoreRevisions(
+      snap("2026-01-02T10:00:00Z", {
+        rounds: [
+          {
+            roundNumber: 1,
+            phase: 1,
+            benchPlayers: [],
+            matches: [{ ...match, scoreA: 1, scoreB: 1 }],
+          },
+        ],
+      }),
+      local
+    );
+    expect(conflict.rounds[0].matches[0].scoreRevision).toBeUndefined();
   });
 });

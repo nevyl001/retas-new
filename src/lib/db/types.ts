@@ -138,6 +138,15 @@ export interface AmericanoMatch {
   court: number;
   scoreA?: number;
   scoreB?: number;
+  /**
+   * Corrección ya confirmada. Opcional: los snapshots anteriores al campo siguen siendo válidos.
+   * El RPC de marcador no crea esta clave; el cliente la conserva en local y la fusiona al recargar.
+   */
+  scoreRevision?: {
+    previousScoreA: number;
+    previousScoreB: number;
+    editedAt: string;
+  };
 }
 
 export interface AmericanoRound {
