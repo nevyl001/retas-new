@@ -55,6 +55,11 @@ function runAudit(audit) {
 function main() {
   console.log("=== SUITE DE AUDITORÍAS (CI) ===");
   if (process.env.AUDIT_CI_MODE === "1") {
+    const mode = (process.env.RIVIERA_API_KEY_MODE || "").trim().toLowerCase();
+    if (mode !== "new") {
+      console.error("AUDIT_CI_MODE exige RIVIERA_API_KEY_MODE=new.");
+      process.exit(1);
+    }
     console.log(
       "AUDIT_CI_MODE=1 — suite en modo logs reducidos (sin nombres de jugadores)."
     );

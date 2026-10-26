@@ -7,7 +7,6 @@
  *   npm run audit:career-integrity -- --fix
  *   npm run audit:career-integrity -- --offline
  */
-import { createClient } from "@supabase/supabase-js";
 import { readFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -17,6 +16,10 @@ import {
   logAuditCiModeBanner,
   redactAuditPayload,
 } from "./lib/auditCiMode.mjs";
+import {
+  createSupabaseAuditClient,
+  resolveAuditKeyMode,
+} from "./lib/supabaseApiKey.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -41,6 +44,13 @@ function loadEnv() {
 }
 
 function resolveServiceRoleKey() {
+  if (resolveAuditKeyMode() === "new") {
+    const direct = process.env.SUPABASE_SECRET_KEY?.trim();
+    if (!direct?.startsWith("sb_secret_")) {
+      throw new Error("RIVIERA_API_KEY_MODE=new sin sb_secret_ default.");
+    }
+    return direct;
+  }
   return (
     process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
     process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY?.trim() ||
@@ -150,7 +160,7 @@ async function runOnlineChecks(sbAnon, sbOps, fix) {
   if (!sbOps) {
     ok =
       fail(
-        "orphan audit: SUPABASE_SERVICE_ROLE_KEY ausente — _riviera_orphan_profile_audit requiere service_role (migración 0021)"
+        "orphan audit: falta SUPABASE_SECRET_KEY o SUPABASE_SERVICE_ROLE_KEY — _riviera_orphan_profile_audit requiere credencial de servicio (migración 0021)"
       ) && ok;
   } else {
     const { data: orphans, error: orphanErr } = await sbOps.rpc(
@@ -353,6 +363,10 @@ async function main() {
   const args = process.argv.slice(2);
   const fix = args.includes("--fix");
   const forceOffline = args.includes("--offline");
+  if (fix && process.env.AUDIT_CI_MODE === "1") {
+    console.error("AUDIT_CI_MODE no permite --fix.");
+    process.exit(1);
+  }
 
   console.log("=== AUDITORÍA CAREER INTEGRITY ===");
   if (fix) console.log("Modo: --fix (reparación limitada vía RPC)");
@@ -363,19 +377,18 @@ async function main() {
   const hasEnv = !forceOffline && loadEnv();
   if (hasEnv) {
     const url = process.env.REACT_APP_SUPABASE_URL;
-    const sbAnon = createClient(url, process.env.REACT_APP_SUPABASE_ANON_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const sbAnon = createSupabaseAuditClient(
+      url,
+      process.env.REACT_APP_SUPABASE_ANON_KEY
+    );
     const serviceRoleKey = resolveServiceRoleKey();
     const sbOps = serviceRoleKey
-      ? createClient(url, serviceRoleKey, {
-          auth: { persistSession: false, autoRefreshToken: false },
-        })
+      ? createSupabaseAuditClient(url, serviceRoleKey)
       : null;
     onlineOk = await runOnlineChecks(sbAnon, sbOps, fix);
   } else {
     console.log(
-      "\n⚠ Sin credenciales Supabase o --offline: solo checks offline. Configura REACT_APP_SUPABASE_URL/ANON_KEY (y SUPABASE_SERVICE_ROLE_KEY para orphan audit).\n"
+      "\n⚠ Sin credenciales Supabase o --offline: solo checks offline. Configura REACT_APP_SUPABASE_URL/ANON_KEY (y SUPABASE_SECRET_KEY o SUPABASE_SERVICE_ROLE_KEY para orphan audit).\n"
     );
   }
 

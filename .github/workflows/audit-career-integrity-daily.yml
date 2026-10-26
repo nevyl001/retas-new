@@ -1,9 +1,10 @@
 name: Auditoría diaria de integridad de carrera
 
 # Corre contra el proyecto Supabase de producción (secrets REACT_APP_SUPABASE_*).
-# - Checks públicos: anon key (misma que el navegador).
-# - Checks ops-only (_riviera_orphan_profile_audit): SUPABASE_SERVICE_ROLE_KEY
-#   (recomendado: GitHub Environment "production-audit" con secret restringido).
+# - Checks públicos: REACT_APP_SUPABASE_ANON_KEY = sb_publishable_.
+# - Checks ops-only: SUPABASE_SECRET_KEY = sb_secret_.
+#   RIVIERA_API_KEY_MODE=new no usa la service_role legacy.
+#   Los dos secretos viven en el GitHub Environment "production-audit".
 on:
   schedule:
     - cron: "0 13 * * *" # 07:00 hora CDMX (UTC-6) aprox.
@@ -46,8 +47,9 @@ jobs:
         run: node scripts/run-audit-suite-ci.mjs
         env:
           AUDIT_CI_MODE: "1"
+          RIVIERA_API_KEY_MODE: new
           REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
           REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           AUDIT_LIGA_PUBLIC_ID: 08d658c9-ebf5-411f-bfff-c764f3226858
           AUDIT_LIGA_PRIVATE_ID: ${{ secrets.AUDIT_LIGA_PRIVATE_ID }}

@@ -13,7 +13,6 @@
  *   npm run audit:global-career-parity -- --riviera-id RIV-00000071
  *   npm run audit:global-career-parity -- --json
  */
-import { createClient } from "@supabase/supabase-js";
 import { readFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -30,6 +29,7 @@ import {
   logAuditCiModeBanner,
   redactAuditPayload,
 } from "./lib/auditCiMode.mjs";
+import { createSupabaseAuditClient } from "./lib/supabaseApiKey.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -237,9 +237,7 @@ async function ensureRequiredIdentities(supabase, identities) {
 async function runLiveAudit({ filterRivieraId, jsonOut }) {
   const url = process.env.REACT_APP_SUPABASE_URL;
   const key = process.env.REACT_APP_SUPABASE_ANON_KEY;
-  const supabase = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const supabase = createSupabaseAuditClient(url, key);
 
   const orgIds = {
     hackpadel:

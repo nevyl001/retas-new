@@ -26,11 +26,11 @@
  *   npm run audit:rls-public-isolation
  *   AUDIT_LIGA_PUBLIC_ID=<uuid> AUDIT_LIGA_PRIVATE_ID=<uuid> npm run audit:rls-public-isolation
  */
-import { createClient } from "@supabase/supabase-js";
 import { readFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { logAuditCiModeBanner } from "./lib/auditCiMode.mjs";
+import { createSupabaseAuditClient } from "./lib/supabaseApiKey.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -64,7 +64,7 @@ async function main() {
     process.exit(1);
   }
 
-  const supabase = createClient(
+  const supabase = createSupabaseAuditClient(
     process.env.REACT_APP_SUPABASE_URL,
     process.env.REACT_APP_SUPABASE_ANON_KEY
   );
