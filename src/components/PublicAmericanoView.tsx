@@ -15,7 +15,6 @@ import {
   rosterFromAmericanoSnapshot,
 } from "../lib/americanoSnapshotRoster";
 import { computeAmericanoLiveStatsMap } from "../lib/americanoLiveStandings";
-import { buildAmericanoPlayerJourney } from "../lib/americanoPlayerJourney";
 import {
   buildAmericanoPublicMatchHistoryByPlayerId,
   type AmericanoPublicMatchHistoryEntry,
@@ -357,15 +356,6 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     return { row: rankedRows[index], position: index + 1 };
   }, [selectedPlayerId, rankedRows]);
 
-  const selectedJourney = useMemo(() => {
-    if (!selectedPlayerId || !snapshot) return [];
-    return buildAmericanoPlayerJourney(
-      selectedPlayerId,
-      snapshot.rounds,
-      snapshot.totalRounds ?? snapshot.rounds.length
-    );
-  }, [selectedPlayerId, snapshot]);
-
   const showFinishedPodium =
     rankedRows.length > 0 &&
     !!snapshot &&
@@ -504,12 +494,6 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
         liveStatsMap={liveStatsMap}
         matchHistoryByPlayerId={matchHistoryByPlayerId}
         selectedStanding={selectedStanding}
-        restRounds={selectedJourney
-          .filter((cell) => cell.kind === "bench")
-          .map((cell) => cell.roundNumber)}
-        pendingRounds={selectedJourney
-          .filter((cell) => cell.kind === "pending")
-          .map((cell) => cell.roundNumber)}
         onPlayerSelect={setSelectedPlayerId}
         totalForPhaseLabels={totalForPhaseLabels}
         roundMatchesSorted={roundMatchesSorted}
@@ -546,8 +530,6 @@ type AmericanoPublicBodyProps = {
   liveStatsMap: Map<string, UnifiedStandingStats>;
   matchHistoryByPlayerId: Map<string, AmericanoPublicMatchHistoryEntry[]>;
   selectedStanding: { row: AmericanoRankedRow; position: number } | null;
-  restRounds: number[];
-  pendingRounds: number[];
   onPlayerSelect: (playerId: string | null) => void;
   totalForPhaseLabels: number;
   roundMatchesSorted: (round: AmericanoSnapshotRound) => AmericanoSnapshotRound["matches"];
@@ -576,8 +558,6 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
   liveStatsMap,
   matchHistoryByPlayerId,
   selectedStanding,
-  restRounds,
-  pendingRounds,
   onPlayerSelect,
   totalForPhaseLabels,
   roundMatchesSorted,
@@ -875,8 +855,6 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
           pointsFor={selectedStanding.row.stats.pointsFor}
           pointsAgainst={selectedStanding.row.stats.pointsAgainst}
           history={matchHistoryByPlayerId.get(selectedStanding.row.id) ?? []}
-          restRounds={restRounds}
-          pendingRounds={pendingRounds}
         />
       ) : null}
 
