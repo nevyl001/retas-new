@@ -226,13 +226,13 @@ export const RoundView: React.FC<RoundViewProps> = ({
                 </span>
               </div>
 
-              <div className="americano-court">
+              <div className="am-match-lineup">
                 <AmericanoPairLine
                   label={teamALabel}
                   highlight={aWins ? "win" : tie ? "tie" : scored ? "loss" : undefined}
                   players={toLine(match.teamA)}
                 />
-                <div className="americano-court__score">
+                <div className="am-match-lineup__score">
                   {readOnly ? (
                     <span aria-label={`Marcador ${a || "sin juegos"} a ${b || "sin juegos"}`}>
                       {a || "—"} – {b || "—"}
