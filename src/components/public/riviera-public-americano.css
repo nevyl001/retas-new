@@ -3218,6 +3218,16 @@
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.48);
 }
 
+/* Retratos fluidos: llenan la cancha y el rating escala con el ancho */
+.te-public--americano .am-pub-match .am-court-board {
+  width: 100%;
+  gap: clamp(0.55rem, 1.4vw, 1rem) clamp(0.45rem, 1.2vw, 0.85rem);
+}
+
+.te-public--americano .am-pub-match .am-portrait {
+  width: 100%;
+}
+
 .te-public--americano .am-pub-match .te-pub-match__top {
   margin-bottom: 0.65rem;
 }
