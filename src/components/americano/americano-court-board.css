@@ -57,12 +57,13 @@
 
 .am-portrait {
   position: relative;
-  width: min(100%, 6.5rem);
+  width: min(100%, 8.75rem);
   aspect-ratio: 4 / 5;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--ro-border, var(--border-subtle));
   background: var(--bg-elevated, var(--rv-bg-card));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
 }
 
 .am-portrait__photo {
@@ -101,30 +102,60 @@
   pointer-events: none;
 }
 
-.am-portrait__name {
+.am-portrait__rating.jugador-rating-chip {
   position: absolute;
-  left: 6px;
-  right: 6px;
-  bottom: 5px;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 2;
+  font-size: 0.58rem;
+  padding: 0.08rem 0.32rem;
+  line-height: 1.15;
+  border-color: rgba(163, 230, 53, 0.45);
+  background: rgba(8, 12, 8, 0.72);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.am-portrait__identity {
+  position: absolute;
+  left: 0.4rem;
+  right: 0.4rem;
+  bottom: 0.35rem;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.am-portrait__given,
+.am-portrait__family {
   margin: 0;
   color: #fff;
   font-family: var(--font-body);
+  line-height: 1.15;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.am-portrait__given {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.am-portrait__family {
   font-size: 12px;
   font-weight: 600;
-  line-height: 1.2;
-  text-align: center;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .am-court-board__score {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: min(100%, 6.5rem);
+  width: min(100%, 8.75rem);
   margin-top: 2px;
   font-variant-numeric: tabular-nums;
 }

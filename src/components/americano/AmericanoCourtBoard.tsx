@@ -6,6 +6,7 @@ export interface AmericanoCourtPlayer {
   id: string;
   name: string;
   fotoUrl?: string | null;
+  rating?: number | null;
 }
 
 export const AmericanoPairMark: React.FC<{
@@ -36,6 +37,7 @@ export const AmericanoCourtBoard: React.FC<{
           key={player.id}
           name={player.name}
           fotoUrl={player.fotoUrl}
+          rating={player.rating}
         />
       ))}
       <div className="am-court-board__score">{scoreA}</div>
@@ -51,6 +53,7 @@ export const AmericanoCourtBoard: React.FC<{
           key={player.id}
           name={player.name}
           fotoUrl={player.fotoUrl}
+          rating={player.rating}
         />
       ))}
       <div className="am-court-board__score">{scoreB}</div>
