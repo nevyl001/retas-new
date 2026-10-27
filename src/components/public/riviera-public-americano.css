@@ -3218,15 +3218,22 @@
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.48);
 }
 
-/* Vista pública: retratos un poco más grandes, sin llegar a exagerar */
+/* Vista pública: foto llena la mitad de cancha; marcador con más presencia */
 .te-public--americano .am-pub-match .am-court-board {
   width: 100%;
-  justify-items: center;
-  gap: 0.7rem 0.85rem;
+  justify-items: stretch;
+  gap: 0.65rem 0.55rem;
+}
+
+.te-public--americano .am-pub-match .am-court-board__pair {
+  align-items: stretch;
+  width: 100%;
+  gap: 0.55rem;
 }
 
 .te-public--americano .am-pub-match .am-portrait {
-  width: min(100%, 9rem);
+  width: 100%;
+  max-width: none;
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.34);
 }
@@ -3234,36 +3241,51 @@
 .te-public--americano .am-pub-match .am-portrait__rating.jugador-rating-chip {
   top: 0.45rem;
   right: 0.45rem;
-  min-height: 1.35rem;
-  padding: 0.16rem 0.45rem;
-  font-size: 0.8rem;
+  min-height: 1.4rem;
+  padding: 0.18rem 0.48rem;
+  font-size: 0.82rem;
+}
+
+.te-public--americano .am-pub-match .am-portrait__identity {
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.45rem;
 }
 
 .te-public--americano .am-pub-match .am-portrait__given {
-  font-size: 0.9rem;
+  font-size: clamp(0.82rem, 2.1vw, 1rem);
 }
 
 .te-public--americano .am-pub-match .am-portrait__family {
-  font-size: 0.76rem;
+  font-size: clamp(0.7rem, 1.7vw, 0.85rem);
+}
+
+.te-public--americano .am-pub-match .am-court-board__vs {
+  min-width: 2rem;
 }
 
 .te-public--americano .am-pub-match .am-court-board__score {
-  width: min(100%, 9rem);
+  width: 100%;
+  margin-top: 0.15rem;
+  padding: 0.35rem 0 0.1rem;
 }
 
-.te-public--americano .am-pub-match .am-court-board__num,
+.te-public--americano .am-pub-match .am-court-board__num {
+  font-family: var(--font-display, var(--ro-font-heading), var(--font-body));
+  font-size: clamp(1.85rem, 3.4vw, 2.55rem);
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.te-public--americano .am-pub-match .am-court-board__num.is-win {
+  color: #fff;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.18);
+}
+
 .te-public--americano .am-pub-match .am-court-board__pending {
-  font-size: 1.45rem;
-}
-
-@media (min-width: 1100px) {
-  .te-public--americano .am-pub-match .am-portrait {
-    width: min(100%, 9.75rem);
-  }
-
-  .te-public--americano .am-pub-match .am-court-board__score {
-    width: min(100%, 9.75rem);
-  }
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 700;
 }
 
 .te-public--americano .am-pub-match .te-pub-match__top {
