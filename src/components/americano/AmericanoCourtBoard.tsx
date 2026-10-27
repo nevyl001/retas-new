@@ -20,7 +20,7 @@ export const AmericanoPairMark: React.FC<{
   return <span className={`am-court-board__num${tone}`}>{value}</span>;
 };
 
-/** Retratos de cada pareja y su marcador debajo. */
+/** Pareja A | VS | Pareja B, con el marcador debajo de cada pareja. */
 export const AmericanoCourtBoard: React.FC<{
   sideA: AmericanoCourtPlayer[];
   sideB: AmericanoCourtPlayer[];
@@ -29,8 +29,8 @@ export const AmericanoCourtBoard: React.FC<{
   scoreA: React.ReactNode;
   scoreB: React.ReactNode;
 }> = ({ sideA, sideB, labelA, labelB, scoreA, scoreB }) => (
-  <div className="am-court-board" aria-label={`${labelA} contra ${labelB}`}>
-    <div className="am-court-board__faces">
+  <div className="am-court-board">
+    <div className="am-court-board__pair" aria-label={labelA}>
       {sideA.map((player) => (
         <AmericanoPortrait
           key={player.id}
@@ -38,11 +38,14 @@ export const AmericanoCourtBoard: React.FC<{
           fotoUrl={player.fotoUrl}
         />
       ))}
+      <div className="am-court-board__score">{scoreA}</div>
     </div>
-    <span className="am-court-board__vs" aria-hidden>
-      VS
-    </span>
-    <div className="am-court-board__faces">
+    <div className="am-court-board__vs" aria-hidden>
+      <span className="am-court-board__vs-line" />
+      <span className="am-court-board__vs-badge">VS</span>
+      <span className="am-court-board__vs-line" />
+    </div>
+    <div className="am-court-board__pair" aria-label={labelB}>
       {sideB.map((player) => (
         <AmericanoPortrait
           key={player.id}
@@ -50,9 +53,7 @@ export const AmericanoCourtBoard: React.FC<{
           fotoUrl={player.fotoUrl}
         />
       ))}
+      <div className="am-court-board__score">{scoreB}</div>
     </div>
-    <div className="am-court-board__score">{scoreA}</div>
-    <span className="am-court-board__vs-gap" aria-hidden />
-    <div className="am-court-board__score">{scoreB}</div>
   </div>
 );

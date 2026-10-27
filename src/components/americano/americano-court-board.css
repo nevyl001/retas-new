@@ -2,12 +2,11 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  column-gap: 8px;
-  row-gap: 8px;
+  gap: 8px 10px;
   min-width: 0;
 }
 
-.am-court-board__faces {
+.am-court-board__pair {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -16,13 +15,44 @@
 }
 
 .am-court-board__vs {
-  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  gap: 8px;
+  min-width: 1.75rem;
+  padding: 4px 0;
+}
+
+.am-court-board__vs-line {
+  flex: 1 1 auto;
+  width: 1px;
+  min-height: 12px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--ro-border, var(--border-subtle)),
+    transparent
+  );
+}
+
+.am-court-board__vs-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  background: var(--bg-card, var(--rv-bg-card));
+  color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   line-height: 1;
-  color: var(--text-muted, var(--text-secondary));
 }
 
 .am-portrait {
