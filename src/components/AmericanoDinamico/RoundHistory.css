@@ -48,32 +48,91 @@
 
 .americano-history__matches {
   display: grid;
-  gap: clamp(0.75rem, 1.4vw, 1rem);
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr));
 }
 
 .americano-history__match {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid var(--ro-border, var(--border-subtle));
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--rv-bg-card-soft, var(--ro-bg-inset, transparent));
 }
 
 .americano-history__match .am-court-board {
   width: 100%;
-}
-
-.americano-history__match .am-portrait {
-  width: min(100%, 7rem);
-  margin-inline: auto;
+  gap: 6px 8px;
 }
 
 .americano-history__match .am-court-board__pair {
   align-items: center;
+  gap: 4px;
+}
+
+.americano-history__match .am-portrait {
+  width: 3.6rem;
+  margin-inline: auto;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.americano-history__match .am-portrait__initials {
+  font-size: 0.85rem;
+}
+
+.americano-history__match .am-portrait__rating.jugador-rating-chip {
+  top: 0.2rem;
+  right: 0.2rem;
+  min-height: 0.95rem;
+  padding: 0.05rem 0.22rem;
+  font-size: 0.58rem;
+}
+
+.americano-history__match .am-portrait__identity {
+  left: 0.25rem;
+  right: 0.25rem;
+  bottom: 0.22rem;
+  gap: 0;
+}
+
+.americano-history__match .am-portrait__given {
+  font-size: 0.58rem;
+}
+
+.americano-history__match .am-portrait__family {
+  font-size: 0.52rem;
+}
+
+.americano-history__match .am-court-board__vs {
+  min-width: 1.35rem;
+  gap: 4px;
+  padding: 0;
+}
+
+.americano-history__match .am-court-board__vs-badge {
+  min-width: 1.35rem;
+  height: 1.35rem;
+  font-size: 0.55rem;
+  padding: 0 0.25rem;
+}
+
+.americano-history__match .am-court-board__score {
+  width: 3.6rem;
+}
+
+.americano-history__match .am-court-board__num,
+.americano-history__match .am-court-board__pending {
+  font-size: 1rem;
+}
+
+.americano-history__match .am-court-board__score input {
+  width: 2.2rem;
+  min-height: 1.85rem;
+  font-size: 1rem;
 }
 
 .americano-history__match-top {
