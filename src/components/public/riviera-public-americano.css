@@ -3126,6 +3126,91 @@
   border-radius: 0;
 }
 
+/* Selector de ronda centrado (evita listar todas hacia abajo) */
+.te-public--americano .am-pub-round-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0.45rem;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 1.15rem;
+  padding: 0.35rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(8, 10, 14, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.te-public--americano .am-pub-round-nav__btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12rem;
+  min-width: 3.6rem;
+  min-height: 3rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.te-public--americano .am-pub-round-nav__label {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.te-public--americano .am-pub-round-nav__meta {
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.te-public--americano .am-pub-round-nav__btn:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.te-public--americano .am-pub-round-nav__btn.is-active {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.te-public--americano .am-pub-round-nav__btn.is-active .am-pub-round-nav__meta {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.te-public--americano .am-pub-round-nav__btn.is-live.is-active {
+  border-color: color-mix(in srgb, var(--ro-success, #4ade80) 45%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--ro-success, #4ade80) 12%,
+    rgba(0, 0, 0, 0.35)
+  );
+}
+
+.te-public--americano .am-pub-round-nav__btn.is-live .am-pub-round-nav__meta {
+  color: color-mix(in srgb, var(--ro-success, #4ade80) 80%, #fff);
+}
+
 /* Cabecera de ronda */
 .te-public--americano .am-pub-round-head {
   margin-bottom: 0.85rem;
