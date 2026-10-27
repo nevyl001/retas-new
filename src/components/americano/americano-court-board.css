@@ -166,6 +166,19 @@
   font-variant-numeric: tabular-nums;
 }
 
+.am-court-board__mark {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.am-court-board__crown {
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--ro-medal-gold, var(--ro-gold, #c9a227));
+}
+
 .am-court-board__num {
   font-family: var(--font-display, var(--font-body));
   font-size: 1.35rem;

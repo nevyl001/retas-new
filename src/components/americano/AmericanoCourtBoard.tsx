@@ -17,8 +17,18 @@ export const AmericanoPairMark: React.FC<{
   if (!played || value == null || opponent == null) {
     return <span className="am-court-board__pending">—</span>;
   }
-  const tone = value > opponent ? " is-win" : value < opponent ? " is-loss" : "";
-  return <span className={`am-court-board__num${tone}`}>{value}</span>;
+  const isWin = value > opponent;
+  const isLoss = value < opponent;
+  const tone = isWin ? " is-win" : isLoss ? " is-loss" : "";
+  return (
+    <span
+      className={`am-court-board__mark${tone}`}
+      aria-label={isWin ? `Ganador ${value}` : String(value)}
+    >
+      {isWin ? <span className="am-court-board__crown" aria-hidden>♛</span> : null}
+      <span className={`am-court-board__num${tone}`}>{value}</span>
+    </span>
+  );
 };
 
 /** Pareja A | VS | Pareja B, con el marcador debajo de cada pareja. */

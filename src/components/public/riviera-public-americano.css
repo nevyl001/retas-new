@@ -3218,74 +3218,96 @@
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.48);
 }
 
-/* Vista pública: foto llena la mitad de cancha; marcador con más presencia */
+/* Vista pública: retrato elegante + marcador con corona en el ganador */
 .te-public--americano .am-pub-match .am-court-board {
   width: 100%;
-  justify-items: stretch;
-  gap: 0.65rem 0.55rem;
+  justify-items: center;
+  gap: 0.7rem 0.7rem;
 }
 
 .te-public--americano .am-pub-match .am-court-board__pair {
-  align-items: stretch;
+  align-items: center;
   width: 100%;
-  gap: 0.55rem;
+  gap: 0.5rem;
 }
 
 .te-public--americano .am-pub-match .am-portrait {
-  width: 100%;
-  max-width: none;
+  width: min(100%, 8.75rem);
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.34);
 }
 
 .te-public--americano .am-pub-match .am-portrait__rating.jugador-rating-chip {
-  top: 0.45rem;
-  right: 0.45rem;
-  min-height: 1.4rem;
-  padding: 0.18rem 0.48rem;
-  font-size: 0.82rem;
+  top: 0.42rem;
+  right: 0.42rem;
+  min-height: 1.3rem;
+  padding: 0.15rem 0.42rem;
+  font-size: 0.78rem;
 }
 
 .te-public--americano .am-pub-match .am-portrait__identity {
-  left: 0.5rem;
-  right: 0.5rem;
-  bottom: 0.45rem;
+  left: 0.45rem;
+  right: 0.45rem;
+  bottom: 0.4rem;
 }
 
 .te-public--americano .am-pub-match .am-portrait__given {
-  font-size: clamp(0.82rem, 2.1vw, 1rem);
+  font-size: 0.88rem;
 }
 
 .te-public--americano .am-pub-match .am-portrait__family {
-  font-size: clamp(0.7rem, 1.7vw, 0.85rem);
+  font-size: 0.74rem;
 }
 
 .te-public--americano .am-pub-match .am-court-board__vs {
-  min-width: 2rem;
+  min-width: 1.9rem;
 }
 
 .te-public--americano .am-pub-match .am-court-board__score {
-  width: 100%;
-  margin-top: 0.15rem;
-  padding: 0.35rem 0 0.1rem;
+  width: min(100%, 8.75rem);
+  margin-top: 0.2rem;
+  padding: 0.45rem 0.55rem 0.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.te-public--americano .am-pub-match .am-court-board__mark.is-win .am-court-board__score,
+.te-public--americano .am-pub-match .am-court-board__score:has(.am-court-board__mark.is-win) {
+  border-color: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 45%, transparent);
+  background: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 10%, rgba(0, 0, 0, 0.32));
+}
+
+.te-public--americano .am-pub-match .am-court-board__crown {
+  font-size: 1rem;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.45));
 }
 
 .te-public--americano .am-pub-match .am-court-board__num {
   font-family: var(--font-display, var(--ro-font-heading), var(--font-body));
-  font-size: clamp(1.85rem, 3.4vw, 2.55rem);
+  font-size: clamp(1.7rem, 2.8vw, 2.2rem);
   font-weight: 850;
   letter-spacing: -0.03em;
   line-height: 1;
 }
 
 .te-public--americano .am-pub-match .am-court-board__num.is-win {
-  color: #fff;
-  text-shadow: 0 0 18px rgba(255, 255, 255, 0.18);
+  color: var(--ro-medal-gold, #c9a227);
 }
 
 .te-public--americano .am-pub-match .am-court-board__pending {
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-size: clamp(1.45rem, 2.4vw, 1.9rem);
   font-weight: 700;
+}
+
+@media (min-width: 1100px) {
+  .te-public--americano .am-pub-match .am-portrait {
+    width: min(100%, 9.5rem);
+  }
+
+  .te-public--americano .am-pub-match .am-court-board__score {
+    width: min(100%, 9.5rem);
+  }
 }
 
 .te-public--americano .am-pub-match .te-pub-match__top {
