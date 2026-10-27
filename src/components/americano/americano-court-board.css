@@ -1,17 +1,28 @@
 .am-court-board {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: start;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 8px;
   min-width: 0;
 }
 
-.am-court-board__pair {
+.am-court-board__faces {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   min-width: 0;
+}
+
+.am-court-board__vs {
+  align-self: center;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  color: var(--text-muted, var(--text-secondary));
 }
 
 .am-portrait {
