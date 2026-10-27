@@ -7,10 +7,7 @@ import {
   type AmericanoEditScoreResult,
 } from "../../lib/americanoScoreEdit";
 import { isAmericanoMatchScored } from "../../lib/americanoPlayerJourney";
-import {
-  AmericanoCenterScore,
-  AmericanoCourtBoard,
-} from "../americano/AmericanoCourtBoard";
+import { AmericanoCourtBoard, AmericanoPairMark } from "../americano/AmericanoCourtBoard";
 import { Button, Modal } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
 import "./RoundHistory.css";
@@ -230,10 +227,16 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
                     sideB={toLine(match.teamB)}
                     labelA={namesA}
                     labelB={namesB}
-                    score={
-                      <AmericanoCenterScore
-                        scoreA={scored ? match.scoreA : null}
-                        scoreB={scored ? match.scoreB : null}
+                    scoreA={
+                      <AmericanoPairMark
+                        value={scored ? match.scoreA : null}
+                        opponent={scored ? match.scoreB : null}
+                      />
+                    }
+                    scoreB={
+                      <AmericanoPairMark
+                        value={scored ? match.scoreB : null}
+                        opponent={scored ? match.scoreA : null}
                       />
                     }
                   />
@@ -270,26 +273,23 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
               sideB={editing.sideB}
               labelA={pairNames(editing.sideA)}
               labelB={pairNames(editing.sideB)}
-              score={
-                <div className="am-court-board__inputs">
-                  <input
-                    aria-label={`Marcador de ${pairNames(editing.sideA)}`}
-                    inputMode="numeric"
-                    value={draftA}
-                    onChange={(event) => setDraftA(event.target.value)}
-                    disabled={saving}
-                  />
-                  <span className="am-court-board__sep" aria-hidden>
-                    —
-                  </span>
-                  <input
-                    aria-label={`Marcador de ${pairNames(editing.sideB)}`}
-                    inputMode="numeric"
-                    value={draftB}
-                    onChange={(event) => setDraftB(event.target.value)}
-                    disabled={saving}
-                  />
-                </div>
+              scoreA={
+                <input
+                  aria-label={`Marcador de ${pairNames(editing.sideA)}`}
+                  inputMode="numeric"
+                  value={draftA}
+                  onChange={(event) => setDraftA(event.target.value)}
+                  disabled={saving}
+                />
+              }
+              scoreB={
+                <input
+                  aria-label={`Marcador de ${pairNames(editing.sideB)}`}
+                  inputMode="numeric"
+                  value={draftB}
+                  onChange={(event) => setDraftB(event.target.value)}
+                  disabled={saving}
+                />
               }
             />
             {phase === "finished" ? (

@@ -5,7 +5,7 @@ import { formatMatchCourtLabel, sortByMatchCourt } from "../../lib/matchCourt";
 import { ActionBar } from "../platform/ActionBar";
 import { Button } from "../ui";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
-import { AmericanoCenterScore, AmericanoCourtBoard } from "../americano/AmericanoCourtBoard";
+import { AmericanoCourtBoard, AmericanoPairMark } from "../americano/AmericanoCourtBoard";
 import "../jugadores/riviera-jugadores.css";
 import "./RoundView.css";
 
@@ -221,28 +221,32 @@ export const RoundView: React.FC<RoundViewProps> = ({
                 sideB={toLine(match.teamB)}
                 labelA={teamALabel}
                 labelB={teamBLabel}
-                score={
+                scoreA={
                   readOnly ? (
-                    <AmericanoCenterScore
-                      scoreA={a === "" ? null : Number(a)}
-                      scoreB={b === "" ? null : Number(b)}
+                    <AmericanoPairMark
+                      value={a === "" ? null : Number(a)}
+                      opponent={b === "" ? null : Number(b)}
                     />
                   ) : (
-                    <>
-                      <ScoreField
-                        value={a}
-                        ariaLabel={`Juegos ${teamALabel}`}
-                        onChange={(raw) => patchScore("a", raw)}
-                      />
-                      <span className="am-match-board__score-sep" aria-hidden>
-                        -
-                      </span>
-                      <ScoreField
-                        value={b}
-                        ariaLabel={`Juegos ${teamBLabel}`}
-                        onChange={(raw) => patchScore("b", raw)}
-                      />
-                    </>
+                    <ScoreField
+                      value={a}
+                      ariaLabel={`Juegos ${teamALabel}`}
+                      onChange={(raw) => patchScore("a", raw)}
+                    />
+                  )
+                }
+                scoreB={
+                  readOnly ? (
+                    <AmericanoPairMark
+                      value={b === "" ? null : Number(b)}
+                      opponent={a === "" ? null : Number(a)}
+                    />
+                  ) : (
+                    <ScoreField
+                      value={b}
+                      ariaLabel={`Juegos ${teamBLabel}`}
+                      onChange={(raw) => patchScore("b", raw)}
+                    />
                   )
                 }
               />
