@@ -7,12 +7,14 @@ import "./reta-public-scoreboard.css";
 
 function teamPlayers(
   pair: [{ id: string; name: string }, { id: string; name: string }],
-  fotos?: Record<string, string | null>
+  fotos?: Record<string, string | null>,
+  ratings?: Record<string, number>
 ) {
   return pair.map((p) => ({
     id: p.id,
     name: p.name,
     fotoUrl: fotos?.[p.id] ?? null,
+    rating: ratings?.[p.id] ?? null,
   }));
 }
 
@@ -36,6 +38,7 @@ export const PublicAmericanoMatchCard: React.FC<{
   live,
   scheduleStatus,
   index,
+  playerRatings,
   playerFotos,
 }) => {
   const played =
@@ -44,8 +47,8 @@ export const PublicAmericanoMatchCard: React.FC<{
   const matchState =
     scheduleStatus ?? (played ? "played" : live ? "live" : "pending");
 
-  const playersA = teamPlayers(m.teamA, playerFotos);
-  const playersB = teamPlayers(m.teamB, playerFotos);
+  const playersA = teamPlayers(m.teamA, playerFotos, playerRatings);
+  const playersB = teamPlayers(m.teamB, playerFotos, playerRatings);
 
   return (
     <article
