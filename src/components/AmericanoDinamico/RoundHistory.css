@@ -47,20 +47,34 @@
 }
 
 .americano-history__matches {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  gap: clamp(0.75rem, 1.4vw, 1rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
 }
 
 .americano-history__match {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   padding: 12px;
   border: 1px solid var(--ro-border, var(--border-subtle));
   border-radius: 12px;
   background: var(--rv-bg-card-soft, var(--ro-bg-inset, transparent));
+}
+
+.americano-history__match .am-court-board {
+  width: 100%;
+}
+
+.americano-history__match .am-portrait {
+  width: 100%;
+  max-width: 9.5rem;
+  margin-inline: auto;
+}
+
+.americano-history__match .am-court-board__pair {
+  align-items: center;
 }
 
 .americano-history__match-top {
