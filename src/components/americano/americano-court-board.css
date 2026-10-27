@@ -179,12 +179,33 @@
   color: var(--ro-medal-gold, var(--ro-gold, #c9a227));
 }
 
+.am-court-board__tie-badge {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--ro-gold-light, var(--ro-medal-gold, #e8c547));
+}
+
 .am-court-board__num {
   font-family: var(--font-display, var(--font-body));
   font-size: 1.35rem;
   font-weight: 750;
   line-height: 1;
   color: var(--text-primary);
+}
+
+.am-court-board__num.is-tie {
+  color: var(--ro-gold-light, var(--ro-medal-gold, #e8c547));
+  font-weight: 800;
+}
+
+.am-court-board__mark.is-tie {
+  padding: 0.15rem 0.45rem 0.2rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ro-medal-gold, #c9a227) 35%, transparent);
+  background: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 8%, transparent);
 }
 
 .am-court-board__result {
