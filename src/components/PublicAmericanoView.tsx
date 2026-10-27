@@ -569,6 +569,21 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
     fetchStatus,
     snapshot
   );
+  const roundCount = snapshot?.rounds.length ?? 0;
+  const [selectedRoundIndex, setSelectedRoundIndex] = useState(() =>
+    Math.max(roundCount - 1, 0)
+  );
+
+  useEffect(() => {
+    setSelectedRoundIndex((prev) => {
+      if (roundCount <= 0) return 0;
+      // Si llegó una ronda nueva, mostrar la más reciente.
+      if (prev === roundCount - 2 || prev >= roundCount) {
+        return roundCount - 1;
+      }
+      return Math.min(Math.max(prev, 0), roundCount - 1);
+    });
+  }, [roundCount]);
 
   return (
     <PublicScopedBrandGate message="Cargando Americano…">
@@ -681,80 +696,128 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
 
       {snapshot && (
         <>
-          {snapshot.rounds.length > 0 &&
-            snapshot.rounds.map((round, roundIdx) => {
-              const isLastRound = roundIdx === snapshot.rounds.length - 1;
-              const roundLive =
-                eventScheduleStatus.phase === "in_window" &&
-                isLastRound &&
-                !roundFullyScored(round);
-              const matches = roundMatchesSorted(round);
-              const phaseCaption = americanoRoundPhaseCaption(
-                round,
-                totalForPhaseLabels
-              );
-              const roundAllScored = roundFullyScored(round);
-              const roundStatus =
-                roundLive ? (
-                  <p className="am-pub-round-head__status am-pub-round-head__status--live">
-                    <span className="te-pub-status__dot" aria-hidden />
-                    En curso
-                  </p>
-                ) : roundAllScored ? (
-                  <p className="am-pub-round-head__status am-pub-round-head__status--done">
-                    Completada
-                  </p>
-                ) : phaseCaption ? (
-                  <p className="am-pub-round-head__status">{phaseCaption}</p>
-                ) : null;
+          {snapshot.rounds.length > 0 && (() => {
+            const roundIdx = Math.min(
+              Math.max(selectedRoundIndex, 0),
+              snapshot.rounds.length - 1
+            );
+            const round = snapshot.rounds[roundIdx]!;
+            const isLastRound = roundIdx === snapshot.rounds.length - 1;
+            const roundLive =
+              eventScheduleStatus.phase === "in_window" &&
+              isLastRound &&
+              !roundFullyScored(round);
+            const matches = roundMatchesSorted(round);
+            const phaseCaption = americanoRoundPhaseCaption(
+              round,
+              totalForPhaseLabels
+            );
+            const roundAllScored = roundFullyScored(round);
+            const roundStatus =
+              roundLive ? (
+                <p className="am-pub-round-head__status am-pub-round-head__status--live">
+                  <span className="te-pub-status__dot" aria-hidden />
+                  En curso
+                </p>
+              ) : roundAllScored ? (
+                <p className="am-pub-round-head__status am-pub-round-head__status--done">
+                  Completada
+                </p>
+              ) : phaseCaption ? (
+                <p className="am-pub-round-head__status">{phaseCaption}</p>
+              ) : null;
+            const matchCount = matches.length;
+            const matchGridCountClass =
+              matchCount === 1
+                ? "te-pub-matches-grid--one te-pub-matches-grid--few"
+                : matchCount === 2
+                  ? "te-pub-matches-grid--two te-pub-matches-grid--few"
+                  : matchCount === 3
+                    ? "te-pub-matches-grid--three"
+                    : "te-pub-matches-grid--many";
 
-              return (
-                <section
-                  key={`${round.roundNumber}-${round.phase}-${roundIdx}`}
-                  className="te-public-section te-pub-fade-in"
-                  style={{ animationDelay: `${0.05 + roundIdx * 0.06}s` }}
+            return (
+              <section
+                key={`${round.roundNumber}-${round.phase}-${roundIdx}`}
+                className="te-public-section te-pub-fade-in am-pub-round-stage"
+              >
+                <div
+                  className="am-pub-round-nav"
+                  role="tablist"
+                  aria-label="Seleccionar ronda"
                 >
-                  <div className="te-public-round-head am-pub-round-head">
-                    <div className="am-pub-round-head__copy">
-                      <h2 className="am-pub-round-head__title">
-                        Ronda {round.roundNumber}
-                      </h2>
-                      {roundStatus}
-                    </div>
-                  </div>
-                  <div className="te-public-section__divider am-pub-round-head__divider" aria-hidden />
-
-                  {round.benchPlayers.length > 0 && (
-                    <p className="te-public-bench">
-                      <strong>Descansan:</strong>{" "}
-                      {round.benchPlayers.map((p) => p.name).join(", ")}
-                    </p>
-                  )}
-
-                  {(() => {
-                    const matchCount = matches.length;
-                    const matchGridCountClass =
-                      matchCount === 1
-                        ? "te-pub-matches-grid--one te-pub-matches-grid--few"
-                        : matchCount === 2
-                        ? "te-pub-matches-grid--two te-pub-matches-grid--few"
-                        : matchCount === 3
-                        ? "te-pub-matches-grid--three"
-                        : "te-pub-matches-grid--many";
+                  {snapshot.rounds.map((item, index) => {
+                    const itemLive =
+                      eventScheduleStatus.phase === "in_window" &&
+                      index === snapshot.rounds.length - 1 &&
+                      !roundFullyScored(item);
+                    const itemDone = roundFullyScored(item);
                     return (
-                      <div className={`te-pub-matches-grid te-pub-matches-grid--wide ${matchGridCountClass}`}>
-                        {matches.map((m, matchIdx) => {
-                          const played =
-                            typeof m.scoreA === "number" &&
-                            typeof m.scoreB === "number";
-                      const matchScheduleStatus = played
-                        ? "played"
-                        : resolvePublicMatchStatusVariant({
-                            matchFinished: false,
-                            eventPhase: eventScheduleStatus.phase,
-                          });
+                      <button
+                        key={item.roundNumber}
+                        type="button"
+                        role="tab"
+                        aria-selected={index === roundIdx}
+                        className={[
+                          "am-pub-round-nav__btn",
+                          index === roundIdx ? "is-active" : "",
+                          itemLive ? "is-live" : "",
+                          itemDone ? "is-done" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        onClick={() => setSelectedRoundIndex(index)}
+                      >
+                        <span className="am-pub-round-nav__label">
+                          R{item.roundNumber}
+                        </span>
+                        <span className="am-pub-round-nav__meta">
+                          {itemLive
+                            ? "En curso"
+                            : itemDone
+                              ? "Completada"
+                              : "Pendiente"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-                      return (
+                <div className="te-public-round-head am-pub-round-head">
+                  <div className="am-pub-round-head__copy">
+                    <h2 className="am-pub-round-head__title">
+                      Ronda {round.roundNumber}
+                    </h2>
+                    {roundStatus}
+                  </div>
+                </div>
+                <div
+                  className="te-public-section__divider am-pub-round-head__divider"
+                  aria-hidden
+                />
+
+                {round.benchPlayers.length > 0 && (
+                  <p className="te-public-bench">
+                    <strong>Descansan:</strong>{" "}
+                    {round.benchPlayers.map((p) => p.name).join(", ")}
+                  </p>
+                )}
+
+                <div
+                  className={`te-pub-matches-grid te-pub-matches-grid--wide ${matchGridCountClass}`}
+                >
+                  {matches.map((m, matchIdx) => {
+                    const played =
+                      typeof m.scoreA === "number" &&
+                      typeof m.scoreB === "number";
+                    const matchScheduleStatus = played
+                      ? "played"
+                      : resolvePublicMatchStatusVariant({
+                          matchFinished: false,
+                          eventPhase: eventScheduleStatus.phase,
+                        });
+
+                    return (
                       <PublicAmericanoMatchCard
                         key={m.id}
                         match={m}
@@ -764,14 +827,12 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                         playerRatings={playerRatings}
                         playerFotos={playerFotos}
                       />
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-            </section>
-          );
-        })}
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })()}
 
           {showFinishedPodium && (
             <section
