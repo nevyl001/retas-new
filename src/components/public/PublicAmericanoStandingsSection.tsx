@@ -4,9 +4,12 @@ import {
   formatStandingDif,
 } from "../../utils/standingsDisplay";
 import type { AmericanoSnapshotPlayer } from "../../lib/americanoDinamicoStorage";
-import { JugadorAvatar } from "../jugadores/JugadorAvatar";
-import { TablerIcon } from "../ui/TablerIcon";
-import "../jugadores/riviera-jugadores.css";
+import { useRetryableImage } from "../../hooks/useRetryableImage";
+import {
+  isPhotographicSplitVsFoto,
+  playerAvatarHashTone,
+} from "../liga/jornada-public/ligaJornadaMatchNames";
+import { getJugadorInitials } from "../jugadores/JugadorAvatar";
 
 function DifValue({ ptsFav, ptsCon }: { ptsFav: number; ptsCon: number }) {
   const dif = computeStandingDif(ptsFav, ptsCon);
@@ -38,6 +41,56 @@ function StatCell({
       <span className="am-pub-standings__stat-value">{children}</span>
     </span>
   );
+}
+
+function StandingCardMedia({
+  name,
+  fotoUrl,
+}: {
+  name: string;
+  fotoUrl?: string | null;
+}) {
+  const photoCandidate = isPhotographicSplitVsFoto(fotoUrl) ? fotoUrl : null;
+  const { src, onError } = useRetryableImage(photoCandidate);
+  const tone = playerAvatarHashTone(name);
+  const initials = getJugadorInitials(name);
+
+  return (
+    <span
+      className={`am-pub-standings__media${
+        src ? " am-pub-standings__media--photo" : " am-pub-standings__media--fallback"
+      }`}
+      style={
+        src
+          ? undefined
+          : ({
+              background: tone.background,
+              color: tone.color,
+            } as React.CSSProperties)
+      }
+      aria-hidden
+    >
+      {src ? (
+        <img
+          className="am-pub-standings__photo"
+          src={src}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={onError}
+        />
+      ) : (
+        <span className="am-pub-standings__initials">{initials}</span>
+      )}
+    </span>
+  );
+}
+
+function podiumHint(pos: number): string | null {
+  if (pos === 1) return "1.er lugar";
+  if (pos === 2) return "2.º lugar";
+  if (pos === 3) return "3.er lugar";
+  return null;
 }
 
 export const PublicAmericanoStandingsSection: React.FC<{
@@ -79,31 +132,25 @@ export const PublicAmericanoStandingsSection: React.FC<{
             {rows.length} jugador{rows.length === 1 ? "" : "es"}
           </p>
         </div>
+        <p className="am-pub-standings__legend" aria-hidden>
+          <span>PJ</span>
+          <span>FAV</span>
+          <span>CON</span>
+          <span>DIF</span>
+        </p>
       </header>
-      <div className="te-public-section__divider am-pub-standings__divider" aria-hidden />
+      <div
+        className="te-public-section__divider am-pub-standings__divider"
+        aria-hidden
+      />
 
       <div className="am-pub-standings__panel te-pub-fade-in te-pub-fade-in--delay-1">
-        <div className="am-pub-standings__head" aria-hidden>
-          <span className="am-pub-standings__col am-pub-standings__col--pos">
-            Pos
-          </span>
-          <span className="am-pub-standings__col am-pub-standings__col--player">
-            Jugador
-          </span>
-          <span className="am-pub-standings__col am-pub-standings__col--stats">
-            <span className="am-pub-standings__stat-label">PJ</span>
-            <span className="am-pub-standings__stat-label">FAV</span>
-            <span className="am-pub-standings__stat-label">CON</span>
-            <span className="am-pub-standings__stat-label">DIF</span>
-          </span>
-          <span className="am-pub-standings__col am-pub-standings__col--go" />
-        </div>
-
-        <ul className="am-pub-standings__list">
+        <ul className="am-pub-standings__grid">
           {rows.map((row, index) => {
             const pos = index + 1;
             const isLeader = index === 0;
             const showWinner = isFinished && isLeader;
+            const hint = showWinner ? null : podiumHint(pos);
             const topClass =
               pos === 1
                 ? " am-pub-standings__row--top-1"
@@ -120,17 +167,25 @@ export const PublicAmericanoStandingsSection: React.FC<{
               : `${pos}. ${row.name}. Ver desempeño`;
 
             return (
-              <li key={row.id}>
+              <li key={row.id} className="am-pub-standings__cell">
                 <button
                   type="button"
-                  className={`am-pub-standings__row te-pub-fade-in-up${
+                  className={`am-pub-standings__row am-pub-standings__card te-pub-fade-in-up${
                     isLeader ? " am-pub-standings__row--leader" : ""
-                  }${showWinner ? " am-pub-standings__row--winner" : ""}${topClass}`}
+                  }${
+                    showWinner ? " am-pub-standings__row--winner" : ""
+                  }${topClass}`}
                   style={{ animationDelay: `${0.06 + index * staggerBase}s` }}
                   onClick={() => onPlayerSelect?.(row.id)}
                   aria-label={label}
                 >
-                  <span className="am-pub-standings__col am-pub-standings__col--pos">
+                  <StandingCardMedia
+                    name={row.name}
+                    fotoUrl={playerFotos?.[row.id]}
+                  />
+                  <span className="am-pub-standings__scrim" aria-hidden />
+
+                  <span className="am-pub-standings__pos">
                     <span className="am-pub-standings__pos-num">
                       <span className="am-pub-standings__pos-hash" aria-hidden>
                         #
@@ -139,51 +194,28 @@ export const PublicAmericanoStandingsSection: React.FC<{
                     </span>
                   </span>
 
-                  <span className="am-pub-standings__col am-pub-standings__col--player">
-                    <span className="am-pub-standings__avatar">
-                      <JugadorAvatar
-                        fotoUrl={playerFotos?.[row.id] ?? null}
-                        nombre={row.name}
-                        size="lg"
-                        className="am-pub-standings__avatar-img"
-                      />
-                    </span>
+                  <span className="am-pub-standings__body">
                     <span className="am-pub-standings__identity">
                       <span className="am-pub-standings__name">{row.name}</span>
                       {showWinner ? (
                         <span className="am-pub-standings__winner-badge">
                           Ganador
                         </span>
-                      ) : pos <= 3 ? (
+                      ) : hint ? (
                         <span className="am-pub-standings__podium-hint">
-                          {pos === 1
-                            ? "1.er lugar"
-                            : pos === 2
-                              ? "2.º lugar"
-                              : "3.er lugar"}
+                          {hint}
                         </span>
                       ) : null}
                     </span>
-                  </span>
 
-                  <span className="am-pub-standings__col am-pub-standings__col--stats">
-                    <StatCell label="PJ">{pj}</StatCell>
-                    <StatCell label="FAV">{fav}</StatCell>
-                    <StatCell label="CON">{con}</StatCell>
-                    <StatCell label="DIF" emphasize>
-                      <DifValue ptsFav={fav} ptsCon={con} />
-                    </StatCell>
-                  </span>
-
-                  <span
-                    className="am-pub-standings__col am-pub-standings__col--go"
-                    aria-hidden
-                  >
-                    <TablerIcon
-                      name="chevron-right"
-                      size={18}
-                      className="am-pub-standings__chevron"
-                    />
+                    <span className="am-pub-standings__stats">
+                      <StatCell label="PJ">{pj}</StatCell>
+                      <StatCell label="FAV">{fav}</StatCell>
+                      <StatCell label="CON">{con}</StatCell>
+                      <StatCell label="DIF" emphasize>
+                        <DifValue ptsFav={fav} ptsCon={con} />
+                      </StatCell>
+                    </span>
                   </span>
                 </button>
               </li>
