@@ -746,41 +746,65 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                   role="tablist"
                   aria-label="Seleccionar ronda"
                 >
-                  {snapshot.rounds.map((item, index) => {
-                    const itemLive =
-                      eventScheduleStatus.phase === "in_window" &&
-                      index === snapshot.rounds.length - 1 &&
-                      !roundFullyScored(item);
-                    const itemDone = roundFullyScored(item);
-                    return (
-                      <button
-                        key={item.roundNumber}
-                        type="button"
-                        role="tab"
-                        aria-selected={index === roundIdx}
-                        className={[
-                          "am-pub-round-nav__btn",
-                          index === roundIdx ? "is-active" : "",
-                          itemLive ? "is-live" : "",
-                          itemDone ? "is-done" : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                        onClick={() => setSelectedRoundIndex(index)}
-                      >
-                        <span className="am-pub-round-nav__label">
-                          R{item.roundNumber}
-                        </span>
-                        <span className="am-pub-round-nav__meta">
-                          {itemLive
-                            ? "En curso"
-                            : itemDone
-                              ? "Completada"
-                              : "Pendiente"}
-                        </span>
-                      </button>
-                    );
-                  })}
+                  <div className="am-pub-round-nav__header">
+                    <span className="am-pub-round-nav__title">Rondas</span>
+                    <span className="am-pub-round-nav__count">
+                      {
+                        snapshot.rounds.filter((item) =>
+                          roundFullyScored(item)
+                        ).length
+                      }
+                      /{snapshot.rounds.length}
+                    </span>
+                  </div>
+                  <div className="am-pub-round-nav__track">
+                    {snapshot.rounds.map((item, index) => {
+                      const itemLive =
+                        eventScheduleStatus.phase === "in_window" &&
+                        index === snapshot.rounds.length - 1 &&
+                        !roundFullyScored(item);
+                      const itemDone = roundFullyScored(item);
+                      const itemPending = !itemLive && !itemDone;
+                      return (
+                        <button
+                          key={item.roundNumber}
+                          type="button"
+                          role="tab"
+                          aria-selected={index === roundIdx}
+                          className={[
+                            "am-pub-round-nav__btn",
+                            index === roundIdx ? "is-active" : "",
+                            itemLive ? "is-live" : "",
+                            itemDone ? "is-done" : "",
+                            itemPending ? "is-pending" : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          onClick={() => setSelectedRoundIndex(index)}
+                        >
+                          <span className="am-pub-round-nav__indicator" aria-hidden>
+                            {itemDone ? (
+                              <span className="am-pub-round-nav__check">✓</span>
+                            ) : itemLive ? (
+                              <span className="am-pub-round-nav__pulse" />
+                            ) : (
+                              <span className="am-pub-round-nav__dot" />
+                            )}
+                          </span>
+                          <span className="am-pub-round-nav__label">
+                            R{item.roundNumber}
+                          </span>
+                          <span className="am-pub-round-nav__meta">
+                            {itemLive
+                              ? "En curso"
+                              : itemDone
+                                ? "Completada"
+                                : "Pendiente"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="te-public-round-head am-pub-round-head">
