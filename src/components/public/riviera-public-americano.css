@@ -3218,14 +3218,21 @@
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.48);
 }
 
-/* Retratos fluidos: llenan la cancha y el rating escala con el ancho */
+/* Retratos compactos y centrados dentro de cada cancha */
 .te-public--americano .am-pub-match .am-court-board {
   width: 100%;
-  gap: clamp(0.55rem, 1.4vw, 1rem) clamp(0.45rem, 1.2vw, 0.85rem);
+  justify-items: center;
+  gap: 0.65rem 0.75rem;
 }
 
 .te-public--americano .am-pub-match .am-portrait {
-  width: 100%;
+  width: min(100%, 7rem);
+}
+
+@media (min-width: 1100px) {
+  .te-public--americano .am-pub-match .am-portrait {
+    width: min(100%, 7.5rem);
+  }
 }
 
 .te-public--americano .am-pub-match .te-pub-match__top {
