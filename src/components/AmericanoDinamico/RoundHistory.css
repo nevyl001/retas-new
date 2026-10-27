@@ -68,8 +68,7 @@
 }
 
 .americano-history__match .am-portrait {
-  width: 100%;
-  max-width: 9.5rem;
+  width: min(100%, 7rem);
   margin-inline: auto;
 }
 
