@@ -20,7 +20,7 @@ export const AmericanoPairMark: React.FC<{
   return <span className={`am-court-board__num${tone}`}>{value}</span>;
 };
 
-/** Retratos de cada pareja y su marcador debajo. */
+/** Pareja A | VS | Pareja B, con el marcador debajo de cada pareja. */
 export const AmericanoCourtBoard: React.FC<{
   sideA: AmericanoCourtPlayer[];
   sideB: AmericanoCourtPlayer[];
@@ -39,6 +39,11 @@ export const AmericanoCourtBoard: React.FC<{
         />
       ))}
       <div className="am-court-board__score">{scoreA}</div>
+    </div>
+    <div className="am-court-board__vs" aria-hidden>
+      <span className="am-court-board__vs-line" />
+      <span className="am-court-board__vs-badge">VS</span>
+      <span className="am-court-board__vs-line" />
     </div>
     <div className="am-court-board__pair" aria-label={labelB}>
       {sideB.map((player) => (
