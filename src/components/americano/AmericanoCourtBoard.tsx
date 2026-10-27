@@ -8,44 +8,27 @@ export interface AmericanoCourtPlayer {
   fotoUrl?: string | null;
 }
 
-export const AmericanoCenterScore: React.FC<{
-  scoreA?: number | null;
-  scoreB?: number | null;
-}> = ({ scoreA, scoreB }) => {
-  const played = Number.isFinite(scoreA) && Number.isFinite(scoreB);
-  if (!played || scoreA == null || scoreB == null) {
-    return (
-      <span className="am-court-board__pending" aria-label="Sin marcador">
-        —
-      </span>
-    );
+export const AmericanoPairMark: React.FC<{
+  value?: number | null;
+  opponent?: number | null;
+}> = ({ value, opponent }) => {
+  const played = Number.isFinite(value) && Number.isFinite(opponent);
+  if (!played || value == null || opponent == null) {
+    return <span className="am-court-board__pending">—</span>;
   }
-  const aWins = scoreA > scoreB;
-  const bWins = scoreB > scoreA;
-  const tone = (wins: boolean, loses: boolean) =>
-    wins ? " is-win" : loses ? " is-loss" : "";
-  return (
-    <div
-      className="am-court-board__result"
-      aria-label={`Marcador ${scoreA} a ${scoreB}`}
-    >
-      <span className={`am-court-board__num${tone(aWins, bWins)}`}>{scoreA}</span>
-      <span className="am-court-board__sep" aria-hidden>
-        —
-      </span>
-      <span className={`am-court-board__num${tone(bWins, aWins)}`}>{scoreB}</span>
-    </div>
-  );
+  const tone = value > opponent ? " is-win" : value < opponent ? " is-loss" : "";
+  return <span className={`am-court-board__num${tone}`}>{value}</span>;
 };
 
-/** Pareja A | marcador | Pareja B, en la misma fila. */
+/** Retratos de cada pareja y su marcador debajo. */
 export const AmericanoCourtBoard: React.FC<{
   sideA: AmericanoCourtPlayer[];
   sideB: AmericanoCourtPlayer[];
   labelA: string;
   labelB: string;
-  score: React.ReactNode;
-}> = ({ sideA, sideB, labelA, labelB, score }) => (
+  scoreA: React.ReactNode;
+  scoreB: React.ReactNode;
+}> = ({ sideA, sideB, labelA, labelB, scoreA, scoreB }) => (
   <div className="am-court-board">
     <div className="am-court-board__pair" aria-label={labelA}>
       {sideA.map((player) => (
@@ -55,8 +38,8 @@ export const AmericanoCourtBoard: React.FC<{
           fotoUrl={player.fotoUrl}
         />
       ))}
+      <div className="am-court-board__score">{scoreA}</div>
     </div>
-    <div className="am-court-board__score">{score}</div>
     <div className="am-court-board__pair" aria-label={labelB}>
       {sideB.map((player) => (
         <AmericanoPortrait
@@ -65,6 +48,7 @@ export const AmericanoCourtBoard: React.FC<{
           fotoUrl={player.fotoUrl}
         />
       ))}
+      <div className="am-court-board__score">{scoreB}</div>
     </div>
   </div>
 );

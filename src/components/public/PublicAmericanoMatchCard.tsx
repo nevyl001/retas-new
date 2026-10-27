@@ -1,10 +1,7 @@
 import React from "react";
 import type { AmericanoSnapshotMatch } from "../../lib/americanoDinamicoStorage";
 import { formatMatchCourtLabel } from "../../lib/matchCourt";
-import {
-  AmericanoCenterScore,
-  AmericanoCourtBoard,
-} from "../americano/AmericanoCourtBoard";
+import { AmericanoCourtBoard, AmericanoPairMark } from "../americano/AmericanoCourtBoard";
 import { TePubMatchStatus } from "./tePubShared";
 import "./reta-public-scoreboard.css";
 
@@ -72,10 +69,16 @@ export const PublicAmericanoMatchCard: React.FC<{
         sideB={playersB}
         labelA={teamLabel(m.teamA)}
         labelB={teamLabel(m.teamB)}
-        score={
-          <AmericanoCenterScore
-            scoreA={played ? m.scoreA : null}
-            scoreB={played ? m.scoreB : null}
+        scoreA={
+          <AmericanoPairMark
+            value={played ? m.scoreA : null}
+            opponent={played ? m.scoreB : null}
+          />
+        }
+        scoreB={
+          <AmericanoPairMark
+            value={played ? m.scoreB : null}
+            opponent={played ? m.scoreA : null}
           />
         }
       />
