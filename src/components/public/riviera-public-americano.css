@@ -932,25 +932,28 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
   width: 100%;
+  align-items: stretch;
 }
 
 .te-public--americano .am-pub-standings__cell {
   min-width: 0;
+  display: flex;
 }
 
 .te-public--americano .am-pub-standings__card {
   position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  aspect-ratio: 3 / 4;
-  min-height: 15.5rem;
+  height: 300px;
+  max-height: 340px;
   margin: 0;
   padding: 0;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: var(--am-surface-card, #141414);
   color: inherit;
@@ -959,27 +962,27 @@
   cursor: pointer;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 14px 32px rgba(0, 0, 0, 0.34);
+    0 10px 24px rgba(0, 0, 0, 0.3);
   transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .te-public--americano .am-pub-standings__card:hover,
 .te-public--americano .am-pub-standings__card:focus-visible {
-  transform: translateY(-3px) scale(1.01);
-  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 18px 40px rgba(0, 0, 0, 0.45);
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 14px 28px rgba(0, 0, 0, 0.4);
   outline: none;
 }
 
 .te-public--americano .am-pub-standings__card:focus-visible {
   box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.35),
-    0 18px 40px rgba(0, 0, 0, 0.45);
+    0 0 0 2px rgba(255, 255, 255, 0.32),
+    0 14px 28px rgba(0, 0, 0, 0.4);
 }
 
 .te-public--americano .am-pub-standings__media {
@@ -991,22 +994,37 @@
   overflow: hidden;
 }
 
+.te-public--americano .am-pub-standings__media--fallback {
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 28%,
+      rgba(255, 255, 255, 0.06) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      165deg,
+      #1a1a1a 0%,
+      #121212 48%,
+      #0d0d0d 100%
+    );
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .te-public--americano .am-pub-standings__photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 18%;
+  object-position: center 22%;
   display: block;
-  transform: scale(1.02);
 }
 
 .te-public--americano .am-pub-standings__initials {
   font-family: var(--font-display, inherit);
-  font-size: clamp(2.2rem, 8vw, 3.2rem);
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  font-size: 2rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
   line-height: 1;
-  opacity: 0.92;
+  opacity: 0.78;
 }
 
 .te-public--americano .am-pub-standings__scrim {
@@ -1016,27 +1034,27 @@
   background:
     linear-gradient(
       180deg,
-      rgba(0, 0, 0, 0.55) 0%,
-      rgba(0, 0, 0, 0.08) 28%,
-      rgba(0, 0, 0, 0.18) 48%,
-      rgba(0, 0, 0, 0.82) 78%,
-      rgba(0, 0, 0, 0.94) 100%
+      rgba(0, 0, 0, 0.42) 0%,
+      rgba(0, 0, 0, 0.05) 32%,
+      rgba(0, 0, 0, 0.2) 55%,
+      rgba(0, 0, 0, 0.78) 78%,
+      rgba(0, 0, 0, 0.92) 100%
     );
 }
 
 .te-public--americano .am-pub-standings__pos {
   position: absolute;
-  top: 0.7rem;
-  left: 0.7rem;
+  top: 0.6rem;
+  left: 0.6rem;
   z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2.55rem;
-  padding: 0.35rem 0.5rem;
+  min-width: 2.4rem;
+  padding: 0.28rem 0.45rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(8, 10, 14, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(8, 10, 14, 0.58);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -1046,7 +1064,7 @@
   align-items: baseline;
   gap: 0.04rem;
   font-family: var(--font-display, inherit);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: #fff;
@@ -1055,7 +1073,7 @@
 }
 
 .te-public--americano .am-pub-standings__pos-hash {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 700;
   opacity: 0.55;
 }
@@ -1068,15 +1086,15 @@
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  padding: 0.85rem 0.75rem 0.8rem;
+  gap: 0.45rem;
+  padding: 0.7rem 0.7rem 0.65rem;
 }
 
 .te-public--americano .am-pub-standings__identity {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.28rem;
+  gap: 0.2rem;
   min-width: 0;
 }
 
@@ -1086,20 +1104,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.98rem;
+  font-size: 1.05rem;
   font-weight: 750;
   letter-spacing: -0.01em;
   line-height: 1.15;
   color: #fff;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
 }
 
 .te-public--americano .am-pub-standings__podium-hint {
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   font-weight: 650;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.58);
+  color: rgba(255, 255, 255, 0.55);
   line-height: 1;
 }
 
@@ -1120,7 +1138,14 @@
 .te-public--americano .am-pub-standings__stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.28rem;
+  gap: 0;
+  width: 100%;
+  padding: 0.4rem 0.2rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(8, 10, 14, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .te-public--americano .am-pub-standings__stat {
@@ -1128,23 +1153,25 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
-  min-height: 2.45rem;
-  padding: 0.28rem 0.12rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(8, 10, 14, 0.48);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  gap: 0.18rem;
+  padding: 0.1rem 0.15rem;
+  border: 0;
+  background: transparent;
+  min-height: 0;
+  border-radius: 0;
+}
+
+.te-public--americano .am-pub-standings__stat + .am-pub-standings__stat {
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .te-public--americano .am-pub-standings__stat--dif {
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(8, 10, 14, 0.62);
+  background: transparent;
+  border-color: transparent;
 }
 
 .te-public--americano .am-pub-standings__stat-label {
-  font-size: 0.52rem;
+  font-size: 0.58rem;
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1153,7 +1180,7 @@
 }
 
 .te-public--americano .am-pub-standings__stat-value {
-  font-size: 0.82rem;
+  font-size: 1rem;
   font-weight: 750;
   font-variant-numeric: tabular-nums;
   color: rgba(255, 255, 255, 0.96);
@@ -1161,25 +1188,21 @@
 }
 
 .te-public--americano .am-pub-standings__dif {
-  font-size: 0.82rem;
+  font-size: 1rem;
   font-weight: 800;
   min-width: 0;
   padding: 0;
   background: transparent;
 }
 
-/* Top 3 — acentos semánticos de medalla */
+/* Top 3 — acentos semánticos discretos */
 .te-public--americano .am-pub-standings__row--top-1 {
-  border-color: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 48%, transparent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--ro-medal-gold, #c9a227) 18%, transparent),
-    0 16px 36px rgba(0, 0, 0, 0.4),
-    0 0 28px color-mix(in srgb, var(--ro-medal-gold, #c9a227) 16%, transparent);
+  border-color: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 42%, transparent);
 }
 
 .te-public--americano .am-pub-standings__row--top-1 .am-pub-standings__pos {
-  border-color: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 45%, transparent);
-  background: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 18%, rgba(8, 10, 14, 0.7));
+  border-color: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 42%, transparent);
+  background: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 14%, rgba(8, 10, 14, 0.72));
 }
 
 .te-public--americano .am-pub-standings__row--top-1 .am-pub-standings__pos-num,
@@ -1188,14 +1211,11 @@
 }
 
 .te-public--americano .am-pub-standings__row--top-2 {
-  border-color: color-mix(in srgb, var(--ro-medal-silver, #b8bcc6) 42%, transparent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--ro-medal-silver, #b8bcc6) 14%, transparent),
-    0 14px 32px rgba(0, 0, 0, 0.36);
+  border-color: color-mix(in srgb, var(--ro-medal-silver, #b8bcc6) 34%, transparent);
 }
 
 .te-public--americano .am-pub-standings__row--top-2 .am-pub-standings__pos {
-  border-color: color-mix(in srgb, var(--ro-medal-silver, #b8bcc6) 40%, transparent);
+  border-color: color-mix(in srgb, var(--ro-medal-silver, #b8bcc6) 34%, transparent);
 }
 
 .te-public--americano .am-pub-standings__row--top-2 .am-pub-standings__pos-num,
@@ -1204,14 +1224,11 @@
 }
 
 .te-public--americano .am-pub-standings__row--top-3 {
-  border-color: color-mix(in srgb, var(--ro-medal-bronze, #b87333) 42%, transparent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--ro-medal-bronze, #b87333) 14%, transparent),
-    0 14px 32px rgba(0, 0, 0, 0.36);
+  border-color: color-mix(in srgb, var(--ro-medal-bronze, #b87333) 34%, transparent);
 }
 
 .te-public--americano .am-pub-standings__row--top-3 .am-pub-standings__pos {
-  border-color: color-mix(in srgb, var(--ro-medal-bronze, #b87333) 40%, transparent);
+  border-color: color-mix(in srgb, var(--ro-medal-bronze, #b87333) 34%, transparent);
 }
 
 .te-public--americano .am-pub-standings__row--top-3 .am-pub-standings__pos-num,
@@ -1228,15 +1245,15 @@
   color: var(--ro-pub-gold, var(--ro-medal-gold, #c9a227));
 }
 
-@media (max-width: 420px) {
+/* Móvil pequeño: 1 columna */
+@media (max-width: 479px) {
   .te-public--americano .am-pub-standings__grid {
     grid-template-columns: 1fr;
-    gap: 0.7rem;
+    gap: 0.75rem;
   }
 
   .te-public--americano .am-pub-standings__card {
-    aspect-ratio: 16 / 11;
-    min-height: 14rem;
+    height: 280px;
   }
 
   .te-public--americano .am-pub-standings__legend {
@@ -1244,54 +1261,64 @@
   }
 
   .te-public--americano .am-pub-standings__name {
-    font-size: 1.05rem;
-  }
-}
-
-@media (min-width: 640px) {
-  .te-public--americano .am-pub-standings__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.85rem;
-  }
-}
-
-@media (min-width: 960px) {
-  .te-public--americano .am-pub-standings__grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1rem;
-  }
-
-  .te-public--americano .am-pub-standings__card {
-    border-radius: 20px;
-    min-height: 17rem;
-  }
-
-  .te-public--americano .am-pub-standings__body {
-    padding: 0.95rem 0.85rem 0.9rem;
-    gap: 0.75rem;
-  }
-
-  .te-public--americano .am-pub-standings__name {
-    font-size: 1.05rem;
-  }
-
-  .te-public--americano .am-pub-standings__stat {
-    min-height: 2.6rem;
+    font-size: 1.08rem;
   }
 
   .te-public--americano .am-pub-standings__stat-value,
   .te-public--americano .am-pub-standings__dif {
-    font-size: 0.88rem;
+    font-size: 1.05rem;
   }
 }
 
-@media (min-width: 1280px) {
+/* Tablet / móvil ancho: 2 columnas */
+@media (min-width: 480px) and (max-width: 899px) {
   .te-public--americano .am-pub-standings__grid {
-    gap: 1.1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
   }
 
   .te-public--americano .am-pub-standings__card {
-    min-height: 18.5rem;
+    height: 290px;
+  }
+}
+
+/* Escritorio intermedio: 3 columnas */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .te-public--americano .am-pub-standings__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+
+  .te-public--americano .am-pub-standings__card {
+    height: 300px;
+  }
+}
+
+/* Escritorio amplio: 4 columnas, ~300–320px */
+@media (min-width: 1200px) {
+  .te-public--americano .am-pub-standings__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.9rem; /* ~14px */
+  }
+
+  .te-public--americano .am-pub-standings__card {
+    height: 310px;
+    border-radius: 16px;
+  }
+
+  .te-public--americano .am-pub-standings__name {
+    font-size: 1.08rem;
+  }
+
+  .te-public--americano .am-pub-standings__stat-value,
+  .te-public--americano .am-pub-standings__dif {
+    font-size: 1.05rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .te-public--americano .am-pub-standings__card {
+    height: 320px;
   }
 }
 
