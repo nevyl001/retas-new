@@ -1,0 +1,146 @@
+.am-court-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 10px;
+  min-width: 0;
+}
+
+.am-court-board__pair {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.am-portrait {
+  position: relative;
+  width: min(100%, 6.5rem);
+  aspect-ratio: 4 / 5;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  background: var(--bg-elevated, var(--rv-bg-card));
+}
+
+.am-portrait__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;
+}
+
+.am-portrait__initials {
+  position: absolute;
+  inset: 0 0 28%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.am-portrait__scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.55) 42%,
+    rgba(0, 0, 0, 0.88) 100%
+  );
+  pointer-events: none;
+}
+
+.am-portrait__name {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 5px;
+  z-index: 1;
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.am-court-board__score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  gap: 6px;
+  min-width: 4.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.am-court-board__result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-display, var(--font-body));
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.am-court-board__num.is-loss,
+.am-court-board__pending,
+.am-court-board__sep {
+  color: var(--text-muted, var(--text-secondary));
+  font-weight: 600;
+}
+
+.am-court-board__pending {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.am-court-board .am-match-board__score {
+  width: 2.75rem;
+  max-width: 2.75rem;
+  min-height: 2.5rem;
+  font-size: 1.25rem;
+  border-color: var(--ro-border, var(--border-subtle));
+  background: var(--bg-card, var(--rv-bg-card));
+}
+
+.am-court-board__inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.am-court-board__inputs input {
+  width: 2.75rem;
+  min-height: 2.5rem;
+  padding: 0.2rem;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  background: var(--bg-card, var(--rv-bg-card));
+  color: var(--text-primary);
+  font-family: var(--font-display, var(--font-body));
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

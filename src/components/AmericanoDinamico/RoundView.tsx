@@ -5,7 +5,7 @@ import { formatMatchCourtLabel, sortByMatchCourt } from "../../lib/matchCourt";
 import { ActionBar } from "../platform/ActionBar";
 import { Button } from "../ui";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
-import { AmericanoPairLine } from "../americano/AmericanoPairLine";
+import { AmericanoCenterScore, AmericanoCourtBoard } from "../americano/AmericanoCourtBoard";
 import "../jugadores/riviera-jugadores.css";
 import "./RoundView.css";
 
@@ -190,16 +190,6 @@ export const RoundView: React.FC<RoundViewProps> = ({
           const { a, b } = readDraft(match, draftScores);
           const teamALabel = teamPlayersLabel(match.teamA);
           const teamBLabel = teamPlayersLabel(match.teamB);
-          const scoreA = a === "" ? null : Number(a);
-          const scoreB = b === "" ? null : Number(b);
-          const scored =
-            scoreA != null &&
-            scoreB != null &&
-            !Number.isNaN(scoreA) &&
-            !Number.isNaN(scoreB);
-          const aWins = scored && scoreA > scoreB;
-          const bWins = scored && scoreB > scoreA;
-          const tie = scored && scoreA === scoreB;
           const patchScore = (side: "a" | "b", raw: string) => {
             const sanitized = raw.replace(/\D/g, "").slice(0, 2);
             setDraftScores((prev) => ({
@@ -226,17 +216,17 @@ export const RoundView: React.FC<RoundViewProps> = ({
                 </span>
               </div>
 
-              <div className="am-match-lineup">
-                <AmericanoPairLine
-                  label={teamALabel}
-                  highlight={aWins ? "win" : tie ? "tie" : scored ? "loss" : undefined}
-                  players={toLine(match.teamA)}
-                />
-                <div className="am-match-lineup__score">
-                  {readOnly ? (
-                    <span aria-label={`Marcador ${a || "sin juegos"} a ${b || "sin juegos"}`}>
-                      {a || "—"} – {b || "—"}
-                    </span>
+              <AmericanoCourtBoard
+                sideA={toLine(match.teamA)}
+                sideB={toLine(match.teamB)}
+                labelA={teamALabel}
+                labelB={teamBLabel}
+                score={
+                  readOnly ? (
+                    <AmericanoCenterScore
+                      scoreA={a === "" ? null : Number(a)}
+                      scoreB={b === "" ? null : Number(b)}
+                    />
                   ) : (
                     <>
                       <ScoreField
@@ -253,14 +243,9 @@ export const RoundView: React.FC<RoundViewProps> = ({
                         onChange={(raw) => patchScore("b", raw)}
                       />
                     </>
-                  )}
-                </div>
-                <AmericanoPairLine
-                  label={teamBLabel}
-                  highlight={bWins ? "win" : tie ? "tie" : scored ? "loss" : undefined}
-                  players={toLine(match.teamB)}
-                />
-              </div>
+                  )
+                }
+              />
             </article>
           );
         })}

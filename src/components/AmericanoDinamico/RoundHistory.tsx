@@ -7,8 +7,11 @@ import {
   type AmericanoEditScoreResult,
 } from "../../lib/americanoScoreEdit";
 import { isAmericanoMatchScored } from "../../lib/americanoPlayerJourney";
-import { AmericanoPairLine } from "../americano/AmericanoPairLine";
-import { Button, Input, Modal } from "../ui";
+import {
+  AmericanoCenterScore,
+  AmericanoCourtBoard,
+} from "../americano/AmericanoCourtBoard";
+import { Button, Modal } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
 import "./RoundHistory.css";
 
@@ -180,9 +183,6 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
           <div className="americano-history__matches">
             {sortByMatchCourt(round.matches).map((match) => {
               const scored = isAmericanoMatchScored(match);
-              const aWins = scored && (match.scoreA as number) > (match.scoreB as number);
-              const bWins = scored && (match.scoreB as number) > (match.scoreA as number);
-              const tie = scored && match.scoreA === match.scoreB;
               const revision = match.scoreRevision;
               const namesA = pairNames(match.teamA);
               const namesB = pairNames(match.teamB);
@@ -225,25 +225,18 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
                       </button>
                     ) : null}
                   </div>
-                  <div className="americano-history__sides">
-                    <div className={`americano-history__side${aWins ? " is-win" : tie ? " is-tie" : ""}`}>
-                      <span className="americano-history__side-label">Pareja A</span>
-                      <AmericanoPairLine label={namesA} players={toLine(match.teamA)} />
-                      <span className="americano-history__points">
-                        {scored ? match.scoreA : "—"}
-                      </span>
-                    </div>
-                    <span className="americano-history__vs" aria-hidden>
-                      vs
-                    </span>
-                    <div className={`americano-history__side${bWins ? " is-win" : tie ? " is-tie" : ""}`}>
-                      <span className="americano-history__side-label">Pareja B</span>
-                      <AmericanoPairLine label={namesB} players={toLine(match.teamB)} />
-                      <span className="americano-history__points">
-                        {scored ? match.scoreB : "—"}
-                      </span>
-                    </div>
-                  </div>
+                  <AmericanoCourtBoard
+                    sideA={toLine(match.teamA)}
+                    sideB={toLine(match.teamB)}
+                    labelA={namesA}
+                    labelB={namesB}
+                    score={
+                      <AmericanoCenterScore
+                        scoreA={scored ? match.scoreA : null}
+                        scoreB={scored ? match.scoreB : null}
+                      />
+                    }
+                  />
                 </article>
               );
             })}
@@ -272,36 +265,33 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
             <p className="americano-history__form-meta">
               Ronda {editing.roundNumber} · {formatMatchCourtLabel(editing.court)}
             </p>
-            <div className="americano-history__form-scores">
-              <div className="americano-history__form-side">
-                <span className="americano-history__side-label">Pareja A</span>
-                <AmericanoPairLine
-                  label={pairNames(editing.sideA)}
-                  players={editing.sideA}
-                />
-                <Input
-                  label={`Marcador de ${pairNames(editing.sideA)}`}
-                  inputMode="numeric"
-                  value={draftA}
-                  onChange={(event) => setDraftA(event.target.value)}
-                  disabled={saving}
-                />
-              </div>
-              <div className="americano-history__form-side">
-                <span className="americano-history__side-label">Pareja B</span>
-                <AmericanoPairLine
-                  label={pairNames(editing.sideB)}
-                  players={editing.sideB}
-                />
-                <Input
-                  label={`Marcador de ${pairNames(editing.sideB)}`}
-                  inputMode="numeric"
-                  value={draftB}
-                  onChange={(event) => setDraftB(event.target.value)}
-                  disabled={saving}
-                />
-              </div>
-            </div>
+            <AmericanoCourtBoard
+              sideA={editing.sideA}
+              sideB={editing.sideB}
+              labelA={pairNames(editing.sideA)}
+              labelB={pairNames(editing.sideB)}
+              score={
+                <div className="am-court-board__inputs">
+                  <input
+                    aria-label={`Marcador de ${pairNames(editing.sideA)}`}
+                    inputMode="numeric"
+                    value={draftA}
+                    onChange={(event) => setDraftA(event.target.value)}
+                    disabled={saving}
+                  />
+                  <span className="am-court-board__sep" aria-hidden>
+                    —
+                  </span>
+                  <input
+                    aria-label={`Marcador de ${pairNames(editing.sideB)}`}
+                    inputMode="numeric"
+                    value={draftB}
+                    onChange={(event) => setDraftB(event.target.value)}
+                    disabled={saving}
+                  />
+                </div>
+              }
+            />
             {phase === "finished" ? (
               <label className="americano-history__confirm">
                 <input
