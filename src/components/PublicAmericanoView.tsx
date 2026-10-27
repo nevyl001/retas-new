@@ -920,6 +920,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
               rows={rankedRows}
               isFinished={showFinishedPodium}
               playerFotos={playerFotos}
+              liveStatsMap={liveStatsMap}
               onPlayerSelect={onPlayerSelect}
             />
           )}

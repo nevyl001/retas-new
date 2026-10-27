@@ -1137,10 +1137,10 @@
 
 .te-public--americano .am-pub-standings__stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0;
   width: 100%;
-  padding: 0.4rem 0.2rem;
+  padding: 0.4rem 0.15rem;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(8, 10, 14, 0.62);
@@ -1180,7 +1180,7 @@
 }
 
 .te-public--americano .am-pub-standings__stat-value {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 750;
   font-variant-numeric: tabular-nums;
   color: rgba(255, 255, 255, 0.96);
@@ -1188,7 +1188,7 @@
 }
 
 .te-public--americano .am-pub-standings__dif {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 800;
   min-width: 0;
   padding: 0;

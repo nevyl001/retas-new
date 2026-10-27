@@ -4,6 +4,7 @@ import {
   formatStandingDif,
 } from "../../utils/standingsDisplay";
 import type { AmericanoSnapshotPlayer } from "../../lib/americanoDinamicoStorage";
+import type { UnifiedStandingStats } from "../../lib/unifiedStandings";
 import { useRetryableImage } from "../../hooks/useRetryableImage";
 import { isPhotographicSplitVsFoto } from "../liga/jornada-public/ligaJornadaMatchNames";
 import { getJugadorInitials } from "../jugadores/JugadorAvatar";
@@ -89,6 +90,8 @@ export const PublicAmericanoStandingsSection: React.FC<{
   title?: string;
   /** Fotos resueltas por id de jugador (vista pública). */
   playerFotos?: Record<string, string | null>;
+  /** Stats en vivo (incluye PG como 3.er criterio de desempate). */
+  liveStatsMap?: Map<string, UnifiedStandingStats>;
   /**
    * Filas accionables: abren el desempeño (Fase 2).
    */
@@ -98,6 +101,7 @@ export const PublicAmericanoStandingsSection: React.FC<{
   isFinished = false,
   title,
   playerFotos,
+  liveStatsMap,
   onPlayerSelect,
 }) => {
   const staggerBase = useMemo(() => 0.03, []);
@@ -122,6 +126,7 @@ export const PublicAmericanoStandingsSection: React.FC<{
         </div>
         <p className="am-pub-standings__legend" aria-hidden>
           <span>PJ</span>
+          <span>PG</span>
           <span>FAV</span>
           <span>CON</span>
           <span>DIF</span>
@@ -147,9 +152,11 @@ export const PublicAmericanoStandingsSection: React.FC<{
                   : pos === 3
                     ? " am-pub-standings__row--top-3"
                     : "";
-            const fav = row.stats.pointsFor;
-            const con = row.stats.pointsAgainst;
-            const pj = row.stats.gamesPlayed;
+            const live = liveStatsMap?.get(row.id);
+            const fav = live?.ptsFav ?? row.stats.pointsFor;
+            const con = live?.ptsCon ?? row.stats.pointsAgainst;
+            const pj = live?.pj ?? row.stats.gamesPlayed;
+            const pg = live?.pg ?? 0;
             const label = showWinner
               ? `${pos}. ${row.name}, ganador. Ver desempeño`
               : `${pos}. ${row.name}. Ver desempeño`;
@@ -200,6 +207,7 @@ export const PublicAmericanoStandingsSection: React.FC<{
 
                     <span className="am-pub-standings__stats">
                       <StatCell label="PJ">{pj}</StatCell>
+                      <StatCell label="PG">{pg}</StatCell>
                       <StatCell label="FAV">{fav}</StatCell>
                       <StatCell label="CON">{con}</StatCell>
                       <StatCell label="DIF" emphasize>

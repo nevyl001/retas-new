@@ -74,13 +74,40 @@ describe("PublicAmericanoStandingsSection", () => {
     ).toBe("Ganador");
   });
 
-  it("conserva orden, PJ, FAV, CON, DIF y filas accionables", () => {
+  it("conserva orden, PJ, PG, FAV, CON, DIF y filas accionables", () => {
     const onPlayerSelect = jest.fn();
+    const liveStatsMap = new Map([
+      [
+        "a",
+        {
+          pj: 4,
+          pg: 3,
+          pe: 0,
+          pp: 1,
+          ptsFav: 24,
+          ptsCon: 12,
+          puntos: 6,
+        },
+      ],
+      [
+        "b",
+        {
+          pj: 4,
+          pg: 1,
+          pe: 0,
+          pp: 3,
+          ptsFav: 21,
+          ptsCon: 15,
+          puntos: 2,
+        },
+      ],
+    ]);
     act(() => {
       root.render(
         <PublicAmericanoStandingsSection
           rows={rows}
           isFinished={false}
+          liveStatsMap={liveStatsMap}
           onPlayerSelect={onPlayerSelect}
         />
       );
@@ -92,6 +119,9 @@ describe("PublicAmericanoStandingsSection", () => {
     expect(buttons).toHaveLength(2);
     expect(buttons[0].getAttribute("aria-label")).toMatch(/Eduardo L/);
     expect(buttons[1].getAttribute("aria-label")).toMatch(/Carlos R/);
+    expect(buttons[0].textContent).toContain("PJ");
+    expect(buttons[0].textContent).toContain("PG");
+    expect(buttons[0].textContent).toContain("3");
     expect(buttons[0].textContent).toContain("4");
     expect(buttons[0].textContent).toContain("24");
     expect(buttons[0].textContent).toContain("12");
