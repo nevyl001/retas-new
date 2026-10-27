@@ -919,6 +919,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
             <PublicAmericanoStandingsSection
               rows={rankedRows}
               isFinished={showFinishedPodium}
+              playerFotos={playerFotos}
               onPlayerSelect={onPlayerSelect}
             />
           )}
