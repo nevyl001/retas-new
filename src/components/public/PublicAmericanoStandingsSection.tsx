@@ -5,10 +5,7 @@ import {
 } from "../../utils/standingsDisplay";
 import type { AmericanoSnapshotPlayer } from "../../lib/americanoDinamicoStorage";
 import { useRetryableImage } from "../../hooks/useRetryableImage";
-import {
-  isPhotographicSplitVsFoto,
-  playerAvatarHashTone,
-} from "../liga/jornada-public/ligaJornadaMatchNames";
+import { isPhotographicSplitVsFoto } from "../liga/jornada-public/ligaJornadaMatchNames";
 import { getJugadorInitials } from "../jugadores/JugadorAvatar";
 
 function DifValue({ ptsFav, ptsCon }: { ptsFav: number; ptsCon: number }) {
@@ -52,7 +49,6 @@ function StandingCardMedia({
 }) {
   const photoCandidate = isPhotographicSplitVsFoto(fotoUrl) ? fotoUrl : null;
   const { src, onError } = useRetryableImage(photoCandidate);
-  const tone = playerAvatarHashTone(name);
   const initials = getJugadorInitials(name);
 
   return (
@@ -60,14 +56,6 @@ function StandingCardMedia({
       className={`am-pub-standings__media${
         src ? " am-pub-standings__media--photo" : " am-pub-standings__media--fallback"
       }`}
-      style={
-        src
-          ? undefined
-          : ({
-              background: tone.background,
-              color: tone.color,
-            } as React.CSSProperties)
-      }
       aria-hidden
     >
       {src ? (
@@ -196,7 +184,9 @@ export const PublicAmericanoStandingsSection: React.FC<{
 
                   <span className="am-pub-standings__body">
                     <span className="am-pub-standings__identity">
-                      <span className="am-pub-standings__name">{row.name}</span>
+                      <span className="am-pub-standings__name" title={row.name}>
+                        {row.name}
+                      </span>
                       {showWinner ? (
                         <span className="am-pub-standings__winner-badge">
                           Ganador
