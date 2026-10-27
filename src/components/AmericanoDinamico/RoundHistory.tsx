@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { AmericanoRound } from "../../lib/db/types";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
 import { formatMatchCourtLabel, sortByMatchCourt } from "../../lib/matchCourt";
@@ -72,6 +72,17 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
   const [formError, setFormError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmFinished, setConfirmFinished] = useState(false);
+  const [selectedRoundIndex, setSelectedRoundIndex] = useState(() =>
+    Math.max(rounds.length - 1, 0)
+  );
+
+  useEffect(() => {
+    setSelectedRoundIndex((prev) =>
+      Math.min(Math.max(prev, 0), Math.max(rounds.length - 1, 0))
+    );
+  }, [rounds.length]);
+
+  const selectedRound = rounds[selectedRoundIndex] ?? null;
 
   const openEdit = (roundIndex: number, round: AmericanoRound, matchId: string) => {
     const match = round.matches.find((item) => item.id === matchId);
@@ -160,30 +171,58 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
         </p>
       ) : null}
 
-      {rounds.map((round, roundIndex) => (
+      <div
+        className="americano-history__nav"
+        role="tablist"
+        aria-label="Rondas del historial"
+      >
+        {rounds.map((round, index) => (
+          <button
+            key={round.roundNumber}
+            type="button"
+            role="tab"
+            aria-selected={index === selectedRoundIndex}
+            className={
+              index === selectedRoundIndex
+                ? "americano-history__nav-btn is-active"
+                : "americano-history__nav-btn"
+            }
+            onClick={() => setSelectedRoundIndex(index)}
+          >
+            R{round.roundNumber}
+          </button>
+        ))}
+      </div>
+
+      {selectedRound ? (
         <section
-          key={round.roundNumber}
           className="americano-history__round"
-          aria-label={`Ronda ${round.roundNumber}`}
+          aria-label={`Ronda ${selectedRound.roundNumber}`}
         >
           <header className="americano-history__round-head">
             <h4>
-              Ronda {round.roundNumber}
+              Ronda {selectedRound.roundNumber}
               {totalRounds > 0 ? (
                 <span className="americano-history__of"> de {totalRounds}</span>
               ) : null}
             </h4>
             <span className="americano-history__phase">
-              {americanoRoundPhaseCaption(round, totalRounds) || "Americano"}
+              {americanoRoundPhaseCaption(selectedRound, totalRounds) ||
+                "Americano"}
             </span>
           </header>
           <div className="americano-history__matches">
-            {sortByMatchCourt(round.matches).map((match) => {
+            {sortByMatchCourt(selectedRound.matches).map((match) => {
               const scored = isAmericanoMatchScored(match);
               const revision = match.scoreRevision;
               const namesA = pairNames(match.teamA);
               const namesB = pairNames(match.teamB);
-              const result = outcomeLabel(match.scoreA, match.scoreB, namesA, namesB);
+              const result = outcomeLabel(
+                match.scoreA,
+                match.scoreB,
+                namesA,
+                namesB
+              );
               const toLine = (players: typeof match.teamA) =>
                 players.map((player) => ({
                   id: player.id,
@@ -204,7 +243,10 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
                         title={`Marcador anterior: ${revision.previousScoreA}–${revision.previousScoreB}`}
                       >
                         Editado
-                        <span className="americano-history__edited-tip" role="tooltip">
+                        <span
+                          className="americano-history__edited-tip"
+                          role="tooltip"
+                        >
                           Marcador anterior: {revision.previousScoreA}–
                           {revision.previousScoreB}
                         </span>
@@ -215,7 +257,9 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
                         type="button"
                         className="americano-history__edit"
                         aria-label={`Corregir ${formatMatchCourtLabel(match.court)}: ${namesA} contra ${namesB}`}
-                        onClick={() => openEdit(roundIndex, round, match.id)}
+                        onClick={() =>
+                          openEdit(selectedRoundIndex, selectedRound, match.id)
+                        }
                       >
                         <TablerIcon name="pencil" size={14} />
                         Corregir
@@ -245,7 +289,7 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
             })}
           </div>
         </section>
-      ))}
+      ) : null}
 
       <Modal
         open={editing != null}

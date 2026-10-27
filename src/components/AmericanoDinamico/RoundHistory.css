@@ -16,8 +16,39 @@
   color: var(--ro-success);
 }
 
+.americano-history__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.americano-history__nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  min-width: 2.5rem;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.americano-history__nav-btn.is-active {
+  background: var(--rv-bg-card, var(--bg-elevated));
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
 .americano-history__round {
-  margin: 0 0 16px;
+  margin: 0;
   padding: 12px;
   border: 1px solid var(--ro-border, var(--border-subtle));
   border-radius: 12px;
