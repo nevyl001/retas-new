@@ -19,13 +19,29 @@ export const AmericanoPairMark: React.FC<{
   }
   const isWin = value > opponent;
   const isLoss = value < opponent;
-  const tone = isWin ? " is-win" : isLoss ? " is-loss" : "";
+  const isTie = value === opponent;
+  const tone = isWin ? " is-win" : isLoss ? " is-loss" : isTie ? " is-tie" : "";
   return (
     <span
       className={`am-court-board__mark${tone}`}
-      aria-label={isWin ? `Ganador ${value}` : String(value)}
+      aria-label={
+        isWin
+          ? `Ganador ${value}`
+          : isTie
+            ? `Empate ${value}`
+            : String(value)
+      }
     >
-      {isWin ? <span className="am-court-board__crown" aria-hidden>♛</span> : null}
+      {isWin ? (
+        <span className="am-court-board__crown" aria-hidden>
+          ♛
+        </span>
+      ) : null}
+      {isTie ? (
+        <span className="am-court-board__tie-badge" aria-hidden>
+          Empate
+        </span>
+      ) : null}
       <span className={`am-court-board__num${tone}`}>{value}</span>
     </span>
   );

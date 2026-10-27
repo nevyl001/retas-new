@@ -3761,6 +3761,26 @@
   background: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 10%, rgba(0, 0, 0, 0.32));
 }
 
+.te-public--americano .am-pub-match .am-court-board__score:has(.am-court-board__mark.is-tie) {
+  border-color: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 40%, transparent);
+  background: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 9%, rgba(0, 0, 0, 0.32));
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--ro-medal-gold, #c9a227) 12%, transparent);
+}
+
+.te-public--americano .am-pub-match .am-court-board__mark.is-tie {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  gap: 0.2rem;
+}
+
+.te-public--americano .am-pub-match .am-court-board__tie-badge {
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  color: var(--ro-gold-light, #e8c547);
+}
+
 .te-public--americano .am-pub-match .am-court-board__crown {
   font-size: 1rem;
   filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.45));
@@ -3776,6 +3796,10 @@
 
 .te-public--americano .am-pub-match .am-court-board__num.is-win {
   color: var(--ro-medal-gold, #c9a227);
+}
+
+.te-public--americano .am-pub-match .am-court-board__num.is-tie {
+  color: var(--ro-gold-light, #e8c547);
 }
 
 .te-public--americano .am-pub-match .am-court-board__pending {
