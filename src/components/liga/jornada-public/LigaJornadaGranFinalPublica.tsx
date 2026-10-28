@@ -115,7 +115,6 @@ const GranFinalPortrait: React.FC<{ player: LigaGranFinalPlayer }> = ({
         {showRating ? (
           <JugadorRatingChip
             rating={rating.value}
-            caption={rating.label}
             className="liga-gran-final__portrait-rating"
           />
         ) : null}
