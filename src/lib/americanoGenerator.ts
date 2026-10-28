@@ -9,7 +9,14 @@ import type {
 /** Pesos de costo para optimizar cada ronda (rotación americana equilibrada). */
 const COST = {
   PARTNER_REPEAT: 1000,
+  /** Evitar el mismo jugador en banquillo dos rondas seguidas. */
   BENCH_REPEAT: 500,
+  /**
+   * Penaliza volver a sentar a quien ya descansó mientras otros aún no.
+   * Debe superar PARTNER_REPEAT para que la equidad de banca no se sacrifique
+   * por un emparejamiento “más barato”.
+   */
+  BENCH_BALANCE: 2500,
   RIVAL_REPEAT: 100,
   COURT_REPEAT: 10,
 } as const;
@@ -213,9 +220,43 @@ function benchSelectionCost(
     if (lastBenchPlayerIds.has(p.id)) {
       cost += COST.BENCH_REPEAT;
     }
-    cost -= p.stats.roundsOnBench * 2;
+    // Más descansos previos → más costo (nunca recompensar re-sentar).
+    cost += p.stats.roundsOnBench * COST.BENCH_BALANCE;
   }
   return cost;
+}
+
+/**
+ * Solo considera bancas “justas”: jugadores con el mínimo de descansos posible.
+ * Si hace falta más cupo, abre el siguiente nivel de `roundsOnBench`.
+ */
+function fairBenchEligiblePool(
+  players: AmericanoPlayer[],
+  benchCount: number
+): AmericanoPlayer[] {
+  if (benchCount <= 0 || players.length === 0) return [];
+  const sorted = [...players].sort((a, b) => {
+    if (a.stats.roundsOnBench !== b.stats.roundsOnBench) {
+      return a.stats.roundsOnBench - b.stats.roundsOnBench;
+    }
+    if (a.stats.gamesPlayed !== b.stats.gamesPlayed) {
+      return a.stats.gamesPlayed - b.stats.gamesPlayed;
+    }
+    return a.id.localeCompare(b.id);
+  });
+
+  const pool: AmericanoPlayer[] = [];
+  let level = sorted[0]!.stats.roundsOnBench;
+  for (const p of sorted) {
+    if (p.stats.roundsOnBench > level && pool.length >= benchCount) {
+      break;
+    }
+    if (p.stats.roundsOnBench > level) {
+      level = p.stats.roundsOnBench;
+    }
+    pool.push(p);
+  }
+  return pool;
 }
 
 /**
@@ -248,6 +289,27 @@ function enumerateBenchCandidates(
 ): AmericanoPlayer[][] {
   if (benchCount <= 0) return [[]];
   if (benchCount >= players.length) return [players];
+
+  // Prioridad: combos solo entre quienes menos han descansado.
+  const fairPool = fairBenchEligiblePool(players, benchCount);
+  const fairCombos = combinationsOfSize(fairPool, benchCount);
+  if (fairCombos.length > 0 && fairCombos.length <= 80) {
+    return fairCombos;
+  }
+  if (fairCombos.length > 80) {
+    const out: AmericanoPlayer[][] = [];
+    const sortedFair = [...fairPool].sort((a, b) => {
+      if (a.stats.gamesPlayed !== b.stats.gamesPlayed) {
+        return a.stats.gamesPlayed - b.stats.gamesPlayed;
+      }
+      return a.id.localeCompare(b.id);
+    });
+    out.push(sortedFair.slice(0, benchCount));
+    for (let t = 0; t < 48; t += 1) {
+      out.push(shuffle(fairPool).slice(0, benchCount));
+    }
+    return out;
+  }
 
   const combos = combinationsOfSize(players, benchCount);
   if (combos.length <= 80) return combos;
@@ -647,11 +709,29 @@ export function generateAmericanoRound(
   const courtUsage = buildCourtUsageFromRounds(priorRounds);
 
   const benchCandidates = enumerateBenchCandidates(allPlayers, benchCount);
+  // Primero intenta bancas justas sin repetición consecutiva; si no hay
+  // emparejamiento válido, abre el resto de candidatos.
+  const preferredBench = benchCandidates.filter(
+    (bench) => !bench.some((p) => lastBenchPlayerIds.has(p.id))
+  );
+  const benchSearchOrder =
+    preferredBench.length > 0
+      ? [...preferredBench, ...benchCandidates]
+      : benchCandidates;
+
   let bestBench: AmericanoPlayer[] = [];
   let bestMatches: AmericanoMatch[] = [];
   let bestTotalCost = Infinity;
+  const seenBenchKeys = new Set<string>();
 
-  for (const bench of benchCandidates) {
+  for (const bench of benchSearchOrder) {
+    const benchKey = bench
+      .map((p) => p.id)
+      .sort()
+      .join("|");
+    if (seenBenchKeys.has(benchKey)) continue;
+    seenBenchKeys.add(benchKey);
+
     const benchIds = new Set(bench.map((p) => p.id));
     const activePlayers = allPlayers.filter((p) => !benchIds.has(p.id));
     const matches = buildMatchesForActivePlayers(

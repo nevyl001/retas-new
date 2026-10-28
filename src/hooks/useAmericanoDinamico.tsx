@@ -30,6 +30,7 @@ import { applyAmericanoSnapshotToState } from "../lib/americanoDinamicoRestore";
 import {
   loadAmericanoDinamicoSnapshotMerged,
   persistAmericanoDinamicoMatchScore,
+  persistAmericanoDinamicoSnapshot,
   persistAmericanoNewRound,
   resetAmericanoDinamicoRemote,
 } from "../lib/americanoDinamicoSync";
@@ -809,7 +810,11 @@ export function useAmericanoDinamico(
         tournamentId: resolvedTournamentId,
         roundNumber: nextRoundNumber,
         round: buildAmericanoSnapshotRound(newRound),
-        ranking: rebuilt.players.map((p) => ({ id: p.id, name: p.name, stats: p.stats })),
+        ranking: rebuilt.players.map((p) => ({
+          id: p.id,
+          name: p.name,
+          stats: p.stats,
+        })),
         phase: "playing",
         totalRounds: total,
       });
@@ -832,6 +837,90 @@ export function useAmericanoDinamico(
       console.warn("[americano-live] nextRound:", e);
       setRoundSyncError(
         "No se pudo guardar la siguiente ronda. Verifica tu conexión e intenta de nuevo."
+      );
+      return false;
+    } finally {
+      setRoundSyncPending(false);
+    }
+  }, [phase, resolvedTournamentId]);
+
+  /**
+   * Regenera la ronda actual si aún no tiene marcadores (corrige banca /
+   * emparejamientos sin borrar rondas ya jugadas).
+   */
+  const regenerateCurrentRound = useCallback(async (): Promise<boolean> => {
+    if (phase !== "playing") return false;
+    const idx = currentRoundIndexRef.current;
+    const cur = roundsRef.current[idx];
+    if (!cur) return false;
+
+    const hasAnyScore = cur.matches.some(
+      (m) =>
+        (typeof m.scoreA === "number" && !Number.isNaN(m.scoreA)) ||
+        (typeof m.scoreB === "number" && !Number.isNaN(m.scoreB))
+    );
+    if (hasAnyScore) return false;
+
+    const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
+    const priorRounds = roundsRef.current.slice(0, idx);
+    const rebuilt = rebuildStateFromRounds(priorRounds, template);
+    const scoredRounds = filterScoredAmericanoRounds(rebuilt.rounds);
+    const { partnerMatrix, rivalMatrix } = buildMatricesFromScoredRounds(
+      rebuilt.players,
+      scoredRounds
+    );
+    const lastBenchIds =
+      idx > 0
+        ? new Set(priorRounds[idx - 1]!.benchPlayers.map((p) => p.id))
+        : new Set<string>();
+
+    const regenerated = generateAmericanoRound({
+      allPlayers: rebuilt.players,
+      roundNumber: cur.roundNumber,
+      totalRounds: totalRoundsRef.current,
+      courts: courtsRef.current,
+      partnerMatrix,
+      rivalMatrix,
+      lastBenchPlayerIds: lastBenchIds,
+      priorRounds: rebuilt.rounds,
+      scoredRounds,
+    });
+
+    const nextRounds = [...rebuilt.rounds, regenerated];
+    setPlayers(rebuilt.players);
+    setRounds(nextRounds);
+
+    if (!resolvedTournamentId) return true;
+
+    setRoundSyncPending(true);
+    setRoundSyncError(null);
+    try {
+      const roster = template.map((p) => ({ id: p.id, name: p.name }));
+      const ok = await persistAmericanoDinamicoSnapshot(resolvedTournamentId, {
+        version: 1,
+        savedAt: new Date().toISOString(),
+        tournamentPhase: "playing",
+        totalRounds: totalRoundsRef.current,
+        plannedCourts: courtsRef.current,
+        roster,
+        ranking: rebuilt.players.map((p) => ({
+          id: p.id,
+          name: p.name,
+          stats: { ...p.stats },
+        })),
+        rounds: nextRounds.map(buildAmericanoSnapshotRound),
+      });
+      if (!ok) {
+        setRoundSyncError(
+          "No se pudo guardar el nuevo emparejamiento. Verifica tu conexión."
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.warn("[americano-live] regenerateCurrentRound:", e);
+      setRoundSyncError(
+        "No se pudo guardar el nuevo emparejamiento. Verifica tu conexión."
       );
       return false;
     } finally {
@@ -931,6 +1020,7 @@ export function useAmericanoDinamico(
     submitScore,
     editScore,
     nextRound,
+    regenerateCurrentRound,
     resetTournament,
     updateTotalRounds,
     ranking,

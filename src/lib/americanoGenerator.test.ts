@@ -375,11 +375,38 @@ describe("Americano schedule scenarios", () => {
     const minBench = Math.min(...counts);
     const maxBench = Math.max(...counts);
 
-    // Reparto ideal: 1 descanso por jugador. El algoritmo actual no lo garantiza;
-    // documentamos el rango observado sin modificar la lógica de generación.
-    expect(minBench).toBeGreaterThanOrEqual(0);
-    expect(maxBench).toBeLessThanOrEqual(2);
-    expect(maxBench - minBench).toBeLessThanOrEqual(2);
+    // 5 rondas × 2 bancas = 10 descansos → ideal 1 por jugador.
+    expect(minBench).toBe(1);
+    expect(maxBench).toBe(1);
+  });
+
+  test("9 jugadores, 2 canchas: nadie re-descansa hasta que todos hayan descansado 1 vez", () => {
+    const { rounds, players } = simulateAmericanoTournament(9, 9, 2);
+
+    expect(rounds).toHaveLength(9);
+    rounds.forEach((round) => {
+      expect(round.matches).toHaveLength(2);
+      expect(round.benchPlayers).toHaveLength(1);
+      expect(collectPlayingIds(round).size).toBe(8);
+    });
+
+    const consecutive = analyzeConsecutiveBench(rounds);
+    expect(consecutive.consecutiveCount).toBe(0);
+
+    // Primeras 9 rondas: cada jugador exactamente 1 descanso.
+    const firstCycle = rounds.slice(0, 9);
+    const seen = new Set<string>();
+    firstCycle.forEach((round) => {
+      const id = round.benchPlayers[0]!.id;
+      expect(seen.has(id)).toBe(false);
+      seen.add(id);
+    });
+    expect(seen.size).toBe(players.length);
+
+    // En ronda 3 (índice 2) no puede repetirse el banquillo de ronda 1.
+    expect(rounds[2]!.benchPlayers[0]!.id).not.toBe(
+      rounds[0]!.benchPlayers[0]!.id
+    );
   });
 });
 
@@ -394,6 +421,20 @@ describe("selectBenchPlayers", () => {
     const bench = selectBenchPlayers(ps, 1, last);
     expect(bench).toHaveLength(1);
     expect(bench[0].id).not.toBe("p-1");
+  });
+
+  test("prefers players with fewer prior sits over anyone who already rested", () => {
+    const ps = makePlayers(5);
+    ps[0]!.stats.roundsOnBench = 1; // Ernesto ya descansó
+    ps[1]!.stats.roundsOnBench = 0;
+    ps[2]!.stats.roundsOnBench = 0;
+    ps[3]!.stats.roundsOnBench = 0;
+    ps[4]!.stats.roundsOnBench = 0;
+    const last = new Set(["p-2"]);
+    const bench = selectBenchPlayers(ps, 1, last);
+    expect(bench).toHaveLength(1);
+    expect(bench[0]!.id).not.toBe("p-1");
+    expect(bench[0]!.stats.roundsOnBench).toBe(0);
   });
 });
 

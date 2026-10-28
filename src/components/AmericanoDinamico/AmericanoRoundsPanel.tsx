@@ -19,6 +19,7 @@ interface AmericanoRoundsPanelProps {
   playerFotos?: Record<string, string | null>;
   onCommitRound: (scores: { matchId: string; scoreA: number; scoreB: number }[]) => void;
   onRoundFinalized: () => void;
+  onRegenerateRound?: () => void;
   roundSyncPending?: boolean;
   roundSyncError?: string | null;
 }
@@ -72,6 +73,7 @@ export const AmericanoRoundsPanel: React.FC<AmericanoRoundsPanelProps> = ({
   playerFotos,
   onCommitRound,
   onRoundFinalized,
+  onRegenerateRound,
   roundSyncPending,
   roundSyncError,
 }) => {
@@ -151,12 +153,15 @@ export const AmericanoRoundsPanel: React.FC<AmericanoRoundsPanelProps> = ({
             })}
           </div>
           <RoundView
-            key={round.roundNumber}
+            key={`${round.roundNumber}-${round.matches.map((m) => m.id).join("_")}`}
             round={round}
             totalRounds={totalRounds}
             readOnly={!isCurrent}
             onCommitRound={onCommitRound}
             onRoundFinalized={onRoundFinalized}
+            onRegenerateRound={
+              isCurrent && onRegenerateRound ? onRegenerateRound : undefined
+            }
             roundSyncPending={roundSyncPending}
             roundSyncError={roundSyncError}
             playerFotos={playerFotos}
