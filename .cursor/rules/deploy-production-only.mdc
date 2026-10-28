@@ -1,0 +1,17 @@
+---
+description: Publicar siempre solo en Production (main); nunca dual Preview+Prod
+alwaysApply: true
+---
+
+# Despliegue — solo Production
+
+Cuando el usuario pida publicar, subir, deploy o “súbelo”:
+
+1. **Commit y push a `origin/main`** (o merge a `main` y push). Production despliega desde `main`.
+2. **No** dejar el trabajo solo en Preview / branches de feature sin llegar a `main`.
+3. **No** dual-deploy (Preview + Production a la vez como “publicación”). Si Vercel genera Preview al push de un branch, eso no cuenta como publicación: la publicación válida es Production en `main`.
+4. Tras el push, confirmar el deploy de **Production** (commit SHA en Production Ready/success).
+5. Si hay migraciones Supabase necesarias para el cambio, aplicarlas en el proyecto de producción vinculado antes o junto al deploy frontend.
+6. No crear commits vacíos ni re-pushes si `origin/main` ya tiene el cambio y Production ya está en ese SHA.
+
+Excepción: solo si el usuario pide explícitamente un Preview o un PR sin merge a `main`.
