@@ -181,12 +181,9 @@
   opacity: 0;
 }
 
-.pub-split-vs-panel--pending-photo {
-  background: #0c1016;
-}
-
-.pub-split-vs-panel--pending-photo .pub-split-vs-panel__texture {
-  opacity: 0.03;
+/* Foto en vuelo: se mantiene el fallback (iniciales); no pantalla negra vacía */
+.pub-split-vs-panel--photo-inflight .pub-split-vs-panel__photo:not(.is-visible) {
+  opacity: 0;
 }
 
 .pub-split-vs-panel__photo {

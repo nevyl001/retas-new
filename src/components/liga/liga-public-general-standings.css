@@ -231,6 +231,19 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
+.liga-pub-podium__faces .pub-split-vs-panel__rating.jugador-rating-chip {
+  margin-top: 0.22rem;
+  max-width: 100%;
+  font-size: 0.55rem;
+  padding: 0.1rem 0.34rem;
+}
+
+.liga-pub-podium__faces
+  .pub-split-vs-panel__rating.jugador-rating-chip
+  .jugador-rating-chip__caption {
+  font-size: 0.55em;
+}
+
 .liga-pub-podium__faces--1 {
   max-width: 26rem;
 }
@@ -511,10 +524,19 @@
 .liga-pub-general__faces-pair .pub-split-vs-panel__rating.jugador-rating-chip {
   position: absolute;
   top: auto;
-  right: 0.24rem;
-  bottom: 0.24rem;
-  font-size: 0.5rem;
-  padding: 0.06rem 0.26rem;
+  right: 0.2rem;
+  bottom: 0.2rem;
+  left: auto;
+  max-width: calc(100% - 0.4rem);
+  font-size: 0.42rem;
+  padding: 0.05rem 0.22rem;
+  gap: 0.18rem;
+}
+
+.liga-pub-general__faces-pair
+  .pub-split-vs-panel__rating.jugador-rating-chip
+  .jugador-rating-chip__caption {
+  font-size: 0.52em;
 }
 
 .liga-pub-general__faces-pair .pub-split-vs-panel__scrim {

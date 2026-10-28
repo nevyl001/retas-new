@@ -9,9 +9,15 @@ import "./public-split-vs.css";
 
 export interface PublicSplitVsPlayerPanelProps {
   name: string;
-  /** URL de foto; `undefined` = aún resolviendo (fondo neutro, sin jersey). */
+  /** URL de foto; `undefined` = aún resolviendo. Nunca deja la tarjeta vacía. */
   foto?: string | null;
   rating?: number | null;
+  /** Prefijo del chip (p. ej. RATING ORIGINAL). */
+  ratingCaption?: string;
+  /** Texto si no hay rating verificable (evita fingir 3.00). */
+  ratingEmptyLabel?: string;
+  /** Lazy load de imagen (filas fuera del podio). */
+  lazyPhoto?: boolean;
   className?: string;
 }
 
@@ -62,7 +68,15 @@ function PadelPlayerSilhouette() {
  */
 export const PublicSplitVsPlayerPanel: React.FC<
   PublicSplitVsPlayerPanelProps
-> = ({ name, foto, rating, className }) => {
+> = ({
+  name,
+  foto,
+  rating,
+  ratingCaption,
+  ratingEmptyLabel,
+  lazyPhoto = false,
+  className,
+}) => {
   const { primary, secondary } = splitPlayerDisplayName(name);
   const tone = playerAvatarHashTone(name);
   const initials = `${primary.charAt(0)}${
@@ -77,7 +91,7 @@ export const PublicSplitVsPlayerPanel: React.FC<
   const [photoLoaded, setPhotoLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const showPhoto = Boolean(candidateFoto) && !photoFailed && photoLoaded;
-  const awaitingPhoto =
+  const photoInFlight =
     photosStillResolving ||
     (Boolean(candidateFoto) && !photoFailed && !photoLoaded);
 
@@ -101,28 +115,24 @@ export const PublicSplitVsPlayerPanel: React.FC<
         "pub-split-vs-panel",
         showPhoto
           ? "pub-split-vs-panel--has-photo"
-          : awaitingPhoto
-            ? "pub-split-vs-panel--pending-photo"
-            : "pub-split-vs-panel--fallback",
+          : "pub-split-vs-panel--fallback",
+        photoInFlight ? "pub-split-vs-panel--photo-inflight" : "",
         className,
       ]
         .filter(Boolean)
         .join(" ")}
       style={
-        awaitingPhoto || showPhoto
-          ? undefined
-          : ({
-              ["--pub-split-vs-bg" as string]: tone.background,
-              ["--pub-split-vs-fg" as string]: tone.color,
-            } as React.CSSProperties)
+        {
+          ["--pub-split-vs-bg" as string]: tone.background,
+          ["--pub-split-vs-fg" as string]: tone.color,
+        } as React.CSSProperties
       }
     >
       <div className="pub-split-vs-panel__media" aria-hidden>
         <span className="pub-split-vs-panel__texture" />
-        {!awaitingPhoto && !showPhoto ? <PadelPlayerSilhouette /> : null}
-        {!awaitingPhoto && !showPhoto ? (
-          <span className="pub-split-vs-panel__watermark">{initials}</span>
-        ) : null}
+        {/* Fallback inmediato: nunca tarjeta negra vacía mientras llega la foto */}
+        <PadelPlayerSilhouette />
+        <span className="pub-split-vs-panel__watermark">{initials}</span>
         {candidateFoto && !photoFailed ? (
           <img
             ref={imgRef}
@@ -131,7 +141,7 @@ export const PublicSplitVsPlayerPanel: React.FC<
             }`}
             src={candidateFoto}
             alt=""
-            loading="eager"
+            loading={lazyPhoto ? "lazy" : "eager"}
             decoding="async"
             onLoad={() => setPhotoLoaded(true)}
             onError={() => setPhotoFailed(true)}
@@ -146,6 +156,8 @@ export const PublicSplitVsPlayerPanel: React.FC<
         ) : null}
         <JugadorRatingChip
           rating={rating}
+          caption={ratingCaption}
+          emptyLabel={ratingEmptyLabel}
           className="pub-split-vs-panel__rating"
         />
       </span>
