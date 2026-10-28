@@ -103,6 +103,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     commitRoundScores,
     editScore,
     nextRound,
+    regenerateCurrentRound,
     resetTournament,
     updateTotalRounds,
     hydrating,
@@ -644,6 +645,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             playerFotos={playerFotos}
             onCommitRound={commitRoundScores}
             onRoundFinalized={() => void nextRound()}
+            onRegenerateRound={() => void regenerateCurrentRound()}
             roundSyncPending={roundSyncPending}
             roundSyncError={roundSyncError}
           />
@@ -682,6 +684,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           playerFotos={playerFotos}
           onCommitRound={commitRoundScores}
           onRoundFinalized={() => void nextRound()}
+          onRegenerateRound={() => void regenerateCurrentRound()}
           roundSyncPending={roundSyncPending}
           roundSyncError={roundSyncError}
         />

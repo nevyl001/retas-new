@@ -22,6 +22,8 @@ interface RoundViewProps {
   /** Persiste ranking + servidor solo al pulsar Confirmar (borrador local hasta entonces). */
   onCommitRound?: (scores: RoundScorePayload[]) => void;
   onRoundFinalized?: () => void;
+  /** Regenera emparejamientos/banca de la ronda actual (solo sin marcadores). */
+  onRegenerateRound?: () => void;
   /** Ronda histórica: marcador visible, sin captura. */
   readOnly?: boolean;
   /** FC-01 (Fase C1): true mientras la ronda siguiente se confirma con el servidor. */
@@ -116,6 +118,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
   totalRounds = 0,
   onCommitRound,
   onRoundFinalized,
+  onRegenerateRound,
   readOnly = false,
   roundSyncPending = false,
   roundSyncError = null,
@@ -298,6 +301,16 @@ export const RoundView: React.FC<RoundViewProps> = ({
             >
               {roundSyncPending ? "Guardando…" : "Ronda finalizada"}
             </Button>
+            {onRegenerateRound && !committed ? (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onRegenerateRound()}
+                disabled={roundSyncPending}
+              >
+                Rehacer emparejamiento
+              </Button>
+            ) : null}
           </ActionBar>
           {!draftComplete && (
             <p className="americano-round__footer-hint">
