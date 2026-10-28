@@ -6,6 +6,7 @@ import {
   computeAmericanoLayoutMetrics,
   generateAmericanoRound,
   initializeMatrix,
+  seatBenchPlayerWithPartner,
   selectBenchPlayers,
   validateAmericanoRound,
 } from "./americanoGenerator";
@@ -407,6 +408,36 @@ describe("Americano schedule scenarios", () => {
     expect(rounds[2]!.benchPlayers[0]!.id).not.toBe(
       rounds[0]!.benchPlayers[0]!.id
     );
+  });
+});
+
+describe("seatBenchPlayerWithPartner", () => {
+  test("pone al banquillo de pareja del jugador elegido y saca al compañero anterior", () => {
+    const ps = makePlayers(5);
+    const round: AmericanoRound = {
+      roundNumber: 3,
+      phase: 1,
+      benchPlayers: [ps[4]!],
+      matches: [
+        {
+          id: "m1",
+          court: 1,
+          teamA: [ps[0]!, ps[1]!],
+          teamB: [ps[2]!, ps[3]!],
+        },
+      ],
+    };
+    // Meter p-5 (banquillo) con p-1 → p-2 sale a banquillo
+    const next = seatBenchPlayerWithPartner(round, "p-5", "p-1");
+    expect(next.benchPlayers.map((p) => p.id)).toEqual(["p-2"]);
+    expect(next.matches[0]!.teamA.map((p) => p.id).sort()).toEqual([
+      "p-1",
+      "p-5",
+    ]);
+    expect(next.matches[0]!.teamB.map((p) => p.id).sort()).toEqual([
+      "p-3",
+      "p-4",
+    ]);
   });
 });
 

@@ -340,6 +340,30 @@
   flex-shrink: 0;
 }
 
+.americano-round__bench-seat {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.americano-round__bench-seat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.americano-round__bench-seat-label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.americano-round__bench-seat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
 .americano-round__actions {
   display: flex;
   flex-wrap: wrap;

@@ -20,6 +20,7 @@ interface AmericanoRoundsPanelProps {
   onCommitRound: (scores: { matchId: string; scoreA: number; scoreB: number }[]) => void;
   onRoundFinalized: () => void;
   onRegenerateRound?: () => void;
+  onSeatBenchWithPartner?: (benchPlayerId: string, stayPlayerId: string) => void;
   roundSyncPending?: boolean;
   roundSyncError?: string | null;
 }
@@ -74,6 +75,7 @@ export const AmericanoRoundsPanel: React.FC<AmericanoRoundsPanelProps> = ({
   onCommitRound,
   onRoundFinalized,
   onRegenerateRound,
+  onSeatBenchWithPartner,
   roundSyncPending,
   roundSyncError,
 }) => {
@@ -161,6 +163,11 @@ export const AmericanoRoundsPanel: React.FC<AmericanoRoundsPanelProps> = ({
             onRoundFinalized={onRoundFinalized}
             onRegenerateRound={
               isCurrent && onRegenerateRound ? onRegenerateRound : undefined
+            }
+            onSeatBenchWithPartner={
+              isCurrent && onSeatBenchWithPartner
+                ? onSeatBenchWithPartner
+                : undefined
             }
             roundSyncPending={roundSyncPending}
             roundSyncError={roundSyncError}
