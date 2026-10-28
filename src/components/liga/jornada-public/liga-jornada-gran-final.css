@@ -113,16 +113,11 @@
   align-items: stretch;
   gap: 0.85rem;
   margin: 0 auto;
-  padding: clamp(0.75rem, 2vw, 1.15rem);
-  border: 1px solid var(--lgf-border);
-  border-radius: calc(var(--lgf-radius) + 2px);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--lgf-surface) 88%, #fff) 0%,
-      var(--lgf-surface) 100%
-    );
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 @media (min-width: 860px) {
@@ -131,6 +126,7 @@
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: clamp(0.85rem, 2vw, 1.5rem);
+    padding: 0;
   }
 }
 
