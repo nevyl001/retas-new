@@ -20,7 +20,7 @@ import { jornadaHoraInicioLabel } from "../../lib/liga/programacion";
 import type { LigaDetalle, LigaJornada, LigaJornadaPareja, LigaPartido } from "../../lib/liga/types";
 import { isEquiposModalidad, isParejasFijasPlayoffs } from "../../lib/liga/ligaModalidad";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
-import { resolveLigaJugadorPublicFotos } from "../../lib/liga/publicParejaAvatars";
+import { resolveLigaJugadorPublicProfiles } from "../../lib/liga/publicParejaAvatars";
 import { getLigaById } from "../../services/ligaService";
 import { ClubExperienceScope, PublicEventBrandIdentity, PublicEventNeutralLoading, PublicScopedBrandGate, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
@@ -119,6 +119,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   const [parejaFotos, setParejaFotos] = useState<Record<string, string | null>>(
     {}
   );
+  const [parejaRatings, setParejaRatings] = useState<
+    Record<string, number | null>
+  >({});
   const organizerName = useOrganizerDisplayName(detalle?.organizador_id);
   const { isClubBranded } = useClubExperience();
   const cancelledRef = useRef(false);
@@ -172,6 +175,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     const parejas = jornada?.parejas;
     if (!organizadorId || !parejas?.length) {
       setParejaFotos({});
+      setParejaRatings({});
       return;
     }
 
@@ -188,9 +192,20 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     });
 
     let cancelled = false;
-    void resolveLigaJugadorPublicFotos(organizadorId, entries).then((fotos) => {
-      if (!cancelled) setParejaFotos(fotos);
-    });
+    // Misma resolución que clasificación pública: foto + rating Riviera (sin query extra).
+    void resolveLigaJugadorPublicProfiles(organizadorId, entries).then(
+      (profiles) => {
+        if (cancelled) return;
+        const fotos: Record<string, string | null> = {};
+        const ratings: Record<string, number | null> = {};
+        for (const entry of entries) {
+          fotos[entry.id] = profiles[entry.id]?.fotoUrl ?? null;
+          ratings[entry.id] = profiles[entry.id]?.rating ?? null;
+        }
+        setParejaFotos(fotos);
+        setParejaRatings(ratings);
+      }
+    );
 
     return () => {
       cancelled = true;
@@ -381,17 +396,23 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       const n = jugadoresById.get(id)?.nivel;
       return n != null && Number.isFinite(Number(n)) ? Number(n) : null;
     };
+    const rivieraOf = (id: string) => {
+      const r = parejaRatings[id];
+      return r != null && Number.isFinite(Number(r)) ? Number(r) : null;
+    };
     return {
       pairName,
       player1: {
         name: face.name1,
         foto: face.foto1,
         nivel: face.id1 ? nivelOf(face.id1) : null,
+        rivieraRating: face.id1 ? rivieraOf(face.id1) : null,
       },
       player2: {
         name: face.name2,
         foto: face.foto2,
         nivel: face.id2 ? nivelOf(face.id2) : null,
+        rivieraRating: face.id2 ? rivieraOf(face.id2) : null,
       },
     };
   };

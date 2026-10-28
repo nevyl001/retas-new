@@ -6,12 +6,10 @@ import {
   resolveLigaGranFinalPresentationState,
   type LigaGranFinalPresentationState,
 } from "../../../lib/liga/ligaGranFinalPublic";
-import {
-  formatLigaPublicRatingValue,
-  resolveLigaPublicPlayerRating,
-} from "../../../lib/liga/ligaPublicPlayerRating";
+import { resolveLigaPublicPlayerRating } from "../../../lib/liga/ligaPublicPlayerRating";
 import type { LigaPartido } from "../../../lib/liga/types";
 import { partidoMatchWinnerSide } from "../../../lib/liga/publicDisplay";
+import { JugadorRatingChip } from "../../jugadores/JugadorRatingChip";
 import {
   isPhotographicSplitVsFoto,
   playerAvatarHashTone,
@@ -22,8 +20,10 @@ import "./liga-jornada-gran-final.css";
 export type LigaGranFinalPlayer = {
   name: string;
   foto?: string | null;
-  /** Rating original verificable (liga_jugadores.nivel); null = no mostrar. */
+  /** Rating original de inscripción (liga_jugadores.nivel). */
   nivel?: number | null;
+  /** Rating actual Riviera cuando no hay nivel histórico. */
+  rivieraRating?: number | null;
 };
 
 export type LigaGranFinalPair = {
@@ -76,9 +76,11 @@ const GranFinalPortrait: React.FC<{ player: LigaGranFinalPlayer }> = ({
     }
   }, [candidate]);
 
-  const rating = resolveLigaPublicPlayerRating(player.nivel ?? null, null);
-  const showRating =
-    rating.source === "original" && rating.value != null;
+  const rating = resolveLigaPublicPlayerRating(
+    player.nivel ?? null,
+    player.rivieraRating ?? null
+  );
+  const showRating = rating.value != null;
 
   return (
     <figure
@@ -108,12 +110,14 @@ const GranFinalPortrait: React.FC<{ player: LigaGranFinalPlayer }> = ({
         />
       ) : null}
       <div className="liga-gran-final__portrait-scrim" aria-hidden />
-      <figcaption className="liga-gran-final__portrait-name">
-        {player.name}
+      <figcaption className="liga-gran-final__portrait-identity">
+        <span className="liga-gran-final__portrait-name">{player.name}</span>
         {showRating ? (
-          <span className="liga-gran-final__portrait-rating">
-            Rating original {formatLigaPublicRatingValue(rating.value!)}
-          </span>
+          <JugadorRatingChip
+            rating={rating.value}
+            caption={rating.label}
+            className="liga-gran-final__portrait-rating"
+          />
         ) : null}
       </figcaption>
     </figure>
@@ -150,7 +154,6 @@ function PairBlock({
         <GranFinalPortrait player={pair.player1} />
         <GranFinalPortrait player={pair.player2} />
       </div>
-      <p className="liga-gran-final__pair-name">{pair.pairName}</p>
     </div>
   );
 }

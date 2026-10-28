@@ -155,16 +155,6 @@
   color: var(--lgf-accent);
 }
 
-.liga-gran-final__pair-name {
-  margin: 0;
-  text-align: center;
-  font-family: var(--liga-font-display, inherit);
-  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
-  font-weight: 600;
-  line-height: 1.25;
-  color: var(--lgf-text);
-}
-
 .liga-gran-final__portraits {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -239,29 +229,62 @@
   pointer-events: none;
 }
 
-.liga-gran-final__portrait-name {
+.liga-gran-final__portrait-identity {
   position: absolute;
-  left: 0.45rem;
-  right: 0.45rem;
-  bottom: 0.45rem;
+  left: 0.4rem;
+  right: 0.4rem;
+  bottom: 0.4rem;
   z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.liga-gran-final__portrait-name {
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0;
-  font-size: clamp(0.72rem, 2.4vw, 0.86rem);
+  font-size: clamp(0.7rem, 2.3vw, 0.84rem);
   font-weight: 600;
   line-height: 1.2;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow-wrap: anywhere;
 }
 
-.liga-gran-final__portrait-rating {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.65rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, #fff 72%, transparent);
+.liga-gran-final__portrait-rating.jugador-rating-chip {
+  flex: 0 0 auto;
+  max-width: 48%;
+  margin: 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.05rem;
+  font-size: 0.58rem;
+  padding: 0.1rem 0.32rem;
+  line-height: 1.1;
+  border-color: rgba(163, 230, 53, 0.45);
+  background: rgba(8, 12, 8, 0.72);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  text-align: right;
+}
+
+.liga-gran-final__portrait-rating .jugador-rating-chip__caption {
+  font-size: 0.48rem;
+  letter-spacing: 0.03em;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.liga-gran-final__portrait-rating .jugador-rating-chip__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
 }
 
 .liga-gran-final__vs {
