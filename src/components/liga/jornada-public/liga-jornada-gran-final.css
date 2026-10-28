@@ -133,8 +133,10 @@
 .liga-gran-final__pair {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.55rem;
   min-width: 0;
+  width: 100%;
 }
 
 .liga-gran-final__pair-label {
@@ -152,15 +154,22 @@
 }
 
 .liga-gran-final__portraits {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
   gap: var(--lgf-gap);
+  width: 100%;
+  max-width: min(100%, 22rem);
+  margin-inline: auto;
 }
 
 .liga-gran-final__portrait {
   position: relative;
+  flex: 1 1 0;
+  width: 100%;
+  min-width: 0;
   aspect-ratio: var(--lgf-portrait-ratio);
-  max-height: min(17rem, 42vw);
+  max-height: none;
   border-radius: var(--lgf-radius);
   overflow: hidden;
   border: 1px solid var(--lgf-border);
@@ -168,6 +177,10 @@
 }
 
 @media (min-width: 860px) {
+  .liga-gran-final__portraits {
+    max-width: min(100%, 26rem);
+  }
+
   .liga-gran-final__portrait {
     max-height: min(15.5rem, 28vh);
   }
