@@ -5,6 +5,8 @@ export type PublicSplitVsPairPlayer = {
   name: string;
   foto?: string | null;
   rating?: number | null;
+  ratingCaption?: string;
+  ratingEmptyLabel?: string;
 };
 
 export interface PublicSplitVsPairHalfProps {
@@ -13,6 +15,8 @@ export interface PublicSplitVsPairHalfProps {
   label?: string;
   tone?: "win" | "loss" | "neutral";
   showWinnerBadge?: boolean;
+  /** Lazy-load fotos (filas bajo el podio). */
+  lazyPhoto?: boolean;
   className?: string;
 }
 
@@ -23,6 +27,7 @@ export const PublicSplitVsPairHalf: React.FC<PublicSplitVsPairHalfProps> = ({
   label,
   tone = "neutral",
   showWinnerBadge = false,
+  lazyPhoto = false,
   className,
 }) => {
   const pairLabel =
@@ -56,12 +61,18 @@ export const PublicSplitVsPairHalf: React.FC<PublicSplitVsPairHalfProps> = ({
           name={player1.name}
           foto={player1.foto}
           rating={player1.rating}
+          ratingCaption={player1.ratingCaption}
+          ratingEmptyLabel={player1.ratingEmptyLabel}
+          lazyPhoto={lazyPhoto}
         />
         {player2 ? (
           <PublicSplitVsPlayerPanel
             name={player2.name}
             foto={player2.foto}
             rating={player2.rating}
+            ratingCaption={player2.ratingCaption}
+            ratingEmptyLabel={player2.ratingEmptyLabel}
+            lazyPhoto={lazyPhoto}
           />
         ) : null}
       </div>

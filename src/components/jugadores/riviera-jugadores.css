@@ -2033,7 +2033,9 @@
 }
 
 .jugador-rating-chip {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
   font-size: 0.72rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -2044,6 +2046,29 @@
   background: rgba(163, 230, 53, 0.12);
   line-height: 1.2;
   letter-spacing: 0.02em;
+  max-width: 100%;
+}
+
+.jugador-rating-chip__caption {
+  font-size: 0.58em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.88;
+  white-space: nowrap;
+}
+
+.jugador-rating-chip__value {
+  font-variant-numeric: tabular-nums;
+}
+
+.jugador-rating-chip--empty {
+  color: rgba(255, 255, 255, 0.62);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.35);
+  font-weight: 600;
+  font-size: 0.58rem;
+  letter-spacing: 0.01em;
 }
 
 .te-pub-pair__player-rating,

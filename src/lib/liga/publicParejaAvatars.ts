@@ -364,26 +364,15 @@ export async function resolveLigaJugadorPublicProfiles(
     applyLookup(fotos, ratings, await fetchPublicLigaJugadorFotosRpc(organizadorId, ids));
   }
 
+  // Fallbacks de foto en paralelo (antes eran secuenciales → latencia extra).
   const missingFoto = entries.filter((e) => !fotos[e.id]);
   if (missingFoto.length > 0) {
-    applyLookup(
-      fotos,
-      ratings,
-      await fetchDirectLigaJugadorFotos(organizadorId, missingFoto, publicOnly)
-    );
-  }
-
-  const missingFotoAfterLegacy = entries.filter((e) => !fotos[e.id]);
-  if (missingFotoAfterLegacy.length > 0) {
-    applyLookup(
-      fotos,
-      ratings,
-      await fetchDirectLigaJugadorFotosByName(
-        organizadorId,
-        missingFotoAfterLegacy,
-        publicOnly
-      )
-    );
+    const [legacy, byName] = await Promise.all([
+      fetchDirectLigaJugadorFotos(organizadorId, missingFoto, publicOnly),
+      fetchDirectLigaJugadorFotosByName(organizadorId, missingFoto, publicOnly),
+    ]);
+    applyLookup(fotos, ratings, legacy);
+    applyLookup(fotos, ratings, byName);
   }
 
   const stillWithoutRating = entries.filter((e) => ratings[e.id] == null);

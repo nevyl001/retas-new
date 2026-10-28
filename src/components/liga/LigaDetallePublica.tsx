@@ -20,6 +20,7 @@ import {
 import { formatFechaLegible, dateInputValue } from "../../lib/liga/programacion";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
 import { resolveLigaJugadorPublicProfiles } from "../../lib/liga/publicParejaAvatars";
+import { resolveLigaPublicPlayerRating } from "../../lib/liga/ligaPublicPlayerRating";
 import {
   aggregateJugadorSeasonSupportStats,
   formatSupportDif,
@@ -140,18 +141,19 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     try {
       const d = await getLigaById(ligaId, true);
       if (cancelledRef.current) return;
+      // Ranking en paralelo conceptual: detalle primero (nombres/nivel), ranking al lado.
       if (isEquiposModalidad(d.modalidad)) {
+        setDetalle(d);
+        setRanking([]);
         const rEq = await getRankingEquipos(ligaId);
         if (cancelledRef.current) return;
-        setDetalle(d);
         setRankingEquipos(rEq);
-        setRanking([]);
       } else {
+        setDetalle(d);
+        setRankingEquipos([]);
         const r = await getRanking(ligaId);
         if (cancelledRef.current) return;
-        setDetalle(d);
         setRanking(r);
-        setRankingEquipos([]);
       }
       setLastRefresh(new Date());
       setError(null);
@@ -207,19 +209,18 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     });
 
     let cancelled = false;
-    setParejaFotosReady(false);
+    // No bloquear UI: iniciales/rating original (nivel) ya salen del detalle.
+    setParejaFotosReady(true);
     void (async () => {
+      // Perfiles (foto + rating Riviera) en paralelo; aplicar pendientes no bloquea.
       if (isParejasFijasPlayoffs(detalle?.modalidad)) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData.session?.user?.id === organizadorId) {
-          try {
-            await aplicarRatingsPendientesLigaPlayoffs(ligaId, organizadorId);
-          } catch (error) {
-            console.warn("[rating] liga playoffs pendientes:", error);
-          }
-        }
+        void supabase.auth.getSession().then(({ data: sessionData }) => {
+          if (sessionData.session?.user?.id !== organizadorId) return;
+          void aplicarRatingsPendientesLigaPlayoffs(ligaId, organizadorId).catch(
+            (error) => console.warn("[rating] liga playoffs pendientes:", error)
+          );
+        });
       }
-      if (cancelled) return;
       return resolveLigaJugadorPublicProfiles(organizadorId, entries);
     })().then(
       (profiles) => {
@@ -232,11 +233,9 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
         }
         setParejaFotos(fotos);
         setParejaRatings(ratings);
-        setParejaFotosReady(true);
       }
     ).catch((error) => {
       console.warn("[rating] perfiles liga:", error);
-      if (!cancelled) setParejaFotosReady(true);
     });
 
     return () => {
@@ -273,21 +272,40 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     const byId = new Map(detalle.equipos.map((e) => [e.id, e]));
     return rankingEquiposOrdered.map((ranking) => {
       const equipo = byId.get(ranking.equipo_id);
+      const riviera1 = equipo
+        ? parejaRatings[equipo.jugador1_id] ?? null
+        : null;
+      const riviera2 = equipo
+        ? parejaRatings[equipo.jugador2_id] ?? null
+        : null;
+      const r1 = resolveLigaPublicPlayerRating(
+        equipo?.jugador1?.nivel,
+        riviera1
+      );
+      const r2 = resolveLigaPublicPlayerRating(
+        equipo?.jugador2?.nivel,
+        riviera2
+      );
       return {
         ranking,
         equipo,
-        foto1: !parejaFotosReady
-          ? undefined
-          : equipo
+        // null inmediato → iniciales; la URL llega luego sin vaciar la tarjeta
+        foto1: equipo
+          ? parejaFotosReady
             ? parejaFotos[equipo.jugador1_id] ?? null
-            : null,
-        foto2: !parejaFotosReady
-          ? undefined
-          : equipo
+            : null
+          : null,
+        foto2: equipo
+          ? parejaFotosReady
             ? parejaFotos[equipo.jugador2_id] ?? null
-            : null,
-        rating1: equipo ? parejaRatings[equipo.jugador1_id] ?? null : null,
-        rating2: equipo ? parejaRatings[equipo.jugador2_id] ?? null : null,
+            : null
+          : null,
+        rating1: r1.value,
+        rating2: r2.value,
+        ratingCaption1: r1.source === "none" ? undefined : r1.label,
+        ratingCaption2: r2.source === "none" ? undefined : r2.label,
+        ratingEmpty1: r1.source === "none" ? r1.label : undefined,
+        ratingEmpty2: r2.source === "none" ? r2.label : undefined,
       };
     });
   }, [
