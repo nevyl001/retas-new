@@ -269,8 +269,9 @@ describe("JugadorRewardsPanel — Experiencia de Fidelización del Jugador (Play
     expect(container.textContent).toContain("Riviera Rewards");
     expect(container.textContent).toContain("Puntos y Recompensas del Club");
     expect(container.textContent).toContain("Programa Oficial");
-    expect(container.textContent).toContain("¿Eres el propietario de este perfil?");
-    expect(container.textContent).toContain("otro@club.com");
+    expect(container.textContent).toContain("Puntos por participación");
+    expect(container.textContent).toContain("Saldos por club");
+    expect(container.textContent).not.toContain("¿Eres el propietario de este perfil?");
     expect(container.textContent).not.toContain("Acceso restringido");
     expect(container.textContent).not.toContain("Disponibles");
     expect(container.textContent).not.toContain("Próxima recompensa");
@@ -1015,7 +1016,7 @@ describe("Riviera Rewards — Verificaciones de seguridad y visibilidad multiclu
     expect(container.textContent).toContain("independiente al puntaje del ranking deportivo");
   });
 
-  test("2. Propietario sin vinculación: muestra indicación clara del procedimiento autorizado con su correo", async () => {
+  test("2. Propietario sin vinculación: info de puntos/clubes sin anuncio de vinculación", async () => {
     mockPlayerSnapshot.mockRejectedValue(new Error("Esta cuenta no está vinculada a este jugador"));
 
     root = createRoot(container);
@@ -1033,9 +1034,10 @@ describe("Riviera Rewards — Verificaciones de seguridad y visibilidad multiclu
     await flush();
 
     expect(container.textContent).toContain("Programa Oficial");
-    expect(container.textContent).toContain("¿Eres el propietario de este perfil?");
-    expect(container.textContent).toContain("carlos@padelito.com");
-    expect(container.textContent).toContain("solicita en la administración o recepción del club organizador que vinculen tu cuenta");
+    expect(container.textContent).toContain("Puntos y Recompensas del Club");
+    expect(container.textContent).toContain("Puntos por participación");
+    expect(container.textContent).not.toContain("¿Eres el propietario de este perfil?");
+    expect(container.textContent).not.toContain("vinculen tu cuenta");
     expect(container.textContent).not.toContain("Acceso restringido");
   });
 

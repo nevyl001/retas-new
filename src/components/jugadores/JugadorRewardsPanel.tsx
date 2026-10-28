@@ -773,19 +773,6 @@ function PlayerRewardsView({
               </div>
             </li>
           </ul>
-
-          <div className="rrw-compact-guide rrw-unlinked-guide">
-            <div className="rrw-compact-guide-head rrw-unlinked-guide-header">
-              <TablerIcon name="user-check" size={15} className="rrw-guide-icon" />
-              <strong>¿Eres el propietario de este perfil?</strong>
-            </div>
-            <p className="rrw-compact-guide-body rrw-unlinked-guide-text">
-              Para consultar tu saldo de puntos y solicitar premios en {currentClubDisplayName || "este club"}, solicita en la administración o recepción del club organizador que vinculen tu cuenta ({user?.email || "tu correo"}) a tu perfil de Riviera Rewards.
-            </p>
-            <span className="rrw-unlinked-guide-subtext">
-              Procedimiento oficial de vinculación verificado por el club sede.
-            </span>
-          </div>
         </div>
       </section>
     );
