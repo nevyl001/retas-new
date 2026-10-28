@@ -159,6 +159,39 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
     setDrafts((prev) => prev.slice(0, -2));
   };
 
+  const toggleDecidingSetMode = (index: number, asSuperMuerte: boolean) => {
+    const current = sets[index];
+    if (!current) return;
+    const already = current.super_muerte === true;
+    if (already === asSuperMuerte) return;
+    const hasScores =
+      (drafts[index * 2] ?? "") !== "" ||
+      (drafts[index * 2 + 1] ?? "") !== "";
+    if (
+      hasScores &&
+      !window.confirm(
+        "Cambiar el tipo de set decisivo descartará los puntos capturados en ese set. ¿Continuar?"
+      )
+    ) {
+      return;
+    }
+    setSets((prev) =>
+      prev.map((s, i) =>
+        i === index
+          ? asSuperMuerte
+            ? { local: 0, visitante: 0, super_muerte: true }
+            : { local: 0, visitante: 0 }
+          : s
+      )
+    );
+    setDrafts((prev) => {
+      const next = [...prev];
+      next[index * 2] = "";
+      next[index * 2 + 1] = "";
+      return next;
+    });
+  };
+
   const winnerLabel =
     winner === "local"
       ? localLabel
@@ -229,40 +262,79 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
         ) : null}
 
         <div className="te-sets-modal__rows">
-          {sets.map((set, index) => (
-            <div key={index} className="te-sets-modal__row">
-              <span className="te-sets-modal__row-label">
-                {set.super_muerte ? "Súper muerte" : `Set ${index + 1}`}
-              </span>
-              <div className="te-sets-modal__row-inputs">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  className="te-sets-modal__input"
-                  value={drafts[index * 2] ?? ""}
-                  disabled={saving}
-                  aria-label={`${set.super_muerte ? "Súper muerte" : `Set ${index + 1}`} ${localLabel}`}
-                  onFocus={(e) => e.currentTarget.select()}
-                  onChange={(e) => updateSet(index, "local", e.target.value)}
-                />
-                <span className="te-sets-modal__vs">vs</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  className="te-sets-modal__input"
-                  value={drafts[index * 2 + 1] ?? ""}
-                  disabled={saving}
-                  aria-label={`${set.super_muerte ? "Súper muerte" : `Set ${index + 1}`} ${visitLabel}`}
-                  onFocus={(e) => e.currentTarget.select()}
-                  onChange={(e) =>
-                    updateSet(index, "visitante", e.target.value)
-                  }
-                />
+          {sets.map((set, index) => {
+            const isDecidingRow =
+              sets.length === 3 && index === 2 && wins.local === 1 && wins.visitante === 1;
+            return (
+              <div key={index} className="te-sets-modal__row">
+                <span className="te-sets-modal__row-label">
+                  {set.super_muerte ? "Súper muerte" : `Set ${index + 1}`}
+                </span>
+                {isDecidingRow ? (
+                  <div
+                    className="liga-deciding-mode liga-deciding-mode--compact te-sets-modal__deciding"
+                    role="group"
+                    aria-label="Tipo de set decisivo"
+                  >
+                    <span className="liga-deciding-mode__label">
+                      Tipo de set decisivo
+                    </span>
+                    <div className="liga-deciding-mode__seg">
+                      <button
+                        type="button"
+                        className={`liga-deciding-mode__btn${
+                          !set.super_muerte ? " is-active" : ""
+                        }`}
+                        disabled={saving}
+                        aria-pressed={!set.super_muerte}
+                        onClick={() => toggleDecidingSetMode(index, false)}
+                      >
+                        Set completo
+                      </button>
+                      <button
+                        type="button"
+                        className={`liga-deciding-mode__btn${
+                          set.super_muerte ? " is-active" : ""
+                        }`}
+                        disabled={saving}
+                        aria-pressed={Boolean(set.super_muerte)}
+                        onClick={() => toggleDecidingSetMode(index, true)}
+                      >
+                        Super Tie-Break
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                <div className="te-sets-modal__row-inputs">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    className="te-sets-modal__input"
+                    value={drafts[index * 2] ?? ""}
+                    disabled={saving}
+                    aria-label={`${set.super_muerte ? "Súper muerte" : `Set ${index + 1}`} ${localLabel}`}
+                    onFocus={(e) => e.currentTarget.select()}
+                    onChange={(e) => updateSet(index, "local", e.target.value)}
+                  />
+                  <span className="te-sets-modal__vs">vs</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    className="te-sets-modal__input"
+                    value={drafts[index * 2 + 1] ?? ""}
+                    disabled={saving}
+                    aria-label={`${set.super_muerte ? "Súper muerte" : `Set ${index + 1}`} ${visitLabel}`}
+                    onFocus={(e) => e.currentTarget.select()}
+                    onChange={(e) =>
+                      updateSet(index, "visitante", e.target.value)
+                    }
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="te-sets-modal__toolbar">

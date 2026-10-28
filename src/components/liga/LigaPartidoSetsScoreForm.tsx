@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import {
   draftFromSetScores,
-  needsSuperTiebreakDraft,
+  needsDecidingSetDraft,
   normalizeParejasFijasDraft,
   validateParejasFijasDraft,
   type ParejasFijasSetsDraft,
@@ -9,6 +9,10 @@ import {
 } from "../../lib/liga/parejasFijasMatchScore";
 import type { LigaPartido } from "../../lib/liga/types";
 import { Button } from "../ui";
+import {
+  confirmDecidingModeSwitch,
+  DecidingSetModeToggle,
+} from "./DecidingSetModeToggle";
 import { LigaScoreInput } from "./LigaScoreInput";
 
 function SetInputRow({
@@ -99,7 +103,8 @@ export const LigaPartidoSetsScoreForm: React.FC<LigaPartidoSetsScoreFormProps> =
   onChange,
   onSave,
 }) => {
-  const showSet3 = needsSuperTiebreakDraft(draft);
+  const showDeciding = needsDecidingSetDraft(draft);
+  const useStb = draft.set3Kind === "super_tiebreak";
   const validationError = useMemo(() => validateParejasFijasDraft(draft), [draft]);
   const canSave = !validationError && !disabled && !busy;
 
@@ -133,10 +138,24 @@ export const LigaPartidoSetsScoreForm: React.FC<LigaPartidoSetsScoreFormProps> =
           onChange={(set2) => handleDraftChange({ ...draft, set2 })}
         />
       </div>
-      {showSet3 ? (
+      {showDeciding ? (
         <div className="liga-sets-form__set3 liga-sets-form__set3--visible">
+          <DecidingSetModeToggle
+            compact={compact}
+            disabled={disabled || busy}
+            value={useStb ? "stb" : "regular"}
+            onChange={(next) => {
+              const hasScores = draft.set3.p1 !== "" || draft.set3.p2 !== "";
+              if (!confirmDecidingModeSwitch(hasScores)) return;
+              handleDraftChange({
+                ...draft,
+                set3Kind: next === "stb" ? "super_tiebreak" : "regular",
+                set3: { p1: "", p2: "" },
+              });
+            }}
+          />
           <SetInputRow
-            label="Set 3 (súper tie-break)"
+            label={useStb ? "Set 3 (súper tie-break)" : "Set 3"}
             partidoId={partido.id}
             fieldKey="set3"
             pareja1Label={pareja1Label}

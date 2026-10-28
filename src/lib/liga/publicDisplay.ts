@@ -119,11 +119,14 @@ export function getPartidoPublicScoreboard(
       return { kind: "wo", winner: s1 > s2 ? 1 : 2 };
     }
     const columns: PartidoPublicScoreColumn[] = [];
-    if (playoffs.sets?.length === 2) {
-      columns.push(
-        { label: "S1", p1: playoffs.sets[0].p1, p2: playoffs.sets[0].p2 },
-        { label: "S2", p1: playoffs.sets[1].p1, p2: playoffs.sets[1].p2 }
-      );
+    if (playoffs.sets && playoffs.sets.length >= 2) {
+      playoffs.sets.forEach((set, idx) => {
+        columns.push({
+          label: `S${idx + 1}`,
+          p1: set.p1,
+          p2: set.p2,
+        });
+      });
     }
     if (playoffs.stb) {
       columns.push({
@@ -147,10 +150,7 @@ export function getPartidoPublicScoreboard(
     if (legacySets?.sets?.length) {
       const columns: PartidoPublicScoreColumn[] = legacySets.sets.map(
         (set, idx) => ({
-          label:
-            set.kind === "super_tiebreak" || idx === 2
-              ? "STB"
-              : `S${idx + 1}`,
+          label: set.kind === "super_tiebreak" ? "STB" : `S${idx + 1}`,
           p1: Number(set.p1),
           p2: Number(set.p2),
         })

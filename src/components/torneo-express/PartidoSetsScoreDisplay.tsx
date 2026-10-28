@@ -128,9 +128,15 @@ export const PartidoSetsScoreDisplay: React.FC<PartidoSetsScoreDisplayProps> = (
                 setWonByMatchWinner
                   ? " te-set-pill--match-won"
                   : " te-set-pill--match-lost"
-              }`}
+              }${s.super_muerte ? " te-set-pill--sm" : ""}`}
+              title={s.super_muerte ? "Súper muerte" : undefined}
             >
               <SetGameNums set={s} winnerSide={winnerSide} variant="inline" />
+              {s.super_muerte ? (
+                <span className="te-set-pill__sm" aria-hidden>
+                  SM
+                </span>
+              ) : null}
             </span>
           );
         })}
@@ -172,6 +178,12 @@ export const PartidoSetsScoreDisplay: React.FC<PartidoSetsScoreDisplayProps> = (
           ) : null}
           <span className="te-set-chip">
             <SetGameNums set={s} winnerSide={winnerSide} variant="inline" />
+            {s.super_muerte ? (
+              <span className="te-set-chip__sm" title="Súper muerte">
+                {" "}
+                SM
+              </span>
+            ) : null}
           </span>
         </React.Fragment>
       ))}

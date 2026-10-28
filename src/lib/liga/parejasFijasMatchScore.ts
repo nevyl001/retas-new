@@ -1,4 +1,4 @@
-/** Marcador por sets en liga parejas fijas (2 de 3, set 3 super tie-break a 10). */
+/** Marcador por sets en liga parejas fijas (mejor de 3; set 3 completo o STB a 10). */
 
 export type LigaPartidoSetKind = "regular" | "super_tiebreak";
 
@@ -47,16 +47,25 @@ export type SetScoreDraft = {
   p2: string;
 };
 
+export type ParejasFijasDecidingMode = "regular" | "super_tiebreak";
+
 export type ParejasFijasSetsDraft = {
   set1: SetScoreDraft;
   set2: SetScoreDraft;
   set3: SetScoreDraft;
+  /** Modalidad del set 3 cuando hay 1-1. Default: set completo. */
+  set3Kind: ParejasFijasDecidingMode;
 };
 
 const EMPTY_DRAFT: SetScoreDraft = { p1: "", p2: "" };
 
 export function emptyParejasFijasSetsDraft(): ParejasFijasSetsDraft {
-  return { set1: { ...EMPTY_DRAFT }, set2: { ...EMPTY_DRAFT }, set3: { ...EMPTY_DRAFT } };
+  return {
+    set1: { ...EMPTY_DRAFT },
+    set2: { ...EMPTY_DRAFT },
+    set3: { ...EMPTY_DRAFT },
+    set3Kind: "regular",
+  };
 }
 
 export function parseSetScoresJson(raw: unknown): LigaPartidoSetScores | null {
@@ -185,7 +194,8 @@ export function validateParejasFijasMatchSets(
     if (w1 !== w2) {
       return {
         ok: false,
-        error: "Van 1-1 en sets: registra el super tie-break (set 3 a 10 puntos).",
+        error:
+          "Van 1-1 en sets: registra el set 3 (completo) o el super tie-break.",
       };
     }
     return { ok: true };
@@ -199,10 +209,18 @@ export function validateParejasFijasMatchSets(
   }
 
   const s3 = sets[2]!;
-  if (s3.kind !== "super_tiebreak") {
-    return { ok: false, error: "El set 3 debe ser super tie-break a 10 puntos." };
+  if (s3.kind === "super_tiebreak") {
+    const err3 = validateSuperTiebreakSet(s3.p1, s3.p2);
+    if (err3) return { ok: false, error: `Set 3: ${err3}` };
+    return { ok: true };
   }
-  const err3 = validateSuperTiebreakSet(s3.p1, s3.p2);
+  if (s3.kind !== "regular") {
+    return {
+      ok: false,
+      error: "El set 3 debe ser set completo o super tie-break.",
+    };
+  }
+  const err3 = validateRegularSet(s3.p1, s3.p2);
   if (err3) return { ok: false, error: `Set 3: ${err3}` };
 
   return { ok: true };
@@ -247,14 +265,25 @@ export function buildSetsFromDraft(draft: ParejasFijasSetsDraft): LigaPartidoSet
   const w2 = setWinner(set2);
 
   if (w1 !== w2) {
-    const raw3 = parseDraftSet(normalized.set3, "Set 3 (super tie-break)");
+    const kind: LigaPartidoSetKind =
+      normalized.set3Kind === "super_tiebreak"
+        ? "super_tiebreak"
+        : "regular";
+    const label =
+      kind === "super_tiebreak" ? "Set 3 (super tie-break)" : "Set 3";
+    const raw3 = parseDraftSet(normalized.set3, label);
     if (!raw3) {
       throw new Error(
-        "Van 1-1 en sets: registra el super tie-break (set 3, muerte súbita a 10)."
+        kind === "super_tiebreak"
+          ? "Van 1-1 en sets: registra el super tie-break (set 3 a 10)."
+          : "Van 1-1 en sets: registra el set 3 completo."
       );
     }
-    const set3: LigaPartidoSetScore = { ...raw3, kind: "super_tiebreak" };
-    const err3 = validateSuperTiebreakSet(set3.p1, set3.p2);
+    const set3: LigaPartidoSetScore = { ...raw3, kind };
+    const err3 =
+      kind === "super_tiebreak"
+        ? validateSuperTiebreakSet(set3.p1, set3.p2)
+        : validateRegularSet(set3.p1, set3.p2);
     if (err3) throw new Error(`Set 3: ${err3}`);
     return [set1, set2, set3];
   }
@@ -266,7 +295,7 @@ export function buildSetsFromDraft(draft: ParejasFijasSetsDraft): LigaPartidoSet
 export function normalizeParejasFijasDraft(
   draft: ParejasFijasSetsDraft
 ): ParejasFijasSetsDraft {
-  if (needsSuperTiebreakDraft(draft)) return draft;
+  if (needsDecidingSetDraft(draft)) return draft;
   return { ...draft, set3: { p1: "", p2: "" } };
 }
 
@@ -288,23 +317,30 @@ export function draftFromSetScores(
   const draft = emptyParejasFijasSetsDraft();
   if (!stored?.sets?.length) return draft;
 
-  const regular = stored.sets.filter((s) => s.kind === "regular");
-  const stb = stored.sets.find((s) => s.kind === "super_tiebreak");
-
-  if (regular[0]) {
-    draft.set1 = { p1: String(regular[0].p1), p2: String(regular[0].p2) };
+  if (stored.sets[0]) {
+    draft.set1 = {
+      p1: String(stored.sets[0].p1),
+      p2: String(stored.sets[0].p2),
+    };
   }
-  if (regular[1]) {
-    draft.set2 = { p1: String(regular[1].p1), p2: String(regular[1].p2) };
+  if (stored.sets[1]) {
+    draft.set2 = {
+      p1: String(stored.sets[1].p1),
+      p2: String(stored.sets[1].p2),
+    };
   }
-  if (stb) {
-    draft.set3 = { p1: String(stb.p1), p2: String(stb.p2) };
+  if (stored.sets[2]) {
+    const s3 = stored.sets[2];
+    draft.set3 = { p1: String(s3.p1), p2: String(s3.p2) };
+    draft.set3Kind =
+      s3.kind === "super_tiebreak" ? "super_tiebreak" : "regular";
   }
 
   return draft;
 }
 
-export function needsSuperTiebreakDraft(draft: ParejasFijasSetsDraft): boolean {
+/** True cuando S1+S2 válidos y ganadores distintos (hace falta set 3). */
+export function needsDecidingSetDraft(draft: ParejasFijasSetsDraft): boolean {
   try {
     const raw1 = parseDraftSet(draft.set1, "Set 1");
     const raw2 = parseDraftSet(draft.set2, "Set 2");
@@ -317,6 +353,11 @@ export function needsSuperTiebreakDraft(draft: ParejasFijasSetsDraft): boolean {
   } catch {
     return false;
   }
+}
+
+/** @deprecated Preferir needsDecidingSetDraft. */
+export function needsSuperTiebreakDraft(draft: ParejasFijasSetsDraft): boolean {
+  return needsDecidingSetDraft(draft);
 }
 
 export function resolveParejasFijasPartidoTotals(partido: {

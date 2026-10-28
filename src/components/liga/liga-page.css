@@ -2519,10 +2519,71 @@
 }
 
 .liga-sets-form__set3--visible {
-  max-height: 160px;
+  max-height: 220px;
   opacity: 1;
   transform: translateY(0);
   margin-top: var(--liga-space-sm);
+}
+
+/* Selector Set completo | Super Tie-Break (set decisivo) */
+.liga-deciding-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0 0 var(--liga-space-sm);
+}
+
+.liga-deciding-mode__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--liga-text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.liga-deciding-mode__seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 10px;
+  border: 1px solid var(--liga-border, rgba(255, 255, 255, 0.12));
+  background: var(--liga-surface-2, rgba(0, 0, 0, 0.25));
+}
+
+.liga-deciding-mode__btn {
+  appearance: none;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.45rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--liga-text-muted, rgba(255, 255, 255, 0.65));
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.liga-deciding-mode__btn.is-active {
+  color: var(--liga-text, #fff);
+  background: var(--brand-primary, var(--ro-accent, #1f6feb));
+}
+
+.liga-deciding-mode__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.liga-deciding-mode--compact {
+  margin-bottom: 0.5rem;
+}
+
+.liga-deciding-mode--compact .liga-deciding-mode__btn {
+  padding: 0.38rem 0.4rem;
+  font-size: 0.72rem;
 }
 
 .liga-partido-save-btn.riviera-btn {

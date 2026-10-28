@@ -3,6 +3,7 @@ import {
   computeParejasFijasMatchTotals,
   emptyParejasFijasSetsDraft,
   parejasFijasVictoryRankingPoints,
+  validateParejasFijasMatchSets,
   validateRegularSet,
   validateSuperTiebreakSet,
 } from "./parejasFijasMatchScore";
@@ -33,16 +34,33 @@ describe("parejasFijasMatchScore", () => {
     expect(totals.p1WonMatch).toBe(true);
   });
 
-  it("partido 2-1 requiere super tie-break en set 3", () => {
+  it("final 6-4 / 3-6: set 3 completo es predeterminado", () => {
+    const draft = emptyParejasFijasSetsDraft();
+    draft.set1 = { p1: "6", p2: "4" };
+    draft.set2 = { p1: "3", p2: "6" };
+    draft.set3 = { p1: "6", p2: "2" };
+    expect(draft.set3Kind).toBe("regular");
+
+    const sets = buildSetsFromDraft(draft);
+    expect(sets).toHaveLength(3);
+    expect(sets[2]!.kind).toBe("regular");
+    const totals = computeParejasFijasMatchTotals(sets);
+    expect(totals.display).toBe("6-4, 3-6, 6-2");
+    expect(totals.p1WonMatch).toBe(true);
+  });
+
+  it("partido 2-1 con STB solo si set3Kind es super_tiebreak", () => {
     const draft = emptyParejasFijasSetsDraft();
     draft.set1 = { p1: "6", p2: "4" };
     draft.set2 = { p1: "3", p2: "6" };
     draft.set3 = { p1: "10", p2: "7" };
+    draft.set3Kind = "super_tiebreak";
 
     const sets = buildSetsFromDraft(draft);
     const totals = computeParejasFijasMatchTotals(sets);
 
     expect(sets).toHaveLength(3);
+    expect(sets[2]!.kind).toBe("super_tiebreak");
     expect(totals.gamesP1).toBe(19);
     expect(totals.gamesP2).toBe(17);
     expect(totals.p1WonMatch).toBe(true);
@@ -52,7 +70,16 @@ describe("parejasFijasMatchScore", () => {
     const draft = emptyParejasFijasSetsDraft();
     draft.set1 = { p1: "6", p2: "4" };
     draft.set2 = { p1: "2", p2: "6" };
-    expect(() => buildSetsFromDraft(draft)).toThrow(/super tie-break/i);
+    expect(() => buildSetsFromDraft(draft)).toThrow(/set 3/i);
+  });
+
+  it("acepta set 3 regular en validateParejasFijasMatchSets", () => {
+    const ok = validateParejasFijasMatchSets([
+      { p1: 6, p2: 4, kind: "regular" },
+      { p1: 3, p2: 6, kind: "regular" },
+      { p1: 6, p2: 2, kind: "regular" },
+    ]);
+    expect(ok).toEqual({ ok: true });
   });
 
   it("corrige 2-1 a 2-0 ignorando set 3 obsoleto", () => {
@@ -85,5 +112,12 @@ describe("parejasFijasMatchScore", () => {
     ]);
     expect(parejasFijasVictoryRankingPoints(stb, true)).toBe(2);
     expect(parejasFijasVictoryRankingPoints(stb, false)).toBe(0);
+
+    const fullSet3 = computeParejasFijasMatchTotals([
+      { p1: 6, p2: 4, kind: "regular" },
+      { p1: 3, p2: 6, kind: "regular" },
+      { p1: 6, p2: 2, kind: "regular" },
+    ]);
+    expect(parejasFijasVictoryRankingPoints(fullSet3, true)).toBe(2);
   });
 });

@@ -569,9 +569,22 @@ export async function updateScoreParejasFijasPlayoffs(
   };
 
   if (!result?.ok) {
+    const code = result?.error;
+    const mapped =
+      code === "deciding_set_required" || code === "stb_required"
+        ? "Empate en sets: elige Set completo o Super Tie-Break y captura el marcador."
+        : code === "stb_not_allowed"
+          ? "El súper tie-break no aplica con este marcador de sets."
+          : code === "set3_not_allowed"
+            ? "Con victoria en dos sets no hace falta el set 3."
+            : code === "set3_tie_not_allowed"
+              ? "El set 3 decisivo no puede empatar."
+              : code === "match_tie_not_allowed"
+                ? "El partido no puede quedar empatado."
+                : code ?? "No se pudo guardar el marcador";
     return {
       ok: false,
-      error: result?.error ?? "No se pudo guardar el marcador",
+      error: mapped,
       status: result?.status,
     };
   }
