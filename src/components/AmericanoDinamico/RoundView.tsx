@@ -24,6 +24,8 @@ interface RoundViewProps {
   onRoundFinalized?: () => void;
   /** Regenera emparejamientos/banca de la ronda actual (solo sin marcadores). */
   onRegenerateRound?: () => void;
+  /** Mete a un banquillo como pareja de un jugador en cancha (sin marcadores). */
+  onSeatBenchWithPartner?: (benchPlayerId: string, stayPlayerId: string) => void;
   /** Ronda histórica: marcador visible, sin captura. */
   readOnly?: boolean;
   /** FC-01 (Fase C1): true mientras la ronda siguiente se confirma con el servidor. */
@@ -119,6 +121,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
   onCommitRound,
   onRoundFinalized,
   onRegenerateRound,
+  onSeatBenchWithPartner,
   readOnly = false,
   roundSyncPending = false,
   roundSyncError = null,
@@ -149,6 +152,16 @@ export const RoundView: React.FC<RoundViewProps> = ({
   );
 
   const canFinalizeRound = committed && !dirty && !roundSyncPending;
+
+  const activePlayers = useMemo(() => {
+    const out: { id: string; name: string }[] = [];
+    for (const match of matchesByCourt) {
+      for (const p of [...match.teamA, ...match.teamB]) {
+        out.push({ id: p.id, name: p.name });
+      }
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name, "es"));
+  }, [matchesByCourt]);
 
   const handleConfirm = () => {
     if (!draftComplete) return;
@@ -279,6 +292,39 @@ export const RoundView: React.FC<RoundViewProps> = ({
             ))
           )}
         </div>
+        {!readOnly &&
+        !committed &&
+        onSeatBenchWithPartner &&
+        round.benchPlayers.length > 0 ? (
+          <div className="americano-round__bench-seat">
+            {round.benchPlayers.map((benchPlayer) => (
+              <div
+                key={`seat-${benchPlayer.id}`}
+                className="americano-round__bench-seat-row"
+              >
+                <span className="americano-round__bench-seat-label">
+                  Meter a <strong>{benchPlayer.name}</strong> con:
+                </span>
+                <div className="americano-round__bench-seat-actions">
+                  {activePlayers.map((active) => (
+                    <Button
+                      key={`${benchPlayer.id}-${active.id}`}
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={roundSyncPending}
+                      onClick={() =>
+                        onSeatBenchWithPartner(benchPlayer.id, active.id)
+                      }
+                    >
+                      {active.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {readOnly ? null : (

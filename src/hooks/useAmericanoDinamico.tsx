@@ -11,6 +11,7 @@ import type { AmericanoMatch, AmericanoPlayer, AmericanoRound } from "../lib/db/
 import {
   buildMatricesFromScoredRounds,
   generateAmericanoRound,
+  seatBenchPlayerWithPartner,
 } from "../lib/americanoGenerator";
 import {
   computeAmericanoLiveRanking,
@@ -929,6 +930,79 @@ export function useAmericanoDinamico(
   }, [phase, resolvedTournamentId]);
 
   /**
+   * Mete a un jugador del banquillo como pareja de otro en la ronda actual
+   * (solo si aún no hay marcadores). El compañero anterior pasa a descansar.
+   */
+  const seatBenchWithPartner = useCallback(
+    async (benchPlayerId: string, stayPlayerId: string): Promise<boolean> => {
+      if (phase !== "playing") return false;
+      const idx = currentRoundIndexRef.current;
+      const cur = roundsRef.current[idx];
+      if (!cur) return false;
+
+      const hasAnyScore = cur.matches.some(
+        (m) =>
+          (typeof m.scoreA === "number" && !Number.isNaN(m.scoreA)) ||
+          (typeof m.scoreB === "number" && !Number.isNaN(m.scoreB))
+      );
+      if (hasAnyScore) return false;
+
+      let patched: AmericanoRound;
+      try {
+        patched = seatBenchPlayerWithPartner(cur, benchPlayerId, stayPlayerId);
+      } catch (e) {
+        console.warn("[americano-live] seatBenchWithPartner:", e);
+        return false;
+      }
+
+      const priorRounds = roundsRef.current.slice(0, idx);
+      const nextRounds = [...priorRounds, patched];
+      const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
+      const rebuilt = rebuildStateFromRounds(nextRounds, template);
+      setPlayers(rebuilt.players);
+      setRounds(rebuilt.rounds);
+
+      if (!resolvedTournamentId) return true;
+
+      setRoundSyncPending(true);
+      setRoundSyncError(null);
+      try {
+        const roster = template.map((p) => ({ id: p.id, name: p.name }));
+        const ok = await persistAmericanoDinamicoSnapshot(resolvedTournamentId, {
+          version: 1,
+          savedAt: new Date().toISOString(),
+          tournamentPhase: "playing",
+          totalRounds: totalRoundsRef.current,
+          plannedCourts: courtsRef.current,
+          roster,
+          ranking: rebuilt.players.map((p) => ({
+            id: p.id,
+            name: p.name,
+            stats: { ...p.stats },
+          })),
+          rounds: rebuilt.rounds.map(buildAmericanoSnapshotRound),
+        });
+        if (!ok) {
+          setRoundSyncError(
+            "No se pudo guardar el cambio de pareja. Verifica tu conexión."
+          );
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.warn("[americano-live] seatBenchWithPartner persist:", e);
+        setRoundSyncError(
+          "No se pudo guardar el cambio de pareja. Verifica tu conexión."
+        );
+        return false;
+      } finally {
+        setRoundSyncPending(false);
+      }
+    },
+    [phase, resolvedTournamentId]
+  );
+
+  /**
    * Reiniciar el americano a "recién creado" (registro vacío). SOLO permitido
    * mientras NO ha finalizado: así no hay participaciones/ranking/ROMC ya
    * registrados que revertir (esos se escriben al finalizar). Limpia estado
@@ -1021,6 +1095,7 @@ export function useAmericanoDinamico(
     editScore,
     nextRound,
     regenerateCurrentRound,
+    seatBenchWithPartner,
     resetTournament,
     updateTotalRounds,
     ranking,

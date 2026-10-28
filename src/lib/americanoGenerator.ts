@@ -529,6 +529,60 @@ function monteCarloPartition(
   return bestMatches;
 }
 
+
+/**
+ * Saca a `benchPlayerId` del banquillo y lo pone de pareja de `stayPlayerId`.
+ * El compañero anterior de `stayPlayerId` pasa a banquillo.
+ * Solo válido en rondas sin marcador (el caller lo garantiza).
+ */
+export function seatBenchPlayerWithPartner(
+  round: AmericanoRound,
+  benchPlayerId: string,
+  stayPlayerId: string
+): AmericanoRound {
+  if (benchPlayerId === stayPlayerId) {
+    throw new Error("Americano: no se puede sentar consigo mismo.");
+  }
+  const benchPlayer = round.benchPlayers.find((p) => p.id === benchPlayerId);
+  if (!benchPlayer) {
+    throw new Error("Americano: el jugador no está en banquillo.");
+  }
+
+  let displaced: AmericanoPlayer | null = null;
+  const matches = round.matches.map((match) => {
+    for (const side of ["teamA", "teamB"] as const) {
+      const pair = match[side];
+      const stayIdx = pair.findIndex((p) => p.id === stayPlayerId);
+      if (stayIdx < 0) continue;
+      if (displaced) {
+        throw new Error("Americano: jugador duplicado en la ronda.");
+      }
+      const partnerIdx = stayIdx === 0 ? 1 : 0;
+      displaced = pair[partnerIdx]!;
+      const nextPair: [AmericanoPlayer, AmericanoPlayer] = [...pair] as [
+        AmericanoPlayer,
+        AmericanoPlayer,
+      ];
+      nextPair[partnerIdx] = benchPlayer;
+      return { ...match, [side]: nextPair };
+    }
+    return match;
+  });
+
+  if (!displaced) {
+    throw new Error("Americano: el compañero elegido no está jugando esta ronda.");
+  }
+
+  return {
+    ...round,
+    matches,
+    benchPlayers: [
+      ...round.benchPlayers.filter((p) => p.id !== benchPlayerId),
+      displaced,
+    ],
+  };
+}
+
 function buildMatchesForActivePlayers(
   activePlayers: AmericanoPlayer[],
   partnerMatrix: PartnerMatrix,
