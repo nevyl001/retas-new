@@ -2,17 +2,23 @@ import React, { useEffect, useMemo, useState } from "react";
 import type { LigaJornada, LigaPartido } from "../../../lib/liga/types";
 import {
   formatSetScoresDisplay,
-  needsSuperTiebreakDraft,
+  needsDecidingSetDraft,
   normalizeParejasFijasDraft,
   validateParejasFijasDraft,
   type ParejasFijasSetsDraft,
 } from "../../../lib/liga/parejasFijasMatchScore";
 import {
+  needsPlayoffsDecidingSetDraft,
+  needsPlayoffsSet3Draft,
   needsPlayoffsStbDraft,
   playoffsMatchDisplay,
   parsePlayoffsSetScoresJson,
   type PlayoffsScoreDraft,
 } from "../../../lib/liga/parejasFijasPlayoffsMatchScore";
+import {
+  confirmDecidingModeSwitch,
+  DecidingSetModeToggle,
+} from "../DecidingSetModeToggle";
 import { LigaScoreInput } from "../LigaScoreInput";
 import { parejaPlayerNames, playerInitials } from "./jornadaAdminUtils";
 
@@ -225,12 +231,24 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
     return validateParejasFijasDraft(setsDraft);
   }, [mode, setsDraft]);
 
-  const showSet3 =
-    mode === "sets" && setsDraft ? needsSuperTiebreakDraft(setsDraft) : false;
+  const showSetsDeciding =
+    mode === "sets" && setsDraft ? needsDecidingSetDraft(setsDraft) : false;
+  const setsUseStb =
+    showSetsDeciding && setsDraft?.set3Kind === "super_tiebreak";
+  const showSet3 = showSetsDeciding;
+  const showPlayoffsDeciding =
+    mode === "playoffs" && playoffsDraft
+      ? needsPlayoffsDecidingSetDraft(playoffsDraft)
+      : false;
+  const showPlayoffsSet3 =
+    mode === "playoffs" && playoffsDraft
+      ? needsPlayoffsSet3Draft(playoffsDraft)
+      : false;
   const showStb =
     mode === "playoffs" && playoffsDraft
       ? needsPlayoffsStbDraft(playoffsDraft)
       : false;
+  const decidingSetLabel = setsUseStb ? "STB (10)" : "Set 3";
 
   const disabled = Boolean(locked || busy);
   const canSaveSets =
@@ -303,6 +321,28 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
         <div className="jornada-match-card__matchup">
           {mode === "sets" && setsDraft && onSetsChange ? (
             <>
+              {showSetsDeciding ? (
+                <DecidingSetModeToggle
+                  compact
+                  disabled={disabled}
+                  value={
+                    setsDraft.set3Kind === "super_tiebreak" ? "stb" : "regular"
+                  }
+                  onChange={(next) => {
+                    const hasScores =
+                      setsDraft.set3.p1 !== "" || setsDraft.set3.p2 !== "";
+                    if (!confirmDecidingModeSwitch(hasScores)) return;
+                    onSetsChange(
+                      normalizeParejasFijasDraft({
+                        ...setsDraft,
+                        set3Kind:
+                          next === "stb" ? "super_tiebreak" : "regular",
+                        set3: { p1: "", p2: "" },
+                      })
+                    );
+                  }}
+                />
+              ) : null}
               <PairScoreBlock
                 name1={team1.name1}
                 name2={team1.name2}
@@ -343,9 +383,9 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                 {showSet3 ? (
                   <ScoreField
                     id={scoreFieldId(partido.id, "set3-p1")}
-                    label="Set 3 STB"
+                    label={decidingSetLabel}
                     value={setsDraft.set3.p1}
-                    ariaLabel={`Set 3 súper tie-break de ${pareja1Label}`}
+                    ariaLabel={`${decidingSetLabel} de ${pareja1Label}`}
                     disabled={disabled}
                     maxLength={2}
                     onChange={(p1) =>
@@ -404,9 +444,9 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                 {showSet3 ? (
                   <ScoreField
                     id={scoreFieldId(partido.id, "set3-p2")}
-                    label="Set 3 STB"
+                    label={decidingSetLabel}
                     value={setsDraft.set3.p2}
-                    ariaLabel={`Set 3 súper tie-break de ${pareja2Label}`}
+                    ariaLabel={`${decidingSetLabel} de ${pareja2Label}`}
                     disabled={disabled}
                     maxLength={2}
                     onChange={(p2) =>
@@ -425,6 +465,29 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
 
           {mode === "playoffs" && playoffsDraft && onPlayoffsChange ? (
             <>
+              {showPlayoffsDeciding ? (
+                <DecidingSetModeToggle
+                  compact
+                  disabled={disabled}
+                  value={playoffsDraft.decidingMode}
+                  onChange={(next) => {
+                    const hasScores =
+                      playoffsDraft.set3.p1 !== "" ||
+                      playoffsDraft.set3.p2 !== "" ||
+                      playoffsDraft.stb1 !== "" ||
+                      playoffsDraft.stb2 !== "";
+                    if (!confirmDecidingModeSwitch(hasScores)) return;
+                    onPlayoffsChange({
+                      ...playoffsDraft,
+                      decidingMode: next,
+                      set3: { p1: "", p2: "" },
+                      stb1: "",
+                      stb2: "",
+                      woWinner: null,
+                    });
+                  }}
+                />
+              ) : null}
               <PairScoreBlock
                 name1={team1.name1}
                 name2={team1.name2}
@@ -460,6 +523,22 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                     })
                   }
                 />
+                {showPlayoffsSet3 ? (
+                  <ScoreField
+                    id={scoreFieldId(partido.id, "playoffs-set3-p1")}
+                    label="Set 3"
+                    value={playoffsDraft.set3.p1}
+                    ariaLabel={`Set 3 de ${pareja1Label}`}
+                    disabled={disabled}
+                    onChange={(p1) =>
+                      onPlayoffsChange({
+                        ...playoffsDraft,
+                        set3: { ...playoffsDraft.set3, p1 },
+                        woWinner: null,
+                      })
+                    }
+                  />
+                ) : null}
                 {showStb ? (
                   <ScoreField
                     id={scoreFieldId(partido.id, "playoffs-stb-p1")}
@@ -513,6 +592,22 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                     })
                   }
                 />
+                {showPlayoffsSet3 ? (
+                  <ScoreField
+                    id={scoreFieldId(partido.id, "playoffs-set3-p2")}
+                    label="Set 3"
+                    value={playoffsDraft.set3.p2}
+                    ariaLabel={`Set 3 de ${pareja2Label}`}
+                    disabled={disabled}
+                    onChange={(p2) =>
+                      onPlayoffsChange({
+                        ...playoffsDraft,
+                        set3: { ...playoffsDraft.set3, p2 },
+                        woWinner: null,
+                      })
+                    }
+                  />
+                ) : null}
                 {showStb ? (
                   <ScoreField
                     id={scoreFieldId(partido.id, "playoffs-stb-p2")}

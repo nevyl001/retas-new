@@ -4,7 +4,13 @@
  * - asignacion_grupo (grupo y rivales asignados)
  * - clasifico_eliminatoria_batch (clasificó / no clasificó)
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  createCredentialClient,
+  logCredentialSelection,
+  readSecretCredential,
+} from "../_shared/supabaseCredentials.ts";
+import { decideQueueClaim } from "../_shared/queueClaim.ts";
+import { webhookAuthorized } from "../_shared/webhookAuth.ts";
 import {
   companeroFromPair,
   fetchGrupoContextForPair,
@@ -72,12 +78,12 @@ const MAX_BODY_BYTES = 5_000;
 const WEBHOOK_RATE_BUCKET = `${MODULE}:webhook`;
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY =
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const secretKey = readSecretCredential();
+logCredentialSelection({ module: MODULE, secret: secretKey });
 const NOTIFICACIONES_WEBHOOK_SECRET =
   Deno.env.get("NOTIFICACIONES_WEBHOOK_SECRET") ?? "";
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+if (!SUPABASE_URL) {
   throw new Error("Missing Supabase env vars.");
 }
 
@@ -85,24 +91,27 @@ if (!NOTIFICACIONES_WEBHOOK_SECRET) {
   throw new Error("Missing NOTIFICACIONES_WEBHOOK_SECRET env var.");
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createCredentialClient(SUPABASE_URL, secretKey);
 
 logResendConfig("procesar-notificaciones-evento");
 
-/** Comparación en tiempo constante para evitar filtrar el secret por timing. */
-function secretsEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return diff === 0;
-}
+const QUEUE_UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isAuthorizedWebhook(req: Request): boolean {
-  const provided = req.headers.get("x-notificaciones-secret")?.trim() ?? "";
-  if (!provided) return false;
-  return secretsEqual(provided, NOTIFICACIONES_WEBHOOK_SECRET);
+  return webhookAuthorized(
+    req.headers.get("x-notificaciones-secret"),
+    NOTIFICACIONES_WEBHOOK_SECRET,
+  );
+}
+
+/** Contrato único con el trigger: `{"record":{"id":"<uuid>"}}`. */
+function queueIdFromBody(body: Record<string, unknown>): string | null {
+  const record = body.record;
+  if (!record || typeof record !== "object") return null;
+  const id = (record as { id?: unknown }).id;
+  if (typeof id !== "string" || !QUEUE_UUID.test(id)) return null;
+  return id;
 }
 
 function isFakeEmail(email: string | null | undefined): boolean {
@@ -186,16 +195,24 @@ async function markQueue(
  * Devuelve null si otra invocación ya se quedó con el evento primero.
  */
 async function tryClaimQueueEvent(id: string): Promise<QueueRow | null> {
-  const { data: current } = await supabase
+  const { data: current, error: readError } = await supabase
     .from("notificaciones_eventos_queue")
-    .select("attempts")
+    .select("estado, attempts")
     .eq("id", id)
     .maybeSingle();
-  const nextAttempts = ((current?.attempts as number | undefined) ?? 0) + 1;
+  const decision = decideQueueClaim(
+    readError || !current
+      ? null
+      : {
+        estado: String(current.estado),
+        attempts: Number(current.attempts ?? 0),
+      },
+  );
+  if (!decision.write) return null;
 
   const { data, error } = await supabase
     .from("notificaciones_eventos_queue")
-    .update({ estado: "procesando", attempts: nextAttempts })
+    .update({ estado: "procesando", attempts: decision.attempts })
     .eq("id", id)
     .eq("estado", "pendiente")
     .select()
@@ -469,11 +486,8 @@ Deno.serve(async (req) => {
     return jsonResponse(400, { error: "Invalid JSON" });
   }
 
-  const queueId =
-    (body?.record as { id?: string } | undefined)?.id ??
-    (body?.id as string | undefined) ??
-    (body?.queue_id as string | undefined);
-  if (!queueId || typeof queueId !== "string") {
+  const queueId = queueIdFromBody(body);
+  if (!queueId) {
     return jsonResponse(400, { error: "Missing queue event id (record.id)" });
   }
 

@@ -130,6 +130,79 @@ describe("publicDisplay", () => {
     expect(rows[0].score).toBe("6-4, 4-6, 10-8 (STB)");
   });
 
+  it("muestra set 3 completo sin etiqueta STB forzada", () => {
+    const pareja1: LigaJornadaPareja = {
+      id: "p1",
+      jornada_id: "j1",
+      jugador1_id: "j1",
+      jugador2_id: "j2",
+      equipo_id: "eq1",
+    };
+    const pareja2: LigaJornadaPareja = {
+      id: "p2",
+      jornada_id: "j1",
+      jugador1_id: "j3",
+      jugador2_id: "j4",
+      jugador1: {
+        id: "j3",
+        nombre: "Gamma",
+        email: null,
+        telefono: null,
+        genero: null,
+        nivel: null,
+        estado: "activo",
+        organizador_id: null,
+        created_at: "",
+      },
+      jugador2: {
+        id: "j4",
+        nombre: "Delta",
+        email: null,
+        telefono: null,
+        genero: null,
+        nivel: null,
+        estado: "activo",
+        organizador_id: null,
+        created_at: "",
+      },
+    };
+    const jornada: LigaJornada = {
+      id: "j1",
+      liga_id: "l1",
+      numero: 1,
+      estado: "upcoming",
+      fecha: null,
+      created_at: "",
+      puntos_aplicados: false,
+      parejas: [pareja1, pareja2],
+      partidos: [
+        {
+          id: "m1",
+          jornada_id: "j1",
+          pareja1_id: "p1",
+          pareja2_id: "p2",
+          score_pareja1: 15,
+          score_pareja2: 12,
+          set_scores: {
+            sets: [
+              { p1: 6, p2: 4, kind: "regular" },
+              { p1: 3, p2: 6, kind: "regular" },
+              { p1: 6, p2: 2, kind: "regular" },
+            ],
+          },
+          cancha: 1,
+          ronda: 1,
+          estado: "completed",
+          created_at: "",
+        },
+      ],
+    };
+
+    const rows = listJornadaPublicMatches(jornada, equipos, true);
+    expect(rows[0].score).toBe("6-4, 3-6, 6-2");
+    expect(rows[0].score).not.toMatch(/STB/);
+  });
+
   it("arma programa completo de la liga", () => {
     const pareja1: LigaJornadaPareja = {
       id: "p1",

@@ -4,15 +4,25 @@
  *
  *   supabase start
  *   SUPABASE_URL=http://127.0.0.1:54821 \
- *   SUPABASE_SERVICE_ROLE_KEY=<service_role local> \
+ *   SUPABASE_SECRET_KEY=sb_secret_... o SUPABASE_SERVICE_ROLE_KEY=<legacy local> \
  *   deno test --allow-net --allow-env supabase/functions/_shared/rateLimit.test.ts
  */
 import { assertEquals, assert } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, rateLimitedResponse } from "./rateLimit.ts";
+import { createCredentialClient, readSecretCredential } from "./supabaseCredentials.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const directSecret = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
+if (directSecret.startsWith("sb_secret_")) {
+  Deno.env.set("RIVIERA_API_KEY_MODE", "new");
+  Deno.env.set("SUPABASE_SECRET_KEYS", JSON.stringify({ default: directSecret }));
+}
+let SERVICE_ROLE_KEY = "";
+try {
+  SERVICE_ROLE_KEY = readSecretCredential();
+} catch {
+  SERVICE_ROLE_KEY = "";
+}
 
 const canRunIntegration = Boolean(SUPABASE_URL && SERVICE_ROLE_KEY);
 
@@ -24,7 +34,7 @@ Deno.test({
   name: "permite solicitudes dentro del límite y expone remaining decreciente",
   ignore: !canRunIntegration,
   fn: async () => {
-    const admin = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!);
+    const admin = createCredentialClient(SUPABASE_URL!, SERVICE_ROLE_KEY);
     const bucket = uniqueBucket("test:normal");
 
     const r1 = await checkRateLimit(admin, bucket, 5, 60);
@@ -41,7 +51,7 @@ Deno.test({
   name: "ATAQUE: ráfaga por encima del límite es rechazada con 429 y Retry-After > 0",
   ignore: !canRunIntegration,
   fn: async () => {
-    const admin = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!);
+    const admin = createCredentialClient(SUPABASE_URL!, SERVICE_ROLE_KEY);
     const bucket = uniqueBucket("test:burst");
     const limit = 3;
 
@@ -74,7 +84,7 @@ Deno.test({
   name: "ATAQUE: 15 requests concurrentes al mismo bucket no exceden el límite (sin condición de carrera)",
   ignore: !canRunIntegration,
   fn: async () => {
-    const admin = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!);
+    const admin = createCredentialClient(SUPABASE_URL!, SERVICE_ROLE_KEY);
     const bucket = uniqueBucket("test:concurrent");
     const limit = 5;
 
@@ -95,7 +105,7 @@ Deno.test({
   name: "buckets distintos no interfieren entre sí (aislamiento por clave)",
   ignore: !canRunIntegration,
   fn: async () => {
-    const admin = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!);
+    const admin = createCredentialClient(SUPABASE_URL!, SERVICE_ROLE_KEY);
     const bucketA = uniqueBucket("test:isolated:a");
     const bucketB = uniqueBucket("test:isolated:b");
 
@@ -110,7 +120,7 @@ Deno.test({
 
 if (!canRunIntegration) {
   Deno.test(
-    "aviso: pruebas de integración omitidas (falta SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY locales)",
+    "aviso: pruebas de integración omitidas (falta SUPABASE_URL y una credencial de servicio local)",
     () => {
       console.warn(
         "rateLimit.test.ts: integración omitida — exportar SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY de `supabase status -o env` con el stack local levantado."

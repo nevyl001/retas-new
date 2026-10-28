@@ -18,7 +18,12 @@
  *   - Rate limiting por organizador.
  *   - Los errores del upstream y de red ya no se reenvían crudos al cliente.
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  createCredentialClient,
+  logCredentialSelection,
+  readPublishableCredential,
+  readSecretCredential,
+} from "../_shared/supabaseCredentials.ts";
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { newCorrelationId, logError, logWarn } from "../_shared/logger.ts";
 import { safeClientMessage, internalErrorDetail } from "../_shared/errors.ts";
@@ -31,9 +36,13 @@ const UPSTREAM_TIMEOUT_MS = 10_000;
 const MAX_UPSTREAM_RESPONSE_BYTES = 1_000_000;
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY =
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const publishableKey = readPublishableCredential();
+const secretKey = readSecretCredential();
+logCredentialSelection({ module: MODULE, secret: secretKey, publishable: publishableKey });
+
+if (!SUPABASE_URL) {
+  throw new Error("Missing Supabase env vars.");
+}
 const RIVIERAOPEN_API_BASE =
   Deno.env.get("RIVIERAOPEN_API_BASE")?.trim() || "https://rivieraopen.com";
 const RETA_ARCHIVE_SECRET = Deno.env.get("RETA_ARCHIVE_SECRET")?.trim() ?? "";
@@ -99,9 +108,11 @@ Deno.serve(async (req) => {
     return jsonResponse(400, { error: "action must be archive or status" });
   }
 
-  const supabaseCaller = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-  });
+  const supabaseCaller = createCredentialClient(
+    SUPABASE_URL,
+    publishableKey,
+    authHeader,
+  );
   const {
     data: { user: caller },
     error: callerError,
@@ -111,7 +122,7 @@ Deno.serve(async (req) => {
     return jsonResponse(401, { error: "Sesión inválida o expirada" });
   }
 
-  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const supabaseAdmin = createCredentialClient(SUPABASE_URL, secretKey);
 
   // Rate limit por organizador: "status" se usa para polling y admite más
   // tráfico legítimo que "archive" (acción irreversible más costosa aguas

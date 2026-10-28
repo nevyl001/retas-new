@@ -210,7 +210,10 @@ async function run() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: SUPABASE_ANON_KEY,
+      ...(String(SUPABASE_ANON_KEY).startsWith("eyJ")
+        ? { Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
+        : {}),
     },
     body: JSON.stringify({
       token: TEST_TOKEN,

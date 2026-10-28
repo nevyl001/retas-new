@@ -1,12 +1,19 @@
 import React from "react";
 import type { LigaPartido } from "../../lib/liga/types";
 import {
+  draftFromPlayoffsPayload,
   emptyPlayoffsScoreDraft,
+  needsPlayoffsDecidingSetDraft,
+  needsPlayoffsSet3Draft,
   needsPlayoffsStbDraft,
   parsePlayoffsSetScoresJson,
   type PlayoffsScoreDraft,
 } from "../../lib/liga/parejasFijasPlayoffsMatchScore";
 import { Button } from "../ui";
+import {
+  confirmDecidingModeSwitch,
+  DecidingSetModeToggle,
+} from "./DecidingSetModeToggle";
 import { LigaScoreInput } from "./LigaScoreInput";
 
 type Props = {
@@ -31,23 +38,7 @@ export function getPlayoffsDraftForPartido(
   if (partido.score_pareja1 == null || partido.score_pareja2 == null) {
     return emptyPlayoffsScoreDraft();
   }
-
-  const base = emptyPlayoffsScoreDraft();
-  if (payload?.sets && payload.sets.length === 2) {
-    base.set1 = {
-      p1: String(payload.sets[0].p1),
-      p2: String(payload.sets[0].p2),
-    };
-    base.set2 = {
-      p1: String(payload.sets[1].p1),
-      p2: String(payload.sets[1].p2),
-    };
-  }
-  if (payload?.stb) {
-    base.stb1 = String(payload.stb.p1);
-    base.stb2 = String(payload.stb.p2);
-  }
-  return base;
+  return draftFromPlayoffsPayload(payload);
 }
 
 function PlayoffsSetRow({
@@ -116,6 +107,8 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
   onSave,
 }) => {
   const locked = Boolean(disabled || busy);
+  const showDeciding = needsPlayoffsDecidingSetDraft(draft);
+  const showSet3 = needsPlayoffsSet3Draft(draft);
   const showStb = needsPlayoffsStbDraft(draft);
   const left = pareja1Label.trim() || "Pareja 1";
   const right = pareja2Label.trim() || "Pareja 2";
@@ -159,21 +152,71 @@ export const LigaPartidoPlayoffsScoreForm: React.FC<Props> = ({
         />
       </div>
 
-      {showStb ? (
+      {showDeciding ? (
         <div className="liga-sets-form__set3 liga-sets-form__set3--visible">
-          <PlayoffsSetRow
-            label="Súper tie-break (a 5)"
-            partidoId={partido.id}
-            fieldKey="playoffs-stb"
-            p1={draft.stb1}
-            p2={draft.stb2}
-            disabled={locked}
+          <DecidingSetModeToggle
             compact={compact}
-            ariaLeft={`Súper tie-break: ${left}`}
-            ariaRight={`Súper tie-break: ${right}`}
-            onChangeP1={(stb1) => onChange({ ...draft, stb1, woWinner: null })}
-            onChangeP2={(stb2) => onChange({ ...draft, stb2, woWinner: null })}
+            disabled={locked}
+            value={draft.decidingMode}
+            onChange={(next) => {
+              const hasScores =
+                draft.set3.p1 !== "" ||
+                draft.set3.p2 !== "" ||
+                draft.stb1 !== "" ||
+                draft.stb2 !== "";
+              if (!confirmDecidingModeSwitch(hasScores)) return;
+              onChange({
+                ...draft,
+                decidingMode: next,
+                set3: { p1: "", p2: "" },
+                stb1: "",
+                stb2: "",
+                woWinner: null,
+              });
+            }}
           />
+          {showSet3 ? (
+            <PlayoffsSetRow
+              label="Set 3"
+              partidoId={partido.id}
+              fieldKey="playoffs-set3"
+              p1={draft.set3.p1}
+              p2={draft.set3.p2}
+              disabled={locked}
+              compact={compact}
+              ariaLeft={`Set 3: games de ${left}`}
+              ariaRight={`Set 3: games de ${right}`}
+              onChangeP1={(p1) =>
+                onChange({
+                  ...draft,
+                  set3: { ...draft.set3, p1 },
+                  woWinner: null,
+                })
+              }
+              onChangeP2={(p2) =>
+                onChange({
+                  ...draft,
+                  set3: { ...draft.set3, p2 },
+                  woWinner: null,
+                })
+              }
+            />
+          ) : null}
+          {showStb ? (
+            <PlayoffsSetRow
+              label="Súper tie-break (a 5)"
+              partidoId={partido.id}
+              fieldKey="playoffs-stb"
+              p1={draft.stb1}
+              p2={draft.stb2}
+              disabled={locked}
+              compact={compact}
+              ariaLeft={`Súper tie-break: ${left}`}
+              ariaRight={`Súper tie-break: ${right}`}
+              onChangeP1={(stb1) => onChange({ ...draft, stb1, woWinner: null })}
+              onChangeP2={(stb2) => onChange({ ...draft, stb2, woWinner: null })}
+            />
+          ) : null}
         </div>
       ) : null}
 
