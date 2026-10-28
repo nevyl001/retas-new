@@ -1,0 +1,349 @@
+/* Gran Final pública — variante especial (no afecta jornadas ordinarias). */
+
+.liga-gran-final {
+  --lgf-max: 72rem;
+  --lgf-portrait-ratio: 3 / 4;
+  --lgf-gap: clamp(0.75rem, 2vw, 1.5rem);
+  --lgf-radius: var(--liga-radius-md, 12px);
+  --lgf-border: color-mix(in srgb, var(--liga-border, #3a3a3a) 80%, transparent);
+  --lgf-surface: color-mix(in srgb, var(--liga-surface, #141414) 92%, #000);
+  --lgf-text: var(--liga-text, #f5f5f2);
+  --lgf-muted: var(--liga-text-muted, #a3a39a);
+  --lgf-soft: var(--liga-text-soft, #d4d4cc);
+  --lgf-accent: var(--brand-accent, var(--liga-gold, #c4c4bc));
+  width: 100%;
+  max-width: var(--lgf-max);
+  margin: 0 auto;
+  padding: 0 0.25rem;
+}
+
+.liga-gran-final__header {
+  text-align: center;
+  margin: 0 auto 1.25rem;
+  max-width: 40rem;
+}
+
+.liga-gran-final__eyebrow {
+  margin: 0 0 0.35rem;
+  font-family: var(--liga-font-body, inherit);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--lgf-muted);
+}
+
+.liga-gran-final__title {
+  margin: 0;
+  font-family: var(--liga-font-display, inherit);
+  font-size: clamp(1.65rem, 4.2vw, 2.35rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: var(--lgf-text);
+}
+
+.liga-gran-final__title-live {
+  color: var(--lgf-accent);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.liga-gran-final__subtitle {
+  margin: 0.45rem 0 0;
+  font-size: clamp(0.88rem, 2.2vw, 1rem);
+  font-weight: 500;
+  color: var(--lgf-soft);
+}
+
+.liga-gran-final__congrats {
+  margin: 0.85rem 0 0;
+  font-family: var(--liga-font-display, inherit);
+  font-size: clamp(1rem, 2.6vw, 1.2rem);
+  font-weight: 600;
+  color: var(--lgf-text);
+}
+
+.liga-gran-final__copy {
+  margin: 0.55rem auto 0;
+  max-width: 34rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--lgf-muted);
+}
+
+.liga-gran-final__tagline {
+  margin: 0.7rem 0 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--lgf-muted) 85%, transparent);
+}
+
+.liga-gran-final__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 0.75rem;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.78rem;
+  color: var(--lgf-muted);
+}
+
+.liga-gran-final__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.liga-gran-final__meta-dot::before {
+  content: "";
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--lgf-accent) 70%, transparent);
+}
+
+.liga-gran-final__stage {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.85rem;
+  margin: 0 auto;
+  padding: clamp(0.75rem, 2vw, 1.15rem);
+  border: 1px solid var(--lgf-border);
+  border-radius: calc(var(--lgf-radius) + 2px);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--lgf-surface) 88%, #fff) 0%,
+      var(--lgf-surface) 100%
+    );
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+}
+
+@media (min-width: 860px) {
+  .liga-gran-final__stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(0.85rem, 2vw, 1.5rem);
+  }
+}
+
+.liga-gran-final__pair {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.liga-gran-final__pair-label {
+  margin: 0;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lgf-muted);
+}
+
+.liga-gran-final__pair--winner .liga-gran-final__pair-label {
+  color: var(--lgf-accent);
+}
+
+.liga-gran-final__pair-name {
+  margin: 0;
+  text-align: center;
+  font-family: var(--liga-font-display, inherit);
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--lgf-text);
+}
+
+.liga-gran-final__portraits {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--lgf-gap);
+}
+
+.liga-gran-final__portrait {
+  position: relative;
+  aspect-ratio: var(--lgf-portrait-ratio);
+  max-height: min(17rem, 42vw);
+  border-radius: var(--lgf-radius);
+  overflow: hidden;
+  border: 1px solid var(--lgf-border);
+  background: color-mix(in srgb, #0a0a0a 70%, var(--lgf-surface));
+}
+
+@media (min-width: 860px) {
+  .liga-gran-final__portrait {
+    max-height: min(15.5rem, 28vh);
+  }
+}
+
+.liga-gran-final__portrait-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 22%;
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+
+.liga-gran-final__portrait-photo.is-visible {
+  opacity: 1;
+}
+
+.liga-gran-final__portrait-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--liga-font-display, inherit);
+  font-size: clamp(1.6rem, 6vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--lgf-text) 78%, transparent);
+  background:
+    radial-gradient(
+      circle at 50% 28%,
+      color-mix(in srgb, var(--lgf-accent) 18%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(160deg, #1a1a1a, #0d0d0d);
+}
+
+.liga-gran-final__portrait--has-photo .liga-gran-final__portrait-fallback {
+  opacity: 0;
+}
+
+.liga-gran-final__portrait-scrim {
+  position: absolute;
+  inset: auto 0 0;
+  height: 46%;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(8, 10, 14, 0.55) 42%,
+    rgba(8, 10, 14, 0.92) 100%
+  );
+  pointer-events: none;
+}
+
+.liga-gran-final__portrait-name {
+  position: absolute;
+  left: 0.45rem;
+  right: 0.45rem;
+  bottom: 0.45rem;
+  z-index: 2;
+  margin: 0;
+  font-size: clamp(0.72rem, 2.4vw, 0.86rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  overflow-wrap: anywhere;
+}
+
+.liga-gran-final__portrait-rating {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #fff 72%, transparent);
+}
+
+.liga-gran-final__vs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.15rem 0;
+}
+
+.liga-gran-final__vs-badge {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--lgf-border);
+  background: color-mix(in srgb, #000 35%, var(--lgf-surface));
+  font-family: var(--liga-font-display, inherit);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--lgf-soft);
+}
+
+.liga-gran-final__score {
+  margin: 0;
+  text-align: center;
+  font-family: var(--liga-font-display, inherit);
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--lgf-text);
+}
+
+.liga-gran-final__result {
+  margin: 1rem auto 0;
+  max-width: 36rem;
+  text-align: center;
+}
+
+.liga-gran-final__result-title {
+  margin: 0;
+  font-family: var(--liga-font-display, inherit);
+  font-size: clamp(1.15rem, 3vw, 1.45rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lgf-text);
+}
+
+.liga-gran-final__result-pair {
+  margin: 0.45rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--lgf-accent);
+}
+
+.liga-gran-final__result-sub {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  color: var(--lgf-muted);
+}
+
+.liga-gran-final__result-copy {
+  margin: 0.65rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--lgf-soft);
+}
+
+.liga-gran-final--champions .liga-gran-final__pair--runner .liga-gran-final__portrait {
+  opacity: 0.78;
+}
+
+.liga-gran-final--champions .liga-gran-final__pair--winner .liga-gran-final__portrait {
+  border-color: color-mix(in srgb, var(--lgf-accent) 45%, var(--lgf-border));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liga-gran-final__portrait-photo {
+    transition: none;
+  }
+}

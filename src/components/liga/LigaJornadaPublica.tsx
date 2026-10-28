@@ -11,6 +11,11 @@ import {
   getPartidoPublicScoreboard,
   partidoMatchWinnerSide,
 } from "../../lib/liga/publicDisplay";
+import {
+  findLigaGranFinalPartido,
+  jornadaHasLigaGranFinal,
+  ligaGranFinalHeroMeta,
+} from "../../lib/liga/ligaGranFinalPublic";
 import { jornadaHoraInicioLabel } from "../../lib/liga/programacion";
 import type { LigaDetalle, LigaJornada, LigaJornadaPareja, LigaPartido } from "../../lib/liga/types";
 import { isEquiposModalidad, isParejasFijasPlayoffs } from "../../lib/liga/ligaModalidad";
@@ -30,6 +35,7 @@ import { LigaMotionValue } from "./LigaMotionValue";
 import {
   parejaPlayerNames,
 } from "./LigaPublicParejaFaces";
+import { LigaJornadaGranFinalPublica } from "./jornada-public/LigaJornadaGranFinalPublica";
 import { LigaJornadaMatchCardFinal } from "./jornada-public/LigaJornadaMatchCardFinal";
 import { LigaJornadaMatchCardPending } from "./jornada-public/LigaJornadaMatchCardPending";
 import { LigaJornadaStandingsRow } from "./jornada-public/LigaJornadaStandingsRow";
@@ -352,6 +358,43 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     .join(" · ");
   const canchasDisponibles = Math.max(1, detalle.canchas_disponibles ?? 4);
   const totalPartidos = jornada.partidos?.length ?? 0;
+  const esGranFinalJornada = jornadaHasLigaGranFinal(jornada.partidos);
+  const granFinalPartido = findLigaGranFinalPartido(jornada.partidos);
+  const jugadoresById = new Map(
+    (detalle.jugadores ?? []).map((j) => [j.id, j])
+  );
+  const heroMetaText =
+    totalPartidos > 0
+      ? ligaGranFinalHeroMeta(jornada.partidos ?? [])
+      : "Liga";
+  const heroCategoria = esGranFinalJornada
+    ? "Gran Final"
+    : `Jornada ${numero}`;
+
+  const buildGranFinalPair = (parejaId: string) => {
+    const face = resolveParejaFace(parejaId);
+    const pareja = jornada.parejas?.find((p) => p.id === parejaId);
+    const pairName = pareja
+      ? formatJornadaParejaNombre(pareja, equiposById)
+      : `${face.name1} / ${face.name2}`;
+    const nivelOf = (id: string) => {
+      const n = jugadoresById.get(id)?.nivel;
+      return n != null && Number.isFinite(Number(n)) ? Number(n) : null;
+    };
+    return {
+      pairName,
+      player1: {
+        name: face.name1,
+        foto: face.foto1,
+        nivel: face.id1 ? nivelOf(face.id1) : null,
+      },
+      player2: {
+        name: face.name2,
+        foto: face.foto2,
+        nivel: face.id2 ? nivelOf(face.id2) : null,
+      },
+    };
+  };
 
   const renderMatchCard = (
     partido: LigaPartido,
@@ -502,21 +545,15 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
             }
             nombreEvento={detalle.nombre}
             club={isClubBranded ? organizerName : undefined}
-            categoria={`Jornada ${numero}`}
+            categoria={heroCategoria}
             fecha={jornadaFechaHorarioText || undefined}
-            meta={
-              totalPartidos > 0
-                ? `${partidosByRonda.length} ronda${
-                    partidosByRonda.length === 1 ? "" : "s"
-                  } · ${canchasDisponibles} canchas`
-                : "Liga"
-            }
+            meta={heroMetaText}
           />
         ) : (
           <header className="liga-pantalla__header">
             <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
             <p className="liga-pantalla__subtitle">
-              Jornada {numero}
+              {heroCategoria}
               {jornadaFechaHorarioText ? ` · ${jornadaFechaHorarioText}` : ""}
               {" · "}
               {jornadaEstadoText}
@@ -533,10 +570,28 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
               <p className="liga-pantalla__loading">
                 Los partidos aparecerán cuando se inicie la jornada.
               </p>
+            ) : esGranFinalJornada && granFinalPartido ? (
+              <LigaJornadaGranFinalPublica
+                ligaNombre={detalle.nombre}
+                partido={granFinalPartido}
+                side1={buildGranFinalPair(granFinalPartido.pareja1_id)}
+                side2={buildGranFinalPair(granFinalPartido.pareja2_id)}
+                esParejasFijas={esParejasFijas}
+                fechaHorarioText={jornadaFechaHorarioText}
+              />
             ) : (
               partidosByRonda.map(([ronda, partidos]) => {
                 const meta = rondaEstados.find((x) => x.ronda === ronda);
                 const estado = meta?.estado ?? "pending";
+                const canchasEnRonda = new Set(
+                  partidos
+                    .map((p) => p.cancha)
+                    .filter(
+                      (c): c is number =>
+                        typeof c === "number" && Number.isFinite(c)
+                    )
+                ).size;
+                const canchasMeta = Math.max(1, canchasEnRonda || partidos.length);
                 return (
                   <section
                     key={ronda}
@@ -553,8 +608,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                           {partidos.length} partido
                           {partidos.length === 1 ? "" : "s"}
                           {" · "}
-                          {partidos.length} cancha
-                          {partidos.length === 1 ? "" : "s"}
+                          {canchasMeta} cancha
+                          {canchasMeta === 1 ? "" : "s"}
                         </p>
                       </div>
                       {estado !== "pending" ? (
