@@ -228,12 +228,19 @@ export async function assertCareerEventIntegrity(
 
   failures.push(...detectDuplicateParticipaciones(participaciones));
 
-  const jugadorIdsToCheck = Array.from(
-    new Set([
-      ...touchedJugadorIds,
-      ...participaciones.map((p) => p.jugador_id),
-    ])
-  );
+  // liga_inscripcion se ejecuta por jugador (ensureLigaInscripcionRankingForLiga).
+  // Re-asertar a TODOS los participantes del evento en cada llamada produce
+  // N×M requests y warning spam (p.ej. Padelito: 16 warnings × 16 jugadores).
+  // Duplicados se detectan arriba sobre el set completo; per-jugador solo touched.
+  const jugadorIdsToCheck =
+    context.kind === "liga_inscripcion"
+      ? Array.from(new Set(touchedJugadorIds))
+      : Array.from(
+          new Set([
+            ...touchedJugadorIds,
+            ...participaciones.map((p) => p.jugador_id),
+          ])
+        );
 
   for (const jugadorId of jugadorIdsToCheck) {
     const rowsForJugador = participaciones.filter(
