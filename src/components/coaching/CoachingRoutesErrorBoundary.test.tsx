@@ -142,6 +142,7 @@ describe("Coaching Routes ErrorBoundary Validation", () => {
       },
     ]);
     jest.spyOn(coachingApi, "fetchCoachAgenda").mockResolvedValueOnce([]);
+    jest.spyOn(coachingApi, "fetchCoachFollowupDigest").mockResolvedValueOnce([]);
 
     await act(async () => {
       root.render(
@@ -197,6 +198,7 @@ describe("Coaching Routes ErrorBoundary Validation", () => {
         } as any,
       ],
     });
+    jest.spyOn(coachingApi, "fetchStudentTrainingTimeline").mockResolvedValueOnce([]);
 
     await act(async () => {
       root.render(
