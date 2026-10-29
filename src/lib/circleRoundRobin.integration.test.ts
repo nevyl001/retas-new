@@ -129,7 +129,6 @@ describe("integración Round Robin 8 parejas × 3 canchas", () => {
     }
 
     // Forzar fallback: maxNodes=0 hace fallar el backtracking.
-    const infoSpy = jest.spyOn(console, "info").mockImplementation(() => {});
     const forced = generateCircleRoundRobinScheduleDetailed(UUID_PAIRS_8, 3, {
       seed: 55,
       maxNodes: 0,
@@ -140,8 +139,6 @@ describe("integración Round Robin 8 parejas × 3 canchas", () => {
     expect(validateSchedule(slots(forced.schedule), UUID_PAIRS_8, 3)).toEqual(
       []
     );
-    expect(infoSpy).toHaveBeenCalled();
-    infoSpy.mockRestore();
   });
 
   test("preview válido no implica escritura (solo estructura en memoria)", () => {

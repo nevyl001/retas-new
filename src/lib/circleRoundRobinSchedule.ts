@@ -521,7 +521,7 @@ export function generateCircleRoundRobinScheduleDetailed(
       safeCourts
     );
     if (errors.length === 0) {
-      console.info(
+      debugLog(
         "[circle-rr] usando calendario de referencia 8×3 (fallback).",
         { seed: baseSeed }
       );
