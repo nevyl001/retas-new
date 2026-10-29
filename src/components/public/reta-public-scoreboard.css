@@ -3205,3 +3205,255 @@
     font-size: clamp(2.4rem, 1.8vw, 3.6rem);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Reta pública RR — estilo uniforme con Americano (sin colapsar paneles)
+   Regla crítica: NUNCA width:max-content + hijos width:100%/min(100%).
+   Anchos fijos en rem/vw; position:relative; aspect-ratio 4/5.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.te-public--reta .reta-sb-card--split-vs:not(.reta-sb-card--teams) {
+  padding: 0.65rem 0.7rem 0.6rem !important;
+  border-radius: 14px !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .reta-sb-card__meta {
+  margin-bottom: 0.45rem !important;
+  padding-bottom: 0.35rem !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .reta-sb-card__board {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+  align-items: center !important;
+  justify-items: center !important;
+  column-gap: 0.55rem !important;
+  row-gap: 0.35rem !important;
+  width: 100% !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .reta-sb-team--split-vs,
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .reta-sb-team__players--split-vs,
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .pub-split-vs-pair--compact {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .pub-split-vs-pair--compact
+  .pub-split-vs-pair__grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  justify-items: center !important;
+  align-items: start !important;
+  gap: 0.45rem !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .pub-split-vs-pair--compact
+  .pub-split-vs-panel {
+  position: relative !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  aspect-ratio: 4 / 5 !important;
+  width: clamp(5.75rem, 7.5vw, 7.5rem) !important;
+  max-width: clamp(5.75rem, 7.5vw, 7.5rem) !important;
+  min-width: 5.25rem !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin-inline: auto !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  overflow: hidden !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.38) !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .pub-split-vs-pair--compact
+  .pub-split-vs-panel__media {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .pub-split-vs-pair--compact
+  .pub-split-vs-panel__photo {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 18% !important;
+  transform: none !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .pub-split-vs-pair--compact
+  .pub-split-vs-panel__photo.is-visible {
+  opacity: 1 !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .pub-split-vs-pair--compact
+  .pub-split-vs-panel__scrim {
+  display: block !important;
+  height: 56% !important;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.4) 34%,
+    rgba(0, 0, 0, 0.92) 100%
+  ) !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .pub-split-vs-pair--compact
+  .pub-split-vs-panel__watermark {
+  font-size: clamp(1.6rem, 28cqi, 2.4rem) !important;
+  opacity: 0.12 !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .pub-split-vs-pair--compact
+  .pub-split-vs-panel__given {
+  left: 0.32rem !important;
+  right: 2.5rem !important;
+  bottom: 0.72rem !important;
+  font-size: clamp(0.64rem, 5.5cqi, 0.78rem) !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .pub-split-vs-pair--compact
+  .pub-split-vs-panel__family {
+  left: 0.32rem !important;
+  right: 2.5rem !important;
+  bottom: 0.28rem !important;
+  font-size: clamp(0.52rem, 4.5cqi, 0.64rem) !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .pub-split-vs-pair--compact
+  .pub-split-vs-panel__rating.jugador-rating-chip {
+  top: auto !important;
+  bottom: 0.28rem !important;
+  right: 0.28rem !important;
+  left: auto !important;
+  min-height: 1.05rem !important;
+  padding: 0.08rem 0.3rem !important;
+  font-size: 0.6rem !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .reta-sb-vs {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: stretch !important;
+  min-width: 1.85rem !important;
+  gap: 0.4rem !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .reta-sb-vs__badge {
+  min-width: 1.85rem !important;
+  height: 1.85rem !important;
+  font-size: 0.62rem !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+  background: rgba(20, 22, 26, 0.9) !important;
+}
+
+.te-public--reta
+  .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+  .reta-sb-card__scoreboard {
+  margin-top: 0.45rem !important;
+  padding-top: 0.35rem !important;
+}
+
+@media (min-width: 1024px) {
+  .te-public--reta .te-pub-matches-grid--wide:has(> :nth-child(3):last-child),
+  .te-public--reta .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4))),
+  .te-public--reta.te-public--reta-wide
+    .te-pub-matches-grid--wide.te-pub-matches-grid--three {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.75rem !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  .te-public--reta
+    .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+    .pub-split-vs-pair--compact
+    .pub-split-vs-panel {
+    width: clamp(6.25rem, 7.2vw, 8rem) !important;
+    max-width: clamp(6.25rem, 7.2vw, 8rem) !important;
+    min-width: 6rem !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .te-public--reta
+    .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+    .reta-sb-card__board {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+  }
+
+  .te-public--reta
+    .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+    .pub-split-vs-pair--compact
+    .pub-split-vs-pair__grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .te-public--reta
+    .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+    .pub-split-vs-pair--compact
+    .pub-split-vs-panel {
+    width: clamp(5.5rem, 28vw, 6.75rem) !important;
+    max-width: clamp(5.5rem, 28vw, 6.75rem) !important;
+    min-width: 5rem !important;
+    aspect-ratio: 4 / 5 !important;
+  }
+
+  .te-public--reta
+    .reta-sb-card--split-vs:not(.reta-sb-card--teams)
+    .reta-sb-vs {
+    flex-direction: column !important;
+    width: auto !important;
+  }
+}
