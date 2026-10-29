@@ -3835,7 +3835,7 @@
 }
 
 .te-public--americano .am-pub-match .am-portrait {
-  width: min(100%, clamp(5.75rem, 11vh, 7.25rem));
+  width: min(100%, clamp(6.5rem, 13vh, 8.25rem));
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.38);
   border-color: rgba(255, 255, 255, 0.12);
@@ -3878,13 +3878,13 @@
 }
 
 .te-public--americano .am-pub-match .am-portrait__given {
-  font-size: clamp(0.72rem, 1.35vw, 0.88rem);
+  font-size: clamp(0.78rem, 1.45vw, 0.95rem);
   font-weight: 750;
   line-height: 1.15;
 }
 
 .te-public--americano .am-pub-match .am-portrait__family {
-  font-size: clamp(0.6rem, 1.1vw, 0.72rem);
+  font-size: clamp(0.64rem, 1.15vw, 0.78rem);
   line-height: 1.15;
   -webkit-line-clamp: 1;
   line-clamp: 1;
@@ -4004,7 +4004,7 @@
     .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4)))
     .am-pub-match
     .am-portrait {
-    width: min(100%, clamp(6rem, 7.2vw, 7.75rem));
+    width: min(100%, clamp(6.85rem, 8.4vw, 9rem));
   }
 
   .te-public--americano
@@ -4041,7 +4041,7 @@
     .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4)))
     .am-pub-match
     .am-portrait {
-    width: min(100%, clamp(5.35rem, 6.4vw, 6.75rem));
+    width: min(100%, clamp(6.25rem, 7.6vw, 8.1rem));
   }
 
   .te-public--americano
@@ -4052,13 +4052,13 @@
     .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4)))
     .am-pub-match
     .am-court-board__pair {
-    gap: 0.4rem;
+    gap: 0.45rem;
   }
 }
 
 @media (max-width: 639px) {
   .te-public--americano .am-pub-match .am-portrait {
-    width: min(100%, clamp(5.25rem, 34vw, 6.75rem));
+    width: min(100%, clamp(5.75rem, 36vw, 7.25rem));
   }
 
   .te-public--americano .am-pub-match .am-court-board__score {
@@ -5210,9 +5210,9 @@
     padding: 0.32rem 0.55rem;
   }
 
-  /* Parejas verticales: retratos siguen con presencia en viewport corto */
+  /* Parejas verticales: fotos un poco más grandes; la clasificación sigue abajo con scroll */
   .te-public--americano .am-pub-match .am-portrait {
-    width: min(100%, clamp(5.25rem, 10.5vh, 6.5rem));
+    width: min(100%, clamp(6rem, 12vh, 7.5rem));
   }
 
   .te-public--americano
@@ -5223,7 +5223,15 @@
     .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4)))
     .am-pub-match
     .am-portrait {
-    width: min(100%, clamp(5.35rem, 6.5vw, 6.75rem));
+    width: min(100%, clamp(6.25rem, 7.6vw, 8.1rem));
+  }
+
+  .te-public--americano .am-pub-round-stage.te-public-section {
+    margin-bottom: 0.55rem;
+  }
+
+  .te-public--americano .am-pub-standings {
+    margin-top: 0.35rem;
   }
 
   .te-public--americano .am-pub-match .am-court-board__num {
