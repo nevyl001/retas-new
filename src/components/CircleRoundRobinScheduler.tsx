@@ -1,14 +1,59 @@
 import {
   Pair,
+  Match,
   createMatchesBulk,
-  deleteMatchesByTournamentSafely,
   getMatches,
+  getTournamentGames,
+  reassignTournamentMatchRoundsIfUnscored,
+  replaceTournamentMatchesIfUnscored,
 } from "../lib/database";
 import {
-  generateCircleRoundRobinSchedule,
   generateTeamsCrossSchedule,
+  previewCircleRoundRobinSchedule,
+  validateSchedule,
 } from "../lib/circleRoundRobinSchedule";
 import { debugLog } from "../lib/debug/debugLog";
+import {
+  buildResultsProtectionMessage,
+  inspectTournamentResults,
+} from "../lib/reta/tournamentResultGuards";
+import { planRepackExistingRoundRobin } from "../lib/reta/repackRoundRobinRounds";
+
+/** Respaldo JSON del calendario actual (sin UI nueva). */
+function downloadScheduleBackupJson(
+  tournamentId: string,
+  matches: Match[]
+): void {
+  if (typeof document === "undefined") return;
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    tournamentId,
+    matchCount: matches.length,
+    matches: matches.map((m) => ({
+      id: m.id,
+      round: m.round,
+      court: m.court,
+      pair1_id: m.pair1_id,
+      pair2_id: m.pair2_id,
+      pair1_name: m.pair1_name,
+      pair2_name: m.pair2_name,
+      status: m.status,
+      pair1_score: m.pair1_score ?? null,
+      pair2_score: m.pair2_score ?? null,
+    })),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `reta-calendar-backup-${tournamentId.slice(0, 8)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 function pairMatchLabel(pair: Pair): string {
   return `${pair.player1_name}/${pair.player2_name}`;
@@ -153,7 +198,8 @@ export class CircleRoundRobinScheduler {
     pairs: Pair[],
     courts: number
   ): Array<{ pair1: Pair; pair2: Pair; round: number; court: number }> {
-    const matches = generateCircleRoundRobinSchedule(pairs, courts);
+    const preview = previewCircleRoundRobinSchedule(pairs, courts);
+    const matches = preview.schedule;
     const expectedMatches = (pairs.length * (pairs.length - 1)) / 2;
     const maxTimeRound =
       matches.length > 0 ? Math.max(...matches.map((m) => m.round)) : 0;
@@ -164,11 +210,14 @@ export class CircleRoundRobinScheduler {
       partidosGenerados: matches.length,
       partidosEsperados: expectedMatches,
       rondas: maxTimeRound,
+      usedFallback: preview.usedFallback,
+      seed: preview.seed,
+      validationErrors: preview.errors,
     });
 
-    if (matches.length !== expectedMatches) {
-      console.error(
-        `❌ ERROR: Se generaron ${matches.length} partidos pero se esperaban ${expectedMatches}`
+    if (preview.errors.length > 0) {
+      throw new Error(
+        `Calendario inválido; no se persistirá. ${preview.errors.join(" | ")}`
       );
     }
 
@@ -185,71 +234,21 @@ export class CircleRoundRobinScheduler {
     pairs: Pair[],
     courts: number
   ): void {
-    // Agrupar partidos por ronda
-    const matchesByRound: {
-      [key: number]: Array<{
-        pair1: Pair;
-        pair2: Pair;
-        round: number;
-        court: number;
-      }>;
-    } = {};
-    matches.forEach((match) => {
-      if (!matchesByRound[match.round]) {
-        matchesByRound[match.round] = [];
-      }
-      matchesByRound[match.round].push(match);
-    });
+    const errors = validateSchedule(
+      matches.map((m) => ({
+        pair1Id: m.pair1.id,
+        pair2Id: m.pair2.id,
+        round: m.round,
+        court: m.court,
+      })),
+      pairs,
+      courts
+    );
 
-    let allCorrect = true;
-
-    // Verificar cada ronda
-    Object.keys(matchesByRound).forEach((roundNum) => {
-      const roundMatches = matchesByRound[parseInt(roundNum)];
-
-      // Verificar que no hay más partidos que canchas
-      if (roundMatches.length > courts) {
-        console.error(
-          `❌ ERROR: Ronda ${roundNum} tiene ${roundMatches.length} partidos pero solo hay ${courts} canchas`
-        );
-        allCorrect = false;
-      }
-
-      // Verificar que cada cancha tiene máximo 1 partido
-      const courtsUsed = new Set<number>();
-      roundMatches.forEach((match) => {
-        if (courtsUsed.has(match.court)) {
-          console.error(
-            `❌ ERROR: Cancha ${match.court} tiene múltiples partidos en ronda ${roundNum}`
-          );
-          allCorrect = false;
-        } else {
-          courtsUsed.add(match.court);
-        }
-      });
-
-      // Verificar que cada pareja solo juega una vez por ronda
-      const pairsUsed = new Set<string>();
-      roundMatches.forEach((match) => {
-        if (pairsUsed.has(match.pair1.id)) {
-          console.error(
-            `❌ ERROR: Pareja ${match.pair1.player1_name}/${match.pair1.player2_name} juega múltiples veces en ronda ${roundNum}`
-          );
-          allCorrect = false;
-        } else {
-          pairsUsed.add(match.pair1.id);
-        }
-
-        if (pairsUsed.has(match.pair2.id)) {
-          console.error(
-            `❌ ERROR: Pareja ${match.pair2.player1_name}/${match.pair2.player2_name} juega múltiples veces en ronda ${roundNum}`
-          );
-          allCorrect = false;
-        } else {
-          pairsUsed.add(match.pair2.id);
-        }
-      });
-    });
+    let allCorrect = errors.length === 0;
+    if (!allCorrect) {
+      console.error("❌ ERROR de validateSchedule:", errors);
+    }
 
     // Verificar que todas las parejas se enfrentan EXACTAMENTE UNA VEZ (round robin completo)
     const pairMatchups = new Set<string>();
@@ -382,30 +381,26 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      // Eliminar partidos existentes (con gate de archivado si hay finalizados)
-      const existingMatches = await getMatches(tournamentId);
-      if (existingMatches.length > 0) {
-        const deleteGate = await deleteMatchesByTournamentSafely(
-          tournamentId,
-          (prompt) => window.confirm(prompt)
-        );
-        if (deleteGate.outcome === "cancelled") {
-          return {
-            success: false,
-            message:
-              deleteGate.warning ??
-              "No se reprogramó la reta: se conservaron los partidos existentes.",
-            matches: [],
-            totalRounds: 0,
-          };
-        }
-        if (deleteGate.outcome === "deleted" && deleteGate.warning) {
-          console.warn("[reta-archive]", deleteGate.warning);
-        }
+      // 1) Generar + validar en memoria (preview). Nunca escribir si es inválido.
+      let matches: Array<{
+        pair1: Pair;
+        pair2: Pair;
+        round: number;
+        court: number;
+      }>;
+      try {
+        matches = this.generateCircleRoundRobin(pairs, courts);
+      } catch (genErr) {
+        return {
+          success: false,
+          message:
+            genErr instanceof Error
+              ? genErr.message
+              : "No se pudo generar un calendario válido",
+          matches: [],
+          totalRounds: 0,
+        };
       }
-
-      // Generar partidos usando el método del círculo
-      const matches = this.generateCircleRoundRobin(pairs, courts);
 
       if (matches.length === 0) {
         return {
@@ -416,29 +411,182 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      // Un solo insert (o pocos chunks) — no 3 requests por partido en serie.
-      const createdMatches = await createMatchesBulk(
-        toBulkMatchRows(tournamentId, matches)
+      const previewErrors = validateSchedule(
+        matches.map((m) => ({
+          pair1Id: m.pair1.id,
+          pair2Id: m.pair2.id,
+          round: m.round,
+          court: m.court,
+        })),
+        pairs,
+        courts
       );
+      if (previewErrors.length > 0) {
+        return {
+          success: false,
+          message: `Calendario inválido; no se guardó nada. ${previewErrors.join(
+            " | "
+          )}`,
+          matches: [],
+          totalRounds: 0,
+        };
+      }
 
-      const totalRounds = Math.max(...matches.map((m) => m.round));
+      const existingMatches = await getMatches(tournamentId);
+      const existingGames = await getTournamentGames(tournamentId);
+      const results = inspectTournamentResults(existingMatches, existingGames);
+
+      // 2) Con marcadores (matches O games parciales): NO regenerar.
+      if (results.scoredMatchIds.length > 0) {
+        const plan = buildResultsProtectionMessage(results);
+        console.warn("[circle-rr] regeneración bloqueada por marcadores:\n" + plan);
+        return {
+          success: false,
+          message: plan,
+          matches: [],
+          totalRounds: 0,
+        };
+      }
+
+      const totalRoundsPreview = Math.max(...matches.map((m) => m.round));
+      const bulkRows = toBulkMatchRows(tournamentId, matches);
+
+      // 3) Sin marcadores pero con partidos previos:
+      // Preferir reasignar round/court conservando IDs (sin delete).
+      if (existingMatches.length > 0) {
+        downloadScheduleBackupJson(tournamentId, existingMatches);
+
+        const expected = (pairs.length * (pairs.length - 1)) / 2;
+        const repack = planRepackExistingRoundRobin(
+          pairs,
+          existingMatches,
+          courts
+        );
+
+        if (repack.ok && existingMatches.length === expected) {
+          const okRepack = window.confirm(
+            `Se exportó un respaldo JSON (${existingMatches.length} partidos, 0 marcadores / 0 games).\n\n` +
+              `Se reasignarán SOLO round/court a ${totalRoundsPreview} rondas conservando los mismos IDs de partido.\n\n` +
+              `¿Aplicar reparación atómica?`
+          );
+          if (!okRepack) {
+            return {
+              success: false,
+              message:
+                "Operación cancelada: se conservó el calendario actual (respaldo JSON exportado).",
+              matches: [],
+              totalRounds: 0,
+            };
+          }
+
+          const reassigned = await reassignTournamentMatchRoundsIfUnscored(
+            tournamentId,
+            repack.patches.map((p) => ({
+              id: p.id,
+              round: p.round,
+              court: p.court,
+            }))
+          );
+          if (!reassigned.ok) {
+            return {
+              success: false,
+              message: reassigned.message,
+              matches: [],
+              totalRounds: 0,
+            };
+          }
+
+          debugLog("[circle-rr] rondas reasignadas (IDs conservados):", {
+            updated: reassigned.updated,
+            totalRondas: totalRoundsPreview,
+          });
+
+          return {
+            success: true,
+            message: `Rondas reparadas de forma atómica. ${reassigned.updated} partidos conservaron su ID; ahora hay ${totalRoundsPreview} rondas.`,
+            matches: repack.schedule,
+            totalRounds: totalRoundsPreview,
+          };
+        }
+
+        if (!repack.ok) {
+          console.warn(
+            "[circle-rr] no se pudo remapar conservando IDs:",
+            repack.error,
+            repack.details
+          );
+        }
+
+        const ok = window.confirm(
+          `Se exportó un respaldo JSON del calendario actual (${existingMatches.length} partidos, 0 marcadores / 0 games).\n\n` +
+            `No fue posible remapar conservando IDs. ¿Reemplazar el calendario por uno nuevo (${matches.length} partidos / ${totalRoundsPreview} rondas) de forma atómica?`
+        );
+        if (!ok) {
+          return {
+            success: false,
+            message:
+              "Operación cancelada: se conservó el calendario actual (respaldo JSON exportado).",
+            matches: [],
+            totalRounds: 0,
+          };
+        }
+
+        const replaced = await replaceTournamentMatchesIfUnscored(
+          tournamentId,
+          bulkRows
+        );
+        if (!replaced.ok) {
+          return {
+            success: false,
+            message: replaced.message,
+            matches: [],
+            totalRounds: 0,
+          };
+        }
+
+        return {
+          success: true,
+          message: `Reta reprogramada de forma atómica. ${replaced.inserted} partidos en ${totalRoundsPreview} rondas.`,
+          matches,
+          totalRounds: totalRoundsPreview,
+        };
+      }
+
+      // Primera escritura: confirmación + insert (no hay delete; no hay hueco parcial).
+      const okFirst = window.confirm(
+        `Preview válido: ${matches.length} partidos en ${totalRoundsPreview} rondas ` +
+          `(${pairs.length} parejas, ${courts} canchas).\n\n¿Guardar este calendario en Supabase?`
+      );
+      if (!okFirst) {
+        return {
+          success: false,
+          message:
+            "Preview cancelado: no se escribió nada en la base de datos.",
+          matches,
+          totalRounds: totalRoundsPreview,
+        };
+      }
+
+      const createdMatches = await createMatchesBulk(bulkRows);
       const expectedMatches = (pairs.length * (pairs.length - 1)) / 2;
 
       debugLog("[circle-rr] torneo programado:", {
         partidosCreados: createdMatches.length,
-        totalRondas: totalRounds,
+        totalRondas: totalRoundsPreview,
         partidosEsperados: expectedMatches,
       });
 
       if (createdMatches.length !== expectedMatches) {
-        console.error(`❌ ADVERTENCIA: Se crearon ${createdMatches.length} partidos pero se esperaban ${expectedMatches}`);
+        console.error(
+          `❌ ADVERTENCIA: Se crearon ${createdMatches.length} partidos pero se esperaban ${expectedMatches}`
+        );
       }
 
       return {
         success: true,
-        message: `Reta programada exitosamente usando método del círculo. ${createdMatches.length} partidos distribuidos en ${totalRounds} rondas`,
+        message: `Reta programada exitosamente. ${createdMatches.length} partidos distribuidos en ${totalRoundsPreview} rondas`,
         matches,
-        totalRounds,
+        totalRounds: totalRoundsPreview,
       };
     } catch (error) {
       console.error("❌ Error programando reta:", error);
@@ -484,27 +632,6 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      const existingMatches = await getMatches(tournamentId);
-      if (existingMatches.length > 0) {
-        const deleteGate = await deleteMatchesByTournamentSafely(
-          tournamentId,
-          (prompt) => window.confirm(prompt)
-        );
-        if (deleteGate.outcome === "cancelled") {
-          return {
-            success: false,
-            message:
-              deleteGate.warning ??
-              "No se reprogramó la reta: se conservaron los partidos existentes.",
-            matches: [],
-            totalRounds: 0,
-          };
-        }
-        if (deleteGate.outcome === "deleted" && deleteGate.warning) {
-          console.warn("[reta-archive]", deleteGate.warning);
-        }
-      }
-
       const matches = this.generateTeamsSchedule(pairs, courts, teamsCount, pairToTeam);
       if (matches.length === 0) {
         return {
@@ -515,11 +642,58 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      const createdMatches = await createMatchesBulk(
-        toBulkMatchRows(tournamentId, matches)
-      );
+      const existingMatches = await getMatches(tournamentId);
+      const existingGames = await getTournamentGames(tournamentId);
+      const results = inspectTournamentResults(existingMatches, existingGames);
+      if (results.scoredMatchIds.length > 0) {
+        const plan = buildResultsProtectionMessage(results);
+        console.warn("[circle-rr-teams] regeneración bloqueada:\n" + plan);
+        return {
+          success: false,
+          message: plan,
+          matches: [],
+          totalRounds: 0,
+        };
+      }
 
       const totalRounds = Math.max(...matches.map((m) => m.round));
+      const bulkRows = toBulkMatchRows(tournamentId, matches);
+
+      if (existingMatches.length > 0) {
+        downloadScheduleBackupJson(tournamentId, existingMatches);
+        const ok = window.confirm(
+          `Respaldo exportado (${existingMatches.length} partidos sin marcador). ¿Reemplazar calendario de equipos de forma atómica?`
+        );
+        if (!ok) {
+          return {
+            success: false,
+            message:
+              "Operación cancelada: se conservó el calendario actual (respaldo JSON exportado).",
+            matches: [],
+            totalRounds: 0,
+          };
+        }
+        const replaced = await replaceTournamentMatchesIfUnscored(
+          tournamentId,
+          bulkRows
+        );
+        if (!replaced.ok) {
+          return {
+            success: false,
+            message: replaced.message,
+            matches: [],
+            totalRounds: 0,
+          };
+        }
+        return {
+          success: true,
+          message: `Reta por equipos reprogramada de forma atómica. ${replaced.inserted} partidos en ${totalRounds} rondas.`,
+          matches,
+          totalRounds,
+        };
+      }
+
+      const createdMatches = await createMatchesBulk(bulkRows);
       return {
         success: true,
         message: `Reta programada por equipos. ${createdMatches.length} partidos distribuidos en ${totalRounds} rondas (sin enfrentamientos dentro del mismo equipo).`,

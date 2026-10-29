@@ -1214,6 +1214,123 @@ export async function createMatchesBulk(
   return out;
 }
 
+export type ReplaceTournamentMatchesResult =
+  | {
+      ok: true;
+      inserted: number;
+      replacedExisting: number;
+      matches: Match[];
+    }
+  | {
+      ok: false;
+      error: string;
+      message: string;
+      scoredMatches?: number;
+      gamesCount?: number;
+    };
+
+export type ReassignMatchRoundsResult =
+  | { ok: true; updated: number }
+  | { ok: false; error: string; message: string };
+
+/**
+ * Reasigna round/court conservando IDs (RPC atómica). Bloquea si hay games/marcadores.
+ */
+export async function reassignTournamentMatchRoundsIfUnscored(
+  tournamentId: string,
+  patches: Array<{ id: string; round: number; court: number }>
+): Promise<ReassignMatchRoundsResult> {
+  const { data, error } = await supabase.rpc(
+    "reassign_tournament_match_rounds_if_unscored",
+    {
+      p_tournament_id: tournamentId,
+      p_patches: patches,
+    }
+  );
+  if (error) {
+    throw new Error(
+      `No se pudo reasignar rondas de forma atómica: ${error.message}`
+    );
+  }
+  const res = (data ?? {}) as Record<string, unknown>;
+  if (res.ok !== true) {
+    return {
+      ok: false,
+      error: String(res.error ?? "reassign_failed"),
+      message: String(
+        res.message ?? "No se reasignaron rondas (protección de resultados)."
+      ),
+    };
+  }
+  return { ok: true, updated: Number(res.updated ?? patches.length) };
+}
+
+/**
+ * Reemplazo atómico vía RPC: solo si no hay marcadores en matches ni filas en games.
+ * Evita el hueco delete→insert del cliente (persistencia parcial).
+ */
+export async function replaceTournamentMatchesIfUnscored(
+  tournamentId: string,
+  rows: CreateMatchBulkRow[]
+): Promise<ReplaceTournamentMatchesResult> {
+  if (rows.length === 0) {
+    return {
+      ok: false,
+      error: "empty_schedule",
+      message: "No se puede persistir un calendario vacío.",
+    };
+  }
+
+  const payload = rows.map((r) => ({
+    pair1_id: r.pair1Id,
+    pair2_id: r.pair2Id,
+    pair1_name: r.pair1Name,
+    pair2_name: r.pair2Name,
+    court: r.court,
+    round: r.round,
+    status: "pending",
+  }));
+
+  const { data, error } = await supabase.rpc(
+    "replace_tournament_matches_if_unscored",
+    {
+      p_tournament_id: tournamentId,
+      p_matches: payload,
+    }
+  );
+
+  if (error) {
+    throw new Error(
+      `No se pudo reemplazar el calendario de forma atómica: ${error.message}`
+    );
+  }
+
+  const res = (data ?? {}) as Record<string, unknown>;
+  if (res.ok !== true) {
+    return {
+      ok: false,
+      error: String(res.error ?? "replace_failed"),
+      message: String(
+        res.message ?? "No se reemplazó el calendario (protección de resultados)."
+      ),
+      scoredMatches:
+        typeof res.scored_matches === "number"
+          ? res.scored_matches
+          : undefined,
+      gamesCount:
+        typeof res.games_count === "number" ? res.games_count : undefined,
+    };
+  }
+
+  const matches = await getMatches(tournamentId);
+  return {
+    ok: true,
+    inserted: Number(res.inserted ?? matches.length),
+    replacedExisting: Number(res.replaced_existing ?? 0),
+    matches,
+  };
+}
+
 /**
  * Inserta un partido. La tabla `matches` en producción NO tiene `user_id` ni
  * (a menudo) `match_type` — mandarlos provoca PGRST204/400 por cada partido
