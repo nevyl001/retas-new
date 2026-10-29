@@ -3317,51 +3317,66 @@
   border-radius: 0;
 }
 
-/* Selector de ronda — módulo premium centrado */
+/* Selector de ronda — franja discreta, chips compactos, motion premium */
 .te-public--americano .am-pub-round-nav {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  width: min(100%, 42rem);
-  margin: 0 auto 1.35rem;
-  padding: 1rem 1.1rem 1.05rem;
-  border-radius: 18px;
-  border: 1px solid var(--am-border-subtle);
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.04) 0%,
-      transparent 42%
-    ),
-    var(--am-surface-card);
+  align-items: stretch;
+  gap: 0.55rem;
+  width: min(100%, 22rem);
+  margin: 0 auto 1rem;
+  padding: 0.55rem 0.65rem 0.6rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(8, 10, 12, 0.55);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 14px 36px rgba(0, 0, 0, 0.38);
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 8px 22px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: am-pub-round-nav-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes am-pub-round-nav-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .te-public--americano .am-pub-round-nav {
+    animation: none;
+  }
 }
 
 .te-public--americano .am-pub-round-nav__header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0 0.15rem;
+  gap: 0.5rem;
+  padding: 0 0.2rem;
 }
 
 .te-public--americano .am-pub-round-nav__title {
-  font-family: var(--font-display, inherit);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-family: var(--font-body, inherit);
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.38);
   line-height: 1;
 }
 
 .te-public--americano .am-pub-round-nav__count {
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.28);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -3370,56 +3385,79 @@
   display: flex;
   flex-wrap: nowrap;
   justify-content: center;
-  align-items: stretch;
-  gap: 0.55rem;
+  align-items: center;
+  gap: 0.4rem;
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
-  padding: 0.1rem 0.05rem 0.25rem;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  padding: 0.05rem 0.05rem 0.15rem;
   scroll-snap-type: x proximity;
 }
 
 .te-public--americano .am-pub-round-nav__track::-webkit-scrollbar {
-  height: 4px;
+  height: 3px;
 }
 
 .te-public--americano .am-pub-round-nav__track::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 999px;
 }
 
 .te-public--americano .am-pub-round-nav__btn {
   position: relative;
   display: inline-flex;
-  flex: 1 1 0;
-  flex-direction: column;
+  flex: 0 0 auto;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  min-width: 5.25rem;
-  max-width: 8.5rem;
-  min-height: 5.1rem;
-  padding: 0.7rem 0.85rem 0.75rem;
-  border-radius: 14px;
+  gap: 0.45rem;
+  min-width: 0;
+  max-width: none;
+  min-height: 0;
+  padding: 0.38rem 0.75rem 0.38rem 0.55rem;
+  border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: var(--am-surface-sub);
-  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.58);
   font: inherit;
   cursor: pointer;
   scroll-snap-align: center;
+  isolation: isolate;
+  overflow: hidden;
   transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease,
-    box-shadow 0.18s ease,
-    transform 0.18s ease;
+    background 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.28s ease,
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.te-public--americano .am-pub-round-nav__btn::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 0;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  opacity: 0;
+  transform: scaleX(0.35);
+  transition:
+    opacity 0.35s ease,
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .te-public--americano .am-pub-round-nav__btn:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.45);
+  outline: 1px solid rgba(255, 255, 255, 0.4);
   outline-offset: 2px;
 }
 
@@ -3427,8 +3465,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 0.7rem;
+  height: 0.7rem;
   flex-shrink: 0;
 }
 
@@ -3436,39 +3474,39 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.05rem;
-  height: 1.05rem;
+  width: 0.7rem;
+  height: 0.7rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 0.62rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.48rem;
   font-weight: 700;
   line-height: 1;
 }
 
 .te-public--americano .am-pub-round-nav__dot {
-  width: 0.42rem;
-  height: 0.42rem;
+  width: 0.28rem;
+  height: 0.28rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .te-public--americano .am-pub-round-nav__pulse {
-  width: 0.55rem;
-  height: 0.55rem;
+  width: 0.36rem;
+  height: 0.36rem;
   border-radius: 999px;
   background: var(--am-accent-live);
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--am-accent-live) 55%, transparent);
-  animation: am-pub-round-pulse 1.6s ease-out infinite;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--am-accent-live) 45%, transparent);
+  animation: am-pub-round-pulse 2s ease-out infinite;
 }
 
 @keyframes am-pub-round-pulse {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--am-accent-live) 50%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--am-accent-live) 40%, transparent);
   }
   70% {
-    box-shadow: 0 0 0 8px transparent;
+    box-shadow: 0 0 0 6px transparent;
   }
   100% {
     box-shadow: 0 0 0 0 transparent;
@@ -3476,65 +3514,67 @@
 }
 
 .te-public--americano .am-pub-round-nav__label {
-  font-family: var(--font-display, inherit);
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  font-family: var(--font-body, inherit);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   line-height: 1;
 }
 
 .te-public--americano .am-pub-round-nav__meta {
-  font-size: 0.68rem;
-  font-weight: 650;
-  letter-spacing: 0.08em;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   line-height: 1;
-  color: rgba(255, 255, 255, 0.42);
+  color: rgba(255, 255, 255, 0.34);
   white-space: nowrap;
 }
 
 .te-public--americano .am-pub-round-nav__btn:hover {
-  color: rgba(255, 255, 255, 0.95);
-  border-color: rgba(255, 255, 255, 0.16);
-  background: color-mix(in srgb, var(--am-surface-sub) 70%, #fff 6%);
+  color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.055);
   transform: translateY(-1px);
 }
 
+.te-public--americano .am-pub-round-nav__btn:hover::after {
+  opacity: 0.35;
+  transform: scaleX(0.7);
+}
+
 .te-public--americano .am-pub-round-nav__btn.is-done {
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .te-public--americano .am-pub-round-nav__btn.is-done .am-pub-round-nav__meta {
-  color: rgba(255, 255, 255, 0.48);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .te-public--americano .am-pub-round-nav__btn.is-pending {
-  color: rgba(255, 255, 255, 0.48);
-  opacity: 0.88;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .te-public--americano .am-pub-round-nav__btn.is-pending .am-pub-round-nav__meta {
-  color: rgba(255, 255, 255, 0.32);
+  color: rgba(255, 255, 255, 0.28);
 }
 
 .te-public--americano .am-pub-round-nav__btn.is-active {
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.22);
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(255, 255, 255, 0.03) 100%
-    ),
-    var(--am-surface-sub);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.07);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 10px 24px rgba(0, 0, 0, 0.35);
-  opacity: 1;
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 6px 18px rgba(0, 0, 0, 0.28);
+}
+
+.te-public--americano .am-pub-round-nav__btn.is-active::after {
+  opacity: 0.85;
+  transform: scaleX(1);
 }
 
 .te-public--americano .am-pub-round-nav__btn.is-active .am-pub-round-nav__meta {
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.58);
 }
 
 .te-public--americano .am-pub-round-nav__btn.is-live {
@@ -3542,70 +3582,67 @@
 }
 
 .te-public--americano .am-pub-round-nav__btn.is-live .am-pub-round-nav__meta {
-  color: color-mix(in srgb, var(--am-accent-live) 85%, #fff);
+  color: color-mix(in srgb, var(--am-accent-live) 80%, #fff);
 }
 
 .te-public--americano .am-pub-round-nav__btn.is-live.is-active {
-  border-color: color-mix(in srgb, var(--am-accent-live) 55%, transparent);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--am-accent-live) 16%, transparent) 0%,
-      color-mix(in srgb, var(--am-accent-live) 4%, transparent) 100%
-    ),
-    var(--am-surface-sub);
+  border-color: color-mix(in srgb, var(--am-accent-live) 40%, transparent);
+  background: color-mix(in srgb, var(--am-accent-live) 8%, rgba(255, 255, 255, 0.04));
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--am-accent-live) 22%, transparent),
-    0 0 28px color-mix(in srgb, var(--am-accent-live) 18%, transparent),
-    0 12px 28px rgba(0, 0, 0, 0.4);
+    0 0 0 1px color-mix(in srgb, var(--am-accent-live) 16%, transparent),
+    0 0 18px color-mix(in srgb, var(--am-accent-live) 12%, transparent),
+    0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.te-public--americano .am-pub-round-nav__btn.is-live.is-active::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--am-accent-live) 80%, #fff),
+    transparent
+  );
 }
 
 @media (max-width: 640px) {
   .te-public--americano .am-pub-round-nav {
-    width: 100%;
-    padding: 0.9rem 0.8rem 0.95rem;
-    border-radius: 16px;
-    gap: 0.75rem;
+    width: min(100%, 18.5rem);
+    padding: 0.5rem 0.55rem 0.55rem;
+    border-radius: 12px;
+    gap: 0.45rem;
   }
 
   .te-public--americano .am-pub-round-nav__track {
     justify-content: flex-start;
-    gap: 0.45rem;
-    padding-bottom: 0.35rem;
+    gap: 0.35rem;
   }
 
   .te-public--americano .am-pub-round-nav__btn {
-    flex: 0 0 auto;
-    min-width: 4.85rem;
-    max-width: none;
-    min-height: 4.7rem;
-    padding: 0.6rem 0.7rem 0.65rem;
-    gap: 0.28rem;
+    padding: 0.34rem 0.65rem 0.34rem 0.48rem;
+    gap: 0.38rem;
   }
 
   .te-public--americano .am-pub-round-nav__label {
-    font-size: 1.2rem;
+    font-size: 0.76rem;
   }
 
   .te-public--americano .am-pub-round-nav__meta {
-    font-size: 0.62rem;
+    font-size: 0.54rem;
+    letter-spacing: 0.1em;
   }
 }
 
 @media (min-width: 900px) {
   .te-public--americano .am-pub-round-nav {
-    width: min(100%, 48rem);
-    padding: 1.15rem 1.25rem 1.2rem;
+    width: min(100%, 24rem);
+    padding: 0.6rem 0.7rem 0.65rem;
   }
 
   .te-public--americano .am-pub-round-nav__btn {
-    min-width: 5.75rem;
-    min-height: 5.4rem;
-    gap: 0.4rem;
+    padding: 0.42rem 0.85rem 0.42rem 0.6rem;
   }
 
   .te-public--americano .am-pub-round-nav__label {
-    font-size: 1.45rem;
+    font-size: 0.86rem;
   }
 }
 
