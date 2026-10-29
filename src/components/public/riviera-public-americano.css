@@ -5359,3 +5359,65 @@
     display: inline-flex;
   }
 }
+
+/* Reta RR — hero compacto (paridad con Americano) */
+.te-public--reta .te-public-brand-bar {
+  margin-bottom: 0.35rem;
+  padding-bottom: 0.35rem;
+  min-height: 0;
+}
+
+.te-public--reta .peds-hero.peds-hero--reta-compact,
+.te-public--reta .peds-hero {
+  gap: 0.28rem;
+  margin-block-end: 0.55rem;
+  padding: 0;
+}
+
+.te-public--reta .peds-hero__evento {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.2vw, 1.65rem);
+  max-width: min(100%, 28ch);
+}
+
+.te-public--reta .peds-hero__descripcion {
+  margin: 0;
+  max-width: min(100%, 48rem);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.te-public--reta .peds-hero__meta-row {
+  margin-block-start: 0.2rem;
+  padding: 0.38rem 0.65rem;
+  border-radius: 10px;
+}
+
+.te-public--reta .peds-hero__divider {
+  margin-block: 0.4rem 0.1rem;
+  max-width: min(110px, 32vw);
+  height: 1px;
+}
+
+.te-public--reta.te-public--reta-wide .te-public__inner {
+  padding-top: clamp(0.55rem, 1.2vw, 0.85rem);
+  padding-left: clamp(0.65rem, 1.8vw, 1.4rem);
+  padding-right: clamp(0.65rem, 1.8vw, 1.4rem);
+}
+
+@media (min-width: 900px) and (max-height: 920px) {
+  .te-public--reta .peds-hero.peds-hero--reta-compact,
+  .te-public--reta .peds-hero {
+    gap: 0.2rem;
+    margin-block-end: 0.4rem;
+  }
+
+  .te-public--reta .peds-hero__evento {
+    font-size: clamp(1.15rem, 1.8vw, 1.45rem);
+  }
+}

@@ -1297,6 +1297,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         />
       ) : isPubDsV2Enabled ? (
         <PublicHero
+          className="peds-hero--reta-compact"
           estado={
             <StatusBadge variant={eventScheduleStatus.tone}>
               {eventScheduleStatus.label}
