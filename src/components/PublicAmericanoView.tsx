@@ -759,47 +759,42 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                   </div>
                   <div className="am-pub-round-nav__track">
                     {snapshot.rounds.map((item, index) => {
-                      const itemLive =
-                        eventScheduleStatus.phase === "in_window" &&
-                        index === snapshot.rounds.length - 1 &&
-                        !roundFullyScored(item);
                       const itemDone = roundFullyScored(item);
-                      const itemPending = !itemLive && !itemDone;
+                      const hasAnyScore = (item.matches ?? []).some(
+                        (m) =>
+                          typeof m.scoreA === "number" ||
+                          typeof m.scoreB === "number"
+                      );
+                      const itemLive =
+                        !itemDone &&
+                        (hasAnyScore ||
+                          (eventScheduleStatus.phase === "in_window" &&
+                            index === snapshot.rounds.length - 1));
+                      const statusLabel = itemLive
+                        ? "en curso"
+                        : itemDone
+                          ? "completada"
+                          : "pendiente";
                       return (
                         <button
                           key={item.roundNumber}
                           type="button"
                           role="tab"
                           aria-selected={index === roundIdx}
+                          aria-label={`Ronda ${item.roundNumber}, ${statusLabel}`}
                           className={[
                             "am-pub-round-nav__btn",
                             index === roundIdx ? "is-active" : "",
                             itemLive ? "is-live" : "",
                             itemDone ? "is-done" : "",
-                            itemPending ? "is-pending" : "",
+                            !itemLive && !itemDone ? "is-pending" : "",
                           ]
                             .filter(Boolean)
                             .join(" ")}
                           onClick={() => setSelectedRoundIndex(index)}
                         >
-                          <span className="am-pub-round-nav__indicator" aria-hidden>
-                            {itemDone ? (
-                              <span className="am-pub-round-nav__check">✓</span>
-                            ) : itemLive ? (
-                              <span className="am-pub-round-nav__pulse" />
-                            ) : (
-                              <span className="am-pub-round-nav__dot" />
-                            )}
-                          </span>
                           <span className="am-pub-round-nav__label">
                             R{item.roundNumber}
-                          </span>
-                          <span className="am-pub-round-nav__meta">
-                            {itemLive
-                              ? "En curso"
-                              : itemDone
-                                ? "Completada"
-                                : "Pendiente"}
                           </span>
                         </button>
                       );
