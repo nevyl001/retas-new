@@ -4,7 +4,6 @@ import {
   tePubScoreNumModifier,
 } from "./tePubShared";
 import type { PublicRetaPairPlayer } from "./PublicRetaPairSide";
-import { PublicSplitVsPairHalf } from "./split-vs";
 import { formatMatchCourtLabel } from "../../lib/matchCourt";
 import { useRetryableImage } from "../../hooks/useRetryableImage";
 import {
@@ -13,8 +12,29 @@ import {
   splitPlayerDisplayName,
 } from "../liga/jornada-public/ligaJornadaMatchNames";
 import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
+import {
+  AmericanoCourtBoard,
+  AmericanoPairMark,
+  type AmericanoCourtPlayer,
+} from "../americano/AmericanoCourtBoard";
 import "../jugadores/riviera-jugadores.css";
 import "./reta-public-scoreboard.css";
+
+function toCourtPlayers(
+  players: PublicRetaPairPlayer[] | undefined,
+  fallbackLabel: string
+): AmericanoCourtPlayer[] {
+  const list = (players ?? []).filter((p) => p?.name?.trim());
+  if (list.length === 0) {
+    return [{ id: `fallback-${fallbackLabel}`, name: fallbackLabel }];
+  }
+  return list.map((p) => ({
+    id: p.id,
+    name: p.name,
+    fotoUrl: p.fotoUrl,
+    rating: p.rating,
+  }));
+}
 
 function shortTeamLabel(name: string): string {
   const cleaned = name.replace(/^team\s+/i, "").trim();
@@ -172,75 +192,6 @@ function EqDuelSide({
   );
 }
 
-/** Pareja clásica Split VS (Reta no-equipos). */
-function ClassicTeamPairBlock({
-  players,
-  pairLabel,
-  hasResult,
-  isWinner,
-  isTie,
-  side,
-}: {
-  players: PublicRetaPairPlayer[];
-  pairLabel: string;
-  hasResult: boolean;
-  isWinner: boolean;
-  isTie: boolean;
-  side: "a" | "b";
-}) {
-  const [p1, p2] = players;
-  const hasPlayers = Boolean(p1 || p2);
-  const tone = isTie
-    ? "neutral"
-    : isWinner
-      ? "win"
-      : hasResult
-        ? "loss"
-        : "neutral";
-
-  return (
-    <section
-      className={[
-        "reta-sb-team",
-        `reta-sb-team--${side}`,
-        "reta-sb-team--split-vs",
-        isWinner ? "reta-sb-team--win" : "",
-        isTie ? "reta-sb-team--tie" : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      aria-label={`Pareja ${pairLabel}`}
-    >
-      <div className="reta-sb-team__body">
-        <div className="reta-sb-team__main">
-          <div className="reta-sb-team__players reta-sb-team__players--split-vs">
-            {hasPlayers && p1 ? (
-              <PublicSplitVsPairHalf
-                player1={{ name: p1.name, foto: p1.fotoUrl, rating: p1.rating }}
-                player2={
-                  p2
-                    ? { name: p2.name, foto: p2.fotoUrl, rating: p2.rating }
-                    : null
-                }
-                label={pairLabel}
-                tone={tone}
-                showWinnerBadge={isWinner && !isTie}
-                className="pub-split-vs-pair--compact"
-              />
-            ) : (
-              <PublicSplitVsPairHalf
-                player1={{ name: pairLabel, foto: null, rating: null }}
-                tone={tone}
-                className="pub-split-vs-pair--compact"
-              />
-            )}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export const PublicRetaMatchCard: React.FC<{
   pair1Label: string;
   pair2Label: string;
@@ -305,7 +256,7 @@ export const PublicRetaMatchCard: React.FC<{
         remontadaRound != null ? " te-pub-match--remontada" : ""
       }${isTie ? " te-pub-match--tie" : ""}${
         statusVariant === "live" ? " reta-sb-card--live" : ""
-      }${hasTeams ? " reta-sb-card--teams reta-eq-duel-card" : ""}`}
+      }${hasTeams ? " reta-sb-card--teams reta-eq-duel-card" : " am-pub-match reta-sb-card--am-court"}`}
       style={{ animationDelay: `${0.08 + index * 0.05}s` }}
     >
       <header className="reta-sb-card__meta">
@@ -326,97 +277,90 @@ export const PublicRetaMatchCard: React.FC<{
       </header>
 
       {hasTeams ? (
-        <div className="reta-eq-duel">
-          <EqDuelSide
-            teamName={pair1TeamLabel}
-            logoUrl={pair1LogoUrl}
-            players={pair1Players}
-            pairLabel={pair1Label}
-            hasResult={hasResult}
-            isWinner={pair1Wins}
-            isTie={isTie}
-            side="a"
-          />
+        <>
+          <div className="reta-eq-duel">
+            <EqDuelSide
+              teamName={pair1TeamLabel}
+              logoUrl={pair1LogoUrl}
+              players={pair1Players}
+              pairLabel={pair1Label}
+              hasResult={hasResult}
+              isWinner={pair1Wins}
+              isTie={isTie}
+              side="a"
+            />
 
-          <div className="reta-eq-duel__vs" aria-hidden>
-            <span className="reta-eq-duel__vs-ring">vs</span>
+            <div className="reta-eq-duel__vs" aria-hidden>
+              <span className="reta-eq-duel__vs-ring">vs</span>
+            </div>
+
+            <EqDuelSide
+              teamName={pair2TeamLabel}
+              logoUrl={pair2LogoUrl}
+              players={pair2Players}
+              pairLabel={pair2Label}
+              hasResult={hasResult}
+              isWinner={pair2Wins}
+              isTie={isTie}
+              side="b"
+            />
           </div>
 
-          <EqDuelSide
-            teamName={pair2TeamLabel}
-            logoUrl={pair2LogoUrl}
-            players={pair2Players}
-            pairLabel={pair2Label}
-            hasResult={hasResult}
-            isWinner={pair2Wins}
-            isTie={isTie}
-            side="b"
-          />
-        </div>
+          <div
+            className="reta-sb-card__scoreboard reta-eq-duel__scoreboard"
+            aria-label={
+              hasResult ? `Marcador ${score1} a ${score2}` : "Sin marcador"
+            }
+          >
+            {hasResult ? (
+              <div className="te-pub-score te-pub-score--faceoff reta-sb-card__score-faceoff">
+                <span
+                  className={`te-pub-score__num${tePubScoreNumModifier({
+                    isWin: pair1Wins,
+                    isTie,
+                  })}`}
+                >
+                  {score1}
+                </span>
+                <span className="te-pub-score__sep" aria-hidden>
+                  -
+                </span>
+                <span
+                  className={`te-pub-score__num${tePubScoreNumModifier({
+                    isWin: pair2Wins,
+                    isTie,
+                  })}`}
+                >
+                  {score2}
+                </span>
+              </div>
+            ) : (
+              <span className="te-pub-score te-pub-score--pending reta-sb-card__score-pending">
+                —
+              </span>
+            )}
+          </div>
+        </>
       ) : (
-        <div className="reta-sb-card__board">
-          <ClassicTeamPairBlock
-            players={pair1Players}
-            pairLabel={pair1Label}
-            hasResult={hasResult}
-            isWinner={pair1Wins}
-            isTie={isTie}
-            side="a"
-          />
-
-          <div className="reta-sb-vs" aria-hidden>
-            <span className="reta-sb-vs__line" />
-            <span className="reta-sb-vs__badge">VS</span>
-            <span className="reta-sb-vs__line" />
-          </div>
-
-          <ClassicTeamPairBlock
-            players={pair2Players}
-            pairLabel={pair2Label}
-            hasResult={hasResult}
-            isWinner={pair2Wins}
-            isTie={isTie}
-            side="b"
-          />
-        </div>
+        <AmericanoCourtBoard
+          sideA={toCourtPlayers(pair1Players, pair1Label)}
+          sideB={toCourtPlayers(pair2Players, pair2Label)}
+          labelA={pair1Label}
+          labelB={pair2Label}
+          scoreA={
+            <AmericanoPairMark
+              value={hasResult ? score1 : null}
+              opponent={hasResult ? score2 : null}
+            />
+          }
+          scoreB={
+            <AmericanoPairMark
+              value={hasResult ? score2 : null}
+              opponent={hasResult ? score1 : null}
+            />
+          }
+        />
       )}
-
-      <div
-        className={`reta-sb-card__scoreboard${
-          hasTeams ? " reta-eq-duel__scoreboard" : ""
-        }`}
-        aria-label={
-          hasResult ? `Marcador ${score1} a ${score2}` : "Sin marcador"
-        }
-      >
-        {hasResult ? (
-          <div className="te-pub-score te-pub-score--faceoff reta-sb-card__score-faceoff">
-            <span
-              className={`te-pub-score__num${tePubScoreNumModifier({
-                isWin: pair1Wins,
-                isTie,
-              })}`}
-            >
-              {score1}
-            </span>
-            <span className="te-pub-score__sep" aria-hidden>
-              -
-            </span>
-            <span
-              className={`te-pub-score__num${tePubScoreNumModifier({
-                isWin: pair2Wins,
-                isTie,
-              })}`}
-            >
-              {score2}
-            </span>
-          </div>
-        ) : (
-          <span className="te-pub-score te-pub-score--pending reta-sb-card__score-pending">
-            —
-          </span>
-        )}
-      </div>
 
       {games && games.length > 1 ? (
         <div className="te-pub-games">
