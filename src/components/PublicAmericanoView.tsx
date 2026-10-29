@@ -593,6 +593,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
         <>
       {isPubDsV2Enabled ? (
         <PublicHero
+          className="peds-hero--americano-compact"
           estado={
             <StatusBadge variant={eventScheduleStatus.tone}>
               {eventScheduleStatus.label}
@@ -741,14 +742,15 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                 key={`${round.roundNumber}-${round.phase}-${roundIdx}`}
                 className="te-public-section te-pub-fade-in am-pub-round-stage"
               >
-                <div
-                  className="am-pub-round-nav"
-                  role="tablist"
-                  aria-label="Seleccionar ronda"
-                >
-                  <div className="am-pub-round-nav__header">
-                    <span className="am-pub-round-nav__title">Rondas</span>
-                    <span className="am-pub-round-nav__count">
+                <div className="am-pub-round-toolbar">
+                  <div className="am-pub-round-head am-pub-round-head--inline">
+                    <div className="am-pub-round-head__copy">
+                      <h2 className="am-pub-round-head__title">
+                        Ronda {round.roundNumber}
+                      </h2>
+                      {roundStatus}
+                    </div>
+                    <span className="am-pub-round-nav__count" aria-hidden>
                       {
                         snapshot.rounds.filter((item) =>
                           roundFullyScored(item)
@@ -757,63 +759,56 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                       /{snapshot.rounds.length}
                     </span>
                   </div>
-                  <div className="am-pub-round-nav__track">
-                    {snapshot.rounds.map((item, index) => {
-                      const itemDone = roundFullyScored(item);
-                      const hasAnyScore = (item.matches ?? []).some(
-                        (m) =>
-                          typeof m.scoreA === "number" ||
-                          typeof m.scoreB === "number"
-                      );
-                      const itemLive =
-                        !itemDone &&
-                        (hasAnyScore ||
-                          (eventScheduleStatus.phase === "in_window" &&
-                            index === snapshot.rounds.length - 1));
-                      const statusLabel = itemLive
-                        ? "en curso"
-                        : itemDone
-                          ? "completada"
-                          : "pendiente";
-                      return (
-                        <button
-                          key={item.roundNumber}
-                          type="button"
-                          role="tab"
-                          aria-selected={index === roundIdx}
-                          aria-label={`Ronda ${item.roundNumber}, ${statusLabel}`}
-                          className={[
-                            "am-pub-round-nav__btn",
-                            index === roundIdx ? "is-active" : "",
-                            itemLive ? "is-live" : "",
-                            itemDone ? "is-done" : "",
-                            !itemLive && !itemDone ? "is-pending" : "",
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                          onClick={() => setSelectedRoundIndex(index)}
-                        >
-                          <span className="am-pub-round-nav__label">
-                            R{item.roundNumber}
-                          </span>
-                        </button>
-                      );
-                    })}
+                  <div
+                    className="am-pub-round-nav"
+                    role="tablist"
+                    aria-label="Seleccionar ronda"
+                  >
+                    <div className="am-pub-round-nav__track">
+                      {snapshot.rounds.map((item, index) => {
+                        const itemDone = roundFullyScored(item);
+                        const hasAnyScore = (item.matches ?? []).some(
+                          (m) =>
+                            typeof m.scoreA === "number" ||
+                            typeof m.scoreB === "number"
+                        );
+                        const itemLive =
+                          !itemDone &&
+                          (hasAnyScore ||
+                            (eventScheduleStatus.phase === "in_window" &&
+                              index === snapshot.rounds.length - 1));
+                        const statusLabel = itemLive
+                          ? "en curso"
+                          : itemDone
+                            ? "completada"
+                            : "pendiente";
+                        return (
+                          <button
+                            key={item.roundNumber}
+                            type="button"
+                            role="tab"
+                            aria-selected={index === roundIdx}
+                            aria-label={`Ronda ${item.roundNumber}, ${statusLabel}`}
+                            className={[
+                              "am-pub-round-nav__btn",
+                              index === roundIdx ? "is-active" : "",
+                              itemLive ? "is-live" : "",
+                              itemDone ? "is-done" : "",
+                              !itemLive && !itemDone ? "is-pending" : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
+                            onClick={() => setSelectedRoundIndex(index)}
+                          >
+                            <span className="am-pub-round-nav__label">
+                              R{item.roundNumber}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-
-                <div className="te-public-round-head am-pub-round-head">
-                  <div className="am-pub-round-head__copy">
-                    <h2 className="am-pub-round-head__title">
-                      Ronda {round.roundNumber}
-                    </h2>
-                    {roundStatus}
-                  </div>
-                </div>
-                <div
-                  className="te-public-section__divider am-pub-round-head__divider"
-                  aria-hidden
-                />
 
                 {round.benchPlayers.length > 0 && (
                   <p className="te-public-bench">
