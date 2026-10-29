@@ -4,6 +4,7 @@ import {
   createMatchesBulk,
   getMatches,
   getTournamentGames,
+  reassignTournamentMatchRoundsIfUnscored,
   replaceTournamentMatchesIfUnscored,
 } from "../lib/database";
 import {
@@ -16,6 +17,7 @@ import {
   buildResultsProtectionMessage,
   inspectTournamentResults,
 } from "../lib/reta/tournamentResultGuards";
+import { planRepackExistingRoundRobin } from "../lib/reta/repackRoundRobinRounds";
 
 /** Respaldo JSON del calendario actual (sin UI nueva). */
 function downloadScheduleBackupJson(
@@ -449,13 +451,75 @@ export class CircleRoundRobinScheduler {
       const totalRoundsPreview = Math.max(...matches.map((m) => m.round));
       const bulkRows = toBulkMatchRows(tournamentId, matches);
 
-      // 3) Sin marcadores pero con partidos previos: respaldo + confirmación + RPC atómica.
+      // 3) Sin marcadores pero con partidos previos:
+      // Preferir reasignar round/court conservando IDs (sin delete).
       if (existingMatches.length > 0) {
         downloadScheduleBackupJson(tournamentId, existingMatches);
+
+        const expected = (pairs.length * (pairs.length - 1)) / 2;
+        const repack = planRepackExistingRoundRobin(
+          pairs,
+          existingMatches,
+          courts
+        );
+
+        if (repack.ok && existingMatches.length === expected) {
+          const okRepack = window.confirm(
+            `Se exportó un respaldo JSON (${existingMatches.length} partidos, 0 marcadores / 0 games).\n\n` +
+              `Se reasignarán SOLO round/court a ${totalRoundsPreview} rondas conservando los mismos IDs de partido.\n\n` +
+              `¿Aplicar reparación atómica?`
+          );
+          if (!okRepack) {
+            return {
+              success: false,
+              message:
+                "Operación cancelada: se conservó el calendario actual (respaldo JSON exportado).",
+              matches: [],
+              totalRounds: 0,
+            };
+          }
+
+          const reassigned = await reassignTournamentMatchRoundsIfUnscored(
+            tournamentId,
+            repack.patches.map((p) => ({
+              id: p.id,
+              round: p.round,
+              court: p.court,
+            }))
+          );
+          if (!reassigned.ok) {
+            return {
+              success: false,
+              message: reassigned.message,
+              matches: [],
+              totalRounds: 0,
+            };
+          }
+
+          debugLog("[circle-rr] rondas reasignadas (IDs conservados):", {
+            updated: reassigned.updated,
+            totalRondas: totalRoundsPreview,
+          });
+
+          return {
+            success: true,
+            message: `Rondas reparadas de forma atómica. ${reassigned.updated} partidos conservaron su ID; ahora hay ${totalRoundsPreview} rondas.`,
+            matches: repack.schedule,
+            totalRounds: totalRoundsPreview,
+          };
+        }
+
+        if (!repack.ok) {
+          console.warn(
+            "[circle-rr] no se pudo remapar conservando IDs:",
+            repack.error,
+            repack.details
+          );
+        }
+
         const ok = window.confirm(
           `Se exportó un respaldo JSON del calendario actual (${existingMatches.length} partidos, 0 marcadores / 0 games).\n\n` +
-            `¿Reemplazar el calendario por uno nuevo de ${matches.length} partidos en ${totalRoundsPreview} rondas?\n\n` +
-            `El reemplazo es atómico (no deja el calendario a medias).`
+            `No fue posible remapar conservando IDs. ¿Reemplazar el calendario por uno nuevo (${matches.length} partidos / ${totalRoundsPreview} rondas) de forma atómica?`
         );
         if (!ok) {
           return {
@@ -479,12 +543,6 @@ export class CircleRoundRobinScheduler {
             totalRounds: 0,
           };
         }
-
-        debugLog("[circle-rr] torneo reprogramado (atómico):", {
-          partidosCreados: replaced.inserted,
-          totalRondas: totalRoundsPreview,
-          replacedExisting: replaced.replacedExisting,
-        });
 
         return {
           success: true,

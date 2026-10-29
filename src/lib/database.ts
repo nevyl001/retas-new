@@ -1229,6 +1229,42 @@ export type ReplaceTournamentMatchesResult =
       gamesCount?: number;
     };
 
+export type ReassignMatchRoundsResult =
+  | { ok: true; updated: number }
+  | { ok: false; error: string; message: string };
+
+/**
+ * Reasigna round/court conservando IDs (RPC atómica). Bloquea si hay games/marcadores.
+ */
+export async function reassignTournamentMatchRoundsIfUnscored(
+  tournamentId: string,
+  patches: Array<{ id: string; round: number; court: number }>
+): Promise<ReassignMatchRoundsResult> {
+  const { data, error } = await supabase.rpc(
+    "reassign_tournament_match_rounds_if_unscored",
+    {
+      p_tournament_id: tournamentId,
+      p_patches: patches,
+    }
+  );
+  if (error) {
+    throw new Error(
+      `No se pudo reasignar rondas de forma atómica: ${error.message}`
+    );
+  }
+  const res = (data ?? {}) as Record<string, unknown>;
+  if (res.ok !== true) {
+    return {
+      ok: false,
+      error: String(res.error ?? "reassign_failed"),
+      message: String(
+        res.message ?? "No se reasignaron rondas (protección de resultados)."
+      ),
+    };
+  }
+  return { ok: true, updated: Number(res.updated ?? patches.length) };
+}
+
 /**
  * Reemplazo atómico vía RPC: solo si no hay marcadores en matches ni filas en games.
  * Evita el hueco delete→insert del cliente (persistencia parcial).
