@@ -854,7 +854,10 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
               aria-label={getPodiumFinalAriaLabel(organizerName)}
             >
               <div className="ro-pub-celebrate__inner am-pub-podium__inner">
-                <PublicRivieraCelebrateBrand logoOnly showTagline={false} />
+                <PublicRivieraCelebrateBrand
+                  logoOnly
+                  tagline={podiumCelebration.tagline}
+                />
                 <span className="ro-pub-celebrate__badge am-pub-podium__badge">
                   {podiumCelebration.statusBadge}
                 </span>
@@ -910,7 +913,9 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                     />
                   )}
                 </div>
-                <PublicRivieraCelebrateClosing />
+                <PublicRivieraCelebrateClosing
+                  torneoNombre={tournamentName ?? undefined}
+                />
               </div>
             </section>
           )}

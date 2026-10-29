@@ -15,10 +15,10 @@ export function buildAmericanoPodiumCelebration(
 ): AmericanoPodiumCelebration {
   const event = eventName?.trim() || "la reta";
   return {
-    tagline: "",
-    headline: "Cuadro de honor",
-    title: event === "la reta" ? "Americano" : event,
+    tagline: "Demuestra tu nivel.",
+    headline: "¡Felicidades!",
+    title: "Los 3 primeros lugares",
     statusBadge: "Americano finalizado",
-    message: "¡Felicidades a los tres primeros lugares!",
+    message: `Top 3 de ${event}. Sigue compitiendo en Riviera Open y demuestra tu nivel.`,
   };
 }
