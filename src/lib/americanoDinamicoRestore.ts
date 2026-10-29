@@ -138,29 +138,46 @@ export function applyAmericanoSnapshotToState(
       totalRoundsRef.current = plannedRounds;
     }
 
-    if (
-      snap.ranking.length > 0 &&
+    const canRestoreRegistration =
       snap.tournamentPhase !== "playing" &&
-      snap.tournamentPhase !== "finished"
-    ) {
+      snap.tournamentPhase !== "finished";
+
+    if (canRestoreRegistration) {
       const seenIds = new Set<string>();
       const uniquePlayers: AmericanoPlayer[] = [];
-      for (const p of snap.ranking) {
-        if (!p.id || seenIds.has(p.id)) continue;
-        seenIds.add(p.id);
+      const pushPlayer = (
+        id: string,
+        name: string,
+        stats?: AmericanoPlayer["stats"]
+      ) => {
+        if (!id || seenIds.has(id)) return;
+        seenIds.add(id);
         uniquePlayers.push({
-          id: p.id,
-          name: p.name,
-          stats: { ...createEmptyStats(), ...p.stats },
+          id,
+          name,
+          stats: { ...createEmptyStats(), ...(stats ?? {}) },
         });
+      };
+      // Preferir ranking (prep histórico); si solo hay roster (post-reinicio), usarlo.
+      for (const p of snap.ranking) {
+        pushPlayer(p.id, p.name, p.stats);
       }
-      setPlayers(uniquePlayers);
-      setRounds([]);
-      setCurrentRoundIndex(0);
-      setPhase("registration");
-      baseRosterRef.current = [];
-      courtsRef.current = 1;
-      return true;
+      for (const p of snap.roster ?? []) {
+        pushPlayer(p.id, p.name);
+      }
+
+      if (uniquePlayers.length > 0) {
+        setPlayers(uniquePlayers);
+        setRounds([]);
+        setCurrentRoundIndex(0);
+        setPhase("registration");
+        baseRosterRef.current = [];
+        courtsRef.current =
+          snap.plannedCourts && snap.plannedCourts > 0
+            ? snap.plannedCourts
+            : 1;
+        return true;
+      }
     }
 
     if (plannedRounds > 0 && snap.tournamentPhase === "registration") {

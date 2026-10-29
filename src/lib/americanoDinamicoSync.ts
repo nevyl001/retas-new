@@ -171,28 +171,62 @@ export async function loadAmericanoDinamicoSnapshotMerged(
   };
 }
 
+export type ResetAmericanoDinamicoOptions = {
+  /** Jugadores inscritos a conservar (id + name). Nunca vaciar automáticamente. */
+  roster?: AmericanoSnapshotRosterEntry[];
+  plannedCourts?: number;
+  totalRounds?: number;
+};
+
 /**
- * Reinicio del americano en la nube: sobreescribe `americano_live` con un
- * snapshot vacío de "registration". Al recargar u otro dispositivo, el merge
- * elige este snapshot vacío y el estado vuelve a registro (sin rondas ni
- * ranking). NO toca participaciones/ledger/ROMC: solo el snapshot en vivo.
+ * Reinicio del americano: vuelve a fase "registration" sin rondas ni marcadores,
+ * pero CONSERVA el roster inscrito. NO toca participaciones/ledger/ROMC.
  * Pensado para reiniciar un americano que aún NO ha finalizado.
  */
 export async function resetAmericanoDinamicoRemote(
-  tournamentId: string
+  tournamentId: string,
+  options?: ResetAmericanoDinamicoOptions
 ): Promise<boolean> {
   const tid = tournamentId.trim();
   if (!tid) return false;
-  const emptySnapshot: AmericanoDinamicoSnapshotV1 = {
+
+  const roster = (options?.roster ?? [])
+    .map((p) => ({
+      id: String(p.id ?? "").trim(),
+      name: String(p.name ?? "").trim() || "Jugador",
+    }))
+    .filter((p) => Boolean(p.id));
+
+  const ranking = roster.map((p) => ({
+    id: p.id,
+    name: p.name,
+    stats: {
+      pointsFor: 0,
+      pointsAgainst: 0,
+      gamesPlayed: 0,
+      roundsOnBench: 0,
+    },
+  }));
+
+  const resetSnapshot: AmericanoDinamicoSnapshotV1 = {
     version: 1,
     savedAt: new Date().toISOString(),
     tournamentPhase: "registration",
-    totalRounds: 0,
-    roster: [],
-    ranking: [],
+    totalRounds:
+      options?.totalRounds && options.totalRounds > 0
+        ? options.totalRounds
+        : undefined,
+    plannedCourts:
+      options?.plannedCourts && options.plannedCourts > 0
+        ? options.plannedCourts
+        : undefined,
+    roster,
+    ranking,
     rounds: [],
   };
-  return upsertAmericanoLivePublic(tid, emptySnapshot);
+
+  saveAmericanoDinamicoSnapshot(tid, resetSnapshot, { skipDispatch: true });
+  return upsertAmericanoLivePublic(tid, resetSnapshot);
 }
 
 /** Guarda en localStorage y publica en Supabase (fuente de verdad en nube). */

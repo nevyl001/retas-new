@@ -23,7 +23,6 @@ import {
 import type { AmericanoDinamicoSnapshotV1 } from "../lib/americanoDinamicoStorage";
 import {
   buildAmericanoSnapshotRound,
-  clearAmericanoDinamicoSnapshot,
   loadAmericanoDinamicoSnapshot,
   resolveAmericanoTournamentId,
 } from "../lib/americanoDinamicoStorage";
@@ -1003,16 +1002,26 @@ export function useAmericanoDinamico(
   );
 
   /**
-   * Reiniciar el americano a "recién creado" (registro vacío). SOLO permitido
-   * mientras NO ha finalizado: así no hay participaciones/ranking/ROMC ya
-   * registrados que revertir (esos se escriben al finalizar). Limpia estado
-   * local, caché local y snapshot remoto; NO toca la tabla `tournaments`
-   * (los flags is_started/is_finished los ajusta el componente de pantalla).
+   * Reiniciar el americano a fase registro: borra rondas/marcadores, CONSERVA
+   * el roster inscrito. SOLO permitido mientras NO ha finalizado (participaciones
+   * /ROMC se escriben al finalizar). NO toca la tabla `tournaments`
+   * (is_started/is_finished los ajusta el componente de pantalla).
    */
   const resetTournament = useCallback(async (): Promise<boolean> => {
     if (phase === "finished") return false;
 
-    setPlayers([]);
+    const preservedPlayers = rosterTemplateFromRef(
+      baseRosterRef,
+      playersRef.current
+    ).map((p) => ({
+      id: p.id,
+      name: p.name,
+      stats: createEmptyStats(),
+    }));
+    const plannedCourts =
+      courtsRef.current > 1 ? courtsRef.current : undefined;
+
+    setPlayers(preservedPlayers);
     setRounds([]);
     setCurrentRoundIndex(0);
     setPhase("registration");
@@ -1021,16 +1030,18 @@ export function useAmericanoDinamico(
     totalRoundsRef.current = 0;
     courtsRef.current = 1;
     roundsRef.current = [];
-    playersRef.current = [];
+    playersRef.current = preservedPlayers;
     participacionSyncedRef.current = false;
     setParticipacionSyncError(null);
     setRoundSyncPending(false);
     setRoundSyncError(null);
 
     if (!resolvedTournamentId) return true;
-    clearAmericanoDinamicoSnapshot(resolvedTournamentId);
     try {
-      await resetAmericanoDinamicoRemote(resolvedTournamentId);
+      await resetAmericanoDinamicoRemote(resolvedTournamentId, {
+        roster: preservedPlayers.map((p) => ({ id: p.id, name: p.name })),
+        plannedCourts,
+      });
     } catch (e) {
       console.warn("[americano-live] no se pudo reiniciar el snapshot remoto:", e);
     }

@@ -1,10 +1,22 @@
+jest.mock("./database", () => {
+  const actual = jest.requireActual("./database") as Record<string, unknown>;
+  return {
+    ...actual,
+    upsertAmericanoLivePublic: jest.fn(async () => true),
+    fetchAmericanoLivePublic: jest.fn(async () => null),
+  };
+});
+
 import {
   mergeAmericanoPrepSnapshots,
   mergeAmericanoScoreRevisions,
   pickNewerAmericanoSnapshot,
+  resetAmericanoDinamicoRemote,
   snapshotSavedAtMs,
 } from "./americanoDinamicoSync";
 import type { AmericanoDinamicoSnapshotV1 } from "./americanoDinamicoStorage";
+import { loadAmericanoDinamicoSnapshot } from "./americanoDinamicoStorage";
+import { upsertAmericanoLivePublic } from "./database";
 
 function snap(
   savedAt: string,
@@ -103,5 +115,45 @@ describe("americanoDinamicoSync", () => {
       local
     );
     expect(conflict.rounds[0].matches[0].scoreRevision).toBeUndefined();
+  });
+
+  it("resetAmericanoDinamicoRemote conserva el roster y limpia rondas", async () => {
+    (upsertAmericanoLivePublic as jest.Mock).mockResolvedValue(true);
+    const tid = "americano-reset-roster-test";
+    const roster = [
+      { id: "p1", name: "AronMer" },
+      { id: "p2", name: "AustinT" },
+      { id: "p3", name: "Bortoluci" },
+      { id: "p4", name: "Chaparro" },
+      { id: "p5", name: "Duran" },
+      { id: "p6", name: "Ferrito" },
+      { id: "p7", name: "Ferro" },
+      { id: "p8", name: "Devyl" },
+    ];
+
+    await resetAmericanoDinamicoRemote(tid, {
+      roster,
+      plannedCourts: 2,
+    });
+
+    expect(upsertAmericanoLivePublic).toHaveBeenCalled();
+    const remoteSnap = (upsertAmericanoLivePublic as jest.Mock).mock
+      .calls[0][1] as AmericanoDinamicoSnapshotV1;
+    expect(remoteSnap.tournamentPhase).toBe("registration");
+    expect(remoteSnap.rounds).toEqual([]);
+    expect(remoteSnap.roster?.map((p) => p.name)).toEqual(
+      roster.map((p) => p.name)
+    );
+    expect(remoteSnap.ranking?.map((p) => p.name)).toEqual(
+      roster.map((p) => p.name)
+    );
+
+    const saved = loadAmericanoDinamicoSnapshot(tid);
+    expect(saved?.roster?.map((p) => p.name)).toEqual(
+      roster.map((p) => p.name)
+    );
+    expect(saved?.plannedCourts).toBe(2);
+
+    localStorage.removeItem(`americano_dinamico_snapshot_v1_${tid}`);
   });
 });

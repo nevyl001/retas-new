@@ -50,7 +50,7 @@ import {
   ModeSectionTabs,
 } from "../platform";
 import { PublicShareSection } from "../platform/PublicShareSection";
-import { Button, Input } from "../ui";
+import { Button, Input, Modal } from "../ui";
 import { LoadingProgressHint } from "../ui/LoadingProgressHint";
 import { AmericanoModeShell } from "./AmericanoModeShell";
 import { closeOpenGameRegistration } from "../../lib/retaAbierta/retaAbiertaService";
@@ -403,17 +403,12 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   }, [effectiveUserId, phase, podiumPlayers, playerFotos]);
 
   const [resetting, setResetting] = React.useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = React.useState(false);
 
   const handleResetAmericano = React.useCallback(async () => {
     if (resetting) return;
-    if (
-      !window.confirm(
-        "¿Reiniciar este americano? Se borrarán todas las rondas y los marcadores registrados, y volverás a la pantalla de registro con la lista vacía. Esta acción no se puede deshacer."
-      )
-    ) {
-      return;
-    }
     setResetting(true);
+    setResetConfirmOpen(false);
     try {
       const ok = await resetTournament();
       if (!ok) return;
@@ -741,9 +736,9 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           <div className="americano-screen__danger-copy">
             <p className="americano-screen__danger-title">¿Algo salió mal?</p>
             <p className="americano-screen__danger-hint">
-              Reiniciar borra todas las rondas y marcadores de este americano y
-              vuelve al registro con la lista vacía. No afecta el ranking global
-              ni el historial de los jugadores.
+              Reiniciar borra las rondas, partidos y marcadores de este
+              americano, pero conserva los jugadores inscritos. No afecta el
+              ranking global ni el historial de los jugadores.
             </p>
           </div>
           <Button
@@ -752,11 +747,52 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             size="sm"
             loading={resetting}
             disabled={resetting}
-            onClick={() => void handleResetAmericano()}
+            onClick={() => setResetConfirmOpen(true)}
           >
             {resetting ? "Reiniciando…" : "Reiniciar americano"}
           </Button>
         </div>
+        <Modal
+          open={resetConfirmOpen}
+          onClose={() => {
+            if (!resetting) setResetConfirmOpen(false);
+          }}
+          title="¿Reiniciar este Americano?"
+          size="md"
+          hideClose={resetting}
+          footer={
+            <>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={resetting}
+                onClick={() => setResetConfirmOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                loading={resetting}
+                disabled={resetting}
+                onClick={() => void handleResetAmericano()}
+              >
+                Reiniciar Americano
+              </Button>
+            </>
+          }
+        >
+          <p>
+            Se eliminarán las rondas, partidos y marcadores registrados, pero
+            los jugadores inscritos permanecerán seleccionados.
+          </p>
+          <p>
+            Podrás agregar o quitar jugadores antes de comenzar nuevamente.
+          </p>
+          <p>Esta acción no se puede deshacer.</p>
+        </Modal>
         </div>
       </AmericanoModeShell>
     );
