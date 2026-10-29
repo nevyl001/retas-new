@@ -59,7 +59,8 @@
 .am-portrait {
   position: relative;
   container-type: inline-size;
-  width: min(100%, 7rem);
+  /* Más compacto; sigue creciendo/decreciendo con el viewport. */
+  width: min(100%, clamp(4.75rem, 11.5vw, 6.1rem));
   aspect-ratio: 4 / 5;
   border-radius: 12px;
   overflow: hidden;
@@ -161,7 +162,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: min(100%, 7rem);
+  width: min(100%, clamp(4.75rem, 11.5vw, 6.1rem));
   margin-top: 2px;
   font-variant-numeric: tabular-nums;
 }
