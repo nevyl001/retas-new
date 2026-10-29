@@ -1,14 +1,61 @@
 import {
   Pair,
+  Match,
   createMatchesBulk,
   deleteMatchesByTournamentSafely,
   getMatches,
 } from "../lib/database";
 import {
-  generateCircleRoundRobinSchedule,
   generateTeamsCrossSchedule,
+  previewCircleRoundRobinSchedule,
+  validateSchedule,
 } from "../lib/circleRoundRobinSchedule";
 import { debugLog } from "../lib/debug/debugLog";
+
+function countScoredMatches(matches: Match[]): number {
+  return matches.filter(
+    (m) =>
+      m.status === "finished" ||
+      m.pair1_score != null ||
+      m.pair2_score != null
+  ).length;
+}
+
+/** Respaldo JSON del calendario actual (sin UI nueva). */
+function downloadScheduleBackupJson(
+  tournamentId: string,
+  matches: Match[]
+): void {
+  if (typeof document === "undefined") return;
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    tournamentId,
+    matchCount: matches.length,
+    matches: matches.map((m) => ({
+      id: m.id,
+      round: m.round,
+      court: m.court,
+      pair1_id: m.pair1_id,
+      pair2_id: m.pair2_id,
+      pair1_name: m.pair1_name,
+      pair2_name: m.pair2_name,
+      status: m.status,
+      pair1_score: m.pair1_score ?? null,
+      pair2_score: m.pair2_score ?? null,
+    })),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `reta-calendar-backup-${tournamentId.slice(0, 8)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 function pairMatchLabel(pair: Pair): string {
   return `${pair.player1_name}/${pair.player2_name}`;
@@ -153,7 +200,8 @@ export class CircleRoundRobinScheduler {
     pairs: Pair[],
     courts: number
   ): Array<{ pair1: Pair; pair2: Pair; round: number; court: number }> {
-    const matches = generateCircleRoundRobinSchedule(pairs, courts);
+    const preview = previewCircleRoundRobinSchedule(pairs, courts);
+    const matches = preview.schedule;
     const expectedMatches = (pairs.length * (pairs.length - 1)) / 2;
     const maxTimeRound =
       matches.length > 0 ? Math.max(...matches.map((m) => m.round)) : 0;
@@ -164,11 +212,14 @@ export class CircleRoundRobinScheduler {
       partidosGenerados: matches.length,
       partidosEsperados: expectedMatches,
       rondas: maxTimeRound,
+      usedFallback: preview.usedFallback,
+      seed: preview.seed,
+      validationErrors: preview.errors,
     });
 
-    if (matches.length !== expectedMatches) {
-      console.error(
-        `❌ ERROR: Se generaron ${matches.length} partidos pero se esperaban ${expectedMatches}`
+    if (preview.errors.length > 0) {
+      throw new Error(
+        `Calendario inválido; no se persistirá. ${preview.errors.join(" | ")}`
       );
     }
 
@@ -185,71 +236,21 @@ export class CircleRoundRobinScheduler {
     pairs: Pair[],
     courts: number
   ): void {
-    // Agrupar partidos por ronda
-    const matchesByRound: {
-      [key: number]: Array<{
-        pair1: Pair;
-        pair2: Pair;
-        round: number;
-        court: number;
-      }>;
-    } = {};
-    matches.forEach((match) => {
-      if (!matchesByRound[match.round]) {
-        matchesByRound[match.round] = [];
-      }
-      matchesByRound[match.round].push(match);
-    });
+    const errors = validateSchedule(
+      matches.map((m) => ({
+        pair1Id: m.pair1.id,
+        pair2Id: m.pair2.id,
+        round: m.round,
+        court: m.court,
+      })),
+      pairs,
+      courts
+    );
 
-    let allCorrect = true;
-
-    // Verificar cada ronda
-    Object.keys(matchesByRound).forEach((roundNum) => {
-      const roundMatches = matchesByRound[parseInt(roundNum)];
-
-      // Verificar que no hay más partidos que canchas
-      if (roundMatches.length > courts) {
-        console.error(
-          `❌ ERROR: Ronda ${roundNum} tiene ${roundMatches.length} partidos pero solo hay ${courts} canchas`
-        );
-        allCorrect = false;
-      }
-
-      // Verificar que cada cancha tiene máximo 1 partido
-      const courtsUsed = new Set<number>();
-      roundMatches.forEach((match) => {
-        if (courtsUsed.has(match.court)) {
-          console.error(
-            `❌ ERROR: Cancha ${match.court} tiene múltiples partidos en ronda ${roundNum}`
-          );
-          allCorrect = false;
-        } else {
-          courtsUsed.add(match.court);
-        }
-      });
-
-      // Verificar que cada pareja solo juega una vez por ronda
-      const pairsUsed = new Set<string>();
-      roundMatches.forEach((match) => {
-        if (pairsUsed.has(match.pair1.id)) {
-          console.error(
-            `❌ ERROR: Pareja ${match.pair1.player1_name}/${match.pair1.player2_name} juega múltiples veces en ronda ${roundNum}`
-          );
-          allCorrect = false;
-        } else {
-          pairsUsed.add(match.pair1.id);
-        }
-
-        if (pairsUsed.has(match.pair2.id)) {
-          console.error(
-            `❌ ERROR: Pareja ${match.pair2.player1_name}/${match.pair2.player2_name} juega múltiples veces en ronda ${roundNum}`
-          );
-          allCorrect = false;
-        } else {
-          pairsUsed.add(match.pair2.id);
-        }
-      });
-    });
+    let allCorrect = errors.length === 0;
+    if (!allCorrect) {
+      console.error("❌ ERROR de validateSchedule:", errors);
+    }
 
     // Verificar que todas las parejas se enfrentan EXACTAMENTE UNA VEZ (round robin completo)
     const pairMatchups = new Set<string>();
@@ -382,9 +383,99 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      // Eliminar partidos existentes (con gate de archivado si hay finalizados)
+      // 1) Generar + validar en memoria (preview). Nunca escribir si es inválido.
+      let matches: Array<{
+        pair1: Pair;
+        pair2: Pair;
+        round: number;
+        court: number;
+      }>;
+      try {
+        matches = this.generateCircleRoundRobin(pairs, courts);
+      } catch (genErr) {
+        return {
+          success: false,
+          message:
+            genErr instanceof Error
+              ? genErr.message
+              : "No se pudo generar un calendario válido",
+          matches: [],
+          totalRounds: 0,
+        };
+      }
+
+      if (matches.length === 0) {
+        return {
+          success: false,
+          message: "No se pudieron generar partidos",
+          matches: [],
+          totalRounds: 0,
+        };
+      }
+
+      const previewErrors = validateSchedule(
+        matches.map((m) => ({
+          pair1Id: m.pair1.id,
+          pair2Id: m.pair2.id,
+          round: m.round,
+          court: m.court,
+        })),
+        pairs,
+        courts
+      );
+      if (previewErrors.length > 0) {
+        return {
+          success: false,
+          message: `Calendario inválido; no se guardó nada. ${previewErrors.join(
+            " | "
+          )}`,
+          matches: [],
+          totalRounds: 0,
+        };
+      }
+
       const existingMatches = await getMatches(tournamentId);
+      const scoredCount = countScoredMatches(existingMatches);
+
+      // 2) Con marcadores: NO regenerar. Plan de migración pendiente de OK.
+      if (scoredCount > 0) {
+        const plan = [
+          `Hay ${scoredCount} partido(s) con marcador en esta reta.`,
+          "No se regeneró el calendario para no perder resultados.",
+          "Plan de migración propuesto:",
+          "1) Exportar respaldo JSON del calendario y marcadores actuales.",
+          "2) Congelar partidos ya jugados (IDs estables).",
+          "3) Reprogramar solo rondas futuras sin marcador, o esperar OK para un replace total archivando primero.",
+          "4) No reasignar IDs de partidos con games/scores asociados.",
+        ].join("\n");
+        console.warn("[circle-rr] regeneración bloqueada por marcadores:\n" + plan);
+        return {
+          success: false,
+          message: plan,
+          matches: [],
+          totalRounds: 0,
+        };
+      }
+
+      // 3) Sin marcadores pero con partidos previos: respaldo + confirmación.
       if (existingMatches.length > 0) {
+        downloadScheduleBackupJson(tournamentId, existingMatches);
+        const ok = window.confirm(
+          `Se exportó un respaldo JSON del calendario actual (${existingMatches.length} partidos, 0 marcadores).\n\n` +
+            `¿Reemplazar el calendario por uno nuevo de ${matches.length} partidos en ${Math.max(
+              ...matches.map((m) => m.round)
+            )} rondas?\n\nEsta acción no se puede deshacer sin el respaldo.`
+        );
+        if (!ok) {
+          return {
+            success: false,
+            message:
+              "Operación cancelada: se conservó el calendario actual (respaldo JSON exportado).",
+            matches: [],
+            totalRounds: 0,
+          };
+        }
+
         const deleteGate = await deleteMatchesByTournamentSafely(
           tournamentId,
           (prompt) => window.confirm(prompt)
@@ -402,18 +493,22 @@ export class CircleRoundRobinScheduler {
         if (deleteGate.outcome === "deleted" && deleteGate.warning) {
           console.warn("[reta-archive]", deleteGate.warning);
         }
-      }
-
-      // Generar partidos usando el método del círculo
-      const matches = this.generateCircleRoundRobin(pairs, courts);
-
-      if (matches.length === 0) {
-        return {
-          success: false,
-          message: "No se pudieron generar partidos",
-          matches: [],
-          totalRounds: 0,
-        };
+      } else {
+        // Primera escritura: confirmación explícita del preview validado.
+        const totalRoundsPreview = Math.max(...matches.map((m) => m.round));
+        const okFirst = window.confirm(
+          `Preview válido: ${matches.length} partidos en ${totalRoundsPreview} rondas ` +
+            `(${pairs.length} parejas, ${courts} canchas).\n\n¿Guardar este calendario en Supabase?`
+        );
+        if (!okFirst) {
+          return {
+            success: false,
+            message:
+              "Preview cancelado: no se escribió nada en la base de datos.",
+            matches,
+            totalRounds: totalRoundsPreview,
+          };
+        }
       }
 
       // Un solo insert (o pocos chunks) — no 3 requests por partido en serie.

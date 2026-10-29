@@ -1,5 +1,9 @@
 import { Match, Pair, updateMatch } from "./database";
 import { debugLog } from "./debug/debugLog";
+import {
+  expectedRoundRobinTotals,
+  validateSchedule,
+} from "./roundRobinValidate";
 
 export type ScheduledRoundRobinMatch = {
   pair1: Pair;
@@ -7,6 +11,401 @@ export type ScheduledRoundRobinMatch = {
   round: number;
   court: number;
 };
+
+export type GenerateRoundRobinOptions = {
+  /** Misma semilla ⇒ mismo calendario. */
+  seed?: number;
+  /** Tope de nodos de backtracking por intento. */
+  maxNodes?: number;
+  /** Tope de tiempo (ms) por intento. */
+  maxMs?: number;
+  /** Reintentos con semillas derivadas si el primero falla. */
+  maxAttempts?: number;
+};
+
+export {
+  validateSchedule,
+  expectedRoundRobinTotals,
+} from "./roundRobinValidate";
+
+/** Calendario de referencia verificado para 8 parejas / 3 canchas (índices 0–7). */
+export const REFERENCE_SCHEDULE_8x3: ReadonlyArray<
+  ReadonlyArray<readonly [number, number]>
+> = [
+  [
+    [1, 2],
+    [3, 4],
+    [0, 7],
+  ],
+  [
+    [2, 6],
+    [4, 7],
+    [3, 5],
+  ],
+  [
+    [1, 6],
+    [5, 7],
+    [0, 3],
+  ],
+  [
+    [3, 7],
+    [0, 4],
+    [2, 5],
+  ],
+  [
+    [0, 6],
+    [2, 4],
+    [1, 5],
+  ],
+  [
+    [1, 3],
+    [4, 6],
+    [2, 7],
+  ],
+  [
+    [1, 7],
+    [5, 6],
+    [0, 2],
+  ],
+  [
+    [0, 1],
+    [4, 5],
+    [3, 6],
+  ],
+  [
+    [6, 7],
+    [1, 4],
+    [2, 3],
+  ],
+  [[0, 5]],
+];
+
+type Edge = { a: number; b: number };
+
+function createRng(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleInPlace<T>(arr: T[], rng: () => number): void {
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+  }
+}
+
+function seededPermutation(n: number, seed: number): number[] {
+  const perm = Array.from({ length: n }, (_, i) => i);
+  shuffleInPlace(perm, createRng(seed));
+  return perm;
+}
+
+function allEdges(n: number): Edge[] {
+  const edges: Edge[] = [];
+  for (let a = 0; a < n; a += 1) {
+    for (let b = a + 1; b < n; b += 1) {
+      edges.push({ a, b });
+    }
+  }
+  return edges;
+}
+
+function edgeKey(e: Edge): string {
+  return e.a < e.b ? `${e.a}:${e.b}` : `${e.b}:${e.a}`;
+}
+
+function degreeMap(pending: Edge[], n: number): number[] {
+  const deg = Array.from({ length: n }, () => 0);
+  for (const e of pending) {
+    deg[e.a] += 1;
+    deg[e.b] += 1;
+  }
+  return deg;
+}
+
+/** Enumera matchings de tamaño `target` priorizando aristas de alta demanda. */
+function enumerateMatchings(
+  pending: Edge[],
+  n: number,
+  target: number,
+  rng: () => number,
+  hardCap: number
+): Edge[][] {
+  if (target <= 0) return [[]];
+  const deg = degreeMap(pending, n);
+  const ordered = pending
+    .map((e, idx) => ({
+      e,
+      idx,
+      score: deg[e.a] + deg[e.b],
+      jitter: rng(),
+    }))
+    .sort(
+      (x, y) =>
+        y.score - x.score || x.jitter - y.jitter || x.idx - y.idx
+    )
+    .map((row) => row.e);
+
+  const out: Edge[][] = [];
+  const used = new Set<number>();
+  const chosen: Edge[] = [];
+
+  const dfs = (start: number) => {
+    if (out.length >= hardCap) return;
+    if (chosen.length === target) {
+      out.push(chosen.slice());
+      return;
+    }
+    for (let i = start; i < ordered.length; i += 1) {
+      if (out.length >= hardCap) return;
+      const e = ordered[i];
+      if (used.has(e.a) || used.has(e.b)) continue;
+      used.add(e.a);
+      used.add(e.b);
+      chosen.push(e);
+      dfs(i + 1);
+      chosen.pop();
+      used.delete(e.a);
+      used.delete(e.b);
+    }
+  };
+
+  dfs(0);
+  return out;
+}
+
+function restingIndices(n: number, roundEdges: Edge[]): number[] {
+  const playing = new Set<number>();
+  for (const e of roundEdges) {
+    playing.add(e.a);
+    playing.add(e.b);
+  }
+  const rest: number[] = [];
+  for (let i = 0; i < n; i += 1) {
+    if (!playing.has(i)) rest.push(i);
+  }
+  return rest;
+}
+
+function searchCourtLimitedSchedule(
+  n: number,
+  courts: number,
+  seed: number,
+  maxNodes: number,
+  maxMs: number
+): Edge[][] | null {
+  const { matches: expectedMatches, rounds: expectedRounds } =
+    expectedRoundRobinTotals(n, courts);
+  if (expectedMatches === 0) return [];
+
+  const strictEightThree = n === 8 && courts === 3;
+  const rng = createRng(seed);
+  const pending = allEdges(n);
+  shuffleInPlace(pending, rng);
+
+  const rounds: Edge[][] = [];
+  const restCount = Array.from({ length: n }, () => 0);
+  let nodes = 0;
+  const started = Date.now();
+
+  const dfs = (): boolean => {
+    nodes += 1;
+    if (nodes > maxNodes || Date.now() - started > maxMs) return false;
+
+    if (pending.length === 0) {
+      return rounds.length === expectedRounds;
+    }
+    if (rounds.length >= expectedRounds) return false;
+
+    const roundIndex = rounds.length; // 0-based
+    const isLast = roundIndex === expectedRounds - 1;
+    const remainingRounds = expectedRounds - roundIndex;
+    const target = isLast
+      ? pending.length
+      : Math.min(courts, pending.length);
+
+    if (target > courts) return false;
+    if (!isLast && pending.length - target > courts * (remainingRounds - 1)) {
+      // Demasiados partidos para las rondas restantes aunque llenen canchas.
+      return false;
+    }
+    if (!isLast && target !== courts && pending.length >= courts) {
+      // Mientras quepan C partidos, la ronda intermedia debe llenar canchas.
+      return false;
+    }
+
+    if (strictEightThree) {
+      if (roundIndex < 9 && target !== 3) return false;
+      if (roundIndex === 9 && target !== 1) return false;
+    }
+
+    const candidates = enumerateMatchings(
+      pending,
+      n,
+      target,
+      rng,
+      strictEightThree && roundIndex === 9 ? 32 : 400
+    );
+
+    // Heurística: priorizar matchings que cubren a quienes tienen más pendientes.
+    const deg = degreeMap(pending, n);
+    candidates.sort((A, B) => {
+      const score = (edges: Edge[]) =>
+        edges.reduce((s, e) => s + deg[e.a] + deg[e.b], 0);
+      return score(B) - score(A) || rng() - 0.5;
+    });
+
+    const prevRest =
+      roundIndex > 0 ? new Set(restingIndices(n, rounds[roundIndex - 1])) : null;
+
+    for (const cand of candidates) {
+      const rest = restingIndices(n, cand);
+
+      if (strictEightThree) {
+        let restOk = true;
+        for (const i of rest) {
+          if (restCount[i] >= 3) {
+            restOk = false;
+            break;
+          }
+          if (prevRest && prevRest.has(i)) {
+            restOk = false;
+            break;
+          }
+        }
+        if (!restOk) continue;
+
+        // Condición R10 dentro de la búsqueda: al cerrar R9 debe quedar
+        // exactamente 1 arista entre las 2 que descansan en R9.
+        if (roundIndex === 8) {
+          const restSet = new Set(rest);
+          const leftover = pending.filter((e) => {
+            const inCand =
+              cand.some(
+                (x) =>
+                  (x.a === e.a && x.b === e.b) || (x.a === e.b && x.b === e.a)
+              );
+            return !inCand;
+          });
+          if (leftover.length !== 1) continue;
+          const last = leftover[0];
+          if (!restSet.has(last.a) || !restSet.has(last.b)) continue;
+        }
+      }
+
+      // Aplicar candidato
+      const removedKeys = new Set(cand.map(edgeKey));
+      const kept: Edge[] = [];
+      const removed: Edge[] = [];
+      for (const e of pending) {
+        if (removedKeys.has(edgeKey(e))) removed.push(e);
+        else kept.push(e);
+      }
+      pending.length = 0;
+      pending.push(...kept);
+      for (const i of rest) restCount[i] += 1;
+      rounds.push(cand);
+
+      if (dfs()) return true;
+
+      rounds.pop();
+      for (const i of rest) restCount[i] -= 1;
+      pending.push(...removed);
+    }
+
+    return false;
+  };
+
+  return dfs() ? rounds.map((r) => r.map((e) => ({ a: e.a, b: e.b }))) : null;
+}
+
+function materializeRounds(
+  pairsOrdered: Pair[],
+  indexRounds: Edge[][],
+  courts: number
+): ScheduledRoundRobinMatch[] {
+  const anchorPairId = pairsOrdered[0]?.id;
+  const out: ScheduledRoundRobinMatch[] = [];
+  for (let r = 0; r < indexRounds.length; r += 1) {
+    const chunk = indexRounds[r].map((e) => ({
+      pair1: pairsOrdered[e.a],
+      pair2: pairsOrdered[e.b],
+    }));
+    const timeRound = r + 1;
+    const courtsForChunk = assignCourtsInChunk(
+      chunk,
+      timeRound,
+      courts,
+      anchorPairId
+    );
+    for (let k = 0; k < chunk.length; k += 1) {
+      out.push({
+        pair1: chunk[k].pair1,
+        pair2: chunk[k].pair2,
+        round: timeRound,
+        court: courtsForChunk[k],
+      });
+    }
+  }
+  return out;
+}
+
+/** Aplica el calendario de referencia 8×3 reasignando índices 0–7 vía semilla. */
+export function buildReferenceSchedule8x3(
+  pairs: Pair[],
+  seed: number
+): ScheduledRoundRobinMatch[] {
+  if (pairs.length !== 8) {
+    throw new Error("El calendario de referencia 8×3 requiere exactamente 8 parejas.");
+  }
+  const ordered = [...pairs].sort((a, b) => a.id.localeCompare(b.id));
+  const perm = seededPermutation(8, seed);
+  const indexed = perm.map((i) => ordered[i]);
+  const indexRounds: Edge[][] = REFERENCE_SCHEDULE_8x3.map((round) =>
+    round.map(([a, b]) => ({ a, b }))
+  );
+  return materializeRounds(indexed, indexRounds, 3);
+}
+
+/**
+ * Genera preview sin escribir: calendario + errores de validación.
+ * Nunca persiste.
+ */
+export function previewCircleRoundRobinSchedule(
+  pairs: Pair[],
+  courts: number,
+  options?: GenerateRoundRobinOptions
+): {
+  schedule: ScheduledRoundRobinMatch[];
+  errors: string[];
+  usedFallback: boolean;
+  seed: number;
+} {
+  const result = generateCircleRoundRobinScheduleDetailed(pairs, courts, options);
+  const errors = validateSchedule(
+    result.schedule.map((m) => ({
+      pair1Id: m.pair1.id,
+      pair2Id: m.pair2.id,
+      round: m.round,
+      court: m.court,
+    })),
+    pairs,
+    courts
+  );
+  return {
+    schedule: result.schedule,
+    errors,
+    usedFallback: result.usedFallback,
+    seed: result.seed,
+  };
+}
 
 /** Asigna canchas rotando explícitamente la pareja ancla (pairs[0] en RR par). */
 export function assignCourtsInChunk(
@@ -46,118 +445,106 @@ export function assignCourtsInChunk(
   return assigned;
 }
 
-function packLogicalRoundsIntoTimeSlots(
-  logicalRounds: Array<Array<{ pair1: Pair; pair2: Pair }>>,
+/**
+ * Backtracking con cupo de canchas + fallback 8×3.
+ * Usa IDs estables (orden lexicográfico + permutación por semilla), nunca nombres.
+ */
+export function generateCircleRoundRobinScheduleDetailed(
+  pairs: Pair[],
   courts: number,
-  anchorPairId?: string
-): ScheduledRoundRobinMatch[] {
-  const safeCourts = Math.max(1, courts);
-  const out: ScheduledRoundRobinMatch[] = [];
-  let timeRound = 1;
-
-  for (const logical of logicalRounds) {
-    for (let start = 0; start < logical.length; start += safeCourts) {
-      const chunk = logical.slice(start, start + safeCourts);
-      const courtsForChunk = assignCourtsInChunk(
-        chunk,
-        timeRound,
-        safeCourts,
-        anchorPairId
-      );
-
-      for (let k = 0; k < chunk.length; k++) {
-        const m = chunk[k];
-        out.push({
-          pair1: m.pair1,
-          pair2: m.pair2,
-          round: timeRound,
-          court: courtsForChunk[k],
-        });
-      }
-      timeRound += 1;
-    }
+  options?: GenerateRoundRobinOptions
+): {
+  schedule: ScheduledRoundRobinMatch[];
+  usedFallback: boolean;
+  seed: number;
+} {
+  if (pairs.length < 2) {
+    return { schedule: [], usedFallback: false, seed: options?.seed ?? 1 };
   }
 
-  return out;
+  const safeCourts = Math.max(1, Math.floor(courts) || 1);
+  const baseSeed = options?.seed ?? 1;
+  const maxNodes = options?.maxNodes ?? 200_000;
+  const maxMs = options?.maxMs ?? 2_000;
+  const maxAttempts = options?.maxAttempts ?? 8;
+  const n = pairs.length;
+  const ordered = [...pairs].sort((a, b) => a.id.localeCompare(b.id));
+
+  let lastError = "";
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const seed = (baseSeed + attempt * 9973) >>> 0;
+    const perm = seededPermutation(n, seed);
+    const indexed = perm.map((i) => ordered[i]);
+
+    const indexRounds = searchCourtLimitedSchedule(
+      n,
+      safeCourts,
+      seed ^ 0x9e3779b9,
+      maxNodes,
+      maxMs
+    );
+
+    if (!indexRounds) {
+      lastError = `Sin solución en intento ${attempt + 1} (seed=${seed}).`;
+      continue;
+    }
+
+    const schedule = materializeRounds(indexed, indexRounds, safeCourts);
+    const errors = validateSchedule(
+      schedule.map((m) => ({
+        pair1Id: m.pair1.id,
+        pair2Id: m.pair2.id,
+        round: m.round,
+        court: m.court,
+      })),
+      pairs,
+      safeCourts
+    );
+    if (errors.length === 0) {
+      return { schedule, usedFallback: false, seed };
+    }
+    lastError = errors.join(" | ");
+  }
+
+  // Fallback explícito solo para 8/3.
+  if (n === 8 && safeCourts === 3) {
+    const schedule = buildReferenceSchedule8x3(pairs, baseSeed);
+    const errors = validateSchedule(
+      schedule.map((m) => ({
+        pair1Id: m.pair1.id,
+        pair2Id: m.pair2.id,
+        round: m.round,
+        court: m.court,
+      })),
+      pairs,
+      safeCourts
+    );
+    if (errors.length === 0) {
+      console.info(
+        "[circle-rr] usando calendario de referencia 8×3 (fallback).",
+        { seed: baseSeed }
+      );
+      return { schedule, usedFallback: true, seed: baseSeed };
+    }
+    throw new Error(
+      `Fallback 8×3 inválido: ${errors.join(" | ")}`
+    );
+  }
+
+  throw new Error(
+    `No se encontró un calendario válido para ${n} parejas y ${safeCourts} canchas dentro del límite de búsqueda. ${lastError}`
+  );
 }
 
-/** Calendario round robin (método del círculo) con rotación de canchas por ronda. */
+/** Calendario round robin con cupo real de canchas (sin trocear 1-factores). */
 export function generateCircleRoundRobinSchedule(
   pairs: Pair[],
-  courts: number
+  courts: number,
+  options?: GenerateRoundRobinOptions
 ): ScheduledRoundRobinMatch[] {
-  if (pairs.length < 2) {
-    return [];
-  }
-
-  const anchorPairId = pairs[0]?.id;
-  const matches: ScheduledRoundRobinMatch[] = [];
-  const isOdd = pairs.length % 2 === 1;
-  const totalRounds = isOdd ? pairs.length : pairs.length - 1;
-
-  if (isOdd) {
-    let circularPairs = [...pairs];
-    const logicalRounds: Array<Array<{ pair1: Pair; pair2: Pair }>> = [];
-
-    for (let round = 1; round <= totalRounds; round++) {
-      const restingIndex = Math.floor(circularPairs.length / 2);
-      const playingPairs = circularPairs.filter((_, index) => index !== restingIndex);
-      const possibleMatches = Math.floor(playingPairs.length / 2);
-      const roundPairings: Array<{ pair1: Pair; pair2: Pair }> = [];
-
-      for (let i = 0; i < possibleMatches; i++) {
-        roundPairings.push({
-          pair1: playingPairs[i],
-          pair2: playingPairs[playingPairs.length - 1 - i],
-        });
-      }
-
-      logicalRounds.push(roundPairings);
-
-      if (round < totalRounds) {
-        const firstPair = circularPairs.shift();
-        if (firstPair) {
-          circularPairs.push(firstPair);
-        }
-      }
-    }
-
-    matches.push(
-      ...packLogicalRoundsIntoTimeSlots(logicalRounds, courts, anchorPairId)
-    );
-  } else {
-    const fixedPair = pairs[0];
-    let rotatingPairs = [...pairs.slice(1)];
-    const logicalRounds: Array<Array<{ pair1: Pair; pair2: Pair }>> = [];
-
-    for (let round = 1; round <= totalRounds; round++) {
-      const roundPairs = [fixedPair, ...rotatingPairs];
-      const possibleMatches = Math.floor(roundPairs.length / 2);
-      const roundPairings: Array<{ pair1: Pair; pair2: Pair }> = [];
-
-      for (let i = 0; i < possibleMatches; i++) {
-        roundPairings.push({
-          pair1: roundPairs[i],
-          pair2: roundPairs[roundPairs.length - 1 - i],
-        });
-      }
-
-      logicalRounds.push(roundPairings);
-
-      if (round < totalRounds) {
-        const lastPair = rotatingPairs.pop();
-        if (lastPair) {
-          rotatingPairs.unshift(lastPair);
-        }
-      }
-    }
-
-    matches.push(
-      ...packLogicalRoundsIntoTimeSlots(logicalRounds, courts, fixedPair.id)
-    );
-  }
-
-  return matches;
+  return generateCircleRoundRobinScheduleDetailed(pairs, courts, options)
+    .schedule;
 }
 
 export function matchPairingKey(

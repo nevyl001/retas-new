@@ -59,7 +59,7 @@ describe("circleRoundRobinSchedule court rotation", () => {
     expect(assignCourtsInChunk(chunk, 3, 2, anchor.id)).toEqual([1, 2]);
   });
 
-  test("fixed pair alternates courts with 4 pairs and 2 courts", () => {
+  test("4 pairs / 2 courts: 3 rondas llenas, canchas 1–2 sin colisión", () => {
     const pairs = [
       makePair("1", "Devyl", "Duran"),
       makePair("2", "Nevyl", "Marlon"),
@@ -67,12 +67,20 @@ describe("circleRoundRobinSchedule court rotation", () => {
       makePair("4", "pepito", "Ricar"),
     ];
 
-    const schedule = generateCircleRoundRobinSchedule(pairs, 2);
-    const fixedCourts = schedule
-      .filter((m) => m.pair1.id === "1" || m.pair2.id === "1")
-      .map((m) => m.court);
-
-    expect(fixedCourts).toEqual([1, 2, 1]);
+    const schedule = generateCircleRoundRobinSchedule(pairs, 2, { seed: 1 });
+    expect(schedule).toHaveLength(6);
+    const byRound = new Map<number, typeof schedule>();
+    for (const m of schedule) {
+      const list = byRound.get(m.round) ?? [];
+      list.push(m);
+      byRound.set(m.round, list);
+    }
+    expect(byRound.size).toBe(3);
+    for (const roundMatches of Array.from(byRound.values())) {
+      expect(roundMatches).toHaveLength(2);
+      expect(new Set(roundMatches.map((m) => m.court)).size).toBe(2);
+      expect(Math.max(...roundMatches.map((m) => m.court))).toBeLessThanOrEqual(2);
+    }
   });
 
   test("caps courts to simultaneous matches (3 matches never get Cancha 4)", () => {
