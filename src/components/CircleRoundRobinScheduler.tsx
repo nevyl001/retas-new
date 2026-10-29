@@ -2,8 +2,9 @@ import {
   Pair,
   Match,
   createMatchesBulk,
-  deleteMatchesByTournamentSafely,
   getMatches,
+  getTournamentGames,
+  replaceTournamentMatchesIfUnscored,
 } from "../lib/database";
 import {
   generateTeamsCrossSchedule,
@@ -11,15 +12,10 @@ import {
   validateSchedule,
 } from "../lib/circleRoundRobinSchedule";
 import { debugLog } from "../lib/debug/debugLog";
-
-function countScoredMatches(matches: Match[]): number {
-  return matches.filter(
-    (m) =>
-      m.status === "finished" ||
-      m.pair1_score != null ||
-      m.pair2_score != null
-  ).length;
-}
+import {
+  buildResultsProtectionMessage,
+  inspectTournamentResults,
+} from "../lib/reta/tournamentResultGuards";
 
 /** Respaldo JSON del calendario actual (sin UI nueva). */
 function downloadScheduleBackupJson(
@@ -435,19 +431,12 @@ export class CircleRoundRobinScheduler {
       }
 
       const existingMatches = await getMatches(tournamentId);
-      const scoredCount = countScoredMatches(existingMatches);
+      const existingGames = await getTournamentGames(tournamentId);
+      const results = inspectTournamentResults(existingMatches, existingGames);
 
-      // 2) Con marcadores: NO regenerar. Plan de migración pendiente de OK.
-      if (scoredCount > 0) {
-        const plan = [
-          `Hay ${scoredCount} partido(s) con marcador en esta reta.`,
-          "No se regeneró el calendario para no perder resultados.",
-          "Plan de migración propuesto:",
-          "1) Exportar respaldo JSON del calendario y marcadores actuales.",
-          "2) Congelar partidos ya jugados (IDs estables).",
-          "3) Reprogramar solo rondas futuras sin marcador, o esperar OK para un replace total archivando primero.",
-          "4) No reasignar IDs de partidos con games/scores asociados.",
-        ].join("\n");
+      // 2) Con marcadores (matches O games parciales): NO regenerar.
+      if (results.scoredMatchIds.length > 0) {
+        const plan = buildResultsProtectionMessage(results);
         console.warn("[circle-rr] regeneración bloqueada por marcadores:\n" + plan);
         return {
           success: false,
@@ -457,14 +446,16 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      // 3) Sin marcadores pero con partidos previos: respaldo + confirmación.
+      const totalRoundsPreview = Math.max(...matches.map((m) => m.round));
+      const bulkRows = toBulkMatchRows(tournamentId, matches);
+
+      // 3) Sin marcadores pero con partidos previos: respaldo + confirmación + RPC atómica.
       if (existingMatches.length > 0) {
         downloadScheduleBackupJson(tournamentId, existingMatches);
         const ok = window.confirm(
-          `Se exportó un respaldo JSON del calendario actual (${existingMatches.length} partidos, 0 marcadores).\n\n` +
-            `¿Reemplazar el calendario por uno nuevo de ${matches.length} partidos en ${Math.max(
-              ...matches.map((m) => m.round)
-            )} rondas?\n\nEsta acción no se puede deshacer sin el respaldo.`
+          `Se exportó un respaldo JSON del calendario actual (${existingMatches.length} partidos, 0 marcadores / 0 games).\n\n` +
+            `¿Reemplazar el calendario por uno nuevo de ${matches.length} partidos en ${totalRoundsPreview} rondas?\n\n` +
+            `El reemplazo es atómico (no deja el calendario a medias).`
         );
         if (!ok) {
           return {
@@ -476,64 +467,68 @@ export class CircleRoundRobinScheduler {
           };
         }
 
-        const deleteGate = await deleteMatchesByTournamentSafely(
+        const replaced = await replaceTournamentMatchesIfUnscored(
           tournamentId,
-          (prompt) => window.confirm(prompt)
+          bulkRows
         );
-        if (deleteGate.outcome === "cancelled") {
+        if (!replaced.ok) {
           return {
             success: false,
-            message:
-              deleteGate.warning ??
-              "No se reprogramó la reta: se conservaron los partidos existentes.",
+            message: replaced.message,
             matches: [],
             totalRounds: 0,
           };
         }
-        if (deleteGate.outcome === "deleted" && deleteGate.warning) {
-          console.warn("[reta-archive]", deleteGate.warning);
-        }
-      } else {
-        // Primera escritura: confirmación explícita del preview validado.
-        const totalRoundsPreview = Math.max(...matches.map((m) => m.round));
-        const okFirst = window.confirm(
-          `Preview válido: ${matches.length} partidos en ${totalRoundsPreview} rondas ` +
-            `(${pairs.length} parejas, ${courts} canchas).\n\n¿Guardar este calendario en Supabase?`
-        );
-        if (!okFirst) {
-          return {
-            success: false,
-            message:
-              "Preview cancelado: no se escribió nada en la base de datos.",
-            matches,
-            totalRounds: totalRoundsPreview,
-          };
-        }
+
+        debugLog("[circle-rr] torneo reprogramado (atómico):", {
+          partidosCreados: replaced.inserted,
+          totalRondas: totalRoundsPreview,
+          replacedExisting: replaced.replacedExisting,
+        });
+
+        return {
+          success: true,
+          message: `Reta reprogramada de forma atómica. ${replaced.inserted} partidos en ${totalRoundsPreview} rondas.`,
+          matches,
+          totalRounds: totalRoundsPreview,
+        };
       }
 
-      // Un solo insert (o pocos chunks) — no 3 requests por partido en serie.
-      const createdMatches = await createMatchesBulk(
-        toBulkMatchRows(tournamentId, matches)
+      // Primera escritura: confirmación + insert (no hay delete; no hay hueco parcial).
+      const okFirst = window.confirm(
+        `Preview válido: ${matches.length} partidos en ${totalRoundsPreview} rondas ` +
+          `(${pairs.length} parejas, ${courts} canchas).\n\n¿Guardar este calendario en Supabase?`
       );
+      if (!okFirst) {
+        return {
+          success: false,
+          message:
+            "Preview cancelado: no se escribió nada en la base de datos.",
+          matches,
+          totalRounds: totalRoundsPreview,
+        };
+      }
 
-      const totalRounds = Math.max(...matches.map((m) => m.round));
+      const createdMatches = await createMatchesBulk(bulkRows);
       const expectedMatches = (pairs.length * (pairs.length - 1)) / 2;
 
       debugLog("[circle-rr] torneo programado:", {
         partidosCreados: createdMatches.length,
-        totalRondas: totalRounds,
+        totalRondas: totalRoundsPreview,
         partidosEsperados: expectedMatches,
       });
 
       if (createdMatches.length !== expectedMatches) {
-        console.error(`❌ ADVERTENCIA: Se crearon ${createdMatches.length} partidos pero se esperaban ${expectedMatches}`);
+        console.error(
+          `❌ ADVERTENCIA: Se crearon ${createdMatches.length} partidos pero se esperaban ${expectedMatches}`
+        );
       }
 
       return {
         success: true,
-        message: `Reta programada exitosamente usando método del círculo. ${createdMatches.length} partidos distribuidos en ${totalRounds} rondas`,
+        message: `Reta programada exitosamente. ${createdMatches.length} partidos distribuidos en ${totalRoundsPreview} rondas`,
         matches,
-        totalRounds,
+        totalRounds: totalRoundsPreview,
       };
     } catch (error) {
       console.error("❌ Error programando reta:", error);
@@ -579,27 +574,6 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      const existingMatches = await getMatches(tournamentId);
-      if (existingMatches.length > 0) {
-        const deleteGate = await deleteMatchesByTournamentSafely(
-          tournamentId,
-          (prompt) => window.confirm(prompt)
-        );
-        if (deleteGate.outcome === "cancelled") {
-          return {
-            success: false,
-            message:
-              deleteGate.warning ??
-              "No se reprogramó la reta: se conservaron los partidos existentes.",
-            matches: [],
-            totalRounds: 0,
-          };
-        }
-        if (deleteGate.outcome === "deleted" && deleteGate.warning) {
-          console.warn("[reta-archive]", deleteGate.warning);
-        }
-      }
-
       const matches = this.generateTeamsSchedule(pairs, courts, teamsCount, pairToTeam);
       if (matches.length === 0) {
         return {
@@ -610,11 +584,58 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      const createdMatches = await createMatchesBulk(
-        toBulkMatchRows(tournamentId, matches)
-      );
+      const existingMatches = await getMatches(tournamentId);
+      const existingGames = await getTournamentGames(tournamentId);
+      const results = inspectTournamentResults(existingMatches, existingGames);
+      if (results.scoredMatchIds.length > 0) {
+        const plan = buildResultsProtectionMessage(results);
+        console.warn("[circle-rr-teams] regeneración bloqueada:\n" + plan);
+        return {
+          success: false,
+          message: plan,
+          matches: [],
+          totalRounds: 0,
+        };
+      }
 
       const totalRounds = Math.max(...matches.map((m) => m.round));
+      const bulkRows = toBulkMatchRows(tournamentId, matches);
+
+      if (existingMatches.length > 0) {
+        downloadScheduleBackupJson(tournamentId, existingMatches);
+        const ok = window.confirm(
+          `Respaldo exportado (${existingMatches.length} partidos sin marcador). ¿Reemplazar calendario de equipos de forma atómica?`
+        );
+        if (!ok) {
+          return {
+            success: false,
+            message:
+              "Operación cancelada: se conservó el calendario actual (respaldo JSON exportado).",
+            matches: [],
+            totalRounds: 0,
+          };
+        }
+        const replaced = await replaceTournamentMatchesIfUnscored(
+          tournamentId,
+          bulkRows
+        );
+        if (!replaced.ok) {
+          return {
+            success: false,
+            message: replaced.message,
+            matches: [],
+            totalRounds: 0,
+          };
+        }
+        return {
+          success: true,
+          message: `Reta por equipos reprogramada de forma atómica. ${replaced.inserted} partidos en ${totalRounds} rondas.`,
+          matches,
+          totalRounds,
+        };
+      }
+
+      const createdMatches = await createMatchesBulk(bulkRows);
       return {
         success: true,
         message: `Reta programada por equipos. ${createdMatches.length} partidos distribuidos en ${totalRounds} rondas (sin enfrentamientos dentro del mismo equipo).`,
