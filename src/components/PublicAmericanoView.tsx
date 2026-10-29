@@ -854,10 +854,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
               aria-label={getPodiumFinalAriaLabel(organizerName)}
             >
               <div className="ro-pub-celebrate__inner am-pub-podium__inner">
-                <PublicRivieraCelebrateBrand
-                  logoOnly
-                  tagline={podiumCelebration.tagline}
-                />
+                <PublicRivieraCelebrateBrand logoOnly showTagline={false} />
                 <span className="ro-pub-celebrate__badge am-pub-podium__badge">
                   {podiumCelebration.statusBadge}
                 </span>
@@ -877,6 +874,11 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                       rank={1}
                       name={rankedRows[0].name}
                       fotoUrl={podiumAvatars[rankedRows[0].id]}
+                      statLabel={
+                        Number.isFinite(rankedRows[0].stats.pointsFor)
+                          ? `${rankedRows[0].stats.pointsFor} pts`
+                          : null
+                      }
                     />
                   )}
                   {rankedRows[1] && (
@@ -886,6 +888,11 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                       name={rankedRows[1].name}
                       fotoUrl={podiumAvatars[rankedRows[1].id]}
                       animationDelay="0.08s"
+                      statLabel={
+                        Number.isFinite(rankedRows[1].stats.pointsFor)
+                          ? `${rankedRows[1].stats.pointsFor} pts`
+                          : null
+                      }
                     />
                   )}
                   {rankedRows[2] && (
@@ -895,12 +902,15 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                       name={rankedRows[2].name}
                       fotoUrl={podiumAvatars[rankedRows[2].id]}
                       animationDelay="0.12s"
+                      statLabel={
+                        Number.isFinite(rankedRows[2].stats.pointsFor)
+                          ? `${rankedRows[2].stats.pointsFor} pts`
+                          : null
+                      }
                     />
                   )}
                 </div>
-                <PublicRivieraCelebrateClosing
-                  torneoNombre={tournamentName ?? undefined}
-                />
+                <PublicRivieraCelebrateClosing />
               </div>
             </section>
           )}

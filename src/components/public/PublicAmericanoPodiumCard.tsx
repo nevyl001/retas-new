@@ -9,6 +9,8 @@ interface PublicAmericanoPodiumCardProps {
   animationDelay?: string;
   /** Vista pública: retrato grande con el nombre sobre la foto. */
   portrait?: boolean;
+  /** Estadística ya existente (p. ej. puntos); no inventar. */
+  statLabel?: string | null;
 }
 
 const RANK_META: Record<
@@ -37,7 +39,14 @@ const RANK_META: Record<
 
 export const PublicAmericanoPodiumCard: React.FC<
   PublicAmericanoPodiumCardProps
-> = ({ rank, name, fotoUrl, animationDelay, portrait = false }) => {
+> = ({
+  rank,
+  name,
+  fotoUrl,
+  animationDelay,
+  portrait = false,
+  statLabel = null,
+}) => {
   const meta = RANK_META[rank];
   const label = (
     <>
@@ -45,6 +54,9 @@ export const PublicAmericanoPodiumCard: React.FC<
       <span className="te-public-podium__name" title={name}>
         {name}
       </span>
+      {statLabel ? (
+        <span className="te-public-podium__stat">{statLabel}</span>
+      ) : null}
     </>
   );
   return (
