@@ -372,7 +372,9 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       teamConfig?.pairToTeam && !isDynamicLineups
         ? pairs.filter((p) => Object.prototype.hasOwnProperty.call(teamConfig.pairToTeam, p.id))
         : undefined,
-    editableRestingPairs: true,
+    // Pair-ID swap breaks RR edges (duplicate/missing cruces). Keep read-only until
+    // rest changes rematch pending rounds without rewriting opponents.
+    editableRestingPairs: false,
     onReloadMatches,
     roundTimers,
     onRoundTimersChange: setRoundTimers,
