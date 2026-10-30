@@ -67,6 +67,9 @@ function renderRoundBlock(
     /** Si se pasa, "parejas que descansan" solo considera este set (p.ej. parejas del bloque). */
     restingCandidatePairs?: Pair[];
     hideRestingPairs?: boolean;
+    /** Organizador: intercambiar pareja en descanso con una en cancha. */
+    editableRestingPairs?: boolean;
+    onReloadMatches?: () => void;
     roundTimers?: RoundTimersState;
     onRoundTimersChange?: (next: RoundTimersState) => void;
   }
@@ -84,6 +87,8 @@ function renderRoundBlock(
     teamConfig,
     restingCandidatePairs,
     hideRestingPairs,
+    editableRestingPairs = false,
+    onReloadMatches,
     roundTimers,
     onRoundTimersChange,
   } = opts;
@@ -153,6 +158,13 @@ function renderRoundBlock(
           round={roundMatches[0]?.round ?? parseInt(round, 10)}
           courts={tournament.courts}
           teamConfig={teamConfig}
+          editable={editableRestingPairs}
+          onMatchUpdated={onMatchUpdated}
+          onAfterSwap={async () => {
+            onReloadMatches?.();
+            await onAfterScoreSaved?.();
+            setForceRefresh((prev) => prev + 1);
+          }}
         />
       ) : null}
     </div>
@@ -360,6 +372,8 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       teamConfig?.pairToTeam && !isDynamicLineups
         ? pairs.filter((p) => Object.prototype.hasOwnProperty.call(teamConfig.pairToTeam, p.id))
         : undefined,
+    editableRestingPairs: true,
+    onReloadMatches,
     roundTimers,
     onRoundTimersChange: setRoundTimers,
   };

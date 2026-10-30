@@ -1,13 +1,18 @@
-import React from "react";
-import { Pair, Match } from "../lib/database";
+import React, { useMemo, useState } from "react";
+import { Pair, Match, updateMatch } from "../lib/database";
 import { pairPlayersDisplayLabel } from "../lib/pairPlayerNames";
 import {
   getPairTeamIndex,
   getPairTeamName,
   type TeamConfigLike,
 } from "../lib/teamConfigDisplay";
+import {
+  listSwappablePlayingSlots,
+  planRestingPairSwap,
+} from "../lib/reta/swapRestingPair";
 import { TeamBadge } from "./teams/TeamBadge";
 import { TablerIcon } from "./ui/TablerIcon";
+import { Button } from "./ui";
 import "./RestingPairsSection.css";
 
 interface RestingPairsSectionProps {
@@ -16,6 +21,10 @@ interface RestingPairsSectionProps {
   round: number;
   courts: number;
   teamConfig?: TeamConfigLike | null;
+  /** Si se pasa, el organizador puede intercambiar descanso ↔ jugando. */
+  editable?: boolean;
+  onMatchUpdated?: (match: Match) => void;
+  onAfterSwap?: () => void | Promise<void>;
 }
 
 /** Partidos de la ronda: si ya vienen filtrados (p. ej. remontada), no re-filtrar por número. */
@@ -52,8 +61,40 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
   round,
   courts,
   teamConfig = null,
+  editable = false,
+  onMatchUpdated,
+  onAfterSwap,
 }) => {
-  const restingPairs = getRestingPairs(pairs, matches, round);
+  const roundMatches = useMemo(
+    () => resolveRoundMatches(matches, round),
+    [matches, round]
+  );
+  const restingPairs = useMemo(
+    () => getRestingPairs(pairs, roundMatches, round),
+    [pairs, roundMatches, round]
+  );
+
+  const [selectedRestingId, setSelectedRestingId] = useState<string | null>(
+    null
+  );
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const swapSlots = useMemo(() => {
+    if (!selectedRestingId) return [];
+    return listSwappablePlayingSlots({
+      roundMatches,
+      restingPairId: selectedRestingId,
+      pairs,
+      teamConfig,
+    });
+  }, [selectedRestingId, roundMatches, pairs, teamConfig]);
+
+  const pairById = useMemo(() => {
+    const map = new Map<string, Pair>();
+    pairs.forEach((p) => map.set(p.id, p));
+    return map;
+  }, [pairs]);
 
   if (restingPairs.length === 0) {
     return null;
@@ -67,8 +108,50 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
       Object.keys(teamConfig.pairToTeam).length > 0
   );
 
+  const handleSelectResting = (pairId: string) => {
+    if (!editable || busy) return;
+    setError(null);
+    setSelectedRestingId((prev) => (prev === pairId ? null : pairId));
+  };
+
+  const handleSwapWith = async (playingPairId: string) => {
+    if (!selectedRestingId || busy) return;
+    const plan = planRestingPairSwap({
+      roundMatches,
+      restingPairId: selectedRestingId,
+      playingPairId,
+      pairs,
+      teamConfig,
+    });
+    if ("error" in plan) {
+      setError(plan.error);
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = await updateMatch(plan.matchId, plan.updates);
+      onMatchUpdated?.(updated);
+      setSelectedRestingId(null);
+      await onAfterSwap?.();
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "No se pudo actualizar el partido. Intenta de nuevo."
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
-    <div className="resting-pairs-section">
+    <div
+      className={`resting-pairs-section${
+        editable ? " resting-pairs-section--editable" : ""
+      }`}
+    >
       <div className="resting-pairs-header">
         <span className="resting-pairs-icon">
           <TablerIcon name="moon" size={16} />
@@ -76,6 +159,13 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
         <span className="resting-pairs-title">
           Parejas que Descansan ({restingPairs.length})
         </span>
+        {editable ? (
+          <span className="resting-pairs-edit-hint">
+            {selectedRestingId
+              ? "Elige a quién reemplaza en cancha"
+              : "Toca una pareja para meterla a jugar"}
+          </span>
+        ) : null}
       </div>
       <div className="resting-pairs-list">
         {restingPairs.map((pair) => {
@@ -85,13 +175,20 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
           const teamIndex = showTeams
             ? getPairTeamIndex(pair.id, teamConfig, pair)
             : null;
+          const isSelected = selectedRestingId === pair.id;
 
           return (
-            <div
+            <button
               key={pair.id}
+              type="button"
+              disabled={!editable || busy}
+              onClick={() => handleSelectResting(pair.id)}
               className={`resting-pair-card${
                 showTeams ? " resting-pair-card--teams" : ""
+              }${editable ? " resting-pair-card--action" : ""}${
+                isSelected ? " is-selected" : ""
               }`}
+              aria-pressed={editable ? isSelected : undefined}
             >
               {teamName ? (
                 <TeamBadge
@@ -103,15 +200,79 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
               <span className="resting-pair-name">
                 {pairPlayersDisplayLabel(pair)}
               </span>
-            </div>
+            </button>
           );
         })}
       </div>
+
+      {editable && selectedRestingId ? (
+        <div className="resting-pairs-swap">
+          <p className="resting-pairs-swap__title">
+            Reemplazar en esta ronda a:
+          </p>
+          {swapSlots.length === 0 ? (
+            <p className="resting-pairs-swap__empty">
+              No hay partidos pendientes donde pueda entrar esta pareja
+              {showTeams ? " (mismo equipo)" : ""}.
+            </p>
+          ) : (
+            <div className="resting-pairs-swap__list">
+              {swapSlots.map((slot) => {
+                const playing = pairById.get(slot.playingPairId);
+                const label = playing
+                  ? pairPlayersDisplayLabel(playing)
+                  : slot.playingPairId;
+                const courtLabel =
+                  slot.court != null ? `Cancha ${slot.court}` : "Sin cancha";
+                return (
+                  <Button
+                    key={`${slot.matchId}-${slot.side}`}
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={busy}
+                    loading={busy}
+                    className="resting-pairs-swap__btn"
+                    onClick={() => void handleSwapWith(slot.playingPairId)}
+                  >
+                    {label}
+                    <span className="resting-pairs-swap__meta">
+                      {courtLabel}
+                    </span>
+                  </Button>
+                );
+              })}
+            </div>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={busy}
+            onClick={() => {
+              setSelectedRestingId(null);
+              setError(null);
+            }}
+          >
+            Cancelar
+          </Button>
+        </div>
+      ) : null}
+
+      {error ? (
+        <p className="resting-pairs-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+
       {restingPairs.length > 0 && (
         <div className="resting-pairs-info">
           <span className="resting-pairs-info-text">
             {pairsPlaying} parejas jugando ({courts} canchas × 2 parejas ={" "}
             {maxPairsThatCanPlay} máximo)
+            {editable
+              ? " · Intercambiar solo afecta partidos sin marcador."
+              : ""}
           </span>
         </div>
       )}

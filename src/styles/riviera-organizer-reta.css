@@ -471,6 +471,34 @@
   box-shadow: none !important;
 }
 
+.riviera-organizer-reta .resting-pair-card.is-selected {
+  border-color: var(--brand-accent, var(--ro-accent)) !important;
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 12%,
+    var(--bg-surface)
+  ) !important;
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 28%, transparent) !important;
+}
+
+.riviera-organizer-reta .resting-pairs-edit-hint {
+  color: var(--text-muted) !important;
+}
+
+.riviera-organizer-reta .resting-pairs-swap {
+  border-color: var(--border-subtle) !important;
+  background: var(--bg-surface) !important;
+}
+
+.riviera-organizer-reta .resting-pairs-swap__title {
+  color: var(--text-secondary) !important;
+}
+
+.riviera-organizer-reta .resting-pairs-error {
+  color: #b42318 !important;
+}
+
 .riviera-organizer-reta .resting-pair-name {
   font-family: var(--font-body) !important;
   font-size: 0.85rem !important;
