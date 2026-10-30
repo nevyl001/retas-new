@@ -6,6 +6,8 @@ import {
   planRestingPairSwap,
 } from "./swapRestingPair";
 import type { Match, Pair } from "../db/types";
+import { generateCircleRoundRobinSchedule } from "../circleRoundRobinSchedule";
+import { validateSchedule } from "../roundRobinValidate";
 
 function pair(id: string, a: string, b: string): Pair {
   return {
@@ -65,35 +67,22 @@ describe("swapRestingPair", () => {
     expect(slots.map((s) => s.playingPairId).sort()).toEqual(["A", "B"]);
   });
 
-  test("planifica swap: descanso entra y la jugadora sale", () => {
-    const one = [match("m1", "A", "B")];
-    const plan = planRestingPairSwap({
-      roundMatches: one,
-      restingPairId: "C",
-      playingPairId: "A",
-      pairs,
-    });
-    expect("error" in plan).toBe(false);
-    if ("error" in plan) return;
-    expect(plan.matchId).toBe("m1");
-    expect(plan.updates.pair1_id).toBe("C");
-    expect(plan.updates.pair1_name).toBe("Cata / Cris");
-    expect(plan.updates.pair2_id).toBe("B");
-  });
-
   test("rechaza swap si el partido ya tiene marcador", () => {
     const roundMatches = [
       match("m1", "A", "B", { pair1_score: 1, pair2_score: 0 }),
     ];
     const plan = planRestingPairSwap({
+      allMatches: roundMatches,
       roundMatches,
+      round: 1,
       restingPairId: "C",
       playingPairId: "A",
       pairs,
+      courts: 1,
     });
     expect(plan).toEqual(
       expect.objectContaining({
-        error: expect.stringMatching(/jugado|remontada/i),
+        error: expect.stringMatching(/jugado|remontada|reacomodar/i),
       })
     );
   });
@@ -104,20 +93,14 @@ describe("swapRestingPair", () => {
       pairToTeam: { A: 0, B: 0, C: 1, D: 1 },
     };
     const roundMatches = [match("m1", "A", "C")];
-    const sameTeam = planRestingPairSwap({
-      roundMatches,
-      restingPairId: "B",
-      playingPairId: "A",
-      pairs,
-      teamConfig,
-    });
-    expect("error" in sameTeam).toBe(false);
-
     const crossTeam = planRestingPairSwap({
+      allMatches: roundMatches,
       roundMatches,
+      round: 1,
       restingPairId: "B",
       playingPairId: "C",
       pairs,
+      courts: 1,
       teamConfig,
     });
     expect(crossTeam).toEqual(
@@ -125,5 +108,93 @@ describe("swapRestingPair", () => {
         error: expect.stringMatching(/mismo equipo/i),
       })
     );
+  });
+
+  test("8×3: meter a quien descansa reacomoda rondas sin repetir cruces", () => {
+    const eight = Array.from({ length: 8 }, (_, i) =>
+      pair(`P${i}`, `A${i}`, `B${i}`)
+    );
+    const scheduled = generateCircleRoundRobinSchedule(eight, 3, { seed: 7 });
+    expect(scheduled.length).toBe(28);
+
+    const allMatches: Match[] = scheduled.map((s, i) =>
+      match(`m${i}`, s.pair1.id, s.pair2.id, {
+        round: s.round,
+        court: s.court,
+        pair1_name: s.pair1.id,
+        pair2_name: s.pair2.id,
+      })
+    );
+
+    const targetRound = 2;
+    const roundMatches = allMatches.filter((m) => m.round === targetRound);
+    const playing = new Set<string>();
+    roundMatches.forEach((m) => {
+      playing.add(m.pair1_id);
+      playing.add(m.pair2_id);
+    });
+    const resting = eight.map((p) => p.id).filter((id) => !playing.has(id));
+    expect(resting.length).toBe(2);
+
+    const restingPairId = resting[0];
+    const playingPairId = Array.from(playing)[0];
+
+    const plan = planRestingPairSwap({
+      allMatches,
+      roundMatches,
+      round: targetRound,
+      restingPairId,
+      playingPairId,
+      pairs: eight,
+      courts: 3,
+    });
+
+    expect("error" in plan).toBe(false);
+    if ("error" in plan) return;
+
+    expect(plan.patches.length).toBeGreaterThan(0);
+    for (const patch of plan.patches) {
+      expect(patch.updates).toEqual(
+        expect.objectContaining({
+          round: expect.any(Number),
+          court: expect.any(Number),
+        })
+      );
+    }
+
+    const byId = new Map(plan.patches.map((p) => [p.matchId, p.updates]));
+    const next = allMatches.map((m) => {
+      const u = byId.get(m.id);
+      return u ? { ...m, ...u } : m;
+    });
+
+    const errors = validateSchedule(
+      next.map((m) => ({
+        pair1Id: m.pair1_id,
+        pair2Id: m.pair2_id,
+        round: m.round ?? 0,
+        court: m.court,
+      })),
+      eight,
+      3
+    );
+    expect(errors).toEqual([]);
+
+    const nextRound = next.filter((m) => m.round === targetRound);
+    const nextPlaying = new Set<string>();
+    nextRound.forEach((m) => {
+      nextPlaying.add(m.pair1_id);
+      nextPlaying.add(m.pair2_id);
+    });
+    expect(nextPlaying.has(restingPairId)).toBe(true);
+    expect(nextPlaying.has(playingPairId)).toBe(false);
+
+    // Rivales intactos: mismos 28 edges.
+    const edge = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+    const before = new Set(
+      allMatches.map((m) => edge(m.pair1_id, m.pair2_id))
+    );
+    const after = new Set(next.map((m) => edge(m.pair1_id, m.pair2_id)));
+    expect(after).toEqual(before);
   });
 });

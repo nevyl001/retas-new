@@ -18,6 +18,8 @@ import "./RestingPairsSection.css";
 interface RestingPairsSectionProps {
   pairs: Pair[];
   matches: Match[];
+  /** Todos los partidos del torneo (para reacomodar rondas sin romper cruces). */
+  allMatches?: Match[];
   round: number;
   courts: number;
   teamConfig?: TeamConfigLike | null;
@@ -58,6 +60,7 @@ const getRestingPairs = (
 export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
   pairs,
   matches,
+  allMatches,
   round,
   courts,
   teamConfig = null,
@@ -69,6 +72,7 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
     () => resolveRoundMatches(matches, round),
     [matches, round]
   );
+  const tournamentMatches = allMatches ?? matches;
   const restingPairs = useMemo(
     () => getRestingPairs(pairs, roundMatches, round),
     [pairs, roundMatches, round]
@@ -117,10 +121,13 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
   const handleSwapWith = async (playingPairId: string) => {
     if (!selectedRestingId || busy) return;
     const plan = planRestingPairSwap({
+      allMatches: tournamentMatches,
       roundMatches,
+      round,
       restingPairId: selectedRestingId,
       playingPairId,
       pairs,
+      courts,
       teamConfig,
     });
     if ("error" in plan) {
@@ -128,18 +135,25 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
       return;
     }
 
+    if (plan.patches.length === 0) {
+      setSelectedRestingId(null);
+      return;
+    }
+
     setBusy(true);
     setError(null);
     try {
-      const updated = await updateMatch(plan.matchId, plan.updates);
-      onMatchUpdated?.(updated);
+      for (const patch of plan.patches) {
+        const updated = await updateMatch(patch.matchId, patch.updates);
+        onMatchUpdated?.(updated);
+      }
       setSelectedRestingId(null);
       await onAfterSwap?.();
     } catch (e) {
       setError(
         e instanceof Error
           ? e.message
-          : "No se pudo actualizar el partido. Intenta de nuevo."
+          : "No se pudo reacomodar la ronda. Intenta de nuevo."
       );
     } finally {
       setBusy(false);
@@ -162,8 +176,8 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
         {editable ? (
           <span className="resting-pairs-edit-hint">
             {selectedRestingId
-              ? "Elige a quién reemplaza en cancha"
-              : "Toca una pareja para meterla a jugar"}
+              ? "Elige quién descansa en su lugar (se reacomoda sola)"
+              : "Toca quien descansa para meterla a jugar"}
           </span>
         ) : null}
       </div>
@@ -271,7 +285,7 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
             {pairsPlaying} parejas jugando ({courts} canchas × 2 parejas ={" "}
             {maxPairsThatCanPlay} máximo)
             {editable
-              ? " · Intercambiar solo afecta partidos sin marcador."
+              ? " · Se reacomodan rondas pendientes; los rivales no se cambian."
               : ""}
           </span>
         </div>

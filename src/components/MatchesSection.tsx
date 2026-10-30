@@ -69,6 +69,8 @@ function renderRoundBlock(
     hideRestingPairs?: boolean;
     /** Organizador: intercambiar pareja en descanso con una en cancha. */
     editableRestingPairs?: boolean;
+    /** Calendario completo para reacomodar descansos sin romper cruces. */
+    allTournamentMatches?: Match[];
     onReloadMatches?: () => void;
     roundTimers?: RoundTimersState;
     onRoundTimersChange?: (next: RoundTimersState) => void;
@@ -155,6 +157,7 @@ function renderRoundBlock(
         <RestingPairsSection
           pairs={restingCandidatePairs ?? pairs}
           matches={roundMatches}
+          allMatches={opts.allTournamentMatches}
           round={roundMatches[0]?.round ?? parseInt(round, 10)}
           courts={tournament.courts}
           teamConfig={teamConfig}
@@ -372,9 +375,8 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       teamConfig?.pairToTeam && !isDynamicLineups
         ? pairs.filter((p) => Object.prototype.hasOwnProperty.call(teamConfig.pairToTeam, p.id))
         : undefined,
-    // Pair-ID swap breaks RR edges (duplicate/missing cruces). Keep read-only until
-    // rest changes rematch pending rounds without rewriting opponents.
-    editableRestingPairs: false,
+    editableRestingPairs: true,
+    allTournamentMatches: matches,
     onReloadMatches,
     roundTimers,
     onRoundTimersChange: setRoundTimers,
