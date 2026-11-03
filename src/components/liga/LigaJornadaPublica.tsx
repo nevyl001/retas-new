@@ -691,43 +691,64 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                         }
                         className={`liga-pantalla-ronda liga-pantalla-ronda--courts liga-pantalla-ronda--selected${
                           estado === "live" ? " liga-pantalla-ronda--live" : ""
-                        }`}
+                        }${showRoundTabs ? " liga-pantalla-ronda--tabs-only" : ""}`}
                       >
-                        <div className="liga-pantalla-ronda__head">
-                          <div className="liga-pantalla-ronda__heading">
-                            <h2 className="liga-pantalla-ronda__title">
+                        {showRoundTabs ? (
+                          <>
+                            <h2 className="liga-pantalla-ronda__title sr-only">
                               Ronda {ronda}
                             </h2>
-                            <p className="liga-pantalla-ronda__meta">
-                              {partidos.length} partido
-                              {partidos.length === 1 ? "" : "s"}
-                              {" · "}
-                              {canchasMeta} cancha
-                              {canchasMeta === 1 ? "" : "s"}
+                            {selectedRonda != null ? (
+                              <LigaJornadaPublicRoundSelector
+                                rondas={rondaEstados}
+                                selectedRonda={selectedRonda}
+                                onSelect={(next) => {
+                                  userPickedRondaRef.current = true;
+                                  setSelectedRonda(next);
+                                }}
+                              />
+                            ) : null}
+                            <p className="liga-pantalla-ronda__meta liga-pantalla-ronda__meta--centered">
+                              <span>{rondaLabel(estado)}</span>
+                              <span aria-hidden>·</span>
+                              <span>
+                                {partidos.length} partido
+                                {partidos.length === 1 ? "" : "s"}
+                              </span>
+                              <span aria-hidden>·</span>
+                              <span>
+                                {canchasMeta} cancha
+                                {canchasMeta === 1 ? "" : "s"}
+                              </span>
                             </p>
+                          </>
+                        ) : (
+                          <div className="liga-pantalla-ronda__head">
+                            <div className="liga-pantalla-ronda__heading">
+                              <h2 className="liga-pantalla-ronda__title">
+                                Ronda {ronda}
+                              </h2>
+                              <p className="liga-pantalla-ronda__meta">
+                                {partidos.length} partido
+                                {partidos.length === 1 ? "" : "s"}
+                                {" · "}
+                                {canchasMeta} cancha
+                                {canchasMeta === 1 ? "" : "s"}
+                              </p>
+                            </div>
+                            <span
+                              className={`liga-pantalla-ronda__badge${
+                                estado === "live"
+                                  ? " liga-pantalla-ronda__badge--live"
+                                  : estado === "done"
+                                    ? " liga-pantalla-ronda__badge--done"
+                                    : ""
+                              }`}
+                            >
+                              {rondaLabel(estado)}
+                            </span>
                           </div>
-                          <span
-                            className={`liga-pantalla-ronda__badge${
-                              estado === "live"
-                                ? " liga-pantalla-ronda__badge--live"
-                                : estado === "done"
-                                  ? " liga-pantalla-ronda__badge--done"
-                                  : ""
-                            }`}
-                          >
-                            {rondaLabel(estado)}
-                          </span>
-                        </div>
-                        {showRoundTabs && selectedRonda != null ? (
-                          <LigaJornadaPublicRoundSelector
-                            rondas={rondaEstados}
-                            selectedRonda={selectedRonda}
-                            onSelect={(next) => {
-                              userPickedRondaRef.current = true;
-                              setSelectedRonda(next);
-                            }}
-                          />
-                        ) : null}
+                        )}
                         <div
                           className="liga-pantalla-ronda__matches liga-pantalla-ronda__matches--courts"
                           data-cols={String(

@@ -2,13 +2,33 @@
    PUBLIC ROUND SELECTOR — tabs editoriales discretas (solo vista pública)
    ============================================================================= */
 
+.liga-pantalla--jornada-fijas .liga-pantalla-ronda--tabs-only .liga-pantalla-ronda__meta--centered {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0 0 0.85rem;
+  padding: 0;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--liga-jornada-muted, var(--liga-pub-text-muted));
+  border: none;
+}
+
 .liga-pantalla--jornada-fijas .liga-pub-round-selector {
   display: flex;
   justify-content: center;
   width: 100%;
   min-width: 0;
-  margin: 0.15rem 0 0.85rem;
+  margin: 0 0 0.45rem;
   padding: 0;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ronda--tabs-only .liga-pub-round-selector {
+  margin-top: 0.1rem;
 }
 
 .liga-pantalla--jornada-fijas .liga-pub-round-selector__track {
