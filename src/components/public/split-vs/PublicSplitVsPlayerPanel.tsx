@@ -154,12 +154,21 @@ export const PublicSplitVsPlayerPanel: React.FC<
         {secondary ? (
           <span className="pub-split-vs-panel__family">{secondary}</span>
         ) : null}
-        <JugadorRatingChip
-          rating={rating}
-          caption={ratingCaption}
-          emptyLabel={ratingEmptyLabel}
-          className="pub-split-vs-panel__rating"
-        />
+        {rating != null && Number.isFinite(rating) ? (
+          <JugadorRatingChip
+            rating={rating}
+            caption={ratingCaption}
+            emptyLabel={ratingEmptyLabel}
+            className="pub-split-vs-panel__rating"
+          />
+        ) : ratingEmptyLabel && ratingEmptyLabel.trim() ? (
+          <JugadorRatingChip
+            rating={null}
+            caption={ratingCaption}
+            emptyLabel={ratingEmptyLabel}
+            className="pub-split-vs-panel__rating"
+          />
+        ) : null}
       </span>
     </div>
   );

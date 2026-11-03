@@ -301,6 +301,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       ...names,
       foto1: names.id1 ? parejaFotos[names.id1] ?? null : null,
       foto2: names.id2 ? parejaFotos[names.id2] ?? null : null,
+      rating1: names.id1 ? parejaRatings[names.id1] ?? null : null,
+      rating2: names.id2 ? parejaRatings[names.id2] ?? null : null,
     };
   };
 
@@ -443,12 +445,16 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         name2: side1.name2,
         foto1: side1.foto1,
         foto2: side1.foto2,
+        rating1: side1.rating1,
+        rating2: side1.rating2,
       };
       const pairSide2 = {
         name1: side2.name1,
         name2: side2.name2,
         foto1: side2.foto1,
         foto2: side2.foto2,
+        rating1: side2.rating1,
+        rating2: side2.rating2,
       };
       const cardProps = {
         canchaNum,

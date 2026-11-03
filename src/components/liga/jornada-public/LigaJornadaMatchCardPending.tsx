@@ -2,6 +2,7 @@ import React from "react";
 import { LigaJornadaMatchCardHeader } from "./LigaJornadaMatchCardHeader";
 import type { LigaJornadaMatchPairSide } from "./ligaJornadaMatchTypes";
 import { LigaJornadaMatchPairStack } from "./LigaJornadaMatchPairStack";
+import { LigaJornadaMatchVsDivider } from "./LigaJornadaMatchVsDivider";
 
 interface LigaJornadaMatchCardPendingProps {
   canchaNum: string | number;
@@ -12,7 +13,7 @@ interface LigaJornadaMatchCardPendingProps {
   matchStyle?: React.CSSProperties;
 }
 
-/** Card pendiente/live — layout vertical (pareja 1 arriba) sin marcador. */
+/** Card pendiente/live — Pareja A arriba, VS editorial, Pareja B abajo. */
 export const LigaJornadaMatchCardPending: React.FC<
   LigaJornadaMatchCardPendingProps
 > = ({
@@ -36,16 +37,15 @@ export const LigaJornadaMatchCardPending: React.FC<
       <LigaJornadaMatchPairStack
         side={side1}
         align="top"
-        label={`Pareja: ${side1.name1} y ${side1.name2}`}
+        pairLabel="Pareja A"
+        label={`Pareja A: ${side1.name1} y ${side1.name2}`}
       />
-      <div className="liga-jornada-match-card__split-vs" aria-hidden="true">
-        <span className="liga-jornada-match-card__split-vs-line" />
-        <span className="liga-jornada-match-card__split-vs-badge">VS</span>
-      </div>
+      <LigaJornadaMatchVsDivider />
       <LigaJornadaMatchPairStack
         side={side2}
         align="bottom"
-        label={`Pareja: ${side2.name1} y ${side2.name2}`}
+        pairLabel="Pareja B"
+        label={`Pareja B: ${side2.name1} y ${side2.name2}`}
       />
     </div>
   </article>

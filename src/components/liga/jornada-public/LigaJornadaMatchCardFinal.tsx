@@ -4,6 +4,7 @@ import { LigaJornadaMatchCardHeader } from "./LigaJornadaMatchCardHeader";
 import type { LigaJornadaMatchPairSide } from "./ligaJornadaMatchTypes";
 import { LigaJornadaMatchPairStack } from "./LigaJornadaMatchPairStack";
 import { LigaJornadaMatchScoreGrid } from "./LigaJornadaMatchScoreGrid";
+import { LigaJornadaMatchVsDivider } from "./LigaJornadaMatchVsDivider";
 
 interface LigaJornadaMatchCardFinalProps {
   canchaNum: string | number;
@@ -79,16 +80,15 @@ export const LigaJornadaMatchCardFinal: React.FC<
             side={topSide}
             align="top"
             tone={topTone}
+            pairLabel={topTone === "win" ? "Ganadores" : "Pareja A"}
             label={`Pareja: ${topSide.name1} y ${topSide.name2}`}
           />
-          <div className="liga-jornada-match-card__split-vs" aria-hidden="true">
-            <span className="liga-jornada-match-card__split-vs-line" />
-            <span className="liga-jornada-match-card__split-vs-badge">VS</span>
-          </div>
+          <LigaJornadaMatchVsDivider />
           <LigaJornadaMatchPairStack
             side={bottomSide}
             align="bottom"
             tone={bottomTone}
+            pairLabel={bottomTone === "loss" ? "Rivales" : "Pareja B"}
             label={`Pareja: ${bottomSide.name1} y ${bottomSide.name2}`}
           />
         </div>

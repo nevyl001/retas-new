@@ -7,18 +7,23 @@ interface LigaJornadaMatchPairStackProps {
   align?: "top" | "bottom" | "left" | "right";
   tone?: "win" | "loss";
   label?: string;
+  /** Etiqueta visible discreta (Pareja A / Pareja B). */
+  pairLabel?: string;
 }
 
-/** Fila de pareja: 2 jugadores siempre lado a lado. */
+/** Bloque de pareja: 2 jugadores lado a lado dentro de la composición vertical. */
 export const LigaJornadaMatchPairStack: React.FC<
   LigaJornadaMatchPairStackProps
-> = ({ side, align = "top", tone, label }) => (
+> = ({ side, align = "top", tone, label, pairLabel }) => (
   <div
     className={`liga-jornada-match-pair-half liga-jornada-match-pair-half--${align}${
       tone ? ` liga-jornada-match-pair-half--${tone}` : ""
     }`}
     aria-label={label ?? `Pareja: ${side.name1} y ${side.name2}`}
   >
+    {pairLabel ? (
+      <p className="liga-jornada-match-pair-half__label">{pairLabel}</p>
+    ) : null}
     {tone === "win" ? (
       <span
         className="liga-jornada-match-pair-half__badge"
@@ -30,17 +35,17 @@ export const LigaJornadaMatchPairStack: React.FC<
         </span>
       </span>
     ) : null}
-    <div
-      className="liga-jornada-match-pair-half__grid"
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 4,
-        width: "100%",
-      }}
-    >
-      <LigaJornadaMatchPlayerPanel name={side.name1} foto={side.foto1} />
-      <LigaJornadaMatchPlayerPanel name={side.name2} foto={side.foto2} />
+    <div className="liga-jornada-match-pair-half__grid">
+      <LigaJornadaMatchPlayerPanel
+        name={side.name1}
+        foto={side.foto1}
+        rating={side.rating1}
+      />
+      <LigaJornadaMatchPlayerPanel
+        name={side.name2}
+        foto={side.foto2}
+        rating={side.rating2}
+      />
     </div>
   </div>
 );
