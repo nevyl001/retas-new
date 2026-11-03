@@ -21,7 +21,7 @@ interface LigaJornadaMatchCardFinalProps {
 }
 
 /**
- * Card final — enfrentamiento horizontal [J1][J2] VS [J3][J4] + marcador.
+ * Card final — pareja izq (vertical) · VS · pareja der (vertical) + marcador.
  * Lados fijos (pareja1 izquierda / pareja2 derecha); tono win/loss visual.
  */
 export const LigaJornadaMatchCardFinal: React.FC<
@@ -43,7 +43,7 @@ export const LigaJornadaMatchCardFinal: React.FC<
 
   return (
     <article
-      className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--final liga-jornada-match-card--broadcast liga-jornada-match-card--duel-row"
+      className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--final liga-jornada-match-card--broadcast liga-jornada-match-card--duel-row liga-jornada-match-card--duel-stacks"
       style={matchStyle}
     >
       <LigaJornadaMatchCardHeader

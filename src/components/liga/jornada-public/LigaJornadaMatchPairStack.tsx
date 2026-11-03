@@ -9,7 +9,10 @@ interface LigaJornadaMatchPairStackProps {
   label?: string;
 }
 
-/** Pareja: 2 retratos lado a lado (sin etiqueta Pareja A/B). */
+/**
+ * Pareja en columna: jugador arriba + jugador abajo.
+ * Sin etiquetas "Pareja A/B" — la agrupación vertical deja claro el equipo.
+ */
 export const LigaJornadaMatchPairStack: React.FC<
   LigaJornadaMatchPairStackProps
 > = ({ side, align = "left", tone, label }) => (

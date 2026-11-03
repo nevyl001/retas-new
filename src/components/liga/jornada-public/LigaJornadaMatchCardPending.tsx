@@ -14,8 +14,8 @@ interface LigaJornadaMatchCardPendingProps {
 }
 
 /**
- * Card pendiente/live — enfrentamiento horizontal:
- * [J1][J2]  VS  [J3][J4]
+ * Card pendiente/live — enfrentamiento editorial:
+ * pareja izq (J1↑ J2↓) · VS · pareja der (J3↑ J4↓)
  */
 export const LigaJornadaMatchCardPending: React.FC<
   LigaJornadaMatchCardPendingProps
@@ -28,7 +28,7 @@ export const LigaJornadaMatchCardPending: React.FC<
   matchStyle,
 }) => (
   <article
-    className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--pending liga-jornada-match-card--broadcast liga-jornada-match-card--duel-row"
+    className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--pending liga-jornada-match-card--broadcast liga-jornada-match-card--duel-row liga-jornada-match-card--duel-stacks"
     style={matchStyle}
   >
     <LigaJornadaMatchCardHeader
