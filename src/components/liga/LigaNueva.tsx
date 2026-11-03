@@ -100,7 +100,7 @@ export const LigaNueva: React.FC = () => {
 
   return (
     <LigaPageShell className="liga-nueva">
-      <ActionBar className="liga-toolbar riviera-back-toolbar">
+      <ActionBar className="liga-toolbar riviera-back-toolbar liga-nueva__toolbar">
         <Button type="button" variant="back" onClick={() => navigateLiga("/liga")}>
           ← Ligas
         </Button>
@@ -108,20 +108,6 @@ export const LigaNueva: React.FC = () => {
           Inicio
         </Button>
       </ActionBar>
-
-      <nav className="liga-nueva__crumb" aria-label="Miga de pan">
-        <button
-          type="button"
-          className="liga-nueva__crumb-link"
-          onClick={() => navigateLiga("/liga")}
-        >
-          Ligas
-        </button>
-        <span className="liga-nueva__crumb-sep" aria-hidden>
-          /
-        </span>
-        <span className="liga-nueva__crumb-current">Nueva liga</span>
-      </nav>
 
       <ModeHeader
         className="liga-header rv-mode-header rv-mode-header--entry liga-nueva__header"
