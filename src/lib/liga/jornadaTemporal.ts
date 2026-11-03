@@ -113,3 +113,24 @@ export function rondaPublicTemporalEstado(
   if (estados.some((e) => e === "in_progress")) return "live";
   return "pending";
 }
+
+export type PublicRondaEstadoItem = {
+  ronda: number;
+  estado: "pending" | "live" | "done";
+};
+
+/**
+ * Ronda a mostrar por defecto en la vista pública:
+ * 1) primera en curso, 2) primera pendiente, 3) última completada / disponible.
+ */
+export function pickDefaultPublicRonda(
+  rondas: ReadonlyArray<PublicRondaEstadoItem>
+): number | null {
+  if (rondas.length === 0) return null;
+  const sorted = [...rondas].sort((a, b) => a.ronda - b.ronda);
+  const live = sorted.find((r) => r.estado === "live");
+  if (live) return live.ronda;
+  const pending = sorted.find((r) => r.estado === "pending");
+  if (pending) return pending.ronda;
+  return sorted[sorted.length - 1]!.ronda;
+}

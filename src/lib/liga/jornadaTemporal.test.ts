@@ -1,6 +1,7 @@
 import {
   jornadaPublicTemporalEstado,
   partidoPublicTemporalEstado,
+  pickDefaultPublicRonda,
   resolveLigaProgramadoStartMs,
   rondaPublicTemporalEstado,
 } from "./jornadaTemporal";
@@ -104,5 +105,29 @@ describe("jornadaTemporal", () => {
         now: afterKickoff,
       })
     ).toBe("live");
+  });
+
+  it("pickDefaultPublicRonda: live → pending → última done", () => {
+    expect(pickDefaultPublicRonda([])).toBeNull();
+    expect(
+      pickDefaultPublicRonda([
+        { ronda: 1, estado: "done" },
+        { ronda: 2, estado: "live" },
+        { ronda: 3, estado: "pending" },
+      ])
+    ).toBe(2);
+    expect(
+      pickDefaultPublicRonda([
+        { ronda: 1, estado: "done" },
+        { ronda: 2, estado: "pending" },
+        { ronda: 3, estado: "pending" },
+      ])
+    ).toBe(2);
+    expect(
+      pickDefaultPublicRonda([
+        { ronda: 1, estado: "done" },
+        { ronda: 2, estado: "done" },
+      ])
+    ).toBe(2);
   });
 });

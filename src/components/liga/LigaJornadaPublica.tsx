@@ -20,6 +20,7 @@ import { jornadaHoraInicioLabel } from "../../lib/liga/programacion";
 import {
   jornadaPublicTemporalEstado,
   partidoPublicTemporalEstado,
+  pickDefaultPublicRonda,
   rondaPublicTemporalEstado,
 } from "../../lib/liga/jornadaTemporal";
 import type { LigaDetalle, LigaJornada, LigaJornadaPareja, LigaPartido } from "../../lib/liga/types";
@@ -43,7 +44,9 @@ import {
 import { LigaJornadaGranFinalPublica } from "./jornada-public/LigaJornadaGranFinalPublica";
 import { LigaJornadaMatchCardFinal } from "./jornada-public/LigaJornadaMatchCardFinal";
 import { LigaJornadaMatchCardPending } from "./jornada-public/LigaJornadaMatchCardPending";
+import { LigaJornadaPublicRoundSelector } from "./jornada-public/LigaJornadaPublicRoundSelector";
 import { LigaJornadaStandingsRow } from "./jornada-public/LigaJornadaStandingsRow";
+import "./jornada-public/liga-jornada-public-round-selector.css";
 import { PublicSplitVsPairHalf } from "../public/split-vs";
 import {
   useFlipReorder,
@@ -127,12 +130,16 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   const [parejaRatings, setParejaRatings] = useState<
     Record<string, number | null>
   >({});
+  const [selectedRonda, setSelectedRonda] = useState<number | null>(null);
   const organizerName = useOrganizerDisplayName(detalle?.organizador_id);
   const { isClubBranded } = useClubExperience();
   const cancelledRef = useRef(false);
+  const userPickedRondaRef = useRef(false);
 
   useEffect(() => {
     cancelledRef.current = false;
+    userPickedRondaRef.current = false;
+    setSelectedRonda(null);
     return () => {
       cancelledRef.current = true;
     };
@@ -256,6 +263,30 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       estado: rondaPublicTemporalEstado(partidos, temporalCtx),
     }));
   }, [partidosByRonda, temporalCtx]);
+
+  const defaultRonda = useMemo(
+    () => pickDefaultPublicRonda(rondaEstados),
+    [rondaEstados]
+  );
+
+  useEffect(() => {
+    if (defaultRonda == null) {
+      setSelectedRonda(null);
+      return;
+    }
+    const selectedStillValid =
+      selectedRonda != null &&
+      rondaEstados.some((item) => item.ronda === selectedRonda);
+    if (userPickedRondaRef.current && selectedStillValid) return;
+    setSelectedRonda(defaultRonda);
+  }, [defaultRonda, rondaEstados, selectedRonda]);
+
+  const visibleRondaEntry = useMemo(() => {
+    if (selectedRonda == null) return null;
+    return (
+      partidosByRonda.find(([ronda]) => ronda === selectedRonda) ?? null
+    );
+  }, [partidosByRonda, selectedRonda]);
 
   const esParejasFijas = isEquiposModalidad(detalle?.modalidad ?? "individual_rotativo");
   const esParejasFijasPlayoffs = isParejasFijasPlayoffs(
@@ -626,68 +657,96 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 fechaHorarioText={jornadaFechaHorarioText}
               />
             ) : (
-              partidosByRonda.map(([ronda, partidos]) => {
-                const meta = rondaEstados.find((x) => x.ronda === ronda);
-                const estado = meta?.estado ?? "pending";
-                const canchasEnRonda = new Set(
-                  partidos
-                    .map((p) => p.cancha)
-                    .filter(
-                      (c): c is number =>
-                        typeof c === "number" && Number.isFinite(c)
-                    )
-                ).size;
-                const canchasMeta = Math.max(1, canchasEnRonda || partidos.length);
-                return (
-                  <section
-                    key={ronda}
-                    className={`liga-pantalla-ronda liga-pantalla-ronda--courts${
-                      estado === "live" ? " liga-pantalla-ronda--live" : ""
-                    }`}
-                  >
-                    <div className="liga-pantalla-ronda__head">
-                      <div className="liga-pantalla-ronda__heading">
-                        <h2 className="liga-pantalla-ronda__title">
-                          Ronda {ronda}
-                        </h2>
-                        <p className="liga-pantalla-ronda__meta">
-                          {partidos.length} partido
-                          {partidos.length === 1 ? "" : "s"}
-                          {" · "}
-                          {canchasMeta} cancha
-                          {canchasMeta === 1 ? "" : "s"}
-                        </p>
-                      </div>
-                      {estado !== "pending" ? (
-                        <span
-                          className={`liga-pantalla-ronda__badge${
-                            estado === "live"
-                              ? " liga-pantalla-ronda__badge--live"
-                              : estado === "done"
-                                ? " liga-pantalla-ronda__badge--done"
-                                : ""
+              <>
+                {rondaEstados.length > 1 && selectedRonda != null ? (
+                  <LigaJornadaPublicRoundSelector
+                    rondas={rondaEstados}
+                    selectedRonda={selectedRonda}
+                    onSelect={(ronda) => {
+                      userPickedRondaRef.current = true;
+                      setSelectedRonda(ronda);
+                    }}
+                  />
+                ) : null}
+                {visibleRondaEntry
+                  ? (() => {
+                      const [ronda, partidos] = visibleRondaEntry;
+                      const meta = rondaEstados.find((x) => x.ronda === ronda);
+                      const estado = meta?.estado ?? "pending";
+                      const showRoundTabs = rondaEstados.length > 1;
+                      const canchasEnRonda = new Set(
+                        partidos
+                          .map((p) => p.cancha)
+                          .filter(
+                            (c): c is number =>
+                              typeof c === "number" && Number.isFinite(c)
+                          )
+                      ).size;
+                      const canchasMeta = Math.max(
+                        1,
+                        canchasEnRonda || partidos.length
+                      );
+                      return (
+                        <section
+                          key={ronda}
+                          id={
+                            showRoundTabs
+                              ? `liga-pub-ronda-panel-${ronda}`
+                              : undefined
+                          }
+                          role={showRoundTabs ? "tabpanel" : undefined}
+                          aria-labelledby={
+                            showRoundTabs
+                              ? `liga-pub-ronda-tab-${ronda}`
+                              : undefined
+                          }
+                          className={`liga-pantalla-ronda liga-pantalla-ronda--courts liga-pantalla-ronda--selected${
+                            estado === "live" ? " liga-pantalla-ronda--live" : ""
                           }`}
                         >
-                          {rondaLabel(estado)}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div
-                      className="liga-pantalla-ronda__matches liga-pantalla-ronda__matches--courts"
-                      data-cols={String(
-                        Math.max(
-                          1,
-                          Math.min(canchasDisponibles, partidos.length)
-                        )
-                      )}
-                    >
-                      {partidos.map((partido, matchIndex) =>
-                        renderMatchCard(partido, true, matchIndex)
-                      )}
-                    </div>
-                  </section>
-                );
-              })
+                          <div className="liga-pantalla-ronda__head">
+                            <div className="liga-pantalla-ronda__heading">
+                              <h2 className="liga-pantalla-ronda__title">
+                                Ronda {ronda}
+                              </h2>
+                              <p className="liga-pantalla-ronda__meta">
+                                {partidos.length} partido
+                                {partidos.length === 1 ? "" : "s"}
+                                {" · "}
+                                {canchasMeta} cancha
+                                {canchasMeta === 1 ? "" : "s"}
+                              </p>
+                            </div>
+                            <span
+                              className={`liga-pantalla-ronda__badge${
+                                estado === "live"
+                                  ? " liga-pantalla-ronda__badge--live"
+                                  : estado === "done"
+                                    ? " liga-pantalla-ronda__badge--done"
+                                    : ""
+                              }`}
+                            >
+                              {rondaLabel(estado)}
+                            </span>
+                          </div>
+                          <div
+                            className="liga-pantalla-ronda__matches liga-pantalla-ronda__matches--courts"
+                            data-cols={String(
+                              Math.max(
+                                1,
+                                Math.min(canchasDisponibles, partidos.length)
+                              )
+                            )}
+                          >
+                            {partidos.map((partido, matchIndex) =>
+                              renderMatchCard(partido, true, matchIndex)
+                            )}
+                          </div>
+                        </section>
+                      );
+                    })()
+                  : null}
+              </>
             )}
           </div>
 

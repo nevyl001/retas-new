@@ -1,0 +1,165 @@
+/* =============================================================================
+   PUBLIC ROUND SELECTOR — pills horizontales premium (solo vista pública)
+   ============================================================================= */
+
+.liga-pantalla--jornada-fijas .liga-pub-round-selector {
+  margin: 0 0 0.85rem;
+  min-width: 0;
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-round-selector__track {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.1rem 0.05rem 0.35rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-round-selector__track::-webkit-scrollbar {
+  display: none;
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-round-selector__pill {
+  appearance: none;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.35rem;
+  padding: 0.42rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #fff 14%, transparent);
+  background: color-mix(in srgb, #0a0c10 55%, transparent);
+  color: color-mix(in srgb, var(--liga-pub-text, #f4f4f5) 72%, transparent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-round-selector__pill:hover {
+  color: var(--liga-pub-text, #f4f4f5);
+  border-color: color-mix(in srgb, #fff 22%, transparent);
+  background: color-mix(in srgb, #12151c 72%, transparent);
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-round-selector__pill:focus-visible {
+  outline: 2px solid
+    color-mix(
+      in srgb,
+      var(--liga-prem-accent, var(--liga-jornada-accent, var(--brand-accent, #a3e635)))
+        70%,
+      transparent
+    );
+  outline-offset: 2px;
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-round-selector__pill.is-selected {
+  color: #0a0c10;
+  border-color: transparent;
+  background: var(
+    --liga-prem-accent,
+    var(--liga-jornada-accent, var(--brand-accent, #a3e635))
+  );
+  box-shadow: 0 0 0 1px
+    color-mix(
+      in srgb,
+      var(--liga-prem-accent, var(--liga-jornada-accent, var(--brand-accent, #a3e635)))
+        35%,
+      transparent
+    );
+  font-weight: 750;
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-round-selector__pill.is-selected.is-live {
+  box-shadow:
+    0 0 0 1px
+      color-mix(
+        in srgb,
+        var(--liga-prem-accent, var(--liga-jornada-accent, var(--brand-accent, #a3e635)))
+          45%,
+        transparent
+      ),
+    0 0 18px
+      color-mix(
+        in srgb,
+        var(--liga-prem-accent, var(--liga-jornada-accent, var(--brand-accent, #a3e635)))
+          28%,
+        transparent
+      );
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-round-selector__pill.is-done:not(.is-selected) {
+  color: color-mix(in srgb, var(--liga-pub-text, #f4f4f5) 55%, transparent);
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-round-selector__dot {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.liga-pantalla--jornada-fijas .liga-pub-round-selector__pill.is-selected .liga-pub-round-selector__dot {
+  background: #0a0c10;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ronda--selected {
+  animation: liga-pub-ronda-fade 220ms ease;
+}
+
+@keyframes liga-pub-ronda-fade {
+  from {
+    opacity: 0.55;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liga-pantalla--jornada-fijas .liga-pantalla-ronda--selected {
+    animation: none;
+  }
+
+  .liga-pantalla--jornada-fijas .liga-pub-round-selector__pill {
+    transition: none;
+  }
+}
+
+@media (min-width: 900px) {
+  .liga-pantalla--jornada-fijas .liga-pub-round-selector {
+    margin-bottom: 1rem;
+  }
+
+  .liga-pantalla--jornada-fijas .liga-pub-round-selector__pill {
+    min-height: 2.5rem;
+    padding: 0.48rem 1.1rem;
+    font-size: 0.84375rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .liga-pantalla--jornada-fijas .liga-pub-round-selector__pill {
+    min-height: 2.45rem;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.75rem;
+  }
+}
