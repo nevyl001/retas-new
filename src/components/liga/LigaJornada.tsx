@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { computeJornadaPublicStats } from "../../lib/liga/jornadaStats";
-import { timeInputValue } from "../../lib/liga/programacion";
 import type {
   LigaDetalle,
   LigaEquipoRankingItem,
@@ -24,7 +23,6 @@ import {
   updateScoreParejasFijasPlayoffs,
   updateJornadaFecha,
   updateJornadaHoraInicio,
-  updateRondaProgramacion,
 } from "../../services/ligaService";
 import {
   buildSetsFromDraft,
@@ -166,9 +164,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const [jornadaFechaDrafts, setJornadaFechaDrafts] = useState<
     Record<string, string>
   >({});
-  const [rondaHoraDrafts, setRondaHoraDrafts] = useState<Record<number, string>>(
-    {}
-  );
   const [jornadaHoraDraft, setJornadaHoraDraft] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
   const [savedPartidoFlash, setSavedPartidoFlash] = useState<string | null>(null);
@@ -309,18 +304,11 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   useEffect(() => {
     if (!jornada?.partidos?.length) {
       setJornadaHoraDraft("");
-      setRondaHoraDrafts({});
       return;
     }
     const rounds = groupPartidosByRonda(jornada.partidos);
     const ronda1 = rounds.find(([ronda]) => ronda === 1)?.[1] ?? [];
     setJornadaHoraDraft(rondaHoraLabel(ronda1) ?? "");
-    const drafts: Record<number, string> = {};
-    for (const [ronda, partidos] of rounds) {
-      const hora = rondaHoraLabel(partidos);
-      if (hora) drafts[ronda] = hora;
-    }
-    setRondaHoraDrafts(drafts);
   }, [jornada?.id, jornada?.partidos]);
 
   const esParejasFijas = detalle ? isEquiposModalidad(detalle.modalidad) : false;
@@ -733,27 +721,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     try {
       await updateJornadaFecha(jornada.id, fecha || null);
       setMessage("Día de jornada guardado.");
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const saveRondaHorario = async (ronda: number) => {
-    if (!jornada) return;
-    const hora = rondaHoraDrafts[ronda] ?? "";
-    setBusy(true);
-    setError(null);
-    try {
-      await updateRondaProgramacion(
-        jornada.id,
-        ronda,
-        { hora_inicio: hora || null },
-        detalle?.canchas_disponibles ?? 1
-      );
-      setMessage(`Horario aplicado a la ronda ${ronda}.`);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -1216,34 +1183,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                     !esParejasFijas &&
                     rondaActiva != null &&
                     ronda !== rondaActiva
-                  }
-                  rondaHorario={
-                    !esParejasFijas ? (
-                      <div className="jornada-round__schedule">
-                        <input
-                          id={`jornada-ronda-${ronda}-hora`}
-                          name={`jornada-ronda-${ronda}-hora`}
-                          type="time"
-                          value={rondaHoraDrafts[ronda] ?? ""}
-                          disabled={busy}
-                          onChange={(event) =>
-                            setRondaHoraDrafts((prev) => ({
-                              ...prev,
-                              [ronda]: timeInputValue(event.target.value),
-                            }))
-                          }
-                          aria-label={`Horario ronda ${ronda}`}
-                        />
-                        <button
-                          type="button"
-                          className="jornada-round__schedule-btn"
-                          disabled={busy}
-                          onClick={() => saveRondaHorario(ronda)}
-                        >
-                          Aplicar
-                        </button>
-                      </div>
-                    ) : null
                   }
                   footerActions={
                     puedeActivarSiguiente ? (

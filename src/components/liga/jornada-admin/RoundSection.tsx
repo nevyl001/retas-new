@@ -9,7 +9,6 @@ export interface RoundSectionProps {
   resultadosGuardados?: number;
   /** Si true, la ronda inicia contraída (el grid permanece montado). */
   defaultCollapsed?: boolean;
-  rondaHorario?: React.ReactNode;
   footerActions?: React.ReactNode;
   children: React.ReactNode;
 }
@@ -20,7 +19,6 @@ export const RoundSection: React.FC<RoundSectionProps> = ({
   statusLabel,
   resultadosGuardados,
   defaultCollapsed = false,
-  rondaHorario,
   footerActions,
   children,
 }) => {
@@ -34,10 +32,10 @@ export const RoundSection: React.FC<RoundSectionProps> = ({
     if (!defaultCollapsed) setOpen(true);
   }, [defaultCollapsed]);
 
-  const metaParts = [
-    `${total} partido${total === 1 ? "" : "s"}`,
-    `${saved} de ${total} resultados`,
-  ];
+  const title = statusLabel
+    ? `Ronda ${ronda} — ${statusLabel}`
+    : `Ronda ${ronda}`;
+  const meta = `${total} partido${total === 1 ? "" : "s"} · ${saved} de ${total} resultados guardados`;
 
   return (
     <section
@@ -57,16 +55,10 @@ export const RoundSection: React.FC<RoundSectionProps> = ({
               {open ? "▾" : "▸"}
             </span>
             <h2 id={`jornada-ronda-${ronda}`} className="jornada-round__title">
-              Ronda {ronda}
+              {title}
             </h2>
           </button>
-          <p className="jornada-round__meta">{metaParts.join(" · ")}</p>
-        </div>
-        <div className="jornada-round__tools">
-          {statusLabel ? (
-            <span className="jornada-round__status">{statusLabel}</span>
-          ) : null}
-          {rondaHorario}
+          <p className="jornada-round__meta">{meta}</p>
         </div>
       </header>
       <div

@@ -302,7 +302,8 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
     rotativoDraft.s2.trim() !== "" &&
     !disabled;
 
-  const headerMeta = cancha != null ? `Cancha ${cancha}` : "Sin cancha";
+  const headerMeta =
+    cancha != null ? `Cancha ${cancha}` : "Sin cancha";
   const statusLabel =
     isSaved && !editing
       ? "Resultado guardado"
@@ -311,6 +312,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
         : locked
           ? "Bloqueado"
           : "Pendiente";
+  const headTitle = `${headerMeta} — ${statusLabel}`;
   const canEdit = !locked;
   const showForm =
     canEdit &&
@@ -334,18 +336,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
       }${isInProgress && !isSaved ? " jornada-match-card--live" : ""}`}
     >
       <header className="jornada-match-card__head">
-        <span className="jornada-match-card__meta">{headerMeta}</span>
-        <span
-          className={`jornada-match-card__badge${
-            isSaved && !editing
-              ? " jornada-match-card__badge--saved"
-              : isInProgress
-                ? " jornada-match-card__badge--live"
-                : " jornada-match-card__badge--pending"
-          }`}
-        >
-          {statusLabel}
-        </span>
+        <span className="jornada-match-card__meta">{headTitle}</span>
       </header>
 
       {showSavedSummary ? (
@@ -719,7 +710,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               >
                 <ScoreField
                   id={scoreFieldId(partido.id, "rotativo-s1")}
-                  label="Resultado Pareja A"
+                  label="Resultado A"
                   value={rotativoDraft.s1}
                   ariaLabel={`Puntos de ${pareja1Label}`}
                   disabled={disabled}
@@ -727,9 +718,11 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                 />
               </PairScoreBlock>
 
-              <span className="jornada-match-card__vs jornada-match-card__vs--between">
-                VS
-              </span>
+              <div className="jornada-match-card__vs jornada-match-card__vs--between" aria-hidden>
+                <span className="jornada-match-card__vs-rule" />
+                <span className="jornada-match-card__vs-label">VS</span>
+                <span className="jornada-match-card__vs-rule" />
+              </div>
 
               <PairScoreBlock
                 pairLabel="Pareja B"
@@ -744,7 +737,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               >
                 <ScoreField
                   id={scoreFieldId(partido.id, "rotativo-s2")}
-                  label="Resultado Pareja B"
+                  label="Resultado B"
                   value={rotativoDraft.s2}
                   ariaLabel={`Puntos de ${pareja2Label}`}
                   disabled={disabled}
