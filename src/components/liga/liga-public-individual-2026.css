@@ -123,25 +123,27 @@
   font-weight: 650;
 }
 
-/* ── Top 3 / podio editorial con retrato full-bleed ── */
+/* ── Top 3 / podio compacto editorial (proporción contenida) ── */
 
 .liga-pantalla--individual .liga-ind-top3 {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.75rem;
-  margin-bottom: 1.15rem;
+  gap: 0.55rem;
+  margin: 0 auto 1rem;
+  max-width: 34rem;
 }
 
 @media (min-width: 720px) {
   .liga-pantalla--individual .liga-ind-top3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.85rem;
+    gap: 0.6rem;
     align-items: end;
+    max-width: 30rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--1 {
     order: 2;
-    transform: translateY(-0.55rem);
+    transform: translateY(-0.28rem);
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--2 {
@@ -160,11 +162,11 @@
   gap: 0;
   padding: 0;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px solid color-mix(in srgb, var(--liga-pub-border-card) 62%, transparent);
   background: color-mix(in srgb, var(--liga-pub-surface) 88%, transparent);
   min-width: 0;
-  box-shadow: 0 8px 22px color-mix(in srgb, #000 18%, transparent);
+  box-shadow: 0 6px 16px color-mix(in srgb, #000 16%, transparent);
 }
 
 .liga-pantalla--individual .liga-ind-top3__card--1 {
@@ -177,10 +179,10 @@
     0 0 0 1px
       color-mix(
         in srgb,
-        var(--brand-accent, var(--liga-pub-gold, var(--ro-medal-gold))) 18%,
+        var(--brand-accent, var(--liga-pub-gold, var(--ro-medal-gold))) 16%,
         transparent
       ),
-    0 14px 32px color-mix(in srgb, #000 24%, transparent);
+    0 8px 20px color-mix(in srgb, #000 20%, transparent);
 }
 
 .liga-pantalla--individual .liga-ind-top3__card--2,
@@ -192,12 +194,12 @@
 .liga-pantalla--individual .liga-ind-top3__portrait {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 5;
+  height: 7.25rem;
   background: color-mix(in srgb, #121214 88%, transparent);
 }
 
 .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__portrait {
-  aspect-ratio: 3 / 4;
+  height: 8.15rem;
 }
 
 .liga-pantalla--individual .liga-ind-top3__photo.rj-avatar {
@@ -210,7 +212,7 @@
   overflow: hidden;
   border: none;
   box-shadow: none;
-  font-size: clamp(1.4rem, 4vw, 1.85rem);
+  font-size: 1.15rem;
 }
 
 .liga-pantalla--individual .liga-ind-top3__photo .rj-avatar__img {
@@ -225,31 +227,31 @@
   content: "";
   position: absolute;
   inset: auto 0 0;
-  height: 42%;
+  height: 48%;
   pointer-events: none;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    color-mix(in srgb, #050506 78%, transparent) 100%
+    color-mix(in srgb, #050506 82%, transparent) 100%
   );
 }
 
 .liga-pantalla--individual .liga-ind-top3__pos {
   position: absolute;
-  left: 0.7rem;
-  bottom: 0.7rem;
+  left: 0.45rem;
+  bottom: 0.45rem;
   z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.7rem;
-  height: 1.7rem;
-  padding: 0 0.35rem;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.28rem;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, #fff 16%, transparent);
   background: color-mix(in srgb, #0a0a0a 82%, transparent);
   backdrop-filter: blur(8px);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 750;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -258,9 +260,9 @@
 }
 
 .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__pos {
-  min-width: 1.9rem;
-  height: 1.9rem;
-  font-size: 0.9rem;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.75rem;
   color: var(--brand-accent, var(--liga-pub-gold-light, var(--ro-medal-gold)));
   border-color: color-mix(
     in srgb,
@@ -276,13 +278,13 @@
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
-  gap: 0.22rem;
-  padding: 0.85rem 0.9rem 0.95rem;
+  gap: 0.12rem;
+  padding: 0.55rem 0.65rem 0.65rem;
 }
 
 .liga-pantalla--individual .liga-ind-top3__name {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: -0.015em;
   color: var(--liga-pub-text);
@@ -291,19 +293,19 @@
 }
 
 .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__name {
-  font-size: 1.12rem;
+  font-size: 0.9375rem;
 }
 
 .liga-pantalla--individual .liga-ind-top3__pts {
-  margin: 0.1rem 0 0;
+  margin: 0.05rem 0 0;
   display: flex;
   align-items: baseline;
   justify-content: flex-start;
-  gap: 0.35rem;
+  gap: 0.28rem;
 }
 
 .liga-pantalla--individual .liga-ind-top3__pts-value {
-  font-size: 1.55rem;
+  font-size: 1.2rem;
   font-weight: 750;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
@@ -312,7 +314,7 @@
 }
 
 .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__pts-value {
-  font-size: 1.7rem;
+  font-size: 1.3rem;
   color: var(--liga-pub-text);
 }
 
@@ -357,26 +359,29 @@
 
 /* Mobile: fila horizontal compacta para top 3 apilado */
 @media (max-width: 719px) {
+  .liga-pantalla--individual .liga-ind-top3 {
+    max-width: none;
+  }
+
   .liga-pantalla--individual .liga-ind-top3__card {
     display: grid;
-    grid-template-columns: 5.75rem minmax(0, 1fr);
+    grid-template-columns: 4.75rem minmax(0, 1fr);
     align-items: stretch;
   }
 
   .liga-pantalla--individual .liga-ind-top3__portrait,
   .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__portrait {
-    aspect-ratio: auto;
-    min-height: 7.25rem;
+    height: 5.75rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3__body {
     justify-content: center;
-    padding: 0.75rem 0.85rem;
+    padding: 0.55rem 0.7rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3__pos {
-    left: 0.45rem;
-    bottom: 0.45rem;
+    left: 0.3rem;
+    bottom: 0.3rem;
   }
 }
 
