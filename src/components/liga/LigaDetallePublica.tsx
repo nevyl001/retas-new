@@ -40,6 +40,7 @@ import { useVisiblePolling } from "../../hooks/useVisiblePolling";
 import { PublicModeShell } from "../platform/PublicModeShell";
 import { StatusBadge } from "../platform/StatusBadge";
 import { PublicHero } from "../public/peds";
+import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import { LigaPubProgramaMatchCard } from "./LigaPubProgramaMatchCard";
 import { LigaPublicParejasStandings } from "./LigaPublicParejasStandings";
 import "./liga-public-pantalla.css";
@@ -116,6 +117,9 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const [parejaFotos, setParejaFotos] = useState<Record<string, string | null>>(
     {}
   );
+  const [jugadorFotos, setJugadorFotos] = useState<
+    Record<string, string | null>
+  >({});
   const [parejaRatings, setParejaRatings] = useState<
     Record<string, number | null>
   >({});
@@ -181,6 +185,41 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     onUpdate: load,
     enabled: true,
   });
+
+  useEffect(() => {
+    const organizadorId = detalle?.organizador_id;
+    if (
+      !organizadorId ||
+      !detalle ||
+      isEquiposModalidad(detalle.modalidad) ||
+      ranking.length === 0
+    ) {
+      setJugadorFotos({});
+      return;
+    }
+
+    const entries = ranking.map((row) => ({
+      id: row.jugador_id,
+      name: row.nombre,
+    }));
+    let cancelled = false;
+    void resolveLigaJugadorPublicProfiles(organizadorId, entries)
+      .then((profiles) => {
+        if (cancelled || !profiles) return;
+        const fotos: Record<string, string | null> = {};
+        for (const entry of entries) {
+          fotos[entry.id] = profiles[entry.id]?.fotoUrl ?? null;
+        }
+        setJugadorFotos(fotos);
+      })
+      .catch((err) => {
+        console.warn("[liga] fotos ranking individual:", err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detalle, ranking]);
 
   useEffect(() => {
     const organizadorId = detalle?.organizador_id;
@@ -466,9 +505,10 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
             ) : (
               <>
                 <div className="liga-ind-top3" role="list" aria-label="Podio del ranking">
-                  {ranking.slice(0, 3).map((row, idx) => {
+                  {(podioOrdenVisual as RankingItem[]).map((row, idx) => {
                     const support = supportStatsByJugador.get(row.jugador_id);
                     const showSupport = hasMeaningfulSupportStats(support);
+                    const foto = jugadorFotos[row.jugador_id];
                     return (
                       <article
                         key={row.jugador_id}
@@ -480,9 +520,18 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                           } as React.CSSProperties
                         }
                       >
-                        <span className="liga-ind-top3__pos" aria-hidden>
-                          {row.posicion}
-                        </span>
+                        <div className="liga-ind-top3__portrait">
+                          <JugadorAvatar
+                            fotoUrl={foto}
+                            nombre={row.nombre}
+                            size="xl"
+                            className="liga-ind-top3__photo"
+                            alt=""
+                          />
+                          <span className="liga-ind-top3__pos" aria-hidden>
+                            {row.posicion}
+                          </span>
+                        </div>
                         <div className="liga-ind-top3__body">
                           <p className="liga-ind-top3__name">{row.nombre}</p>
                           <p className="liga-ind-top3__pts">
@@ -516,42 +565,43 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
 
                 {ranking.length > 3 ? (
                   <div className="liga-ind-rest">
-                    <table className="liga-ind-rest__table">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Jugador</th>
-                          <th>Pts</th>
-                          <th>Jorn.</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ranking.slice(3).map((row, idx) => (
-                          <tr
+                    <ul className="liga-ind-rest__list" aria-label="Resto del ranking">
+                      {ranking.slice(3).map((row, idx) => {
+                        const foto = jugadorFotos[row.jugador_id];
+                        return (
+                          <li
                             key={row.jugador_id}
-                            className="liga-ind-enter"
+                            className="liga-ind-rest__row liga-ind-enter"
                             style={
                               {
                                 ["--liga-ind-i" as string]: idx + 3,
                               } as React.CSSProperties
                             }
                           >
-                            <td className="liga-pantalla-ranking__rank">
+                            <span className="liga-ind-rest__rank" aria-hidden>
                               {row.posicion}
-                            </td>
-                            <td className="liga-pantalla-ranking__name">
-                              {row.nombre}
-                            </td>
-                            <td className="liga-pantalla-ranking__pts">
-                              {row.puntos}
-                            </td>
-                            <td className="liga-pantalla-ranking__meta">
-                              {row.jornadas_jugadas}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </span>
+                            <JugadorAvatar
+                              fotoUrl={foto}
+                              nombre={row.nombre}
+                              size="sm"
+                              className="liga-ind-rest__avatar"
+                              alt=""
+                            />
+                            <span className="liga-ind-rest__name">{row.nombre}</span>
+                            <span className="liga-ind-rest__stats">
+                              <span className="liga-ind-rest__pts">
+                                <strong>{row.puntos}</strong>
+                                <small>pts</small>
+                              </span>
+                              <span className="liga-ind-rest__jorn">
+                                {row.jornadas_jugadas} jorn.
+                              </span>
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
                 ) : null}
               </>
