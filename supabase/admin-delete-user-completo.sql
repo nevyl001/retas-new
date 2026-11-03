@@ -184,6 +184,184 @@ BEGIN
     );
   END IF;
 
+  -- ── ROMC / identidad oficial (FK RESTRICT hacia riviera_jugadores) ──
+  IF to_regclass('public.riviera_official_points_ledger') IS NOT NULL THEN
+    DELETE FROM public.riviera_official_points_ledger
+    WHERE source_local_jugador_id IN (
+      SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+    )
+       OR source_organizer_id = v_uid
+       OR official_player_key IN (
+            SELECT i.official_player_key
+            FROM public.riviera_official_player_identity i
+            WHERE i.canonical_riviera_jugador_id IN (
+              SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+            )
+          );
+  END IF;
+
+  IF to_regclass('public.jugador_participacion_exclusiones') IS NOT NULL THEN
+    DELETE FROM public.jugador_participacion_exclusiones
+    WHERE scope_jugador_id IN (
+      SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+    )
+       OR official_player_key IN (
+            SELECT i.official_player_key
+            FROM public.riviera_official_player_identity i
+            WHERE i.canonical_riviera_jugador_id IN (
+              SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+            )
+          );
+  END IF;
+
+  IF to_regclass('public.riviera_player_sharing_request') IS NOT NULL THEN
+    DELETE FROM public.riviera_player_sharing_request
+    WHERE riviera_jugador_id IN (
+      SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+    )
+       OR registration_jugador_id IN (
+            SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+          );
+  END IF;
+
+  -- Reasignar o borrar identidades cuyo canonical pertenece a esta cuenta.
+  IF to_regclass('public.riviera_official_player_identity') IS NOT NULL THEN
+    IF to_regclass('public.riviera_official_player_profile_link') IS NOT NULL THEN
+      UPDATE public.riviera_official_player_identity i
+      SET canonical_riviera_jugador_id = alt.riviera_jugador_id
+      FROM LATERAL (
+        SELECT l.riviera_jugador_id
+        FROM public.riviera_official_player_profile_link l
+        WHERE l.official_player_key = i.official_player_key
+          AND l.riviera_jugador_id NOT IN (
+            SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+          )
+        ORDER BY l.created_at
+        LIMIT 1
+      ) alt
+      WHERE i.canonical_riviera_jugador_id IN (
+        SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+      );
+
+      DELETE FROM public.riviera_official_player_profile_link
+      WHERE riviera_jugador_id IN (
+        SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+      )
+         OR official_player_key IN (
+              SELECT i.official_player_key
+              FROM public.riviera_official_player_identity i
+              WHERE i.canonical_riviera_jugador_id IN (
+                SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+              )
+            );
+    END IF;
+
+    IF to_regclass('public.riviera_official_player_totals') IS NOT NULL THEN
+      DELETE FROM public.riviera_official_player_totals
+      WHERE official_player_key IN (
+        SELECT i.official_player_key
+        FROM public.riviera_official_player_identity i
+        WHERE i.canonical_riviera_jugador_id IN (
+          SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+        )
+      );
+    END IF;
+
+    DELETE FROM public.riviera_official_player_identity
+    WHERE canonical_riviera_jugador_id IN (
+      SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+    );
+  ELSIF to_regclass('public.riviera_official_player_profile_link') IS NOT NULL THEN
+    DELETE FROM public.riviera_official_player_profile_link
+    WHERE riviera_jugador_id IN (
+      SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+    );
+  END IF;
+
+  IF to_regclass('public.organizer_player_access') IS NOT NULL THEN
+    DELETE FROM public.organizer_player_access
+    WHERE grantee_organizer_id = v_uid
+       OR owner_organizador_id = v_uid
+       OR jugador_id IN (
+            SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+          )
+       OR local_jugador_id IN (
+            SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+          );
+  END IF;
+
+  -- Coaching ledger / vínculos con RESTRICT hacia riviera_jugadores
+  IF to_regclass('public.coach_class_ledger') IS NOT NULL THEN
+    DELETE FROM public.coach_class_ledger
+    WHERE organizador_id = v_uid
+       OR jugador_id IN (
+            SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+          )
+       OR (
+            to_regclass('public.riviera_coaches') IS NOT NULL
+            AND coach_id IN (
+              SELECT id FROM public.riviera_coaches WHERE auth_user_id = v_uid
+            )
+          );
+  END IF;
+
+  IF to_regclass('public.coach_sessions') IS NOT NULL THEN
+    DELETE FROM public.coach_sessions
+    WHERE organizador_id = v_uid
+       OR (
+            to_regclass('public.riviera_coaches') IS NOT NULL
+            AND coach_id IN (
+              SELECT id FROM public.riviera_coaches WHERE auth_user_id = v_uid
+            )
+          );
+  END IF;
+
+  IF to_regclass('public.coach_player_relationships') IS NOT NULL THEN
+    DELETE FROM public.coach_player_relationships
+    WHERE organizador_id = v_uid
+       OR jugador_id IN (
+            SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+          )
+       OR (
+            to_regclass('public.riviera_coaches') IS NOT NULL
+            AND coach_id IN (
+              SELECT id FROM public.riviera_coaches WHERE auth_user_id = v_uid
+            )
+          );
+  END IF;
+
+  IF to_regclass('public.coach_student_invitations') IS NOT NULL THEN
+    DELETE FROM public.coach_student_invitations
+    WHERE organizador_id = v_uid
+       OR jugador_id IN (
+            SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+          );
+  END IF;
+
+  IF to_regclass('public.coach_student_account_links') IS NOT NULL THEN
+    DELETE FROM public.coach_student_account_links
+    WHERE organizador_id = v_uid
+       OR jugador_id IN (
+            SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+          );
+  END IF;
+
+  IF to_regclass('public.coach_club_memberships') IS NOT NULL THEN
+    DELETE FROM public.coach_club_memberships
+    WHERE organizador_id = v_uid
+       OR (
+            to_regclass('public.riviera_coaches') IS NOT NULL
+            AND coach_id IN (
+              SELECT id FROM public.riviera_coaches WHERE auth_user_id = v_uid
+            )
+          );
+  END IF;
+
+  IF to_regclass('public.riviera_coaches') IS NOT NULL THEN
+    DELETE FROM public.riviera_coaches
+    WHERE auth_user_id = v_uid;
+  END IF;
+
   IF to_regclass('public.riviera_jugadores') IS NOT NULL THEN
     DELETE FROM public.riviera_jugadores WHERE organizador_id = v_uid;
   END IF;
