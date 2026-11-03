@@ -18,9 +18,6 @@ export const LigaJornadaMatchPlayerPanel: React.FC<
     name={name}
     foto={foto}
     rating={rating}
-    ratingCaption={
-      rating != null && Number.isFinite(rating) ? "Rating" : undefined
-    }
     className="liga-jornada-match-player-panel"
   />
 );

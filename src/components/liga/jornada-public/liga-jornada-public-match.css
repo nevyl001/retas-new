@@ -207,7 +207,7 @@
   }
 }
 
-/* VS editorial vertical (línea · VS · línea) — sin círculo flotante */
+/* VS vertical editorial entre parejas */
 .liga-pantalla--jornada-fijas .liga-jornada-match-card__split-vs {
   position: relative;
   z-index: 2;
@@ -215,41 +215,44 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.32rem;
+  gap: 0.28rem;
   flex: 0 0 auto;
   height: auto;
   margin: 0;
-  padding: 0.55rem 0.85rem;
+  padding: 0.45rem 0.75rem;
   pointer-events: none;
 }
 
 .liga-pantalla--jornada-fijas .liga-jornada-match-card__split-vs-rule {
   display: block;
-  width: min(42%, 7.5rem);
-  height: 1px;
+  width: 1px;
+  height: 0.7rem;
   background: linear-gradient(
-    to right,
+    to bottom,
     transparent 0%,
-    color-mix(in srgb, #fff 22%, transparent) 18%,
-    color-mix(in srgb, #fff 40%, transparent) 50%,
-    color-mix(in srgb, #fff 22%, transparent) 82%,
+    color-mix(in srgb, #fff 38%, transparent) 50%,
     transparent 100%
   );
 }
 
 .liga-pantalla--jornada-fijas .liga-jornada-match-card__split-vs-label {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.1rem;
+  min-height: 1.55rem;
   margin: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #fff 18%, transparent);
+  background: color-mix(in srgb, #0a0c10 78%, transparent);
   box-shadow: none;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-size: 0.625rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
   line-height: 1;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--liga-pub-text, #f4f4f5) 62%, transparent);
+  color: color-mix(in srgb, var(--liga-pub-text, #f4f4f5) 82%, transparent);
 }
 
 /* Legacy class (por si queda markup viejo en cache) */
@@ -371,7 +374,7 @@
   color: color-mix(in srgb, #fff 78%, transparent);
 }
 
-/* Retratos consistentes 3:4 */
+/* Mini cards retrato — presencia sin gigantismo */
 .liga-jornada-match-pair-half__grid .pub-split-vs-panel,
 .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel,
 .liga-pantalla--jornada-fijas .liga-jornada-match-pair-half__grid .pub-split-vs-panel,
@@ -381,8 +384,8 @@
   min-width: 0;
   min-height: 0;
   height: auto;
-  max-height: min(8.75rem, 26vh);
-  border-radius: 11px;
+  max-height: 6.75rem;
+  border-radius: 10px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, #fff 10%, transparent);
 }
@@ -393,8 +396,7 @@
   .liga-pantalla--jornada-fijas .liga-jornada-match-pair-half__grid .pub-split-vs-panel,
   .liga-pantalla--jornada-fijas .liga-jornada-match-player-panel.pub-split-vs-panel,
   .liga-pantalla--jornada-fijas .liga-jornada-match-player-panel {
-    aspect-ratio: 3 / 4;
-    max-height: min(9.5rem, 24vh);
+    max-height: 7.25rem;
   }
 }
 
@@ -404,8 +406,7 @@
   .liga-pantalla--jornada-fijas .liga-jornada-match-pair-half__grid .pub-split-vs-panel,
   .liga-pantalla--jornada-fijas .liga-jornada-match-player-panel.pub-split-vs-panel,
   .liga-pantalla--jornada-fijas .liga-jornada-match-player-panel {
-    aspect-ratio: 3 / 4;
-    max-height: min(10.25rem, 22vh);
+    max-height: 7.75rem;
   }
 }
 
@@ -455,17 +456,17 @@
 .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel .pub-split-vs-panel__given,
 .liga-pantalla--jornada-fijas .liga-jornada-match-player-panel .pub-split-vs-panel__given {
   position: absolute;
-  left: 0.45rem;
-  right: 0.45rem;
-  bottom: 0.42rem;
+  left: 0.4rem;
+  right: 2.55rem;
+  bottom: 0.36rem;
   z-index: 1;
   margin: 0;
-  font-size: clamp(0.8125rem, 8.5cqi, 0.9375rem);
+  font-size: clamp(0.75rem, 8cqi, 0.875rem);
   font-weight: 650;
-  line-height: 1.2;
+  line-height: 1.15;
   color: #fff;
   text-align: left;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   white-space: normal;
   overflow: hidden;
   display: -webkit-box;
@@ -477,17 +478,17 @@
 .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel .pub-split-vs-panel__family,
 .liga-pantalla--jornada-fijas .liga-jornada-match-player-panel .pub-split-vs-panel__family {
   position: absolute;
-  left: 0.45rem;
-  right: 0.45rem;
-  bottom: 0.42rem;
+  left: 0.4rem;
+  right: 2.55rem;
+  bottom: 0.36rem;
   z-index: 1;
   margin: 0;
-  font-size: clamp(0.7rem, 7cqi, 0.8125rem);
+  font-size: clamp(0.625rem, 6.5cqi, 0.75rem);
   font-weight: 600;
-  line-height: 1.15;
+  line-height: 1.1;
   color: rgba(255, 255, 255, 0.88);
   text-align: left;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   white-space: normal;
   overflow: hidden;
   display: -webkit-box;
@@ -502,10 +503,10 @@
 .liga-pantalla--jornada-fijas
   .liga-jornada-match-player-panel
   .pub-split-vs-panel__given:has(+ .pub-split-vs-panel__family) {
-  bottom: 1.05rem;
+  bottom: 0.95rem;
 }
 
-/* Rating secundario — no confundir con marcador */
+/* Número verde dentro de la foto — solo el valor, sin “Rating” */
 .liga-jornada-match-pair-half__grid
   .liga-jornada-match-player-panel
   .pub-split-vs-panel__rating.jugador-rating-chip,
@@ -513,25 +514,22 @@
   .liga-jornada-match-player-panel
   .pub-split-vs-panel__rating.jugador-rating-chip {
   position: absolute;
-  left: 0.4rem;
-  right: auto;
-  bottom: auto;
-  top: 0.35rem;
+  left: auto;
+  right: 0.32rem;
+  bottom: 0.3rem;
+  top: auto;
   z-index: 2;
   display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
   margin: 0;
-  max-width: calc(100% - 0.7rem);
-  font-size: 0.5625rem;
-  font-weight: 650;
-  padding: 0.14rem 0.35rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 0.1rem 0.34rem;
   line-height: 1.15;
   letter-spacing: 0.02em;
-  color: color-mix(in srgb, #fff 88%, transparent);
-  border-color: color-mix(in srgb, #fff 18%, transparent);
-  background: color-mix(in srgb, #050506 55%, transparent);
-  opacity: 0.92;
+  color: #a3e635;
+  border: 1px solid rgba(163, 230, 53, 0.35);
+  background: rgba(163, 230, 53, 0.12);
+  opacity: 1;
   visibility: visible;
 }
 
@@ -539,11 +537,7 @@
   .liga-jornada-match-player-panel
   .pub-split-vs-panel__rating
   .jugador-rating-chip__caption {
-  font-size: 0.5rem;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.78;
+  display: none !important;
 }
 
 .liga-pantalla--jornada-fijas .liga-jornada-match-player-panel .pub-split-vs-panel__watermark {
