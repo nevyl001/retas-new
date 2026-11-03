@@ -4,6 +4,7 @@ import {
   type JornadaPublicMatch,
   type PartidoPublicScoreboard,
 } from "../../lib/liga/publicDisplay";
+import { partidoPublicTemporalEstado } from "../../lib/liga/jornadaTemporal";
 import type { LigaPartido } from "../../lib/liga/types";
 
 function formatJornadaFecha(fecha: string | null | undefined): string | null {
@@ -113,7 +114,10 @@ export const LigaPubProgramaMatchCard: React.FC<LigaPubProgramaMatchCardProps> =
 
   const pending = board.kind === "pending";
   const isWo = board.kind === "wo";
-  const isLive = partido?.estado === "in_progress";
+  const isLive = partido
+    ? partidoPublicTemporalEstado(partido, { fechaJornada: jornadaFecha }) ===
+      "in_progress"
+    : false;
   const team1Win = match.winnerSide === 1;
   const team2Win = match.winnerSide === 2;
   const sets1 = teamSetCells(board, 1);

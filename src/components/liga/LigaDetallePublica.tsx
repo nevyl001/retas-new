@@ -18,6 +18,7 @@ import {
   listJornadaPublicMatches,
 } from "../../lib/liga/publicDisplay";
 import { formatFechaLegible, dateInputValue } from "../../lib/liga/programacion";
+import { jornadaPublicTemporalEstado } from "../../lib/liga/jornadaTemporal";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
 import { resolveLigaJugadorPublicProfiles } from "../../lib/liga/publicParejaAvatars";
 import { resolveLigaPublicPlayerRating } from "../../lib/liga/ligaPublicPlayerRating";
@@ -92,12 +93,24 @@ function jornadaBadgeLabel(estado: LigaJornada["estado"]): string {
   return "Próxima";
 }
 
-/** Jornada destacada: en curso, o la completed más reciente. */
-function jornadaFeaturedOpenId(jornadas: LigaJornada[]): string | null {
-  const live = jornadas.find((j) => j.estado === "in_progress");
+function jornadaPublicEstadoNow(
+  jornada: LigaJornada,
+  now?: Date
+): LigaJornada["estado"] {
+  return jornadaPublicTemporalEstado(jornada, { now });
+}
+
+/** Jornada destacada: en curso (horario ya llegó), o la completed más reciente. */
+function jornadaFeaturedOpenId(
+  jornadas: LigaJornada[],
+  now: Date = new Date()
+): string | null {
+  const live = jornadas.find(
+    (j) => jornadaPublicEstadoNow(j, now) === "in_progress"
+  );
   if (live) return live.id;
   const completed = jornadas
-    .filter((j) => j.estado === "completed")
+    .filter((j) => jornadaPublicEstadoNow(j, now) === "completed")
     .sort((a, b) => b.numero - a.numero);
   return completed[0]?.id ?? null;
 }
@@ -387,13 +400,18 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       setProgramaJornadaId(null);
       return;
     }
+    const now = new Date();
     const preferred = isEquiposModalidad(detalle.modalidad)
-      ? detalle.jornadas.find((j) => j.estado === "in_progress")?.id ??
-        detalle.jornadas.find((j) => j.estado === "upcoming")?.id ??
+      ? detalle.jornadas.find(
+          (j) => jornadaPublicEstadoNow(j, now) === "in_progress"
+        )?.id ??
+        detalle.jornadas.find(
+          (j) => jornadaPublicEstadoNow(j, now) === "upcoming"
+        )?.id ??
         detalle.jornadas[detalle.jornadas.length - 1]?.id ??
         detalle.jornadas[0]?.id ??
         null
-      : jornadaFeaturedOpenId(detalle.jornadas) ??
+      : jornadaFeaturedOpenId(detalle.jornadas, now) ??
         detalle.jornadas[0]?.id ??
         null;
     setProgramaJornadaId((prev) => {
@@ -418,11 +436,13 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     );
   }
 
-  const jornadaActiva = detalle.jornadas.find((j) => j.estado === "in_progress");
+  const jornadaActiva = detalle.jornadas.find(
+    (j) => jornadaPublicEstadoNow(j) === "in_progress"
+  );
 
   const todasJornadasCompletas =
     detalle.jornadas.length > 0 &&
-    detalle.jornadas.every((j) => j.estado === "completed");
+    detalle.jornadas.every((j) => jornadaPublicEstadoNow(j) === "completed");
 
   const ligaTerminada =
     detalle.estado === "completed" || todasJornadasCompletas;
@@ -687,7 +707,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                           {j.fecha
                             ? ` · ${formatFechaLegible(dateInputValue(j.fecha))}`
                             : ""}
-                          {` · ${jornadaBadgeLabel(j.estado)}`}
+                          {` · ${jornadaBadgeLabel(jornadaPublicEstadoNow(j))}`}
                         </option>
                       ))}
                     </select>
@@ -702,10 +722,11 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                       detalle.equipos,
                       true
                     );
+                    const jEstado = jornadaPublicEstadoNow(j);
                     const estadoMod =
-                      j.estado === "in_progress"
+                      jEstado === "in_progress"
                         ? "live"
-                        : j.estado === "completed"
+                        : jEstado === "completed"
                           ? "done"
                           : "upcoming";
                     const isSelected = j.id === programaJornadaId;
@@ -737,8 +758,8 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                               </p>
                             ) : null}
                           </div>
-                          <span className={jornadaBadgeClass(j.estado)}>
-                            {jornadaBadgeLabel(j.estado)}
+                          <span className={jornadaBadgeClass(jEstado)}>
+                            {jornadaBadgeLabel(jEstado)}
                           </span>
                         </div>
                         <div className="liga-pantalla-jornada-card__body">
@@ -809,10 +830,11 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                 );
                 const tienePantalla =
                   (selectedJornada.partidos?.length ?? 0) > 0;
+                const selectedEstado = jornadaPublicEstadoNow(selectedJornada);
                 const estadoMod =
-                  selectedJornada.estado === "in_progress"
+                  selectedEstado === "in_progress"
                     ? "live"
-                    : selectedJornada.estado === "completed"
+                    : selectedEstado === "completed"
                       ? "done"
                       : "upcoming";
 
@@ -825,6 +847,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                     >
                       {detalle.jornadas.map((j) => {
                         const selected = j.id === selectedJornada.id;
+                        const jEstado = jornadaPublicEstadoNow(j);
                         return (
                           <button
                             key={j.id}
@@ -837,9 +860,9 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                             className={`liga-ind-jornadas__tab${
                               selected ? " is-selected" : ""
                             } liga-ind-jornadas__tab--${
-                              j.estado === "in_progress"
+                              jEstado === "in_progress"
                                 ? "live"
-                                : j.estado === "completed"
+                                : jEstado === "completed"
                                   ? "done"
                                   : "upcoming"
                             }`}
@@ -849,7 +872,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                               {j.numero}
                             </span>
                             <span className="liga-ind-jornadas__tab-label">
-                              {jornadaBadgeLabel(j.estado)}
+                              {jornadaBadgeLabel(jEstado)}
                             </span>
                           </button>
                         );
@@ -875,10 +898,8 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                             </p>
                           ) : null}
                         </div>
-                        <span
-                          className={jornadaBadgeClass(selectedJornada.estado)}
-                        >
-                          {jornadaBadgeLabel(selectedJornada.estado)}
+                        <span className={jornadaBadgeClass(selectedEstado)}>
+                          {jornadaBadgeLabel(selectedEstado)}
                         </span>
                       </header>
 

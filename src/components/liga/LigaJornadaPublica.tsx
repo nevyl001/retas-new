@@ -17,6 +17,11 @@ import {
   ligaGranFinalHeroMeta,
 } from "../../lib/liga/ligaGranFinalPublic";
 import { jornadaHoraInicioLabel } from "../../lib/liga/programacion";
+import {
+  jornadaPublicTemporalEstado,
+  partidoPublicTemporalEstado,
+  rondaPublicTemporalEstado,
+} from "../../lib/liga/jornadaTemporal";
 import type { LigaDetalle, LigaJornada, LigaJornadaPareja, LigaPartido } from "../../lib/liga/types";
 import { isEquiposModalidad, isParejasFijasPlayoffs } from "../../lib/liga/ligaModalidad";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
@@ -231,16 +236,26 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       ] as [number, LigaPartido[]]);
   }, [jornada]);
 
+  const jornadaHoraRef = useMemo(
+    () => jornadaHoraInicioLabel(jornada?.partidos ?? []),
+    [jornada?.partidos]
+  );
+
+  const temporalCtx = useMemo(
+    () => ({
+      fechaJornada: jornada?.fecha ?? null,
+      horaJornada: jornadaHoraRef,
+      now: lastRefresh ?? new Date(),
+    }),
+    [jornada?.fecha, jornadaHoraRef, lastRefresh]
+  );
+
   const rondaEstados = useMemo(() => {
-    return partidosByRonda.map(([ronda, partidos]) => {
-      const completa = partidos.every((p) => p.estado === "completed");
-      const enCurso = partidos.some((p) => p.estado === "in_progress");
-      return {
-        ronda,
-        estado: completa ? "done" : enCurso ? "live" : "pending",
-      };
-    });
-  }, [partidosByRonda]);
+    return partidosByRonda.map(([ronda, partidos]) => ({
+      ronda,
+      estado: rondaPublicTemporalEstado(partidos, temporalCtx),
+    }));
+  }, [partidosByRonda, temporalCtx]);
 
   const esParejasFijas = isEquiposModalidad(detalle?.modalidad ?? "individual_rotativo");
   const esParejasFijasPlayoffs = isParejasFijasPlayoffs(
@@ -367,9 +382,12 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     );
   }
 
-  const jornadaEstadoText = jornadaEstadoLabel(jornada.estado);
+  const jornadaEstadoVisible = jornadaPublicTemporalEstado(jornada, {
+    now: temporalCtx.now,
+  });
+  const jornadaEstadoText = jornadaEstadoLabel(jornadaEstadoVisible);
   const jornadaFechaText = formatJornadaFechaPublica(jornada.fecha);
-  const jornadaHoraText = jornadaHoraInicioLabel(jornada.partidos ?? []);
+  const jornadaHoraText = jornadaHoraRef;
   const jornadaFechaHorarioText = [jornadaFechaText, jornadaHoraText]
     .filter(Boolean)
     .join(" · ");
@@ -432,8 +450,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     const side1 = resolveParejaFace(partido.pareja1_id);
     const side2 = resolveParejaFace(partido.pareja2_id);
     const canchaNum = partido.cancha ?? "?";
-    const estadoMod = partidoPublicEstadoMod(partido.estado);
-    const estadoText = partidoPublicEstadoLabel(partido.estado);
+    const estadoVisible = partidoPublicTemporalEstado(partido, temporalCtx);
+    const estadoMod = partidoPublicEstadoMod(estadoVisible);
+    const estadoText = partidoPublicEstadoLabel(estadoVisible);
     const board = getPartidoPublicScoreboard(partido, esParejasFijas);
     const matchStyle = {
       ["--liga-match-i" as string]: matchIndex,
@@ -566,7 +585,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
               <PublicEventBrandIdentity className="peds-hero__club-identity" />
             }
             estado={
-              <StatusBadge variant={jornadaEstadoBadgeVariant(jornada.estado)}>
+              <StatusBadge variant={jornadaEstadoBadgeVariant(jornadaEstadoVisible)}>
                 {jornadaEstadoText}
               </StatusBadge>
             }
