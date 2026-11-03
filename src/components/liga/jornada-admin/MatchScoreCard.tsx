@@ -20,6 +20,7 @@ import {
   DecidingSetModeToggle,
 } from "../DecidingSetModeToggle";
 import { JugadorAvatar } from "../../jugadores/JugadorAvatar";
+import { Button } from "../../ui";
 import { LigaScoreInput } from "../LigaScoreInput";
 import { parejaPlayerNames } from "./jornadaAdminUtils";
 
@@ -312,10 +313,14 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
       : isInProgress
         ? "En curso"
         : locked
-          ? "Bloqueado"
+          ? "Pendiente · espera ronda activa"
           : "Pendiente";
   const headTitle = `${headerMeta} — ${statusLabel}`;
   const canEdit = !locked;
+  const saveDisabled =
+    disabled ||
+    (mode === "sets" && !canSaveSets) ||
+    (mode === "rotativo" && !canSaveRotativo);
   const showForm =
     canEdit &&
     editing &&
@@ -764,32 +769,39 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
         </p>
       ) : null}
 
+      {locked ? (
+        <p className="jornada-match-card__locked-hint">
+          Captura disponible al activar esta ronda
+        </p>
+      ) : null}
+
       <div className="jornada-match-card__actions">
         {showSavedSummary && canEdit ? (
-          <button
+          <Button
             type="button"
-            className="jornada-match-card__save"
+            variant="secondary"
+            size="md"
+            className="jornada-match-card__save-btn"
             disabled={disabled}
             onClick={() => setEditing(true)}
           >
             Corregir resultado
-          </button>
+          </Button>
         ) : null}
 
         {showForm ? (
           <>
-            <button
+            <Button
               type="button"
-              className="jornada-match-card__save"
-              disabled={
-                disabled ||
-                (mode === "sets" && !canSaveSets) ||
-                (mode === "rotativo" && !canSaveRotativo)
-              }
+              variant="primary"
+              size="md"
+              className="jornada-match-card__save-btn"
+              disabled={saveDisabled}
+              loading={Boolean(busy)}
               onClick={onSave}
             >
               {justSaved ? "Guardado" : "Guardar resultado"}
-            </button>
+            </Button>
             {isSaved ? (
               <div className="jornada-match-card__edit-secondary">
                 <button
