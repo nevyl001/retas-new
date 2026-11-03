@@ -2937,10 +2937,8 @@
 
 .liga-nueva .liga-nueva__toolbar.riviera-back-toolbar::after,
 .liga-nueva .liga-toolbar.riviera-back-toolbar::after {
-  flex: 1 0 100%;
-  width: 48px;
-  max-width: 48px;
-  margin-top: 0.15rem;
+  content: none;
+  display: none;
 }
 
 .liga-nueva .liga-nueva__toolbar .riviera-btn-back {
