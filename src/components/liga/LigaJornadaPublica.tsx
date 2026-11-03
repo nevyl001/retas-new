@@ -830,7 +830,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                   Ranking de la jornada
                 </h2>
                 <p className="liga-pantalla-ranking__hint">
-                  Resultados de esta jornada por pareja y por jugador
+                  Parejas: PTS → DIF (obtenidos − recibidos) → G (ganados). Jugadores:
+                  PTS de la jornada.
                 </p>
                 <div className="liga-pantalla-ranking__dual">
                   <div className="liga-pantalla-ranking__panel">
@@ -845,7 +846,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                           <tr>
                             <th>#</th>
                             <th>Pareja</th>
-                            <th>V</th>
+                            <th title="Ganados">G</th>
                             <th>Pts</th>
                           </tr>
                         </thead>

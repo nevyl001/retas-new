@@ -38,6 +38,28 @@ function parejaDisplayName(p: LigaJornadaPareja): string {
   return `${p.jugador1?.nombre ?? "?"} / ${p.jugador2?.nombre ?? "?"}`;
 }
 
+/**
+ * Desempate ranking de parejas — jornada individual rotativa:
+ * PTS → DIF (obtenidos − recibidos) → G (ganados) → nombre.
+ */
+export function compareRotativoParejaJornadaRanking(
+  a: Pick<
+    ParejaJornadaStat,
+    "puntos" | "games_favor" | "games_contra" | "victorias" | "nombre"
+  >,
+  b: Pick<
+    ParejaJornadaStat,
+    "puntos" | "games_favor" | "games_contra" | "victorias" | "nombre"
+  >
+): number {
+  if (b.puntos !== a.puntos) return b.puntos - a.puntos;
+  const difA = a.games_favor - a.games_contra;
+  const difB = b.games_favor - b.games_contra;
+  if (difB !== difA) return difB - difA;
+  if (b.victorias !== a.victorias) return b.victorias - a.victorias;
+  return a.nombre.localeCompare(b.nombre);
+}
+
 export interface JornadaPublicStatsOptions {
   parejasFijas?: boolean;
 }
@@ -433,12 +455,7 @@ export function computeJornadaPublicStats(
         }
       );
     }
-    if (b.games_favor !== a.games_favor) return b.games_favor - a.games_favor;
-    const difA = a.games_favor - a.games_contra;
-    const difB = b.games_favor - b.games_contra;
-    if (difB !== difA) return difB - difA;
-    if (b.victorias !== a.victorias) return b.victorias - a.victorias;
-    return a.nombre.localeCompare(b.nombre);
+    return compareRotativoParejaJornadaRanking(a, b);
   });
 
   const rankingParejas = rankingParejasRaw.map((row, idx) => ({
