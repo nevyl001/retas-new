@@ -121,18 +121,6 @@ const ScoreField: React.FC<ScoreFieldProps> = ({
   </div>
 );
 
-interface PairScoreBlockProps {
-  id1: string | null;
-  id2: string | null;
-  name1: string;
-  name2: string;
-  rating1?: number | null;
-  rating2?: number | null;
-  side: "a" | "b";
-  fotoByJugadorId?: Record<string, string | null>;
-  children: React.ReactNode;
-}
-
 const AdminVsDivider: React.FC = () => (
   <div className="jornada-match-card__vs jornada-match-card__vs--between" aria-hidden>
     <span className="jornada-match-card__vs-rule" />
@@ -203,32 +191,21 @@ const PairLineup: React.FC<{
   </div>
 );
 
-const PairScoreBlock: React.FC<PairScoreBlockProps> = ({
-  id1,
-  id2,
-  name1,
-  name2,
-  rating1,
-  rating2,
-  side,
-  fotoByJugadorId,
-  children,
-}) => (
+/** Marcadores bajo la pareja; fila 2 del duelo alineado. */
+const PairSets: React.FC<{
+  side: "a" | "b";
+  children: React.ReactNode;
+}> = ({ side, children }) => (
   <div
-    className={`jornada-match-card__pair-block jornada-match-card__pair-block--${side}`}
+    className={`jornada-match-card__pair-sets jornada-match-card__pair-sets--${side}`}
   >
-    <PairLineup
-      id1={id1}
-      id2={id2}
-      name1={name1}
-      name2={name2}
-      rating1={rating1}
-      rating2={rating2}
-      fotoByJugadorId={fotoByJugadorId}
-      align={side === "b" ? "right" : "left"}
-    />
-    <div className="jornada-match-card__pair-sets">{children}</div>
+    {children}
   </div>
+);
+
+/** Celda vacía bajo el VS para la grilla 3×2. */
+const MatchupMidGap: React.FC = () => (
+  <div className="jornada-match-card__matchup-mid" aria-hidden />
 );
 
 export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
@@ -403,16 +380,27 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                   }}
                 />
               ) : null}
-              <PairScoreBlock
+              <PairLineup
                 id1={team1.id1}
                 id2={team1.id2}
                 name1={team1.name1}
                 name2={team1.name2}
                 rating1={team1.rating1}
                 rating2={team1.rating2}
-                side="a"
                 fotoByJugadorId={fotoByJugadorId}
-              >
+              />
+              <AdminVsDivider />
+              <PairLineup
+                id1={team2.id1}
+                id2={team2.id2}
+                name1={team2.name1}
+                name2={team2.name2}
+                rating1={team2.rating1}
+                rating2={team2.rating2}
+                fotoByJugadorId={fotoByJugadorId}
+                align="right"
+              />
+              <PairSets side="a">
                 <ScoreField
                   id={scoreFieldId(partido.id, "set1-p1")}
                   label="Set 1"
@@ -461,20 +449,9 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                     }
                   />
                 ) : null}
-              </PairScoreBlock>
-
-              <AdminVsDivider />
-
-              <PairScoreBlock
-                id1={team2.id1}
-                id2={team2.id2}
-                name1={team2.name1}
-                name2={team2.name2}
-                rating1={team2.rating1}
-                rating2={team2.rating2}
-                side="b"
-                fotoByJugadorId={fotoByJugadorId}
-              >
+              </PairSets>
+              <MatchupMidGap />
+              <PairSets side="b">
                 <ScoreField
                   id={scoreFieldId(partido.id, "set1-p2")}
                   label="Set 1"
@@ -523,7 +500,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                     }
                   />
                 ) : null}
-              </PairScoreBlock>
+              </PairSets>
             </>
           ) : null}
 
@@ -552,16 +529,27 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                   }}
                 />
               ) : null}
-              <PairScoreBlock
+              <PairLineup
                 id1={team1.id1}
                 id2={team1.id2}
                 name1={team1.name1}
                 name2={team1.name2}
                 rating1={team1.rating1}
                 rating2={team1.rating2}
-                side="a"
                 fotoByJugadorId={fotoByJugadorId}
-              >
+              />
+              <AdminVsDivider />
+              <PairLineup
+                id1={team2.id1}
+                id2={team2.id2}
+                name1={team2.name1}
+                name2={team2.name2}
+                rating1={team2.rating1}
+                rating2={team2.rating2}
+                fotoByJugadorId={fotoByJugadorId}
+                align="right"
+              />
+              <PairSets side="a">
                 <ScoreField
                   id={scoreFieldId(partido.id, "playoffs-set1-p1")}
                   label="Set 1"
@@ -618,20 +606,9 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                     }
                   />
                 ) : null}
-              </PairScoreBlock>
-
-              <AdminVsDivider />
-
-              <PairScoreBlock
-                id1={team2.id1}
-                id2={team2.id2}
-                name1={team2.name1}
-                name2={team2.name2}
-                rating1={team2.rating1}
-                rating2={team2.rating2}
-                side="b"
-                fotoByJugadorId={fotoByJugadorId}
-              >
+              </PairSets>
+              <MatchupMidGap />
+              <PairSets side="b">
                 <ScoreField
                   id={scoreFieldId(partido.id, "playoffs-set1-p2")}
                   label="Set 1"
@@ -688,22 +665,33 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                     }
                   />
                 ) : null}
-              </PairScoreBlock>
+              </PairSets>
             </>
           ) : null}
 
           {mode === "rotativo" && rotativoDraft && onRotativoChange ? (
             <>
-              <PairScoreBlock
+              <PairLineup
                 id1={team1.id1}
                 id2={team1.id2}
                 name1={team1.name1}
                 name2={team1.name2}
                 rating1={team1.rating1}
                 rating2={team1.rating2}
-                side="a"
                 fotoByJugadorId={fotoByJugadorId}
-              >
+              />
+              <AdminVsDivider />
+              <PairLineup
+                id1={team2.id1}
+                id2={team2.id2}
+                name1={team2.name1}
+                name2={team2.name2}
+                rating1={team2.rating1}
+                rating2={team2.rating2}
+                fotoByJugadorId={fotoByJugadorId}
+                align="right"
+              />
+              <PairSets side="a">
                 <ScoreField
                   id={scoreFieldId(partido.id, "rotativo-s1")}
                   label="Resultado"
@@ -712,20 +700,9 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                   disabled={disabled}
                   onChange={(s1) => onRotativoChange({ ...rotativoDraft, s1 })}
                 />
-              </PairScoreBlock>
-
-              <AdminVsDivider />
-
-              <PairScoreBlock
-                id1={team2.id1}
-                id2={team2.id2}
-                name1={team2.name1}
-                name2={team2.name2}
-                rating1={team2.rating1}
-                rating2={team2.rating2}
-                side="b"
-                fotoByJugadorId={fotoByJugadorId}
-              >
+              </PairSets>
+              <MatchupMidGap />
+              <PairSets side="b">
                 <ScoreField
                   id={scoreFieldId(partido.id, "rotativo-s2")}
                   label="Resultado"
@@ -734,7 +711,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                   disabled={disabled}
                   onChange={(s2) => onRotativoChange({ ...rotativoDraft, s2 })}
                 />
-              </PairScoreBlock>
+              </PairSets>
             </>
           ) : null}
         </div>
