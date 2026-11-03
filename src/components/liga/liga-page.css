@@ -2916,3 +2916,442 @@
     text-align: left;
   }
 }
+
+/* ─── LigaNueva — configurador premium (solo UI) ─── */
+
+.liga-page.liga-nueva .liga-page__inner {
+  max-width: min(1240px, 100%);
+}
+
+.liga-nueva__crumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--liga-text-muted);
+}
+
+.liga-nueva__crumb-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: var(--liga-text-soft);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.liga-nueva__crumb-link:hover,
+.liga-nueva__crumb-link:focus-visible {
+  color: var(--brand-accent, var(--ro-accent));
+  outline: none;
+}
+
+.liga-nueva__crumb-sep {
+  opacity: 0.55;
+}
+
+.liga-nueva__crumb-current {
+  color: var(--liga-text);
+  font-weight: 600;
+}
+
+.liga-nueva__header.liga-header {
+  margin-bottom: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+.liga-nueva__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.liga-nueva__form {
+  margin: 0;
+}
+
+.liga-nueva__layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .liga-nueva__layout {
+    grid-template-columns: minmax(0, 1.95fr) minmax(280px, 0.9fr);
+    gap: 1.5rem;
+  }
+
+  .liga-nueva__aside {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+.liga-nueva__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  min-width: 0;
+}
+
+.liga-nueva__panel {
+  background: var(--liga-surface);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-radius-lg);
+  padding: clamp(1.1rem, 2.4vw, 1.5rem);
+  box-shadow: var(--liga-shadow-card);
+}
+
+.liga-nueva__panel-head {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  margin-bottom: 1.15rem;
+}
+
+.liga-nueva__step {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--liga-border);
+  background: var(--liga-surface-deep);
+  color: var(--liga-text-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.liga-nueva__panel-title {
+  margin: 0;
+  font-family: var(--liga-font-display);
+  font-size: clamp(1.05rem, 2.2vw, 1.2rem);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--liga-text);
+}
+
+.liga-nueva__panel-sub {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--liga-text-muted);
+}
+
+.liga-nueva .liga-field label {
+  font-size: 0.875rem;
+  color: var(--liga-text-soft);
+}
+
+.liga-nueva .liga-field input:not([type="radio"]):not([type="checkbox"]),
+.liga-nueva .liga-field select {
+  min-height: 46px;
+  font-size: 0.95rem;
+}
+
+.liga-nueva__modalidades {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.liga-nueva__modalidad-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 900px) and (max-width: 1023px) {
+  .liga-nueva__modalidad-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.liga-nueva__modalidad-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.85rem;
+  align-items: flex-start;
+  min-width: 0;
+  margin: 0;
+  padding: 1rem 1.05rem;
+  border-radius: var(--liga-radius-md);
+  border: 1px solid var(--liga-border);
+  background: var(--liga-surface-deep);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.liga-nueva__modalidad-card:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 35%,
+    var(--liga-border)
+  );
+  background: var(--liga-surface-hover);
+}
+
+.liga-nueva__modalidad-card:focus-within {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ro-accent-ring);
+}
+
+.liga-nueva__modalidad-card.is-selected {
+  border-color: var(--brand-accent, var(--ro-accent));
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 9%,
+    var(--liga-surface)
+  );
+}
+
+.liga-nueva__modalidad-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+.liga-nueva__modalidad-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--liga-border-subtle);
+  background: var(--liga-surface);
+  color: var(--liga-text-soft);
+  flex: 0 0 auto;
+}
+
+.liga-nueva__modalidad-card.is-selected .liga-nueva__modalidad-icon {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 45%,
+    var(--liga-border)
+  );
+  color: var(--brand-accent, var(--ro-accent));
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 12%,
+    var(--liga-surface)
+  );
+}
+
+.liga-nueva__modalidad-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.liga-nueva__modalidad-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+}
+
+.liga-nueva__modalidad-title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--liga-text);
+}
+
+.liga-nueva__modalidad-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--liga-border);
+  background: var(--liga-surface);
+  color: var(--liga-text-muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.liga-nueva__modalidad-card.is-selected .liga-nueva__modalidad-badge {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 40%,
+    var(--liga-border)
+  );
+  color: var(--liga-text-soft);
+}
+
+.liga-nueva__modalidad-desc {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--liga-text-muted);
+}
+
+.liga-nueva__modalidad-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-accent, var(--ro-accent));
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.liga-nueva__modalidad-card.is-selected .liga-nueva__modalidad-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.liga-nueva__vueltas {
+  margin-top: 1rem;
+  margin-bottom: 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--liga-border-subtle);
+}
+
+.liga-nueva__summary {
+  background: var(--liga-surface);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-radius-lg);
+  padding: clamp(1.1rem, 2.4vw, 1.35rem);
+  box-shadow: var(--liga-shadow-card);
+}
+
+.liga-nueva__summary-title {
+  margin: 0 0 1rem;
+  font-family: var(--liga-font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--liga-text);
+}
+
+.liga-nueva__summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin: 0 0 1.15rem;
+  padding: 0;
+}
+
+.liga-nueva__summary-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--liga-border-subtle);
+}
+
+.liga-nueva__summary-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.liga-nueva__summary-row dt {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--liga-text-muted);
+}
+
+.liga-nueva__summary-row dd {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--liga-text);
+  overflow-wrap: anywhere;
+}
+
+.liga-nueva__summary-row dd.is-muted {
+  font-weight: 500;
+  color: var(--liga-text-muted);
+}
+
+.liga-nueva__summary-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--liga-border);
+  font-size: 0.7rem;
+  font-weight: 650;
+  color: var(--liga-text-muted);
+  vertical-align: middle;
+}
+
+.liga-nueva__summary-error {
+  margin: 0 0 0.85rem;
+  font-size: 0.9rem;
+}
+
+.liga-nueva__submit {
+  width: 100%;
+  min-height: 48px;
+  justify-content: center;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+@media (max-width: 1023px) {
+  .liga-nueva__aside {
+    order: 2;
+  }
+
+  .liga-nueva__main {
+    order: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .liga-nueva__modalidad-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 0.9rem;
+  }
+
+  .liga-nueva__modalidad-check {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+
+  .liga-nueva__modalidad-badge {
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liga-nueva__modalidad-card,
+  .liga-nueva__modalidad-check {
+    transition: none;
+  }
+}
