@@ -713,33 +713,19 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     }
   };
 
-  const saveJornadaFecha = async () => {
+  const saveJornadaProgramacion = async () => {
     if (!jornada) return;
     const fecha = jornadaFechaDraft(jornada.fecha, jornadaFechaDrafts, jornada.id);
     setBusy(true);
     setError(null);
     try {
       await updateJornadaFecha(jornada.id, fecha || null);
-      setMessage("Día de jornada guardado.");
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const saveJornadaHorario = async () => {
-    if (!jornada) return;
-    setBusy(true);
-    setError(null);
-    try {
       await updateJornadaHoraInicio(
         jornada.id,
         jornadaHoraDraft || null,
         detalle?.canchas_disponibles ?? 1
       );
-      setMessage("Hora de inicio guardada.");
+      setMessage("Programación guardada.");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -1075,8 +1061,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               }))
             }
             onHoraChange={setJornadaHoraDraft}
-            onSaveFecha={saveJornadaFecha}
-            onApplyHorario={saveJornadaHorario}
+            onSave={() => void saveJornadaProgramacion()}
           />
         ) : null}
 

@@ -8,8 +8,8 @@ export interface JornadaScheduleToolbarProps {
   busy?: boolean;
   onFechaChange: (fecha: string) => void;
   onHoraChange: (hora: string) => void;
-  onSaveFecha: () => void;
-  onApplyHorario: () => void;
+  /** Guarda fecha e inicio (cuando aplica) en una sola acción. */
+  onSave: () => void;
 }
 
 export const JornadaScheduleToolbar: React.FC<JornadaScheduleToolbarProps> = ({
@@ -20,8 +20,7 @@ export const JornadaScheduleToolbar: React.FC<JornadaScheduleToolbarProps> = ({
   busy,
   onFechaChange,
   onHoraChange,
-  onSaveFecha,
-  onApplyHorario,
+  onSave,
 }) => (
   <section className="jornada-schedule-toolbar" aria-label="Programación de la jornada">
     <span className="jornada-schedule-toolbar__label">Programación</span>
@@ -53,21 +52,11 @@ export const JornadaScheduleToolbar: React.FC<JornadaScheduleToolbarProps> = ({
     ) : null}
     <button
       type="button"
-      className="jornada-schedule-toolbar__btn"
+      className="jornada-schedule-toolbar__btn jornada-schedule-toolbar__btn--accent"
       disabled={disabled || busy}
-      onClick={onSaveFecha}
+      onClick={onSave}
     >
-      Guardar fecha
+      {busy ? "Guardando…" : "Guardar"}
     </button>
-    {showBulkHorario ? (
-      <button
-        type="button"
-        className="jornada-schedule-toolbar__btn jornada-schedule-toolbar__btn--accent"
-        disabled={disabled || busy}
-        onClick={onApplyHorario}
-      >
-        Guardar inicio
-      </button>
-    ) : null}
   </section>
 );
