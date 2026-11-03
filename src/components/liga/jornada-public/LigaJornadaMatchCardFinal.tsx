@@ -20,29 +20,10 @@ interface LigaJornadaMatchCardFinalProps {
   scoreSummaryOnly?: boolean;
 }
 
-/** Invierte p1/p2 del marcador para alinear con ganador arriba. */
-function boardWithTopFirst(
-  board: PartidoPublicScoreboard,
-  flip: boolean
-): PartidoPublicScoreboard {
-  if (!flip) return board;
-  if (board.kind === "simple") {
-    return { ...board, s1: board.s2, s2: board.s1 };
-  }
-  if (board.kind === "board") {
-    return {
-      ...board,
-      columns: board.columns.map((col) => ({
-        ...col,
-        p1: col.p2,
-        p2: col.p1,
-      })),
-    };
-  }
-  return board;
-}
-
-/** Card final — layout vertical (ganador arriba) + marcador debajo. */
+/**
+ * Card final — enfrentamiento horizontal [J1][J2] VS [J3][J4] + marcador.
+ * Lados fijos (pareja1 izquierda / pareja2 derecha); tono win/loss visual.
+ */
 export const LigaJornadaMatchCardFinal: React.FC<
   LigaJornadaMatchCardFinalProps
 > = ({
@@ -57,16 +38,12 @@ export const LigaJornadaMatchCardFinal: React.FC<
   matchStyle,
   scoreSummaryOnly = false,
 }) => {
-  const winnerOnTop = p2Wins;
-  const topSide = winnerOnTop ? side2 : side1;
-  const bottomSide = winnerOnTop ? side1 : side2;
-  const topTone = p1Wins || p2Wins ? "win" : undefined;
-  const bottomTone = p1Wins || p2Wins ? "loss" : undefined;
-  const visualBoard = boardWithTopFirst(board, winnerOnTop);
+  const leftTone = p1Wins ? "win" : p2Wins ? "loss" : undefined;
+  const rightTone = p2Wins ? "win" : p1Wins ? "loss" : undefined;
 
   return (
     <article
-      className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--final liga-jornada-match-card--hero-players liga-jornada-match-card--broadcast liga-jornada-match-card--split-vs liga-jornada-match-card--stack-vs"
+      className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--final liga-jornada-match-card--broadcast liga-jornada-match-card--duel-row"
       style={matchStyle}
     >
       <LigaJornadaMatchCardHeader
@@ -75,26 +52,24 @@ export const LigaJornadaMatchCardFinal: React.FC<
         estadoText={estadoText}
       />
       <div className="liga-jornada-match-card__final-body">
-        <div className="liga-jornada-match-card__split">
+        <div className="liga-jornada-match-card__duel">
           <LigaJornadaMatchPairStack
-            side={topSide}
-            align="top"
-            tone={topTone}
-            pairLabel={topTone === "win" ? "Ganadores" : "Pareja A"}
-            label={`Pareja: ${topSide.name1} y ${topSide.name2}`}
+            side={side1}
+            align="left"
+            tone={leftTone}
+            label={`${side1.name1} y ${side1.name2}`}
           />
           <LigaJornadaMatchVsDivider />
           <LigaJornadaMatchPairStack
-            side={bottomSide}
-            align="bottom"
-            tone={bottomTone}
-            pairLabel={bottomTone === "loss" ? "Rivales" : "Pareja B"}
-            label={`Pareja: ${bottomSide.name1} y ${bottomSide.name2}`}
+            side={side2}
+            align="right"
+            tone={rightTone}
+            label={`${side2.name1} y ${side2.name2}`}
           />
         </div>
         <div className="liga-jornada-match-card__final-score">
           <LigaJornadaMatchScoreGrid
-            board={visualBoard}
+            board={board}
             summaryOnly={scoreSummaryOnly}
           />
         </div>

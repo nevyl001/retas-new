@@ -1,10 +1,8 @@
 import React from "react";
 
-/** Separador editorial vertical entre Pareja A y Pareja B. */
+/** Separador VS entre parejas (eje horizontal del enfrentamiento). */
 export const LigaJornadaMatchVsDivider: React.FC = () => (
-  <div className="liga-jornada-match-card__split-vs" aria-hidden="true">
-    <span className="liga-jornada-match-card__split-vs-rule" />
-    <span className="liga-jornada-match-card__split-vs-label">VS</span>
-    <span className="liga-jornada-match-card__split-vs-rule" />
+  <div className="liga-jornada-match-card__duel-vs" aria-hidden="true">
+    <span className="liga-jornada-match-card__duel-vs-label">VS</span>
   </div>
 );

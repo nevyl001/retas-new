@@ -4,26 +4,21 @@ import type { LigaJornadaMatchPairSide } from "./ligaJornadaMatchTypes";
 
 interface LigaJornadaMatchPairStackProps {
   side: LigaJornadaMatchPairSide;
-  align?: "top" | "bottom" | "left" | "right";
+  align?: "left" | "right";
   tone?: "win" | "loss";
   label?: string;
-  /** Etiqueta visible discreta (Pareja A / Pareja B). */
-  pairLabel?: string;
 }
 
-/** Bloque de pareja: 2 jugadores lado a lado dentro de la composición vertical. */
+/** Pareja: 2 retratos lado a lado (sin etiqueta Pareja A/B). */
 export const LigaJornadaMatchPairStack: React.FC<
   LigaJornadaMatchPairStackProps
-> = ({ side, align = "top", tone, label, pairLabel }) => (
+> = ({ side, align = "left", tone, label }) => (
   <div
     className={`liga-jornada-match-pair-half liga-jornada-match-pair-half--${align}${
       tone ? ` liga-jornada-match-pair-half--${tone}` : ""
     }`}
     aria-label={label ?? `Pareja: ${side.name1} y ${side.name2}`}
   >
-    {pairLabel ? (
-      <p className="liga-jornada-match-pair-half__label">{pairLabel}</p>
-    ) : null}
     {tone === "win" ? (
       <span
         className="liga-jornada-match-pair-half__badge"
