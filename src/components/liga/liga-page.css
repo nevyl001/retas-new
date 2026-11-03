@@ -3338,3 +3338,333 @@
     transition: none;
   }
 }
+
+/* ─── LigaInscripcionesPanel — roster premium ─── */
+
+.liga-inscripciones__header {
+  margin-bottom: 1rem;
+}
+
+.liga-inscripciones__title {
+  margin: 0;
+  font-family: var(--liga-font-display);
+  font-size: clamp(1.15rem, 2.4vw, 1.35rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--liga-text);
+}
+
+.liga-inscripciones__subtitle {
+  margin: 0.3rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--liga-text-muted);
+}
+
+.liga-inscripciones__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1.1rem;
+}
+
+.liga-inscripciones__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--liga-radius-md);
+  border: 1px solid var(--liga-border);
+  background: var(--liga-surface-deep);
+}
+
+.liga-inscripciones__stat-label {
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--liga-text-muted);
+}
+
+.liga-inscripciones__stat-value {
+  font-size: 1.2rem;
+  font-weight: 750;
+  line-height: 1.2;
+  color: var(--liga-text);
+}
+
+.liga-inscripciones__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .liga-inscripciones__controls {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+}
+
+.liga-inscripciones__search {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 28rem;
+}
+
+.liga-inscripciones__search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--liga-text-muted);
+  pointer-events: none;
+}
+
+.liga-inscripciones__search input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.65rem 2.4rem 0.65rem 2.45rem;
+  border-radius: var(--liga-radius-sm);
+  border: 1px solid var(--liga-border);
+  background: var(--ro-bg-input);
+  color: var(--liga-text);
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.liga-inscripciones__search input:focus {
+  outline: none;
+  border-color: var(--brand-accent, var(--ro-accent));
+  box-shadow: 0 0 0 2px var(--ro-accent-ring);
+}
+
+.liga-inscripciones__search-clear {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--liga-text-muted);
+  cursor: pointer;
+}
+
+.liga-inscripciones__search-clear:hover,
+.liga-inscripciones__search-clear:focus-visible {
+  color: var(--liga-text);
+  background: var(--liga-surface-hover);
+  outline: none;
+}
+
+.liga-inscripciones__filters {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--liga-border);
+  background: var(--liga-surface-deep);
+}
+
+.liga-inscripciones__filter {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--liga-text-muted);
+  min-height: 36px;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.liga-inscripciones__filter.is-active {
+  background: var(--liga-surface);
+  color: var(--liga-text);
+  box-shadow: var(--liga-shadow-card);
+}
+
+.liga-inscripciones__filter:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--ro-accent));
+  outline-offset: 2px;
+}
+
+.liga-inscripciones__results {
+  margin: 0 0 0.9rem;
+  font-size: 0.85rem;
+  color: var(--liga-text-muted);
+}
+
+.liga-inscripciones__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+
+@media (min-width: 640px) {
+  .liga-inscripciones__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .liga-inscripciones__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .liga-inscripciones__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.liga-inscripciones__card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.85rem;
+  min-width: 0;
+  padding: 1rem;
+  border-radius: var(--liga-radius-md);
+  border: 1px solid var(--liga-border);
+  background: var(--liga-surface-deep);
+}
+
+.liga-inscripciones__card.is-inscrito {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 40%,
+    var(--liga-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, var(--ro-accent)) 8%,
+    var(--liga-surface)
+  );
+}
+
+.liga-inscripciones__card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.liga-inscripciones__avatar.rj-avatar {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+}
+
+.liga-inscripciones__identity {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.liga-inscripciones__name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--liga-text);
+  overflow-wrap: anywhere;
+}
+
+.liga-inscripciones__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.liga-inscripciones__cat-missing,
+.liga-inscripciones__nivel {
+  font-size: 0.75rem;
+  color: var(--liga-text-muted);
+}
+
+.liga-inscripciones__card-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+}
+
+.liga-inscripciones__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--liga-text-muted);
+}
+
+.liga-inscripciones__status.is-on {
+  color: var(--liga-text-soft);
+}
+
+.liga-inscripciones__action {
+  width: 100%;
+  min-height: 42px;
+  justify-content: center;
+}
+
+.liga-inscripciones__empty {
+  margin-top: 0.5rem;
+}
+
+.liga-inscripciones__pager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--liga-border-subtle);
+}
+
+@media (min-width: 640px) {
+  .liga-inscripciones__pager {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.liga-inscripciones__pager-meta,
+.liga-inscripciones__pager-page {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--liga-text-muted);
+}
+
+.liga-inscripciones__pager-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .liga-inscripciones__stats {
+    grid-template-columns: 1fr;
+  }
+}

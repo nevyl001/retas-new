@@ -61,6 +61,7 @@ import {
   navigateLiga,
 } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
+import { LigaInscripcionesPanel } from "./LigaInscripcionesPanel";
 import "./liga-page.css";
 
 interface LigaGestionarProps {
@@ -1152,67 +1153,14 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
       {!esParejasFijas && (
         <ModeSectionPanel id="jugadores" activeId={tab}>
-          <div className="liga-card rv-card">
-            <h2 className="liga-card__title">Inscripciones en esta liga</h2>
-            <ul className="liga-list liga-list--roster">
-              {jugadoresPool.map((j) => {
-                const inscrito = inscritosIds.has(j.id);
-                return (
-                  <li
-                    key={j.id}
-                    className={`liga-list-item liga-list-item--roster${
-                      inscrito ? " is-inscrito" : ""
-                    }`}
-                  >
-                    <div className="liga-list-item__main">
-                      <div className="liga-list-item__head">
-                        <p className="liga-list-item__title">{j.nombre}</p>
-                        {j.categoria ? (
-                          <JugadorCategoriaBadge
-                            categoria={j.categoria}
-                            className="liga-list-item__cat"
-                          />
-                        ) : (
-                          <span className="liga-list-item__cat-missing">
-                            Sin categoría
-                          </span>
-                        )}
-                      </div>
-                      <p className="liga-list-item__meta">
-                        {inscrito ? "Inscrito" : "Sin inscribir"}
-                      </p>
-                    </div>
-                    {ligaEditable && (
-                      <div className="liga-list-item__actions">
-                        <Button
-                          type="button"
-                          variant={inscrito ? "danger" : "secondary"}
-                          size="sm"
-                          disabled={busy}
-                          onClick={() => toggleInscripcion(j.id, inscrito)}
-                        >
-                          {inscrito ? "Desinscribir" : "Inscribir"}
-                        </Button>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-            {jugadoresPool.length === 0 && (
-              <div className="liga-empty">
-                <p>Aún no hay jugadores en el registro.</p>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigateJugadoresLista("M")}
-                >
-                  Ir al registro de jugadores
-                </Button>
-              </div>
-            )}
-          </div>
+          <LigaInscripcionesPanel
+            jugadoresPool={jugadoresPool}
+            inscritosIds={inscritosIds}
+            ligaEditable={ligaEditable}
+            busy={busy}
+            onToggleInscripcion={toggleInscripcion}
+            onGoToRegistro={() => navigateJugadoresLista("M")}
+          />
         </ModeSectionPanel>
       )}
 
