@@ -188,20 +188,37 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
 
   useEffect(() => {
     const organizadorId = detalle?.organizador_id;
-    if (
-      !organizadorId ||
-      !detalle ||
-      isEquiposModalidad(detalle.modalidad) ||
-      ranking.length === 0
-    ) {
+    if (!organizadorId || !detalle || isEquiposModalidad(detalle.modalidad)) {
       setJugadorFotos({});
       return;
     }
 
-    const entries = ranking.map((row) => ({
-      id: row.jugador_id,
-      name: row.nombre,
+    const byId = new Map<string, string>();
+    for (const row of ranking) {
+      byId.set(row.jugador_id, row.nombre);
+    }
+    for (const j of detalle.jugadores ?? []) {
+      if (!byId.has(j.id)) byId.set(j.id, j.nombre);
+    }
+    for (const jornada of detalle.jornadas ?? []) {
+      for (const p of jornada.parejas ?? []) {
+        if (p.jugador1_id && !byId.has(p.jugador1_id)) {
+          byId.set(p.jugador1_id, p.jugador1?.nombre ?? "");
+        }
+        if (p.jugador2_id && !byId.has(p.jugador2_id)) {
+          byId.set(p.jugador2_id, p.jugador2?.nombre ?? "");
+        }
+      }
+    }
+    const entries = Array.from(byId.entries()).map(([id, name]) => ({
+      id,
+      name,
     }));
+    if (entries.length === 0) {
+      setJugadorFotos({});
+      return;
+    }
+
     let cancelled = false;
     void resolveLigaJugadorPublicProfiles(organizadorId, entries)
       .then((profiles) => {
@@ -872,30 +889,58 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                           </p>
                         ) : (
                           <ul className="liga-ind-jornadas__matches">
-                            {matchups.map((m) => {
-                              const { a, b } = splitParejaLabel(m.local);
+                            {(selectedJornada.parejas ?? []).map((pareja) => {
+                              const labelFallback = splitParejaLabel(
+                                matchups.find((m) => m.id === pareja.id)
+                                  ?.local ?? ""
+                              );
+                              const nombre1 =
+                                pareja.jugador1?.nombre?.trim() ||
+                                labelFallback.a ||
+                                "?";
+                              const nombre2 =
+                                pareja.jugador2?.nombre?.trim() ||
+                                labelFallback.b ||
+                                "?";
                               return (
                                 <li
-                                  key={m.id}
+                                  key={pareja.id}
                                   className="liga-ind-jornadas__match"
                                 >
+                                  <div
+                                    className="liga-ind-jornadas__faces"
+                                    aria-hidden
+                                  >
+                                    <JugadorAvatar
+                                      fotoUrl={
+                                        jugadorFotos[pareja.jugador1_id]
+                                      }
+                                      nombre={nombre1}
+                                      size="sm"
+                                      className="liga-ind-jornadas__face"
+                                    />
+                                    <JugadorAvatar
+                                      fotoUrl={
+                                        jugadorFotos[pareja.jugador2_id]
+                                      }
+                                      nombre={nombre2}
+                                      size="sm"
+                                      className="liga-ind-jornadas__face"
+                                    />
+                                  </div>
                                   <span className="liga-ind-jornadas__pair">
                                     <span className="liga-ind-jornadas__player">
-                                      {a}
+                                      {nombre1}
                                     </span>
-                                    {b ? (
-                                      <>
-                                        <span
-                                          className="liga-ind-jornadas__sep"
-                                          aria-hidden
-                                        >
-                                          /
-                                        </span>
-                                        <span className="liga-ind-jornadas__player">
-                                          {b}
-                                        </span>
-                                      </>
-                                    ) : null}
+                                    <span
+                                      className="liga-ind-jornadas__sep"
+                                      aria-hidden
+                                    >
+                                      /
+                                    </span>
+                                    <span className="liga-ind-jornadas__player">
+                                      {nombre2}
+                                    </span>
                                   </span>
                                 </li>
                               );
