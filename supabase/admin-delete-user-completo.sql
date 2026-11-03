@@ -225,11 +225,11 @@ BEGIN
   END IF;
 
   -- Reasignar o borrar identidades cuyo canonical pertenece a esta cuenta.
+  -- (sin UPDATE…FROM LATERAL: Postgres marca "invalid reference to FROM-clause entry for table i")
   IF to_regclass('public.riviera_official_player_identity') IS NOT NULL THEN
     IF to_regclass('public.riviera_official_player_profile_link') IS NOT NULL THEN
       UPDATE public.riviera_official_player_identity i
-      SET canonical_riviera_jugador_id = alt.riviera_jugador_id
-      FROM LATERAL (
+      SET canonical_riviera_jugador_id = (
         SELECT l.riviera_jugador_id
         FROM public.riviera_official_player_profile_link l
         WHERE l.official_player_key = i.official_player_key
@@ -238,26 +238,38 @@ BEGIN
           )
         ORDER BY l.created_at
         LIMIT 1
-      ) alt
+      )
       WHERE i.canonical_riviera_jugador_id IN (
         SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
-      );
+      )
+        AND EXISTS (
+          SELECT 1
+          FROM public.riviera_official_player_profile_link l
+          WHERE l.official_player_key = i.official_player_key
+            AND l.riviera_jugador_id NOT IN (
+              SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+            )
+        );
 
       DELETE FROM public.riviera_official_player_profile_link
       WHERE riviera_jugador_id IN (
         SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
-      )
-         OR official_player_key IN (
-              SELECT i.official_player_key
-              FROM public.riviera_official_player_identity i
-              WHERE i.canonical_riviera_jugador_id IN (
-                SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
-              )
-            );
+      );
     END IF;
 
     IF to_regclass('public.riviera_official_player_totals') IS NOT NULL THEN
       DELETE FROM public.riviera_official_player_totals
+      WHERE official_player_key IN (
+        SELECT i.official_player_key
+        FROM public.riviera_official_player_identity i
+        WHERE i.canonical_riviera_jugador_id IN (
+          SELECT id FROM public.riviera_jugadores WHERE organizador_id = v_uid
+        )
+      );
+    END IF;
+
+    IF to_regclass('public.riviera_official_points_ledger') IS NOT NULL THEN
+      DELETE FROM public.riviera_official_points_ledger
       WHERE official_player_key IN (
         SELECT i.official_player_key
         FROM public.riviera_official_player_identity i
