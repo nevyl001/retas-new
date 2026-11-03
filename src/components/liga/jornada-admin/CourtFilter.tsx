@@ -38,7 +38,7 @@ export const CourtFilter: React.FC<CourtFilterProps> = ({
         }`}
         onClick={() => onChange(n)}
       >
-        C{n}
+        Cancha {n}
       </button>
     ))}
   </div>

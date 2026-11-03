@@ -61,6 +61,7 @@ import {
   parejaLabel,
   rondaHoraLabel,
 } from "./jornada-admin/jornadaAdminUtils";
+import { resolveLigaJugadorPublicProfiles } from "../../lib/liga/publicParejaAvatars";
 import { ligaGestionarPath, navigateLiga, publicLigaJornadaUrl } from "./ligaNav";
 import type { SimpleRankingPresentationRow } from "../../lib/modePresentation/standingsRowAdapters";
 import "./liga-page.css";
@@ -178,6 +179,9 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const [manualPuntos, setManualPuntos] = useState<Record<string, string>>({});
   const [showManualEdit, setShowManualEdit] = useState(false);
   const [canchaFilter, setCanchaFilter] = useState<number | "all">("all");
+  const [jugadorFotos, setJugadorFotos] = useState<
+    Record<string, string | null>
+  >({});
   const autoCareerResyncRef = useRef<string | null>(null);
   const autoRepairScheduleRef = useRef<string | null>(null);
 
@@ -215,6 +219,50 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     () => detalle?.jornadas.find((j) => j.numero === numero),
     [detalle, numero]
   );
+
+  useEffect(() => {
+    const organizadorId = detalle?.organizador_id;
+    if (!organizadorId || !jornada) {
+      setJugadorFotos({});
+      return;
+    }
+    const byId = new Map<string, string>();
+    for (const p of jornada.parejas ?? []) {
+      if (p.jugador1_id) {
+        byId.set(p.jugador1_id, p.jugador1?.nombre ?? "");
+      }
+      if (p.jugador2_id) {
+        byId.set(p.jugador2_id, p.jugador2?.nombre ?? "");
+      }
+    }
+    for (const j of detalle.jugadores ?? []) {
+      if (!byId.has(j.id)) byId.set(j.id, j.nombre);
+    }
+    const entries = Array.from(byId.entries()).map(([id, name]) => ({
+      id,
+      name,
+    }));
+    if (entries.length === 0) {
+      setJugadorFotos({});
+      return;
+    }
+    let cancelled = false;
+    void resolveLigaJugadorPublicProfiles(organizadorId, entries)
+      .then((profiles) => {
+        if (cancelled || !profiles) return;
+        const fotos: Record<string, string | null> = {};
+        for (const entry of entries) {
+          fotos[entry.id] = profiles[entry.id]?.fotoUrl ?? null;
+        }
+        setJugadorFotos(fotos);
+      })
+      .catch((err) => {
+        console.warn("[liga] fotos jornada admin:", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [detalle, jornada]);
 
   // Al abrir una jornada ya cerrada, reparar historial Riviera automáticamente
   // (idempotente). Cubre el caso “Completada” sin GANADOR JORNADA N.
@@ -951,6 +999,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
           busy={busy}
           pareja1Label={label1}
           pareja2Label={label2}
+          fotoByJugadorId={jugadorFotos}
           playoffsDraft={playoffsDraft}
           justSaved={savedPartidoFlash === partido.id}
           onPlayoffsChange={(next) =>
@@ -974,6 +1023,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
           busy={busy}
           pareja1Label={label1}
           pareja2Label={label2}
+          fotoByJugadorId={jugadorFotos}
           setsDraft={setsDraft}
           justSaved={savedPartidoFlash === partido.id}
           onSetsChange={(next) =>
@@ -1009,6 +1059,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         busy={busy}
         pareja1Label={label1}
         pareja2Label={label2}
+        fotoByJugadorId={jugadorFotos}
         rotativoDraft={draft}
         justSaved={savedPartidoFlash === partido.id}
         onRotativoChange={(next) =>
@@ -1158,6 +1209,14 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                   ronda={ronda}
                   partidos={partidos}
                   statusLabel={!esParejasFijas ? statusLabel : undefined}
+                  resultadosGuardados={
+                    partidos.filter((p) => p.estado === "completed").length
+                  }
+                  defaultCollapsed={
+                    !esParejasFijas &&
+                    rondaActiva != null &&
+                    ronda !== rondaActiva
+                  }
                   rondaHorario={
                     !esParejasFijas ? (
                       <div className="jornada-round__schedule">

@@ -16,6 +16,8 @@ export function parejaPlayerNames(
   parejaId: string,
   jornada: LigaJornada | undefined
 ): {
+  id1: string | null;
+  id2: string | null;
   name1: string;
   name2: string;
   rating1: number | null;
@@ -24,6 +26,8 @@ export function parejaPlayerNames(
   const p = jornada?.parejas?.find((x) => x.id === parejaId);
   if (!p) {
     return {
+      id1: null,
+      id2: null,
       name1: "Jugador 1",
       name2: "Jugador 2",
       rating1: null,
@@ -31,6 +35,8 @@ export function parejaPlayerNames(
     };
   }
   return {
+    id1: p.jugador1_id ?? null,
+    id2: p.jugador2_id ?? null,
     name1: p.jugador1?.nombre?.trim() || "?",
     name2: p.jugador2?.nombre?.trim() || "?",
     rating1:

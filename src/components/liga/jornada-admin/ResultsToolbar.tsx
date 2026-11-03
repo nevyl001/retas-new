@@ -30,14 +30,7 @@ export const ResultsToolbar: React.FC<ResultsToolbarProps> = ({
             }`}
             role="status"
           >
-            {capturados}
-            <span className="jornada-results-toolbar__badge-sep" aria-hidden>
-              /
-            </span>
-            {total}
-            <span className="jornada-results-toolbar__badge-label">
-              capturados
-            </span>
+            Resultados guardados: {capturados} de {total}
           </span>
         </div>
         <div
