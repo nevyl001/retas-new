@@ -1179,11 +1179,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                   resultadosGuardados={
                     partidos.filter((p) => p.estado === "completed").length
                   }
-                  defaultCollapsed={
-                    !esParejasFijas &&
-                    rondaActiva != null &&
-                    ronda !== rondaActiva
-                  }
                   footerActions={
                     puedeActivarSiguiente ? (
                       <Button

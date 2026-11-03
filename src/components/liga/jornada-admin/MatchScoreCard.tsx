@@ -121,7 +121,6 @@ const ScoreField: React.FC<ScoreFieldProps> = ({
 );
 
 interface PairScoreBlockProps {
-  pairLabel: string;
   id1: string | null;
   id2: string | null;
   name1: string;
@@ -133,8 +132,15 @@ interface PairScoreBlockProps {
   children: React.ReactNode;
 }
 
+const AdminVsDivider: React.FC = () => (
+  <div className="jornada-match-card__vs jornada-match-card__vs--between" aria-hidden>
+    <span className="jornada-match-card__vs-rule" />
+    <span className="jornada-match-card__vs-label">VS</span>
+    <span className="jornada-match-card__vs-rule" />
+  </div>
+);
+
 const PairLineup: React.FC<{
-  pairLabel?: string;
   id1: string | null;
   id2: string | null;
   name1: string;
@@ -144,7 +150,6 @@ const PairLineup: React.FC<{
   fotoByJugadorId?: Record<string, string | null>;
   align?: "left" | "right";
 }> = ({
-  pairLabel,
   id1,
   id2,
   name1,
@@ -158,10 +163,8 @@ const PairLineup: React.FC<{
     className={`jornada-match-card__lineup${
       align === "right" ? " jornada-match-card__lineup--right" : ""
     }`}
+    aria-label={`${name1} y ${name2}`}
   >
-    {pairLabel ? (
-      <p className="jornada-match-card__pair-label">{pairLabel}</p>
-    ) : null}
     <div className="jornada-match-card__player">
       <JugadorAvatar
         fotoUrl={id1 ? fotoByJugadorId?.[id1] : null}
@@ -200,7 +203,6 @@ const PairLineup: React.FC<{
 );
 
 const PairScoreBlock: React.FC<PairScoreBlockProps> = ({
-  pairLabel,
   id1,
   id2,
   name1,
@@ -215,7 +217,6 @@ const PairScoreBlock: React.FC<PairScoreBlockProps> = ({
     className={`jornada-match-card__pair-block jornada-match-card__pair-block--${side}`}
   >
     <PairLineup
-      pairLabel={pairLabel}
       id1={id1}
       id2={id2}
       name1={name1}
@@ -223,6 +224,7 @@ const PairScoreBlock: React.FC<PairScoreBlockProps> = ({
       rating1={rating1}
       rating2={rating2}
       fotoByJugadorId={fotoByJugadorId}
+      align={side === "b" ? "right" : "left"}
     />
     <div className="jornada-match-card__pair-sets">{children}</div>
   </div>
@@ -343,7 +345,6 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
         <div className="jornada-match-card__saved-summary">
           <div className="jornada-match-card__teams">
             <PairLineup
-              pairLabel="Pareja A"
               id1={team1.id1}
               id2={team1.id2}
               name1={team1.name1}
@@ -352,9 +353,8 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               rating2={team1.rating2}
               fotoByJugadorId={fotoByJugadorId}
             />
-            <span className="jornada-match-card__vs">VS</span>
+            <AdminVsDivider />
             <PairLineup
-              pairLabel="Pareja B"
               id1={team2.id1}
               id2={team2.id2}
               name1={team2.name1}
@@ -399,7 +399,6 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                 />
               ) : null}
               <PairScoreBlock
-                pairLabel="Pareja A"
                 id1={team1.id1}
                 id2={team1.id2}
                 name1={team1.name1}
@@ -459,12 +458,9 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                 ) : null}
               </PairScoreBlock>
 
-              <span className="jornada-match-card__vs jornada-match-card__vs--between">
-                VS
-              </span>
+              <AdminVsDivider />
 
               <PairScoreBlock
-                pairLabel="Pareja B"
                 id1={team2.id1}
                 id2={team2.id2}
                 name1={team2.name1}
@@ -552,7 +548,6 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                 />
               ) : null}
               <PairScoreBlock
-                pairLabel="Pareja A"
                 id1={team1.id1}
                 id2={team1.id2}
                 name1={team1.name1}
@@ -620,12 +615,9 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                 ) : null}
               </PairScoreBlock>
 
-              <span className="jornada-match-card__vs jornada-match-card__vs--between">
-                VS
-              </span>
+              <AdminVsDivider />
 
               <PairScoreBlock
-                pairLabel="Pareja B"
                 id1={team2.id1}
                 id2={team2.id2}
                 name1={team2.name1}
@@ -698,7 +690,6 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
           {mode === "rotativo" && rotativoDraft && onRotativoChange ? (
             <>
               <PairScoreBlock
-                pairLabel="Pareja A"
                 id1={team1.id1}
                 id2={team1.id2}
                 name1={team1.name1}
@@ -710,7 +701,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               >
                 <ScoreField
                   id={scoreFieldId(partido.id, "rotativo-s1")}
-                  label="Resultado A"
+                  label="Resultado"
                   value={rotativoDraft.s1}
                   ariaLabel={`Puntos de ${pareja1Label}`}
                   disabled={disabled}
@@ -718,14 +709,9 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
                 />
               </PairScoreBlock>
 
-              <div className="jornada-match-card__vs jornada-match-card__vs--between" aria-hidden>
-                <span className="jornada-match-card__vs-rule" />
-                <span className="jornada-match-card__vs-label">VS</span>
-                <span className="jornada-match-card__vs-rule" />
-              </div>
+              <AdminVsDivider />
 
               <PairScoreBlock
-                pairLabel="Pareja B"
                 id1={team2.id1}
                 id2={team2.id2}
                 name1={team2.name1}
@@ -737,7 +723,7 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
               >
                 <ScoreField
                   id={scoreFieldId(partido.id, "rotativo-s2")}
-                  label="Resultado B"
+                  label="Resultado"
                   value={rotativoDraft.s2}
                   ariaLabel={`Puntos de ${pareja2Label}`}
                   disabled={disabled}
@@ -750,7 +736,6 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
       ) : (
         <div className="jornada-match-card__teams">
           <PairLineup
-            pairLabel="Pareja A"
             id1={team1.id1}
             id2={team1.id2}
             name1={team1.name1}
@@ -759,9 +744,8 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
             rating2={team1.rating2}
             fotoByJugadorId={fotoByJugadorId}
           />
-          <span className="jornada-match-card__vs">VS</span>
+          <AdminVsDivider />
           <PairLineup
-            pairLabel="Pareja B"
             id1={team2.id1}
             id2={team2.id2}
             name1={team2.name1}

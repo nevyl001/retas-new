@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import type { LigaPartido } from "../../../lib/liga/types";
 
 export interface RoundSectionProps {
@@ -7,7 +7,7 @@ export interface RoundSectionProps {
   statusLabel?: string;
   /** Resultados ya persistidos (completed) en esta ronda. */
   resultadosGuardados?: number;
-  /** Si true, la ronda inicia contraída (el grid permanece montado). */
+  /** @deprecated Las rondas siempre se muestran abiertas. */
   defaultCollapsed?: boolean;
   footerActions?: React.ReactNode;
   children: React.ReactNode;
@@ -18,53 +18,43 @@ export const RoundSection: React.FC<RoundSectionProps> = ({
   partidos,
   statusLabel,
   resultadosGuardados,
-  defaultCollapsed = false,
   footerActions,
   children,
 }) => {
-  const [open, setOpen] = useState(!defaultCollapsed);
   const saved =
     resultadosGuardados ??
     partidos.filter((p) => p.estado === "completed").length;
   const total = partidos.length;
-
-  useEffect(() => {
-    if (!defaultCollapsed) setOpen(true);
-  }, [defaultCollapsed]);
+  const canchas = new Set(
+    partidos
+      .map((p) => p.cancha)
+      .filter((c): c is number => typeof c === "number" && c > 0)
+  ).size;
+  const canchasLabel = canchas > 0 ? canchas : total;
 
   const title = statusLabel
     ? `Ronda ${ronda} — ${statusLabel}`
     : `Ronda ${ronda}`;
-  const meta = `${total} partido${total === 1 ? "" : "s"} · ${saved} de ${total} resultados guardados`;
+  const meta = `${total} partido${total === 1 ? "" : "s"} · ${canchasLabel} cancha${
+    canchasLabel === 1 ? "" : "s"
+  } · ${saved} de ${total} resultados guardados`;
 
   return (
     <section
-      className={`jornada-round${open ? " jornada-round--open" : " jornada-round--collapsed"}`}
+      className="jornada-round jornada-round--open"
       aria-labelledby={`jornada-ronda-${ronda}`}
     >
       <header className="jornada-round__head">
         <div className="jornada-round__titles">
-          <button
-            type="button"
-            className="jornada-round__toggle"
-            aria-expanded={open}
-            aria-controls={`jornada-ronda-panel-${ronda}`}
-            onClick={() => setOpen((v) => !v)}
-          >
-            <span className="jornada-round__chevron" aria-hidden>
-              {open ? "▾" : "▸"}
-            </span>
-            <h2 id={`jornada-ronda-${ronda}`} className="jornada-round__title">
-              {title}
-            </h2>
-          </button>
+          <h2 id={`jornada-ronda-${ronda}`} className="jornada-round__title">
+            {title}
+          </h2>
           <p className="jornada-round__meta">{meta}</p>
         </div>
       </header>
       <div
         id={`jornada-ronda-panel-${ronda}`}
         className="jornada-round__panel"
-        hidden={!open}
       >
         <div className="jornada-round__grid">{children}</div>
         {footerActions ? (

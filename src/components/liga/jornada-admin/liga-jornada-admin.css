@@ -456,9 +456,10 @@
   }
 }
 
-/* Round section */
+/* Round section — siempre abierta, encabezado fuerte */
 .jornada-round {
-  margin-bottom: 20px;
+  margin-bottom: 1.75rem;
+  padding-bottom: 0.35rem;
 }
 
 .jornada-round__head {
@@ -467,54 +468,37 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px 16px;
-  margin-bottom: 12px;
+  margin-bottom: 0.85rem;
 }
 
 .jornada-round__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  text-align: left;
-}
-
-.jornada-round__toggle:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--jornada-admin-accent) 55%, transparent);
-  outline-offset: 3px;
-  border-radius: 6px;
+  display: none;
 }
 
 .jornada-round__chevron {
-  display: inline-flex;
-  width: 1rem;
-  justify-content: center;
-  font-size: 0.875rem;
-  color: var(--liga-text-muted);
+  display: none;
 }
 
 .jornada-round__title {
   margin: 0;
   font-family: var(--font-display, var(--liga-font-body));
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: clamp(1.35rem, 2.2vw, 1.65rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
   text-transform: uppercase;
   color: var(--liga-text);
 }
 
 .jornada-round__meta {
-  margin: 2px 0 0;
+  margin: 0.3rem 0 0;
   font-size: 0.9375rem;
+  font-weight: 500;
   color: var(--liga-text-muted);
 }
 
 .jornada-round__panel[hidden] {
-  display: none;
+  display: block;
 }
 
 .jornada-round__tools {
@@ -599,19 +583,19 @@
   margin-top: 12px;
 }
 
-/* Match card — compacta, operativa */
+/* Match card — compacta horizontal: pareja | VS | pareja */
 .jornada-match-card {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.45rem;
   min-width: 0;
   min-height: 0;
   height: auto;
-  padding: 0.7rem 0.75rem 0.75rem;
+  padding: 0.55rem 0.65rem 0.65rem;
   border: 1px solid color-mix(in srgb, var(--jornada-admin-border) 70%, transparent);
   border-radius: 12px;
   background: color-mix(in srgb, var(--jornada-admin-surface) 94%, transparent);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
   transition: border-color 160ms ease;
 }
 
@@ -676,24 +660,8 @@
 .jornada-match-card__teams {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 0.65rem 0.5rem;
+  gap: 0.4rem 0.45rem;
   align-items: center;
-}
-
-.jornada-match-card__vs {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.75rem;
-  height: 1.75rem;
-  padding: 0 0.35rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, #fff 14%, transparent);
-  background: color-mix(in srgb, #000 28%, transparent);
-  font-size: 0.625rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: color-mix(in srgb, var(--liga-text) 72%, transparent);
 }
 
 .jornada-match-card__saved-line {
@@ -735,15 +703,21 @@
 }
 
 .jornada-match-card__matchup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.4rem 0.45rem;
+  align-items: center;
+}
+
+.jornada-match-card__matchup > .liga-deciding-mode {
+  grid-column: 1 / -1;
 }
 
 .jornada-match-card__pair-block {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  min-width: 0;
   padding: 0;
   border-radius: 0;
   border: none;
@@ -755,11 +729,11 @@
   border: none;
 }
 
-/* Pareja: 2 jugadores en filas verticales compactas */
+/* Pareja: 2 jugadores uno debajo del otro */
 .jornada-match-card__lineup {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.28rem;
   min-width: 0;
   width: 100%;
 }
@@ -776,21 +750,21 @@
 .jornada-match-card__player {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
   min-width: 0;
   width: 100%;
 }
 
 .jornada-match-card__portrait.rj-avatar {
   flex: 0 0 auto;
-  width: 44px !important;
-  height: 60px !important;
+  width: 40px !important;
+  height: 52px !important;
   border-radius: 8px !important;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, #fff 10%, transparent);
   background: color-mix(in srgb, #121418 90%, transparent);
   box-shadow: none;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 750;
 }
 
@@ -811,9 +785,9 @@
 }
 
 .jornada-match-card__player-name {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
   letter-spacing: -0.01em;
   color: var(--liga-text);
   overflow-wrap: anywhere;
@@ -843,7 +817,7 @@
 .jornada-match-card__pair-sets {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.35rem;
+  gap: 0.28rem;
   align-items: end;
   margin: 0;
   padding: 0;
@@ -856,12 +830,12 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0.28rem;
+  gap: 0.2rem;
   min-width: 0;
 }
 
 .jornada-match-card__field-label {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: none;
@@ -870,42 +844,57 @@
   line-height: 1.2;
 }
 
-.jornada-match-card__vs {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.625rem;
-  font-weight: 750;
-  letter-spacing: 0.1em;
-  color: var(--liga-text-muted);
+.jornada-match-card__pair-block--b .jornada-match-card__field-label {
+  text-align: right;
 }
 
+/* VS editorial central entre parejas */
+.jornada-match-card__vs,
 .jornada-match-card__vs--between {
-  align-self: stretch;
+  align-self: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.2rem;
-  margin: 0.1rem 0;
-  padding: 0.15rem 0;
+  justify-content: center;
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0.1rem 0.15rem;
   border: none;
   background: transparent;
-  min-width: 0;
+  min-width: 2.1rem;
   height: auto;
   min-height: 0;
+  pointer-events: none;
 }
 
 .jornada-match-card__vs-rule {
+  display: block;
   width: 1px;
-  height: 0.55rem;
-  background: color-mix(in srgb, #fff 22%, transparent);
+  height: 0.85rem;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, #fff 40%, transparent) 50%,
+    transparent 100%
+  );
 }
 
 .jornada-match-card__vs-label {
-  font-size: 0.625rem;
-  font-weight: 750;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  min-height: 1.55rem;
+  padding: 0.22rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #fff 18%, transparent);
+  background: color-mix(in srgb, #0a0c10 78%, transparent);
+  font-size: 0.75rem;
+  font-weight: 800;
   letter-spacing: 0.14em;
-  color: var(--liga-text-muted);
+  line-height: 1;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--liga-text) 88%, transparent);
 }
 
 .jornada-match-card__sets-row {
@@ -1078,8 +1067,8 @@
 .jornada-match-card__actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: auto;
+  gap: 0.28rem;
+  margin-top: 0.15rem;
 }
 
 .jornada-match-card__reset {
@@ -1140,14 +1129,14 @@
 
 .jornada-match-card__save {
   width: 100%;
-  min-height: 44px;
-  margin-top: 0.15rem;
+  min-height: 42px;
+  margin-top: 0;
   border: none;
   border-radius: 8px;
   background: color-mix(in srgb, var(--jornada-admin-lime) 88%, #3f6212);
   color: #09090b;
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: 0.9rem;
   font-weight: 750;
   letter-spacing: 0.01em;
   text-transform: none;
@@ -1155,12 +1144,29 @@
 }
 
 .jornada-match-card__pair-label {
-  margin: 0 0 0.1rem;
-  font-size: 0.625rem;
-  font-weight: 750;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--liga-text-muted);
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .jornada-match-card__matchup,
+  .jornada-match-card__teams {
+    gap: 0.35rem 0.3rem;
+  }
+
+  .jornada-match-card__portrait.rj-avatar {
+    width: 36px !important;
+    height: 48px !important;
+  }
+
+  .jornada-match-card__player-name {
+    font-size: 0.8125rem;
+  }
+
+  .jornada-match-card__vs-label {
+    font-size: 0.6875rem;
+    min-width: 1.85rem;
+    min-height: 1.4rem;
+  }
 }
 
 .jornada-match-card__save:disabled {
