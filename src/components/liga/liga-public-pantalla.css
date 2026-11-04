@@ -1880,6 +1880,10 @@
   margin-bottom: clamp(0.85rem, 1.8vw, 1.25rem);
   font-size: clamp(0.78rem, 1.15vw, 0.9rem);
   color: var(--liga-pub-text-hint);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-wrap: pretty;
 }
 
 /* Jugadores | Parejas lado a lado (menos scroll) */
@@ -1934,7 +1938,8 @@
   text-align: center;
 }
 
-/* Rotativo: misma grilla que admin (POS PJ PG PP GF GC DIF PTS) */
+/* Rotativo: misma grilla que admin (POS PJ PG PP GF GC DIF PTS).
+   En móvil se ocultan PP/GF/GC para caber sin scroll horizontal. */
 .liga-pantalla--jornada-fijas
   .liga-pantalla-ranking__dual--rotativo {
   grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
@@ -1942,8 +1947,9 @@
 
 .liga-pantalla--jornada-fijas
   .liga-pantalla-ranking__table--jornada-parejas {
-  min-width: 34rem;
-  table-layout: auto;
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1953,7 +1959,7 @@
 .liga-pantalla--jornada-fijas
   .liga-pantalla-ranking__table--jornada-parejas
   td {
-  padding: 0.55rem 0.4rem;
+  padding: 0.55rem 0.28rem;
 }
 
 .liga-pantalla--jornada-fijas
@@ -1963,7 +1969,7 @@
   .liga-pantalla-ranking__table--jornada-parejas
   td:not(.liga-pantalla-ranking__pair) {
   text-align: center;
-  width: 2.4rem;
+  width: 2.2rem;
 }
 
 .liga-pantalla--jornada-fijas
@@ -1975,10 +1981,11 @@
   text-align: right;
   font-weight: 700;
   color: var(--liga-pub-text);
-  width: 2.75rem;
+  width: 2.5rem;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-ranking__pair {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1993,6 +2000,59 @@
 @media (max-width: 720px) {
   .liga-pantalla--jornada-fijas .liga-pantalla-ranking__dual {
     grid-template-columns: 1fr;
+  }
+
+  .liga-pantalla--jornada-fijas .liga-pantalla-ranking--jornada-fijas,
+  .liga-pantalla--jornada-fijas .liga-pantalla-ranking__panel,
+  .liga-pantalla--jornada-fijas .liga-pantalla-ranking__dual {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .liga-pantalla--jornada-fijas .liga-pantalla-ranking__scroll {
+    overflow-x: clip;
+    max-width: 100%;
+  }
+
+  .liga-pantalla--jornada-fijas
+    .liga-pantalla-ranking__table--jornada-parejas
+    .liga-pantalla-ranking__col--pp,
+  .liga-pantalla--jornada-fijas
+    .liga-pantalla-ranking__table--jornada-parejas
+    .liga-pantalla-ranking__col--gf,
+  .liga-pantalla--jornada-fijas
+    .liga-pantalla-ranking__table--jornada-parejas
+    .liga-pantalla-ranking__col--gc {
+    display: none;
+  }
+
+  .liga-pantalla--jornada-fijas
+    .liga-pantalla-ranking__table--jornada-parejas
+    th,
+  .liga-pantalla--jornada-fijas
+    .liga-pantalla-ranking__table--jornada-parejas
+    td {
+    padding: 0.5rem 0.2rem;
+    font-size: 0.78rem;
+  }
+
+  .liga-pantalla--jornada-fijas
+    .liga-pantalla-ranking__table--jornada-parejas
+    th:first-child,
+  .liga-pantalla--jornada-fijas
+    .liga-pantalla-ranking__table--jornada-parejas
+    td:first-child {
+    width: 2rem;
+  }
+
+  .liga-pantalla--jornada-fijas
+    .liga-pantalla-ranking__table--jornada-parejas
+    th:not(:nth-child(2)),
+  .liga-pantalla--jornada-fijas
+    .liga-pantalla-ranking__table--jornada-parejas
+    td:not(.liga-pantalla-ranking__pair) {
+    width: 2rem;
   }
 }
 

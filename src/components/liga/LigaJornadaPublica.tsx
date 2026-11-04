@@ -865,13 +865,25 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                               <th scope="col" title="Partidos ganados">
                                 PG
                               </th>
-                              <th scope="col" title="Partidos perdidos">
+                              <th
+                                scope="col"
+                                className="liga-pantalla-ranking__col--pp"
+                                title="Partidos perdidos"
+                              >
                                 PP
                               </th>
-                              <th scope="col" title="Games / puntos a favor">
+                              <th
+                                scope="col"
+                                className="liga-pantalla-ranking__col--gf"
+                                title="Games / puntos a favor"
+                              >
                                 GF
                               </th>
-                              <th scope="col" title="Games / puntos en contra">
+                              <th
+                                scope="col"
+                                className="liga-pantalla-ranking__col--gc"
+                                title="Games / puntos en contra"
+                              >
                                 GC
                               </th>
                               <th scope="col" title="Diferencia (GF − GC)">
@@ -909,13 +921,13 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                                   <td className="liga-pantalla-ranking__stat">
                                     {row.victorias}
                                   </td>
-                                  <td className="liga-pantalla-ranking__stat">
+                                  <td className="liga-pantalla-ranking__stat liga-pantalla-ranking__col--pp">
                                     {row.derrotas}
                                   </td>
-                                  <td className="liga-pantalla-ranking__stat">
+                                  <td className="liga-pantalla-ranking__stat liga-pantalla-ranking__col--gf">
                                     {row.games_favor}
                                   </td>
-                                  <td className="liga-pantalla-ranking__stat">
+                                  <td className="liga-pantalla-ranking__stat liga-pantalla-ranking__col--gc">
                                     {row.games_contra}
                                   </td>
                                   <td className="liga-pantalla-ranking__stat">
