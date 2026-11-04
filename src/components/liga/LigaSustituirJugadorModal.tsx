@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import type {
   LigaJornada,
   LigaJugadorPoolItem,
@@ -73,6 +74,20 @@ export const LigaSustituirJugadorModal: React.FC<
     setJornadaId(pickDefaultJornadaSustitucionId(elegibles));
   }, [open, saliente?.id, elegibles]);
 
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !saving) onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open, onClose, saving]);
+
   const entrante = useMemo(
     () => candidatos.find((c) => c.id === entranteId) ?? null,
     [candidatos, entranteId]
@@ -95,14 +110,12 @@ export const LigaSustituirJugadorModal: React.FC<
   const jornadaLabel =
     elegibles.find((j) => j.id === jornadaId)?.label ?? "—";
 
-  if (!open || !saliente) return null;
-
   const canNextFrom2 = Boolean(entranteId);
   const canNextFrom3 = Boolean(jornadaId);
   const canNextFrom4 = motivo !== "";
 
   const handleConfirm = async () => {
-    if (!entranteId || !jornadaId || !motivo) return;
+    if (!saliente || !entranteId || !jornadaId || !motivo) return;
     setSaving(true);
     setError(null);
     try {
@@ -125,7 +138,9 @@ export const LigaSustituirJugadorModal: React.FC<
     }
   };
 
-  return (
+  if (!open || !saliente || typeof document === "undefined") return null;
+
+  return createPortal(
     <div className="liga-sust-modal-backdrop" role="presentation" onClick={onClose}>
       <div
         className="liga-sust-modal"
@@ -351,6 +366,7 @@ export const LigaSustituirJugadorModal: React.FC<
           </div>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
