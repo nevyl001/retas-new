@@ -53,7 +53,18 @@ export const LigaRanking: React.FC<LigaRankingProps> = ({
                 className={row.posicion <= 3 ? "liga-ranking-top" : undefined}
               >
                 <td>{row.posicion}</td>
-                <td>{row.nombre}</td>
+                <td>
+                  <span className="liga-ranking-player">
+                    <span className="liga-ranking-player__name">
+                      {row.nombre}
+                    </span>
+                    {row.puntos_ajuste_motivo ? (
+                      <span className="liga-ranking-player__ajuste">
+                        Ajuste: {row.puntos_ajuste_motivo}
+                      </span>
+                    ) : null}
+                  </span>
+                </td>
                 <td>{row.puntos}</td>
                 <td>{row.jornadas_jugadas}</td>
               </tr>

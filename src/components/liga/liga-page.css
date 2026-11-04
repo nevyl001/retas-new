@@ -700,6 +700,23 @@
   color: var(--liga-text-muted);
 }
 
+.liga-ranking-player {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.liga-ranking-player__name {
+  font-weight: 550;
+}
+
+.liga-ranking-player__ajuste {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--liga-text, #f5f5f5) 62%, transparent);
+}
+
 .liga-ranking-table tr.liga-ranking-top td {
   color: var(--liga-gold-light);
   font-weight: 600;
@@ -1528,41 +1545,204 @@
   border-top: 0.5px solid var(--liga-border);
 }
 
-.liga-jornada-manual__list {
-  margin-top: 0.75rem;
+.liga-jornada-manual--open {
+  border-top-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--liga-gold, #c9a227)) 28%,
+    var(--liga-border)
+  );
 }
 
-.liga-jornada-manual__row {
+.liga-jornada-manual__panel {
+  margin-top: 0.85rem;
+  padding: 1rem 1rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, #fff 12%, transparent);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--brand-accent, #c9a227) 8%, transparent) 0%,
+      transparent 42%
+    ),
+    color-mix(in srgb, rgba(10, 12, 16, 0.72) 92%, transparent);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.liga-jornada-manual__panel-head {
+  margin-bottom: 0.85rem;
+}
+
+.liga-jornada-manual__panel-title {
+  margin: 0 0 0.3rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--liga-text, #f5f5f5);
+}
+
+.liga-jornada-manual__panel-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--liga-text, #f5f5f5) 62%, transparent);
+}
+
+.liga-jornada-manual__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
-  align-items: center;
-  gap: var(--liga-space-sm);
-  flex-wrap: wrap;
-  margin-bottom: var(--liga-space-sm);
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.liga-jornada-manual__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #fff 10%, transparent);
+  background: color-mix(in srgb, rgba(8, 10, 14, 0.55) 90%, transparent);
+  transition: border-color 160ms ease;
+}
+
+.liga-jornada-manual__card.is-dirty {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--liga-gold, #c9a227)) 42%,
+    transparent
+  );
+}
+
+.liga-jornada-manual__card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .liga-jornada-manual__name {
-  flex: 1 1 120px;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--liga-text, #f5f5f5);
+}
+
+.liga-jornada-manual__current {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--liga-text, #f5f5f5) 55%, transparent);
+}
+
+.liga-jornada-manual__prev-motivo {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--liga-text, #f5f5f5) 68%, transparent);
+}
+
+.liga-jornada-manual__card-fields {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: end;
+}
+
+@media (max-width: 520px) {
+  .liga-jornada-manual__card-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.liga-jornada-manual__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.liga-jornada-manual__field-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--liga-text, #f5f5f5) 58%, transparent);
 }
 
 .liga-jornada-manual__input {
-  width: 4.5rem;
+  width: 100%;
   min-height: var(--mode-tab-min-height, 44px);
-  padding: 0.35rem 0.4rem;
+  padding: 0.35rem 0.45rem;
   text-align: center;
-  border-radius: var(--liga-radius-sm);
-  border: 0.5px solid var(--liga-border);
-  background: var(--ro-bg-elevated);
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, #fff 14%, transparent);
+  background: color-mix(in srgb, rgba(0, 0, 0, 0.35) 88%, transparent);
   color: var(--liga-text);
   font-size: var(--ro-input-font-size-mobile);
   font-family: inherit;
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.liga-jornada-manual__input:focus {
-  border-color: var(--liga-gold);
+.liga-jornada-manual__motivo {
+  width: 100%;
+  min-height: var(--mode-tab-min-height, 44px);
+  padding: 0.4rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, #fff 14%, transparent);
+  background: color-mix(in srgb, rgba(0, 0, 0, 0.35) 88%, transparent);
+  color: var(--liga-text);
+  font-size: 0.875rem;
+  font-family: inherit;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.liga-jornada-manual__input:focus,
+.liga-jornada-manual__motivo:focus {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--liga-gold, #c9a227)) 55%,
+    transparent
+  );
   outline: none;
-  box-shadow: 0 0 0 2px var(--ro-accent-ring);
+  box-shadow: 0 0 0 2px
+    color-mix(
+      in srgb,
+      var(--brand-accent, var(--liga-gold, #c9a227)) 22%,
+      transparent
+    );
+}
+
+.liga-jornada-manual__card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.liga-jornada-manual__delta {
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--liga-text, #f5f5f5);
+}
+
+.liga-jornada-manual__delta.is-muted {
+  font-weight: 500;
+  color: color-mix(in srgb, var(--liga-text, #f5f5f5) 48%, transparent);
+}
+
+.liga-jornada-manual__delta.is-up {
+  color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--liga-gold, #c9a227)) 85%,
+    #fff
+  );
+}
+
+.liga-jornada-manual__delta.is-down {
+  color: color-mix(in srgb, #f87171 88%, #fff);
 }
 
 .liga-jornada-share.public-link-section {

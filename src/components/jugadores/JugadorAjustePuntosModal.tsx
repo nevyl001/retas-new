@@ -47,6 +47,12 @@ export const JugadorAjustePuntosModal: React.FC<JugadorAjustePuntosModalProps> =
       setError("Escribe un número distinto de cero (positivo suma, negativo resta).");
       return;
     }
+    if (motivo.trim().length < 3) {
+      setError(
+        "Indica el motivo del ajuste (mínimo 3 caracteres) para que el jugador lo vea en su historial."
+      );
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -54,7 +60,7 @@ export const JugadorAjustePuntosModal: React.FC<JugadorAjustePuntosModalProps> =
         organizadorId,
         jugador.id,
         Math.trunc(deltaNum),
-        motivo
+        motivo.trim()
       );
       await onSaved();
       onClose();
@@ -106,14 +112,18 @@ export const JugadorAjustePuntosModal: React.FC<JugadorAjustePuntosModalProps> =
             </p>
           )}
           <div className="rj-field">
-            <label htmlFor="rj-ajuste-motivo">Nota (opcional)</label>
+            <label htmlFor="rj-ajuste-motivo">Motivo (visible al jugador)</label>
             <input
               id="rj-ajuste-motivo"
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
-              placeholder="Motivo del ajuste"
+              placeholder="Ej. Corrección por error de captura"
               maxLength={120}
+              required
             />
+            <p className="rj-field__hint">
+              El jugador verá este motivo en su historial de carrera.
+            </p>
           </div>
           {error && (
             <p style={{ color: "#ff3b30", fontSize: "0.8125rem" }}>{error}</p>

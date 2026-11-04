@@ -91,6 +91,9 @@ export interface LigaInscripcion {
   liga_id: string;
   jugador_id: string;
   puntos: number;
+  /** Motivo del último ajuste manual (si existe). */
+  puntos_ajuste_motivo?: string | null;
+  puntos_ajuste_at?: string | null;
   jugador?: LigaJugador;
 }
 
@@ -156,6 +159,9 @@ export interface RankingItem {
   nombre: string;
   puntos: number;
   jornadas_jugadas: number;
+  /** Motivo del último ajuste manual de puntos (si aplica). */
+  puntos_ajuste_motivo?: string | null;
+  puntos_ajuste_at?: string | null;
 }
 
 export function ligaModalidadLabel(modalidad: LigaModalidad): string {

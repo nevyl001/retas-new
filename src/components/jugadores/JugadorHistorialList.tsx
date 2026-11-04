@@ -108,9 +108,10 @@ export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
                     <span className="rj-historial-timeline__fecha-text">
                       {formatHistorialFecha(it.fecha)}
                     </span>
-                    {it.puntos != null && it.puntos > 0 && (
+                    {it.puntos != null && it.puntos !== 0 && (
                       <span className="rj-historial-timeline__pts">
-                        +{it.puntos.toLocaleString("es-MX")} pts
+                        {it.puntos > 0 ? "+" : ""}
+                        {it.puntos.toLocaleString("es-MX")} pts
                       </span>
                     )}
                   </p>
@@ -162,9 +163,10 @@ export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
                     <span className="rj-historial-timeline__fecha-text">
                       {formatHistorialFecha(it.fecha)}
                     </span>
-                    {it.puntos != null && it.puntos > 0 && (
+                    {it.puntos != null && it.puntos !== 0 && (
                       <span className="rj-historial-timeline__pts">
-                        +{it.puntos.toLocaleString("es-MX")} pts
+                        {it.puntos > 0 ? "+" : ""}
+                        {it.puntos.toLocaleString("es-MX")} pts
                       </span>
                     )}
                   </p>

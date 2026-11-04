@@ -172,6 +172,9 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     []
   );
   const [manualPuntos, setManualPuntos] = useState<Record<string, string>>({});
+  const [manualMotivos, setManualMotivos] = useState<Record<string, string>>(
+    {}
+  );
   const [showManualEdit, setShowManualEdit] = useState(false);
   const [canchaFilter, setCanchaFilter] = useState<number | "all">("all");
   const [jugadorFotos, setJugadorFotos] = useState<
@@ -816,11 +819,23 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
       setError("Puntos inválidos.");
       return;
     }
+    const motivo = (manualMotivos[jugadorId] ?? "").trim();
+    if (motivo.length < 3) {
+      setError(
+        "Escribe el motivo del ajuste (mínimo 3 caracteres) para que el jugador lo vea."
+      );
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      await actualizarPuntosInscripcion(ligaId, jugadorId, pts);
-      setMessage("Puntos del jugador actualizados.");
+      await actualizarPuntosInscripcion(ligaId, jugadorId, pts, motivo);
+      setManualMotivos((prev) => {
+        const next = { ...prev };
+        delete next[jugadorId];
+        return next;
+      });
+      setMessage("Puntos actualizados. El motivo queda visible para el jugador.");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -1289,56 +1304,156 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         ) : null}
 
         {!esParejasFijas && (
-          <div className="liga-jornada-manual">
+          <div
+            className={`liga-jornada-manual${
+              showManualEdit ? " liga-jornada-manual--open" : ""
+            }`}
+          >
             <Button
               type="button"
-              variant="ghost"
+              variant={showManualEdit ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setShowManualEdit((v) => !v)}
             >
               {showManualEdit
-                ? "Ocultar ajuste manual"
+                ? "Cerrar corrección"
                 : "Corregir puntos manualmente"}
             </Button>
             {showManualEdit && (
-              <div className="liga-jornada-manual__list">
-                <p className="liga-hint">
-                  Solo para correcciones excepcionales. Recalcular volverá a
-                  calcular desde los partidos.
-                </p>
-                {ranking.map((row) => (
-                  <div key={row.jugador_id} className="liga-jornada-manual__row">
-                    <span className="liga-jornada-manual__name">
-                      {row.nombre}
-                    </span>
-                    <input
-                      id={`jornada-manual-puntos-${row.jugador_id}`}
-                      name={`jornada-manual-puntos-${row.jugador_id}`}
-                      type="number"
-                      min={0}
-                      className="liga-jornada-manual__input"
-                      value={manualPuntos[row.jugador_id] ?? String(row.puntos)}
-                      disabled={busy}
-                      onChange={(event) =>
-                        setManualPuntos((prev) => ({
-                          ...prev,
-                          [row.jugador_id]: event.target.value,
-                        }))
-                      }
-                      aria-label={`Puntos ${row.nombre}`}
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => handleGuardarPuntosManual(row.jugador_id)}
-                    >
-                      Guardar
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              <section
+                className="liga-jornada-manual__panel"
+                aria-labelledby="liga-manual-adjust-title"
+              >
+                <header className="liga-jornada-manual__panel-head">
+                  <p
+                    id="liga-manual-adjust-title"
+                    className="liga-jornada-manual__panel-title"
+                  >
+                    Corrección de puntos
+                  </p>
+                  <p className="liga-jornada-manual__panel-hint">
+                    Solo para excepciones. El motivo queda visible para el
+                    jugador en el ranking. Recalcular desde partidos borra el
+                    ajuste.
+                  </p>
+                </header>
+                <ul className="liga-jornada-manual__list">
+                  {ranking.map((row) => {
+                    const draftPts =
+                      manualPuntos[row.jugador_id] ?? String(row.puntos);
+                    const ptsNum = Number(draftPts);
+                    const changed =
+                      Number.isFinite(ptsNum) && ptsNum !== row.puntos;
+                    const delta = changed ? ptsNum - row.puntos : 0;
+                    const motivo = manualMotivos[row.jugador_id] ?? "";
+                    const canSave =
+                      changed && motivo.trim().length >= 3 && !busy;
+                    return (
+                      <li
+                        key={row.jugador_id}
+                        className={`liga-jornada-manual__card${
+                          changed ? " is-dirty" : ""
+                        }`}
+                      >
+                        <div className="liga-jornada-manual__card-top">
+                          <span className="liga-jornada-manual__name">
+                            {row.nombre}
+                          </span>
+                          <span className="liga-jornada-manual__current">
+                            Actual · {row.puntos}
+                          </span>
+                        </div>
+                        {row.puntos_ajuste_motivo ? (
+                          <p className="liga-jornada-manual__prev-motivo">
+                            Último motivo: {row.puntos_ajuste_motivo}
+                          </p>
+                        ) : null}
+                        <div className="liga-jornada-manual__card-fields">
+                          <label
+                            className="liga-jornada-manual__field"
+                            htmlFor={`jornada-manual-puntos-${row.jugador_id}`}
+                          >
+                            <span className="liga-jornada-manual__field-label">
+                              Nuevos pts
+                            </span>
+                            <input
+                              id={`jornada-manual-puntos-${row.jugador_id}`}
+                              name={`jornada-manual-puntos-${row.jugador_id}`}
+                              type="number"
+                              min={0}
+                              className="liga-jornada-manual__input"
+                              value={draftPts}
+                              disabled={busy}
+                              onChange={(event) =>
+                                setManualPuntos((prev) => ({
+                                  ...prev,
+                                  [row.jugador_id]: event.target.value,
+                                }))
+                              }
+                              aria-label={`Nuevos puntos ${row.nombre}`}
+                            />
+                          </label>
+                          <label
+                            className="liga-jornada-manual__field liga-jornada-manual__field--motivo"
+                            htmlFor={`jornada-manual-motivo-${row.jugador_id}`}
+                          >
+                            <span className="liga-jornada-manual__field-label">
+                              Motivo (visible al jugador)
+                            </span>
+                            <input
+                              id={`jornada-manual-motivo-${row.jugador_id}`}
+                              name={`jornada-manual-motivo-${row.jugador_id}`}
+                              type="text"
+                              className="liga-jornada-manual__motivo"
+                              value={motivo}
+                              disabled={busy}
+                              maxLength={240}
+                              placeholder="Ej. Corrección por error de captura"
+                              onChange={(event) =>
+                                setManualMotivos((prev) => ({
+                                  ...prev,
+                                  [row.jugador_id]: event.target.value,
+                                }))
+                              }
+                              aria-label={`Motivo del ajuste de ${row.nombre}`}
+                            />
+                          </label>
+                        </div>
+                        <div className="liga-jornada-manual__card-actions">
+                          {changed ? (
+                            <span
+                              className={`liga-jornada-manual__delta${
+                                delta > 0
+                                  ? " is-up"
+                                  : delta < 0
+                                    ? " is-down"
+                                    : ""
+                              }`}
+                            >
+                              {delta > 0 ? `+${delta}` : delta} pts
+                            </span>
+                          ) : (
+                            <span className="liga-jornada-manual__delta is-muted">
+                              Sin cambio
+                            </span>
+                          )}
+                          <Button
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            disabled={!canSave}
+                            onClick={() =>
+                              handleGuardarPuntosManual(row.jugador_id)
+                            }
+                          >
+                            Guardar ajuste
+                          </Button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
             )}
           </div>
         )}

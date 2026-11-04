@@ -107,8 +107,8 @@ export const JugadorPublicRecentResults: React.FC<{
                 <span className="rjp-ficha-activity__event">{it.eventoNombre}</span>
                 <span className="rjp-ficha-activity__meta">
                   {formatFechaCorta(it.fecha)}
-                  {it.puntos != null && it.puntos > 0
-                    ? ` · ${it.puntos} pts`
+                  {it.puntos != null && it.puntos !== 0
+                    ? ` · ${it.puntos > 0 ? "+" : ""}${it.puntos} pts`
                     : ""}
                 </span>
               </div>

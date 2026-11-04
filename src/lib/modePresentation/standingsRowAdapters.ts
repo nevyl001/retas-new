@@ -13,6 +13,9 @@ export function ligaRankingItemToMobileRow(row: RankingItem): StandingsMobileCar
     points: 0,
     pointsReceived: 0,
     puntosTorneo: row.puntos,
+    note: row.puntos_ajuste_motivo
+      ? `Ajuste: ${row.puntos_ajuste_motivo}`
+      : null,
   };
 }
 

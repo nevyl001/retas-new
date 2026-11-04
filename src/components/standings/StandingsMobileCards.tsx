@@ -24,6 +24,8 @@ export type StandingsMobileCardRow = {
   setsFavor?: number;
   setsContra?: number;
   tied?: boolean;
+  /** Nota secundaria (ej. motivo de ajuste manual de puntos). */
+  note?: string | null;
 };
 
 function positionIcon(position: number): string {
@@ -108,7 +110,12 @@ export const StandingsMobileCards: React.FC<{
               >
                 {positionIcon(row.position) || row.position}
               </span>
-              <h3 className="standings-mobile-card__name">{row.label}</h3>
+              <div className="standings-mobile-card__identity">
+                <h3 className="standings-mobile-card__name">{row.label}</h3>
+                {row.note ? (
+                  <p className="standings-mobile-card__note">{row.note}</p>
+                ) : null}
+              </div>
               <span
                 className={`standings-mobile-card__fav-hero${
                   isLeader ? " standings-mobile-card__fav-hero--leader" : ""

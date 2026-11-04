@@ -557,7 +557,11 @@ async function deleteAllJornadasLiga(ligaId: string): Promise<void> {
 async function resetPuntosLiga(ligaId: string): Promise<void> {
   const { error } = await supabase
     .from("liga_inscripciones")
-    .update({ puntos: 0 })
+    .update({
+      puntos: 0,
+      puntos_ajuste_motivo: null,
+      puntos_ajuste_at: null,
+    })
     .eq("liga_id", ligaId);
   if (error) throw new Error(error.message);
 }
@@ -1623,7 +1627,11 @@ export async function recalcularPuntosLiga(ligaId: string): Promise<void> {
 
   const { error: resetErr } = await supabase
     .from("liga_inscripciones")
-    .update({ puntos: 0 })
+    .update({
+      puntos: 0,
+      puntos_ajuste_motivo: null,
+      puntos_ajuste_at: null,
+    })
     .eq("liga_id", ligaId);
 
   if (resetErr) {
@@ -1740,7 +1748,11 @@ export async function recalcularPuntosLiga(ligaId: string): Promise<void> {
     Array.from(totales.entries()).map(([jugadorId, pts]) =>
       supabase
         .from("liga_inscripciones")
-        .update({ puntos: pts })
+        .update({
+          puntos: pts,
+          puntos_ajuste_motivo: null,
+          puntos_ajuste_at: null,
+        })
         .eq("liga_id", ligaId)
         .eq("jugador_id", jugadorId)
     )
@@ -2090,7 +2102,8 @@ export async function resetPartidoResult(
 export async function actualizarPuntosInscripcion(
   ligaId: string,
   jugadorId: string,
-  puntos: number
+  puntos: number,
+  motivo: string
 ): Promise<void> {
   await requireUserId();
 
@@ -2099,9 +2112,20 @@ export async function actualizarPuntosInscripcion(
     throw new Error("Puntos inválidos.");
   }
 
+  const motivoTrim = motivo.trim();
+  if (motivoTrim.length < 3) {
+    throw new Error(
+      "Indica el motivo del ajuste (mínimo 3 caracteres) para que el jugador lo vea."
+    );
+  }
+
   const { error } = await supabase
     .from("liga_inscripciones")
-    .update({ puntos: valor })
+    .update({
+      puntos: valor,
+      puntos_ajuste_motivo: motivoTrim.slice(0, 240),
+      puntos_ajuste_at: new Date().toISOString(),
+    })
     .eq("liga_id", ligaId)
     .eq("jugador_id", jugadorId);
 
@@ -2143,11 +2167,23 @@ export async function finishLiga(ligaId: string): Promise<LigaCareerCloseResult>
 }
 
 export async function getRanking(ligaId: string): Promise<RankingItem[]> {
-  const { data, error } = await supabase
+  const withMotivo = await supabase
     .from("liga_inscripciones")
-    .select("jugador_id, puntos, jugador:liga_jugadores(nombre)")
+    .select(
+      "jugador_id, puntos, puntos_ajuste_motivo, puntos_ajuste_at, jugador:liga_jugadores(nombre)"
+    )
     .eq("liga_id", ligaId)
     .order("puntos", { ascending: false });
+
+  const { data, error } =
+    withMotivo.error &&
+    /puntos_ajuste_motivo|column/i.test(withMotivo.error.message)
+      ? await supabase
+          .from("liga_inscripciones")
+          .select("jugador_id, puntos, jugador:liga_jugadores(nombre)")
+          .eq("liga_id", ligaId)
+          .order("puntos", { ascending: false })
+      : withMotivo;
 
   if (error) throw new Error(error.message);
 
@@ -2185,12 +2221,26 @@ export async function getRanking(ligaId: string): Promise<RankingItem[]> {
   return sorted.map((row, idx) => {
     const jug = row.jugador as { nombre?: string } | null;
     const jugadorId = String(row.jugador_id);
+    const motivoRaw =
+      "puntos_ajuste_motivo" in row
+        ? (row as { puntos_ajuste_motivo?: string | null }).puntos_ajuste_motivo
+        : null;
+    const atRaw =
+      "puntos_ajuste_at" in row
+        ? (row as { puntos_ajuste_at?: string | null }).puntos_ajuste_at
+        : null;
+    const motivo =
+      typeof motivoRaw === "string" && motivoRaw.trim()
+        ? motivoRaw.trim()
+        : null;
     return {
       posicion: idx + 1,
       jugador_id: jugadorId,
       nombre: jug?.nombre ?? "Jugador",
       puntos: Number(row.puntos),
       jornadas_jugadas: jornadasPorJugador.get(jugadorId) ?? 0,
+      puntos_ajuste_motivo: motivo,
+      puntos_ajuste_at: atRaw ?? null,
     };
   });
 }

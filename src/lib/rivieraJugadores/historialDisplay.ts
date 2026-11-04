@@ -59,7 +59,7 @@ function metaStr(meta: Record<string, unknown>, key: string): string | undefined
   return typeof v === "string" && v.trim() ? v.trim() : undefined;
 }
 
-/** Ajustes de puntos hechos por el organizador (no se muestran en fichas/historial). */
+/** Ajustes de puntos hechos por el organizador (sí visibles en historial con su motivo). */
 export function isParticipacionAjusteManual(row: JugadorParticipacion): boolean {
   const meta = (row.metadata ?? {}) as Record<string, unknown>;
   if (meta.subtipo === "ajuste_manual") return true;
@@ -67,10 +67,14 @@ export function isParticipacionAjusteManual(row: JugadorParticipacion): boolean 
   return nombre.startsWith("Ajuste manual");
 }
 
+/**
+ * Historial visible al jugador: incluye ajustes manuales para que vea el motivo
+ * de subidas/bajadas de puntos. (La evolución de ranking puede seguir excluyéndolos.)
+ */
 export function filterParticipacionesHistorialVisible(
   rows: JugadorParticipacion[]
 ): JugadorParticipacion[] {
-  return rows.filter((p) => !isParticipacionAjusteManual(p));
+  return rows;
 }
 
 function metaNum(meta: Record<string, unknown>, key: string): number | undefined {
@@ -323,7 +327,12 @@ export function participacionToHistorialItem(
   const { id: modalidadId, label: modalidadLabel } =
     resolveModalidadFromParticipacion(row);
   const meta = row.metadata ?? {};
-  const lugarLabel = resolveLugarLabel(row);
+  const esAjusteManual = isParticipacionAjusteManual(row);
+  const lugarLabel = esAjusteManual
+    ? row.puntos_obtenidos >= 0
+      ? "Ajuste +"
+      : "Ajuste −"
+    : resolveLugarLabel(row);
   const ligaNombre = metaStr(meta, "liga_nombre");
   const jornadaNum = metaNum(meta, "jornada_numero");
   const categoriaLabel = resolveCategoriaLabel(
@@ -332,13 +341,20 @@ export function participacionToHistorialItem(
     row.tipo_evento
   );
   const esTorneoExpress = row.tipo_evento === "torneo_express";
-  const eventoNombre = esTorneoExpress
-    ? composeTorneoExpressTitulo(row.evento_nombre, categoriaLabel)
-    : row.evento_nombre;
-  const eventoDescripcion =
-    metaStr(meta, "evento_descripcion") ??
-    metaStr(meta, "reta_descripcion") ??
-    metaStr(meta, "descripcion");
+  const eventoNombre = esAjusteManual
+    ? "Ajuste de puntos"
+    : esTorneoExpress
+      ? composeTorneoExpressTitulo(row.evento_nombre, categoriaLabel)
+      : row.evento_nombre;
+  const motivoAjuste = metaStr(meta, "motivo");
+  const eventoDescripcion = esAjusteManual
+    ? motivoAjuste ??
+      (row.evento_nombre?.includes(":")
+        ? row.evento_nombre.split(":").slice(1).join(":").trim()
+        : undefined)
+    : metaStr(meta, "evento_descripcion") ??
+      metaStr(meta, "reta_descripcion") ??
+      metaStr(meta, "descripcion");
   const balanceLabel = formatBalanceParticipacion(meta, row);
 
   const detalleParts: string[] = [];
@@ -383,7 +399,10 @@ export function participacionToHistorialItem(
     categoriaLabel,
     eventoDescripcion,
     balanceLabel,
-    puntos: row.puntos_obtenidos > 0 ? row.puntos_obtenidos : undefined,
+    puntos:
+      esAjusteManual || row.puntos_obtenidos > 0
+        ? row.puntos_obtenidos
+        : undefined,
     esCampeon:
       participacionCuentaComoVictoria(row) &&
       (lugarLabel === "Campeón" ||
@@ -503,7 +522,9 @@ export function computePublicProfileStats(
   let partidosPerdidos = 0;
   let partidosEmpatados = 0;
 
-  const visible = filterParticipacionesHistorialVisible(participaciones);
+  const visible = filterParticipacionesHistorialVisible(participaciones).filter(
+    (p) => !isParticipacionAjusteManual(p)
+  );
 
   for (const p of visible) {
     if (p.tipo_evento === "reta") retasClasicas += 1;
@@ -564,6 +585,7 @@ export function computeRankingEvolution(
   participaciones: JugadorParticipacion[]
 ): RankingEvolutionPoint[] {
   const visible = filterParticipacionesHistorialVisible(participaciones)
+    .filter((p) => !isParticipacionAjusteManual(p))
     .filter((p) => (p.puntos_obtenidos ?? 0) > 0)
     .sort((a, b) =>
       resolveParticipacionFechaInstant(a).localeCompare(
