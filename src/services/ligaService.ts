@@ -95,6 +95,12 @@ function mapLiga(row: Record<string, unknown>): Liga {
         : undefined,
     equipos_count:
       row.equipos_count != null ? Number(row.equipos_count) : undefined,
+    jornadas_count:
+      row.jornadas_count != null ? Number(row.jornadas_count) : undefined,
+    jornada_actual_numero:
+      row.jornada_actual_numero != null
+        ? Number(row.jornada_actual_numero)
+        : null,
     playoff_seeds:
       row.playoff_seeds && typeof row.playoff_seeds === "object"
         ? (row.playoff_seeds as Record<string, string>)
@@ -249,15 +255,25 @@ export async function getLigas(): Promise<Liga[]> {
   if (!ligas?.length) return [];
 
   const ids = ligas.map((l) => l.id);
-  const [{ data: counts, error: cErr }, { data: equipoCounts, error: eErr }] =
-    await Promise.all([
-      supabase.from("liga_inscripciones").select("liga_id").in("liga_id", ids),
-      supabase.from("liga_equipos").select("liga_id").in("liga_id", ids),
-    ]);
+  const [
+    { data: counts, error: cErr },
+    { data: equipoCounts, error: eErr },
+    { data: jornadaRows, error: jErr },
+  ] = await Promise.all([
+    supabase.from("liga_inscripciones").select("liga_id").in("liga_id", ids),
+    supabase.from("liga_equipos").select("liga_id").in("liga_id", ids),
+    supabase
+      .from("liga_jornadas")
+      .select("liga_id, numero, estado")
+      .in("liga_id", ids),
+  ]);
 
   if (cErr) throw new Error(cErr.message);
   if (eErr && !eErr.message.includes("liga_equipos")) {
     throw new Error(eErr.message);
+  }
+  if (jErr && !/liga_jornadas|relation|column/i.test(jErr.message)) {
+    throw new Error(jErr.message);
   }
 
   const countMap = new Map<string, number>();
@@ -272,13 +288,27 @@ export async function getLigas(): Promise<Liga[]> {
     equiposMap.set(lid, (equiposMap.get(lid) ?? 0) + 1);
   }
 
-  return ligas.map((l) =>
-    mapLiga({
+  const jornadasTotal = new Map<string, number>();
+  const jornadaActual = new Map<string, number>();
+  for (const row of jornadaRows ?? []) {
+    const lid = String(row.liga_id);
+    jornadasTotal.set(lid, (jornadasTotal.get(lid) ?? 0) + 1);
+    if (String(row.estado) === "in_progress") {
+      const n = Number(row.numero);
+      if (Number.isFinite(n)) jornadaActual.set(lid, n);
+    }
+  }
+
+  return ligas.map((l) => {
+    const id = String(l.id);
+    return mapLiga({
       ...l,
-      inscripciones_count: countMap.get(String(l.id)) ?? 0,
-      equipos_count: equiposMap.get(String(l.id)) ?? 0,
-    } as Record<string, unknown>)
-  );
+      inscripciones_count: countMap.get(id) ?? 0,
+      equipos_count: equiposMap.get(id) ?? 0,
+      jornadas_count: jornadasTotal.get(id) ?? 0,
+      jornada_actual_numero: jornadaActual.get(id) ?? null,
+    } as Record<string, unknown>);
+  });
 }
 
 /**

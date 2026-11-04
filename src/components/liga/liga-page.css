@@ -277,6 +277,258 @@
   align-items: stretch;
 }
 
+/* ─── LigaHome — dashboard de tarjetas (solo listado admin) ─── */
+
+.liga-home .liga-home__back {
+  margin-bottom: var(--liga-space-sm);
+}
+
+.liga-home__intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--liga-space-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--liga-space-md);
+}
+
+.liga-home__header.liga-header,
+.liga-home__header.rv-mode-header {
+  flex: 1 1 16rem;
+  min-width: 0;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.liga-home__create {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+}
+
+.liga-home__filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0 0 var(--liga-space-md);
+}
+
+.liga-home__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.25rem;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--liga-border);
+  background: transparent;
+  color: var(--liga-text-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.liga-home__chip:hover {
+  border-color: var(--liga-border-subtle);
+  color: var(--liga-text);
+}
+
+.liga-home__chip.is-active {
+  border-color: var(--brand-accent, var(--liga-gold));
+  background: var(--liga-surface);
+  color: var(--liga-text);
+}
+
+.liga-home__chip:focus-visible {
+  outline: 2px solid var(--liga-text);
+  outline-offset: 2px;
+}
+
+.liga-home__chip-count {
+  min-width: 1.25rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--liga-surface-deep);
+  color: var(--liga-text-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.liga-home__chip.is-active .liga-home__chip-count {
+  color: var(--liga-text);
+}
+
+.liga-home__error {
+  margin: 0 0 var(--liga-space-md);
+}
+
+.liga-home__status {
+  margin: var(--liga-space-sm) 0;
+}
+
+.liga-home__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.liga-home__grid {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  width: 100%;
+  max-width: 1400px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .liga-home__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.35rem;
+  }
+}
+
+.liga-home-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+  padding: 1rem 1.1rem 1.05rem;
+  background: var(--liga-surface);
+  border: 1px solid var(--liga-border);
+  border-radius: var(--liga-radius-lg);
+  box-shadow: var(--liga-shadow-card);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.liga-home-card:hover,
+.liga-home-card:focus-within {
+  border-color: var(--liga-border-subtle);
+  box-shadow: var(--liga-shadow-hover);
+  background: var(--liga-surface-hover);
+}
+
+.liga-home-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.liga-home-card__state {
+  flex: 0 0 auto;
+}
+
+.liga-home-card__menu {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.liga-home-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.liga-home-card__title {
+  margin: 0;
+  font-family: var(--liga-font-display);
+  font-size: clamp(1.05rem, 2.2vw, 1.3rem);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--liga-text);
+  overflow-wrap: anywhere;
+}
+
+.liga-home-card__modality {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--liga-text-muted);
+}
+
+.liga-home-card__meta {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.liga-home-card__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--liga-text-soft);
+}
+
+.liga-home-card__meta .ti {
+  flex: 0 0 auto;
+  color: var(--liga-text-muted);
+}
+
+.liga-home-card__footer {
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+.liga-home-card__manage {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+@media (max-width: 767px) {
+  .liga-home__intro {
+    gap: var(--liga-space-sm);
+  }
+
+  .liga-home__create {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .liga-home__filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .liga-home__filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .liga-home__chip {
+    flex: 0 0 auto;
+  }
+}
+
 /* Roster de inscripciones: grilla compacta (muchos jugadores) */
 .liga-list--roster {
   display: grid;

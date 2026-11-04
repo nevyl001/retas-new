@@ -49,7 +49,7 @@ describe("LigaHome / LigaNueva — mantienen ModeHeader (sin cambios en esta fas
     document.body.removeChild(container);
   });
 
-  it("LigaHome renderiza un ModeHeader (rv-mode-header) con título «Ligas»", async () => {
+  it("LigaHome renderiza un ModeHeader (rv-mode-header) con título «Mis ligas»", async () => {
     root = createRoot(container);
     await act(async () => {
       root.render(<LigaHome />);
@@ -60,7 +60,7 @@ describe("LigaHome / LigaNueva — mantienen ModeHeader (sin cambios en esta fas
     const header = container.querySelector(".rv-mode-header");
     expect(header).not.toBeNull();
     expect(header?.querySelector(".rv-mode-header__title")?.textContent).toBe(
-      "Ligas"
+      "Mis ligas"
     );
     // LigaHome no usa el shell móvil de evento (eso es solo LigaGestionar/Jornada).
     expect(container.querySelector(".mode-event-header")).toBeNull();
@@ -75,7 +75,7 @@ describe("LigaHome / LigaNueva — mantienen ModeHeader (sin cambios en esta fas
     const header = container.querySelector(".rv-mode-header");
     expect(header).not.toBeNull();
     expect(header?.querySelector(".rv-mode-header__title")?.textContent).toBe(
-      "Nueva liga"
+      "Crear nueva liga"
     );
     expect(container.querySelector(".mode-event-header")).toBeNull();
   });

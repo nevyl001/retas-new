@@ -1,34 +1,30 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useClubModeEyebrow } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import type { Liga } from "../../lib/liga/types";
-import { isEquiposModalidad } from "../../lib/liga/ligaModalidad";
-import { ligaModalidadLabel } from "../../lib/liga/types";
 import { deleteLiga, getLigas } from "../../services/ligaService";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
 import { ModeHeader } from "../platform/ModeHeader";
+import { TablerIcon } from "../ui/TablerIcon";
 import { navigateLiga } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
+import {
+  LigaListaCard,
+  type LigaListaFilter,
+} from "./LigaListaCard";
 import "./liga-page.css";
+import "../torneo-express/te-action-menu.css";
 
-function estadoLabel(estado: Liga["estado"]): string {
-  switch (estado) {
-    case "upcoming":
-      return "Próxima";
-    case "in_progress":
-      return "En curso";
-    case "completed":
-      return "Finalizada";
-    default:
-      return estado;
-  }
-}
+const FILTERS: Array<{ id: LigaListaFilter; label: string }> = [
+  { id: "all", label: "Todas" },
+  { id: "in_progress", label: "En curso" },
+  { id: "completed", label: "Finalizadas" },
+];
 
-function badgeClass(estado: Liga["estado"]): string {
-  if (estado === "in_progress") return "liga-badge liga-badge--live rv-pill";
-  if (estado === "completed") return "liga-badge liga-badge--done rv-pill";
-  return "liga-badge rv-pill";
+function matchesFilter(liga: Liga, filter: LigaListaFilter): boolean {
+  if (filter === "all") return true;
+  return liga.estado === filter;
 }
 
 export const LigaHome: React.FC = () => {
@@ -37,6 +33,7 @@ export const LigaHome: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<LigaListaFilter>("all");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,6 +51,20 @@ export const LigaHome: React.FC = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  const counts = useMemo(
+    () => ({
+      all: ligas.length,
+      in_progress: ligas.filter((l) => l.estado === "in_progress").length,
+      completed: ligas.filter((l) => l.estado === "completed").length,
+    }),
+    [ligas]
+  );
+
+  const visible = useMemo(
+    () => ligas.filter((l) => matchesFilter(l, filter)),
+    [ligas, filter]
+  );
 
   const handleDeleteLiga = async (liga: Liga) => {
     if (
@@ -76,78 +87,87 @@ export const LigaHome: React.FC = () => {
   };
 
   return (
-    <LigaPageShell>
-      <ActionBar className="liga-toolbar riviera-back-toolbar">
+    <LigaPageShell className="liga-home">
+      <ActionBar className="liga-toolbar riviera-back-toolbar liga-home__back">
         <Button type="button" variant="back" onClick={() => navigateToAppHome()}>
           ← Volver al inicio
         </Button>
       </ActionBar>
 
-      <ModeHeader
-        className="liga-header rv-mode-header rv-mode-header--entry"
-        eyebrow={modeEyebrow}
-        title="Ligas"
-        subtitle="Liga individual con parejas rotativas o liga por parejas fijas"
-      />
-
-      <ActionBar className="liga-actions">
+      <div className="liga-home__intro">
+        <ModeHeader
+          className="liga-header rv-mode-header rv-mode-header--entry liga-home__header"
+          eyebrow={modeEyebrow}
+          title="Mis ligas"
+          subtitle="Organiza y administra tus competiciones"
+        />
         <Button
           type="button"
           variant="primary"
+          className="liga-home__create"
           onClick={() => navigateLiga("/liga/nueva")}
         >
+          <TablerIcon name="plus" size={18} />
           Nueva liga
         </Button>
-      </ActionBar>
+      </div>
 
-      {error ? <p className="liga-error">{error}</p> : null}
+      {!loading && ligas.length > 0 ? (
+        <div
+          className="liga-home__filters"
+          role="tablist"
+          aria-label="Filtrar ligas"
+        >
+          {FILTERS.map((item) => {
+            const active = filter === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                className={`liga-home__chip${active ? " is-active" : ""}`}
+                onClick={() => setFilter(item.id)}
+              >
+                <span>{item.label}</span>
+                <span className="liga-home__chip-count">{counts[item.id]}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {error ? <p className="liga-error liga-home__error">{error}</p> : null}
 
       {loading ? (
-        <p className="liga-subtitle">Cargando ligas…</p>
+        <p className="liga-subtitle liga-home__status">Cargando ligas…</p>
       ) : ligas.length === 0 ? (
-        <div className="liga-card liga-empty rv-card rv-empty-state">
+        <div className="liga-card liga-empty rv-card rv-empty-state liga-home__empty">
           <p>No tienes ligas creadas. Usa «Nueva liga» para empezar.</p>
         </div>
+      ) : visible.length === 0 ? (
+        <div className="liga-card liga-empty rv-card rv-empty-state liga-home__empty">
+          <p>No hay ligas en este filtro.</p>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setFilter("all")}
+          >
+            Ver todas
+          </Button>
+        </div>
       ) : (
-        <ul className="liga-list">
-          {ligas.map((liga) => (
-            <li key={liga.id} className="liga-list-item">
-              <div className="liga-list-item__main">
-                <p className="liga-list-item__title">{liga.nombre}</p>
-                <p className="liga-list-item__meta">
-                  {ligaModalidadLabel(liga.modalidad)}
-                  {" · "}
-                  {isEquiposModalidad(liga.modalidad)
-                    ? `${liga.equipos_count ?? 0} parejas`
-                    : `${liga.inscripciones_count ?? 0} jugadores`}
-                  {" · "}
-                  <span className={badgeClass(liga.estado)}>
-                    {estadoLabel(liga.estado)}
-                  </span>
-                </p>
-              </div>
-              <div className="liga-list-item__actions">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  disabled={deletingId !== null}
-                  onClick={() => navigateLiga(`/liga/${liga.id}/gestionar`)}
-                >
-                  Gestionar
-                </Button>
-                <Button
-                  type="button"
-                  variant="danger"
-                  size="sm"
-                  loading={deletingId === liga.id}
-                  disabled={deletingId !== null && deletingId !== liga.id}
-                  onClick={() => void handleDeleteLiga(liga)}
-                >
-                  Eliminar
-                </Button>
-              </div>
-            </li>
+        <ul className="liga-home__grid">
+          {visible.map((liga) => (
+            <LigaListaCard
+              key={liga.id}
+              liga={liga}
+              deleting={deletingId === liga.id}
+              deleteDisabled={deletingId !== null}
+              onManage={() => navigateLiga(`/liga/${liga.id}/gestionar`)}
+              onDelete={() => void handleDeleteLiga(liga)}
+            />
           ))}
         </ul>
       )}

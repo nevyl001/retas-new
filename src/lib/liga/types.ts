@@ -32,6 +32,10 @@ export interface Liga {
   created_at: string;
   inscripciones_count?: number;
   equipos_count?: number;
+  /** Total de jornadas registradas (listado admin). */
+  jornadas_count?: number;
+  /** Número de la jornada en curso, si existe. */
+  jornada_actual_numero?: number | null;
   /** Fotografía 1..N (+ classification_bye opcional) al cerrar fase regular. */
   playoff_seeds?: Record<string, string> | null;
   playoff_seeded_at?: string | null;
@@ -194,6 +198,15 @@ export function ligaModalidadLabel(modalidad: LigaModalidad): string {
     return "Liga por parejas fijas con semifinales y final";
   }
   return "Liga individual con parejas rotativas";
+}
+
+/** Etiqueta compacta para tarjetas del listado admin. */
+export function ligaModalidadCardLabel(modalidad: LigaModalidad): string {
+  if (modalidad === "parejas_fijas") return "Liga por parejas fijas";
+  if (modalidad === "parejas_fijas_playoffs") {
+    return "Liga por parejas fijas · Playoffs";
+  }
+  return "Liga individual · Parejas rotativas";
 }
 
 /** Etiqueta corta para vistas públicas (sin repetir «Liga»). */
