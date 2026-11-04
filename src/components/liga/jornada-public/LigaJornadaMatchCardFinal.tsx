@@ -38,13 +38,26 @@ export const LigaJornadaMatchCardFinal: React.FC<
   matchStyle,
   scoreSummaryOnly = false,
 }) => {
-  const leftTone = p1Wins ? "win" : p2Wins ? "loss" : undefined;
-  const rightTone = p2Wins ? "win" : p1Wins ? "loss" : undefined;
+  const isDraw = estadoMod === "draw";
+  const leftTone = isDraw
+    ? undefined
+    : p1Wins
+      ? "win"
+      : p2Wins
+        ? "loss"
+        : undefined;
+  const rightTone = isDraw
+    ? undefined
+    : p2Wins
+      ? "win"
+      : p1Wins
+        ? "loss"
+        : undefined;
 
   return (
     <article
       className={`liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--final liga-jornada-match-card--broadcast liga-jornada-match-card--duel-row liga-jornada-match-card--duel-stacks${
-        estadoMod === "draw" ? " liga-jornada-match-card--draw" : ""
+        isDraw ? " liga-jornada-match-card--draw" : ""
       }`}
       style={matchStyle}
     >
@@ -73,6 +86,7 @@ export const LigaJornadaMatchCardFinal: React.FC<
           <LigaJornadaMatchScoreGrid
             board={board}
             summaryOnly={scoreSummaryOnly}
+            isDraw={isDraw}
           />
         </div>
       </div>

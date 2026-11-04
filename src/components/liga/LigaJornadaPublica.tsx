@@ -482,15 +482,17 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   ) => {
     const { s1, s2 } = scoreDisplay(partido);
     const pending = partido.estado !== "completed";
-    const winner = partidoMatchWinnerSide(partido, esParejasFijas);
+    const esEmpate =
+      !esParejasFijas && partidoRotativoEsEmpate(partido);
+    const winner = esEmpate
+      ? null
+      : partidoMatchWinnerSide(partido, esParejasFijas);
     const p1Wins = winner === 1;
     const p2Wins = winner === 2;
     const side1 = resolveParejaFace(partido.pareja1_id);
     const side2 = resolveParejaFace(partido.pareja2_id);
     const canchaNum = partido.cancha ?? "?";
     const estadoVisible = partidoPublicTemporalEstado(partido, temporalCtx);
-    const esEmpate =
-      !esParejasFijas && partidoRotativoEsEmpate(partido);
     const estadoMod = partidoPublicEstadoMod(estadoVisible, {
       empate: esEmpate,
     });

@@ -10,6 +10,8 @@ interface LigaJornadaMatchScoreGridProps {
    * sin la columna PTS duplicada. No usar en parejas fijas / playoffs.
    */
   summaryOnly?: boolean;
+  /** Marcador empatado (rotativo): sin resaltar ganador. */
+  isDraw?: boolean;
 }
 
 function setsWonSummary(
@@ -28,7 +30,7 @@ function setsWonSummary(
 /** Marcador tipo broadcast: resumen 2-0 + SET 1 / SET 2 con ganador resaltado. */
 export const LigaJornadaMatchScoreGrid: React.FC<
   LigaJornadaMatchScoreGridProps
-> = ({ board, summaryOnly = false }) => {
+> = ({ board, summaryOnly = false, isDraw = false }) => {
   if (board.kind === "wo") {
     return (
       <div className="liga-jornada-match-score liga-jornada-match-score--wo">
@@ -40,14 +42,15 @@ export const LigaJornadaMatchScoreGrid: React.FC<
   }
 
   if (board.kind === "simple") {
-    const topWin = board.s1 > board.s2;
-    const botWin = board.s2 > board.s1;
+    const tied = isDraw || board.s1 === board.s2;
+    const topWin = !tied && board.s1 > board.s2;
+    const botWin = !tied && board.s2 > board.s1;
     return (
       <div
         className={`liga-jornada-match-score${
           summaryOnly ? " liga-jornada-match-score--summary-only" : ""
-        }`}
-        aria-label="Marcador"
+        }${tied ? " liga-jornada-match-score--draw" : ""}`}
+        aria-label={tied ? "Marcador empatado" : "Marcador"}
       >
         <div
           className="liga-jornada-match-score__summary"
@@ -56,7 +59,7 @@ export const LigaJornadaMatchScoreGrid: React.FC<
           <span
             className={`liga-jornada-match-score__summary-num${
               topWin ? " is-win" : ""
-            }`}
+            }${tied ? " is-draw" : ""}`}
           >
             {board.s1}
           </span>
@@ -64,11 +67,16 @@ export const LigaJornadaMatchScoreGrid: React.FC<
           <span
             className={`liga-jornada-match-score__summary-num${
               botWin ? " is-win" : ""
-            }`}
+            }${tied ? " is-draw" : ""}`}
           >
             {board.s2}
           </span>
         </div>
+        {tied ? (
+          <p className="liga-jornada-match-score__draw-label" role="status">
+            Empate
+          </p>
+        ) : null}
         {summaryOnly ? null : (
           <div
             className="liga-jornada-match-score__grid liga-jornada-match-score__grid--simple"
