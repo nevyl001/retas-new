@@ -79,6 +79,7 @@
 
 .liga-honores-card {
   position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -93,6 +94,19 @@
       var(--honores-bg-deep) 100%
     );
   overflow: hidden;
+}
+
+.liga-honores-card > *:not(.liga-honores-card__ambient) {
+  position: relative;
+  z-index: 1;
+}
+
+.liga-honores-card__ambient.liga-celebrate-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: clip;
 }
 
 .liga-honores-card--hero {
@@ -335,12 +349,28 @@
 }
 
 .liga-honores-thanks {
+  position: relative;
+  isolation: isolate;
   margin-top: 1.25rem;
   padding: 1.25rem 1.1rem 1.35rem;
   border-radius: var(--honores-radius);
   border: 1px solid var(--honores-border);
   background: color-mix(in srgb, var(--honores-bg) 70%, transparent);
   text-align: center;
+  overflow: hidden;
+}
+
+.liga-honores-thanks > *:not(.liga-honores-card__ambient) {
+  position: relative;
+  z-index: 1;
+}
+
+.liga-honores-thanks .liga-honores-card__ambient.liga-celebrate-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: clip;
 }
 
 .liga-honores-thanks__badge {

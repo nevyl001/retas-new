@@ -9,6 +9,7 @@ import { formatPublicPodiumDif } from "../../lib/torneoExpress/publicEliminatori
 import type { PublicRetaWinnerAvatar } from "../public/PublicRetaWinnerSection";
 import { getJugadorInitials } from "../jugadores/JugadorAvatar";
 import { TablerIcon } from "../ui/TablerIcon";
+import "./liga-pareja-victoria-celebrate.css";
 import "./liga-temporada-honores.css";
 
 export type LigaTemporadaHonoresPlayer = {
@@ -106,6 +107,16 @@ function StatsPanel({
   );
 }
 
+function HonoresAmbient() {
+  return (
+    <div className="liga-celebrate-ambient liga-honores-card__ambient" aria-hidden>
+      <span className="liga-celebrate-ball liga-celebrate-ball--a" />
+      <span className="liga-celebrate-ball liga-celebrate-ball--b" />
+      <span className="liga-celebrate-ball liga-celebrate-ball--c" />
+    </div>
+  );
+}
+
 function HonorCard({
   slot,
   ligaNombre,
@@ -121,6 +132,7 @@ function HonorCard({
         className={`liga-honores-card liga-honores-card--side liga-honores-card--pending`}
         aria-label="Tercer lugar por definir"
       >
+        <HonoresAmbient />
         <header className="liga-honores-card__head">
           <span className="liga-honores-card__icon" aria-hidden>
             <TablerIcon name="medal" size={variant === "hero" ? 22 : 18} />
@@ -150,6 +162,7 @@ function HonorCard({
       className={`liga-honores-card liga-honores-card--${variant} liga-honores-card--${slot.placement}`}
       aria-label={`${copy.badge} — ${slot.pairLabel}`}
     >
+      <HonoresAmbient />
       <header className="liga-honores-card__head">
         <span className="liga-honores-card__icon" aria-hidden>
           <TablerIcon
@@ -256,6 +269,7 @@ export const LigaTemporadaHonores: React.FC<LigaTemporadaHonoresProps> = ({
         className="liga-honores-thanks"
         aria-label="Agradecimiento a todos los participantes"
       >
+        <HonoresAmbient />
         <p className="liga-honores-thanks__badge">Todos los participantes</p>
         <h3 className="liga-honores-thanks__title">Gracias por la temporada</h3>
         <p className="liga-honores-thanks__copy">
