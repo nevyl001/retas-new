@@ -1,6 +1,7 @@
 import {
   jornadaPublicTemporalEstado,
   partidoPublicTemporalEstado,
+  pickDefaultPublicJornadaId,
   pickDefaultPublicRonda,
   resolveLigaProgramadoStartMs,
   rondaPublicTemporalEstado,
@@ -129,5 +130,29 @@ describe("jornadaTemporal", () => {
         { ronda: 2, estado: "done" },
       ])
     ).toBe(2);
+  });
+
+  it("pickDefaultPublicJornadaId: live → próxima → última completada", () => {
+    expect(pickDefaultPublicJornadaId([])).toBeNull();
+    expect(
+      pickDefaultPublicJornadaId([
+        { id: "j1", numero: 1, estado: "completed" },
+        { id: "j2", numero: 2, estado: "in_progress" },
+        { id: "j3", numero: 3, estado: "upcoming" },
+      ])
+    ).toBe("j2");
+    expect(
+      pickDefaultPublicJornadaId([
+        { id: "j1", numero: 1, estado: "completed" },
+        { id: "j2", numero: 2, estado: "upcoming" },
+        { id: "j3", numero: 3, estado: "upcoming" },
+      ])
+    ).toBe("j2");
+    expect(
+      pickDefaultPublicJornadaId([
+        { id: "j1", numero: 1, estado: "completed" },
+        { id: "j2", numero: 2, estado: "completed" },
+      ])
+    ).toBe("j2");
   });
 });

@@ -18,7 +18,10 @@ import {
   listJornadaPublicMatches,
 } from "../../lib/liga/publicDisplay";
 import { formatFechaLegible, dateInputValue } from "../../lib/liga/programacion";
-import { jornadaPublicTemporalEstado } from "../../lib/liga/jornadaTemporal";
+import {
+  jornadaPublicTemporalEstado,
+  pickDefaultPublicJornadaId,
+} from "../../lib/liga/jornadaTemporal";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
 import { resolveLigaJugadorPublicProfiles } from "../../lib/liga/publicParejaAvatars";
 import { resolveLigaPublicPlayerRating } from "../../lib/liga/ligaPublicPlayerRating";
@@ -100,21 +103,6 @@ function jornadaPublicEstadoNow(
   return jornadaPublicTemporalEstado(jornada, { now });
 }
 
-/** Jornada destacada: en curso (horario ya llegó), o la completed más reciente. */
-function jornadaFeaturedOpenId(
-  jornadas: LigaJornada[],
-  now: Date = new Date()
-): string | null {
-  const live = jornadas.find(
-    (j) => jornadaPublicEstadoNow(j, now) === "in_progress"
-  );
-  if (live) return live.id;
-  const completed = jornadas
-    .filter((j) => jornadaPublicEstadoNow(j, now) === "completed")
-    .sort((a, b) => b.numero - a.numero);
-  return completed[0]?.id ?? null;
-}
-
 interface LigaDetallePublicaProps {
   ligaId: string;
 }
@@ -146,13 +134,20 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const organizerName = useOrganizerDisplayName(detalle?.organizador_id);
   const { isClubBranded } = useClubExperience();
   const cancelledRef = useRef(false);
+  const programaUserPickedRef = useRef(false);
 
   useEffect(() => {
     cancelledRef.current = false;
+    programaUserPickedRef.current = false;
     return () => {
       cancelledRef.current = true;
     };
   }, [ligaId]);
+
+  const selectProgramaJornada = useCallback((jornadaId: string) => {
+    programaUserPickedRef.current = true;
+    setProgramaJornadaId(jornadaId);
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -401,21 +396,24 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       return;
     }
     const now = new Date();
-    const preferred = isEquiposModalidad(detalle.modalidad)
-      ? detalle.jornadas.find(
-          (j) => jornadaPublicEstadoNow(j, now) === "in_progress"
-        )?.id ??
-        detalle.jornadas.find(
-          (j) => jornadaPublicEstadoNow(j, now) === "upcoming"
-        )?.id ??
-        detalle.jornadas[detalle.jornadas.length - 1]?.id ??
-        detalle.jornadas[0]?.id ??
-        null
-      : jornadaFeaturedOpenId(detalle.jornadas, now) ??
-        detalle.jornadas[0]?.id ??
-        null;
+    const preferred =
+      pickDefaultPublicJornadaId(
+        detalle.jornadas.map((j) => ({
+          id: j.id,
+          numero: j.numero,
+          estado: jornadaPublicEstadoNow(j, now),
+        }))
+      ) ??
+      detalle.jornadas[0]?.id ??
+      null;
     setProgramaJornadaId((prev) => {
-      if (prev && detalle.jornadas.some((j) => j.id === prev)) return prev;
+      if (
+        programaUserPickedRef.current &&
+        prev &&
+        detalle.jornadas.some((j) => j.id === prev)
+      ) {
+        return prev;
+      }
       return preferred;
     });
   }, [detalle]);
@@ -713,7 +711,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                       id="liga-pub-programa-select"
                       className="liga-pub-programa__select"
                       value={programaJornadaId ?? ""}
-                      onChange={(e) => setProgramaJornadaId(e.target.value)}
+                      onChange={(e) => selectProgramaJornada(e.target.value)}
                     >
                       {detalle.jornadas.map((j) => (
                         <option key={j.id} value={j.id}>
@@ -880,7 +878,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                                   ? "done"
                                   : "upcoming"
                             }`}
-                            onClick={() => setProgramaJornadaId(j.id)}
+                            onClick={() => selectProgramaJornada(j.id)}
                           >
                             <span className="liga-ind-jornadas__tab-num">
                               {j.numero}

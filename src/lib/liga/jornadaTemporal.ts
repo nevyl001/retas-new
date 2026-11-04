@@ -134,3 +134,26 @@ export function pickDefaultPublicRonda(
   if (pending) return pending.ronda;
   return sorted[sorted.length - 1]!.ronda;
 }
+
+export type PublicJornadaEstadoItem = {
+  id: string;
+  numero: number;
+  estado: "upcoming" | "in_progress" | "completed";
+};
+
+/**
+ * Jornada a mostrar por defecto en el programa público:
+ * 1) en curso, 2) primera próxima, 3) última completada.
+ * Si la jornada actual ya terminó, avanza a la siguiente pendiente.
+ */
+export function pickDefaultPublicJornadaId(
+  jornadas: ReadonlyArray<PublicJornadaEstadoItem>
+): string | null {
+  if (jornadas.length === 0) return null;
+  const sorted = [...jornadas].sort((a, b) => a.numero - b.numero);
+  const live = sorted.find((j) => j.estado === "in_progress");
+  if (live) return live.id;
+  const upcoming = sorted.find((j) => j.estado === "upcoming");
+  if (upcoming) return upcoming.id;
+  return sorted[sorted.length - 1]!.id;
+}
