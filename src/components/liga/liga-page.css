@@ -2722,6 +2722,26 @@
   );
 }
 
+/* Tras completar una jornada: resaltar la siguiente upcoming */
+.liga-jornada-card--next {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--liga-gestionar-accent, var(--ro-accent))) 48%,
+    var(--liga-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, var(--liga-gestionar-accent, var(--ro-accent))) 10%,
+    var(--liga-surface)
+  );
+  box-shadow: 0 0 0 1px
+    color-mix(
+      in srgb,
+      var(--brand-accent, var(--liga-gestionar-accent, var(--ro-accent))) 18%,
+      transparent
+    );
+}
+
 .liga-jornada-card--completed {
   opacity: 0.92;
 }
@@ -2758,6 +2778,20 @@
   background: color-mix(
     in srgb,
     var(--brand-accent, var(--liga-gestionar-accent, var(--ro-accent))) 12%,
+    transparent
+  );
+}
+
+.liga-jornada-card__badge--next {
+  color: var(--brand-accent, var(--liga-gestionar-accent, var(--ro-accent)));
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent, var(--liga-gestionar-accent, var(--ro-accent))) 50%,
+    transparent
+  );
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, var(--liga-gestionar-accent, var(--ro-accent))) 14%,
     transparent
   );
 }

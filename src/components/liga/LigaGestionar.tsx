@@ -133,6 +133,21 @@ export function jornadaEstadoLabel(estado: LigaJornadaEstado): string {
   }
 }
 
+/**
+ * Jornada siguiente a resaltar: la upcoming de menor número cuando no hay
+ * ninguna en curso (p. ej. tras completar la jornada actual).
+ */
+export function resolveSiguienteJornadaNumero(
+  jornadas: ReadonlyArray<{ numero: number; estado: LigaJornadaEstado }>
+): number | null {
+  if (jornadas.some((j) => j.estado === "in_progress")) return null;
+  const siguientes = jornadas
+    .filter((j) => j.estado === "upcoming")
+    .slice()
+    .sort((a, b) => a.numero - b.numero);
+  return siguientes[0]?.numero ?? null;
+}
+
 export function ligaEstadoStatusDisplayLabel(
   estado: LigaDetalle["estado"]
 ): string {
@@ -1569,55 +1584,72 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
               </p>
             ) : (
               <ul className="liga-jornadas-grid">
-                {detalle.jornadas.map((j) => {
-                  const fechaLabel = j.fecha
-                    ? formatFechaLegible(dateInputValue(j.fecha))
-                    : null;
-                  const isLive = j.estado === "in_progress";
-                  return (
-                    <li
-                      key={j.id}
-                      className={`liga-jornada-card liga-jornada-card--${j.estado}`}
-                    >
-                      <div className="liga-jornada-card__top">
-                        <span
-                          className={`liga-jornada-card__badge liga-jornada-card__badge--${j.estado}`}
-                        >
-                          {jornadaEstadoLabel(j.estado)}
-                        </span>
-                        <span
-                          className="liga-jornada-card__icon"
-                          aria-hidden="true"
-                        >
-                          {jornadaEstadoIcon(j.estado)}
-                        </span>
-                      </div>
-                      <h3 className="liga-jornada-card__title">
-                        Jornada {j.numero}
-                      </h3>
-                      {fechaLabel ? (
-                        <p className="liga-jornada-card__fecha">{fechaLabel}</p>
-                      ) : (
-                        <p className="liga-jornada-card__fecha liga-jornada-card__fecha--empty">
-                          Sin fecha
-                        </p>
-                      )}
-                      <Button
-                        type="button"
-                        variant={isLive ? "primary" : "secondary"}
-                        size="sm"
-                        className="liga-jornada-card__cta"
-                        disabled={busy}
-                        onClick={() =>
-                          navigateLiga(ligaJornadaPath(ligaId, j.numero))
-                        }
-                      >
-                        {isLive ? "Continuar jornada" : "Ver jornada"}
-                        <TablerIcon name="chevron-right" size={16} />
-                      </Button>
-                    </li>
+                {(() => {
+                  const siguienteNumero = resolveSiguienteJornadaNumero(
+                    detalle.jornadas
                   );
-                })}
+                  return detalle.jornadas.map((j) => {
+                    const fechaLabel = j.fecha
+                      ? formatFechaLegible(dateInputValue(j.fecha))
+                      : null;
+                    const isLive = j.estado === "in_progress";
+                    const isNext =
+                      !isLive &&
+                      j.estado === "upcoming" &&
+                      j.numero === siguienteNumero;
+                    return (
+                      <li
+                        key={j.id}
+                        className={`liga-jornada-card liga-jornada-card--${j.estado}${
+                          isNext ? " liga-jornada-card--next" : ""
+                        }`}
+                      >
+                        <div className="liga-jornada-card__top">
+                          <span
+                            className={`liga-jornada-card__badge liga-jornada-card__badge--${j.estado}${
+                              isNext ? " liga-jornada-card__badge--next" : ""
+                            }`}
+                          >
+                            {isNext ? "Siguiente" : jornadaEstadoLabel(j.estado)}
+                          </span>
+                          <span
+                            className="liga-jornada-card__icon"
+                            aria-hidden="true"
+                          >
+                            {isNext ? "→" : jornadaEstadoIcon(j.estado)}
+                          </span>
+                        </div>
+                        <h3 className="liga-jornada-card__title">
+                          Jornada {j.numero}
+                        </h3>
+                        {fechaLabel ? (
+                          <p className="liga-jornada-card__fecha">{fechaLabel}</p>
+                        ) : (
+                          <p className="liga-jornada-card__fecha liga-jornada-card__fecha--empty">
+                            Sin fecha
+                          </p>
+                        )}
+                        <Button
+                          type="button"
+                          variant={isLive || isNext ? "primary" : "secondary"}
+                          size="sm"
+                          className="liga-jornada-card__cta"
+                          disabled={busy}
+                          onClick={() =>
+                            navigateLiga(ligaJornadaPath(ligaId, j.numero))
+                          }
+                        >
+                          {isLive
+                            ? "Continuar jornada"
+                            : isNext
+                              ? "Abrir jornada"
+                              : "Ver jornada"}
+                          <TablerIcon name="chevron-right" size={16} />
+                        </Button>
+                      </li>
+                    );
+                  });
+                })()}
               </ul>
             )}
           </div>

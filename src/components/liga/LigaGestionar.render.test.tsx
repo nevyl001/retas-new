@@ -21,7 +21,10 @@ import {
   getLigaById,
   publicLigaUrl,
 } from "../../services/ligaService";
-import { LigaGestionar } from "./LigaGestionar";
+import {
+  LigaGestionar,
+  resolveSiguienteJornadaNumero,
+} from "./LigaGestionar";
 
 // React 18 + createRoot requiere esta bandera para que act() no advierta
 // "not configured to support act()" (no aplica @testing-library, que la
@@ -143,6 +146,80 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
     ).map((el) => el.textContent);
 
     expect(tabButtons).toEqual(["Jugadores", "Jornadas"]);
+  });
+
+  it("resolveSiguienteJornadaNumero apunta a la primera upcoming si no hay en curso", () => {
+    expect(
+      resolveSiguienteJornadaNumero([
+        { numero: 1, estado: "completed" },
+        { numero: 2, estado: "upcoming" },
+        { numero: 3, estado: "upcoming" },
+      ])
+    ).toBe(2);
+    expect(
+      resolveSiguienteJornadaNumero([
+        { numero: 1, estado: "in_progress" },
+        { numero: 2, estado: "upcoming" },
+      ])
+    ).toBeNull();
+    expect(
+      resolveSiguienteJornadaNumero([
+        { numero: 1, estado: "completed" },
+        { numero: 2, estado: "completed" },
+      ])
+    ).toBeNull();
+  });
+
+  it("tras completar una jornada resalta la siguiente upcoming", async () => {
+    await renderLiga(
+      baseDetalle({
+        estado: "in_progress",
+        jornadas: [
+          {
+            id: "jor-1",
+            liga_id: "liga-1",
+            numero: 1,
+            estado: "completed",
+            fecha: "2026-11-03",
+            puntos_aplicados: true,
+          } as LigaDetalle["jornadas"][number],
+          {
+            id: "jor-2",
+            liga_id: "liga-1",
+            numero: 2,
+            estado: "upcoming",
+            fecha: null,
+            puntos_aplicados: false,
+          } as LigaDetalle["jornadas"][number],
+          {
+            id: "jor-3",
+            liga_id: "liga-1",
+            numero: 3,
+            estado: "upcoming",
+            fecha: null,
+            puntos_aplicados: false,
+          } as LigaDetalle["jornadas"][number],
+        ],
+      })
+    );
+
+    const jornadasTab = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".mode-section-tabs__btn")
+    ).find((b) => b.textContent === "Jornadas");
+
+    await act(async () => {
+      jornadasTab?.click();
+      await Promise.resolve();
+    });
+
+    const nextCard = container.querySelector(".liga-jornada-card--next");
+    expect(nextCard).not.toBeNull();
+    expect(nextCard?.textContent).toContain("Jornada 2");
+    expect(nextCard?.textContent).toContain("Siguiente");
+    expect(nextCard?.textContent).toContain("Abrir jornada");
+    expect(container.querySelectorAll(".liga-jornada-card--next")).toHaveLength(
+      1
+    );
   });
 
   it("la pestaña activa coincide con el panel renderizado (Jugadores ↔ Jornadas)", async () => {
