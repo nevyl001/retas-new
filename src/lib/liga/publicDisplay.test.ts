@@ -5,6 +5,7 @@ import {
   groupJornadaPublicMatchesByRonda,
   listJornadaPublicMatches,
   listLigaProgramaCompleto,
+  partidoRotativoEsEmpate,
 } from "./publicDisplay";
 
 describe("publicDisplay", () => {
@@ -448,5 +449,29 @@ describe("publicDisplay", () => {
     expect(groups.map((g) => g.ronda)).toEqual([1, 2]);
     expect(groups[0].matches).toHaveLength(4);
     expect(groups[1].matches).toHaveLength(4);
+  });
+
+  it("partidoRotativoEsEmpate: 5-5 completed es empate", () => {
+    expect(
+      partidoRotativoEsEmpate({
+        estado: "completed",
+        score_pareja1: 5,
+        score_pareja2: 5,
+      })
+    ).toBe(true);
+    expect(
+      partidoRotativoEsEmpate({
+        estado: "completed",
+        score_pareja1: 6,
+        score_pareja2: 5,
+      })
+    ).toBe(false);
+    expect(
+      partidoRotativoEsEmpate({
+        estado: "in_progress",
+        score_pareja1: 5,
+        score_pareja2: 5,
+      })
+    ).toBe(false);
   });
 });

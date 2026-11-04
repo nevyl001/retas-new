@@ -6,7 +6,7 @@ import { LigaJornadaMatchVsDivider } from "./LigaJornadaMatchVsDivider";
 
 interface LigaJornadaMatchCardPendingProps {
   canchaNum: string | number;
-  estadoMod: "pending" | "live" | "done";
+  estadoMod: "pending" | "live" | "done" | "draw";
   estadoText: string;
   side1: LigaJornadaMatchPairSide;
   side2: LigaJornadaMatchPairSide;

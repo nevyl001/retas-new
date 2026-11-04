@@ -2,7 +2,7 @@ import React from "react";
 
 interface LigaJornadaMatchCardHeaderProps {
   canchaNum: string | number;
-  estadoMod: "pending" | "live" | "done";
+  estadoMod: "pending" | "live" | "done" | "draw";
   estadoText: string;
 }
 

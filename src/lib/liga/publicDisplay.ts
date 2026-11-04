@@ -217,6 +217,20 @@ export function partidoMatchWinnerSide(
   return s1 > s2 ? 1 : 2;
 }
 
+/** Empate en jornada individual rotativa (marcador completo y scores iguales). */
+export function partidoRotativoEsEmpate(
+  partido: Pick<
+    LigaPartido,
+    "estado" | "score_pareja1" | "score_pareja2"
+  >
+): boolean {
+  if (partido.estado !== "completed") return false;
+  if (partido.score_pareja1 == null || partido.score_pareja2 == null) {
+    return false;
+  }
+  return Number(partido.score_pareja1) === Number(partido.score_pareja2);
+}
+
 /**
  * Agrupa partidos del programa público por ronda de pantalla.
  * Producto: 2 rondas por jornada. Si en BD todos quedaron en una sola ronda,

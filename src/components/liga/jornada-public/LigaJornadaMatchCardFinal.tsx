@@ -8,7 +8,7 @@ import { LigaJornadaMatchVsDivider } from "./LigaJornadaMatchVsDivider";
 
 interface LigaJornadaMatchCardFinalProps {
   canchaNum: string | number;
-  estadoMod: "pending" | "live" | "done";
+  estadoMod: "pending" | "live" | "done" | "draw";
   estadoText: string;
   side1: LigaJornadaMatchPairSide;
   side2: LigaJornadaMatchPairSide;
@@ -43,7 +43,9 @@ export const LigaJornadaMatchCardFinal: React.FC<
 
   return (
     <article
-      className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--final liga-jornada-match-card--broadcast liga-jornada-match-card--duel-row liga-jornada-match-card--duel-stacks"
+      className={`liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--final liga-jornada-match-card--broadcast liga-jornada-match-card--duel-row liga-jornada-match-card--duel-stacks${
+        estadoMod === "draw" ? " liga-jornada-match-card--draw" : ""
+      }`}
       style={matchStyle}
     >
       <LigaJornadaMatchCardHeader

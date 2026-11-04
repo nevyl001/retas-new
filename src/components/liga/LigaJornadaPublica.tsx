@@ -10,6 +10,7 @@ import {
   formatJornadaParejaNombre,
   getPartidoPublicScoreboard,
   partidoMatchWinnerSide,
+  partidoRotativoEsEmpate,
 } from "../../lib/liga/publicDisplay";
 import {
   findLigaGranFinalPartido,
@@ -90,15 +91,21 @@ function rondaLabel(estado: string): string {
   return "Pendiente";
 }
 
-function partidoPublicEstadoLabel(estado: LigaPartido["estado"]): string {
+function partidoPublicEstadoLabel(
+  estado: LigaPartido["estado"],
+  opts?: { empate?: boolean }
+): string {
+  if (estado === "completed" && opts?.empate) return "Empate";
   if (estado === "completed") return "Final";
   if (estado === "in_progress") return "En juego";
   return "Pendiente";
 }
 
 function partidoPublicEstadoMod(
-  estado: LigaPartido["estado"]
-): "pending" | "live" | "done" {
+  estado: LigaPartido["estado"],
+  opts?: { empate?: boolean }
+): "pending" | "live" | "done" | "draw" {
+  if (estado === "completed" && opts?.empate) return "draw";
   if (estado === "completed") return "done";
   if (estado === "in_progress") return "live";
   return "pending";
@@ -482,8 +489,14 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     const side2 = resolveParejaFace(partido.pareja2_id);
     const canchaNum = partido.cancha ?? "?";
     const estadoVisible = partidoPublicTemporalEstado(partido, temporalCtx);
-    const estadoMod = partidoPublicEstadoMod(estadoVisible);
-    const estadoText = partidoPublicEstadoLabel(estadoVisible);
+    const esEmpate =
+      !esParejasFijas && partidoRotativoEsEmpate(partido);
+    const estadoMod = partidoPublicEstadoMod(estadoVisible, {
+      empate: esEmpate,
+    });
+    const estadoText = partidoPublicEstadoLabel(estadoVisible, {
+      empate: esEmpate,
+    });
     const board = getPartidoPublicScoreboard(partido, esParejasFijas);
     const matchStyle = {
       ["--liga-match-i" as string]: matchIndex,
