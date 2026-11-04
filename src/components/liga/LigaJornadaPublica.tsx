@@ -845,58 +845,94 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                   Ranking de la jornada
                 </h2>
                 <p className="liga-pantalla-ranking__hint">
-                  Parejas: PTS → DIF (obtenidos − recibidos) → G (ganados). Jugadores:
-                  PTS de la jornada.
+                  Por pareja de esta jornada. PTS → DIF (obtenidos − recibidos) → G
+                  (ganados). Jugadores: PTS de la jornada.
                 </p>
-                <div className="liga-pantalla-ranking__dual">
-                  <div className="liga-pantalla-ranking__panel">
+                <div className="liga-pantalla-ranking__dual liga-pantalla-ranking__dual--rotativo">
+                  <div className="liga-pantalla-ranking__panel liga-pantalla-ranking__panel--parejas">
                     <h3 className="liga-pantalla-ranking__subtitle liga-pantalla-ranking__subtitle--flush">
                       Parejas
                     </h3>
                     {jornadaStats.rankingParejas.length === 0 ? (
                       <p className="liga-pantalla__loading">Sin resultados aún.</p>
                     ) : (
-                      <table className="liga-pantalla-ranking__table--compact">
-                        <thead>
-                          <tr>
-                            <th>#</th>
-                            <th>Pareja</th>
-                            <th title="Ganados">G</th>
-                            <th title="En contra (recibidos)">C</th>
-                            <th title="Diferencia (Pts − C)">Dif</th>
-                            <th>Pts</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {jornadaStats.rankingParejas.map((row) => {
-                            const dif = row.games_favor - row.games_contra;
-                            return (
-                              <tr
-                                key={row.parejaId}
-                                className={
-                                  row.parejaId ===
-                                  jornadaStats.ganadorPareja?.parejaId
-                                    ? "liga-pantalla-ranking-winner"
-                                    : row.posicion <= 3
-                                      ? "liga-pantalla-ranking-top"
-                                      : undefined
-                                }
-                              >
-                                <td>{row.posicion}</td>
-                                <td className="liga-pantalla-ranking__pair">
-                                  {row.nombre}
-                                </td>
-                                <td>{row.victorias}</td>
-                                <td>{row.games_contra}</td>
-                                <td>
-                                  {dif > 0 ? `+${dif}` : dif}
-                                </td>
-                                <td>{row.puntos}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
+                      <div className="liga-pantalla-ranking__scroll">
+                        <table className="liga-pantalla-ranking__table--compact liga-pantalla-ranking__table--jornada-parejas">
+                          <thead>
+                            <tr>
+                              <th scope="col">POS</th>
+                              <th scope="col">Pareja</th>
+                              <th scope="col" title="Partidos jugados">
+                                PJ
+                              </th>
+                              <th scope="col" title="Partidos ganados">
+                                PG
+                              </th>
+                              <th scope="col" title="Partidos perdidos">
+                                PP
+                              </th>
+                              <th scope="col" title="Games / puntos a favor">
+                                GF
+                              </th>
+                              <th scope="col" title="Games / puntos en contra">
+                                GC
+                              </th>
+                              <th scope="col" title="Diferencia (GF − GC)">
+                                DIF
+                              </th>
+                              <th scope="col">PTS</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {jornadaStats.rankingParejas.map((row) => {
+                              const pj =
+                                row.victorias + row.derrotas + row.empates;
+                              const dif = row.games_favor - row.games_contra;
+                              return (
+                                <tr
+                                  key={row.parejaId}
+                                  className={
+                                    row.parejaId ===
+                                    jornadaStats.ganadorPareja?.parejaId
+                                      ? "liga-pantalla-ranking-winner"
+                                      : row.posicion <= 3
+                                        ? "liga-pantalla-ranking-top"
+                                        : undefined
+                                  }
+                                >
+                                  <td className="liga-pantalla-ranking__rank">
+                                    {row.posicion}
+                                  </td>
+                                  <td className="liga-pantalla-ranking__pair">
+                                    {row.nombre}
+                                  </td>
+                                  <td className="liga-pantalla-ranking__stat">
+                                    {pj}
+                                  </td>
+                                  <td className="liga-pantalla-ranking__stat">
+                                    {row.victorias}
+                                  </td>
+                                  <td className="liga-pantalla-ranking__stat">
+                                    {row.derrotas}
+                                  </td>
+                                  <td className="liga-pantalla-ranking__stat">
+                                    {row.games_favor}
+                                  </td>
+                                  <td className="liga-pantalla-ranking__stat">
+                                    {row.games_contra}
+                                  </td>
+                                  <td className="liga-pantalla-ranking__stat">
+                                    {dif > 0 ? `+${dif}` : dif}
+                                  </td>
+                                  <td className="liga-pantalla-ranking__pts">
+                                    {row.puntos}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     )}
                   </div>
 
@@ -910,9 +946,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                       <table className="liga-pantalla-ranking__table--compact">
                         <thead>
                           <tr>
-                            <th>#</th>
-                            <th>Jugador</th>
-                            <th>Pts</th>
+                            <th scope="col">POS</th>
+                            <th scope="col">Jugador</th>
+                            <th scope="col">PTS</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -925,9 +961,13 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                                   : undefined
                               }
                             >
-                              <td>{row.posicion}</td>
+                              <td className="liga-pantalla-ranking__rank">
+                                {row.posicion}
+                              </td>
                               <td>{row.nombre}</td>
-                              <td>{row.puntos}</td>
+                              <td className="liga-pantalla-ranking__pts">
+                                {row.puntos}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
