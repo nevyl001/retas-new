@@ -48,12 +48,16 @@ jest.mock("../../services/ligaService", () => ({
   finishLiga: jest.fn(),
   getJugadoresOrganizador: jest.fn().mockResolvedValue([]),
   getLigaById: jest.fn(),
+  getRanking: jest.fn().mockResolvedValue([]),
+  listLigaSustituciones: jest.fn().mockResolvedValue([]),
   inscribirJugador: jest.fn(),
   publicLigaUrl: jest.fn().mockReturnValue("https://example.com/public/liga/liga-1"),
   regenerarCalendarioLiga: jest.fn(),
   resetLiga: jest.fn(),
   startLiga: jest.fn(),
   updateLigaNombre: jest.fn(),
+  resyncAllCompletedLigaJornadasCareer: jest.fn(),
+  resyncLigaPodioCareer: jest.fn(),
 }));
 
 const mockGetLigaById = getLigaById as jest.Mock;

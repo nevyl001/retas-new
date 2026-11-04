@@ -94,7 +94,28 @@ export interface LigaInscripcion {
   /** Motivo del último ajuste manual (si existe). */
   puntos_ajuste_motivo?: string | null;
   puntos_ajuste_at?: string | null;
+  /** Puntos de plaza transferidos por sustitución (no son partidos del titular actual). */
+  puntos_heredados?: number;
+  /** Jornada desde la que el titular actual ocupa la plaza. */
+  ingreso_jornada_numero?: number | null;
   jugador?: LigaJugador;
+}
+
+export interface LigaSustitucion {
+  id: string;
+  liga_id: string;
+  plaza_inscripcion_id: string;
+  from_jugador_id: string;
+  to_jugador_id: string;
+  jornada_efectiva_id: string;
+  jornada_efectiva_numero: number;
+  puntos_heredados: number;
+  motivo_categoria: string;
+  motivo_detalle?: string | null;
+  actor_id: string;
+  created_at: string;
+  from_nombre?: string | null;
+  to_nombre?: string | null;
 }
 
 export interface LigaJornadaPareja {
@@ -162,6 +183,9 @@ export interface RankingItem {
   /** Motivo del último ajuste manual de puntos (si aplica). */
   puntos_ajuste_motivo?: string | null;
   puntos_ajuste_at?: string | null;
+  puntos_heredados?: number;
+  ingreso_jornada_numero?: number | null;
+  sustituye_a_nombre?: string | null;
 }
 
 export function ligaModalidadLabel(modalidad: LigaModalidad): string {

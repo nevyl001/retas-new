@@ -16,7 +16,12 @@ export interface LigaInscripcionesPanelProps {
   inscritosIds: ReadonlySet<string>;
   ligaEditable: boolean;
   busy: boolean;
+  /** Solo liga individual rotativa: permite abrir flujo de sustitución. */
+  canSustituir?: boolean;
+  /** jugador_id → etiqueta corta (ej. Sustituto J6). */
+  sustitutoLabelsById?: ReadonlyMap<string, string>;
   onToggleInscripcion: (jugadorId: string, inscrito: boolean) => void | Promise<void>;
+  onSustituirJugador?: (jugadorId: string) => void;
   onGoToRegistro: () => void;
 }
 
@@ -31,7 +36,10 @@ export const LigaInscripcionesPanel: React.FC<LigaInscripcionesPanelProps> = ({
   inscritosIds,
   ligaEditable,
   busy,
+  canSustituir = false,
+  sustitutoLabelsById,
   onToggleInscripcion,
+  onSustituirJugador,
   onGoToRegistro,
 }) => {
   const [query, setQuery] = useState("");
@@ -256,17 +264,36 @@ export const LigaInscripcionesPanel: React.FC<LigaInscripcionesPanelProps> = ({
                     </span>
 
                     {ligaEditable ? (
-                      <Button
-                        type="button"
-                        variant={inscrito ? "secondary" : "primary"}
-                        size="sm"
-                        loading={cardBusy}
-                        disabled={disabled}
-                        className="liga-inscripciones__action"
-                        onClick={() => void handleToggle(j.id, inscrito)}
-                      >
-                        {inscrito ? "Quitar" : "Inscribir jugador"}
-                      </Button>
+                      <div className="liga-inscripciones__actions">
+                        {inscrito && canSustituir && onSustituirJugador ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={disabled}
+                            className="liga-inscripciones__action liga-inscripciones__action--sustituir"
+                            onClick={() => onSustituirJugador(j.id)}
+                          >
+                            Sustituir jugador
+                          </Button>
+                        ) : null}
+                        <Button
+                          type="button"
+                          variant={inscrito ? "secondary" : "primary"}
+                          size="sm"
+                          loading={cardBusy}
+                          disabled={disabled}
+                          className="liga-inscripciones__action"
+                          onClick={() => void handleToggle(j.id, inscrito)}
+                        >
+                          {inscrito ? "Quitar" : "Inscribir jugador"}
+                        </Button>
+                      </div>
+                    ) : null}
+                    {inscrito && sustitutoLabelsById?.get(j.id) ? (
+                      <p className="liga-inscripciones__sust-note">
+                        {sustitutoLabelsById.get(j.id)}
+                      </p>
                     ) : null}
                   </div>
                 </li>

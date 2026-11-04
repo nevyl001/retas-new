@@ -58,6 +58,17 @@ export const LigaRanking: React.FC<LigaRankingProps> = ({
                     <span className="liga-ranking-player__name">
                       {row.nombre}
                     </span>
+                    {row.ingreso_jornada_numero ? (
+                      <span className="liga-ranking-player__ajuste">
+                        Sustituto desde Jornada {row.ingreso_jornada_numero}
+                        {row.sustituye_a_nombre
+                          ? ` · sustituye a ${row.sustituye_a_nombre}`
+                          : ""}
+                        {row.puntos_heredados
+                          ? ` · ${row.puntos_heredados} pts heredados`
+                          : ""}
+                      </span>
+                    ) : null}
                     {row.puntos_ajuste_motivo ? (
                       <span className="liga-ranking-player__ajuste">
                         Ajuste: {row.puntos_ajuste_motivo}

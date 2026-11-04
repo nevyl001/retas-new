@@ -569,7 +569,11 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                         </div>
                         <div className="liga-ind-top3__body">
                           <p className="liga-ind-top3__name">{row.nombre}</p>
-                          {row.puntos_ajuste_motivo ? (
+                          {row.ingreso_jornada_numero ? (
+                            <p className="liga-ind-top3__ajuste">
+                              Sustituto desde Jornada {row.ingreso_jornada_numero}
+                            </p>
+                          ) : row.puntos_ajuste_motivo ? (
                             <p className="liga-ind-top3__ajuste">
                               Ajuste: {row.puntos_ajuste_motivo}
                             </p>
@@ -632,7 +636,15 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                               <span className="liga-ind-rest__name">
                                 {row.nombre}
                               </span>
-                              {row.puntos_ajuste_motivo ? (
+                              {row.ingreso_jornada_numero ? (
+                                <span className="liga-ind-rest__ajuste">
+                                  Sustituto desde Jornada{" "}
+                                  {row.ingreso_jornada_numero}
+                                  {row.sustituye_a_nombre
+                                    ? ` · sustituye a ${row.sustituye_a_nombre}`
+                                    : ""}
+                                </span>
+                              ) : row.puntos_ajuste_motivo ? (
                                 <span className="liga-ind-rest__ajuste">
                                   Ajuste: {row.puntos_ajuste_motivo}
                                 </span>

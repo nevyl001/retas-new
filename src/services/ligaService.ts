@@ -11,9 +11,11 @@ import type {
   LigaJugadorPoolItem,
   LigaPartido,
   LigaVueltas,
+  LigaSustitucion,
   RankingItem,
   UpdateJugadorLigaInput,
 } from "../lib/liga/types";
+import type { LigaSustitucionMotivoCategoria } from "../lib/liga/sustitucion";
 import {
   validateEquiposParaCalendario,
   validateEquiposParaPlayoffsCalendario,
@@ -559,6 +561,8 @@ async function resetPuntosLiga(ligaId: string): Promise<void> {
     .from("liga_inscripciones")
     .update({
       puntos: 0,
+      puntos_heredados: 0,
+      ingreso_jornada_numero: null,
       puntos_ajuste_motivo: null,
       puntos_ajuste_at: null,
     })
@@ -1625,10 +1629,10 @@ export async function recalcularPuntosLiga(ligaId: string): Promise<void> {
     return;
   }
 
+  // Conserva puntos_heredados (transferencia de plaza). Solo limpia ajuste manual.
   const { error: resetErr } = await supabase
     .from("liga_inscripciones")
     .update({
-      puntos: 0,
       puntos_ajuste_motivo: null,
       puntos_ajuste_at: null,
     })
@@ -1742,20 +1746,29 @@ export async function recalcularPuntosLiga(ligaId: string): Promise<void> {
     }
   }
 
-  // Escrituras independientes (1 fila cada una, valores distintos): se
-  // paralelizan en vez de esperarlas una por una.
+  const { data: inscRows, error: inscErr } = await supabase
+    .from("liga_inscripciones")
+    .select("jugador_id, puntos_heredados")
+    .eq("liga_id", ligaId);
+
+  if (inscErr) throw new Error(inscErr.message);
+
+  // Cada plaza: puntos propios de partidos del titular actual + heredados de plaza.
   const results = await Promise.all(
-    Array.from(totales.entries()).map(([jugadorId, pts]) =>
-      supabase
+    (inscRows ?? []).map((row) => {
+      const jugadorId = String(row.jugador_id);
+      const heredados = Math.max(0, Number(row.puntos_heredados ?? 0));
+      const propios = totales.get(jugadorId) ?? 0;
+      return supabase
         .from("liga_inscripciones")
         .update({
-          puntos: pts,
+          puntos: propios + heredados,
           puntos_ajuste_motivo: null,
           puntos_ajuste_at: null,
         })
         .eq("liga_id", ligaId)
-        .eq("jugador_id", jugadorId)
-    )
+        .eq("jugador_id", jugadorId);
+    })
   );
   const firstError = results.find((r) => r.error)?.error;
   if (firstError) throw new Error(firstError.message);
@@ -2167,25 +2180,54 @@ export async function finishLiga(ligaId: string): Promise<LigaCareerCloseResult>
 }
 
 export async function getRanking(ligaId: string): Promise<RankingItem[]> {
-  const withMotivo = await supabase
+  const withSust = await supabase
     .from("liga_inscripciones")
     .select(
-      "jugador_id, puntos, puntos_ajuste_motivo, puntos_ajuste_at, jugador:liga_jugadores(nombre)"
+      "jugador_id, puntos, puntos_heredados, ingreso_jornada_numero, puntos_ajuste_motivo, puntos_ajuste_at, jugador:liga_jugadores(nombre)"
     )
     .eq("liga_id", ligaId)
     .order("puntos", { ascending: false });
 
   const { data, error } =
-    withMotivo.error &&
-    /puntos_ajuste_motivo|column/i.test(withMotivo.error.message)
+    withSust.error && /column|puntos_heredados|ingreso_jornada/i.test(withSust.error.message)
       ? await supabase
           .from("liga_inscripciones")
-          .select("jugador_id, puntos, jugador:liga_jugadores(nombre)")
+          .select(
+            "jugador_id, puntos, puntos_ajuste_motivo, puntos_ajuste_at, jugador:liga_jugadores(nombre)"
+          )
           .eq("liga_id", ligaId)
           .order("puntos", { ascending: false })
-      : withMotivo;
+      : withSust;
 
   if (error) throw new Error(error.message);
+
+  const { data: sustRows } = await supabase
+    .from("liga_sustituciones")
+    .select("to_jugador_id, from_jugador_id")
+    .eq("liga_id", ligaId)
+    .is("reverted_at", null)
+    .order("created_at", { ascending: false });
+
+  const fromIds = Array.from(
+    new Set((sustRows ?? []).map((r) => String(r.from_jugador_id)))
+  );
+  const nombreById = new Map<string, string>();
+  if (fromIds.length > 0) {
+    const { data: fromJugs } = await supabase
+      .from("liga_jugadores")
+      .select("id, nombre")
+      .in("id", fromIds);
+    for (const j of fromJugs ?? []) {
+      nombreById.set(String(j.id), String(j.nombre));
+    }
+  }
+  const sustituyeNombreByTo = new Map<string, string>();
+  for (const row of sustRows ?? []) {
+    const toId = String(row.to_jugador_id);
+    if (sustituyeNombreByTo.has(toId)) continue;
+    const nombre = nombreById.get(String(row.from_jugador_id));
+    if (nombre) sustituyeNombreByTo.set(toId, nombre);
+  }
 
   const { data: jornadas } = await supabase
     .from("liga_jornadas")
@@ -2233,6 +2275,15 @@ export async function getRanking(ligaId: string): Promise<RankingItem[]> {
       typeof motivoRaw === "string" && motivoRaw.trim()
         ? motivoRaw.trim()
         : null;
+    const heredados =
+      "puntos_heredados" in row
+        ? Number((row as { puntos_heredados?: number }).puntos_heredados ?? 0)
+        : 0;
+    const ingreso =
+      "ingreso_jornada_numero" in row
+        ? ((row as { ingreso_jornada_numero?: number | null })
+            .ingreso_jornada_numero ?? null)
+        : null;
     return {
       posicion: idx + 1,
       jugador_id: jugadorId,
@@ -2241,8 +2292,117 @@ export async function getRanking(ligaId: string): Promise<RankingItem[]> {
       jornadas_jugadas: jornadasPorJugador.get(jugadorId) ?? 0,
       puntos_ajuste_motivo: motivo,
       puntos_ajuste_at: atRaw ?? null,
+      puntos_heredados: heredados,
+      ingreso_jornada_numero: ingreso,
+      sustituye_a_nombre: sustituyeNombreByTo.get(jugadorId) ?? null,
     };
   });
+}
+
+export async function sustituirJugadorLigaIndividualRotativo(params: {
+  ligaId: string;
+  fromJugadorId: string;
+  toJugadorId: string;
+  jornadaEfectivaId: string;
+  motivoCategoria: LigaSustitucionMotivoCategoria;
+  motivoDetalle?: string;
+  idempotencyKey?: string;
+}): Promise<{
+  sustitucionId: string;
+  puntosHeredados: number;
+  jornadaEfectivaNumero: number;
+  parejasActualizadas: number;
+}> {
+  await requireUserId();
+  const { data, error } = await supabase.rpc(
+    "sustituir_jugador_liga_individual_rotativo",
+    {
+      p_liga_id: params.ligaId,
+      p_from_jugador_id: params.fromJugadorId,
+      p_to_jugador_id: params.toJugadorId,
+      p_jornada_efectiva_id: params.jornadaEfectivaId,
+      p_motivo_categoria: params.motivoCategoria,
+      p_motivo_detalle: params.motivoDetalle?.trim() || null,
+      p_idempotency_key: params.idempotencyKey ?? crypto.randomUUID(),
+    }
+  );
+
+  if (error) throw new Error(error.message);
+  const result = data as {
+    ok?: boolean;
+    error?: string;
+    sustitucion_id?: string;
+    puntos_heredados?: number;
+    jornada_efectiva_numero?: number;
+    parejas_actualizadas?: number;
+  } | null;
+
+  if (!result?.ok) {
+    throw new Error(result?.error || "No se pudo completar la sustitución.");
+  }
+
+  return {
+    sustitucionId: String(result.sustitucion_id),
+    puntosHeredados: Number(result.puntos_heredados ?? 0),
+    jornadaEfectivaNumero: Number(result.jornada_efectiva_numero ?? 0),
+    parejasActualizadas: Number(result.parejas_actualizadas ?? 0),
+  };
+}
+
+export async function listLigaSustituciones(
+  ligaId: string
+): Promise<LigaSustitucion[]> {
+  const { data, error } = await supabase
+    .from("liga_sustituciones")
+    .select(
+      `id, liga_id, plaza_inscripcion_id, from_jugador_id, to_jugador_id,
+       jornada_efectiva_id, jornada_efectiva_numero, puntos_heredados,
+       motivo_categoria, motivo_detalle, actor_id, created_at`
+    )
+    .eq("liga_id", ligaId)
+    .is("reverted_at", null)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    if (/liga_sustituciones|relation|column/i.test(error.message)) return [];
+    throw new Error(error.message);
+  }
+
+  const ids = Array.from(
+    new Set(
+      (data ?? []).flatMap((row) => [
+        String(row.from_jugador_id),
+        String(row.to_jugador_id),
+      ])
+    )
+  );
+  const nombreById = new Map<string, string>();
+  if (ids.length > 0) {
+    const { data: jugs } = await supabase
+      .from("liga_jugadores")
+      .select("id, nombre")
+      .in("id", ids);
+    for (const j of jugs ?? []) {
+      nombreById.set(String(j.id), String(j.nombre));
+    }
+  }
+
+  return (data ?? []).map((row) => ({
+    id: String(row.id),
+    liga_id: String(row.liga_id),
+    plaza_inscripcion_id: String(row.plaza_inscripcion_id),
+    from_jugador_id: String(row.from_jugador_id),
+    to_jugador_id: String(row.to_jugador_id),
+    jornada_efectiva_id: String(row.jornada_efectiva_id),
+    jornada_efectiva_numero: Number(row.jornada_efectiva_numero),
+    puntos_heredados: Number(row.puntos_heredados),
+    motivo_categoria: String(row.motivo_categoria),
+    motivo_detalle: (row.motivo_detalle as string | null) ?? null,
+    actor_id: String(row.actor_id),
+    created_at: String(row.created_at),
+    from_nombre: nombreById.get(String(row.from_jugador_id)) ?? null,
+    to_nombre: nombreById.get(String(row.to_jugador_id)) ?? null,
+  }));
 }
 
 export function publicLigaUrl(ligaId: string): string {

@@ -40,13 +40,16 @@ import {
   resyncLigaPodioCareer,
   getJugadoresOrganizador,
   getLigaById,
+  getRanking,
   inscribirJugador,
+  listLigaSustituciones,
   publicLigaUrl,
   regenerarCalendarioLiga,
   resetLiga,
   startLiga,
   updateLigaNombre,
 } from "../../services/ligaService";
+import type { LigaSustitucion, RankingItem } from "../../lib/liga/types";
 import { Button } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
 import { ActionBar } from "../platform/ActionBar";
@@ -62,6 +65,7 @@ import {
 } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
 import { LigaInscripcionesPanel } from "./LigaInscripcionesPanel";
+import { LigaSustituirJugadorModal } from "./LigaSustituirJugadorModal";
 import "./liga-page.css";
 
 interface LigaGestionarProps {
@@ -160,6 +164,11 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const isMobile = useMobileViewport(767);
   const [detalle, setDetalle] = useState<LigaDetalle | null>(null);
   const [jugadoresPool, setJugadoresPool] = useState<LigaJugadorPoolItem[]>([]);
+  const [rankingItems, setRankingItems] = useState<RankingItem[]>([]);
+  const [sustituciones, setSustituciones] = useState<LigaSustitucion[]>([]);
+  const [sustituirJugadorId, setSustituirJugadorId] = useState<string | null>(
+    null
+  );
   const [tab, setTab] = useState<LigaGestionarTab>("jugadores");
   const [seleccionParejaIds, setSeleccionParejaIds] = useState<string[]>([]);
   const [parejaGridSearch, setParejaGridSearch] = useState("");
@@ -216,7 +225,17 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
       setNombreDraft(d.nombre);
       setEditingNombre(false);
       if (isEquiposModalidad(d.modalidad)) {
+        setRankingItems([]);
+        setSustituciones([]);
         setTab((prev) => (prev === "jugadores" ? "parejas" : prev));
+      } else {
+        const [rank, sust] = await Promise.all([
+          getRanking(ligaId),
+          listLigaSustituciones(ligaId),
+        ]);
+        if (isStale()) return;
+        setRankingItems(Array.isArray(rank) ? rank : []);
+        setSustituciones(Array.isArray(sust) ? sust : []);
       }
     } catch (e) {
       if (isStale()) return;
@@ -304,6 +323,39 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const esPlayoffs = detalle
     ? isParejasFijasPlayoffs(detalle.modalidad)
     : false;
+  const canSustituirRotativo =
+    Boolean(detalle) &&
+    !esParejasFijas &&
+    detalle?.modalidad === "individual_rotativo" &&
+    detalle.estado !== "completed" &&
+    (detalle.jornadas?.length ?? 0) > 0;
+
+  const sustitutoLabelsById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of sustituciones ?? []) {
+      if (!map.has(s.to_jugador_id)) {
+        map.set(
+          s.to_jugador_id,
+          `Sustituto desde Jornada ${s.jornada_efectiva_numero}`
+        );
+      }
+    }
+    return map;
+  }, [sustituciones]);
+
+  const rankingByJugadorId = useMemo(() => {
+    const map = new Map<string, RankingItem>();
+    for (const row of rankingItems ?? []) map.set(row.jugador_id, row);
+    return map;
+  }, [rankingItems]);
+
+  const salienteSustituir = useMemo(
+    () =>
+      sustituirJugadorId
+        ? jugadoresPool.find((j) => j.id === sustituirJugadorId) ?? null
+        : null,
+    [jugadoresPool, sustituirJugadorId]
+  );
 
   const jugadoresEnEquipo = useMemo(() => {
     const s = new Set<string>();
@@ -1158,11 +1210,52 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
             inscritosIds={inscritosIds}
             ligaEditable={ligaEditable}
             busy={busy}
+            canSustituir={canSustituirRotativo}
+            sustitutoLabelsById={sustitutoLabelsById}
             onToggleInscripcion={toggleInscripcion}
+            onSustituirJugador={(jugadorId) => setSustituirJugadorId(jugadorId)}
             onGoToRegistro={() => navigateJugadoresLista("M")}
           />
+          {sustituciones.length > 0 ? (
+            <div className="liga-card rv-card liga-sustituciones-admin">
+              <h3 className="liga-card__title">Historial de sustituciones</h3>
+              <ul className="liga-sustituciones-admin__list">
+                {sustituciones.map((s) => (
+                  <li key={s.id} className="liga-sustituciones-admin__row">
+                    <span>
+                      {s.from_nombre ?? "Jugador"} → {s.to_nombre ?? "Jugador"}
+                    </span>
+                    <span>
+                      Jornada {s.jornada_efectiva_numero} · {s.puntos_heredados}{" "}
+                      pts heredados
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </ModeSectionPanel>
       )}
+
+      <LigaSustituirJugadorModal
+        open={Boolean(salienteSustituir)}
+        ligaId={ligaId}
+        ligaNombre={detalle?.nombre ?? "Liga"}
+        saliente={salienteSustituir}
+        rankingRow={
+          sustituirJugadorId
+            ? rankingByJugadorId.get(sustituirJugadorId) ?? null
+            : null
+        }
+        jornadas={detalle?.jornadas ?? []}
+        candidatos={jugadoresPool}
+        inscritosIds={inscritosIds}
+        onClose={() => setSustituirJugadorId(null)}
+        onDone={async () => {
+          setMessage("Sustitución aplicada. La plaza conserva los puntos.");
+          await load();
+        }}
+      />
 
       {esParejasFijas && (
         <ModeSectionPanel id="parejas" activeId={tab}>
