@@ -47,7 +47,6 @@ import { LigaMotionValue } from "./LigaMotionValue";
 import {
   parejaPlayerNames,
 } from "./LigaPublicParejaFaces";
-import { LigaJornadaGranFinalPublica } from "./jornada-public/LigaJornadaGranFinalPublica";
 import { LigaJornadaMatchCardFinal } from "./jornada-public/LigaJornadaMatchCardFinal";
 import { LigaJornadaMatchCardPending } from "./jornada-public/LigaJornadaMatchCardPending";
 import { LigaJornadaPublicRoundSelector } from "./jornada-public/LigaJornadaPublicRoundSelector";
@@ -440,9 +439,6 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   const granFinalPartido = findLigaGranFinalPartido(jornada.partidos);
   const thirdPlacePartido =
     jornada.partidos?.find(isLigaThirdPlacePartido) ?? null;
-  const jugadoresById = new Map(
-    (detalle.jugadores ?? []).map((j) => [j.id, j])
-  );
   const heroMetaText =
     totalPartidos > 0
       ? ligaGranFinalHeroMeta(jornada.partidos ?? [])
@@ -452,37 +448,6 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       ? "Gran Final · 3.er lugar"
       : "Gran Final"
     : `Jornada ${numero}`;
-
-  const buildGranFinalPair = (parejaId: string) => {
-    const face = resolveParejaFace(parejaId);
-    const pareja = jornada.parejas?.find((p) => p.id === parejaId);
-    const pairName = pareja
-      ? formatJornadaParejaNombre(pareja, equiposById)
-      : `${face.name1} / ${face.name2}`;
-    const nivelOf = (id: string) => {
-      const n = jugadoresById.get(id)?.nivel;
-      return n != null && Number.isFinite(Number(n)) ? Number(n) : null;
-    };
-    const rivieraOf = (id: string) => {
-      const r = parejaRatings[id];
-      return r != null && Number.isFinite(Number(r)) ? Number(r) : null;
-    };
-    return {
-      pairName,
-      player1: {
-        name: face.name1,
-        foto: face.foto1,
-        nivel: face.id1 ? nivelOf(face.id1) : null,
-        rivieraRating: face.id1 ? rivieraOf(face.id1) : null,
-      },
-      player2: {
-        name: face.name2,
-        foto: face.foto2,
-        nivel: face.id2 ? nivelOf(face.id2) : null,
-        rivieraRating: face.id2 ? rivieraOf(face.id2) : null,
-      },
-    };
-  };
 
   const renderMatchCard = (
     partido: LigaPartido,
@@ -501,6 +466,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     const side1 = resolveParejaFace(partido.pareja1_id);
     const side2 = resolveParejaFace(partido.pareja2_id);
     const canchaNum = partido.cancha ?? "?";
+    const matchLabel = esParejasFijasPlayoffs
+      ? ligaPlayoffsMatchLabel(partido)
+      : null;
     const estadoVisible = partidoPublicTemporalEstado(partido, temporalCtx);
     const estadoMod = partidoPublicEstadoMod(estadoVisible, {
       empate: esEmpate,
@@ -541,6 +509,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         p2Wins,
         matchStyle,
         scoreSummaryOnly: !esParejasFijas,
+        matchLabel,
       };
 
       if (partido.estado === "completed") {
@@ -558,6 +527,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
           side1={cardProps.side1}
           side2={cardProps.side2}
           matchStyle={cardProps.matchStyle}
+          matchLabel={cardProps.matchLabel}
         />
       );
     }
@@ -672,38 +642,32 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 Los partidos aparecerán cuando se inicie la jornada.
               </p>
             ) : esGranFinalJornada && granFinalPartido ? (
-              <div
-                className={
+              <section
+                className="liga-pantalla-ronda liga-pantalla-ronda--courts liga-pantalla-ronda--selected liga-pantalla-final-day"
+                aria-label={
                   thirdPlacePartido
-                    ? "liga-pantalla-final-day liga-pantalla-final-day--dual"
-                    : "liga-pantalla-final-day"
+                    ? "Gran Final y 3.er / 4.º lugar"
+                    : "Gran Final"
                 }
               >
-                <LigaJornadaGranFinalPublica
-                  ligaNombre={detalle.nombre}
-                  partido={granFinalPartido}
-                  side1={buildGranFinalPair(granFinalPartido.pareja1_id)}
-                  side2={buildGranFinalPair(granFinalPartido.pareja2_id)}
-                  esParejasFijas={esParejasFijas}
-                  fechaHorarioText={jornadaFechaHorarioText}
-                />
-                {thirdPlacePartido ? (
-                  <section
-                    className="liga-pantalla-third-place"
-                    aria-label={ligaPlayoffsMatchLabel(thirdPlacePartido)}
-                  >
-                    <h2 className="liga-pantalla-third-place__title">
-                      {ligaPlayoffsMatchLabel(thirdPlacePartido)}
-                    </h2>
-                    <div
-                      className="liga-pantalla-ronda__matches liga-pantalla-ronda__matches--courts"
-                      data-cols="1"
-                    >
-                      {renderMatchCard(thirdPlacePartido, true, 0)}
-                    </div>
-                  </section>
-                ) : null}
-              </div>
+                <div className="liga-pantalla-ronda__head">
+                  <h2 className="liga-pantalla-ronda__title">
+                    {thirdPlacePartido
+                      ? "Jornada final"
+                      : "Gran Final"}
+                  </h2>
+                  <p className="liga-pantalla-ronda__meta">{heroMetaText}</p>
+                </div>
+                <div
+                  className="liga-pantalla-ronda__matches liga-pantalla-ronda__matches--courts liga-pantalla-final-day__matches"
+                  data-cols={thirdPlacePartido ? "2" : "1"}
+                >
+                  {renderMatchCard(granFinalPartido, true, 0)}
+                  {thirdPlacePartido
+                    ? renderMatchCard(thirdPlacePartido, true, 1)
+                    : null}
+                </div>
+              </section>
             ) : (
               visibleRondaEntry
                 ? (() => {

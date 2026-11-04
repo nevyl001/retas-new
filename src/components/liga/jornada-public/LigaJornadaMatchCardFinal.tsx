@@ -18,6 +18,7 @@ interface LigaJornadaMatchCardFinalProps {
   matchStyle?: React.CSSProperties;
   /** Individual rotativo: solo marcador resumen (sin grid PTS). */
   scoreSummaryOnly?: boolean;
+  matchLabel?: string | null;
 }
 
 /**
@@ -37,6 +38,7 @@ export const LigaJornadaMatchCardFinal: React.FC<
   p2Wins,
   matchStyle,
   scoreSummaryOnly = false,
+  matchLabel = null,
 }) => {
   const isDraw = estadoMod === "draw";
   const leftTone = isDraw
@@ -65,6 +67,7 @@ export const LigaJornadaMatchCardFinal: React.FC<
         canchaNum={canchaNum}
         estadoMod={estadoMod}
         estadoText={estadoText}
+        matchLabel={matchLabel}
       />
       <div className="liga-jornada-match-card__final-body">
         <div className="liga-jornada-match-card__duel">

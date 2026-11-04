@@ -2330,37 +2330,17 @@
 .liga-pantalla-match--split-vs .liga-pantalla-match__row--split-vs .pub-split-vs-pair {
   min-width: 0;
 }
+/* Jornada final: mismos duel cards premium (Gran Final + 3.er lugar). */
 .liga-pantalla-final-day {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
   width: 100%;
 }
 
-.liga-pantalla-final-day--dual {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  align-items: start;
+.liga-pantalla-final-day__matches {
+  align-items: stretch;
 }
 
-.liga-pantalla-third-place {
-  margin-top: 0;
-  min-width: 0;
-}
-
-.liga-pantalla-third-place__title {
-  margin: 0 0 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+.liga-pantalla-match__cancha-num--slot {
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--liga-pub-text-muted);
-}
-
-@media (min-width: 960px) {
-  .liga-pantalla-final-day--dual {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 1.75rem;
-  }
+  font-size: 0.78rem;
 }

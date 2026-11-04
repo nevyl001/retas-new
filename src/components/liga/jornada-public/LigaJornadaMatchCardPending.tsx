@@ -11,6 +11,7 @@ interface LigaJornadaMatchCardPendingProps {
   side1: LigaJornadaMatchPairSide;
   side2: LigaJornadaMatchPairSide;
   matchStyle?: React.CSSProperties;
+  matchLabel?: string | null;
 }
 
 /**
@@ -26,6 +27,7 @@ export const LigaJornadaMatchCardPending: React.FC<
   side1,
   side2,
   matchStyle,
+  matchLabel = null,
 }) => (
   <article
     className="liga-pantalla-match liga-pantalla-match--duel liga-jornada-match-card liga-jornada-match-card--pending liga-jornada-match-card--broadcast liga-jornada-match-card--duel-row liga-jornada-match-card--duel-stacks"
@@ -35,6 +37,7 @@ export const LigaJornadaMatchCardPending: React.FC<
       canchaNum={canchaNum}
       estadoMod={estadoMod}
       estadoText={estadoText}
+      matchLabel={matchLabel}
     />
     <div className="liga-jornada-match-card__duel">
       <LigaJornadaMatchPairStack
