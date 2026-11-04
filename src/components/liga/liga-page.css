@@ -2509,16 +2509,30 @@
 }
 
 .liga-page.liga-gestionar-a11y .liga-section-tabs.mode-section-tabs {
-  gap: 0.5rem;
-  padding-bottom: 0.65rem;
-  margin-bottom: 0.65rem;
+  gap: 0.35rem;
+  padding: 0.3rem;
+  margin-bottom: 0.85rem;
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid var(--liga-border);
+  border-radius: 999px;
+  background: var(--liga-surface-deep);
+}
+
+.liga-page.liga-gestionar-a11y
+  .liga-section-tabs
+  .mode-section-tabs__btn--active {
+  background: var(--liga-surface);
+  color: var(--liga-text);
+  box-shadow: var(--liga-shadow-card);
 }
 
 .liga-page.liga-gestionar-a11y .liga-section-tabs .mode-section-tabs__btn {
-  min-height: 48px;
-  padding: 0.65rem 1.15rem;
-  font-size: 1rem;
+  min-height: 44px;
+  padding: 0.55rem 1.05rem;
+  font-size: 0.95rem;
   line-height: 1.35;
+  border-radius: 999px;
 }
 
 .liga-page.liga-gestionar-a11y .liga-gestionar-actions .riviera-btn {
@@ -3807,16 +3821,36 @@
   }
 }
 
-/* ─── LigaInscripcionesPanel — roster premium ─── */
+/* ─── LigaInscripcionesPanel — roster premium (inscritos + modal agregar) ─── */
 
 .liga-inscripciones__header {
   margin-bottom: 1rem;
 }
 
+.liga-inscripciones__header--roster {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.liga-inscripciones__header-copy {
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
+.liga-inscripciones__add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
 .liga-inscripciones__title {
   margin: 0;
   font-family: var(--liga-font-display);
-  font-size: clamp(1.15rem, 2.4vw, 1.35rem);
+  font-size: clamp(1.1rem, 2.2vw, 1.3rem);
   font-weight: 700;
   line-height: 1.25;
   color: var(--liga-text);
@@ -3824,7 +3858,7 @@
 
 .liga-inscripciones__subtitle {
   margin: 0.3rem 0 0;
-  font-size: 0.92rem;
+  font-size: 0.875rem;
   line-height: 1.45;
   color: var(--liga-text-muted);
 }
@@ -3836,19 +3870,24 @@
   margin-bottom: 1.1rem;
 }
 
+.liga-inscripciones__stats--compact {
+  gap: 0.5rem;
+  margin-bottom: 0.95rem;
+}
+
 .liga-inscripciones__stat {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.15rem;
   min-width: 0;
-  padding: 0.7rem 0.8rem;
+  padding: 0.55rem 0.7rem;
   border-radius: var(--liga-radius-md);
   border: 1px solid var(--liga-border);
   background: var(--liga-surface-deep);
 }
 
 .liga-inscripciones__stat-label {
-  font-size: 0.7rem;
+  font-size: 0.6875rem;
   font-weight: 650;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -3856,7 +3895,7 @@
 }
 
 .liga-inscripciones__stat-value {
-  font-size: 1.2rem;
+  font-size: 1.125rem;
   font-weight: 750;
   line-height: 1.2;
   color: var(--liga-text);
@@ -3977,13 +4016,23 @@
   color: var(--liga-text-muted);
 }
 
+.liga-inscripciones__search--roster,
+.liga-inscripciones__search--modal {
+  max-width: none;
+  margin-bottom: 0.85rem;
+}
+
 .liga-inscripciones__grid {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.85rem;
+  gap: 0.75rem;
+}
+
+.liga-inscripciones__grid--roster {
+  gap: 0.7rem;
 }
 
 @media (min-width: 640px) {
@@ -4007,26 +4056,28 @@
 .liga-inscripciones__card {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 0.85rem;
+  justify-content: flex-start;
+  gap: 0;
   min-width: 0;
-  padding: 1rem;
+  min-height: 100%;
+  padding: 0.85rem 0.9rem;
   border-radius: var(--liga-radius-md);
   border: 1px solid var(--liga-border);
-  background: var(--liga-surface-deep);
+  background: var(--liga-surface);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .liga-inscripciones__card.is-inscrito {
-  border-color: color-mix(
-    in srgb,
-    var(--brand-accent, var(--ro-accent)) 40%,
-    var(--liga-border)
-  );
-  background: color-mix(
-    in srgb,
-    var(--brand-accent, var(--ro-accent)) 8%,
-    var(--liga-surface)
-  );
+  border-color: var(--liga-border);
+  background: var(--liga-surface);
+}
+
+.liga-inscripciones__card:hover,
+.liga-inscripciones__card:focus-within {
+  border-color: var(--liga-border-subtle);
+  background: var(--liga-surface-hover);
 }
 
 .liga-inscripciones__card-top {
@@ -4038,8 +4089,9 @@
 
 .liga-inscripciones__avatar.rj-avatar {
   flex: 0 0 auto;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
+  font-size: 0.95rem;
 }
 
 .liga-inscripciones__identity {
@@ -4047,9 +4099,22 @@
   flex: 1 1 auto;
 }
 
+.liga-inscripciones__identity-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.liga-inscripciones__card-menu {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
 .liga-inscripciones__name {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   line-height: 1.35;
   color: var(--liga-text);
@@ -4061,7 +4126,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
-  margin-top: 0.4rem;
+  margin-top: 0.35rem;
 }
 
 .liga-inscripciones__cat-missing,
@@ -4070,18 +4135,11 @@
   color: var(--liga-text-muted);
 }
 
-.liga-inscripciones__card-bottom {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.65rem;
-}
-
 .liga-inscripciones__status {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.8rem;
+  gap: 0.3rem;
+  font-size: 0.75rem;
   font-weight: 650;
   color: var(--liga-text-muted);
 }
@@ -4090,28 +4148,58 @@
   color: var(--liga-text-soft);
 }
 
-.liga-inscripciones__actions {
+.liga-inscripciones__sust-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--liga-text-muted);
+}
+
+.liga-inscripciones-add-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  width: 100%;
+  gap: 0.55rem;
 }
 
-.liga-inscripciones__action {
-  width: 100%;
-  min-height: 42px;
-  justify-content: center;
+.liga-inscripciones-add-list__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--liga-radius-md);
+  border: 1px solid var(--liga-border);
+  background: var(--liga-surface-deep);
 }
 
-.liga-inscripciones__action--sustituir {
-  font-size: 0.8125rem;
+.liga-inscripciones-add-list__identity {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
-.liga-inscripciones__sust-note {
-  margin: 0.15rem 0 0;
-  font-size: 0.72rem;
-  line-height: 1.35;
-  color: color-mix(in srgb, var(--liga-text, #f5f5f5) 62%, transparent);
+.liga-inscripciones-add-list__action {
+  flex: 0 0 auto;
+}
+
+.liga-inscripciones-add-modal__lead {
+  margin: 0 0 0.85rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--liga-text-muted);
+}
+
+.liga-inscripciones-add-modal__body {
+  padding-top: 0.25rem;
+}
+
+@media (max-width: 639px) {
+  .liga-inscripciones__add-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ── Sustitución de jugador (modal) ── */

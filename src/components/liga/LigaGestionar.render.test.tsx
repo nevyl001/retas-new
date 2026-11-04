@@ -56,8 +56,10 @@ jest.mock("../../services/ligaService", () => ({
   resetLiga: jest.fn(),
   startLiga: jest.fn(),
   updateLigaNombre: jest.fn(),
-  resyncAllCompletedLigaJornadasCareer: jest.fn(),
-  resyncLigaPodioCareer: jest.fn(),
+  resyncAllCompletedLigaJornadasCareer: jest
+    .fn()
+    .mockResolvedValue({ careerSyncOk: true, wrote: 0 }),
+  resyncLigaPodioCareer: jest.fn().mockResolvedValue({ ok: true }),
 }));
 
 const mockGetLigaById = getLigaById as jest.Mock;
@@ -151,9 +153,7 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
     expect(header).not.toBeNull();
     expect(header?.textContent).toContain("Liga Otoño");
     expect(header?.textContent).toContain("En curso");
-    expect(header?.textContent).toContain(
-      "Liga individual con parejas rotativas"
-    );
+    expect(header?.textContent).toContain("Individual · Parejas rotativas");
     expect(
       container.querySelector('[aria-label="Editar nombre de la liga"]')
     ).not.toBeNull();
@@ -291,7 +291,7 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
 
     expect(deleteLiga).not.toHaveBeenCalled();
 
-    const confirmInput = container.querySelector(
+    const confirmInput = document.querySelector(
       "#liga-delete-confirm-input"
     ) as HTMLInputElement;
     expect(confirmInput).not.toBeNull();
@@ -306,7 +306,7 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
       await Promise.resolve();
     });
 
-    const confirmDeleteBtn = container.querySelector(
+    const confirmDeleteBtn = document.querySelector(
       ".liga-gestionar-danger-modal__confirm"
     ) as HTMLButtonElement;
     expect(confirmDeleteBtn.disabled).toBe(false);

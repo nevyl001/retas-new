@@ -505,10 +505,14 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     if (jornadas.length === 0) return null;
     const total = jornadas.length;
     const completadas = jornadas.filter((j) => j.estado === "completed").length;
+    const percent =
+      total > 0
+        ? Math.min(100, Math.max(0, (completadas / total) * 100))
+        : 0;
     return {
       total,
       completadas,
-      percent: Math.round((completadas / total) * 100),
+      percent,
     };
   }, [detalle?.jornadas]);
 
@@ -853,6 +857,23 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
                   Reiniciar liga
                 </button>
               ) : null}
+              {(detalle.estado === "completed" ||
+                (jornadaProgress?.completadas ?? 0) > 0) && (
+                <button
+                  type="button"
+                  className="liga-gestionar-options__item"
+                  role="menuitem"
+                  disabled={busy}
+                  title="Registra GANADOR JORNADA (+50) en el historial de cada jugador"
+                  onClick={() => {
+                    setOptionsOpen(false);
+                    void handleResyncLigaCareer();
+                  }}
+                >
+                  <TablerIcon name="database" size={18} aria-hidden={false} />
+                  Sincronizar historial
+                </button>
+              )}
               <button
                 type="button"
                 className="liga-gestionar-options__item liga-gestionar-options__item--danger"
@@ -872,11 +893,10 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
         <ModeEventHeader
           className="liga-event-header"
           eyebrow={modeEyebrow}
-          title={`Liga: ${detalle.nombre}`}
+          title={detalle.nombre}
           titleContent={
             editingNombre ? (
               <form className="liga-nombre-edit" onSubmit={handleSaveNombre}>
-                <span className="liga-nombre-edit__prefix">Liga:</span>
                 <input
                   id="liga-edit-nombre"
                   className="liga-nombre-edit__input"
@@ -907,7 +927,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
               </form>
             ) : (
               <div className="liga-nombre-edit liga-nombre-edit--view">
-                <h2 className="mode-event-header__title">Liga: {detalle.nombre}</h2>
+                <h2 className="mode-event-header__title">{detalle.nombre}</h2>
                 <button
                   type="button"
                   className="liga-nombre-edit__pencil"
@@ -924,7 +944,11 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
               </div>
             )
           }
-          modality={ligaModalidadLabel(detalle.modalidad)}
+          modality={
+            esParejasFijas
+              ? ligaModalidadLabel(detalle.modalidad)
+              : "Individual · Parejas rotativas"
+          }
           statusLabel={ligaEstadoStatusDisplayLabel(detalle.estado)}
           statusVariant={estadoLigaStatusVariant(detalle.estado)}
           summary={`${
@@ -1155,20 +1179,6 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
             onClick={handleFinishLiga}
           >
             Finalizar liga
-          </Button>
-        )}
-        {(detalle?.estado === "completed" ||
-          (jornadaProgress?.completadas ?? 0) > 0) && (
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={busy}
-            title="Registra GANADOR JORNADA (+50) en el historial de cada jugador"
-            onClick={() => {
-              void handleResyncLigaCareer();
-            }}
-          >
-            Sincronizar historial
           </Button>
         )}
       </ActionBar>
