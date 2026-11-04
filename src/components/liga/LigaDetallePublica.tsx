@@ -571,6 +571,11 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                         </div>
                         <div className="liga-ind-top3__body">
                           <p className="liga-ind-top3__name">{row.nombre}</p>
+                          {row.puntos_ajuste_motivo ? (
+                            <p className="liga-ind-top3__ajuste">
+                              Ajuste: {row.puntos_ajuste_motivo}
+                            </p>
+                          ) : null}
                           <p className="liga-ind-top3__pts">
                             <span className="liga-ind-top3__pts-value">
                               {row.puntos}
@@ -625,7 +630,16 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                               className="liga-ind-rest__avatar"
                               alt=""
                             />
-                            <span className="liga-ind-rest__name">{row.nombre}</span>
+                            <span className="liga-ind-rest__identity">
+                              <span className="liga-ind-rest__name">
+                                {row.nombre}
+                              </span>
+                              {row.puntos_ajuste_motivo ? (
+                                <span className="liga-ind-rest__ajuste">
+                                  Ajuste: {row.puntos_ajuste_motivo}
+                                </span>
+                              ) : null}
+                            </span>
                             <span className="liga-ind-rest__stats">
                               <span className="liga-ind-rest__pts">
                                 <strong>{row.puntos}</strong>
