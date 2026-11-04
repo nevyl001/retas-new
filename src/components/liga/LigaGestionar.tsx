@@ -1,5 +1,6 @@
 import { useClubModeEyebrow } from "../../club-experience";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useMobileViewport } from "../../hooks/useMobileViewport";
 import {
   calendarioDesactualizado,
@@ -313,6 +314,15 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [shareOpen]);
+
+  useEffect(() => {
+    if (!shareOpen && !deleteConfirmOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [shareOpen, deleteConfirmOpen]);
 
   const inscritosIds = useMemo(
     () => new Set(detalle?.inscripciones.map((i) => i.jugador_id) ?? []),
@@ -929,162 +939,173 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
         />
       </div>
 
-      {shareOpen ? (
-        <div
-          id="liga-gestionar-share-panel"
-          className="liga-gestionar-modal-backdrop"
-          role="presentation"
-          onClick={() => setShareOpen(false)}
-        >
-          <div
-            className="liga-gestionar-share-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="liga-gestionar-share-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="liga-gestionar-share-modal__close"
-              aria-label="Cerrar"
+      {shareOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              id="liga-gestionar-share-panel"
+              className="liga-gestionar-modal-backdrop"
+              role="presentation"
               onClick={() => setShareOpen(false)}
             >
-              ×
-            </button>
-            <h2
-              id="liga-gestionar-share-title"
-              className="liga-gestionar-share-modal__title"
-            >
-              Comparte esta liga
-            </h2>
-            <p className="liga-gestionar-share-modal__lead">
-              Envía este enlace para que cualquiera pueda ver el ranking y las
-              jornadas (sin poder editar).
-            </p>
-            <label className="liga-gestionar-share-modal__url-label" htmlFor="liga-share-url">
-              Enlace público
-            </label>
-            <input
-              id="liga-share-url"
-              className="liga-gestionar-share-modal__url"
-              type="text"
-              readOnly
-              value={ligaShareUrl}
-              onFocus={(event) => event.currentTarget.select()}
-            />
-            <div className="liga-gestionar-share-modal__actions">
-              <button
-                type="button"
-                className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--primary"
-                onClick={() => void handleCopyShareLink()}
+              <div
+                className="liga-gestionar-share-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="liga-gestionar-share-title"
+                onClick={(event) => event.stopPropagation()}
               >
-                {shareCopied ? "¡Enlace copiado! ✅" : "Copiar enlace"}
-              </button>
-              <a
-                className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--whatsapp"
-                href={whatsAppShareHref}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Enviar por WhatsApp
-              </a>
-              <a
-                className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--secondary"
-                href={ligaPublicUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Ver vista pública
-              </a>
-            </div>
-          </div>
-        </div>
-      ) : null}
+                <button
+                  type="button"
+                  className="liga-gestionar-share-modal__close"
+                  aria-label="Cerrar"
+                  onClick={() => setShareOpen(false)}
+                >
+                  ×
+                </button>
+                <h2
+                  id="liga-gestionar-share-title"
+                  className="liga-gestionar-share-modal__title"
+                >
+                  Comparte esta liga
+                </h2>
+                <p className="liga-gestionar-share-modal__lead">
+                  Envía este enlace para que cualquiera pueda ver el ranking y las
+                  jornadas (sin poder editar).
+                </p>
+                <label
+                  className="liga-gestionar-share-modal__url-label"
+                  htmlFor="liga-share-url"
+                >
+                  Enlace público
+                </label>
+                <input
+                  id="liga-share-url"
+                  className="liga-gestionar-share-modal__url"
+                  type="text"
+                  readOnly
+                  value={ligaShareUrl}
+                  onFocus={(event) => event.currentTarget.select()}
+                />
+                <div className="liga-gestionar-share-modal__actions">
+                  <button
+                    type="button"
+                    className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--primary"
+                    onClick={() => void handleCopyShareLink()}
+                  >
+                    {shareCopied ? "¡Enlace copiado! ✅" : "Copiar enlace"}
+                  </button>
+                  <a
+                    className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--whatsapp"
+                    href={whatsAppShareHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Enviar por WhatsApp
+                  </a>
+                  <a
+                    className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--secondary"
+                    href={ligaPublicUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Ver vista pública
+                  </a>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
 
-      {deleteConfirmOpen ? (
-        <div
-          id="liga-gestionar-delete-panel"
-          className="liga-gestionar-modal-backdrop"
-          role="presentation"
-          onClick={closeDeleteConfirm}
-        >
-          <div
-            className="liga-gestionar-share-modal liga-gestionar-danger-modal"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="liga-gestionar-delete-title"
-            aria-describedby="liga-gestionar-delete-lead"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="liga-gestionar-share-modal__close"
-              aria-label="Cerrar"
-              disabled={busy}
+      {deleteConfirmOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              id="liga-gestionar-delete-panel"
+              className="liga-gestionar-modal-backdrop"
+              role="presentation"
               onClick={closeDeleteConfirm}
             >
-              ×
-            </button>
-            <div className="liga-gestionar-danger-modal__lock" aria-hidden>
-              <TablerIcon name="lock" size={22} />
-            </div>
-            <h2
-              id="liga-gestionar-delete-title"
-              className="liga-gestionar-share-modal__title"
-            >
-              Eliminar liga
-            </h2>
-            <p
-              id="liga-gestionar-delete-lead"
-              className="liga-gestionar-share-modal__lead"
-            >
-              Se borrarán jornadas, partidos, parejas y ranking de{" "}
-              <strong>{detalle.nombre}</strong>. Esta acción no se puede deshacer.
-            </p>
-            <label
-              className="liga-gestionar-danger-modal__label"
-              htmlFor="liga-delete-confirm-input"
-            >
-              Escribe <strong>{LIGA_DELETE_CONFIRM_PHRASE}</strong> para confirmar
-            </label>
-            <input
-              id="liga-delete-confirm-input"
-              name="liga-delete-confirm"
-              className="liga-gestionar-danger-modal__input"
-              type="text"
-              value={deleteConfirmDraft}
-              autoComplete="off"
-              autoCapitalize="characters"
-              spellCheck={false}
-              disabled={busy}
-              aria-label={`Confirmar escribiendo ${LIGA_DELETE_CONFIRM_PHRASE}`}
-              onChange={(event) => setDeleteConfirmDraft(event.target.value)}
-            />
-            <div className="liga-gestionar-share-modal__actions liga-gestionar-danger-modal__actions">
-              <button
-                type="button"
-                className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--secondary"
-                disabled={busy}
-                onClick={closeDeleteConfirm}
+              <div
+                className="liga-gestionar-share-modal liga-gestionar-danger-modal"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="liga-gestionar-delete-title"
+                aria-describedby="liga-gestionar-delete-lead"
+                onClick={(event) => event.stopPropagation()}
               >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="liga-gestionar-share-modal__btn liga-gestionar-danger-modal__confirm"
-                disabled={
-                  busy ||
-                  deleteConfirmDraft.trim().toUpperCase() !==
-                    LIGA_DELETE_CONFIRM_PHRASE
-                }
-                onClick={() => void handleDeleteLiga()}
-              >
-                {busy ? "Eliminando…" : "Eliminar liga"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+                <button
+                  type="button"
+                  className="liga-gestionar-share-modal__close"
+                  aria-label="Cerrar"
+                  disabled={busy}
+                  onClick={closeDeleteConfirm}
+                >
+                  ×
+                </button>
+                <div className="liga-gestionar-danger-modal__lock" aria-hidden>
+                  <TablerIcon name="lock" size={22} />
+                </div>
+                <h2
+                  id="liga-gestionar-delete-title"
+                  className="liga-gestionar-share-modal__title"
+                >
+                  Eliminar liga
+                </h2>
+                <p
+                  id="liga-gestionar-delete-lead"
+                  className="liga-gestionar-share-modal__lead"
+                >
+                  Se borrarán jornadas, partidos, parejas y ranking de{" "}
+                  <strong>{detalle.nombre}</strong>. Esta acción no se puede
+                  deshacer.
+                </p>
+                <label
+                  className="liga-gestionar-danger-modal__label"
+                  htmlFor="liga-delete-confirm-input"
+                >
+                  Escribe <strong>{LIGA_DELETE_CONFIRM_PHRASE}</strong> para
+                  confirmar
+                </label>
+                <input
+                  id="liga-delete-confirm-input"
+                  name="liga-delete-confirm"
+                  className="liga-gestionar-danger-modal__input"
+                  type="text"
+                  value={deleteConfirmDraft}
+                  autoComplete="off"
+                  autoCapitalize="characters"
+                  spellCheck={false}
+                  disabled={busy}
+                  aria-label={`Confirmar escribiendo ${LIGA_DELETE_CONFIRM_PHRASE}`}
+                  onChange={(event) => setDeleteConfirmDraft(event.target.value)}
+                />
+                <div className="liga-gestionar-share-modal__actions liga-gestionar-danger-modal__actions">
+                  <button
+                    type="button"
+                    className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--secondary"
+                    disabled={busy}
+                    onClick={closeDeleteConfirm}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="liga-gestionar-share-modal__btn liga-gestionar-danger-modal__confirm"
+                    disabled={
+                      busy ||
+                      deleteConfirmDraft.trim().toUpperCase() !==
+                        LIGA_DELETE_CONFIRM_PHRASE
+                    }
+                    onClick={() => void handleDeleteLiga()}
+                  >
+                    {busy ? "Eliminando…" : "Eliminar liga"}
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
 
       {jornadaProgress ? (
         <div className="liga-gestionar-progress" role="status">

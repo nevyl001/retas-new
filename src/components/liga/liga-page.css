@@ -2025,11 +2025,17 @@
 .liga-gestionar-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 12000;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: var(--liga-space-md);
+  padding:
+    max(1rem, env(safe-area-inset-top, 0px), min(12vh, 5.5rem))
+    max(1rem, env(safe-area-inset-right, 0px))
+    max(1rem, env(safe-area-inset-bottom, 0px))
+    max(1rem, env(safe-area-inset-left, 0px));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: var(--ro-scrim-modal, rgba(0, 0, 0, 0.55));
   box-sizing: border-box;
 }
@@ -2037,7 +2043,8 @@
 .liga-gestionar-share-modal {
   position: relative;
   width: min(100%, 480px);
-  max-height: min(92dvh, 640px);
+  margin: 0 auto;
+  max-height: min(84dvh, 640px);
   overflow-y: auto;
   padding: var(--liga-space-lg);
   border: 1px solid var(--liga-border);
