@@ -20,9 +20,12 @@ import {
   type PlayoffSeeds,
 } from "../lib/liga/parejasFijasPlayoffsBracket";
 import {
+  PLAYOFFS_THIRD_PLACE_SLOT,
   planGranFinalSync,
+  planThirdPlaceSync,
   resolvePlayoffsSemifinalWinners,
   type ExistingFinalSnapshot,
+  type ExistingThirdPlaceSnapshot,
   type PlayoffsSemifinalRowInput,
 } from "../lib/liga/parejasFijasPlayoffsGranFinal";
 import {
@@ -243,6 +246,13 @@ export async function recalcularPuntosLigaEquiposPlayoffs(
         .from("liga_jornadas")
         .update({ estado: "completed", puntos_aplicados: true })
         .eq("id", jornadaId);
+    } else if (lista.length > 0) {
+      // Reabrir si quedó completed prematuramente (p. ej. FINAL sin THIRD).
+      await supabase
+        .from("liga_jornadas")
+        .update({ estado: "in_progress", puntos_aplicados: false })
+        .eq("id", jornadaId)
+        .eq("estado", "completed");
     }
   }
 
@@ -440,10 +450,131 @@ async function ensureFinalJornadaParejaIds(
   return [parejaIds[0]!, parejaIds[1]!];
 }
 
+type BracketMatchRow = {
+  id: string;
+  jornada_id: string;
+  pareja1_id: string;
+  pareja2_id: string;
+  score_pareja1: number | null;
+  score_pareja2: number | null;
+  set_scores: unknown;
+  estado: string;
+};
+
+async function loadExistingBracketSnapshot(
+  ligaId: string,
+  slot: "FINAL" | typeof PLAYOFFS_THIRD_PLACE_SLOT
+): Promise<{
+  row: BracketMatchRow | null;
+  snapshot: ExistingFinalSnapshot | null;
+}> {
+  const { data: existingRow, error } = await supabase
+    .from("liga_partidos")
+    .select(
+      "id, jornada_id, pareja1_id, pareja2_id, score_pareja1, score_pareja2, set_scores, estado"
+    )
+    .eq("liga_id", ligaId)
+    .eq("bracket_slot", slot)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!existingRow?.id) return { row: null, snapshot: null };
+
+  const eq1 = await resolveEquipoIdFromPareja(
+    String(existingRow.jornada_id),
+    String(existingRow.pareja1_id)
+  );
+  const eq2 = await resolveEquipoIdFromPareja(
+    String(existingRow.jornada_id),
+    String(existingRow.pareja2_id)
+  );
+  if (!eq1 || !eq2) {
+    throw new Error(`No se pudieron resolver equipos del partido ${slot}.`);
+  }
+  return {
+    row: {
+      id: String(existingRow.id),
+      jornada_id: String(existingRow.jornada_id),
+      pareja1_id: String(existingRow.pareja1_id),
+      pareja2_id: String(existingRow.pareja2_id),
+      score_pareja1:
+        existingRow.score_pareja1 == null
+          ? null
+          : Number(existingRow.score_pareja1),
+      score_pareja2:
+        existingRow.score_pareja2 == null
+          ? null
+          : Number(existingRow.score_pareja2),
+      set_scores: existingRow.set_scores,
+      estado: String(existingRow.estado),
+    },
+    snapshot: {
+      id: String(existingRow.id),
+      equipo1_id: eq1,
+      equipo2_id: eq2,
+      estado: String(existingRow.estado),
+      score_pareja1:
+        existingRow.score_pareja1 == null
+          ? null
+          : Number(existingRow.score_pareja1),
+      score_pareja2:
+        existingRow.score_pareja2 == null
+          ? null
+          : Number(existingRow.score_pareja2),
+      set_scores: existingRow.set_scores,
+    },
+  };
+}
+
+async function resolveFinalJornadaId(
+  ligaId: string,
+  preferredJornadaId: string | null
+): Promise<string> {
+  if (preferredJornadaId) return preferredJornadaId;
+  const equipos = await fetchEquiposForLiga(ligaId);
+  const finalNumero = playoffsJornadaNumero(
+    totalRegularJornadas(equipos.length),
+    "final"
+  );
+  const { data: jFinal } = await supabase
+    .from("liga_jornadas")
+    .select("id")
+    .eq("liga_id", ligaId)
+    .eq("numero", finalNumero)
+    .maybeSingle();
+  if (jFinal?.id) return String(jFinal.id);
+  const { data: created, error: jErr } = await supabase
+    .from("liga_jornadas")
+    .insert({ liga_id: ligaId, numero: finalNumero, estado: "upcoming" })
+    .select("id")
+    .single();
+  if (jErr) throw new Error(jErr.message);
+  return String(created.id);
+}
+
 /**
- * Crea o corrige la Gran Final a partir de los ganadores confirmados de SF1/SF2.
- * Si la FINAL ya existe sin marcador y los ganadores de semis cambiaron, actualiza
- * las parejas. Si ya tiene resultado y no coincide, no toca datos históricos.
+ * Si la jornada final quedó marcada completed pero aún hay partidos pendientes
+ * (p. ej. se acaba de crear THIRD), reabrir a in_progress.
+ */
+async function reopenFinalJornadaIfPending(jornadaId: string): Promise<void> {
+  const { data: partidos, error } = await supabase
+    .from("liga_partidos")
+    .select("estado")
+    .eq("jornada_id", jornadaId);
+  if (error) throw new Error(error.message);
+  const lista = partidos ?? [];
+  if (lista.length === 0) return;
+  const allDone = lista.every((p) => p.estado === "completed");
+  if (allDone) return;
+  await supabase
+    .from("liga_jornadas")
+    .update({ estado: "in_progress", puntos_aplicados: false })
+    .eq("id", jornadaId)
+    .eq("estado", "completed");
+}
+
+/**
+ * Crea o corrige Gran Final + partido de 3.er lugar a partir de SF1/SF2.
+ * Idempotente: no duplica slots; no altera partidos ya marcados.
  */
 export async function ensurePlayoffsGranFinal(ligaId: string): Promise<boolean> {
   const { data: sfRows, error } = await supabase
@@ -487,139 +618,141 @@ export async function ensurePlayoffsGranFinal(ligaId: string): Promise<boolean> 
   const resolved = resolvePlayoffsSemifinalWinners(sfInputs);
   if (!resolved.ok) return false;
 
-  const { data: existingRow } = await supabase
-    .from("liga_partidos")
-    .select(
-      "id, jornada_id, pareja1_id, pareja2_id, score_pareja1, score_pareja2, set_scores, estado"
-    )
-    .eq("liga_id", ligaId)
-    .eq("bracket_slot", "FINAL")
-    .maybeSingle();
-
-  let existingFinal: ExistingFinalSnapshot | null = null;
-  if (existingRow?.id) {
-    const eq1 = await resolveEquipoIdFromPareja(
-      String(existingRow.jornada_id),
-      String(existingRow.pareja1_id)
-    );
-    const eq2 = await resolveEquipoIdFromPareja(
-      String(existingRow.jornada_id),
-      String(existingRow.pareja2_id)
-    );
-    if (!eq1 || !eq2) {
-      throw new Error("No se pudieron resolver equipos de la FINAL existente.");
-    }
-    existingFinal = {
-      id: String(existingRow.id),
-      equipo1_id: eq1,
-      equipo2_id: eq2,
-      estado: String(existingRow.estado),
-      score_pareja1:
-        existingRow.score_pareja1 == null
-          ? null
-          : Number(existingRow.score_pareja1),
-      score_pareja2:
-        existingRow.score_pareja2 == null
-          ? null
-          : Number(existingRow.score_pareja2),
-      set_scores: existingRow.set_scores,
-    };
-  }
-
-  const plan = planGranFinalSync(resolved.winners, existingFinal);
-
-  if (plan.action === "noop") return false;
-
-  if (plan.action === "blocked_scored_mismatch") {
-    console.error(
-      "[liga-playoffs] FINAL con marcador no coincide con ganadores de semis; no se modifica.",
-      plan
-    );
-    return false;
-  }
-
-  const equipos = await fetchEquiposForLiga(ligaId);
-  const finalNumero = playoffsJornadaNumero(
-    totalRegularJornadas(equipos.length),
-    "final"
+  const existingFinal = await loadExistingBracketSnapshot(ligaId, "FINAL");
+  const existingThird = await loadExistingBracketSnapshot(
+    ligaId,
+    PLAYOFFS_THIRD_PLACE_SLOT
   );
 
-  let jornadaId: string | null = existingRow?.jornada_id
-    ? String(existingRow.jornada_id)
-    : null;
+  const finalPlan = planGranFinalSync(resolved.winners, existingFinal.snapshot);
+  const thirdPlan = planThirdPlaceSync(
+    resolved.winners,
+    existingThird.snapshot as ExistingThirdPlaceSnapshot | null
+  );
 
-  if (!jornadaId) {
-    const { data: jFinal } = await supabase
-      .from("liga_jornadas")
-      .select("id")
-      .eq("liga_id", ligaId)
-      .eq("numero", finalNumero)
-      .maybeSingle();
-
-    if (jFinal?.id) {
-      jornadaId = String(jFinal.id);
-    } else {
-      const { data: created, error: jErr } = await supabase
-        .from("liga_jornadas")
-        .insert({ liga_id: ligaId, numero: finalNumero, estado: "upcoming" })
-        .select("id")
-        .single();
-      if (jErr) throw new Error(jErr.message);
-      jornadaId = String(created.id);
-    }
+  if (finalPlan.action === "blocked_scored_mismatch") {
+    console.error(
+      "[liga-playoffs] FINAL con marcador no coincide con ganadores de semis; no se modifica.",
+      finalPlan
+    );
+  }
+  if (thirdPlan.action === "blocked_scored_mismatch") {
+    console.error(
+      "[liga-playoffs] THIRD con marcador no coincide con perdedores de semis; no se modifica.",
+      thirdPlan
+    );
   }
 
-  const parejaIds = await ensureFinalJornadaParejaIds(ligaId, jornadaId, [
-    plan.equipo1_id,
-    plan.equipo2_id,
-  ]);
+  let changed = false;
+  const jornadaId = await resolveFinalJornadaId(
+    ligaId,
+    existingFinal.row?.jornada_id ?? existingThird.row?.jornada_id ?? null
+  );
 
-  if (plan.action === "update_unscored") {
-    const { error: updErr } = await supabase
-      .from("liga_partidos")
-      .update({
+  // --- FINAL ---
+  if (finalPlan.action === "create" || finalPlan.action === "update_unscored") {
+    const parejaIds = await ensureFinalJornadaParejaIds(ligaId, jornadaId, [
+      finalPlan.equipo1_id,
+      finalPlan.equipo2_id,
+    ]);
+
+    if (finalPlan.action === "update_unscored") {
+      const { error: updErr } = await supabase
+        .from("liga_partidos")
+        .update({
+          pareja1_id: parejaIds[0],
+          pareja2_id: parejaIds[1],
+          estado: "upcoming",
+          score_pareja1: null,
+          score_pareja2: null,
+          set_scores: null,
+        })
+        .eq("id", finalPlan.finalId)
+        .eq("bracket_slot", "FINAL")
+        .is("score_pareja1", null)
+        .is("score_pareja2", null);
+      if (updErr) throw new Error(updErr.message);
+      changed = true;
+    } else {
+      const { error: insErr } = await supabase.from("liga_partidos").insert({
+        jornada_id: jornadaId,
+        liga_id: ligaId,
         pareja1_id: parejaIds[0],
         pareja2_id: parejaIds[1],
+        ronda: 1,
+        cancha: 1,
         estado: "upcoming",
         score_pareja1: null,
         score_pareja2: null,
-        set_scores: null,
-      })
-      .eq("id", plan.finalId)
-      .eq("bracket_slot", "FINAL")
-      .is("score_pareja1", null)
-      .is("score_pareja2", null);
-
-    if (updErr) throw new Error(updErr.message);
-    return true;
-  }
-
-  const { error: insErr } = await supabase.from("liga_partidos").insert({
-    jornada_id: jornadaId,
-    liga_id: ligaId,
-    pareja1_id: parejaIds[0],
-    pareja2_id: parejaIds[1],
-    ronda: 1,
-    cancha: 1,
-    estado: "upcoming",
-    score_pareja1: null,
-    score_pareja2: null,
-    fase: "final",
-    bracket_slot: "FINAL",
-  });
-
-  if (insErr) {
-    // Unique violation = already created (idempotent)
-    if (
-      insErr.message.includes("liga_partidos_liga_bracket_slot") ||
-      insErr.code === "23505"
-    ) {
-      // Carrera: reintentar sync sobre la fila existente.
-      return ensurePlayoffsGranFinal(ligaId);
+        fase: "final",
+        bracket_slot: "FINAL",
+      });
+      if (insErr) {
+        if (
+          insErr.message.includes("liga_partidos_liga_bracket_slot") ||
+          insErr.code === "23505"
+        ) {
+          return ensurePlayoffsGranFinal(ligaId);
+        }
+        throw new Error(insErr.message);
+      }
+      changed = true;
     }
-    throw new Error(insErr.message);
   }
-  return true;
+
+  // --- THIRD ---
+  if (thirdPlan.action === "create" || thirdPlan.action === "update_unscored") {
+    const parejaIds = await ensureFinalJornadaParejaIds(ligaId, jornadaId, [
+      thirdPlan.equipo1_id,
+      thirdPlan.equipo2_id,
+    ]);
+
+    if (thirdPlan.action === "update_unscored") {
+      const { error: updErr } = await supabase
+        .from("liga_partidos")
+        .update({
+          pareja1_id: parejaIds[0],
+          pareja2_id: parejaIds[1],
+          estado: "upcoming",
+          score_pareja1: null,
+          score_pareja2: null,
+          set_scores: null,
+        })
+        .eq("id", thirdPlan.thirdId)
+        .eq("bracket_slot", PLAYOFFS_THIRD_PLACE_SLOT)
+        .is("score_pareja1", null)
+        .is("score_pareja2", null);
+      if (updErr) throw new Error(updErr.message);
+      changed = true;
+    } else {
+      const { error: insErr } = await supabase.from("liga_partidos").insert({
+        jornada_id: jornadaId,
+        liga_id: ligaId,
+        pareja1_id: parejaIds[0],
+        pareja2_id: parejaIds[1],
+        ronda: 1,
+        cancha: 2,
+        estado: "upcoming",
+        score_pareja1: null,
+        score_pareja2: null,
+        fase: "classification",
+        bracket_slot: PLAYOFFS_THIRD_PLACE_SLOT,
+      });
+      if (insErr) {
+        if (
+          insErr.message.includes("liga_partidos_liga_bracket_slot") ||
+          insErr.code === "23505"
+        ) {
+          return ensurePlayoffsGranFinal(ligaId);
+        }
+        throw new Error(insErr.message);
+      }
+      changed = true;
+    }
+  }
+
+  await reopenFinalJornadaIfPending(jornadaId);
+  return changed;
 }
 
 export async function updateScoreParejasFijasPlayoffs(
@@ -714,14 +847,16 @@ export async function updateScoreParejasFijasPlayoffs(
     ligaId = j?.liga_id ? String(j.liga_id) : null;
   }
   if (ligaId) {
-    await recalcularPuntosLigaEquiposPlayoffs(ligaId);
-    await maybeFreezeAndGeneratePlayoffsJornada9(ligaId);
+    // Primero materializar FINAL+THIRD; luego recalcular (evita marcar jornada
+    // completed con solo la FINAL cuando aún falta el tercer lugar).
     if (
       partido?.bracket_slot === "SF1" ||
       partido?.bracket_slot === "SF2"
     ) {
       await ensurePlayoffsGranFinal(ligaId);
     }
+    await maybeFreezeAndGeneratePlayoffsJornada9(ligaId);
+    await recalcularPuntosLigaEquiposPlayoffs(ligaId);
   }
 
   return {

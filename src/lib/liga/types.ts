@@ -16,7 +16,7 @@ export type LigaPartidoFase =
   | "semifinal"
   | "classification"
   | "final";
-/** SF1 | SF2 | CL1..CLk | FINAL */
+/** SF1 | SF2 | CL1..CLk | FINAL | THIRD */
 export type LigaBracketSlot = string;
 
 export interface Liga {

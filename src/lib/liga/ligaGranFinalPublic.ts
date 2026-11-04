@@ -17,9 +17,33 @@ export type LigaGranFinalPresentationState =
 export function isLigaGranFinalPartido(
   partido: Pick<LigaPartido, "fase" | "bracket_slot">
 ): boolean {
-  if (partido.fase === "final") return true;
   const slot = (partido.bracket_slot ?? "").trim().toUpperCase();
-  return slot === "FINAL";
+  if (slot === "FINAL") return true;
+  if (slot === "THIRD" || slot.startsWith("CL") || slot.startsWith("SF")) {
+    return false;
+  }
+  // Legado: fase=final sin bracket_slot.
+  return partido.fase === "final";
+}
+
+export function isLigaThirdPlacePartido(
+  partido: Pick<LigaPartido, "bracket_slot">
+): boolean {
+  return (partido.bracket_slot ?? "").trim().toUpperCase() === "THIRD";
+}
+
+/** Etiqueta corta para cabecera de partido en admin/público. */
+export function ligaPlayoffsMatchLabel(
+  partido: Pick<LigaPartido, "fase" | "bracket_slot" | "cancha">
+): string {
+  const slot = (partido.bracket_slot ?? "").trim().toUpperCase();
+  if (slot === "FINAL") return "Gran Final";
+  if (slot === "THIRD") return "3.er / 4.º lugar";
+  if (slot === "SF1") return "Semifinal 1";
+  if (slot === "SF2") return "Semifinal 2";
+  if (slot.startsWith("CL")) return `Clasificación ${slot}`;
+  if (partido.cancha != null) return `Cancha ${partido.cancha}`;
+  return "Sin cancha";
 }
 
 export function findLigaGranFinalPartido(

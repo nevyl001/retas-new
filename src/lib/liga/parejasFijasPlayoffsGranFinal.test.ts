@@ -1,6 +1,7 @@
 import { buildPlayoffCrosses, seedsFromRankingOrder } from "./parejasFijasPlayoffsBracket";
 import {
   planGranFinalSync,
+  planThirdPlaceSync,
   resolvePlayoffsMatchWinnerEquipoId,
   resolvePlayoffsSemifinalWinners,
   type ExistingFinalSnapshot,
@@ -445,6 +446,217 @@ describe("playoffs Gran Final — sembrado y avance", () => {
     );
     expect(plan.equipo1_id).not.toBe(PADELITO.arturo);
     expect(plan.equipo2_id).not.toBe(PADELITO.arturo);
+  });
+
+  it("K — THIRD se genera con perdedores de SF (Arturo × Kevin)", () => {
+    const resolved = resolvePlayoffsSemifinalWinners([
+      sfRow(
+        "SF1",
+        PADELITO.arturo,
+        PADELITO.eddie,
+        10,
+        9,
+        {
+          format: PLAYOFFS_SCORE_FORMAT,
+          sets: [
+            { p1: 4, p2: 6 },
+            { p1: 6, p2: 3 },
+          ],
+          stb: { p1: 4, p2: 10 },
+          wo: false,
+        }
+      ),
+      sfRow(
+        "SF2",
+        PADELITO.cuadra,
+        PADELITO.kevin,
+        12,
+        7,
+        {
+          format: PLAYOFFS_SCORE_FORMAT,
+          sets: [
+            { p1: 6, p2: 4 },
+            { p1: 6, p2: 3 },
+          ],
+          stb: null,
+          wo: false,
+        }
+      ),
+    ]);
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+
+    const createPlan = planThirdPlaceSync(resolved.winners, null);
+    expect(createPlan.action).toBe("create");
+    if (createPlan.action !== "create") return;
+    expect(new Set([createPlan.equipo1_id, createPlan.equipo2_id])).toEqual(
+      new Set([PADELITO.arturo, PADELITO.kevin])
+    );
+
+    const existingOk: ExistingFinalSnapshot = {
+      id: "third-ok",
+      equipo1_id: PADELITO.arturo,
+      equipo2_id: PADELITO.kevin,
+      estado: "upcoming",
+      score_pareja1: null,
+      score_pareja2: null,
+      set_scores: null,
+    };
+    expect(planThirdPlaceSync(resolved.winners, existingOk).action).toBe(
+      "noop"
+    );
+
+    const scored: ExistingFinalSnapshot = {
+      ...existingOk,
+      id: "third-scored",
+      estado: "completed",
+      score_pareja1: 12,
+      score_pareja2: 6,
+      set_scores: {
+        format: PLAYOFFS_SCORE_FORMAT,
+        sets: [
+          { p1: 6, p2: 3 },
+          { p1: 6, p2: 3 },
+        ],
+        stb: null,
+        wo: false,
+      },
+      equipo1_id: PADELITO.eddie,
+      equipo2_id: PADELITO.cuadra,
+    };
+    expect(planThirdPlaceSync(resolved.winners, scored).action).toBe(
+      "blocked_scored_mismatch"
+    );
+  });
+
+  it("M — SF pendiente: no inventa ganadores ni plan de THIRD", () => {
+    const resolved = resolvePlayoffsSemifinalWinners([
+      sfRow(
+        "SF1",
+        PADELITO.arturo,
+        PADELITO.eddie,
+        10,
+        9,
+        {
+          format: PLAYOFFS_SCORE_FORMAT,
+          sets: [
+            { p1: 4, p2: 6 },
+            { p1: 6, p2: 3 },
+          ],
+          stb: { p1: 4, p2: 10 },
+          wo: false,
+        }
+      ),
+      sfRow(
+        "SF2",
+        PADELITO.cuadra,
+        PADELITO.kevin,
+        null as unknown as number,
+        null as unknown as number,
+        null,
+        "upcoming"
+      ),
+    ]);
+    expect(resolved.ok).toBe(false);
+  });
+
+  it("N — CL1/CL2 no se usan como semifinales para THIRD", () => {
+    const withClAsSf = resolvePlayoffsSemifinalWinners([
+      {
+        bracket_slot: "CL1",
+        estado: "completed",
+        pareja1_equipo_id: PADELITO.arturo,
+        pareja2_equipo_id: PADELITO.kevin,
+        score_pareja1: 12,
+        score_pareja2: 3,
+        set_scores: {
+          format: PLAYOFFS_SCORE_FORMAT,
+          sets: [
+            { p1: 6, p2: 1 },
+            { p1: 6, p2: 2 },
+          ],
+          stb: null,
+          wo: false,
+        },
+      },
+      {
+        bracket_slot: "CL2",
+        estado: "completed",
+        pareja1_equipo_id: PADELITO.eddie,
+        pareja2_equipo_id: PADELITO.cuadra,
+        score_pareja1: 12,
+        score_pareja2: 1,
+        set_scores: {
+          format: PLAYOFFS_SCORE_FORMAT,
+          sets: [
+            { p1: 6, p2: 0 },
+            { p1: 6, p2: 1 },
+          ],
+          stb: null,
+          wo: false,
+        },
+      },
+    ]);
+    expect(withClAsSf.ok).toBe(false);
+  });
+
+  it("L — FINAL existente + THIRD ausente: solo plan create de THIRD", () => {
+    const resolved = resolvePlayoffsSemifinalWinners([
+      sfRow(
+        "SF1",
+        PADELITO.arturo,
+        PADELITO.eddie,
+        10,
+        9,
+        {
+          format: PLAYOFFS_SCORE_FORMAT,
+          sets: [
+            { p1: 4, p2: 6 },
+            { p1: 6, p2: 3 },
+          ],
+          stb: { p1: 4, p2: 10 },
+          wo: false,
+        }
+      ),
+      sfRow(
+        "SF2",
+        PADELITO.cuadra,
+        PADELITO.kevin,
+        12,
+        7,
+        {
+          format: PLAYOFFS_SCORE_FORMAT,
+          sets: [
+            { p1: 6, p2: 4 },
+            { p1: 6, p2: 3 },
+          ],
+          stb: null,
+          wo: false,
+        }
+      ),
+    ]);
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+
+    const finalOk: ExistingFinalSnapshot = {
+      id: "a5806e1d-81ff-402a-9406-706be98b5f98",
+      equipo1_id: PADELITO.eddie,
+      equipo2_id: PADELITO.cuadra,
+      estado: "completed",
+      score_pareja1: 5,
+      score_pareja2: 12,
+      set_scores: {
+        format: PLAYOFFS_SCORE_FORMAT,
+        sets: [
+          { p1: 1, p2: 6 },
+          { p1: 4, p2: 6 },
+        ],
+        stb: null,
+        wo: false,
+      },
+    };
+    expect(planGranFinalSync(resolved.winners, finalOk).action).toBe("noop");
+    expect(planThirdPlaceSync(resolved.winners, null).action).toBe("create");
   });
 
   it("J — regresión Padelito: FINAL incorrecta Arturo×Cuadra → Eddie×Cuadra", () => {

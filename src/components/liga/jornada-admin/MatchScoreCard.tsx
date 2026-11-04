@@ -22,6 +22,7 @@ import {
 import { JugadorAvatar } from "../../jugadores/JugadorAvatar";
 import { Button } from "../../ui";
 import { LigaScoreInput } from "../LigaScoreInput";
+import { ligaPlayoffsMatchLabel } from "../../../lib/liga/ligaGranFinalPublic";
 import { parejaPlayerNames } from "./jornadaAdminUtils";
 
 export type MatchScoreCardMode = "sets" | "playoffs" | "rotativo";
@@ -283,7 +284,11 @@ export const MatchScoreCard: React.FC<MatchScoreCardProps> = ({
     !disabled;
 
   const headerMeta =
-    cancha != null ? `Cancha ${cancha}` : "Sin cancha";
+    mode === "playoffs"
+      ? ligaPlayoffsMatchLabel(partido)
+      : cancha != null
+        ? `Cancha ${cancha}`
+        : "Sin cancha";
   const statusLabel =
     isSaved && !editing
       ? "Resultado guardado"

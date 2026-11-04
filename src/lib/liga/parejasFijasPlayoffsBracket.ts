@@ -236,8 +236,9 @@ function sortBlock(
 
 /**
  * Clasificación final 1..N.
- * Primero bloque deportivo (FINAL / SF / CL); dentro del bloque: PTS → DIF → H2H.
- * 1–2 FINAL; 3–4 perdedores SF; 5..N ganadores CL / BYE / perdedores CL.
+ * Primero bloque deportivo (FINAL / SF / THIRD / CL); dentro del bloque: PTS → DIF → H2H.
+ * 1–2 FINAL; 3–4 ganador/perdedor de THIRD si existe; legado sin THIRD → perdedores SF
+ * ordenados por standings; 5..N ganadores CL / BYE / perdedores CL.
  */
 export function resolvePlayoffsFinalStandings(input: {
   seeds: PlayoffSeeds;
@@ -267,12 +268,15 @@ export function resolvePlayoffsFinalStandings(input: {
   }
 
   const byId = new Map(input.standings.map((s) => [s.equipo_id, s]));
-  const thirds = sortBlock(
-    [sf1.loser_id, sf2.loser_id],
-    byId,
-    input.seeds,
-    context
-  );
+  const third = bySlot.get("THIRD");
+  const thirds = third
+    ? [third.winner_id, third.loser_id]
+    : sortBlock(
+        [sf1.loser_id, sf2.loser_id],
+        byId,
+        input.seeds,
+        context
+      );
 
   const winners = clResults.map((r) => r.winner_id);
   const losers = clResults.map((r) => r.loser_id);

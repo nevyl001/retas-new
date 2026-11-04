@@ -1,6 +1,8 @@
 /**
- * Resolución de ganadores de semifinales y plan de sincronización de la Gran Final.
- * El ranking/sembrado solo define SF1/SF2; la FINAL solo usa ganadores del marcador.
+ * Resolución de ganadores de semifinales y plan de sincronización de:
+ * - Gran Final (ganadores SF1/SF2)
+ * - Tercer lugar (perdedores SF1/SF2)
+ * El ranking/sembrado solo define SF1/SF2; FINAL/THIRD solo usan el marcador.
  */
 
 import {
@@ -9,6 +11,9 @@ import {
   type PlayoffsSetScoresPayload,
 } from "./parejasFijasPlayoffsMatchScore";
 import { buildGranFinalCross } from "./parejasFijasPlayoffsBracket";
+
+/** Slot oficial del partido por el 3.er / 4.º lugar (no confundir con CL1/CL2 = 5.º–8.º). */
+export const PLAYOFFS_THIRD_PLACE_SLOT = "THIRD" as const;
 
 export type PlayoffsSemifinalRowInput = {
   bracket_slot: "SF1" | "SF2" | string;
@@ -212,5 +217,89 @@ export function planGranFinalSync(
     equipo2_id: expected2,
     previousEquipo1_id: existingFinal.equipo1_id,
     previousEquipo2_id: existingFinal.equipo2_id,
+  };
+}
+
+export type ExistingThirdPlaceSnapshot = ExistingFinalSnapshot;
+
+export type ThirdPlaceSyncPlan =
+  | { action: "noop"; reason: string }
+  | {
+      action: "create";
+      equipo1_id: string;
+      equipo2_id: string;
+    }
+  | {
+      action: "update_unscored";
+      thirdId: string;
+      equipo1_id: string;
+      equipo2_id: string;
+      previousEquipo1_id: string;
+      previousEquipo2_id: string;
+    }
+  | {
+      action: "blocked_scored_mismatch";
+      thirdId: string;
+      expectedEquipo1_id: string;
+      expectedEquipo2_id: string;
+      actualEquipo1_id: string;
+      actualEquipo2_id: string;
+    };
+
+/**
+ * Plan idempotente del partido por el 3.er lugar: perdedores de SF1 y SF2.
+ * No usa CL1/CL2 ni ranking; solo marcadores de semifinal.
+ */
+export function planThirdPlaceSync(
+  winners: readonly [PlayoffsSemifinalWinner, PlayoffsSemifinalWinner],
+  existingThird: ExistingThirdPlaceSnapshot | null
+): ThirdPlaceSyncPlan {
+  const cross = buildGranFinalCross(
+    winners[0]!.loserEquipoId,
+    winners[1]!.loserEquipoId
+  );
+  const expected1 = cross.equipo1_id;
+  const expected2 = cross.equipo2_id;
+
+  if (!existingThird) {
+    return {
+      action: "create",
+      equipo1_id: expected1,
+      equipo2_id: expected2,
+    };
+  }
+
+  if (
+    sameFinalPair(
+      existingThird.equipo1_id,
+      existingThird.equipo2_id,
+      expected1,
+      expected2
+    )
+  ) {
+    return {
+      action: "noop",
+      reason: "THIRD already matches SF losers.",
+    };
+  }
+
+  if (finalHasResult(existingThird)) {
+    return {
+      action: "blocked_scored_mismatch",
+      thirdId: existingThird.id,
+      expectedEquipo1_id: expected1,
+      expectedEquipo2_id: expected2,
+      actualEquipo1_id: existingThird.equipo1_id,
+      actualEquipo2_id: existingThird.equipo2_id,
+    };
+  }
+
+  return {
+    action: "update_unscored",
+    thirdId: existingThird.id,
+    equipo1_id: expected1,
+    equipo2_id: expected2,
+    previousEquipo1_id: existingThird.equipo1_id,
+    previousEquipo2_id: existingThird.equipo2_id,
   };
 }

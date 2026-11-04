@@ -1,9 +1,11 @@
 import {
   findLigaGranFinalPartido,
   isLigaGranFinalPartido,
+  isLigaThirdPlacePartido,
   jornadaHasLigaGranFinal,
   ligaGranFinalHeroMeta,
   ligaGranFinalSubtitle,
+  ligaPlayoffsMatchLabel,
   ligaTemporadaLabelFromNombre,
   resolveLigaGranFinalPresentationState,
 } from "./ligaGranFinalPublic";
@@ -48,10 +50,16 @@ describe("ligaGranFinalPublic", () => {
     const rows = [
       partido({ id: "sf", fase: "semifinal", bracket_slot: "SF1" }),
       partido({ id: "gf", fase: "final", bracket_slot: "FINAL" }),
+      partido({ id: "th", fase: "classification", bracket_slot: "THIRD" }),
     ];
     expect(findLigaGranFinalPartido(rows)?.id).toBe("gf");
     expect(jornadaHasLigaGranFinal(rows)).toBe(true);
     expect(jornadaHasLigaGranFinal([rows[0]!])).toBe(false);
+    expect(isLigaThirdPlacePartido(rows[2]!)).toBe(true);
+    expect(isLigaGranFinalPartido(rows[2]!)).toBe(false);
+    expect(ligaPlayoffsMatchLabel(rows[1]!)).toBe("Gran Final");
+    expect(ligaPlayoffsMatchLabel(rows[2]!)).toBe("3.er / 4.º lugar");
+    expect(ligaPlayoffsMatchLabel(rows[0]!)).toBe("Semifinal 1");
   });
 
   it("meta de cabecera usa partidos/canchas reales", () => {

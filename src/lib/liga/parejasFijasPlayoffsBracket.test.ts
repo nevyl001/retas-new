@@ -163,6 +163,57 @@ describe("parejasFijasPlayoffsBracket (N variable)", () => {
     expect(order).toEqual(["C", "A", "D", "B", "F", "H", "E", "G"]);
   });
 
+  it("THIRD completed: 3°/4° salen del partido, no de SF ni CL", () => {
+    const seeds = seedsFromRankingOrder(letters(8));
+    const results: PlayoffMatchResult[] = [
+      {
+        slot: "SF1",
+        equipo1_id: "A",
+        equipo2_id: "D",
+        winner_id: "A",
+        loser_id: "D",
+      },
+      {
+        slot: "SF2",
+        equipo1_id: "B",
+        equipo2_id: "C",
+        winner_id: "B",
+        loser_id: "C",
+      },
+      {
+        slot: "CL1",
+        equipo1_id: "E",
+        equipo2_id: "H",
+        winner_id: "E",
+        loser_id: "H",
+      },
+      {
+        slot: "CL2",
+        equipo1_id: "F",
+        equipo2_id: "G",
+        winner_id: "F",
+        loser_id: "G",
+      },
+      {
+        slot: "FINAL",
+        equipo1_id: "A",
+        equipo2_id: "B",
+        winner_id: "A",
+        loser_id: "B",
+      },
+      {
+        slot: "THIRD",
+        equipo1_id: "D",
+        equipo2_id: "C",
+        winner_id: "C",
+        loser_id: "D",
+      },
+    ];
+    const standings = letters(8).map((id, idx) => standing(id, 100 - idx));
+    const order = resolvePlayoffsFinalStandings({ seeds, results, standings });
+    expect(order.slice(0, 4)).toEqual(["A", "B", "C", "D"]);
+  });
+
   it("N=15: BYE ocupa slot intermedio 10° sin puntos ficticios", () => {
     const ids = letters(15);
     const seeds = seedsFromRankingOrder(ids);

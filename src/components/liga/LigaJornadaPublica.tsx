@@ -17,8 +17,10 @@ import {
 } from "../../lib/liga/publicDisplay";
 import {
   findLigaGranFinalPartido,
+  isLigaThirdPlacePartido,
   jornadaHasLigaGranFinal,
   ligaGranFinalHeroMeta,
+  ligaPlayoffsMatchLabel,
 } from "../../lib/liga/ligaGranFinalPublic";
 import { jornadaHoraInicioLabel } from "../../lib/liga/programacion";
 import {
@@ -436,6 +438,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   const totalPartidos = jornada.partidos?.length ?? 0;
   const esGranFinalJornada = jornadaHasLigaGranFinal(jornada.partidos);
   const granFinalPartido = findLigaGranFinalPartido(jornada.partidos);
+  const thirdPlacePartido =
+    jornada.partidos?.find(isLigaThirdPlacePartido) ?? null;
   const jugadoresById = new Map(
     (detalle.jugadores ?? []).map((j) => [j.id, j])
   );
@@ -444,7 +448,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       ? ligaGranFinalHeroMeta(jornada.partidos ?? [])
       : "Liga";
   const heroCategoria = esGranFinalJornada
-    ? "Gran Final"
+    ? thirdPlacePartido
+      ? "Gran Final · 3.er lugar"
+      : "Gran Final"
     : `Jornada ${numero}`;
 
   const buildGranFinalPair = (parejaId: string) => {
@@ -666,14 +672,38 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 Los partidos aparecerán cuando se inicie la jornada.
               </p>
             ) : esGranFinalJornada && granFinalPartido ? (
-              <LigaJornadaGranFinalPublica
-                ligaNombre={detalle.nombre}
-                partido={granFinalPartido}
-                side1={buildGranFinalPair(granFinalPartido.pareja1_id)}
-                side2={buildGranFinalPair(granFinalPartido.pareja2_id)}
-                esParejasFijas={esParejasFijas}
-                fechaHorarioText={jornadaFechaHorarioText}
-              />
+              <div
+                className={
+                  thirdPlacePartido
+                    ? "liga-pantalla-final-day liga-pantalla-final-day--dual"
+                    : "liga-pantalla-final-day"
+                }
+              >
+                <LigaJornadaGranFinalPublica
+                  ligaNombre={detalle.nombre}
+                  partido={granFinalPartido}
+                  side1={buildGranFinalPair(granFinalPartido.pareja1_id)}
+                  side2={buildGranFinalPair(granFinalPartido.pareja2_id)}
+                  esParejasFijas={esParejasFijas}
+                  fechaHorarioText={jornadaFechaHorarioText}
+                />
+                {thirdPlacePartido ? (
+                  <section
+                    className="liga-pantalla-third-place"
+                    aria-label={ligaPlayoffsMatchLabel(thirdPlacePartido)}
+                  >
+                    <h2 className="liga-pantalla-third-place__title">
+                      {ligaPlayoffsMatchLabel(thirdPlacePartido)}
+                    </h2>
+                    <div
+                      className="liga-pantalla-ronda__matches liga-pantalla-ronda__matches--courts"
+                      data-cols="1"
+                    >
+                      {renderMatchCard(thirdPlacePartido, true, 0)}
+                    </div>
+                  </section>
+                ) : null}
+              </div>
             ) : (
               visibleRondaEntry
                 ? (() => {
