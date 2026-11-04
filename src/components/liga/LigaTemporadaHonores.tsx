@@ -132,6 +132,10 @@ function HonorCard({
         className={`liga-honores-card liga-honores-card--side liga-honores-card--pending`}
         aria-label="Tercer lugar por definir"
       >
+        <span className="liga-honores-card__corner liga-honores-card__corner--tl" aria-hidden />
+        <span className="liga-honores-card__corner liga-honores-card__corner--tr" aria-hidden />
+        <span className="liga-honores-card__corner liga-honores-card__corner--bl" aria-hidden />
+        <span className="liga-honores-card__corner liga-honores-card__corner--br" aria-hidden />
         <HonoresAmbient />
         <header className="liga-honores-card__head">
           <span className="liga-honores-card__icon" aria-hidden>
@@ -146,7 +150,6 @@ function HonorCard({
         </header>
         <div className="liga-honores-card__pending-stage" aria-hidden>
           <span className="liga-honores-portrait liga-honores-portrait--ghost" />
-          <span className="liga-honores-card__pair-join" />
           <span className="liga-honores-portrait liga-honores-portrait--ghost" />
         </div>
       </article>
@@ -162,6 +165,10 @@ function HonorCard({
       className={`liga-honores-card liga-honores-card--${variant} liga-honores-card--${slot.placement}`}
       aria-label={`${copy.badge} — ${slot.pairLabel}`}
     >
+      <span className="liga-honores-card__corner liga-honores-card__corner--tl" aria-hidden />
+      <span className="liga-honores-card__corner liga-honores-card__corner--tr" aria-hidden />
+      <span className="liga-honores-card__corner liga-honores-card__corner--bl" aria-hidden />
+      <span className="liga-honores-card__corner liga-honores-card__corner--br" aria-hidden />
       <HonoresAmbient />
       <header className="liga-honores-card__head">
         <span className="liga-honores-card__icon" aria-hidden>
@@ -181,9 +188,6 @@ function HonorCard({
       {p1 && p2 ? (
         <div className="liga-honores-card__pair" aria-label={slot.pairLabel}>
           <Portrait player={p1} size={isHero ? "hero" : "side"} />
-          <span className="liga-honores-card__pair-join" aria-hidden>
-            &
-          </span>
           <Portrait player={p2} size={isHero ? "hero" : "side"} />
         </div>
       ) : null}
