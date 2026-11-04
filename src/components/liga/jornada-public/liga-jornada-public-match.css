@@ -345,77 +345,23 @@
   max-width: 100%;
 }
 
-/* Corona sola, centrada entre los dos retratos de la pareja ganadora */
-.liga-pantalla--jornada-fijas .liga-jornada-match-pair-half__badge {
-  position: relative;
-  z-index: 5;
-  display: grid;
-  place-items: center;
-  box-sizing: border-box;
-  width: 1.55rem !important;
-  height: 1.55rem !important;
-  max-width: 1.55rem !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  flex: none !important;
-  justify-self: center !important;
-  align-self: center !important;
-  border-radius: 999px;
-  border: 1px solid
-    color-mix(in srgb, var(--liga-prem-accent, #a3e635) 52%, transparent);
-  background: color-mix(
-    in srgb,
-    var(--liga-prem-accent, #a3e635) 16%,
-    rgba(8, 10, 14, 0.94)
-  );
-  color: color-mix(
-    in srgb,
-    var(--liga-prem-accent, var(--liga-jornada-accent, #a3e635)) 90%,
-    #fff
-  );
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
-  pointer-events: none;
-}
-
-.liga-pantalla--jornada-fijas .liga-jornada-match-pair-half__badge-icon {
-  font-size: 0.78rem;
-  line-height: 1;
-}
-
-.liga-pantalla--jornada-fijas .liga-jornada-match-pair-half__badge-text {
-  display: none;
-}
-
+/* Pareja ganadora: sin adornos; el borde vive en cada retrato (duel stacks). */
 .liga-pantalla--jornada-fijas .liga-jornada-match-pair-half--win {
   z-index: 2;
-  border-color: color-mix(
-    in srgb,
-    var(--liga-prem-accent, #a3e635) 42%,
-    transparent
-  );
-  box-shadow:
-    0 0 0 1px
-      color-mix(in srgb, var(--liga-prem-accent, #a3e635) 18%, transparent),
-    0 8px 20px rgba(0, 0, 0, 0.28);
 }
 
-.liga-pantalla--jornada-fijas
-  .liga-jornada-match-pair-half--win
-  .pub-split-vs-panel__photo.is-visible {
-  filter: saturate(1.12) brightness(1.04);
-}
-
+/* Perdedora: atenuación muy ligera — rostros y nombres siguen legibles */
 .liga-pantalla--jornada-fijas
   .liga-jornada-match-pair-half--loss
   .pub-split-vs-panel {
-  filter: grayscale(0.38) brightness(0.68);
-  opacity: 0.88;
+  filter: brightness(0.92);
+  opacity: 0.9;
 }
 
 .liga-pantalla--jornada-fijas
   .liga-jornada-match-pair-half--loss
   .pub-split-vs-panel__identity {
-  color: color-mix(in srgb, #fff 78%, transparent);
+  color: color-mix(in srgb, #fff 88%, transparent);
 }
 
 /* Mini cards retrato — presencia sin gigantismo */
@@ -992,7 +938,7 @@
   max-width: 8.25rem;
 }
 
-/* Resalta ambos retratos de la pareja ganadora */
+/* Retratos ganadores: borde fino de acento del club (sin glow / neón) */
 .liga-pantalla--jornada-fijas
   .liga-jornada-match-card--duel-stacks
   .liga-jornada-match-pair-half--win
@@ -1011,15 +957,12 @@
   .liga-jornada-match-card--duel-row
   .liga-jornada-match-pair-half--win
   .pub-split-vs-panel {
-  border-color: color-mix(
-    in srgb,
-    var(--liga-prem-accent, #a3e635) 58%,
-    transparent
-  ) !important;
-  box-shadow:
-    0 0 0 1px
-      color-mix(in srgb, var(--liga-prem-accent, #a3e635) 22%, transparent),
-    0 8px 18px rgba(0, 0, 0, 0.28);
+  border: 1.5px solid
+    var(
+      --liga-prem-accent,
+      var(--liga-jornada-accent, var(--brand-accent, #a3e635))
+    ) !important;
+  box-shadow: none;
 }
 
 .liga-pantalla--jornada-fijas
@@ -1064,29 +1007,6 @@
   max-width: 8.25rem;
   padding: 0 !important;
   background: transparent !important;
-}
-
-.liga-pantalla--jornada-fijas
-  .liga-jornada-match-card--duel-row
-  .liga-jornada-match-pair-half__grid--win,
-.liga-pantalla--jornada-fijas
-  .liga-jornada-match-card--duel-stacks
-  .liga-jornada-match-pair-half__grid--win {
-  grid-template-rows: auto auto auto !important;
-  justify-items: center;
-  gap: 0.28rem !important;
-}
-
-.liga-pantalla--jornada-fijas
-  .liga-jornada-match-card--duel-row
-  .liga-jornada-match-pair-half__grid--win
-  > .liga-jornada-match-player-panel,
-.liga-pantalla--jornada-fijas
-  .liga-jornada-match-card--duel-stacks
-  .liga-jornada-match-pair-half__grid--win
-  > .liga-jornada-match-player-panel {
-  width: 100% !important;
-  justify-self: stretch;
 }
 
 /* Retrato 3:4 premium — ocupa el ancho de la columna (máx. contenido, no miniatura) */

@@ -10,8 +10,8 @@ interface LigaJornadaMatchPairStackProps {
 }
 
 /**
- * Pareja en columna: jugador ↑ · corona (si gana) · jugador ↓.
- * Solo corona centrada entre ambos retratos — sin chip de texto.
+ * Pareja en columna: jugador ↑ · jugador ↓.
+ * Victoria solo por tono CSS (borde fino / atenuación), sin adornos.
  */
 export const LigaJornadaMatchPairStack: React.FC<
   LigaJornadaMatchPairStackProps
@@ -20,30 +20,21 @@ export const LigaJornadaMatchPairStack: React.FC<
     className={`liga-jornada-match-pair-half liga-jornada-match-pair-half--${align}${
       tone ? ` liga-jornada-match-pair-half--${tone}` : ""
     }`}
-    aria-label={label ?? `Pareja: ${side.name1} y ${side.name2}`}
+    aria-label={
+      label
+        ? tone === "win"
+          ? `${label} (ganadora)`
+          : label
+        : `Pareja: ${side.name1} y ${side.name2}`
+    }
   >
     <div className="liga-jornada-match-pair-half__column">
-      <div
-        className={`liga-jornada-match-pair-half__grid${
-          tone === "win" ? " liga-jornada-match-pair-half__grid--win" : ""
-        }`}
-      >
+      <div className="liga-jornada-match-pair-half__grid">
         <LigaJornadaMatchPlayerPanel
           name={side.name1}
           foto={side.foto1}
           rating={side.rating1}
         />
-        {tone === "win" ? (
-          <span
-            className="liga-jornada-match-pair-half__badge"
-            aria-label="Pareja ganadora"
-            title="Pareja ganadora"
-          >
-            <span className="liga-jornada-match-pair-half__badge-icon" aria-hidden>
-              ♔
-            </span>
-          </span>
-        ) : null}
         <LigaJornadaMatchPlayerPanel
           name={side.name2}
           foto={side.foto2}
