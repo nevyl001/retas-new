@@ -4,7 +4,10 @@ import {
   computeJornadaPublicStats,
 } from "../../lib/liga/jornadaStats";
 import {
+  resolveGranFinalCelebrateSides,
+  shouldCelebrateLigaCampeonato,
   statsParejaJornadaVictoria,
+  statsParejaLigaEquipo,
 } from "../../lib/liga/jornadaCelebrate";
 import {
   formatJornadaParejaNombre,
@@ -980,40 +983,102 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
           </aside>
         </div>
 
-        {todosPartidosCompletos && jornadaStats.ganadorPareja ? (
+        {todosPartidosCompletos &&
+        (() => {
+          const celebrateCampeonato = shouldCelebrateLigaCampeonato({
+            esParejasFijas,
+            partidos: jornada.partidos,
+            jornadaNumero: numero,
+            jornadas: detalle.jornadas ?? [],
+          });
+          const gfSides = celebrateCampeonato
+            ? resolveGranFinalCelebrateSides(jornada.partidos, esParejasFijas)
+            : null;
+          const campeonRow =
+            (gfSides
+              ? jornadaStats.rankingParejas.find(
+                  (r) => r.parejaId === gfSides.campeonId
+                )
+              : null) ??
+            (celebrateCampeonato ? jornadaStats.rankingParejas[0] : null);
+          const subcampeonRow =
+            (gfSides
+              ? jornadaStats.rankingParejas.find(
+                  (r) => r.parejaId === gfSides.subcampeonId
+                )
+              : null) ??
+            (celebrateCampeonato ? jornadaStats.rankingParejas[1] : null);
+          const jornadaWinner = jornadaStats.ganadorPareja;
+          const celebratePairs = celebrateCampeonato
+            ? [
+                campeonRow
+                  ? { row: campeonRow, placement: "campeones" as const }
+                  : null,
+                subcampeonRow
+                  ? { row: subcampeonRow, placement: "subcampeones" as const }
+                  : null,
+              ].filter(Boolean)
+            : jornadaWinner
+              ? [
+                  {
+                    row: jornadaWinner,
+                    placement: "jornada" as const,
+                  },
+                ]
+              : [];
+
+          if (celebratePairs.length === 0) return null;
+
+          return (
             <div
               ref={celebrateRevealRef}
-              className={`liga-parejas-victorias-grid liga-parejas-victorias-grid--winner liga-motion-reveal${
+              className={`liga-parejas-victorias-grid liga-parejas-victorias-grid--winner${
+                celebrateCampeonato
+                  ? " liga-parejas-victorias-grid--campeonato"
+                  : ""
+              } liga-motion-reveal${
                 !esParejasFijas || celebrateInView ? " is-inview" : ""
-              }${celebratePlay || !esParejasFijas ? " liga-celebrate--play" : ""}`}
+              }${
+                celebratePlay || !esParejasFijas ? " liga-celebrate--play" : ""
+              }`}
               role="status"
             >
-              <LigaParejaVictoriaCelebrate
-                pairId={jornadaStats.ganadorPareja.parejaId}
-                pairLabel={nombreParejaGanadora(
-                  jornadaStats.ganadorPareja.parejaId,
-                  jornadaStats.ganadorPareja.nombre
-                )}
-                torneoNombre={detalle.nombre}
-                jornadaNumero={numero}
-                matchLines={
-                  jornadaMatchBreakdowns.get(
-                    jornadaStats.ganadorPareja.parejaId
-                  ) ?? []
-                }
-                stats={statsParejaJornadaVictoria(
-                  jornadaStats.ganadorPareja.parejaId,
-                  jornada,
-                  jornadaStats.ganadorPareja
-                )}
-                winners={winnerAvatarsForPareja(
-                  jornada.parejas?.find(
-                    (p) => p.id === jornadaStats.ganadorPareja?.parejaId
-                  )
-                )}
-              />
+              {celebratePairs.map((entry) => {
+                if (!entry) return null;
+                const { row, placement } = entry;
+                const equipo = detalle.equipos?.find((e) => e.id === row.parejaId);
+                const leagueStats = statsParejaLigaEquipo(equipo);
+                const useLeagueStats =
+                  placement !== "jornada" && leagueStats != null;
+                return (
+                  <LigaParejaVictoriaCelebrate
+                    key={`${placement}-${row.parejaId}`}
+                    pairId={row.parejaId}
+                    pairLabel={nombreParejaGanadora(row.parejaId, row.nombre)}
+                    torneoNombre={detalle.nombre}
+                    jornadaNumero={
+                      placement === "jornada" ? numero : undefined
+                    }
+                    placement={placement}
+                    matchLines={
+                      placement === "jornada"
+                        ? jornadaMatchBreakdowns.get(row.parejaId) ?? []
+                        : []
+                    }
+                    stats={
+                      useLeagueStats
+                        ? leagueStats
+                        : statsParejaJornadaVictoria(row.parejaId, jornada, row)
+                    }
+                    winners={winnerAvatarsForPareja(
+                      jornada.parejas?.find((p) => p.id === row.parejaId)
+                    )}
+                  />
+                );
+              })}
             </div>
-          ) : null}
+          );
+        })()}
 
         <footer className="liga-pantalla__footer">
           Actualización automática

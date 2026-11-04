@@ -1,6 +1,11 @@
 import React, { useMemo } from "react";
 import { useBranding } from "../../club-experience";
 import {
+  buildLigaCampeonatoCelebrateCopy,
+  buildLigaCampeonatoCelebrateHeadline,
+  type LigaCelebratePlacement,
+} from "../../lib/liga/jornadaCelebrate";
+import {
   formatSignedPoints,
   type ParejaJornadaMatchLine,
 } from "../../lib/liga/jornadaStats";
@@ -58,6 +63,8 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
   matchLines?: ParejaJornadaMatchLine[];
   stats: PublicEliminatoriaPodiumStats;
   winners?: PublicRetaWinnerAvatar[];
+  /** Campeonato de liga (Gran Final / última jornada) vs ganador de jornada. */
+  placement?: LigaCelebratePlacement | "jornada";
 }> = ({
   pairId,
   pairLabel,
@@ -66,22 +73,43 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
   matchLines = [],
   stats,
   winners,
+  placement = "jornada",
 }) => {
   const { nombre: organizerName } = useBranding();
   const pairPlayersById = useMemo(
     () => buildPairPlayersById(pairLabel, pairId, winners),
     [pairLabel, pairId, winners]
   );
+  const isLigaFinal =
+    placement === "campeones" || placement === "subcampeones";
+  const podiumPosition = placement === "subcampeones" ? 2 : 1;
 
   const headline = useMemo(() => {
-    const liga = (torneoNombre || "").trim() || (organizerName || "").trim() || "Riviera Open";
+    const liga =
+      (torneoNombre || "").trim() ||
+      (organizerName || "").trim() ||
+      "Riviera Open";
+    if (isLigaFinal) {
+      return buildLigaCampeonatoCelebrateHeadline(
+        liga,
+        placement as LigaCelebratePlacement
+      );
+    }
     if (jornadaNumero != null && Number.isFinite(jornadaNumero)) {
       return `Ganadores · Jornada ${jornadaNumero} · ${liga}`;
     }
     return `Ganadores · ${liga}`;
-  }, [jornadaNumero, torneoNombre, organizerName]);
+  }, [isLigaFinal, placement, jornadaNumero, torneoNombre, organizerName]);
 
   const copyOverrides = useMemo(() => {
+    if (isLigaFinal) {
+      return buildLigaCampeonatoCelebrateCopy(
+        (torneoNombre || "").trim() ||
+          (organizerName || "").trim() ||
+          "Riviera Open",
+        placement as LigaCelebratePlacement
+      );
+    }
     const rankLine =
       matchLines.length > 0
         ? `${matchLines.length} enfrentamiento${
@@ -93,15 +121,24 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
     return {
       badge: "1.ER LUGAR",
       title: "¡Felicidades!",
-      // Sin copy motivacional dentro de la card (va aparte / se omite).
       message: "",
       ...(rankLine ? { rank: rankLine } : {}),
     };
-  }, [matchLines.length, stats.victorias, stats.dif]);
+  }, [
+    isLigaFinal,
+    placement,
+    torneoNombre,
+    organizerName,
+    matchLines.length,
+    stats.victorias,
+    stats.dif,
+  ]);
 
   const criteriaNote = (
     <p className="liga-celebrate-shell__criteria">
-      Criterio de victoria · games acumulados → diferencia → partidos ganados
+      {isLigaFinal
+        ? "Resumen de toda la liga · puntos → diferencia → partidos ganados"
+        : "Criterio de victoria · games acumulados → diferencia → partidos ganados"}
     </p>
   );
 
@@ -119,7 +156,7 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
   );
 
   const matchesBlock =
-    matchLines.length > 0 ? (
+    !isLigaFinal && matchLines.length > 0 ? (
       <div
         className="liga-celebrate-matches"
         aria-label="Resultados contra rivales"
@@ -157,11 +194,15 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
     ) : null;
 
   return (
-    <div className="liga-celebrate-shell">
+    <div
+      className={`liga-celebrate-shell${
+        isLigaFinal ? ` liga-celebrate-shell--${placement}` : ""
+      }`}
+    >
       {criteriaNote}
       <div className="liga-celebrate-shell__mobile">
         <PodiumCard
-          position={1}
+          position={podiumPosition}
           entry={{ label: pairLabel, parejaId: pairId }}
           categoria={null}
           torneoNombre={headline || torneoNombre}
@@ -181,8 +222,11 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
           copy={copyOverrides}
           players={players as PublicRetaPairPlayer[]}
           stats={stats}
-          matchLines={matchLines}
+          matchLines={isLigaFinal ? [] : matchLines}
           ambient={ambient}
+          statsLabel={
+            isLigaFinal ? "Resumen de toda la liga" : "Resumen de jornada"
+          }
         />
       </div>
     </div>

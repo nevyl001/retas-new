@@ -17,6 +17,19 @@
 }
 
 /* Shell + ambient padel balls (inside card via podium-card__ambient) */
+.liga-parejas-victorias-grid--campeonato {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 900px) {
+  .liga-parejas-victorias-grid--campeonato {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
 .liga-celebrate-shell {
   position: relative;
   isolation: isolate;
