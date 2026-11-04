@@ -1,0 +1,413 @@
+/* Honores de la temporada — premiación pública premium (sin oro/bronce). */
+
+.liga-honores {
+  --honores-bg: var(--ro-chrome-elevated, #121212);
+  --honores-bg-deep: var(--ro-chrome-deep, #0a0a0a);
+  --honores-border: var(--ro-border, rgba(255, 255, 255, 0.12));
+  --honores-border-strong: var(--ro-border-strong, rgba(255, 255, 255, 0.22));
+  --honores-text: var(--ro-text-primary, #f2efe8);
+  --honores-muted: var(--ro-text-secondary, #8a8680);
+  --honores-hint: var(--ro-text-muted, #5c5a56);
+  --honores-accent: var(--brand-accent, var(--ro-accent, #f2efe8));
+  --honores-accent-soft: color-mix(in srgb, var(--honores-accent) 18%, transparent);
+  --honores-radius: var(--ro-radius-md, 12px);
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 3vw, 2rem) 0 clamp(2rem, 4vw, 3rem);
+  color: var(--honores-text);
+}
+
+.liga-honores__intro {
+  text-align: center;
+  margin: 0 auto 1.75rem;
+  max-width: 36rem;
+  padding: 0 0.5rem;
+}
+
+.liga-honores__kicker {
+  margin: 0 0 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--honores-muted);
+}
+
+.liga-honores__title {
+  margin: 0 0 0.45rem;
+  font-family: var(--ro-font-heading, inherit);
+  font-size: clamp(1.55rem, 4.2vw, 2.15rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--honores-text);
+  line-height: 1.15;
+}
+
+.liga-honores__subtitle {
+  margin: 0 0 0.85rem;
+  font-size: 0.92rem;
+  color: var(--honores-muted);
+}
+
+.liga-honores__lead {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--honores-hint);
+}
+
+.liga-honores__podium {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.liga-honores__row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .liga-honores__row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+}
+
+.liga-honores-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1.15rem 1.1rem 1.2rem;
+  border-radius: var(--honores-radius);
+  border: 1px solid var(--honores-border);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--honores-bg) 88%, #fff 4%) 0%,
+      var(--honores-bg-deep) 100%
+    );
+  overflow: hidden;
+}
+
+.liga-honores-card--hero {
+  padding: 1.4rem 1.25rem 1.35rem;
+  border-color: var(--honores-border-strong);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--honores-accent) 12%, transparent);
+}
+
+.liga-honores-card--pending {
+  border-style: dashed;
+  opacity: 0.92;
+}
+
+.liga-honores-card__head {
+  text-align: center;
+}
+
+.liga-honores-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0 auto 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--honores-border);
+  color: var(--honores-accent);
+  background: var(--honores-accent-soft);
+}
+
+.liga-honores-card--hero .liga-honores-card__icon {
+  width: 2.55rem;
+  height: 2.55rem;
+}
+
+.liga-honores-card__badge {
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--honores-text);
+}
+
+.liga-honores-card__rank {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--honores-muted);
+}
+
+.liga-honores-card__title {
+  margin: 0 0 0.45rem;
+  font-family: var(--ro-font-heading, inherit);
+  font-size: clamp(1.15rem, 2.8vw, 1.55rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--honores-text);
+}
+
+.liga-honores-card--hero .liga-honores-card__title {
+  font-size: clamp(1.35rem, 3.2vw, 1.85rem);
+}
+
+.liga-honores-card__message {
+  margin: 0 auto;
+  max-width: 34rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--honores-hint);
+}
+
+.liga-honores-card__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: end;
+  justify-items: center;
+}
+
+.liga-honores-card__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-bottom: 1.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--honores-border);
+  color: var(--honores-muted);
+  background: color-mix(in srgb, var(--honores-bg) 70%, transparent);
+}
+
+.liga-honores-card--hero .liga-honores-card__link {
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 2rem;
+}
+
+.liga-honores-card__pending-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: center;
+  justify-items: center;
+  min-height: 8.5rem;
+}
+
+.liga-honores-portrait {
+  position: relative;
+  width: 100%;
+  max-width: 9.5rem;
+  margin: 0;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--honores-border);
+  background: var(--honores-bg-deep);
+}
+
+.liga-honores-portrait--hero {
+  max-width: 12.5rem;
+}
+
+.liga-honores-portrait--ghost {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--honores-bg) 80%, #fff 6%),
+    var(--honores-bg-deep)
+  );
+  border-style: dashed;
+}
+
+.liga-honores-portrait__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.liga-honores-portrait__fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--honores-accent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--honores-accent) 16%, transparent),
+    var(--honores-bg-deep)
+  );
+}
+
+.liga-honores-portrait__name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 1.6rem 0.45rem 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.82) 0%,
+    rgba(0, 0, 0, 0.35) 55%,
+    transparent 100%
+  );
+}
+
+.liga-honores-portrait--side .liga-honores-portrait__name {
+  font-size: 0.72rem;
+  padding-top: 1.35rem;
+}
+
+.liga-honores-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem 0.35rem;
+  margin: 0;
+  padding: 0.7rem 0.55rem;
+  list-style: none;
+  border-radius: 10px;
+  border: 1px solid var(--honores-border);
+  background: color-mix(in srgb, var(--honores-bg-deep) 75%, transparent);
+}
+
+@media (min-width: 420px) {
+  .liga-honores-stats {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .liga-honores-stats:has(> :nth-child(5):last-child) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.liga-honores-stats--hero {
+  padding: 0.8rem 0.65rem;
+}
+
+.liga-honores-stats__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.liga-honores-stats__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--honores-hint);
+}
+
+.liga-honores-stats__value {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--honores-text);
+}
+
+.liga-honores-stats--hero .liga-honores-stats__value {
+  font-size: 1.2rem;
+}
+
+.liga-honores-stats__item--dif .liga-honores-stats__value {
+  color: var(--honores-accent);
+}
+
+.liga-honores-thanks {
+  margin-top: 1.25rem;
+  padding: 1.25rem 1.1rem 1.35rem;
+  border-radius: var(--honores-radius);
+  border: 1px solid var(--honores-border);
+  background: color-mix(in srgb, var(--honores-bg) 70%, transparent);
+  text-align: center;
+}
+
+.liga-honores-thanks__badge {
+  margin: 0 0 0.35rem;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--honores-muted);
+}
+
+.liga-honores-thanks__title {
+  margin: 0 0 0.45rem;
+  font-family: var(--ro-font-heading, inherit);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--honores-text);
+}
+
+.liga-honores-thanks__copy {
+  margin: 0 auto 1rem;
+  max-width: 34rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--honores-hint);
+}
+
+.liga-honores-thanks__list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.liga-honores-thanks__item {
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--honores-border);
+  font-size: 0.75rem;
+  color: var(--honores-muted);
+  background: color-mix(in srgb, var(--honores-bg-deep) 60%, transparent);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 479px) {
+  .liga-honores-card__pair {
+    gap: 0.4rem;
+  }
+
+  .liga-honores-portrait--hero {
+    max-width: 100%;
+  }
+
+  .liga-honores-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liga-honores-card,
+  .liga-honores-thanks {
+    transition: none;
+  }
+}

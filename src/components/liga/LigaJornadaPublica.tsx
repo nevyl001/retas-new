@@ -5,11 +5,14 @@ import {
 } from "../../lib/liga/jornadaStats";
 import {
   resolveGranFinalCelebrateSides,
+  resolveThirdPlaceCelebrateSide,
   shouldCelebrateLigaCampeonato,
+  shouldShowLigaTemporadaHonores,
   statsParejaJornadaVictoria,
   statsParejaLigaSeason,
 } from "../../lib/liga/jornadaCelebrate";
 import {
+  formatEquipoNombre,
   formatJornadaParejaNombre,
   getPartidoPublicScoreboard,
   partidoMatchWinnerSide,
@@ -43,6 +46,10 @@ import { PublicModeShell } from "../platform/PublicModeShell";
 import { StatusBadge } from "../platform/StatusBadge";
 import { PublicHero } from "../public/peds";
 import { LigaParejaVictoriaCelebrate } from "./LigaParejaVictoriaCelebrate";
+import {
+  LigaTemporadaHonores,
+  winnersToHonoresPlayers,
+} from "./LigaTemporadaHonores";
 import { LigaMotionValue } from "./LigaMotionValue";
 import {
   parejaPlayerNames,
@@ -382,10 +389,14 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     motionReady && esParejasFijas && enterDone,
     motionResetKey
   );
+  const showTemporadaHonores = shouldShowLigaTemporadaHonores({
+    esParejasFijas,
+    partidos: jornada?.partidos,
+  });
   const [celebrateRevealRef, celebrateInView] = useInViewOnce<HTMLDivElement>(
     motionReady &&
-      todosPartidosCompletos &&
-      Boolean(jornadaStats.ganadorPareja) &&
+      (showTemporadaHonores ||
+        (todosPartidosCompletos && Boolean(jornadaStats.ganadorPareja))) &&
       (esParejasFijas ? enterDone : true),
     motionResetKey
   );
@@ -396,12 +407,22 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     setCelebratePlay(false);
   }, [motionResetKey]);
   useEffect(() => {
-    if (!celebrateInView || !jornadaStats.ganadorPareja) return;
-    const key = `${motionResetKey}:${jornadaStats.ganadorPareja.parejaId}`;
+    if (!celebrateInView) return;
+    const key = showTemporadaHonores
+      ? `${motionResetKey}:honores`
+      : jornadaStats.ganadorPareja
+        ? `${motionResetKey}:${jornadaStats.ganadorPareja.parejaId}`
+        : null;
+    if (!key) return;
     if (celebratePlayRef.current === key) return;
     celebratePlayRef.current = key;
     setCelebratePlay(true);
-  }, [celebrateInView, jornadaStats.ganadorPareja, motionResetKey]);
+  }, [
+    celebrateInView,
+    jornadaStats.ganadorPareja,
+    motionResetKey,
+    showTemporadaHonores,
+  ]);
 
   if (loading && !detalle) {
     return (
@@ -989,103 +1010,117 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
           </aside>
         </div>
 
-        {todosPartidosCompletos &&
-        (() => {
+        {(() => {
+          const gfSides = showTemporadaHonores
+            ? resolveGranFinalCelebrateSides(jornada.partidos, esParejasFijas)
+            : null;
+
+          if (showTemporadaHonores && gfSides) {
+            const buildResolvedSlot = (
+              parejaId: string,
+              placement: "campeones" | "subcampeones" | "tercer"
+            ) => {
+              const label = nombreParejaGanadora(parejaId, parejaId);
+              const pareja = jornada.parejas?.find((p) => p.id === parejaId);
+              const winners = winnerAvatarsForPareja(pareja);
+              return {
+                placement,
+                status: "resolved" as const,
+                pairLabel: label,
+                players: winnersToHonoresPlayers(winners, label),
+                stats: statsParejaLigaSeason({
+                  parejaId,
+                  jornadaActual: jornada,
+                  jornadas: detalle.jornadas ?? [],
+                  equipos: detalle.equipos ?? [],
+                }),
+              };
+            };
+
+            const thirdRes = resolveThirdPlaceCelebrateSide(
+              jornada.partidos,
+              esParejasFijas
+            );
+            const tercerSlot =
+              thirdRes.status === "resolved"
+                ? buildResolvedSlot(thirdRes.tercerId, "tercer")
+                : ({ placement: "tercer" as const, status: "pending" as const });
+
+            const participantes = (detalle.equipos ?? []).map((eq) =>
+              formatEquipoNombre(eq)
+            );
+
+            return (
+              <div
+                ref={celebrateRevealRef}
+                className={`liga-parejas-victorias-grid liga-parejas-victorias-grid--winner liga-parejas-victorias-grid--campeonato liga-motion-reveal${
+                  !esParejasFijas || celebrateInView ? " is-inview" : ""
+                }${
+                  celebratePlay || !esParejasFijas ? " liga-celebrate--play" : ""
+                }`}
+                role="status"
+              >
+                <LigaTemporadaHonores
+                  ligaNombre={detalle.nombre}
+                  campeones={buildResolvedSlot(gfSides.campeonId, "campeones")}
+                  subcampeones={buildResolvedSlot(
+                    gfSides.subcampeonId,
+                    "subcampeones"
+                  )}
+                  tercer={tercerSlot}
+                  participantes={participantes}
+                />
+              </div>
+            );
+          }
+
+          if (!todosPartidosCompletos) return null;
+
           const celebrateCampeonato = shouldCelebrateLigaCampeonato({
             esParejasFijas,
             partidos: jornada.partidos,
             jornadaNumero: numero,
             jornadas: detalle.jornadas ?? [],
           });
-          const gfSides = celebrateCampeonato
-            ? resolveGranFinalCelebrateSides(jornada.partidos, esParejasFijas)
-            : null;
-          const campeonRow =
-            (gfSides
-              ? jornadaStats.rankingParejas.find(
-                  (r) => r.parejaId === gfSides.campeonId
-                )
-              : null) ??
-            (celebrateCampeonato ? jornadaStats.rankingParejas[0] : null);
-          const subcampeonRow =
-            (gfSides
-              ? jornadaStats.rankingParejas.find(
-                  (r) => r.parejaId === gfSides.subcampeonId
-                )
-              : null) ??
-            (celebrateCampeonato ? jornadaStats.rankingParejas[1] : null);
-          const jornadaWinner = jornadaStats.ganadorPareja;
-          const celebratePairs = celebrateCampeonato
-            ? [
-                campeonRow
-                  ? { row: campeonRow, placement: "campeones" as const }
-                  : null,
-                subcampeonRow
-                  ? { row: subcampeonRow, placement: "subcampeones" as const }
-                  : null,
-              ].filter(Boolean)
-            : jornadaWinner
-              ? [
-                  {
-                    row: jornadaWinner,
-                    placement: "jornada" as const,
-                  },
-                ]
-              : [];
+          // Sin Gran Final completed: celebrate de ganador de jornada (no podio).
+          if (celebrateCampeonato) return null;
 
-          if (celebratePairs.length === 0) return null;
+          const jornadaWinner = jornadaStats.ganadorPareja;
+          if (!jornadaWinner) return null;
 
           return (
             <div
               ref={celebrateRevealRef}
-              className={`liga-parejas-victorias-grid liga-parejas-victorias-grid--winner${
-                celebrateCampeonato
-                  ? " liga-parejas-victorias-grid--campeonato"
-                  : ""
-              } liga-motion-reveal${
+              className={`liga-parejas-victorias-grid liga-parejas-victorias-grid--winner liga-motion-reveal${
                 !esParejasFijas || celebrateInView ? " is-inview" : ""
               }${
                 celebratePlay || !esParejasFijas ? " liga-celebrate--play" : ""
               }`}
               role="status"
             >
-              {celebratePairs.map((entry) => {
-                if (!entry) return null;
-                const { row, placement } = entry;
-                const leagueStats =
-                  placement === "jornada"
-                    ? null
-                    : statsParejaLigaSeason({
-                        parejaId: row.parejaId,
-                        jornadaActual: jornada,
-                        jornadas: detalle.jornadas ?? [],
-                        equipos: detalle.equipos ?? [],
-                      });
-                return (
-                  <LigaParejaVictoriaCelebrate
-                    key={`${placement}-${row.parejaId}`}
-                    pairId={row.parejaId}
-                    pairLabel={nombreParejaGanadora(row.parejaId, row.nombre)}
-                    torneoNombre={detalle.nombre}
-                    jornadaNumero={
-                      placement === "jornada" ? numero : undefined
-                    }
-                    placement={placement}
-                    matchLines={
-                      placement === "jornada"
-                        ? jornadaMatchBreakdowns.get(row.parejaId) ?? []
-                        : []
-                    }
-                    stats={
-                      leagueStats ??
-                      statsParejaJornadaVictoria(row.parejaId, jornada, row)
-                    }
-                    winners={winnerAvatarsForPareja(
-                      jornada.parejas?.find((p) => p.id === row.parejaId)
-                    )}
-                  />
-                );
-              })}
+              <LigaParejaVictoriaCelebrate
+                pairId={jornadaWinner.parejaId}
+                pairLabel={nombreParejaGanadora(
+                  jornadaWinner.parejaId,
+                  jornadaWinner.nombre
+                )}
+                torneoNombre={detalle.nombre}
+                jornadaNumero={numero}
+                placement="jornada"
+                matchLines={
+                  jornadaMatchBreakdowns.get(jornadaWinner.parejaId) ?? []
+                }
+                stats={statsParejaJornadaVictoria(
+                  jornadaWinner.parejaId,
+                  jornada,
+                  jornadaWinner
+                )}
+                winners={winnerAvatarsForPareja(
+                  jornada.parejas?.find(
+                    (p) => p.id === jornadaWinner.parejaId
+                  )
+                )}
+              />
             </div>
           );
         })()}

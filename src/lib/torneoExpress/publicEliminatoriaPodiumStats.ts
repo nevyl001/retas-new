@@ -13,6 +13,8 @@ export interface PublicEliminatoriaPodiumStats {
   juegosFavor: number;
   juegosContra: number;
   dif: number;
+  /** Puntos de clasificación de temporada (liga); opcional fuera de liga. */
+  puntos?: number | null;
 }
 
 function eliminatoriaPartidoToMatch(

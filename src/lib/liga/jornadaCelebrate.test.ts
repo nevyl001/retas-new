@@ -3,7 +3,9 @@ import {
   buildLigaCampeonatoCelebrateHeadline,
   resolveGranFinalCelebrateSides,
   resolveLigaEquipoForJornadaPareja,
+  resolveThirdPlaceCelebrateSide,
   shouldCelebrateLigaCampeonato,
+  shouldShowLigaTemporadaHonores,
   statsParejaLigaEquipo,
   statsParejaLigaSeason,
 } from "./jornadaCelebrate";
@@ -108,7 +110,8 @@ describe("jornadaCelebrate — campeonato de liga", () => {
       "campeones"
     );
     expect(copy.badge).toBe("CAMPEONES");
-    expect(copy.title).toBe("¡Felicidades!");
+    expect(copy.title).toBe("¡Felicidades, campeones!");
+    expect(copy.message.length).toBeGreaterThan(10);
     expect(copy.rank).toContain("Temporada 1");
     expect(copy.rank).toContain("Resumen de toda la liga");
 
@@ -117,6 +120,81 @@ describe("jornadaCelebrate — campeonato de liga", () => {
       "subcampeones"
     );
     expect(sub.badge).toBe("SUBCAMPEONES");
+    expect(sub.title).toContain("subcampeones");
+  });
+
+  it("muestra Honores solo con Gran Final completed (no exige THIRD)", () => {
+    expect(
+      shouldShowLigaTemporadaHonores({
+        esParejasFijas: true,
+        partidos: [
+          partido({
+            id: "gf",
+            fase: "final",
+            bracket_slot: "FINAL",
+            estado: "completed",
+            score_pareja1: 5,
+            score_pareja2: 12,
+          }),
+          partido({
+            id: "th",
+            bracket_slot: "THIRD",
+            estado: "upcoming",
+          }),
+        ],
+      })
+    ).toBe(true);
+
+    expect(
+      shouldShowLigaTemporadaHonores({
+        esParejasFijas: true,
+        partidos: [
+          partido({
+            id: "gf",
+            fase: "final",
+            bracket_slot: "FINAL",
+            estado: "upcoming",
+          }),
+        ],
+      })
+    ).toBe(false);
+  });
+
+  it("tercer lugar: pending sin inventar; resolved solo con THIRD completed", () => {
+    expect(
+      resolveThirdPlaceCelebrateSide(
+        [
+          partido({ id: "th", bracket_slot: "THIRD", estado: "upcoming" }),
+        ],
+        true
+      )
+    ).toEqual({ status: "pending" });
+
+    expect(
+      resolveThirdPlaceCelebrateSide(
+        [
+          partido({
+            id: "th",
+            bracket_slot: "THIRD",
+            estado: "completed",
+            pareja1_id: "arturo",
+            pareja2_id: "kevin",
+            score_pareja1: 12,
+            score_pareja2: 6,
+            set_scores: {
+              format: PLAYOFFS_SCORE_FORMAT,
+              sets: [
+                { p1: 6, p2: 3 },
+                { p1: 6, p2: 3 },
+              ],
+              stb: null,
+              wo: false,
+            },
+          }),
+        ],
+        true
+      )
+    ).toEqual({ status: "resolved", tercerId: "arturo" });
   });
 
   it("mapea stats de equipo a resumen de liga", () => {
@@ -127,6 +205,7 @@ describe("jornadaCelebrate — campeonato de liga", () => {
       games_favor: 18,
       games_contra: 3,
       diferencia_games: 15,
+      puntos: 42,
     } as Pick<
       LigaEquipo,
       | "partidos_jugados"
@@ -135,6 +214,7 @@ describe("jornadaCelebrate — campeonato de liga", () => {
       | "games_favor"
       | "games_contra"
       | "diferencia_games"
+      | "puntos"
     >;
     expect(statsParejaLigaEquipo(equipo)).toEqual({
       victorias: 9,
@@ -143,6 +223,7 @@ describe("jornadaCelebrate — campeonato de liga", () => {
       juegosFavor: 18,
       juegosContra: 3,
       dif: 15,
+      puntos: 42,
     });
   });
 
@@ -313,6 +394,7 @@ describe("jornadaCelebrate — campeonato de liga", () => {
       juegosFavor: 24,
       juegosContra: 10,
       dif: 14,
+      puntos: 0,
     });
   });
 });

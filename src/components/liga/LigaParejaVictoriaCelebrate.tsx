@@ -81,8 +81,11 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
     [pairLabel, pairId, winners]
   );
   const isLigaFinal =
-    placement === "campeones" || placement === "subcampeones";
-  const podiumPosition = placement === "subcampeones" ? 2 : 1;
+    placement === "campeones" ||
+    placement === "subcampeones" ||
+    placement === "tercer";
+  const podiumPosition =
+    placement === "tercer" ? 3 : placement === "subcampeones" ? 2 : 1;
 
   const headline = useMemo(() => {
     const liga =

@@ -2,6 +2,7 @@ import type { PublicEliminatoriaPodiumStats } from "../torneoExpress/publicElimi
 import type { ParejaJornadaStat } from "./jornadaStats";
 import {
   findLigaGranFinalPartido,
+  isLigaThirdPlacePartido,
   jornadaHasLigaGranFinal,
   ligaGranFinalSubtitle,
   ligaTemporadaLabelFromNombre,
@@ -19,13 +20,21 @@ import { formatPartidoCanchaHorarioLabel } from "./programacion";
 import { formatPartidoPublicScore, partidoMatchWinnerSide } from "./publicDisplay";
 import type { LigaEquipo, LigaJornada, LigaJornadaPareja, LigaPartido } from "./types";
 
-export type LigaCelebratePlacement = "campeones" | "subcampeones";
+export type LigaCelebratePlacement =
+  | "campeones"
+  | "subcampeones"
+  | "tercer";
 
 export type LigaCelebrateCopy = {
   badge: string;
   title: string;
   message: string;
   rank: string;
+};
+
+/** Stats de temporada con PTS de clasificación cuando están disponibles. */
+export type LigaSeasonHonoresStats = PublicEliminatoriaPodiumStats & {
+  puntos: number | null;
 };
 
 export function findPartidoGanadoPareja(
@@ -100,9 +109,14 @@ export function statsParejaLigaEquipo(
     | "games_favor"
     | "games_contra"
     | "diferencia_games"
+    | "puntos"
   > | null | undefined
-): PublicEliminatoriaPodiumStats | null {
+): LigaSeasonHonoresStats | null {
   if (!equipo) return null;
+  const puntos =
+    equipo.puntos != null && Number.isFinite(Number(equipo.puntos))
+      ? Number(equipo.puntos)
+      : null;
   return {
     victorias: equipo.partidos_ganados,
     derrotas: equipo.partidos_perdidos,
@@ -110,6 +124,7 @@ export function statsParejaLigaEquipo(
     juegosFavor: equipo.games_favor,
     juegosContra: equipo.games_contra,
     dif: equipo.diferencia_games,
+    puntos,
   };
 }
 
@@ -258,7 +273,7 @@ export function statsParejaLigaSeason(args: {
   jornadaActual: LigaJornada | undefined;
   jornadas: readonly LigaJornada[];
   equipos: readonly LigaEquipo[];
-}): PublicEliminatoriaPodiumStats | null {
+}): LigaSeasonHonoresStats | null {
   const seed = args.jornadaActual?.parejas?.find((p) => p.id === args.parejaId);
   if (!seed) {
     const equipoOnly = args.equipos.find((e) => e.id === args.parejaId);
@@ -271,6 +286,10 @@ export function statsParejaLigaSeason(args: {
     args.equipos
   );
   const teamParejaIds = collectTeamParejaIds(seed, equipo, args.jornadas);
+  const puntos =
+    equipo?.puntos != null && Number.isFinite(Number(equipo.puntos))
+      ? Number(equipo.puntos)
+      : null;
 
   let victorias = 0;
   let derrotas = 0;
@@ -298,6 +317,7 @@ export function statsParejaLigaSeason(args: {
       juegosFavor,
       juegosContra,
       dif: juegosFavor - juegosContra,
+      puntos,
     };
   }
 
@@ -335,14 +355,54 @@ export function resolveGranFinalCelebrateSides(
     : { campeonId: gf.pareja2_id, subcampeonId: gf.pareja1_id };
 }
 
+/**
+ * Honores de temporada: solo cuando la Gran Final ya tiene resultado oficial.
+ * No exige que THIRD ni el resto de la jornada estén cerrados.
+ */
+export function shouldShowLigaTemporadaHonores(args: {
+  esParejasFijas: boolean;
+  partidos: readonly LigaPartido[] | null | undefined;
+}): boolean {
+  if (!args.esParejasFijas) return false;
+  const gf = findLigaGranFinalPartido(args.partidos);
+  return Boolean(gf && gf.estado === "completed");
+}
+
+export type ThirdPlaceCelebrateResolution =
+  | { status: "pending" }
+  | { status: "resolved"; tercerId: string };
+
+/**
+ * Tercer lugar solo desde el partido THIRD completed.
+ * Pending si el slot existe y aún no hay ganador; no inventa pareja.
+ */
+export function resolveThirdPlaceCelebrateSide(
+  partidos: readonly LigaPartido[] | null | undefined,
+  esParejasFijas: boolean
+): ThirdPlaceCelebrateResolution {
+  const third =
+    partidos?.find(isLigaThirdPlacePartido) ??
+    partidos?.find(
+      (p) => (p.bracket_slot ?? "").trim().toUpperCase() === "THIRD"
+    ) ??
+    null;
+  if (!third) return { status: "pending" };
+  if (third.estado !== "completed") return { status: "pending" };
+  const winner = partidoMatchWinnerSide(third, esParejasFijas);
+  if (winner !== 1 && winner !== 2) return { status: "pending" };
+  const id = winner === 1 ? third.pareja1_id : third.pareja2_id;
+  if (!id) return { status: "pending" };
+  return { status: "resolved", tercerId: id };
+}
+
 export function buildLigaCampeonatoCelebrateHeadline(
   ligaNombre: string,
   placement: LigaCelebratePlacement
 ): string {
   const titulo = ligaGranFinalSubtitle(ligaNombre.trim()) || ligaNombre.trim() || "Liga";
-  return placement === "campeones"
-    ? `Campeones · ${titulo}`
-    : `Subcampeones · ${titulo}`;
+  if (placement === "campeones") return `Campeones · ${titulo}`;
+  if (placement === "subcampeones") return `Subcampeones · ${titulo}`;
+  return `Tercer lugar · ${titulo}`;
 }
 
 export function buildLigaCampeonatoCelebrateCopy(
@@ -350,6 +410,17 @@ export function buildLigaCampeonatoCelebrateCopy(
   placement: LigaCelebratePlacement
 ): LigaCelebrateCopy {
   const temporada = ligaTemporadaLabelFromNombre(ligaNombre);
+  if (placement === "tercer") {
+    return {
+      badge: "TERCER LUGAR",
+      title: "¡Felicidades!",
+      message:
+        "Un podio ganado con carácter. Gracias por una temporada de gran competencia.",
+      rank: temporada
+        ? `3.er lugar · ${temporada} · Resumen de toda la liga`
+        : "3.er lugar · Resumen de toda la liga",
+    };
+  }
   const rank =
     placement === "campeones"
       ? temporada
@@ -360,8 +431,27 @@ export function buildLigaCampeonatoCelebrateCopy(
         : "2.º lugar · Resumen de toda la liga";
   return {
     badge: placement === "campeones" ? "CAMPEONES" : "SUBCAMPEONES",
-    title: "¡Felicidades!",
-    message: "",
+    title:
+      placement === "campeones"
+        ? "¡Felicidades, campeones!"
+        : "¡Felicidades, subcampeones!",
+    message:
+      placement === "campeones"
+        ? "Su entrega, constancia y talento los llevaron a lo más alto. ¡Enhorabuena por una gran temporada!"
+        : "Una finalista de altura. El esfuerzo de toda la temporada los llevó hasta la Gran Final.",
     rank,
+  };
+}
+
+export function buildLigaTemporadaHonoresIntro(ligaNombre: string): {
+  title: string;
+  subtitle: string;
+  lead: string;
+} {
+  const sub = ligaGranFinalSubtitle(ligaNombre.trim()) || ligaNombre.trim() || "Liga";
+  return {
+    title: "Honores de la temporada",
+    subtitle: sub,
+    lead: "Una temporada de competencia, esfuerzo y grandes momentos. Celebramos a quienes dejaron todo en la cancha.",
   };
 }
