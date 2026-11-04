@@ -1360,7 +1360,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                             {row.nombre}
                           </span>
                           <span className="liga-jornada-manual__current">
-                            Actual · {row.puntos}
+                            Actual: {row.puntos}
                           </span>
                         </div>
                         {row.puntos_ajuste_motivo ? (
@@ -1374,7 +1374,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                             htmlFor={`jornada-manual-puntos-${row.jugador_id}`}
                           >
                             <span className="liga-jornada-manual__field-label">
-                              Nuevos pts
+                              Nuevos puntos
                             </span>
                             <input
                               id={`jornada-manual-puntos-${row.jugador_id}`}
@@ -1398,7 +1398,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                             htmlFor={`jornada-manual-motivo-${row.jugador_id}`}
                           >
                             <span className="liga-jornada-manual__field-label">
-                              Motivo (visible al jugador)
+                              Motivo
                             </span>
                             <input
                               id={`jornada-manual-motivo-${row.jugador_id}`}
