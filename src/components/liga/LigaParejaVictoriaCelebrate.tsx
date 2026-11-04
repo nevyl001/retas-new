@@ -168,6 +168,7 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
           pairPlayersById={pairPlayersById}
           stats={stats}
           statsLayout="liga-jornada"
+          photoFormat="panel"
           copyOverrides={copyOverrides}
           className="liga-pareja-victoria-celebrate__podium"
           ambient={ambient}
