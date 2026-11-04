@@ -158,7 +158,7 @@ const PairLineup: React.FC<{
       <JugadorAvatar
         fotoUrl={id1 ? fotoByJugadorId?.[id1] : null}
         nombre={name1}
-        size="sm"
+        size="md"
         className="jornada-match-card__portrait"
         alt=""
       />
@@ -175,7 +175,7 @@ const PairLineup: React.FC<{
       <JugadorAvatar
         fotoUrl={id2 ? fotoByJugadorId?.[id2] : null}
         nombre={name2}
-        size="sm"
+        size="md"
         className="jornada-match-card__portrait"
         alt=""
       />

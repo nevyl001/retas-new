@@ -1159,6 +1159,16 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                 haySiguiente &&
                 siguienteSoloUpcoming;
 
+              const tone = completa
+                ? "complete"
+                : enCurso
+                  ? "active"
+                  : "pending";
+              /* Activa abierta; completada con CTA de activar siguiente también abierta. */
+              const defaultCollapsed =
+                !esParejasFijas &&
+                !(enCurso || puedeActivarSiguiente);
+
               return (
                 <RoundSection
                   key={ronda}
@@ -1168,6 +1178,8 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                   resultadosGuardados={
                     partidos.filter((p) => p.estado === "completed").length
                   }
+                  tone={!esParejasFijas ? tone : enCurso ? "active" : undefined}
+                  defaultCollapsed={defaultCollapsed}
                   footerActions={
                     puedeActivarSiguiente ? (
                       <Button

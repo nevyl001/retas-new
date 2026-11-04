@@ -462,10 +462,38 @@
   }
 }
 
-/* Round section — siempre abierta, encabezado fuerte */
+/* Round section — expandible; activa enfatizada, pendientes más quietas */
 .jornada-round {
-  margin-bottom: 1.75rem;
-  padding-bottom: 0.35rem;
+  margin-bottom: 1.35rem;
+  padding: 0.65rem 0.75rem 0.75rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--jornada-admin-border) 75%, transparent);
+  background: color-mix(in srgb, var(--jornada-admin-surface) 55%, transparent);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    opacity 160ms ease;
+}
+
+.jornada-round--active {
+  border-color: color-mix(in srgb, var(--jornada-admin-accent) 42%, var(--jornada-admin-border));
+  background: color-mix(in srgb, var(--jornada-admin-accent) 7%, var(--jornada-admin-surface));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--jornada-admin-accent) 12%, transparent);
+}
+
+.jornada-round--pending {
+  opacity: 0.78;
+  border-style: dashed;
+  background: color-mix(in srgb, var(--jornada-admin-surface) 40%, transparent);
+}
+
+.jornada-round--pending.jornada-round--open {
+  opacity: 0.92;
+}
+
+.jornada-round--complete {
+  opacity: 0.88;
+  border-color: color-mix(in srgb, var(--jornada-admin-lime) 22%, var(--jornada-admin-border));
 }
 
 .jornada-round__head {
@@ -474,21 +502,64 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px 16px;
+  margin-bottom: 0;
+}
+
+.jornada-round--open .jornada-round__head {
   margin-bottom: 0.85rem;
 }
 
 .jornada-round__toggle {
-  display: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.15rem 0.1rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.jornada-round__toggle:hover .jornada-round__title {
+  color: color-mix(in srgb, var(--liga-text) 92%, var(--jornada-admin-accent));
+}
+
+.jornada-round__toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jornada-admin-accent) 55%, transparent);
+  outline-offset: 3px;
 }
 
 .jornada-round__chevron {
-  display: none;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: 0.15rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jornada-admin-border) 80%, transparent);
+  background: color-mix(in srgb, var(--jornada-admin-field-bg) 70%, transparent);
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--liga-text-muted);
+}
+
+.jornada-round--active .jornada-round__chevron {
+  border-color: color-mix(in srgb, var(--jornada-admin-accent) 35%, transparent);
+  color: var(--liga-text);
 }
 
 .jornada-round__title {
   margin: 0;
   font-family: var(--font-display, var(--liga-font-body));
-  font-size: clamp(1.35rem, 2.2vw, 1.65rem);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
   font-weight: 800;
   letter-spacing: 0.04em;
   line-height: 1.15;
@@ -496,15 +567,20 @@
   color: var(--liga-text);
 }
 
+.jornada-round--pending .jornada-round__title {
+  color: var(--liga-text-muted);
+  font-weight: 700;
+}
+
 .jornada-round__meta {
   margin: 0.3rem 0 0;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--liga-text-muted);
 }
 
 .jornada-round__panel[hidden] {
-  display: block;
+  display: none;
 }
 
 .jornada-round__tools {
@@ -589,42 +665,53 @@
   margin-top: 12px;
 }
 
-/* Match card — compacta horizontal: pareja | VS | pareja */
+.jornada-round__footer--collapsed {
+  margin-top: 0.65rem;
+}
+
+/* Match card — pareja A | VS | pareja B; marcadores bajo cada pareja */
 .jornada-match-card {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.55rem;
   min-width: 0;
   min-height: 0;
   height: auto;
-  padding: 0.55rem 0.65rem 0.65rem;
-  border: 1px solid color-mix(in srgb, var(--jornada-admin-border) 70%, transparent);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--jornada-admin-surface) 94%, transparent);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
-  transition: border-color 160ms ease;
+  padding: 0.7rem 0.75rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--jornada-admin-border) 72%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--jornada-admin-surface) 96%, transparent);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .jornada-match-card:hover {
-  border-color: color-mix(in srgb, var(--jornada-admin-border) 88%, #ffffff);
+  border-color: color-mix(in srgb, var(--jornada-admin-border) 90%, #ffffff);
   transform: none;
 }
 
 .jornada-match-card--saved {
-  border-color: color-mix(in srgb, var(--jornada-admin-lime) 28%, var(--jornada-admin-border));
+  border-color: color-mix(in srgb, var(--jornada-admin-lime) 30%, var(--jornada-admin-border));
 }
 
-/* Pendiente / espera ronda: legible, no apagado ilegible */
+.jornada-match-card--live {
+  border-color: color-mix(in srgb, var(--jornada-admin-accent) 48%, var(--jornada-admin-border));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--jornada-admin-accent) 18%, transparent),
+    0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Pendiente / espera ronda: atenuada pero legible */
 .jornada-match-card--locked {
-  opacity: 1;
+  opacity: 0.72;
   pointer-events: none;
   transform: none;
   box-shadow: none;
   border-style: dashed;
-  border-color: color-mix(in srgb, var(--jornada-admin-border) 85%, transparent);
+  border-color: color-mix(in srgb, var(--jornada-admin-border) 80%, transparent);
   background: color-mix(
     in srgb,
-    var(--jornada-admin-surface) 88%,
+    var(--jornada-admin-surface) 82%,
     transparent
   );
 }
@@ -635,10 +722,10 @@
 
 .jornada-match-card__locked-hint {
   margin: 0;
-  padding: 0.35rem 0.45rem;
-  border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--jornada-admin-border) 70%, transparent);
-  background: color-mix(in srgb, var(--jornada-admin-field-bg) 70%, transparent);
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--jornada-admin-border) 75%, transparent);
+  background: color-mix(in srgb, var(--jornada-admin-field-bg) 65%, transparent);
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.35;
@@ -736,7 +823,7 @@
 .jornada-match-card__matchup {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 0.45rem 0.5rem;
+  gap: 0.5rem 0.55rem;
   align-items: start;
 }
 
@@ -750,11 +837,11 @@
   pointer-events: none;
 }
 
-/* Pareja: 2 jugadores uno debajo del otro */
+/* Pareja: 2 jugadores uno debajo del otro (A izq / B der) */
 .jornada-match-card__lineup {
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
+  gap: 0.35rem;
   min-width: 0;
   width: 100%;
 }
@@ -771,27 +858,27 @@
 .jornada-match-card__player {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
   min-width: 0;
   width: 100%;
   /* Misma altura de fila entre lados → baselines simétricas alrededor del VS. */
-  min-height: 64px;
+  min-height: 72px;
 }
 
 .jornada-match-card__portrait.rj-avatar {
   flex: 0 0 auto;
-  width: 48px !important;
-  height: 64px !important;
-  border-radius: 8px !important;
+  width: 54px !important;
+  height: 72px !important;
+  border-radius: 10px !important;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--liga-text, #fff) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--liga-text, #fff) 16%, transparent);
   background: color-mix(
     in srgb,
     var(--jornada-admin-field-bg) 90%,
     transparent
   );
-  box-shadow: none;
-  font-size: 0.7rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+  font-size: 0.72rem;
   font-weight: 750;
 }
 
@@ -806,16 +893,16 @@
 .jornada-match-card__player-text {
   display: flex;
   flex-direction: column;
-  gap: 0.06rem;
+  gap: 0.1rem;
   min-width: 0;
   flex: 1 1 auto;
 }
 
 .jornada-match-card__player-name {
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  line-height: 1.22;
+  letter-spacing: -0.015em;
   color: var(--liga-text);
   overflow-wrap: anywhere;
   white-space: normal;
@@ -844,37 +931,40 @@
 .jornada-match-card__pair-sets {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.28rem;
+  gap: 0.32rem;
   align-items: stretch;
   margin: 0;
-  padding: 0.1rem 0 0;
-  border-radius: 0;
-  border: none;
-  background: transparent;
+  padding: 0.45rem 0.4rem 0.4rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--jornada-admin-border) 55%, transparent);
+  background: color-mix(in srgb, var(--jornada-admin-field-bg) 55%, transparent);
   min-width: 0;
 }
 
+/* Ancla visual: marcador izquierdo = pareja A; derecho = pareja B */
 .jornada-match-card__pair-sets--a {
   justify-items: stretch;
+  border-top: 2px solid color-mix(in srgb, var(--jornada-admin-accent) 45%, transparent);
 }
 
 .jornada-match-card__pair-sets--b {
   justify-items: stretch;
+  border-top: 2px solid color-mix(in srgb, var(--liga-text) 28%, transparent);
 }
 
 .jornada-match-card__pair-set-field {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0.2rem;
+  gap: 0.22rem;
   min-width: 0;
 }
 
 .jornada-match-card__field-label {
   font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: none;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--liga-text-muted);
   text-align: left;
   line-height: 1.2;
@@ -1055,19 +1145,19 @@
   width: 100%;
   min-width: 0;
   max-width: none;
-  height: 48px;
-  min-height: 48px;
+  height: 52px;
+  min-height: 52px;
   padding: 0;
-  font-size: 1.35rem;
+  font-size: 1.45rem;
   font-weight: 750;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   text-align: center;
   border: 1px solid var(--jornada-admin-score-input-border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--jornada-admin-score-bg);
   color: var(--jornada-admin-score-text);
-  box-shadow: none;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12);
   transition:
     border-color 150ms ease,
     box-shadow 150ms ease,
@@ -1169,14 +1259,16 @@
   cursor: not-allowed;
 }
 
-/* CTA: componente riviera-btn-primary (tokens de marca / club) */
+/* CTA: proporcionado, no mural; tokens de marca / club */
 .jornada-match-card__save-btn.riviera-btn {
   width: 100%;
-  min-height: 48px;
-  margin-top: 0;
-  border-radius: 8px;
-  font-size: 0.9375rem;
+  max-width: 100%;
+  min-height: 42px;
+  margin-top: 0.15rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
   font-weight: 650;
+  letter-spacing: 0.02em;
 }
 
 .jornada-match-card__save-btn.riviera-btn-primary {
@@ -1203,16 +1295,16 @@
 @media (max-width: 560px) {
   .jornada-match-card__matchup,
   .jornada-match-card__teams {
-    gap: 0.35rem 0.3rem;
+    gap: 0.4rem 0.35rem;
   }
 
   .jornada-match-card__portrait.rj-avatar {
-    width: 44px !important;
-    height: 60px !important;
+    width: 48px !important;
+    height: 64px !important;
   }
 
   .jornada-match-card__player {
-    min-height: 60px;
+    min-height: 64px;
   }
 
   .jornada-match-card__player-name {
@@ -1237,8 +1329,8 @@
   grid-template-columns: 1fr;
   gap: 1rem;
   margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--jornada-admin-border);
+  padding-top: 4px;
+  border-top: none;
 }
 
 @media (min-width: 900px) {
@@ -1249,49 +1341,37 @@
   }
 }
 
-.jornada-standings-dual .jornada-standings {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
-  min-width: 0;
-}
-
-.jornada-standings-dual .jornada-standings + .jornada-standings {
-  padding-top: 1rem;
-  border-top: 1px solid var(--jornada-admin-border);
-}
-
-@media (min-width: 900px) {
-  .jornada-standings-dual .jornada-standings + .jornada-standings {
-    padding-top: 0;
-    border-top: none;
-  }
-}
-
 .jornada-standings {
   margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--jornada-admin-border);
+  padding: 1rem 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--jornada-admin-border) 80%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--jornada-admin-surface) 92%, transparent);
+}
+
+.jornada-standings-dual .jornada-standings {
+  margin-top: 0;
+  min-width: 0;
 }
 
 .jornada-standings__title {
   margin: 0;
   font-family: var(--font-display, var(--liga-font-body));
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: 1.0625rem;
+  font-weight: 750;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--liga-text, var(--ro-text-primary));
 }
 
 .jornada-standings-dual .jornada-standings__title {
-  font-size: 1rem;
+  font-size: 0.9375rem;
   letter-spacing: 0.05em;
 }
 
 .jornada-standings__hint {
   margin: 6px 0 0;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--liga-text-muted, var(--ro-text-secondary));
 }
 
@@ -1310,6 +1390,8 @@
   margin-top: 12px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--jornada-admin-border) 60%, transparent);
 }
 
 .jornada-standings__table {
@@ -1334,29 +1416,37 @@
 .jornada-standings__table th {
   padding: 10px 8px;
   border-bottom: 1px solid var(--jornada-admin-border);
-  background: var(--jornada-admin-surface);
-  font-size: 0.8125rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  background: color-mix(in srgb, var(--jornada-admin-field-bg) 80%, var(--jornada-admin-surface));
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   text-align: left;
   color: var(--liga-text-soft, var(--liga-text-muted, var(--ro-text-secondary)));
 }
 
 .jornada-standings-dual .jornada-standings__table th {
-  padding: 7px 6px;
+  padding: 8px 6px;
   font-size: 0.68rem;
 }
 
 .jornada-standings__table td {
-  height: 46px;
+  height: 44px;
   padding: 0 8px;
-  border-bottom: 1px solid color-mix(in srgb, var(--jornada-admin-border) 70%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--jornada-admin-border) 55%, transparent);
   color: var(--liga-text);
 }
 
+.jornada-standings__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.jornada-standings__table tbody tr:hover td {
+  background: color-mix(in srgb, var(--liga-text) 3.5%, transparent);
+}
+
 .jornada-standings-dual .jornada-standings__table td {
-  height: 34px;
+  height: 36px;
   padding: 0 6px;
 }
 
@@ -1375,7 +1465,8 @@
 }
 
 .jornada-standings__row--top td:first-child {
-  color: color-mix(in srgb, var(--jornada-admin-lime) 80%, var(--liga-text));
+  font-weight: 800;
+  color: color-mix(in srgb, var(--jornada-admin-lime) 78%, var(--liga-text));
 }
 
 /* Finish actions + alerts */
