@@ -327,17 +327,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     [jornada, esParejasFijas]
   );
 
-  const jornadaJugadoresRows = useMemo<SimpleRankingPresentationRow[]>(
-    () =>
-      jornadaStats.rankingJugadores.map((row) => ({
-        key: row.jugadorId,
-        position: row.posicion,
-        label: row.nombre,
-        points: row.puntos,
-      })),
-    [jornadaStats.rankingJugadores]
-  );
-
   const flashPartidoSaved = (partidoId: string) => {
     setSavedPartidoFlash(partidoId);
     window.setTimeout(() => {
@@ -1238,24 +1227,16 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
           </div>
         ) : null}
 
-        {!esParejasFijas && jornadaJugadoresRows.length > 0 ? (
+        {!esParejasFijas &&
+        (jornadaParejasRows.length > 0 || rankingJugadoresRows.length > 0) ? (
           <div className="jornada-standings-dual">
             <JornadaStandings
               sectionId="jornada-ranking-jornada"
               title="Ranking de la jornada"
-              hint="Calculado desde los partidos guardados (parcial por jugador)."
-              rows={jornadaJugadoresRows}
-              columns={[
-                { key: "pos", header: "POS", align: "center", render: (r) => r.position },
-                { key: "nombre", header: "Jugador", render: (r) => r.label },
-                {
-                  key: "pts",
-                  header: "PTS",
-                  align: "right",
-                  emphasis: true,
-                  render: (r) => r.points,
-                },
-              ]}
+              hint="Por pareja de esta jornada. PTS → DIF (obtenidos − recibidos) → G (ganados)."
+              rows={jornadaParejasRows}
+              columns={PAREJAS_JORNADA_RANKING_COLUMNS}
+              emptyMessage="Sin resultados en esta jornada aún."
             />
             <JornadaStandings
               sectionId="jornada-ranking-general"
