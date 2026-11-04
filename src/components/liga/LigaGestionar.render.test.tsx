@@ -103,6 +103,15 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
     jest.clearAllMocks();
     mockGetJugadoresOrganizador.mockResolvedValue([]);
     mockPublicLigaUrl.mockReturnValue("https://example.com/public/liga/liga-1");
+    const ligaService = jest.requireMock("../../services/ligaService") as {
+      resyncAllCompletedLigaJornadasCareer: jest.Mock;
+      resyncLigaPodioCareer: jest.Mock;
+    };
+    ligaService.resyncAllCompletedLigaJornadasCareer.mockResolvedValue({
+      careerSyncOk: true,
+      wrote: 0,
+    });
+    ligaService.resyncLigaPodioCareer.mockResolvedValue({ ok: true });
     mockMatchMedia(false); // desktop por default
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -134,6 +143,55 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
     ).map((el) => el.textContent);
 
     expect(tabButtons).toEqual(["Jugadores", "Jornadas"]);
+  });
+
+  it("la pestaña activa coincide con el panel renderizado (Jugadores ↔ Jornadas)", async () => {
+    await renderLiga(
+      baseDetalle({
+        estado: "in_progress",
+        jornadas: [
+          {
+            id: "jor-1",
+            liga_id: "liga-1",
+            numero: 1,
+            estado: "in_progress",
+            fecha: "2026-11-04",
+            puntos_aplicados: false,
+          } as LigaDetalle["jornadas"][number],
+          {
+            id: "jor-2",
+            liga_id: "liga-1",
+            numero: 2,
+            estado: "upcoming",
+            fecha: null,
+            puntos_aplicados: false,
+          } as LigaDetalle["jornadas"][number],
+        ],
+      })
+    );
+
+    const jugadoresTab = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".mode-section-tabs__btn")
+    ).find((b) => b.textContent === "Jugadores");
+    const jornadasTab = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".mode-section-tabs__btn")
+    ).find((b) => b.textContent === "Jornadas");
+    expect(jugadoresTab?.getAttribute("aria-selected")).toBe("true");
+    expect(container.querySelector(".liga-inscripciones")).not.toBeNull();
+    expect(container.querySelector(".liga-jornadas-panel")).toBeNull();
+
+    await act(async () => {
+      jornadasTab?.click();
+      await Promise.resolve();
+    });
+
+    expect(jornadasTab?.getAttribute("aria-selected")).toBe("true");
+    expect(jugadoresTab?.getAttribute("aria-selected")).toBe("false");
+    expect(container.querySelector(".liga-inscripciones")).toBeNull();
+    expect(container.querySelector(".liga-jornadas-panel")).not.toBeNull();
+    expect(container.querySelector(".liga-jornada-card--in_progress")).not.toBeNull();
+    expect(container.textContent).toContain("Continuar jornada");
+    expect(container.textContent).toContain("Ver jornada");
   });
 
   it("parejas_fijas muestra Parejas → Jornadas, no Jugadores", async () => {

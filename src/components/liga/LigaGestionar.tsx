@@ -1234,7 +1234,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
         ariaLabel="Secciones de la liga"
       />
 
-      {!esParejasFijas && (
+      {!esParejasFijas && tab === "jugadores" ? (
         <ModeSectionPanel id="jugadores" activeId={tab}>
           <LigaInscripcionesPanel
             jugadoresPool={jugadoresPool}
@@ -1266,7 +1266,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
             </div>
           ) : null}
         </ModeSectionPanel>
-      )}
+      ) : null}
 
       <LigaSustituirJugadorModal
         open={Boolean(salienteSustituir)}
@@ -1288,7 +1288,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
         }}
       />
 
-      {esParejasFijas && (
+      {esParejasFijas && tab === "parejas" ? (
         <ModeSectionPanel id="parejas" activeId={tab}>
           <div className="liga-card rv-card">
             <h2 className="liga-card__title">Parejas inscritas</h2>
@@ -1529,57 +1529,100 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
             </div>
           )}
         </ModeSectionPanel>
-      )}
+      ) : null}
 
-      <ModeSectionPanel id="jornadas" activeId={tab}>
-        <div className="liga-card rv-card">
-          <h2 className="liga-card__title">Jornadas</h2>
-          {detalle.jornadas.length === 0 ? (
-            <p className="liga-empty">
-              {ligaEditable
-                ? "Inicia la liga o regenera el calendario cuando tengas inscritos listos."
-                : "Sin jornadas."}
-            </p>
-          ) : (
-            <ul className="liga-list liga-jornadas-list">
-              {detalle.jornadas.map((j) => (
-                <li key={j.id} className="liga-jornadas-list__item">
-                  <button
-                    type="button"
-                    className="liga-jornada-row"
-                    disabled={busy}
-                    onClick={() =>
-                      navigateLiga(ligaJornadaPath(ligaId, j.numero))
-                    }
-                  >
-                    <span
-                      className={`liga-jornada-row__icon liga-jornada-row__icon--${j.estado}`}
-                      aria-hidden="true"
+      {tab === "jornadas" ? (
+        <ModeSectionPanel id="jornadas" activeId={tab}>
+          <div className="liga-card rv-card liga-jornadas-panel">
+            <header className="liga-jornadas-panel__header">
+              <div>
+                <h2 className="liga-jornadas-panel__title">Jornadas</h2>
+                <p className="liga-jornadas-panel__summary">
+                  {detalle.jornadas.length === 0
+                    ? "Sin jornadas generadas"
+                    : `${detalle.jornadas.length} jornada${
+                        detalle.jornadas.length === 1 ? "" : "s"
+                      }${
+                        detalle.jornadas.filter((j) => j.estado === "in_progress")
+                          .length > 0
+                          ? ` · ${
+                              detalle.jornadas.filter(
+                                (j) => j.estado === "in_progress"
+                              ).length
+                            } en curso`
+                          : ""
+                      }${
+                        jornadaProgress
+                          ? ` · ${jornadaProgress.completadas} completada${
+                              jornadaProgress.completadas === 1 ? "" : "s"
+                            }`
+                          : ""
+                      }`}
+                </p>
+              </div>
+            </header>
+            {detalle.jornadas.length === 0 ? (
+              <p className="liga-empty">
+                {ligaEditable
+                  ? "Inicia la liga o regenera el calendario cuando tengas inscritos listos."
+                  : "Sin jornadas."}
+              </p>
+            ) : (
+              <ul className="liga-jornadas-grid">
+                {detalle.jornadas.map((j) => {
+                  const fechaLabel = j.fecha
+                    ? formatFechaLegible(dateInputValue(j.fecha))
+                    : null;
+                  const isLive = j.estado === "in_progress";
+                  return (
+                    <li
+                      key={j.id}
+                      className={`liga-jornada-card liga-jornada-card--${j.estado}`}
                     >
-                      {jornadaEstadoIcon(j.estado)}
-                    </span>
-                    <span className="liga-jornada-row__main">
-                      <span className="liga-jornada-row__title">
+                      <div className="liga-jornada-card__top">
+                        <span
+                          className={`liga-jornada-card__badge liga-jornada-card__badge--${j.estado}`}
+                        >
+                          {jornadaEstadoLabel(j.estado)}
+                        </span>
+                        <span
+                          className="liga-jornada-card__icon"
+                          aria-hidden="true"
+                        >
+                          {jornadaEstadoIcon(j.estado)}
+                        </span>
+                      </div>
+                      <h3 className="liga-jornada-card__title">
                         Jornada {j.numero}
-                      </span>
-                      <span className="liga-jornada-row__meta">
-                        {jornadaEstadoLabel(j.estado)}
-                        {j.fecha
-                          ? ` · ${formatFechaLegible(dateInputValue(j.fecha))}`
-                          : ""}
-                      </span>
-                    </span>
-                    <span className="liga-jornada-row__cta">
-                      Ver jornada {j.numero}
-                      <TablerIcon name="chevron-right" size={18} />
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </ModeSectionPanel>
+                      </h3>
+                      {fechaLabel ? (
+                        <p className="liga-jornada-card__fecha">{fechaLabel}</p>
+                      ) : (
+                        <p className="liga-jornada-card__fecha liga-jornada-card__fecha--empty">
+                          Sin fecha
+                        </p>
+                      )}
+                      <Button
+                        type="button"
+                        variant={isLive ? "primary" : "secondary"}
+                        size="sm"
+                        className="liga-jornada-card__cta"
+                        disabled={busy}
+                        onClick={() =>
+                          navigateLiga(ligaJornadaPath(ligaId, j.numero))
+                        }
+                      >
+                        {isLive ? "Continuar jornada" : "Ver jornada"}
+                        <TablerIcon name="chevron-right" size={16} />
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </ModeSectionPanel>
+      ) : null}
 
       {stickyLabel ? (
         <MobileStickyActionFooter>
