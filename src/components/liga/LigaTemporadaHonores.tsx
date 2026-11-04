@@ -146,7 +146,7 @@ function HonorCard({
         </header>
         <div className="liga-honores-card__pending-stage" aria-hidden>
           <span className="liga-honores-portrait liga-honores-portrait--ghost" />
-          <span className="liga-honores-card__link" />
+          <span className="liga-honores-card__pair-join" />
           <span className="liga-honores-portrait liga-honores-portrait--ghost" />
         </div>
       </article>
@@ -181,8 +181,8 @@ function HonorCard({
       {p1 && p2 ? (
         <div className="liga-honores-card__pair" aria-label={slot.pairLabel}>
           <Portrait player={p1} size={isHero ? "hero" : "side"} />
-          <span className="liga-honores-card__link" aria-hidden>
-            <TablerIcon name="vs" size={isHero ? 18 : 14} />
+          <span className="liga-honores-card__pair-join" aria-hidden>
+            &
           </span>
           <Portrait player={p2} size={isHero ? "hero" : "side"} />
         </div>

@@ -187,23 +187,39 @@
   justify-items: center;
 }
 
-.liga-honores-card__link {
+/* Unión de pareja (compañeros, no rivales): sin “vs”. */
+.liga-honores-card__pair-join {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  align-self: center;
+  width: 1.65rem;
+  height: 1.65rem;
   margin-bottom: 1.65rem;
   border-radius: 999px;
   border: 1px solid var(--honores-border);
-  color: var(--honores-muted);
+  color: var(--honores-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
   background: color-mix(in srgb, var(--honores-bg) 70%, transparent);
 }
 
-.liga-honores-card--hero .liga-honores-card__link {
-  width: 2rem;
-  height: 2rem;
+.liga-honores-card--hero .liga-honores-card__pair-join {
+  width: 1.85rem;
+  height: 1.85rem;
   margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+.liga-honores-card--pending .liga-honores-card__pair-join {
+  width: 0.55rem;
+  height: 0.55rem;
+  padding: 0;
+  font-size: 0;
+  background: var(--honores-border);
+  border: none;
 }
 
 .liga-honores-card__pending-stage {

@@ -438,7 +438,7 @@ export function buildLigaCampeonatoCelebrateCopy(
     message:
       placement === "campeones"
         ? "Su entrega, constancia y talento los llevaron a lo más alto. ¡Enhorabuena por una gran temporada!"
-        : "Una finalista de altura. El esfuerzo de toda la temporada los llevó hasta la Gran Final.",
+        : "Una final de altura. El esfuerzo de toda la temporada los llevó hasta la Gran Final.",
     rank,
   };
 }

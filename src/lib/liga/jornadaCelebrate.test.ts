@@ -121,6 +121,8 @@ describe("jornadaCelebrate — campeonato de liga", () => {
     );
     expect(sub.badge).toBe("SUBCAMPEONES");
     expect(sub.title).toContain("subcampeones");
+    expect(sub.message).toContain("Una final de altura");
+    expect(sub.message).not.toMatch(/finalista/i);
   });
 
   it("muestra Honores solo con Gran Final completed (no exige THIRD)", () => {
