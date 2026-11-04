@@ -2201,31 +2201,20 @@ export async function getRanking(ligaId: string): Promise<RankingItem[]> {
 
   if (error) throw new Error(error.message);
 
-  const { data: sustRows } = await supabase
-    .from("liga_sustituciones")
-    .select("to_jugador_id, from_jugador_id")
-    .eq("liga_id", ligaId)
-    .is("reverted_at", null)
-    .order("created_at", { ascending: false });
-
-  const fromIds = Array.from(
-    new Set((sustRows ?? []).map((r) => String(r.from_jugador_id)))
+  // Solo campos públicos (sin motivo/actor/idempotency) vía RPC controlada
+  const { data: sustRows } = await supabase.rpc(
+    "list_liga_sustituciones_publicas",
+    { p_liga_id: ligaId }
   );
-  const nombreById = new Map<string, string>();
-  if (fromIds.length > 0) {
-    const { data: fromJugs } = await supabase
-      .from("liga_jugadores")
-      .select("id, nombre")
-      .in("id", fromIds);
-    for (const j of fromJugs ?? []) {
-      nombreById.set(String(j.id), String(j.nombre));
-    }
-  }
+
   const sustituyeNombreByTo = new Map<string, string>();
   for (const row of sustRows ?? []) {
     const toId = String(row.to_jugador_id);
     if (sustituyeNombreByTo.has(toId)) continue;
-    const nombre = nombreById.get(String(row.from_jugador_id));
+    const nombre =
+      typeof row.from_nombre === "string" && row.from_nombre.trim()
+        ? row.from_nombre.trim()
+        : null;
     if (nombre) sustituyeNombreByTo.set(toId, nombre);
   }
 
