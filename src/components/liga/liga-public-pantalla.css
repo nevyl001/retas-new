@@ -1914,15 +1914,23 @@
 
 .liga-pantalla--jornada-fijas .liga-pantalla-ranking__table--compact th:last-child,
 .liga-pantalla--jornada-fijas .liga-pantalla-ranking__table--compact td:last-child {
-  width: 3rem;
+  width: 2.75rem;
   text-align: right;
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-ranking__table--compact th:nth-last-child(2),
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__table--compact th:nth-last-child(3),
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__table--compact th:nth-last-child(4),
 .liga-pantalla--jornada-fijas
   .liga-pantalla-ranking__table--compact
-  td:nth-last-child(2):not(.liga-pantalla-ranking__pair) {
-  width: 2.5rem;
+  td:nth-last-child(2):not(.liga-pantalla-ranking__pair),
+.liga-pantalla--jornada-fijas
+  .liga-pantalla-ranking__table--compact
+  td:nth-last-child(3):not(.liga-pantalla-ranking__pair),
+.liga-pantalla--jornada-fijas
+  .liga-pantalla-ranking__table--compact
+  td:nth-last-child(4):not(.liga-pantalla-ranking__pair) {
+  width: 2.35rem;
   text-align: center;
 }
 
