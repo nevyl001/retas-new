@@ -7,7 +7,7 @@ import {
   resolveGranFinalCelebrateSides,
   shouldCelebrateLigaCampeonato,
   statsParejaJornadaVictoria,
-  statsParejaLigaEquipo,
+  statsParejaLigaSeason,
 } from "../../lib/liga/jornadaCelebrate";
 import {
   formatJornadaParejaNombre,
@@ -1046,10 +1046,15 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
               {celebratePairs.map((entry) => {
                 if (!entry) return null;
                 const { row, placement } = entry;
-                const equipo = detalle.equipos?.find((e) => e.id === row.parejaId);
-                const leagueStats = statsParejaLigaEquipo(equipo);
-                const useLeagueStats =
-                  placement !== "jornada" && leagueStats != null;
+                const leagueStats =
+                  placement === "jornada"
+                    ? null
+                    : statsParejaLigaSeason({
+                        parejaId: row.parejaId,
+                        jornadaActual: jornada,
+                        jornadas: detalle.jornadas ?? [],
+                        equipos: detalle.equipos ?? [],
+                      });
                 return (
                   <LigaParejaVictoriaCelebrate
                     key={`${placement}-${row.parejaId}`}
@@ -1066,9 +1071,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                         : []
                     }
                     stats={
-                      useLeagueStats
-                        ? leagueStats
-                        : statsParejaJornadaVictoria(row.parejaId, jornada, row)
+                      leagueStats ??
+                      statsParejaJornadaVictoria(row.parejaId, jornada, row)
                     }
                     winners={winnerAvatarsForPareja(
                       jornada.parejas?.find((p) => p.id === row.parejaId)

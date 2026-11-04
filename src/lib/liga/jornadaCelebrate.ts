@@ -6,9 +6,18 @@ import {
   ligaGranFinalSubtitle,
   ligaTemporadaLabelFromNombre,
 } from "./ligaGranFinalPublic";
+import {
+  computePlayoffsMatchPoints,
+  derivePlayoffsGamesTotals,
+  parsePlayoffsSetScoresJson,
+} from "./parejasFijasPlayoffsMatchScore";
+import {
+  resolveParejasFijasPartidoTotals,
+  type LigaPartidoSetScores,
+} from "./parejasFijasMatchScore";
 import { formatPartidoCanchaHorarioLabel } from "./programacion";
 import { formatPartidoPublicScore, partidoMatchWinnerSide } from "./publicDisplay";
-import type { LigaEquipo, LigaJornada, LigaPartido } from "./types";
+import type { LigaEquipo, LigaJornada, LigaJornadaPareja, LigaPartido } from "./types";
 
 export type LigaCelebratePlacement = "campeones" | "subcampeones";
 
@@ -102,6 +111,197 @@ export function statsParejaLigaEquipo(
     juegosContra: equipo.games_contra,
     dif: equipo.diferencia_games,
   };
+}
+
+function samePairPlayers(
+  a1: string,
+  a2: string,
+  b1: string,
+  b2: string
+): boolean {
+  return (a1 === b1 && a2 === b2) || (a1 === b2 && a2 === b1);
+}
+
+/** Resuelve el equipo de liga desde una pareja de jornada (no usar pareja.id === equipo.id). */
+export function resolveLigaEquipoForJornadaPareja(
+  parejaId: string,
+  jornada: LigaJornada | undefined,
+  equipos: readonly LigaEquipo[]
+): LigaEquipo | null {
+  const pareja = jornada?.parejas?.find((p) => p.id === parejaId);
+  if (!pareja) return null;
+  if (pareja.equipo_id) {
+    const byId = equipos.find((e) => e.id === pareja.equipo_id);
+    if (byId) return byId;
+  }
+  return (
+    equipos.find((e) =>
+      samePairPlayers(
+        e.jugador1_id,
+        e.jugador2_id,
+        pareja.jugador1_id,
+        pareja.jugador2_id
+      )
+    ) ?? null
+  );
+}
+
+function collectTeamParejaIds(
+  seed: LigaJornadaPareja,
+  equipo: LigaEquipo | null,
+  jornadas: readonly LigaJornada[]
+): Set<string> {
+  const ids = new Set<string>([seed.id]);
+  for (const j of jornadas) {
+    for (const p of j.parejas ?? []) {
+      if (equipo?.id && p.equipo_id === equipo.id) {
+        ids.add(p.id);
+        continue;
+      }
+      if (
+        samePairPlayers(
+          seed.jugador1_id,
+          seed.jugador2_id,
+          p.jugador1_id,
+          p.jugador2_id
+        )
+      ) {
+        ids.add(p.id);
+      }
+    }
+  }
+  return ids;
+}
+
+function accumulatePartidoForTeam(
+  partido: LigaPartido,
+  teamParejaIds: Set<string>
+): {
+  won: boolean;
+  gamesFavor: number;
+  gamesContra: number;
+} | null {
+  const isP1 = teamParejaIds.has(partido.pareja1_id);
+  const isP2 = teamParejaIds.has(partido.pareja2_id);
+  if (!isP1 && !isP2) return null;
+
+  const playoffsPayload = parsePlayoffsSetScoresJson(partido.set_scores);
+  if (
+    playoffsPayload &&
+    partido.score_pareja1 != null &&
+    partido.score_pareja2 != null
+  ) {
+    const derived = derivePlayoffsGamesTotals(
+      playoffsPayload,
+      Number(partido.score_pareja1),
+      Number(partido.score_pareja2)
+    );
+    if ("error" in derived) return null;
+    const computed = computePlayoffsMatchPoints(
+      derived.gamesTotalP1,
+      derived.gamesTotalP2,
+      playoffsPayload
+    );
+    if (!computed.ok) return null;
+    return isP1
+      ? {
+          won: computed.result.p1Won,
+          gamesFavor: derived.gamesTotalP1,
+          gamesContra: derived.gamesTotalP2,
+        }
+      : {
+          won: !computed.result.p1Won,
+          gamesFavor: derived.gamesTotalP2,
+          gamesContra: derived.gamesTotalP1,
+        };
+  }
+
+  const totals = resolveParejasFijasPartidoTotals({
+    score_pareja1: partido.score_pareja1,
+    score_pareja2: partido.score_pareja2,
+    set_scores:
+      partido.set_scores &&
+      typeof partido.set_scores === "object" &&
+      "sets" in partido.set_scores
+        ? (partido.set_scores as LigaPartidoSetScores)
+        : null,
+  });
+  if (totals) {
+    return isP1
+      ? {
+          won: totals.p1WonMatch,
+          gamesFavor: totals.gamesP1,
+          gamesContra: totals.gamesP2,
+        }
+      : {
+          won: !totals.p1WonMatch,
+          gamesFavor: totals.gamesP2,
+          gamesContra: totals.gamesP1,
+        };
+  }
+
+  const s1 = Number(partido.score_pareja1 ?? 0);
+  const s2 = Number(partido.score_pareja2 ?? 0);
+  if (s1 === s2) return null;
+  return isP1
+    ? { won: s1 > s2, gamesFavor: s1, gamesContra: s2 }
+    : { won: s2 > s1, gamesFavor: s2, gamesContra: s1 };
+}
+
+/**
+ * Resumen de toda la temporada para una pareja de jornada:
+ * acumula partidos de todas las jornadas (por equipo_id o mismos jugadores).
+ * Si no hay partidos agregables, cae al snapshot de liga_equipos.
+ */
+export function statsParejaLigaSeason(args: {
+  parejaId: string;
+  jornadaActual: LigaJornada | undefined;
+  jornadas: readonly LigaJornada[];
+  equipos: readonly LigaEquipo[];
+}): PublicEliminatoriaPodiumStats | null {
+  const seed = args.jornadaActual?.parejas?.find((p) => p.id === args.parejaId);
+  if (!seed) {
+    const equipoOnly = args.equipos.find((e) => e.id === args.parejaId);
+    return statsParejaLigaEquipo(equipoOnly);
+  }
+
+  const equipo = resolveLigaEquipoForJornadaPareja(
+    args.parejaId,
+    args.jornadaActual,
+    args.equipos
+  );
+  const teamParejaIds = collectTeamParejaIds(seed, equipo, args.jornadas);
+
+  let victorias = 0;
+  let derrotas = 0;
+  let juegosFavor = 0;
+  let juegosContra = 0;
+
+  for (const j of args.jornadas) {
+    for (const partido of j.partidos ?? []) {
+      if (partido.estado !== "completed") continue;
+      const row = accumulatePartidoForTeam(partido, teamParejaIds);
+      if (!row) continue;
+      juegosFavor += row.gamesFavor;
+      juegosContra += row.gamesContra;
+      if (row.won) victorias += 1;
+      else derrotas += 1;
+    }
+  }
+
+  const partidos = victorias + derrotas;
+  if (partidos > 0) {
+    return {
+      victorias,
+      derrotas,
+      partidos,
+      juegosFavor,
+      juegosContra,
+      dif: juegosFavor - juegosContra,
+    };
+  }
+
+  return statsParejaLigaEquipo(equipo);
 }
 
 /**
