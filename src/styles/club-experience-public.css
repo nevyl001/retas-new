@@ -238,3 +238,206 @@
 .ro-public-view .club-experience-scope[data-club="valvidub-sports"] .te-public-header__subtitle {
   color: #d4c4b5;
 }
+
+/* —— Padelito Warehouse: round robin público usa azul + lima de la cuenta —— */
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta {
+  --padelito-rr-ink: #10140a;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .peds-hero__evento,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .peds-hero__evento,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-section__title,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-section__title,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-round-head__title,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-round-head__title {
+  font-family: var(--brand-font-heading);
+  letter-spacing: var(--brand-heading-letter-spacing, 0.02em);
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .peds-hero__club,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .peds-hero__club {
+  color: var(--brand-accent);
+  font-family: var(--brand-font-heading);
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .peds-hero__divider,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .peds-hero__divider,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-section__divider,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-section__divider {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--brand-accent),
+    var(--brand-primary),
+    transparent
+  ) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-round-head,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-round-head {
+  border-color: color-mix(in srgb, var(--brand-primary) 55%, transparent);
+  background: color-mix(in srgb, var(--brand-primary) 16%, rgba(0, 0, 0, 0.35));
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-round-head__live,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-round-head__live,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-round-head__live--pending,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-round-head__live--pending {
+  border-color: color-mix(in srgb, var(--brand-accent) 70%, #000000) !important;
+  background: var(--brand-accent) !important;
+  color: var(--padelito-rr-ink) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-round-head__live:not(.te-public-round-head__live--pending),
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-public-round-head__live:not(.te-public-round-head__live--pending) {
+  border-color: color-mix(in srgb, var(--brand-accent) 70%, #000000);
+  background: var(--brand-accent);
+  color: var(--padelito-rr-ink) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-status__dot,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-status__dot {
+  background: var(--padelito-rr-ink);
+  box-shadow: none;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-round-tabs__btn.is-active,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-round-tabs__btn.is-active {
+  background: var(--brand-accent);
+  color: var(--padelito-rr-ink);
+  border-color: var(--brand-accent);
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-round-tabs__btn:focus-visible,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-round-tabs__btn:focus-visible {
+  outline-color: var(--brand-accent);
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card {
+  border-color: color-mix(in srgb, var(--brand-primary) 48%, transparent) !important;
+  background: color-mix(in srgb, var(--brand-primary) 10%, rgba(8, 10, 14, 0.72)) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card:hover,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card:hover,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--live,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--live {
+  border-color: color-mix(in srgb, var(--brand-accent) 65%, var(--brand-primary)) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card__meta-line,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card__meta-line {
+  color: var(--brand-muted) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card .te-pub-status--pending,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card .te-pub-status--upcoming,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card .te-pub-status--played,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card .te-pub-status--finished,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card .te-pub-status--live,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card .te-pub-status--pending,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card .te-pub-status--upcoming,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card .te-pub-status--played,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card .te-pub-status--finished,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card .te-pub-status--live {
+  background: color-mix(in srgb, var(--brand-primary) 28%, transparent) !important;
+  color: var(--brand-accent) !important;
+  border-color: color-mix(in srgb, var(--brand-accent) 45%, var(--brand-primary)) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card .te-pub-status--live .te-pub-status__dot,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card .te-pub-status--live .te-pub-status__dot {
+  background: var(--brand-accent) !important;
+  animation-name: padelito-rr-pulse !important;
+}
+
+@keyframes padelito-rr-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-accent) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .am-court-board__vs-badge,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .am-court-board__vs-badge {
+  border-color: color-mix(in srgb, var(--brand-accent) 55%, transparent);
+  color: var(--brand-accent);
+  background: color-mix(in srgb, var(--brand-primary) 35%, #000000);
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .am-court-board__vs-line,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .am-court-board__vs-line {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--brand-primary),
+    transparent
+  );
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-portrait,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-portrait {
+  border-color: color-mix(in srgb, var(--brand-primary) 70%, var(--brand-accent));
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-court-board__pair:first-child .am-portrait--fallback,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-court-board__pair:first-child .am-portrait--fallback {
+  background:
+    radial-gradient(
+      ellipse 90% 70% at 50% -12%,
+      color-mix(in srgb, var(--brand-accent) 48%, transparent) 0%,
+      transparent 64%
+    ),
+    linear-gradient(
+      160deg,
+      var(--brand-primary) 0%,
+      var(--brand-secondary) 62%,
+      #070b14 100%
+    ) !important;
+  color: #f4f7ff !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-court-board__pair:last-child .am-portrait--fallback,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-court-board__pair:last-child .am-portrait--fallback {
+  background:
+    radial-gradient(
+      ellipse 90% 70% at 50% -12%,
+      color-mix(in srgb, var(--brand-accent) 78%, #ffffff) 0%,
+      transparent 62%
+    ),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--brand-accent) 34%, #12180c) 0%,
+      color-mix(in srgb, var(--brand-primary) 42%, #0c1008) 58%,
+      #070b14 100%
+    ) !important;
+  color: #f7ffe4 !important;
+  border-color: color-mix(in srgb, var(--brand-accent) 55%, #000000);
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .am-portrait__rating.jugador-rating-chip,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .am-portrait__rating.jugador-rating-chip {
+  border-color: color-mix(in srgb, var(--brand-accent) 75%, transparent);
+  background: color-mix(in srgb, var(--brand-primary) 55%, #05070c);
+  color: var(--brand-accent);
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-court-board__score:has(.am-court-board__mark.is-win),
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-court-board__score:has(.am-court-board__mark.is-win) {
+  border-color: color-mix(in srgb, var(--brand-accent) 70%, #000000);
+  background: color-mix(in srgb, var(--brand-accent) 16%, #05070c);
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-court-board__num.is-win,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-court-board__num.is-win,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-court-board__crown,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-court-board__crown {
+  color: var(--brand-accent);
+}
