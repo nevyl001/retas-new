@@ -67,6 +67,14 @@ export async function ensureLigaInscripcionRankingForLiga(
   const { finalizeCareerEvent } = await import(
     "../lib/rivieraJugadores/careerEventPipeline"
   );
+  const { prepareParticipacionIdentityForOrganizer } = await import(
+    "../lib/rivieraJugadores/jugadorIdResolver"
+  );
+
+  // Una sola pasada de cesiones para todo el roster. Cada finalizeCareerEvent
+  // volvería a leer organizer_player_access + riviera_jugadores por cada
+  // jugador concedido (incidente de Log Ingest, 4 nov 2026).
+  await prepareParticipacionIdentityForOrganizer(organizadorId);
 
   await Promise.allSettled(
     unique.map((jugadorId) =>
@@ -75,7 +83,11 @@ export async function ensureLigaInscripcionRankingForLiga(
         organizadorId,
         ligaId,
         jugadorId,
-        options: { telemetry: true, identityCache: true },
+        options: {
+          telemetry: true,
+          identityCache: true,
+          skipIdentityEnsure: true,
+        },
       }).then((result) => {
         if (result && !result.ok) {
           console.error(

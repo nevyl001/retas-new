@@ -75,13 +75,19 @@ export async function repairLigaJornadaCareerSync(params: {
   organizadorId: string;
   ligaId: string;
   jornadaNumero: number;
+  /** La reparación de inscripciones ya preparó las cesiones de este club. */
+  skipIdentityEnsure?: boolean;
 }): Promise<CareerRepairOutcome> {
   const pipeline = await finalizeCareerEvent({
     kind: "liga_jornada",
     organizadorId: params.organizadorId,
     ligaId: params.ligaId,
     jornadaNumero: params.jornadaNumero,
-    options: { telemetry: true, identityCache: true },
+    options: {
+      telemetry: true,
+      identityCache: true,
+      skipIdentityEnsure: params.skipIdentityEnsure === true,
+    },
   });
   return toOutcome(pipeline);
 }

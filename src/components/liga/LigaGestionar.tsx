@@ -275,22 +275,20 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     if (autoJornadasResyncRef.current === detalle.id) return;
 
     const ligaKey = detalle.id;
-    let cancelled = false;
+    const modalidad = detalle.modalidad;
+    const organizadorId = detalle.organizador_id;
+    // Reclamar antes del await: un refresh de `detalle` no debe relanzar
+    // el repair de todas las jornadas (cada uno relee todas las cesiones).
+    autoJornadasResyncRef.current = ligaKey;
+    let active = true;
     void (async () => {
       try {
         const outcome = await resyncAllCompletedLigaJornadasCareer(ligaKey);
-        if (
-          isParejasFijasPlayoffs(detalle.modalidad) &&
-          detalle.organizador_id
-        ) {
-          await aplicarRatingsPendientesLigaPlayoffs(
-            ligaKey,
-            detalle.organizador_id
-          );
+        if (isParejasFijasPlayoffs(modalidad) && organizadorId) {
+          await aplicarRatingsPendientesLigaPlayoffs(ligaKey, organizadorId);
         }
-        if (cancelled) return;
+        if (!active) return;
         if (outcome.careerSyncOk) {
-          autoJornadasResyncRef.current = ligaKey;
           if (outcome.repaired > 0) {
             setMessage(
               outcome.careerSyncMessage ||
@@ -301,13 +299,13 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
           setError(outcome.careerSyncMessage);
         }
       } catch (err) {
-        if (cancelled) return;
+        if (!active) return;
         console.error("[liga] auto-resync jornadas career:", err);
       }
     })();
 
     return () => {
-      cancelled = true;
+      active = false;
     };
   }, [detalle]);
 

@@ -274,14 +274,15 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     if (autoCareerResyncRef.current === jornada.id) return;
 
     const jornadaId = jornada.id;
+    // Una sola pasada automática por jornada abierta. Reintentar en cada
+    // refresh relanzaba el ensure de todas las cesiones del club.
+    autoCareerResyncRef.current = jornadaId;
     let cancelled = false;
     void (async () => {
       try {
         const outcome = await resyncLigaJornadaCareer(jornadaId);
         if (cancelled) return;
         if (outcome.careerSyncOk) {
-          // Solo marcar como hecho tras éxito — si falla, se reintenta al volver.
-          autoCareerResyncRef.current = jornadaId;
           setMessage(
             "Historial Riviera sincronizado: ganadores y puntos de la jornada."
           );

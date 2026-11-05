@@ -1876,6 +1876,7 @@ export async function resyncLigaJornadaCareer(
       organizadorId,
       ligaId: String(jornada.liga_id),
       jornadaNumero: Number(jornada.numero),
+      skipIdentityEnsure: true,
     });
     if (!outcome.careerSyncOk) {
       console.error(

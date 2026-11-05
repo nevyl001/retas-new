@@ -578,12 +578,60 @@ export async function ensureGrantedPlayerLocal(
 }
 
 /**
+ * El 4 nov 2026 el mismo ensure se repitió ~100k veces (un GET a
+ * organizer_player_access y otro a riviera_jugadores por cada cesión, en
+ * cada cierre de carrera). Si el clon ya está en el estado que esta función
+ * exige, no hace falta releerlo durante un minuto. No cachea fallos ni
+ * filas que todavía requieren patch.
+ */
+const GRANTED_SUMS_RANKING_OK_TTL_MS = 60_000;
+const grantedSumsRankingOkUntil = new Map<string, number>();
+const grantedSumsRankingInFlight = new Map<string, Promise<void>>();
+const prepareGrantedInFlight = new Map<string, Promise<string[]>>();
+
+function grantedSumsRankingKey(organizadorId: string, localJugadorId: string): string {
+  return `${organizadorId}:${localJugadorId}`;
+}
+
+/** Limpia el cache de ensure. Lo usan los tests y un cambio de cesión. */
+export function resetGrantedRankingEnsureCache(): void {
+  grantedSumsRankingOkUntil.clear();
+  grantedSumsRankingInFlight.clear();
+  prepareGrantedInFlight.clear();
+}
+
+/**
  * Clon local de jugador concedido: siempre suma ranking interno del club anfitrión.
  * is_public_ranking solo controla visible_publico (ranking público del club).
  */
 export async function ensureGrantedLocalPlayerSumsRanking(
   organizadorId: string,
   localJugadorId: string
+): Promise<void> {
+  const org = organizadorId.trim();
+  const localId = localJugadorId.trim();
+  if (!org || !localId) return;
+
+  const cacheKey = grantedSumsRankingKey(org, localId);
+  const freshUntil = grantedSumsRankingOkUntil.get(cacheKey);
+  if (freshUntil != null && freshUntil > Date.now()) return;
+
+  const inFlight = grantedSumsRankingInFlight.get(cacheKey);
+  if (inFlight) return inFlight;
+
+  const run = ensureGrantedLocalPlayerSumsRankingUncached(org, localId, cacheKey).finally(
+    () => {
+      grantedSumsRankingInFlight.delete(cacheKey);
+    }
+  );
+  grantedSumsRankingInFlight.set(cacheKey, run);
+  return run;
+}
+
+async function ensureGrantedLocalPlayerSumsRankingUncached(
+  organizadorId: string,
+  localJugadorId: string,
+  cacheKey: string
 ): Promise<void> {
   const { data: grant, error: grantErr } = await supabase
     .from("organizer_player_access")
@@ -614,7 +662,13 @@ export async function ensureGrantedLocalPlayerSumsRanking(
   if (grant.is_public_ranking === true && row.visible_publico === false) {
     patch.visible_publico = true;
   }
-  if (Object.keys(patch).length === 0) return;
+  if (Object.keys(patch).length === 0) {
+    grantedSumsRankingOkUntil.set(
+      cacheKey,
+      Date.now() + GRANTED_SUMS_RANKING_OK_TTL_MS
+    );
+    return;
+  }
 
   const { error: updateErr } = await supabase
     .from("riviera_jugadores")
@@ -626,7 +680,10 @@ export async function ensureGrantedLocalPlayerSumsRanking(
       "[riviera-jugadores] ensureGrantedLocalPlayerSumsRanking:",
       updateErr
     );
+    return;
   }
+
+  grantedSumsRankingOkUntil.set(cacheKey, Date.now() + GRANTED_SUMS_RANKING_OK_TTL_MS);
 }
 
 /** Asegura clon local + suma_ranking para cada cedido antes de sync/backfill de puntos. */
@@ -649,6 +706,19 @@ export async function prepareGrantedPlayersForParticipacionSync(
   const org = granteeOrganizerId.trim();
   if (!org) return [];
 
+  const existing = prepareGrantedInFlight.get(org);
+  if (existing) return existing;
+
+  const run = prepareGrantedPlayersForParticipacionSyncUncached(org).finally(() => {
+    prepareGrantedInFlight.delete(org);
+  });
+  prepareGrantedInFlight.set(org, run);
+  return run;
+}
+
+async function prepareGrantedPlayersForParticipacionSyncUncached(
+  org: string
+): Promise<string[]> {
   const grants = await listActiveGrantedAccessForOrganizer(org);
   const localIds: (string | null)[] = new Array(grants.length).fill(null);
   let next = 0;
