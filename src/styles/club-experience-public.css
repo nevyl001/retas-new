@@ -268,8 +268,8 @@
   background: linear-gradient(
     90deg,
     transparent,
-    var(--brand-accent),
-    var(--brand-primary),
+    color-mix(in srgb, var(--brand-accent) 42%, transparent),
+    color-mix(in srgb, var(--brand-primary) 55%, transparent),
     transparent
   ) !important;
 }
@@ -440,4 +440,76 @@
 [data-club="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-court-board__crown,
 [data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .reta-sb-card--am-court .am-court-board__crown {
   color: var(--brand-accent);
+}
+
+/* Clasificación: azul de fondo y lima solo en el criterio que ordena. Medallas intactas. */
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table-wrap,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table-wrap,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standing-card,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standing-card {
+  border-color: color-mix(in srgb, var(--brand-primary) 34%, transparent) !important;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--brand-primary) 12%, rgba(8, 10, 14, 0.96)) 0%,
+    rgba(8, 10, 14, 0.94) 100%
+  ) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table thead th,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table thead th {
+  border-bottom-color: color-mix(in srgb, var(--brand-primary) 40%, transparent) !important;
+  background: color-mix(in srgb, var(--brand-primary) 8%, transparent) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table thead th.standings-criterion-col--rank-1,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table thead th.standings-criterion-col--rank-1,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table thead th:nth-child(6),
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table thead th:nth-child(6) {
+  color: color-mix(in srgb, var(--brand-accent) 58%, #ffffff) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody td:nth-child(6),
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody td:nth-child(6),
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody .te-pub-standings-row__fav,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody .te-pub-standings-row__fav,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--rank-1,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody .standings-criterion-cell--rank-1 {
+  color: color-mix(in srgb, var(--brand-accent) 46%, #ffffff) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody tr.te-pub-standings-row--leader td,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody tr.te-pub-standings-row--leader td {
+  background: color-mix(in srgb, var(--brand-primary) 22%, #070b14) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody tr.te-pub-standings-row--leader .te-pub-standings-row__name,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody tr.te-pub-standings-row--leader .te-pub-standings-row__name {
+  color: #ffffff !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody tr.te-pub-standings-row--leader td:first-child,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody tr.te-pub-standings-row--leader td:first-child {
+  border-left-color: transparent !important;
+  box-shadow: inset 2px 0 0 var(--brand-accent) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody tr.te-pub-standings-row--leader td.te-pub-standings-row__fav,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody tr.te-pub-standings-row--leader td.te-pub-standings-row__fav,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody tr.te-pub-standings-row--leader td.standings-criterion-cell--rank-1,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody tr.te-pub-standings-row--leader td.standings-criterion-cell--rank-1,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standing-card--leader .te-pub-standing-card__criterion-fav,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standing-card--leader .te-pub-standing-card__criterion-fav,
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standing-card--medal-1 .te-pub-standing-card__criterion-fav,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standing-card--medal-1 .te-pub-standing-card__criterion-fav {
+  color: var(--brand-accent) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody tr:hover:not(.te-pub-standings-row--leader) td,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standings-table tbody tr:hover:not(.te-pub-standings-row--leader) td {
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent) !important;
+}
+
+[data-club="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standing-card--leader,
+[data-brand="padelito-warehouse"].club-experience-scope .te-public--reta .te-pub-standing-card--leader {
+  box-shadow: inset 2px 0 0 var(--brand-accent);
 }
