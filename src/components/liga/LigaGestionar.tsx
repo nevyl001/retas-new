@@ -38,6 +38,7 @@ import {
   desinscribirJugador,
   finishLiga,
   resyncAllCompletedLigaJornadasCareer,
+  resyncCompletedLigaJornadasCareerIfMissing,
   resyncLigaPodioCareer,
   getJugadoresOrganizador,
   getLigaById,
@@ -270,7 +271,16 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   // Al abrir la liga, reparar historial de jornadas completed (Cuadra/César +50).
   useEffect(() => {
     if (!detalle?.id) return;
-    const completed = detalle.jornadas.filter((j) => j.estado === "completed");
+    const needsCareerCheck = detalle.jornadas.filter(
+      (jornada) =>
+        jornada.estado === "completed" ||
+        (jornada.puntos_aplicados &&
+          (jornada.partidos?.length ?? 0) > 0 &&
+          (jornada.partidos ?? []).every((partido) => partido.estado === "completed"))
+    );
+    const completed = needsCareerCheck.filter(
+      (jornada) => jornada.estado === "completed"
+    );
     if (completed.length === 0) return;
     if (autoJornadasResyncRef.current === detalle.id) return;
 
@@ -283,7 +293,9 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     let active = true;
     void (async () => {
       try {
-        const outcome = await resyncAllCompletedLigaJornadasCareer(ligaKey);
+        const outcome = await resyncCompletedLigaJornadasCareerIfMissing(
+          needsCareerCheck.map((jornada) => jornada.id)
+        );
         if (isParejasFijasPlayoffs(modalidad) && organizadorId) {
           await aplicarRatingsPendientesLigaPlayoffs(ligaKey, organizadorId);
         }

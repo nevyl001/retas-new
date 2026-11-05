@@ -1462,6 +1462,11 @@ export async function ensureRivieraJugadorVisibleEnRanking(
   if (row?.estado === "archivado" || row?.suma_ranking === false) {
     return;
   }
+  // Ya visible. Reescribir activo en cada cierre de jornada era un PATCH
+  // idéntico (filtro estado=neq.archivado) por jugador y por pase.
+  if (row?.estado === "activo") {
+    return;
+  }
 
   const { error } = await supabase
     .from("riviera_jugadores")

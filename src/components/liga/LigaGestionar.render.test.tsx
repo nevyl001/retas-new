@@ -62,6 +62,9 @@ jest.mock("../../services/ligaService", () => ({
   resyncAllCompletedLigaJornadasCareer: jest
     .fn()
     .mockResolvedValue({ careerSyncOk: true, wrote: 0 }),
+  resyncCompletedLigaJornadasCareerIfMissing: jest
+    .fn()
+    .mockResolvedValue({ careerSyncOk: true, repaired: 0, failed: 0, skipped: 0 }),
   resyncLigaPodioCareer: jest.fn().mockResolvedValue({ ok: true }),
 }));
 
@@ -108,11 +111,18 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
     mockPublicLigaUrl.mockReturnValue("https://example.com/public/liga/liga-1");
     const ligaService = jest.requireMock("../../services/ligaService") as {
       resyncAllCompletedLigaJornadasCareer: jest.Mock;
+      resyncCompletedLigaJornadasCareerIfMissing: jest.Mock;
       resyncLigaPodioCareer: jest.Mock;
     };
     ligaService.resyncAllCompletedLigaJornadasCareer.mockResolvedValue({
       careerSyncOk: true,
       wrote: 0,
+    });
+    ligaService.resyncCompletedLigaJornadasCareerIfMissing.mockResolvedValue({
+      careerSyncOk: true,
+      repaired: 0,
+      failed: 0,
+      skipped: 0,
     });
     ligaService.resyncLigaPodioCareer.mockResolvedValue({ ok: true });
     mockMatchMedia(false); // desktop por default
@@ -211,6 +221,17 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
       jornadasTab?.click();
       await Promise.resolve();
     });
+
+    const ligaService = jest.requireMock("../../services/ligaService") as {
+      resyncAllCompletedLigaJornadasCareer: jest.Mock;
+      resyncCompletedLigaJornadasCareerIfMissing: jest.Mock;
+    };
+    expect(
+      ligaService.resyncCompletedLigaJornadasCareerIfMissing
+    ).toHaveBeenCalledWith(["jor-1"]);
+    expect(
+      ligaService.resyncAllCompletedLigaJornadasCareer
+    ).not.toHaveBeenCalled();
 
     const nextCard = container.querySelector(".liga-jornada-card--next");
     expect(nextCard).not.toBeNull();

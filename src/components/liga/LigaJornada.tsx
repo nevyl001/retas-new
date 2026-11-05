@@ -16,6 +16,7 @@ import {
   getRankingEquipos,
   resetPartidoResult,
   resyncLigaJornadaCareer,
+  resyncLigaJornadaCareerIfMissing,
   startJornada,
   regenerarPartidosJornadaRotativo,
   updateScore,
@@ -280,8 +281,9 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     let cancelled = false;
     void (async () => {
       try {
-        const outcome = await resyncLigaJornadaCareer(jornadaId);
+        const outcome = await resyncLigaJornadaCareerIfMissing(jornadaId);
         if (cancelled) return;
+        if (outcome.alreadyRecorded) return;
         if (outcome.careerSyncOk) {
           setMessage(
             "Historial Riviera sincronizado: ganadores y puntos de la jornada."

@@ -1835,6 +1835,8 @@ export async function aplicarPuntosJornada(jornadaId: string): Promise<void> {
 export type LigaCareerCloseResult = {
   careerSyncOk: boolean;
   careerSyncMessage?: string;
+  /** Ya había ganadores de jornada en historial: no se reescribió nada. */
+  alreadyRecorded?: boolean;
 };
 
 /**
@@ -1978,6 +1980,99 @@ export async function resyncLigaJornadaCareer(
           : "No se pudo sincronizar el historial Riviera de la jornada.",
     };
   }
+}
+
+/**
+ * El mismo criterio con el que resyncLigaJornadaCareer declara el historial
+ * correcto: existe al menos un “GANADOR JORNADA”. Si la sonda falla, se
+ * repara (no se oculta una corrección pendiente).
+ */
+async function ligaJornadaHasRecordedWinners(
+  jornadaId: string
+): Promise<boolean> {
+  const { count, error } = await supabase
+    .from("jugador_participaciones")
+    .select("id", { count: "exact", head: true })
+    .eq("evento_id", jornadaId)
+    .eq("tipo_evento", "liga")
+    .filter("metadata->>subtipo", "eq", "liga_jornada")
+    .filter("metadata->>jornada_ganada", "eq", "true");
+
+  if (error) {
+    console.error("[riviera-jugadores] probe ganadores jornada:", error);
+    return false;
+  }
+  return (count ?? 0) > 0;
+}
+
+/**
+ * Consulta de una jornada ya cerrada. No relanza finalizeCareerEvent si el
+ * historial de ganadores ya está en base. La sincronización manual sigue
+ * en resyncLigaJornadaCareer.
+ */
+export async function resyncLigaJornadaCareerIfMissing(
+  jornadaId: string
+): Promise<LigaCareerCloseResult> {
+  if (await ligaJornadaHasRecordedWinners(jornadaId)) {
+    return { careerSyncOk: true, alreadyRecorded: true };
+  }
+  return resyncLigaJornadaCareer(jornadaId);
+}
+
+/**
+ * Al abrir la gestión: una sonda por jornada completada. Solo las que no
+ * tienen ganador registrado pasan por el repair completo.
+ */
+export async function resyncCompletedLigaJornadasCareerIfMissing(
+  jornadaIds: readonly string[]
+): Promise<LigaCareerCloseResult & { repaired: number; failed: number; skipped: number }> {
+  const unique = Array.from(new Set(jornadaIds.map((id) => id.trim()).filter(Boolean)));
+  if (unique.length === 0) {
+    return {
+      careerSyncOk: true,
+      repaired: 0,
+      failed: 0,
+      skipped: 0,
+    };
+  }
+
+  const recorded = await Promise.all(
+    unique.map((id) => ligaJornadaHasRecordedWinners(id))
+  );
+
+  let repaired = 0;
+  let failed = 0;
+  let skipped = 0;
+  const messages: string[] = [];
+
+  for (let i = 0; i < unique.length; i += 1) {
+    if (recorded[i]) {
+      skipped += 1;
+      continue;
+    }
+    const outcome = await resyncLigaJornadaCareer(unique[i]);
+    if (outcome.careerSyncOk) {
+      repaired += 1;
+    } else {
+      failed += 1;
+      if (outcome.careerSyncMessage) {
+        messages.push(outcome.careerSyncMessage);
+      }
+    }
+  }
+
+  return {
+    careerSyncOk: failed === 0,
+    careerSyncMessage:
+      failed === 0
+        ? repaired > 0
+          ? `Historial Riviera sincronizado (${repaired} jornada${repaired === 1 ? "" : "s"}).`
+          : undefined
+        : `Sincronización incompleta (${repaired} ok, ${failed} con error). ${messages.join(" · ")}`,
+    repaired,
+    failed,
+    skipped,
+  };
 }
 
 /** Repara historial de todas las jornadas completed de una liga. */
