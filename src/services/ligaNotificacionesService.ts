@@ -8,6 +8,17 @@ export interface PreferenciaNotificacionRow {
   consentimiento_origen: string | null;
   consentimiento_registrado_at: string | null;
   correo_verificado: boolean;
+  correo_verificacion_origen: "enlace_de_confirmacion" | null;
+  correo_verificado_email: string | null;
+}
+
+export interface VerificacionSolicitudRow {
+  id: string;
+  liga_jugador_id: string;
+  estado: "pendiente" | "confirmado" | "vencido" | "invalidado" | "cancelado";
+  expires_at: string;
+  confirmed_at: string | null;
+  created_at: string;
 }
 
 export interface ConfigNotificacionLiga {
@@ -39,6 +50,7 @@ export interface NotificacionesLigaSnapshot {
   config: ConfigNotificacionLiga;
   historial: HistorialNotificacionRow[];
   cola: ColaNotificacionRow[];
+  verificaciones: VerificacionSolicitudRow[];
 }
 
 export interface ResultadoNotificacion {
@@ -57,6 +69,7 @@ const VACIO: NotificacionesLigaSnapshot = {
   config: CONFIG_INICIAL,
   historial: [],
   cola: [],
+  verificaciones: [],
 };
 
 export function esEsquemaAusente(message: string): boolean {
@@ -79,42 +92,79 @@ function aviso(motivo: string | null): void {
 export async function cargarNotificacionesLiga(
   ligaId: string
 ): Promise<NotificacionesLigaSnapshot> {
-  const [preferencias, config, historial, cola] = await Promise.all([
-    supabase
-      .from("liga_notificaciones_preferencias")
-      .select(
-        "liga_jugador_id, riviera_jugador_id, admin_habilitado, consentimiento_estado, consentimiento_origen, consentimiento_registrado_at, correo_verificado"
-      )
-      .eq("liga_id", ligaId),
-    supabase
-      .from("liga_notificaciones_config")
-      .select("bienvenida_pausada, modo_prueba")
-      .eq("liga_id", ligaId)
-      .maybeSingle(),
-    supabase
-      .from("liga_notificaciones_log")
-      .select(
-        "id, liga_jugador_id, tipo, estado, attempts, motivo, proveedor_estado, created_at"
-      )
-      .eq("liga_id", ligaId)
-      .order("created_at", { ascending: false })
-      .limit(100),
-    supabase
-      .from("liga_notificaciones_queue")
-      .select("liga_jugador_id, estado, attempts, motivo")
-      .eq("liga_id", ligaId)
-      .order("updated_at", { ascending: false })
-      .limit(100),
-  ]);
+  const [preferencias, config, historial, cola, verificaciones] =
+    await Promise.all([
+      supabase
+        .from("liga_notificaciones_preferencias")
+        .select(
+          "liga_jugador_id, riviera_jugador_id, admin_habilitado, consentimiento_estado, consentimiento_origen, consentimiento_registrado_at, correo_verificado, correo_verificacion_origen, correo_verificado_email"
+        )
+        .eq("liga_id", ligaId),
+      supabase
+        .from("liga_notificaciones_config")
+        .select("bienvenida_pausada, modo_prueba")
+        .eq("liga_id", ligaId)
+        .maybeSingle(),
+      supabase
+        .from("liga_notificaciones_log")
+        .select(
+          "id, liga_jugador_id, tipo, estado, attempts, motivo, proveedor_estado, created_at"
+        )
+        .eq("liga_id", ligaId)
+        .order("created_at", { ascending: false })
+        .limit(100),
+      supabase
+        .from("liga_notificaciones_queue")
+        .select("liga_jugador_id, estado, attempts, motivo")
+        .eq("liga_id", ligaId)
+        .order("updated_at", { ascending: false })
+        .limit(100),
+      supabase
+        .from("liga_notificaciones_verificaciones")
+        .select(
+          "id, liga_jugador_id, estado, expires_at, confirmed_at, created_at"
+        )
+        .eq("liga_id", ligaId)
+        .order("created_at", { ascending: false })
+        .limit(200),
+    ]);
 
   const errores = [
     preferencias.error,
     config.error,
     historial.error,
     cola.error,
+    verificaciones.error,
   ].flatMap((error) => (error ? [error.message] : []));
 
-  if (errores.some(esEsquemaAusente)) return VACIO;
+  if (errores.some(esEsquemaAusente)) {
+    // 0100 sin 0101: el panel de bienvenida sigue usable.
+    if (
+      !preferencias.error &&
+      !config.error &&
+      !historial.error &&
+      !cola.error &&
+      verificaciones.error &&
+      esEsquemaAusente(verificaciones.error.message)
+    ) {
+      return {
+        disponible: true,
+        preferencias: (preferencias.data ?? []).map((row) => ({
+          ...(row as PreferenciaNotificacionRow),
+          correo_verificacion_origen:
+            (row as PreferenciaNotificacionRow).correo_verificacion_origen ??
+            null,
+          correo_verificado_email:
+            (row as PreferenciaNotificacionRow).correo_verificado_email ?? null,
+        })),
+        config: (config.data as ConfigNotificacionLiga | null) ?? CONFIG_INICIAL,
+        historial: (historial.data ?? []) as HistorialNotificacionRow[],
+        cola: (cola.data ?? []) as ColaNotificacionRow[],
+        verificaciones: [],
+      };
+    }
+    return VACIO;
+  }
   if (errores.length > 0) {
     aviso("no_disponible");
     return { ...VACIO, disponible: true };
@@ -128,6 +178,7 @@ export async function cargarNotificacionesLiga(
     config: configRow ?? CONFIG_INICIAL,
     historial: (historial.data ?? []) as HistorialNotificacionRow[],
     cola: (cola.data ?? []) as ColaNotificacionRow[],
+    verificaciones: (verificaciones.data ?? []) as VerificacionSolicitudRow[],
   };
 }
 
@@ -248,6 +299,108 @@ export async function establecerCorreoVerificado(_input: {
   verificado: boolean;
 }): Promise<ResultadoNotificacion> {
   return { ok: false, motivo: "correo_sin_verificacion" };
+}
+
+export async function solicitarVerificacionCorreo(input: {
+  ligaId: string;
+  jugadorId: string;
+}): Promise<
+  ResultadoNotificacion & {
+    simulado: boolean;
+    enlaceSimulado: string | null;
+    solicitudId: string | null;
+  }
+> {
+  const { data, error } = await supabase.rpc(
+    "solicitar_verificacion_correo_liga",
+    {
+      p_liga_id: input.ligaId,
+      p_liga_jugador_id: input.jugadorId,
+    }
+  );
+  if (error) {
+    if (esEsquemaAusente(error.message)) {
+      return {
+        ok: false,
+        motivo: "esquema_pendiente",
+        simulado: false,
+        enlaceSimulado: null,
+        solicitudId: null,
+      };
+    }
+    aviso("no_disponible");
+    return {
+      ok: false,
+      motivo: "no_disponible",
+      simulado: false,
+      enlaceSimulado: null,
+      solicitudId: null,
+    };
+  }
+  const row = (data ?? {}) as {
+    ok?: boolean;
+    motivo?: unknown;
+    simulado?: boolean;
+    enlace_simulado?: unknown;
+    solicitud_id?: unknown;
+  };
+  const enlace =
+    typeof row.enlace_simulado === "string" &&
+    /^https:\/\/[^?\s]+\/public\/verificar-correo\?t=[a-f0-9]{48,128}$/i.test(
+      row.enlace_simulado
+    )
+      ? row.enlace_simulado
+      : null;
+  return {
+    ok: row.ok === true,
+    motivo: motivoSeguro(row.motivo),
+    simulado: row.simulado === true,
+    enlaceSimulado: enlace,
+    solicitudId:
+      typeof row.solicitud_id === "string" ? row.solicitud_id : null,
+  };
+}
+
+export async function inspeccionarVerificacionCorreo(
+  token: string
+): Promise<{ ok: boolean; estado: string }> {
+  const { data, error } = await supabase.rpc(
+    "inspeccionar_verificacion_correo_liga",
+    { p_token: token }
+  );
+  if (error) {
+    if (esEsquemaAusente(error.message)) {
+      return { ok: false, estado: "invalido" };
+    }
+    return { ok: false, estado: "error_temporal" };
+  }
+  const row = (data ?? {}) as { ok?: boolean; estado?: unknown };
+  const estado =
+    typeof row.estado === "string" && /^[a-z_]{1,40}$/.test(row.estado)
+      ? row.estado
+      : "invalido";
+  return { ok: row.ok !== false, estado };
+}
+
+export async function confirmarVerificacionCorreo(
+  token: string
+): Promise<{ ok: boolean; estado: string }> {
+  const { data, error } = await supabase.rpc(
+    "confirmar_verificacion_correo_liga",
+    { p_token: token }
+  );
+  if (error) {
+    if (esEsquemaAusente(error.message)) {
+      return { ok: false, estado: "invalido" };
+    }
+    return { ok: false, estado: "error_temporal" };
+  }
+  const row = (data ?? {}) as { ok?: boolean; estado?: unknown };
+  const estado =
+    typeof row.estado === "string" && /^[a-z_]{1,40}$/.test(row.estado)
+      ? row.estado
+      : "invalido";
+  return { ok: row.ok === true, estado };
 }
 
 export async function guardarConfigLiga(

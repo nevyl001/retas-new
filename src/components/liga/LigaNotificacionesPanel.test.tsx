@@ -29,10 +29,20 @@ const mockHabilitar = jest.fn();
 jest.mock("../../services/ligaNotificacionesService", () => ({
   cargarNotificacionesLiga: (...args: unknown[]) => mockCargar(...args),
   establecerHabilitacionJugador: (...args: unknown[]) => mockHabilitar(...args),
-  establecerCorreoVerificado: jest.fn().mockResolvedValue({ ok: true, motivo: null }),
+  establecerCorreoVerificado: jest.fn().mockResolvedValue({
+    ok: false,
+    motivo: "correo_sin_verificacion",
+  }),
   registrarConsentimientoJugador: jest.fn().mockResolvedValue({ ok: true, motivo: null }),
   revocarConsentimientoJugador: jest.fn().mockResolvedValue({ ok: true, motivo: null }),
   guardarConfigLiga: jest.fn().mockResolvedValue({ ok: true, motivo: null }),
+  solicitarVerificacionCorreo: jest.fn().mockResolvedValue({
+    ok: false,
+    motivo: "deshabilitado",
+    simulado: false,
+    enlaceSimulado: null,
+    solicitudId: null,
+  }),
   solicitarBienvenidaJugador: jest.fn().mockResolvedValue({
     ok: false,
     encolado: false,
@@ -85,6 +95,7 @@ describe("LigaNotificacionesPanel", () => {
       config: { bienvenida_pausada: true, modo_prueba: true },
       historial: [],
       cola: [],
+      verificaciones: [],
     });
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -123,7 +134,8 @@ describe("LigaNotificacionesPanel", () => {
     expect(container.textContent).toContain("1 excluidos");
     expect(container.textContent?.toLowerCase()).not.toContain("habilitar a todos");
     expect(container.textContent).not.toContain("Marcar correo verificado");
-    expect(container.textContent).toContain("pendiente de verificación");
+    expect(container.textContent).toContain("Correo por verificar");
+    expect(container.textContent).not.toContain("Solicitar verificación");
     const checkbox = container.querySelector(
       'input[type="checkbox"]'
     ) as HTMLInputElement;
@@ -181,11 +193,14 @@ describe("LigaNotificacionesPanel", () => {
           consentimiento_origen: null,
           consentimiento_registrado_at: null,
           correo_verificado: false,
+          correo_verificacion_origen: null,
+          correo_verificado_email: null,
         },
       ],
       config: { bienvenida_pausada: true, modo_prueba: true },
       historial: [],
       cola: [],
+      verificaciones: [],
     });
     await renderPanel();
     const checkbox = container.querySelector(

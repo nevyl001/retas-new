@@ -22,6 +22,13 @@ import {
   enlacePerfilBienvenida,
   renderBienvenidaEmail,
 } from "../../lib/liga/notificaciones/bienvenidaTemplate";
+import {
+  ESTADO_VERIFICACION_LABEL,
+  estadoVisualVerificacion,
+  puedeSolicitarVerificacion,
+  type EstadoVisualVerificacion,
+  type SolicitudVerificacionVista,
+} from "../../lib/liga/notificaciones/verificacionPolicy";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import {
@@ -31,9 +38,11 @@ import {
   registrarConsentimientoJugador,
   revocarConsentimientoJugador,
   solicitarBienvenidaJugador,
+  solicitarVerificacionCorreo,
   type ConfigNotificacionLiga,
   type NotificacionesLigaSnapshot,
   type PreferenciaNotificacionRow,
+  type VerificacionSolicitudRow,
 } from "../../services/ligaNotificacionesService";
 import { useMobileViewport } from "../../hooks/useMobileViewport";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
@@ -84,6 +93,10 @@ const MOTIVO_LABEL: Record<string, string> = {
   consentimiento_sin_evidencia: "Falta una constancia del consentimiento",
   anon: "Hace falta una sesión",
   sin_permiso: "No tienes permiso en esta liga",
+  ya_verificado: "El correo ya está verificado",
+  demasiado_pronto: "Espera unos minutos antes de pedir otro enlace",
+  limite_alcanzado: "Se alcanzó el límite de solicitudes",
+  correo_sin_verificacion: "La verificación solo se acredita con el enlace",
 };
 
 interface FilaDestinatario {
@@ -97,8 +110,38 @@ interface FilaDestinatario {
   perfilesConMismoCorreo: number;
   preferencia: PreferenciaNotificacionRow | null;
   visual: EstadoVisualNotificacion;
+  verificacion: EstadoVisualVerificacion;
+  solicitud: SolicitudVerificacionVista | null;
   yaEnviado: boolean;
   yaEncolado: boolean;
+}
+
+function preferenciaParaPolitica(
+  preferencia: PreferenciaNotificacionRow | null
+) {
+  if (!preferencia) return null;
+  return {
+    adminHabilitado: preferencia.admin_habilitado,
+    consentimientoEstado: preferencia.consentimiento_estado,
+    consentimientoOrigen: preferencia.consentimiento_origen,
+    consentimientoRegistradoAt: preferencia.consentimiento_registrado_at,
+    correoVerificado: preferencia.correo_verificado,
+    correoVerificacionOrigen: preferencia.correo_verificacion_origen,
+  };
+}
+
+function ultimaSolicitud(
+  rows: VerificacionSolicitudRow[],
+  jugadorId: string
+): SolicitudVerificacionVista | null {
+  const row = rows.find((item) => item.liga_jugador_id === jugadorId);
+  if (!row) return null;
+  return {
+    estado: row.estado,
+    expiresAt: row.expires_at,
+    confirmedAt: row.confirmed_at,
+    createdAt: row.created_at,
+  };
 }
 
 export interface LigaNotificacionesPanelProps {
@@ -190,6 +233,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       (snapshot?.preferencias ?? []).map((row) => [row.liga_jugador_id, row])
     );
     const cola = snapshot?.cola ?? [];
+    const verificaciones = snapshot?.verificaciones ?? [];
 
     return Array.from(ids).map((jugadorId): FilaDestinatario => {
       const enPool = poolById.get(jugadorId);
@@ -200,6 +244,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       const correo = normalizarCorreo(email);
       const preferencia = preferencias.get(jugadorId) ?? null;
       const envios = cola.filter((item) => item.liga_jugador_id === jugadorId);
+      const solicitud = ultimaSolicitud(verificaciones, jugadorId);
+      const preferenciaPolitica = preferenciaParaPolitica(preferencia);
+      const perfiles = correo ? correos.get(correo)?.size ?? 1 : 0;
       return {
         jugadorId,
         nombre: enPool?.nombre ?? inscripcion?.jugador?.nombre ?? "Jugador",
@@ -208,24 +255,24 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         email,
         fotoUrl: enPool?.foto_url ?? null,
         categoria: categoriaVisible(enPool?.categoria),
-        perfilesConMismoCorreo: correo ? correos.get(correo)?.size ?? 1 : 0,
+        perfilesConMismoCorreo: perfiles,
         preferencia,
         visual: estadoVisual({
           email,
-          perfilesConMismoCorreo: correo ? correos.get(correo)?.size ?? 1 : 0,
-          preferencia: preferencia
-            ? {
-                adminHabilitado: preferencia.admin_habilitado,
-                consentimientoEstado: preferencia.consentimiento_estado,
-                consentimientoOrigen: preferencia.consentimiento_origen,
-                consentimientoRegistradoAt:
-                  preferencia.consentimiento_registrado_at,
-                correoVerificado: preferencia.correo_verificado,
-              }
-            : null,
+          perfilesConMismoCorreo: perfiles,
+          preferencia: preferenciaPolitica,
+          emailVerificado: preferencia?.correo_verificado_email ?? null,
           sigueInscrito: true,
           esSalienteDeSustitucion: false,
         }),
+        verificacion: estadoVisualVerificacion({
+          email,
+          perfilesConMismoCorreo: perfiles,
+          preferencia: preferenciaPolitica,
+          emailVerificado: preferencia?.correo_verificado_email ?? null,
+          solicitud,
+        }),
+        solicitud,
         yaEnviado: envios.some((item) => item.estado === "enviado"),
         yaEncolado: envios.some(
           (item) => item.estado === "pendiente" || item.estado === "procesando"
@@ -247,13 +294,11 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   });
 
   const conteo = contarDestinatarios(
-    filas.map((fila) => preferenciaEfectiva(fila.preferencia ? {
-      adminHabilitado: fila.preferencia.admin_habilitado,
-      consentimientoEstado: fila.preferencia.consentimiento_estado,
-      consentimientoOrigen: fila.preferencia.consentimiento_origen,
-      consentimientoRegistradoAt: fila.preferencia.consentimiento_registrado_at,
-      correoVerificado: fila.preferencia.correo_verificado,
-    } : null).adminHabilitado)
+    filas.map(
+      (fila) =>
+        preferenciaEfectiva(preferenciaParaPolitica(fila.preferencia))
+          .adminHabilitado
+    )
   );
   const listos = filas.filter((fila) => fila.visual === "habilitado").length;
   const config: ConfigNotificacionLiga = snapshot?.config ?? {
@@ -302,9 +347,55 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       consentimiento_origen: base?.consentimiento_origen ?? null,
       consentimiento_registrado_at: base?.consentimiento_registrado_at ?? null,
       correo_verificado: base?.correo_verificado ?? false,
+      correo_verificacion_origen: base?.correo_verificacion_origen ?? null,
+      correo_verificado_email: base?.correo_verificado_email ?? null,
       ...patch,
     });
     confirmar("Cambios guardados");
+  }
+
+  async function pedirVerificacion(fila: FilaDestinatario) {
+    setGuardandoId(fila.jugadorId);
+    const resultado = await solicitarVerificacionCorreo({
+      ligaId,
+      jugadorId: fila.jugadorId,
+    });
+    setGuardandoId(null);
+    if (!resultado.ok) {
+      confirmar(motivoVisible(resultado.motivo));
+      return;
+    }
+    const ahora = new Date().toISOString();
+    setSnapshot((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        verificaciones: [
+          {
+            id: resultado.solicitudId ?? `local-${fila.jugadorId}`,
+            liga_jugador_id: fila.jugadorId,
+            estado: "pendiente",
+            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            confirmed_at: null,
+            created_at: ahora,
+          },
+          ...prev.verificaciones.filter(
+            (item) =>
+              !(
+                item.liga_jugador_id === fila.jugadorId &&
+                item.estado === "pendiente"
+              )
+          ),
+        ],
+      };
+    });
+    if (resultado.enlaceSimulado) {
+      confirmar(
+        `Verificación simulada. Abre el enlace de prueba: ${resultado.enlaceSimulado}`
+      );
+      return;
+    }
+    confirmar("Solicitud de verificación preparada. No se envió un correo real.");
   }
 
   async function cambiarHabilitacion(fila: FilaDestinatario, habilitado: boolean) {
@@ -387,21 +478,14 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
 
   function controles(fila: FilaDestinatario) {
     const preferencia = preferenciaEfectiva(
-      fila.preferencia
-        ? {
-            adminHabilitado: fila.preferencia.admin_habilitado,
-            consentimientoEstado: fila.preferencia.consentimiento_estado,
-            consentimientoOrigen: fila.preferencia.consentimiento_origen,
-            consentimientoRegistradoAt: fila.preferencia.consentimiento_registrado_at,
-            correoVerificado: fila.preferencia.correo_verificado,
-          }
-        : null
+      preferenciaParaPolitica(fila.preferencia)
     );
     const decision = puedeEncolarBienvenida({
       destinatario: {
         email: fila.email,
         perfilesConMismoCorreo: fila.perfilesConMismoCorreo,
-        preferencia,
+        preferencia: preferenciaParaPolitica(fila.preferencia),
+        emailVerificado: fila.preferencia?.correo_verificado_email ?? null,
         sigueInscrito: true,
         esSalienteDeSustitucion: false,
       },
@@ -409,6 +493,26 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       yaEnviado: fila.yaEnviado,
       yaEncolado: fila.yaEncolado,
       origen: "accion_admin",
+    });
+    const recientes = (snapshot?.verificaciones ?? []).filter(
+      (item) =>
+        item.liga_jugador_id === fila.jugadorId &&
+        Date.now() - Date.parse(item.created_at) < 24 * 60 * 60 * 1000
+    ).length;
+    const ultima = fila.solicitud?.createdAt
+      ? (Date.now() - Date.parse(fila.solicitud.createdAt)) / 60000
+      : null;
+    const puedeVerificar = puedeSolicitarVerificacion({
+      autenticado: true,
+      esOrganizadorDeLaLiga: true,
+      esMasterAdmin: false,
+      sigueInscrito: true,
+      email: fila.email,
+      perfilesConMismoCorreo: fila.perfilesConMismoCorreo,
+      preferencia: preferenciaParaPolitica(fila.preferencia),
+      emailVerificado: fila.preferencia?.correo_verificado_email ?? null,
+      solicitudesRecientes: recientes,
+      minutosDesdeUltima: ultima,
     });
     const ocupado = guardandoId === fila.jugadorId;
     return (
@@ -427,9 +531,23 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         <span className="liga-notificaciones__badge">
           {ESTADO_VISUAL_LABEL[fila.visual]}
         </span>
-        {fila.email?.trim() && fila.visual !== "correo_ambiguo" ? (
+        <span className="liga-notificaciones__badge">
+          {ESTADO_VERIFICACION_LABEL[fila.verificacion]}
+        </span>
+        {puedeVerificar.solicitar ? (
+          <button
+            type="button"
+            className="liga-notificaciones__accion"
+            disabled={ocupado || !snapshot?.disponible}
+            onClick={() => void pedirVerificacion(fila)}
+          >
+            Solicitar verificación
+          </button>
+        ) : null}
+        {fila.verificacion === "pendiente_verificacion" ||
+        fila.verificacion === "enlace_vencido" ? (
           <p className="liga-notificaciones__nota">
-            Correo registrado, pendiente de verificación.
+            Correo registrado, pendiente de verificación por enlace.
           </p>
         ) : null}
         {preferencia.consentimientoEstado === "autorizado" ? (
@@ -537,9 +655,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   return (
     <section className="liga-notificaciones" aria-label="Notificaciones de la liga">
       <p className="liga-notificaciones__intro">
-        Nadie recibe un correo hasta que lo autorices en esta liga y exista un
-        consentimiento documentado. Tener un correo guardado no lo verifica, y
-        desde aquí no se puede marcar como verificado. Los envíos reales están apagados.
+        Nadie recibe un correo hasta que lo autorices en esta liga, exista un
+        consentimiento documentado y el jugador confirme su dirección con el
+        enlace. Desde aquí no se marca como verificado a mano. Los envíos reales
+        están apagados.
       </p>
       {aviso ? (
         <p className="liga-notificaciones__aviso" role="status">
@@ -674,16 +793,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   destinatario: {
                     email: preview.email,
                     perfilesConMismoCorreo: preview.perfilesConMismoCorreo,
-                    preferencia: preview.preferencia
-                      ? {
-                          adminHabilitado: preview.preferencia.admin_habilitado,
-                          consentimientoEstado: preview.preferencia.consentimiento_estado,
-                          consentimientoOrigen: preview.preferencia.consentimiento_origen,
-                          consentimientoRegistradoAt:
-                            preview.preferencia.consentimiento_registrado_at,
-                          correoVerificado: preview.preferencia.correo_verificado,
-                        }
-                      : null,
+                    preferencia: preferenciaParaPolitica(preview.preferencia),
+                    emailVerificado:
+                      preview.preferencia?.correo_verificado_email ?? null,
                     sigueInscrito: true,
                     esSalienteDeSustitucion: false,
                   },

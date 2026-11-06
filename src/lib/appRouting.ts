@@ -237,7 +237,11 @@ export function resolveAppViewFromPath(pathname: string): AppView {
   if (currentPath === "/admin-dashboard") return "admin-dashboard";
   if (currentPath === "/admin/dev/player-debug") return "admin-dev-player-debug";
   if (currentPath === "/americano-dinamico") return "americano-dinamico";
-  if (currentPath.startsWith("/liga") || /^\/public\/liga\//i.test(currentPath))
+  if (
+    currentPath.startsWith("/liga") ||
+    /^\/public\/liga\//i.test(currentPath) ||
+    currentPath === "/public/verificar-correo"
+  )
     return "liga";
   if (currentPath === "/coaching" || currentPath.startsWith("/coaching/"))
     return "coaching";

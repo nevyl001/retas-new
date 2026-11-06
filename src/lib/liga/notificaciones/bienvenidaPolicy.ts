@@ -152,6 +152,8 @@ export interface DestinatarioBienvenida {
   email: string | null;
   perfilesConMismoCorreo: number;
   preferencia: PreferenciaGuardada | null;
+  /** Correo normalizado acreditado por el enlace. Si cambia, la verificación caduca. */
+  emailVerificado?: string | null;
   sigueInscrito: boolean;
   esSalienteDeSustitucion: boolean;
 }
@@ -164,7 +166,11 @@ export function estadoVisual(
   if (destinatario.perfilesConMismoCorreo > 1) return "correo_ambiguo";
 
   const preferencia = preferenciaEfectiva(destinatario.preferencia);
-  if (!preferencia.correoVerificado) return "correo_por_verificar";
+  const verificadoActual =
+    preferencia.correoVerificado &&
+    (!destinatario.emailVerificado ||
+      normalizarCorreo(destinatario.emailVerificado) === correo);
+  if (!verificadoActual) return "correo_por_verificar";
   if (preferencia.consentimientoEstado !== "autorizado") {
     return "sin_autorizacion";
   }

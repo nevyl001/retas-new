@@ -2,6 +2,8 @@
 -- No es el esquema real de la plataforma: solo las columnas que la migración toca.
 
 CREATE SCHEMA IF NOT EXISTS auth;
+CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 
 CREATE OR REPLACE FUNCTION auth.uid()
 RETURNS uuid

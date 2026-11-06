@@ -1,0 +1,53 @@
+.liga-verificar-correo {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 48px 20px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.liga-verificar-correo__eyebrow {
+  margin: 0;
+  color: var(--ro-text-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.liga-verificar-correo__title {
+  margin: 0;
+  color: var(--ro-text-primary);
+  font-size: clamp(1.75rem, 4vw, 2.4rem);
+  line-height: 1.15;
+  font-weight: 600;
+}
+
+.liga-verificar-correo__copy,
+.liga-verificar-correo__status,
+.liga-verificar-correo__note {
+  margin: 0;
+  color: var(--ro-text-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.liga-verificar-correo__status {
+  color: var(--ro-text-primary);
+}
+
+.liga-verificar-correo__cta {
+  align-self: flex-start;
+  min-height: 48px;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 767px) {
+  .liga-verificar-correo {
+    padding-top: 32px;
+  }
+
+  .liga-verificar-correo__cta {
+    width: 100%;
+  }
+}

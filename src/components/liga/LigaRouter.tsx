@@ -6,6 +6,7 @@ import { LigaHome } from "./LigaHome";
 import { LigaJornadaView } from "./LigaJornada";
 import { LigaNueva } from "./LigaNueva";
 import { LigaPageShell } from "./LigaPageShell";
+import { LigaVerificarCorreoPublica } from "./LigaVerificarCorreoPublica";
 
 export type LigaRoute =
   | { kind: "home" }
@@ -14,10 +15,15 @@ export type LigaRoute =
   | { kind: "jornada"; ligaId: string; numero: number }
   | { kind: "publica"; ligaId: string }
   | { kind: "publicaJornada"; ligaId: string; numero: number }
+  | { kind: "verificarCorreo" }
   | { kind: "unknown" };
 
 export function parseLigaPath(pathname: string): LigaRoute {
   const path = pathname.replace(/\/+$/, "") || "/";
+
+  if (path === "/public/verificar-correo") {
+    return { kind: "verificarCorreo" };
+  }
 
   const publicaJornada = path.match(
     /^\/public\/liga\/([^/]+)\/jornada\/(\d+)$/i
@@ -53,7 +59,11 @@ export function parseLigaPath(pathname: string): LigaRoute {
 
 export function isLigaPublicPath(pathname: string): boolean {
   const kind = parseLigaPath(pathname).kind;
-  return kind === "publica" || kind === "publicaJornada";
+  return (
+    kind === "publica" ||
+    kind === "publicaJornada" ||
+    kind === "verificarCorreo"
+  );
 }
 
 export const LigaRouter: React.FC<{ pathname: string }> = ({ pathname }) => {
@@ -74,6 +84,8 @@ export const LigaRouter: React.FC<{ pathname: string }> = ({ pathname }) => {
       return (
         <LigaJornadaPublica ligaId={route.ligaId} numero={route.numero} />
       );
+    case "verificarCorreo":
+      return <LigaVerificarCorreoPublica />;
     default:
       return (
         <LigaPageShell>
