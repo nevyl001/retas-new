@@ -74,7 +74,9 @@ interface LigaGestionarProps {
   ligaId: string;
 }
 
-type LigaGestionarTab = "jugadores" | "parejas" | "jornadas";
+type LigaGestionarTab = "jugadores" | "parejas" | "jornadas" | "notificaciones";
+
+const LigaNotificacionesPanel = React.lazy(() => import("./LigaNotificacionesPanel"));
 
 export function estadoLigaLabel(estado: LigaDetalle["estado"]): string {
   switch (estado) {
@@ -110,7 +112,7 @@ export function estadoLigaStatusVariant(
 export function buildLigaGestionarTabs(
   esParejasFijas: boolean
 ): { id: string; label: string }[] {
-  return esParejasFijas
+  const deportivas = esParejasFijas
     ? [
         { id: "parejas", label: "Parejas" },
         { id: "jornadas", label: "Jornadas" },
@@ -119,6 +121,10 @@ export function buildLigaGestionarTabs(
         { id: "jugadores", label: "Jugadores" },
         { id: "jornadas", label: "Jornadas" },
       ];
+  return [
+    ...deportivas,
+    { id: "notificaciones", label: "Notificaciones" },
+  ];
 }
 
 export function jornadaEstadoLabel(estado: LigaJornadaEstado): string {
@@ -1671,6 +1677,21 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
               </ul>
             )}
           </div>
+        </ModeSectionPanel>
+      ) : null}
+
+      {tab === "notificaciones" && detalle ? (
+        <ModeSectionPanel id="notificaciones" activeId={tab}>
+          <React.Suspense fallback={<p className="liga-hint">Cargando notificaciones…</p>}>
+            <LigaNotificacionesPanel
+              ligaId={ligaId}
+              ligaNombre={detalle.nombre}
+              inscripciones={detalle.inscripciones}
+              equipos={detalle.equipos}
+              pool={jugadoresPool}
+              sustituciones={sustituciones}
+            />
+          </React.Suspense>
         </ModeSectionPanel>
       ) : null}
 

@@ -148,14 +148,14 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
     });
   }
 
-  it("muestra las mismas 2 tabs (Jugadores → Jornadas) en el mismo orden, sin duplicados", async () => {
+  it("muestra Jugadores → Jornadas → Notificaciones, sin duplicados", async () => {
     await renderLiga(baseDetalle());
 
     const tabButtons = Array.from(
       container.querySelectorAll(".mode-section-tabs__btn")
     ).map((el) => el.textContent);
 
-    expect(tabButtons).toEqual(["Jugadores", "Jornadas"]);
+    expect(tabButtons).toEqual(["Jugadores", "Jornadas", "Notificaciones"]);
   });
 
   it("resolveSiguienteJornadaNumero apunta a la primera upcoming si no hay en curso", () => {
@@ -299,7 +299,7 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
       container.querySelectorAll(".mode-section-tabs__btn")
     ).map((el) => el.textContent);
 
-    expect(tabButtons).toEqual(["Parejas", "Jornadas"]);
+    expect(tabButtons).toEqual(["Parejas", "Jornadas", "Notificaciones"]);
   });
 
   it("el header conserva nombre, estado y modalidad", async () => {

@@ -1,0 +1,211 @@
+.liga-notificaciones {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.liga-notificaciones__intro,
+.liga-notificaciones__aviso,
+.liga-notificaciones__nota {
+  margin: 0;
+  color: var(--ro-text-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.liga-notificaciones__aviso {
+  color: var(--ro-text-primary);
+}
+
+.liga-notificaciones__areas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.liga-notificaciones__area {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ro-text-primary);
+  font: inherit;
+}
+
+.liga-notificaciones__area[aria-pressed="true"] {
+  background: var(--ro-bg-elevated);
+  border-color: var(--ro-text-primary);
+}
+
+.liga-notificaciones__toolbar,
+.liga-notificaciones__counts,
+.liga-notificaciones__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.liga-notificaciones__search {
+  flex: 1 1 220px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: 8px;
+  background: var(--ro-bg-input);
+  color: var(--ro-text-primary);
+  font: inherit;
+}
+
+.liga-notificaciones__filter {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ro-text-primary);
+  font: inherit;
+}
+
+.liga-notificaciones__filter[aria-pressed="true"] {
+  background: var(--ro-bg-elevated);
+}
+
+.liga-notificaciones__count {
+  color: var(--ro-text-primary);
+  font-size: 0.92rem;
+}
+
+.liga-notificaciones__table {
+  display: none;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.liga-notificaciones__table--visible {
+  display: table;
+}
+
+.liga-notificaciones__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.liga-notificaciones__card,
+.liga-notificaciones__table th,
+.liga-notificaciones__table td {
+  border: 1px solid var(--ro-border-subtle);
+  background: var(--ro-bg-elevated);
+  text-align: left;
+  vertical-align: top;
+}
+
+.liga-notificaciones__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.liga-notificaciones__table th,
+.liga-notificaciones__table td {
+  padding: 12px;
+}
+
+.liga-notificaciones__identidad {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.liga-notificaciones__nombre,
+.liga-notificaciones__correo,
+.liga-notificaciones__meta {
+  margin: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.liga-notificaciones__nombre {
+  color: var(--ro-text-primary);
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.liga-notificaciones__correo,
+.liga-notificaciones__meta {
+  color: var(--ro-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.liga-notificaciones__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: 999px;
+  color: var(--ro-text-primary);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.liga-notificaciones__controles {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.liga-notificaciones__switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--ro-text-primary);
+}
+
+.liga-notificaciones__accion,
+.liga-notificaciones__select,
+.liga-notificaciones__origen {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: 8px;
+  background: var(--ro-bg-input);
+  color: var(--ro-text-primary);
+  font: inherit;
+}
+
+.liga-notificaciones__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.liga-notificaciones__frame {
+  width: 100%;
+  min-height: 640px;
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: 12px;
+  background: #050505;
+}
+
+.liga-notificaciones__historial {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.liga-notificaciones__config {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 640px;
+}
+

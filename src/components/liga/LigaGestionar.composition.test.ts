@@ -14,36 +14,35 @@ import {
 import { jornadaEstadoStatusVariant } from "./LigaJornada";
 
 describe("buildLigaGestionarTabs — mismo orden y textos que antes", () => {
-  it("individual_rotativo: Jugadores → Jornadas, en ese orden exacto", () => {
+  it("individual_rotativo: Jugadores → Jornadas → Notificaciones", () => {
     const tabs = buildLigaGestionarTabs(false);
     expect(tabs).toEqual([
       { id: "jugadores", label: "Jugadores" },
       { id: "jornadas", label: "Jornadas" },
+      { id: "notificaciones", label: "Notificaciones" },
     ]);
   });
 
-  it("parejas_fijas: Parejas → Jornadas, en ese orden exacto", () => {
+  it("parejas_fijas: Parejas → Jornadas → Notificaciones", () => {
     const tabs = buildLigaGestionarTabs(true);
     expect(tabs).toEqual([
       { id: "parejas", label: "Parejas" },
       { id: "jornadas", label: "Jornadas" },
+      { id: "notificaciones", label: "Notificaciones" },
     ]);
   });
 
-  it("siempre exactamente 2 tabs (no se agregan tabs nuevas)", () => {
-    expect(buildLigaGestionarTabs(false)).toHaveLength(2);
-    expect(buildLigaGestionarTabs(true)).toHaveLength(2);
-  });
-
-  it("Jornadas siempre es la última tab, sin importar la modalidad", () => {
-    expect(buildLigaGestionarTabs(false).at(-1)).toEqual({
-      id: "jornadas",
-      label: "Jornadas",
-    });
-    expect(buildLigaGestionarTabs(true).at(-1)).toEqual({
-      id: "jornadas",
-      label: "Jornadas",
-    });
+  it("las tabs deportivas siguen en su orden y Notificaciones queda al final", () => {
+    expect(buildLigaGestionarTabs(false).slice(0, 2)).toEqual([
+      { id: "jugadores", label: "Jugadores" },
+      { id: "jornadas", label: "Jornadas" },
+    ]);
+    expect(buildLigaGestionarTabs(true).slice(0, 2)).toEqual([
+      { id: "parejas", label: "Parejas" },
+      { id: "jornadas", label: "Jornadas" },
+    ]);
+    expect(buildLigaGestionarTabs(false).at(-1)?.id).toBe("notificaciones");
+    expect(buildLigaGestionarTabs(true).at(-1)?.id).toBe("notificaciones");
   });
 });
 

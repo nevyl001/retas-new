@@ -57,6 +57,8 @@ export interface LigaJugador {
 export interface LigaJugadorPoolItem extends LigaJugador {
   categoria: RivieraJugadorCategoria | null;
   riviera_id?: string | null;
+  /** UUID de riviera_jugadores, cuando el pool ya lo resolvió. */
+  riviera_jugador_id?: string | null;
   foto_url?: string | null;
 }
 

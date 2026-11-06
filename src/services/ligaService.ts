@@ -820,6 +820,7 @@ async function enrichLigaJugadoresWithCategoria(
       ...j,
       categoria: null,
       riviera_id: null,
+      riviera_jugador_id: null,
       foto_url: null,
     }));
   }
@@ -884,6 +885,7 @@ async function enrichLigaJugadoresWithCategoria(
       ...j,
       categoria: meta?.categoria ?? null,
       riviera_id,
+      riviera_jugador_id: meta?.rivieraJugadorId ?? null,
       foto_url: meta?.foto_url ?? null,
     };
   });
@@ -978,6 +980,10 @@ export async function inscribirJugador(
   if (error) throw new Error(error.message);
 
   fireLigaInscripcionRankingSync(ligaId, jugadorId, uid);
+  const { encolarBienvenidaTrasInscripcion } = await import(
+    "./ligaNotificacionesService"
+  );
+  void encolarBienvenidaTrasInscripcion(ligaId, jugadorId);
 }
 
 export async function desinscribirJugador(
