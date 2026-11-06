@@ -51,6 +51,8 @@ export interface PreferenciaNotificacion {
   consentimientoOrigen: string | null;
   consentimientoRegistradoAt: string | null;
   correoVerificado: boolean;
+  /** Solo un enlace de confirmación cuenta. Un interruptor del administrador no. */
+  correoVerificacionOrigen: "enlace_de_confirmacion" | null;
 }
 
 export const PREFERENCIA_INICIAL: PreferenciaNotificacion = {
@@ -59,6 +61,7 @@ export const PREFERENCIA_INICIAL: PreferenciaNotificacion = {
   consentimientoOrigen: null,
   consentimientoRegistradoAt: null,
   correoVerificado: false,
+  correoVerificacionOrigen: null,
 };
 
 const ORIGENES_QUE_NO_SON_CONSENTIMIENTO = new Set([
@@ -79,6 +82,7 @@ export interface PreferenciaGuardada {
   consentimientoOrigen?: string | null;
   consentimientoRegistradoAt?: string | null;
   correoVerificado?: boolean | null;
+  correoVerificacionOrigen?: string | null;
 }
 
 export function normalizarCorreo(
@@ -121,6 +125,10 @@ export function preferenciaEfectiva(
     consentimientoEstado = "revocado";
   }
 
+  const verificacion = row.correoVerificacionOrigen?.trim().toLowerCase() ?? "";
+  const correoVerificado =
+    row.correoVerificado === true && verificacion === "enlace_de_confirmacion";
+
   return {
     adminHabilitado: row.adminHabilitado === true,
     consentimientoEstado,
@@ -128,7 +136,8 @@ export function preferenciaEfectiva(
       consentimientoEstado === "sin_autorizacion" ? null : origen,
     consentimientoRegistradoAt:
       consentimientoEstado === "sin_autorizacion" ? null : registradoAt,
-    correoVerificado: row.correoVerificado === true,
+    correoVerificado,
+    correoVerificacionOrigen: correoVerificado ? "enlace_de_confirmacion" : null,
   };
 }
 

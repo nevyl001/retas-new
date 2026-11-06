@@ -1,3 +1,5 @@
+import { parseJugadoresPath } from "../../../components/jugadores/JugadoresRouter";
+import { parseLigaPath } from "../../../components/liga/LigaRouter";
 import {
   acentoSeguro,
   enlacePerfilBienvenida,
@@ -69,6 +71,19 @@ describe("plantilla de bienvenida", () => {
       ligaId: LIGA,
     });
     expect(sinFicha.perfilUrl).toBe(sinFicha.ligaUrl);
+    expect(parseJugadoresPath(new URL(enlaces.perfilUrl).pathname)).toEqual({
+      kind: "officialPlayer",
+      playerId: RIVIERA,
+    });
+    expect(parseLigaPath(new URL(enlaces.ligaUrl).pathname)).toEqual({
+      kind: "publica",
+      ligaId: LIGA,
+    });
+    const versionNoAbierta = enlacePerfilBienvenida({
+      rivieraJugadorId: "aaaaaaaa-aaaa-7aaa-8aaa-aaaaaaaaaaaa",
+      ligaId: LIGA,
+    });
+    expect(versionNoAbierta.perfilUrl).toBe(versionNoAbierta.ligaUrl);
 
     const { html, text } = mensaje();
     expect(html).toContain(enlaces.perfilUrl);

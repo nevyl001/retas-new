@@ -47,6 +47,7 @@ function preferenciaLista(): PreferenciaNotificacion {
     consentimientoOrigen: "manifestacion_presencial",
     consentimientoRegistradoAt: "2026-11-06T12:00:00.000Z",
     correoVerificado: true,
+    correoVerificacionOrigen: "enlace_de_confirmacion",
   };
 }
 
@@ -84,6 +85,7 @@ describe("bienvenida de liga — elegibilidad", () => {
         preferencia: {
           adminHabilitado: true,
           correoVerificado: true,
+          correoVerificacionOrigen: "enlace_de_confirmacion",
           consentimientoEstado: "sin_autorizacion",
         },
       }),
@@ -355,7 +357,33 @@ describe("bienvenida de liga — elegibilidad", () => {
       consentimientoOrigen: null,
       consentimientoRegistradoAt: null,
       correoVerificado: false,
+      correoVerificacionOrigen: null,
     });
+  });
+
+  it("un interruptor no convierte un correo registrado en verificado", () => {
+    const preferencia = preferenciaEfectiva({
+      adminHabilitado: true,
+      correoVerificado: true,
+      consentimientoEstado: "autorizado",
+      consentimientoOrigen: "manifestacion_presencial",
+      consentimientoRegistradoAt: "2026-11-06T12:00:00.000Z",
+    });
+    expect(preferencia.correoVerificado).toBe(false);
+    expect(preferencia.correoVerificacionOrigen).toBeNull();
+    expect(
+      estadoVisual(
+        destinatario({
+          preferencia: {
+            adminHabilitado: true,
+            correoVerificado: true,
+            consentimientoEstado: "autorizado",
+            consentimientoOrigen: "manifestacion_presencial",
+            consentimientoRegistradoAt: "2026-11-06T12:00:00.000Z",
+          },
+        })
+      )
+    ).toBe("correo_por_verificar");
   });
 
   it("no acepta la inscripción ni el correo como consentimiento", () => {
@@ -436,6 +464,7 @@ describe("bienvenida de liga — artefactos de seguridad", () => {
     expect(sql).not.toMatch(/CREATE TRIGGER[\s\S]{0,200}liga_inscripciones/i);
     expect(sql).not.toMatch(/INTO\s+public\.notificaciones_eventos_queue/i);
     expect(sql).toContain("consentimiento_sin_evidencia");
+    expect(sql).toContain("correo_sin_verificacion");
   });
 
   it("el worker no llama a Resend ni escribe mientras los envíos reales están apagados", () => {

@@ -122,6 +122,8 @@ describe("LigaNotificacionesPanel", () => {
     expect(container.textContent).toContain("0 seleccionados");
     expect(container.textContent).toContain("1 excluidos");
     expect(container.textContent?.toLowerCase()).not.toContain("habilitar a todos");
+    expect(container.textContent).not.toContain("Marcar correo verificado");
+    expect(container.textContent).toContain("pendiente de verificación");
     const checkbox = container.querySelector(
       'input[type="checkbox"]'
     ) as HTMLInputElement;

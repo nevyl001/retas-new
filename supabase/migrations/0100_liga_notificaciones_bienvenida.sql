@@ -122,12 +122,17 @@ BEGIN
     END IF;
   END IF;
 
-  IF NEW.correo_verificado THEN
-    IF TG_OP = 'INSERT' THEN
-      NEW.correo_verificado_at := now();
-    ELSIF NOT COALESCE(OLD.correo_verificado, false) THEN
-      NEW.correo_verificado_at := now();
-    END IF;
+  -- No hay un mecanismo que acredite la titularidad del correo.
+  -- Un interruptor del administrador no convierte un correo registrado en verificado.
+  -- Una fila que ya estuviera verificada puede cambiar otras columnas.
+  IF TG_OP = 'INSERT' AND NEW.correo_verificado THEN
+    RAISE EXCEPTION 'correo_sin_verificacion'
+      USING ERRCODE = '23514';
+  ELSIF TG_OP = 'UPDATE'
+     AND NEW.correo_verificado
+     AND NOT COALESCE(OLD.correo_verificado, false) THEN
+    RAISE EXCEPTION 'correo_sin_verificacion'
+      USING ERRCODE = '23514';
   END IF;
 
   IF NOT NEW.correo_verificado THEN

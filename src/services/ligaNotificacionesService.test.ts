@@ -2,6 +2,7 @@ import { supabase } from "../lib/supabaseClient";
 import {
   encolarBienvenidaTrasInscripcion,
   esEsquemaAusente,
+  establecerCorreoVerificado,
   solicitarBienvenidaJugador,
 } from "./ligaNotificacionesService";
 
@@ -42,6 +43,18 @@ describe("ligaNotificacionesService", () => {
       encolado: false,
       motivo: "deshabilitado",
     });
+  });
+
+  it("no escribe una verificación de correo que el administrador no puede acreditar", async () => {
+    await expect(
+      establecerCorreoVerificado({
+        ligaId: "liga",
+        jugadorId: "jugador",
+        rivieraJugadorId: null,
+        verificado: true,
+      })
+    ).resolves.toEqual({ ok: false, motivo: "correo_sin_verificacion" });
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it("no conserva un motivo que no sea un código", async () => {

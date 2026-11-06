@@ -241,18 +241,13 @@ export async function revocarConsentimientoJugador(input: {
   return guardado;
 }
 
-export async function establecerCorreoVerificado(input: {
+export async function establecerCorreoVerificado(_input: {
   ligaId: string;
   jugadorId: string;
   rivieraJugadorId: string | null;
   verificado: boolean;
 }): Promise<ResultadoNotificacion> {
-  return asegurarPreferencia(
-    input.ligaId,
-    input.jugadorId,
-    input.rivieraJugadorId,
-    { correo_verificado: input.verificado }
-  );
+  return { ok: false, motivo: "correo_sin_verificacion" };
 }
 
 export async function guardarConfigLiga(

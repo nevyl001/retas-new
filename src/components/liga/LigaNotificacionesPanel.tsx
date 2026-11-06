@@ -26,7 +26,6 @@ import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import {
   cargarNotificacionesLiga,
-  establecerCorreoVerificado,
   establecerHabilitacionJugador,
   guardarConfigLiga,
   registrarConsentimientoJugador,
@@ -428,26 +427,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         <span className="liga-notificaciones__badge">
           {ESTADO_VISUAL_LABEL[fila.visual]}
         </span>
-        {fila.visual !== "sin_correo" && fila.visual !== "correo_ambiguo" ? (
-          <button
-            type="button"
-            className="liga-notificaciones__accion"
-            disabled={ocupado || !snapshot?.disponible}
-            onClick={() =>
-              void guardarFila(fila, { correo_verificado: !preferencia.correoVerificado }, () =>
-                establecerCorreoVerificado({
-                  ligaId,
-                  jugadorId: fila.jugadorId,
-                  rivieraJugadorId: fila.rivieraJugadorId,
-                  verificado: !preferencia.correoVerificado,
-                })
-              )
-            }
-          >
-            {preferencia.correoVerificado
-              ? "Quitar verificación"
-              : "Marcar correo verificado"}
-          </button>
+        {fila.email?.trim() && fila.visual !== "correo_ambiguo" ? (
+          <p className="liga-notificaciones__nota">
+            Correo registrado, pendiente de verificación.
+          </p>
         ) : null}
         {preferencia.consentimientoEstado === "autorizado" ? (
           <button
@@ -555,7 +538,8 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     <section className="liga-notificaciones" aria-label="Notificaciones de la liga">
       <p className="liga-notificaciones__intro">
         Nadie recibe un correo hasta que lo autorices en esta liga y exista un
-        consentimiento documentado. Los envíos reales están apagados.
+        consentimiento documentado. Tener un correo guardado no lo verifica, y
+        desde aquí no se puede marcar como verificado. Los envíos reales están apagados.
       </p>
       {aviso ? (
         <p className="liga-notificaciones__aviso" role="status">
