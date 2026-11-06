@@ -472,10 +472,18 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
       setBusy(false);
     }
   };
-  const calendarioStale = useMemo(
-    () => (detalle ? calendarioDesactualizado(detalle) : false),
-    [detalle]
-  );
+  const calendarioStale = useMemo(() => {
+    if (!detalle || loading) return false;
+    return calendarioDesactualizado(
+      detalle,
+      sustituciones.map((s) => ({
+        fromJugadorId: s.from_jugador_id,
+        toJugadorId: s.to_jugador_id,
+        ingresoJornadaNumero: s.jornada_efectiva_numero,
+        plazaInscripcionId: s.plaza_inscripcion_id,
+      }))
+    );
+  }, [detalle, loading, sustituciones]);
 
   const jornadasActivas = useMemo(
     () => (detalle ? tieneJornadasEnCurso(detalle) : false),
