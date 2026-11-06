@@ -187,6 +187,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const [snapshot, setSnapshot] = useState<NotificacionesLigaSnapshot | null>(null);
   const [cargando, setCargando] = useState(true);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [enlacePrueba, setEnlacePrueba] = useState<string | null>(null);
   const [guardandoId, setGuardandoId] = useState<string | null>(null);
   const [origenDraft, setOrigenDraft] = useState<string>(ORIGENES[0].id);
   const [consentimientoDe, setConsentimientoDe] = useState<string | null>(null);
@@ -390,11 +391,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       };
     });
     if (resultado.enlaceSimulado) {
+      setEnlacePrueba(resultado.enlaceSimulado);
       confirmar(
-        `Verificación simulada. Abre el enlace de prueba: ${resultado.enlaceSimulado}`
+        "Verificación simulada lista. Copia el enlace de prueba debajo. No se envió un correo."
       );
       return;
     }
+    setEnlacePrueba(null);
     confirmar("Solicitud de verificación preparada. No se envió un correo real.");
   }
 
@@ -665,6 +668,24 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           {aviso}
         </p>
       ) : null}
+      {enlacePrueba ? (
+        <p className="liga-notificaciones__aviso liga-notificaciones__aviso--simulado">
+          <span>Enlace de prueba (solo entorno local): </span>
+          <a href={enlacePrueba} rel="noreferrer">
+            abrir verificación
+          </a>
+          <button
+            type="button"
+            className="liga-notificaciones__link-btn"
+            onClick={() => {
+              void navigator.clipboard?.writeText(enlacePrueba);
+              confirmar("Enlace de prueba copiado.");
+            }}
+          >
+            Copiar
+          </button>
+        </p>
+      ) : null}
       {!cargando && snapshot && !snapshot.disponible ? (
         <p className="liga-notificaciones__nota">
           La migración de notificaciones todavía no está aplicada. Puedes
@@ -891,8 +912,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             Modo de prueba
           </label>
           <p className="liga-notificaciones__nota">
-            El modo de prueba no envía correos. Los envíos reales siguen apagados
-            en el servidor hasta una autorización aparte. No hay envío masivo.
+            El modo de prueba no envía correos y no entrega enlaces de
+            verificación al panel. Los tokens solo aparecen en entornos locales
+            con simulación de servidor expresamente activada. Los envíos reales
+            siguen apagados hasta una autorización aparte. No hay envío masivo.
           </p>
         </div>
       ) : null}

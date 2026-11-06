@@ -84,9 +84,15 @@ function motivoSeguro(raw: unknown): string | null {
 }
 
 function aviso(motivo: string | null): void {
+  // Solo códigos cortos. Nunca tokens, enlaces ni correos.
   if (motivo && motivo !== "esquema_pendiente") {
     console.warn("[liga-notificaciones]", motivo);
   }
+}
+
+/** El cliente solo muestra enlace_simulado si el build lo autorizó de forma explícita. */
+export function simulacionNotificacionesClienteActiva(): boolean {
+  return process.env.REACT_APP_LIGA_NOTIFICACIONES_SIMULACION === "true";
 }
 
 export async function cargarNotificacionesLiga(
@@ -344,7 +350,10 @@ export async function solicitarVerificacionCorreo(input: {
     enlace_simulado?: unknown;
     solicitud_id?: unknown;
   };
+  // Doble candado: el RPC solo incluye el token con GUC de servidor;
+  // el cliente lo ignora salvo build local con REACT_APP_LIGA_NOTIFICACIONES_SIMULACION=true.
   const enlace =
+    simulacionNotificacionesClienteActiva() &&
     typeof row.enlace_simulado === "string" &&
     /^https:\/\/[^?\s]+\/public\/verificar-correo\?t=[a-f0-9]{48,128}$/i.test(
       row.enlace_simulado
@@ -354,7 +363,7 @@ export async function solicitarVerificacionCorreo(input: {
   return {
     ok: row.ok === true,
     motivo: motivoSeguro(row.motivo),
-    simulado: row.simulado === true,
+    simulado: row.simulado === true && enlace !== null,
     enlaceSimulado: enlace,
     solicitudId:
       typeof row.solicitud_id === "string" ? row.solicitud_id : null,

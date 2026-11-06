@@ -17,6 +17,25 @@
   color: var(--ro-text-primary);
 }
 
+.liga-notificaciones__aviso--simulado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  word-break: break-all;
+}
+
+.liga-notificaciones__link-btn {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ro-text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
 .liga-notificaciones__areas {
   display: flex;
   flex-wrap: wrap;

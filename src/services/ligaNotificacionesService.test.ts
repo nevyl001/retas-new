@@ -4,6 +4,8 @@ import {
   esEsquemaAusente,
   establecerCorreoVerificado,
   solicitarBienvenidaJugador,
+  solicitarVerificacionCorreo,
+  simulacionNotificacionesClienteActiva,
 } from "./ligaNotificacionesService";
 
 jest.mock("../lib/supabaseClient", () => ({
@@ -64,5 +66,29 @@ describe("ligaNotificacionesService", () => {
     });
     const resultado = await solicitarBienvenidaJugador("liga", "jugador");
     expect(resultado.motivo).toBe("no_disponible");
+  });
+
+  it("ignora enlace_simulado si el build de cliente no autoriza simulación", async () => {
+    expect(simulacionNotificacionesClienteActiva()).toBe(false);
+    rpc.mockResolvedValue({
+      data: {
+        ok: true,
+        simulado: true,
+        solicitud_id: "sol-1",
+        enlace_simulado:
+          "https://appriviera.rivieraopen.com/public/verificar-correo?t=" +
+          "a".repeat(64),
+      },
+      error: null,
+    });
+    await expect(
+      solicitarVerificacionCorreo({ ligaId: "liga", jugadorId: "jugador" })
+    ).resolves.toEqual({
+      ok: true,
+      motivo: null,
+      simulado: false,
+      enlaceSimulado: null,
+      solicitudId: "sol-1",
+    });
   });
 });

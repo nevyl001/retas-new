@@ -79,6 +79,10 @@ SELECT public._assert(
   'correo compartido no recibe enlace'
 );
 
+-- Tras 0102 el token solo sale con este GUC de servidor.
+-- Con 0101 solo, modo_prueba=true bastaba; el GUC no molesta en ese caso.
+SELECT set_config('app.liga_notificaciones_simulacion', 'true', false);
+
 DO $$
 DECLARE
   v_res jsonb;
@@ -181,6 +185,7 @@ SELECT public._assert(
   'cola vacia y liga sigue pausada'
 );
 
+SELECT set_config('app.liga_notificaciones_simulacion', '', false);
 RESET ROLE;
 
 UPDATE public.liga_jugadores
