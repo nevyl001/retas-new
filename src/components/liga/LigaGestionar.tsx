@@ -1282,8 +1282,8 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
                       {s.from_nombre ?? "Jugador"} → {s.to_nombre ?? "Jugador"}
                     </span>
                     <span>
-                      Jornada {s.jornada_efectiva_numero} · {s.puntos_heredados}{" "}
-                      pts heredados
+                      Ingreso: Jornada {s.jornada_efectiva_numero} · Puntos
+                      heredados: {s.puntos_heredados} · Sustitución aplicada
                     </span>
                   </li>
                 ))}

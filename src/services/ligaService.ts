@@ -39,6 +39,7 @@ import {
   fireLigaInscripcionRankingSync,
 } from "./ligaCareerInscripcionSync";
 import { dedupeLigaJugadoresById } from "../lib/liga/dedupeJugadores";
+import { collectMissingJugadorIds } from "../lib/liga/historicalIdentity";
 import {
   computeParejasFijasMatchTotals,
   parseSetScoresJson,
@@ -362,6 +363,7 @@ export async function getLigaById(
   const jornadaIds = (jornadas ?? []).map((j) => j.id);
   let parejas: LigaJornadaPareja[] = [];
   let partidos: LigaPartido[] = [];
+  const historicalPlayers: LigaJugador[] = [];
 
   if (jornadaIds.length > 0) {
     const [{ data: pRows, error: pErr }, { data: mRows, error: mErr }] =
@@ -401,6 +403,34 @@ export async function getLigaById(
       jugador1: jugadoresById.get(String(p.jugador1_id)),
       jugador2: jugadoresById.get(String(p.jugador2_id)),
     }));
+
+    // El id guardado en la pareja es quien jugó. Tras una sustitución ese
+    // jugador ya no está en la inscripción vigente; sin esta lectura la
+    // tarjeta muestra "?" y pierde foto, nombre y rating históricos.
+    const missingIds = collectMissingJugadorIds(
+      parejas.flatMap((p) => [p.jugador1_id, p.jugador2_id]),
+      new Set(jugadoresById.keys())
+    );
+    if (missingIds.length > 0) {
+      const { data: historicalRows, error: hErr } = await supabase
+        .from("liga_jugadores")
+        .select(LIGA_JUGADOR_SELECT_PUBLIC)
+        .in("id", missingIds);
+      if (hErr) {
+        console.warn("[liga] identidad histórica:", hErr.message);
+      } else {
+        for (const row of historicalRows ?? []) {
+          const j = mapJugador(row as Record<string, unknown>);
+          jugadoresById.set(j.id, j);
+          historicalPlayers.push(j);
+        }
+        parejas = parejas.map((p) => ({
+          ...p,
+          jugador1: jugadoresById.get(p.jugador1_id) ?? p.jugador1,
+          jugador2: jugadoresById.get(p.jugador2_id) ?? p.jugador2,
+        }));
+      }
+    }
 
     partidos = (mRows ?? []).map((m) => ({
       id: String(m.id),
@@ -463,6 +493,9 @@ export async function getLigaById(
   for (const eq of equipos) {
     if (eq.jugador1) jugadorMap.set(eq.jugador1.id, eq.jugador1);
     if (eq.jugador2) jugadorMap.set(eq.jugador2.id, eq.jugador2);
+  }
+  for (const j of historicalPlayers) {
+    if (!jugadorMap.has(j.id)) jugadorMap.set(j.id, j);
   }
 
   const jornadasDetalle: LigaJornada[] = (jornadas ?? []).map((j) => ({
