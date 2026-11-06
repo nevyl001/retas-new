@@ -211,10 +211,16 @@ export async function assertCareerEventIntegrity(
     params;
   const failures: CareerEventAssertionFailure[] = [];
 
-  const participaciones = await loadParticipacionesForEvent(
+  const loaded = await loadParticipacionesForEvent(
     context.tipoEvento,
     context.eventoId
   );
+  // liga_podio comparte evento_id con la inscripción. Solo se audita el
+  // subtipo del título; si no, cada cierre avisa por filas que no son podio.
+  const participaciones =
+    context.kind === "liga_podio"
+      ? loaded.filter((row) => row.metadata?.subtipo === "liga_podio_final")
+      : loaded;
 
   if (participaciones.length === 0 && touchedJugadorIds.length > 0) {
     failures.push(

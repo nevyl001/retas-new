@@ -158,12 +158,14 @@ export async function runCareerEventSync(
     console.error("[career-event-pipeline:sync]", errorLogPayload(e), e);
   }
 
-  if (touchedJugadorIds.length === 0 && eventoId) {
+  if (touchedJugadorIds.length === 0 && eventoId && kind !== "liga_podio") {
     // liga_jornada: eventoId del switch es ligaId; las participaciones viven
     // en jornada.id. No hacer fallback con ligaId (inscripción) — fingiría
     // touched sin haber escrito la jornada.
+    // liga_podio tampoco: el mismo evento_id guarda inscripciones. Cargarlas
+    // aquí hacía pasar por podio a quienes no lo son.
     const lookupId =
-      kind === "liga_jornada" || kind === "liga_podio"
+      kind === "liga_jornada"
         ? participacionEventoId
         : (participacionEventoId ?? eventoId);
     if (lookupId) {

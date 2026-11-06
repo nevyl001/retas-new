@@ -1,5 +1,11 @@
 import { computeJornadaPublicStats } from "../../liga/jornadaStats";
 import { isEquiposModalidad } from "../../liga/ligaModalidad";
+import {
+  ligaPodioLugarLabel,
+  ligaPodioPlacement,
+  resolveLigaPodio,
+  type LigaPodioEntry,
+} from "../../liga/ligaPodioRanking";
 import { latestIsoTimestamp } from "../../matchDate";
 import { getLigaById } from "../../../services/ligaService";
 import { supabase } from "../../supabaseClient";
@@ -481,7 +487,26 @@ export async function syncLigaInscripcionRanking(
   }
 }
 
-/** Podio final al cerrar la liga (+500 / +250 / +100). */
+function flattenPodioPlayers(entries: readonly LigaPodioEntry[]): Array<{
+  posicion: LigaPodioEntry["posicion"];
+  legacyLigaJugadorId: string;
+  nombre: string;
+  parejaCon: string | null;
+}> {
+  return entries.flatMap((entry) =>
+    entry.players.map((player) => ({
+      posicion: entry.posicion,
+      legacyLigaJugadorId: player.legacyLigaJugadorId,
+      nombre: player.nombre,
+      parejaCon:
+        entry.players.find(
+          (other) => other.legacyLigaJugadorId !== player.legacyLigaJugadorId
+        )?.nombre ?? null,
+    }))
+  );
+}
+
+/** Podio final al cerrar la liga (+500 / +250 / +100 por jugador). */
 export async function syncLigaFinalPodio(
   ligaId: string,
   organizadorId: string,
@@ -493,25 +518,41 @@ export async function syncLigaFinalPodio(
     const orgId =
       (detalle.organizador_id && String(detalle.organizador_id).trim()) ||
       organizadorId;
-    const ranking = [...detalle.inscripciones].sort(
-      (a, b) => b.puntos - a.puntos
+    const resolution = resolveLigaPodio(detalle);
+    if (resolution.entries.length === 0) {
+      return {
+        touchedJugadorIds: [],
+        syncFailures: [
+          {
+            code: "sync_failed",
+            message:
+              resolution.reason ??
+              "No hay un podio oficial para registrar en la carrera.",
+            severity: "critical",
+          },
+        ],
+      };
+    }
+
+    const slotFailures: CareerEventAssertionFailure[] = resolution.missingSlots.map(
+      (slot) => ({
+        code: "sync_failed",
+        message: `Podio posición ${slot.posicion}: pareja ${slot.parejaId} sin los dos jugadores.`,
+        severity: "critical" as const,
+        details: { posicion: slot.posicion, parejaId: slot.parejaId },
+      })
     );
 
-    const podioEntries = ranking.slice(0, 3).map((ins, index) => ({
-      ins,
-      posicion: index + 1,
-      nombre: ins.jugador?.nombre ?? "Jugador",
-    }));
-
+    const podioPlayers = flattenPodioPlayers(resolution.entries);
     const parallelOutcome = await runParallelPlayerParticipacionSync(
-      podioEntries.map(({ ins, posicion, nombre }) => ({
-        ctx: { nombre, legacyPlayerId: ins.jugador_id },
+      podioPlayers.map(({ posicion, legacyLigaJugadorId, nombre, parejaCon }) => ({
+        ctx: { nombre, legacyPlayerId: legacyLigaJugadorId },
         fn: async (): Promise<PlayerParticipacionSyncResult> => {
           const { jugadorId, failure } = await resolveJugadorForEventSync(
             {
               nombre,
               organizadorId: orgId,
-              legacyLigaJugadorId: ins.jugador_id,
+              legacyLigaJugadorId,
               tipoEvento: "liga",
               eventoId: ligaId,
             },
@@ -522,11 +563,19 @@ export async function syncLigaFinalPodio(
             return { failure };
           }
           if (!jugadorId) {
-            return {};
+            return {
+              failure: {
+                code: "missing_player_identity",
+                message: `Sin Riviera ID para ${nombre} (${legacyLigaJugadorId}) en el podio.`,
+                severity: "critical",
+                jugadorId: legacyLigaJugadorId,
+              },
+            };
           }
 
           const resultado: JugadorResultado =
             posicion === 1 ? "victoria" : posicion === 2 ? "derrota" : "empate";
+          const placement = ligaPodioPlacement(posicion);
 
           const persisted = await registrarPuntosRanking({
             jugadorId,
@@ -536,15 +585,24 @@ export async function syncLigaFinalPodio(
             resultado,
             formato: "liga",
             calcParams: { posicion_final: posicion },
+            parejaCon: parejaCon ?? undefined,
             metadata: {
               subtipo: "liga_podio_final",
               ...hostClubMetadata(orgId),
               liga_id: ligaId,
               liga_nombre: detalle.nombre,
               posicion_final: posicion,
+              placement,
+              campeon_torneo: posicion === 1,
+              subcampeon_torneo: posicion === 2,
+              // El título no es un partido: no suma victoria/derrota de cancha.
+              partidos_ganados: 0,
+              partidos_perdidos: 0,
+              partidos_empatados: 0,
               modalidad: "liga",
               modalidad_label: "Liga",
-              lugar: formatLugarOrdinal(posicion, ranking.length),
+              lugar: ligaPodioLugarLabel(posicion),
+              podio_source: resolution.source,
             },
           });
 
@@ -553,13 +611,14 @@ export async function syncLigaFinalPodio(
       }))
     );
 
+    const syncFailures = [
+      ...slotFailures,
+      ...parallelOutcome.syncFailures,
+    ];
     return {
       touchedJugadorIds: parallelOutcome.touchedJugadorIds,
       participacionEventoId: ligaId,
-      syncFailures:
-        parallelOutcome.syncFailures.length > 0
-          ? parallelOutcome.syncFailures
-          : undefined,
+      syncFailures: syncFailures.length > 0 ? syncFailures : undefined,
     };
   } catch (e) {
     console.error("[riviera-jugadores] syncLigaFinalPodio:", e);
