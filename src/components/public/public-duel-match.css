@@ -25,10 +25,15 @@
 }
 
 /* Selector de rondas estilo Liga (Ronda N + acento de marca) */
+.te-public--americano .am-pub-round-nav,
+.te-public--americano .am-pub-round-toolbar {
+  width: 100%;
+}
+
 .te-public--americano .am-pub-round-nav__track {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: center !important;
   align-items: center;
   gap: 0.28rem;
   width: 100%;
@@ -36,11 +41,21 @@
   overflow: visible;
 }
 
+.te-public--americano .am-pub-round-head--inline {
+  justify-content: center;
+  width: 100%;
+}
+
+.te-public--americano .am-pub-round-head__copy {
+  justify-content: center;
+  width: 100%;
+}
+
 @media (max-width: 1023px) {
   .te-public--reta .reta-round-tabs {
-    display: flex;
+    display: flex !important;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: center !important;
     align-items: center;
     gap: 0.28rem;
   }

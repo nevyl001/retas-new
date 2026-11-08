@@ -1418,12 +1418,12 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                         Por jugar
                       </span>
                     ) : roundInProgress ? (
-                      <span className="te-public-round-head__live">
+                      <span className="te-public-round-head__live te-public-round-head__live--live">
                         <span className="te-pub-status__dot" aria-hidden />
                         En curso
                       </span>
                     ) : roundComplete ? (
-                      <span className="te-public-round-head__live te-public-round-head__live--pending">
+                      <span className="te-public-round-head__live te-public-round-head__live--done">
                         Completada
                       </span>
                     ) : null}

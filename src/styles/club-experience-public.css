@@ -57,8 +57,22 @@
 }
 
 [data-club="hack-padel"].club-experience-scope .te-public-round-head__live,
+[data-club="hack-padel"].club-experience-scope .te-public-round-head__live--done,
+[data-club="hack-padel"].club-experience-scope .te-public-round-head__live--live,
 [data-club="hack-padel"].club-experience-scope .te-pub-status__dot {
   color: var(--brand-accent);
+}
+
+[data-club="hack-padel"].club-experience-scope .te-public-round-head__live--done,
+[data-club="hack-padel"].club-experience-scope .te-public-round-head__live--live {
+  border-color: color-mix(in srgb, var(--brand-accent) 42%, transparent);
+  background: color-mix(in srgb, var(--brand-accent) 12%, transparent);
+}
+
+[data-club="hack-padel"].club-experience-scope .reta-round-tabs__btn.is-active {
+  color: color-mix(in srgb, var(--brand-accent) 88%, #fff);
+  border-color: color-mix(in srgb, var(--brand-accent) 42%, transparent);
+  background: color-mix(in srgb, var(--brand-accent) 14%, transparent);
 }
 
 [data-club="hack-padel"].club-experience-scope .te-pub-status__dot {

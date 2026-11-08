@@ -3791,7 +3791,7 @@
 }
 
 .te-public--americano .am-pub-round-head__status--done {
-  color: rgba(255, 255, 255, 0.38);
+  color: color-mix(in srgb, var(--brand-accent, #a3e635) 88%, #fff);
 }
 
 .te-public--americano .am-pub-match__top--cancha-only {
