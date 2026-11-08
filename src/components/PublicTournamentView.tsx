@@ -1354,10 +1354,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                   type="button"
                   role="tab"
                   aria-selected={isActive}
+                  aria-label={`Ronda ${roundNum}`}
                   className={`reta-round-tabs__btn${isActive ? " is-active" : ""}`}
                   onClick={() => setMobileRoundTab(roundKey)}
                 >
-                  {`Ronda ${String(roundNum).padStart(2, "0")}`}
+                  {`R${roundNum}`}
                 </button>
               );
             })}

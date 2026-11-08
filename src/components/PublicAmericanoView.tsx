@@ -745,7 +745,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                 <div className="am-pub-round-toolbar">
                   <div className="am-pub-round-head am-pub-round-head--inline">
                     <div className="am-pub-round-head__copy">
-                      <h2 className="am-pub-round-head__title">
+                      <h2 className="am-pub-round-head__title am-pub-round-head__title--sr-only">
                         Ronda {round.roundNumber}
                       </h2>
                       {roundStatus}

@@ -3431,18 +3431,13 @@
 
 .te-public--americano .am-pub-round-nav__track {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   justify-content: flex-start;
   align-items: center;
   gap: 0.35rem;
   width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  overflow: visible;
   padding: 0.05rem 0.05rem 0.1rem;
-  scroll-snap-type: x proximity;
 }
 
 .te-public--americano .am-pub-round-nav__track::-webkit-scrollbar {
@@ -3755,6 +3750,19 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-primary, #fff);
+}
+
+/* La ronda activa ya se ve en R1…Rn; no repetir “RONDA N” en grande. */
+.te-public--americano .am-pub-round-head__title--sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .te-public--americano .am-pub-round-head__status {
