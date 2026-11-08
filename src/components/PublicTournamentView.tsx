@@ -1358,10 +1358,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                   className={`reta-round-tabs__btn${isActive ? " is-active" : ""}`}
                   onClick={() => setMobileRoundTab(roundKey)}
                 >
-                  <span className="reta-round-tabs__label-full">{`Ronda ${roundNum}`}</span>
-                  <span className="reta-round-tabs__label-short" aria-hidden>
-                    {`R${roundNum}`}
-                  </span>
+                  {`Ronda ${roundNum}`}
                 </button>
               );
             })}
@@ -1403,6 +1400,26 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               );
             }
 
+            const courtsInRound = new Set(
+              roundMatches
+                .map((m) => m.court)
+                .filter((c) => c != null && String(c).trim() !== "")
+                .map((c) => String(c))
+            ).size;
+            const courtsMeta = Math.max(
+              1,
+              courtsInRound || roundMatches.length
+            );
+            const roundStatusLabel =
+              eventScheduleStatus.phase === "upcoming"
+                ? "Pendiente"
+                : roundInProgress
+                  ? "En curso"
+                  : roundComplete
+                    ? "Completada"
+                    : "Pendiente";
+            const showTabsMeta = sortedRoundKeys.length > 1;
+
             return (
               <div
                 key={roundKey}
@@ -1411,30 +1428,45 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                 }`}
                 style={{ animationDelay: `${0.05 + roundIdx * 0.06}s` }}
               >
-                <div className="te-public-round-head">
-                  <h3 className="te-public-round-head__title">
-                    <span className="te-public-round-head__num">
-                      {`Ronda ${String(roundNum).padStart(2, "0")}`}
+                {showTabsMeta ? (
+                  <p className="reta-round-meta reta-round-meta--centered">
+                    <span>{roundStatusLabel}</span>
+                    <span aria-hidden>·</span>
+                    <span>
+                      {roundMatches.length} partido
+                      {roundMatches.length === 1 ? "" : "s"}
                     </span>
-                    {eventScheduleStatus.phase === "upcoming" ? (
-                      <span className="te-public-round-head__live te-public-round-head__live--pending">
-                        Por jugar
+                    <span aria-hidden>·</span>
+                    <span>
+                      {courtsMeta} cancha{courtsMeta === 1 ? "" : "s"}
+                    </span>
+                  </p>
+                ) : (
+                  <div className="te-public-round-head">
+                    <h3 className="te-public-round-head__title">
+                      <span className="te-public-round-head__num">
+                        {`Ronda ${String(roundNum).padStart(2, "0")}`}
                       </span>
-                    ) : roundInProgress ? (
-                      <span className="te-public-round-head__live te-public-round-head__live--live">
-                        <span className="te-pub-status__dot" aria-hidden />
-                        En curso
-                      </span>
-                    ) : roundComplete ? (
-                      <span className="te-public-round-head__live te-public-round-head__live--done">
-                        Completada
-                      </span>
-                    ) : null}
-                  </h3>
-                  <div className="te-public-round-head__timer">
-                    <RoundTimerPublic round={roundNum} timers={roundTimers} />
+                      {eventScheduleStatus.phase === "upcoming" ? (
+                        <span className="te-public-round-head__live te-public-round-head__live--pending">
+                          Por jugar
+                        </span>
+                      ) : roundInProgress ? (
+                        <span className="te-public-round-head__live te-public-round-head__live--live">
+                          <span className="te-pub-status__dot" aria-hidden />
+                          En curso
+                        </span>
+                      ) : roundComplete ? (
+                        <span className="te-public-round-head__live te-public-round-head__live--done">
+                          Completada
+                        </span>
+                      ) : null}
+                    </h3>
+                    <div className="te-public-round-head__timer">
+                      <RoundTimerPublic round={roundNum} timers={roundTimers} />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div
                   className={`te-pub-matches-grid te-pub-matches-grid--wide${

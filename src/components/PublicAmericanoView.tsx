@@ -715,20 +715,19 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
               totalForPhaseLabels
             );
             const roundAllScored = roundFullyScored(round);
-            const roundStatus =
-              roundLive ? (
-                <p className="am-pub-round-head__status am-pub-round-head__status--live">
-                  <span className="te-pub-status__dot" aria-hidden />
-                  En curso
-                </p>
-              ) : roundAllScored ? (
-                <p className="am-pub-round-head__status am-pub-round-head__status--done">
-                  Completada
-                </p>
-              ) : phaseCaption ? (
-                <p className="am-pub-round-head__status">{phaseCaption}</p>
-              ) : null;
+            const roundStatusLabel = roundLive
+              ? "En curso"
+              : roundAllScored
+                ? "Completada"
+                : phaseCaption || "Pendiente";
             const matchCount = matches.length;
+            const courtsInRound = new Set(
+              matches
+                .map((m) => m.court)
+                .filter((c) => c != null && String(c).trim() !== "")
+                .map((c) => String(c))
+            ).size;
+            const courtsMeta = Math.max(1, courtsInRound || matchCount);
             const matchGridCountClass =
               matchCount === 1
                 ? "te-pub-matches-grid--one te-pub-matches-grid--few"
@@ -737,87 +736,93 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                   : matchCount === 3
                     ? "te-pub-matches-grid--three"
                     : "te-pub-matches-grid--many";
+            const showRoundTabs = snapshot.rounds.length > 1;
 
             return (
               <section
                 key={`${round.roundNumber}-${round.phase}-${roundIdx}`}
                 className="te-public-section te-pub-fade-in am-pub-round-stage"
               >
-                <div className="am-pub-round-toolbar">
-                  <div className="am-pub-round-head am-pub-round-head--inline">
-                    <div className="am-pub-round-head__copy">
+                {showRoundTabs ? (
+                  <>
+                    <div
+                      className="am-pub-round-nav"
+                      role="tablist"
+                      aria-label="Seleccionar ronda"
+                    >
                       <h2 className="am-pub-round-head__title am-pub-round-head__title--sr-only">
                         Ronda {round.roundNumber}
                       </h2>
-                      {roundStatus}
-                    </div>
-                    <span className="am-pub-round-nav__count" aria-hidden>
-                      {
-                        snapshot.rounds.filter((item) =>
-                          roundFullyScored(item)
-                        ).length
-                      }
-                      /{snapshot.rounds.length}
-                    </span>
-                  </div>
-                  <div
-                    className="am-pub-round-nav"
-                    role="tablist"
-                    aria-label="Seleccionar ronda"
-                  >
-                    <div className="am-pub-round-nav__track">
-                      {snapshot.rounds.map((item, index) => {
-                        const itemDone = roundFullyScored(item);
-                        const hasAnyScore = (item.matches ?? []).some(
-                          (m) =>
-                            typeof m.scoreA === "number" ||
-                            typeof m.scoreB === "number"
-                        );
-                        const itemLive =
-                          !itemDone &&
-                          (hasAnyScore ||
-                            (eventScheduleStatus.phase === "in_window" &&
-                              index === snapshot.rounds.length - 1));
-                        const statusLabel = itemLive
-                          ? "en curso"
-                          : itemDone
-                            ? "completada"
-                            : "pendiente";
-                        return (
-                          <button
-                            key={item.roundNumber}
-                            type="button"
-                            role="tab"
-                            aria-selected={index === roundIdx}
-                            aria-label={`Ronda ${item.roundNumber}, ${statusLabel}`}
-                            className={[
-                              "am-pub-round-nav__btn",
-                              index === roundIdx ? "is-active" : "",
-                              itemLive ? "is-live" : "",
-                              itemDone ? "is-done" : "",
-                              !itemLive && !itemDone ? "is-pending" : "",
-                            ]
-                              .filter(Boolean)
-                              .join(" ")}
-                            onClick={() => setSelectedRoundIndex(index)}
-                          >
-                            <span className="am-pub-round-nav__label">
-                              <span className="am-pub-round-nav__label-full">
+                      <div className="am-pub-round-nav__track">
+                        {snapshot.rounds.map((item, index) => {
+                          const itemDone = roundFullyScored(item);
+                          const hasAnyScore = (item.matches ?? []).some(
+                            (m) =>
+                              typeof m.scoreA === "number" ||
+                              typeof m.scoreB === "number"
+                          );
+                          const itemLive =
+                            !itemDone &&
+                            (hasAnyScore ||
+                              (eventScheduleStatus.phase === "in_window" &&
+                                index === snapshot.rounds.length - 1));
+                          const statusLabel = itemLive
+                            ? "en curso"
+                            : itemDone
+                              ? "completada"
+                              : "pendiente";
+                          return (
+                            <button
+                              key={item.roundNumber}
+                              type="button"
+                              role="tab"
+                              aria-selected={index === roundIdx}
+                              aria-label={`Ronda ${item.roundNumber}, ${statusLabel}`}
+                              className={[
+                                "am-pub-round-nav__btn",
+                                index === roundIdx ? "is-active" : "",
+                                itemLive ? "is-live" : "",
+                                itemDone ? "is-done" : "",
+                                !itemLive && !itemDone ? "is-pending" : "",
+                              ]
+                                .filter(Boolean)
+                                .join(" ")}
+                              onClick={() => setSelectedRoundIndex(index)}
+                            >
+                              <span className="am-pub-round-nav__label">
                                 Ronda {item.roundNumber}
                               </span>
-                              <span
-                                className="am-pub-round-nav__label-short"
-                                aria-hidden
-                              >
-                                {`R${item.roundNumber}`}
-                              </span>
-                            </span>
-                          </button>
-                        );
-                      })}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <p className="am-pub-round-meta am-pub-round-meta--centered">
+                      <span>{roundStatusLabel}</span>
+                      <span aria-hidden>·</span>
+                      <span>
+                        {matchCount} partido{matchCount === 1 ? "" : "s"}
+                      </span>
+                      <span aria-hidden>·</span>
+                      <span>
+                        {courtsMeta} cancha{courtsMeta === 1 ? "" : "s"}
+                      </span>
+                    </p>
+                  </>
+                ) : (
+                  <div className="am-pub-round-toolbar">
+                    <div className="am-pub-round-head am-pub-round-head--inline">
+                      <div className="am-pub-round-head__copy">
+                        <h2 className="am-pub-round-head__title">
+                          Ronda {round.roundNumber}
+                        </h2>
+                        <p className="am-pub-round-head__status">
+                          {roundStatusLabel}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {round.benchPlayers.length > 0 && (
                   <p className="te-public-bench">
