@@ -3883,12 +3883,6 @@
   .te-public--reta .reta-sb-card--am-court .am-portrait {
     width: min(100%, clamp(5.15rem, 33vw, 6.4rem));
   }
-
-  .te-public--reta .reta-round-tabs__btn {
-    font-size: 0.64rem;
-    padding: 0.5rem 0.4rem;
-    letter-spacing: 0.06em;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
