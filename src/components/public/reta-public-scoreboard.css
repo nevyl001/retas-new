@@ -969,52 +969,59 @@
   overflow: hidden;
 }
 
+/* Selector de rondas: grid responsive (sin scroll horizontal). */
 .reta-round-tabs {
   display: none;
-  gap: 0.4rem;
-  margin: 0 0 1rem;
-  padding: 0.15rem;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.reta-round-tabs::-webkit-scrollbar {
-  display: none;
+  gap: 8px;
+  margin: 0 0 1.1rem;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
 }
 
 .reta-round-tabs__btn {
   appearance: none;
-  flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  color: #a3a3a3;
-  border-radius: 999px;
-  padding: 0.5rem 0.95rem;
-  min-height: 2.4rem;
-  font-size: 0.72rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #b0b0b0;
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+  font-family: var(--font-body, inherit);
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  line-height: 1.15;
+  text-align: center;
   cursor: pointer;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition:
-    color 180ms ease,
-    background 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
 }
 
 .reta-round-tabs__btn:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .reta-round-tabs__btn.is-active {
   background: rgba(229, 193, 88, 0.12);
   color: var(--reta-sb-gold, #e5c158);
-  border-color: #e5c158;
+  border-color: var(--reta-sb-gold, #e5c158);
   font-weight: 800;
   box-shadow: none !important;
 }
@@ -1024,9 +1031,18 @@
   outline-offset: 2px;
 }
 
-@media (max-width: 767px) {
+@media (prefers-reduced-motion: reduce) {
+  .reta-round-tabs__btn {
+    transition: none;
+  }
+}
+
+/* Móvil + tablet: tabs en grid. Desktop (≥1024): todas las rondas apiladas. */
+@media (max-width: 1023px) {
   .te-public--reta .reta-round-tabs {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .te-public--reta .te-public-round-block.is-tab-hidden {
@@ -1035,6 +1051,29 @@
 
   .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide {
     grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .te-public--reta .reta-round-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .te-public--reta .reta-round-tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .te-public--reta.te-public--reta-wide
+    .te-pub-matches-grid--wide.te-pub-matches-grid--three,
+  .te-public--reta.te-public--reta-wide
+    .te-pub-matches-grid--wide:has(> :nth-child(3)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 
@@ -3455,5 +3494,414 @@
     .reta-sb-vs {
     flex-direction: column !important;
     width: auto !important;
+  }
+}
+
+/* =============================================================================
+ * Round Robin public — Premium Refinement 2026
+ * Solo vista pública Reta (am-court). No altera lógica ni otros formatos.
+ * ============================================================================= */
+
+/* Encabezado de sección y evento: jerarquía más limpia */
+.te-public--reta .te-public-section__title {
+  margin: 0 0 0.35rem !important;
+  font-family: var(--font-display, var(--ro-font-heading), inherit) !important;
+  font-size: clamp(0.95rem, 2.4vw, 1.12rem) !important;
+  letter-spacing: 0.1em !important;
+  line-height: 1.2 !important;
+}
+
+.te-public--reta .te-public-section__divider {
+  margin: 0.65rem 0 1.15rem;
+  opacity: 0.85;
+}
+
+.te-public--reta .te-public-header--reta {
+  margin-bottom: 1.5rem;
+}
+
+.te-public--reta .te-public-header__title--event {
+  max-width: min(100%, 22ch);
+  font-size: clamp(1.95rem, 5.8vw, 3rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.te-public--reta .te-public-header__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+}
+
+.te-public--reta .te-public-header__subtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  color: rgba(244, 241, 235, 0.72);
+  line-height: 1.35;
+}
+
+/* Cabecera de ronda: badge compacto, tipografía consistente */
+.te-public--reta .te-public-round-head {
+  min-height: 3.15rem;
+  margin: 0 0 0.9rem;
+  padding: 0.55rem 0.95rem;
+  gap: 0.45rem 0.7rem;
+}
+
+.te-public--reta .te-public-round-head__title {
+  max-width: min(100%, calc(100% - 5rem));
+  font-size: 0.88rem !important;
+  letter-spacing: 0.11em;
+}
+
+.te-public--reta .te-public-round-head__live {
+  padding: 0.22rem 0.5rem;
+  min-height: 1.35rem;
+  font-size: 9px !important;
+  letter-spacing: 0.12em;
+}
+
+/* Tarjeta am-court: sin escala en hover (no aparentar clic) */
+.te-public--reta .reta-sb-card--am-court.te-pub-match--wide,
+.te-public--reta .reta-sb-card--am-court.te-pub-match--wide:hover {
+  transform: none !important;
+}
+
+.te-public--reta .reta-sb-card--am-court.te-pub-match--wide {
+  padding: 0.85rem 0.9rem 0.8rem !important;
+  height: 100% !important;
+  box-sizing: border-box;
+}
+
+.te-public--reta .reta-sb-card--am-court .reta-sb-card__meta {
+  margin-bottom: 0.65rem;
+}
+
+.te-public--reta .reta-sb-card--am-court .reta-sb-card__meta-line {
+  font-size: 10px !important;
+  letter-spacing: 0.12em;
+}
+
+.te-public--reta .reta-sb-card--am-court .te-pub-status {
+  font-size: 9px !important;
+  padding: 0.24rem 0.48rem !important;
+  min-height: 1.35rem;
+}
+
+/* Faceoff: ocupar mejor el ancho, fotos con presencia */
+.te-public--reta .reta-sb-card--am-court .am-court-board {
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  justify-items: center;
+  align-items: stretch;
+  column-gap: clamp(0.35rem, 1.4vw, 1.1rem);
+  row-gap: 0.4rem;
+}
+
+.te-public--reta .reta-sb-card--am-court .am-court-board__pair {
+  width: 100%;
+  max-width: 12.5rem;
+  gap: clamp(0.4rem, 1vw, 0.6rem);
+}
+
+.te-public--reta .reta-sb-card--am-court .am-portrait {
+  width: min(100%, clamp(6.75rem, 28vw, 9.25rem));
+  aspect-ratio: 3 / 4;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+}
+
+.te-public--reta .reta-sb-card--am-court .am-portrait__photo {
+  object-position: center 16%;
+}
+
+.te-public--reta .reta-sb-card--am-court .am-portrait__initials {
+  inset: 0 0 30%;
+  font-size: clamp(1.05rem, 14cqi, 1.55rem);
+  font-weight: 700;
+}
+
+.te-public--reta .reta-sb-card--am-court .am-portrait__scrim {
+  height: 56%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.38) 34%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+}
+
+.te-public--reta .reta-sb-card--am-court .am-portrait__identity {
+  left: 0.38rem;
+  right: 2.45rem;
+  bottom: 0.34rem;
+  gap: 0.05rem;
+}
+
+.te-public--reta .reta-sb-card--am-court .am-portrait__given {
+  font-size: clamp(0.68rem, 2.2vw, 0.8rem);
+  font-weight: 700;
+  line-height: 1.12;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.te-public--reta .reta-sb-card--am-court .am-portrait__family {
+  font-size: clamp(0.56rem, 1.8vw, 0.68rem);
+  font-weight: 600;
+  line-height: 1.12;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+.te-public--reta .reta-sb-card--am-court .am-portrait__rating.jugador-rating-chip {
+  top: auto;
+  bottom: 0.34rem;
+  right: 0.34rem;
+  min-height: 1.15rem;
+  padding: 0.12rem 0.34rem;
+  font-size: 0.64rem;
+  border-color: rgba(163, 230, 53, 0.5);
+  background: rgba(6, 10, 6, 0.82);
+}
+
+.te-public--reta .reta-sb-card--am-court .am-court-board__vs {
+  min-width: 1.9rem;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+}
+
+.te-public--reta .reta-sb-card--am-court .am-court-board__vs-badge {
+  min-width: 2rem;
+  height: 2rem;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.78);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(12, 14, 18, 0.72);
+}
+
+/* Marcadores: más jerarquía, alineados al centro de cada pareja */
+.te-public--reta .reta-sb-card--am-court .am-court-board__score {
+  width: min(100%, 100%);
+  max-width: 100%;
+  min-width: 0;
+  margin-top: 0.15rem;
+  padding: 0.28rem 0.55rem 0.32rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.32);
+  justify-content: center;
+}
+
+.te-public--reta .reta-sb-card--am-court .am-court-board__mark {
+  gap: 0.12rem;
+}
+
+.te-public--reta .reta-sb-card--am-court .am-court-board__num {
+  font-family: var(--font-display, var(--ro-font-heading), var(--font-body));
+  font-size: clamp(1.45rem, 3.6vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.te-public--reta .reta-sb-card--am-court .am-court-board__num.is-win {
+  color: var(--ro-medal-gold, #c9a227);
+  font-weight: 850;
+}
+
+.te-public--reta .reta-sb-card--am-court .am-court-board__num.is-loss {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+  font-weight: 650;
+}
+
+.te-public--reta .reta-sb-card--am-court .am-court-board__num.is-tie {
+  color: var(--ro-gold-light, #e8c547);
+  font-weight: 800;
+}
+
+.te-public--reta
+  .reta-sb-card--am-court
+  .am-court-board__score:has(.am-court-board__mark.is-win) {
+  border-color: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 48%, transparent);
+  background: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 12%, rgba(0, 0, 0, 0.34));
+}
+
+.te-public--reta
+  .reta-sb-card--am-court
+  .am-court-board__score:has(.am-court-board__mark.is-loss) {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.te-public--reta
+  .reta-sb-card--am-court
+  .am-court-board__score:has(.am-court-board__mark.is-tie) {
+  border-color: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 40%, transparent);
+  background: color-mix(in srgb, var(--ro-medal-gold, #c9a227) 9%, rgba(0, 0, 0, 0.32));
+}
+
+.te-public--reta .reta-sb-card--am-court .am-court-board__crown {
+  font-size: 0.92rem;
+  line-height: 1;
+  color: var(--ro-medal-gold, #c9a227);
+  filter: none;
+}
+
+.te-public--reta .reta-sb-card--am-court .am-court-board__tie-badge {
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+}
+
+.te-public--reta .reta-sb-card--am-court .am-court-board__pending {
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Grid de canchas: alturas consistentes; máx. 3 por fila en escritorio */
+.te-public--reta .te-pub-matches-grid--wide {
+  align-items: stretch;
+}
+
+.te-public--reta .te-pub-matches-grid--wide > .reta-sb-card--am-court {
+  height: 100%;
+}
+
+@media (min-width: 1024px) {
+  .te-public--reta .te-pub-matches-grid--wide:has(> :nth-child(4)),
+  .te-public--reta.te-public--reta-wide .te-pub-matches-grid--wide:has(> :nth-child(4)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Desktop: fotos más presentes; 2–3 canchas */
+@media (min-width: 1024px) {
+  .te-public--reta .reta-sb-card--am-court .am-portrait {
+    width: min(100%, clamp(7.35rem, 9.2vw, 10.25rem));
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-court-board__pair {
+    max-width: 13.5rem;
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-court-board {
+    column-gap: clamp(0.55rem, 1.6vw, 1.35rem);
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-court-board__num {
+    font-size: clamp(1.55rem, 1.7vw, 1.95rem);
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-court-board__num.is-loss {
+    font-size: clamp(1.28rem, 1.4vw, 1.6rem);
+  }
+
+  .te-public--reta .te-public-round-block {
+    margin-bottom: 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .te-public--reta
+    .te-pub-matches-grid--three
+    .reta-sb-card--am-court
+    .am-portrait,
+  .te-public--reta
+    .te-pub-matches-grid--wide:has(> :nth-child(3):not(:nth-child(4)))
+    .reta-sb-card--am-court
+    .am-portrait {
+    width: min(100%, clamp(7.1rem, 8.6vw, 9.6rem));
+  }
+
+  .te-public--reta
+    .te-pub-matches-grid--wide:has(> :nth-child(2):not(:nth-child(3)))
+    .reta-sb-card--am-court
+    .am-portrait,
+  .te-public--reta
+    .te-pub-matches-grid--few
+    .reta-sb-card--am-court
+    .am-portrait {
+    width: min(100%, clamp(8rem, 10vw, 11rem));
+  }
+}
+
+/* Móvil estrecho: legible desde 320px, sin desbordar */
+@media (max-width: 639px) {
+  .te-public--reta .reta-sb-card--am-court.te-pub-match--wide {
+    padding: 0.75rem 0.7rem 0.7rem !important;
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-court-board {
+    column-gap: clamp(0.25rem, 2.2vw, 0.55rem);
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-court-board__pair {
+    max-width: 100%;
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-portrait {
+    width: min(100%, clamp(5.6rem, 34vw, 7.35rem));
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-portrait__identity {
+    left: 0.28rem;
+    right: 2.2rem;
+    bottom: 0.28rem;
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-portrait__given {
+    font-size: clamp(0.62rem, 3.1vw, 0.74rem);
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-portrait__family {
+    font-size: clamp(0.52rem, 2.6vw, 0.62rem);
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-portrait__rating.jugador-rating-chip {
+    bottom: 0.28rem;
+    right: 0.28rem;
+    padding: 0.1rem 0.28rem;
+    font-size: 0.58rem;
+    min-height: 1.05rem;
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-court-board__vs {
+    min-width: 1.55rem;
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-court-board__vs-badge {
+    min-width: 1.7rem;
+    height: 1.7rem;
+    font-size: 0.58rem;
+  }
+
+  .te-public--reta .reta-sb-card--am-court .am-court-board__score {
+    padding: 0.22rem 0.4rem 0.26rem;
+  }
+}
+
+@media (max-width: 359px) {
+  .te-public--reta .reta-sb-card--am-court .am-portrait {
+    width: min(100%, clamp(5.15rem, 33vw, 6.4rem));
+  }
+
+  .te-public--reta .reta-round-tabs__btn {
+    font-size: 0.64rem;
+    padding: 0.5rem 0.4rem;
+    letter-spacing: 0.06em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .te-public--reta .reta-sb-card--am-court.te-pub-match--wide,
+  .te-public--reta .reta-sb-card--am-court.te-pub-match--wide:hover {
+    transition: none;
   }
 }

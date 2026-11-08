@@ -3814,11 +3814,17 @@
     border-color 0.22s ease;
 }
 
-.te-public--americano .am-pub-match.te-pub-match--wide:hover,
-.te-public--reta .reta-sb-card--am-court.te-pub-match--wide:hover {
+.te-public--americano .am-pub-match.te-pub-match--wide:hover {
   transform: scale(1.02);
   border-color: rgba(255, 255, 255, 0.12);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.48);
+}
+
+/* Reta pública: sin escala — las tarjetas no son clicables */
+.te-public--reta .reta-sb-card--am-court.te-pub-match--wide:hover {
+  transform: none;
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
 }
 
 /* Vista pública: pareja A vertical | VS | pareja B vertical */
