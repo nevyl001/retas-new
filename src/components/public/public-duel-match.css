@@ -1,0 +1,105 @@
+/* Duelo público Reta/Americano — reutiliza markup de Liga jornada.
+   Ajustes de tarjeta contenedora (meta/status) sin romper branding. */
+
+.te-public--reta .reta-sb-card--am-court .pub-duel-match-scope,
+.te-public--americano .am-pub-match .pub-duel-match-scope {
+  width: 100%;
+  min-width: 0;
+}
+
+.te-public--reta .reta-sb-card--am-court .pub-duel-match-scope .liga-jornada-match-card,
+.te-public--americano .am-pub-match .pub-duel-match-scope .liga-jornada-match-card {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 0 !important;
+  margin: 0;
+  border-radius: 0 !important;
+}
+
+.te-public--reta .reta-sb-card--am-court.reta-sb-card,
+.te-public--americano .am-pub-match.reta-sb-card {
+  padding: 0.75rem 0.7rem 0.65rem !important;
+}
+
+/* Selector de rondas estilo Liga (Ronda N + acento de marca) */
+.te-public--americano .am-pub-round-nav__track {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.28rem;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+
+@media (max-width: 1023px) {
+  .te-public--reta .reta-round-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.28rem;
+  }
+}
+
+.te-public--reta .reta-round-tabs__btn,
+.te-public--americano .am-pub-round-nav__btn {
+  appearance: none;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.28rem;
+  min-width: 0;
+  width: auto;
+  min-height: 1.85rem;
+  padding: 0.28rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #fff 9%, transparent);
+  background: transparent;
+  color: color-mix(in srgb, #f4f4f5 58%, transparent);
+  font-size: 0.6875rem;
+  font-weight: 550;
+  letter-spacing: 0.07em;
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: none;
+  transition:
+    color 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+.te-public--reta .reta-round-tabs__btn:hover,
+.te-public--americano .am-pub-round-nav__btn:hover {
+  color: color-mix(in srgb, #f4f4f5 88%, transparent);
+  border-color: color-mix(in srgb, #fff 16%, transparent);
+  background: color-mix(in srgb, #fff 4%, transparent);
+}
+
+.te-public--reta .reta-round-tabs__btn.is-active,
+.te-public--americano .am-pub-round-nav__btn.is-active {
+  color: color-mix(in srgb, var(--brand-accent, #a3e635) 88%, #fff);
+  border-color: color-mix(in srgb, var(--brand-accent, #a3e635) 42%, transparent);
+  background: color-mix(in srgb, var(--brand-accent, #a3e635) 14%, transparent);
+  font-weight: 650;
+  box-shadow: none !important;
+}
+
+.te-public--reta .reta-round-tabs__btn:focus-visible,
+.te-public--americano .am-pub-round-nav__btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand-accent, #a3e635) 55%, transparent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .te-public--reta .reta-round-tabs__btn,
+  .te-public--americano .am-pub-round-nav__btn {
+    transition: none;
+  }
+}

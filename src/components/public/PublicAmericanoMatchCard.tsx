@@ -1,9 +1,10 @@
 import React from "react";
 import type { AmericanoSnapshotMatch } from "../../lib/americanoDinamicoStorage";
 import { formatMatchCourtLabel } from "../../lib/matchCourt";
-import { AmericanoCourtBoard, AmericanoPairMark } from "../americano/AmericanoCourtBoard";
+import { PublicDuelMatchBoard } from "./PublicDuelMatchBoard";
 import { TePubMatchStatus } from "./tePubShared";
 import "./reta-public-scoreboard.css";
+import "./public-duel-match.css";
 
 function teamPlayers(
   pair: [{ id: string; name: string }, { id: string; name: string }],
@@ -11,7 +12,6 @@ function teamPlayers(
   ratings?: Record<string, number>
 ) {
   return pair.map((p) => ({
-    id: p.id,
     name: p.name,
     fotoUrl: fotos?.[p.id] ?? null,
     rating: ratings?.[p.id] ?? null,
@@ -67,23 +67,14 @@ export const PublicAmericanoMatchCard: React.FC<{
         </div>
       </header>
 
-      <AmericanoCourtBoard
+      <PublicDuelMatchBoard
         sideA={playersA}
         sideB={playersB}
         labelA={teamLabel(m.teamA)}
         labelB={teamLabel(m.teamB)}
-        scoreA={
-          <AmericanoPairMark
-            value={played ? m.scoreA : null}
-            opponent={played ? m.scoreB : null}
-          />
-        }
-        scoreB={
-          <AmericanoPairMark
-            value={played ? m.scoreB : null}
-            opponent={played ? m.scoreA : null}
-          />
-        }
+        scoreA={played ? (m.scoreA as number) : null}
+        scoreB={played ? (m.scoreB as number) : null}
+        hasResult={played}
       />
     </article>
   );

@@ -46,6 +46,7 @@ import { StatusBadge } from "./platform/StatusBadge";
 import { PublicHero } from "./public/peds";
 import { resolvePlayerAvatars, resolvePlayerPublicProfiles } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import { PublicAmericanoMatchCard } from "./public/PublicAmericanoMatchCard";
+import "./public/public-duel-match.css";
 import { PublicAmericanoPodiumCard } from "./public/PublicAmericanoPodiumCard";
 import { PublicAmericanoStandingsSection } from "./public/PublicAmericanoStandingsSection";
 import { PublicAmericanoPlayerPerformance } from "./public/PublicAmericanoPlayerPerformance";
@@ -801,7 +802,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                             onClick={() => setSelectedRoundIndex(index)}
                           >
                             <span className="am-pub-round-nav__label">
-                              R{item.roundNumber}
+                              Ronda {item.roundNumber}
                             </span>
                           </button>
                         );

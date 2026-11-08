@@ -12,24 +12,20 @@ import {
   splitPlayerDisplayName,
 } from "../liga/jornada-public/ligaJornadaMatchNames";
 import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
-import {
-  AmericanoCourtBoard,
-  AmericanoPairMark,
-  type AmericanoCourtPlayer,
-} from "../americano/AmericanoCourtBoard";
+import { PublicDuelMatchBoard } from "./PublicDuelMatchBoard";
 import "../jugadores/riviera-jugadores.css";
 import "./reta-public-scoreboard.css";
+import "./public-duel-match.css";
 
-function toCourtPlayers(
+function toDuelPlayers(
   players: PublicRetaPairPlayer[] | undefined,
   fallbackLabel: string
-): AmericanoCourtPlayer[] {
+) {
   const list = (players ?? []).filter((p) => p?.name?.trim());
   if (list.length === 0) {
-    return [{ id: `fallback-${fallbackLabel}`, name: fallbackLabel }];
+    return [{ name: fallbackLabel, fotoUrl: null, rating: null }];
   }
   return list.map((p) => ({
-    id: p.id,
     name: p.name,
     fotoUrl: p.fotoUrl,
     rating: p.rating,
@@ -342,23 +338,14 @@ export const PublicRetaMatchCard: React.FC<{
           </div>
         </>
       ) : (
-        <AmericanoCourtBoard
-          sideA={toCourtPlayers(pair1Players, pair1Label)}
-          sideB={toCourtPlayers(pair2Players, pair2Label)}
+        <PublicDuelMatchBoard
+          sideA={toDuelPlayers(pair1Players, pair1Label)}
+          sideB={toDuelPlayers(pair2Players, pair2Label)}
           labelA={pair1Label}
           labelB={pair2Label}
-          scoreA={
-            <AmericanoPairMark
-              value={hasResult ? score1 : null}
-              opponent={hasResult ? score2 : null}
-            />
-          }
-          scoreB={
-            <AmericanoPairMark
-              value={hasResult ? score2 : null}
-              opponent={hasResult ? score1 : null}
-            />
-          }
+          scoreA={hasResult ? score1 : null}
+          scoreB={hasResult ? score2 : null}
+          hasResult={hasResult}
         />
       )}
 
