@@ -802,7 +802,15 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                             onClick={() => setSelectedRoundIndex(index)}
                           >
                             <span className="am-pub-round-nav__label">
-                              Ronda {item.roundNumber}
+                              <span className="am-pub-round-nav__label-full">
+                                Ronda {item.roundNumber}
+                              </span>
+                              <span
+                                className="am-pub-round-nav__label-short"
+                                aria-hidden
+                              >
+                                {`R${item.roundNumber}`}
+                              </span>
                             </span>
                           </button>
                         );

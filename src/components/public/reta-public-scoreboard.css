@@ -1050,16 +1050,29 @@
   }
 }
 
-/* Móvil + tablet: pills centradas. Sin título “Ronda” duplicado. */
+/* Móvil + tablet: una sola fila centrada. Sin título “Ronda” duplicado. */
 @media (max-width: 1023px) {
   .te-public--reta .reta-round-tabs {
     display: flex !important;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    justify-content: center !important;
-    gap: 0.28rem;
-    width: 100%;
+    justify-content: center;
+    gap: 0.24rem;
+    width: max-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0.05rem 0.1rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .te-public--reta .reta-round-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .te-public--reta .te-public-section:has(.reta-round-tabs)

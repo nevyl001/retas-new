@@ -32,13 +32,23 @@
 
 .te-public--americano .am-pub-round-nav__track {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center !important;
+  flex-wrap: nowrap;
+  justify-content: center;
   align-items: center;
-  gap: 0.28rem;
-  width: 100%;
+  gap: 0.24rem;
+  width: max-content;
   max-width: 100%;
-  overflow: visible;
+  margin: 0 auto;
+  padding: 0.05rem 0.1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.te-public--americano .am-pub-round-nav__track::-webkit-scrollbar {
+  display: none;
 }
 
 .te-public--americano .am-pub-round-head--inline {
@@ -54,10 +64,24 @@
 @media (max-width: 1023px) {
   .te-public--reta .reta-round-tabs {
     display: flex !important;
-    flex-wrap: wrap;
-    justify-content: center !important;
+    flex-wrap: nowrap;
+    justify-content: center;
     align-items: center;
-    gap: 0.28rem;
+    gap: 0.24rem;
+    width: max-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0.05rem 0.1rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .te-public--reta .reta-round-tabs::-webkit-scrollbar {
+    display: none;
   }
 }
 
@@ -72,22 +96,55 @@
   min-width: 0;
   width: auto;
   min-height: 1.85rem;
-  padding: 0.28rem 0.72rem;
+  padding: 0.28rem 0.58rem;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, #fff 9%, transparent);
   background: transparent;
   color: color-mix(in srgb, #f4f4f5 58%, transparent);
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 550;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.05em;
   line-height: 1;
   text-transform: uppercase;
+  white-space: nowrap;
   cursor: pointer;
   box-shadow: none;
   transition:
     color 150ms ease,
     background 150ms ease,
     border-color 150ms ease;
+}
+
+/* Móvil: R1…Rn para caber en una fila. Tablet+/desktop: “Ronda N”. */
+.te-public--reta .reta-round-tabs__label-short,
+.te-public--americano .am-pub-round-nav__label-short {
+  display: none;
+}
+
+.te-public--reta .reta-round-tabs__label-full,
+.te-public--americano .am-pub-round-nav__label-full {
+  display: inline;
+}
+
+@media (max-width: 639px) {
+  .te-public--reta .reta-round-tabs__label-full,
+  .te-public--americano .am-pub-round-nav__label-full {
+    display: none;
+  }
+
+  .te-public--reta .reta-round-tabs__label-short,
+  .te-public--americano .am-pub-round-nav__label-short {
+    display: inline;
+  }
+
+  .te-public--reta .reta-round-tabs__btn,
+  .te-public--americano .am-pub-round-nav__btn {
+    min-height: 2rem;
+    min-width: 2.35rem;
+    padding: 0.3rem 0.52rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+  }
 }
 
 .te-public--reta .reta-round-tabs__btn:hover,
