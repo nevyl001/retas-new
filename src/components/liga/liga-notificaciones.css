@@ -666,71 +666,102 @@
   max-width: 42ch;
 }
 
-/* Drawer — mismo scrim que modales de LigaGestionar */
+/* Drawer — overlay sutil; panel negro; no oculta toda la liga */
 .liga-notificaciones__overlay {
   position: fixed;
   inset: 0;
   z-index: 12000;
   display: flex;
   justify-content: flex-end;
+  pointer-events: none;
 }
 
 .liga-notificaciones__overlay-scrim {
   position: absolute;
   inset: 0;
   border: 0;
-  background: var(--ro-scrim-modal, rgba(0, 0, 0, 0.55));
+  background: rgba(0, 0, 0, 0.28);
   cursor: pointer;
+  pointer-events: auto;
 }
 
 .liga-notificaciones__drawer {
   position: relative;
   z-index: 1;
-  width: min(420px, 100%);
+  width: min(460px, 100%);
+  max-width: 100%;
   height: 100%;
-  overflow: auto;
-  padding: var(--liga-space-lg, 24px);
-  background: var(--liga-surface-deep, var(--ro-bg-inset, #0a0a0a));
+  overflow: hidden;
+  padding: 0;
+  background: #0a0a0a;
   border-left: 0.5px solid var(--liga-border, var(--ro-border));
   color: var(--liga-text, var(--ro-text-primary));
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  box-shadow: var(--ro-shadow-md, 0 8px 24px rgba(0, 0, 0, 0.2));
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
 }
 
 .liga-notificaciones__drawer-head {
+  flex: 0 0 auto;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  padding: 20px 20px 16px;
+  border-bottom: 0.5px solid var(--liga-border, var(--ro-border));
+  background: #0a0a0a;
 }
 
-.liga-notificaciones__facts {
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.liga-notificaciones__drawer-body {
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 16px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.liga-notificaciones__drawer-section {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
+  padding: 14px 0;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
 }
 
-.liga-notificaciones__facts dt {
-  color: var(--liga-text-muted, var(--ro-text-muted));
-  font-size: 11px;
+.liga-notificaciones__drawer-section:last-of-type {
+  border-bottom: 0;
+}
+
+.liga-notificaciones__drawer-section-title {
+  margin: 0;
+  color: var(--liga-text, #f5f5f5);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
-.liga-notificaciones__facts dd {
-  margin: 4px 0 0;
-  color: var(--liga-text, var(--ro-text-primary));
-  font-size: 13px;
-  font-weight: 650;
+.liga-notificaciones__drawer-status {
+  margin: 0;
+  color: var(--liga-text, #f0f0f0);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.liga-notificaciones__drawer-status--muted {
+  color: rgba(245, 245, 245, 0.72);
+  font-weight: 500;
 }
 
 .liga-notificaciones__drawer-actions {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-top: 4px;
 }
 
 .liga-notificaciones__consent-box {
@@ -738,9 +769,69 @@
   flex-direction: column;
   gap: 10px;
   padding: 14px;
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--liga-radius-md, 12px);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.liga-notificaciones__drawer .liga-notificaciones__field span,
+.liga-notificaciones__drawer .liga-notificaciones__hint {
+  color: rgba(245, 245, 245, 0.78);
+}
+
+.liga-notificaciones__drawer .liga-notificaciones__select:disabled,
+.liga-notificaciones__drawer .liga-notificaciones__btn:disabled {
+  opacity: 0.55;
+  color: rgba(245, 245, 245, 0.85);
+}
+
+.liga-notificaciones__envio-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
   border: 0.5px solid var(--liga-border, var(--ro-border));
   border-radius: var(--liga-radius-md, 12px);
   background: transparent;
+}
+
+.liga-notificaciones__envio-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.liga-notificaciones__envio-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--liga-text, var(--ro-text-primary));
+}
+
+.liga-notificaciones__envio-list li span:last-child {
+  color: var(--liga-text-muted, var(--ro-text-muted));
+  text-align: right;
+}
+
+.liga-notificaciones__pick-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+  color: var(--liga-text, var(--ro-text-primary));
+}
+
+.liga-notificaciones__pick-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand-accent, var(--ro-accent, #c9a227));
 }
 
 .liga-notificaciones__field {
@@ -972,10 +1063,6 @@
 
   .liga-notificaciones__drawer {
     width: 100%;
-  }
-
-  .liga-notificaciones__facts {
-    grid-template-columns: 1fr;
   }
 }
 

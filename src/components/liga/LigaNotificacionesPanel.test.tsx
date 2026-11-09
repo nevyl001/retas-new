@@ -92,6 +92,7 @@ describe("LigaNotificacionesPanel", () => {
     mockCargar.mockResolvedValue({
       disponible: true,
       escriturasActivas: true,
+      verificacionDisponible: true,
       preferencias: [],
       config: {
         bienvenida_pausada: true,
@@ -191,6 +192,7 @@ describe("LigaNotificacionesPanel", () => {
     mockCargar.mockResolvedValue({
       disponible: true,
       escriturasActivas: true,
+      verificacionDisponible: true,
       preferencias: [
         {
           liga_jugador_id: "jug-1",
@@ -230,6 +232,7 @@ describe("LigaNotificacionesPanel", () => {
     mockCargar.mockResolvedValue({
       disponible: true,
       escriturasActivas: false,
+      verificacionDisponible: false,
       preferencias: [],
       config: {
         bienvenida_pausada: true,
@@ -252,5 +255,62 @@ describe("LigaNotificacionesPanel", () => {
       await Promise.resolve();
     });
     expect(mockHabilitar).not.toHaveBeenCalled();
+  });
+
+  it("PREPARAR CORREO muestra confirmación sin encolar hasta ENVIAR", async () => {
+    const mockEncolar = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ).solicitarBienvenidaJugador as jest.Mock;
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: true,
+      preferencias: [
+        {
+          liga_jugador_id: "jug-1",
+          riviera_jugador_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          admin_habilitado: true,
+          consentimiento_estado: "autorizado",
+          consentimiento_origen: "manifestacion_presencial",
+          consentimiento_registrado_at: "2026-01-01T00:00:00.000Z",
+          correo_verificado: true,
+          correo_verificacion_origen: "enlace_de_confirmacion",
+          correo_verificado_email: "saul@example.com",
+        },
+      ],
+      config: {
+        bienvenida_pausada: false,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await renderPanel();
+    const tab = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Correo de bienvenida"
+    );
+    await act(async () => {
+      tab?.click();
+    });
+    const preparar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "PREPARAR CORREO"
+    );
+    expect(preparar).toBeTruthy();
+    await act(async () => {
+      preparar?.click();
+    });
+    expect(container.textContent).toContain("ENVIAR A 1 JUGADOR");
+    expect(container.textContent).toContain("Recibirán el correo");
+    expect(mockEncolar).not.toHaveBeenCalled();
+    const cancelar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Cancelar"
+    );
+    await act(async () => {
+      cancelar?.click();
+    });
+    expect(mockEncolar).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("PREPARAR CORREO");
   });
 });

@@ -32,12 +32,18 @@ BEGIN
         USING ERRCODE = '23514';
     END IF;
 
+    -- Conserva la fecha documentada por el organizador (consentimiento previo).
+    -- Solo rellena now() si no vino una constancia explícita.
     IF TG_OP = 'INSERT' THEN
-      NEW.consentimiento_registrado_at := now();
+      IF NEW.consentimiento_registrado_at IS NULL THEN
+        NEW.consentimiento_registrado_at := now();
+      END IF;
       NEW.consentimiento_registrado_por := auth.uid();
     ELSIF OLD.consentimiento_estado IS DISTINCT FROM 'autorizado'
        OR OLD.consentimiento_origen IS DISTINCT FROM NEW.consentimiento_origen THEN
-      NEW.consentimiento_registrado_at := now();
+      IF NEW.consentimiento_registrado_at IS NULL THEN
+        NEW.consentimiento_registrado_at := now();
+      END IF;
       NEW.consentimiento_registrado_por := auth.uid();
     END IF;
   END IF;

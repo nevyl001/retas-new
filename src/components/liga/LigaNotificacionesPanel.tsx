@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useClubExperience } from "../../club-experience/ClubExperienceContext";
 import { resolveClubLogo } from "../../club-experience/resolveClubLogo";
 import { isRivieraOwnAccountName } from "../../club-experience/motherBrand";
@@ -65,9 +66,31 @@ const FILTROS: { id: Filtro; label: string }[] = [
 ];
 
 const ORIGENES = [
-  { id: "manifestacion_presencial", label: "Me lo confirmó en persona" },
-  { id: "mensaje_del_jugador", label: "Me lo escribió el jugador" },
+  {
+    id: "consentimiento_previo_registro",
+    label: "Lo autorizó al registrarse (tengo constancia)",
+    requiereFecha: true,
+  },
+  {
+    id: "documento_firmado",
+    label: "Documento o formulario firmado",
+    requiereFecha: true,
+  },
+  {
+    id: "manifestacion_presencial",
+    label: "Me lo confirmó en persona",
+    requiereFecha: false,
+  },
+  {
+    id: "mensaje_del_jugador",
+    label: "Me lo escribió el jugador",
+    requiereFecha: false,
+  },
 ] as const;
+
+const ORIGEN_LABEL: Record<string, string> = Object.fromEntries(
+  ORIGENES.map((origen) => [origen.id, origen.label])
+);
 
 const MOTIVO_LABEL: Record<string, string> = {
   deshabilitado: "Sigue deshabilitado",
@@ -256,11 +279,18 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const [enlacePrueba, setEnlacePrueba] = useState<string | null>(null);
   const [guardandoId, setGuardandoId] = useState<string | null>(null);
   const [origenDraft, setOrigenDraft] = useState<string>(ORIGENES[0].id);
+  const [fechaConsentimientoDraft, setFechaConsentimientoDraft] =
+    useState<string>("");
   const [gestionId, setGestionId] = useState<string | null>(null);
   const [historialDetalleId, setHistorialDetalleId] = useState<string | null>(
     null
   );
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [envioSeleccion, setEnvioSeleccion] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [envioPaso, setEnvioPaso] = useState<"idle" | "preparado">("idle");
+  const [enviandoLote, setEnviandoLote] = useState(false);
 
   useEffect(() => {
     let activo = true;
@@ -274,6 +304,25 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       activo = false;
     };
   }, [ligaId]);
+
+  useEffect(() => {
+    if (!gestionId) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setGestionId(null);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [gestionId]);
+
+  useEffect(() => {
+    setOrigenDraft(ORIGENES[0].id);
+    setFechaConsentimientoDraft("");
+  }, [gestionId]);
 
   const filas = useMemo(() => {
     const poolById = new Map(pool.map((jugador) => [jugador.id, jugador]));
@@ -407,10 +456,76 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const puedeEscribir = Boolean(
     snapshot?.disponible && snapshot?.escriturasActivas
   );
+  const puedeVerificarCorreo = Boolean(
+    snapshot?.disponible && snapshot?.verificacionDisponible
+  );
   const preview =
     filas.find((fila) => fila.jugadorId === previewId) ?? filas[0] ?? null;
   const gestionFila =
     filas.find((fila) => fila.jugadorId === gestionId) ?? null;
+
+  function decisionEncolar(fila: FilaDestinatario) {
+    return puedeEncolarBienvenida({
+      destinatario: {
+        email: fila.email,
+        perfilesConMismoCorreo: fila.perfilesConMismoCorreo,
+        preferencia: preferenciaParaPolitica(fila.preferencia),
+        emailVerificado: fila.preferencia?.correo_verificado_email ?? null,
+        sigueInscrito: true,
+        esSalienteDeSustitucion: false,
+      },
+      ligaPausada: config.bienvenida_pausada,
+      yaEnviado: fila.yaEnviado,
+      yaEncolado: fila.yaEncolado,
+      origen: "accion_admin",
+    });
+  }
+
+  const candidatosEnvio = useMemo(
+    () => filas.filter((fila) => fila.visual === "habilitado"),
+    [filas]
+  );
+
+  useEffect(() => {
+    setEnvioSeleccion((prev) => {
+      const next: Record<string, boolean> = {};
+      for (const fila of candidatosEnvio) {
+        next[fila.jugadorId] =
+          prev[fila.jugadorId] ?? decisionEncolar(fila).encolar;
+      }
+      return next;
+    });
+    setEnvioPaso("idle");
+    // Solo al cambiar el universo de candidatos / liga.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ligaId, candidatosEnvio.map((fila) => fila.jugadorId).join("|")]);
+
+  const seleccionadosEnvio = candidatosEnvio.filter(
+    (fila) => envioSeleccion[fila.jugadorId]
+  );
+  const incluidosEnvio = seleccionadosEnvio.filter(
+    (fila) => decisionEncolar(fila).encolar
+  );
+  const excluidosEnvio: { fila: FilaDestinatario; motivo: string }[] = [
+    ...seleccionadosEnvio
+      .filter((fila) => !decisionEncolar(fila).encolar)
+      .map((fila) => ({
+        fila,
+        motivo: motivoVisible(decisionEncolar(fila).motivo),
+      })),
+    ...candidatosEnvio
+      .filter((fila) => !envioSeleccion[fila.jugadorId])
+      .map((fila) => ({
+        fila,
+        motivo: "No seleccionado para este envío",
+      })),
+    ...filas
+      .filter((fila) => fila.visual !== "habilitado")
+      .map((fila) => ({
+        fila,
+        motivo: motivoVisible(decisionEncolar(fila).motivo ?? fila.visual),
+      })),
+  ];
 
   function confirmar(texto: string) {
     setAviso(texto);
@@ -464,7 +579,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   }
 
   async function pedirVerificacion(fila: FilaDestinatario) {
-    if (!puedeEscribir) {
+    if (!puedeVerificarCorreo) {
       confirmar(motivoVisible("esquema_pendiente"));
       return;
     }
@@ -525,9 +640,25 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   }
 
   async function confirmarConsentimiento(fila: FilaDestinatario) {
+    const origenMeta = ORIGENES.find((item) => item.id === origenDraft);
+    let registradoAt = new Date().toISOString();
+    if (origenMeta?.requiereFecha) {
+      if (!fechaConsentimientoDraft.trim()) {
+        confirmar(
+          "Indica la fecha del consentimiento original. No inventamos fechas."
+        );
+        return;
+      }
+      const parsed = Date.parse(`${fechaConsentimientoDraft}T12:00:00`);
+      if (Number.isNaN(parsed)) {
+        confirmar(motivoVisible("consentimiento_sin_evidencia"));
+        return;
+      }
+      registradoAt = new Date(parsed).toISOString();
+    }
     const evidencia = registrarConsentimiento({
       origen: origenDraft,
-      registradoAt: new Date().toISOString(),
+      registradoAt,
       actorId: "organizador",
     });
     if ("error" in evidencia) {
@@ -547,8 +678,68 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           jugadorId: fila.jugadorId,
           rivieraJugadorId: fila.rivieraJugadorId,
           origen: evidencia.consentimientoOrigen,
+          registradoAt: evidencia.consentimientoRegistradoAt,
         })
     );
+  }
+
+  async function confirmarEnvioManual() {
+    if (!puedeEscribir || enviandoLote) return;
+    const lote = incluidosEnvio;
+    if (lote.length === 0) {
+      confirmar("No hay jugadores listos para este envío.");
+      return;
+    }
+    setEnviandoLote(true);
+    let ok = 0;
+    let fallidos = 0;
+    const colaNueva: {
+      liga_jugador_id: string;
+      estado: "pendiente";
+      attempts: number;
+      motivo: string | null;
+    }[] = [];
+    for (const fila of lote) {
+      const resultado = await solicitarBienvenidaJugador(ligaId, fila.jugadorId);
+      if (resultado.ok && resultado.encolado) {
+        ok += 1;
+        colaNueva.push({
+          liga_jugador_id: fila.jugadorId,
+          estado: "pendiente",
+          attempts: 0,
+          motivo: null,
+        });
+      } else {
+        fallidos += 1;
+      }
+    }
+    if (colaNueva.length > 0) {
+      setSnapshot((prev) =>
+        prev
+          ? {
+              ...prev,
+              cola: [...colaNueva, ...prev.cola],
+            }
+          : prev
+      );
+    }
+    setEnviandoLote(false);
+    setEnvioPaso("idle");
+    if (ok > 0 && fallidos === 0) {
+      confirmar(
+        `Envío preparado para ${ok} jugador${ok === 1 ? "" : "es"}. Revisa el historial.`
+      );
+      setArea("historial");
+      return;
+    }
+    if (ok > 0) {
+      confirmar(
+        `Preparados ${ok}. ${fallidos} no se pudieron encolar. Revisa el historial.`
+      );
+      setArea("historial");
+      return;
+    }
+    confirmar(motivoVisible("no_disponible"));
   }
 
   async function cambiarConfig(next: ConfigNotificacionLiga) {
@@ -565,37 +756,6 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     }
     setSnapshot((prev) => (prev ? { ...prev, config: next } : prev));
     confirmar("Cambios guardados");
-  }
-
-  async function generarBienvenida(fila: FilaDestinatario) {
-    if (!puedeEscribir) {
-      confirmar(motivoVisible("esquema_pendiente"));
-      return;
-    }
-    setGuardandoId(fila.jugadorId);
-    const resultado = await solicitarBienvenidaJugador(ligaId, fila.jugadorId);
-    setGuardandoId(null);
-    if (!resultado.ok || !resultado.encolado) {
-      confirmar(motivoVisible(resultado.motivo));
-      return;
-    }
-    setSnapshot((prev) =>
-      prev
-        ? {
-            ...prev,
-            cola: [
-              {
-                liga_jugador_id: fila.jugadorId,
-                estado: "pendiente",
-                attempts: 0,
-                motivo: null,
-              },
-              ...prev.cola,
-            ],
-          }
-        : prev
-    );
-    confirmar("Bienvenida preparada. No se envió ningún correo.");
   }
 
   function switchNotificaciones(fila: FilaDestinatario) {
@@ -626,20 +786,6 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     const preferencia = preferenciaEfectiva(
       preferenciaParaPolitica(fila.preferencia)
     );
-    const decision = puedeEncolarBienvenida({
-      destinatario: {
-        email: fila.email,
-        perfilesConMismoCorreo: fila.perfilesConMismoCorreo,
-        preferencia: preferenciaParaPolitica(fila.preferencia),
-        emailVerificado: fila.preferencia?.correo_verificado_email ?? null,
-        sigueInscrito: true,
-        esSalienteDeSustitucion: false,
-      },
-      ligaPausada: config.bienvenida_pausada,
-      yaEnviado: fila.yaEnviado,
-      yaEncolado: fila.yaEncolado,
-      origen: "accion_admin",
-    });
     const recientes = (snapshot?.verificaciones ?? []).filter(
       (item) =>
         item.liga_jugador_id === fila.jugadorId &&
@@ -661,11 +807,24 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       minutosDesdeUltima: ultima,
     });
     const ocupado = guardandoId === fila.jugadorId;
+    const origenRequiereFecha = ORIGENES.some(
+      (item) => item.id === origenDraft && item.requiereFecha
+    );
+    const origenDocumentado =
+      preferencia.consentimientoOrigen &&
+      (ORIGEN_LABEL[preferencia.consentimientoOrigen] ??
+        preferencia.consentimientoOrigen);
+    const fechaDocumentada = preferencia.consentimientoRegistradoAt
+      ? new Date(preferencia.consentimientoRegistradoAt).toLocaleDateString(
+          "es-MX"
+        )
+      : null;
 
     return (
       <div
         className="liga-notificaciones__drawer"
         role="dialog"
+        aria-modal="true"
         aria-label={`Gestionar notificaciones de ${fila.nombre}`}
       >
         <div className="liga-notificaciones__drawer-head">
@@ -673,6 +832,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             <FotoRetrato fotoUrl={fila.fotoUrl} nombre={fila.nombre} size="md" />
             <div className="liga-notificaciones__identidad-copy">
               <p className="liga-notificaciones__nombre">{fila.nombre}</p>
+              {fila.rivieraId ? (
+                <p className="liga-notificaciones__riviera-id">{fila.rivieraId}</p>
+              ) : null}
               <p className="liga-notificaciones__correo">
                 {fila.email?.trim() || "Sin correo"}
               </p>
@@ -681,118 +843,151 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           <button
             type="button"
             className="liga-notificaciones__ghost"
+            aria-label="Cerrar panel"
             onClick={() => setGestionId(null)}
           >
             Cerrar
           </button>
         </div>
 
-        <dl className="liga-notificaciones__facts">
-          <div>
-            <dt>Estado</dt>
-            <dd>{ESTADO_PRINCIPAL_LABEL[fila.visual]}</dd>
-          </div>
-          <div>
-            <dt>Consentimiento</dt>
-            <dd>
-              {preferencia.consentimientoEstado === "autorizado"
-                ? "Documentado"
-                : preferencia.consentimientoEstado === "revocado"
-                  ? "Revocado"
-                  : "Pendiente"}
-            </dd>
-          </div>
-          <div>
-            <dt>Correo</dt>
-            <dd>
-              {fila.preferencia?.correo_verificado
-                ? "Verificado"
-                : "Sin verificar"}
-            </dd>
-          </div>
-        </dl>
+        <div className="liga-notificaciones__drawer-body">
+          <section className="liga-notificaciones__drawer-section">
+            <h3 className="liga-notificaciones__drawer-section-title">
+              Notificaciones
+            </h3>
+            {switchNotificaciones(fila)}
+            <p className="liga-notificaciones__drawer-status--muted liga-notificaciones__drawer-status">
+              {ESTADO_PRINCIPAL_LABEL[fila.visual]}
+            </p>
+          </section>
 
-        {!puedeEscribir ? (
-          <p className="liga-notificaciones__hint">
-            El guardado permanece desactivado mientras el backend está pendiente.
-          </p>
-        ) : null}
-
-        <div className="liga-notificaciones__drawer-actions">
-          {puedeVerificar.solicitar ? (
-            <button
-              type="button"
-              className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
-              disabled={ocupado || !puedeEscribir}
-              onClick={() => void pedirVerificacion(fila)}
-            >
-              Solicitar verificación
-            </button>
-          ) : null}
-
-          {preferencia.consentimientoEstado === "autorizado" ? (
-            <button
-              type="button"
-              className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
-              disabled={ocupado || !puedeEscribir}
-              onClick={() =>
-                void guardarFila(
-                  fila,
-                  { consentimiento_estado: "revocado" },
-                  () =>
-                    revocarConsentimientoJugador({
-                      ligaId,
-                      jugadorId: fila.jugadorId,
-                      rivieraJugadorId: fila.rivieraJugadorId,
-                    })
-                )
-              }
-            >
-              Revocar consentimiento
-            </button>
-          ) : (
-            <div className="liga-notificaciones__consent-box">
-              <p className="liga-notificaciones__hint">
-                El correo y la inscripción no cuentan como consentimiento.
-                Regístralo solo con constancia verificable.
-              </p>
-              <label className="liga-notificaciones__field">
-                <span>Origen</span>
-                <select
-                  className="liga-notificaciones__select"
-                  value={origenDraft}
-                  onChange={(event) => setOrigenDraft(event.target.value)}
-                  aria-label={`Origen del consentimiento de ${fila.nombre}`}
-                  disabled={!puedeEscribir}
+          <section className="liga-notificaciones__drawer-section">
+            <h3 className="liga-notificaciones__drawer-section-title">
+              Autorización
+            </h3>
+            {preferencia.consentimientoEstado === "autorizado" ? (
+              <>
+                <p className="liga-notificaciones__drawer-status">
+                  Consentimiento documentado
+                  {origenDocumentado ? ` · ${origenDocumentado}` : ""}
+                  {fechaDocumentada ? ` · ${fechaDocumentada}` : ""}
+                </p>
+                <p className="liga-notificaciones__hint">
+                  Avisos deportivos de esta liga. No implica correos promocionales.
+                </p>
+                <button
+                  type="button"
+                  className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
+                  disabled={ocupado || !puedeEscribir}
+                  onClick={() =>
+                    void guardarFila(
+                      fila,
+                      { consentimiento_estado: "revocado" },
+                      () =>
+                        revocarConsentimientoJugador({
+                          ligaId,
+                          jugadorId: fila.jugadorId,
+                          rivieraJugadorId: fila.rivieraJugadorId,
+                        })
+                    )
+                  }
                 >
-                  {ORIGENES.map((origen) => (
-                    <option key={origen.id} value={origen.id}>
-                      {origen.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  Revocar autorización
+                </button>
+              </>
+            ) : (
+              <div className="liga-notificaciones__consent-box">
+                <p className="liga-notificaciones__hint">
+                  {preferencia.consentimientoEstado === "revocado"
+                    ? "La autorización está revocada."
+                    : "No hay constancia registrada. La inscripción sola no acredita consentimiento."}{" "}
+                  Documenta solo si tienes evidencia real; no inventes fechas.
+                </p>
+                <label className="liga-notificaciones__field">
+                  <span>Origen</span>
+                  <select
+                    className="liga-notificaciones__select"
+                    value={origenDraft}
+                    onChange={(event) => setOrigenDraft(event.target.value)}
+                    aria-label={`Origen del consentimiento de ${fila.nombre}`}
+                    disabled={!puedeEscribir}
+                  >
+                    {ORIGENES.map((origen) => (
+                      <option key={origen.id} value={origen.id}>
+                        {origen.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {origenRequiereFecha ? (
+                  <label className="liga-notificaciones__field">
+                    <span>Fecha del consentimiento original</span>
+                    <input
+                      type="date"
+                      className="liga-notificaciones__select"
+                      value={fechaConsentimientoDraft}
+                      max={new Date().toISOString().slice(0, 10)}
+                      onChange={(event) =>
+                        setFechaConsentimientoDraft(event.target.value)
+                      }
+                      disabled={!puedeEscribir}
+                      aria-label={`Fecha del consentimiento de ${fila.nombre}`}
+                    />
+                  </label>
+                ) : null}
+                <button
+                  type="button"
+                  className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
+                  disabled={ocupado || !puedeEscribir}
+                  onClick={() => void confirmarConsentimiento(fila)}
+                >
+                  Documentar autorización
+                </button>
+              </div>
+            )}
+          </section>
+
+          <section className="liga-notificaciones__drawer-section">
+            <h3 className="liga-notificaciones__drawer-section-title">
+              Correo electrónico
+            </h3>
+            <p className="liga-notificaciones__drawer-status">
+              {fila.preferencia?.correo_verificado
+                ? "Verificado con enlace de confirmación"
+                : fila.visual === "sin_correo"
+                  ? "Sin correo válido"
+                  : fila.visual === "correo_ambiguo"
+                    ? "Correo ambiguo entre perfiles"
+                    : "Pendiente de verificación"}
+            </p>
+            <p className="liga-notificaciones__hint">
+              La verificación de titularidad es independiente del consentimiento.
+            </p>
+            {puedeVerificar.solicitar ? (
               <button
                 type="button"
                 className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
-                disabled={ocupado || !puedeEscribir}
-                onClick={() => void confirmarConsentimiento(fila)}
+                disabled={ocupado || !puedeVerificarCorreo}
+                onClick={() => void pedirVerificacion(fila)}
               >
-                Confirmar consentimiento
+                {puedeVerificarCorreo
+                  ? "Iniciar verificación de correo"
+                  : "Verificación pendiente de instalar"}
               </button>
-            </div>
-          )}
+            ) : null}
+          </section>
 
-          {decision.encolar ? (
-            <button
-              type="button"
-              className="liga-notificaciones__btn liga-notificaciones__btn--primary"
-              disabled={ocupado || !puedeEscribir}
-              onClick={() => void generarBienvenida(fila)}
-            >
-              Preparar bienvenida
-            </button>
-          ) : null}
+          <div className="liga-notificaciones__drawer-actions">
+            {!puedeEscribir ? (
+              <p className="liga-notificaciones__hint">
+                El guardado permanece desactivado mientras el backend está pendiente.
+              </p>
+            ) : (
+              <p className="liga-notificaciones__hint">
+                Los cambios del interruptor se guardan al activarlo o desactivarlo.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -866,14 +1061,25 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       className="liga-notificaciones"
       aria-label="Notificaciones de la liga"
     >
-      {!cargando && snapshot?.disponible && !snapshot.escriturasActivas ? (
+      {!cargando && snapshot && !snapshot.disponible ? (
         <div className="liga-notificaciones__banner" role="status">
           Vista de revisión. El guardado y los envíos están desactivados.
         </div>
       ) : null}
-      {!cargando && snapshot && !snapshot.disponible ? (
+      {!cargando &&
+      snapshot?.disponible &&
+      !snapshot.escriturasActivas ? (
         <div className="liga-notificaciones__banner" role="status">
           Vista de revisión. El guardado y los envíos están desactivados.
+        </div>
+      ) : null}
+      {!cargando &&
+      snapshot?.disponible &&
+      snapshot.escriturasActivas &&
+      !snapshot.verificacionDisponible ? (
+        <div className="liga-notificaciones__banner" role="status">
+          Preferencias activas. La verificación de correo se habilita al instalar
+          la migración 0101.
         </div>
       ) : null}
 
@@ -1062,17 +1268,20 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             </>
           )}
 
-          {gestionFila ? (
-            <div className="liga-notificaciones__overlay">
-              <button
-                type="button"
-                className="liga-notificaciones__overlay-scrim"
-                aria-label="Cerrar panel"
-                onClick={() => setGestionId(null)}
-              />
-              {panelGestion(gestionFila)}
-            </div>
-          ) : null}
+          {gestionFila && typeof document !== "undefined"
+            ? createPortal(
+                <div className="liga-notificaciones__overlay">
+                  <button
+                    type="button"
+                    className="liga-notificaciones__overlay-scrim"
+                    aria-label="Cerrar panel"
+                    onClick={() => setGestionId(null)}
+                  />
+                  {panelGestion(gestionFila)}
+                </div>,
+                document.body
+              )
+            : null}
         </div>
       ) : null}
 
@@ -1083,10 +1292,11 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               Correo de bienvenida
             </h3>
             <p className="liga-notificaciones__hint">
-              Vista previa. Este mensaje no se ha enviado.
+              Modo manual: selecciona jugadores, revisa la vista previa y confirma
+              el envío. Marcar un interruptor no envía nada.
             </p>
             <label className="liga-notificaciones__field" htmlFor="preview-destinatario">
-              <span>Destinatario</span>
+              <span>Vista previa</span>
               <select
                 id="preview-destinatario"
                 className="liga-notificaciones__select"
@@ -1101,61 +1311,128 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               </select>
             </label>
             {preview ? (
-              <>
-                <div className="liga-notificaciones__preview-meta">
-                  <FotoRetrato
-                    fotoUrl={preview.fotoUrl}
-                    nombre={preview.nombre}
-                    size="md"
-                  />
-                  <div>
-                    <p className="liga-notificaciones__nombre">{preview.nombre}</p>
-                    <p className="liga-notificaciones__correo">
-                      {preview.email?.trim() || "Sin correo"}
-                    </p>
-                    <span
-                      className={`liga-notificaciones__badge liga-notificaciones__badge--${estadoTone(
-                        preview.visual
-                      )}`}
-                    >
-                      {ESTADO_GRID_LABEL[preview.visual]}
-                    </span>
-                  </div>
+              <div className="liga-notificaciones__preview-meta">
+                <FotoRetrato
+                  fotoUrl={preview.fotoUrl}
+                  nombre={preview.nombre}
+                  size="md"
+                />
+                <div>
+                  <p className="liga-notificaciones__nombre">{preview.nombre}</p>
+                  <p className="liga-notificaciones__correo">
+                    {preview.email?.trim() || "Sin correo"}
+                  </p>
+                  <span
+                    className={`liga-notificaciones__badge liga-notificaciones__badge--${estadoTone(
+                      preview.visual
+                    )}`}
+                  >
+                    {ESTADO_GRID_LABEL[preview.visual]}
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  className="liga-notificaciones__btn liga-notificaciones__btn--primary"
-                  disabled={
-                    !puedeEscribir ||
-                    guardandoId === preview.jugadorId ||
-                    !puedeEncolarBienvenida({
-                      destinatario: {
-                        email: preview.email,
-                        perfilesConMismoCorreo: preview.perfilesConMismoCorreo,
-                        preferencia: preferenciaParaPolitica(
-                          preview.preferencia
-                        ),
-                        emailVerificado:
-                          preview.preferencia?.correo_verificado_email ?? null,
-                        sigueInscrito: true,
-                        esSalienteDeSustitucion: false,
-                      },
-                      ligaPausada: config.bienvenida_pausada,
-                      yaEnviado: preview.yaEnviado,
-                      yaEncolado: preview.yaEncolado,
-                      origen: "accion_admin",
-                    }).encolar
-                  }
-                  onClick={() => void generarBienvenida(preview)}
-                >
-                  Preparar bienvenida
-                </button>
-              </>
+              </div>
             ) : (
               <p className="liga-notificaciones__hint">
                 No hay inscritos para previsualizar.
               </p>
             )}
+
+            <div className="liga-notificaciones__envio-panel">
+              <h4 className="liga-notificaciones__drawer-section-title">
+                Destinatarios de este envío
+              </h4>
+              {candidatosEnvio.length === 0 ? (
+                <p className="liga-notificaciones__hint">
+                  Ningún jugador está listo (activado, autorizado y correo
+                  verificado). Gestiona destinatarios primero.
+                </p>
+              ) : (
+                <ul className="liga-notificaciones__envio-list">
+                  {candidatosEnvio.map((fila) => (
+                    <li key={fila.jugadorId}>
+                      <label className="liga-notificaciones__pick-row">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(envioSeleccion[fila.jugadorId])}
+                          disabled={!puedeEscribir || enviandoLote}
+                          onChange={(event) =>
+                            setEnvioSeleccion((prev) => ({
+                              ...prev,
+                              [fila.jugadorId]: event.target.checked,
+                            }))
+                          }
+                        />
+                        <span>{fila.nombre}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {envioPaso === "idle" ? (
+                <button
+                  type="button"
+                  className="liga-notificaciones__btn liga-notificaciones__btn--primary"
+                  disabled={
+                    !puedeEscribir ||
+                    enviandoLote ||
+                    seleccionadosEnvio.length === 0
+                  }
+                  onClick={() => setEnvioPaso("preparado")}
+                >
+                  PREPARAR CORREO
+                </button>
+              ) : (
+                <>
+                  <p className="liga-notificaciones__drawer-status">
+                    Recibirán el correo ({incluidosEnvio.length})
+                  </p>
+                  <ul className="liga-notificaciones__envio-list">
+                    {incluidosEnvio.map((fila) => (
+                      <li key={`in-${fila.jugadorId}`}>
+                        <span>{fila.nombre}</span>
+                        <span>{fila.email?.trim() || "Sin correo"}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="liga-notificaciones__drawer-status">
+                    Excluidos ({excluidosEnvio.length})
+                  </p>
+                  <ul className="liga-notificaciones__envio-list">
+                    {excluidosEnvio.slice(0, 40).map(({ fila, motivo }) => (
+                      <li key={`ex-${fila.jugadorId}`}>
+                        <span>{fila.nombre}</span>
+                        <span>{motivo}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    className="liga-notificaciones__btn liga-notificaciones__btn--primary"
+                    disabled={
+                      !puedeEscribir ||
+                      enviandoLote ||
+                      incluidosEnvio.length === 0
+                    }
+                    onClick={() => void confirmarEnvioManual()}
+                  >
+                    {enviandoLote
+                      ? "Enviando…"
+                      : `ENVIAR A ${incluidosEnvio.length} JUGADOR${
+                          incluidosEnvio.length === 1 ? "" : "ES"
+                        }`}
+                  </button>
+                  <button
+                    type="button"
+                    className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
+                    disabled={enviandoLote}
+                    onClick={() => setEnvioPaso("idle")}
+                  >
+                    Cancelar
+                  </button>
+                </>
+              )}
+            </div>
           </aside>
           <div className="liga-notificaciones__preview-frame-wrap">
             {preview ? (

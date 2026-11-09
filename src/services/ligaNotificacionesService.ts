@@ -56,10 +56,12 @@ export interface ColaNotificacionRow {
 export interface NotificacionesLigaSnapshot {
   disponible: boolean;
   /**
-   * False mientras falten migraciones de cierre (p. ej. 0101/0103) o el
-   * esquema esté incompleto. El panel se puede revisar; no hay escrituras.
+   * Preferencias/config/cola de 0100 utilizables (toggles, consentimiento,
+   * encolar). Independiente de verificación (0101) y modo_operacion (0103).
    */
   escriturasActivas: boolean;
+  /** Tabla/RPC de verificación de correo (0101) disponible. */
+  verificacionDisponible: boolean;
   preferencias: PreferenciaNotificacionRow[];
   config: ConfigNotificacionLiga;
   historial: HistorialNotificacionRow[];
@@ -85,6 +87,7 @@ function normalizarModoOperacion(raw: unknown): ModoOperacionNotificaciones {
 const VACIO: NotificacionesLigaSnapshot = {
   disponible: false,
   escriturasActivas: false,
+  verificacionDisponible: false,
   preferencias: [],
   config: CONFIG_INICIAL,
   historial: [],
@@ -190,7 +193,7 @@ export async function cargarNotificacionesLiga(
   };
 
   if (errores.some(esEsquemaAusente)) {
-    // 0100 sin 0101: el panel de bienvenida sigue usable en modo visual.
+    // 0100 sin 0101: preferencias/toggles/encolar sí; verificación aún no.
     if (
       !preferencias.error &&
       !configError &&
@@ -201,7 +204,8 @@ export async function cargarNotificacionesLiga(
     ) {
       return {
         disponible: true,
-        escriturasActivas: false,
+        escriturasActivas: true,
+        verificacionDisponible: false,
         preferencias: (preferencias.data ?? []).map((row) => ({
           ...(row as PreferenciaNotificacionRow),
           correo_verificacion_origen:
@@ -220,14 +224,27 @@ export async function cargarNotificacionesLiga(
   }
   if (errores.length > 0) {
     aviso("no_disponible");
-    return { ...VACIO, disponible: true, escriturasActivas: false };
+    return {
+      ...VACIO,
+      disponible: true,
+      escriturasActivas: false,
+      verificacionDisponible: false,
+    };
   }
 
   return {
     disponible: true,
-    escriturasActivas: modoOperacionPresente,
+    // Toggles/consentimiento no dependen de 0103; modo_operacion solo afecta config.
+    escriturasActivas: true,
+    verificacionDisponible: true,
     preferencias: (preferencias.data ?? []) as PreferenciaNotificacionRow[],
-    config: configNormalizada,
+    config: {
+      ...configNormalizada,
+      // Sin 0103 la UI muestra manual y no intenta persistir el modo.
+      modo_operacion: modoOperacionPresente
+        ? configNormalizada.modo_operacion
+        : "manual",
+    },
     historial: (historial.data ?? []) as HistorialNotificacionRow[],
     cola: (cola.data ?? []) as ColaNotificacionRow[],
     verificaciones: (verificaciones.data ?? []) as VerificacionSolicitudRow[],
@@ -313,15 +330,21 @@ export async function registrarConsentimientoJugador(input: {
   jugadorId: string;
   rivieraJugadorId: string | null;
   origen: string;
+  /** Fecha real del consentimiento previo; el trigger la conserva si viene. */
+  registradoAt?: string | null;
 }): Promise<ResultadoNotificacion> {
+  const patch: Record<string, unknown> = {
+    consentimiento_estado: "autorizado",
+    consentimiento_origen: input.origen,
+  };
+  if (input.registradoAt?.trim()) {
+    patch.consentimiento_registrado_at = input.registradoAt.trim();
+  }
   return asegurarPreferencia(
     input.ligaId,
     input.jugadorId,
     input.rivieraJugadorId,
-    {
-      consentimiento_estado: "autorizado",
-      consentimiento_origen: input.origen,
-    }
+    patch
   );
 }
 
