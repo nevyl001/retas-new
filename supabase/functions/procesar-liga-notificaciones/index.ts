@@ -27,7 +27,7 @@ import {
 
 const MODULE = "procesar-liga-notificaciones";
 const SECRET_HEADER = "x-liga-notificaciones-secret";
-const MAX_BATCH = 20;
+const MAX_BATCH = 50;
 const MAX_ATTEMPTS = 3;
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -84,12 +84,14 @@ function parseReplyTo(raw: string | null | undefined): string | null {
 function decidirReclamo(input: {
   email: string | null;
   allowlist: Set<string>;
+  modoOperativo: boolean;
   pref: PrefRow | null;
 }): { reclamar: boolean; motivo: string } {
   const email = input.email?.trim().toLowerCase() ?? "";
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !email.endsWith("@padel.local");
-  if (!emailOk || !input.allowlist.has(email)) {
-    return { reclamar: false, motivo: emailOk ? "fuera_de_allowlist" : "sin_correo" };
+  if (!emailOk) return { reclamar: false, motivo: "sin_correo" };
+  if (!input.modoOperativo && !input.allowlist.has(email)) {
+    return { reclamar: false, motivo: "fuera_de_allowlist" };
   }
   if (!input.pref?.admin_habilitado) {
     return { reclamar: false, motivo: "deshabilitado" };
@@ -161,8 +163,9 @@ Deno.serve(async (req) => {
     });
   }
 
+  const modoOperativo = Deno.env.get("LIGA_NOTIFICACIONES_MODO") === "operativo";
   const allowlist = parseAllowlist(Deno.env.get("LIGA_NOTIFICACIONES_ALLOWLIST"));
-  if (allowlist.size === 0) {
+  if (!modoOperativo && allowlist.size === 0) {
     return json(req, 200, {
       ok: true,
       enviosReales: true,
@@ -204,6 +207,7 @@ Deno.serve(async (req) => {
   let aceptados = 0;
   let omitidos = 0;
   let errores = 0;
+  let reintentos = 0;
   let fueraAllowlist = 0;
 
   const { data: pendientes, error: listErr } = await supabase
@@ -227,6 +231,7 @@ Deno.serve(async (req) => {
     const decision = decidirReclamo({
       email: previo.email,
       allowlist,
+      modoOperativo,
       pref: previo.pref,
     });
     if (!decision.reclamar) {
@@ -275,6 +280,7 @@ Deno.serve(async (req) => {
 
     if (outcome === "aceptado") aceptados += 1;
     else if (outcome === "omitido") omitidos += 1;
+    else if (outcome === "reintento") reintentos += 1;
     else errores += 1;
   }
 
@@ -288,6 +294,7 @@ Deno.serve(async (req) => {
     enviados: aceptados,
     errores,
     fuera_allowlist: fueraAllowlist,
+    pendientes: fueraAllowlist + reintentos,
     replyTo: Boolean(replyTo),
   });
 });
@@ -352,12 +359,13 @@ async function enviarReclamado(
     lote_id: string | null;
   },
   replyTo: string | null,
-): Promise<"aceptado" | "omitido" | "error"> {
+): Promise<"aceptado" | "omitido" | "error" | "reintento"> {
   const otraVez = await leerElegibilidad0100(supabase, row);
   const allowlist = parseAllowlist(Deno.env.get("LIGA_NOTIFICACIONES_ALLOWLIST"));
   const decision = decidirReclamo({
     email: otraVez.email,
     allowlist,
+    modoOperativo: Deno.env.get("LIGA_NOTIFICACIONES_MODO") === "operativo",
     pref: otraVez.pref,
   });
   if (!decision.reclamar) {
@@ -427,7 +435,7 @@ async function enviarReclamado(
       motivo: "error_temporal",
       proveedor_estado: null,
     });
-    return "error";
+    return "reintento";
   }
 
   await finalizarMensaje(supabase, row, {

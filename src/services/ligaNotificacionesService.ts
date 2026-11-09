@@ -73,6 +73,7 @@ export interface ResultadoProcesamientoLote {
   errores: number;
   procesados: number;
   fueraAllowlist: number;
+  pendientes: number;
   motivo: string | null;
 }
 
@@ -755,6 +756,8 @@ export async function solicitarProcesamientoLote(input: {
   ligaId: string;
   loteId: string;
   reintentar?: boolean;
+  tipo?: string;
+  jugadores?: { jugadorId: string; asunto: string; cuerpo: string }[];
 }): Promise<ResultadoProcesamientoLote> {
   const vacio: ResultadoProcesamientoLote = {
     ok: false,
@@ -764,6 +767,7 @@ export async function solicitarProcesamientoLote(input: {
     errores: 0,
     procesados: 0,
     fueraAllowlist: 0,
+    pendientes: 0,
     motivo: "no_disponible",
   };
   const { data, error } = await supabase.functions.invoke(
@@ -773,8 +777,14 @@ export async function solicitarProcesamientoLote(input: {
         liga_id: input.ligaId,
         lote_id: input.loteId,
         reintentar: input.reintentar === true,
+        tipo: input.tipo,
+        jugadores: (input.jugadores ?? []).slice(0, 50).map((jugador) => ({
+          jugador_id: jugador.jugadorId,
+          asunto: jugador.asunto,
+          cuerpo: jugador.cuerpo,
+        })),
       },
-      timeout: 20000,
+      timeout: 55000,
     }
   );
   if (error) {
@@ -800,6 +810,7 @@ export async function solicitarProcesamientoLote(input: {
     errores: Number(row.errores ?? 0),
     procesados: Number(row.procesados ?? 0),
     fueraAllowlist: Number(row.fueraAllowlist ?? row.fuera_allowlist ?? 0),
+    pendientes: Number(row.pendientes ?? row.fuera_allowlist ?? 0),
     motivo: motivoSeguro(row.motivo ?? (row as { error?: unknown }).error),
   };
 }

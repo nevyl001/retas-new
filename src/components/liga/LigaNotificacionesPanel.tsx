@@ -16,7 +16,7 @@ import {
   registrarConsentimiento,
   type EstadoVisualNotificacion,
 } from "../../lib/liga/notificaciones/bienvenidaPolicy";
-import { puedeDocumentarAutorizacionVerbal } from "../../lib/liga/notificaciones/envioManualGate";
+import { puedeDocumentarAutorizacionVerbal, MAX_DESTINATARIOS_LOTE } from "../../lib/liga/notificaciones/envioManualGate";
 import {
   contarPerfilesPorCorreo,
   correoEfectivoDestinatario,
@@ -126,11 +126,15 @@ function sePuedeBorrarHistorial(
 
 function etiquetaEntrega(
   estado: string,
-  proveedor: string | null | undefined
+  proveedor: string | null | undefined,
+  motivo?: string | null
 ): string {
   if (proveedor === "entregado") return "Entregado";
   if (estado === "enviado" || proveedor === "aceptado") return "Aceptado";
   if (estado === "procesando") return "Procesando";
+  if (estado === "pendiente" && motivo === "error_temporal") {
+    return "Pendiente de reintento";
+  }
   if (estado === "pendiente") return "Pendiente";
   if (estado === "error") return "Error";
   if (estado === "omitido" || estado === "pausado") return "Omitido";
@@ -212,6 +216,7 @@ function mensajeResultadoEnvio(
     errores: number;
     omitidos: number;
     fueraAllowlist?: number;
+    pendientes?: number;
     motivo: string | null;
   } | null
 ): string {
@@ -219,27 +224,30 @@ function mensajeResultadoEnvio(
   if (!proceso || proceso.ok === false) {
     return "Correo preparado, pero no se pudo completar el procesamiento. Revisa Historial.";
   }
-  const fuera = proceso.fueraAllowlist ?? 0;
-  const excluidos =
-    fuera > 0
-      ? ` ${fuera} destinatario${fuera === 1 ? "" : "s"} siguen pendientes porque no entran en esta prueba.`
-      : "";
   if (!proceso.enviosReales) {
     return `En cola para ${jugadores}. Pendiente de procesamiento. No se entregó.`;
   }
-  if (proceso.enviados > 0 && proceso.errores === 0) {
-    return `Resend aceptó ${proceso.enviados} correo${proceso.enviados === 1 ? "" : "s"}.${excluidos}`;
-  }
-  if (fuera > 0 && proceso.errores === 0) {
-    return `${fuera} destinatario${fuera === 1 ? "" : "s"} siguen pendientes porque no entran en esta prueba. No se entregó.`;
-  }
-  if (proceso.errores > 0) {
-    return `Error al entregar. ${motivoVisible(proceso.motivo)}. Puedes reintentar desde el historial.`;
-  }
+  const aceptados = proceso.enviados;
+  const pendientes = proceso.pendientes ?? proceso.fueraAllowlist ?? 0;
+  const errores = proceso.errores;
+  const partes = [
+    `${aceptados} aceptado${aceptados === 1 ? "" : "s"}`,
+    `${pendientes} pendiente${pendientes === 1 ? "" : "s"}`,
+    `${errores} error${errores === 1 ? "" : "es"}`,
+  ];
   if (proceso.omitidos > 0) {
-    return "Omitido por la validación. No se entregó.";
+    partes.push(
+      `${proceso.omitidos} omitido${proceso.omitidos === 1 ? "" : "s"}`
+    );
   }
-  return `En cola para ${jugadores}. Pendiente de procesamiento. No se entregó.`;
+  const resumen = partes.join(" · ");
+  const prueba =
+    (proceso.fueraAllowlist ?? 0) > 0
+      ? ` ${(proceso.fueraAllowlist ?? 0)} destinatario${
+          proceso.fueraAllowlist === 1 ? "" : "s"
+        } siguen pendientes porque no entran en esta prueba.`
+      : "";
+  return `${resumen}.${prueba} No se marca como entregado hasta la confirmación del proveedor.`;
 }
 
 function motivoVisible(motivo: string | null): string {
@@ -766,6 +774,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       confirmar("No hay jugadores listos para este envío.");
       return;
     }
+    if (lote.length > MAX_DESTINATARIOS_LOTE) {
+      confirmar(`El máximo por envío es ${MAX_DESTINATARIOS_LOTE} jugadores.`);
+      return;
+    }
     if (!asuntoDraft.trim() || !cuerpoDraft.trim()) {
       confirmar(motivoVisible("mensaje_incompleto"));
       return;
@@ -782,6 +794,8 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     let fallidos = 0;
     let ultimoMotivo: string | null = null;
     const colaNueva: ColaNotificacionRow[] = [];
+    const jugadoresLote: { jugadorId: string; asunto: string; cuerpo: string }[] =
+      [];
     let proceso: Awaited<ReturnType<typeof solicitarProcesamientoLote>> | null =
       null;
     try {
@@ -810,6 +824,11 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           resultado.ok && resultado.motivo === "ya_encolado";
         if (resultado.ok && (resultado.encolado || yaEstaba)) {
           preparados += 1;
+          jugadoresLote.push({
+            jugadorId: fila.jugadorId,
+            asunto: asuntoResuelto,
+            cuerpo: cuerpoResuelto,
+          });
           if (resultado.encolado) {
             colaNueva.push({
               liga_jugador_id: fila.jugadorId,
@@ -837,7 +856,12 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       if (preparados > 0) {
         setFaseEnvio("encolado");
         setFaseEnvio("procesando");
-        proceso = await solicitarProcesamientoLote({ ligaId, loteId });
+        proceso = await solicitarProcesamientoLote({
+          ligaId,
+          loteId,
+          tipo: plantillaId,
+          jugadores: jugadoresLote,
+        });
       }
       await refrescarHistorial();
     } catch {
@@ -1561,8 +1585,8 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               {envioPaso === "preparado" ? (
                 <>
                   <p className="liga-notificaciones__drawer-status">
-                    {incluidosEnvio.length} jugador
-                    {incluidosEnvio.length === 1 ? "" : "es"}
+                    VAS A ENVIAR ESTE CORREO A {incluidosEnvio.length} JUGADOR
+                    {incluidosEnvio.length === 1 ? "" : "ES"}
                   </p>
                   <ul className="liga-notificaciones__envio-list">
                     {incluidosEnvio.map((fila) => (
@@ -1606,7 +1630,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                         : faseEnvio === "encolado"
                           ? "Encolado…"
                           : "Procesando…"
-                      : `ENVIAR CORREO A ${incluidosEnvio.length} JUGADOR${
+                      : `CONFIRMAR Y ENVIAR A ${incluidosEnvio.length} JUGADOR${
                           incluidosEnvio.length === 1 ? "" : "ES"
                         }`}
                   </button>
@@ -1734,7 +1758,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                       {new Date(item.created_at).toLocaleString("es-MX")}
                     </p>
                     <span className="liga-notificaciones__badge liga-notificaciones__badge--pending">
-                      {etiquetaEntrega(item.estado, item.proveedor_estado)}
+                      {etiquetaEntrega(item.estado, item.proveedor_estado, item.motivo)}
                     </span>
                     <span className="liga-notificaciones__history-actions">
                       {sePuedeBorrarHistorial(item.estado, item.proveedor_estado) ? (
@@ -1783,10 +1807,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                       <p className="liga-notificaciones__meta">Bienvenida · cola</p>
                     </div>
                     <p className="liga-notificaciones__meta">
-                      {etiquetaEntrega(item.estado, null)}
+                      {etiquetaEntrega(item.estado, null, item.motivo)}
                     </p>
                     <span className="liga-notificaciones__badge liga-notificaciones__badge--pending">
-                      {etiquetaEntrega(item.estado, null)}
+                      {etiquetaEntrega(item.estado, null, item.motivo)}
                     </span>
                     <span className="liga-notificaciones__history-actions">
                       {item.estado === "error" && item.lote_id ? (
@@ -1797,16 +1821,6 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                           onClick={() => void reintentarLote(item.lote_id!)}
                         >
                           Reintentar
-                        </button>
-                      ) : null}
-                      {item.estado === "pendiente" && item.lote_id ? (
-                        <button
-                          type="button"
-                          className="liga-notificaciones__ghost"
-                          disabled={!puedeEscribir || enviandoLote}
-                          onClick={() => void reintentarLote(item.lote_id!)}
-                        >
-                          Procesar
                         </button>
                       ) : null}
                       {item.id && sePuedeBorrarHistorial(item.estado, null) ? (

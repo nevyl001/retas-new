@@ -26,7 +26,14 @@ export function parseReplyTo(raw: string | null | undefined): string | null {
   return normalizarEmailAllowlist(raw);
 }
 
-/** Sin correos válidos no hay lote: cero lecturas de cola y cero Resend. */
+/** Solo el valor exacto "operativo" sale del modo prueba. Una allowlist vacía no lo activa. */
+export function modoOperativoManual(raw: string | null | undefined): boolean {
+  return raw === "operativo";
+}
+
+export const MAX_DESTINATARIOS_LOTE = 50;
+
+/** Sin correos válidos no hay lote de prueba: cero lecturas de cola y cero Resend. */
 export function allowlistActiva(raw: string | null | undefined): boolean {
   return parseAllowlist(raw).size > 0;
 }
@@ -40,6 +47,8 @@ export type FilaSimulada = {
   consentimientoOrigen: string | null;
   consentimientoRegistradoAt: string | null;
   registroAutorizadoAt?: string | null;
+  estado?: "pendiente" | "procesando" | "enviado" | "error" | "omitido" | "pausado";
+  attempts?: number;
 };
 
 export type ResultadoSimulado = {
@@ -59,7 +68,9 @@ export type ResultadoSimulado = {
 export function simularLoteManual(input: {
   enviosReales: string | null | undefined;
   allowlistRaw: string | null | undefined;
+  modo?: string | null;
   loteId?: string | null;
+  fallos?: string[];
   filas: FilaSimulada[];
 }): ResultadoSimulado {
   const quieto: ResultadoSimulado = {
@@ -71,25 +82,29 @@ export function simularLoteManual(input: {
     reclamadas: [],
     excluidasSinEscritura: [],
   };
-  if (input.enviosReales !== "true" || !allowlistActiva(input.allowlistRaw)) {
-    return quieto;
-  }
-  if (input.loteId === null || input.loteId === "") {
-    return quieto;
-  }
-  const filas = input.loteId
+  const operativo = modoOperativoManual(input.modo);
+  if (input.enviosReales !== "true") return quieto;
+  if (!operativo && !allowlistActiva(input.allowlistRaw)) return quieto;
+  if (input.loteId === null || input.loteId === "") return quieto;
+  const filas = (input.loteId
     ? input.filas.filter((fila) => fila.loteId === input.loteId)
-    : input.filas;
+    : input.filas
+  ).slice(0, MAX_DESTINATARIOS_LOTE);
   const allowlist = parseAllowlist(input.allowlistRaw);
+  const fallos = new Set(input.fallos ?? []);
   const reclamadas: string[] = [];
   const excluidasSinEscritura: string[] = [];
   let escrituras = 0;
   let enviados = 0;
+  let fallidos = 0;
   let fuera = 0;
   for (const fila of filas) {
+    if (fila.estado === "enviado" || fila.estado === "procesando") continue;
+    if ((fila.attempts ?? 0) >= 3) continue;
     const decision = decidirReclamoEnvio({
       email: fila.email,
       allowlist,
+      exigirAllowlist: !operativo,
       adminHabilitado: fila.adminHabilitado,
       consentimientoEstado: fila.consentimientoEstado,
       consentimientoOrigen: fila.consentimientoOrigen,
@@ -106,6 +121,10 @@ export function simularLoteManual(input: {
       continue;
     }
     escrituras += 1;
+    if (fallos.has(fila.id)) {
+      fallidos += 1;
+      continue;
+    }
     enviados += 1;
     reclamadas.push(fila.id);
   }
@@ -113,7 +132,7 @@ export function simularLoteManual(input: {
     procesados: filas.length,
     enviados,
     escrituras,
-    llamadasResend: enviados,
+    llamadasResend: enviados + fallidos,
     fuera_allowlist: fuera,
     reclamadas,
     excluidasSinEscritura,
@@ -132,6 +151,7 @@ export type DecisionReclamo =
 export function decidirReclamoEnvio(input: {
   email: string | null | undefined;
   allowlist: Set<string>;
+  exigirAllowlist?: boolean;
   adminHabilitado: boolean;
   consentimientoEstado: string | null | undefined;
   consentimientoOrigen: string | null | undefined;
@@ -139,7 +159,8 @@ export function decidirReclamoEnvio(input: {
   registroAutorizadoAt?: string | null;
 }): DecisionReclamo {
   const email = normalizarEmailAllowlist(input.email);
-  if (!email || !input.allowlist.has(email)) {
+  const exigirAllowlist = input.exigirAllowlist !== false;
+  if (!email || (exigirAllowlist && !input.allowlist.has(email))) {
     return { reclamar: false, motivo: email ? "fuera_de_allowlist" : "sin_correo" };
   }
   if (!input.adminHabilitado) {

@@ -236,6 +236,7 @@ describe("allowlist fail-closed", () => {
     );
     const auth = worker.indexOf("LIGA_NOTIFICACIONES_WEBHOOK_SECRET");
     const flag = worker.indexOf('LIGA_NOTIFICACIONES_ENVIOS_REALES") === "true"');
+    const modo = worker.indexOf('LIGA_NOTIFICACIONES_MODO") === "operativo"');
     const corte = worker.indexOf("allowlist.size === 0");
     const lote = worker.indexOf("lote_requerido");
     const cola = worker.indexOf('from("liga_notificaciones_queue")');
@@ -243,6 +244,8 @@ describe("allowlist fail-closed", () => {
     expect(auth).toBeGreaterThan(-1);
     expect(auth).toBeLessThan(flag);
     expect(flag).toBeLessThan(corte);
+    expect(modo).toBeGreaterThan(flag);
+    expect(modo).toBeLessThan(corte);
     expect(corte).toBeLessThan(lote);
     expect(lote).toBeLessThan(cola);
     expect(worker).toContain('.eq("lote_id", loteId)');
@@ -264,8 +267,189 @@ describe("allowlist fail-closed", () => {
     const worker = fuente.indexOf("procesar-liga-notificaciones");
     expect(apagado).toBeGreaterThan(-1);
     expect(apagado).toBeLessThan(worker);
-    expect(fuente).toContain("AbortSignal.timeout(20000)");
+    expect(fuente.indexOf('return apagado(req, "modo_prueba")')).toBeGreaterThan(apagado);
+    expect(fuente.indexOf('return apagado(req, "modo_prueba")')).toBeLessThan(worker);
+    expect(fuente).toContain('LIGA_NOTIFICACIONES_MODO") === "operativo"');
+    expect(fuente).toContain("AbortSignal.timeout(55000)");
+    expect(fuente).toContain('.eq("estado", "pendiente")');
+    expect(fuente).not.toContain('.eq("estado", "enviado")');
     expect(fuente).toContain("x-liga-notificaciones-secret");
     expect(fuente).toContain("fuera_allowlist");
+  });
+});
+
+function elegible(id: string, email: string): FilaSimulada {
+  return {
+    id,
+    loteId: "lote-confirmado",
+    email,
+    adminHabilitado: true,
+    consentimientoEstado: "autorizado",
+    consentimientoOrigen: "manifestacion_presencial",
+    consentimientoRegistradoAt: "2026-11-09T12:00:00.000Z",
+    estado: "pendiente",
+    attempts: 0,
+  };
+}
+
+describe("modo operativo manual simulado", () => {
+  const operativo = {
+    enviosReales: "true" as const,
+    allowlistRaw: "",
+    modo: "operativo",
+    loteId: "lote-confirmado",
+  };
+
+  it("1. un destinatario elegible se entrega sin allowlist", () => {
+    const resultado = simularLoteManual({
+      ...operativo,
+      filas: [elegible("uno", "uno@example.com")],
+    });
+    expect(resultado.reclamadas).toEqual(["uno"]);
+    expect(resultado.llamadasResend).toBe(1);
+  });
+
+  it("2 y 3. tres y doce destinatarios elegibles se procesan todos", () => {
+    const tres = Array.from({ length: 3 }, (_, i) =>
+      elegible(`j${i}`, `j${i}@example.com`)
+    );
+    const doce = Array.from({ length: 12 }, (_, i) =>
+      elegible(`d${i}`, `d${i}@example.com`)
+    );
+    expect(
+      simularLoteManual({ ...operativo, filas: tres }).reclamadas
+    ).toHaveLength(3);
+    expect(
+      simularLoteManual({ ...operativo, filas: doce }).reclamadas
+    ).toHaveLength(12);
+  });
+
+  it("4, 5 y 6. revocado, desactivado y correo ambiguo no se reclaman", () => {
+    const resultado = simularLoteManual({
+      ...operativo,
+      filas: [
+        elegible("ok", "ok@example.com"),
+        { ...elegible("revocado", "revocado@example.com"), consentimientoEstado: "revocado" },
+        { ...elegible("apagado", "apagado@example.com"), adminHabilitado: false },
+        { ...elegible("ambiguo", "no-es-correo"), email: null },
+      ],
+    });
+    expect(resultado.reclamadas).toEqual(["ok"]);
+    expect(resultado.llamadasResend).toBe(1);
+    expect(resultado.escrituras).toBe(4);
+  });
+
+  it("7. un fallo parcial de Resend no detiene al resto", () => {
+    const resultado = simularLoteManual({
+      ...operativo,
+      fallos: ["j1"],
+      filas: [
+        elegible("j0", "j0@example.com"),
+        elegible("j1", "j1@example.com"),
+        elegible("j2", "j2@example.com"),
+      ],
+    });
+    expect(resultado.reclamadas).toEqual(["j0", "j2"]);
+    expect(resultado.llamadasResend).toBe(3);
+    expect(resultado.enviados).toBe(2);
+  });
+
+  it("8. el reintento sigue disponible antes del tercer intento", () => {
+    const fresco = simularLoteManual({
+      ...operativo,
+      filas: [{ ...elegible("reintento", "reintento@example.com"), attempts: 2 }],
+    });
+    const agotado = simularLoteManual({
+      ...operativo,
+      filas: [{ ...elegible("reintento", "reintento@example.com"), attempts: 3 }],
+    });
+    expect(fresco.reclamadas).toEqual(["reintento"]);
+    expect(agotado.reclamadas).toEqual([]);
+    expect(agotado.llamadasResend).toBe(0);
+  });
+
+  it("9 y 14. un segundo pase no reprocesa un mensaje ya enviado", () => {
+    const primero = simularLoteManual({
+      ...operativo,
+      filas: [elegible("uno", "uno@example.com")],
+    });
+    const segundo = simularLoteManual({
+      ...operativo,
+      filas: [{ ...elegible("uno", "uno@example.com"), estado: "enviado" }],
+    });
+    expect(primero.enviados).toBe(1);
+    expect(segundo).toMatchObject({
+      enviados: 0,
+      llamadasResend: 0,
+      escrituras: 0,
+    });
+  });
+
+  it("10. con envíos apagados no hay lecturas ni Resend", () => {
+    const resultado = simularLoteManual({
+      ...operativo,
+      enviosReales: "false",
+      filas: [elegible("uno", "uno@example.com")],
+    });
+    expect(resultado).toMatchObject({
+      procesados: 0,
+      enviados: 0,
+      llamadasResend: 0,
+      escrituras: 0,
+    });
+  });
+
+  it("11. el modo prueba sigue exigiendo allowlist", () => {
+    const vacia = simularLoteManual({
+      enviosReales: "true",
+      allowlistRaw: "",
+      modo: "prueba",
+      loteId: "lote-confirmado",
+      filas: [elegible("uno", "uno@example.com")],
+    });
+    const una = simularLoteManual({
+      enviosReales: "true",
+      allowlistRaw: "uno@example.com",
+      modo: "",
+      loteId: "lote-confirmado",
+      filas: [
+        elegible("uno", "uno@example.com"),
+        elegible("dos", "dos@example.com"),
+      ],
+    });
+    expect(vacia.procesados).toBe(0);
+    expect(una.reclamadas).toEqual(["uno"]);
+    expect(una.fuera_allowlist).toBe(1);
+  });
+
+  it("12. operativo no se activa porque la allowlist esté vacía", () => {
+    const sinModo = simularLoteManual({
+      enviosReales: "true",
+      allowlistRaw: "",
+      loteId: "lote-confirmado",
+      filas: [elegible("uno", "uno@example.com")],
+    });
+    const activo = simularLoteManual({
+      ...operativo,
+      filas: [
+        elegible("uno", "uno@example.com"),
+        elegible("dos", "dos@example.com"),
+      ],
+    });
+    expect(sinModo.procesados).toBe(0);
+    expect(activo.reclamadas).toEqual(["uno", "dos"]);
+  });
+
+  it("13. la cola histórica de otro lote y un enviado no entran en la confirmación", () => {
+    const resultado = simularLoteManual({
+      ...operativo,
+      filas: [
+        elegible("nuevo", "nuevo@example.com"),
+        { ...elegible("historico", "historico@example.com"), loteId: "lote-viejo" },
+        { ...elegible("entregado", "entregado@example.com"), estado: "enviado" },
+      ],
+    });
+    expect(resultado.reclamadas).toEqual(["nuevo"]);
+    expect(resultado.procesados).toBe(2);
   });
 });

@@ -96,6 +96,7 @@ describe("ligaNotificacionesService", () => {
       errores: 0,
       procesados: 0,
       fueraAllowlist: 0,
+      pendientes: 0,
       motivo: "envios_apagados",
     });
     expect(invoke).toHaveBeenCalledWith("procesar-lote-liga-notificaciones", {
@@ -103,8 +104,10 @@ describe("ligaNotificacionesService", () => {
         liga_id: "liga-1",
         lote_id: "11111111-1111-4111-8111-111111111111",
         reintentar: false,
+        tipo: undefined,
+        jugadores: [],
       },
-      timeout: 20000,
+      timeout: 55000,
     });
   });
 

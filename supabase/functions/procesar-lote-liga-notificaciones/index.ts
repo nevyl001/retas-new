@@ -43,7 +43,13 @@ Deno.serve(async (req) => {
     return json(req, 401, { ok: false, error: "sesion_requerida" });
   }
 
-  let body: { liga_id?: string; lote_id?: string; reintentar?: boolean };
+  let body: {
+    liga_id?: string;
+    lote_id?: string;
+    reintentar?: boolean;
+    tipo?: string;
+    jugadores?: { jugador_id?: string; asunto?: string; cuerpo?: string }[];
+  };
   try {
     body = await req.json();
   } catch {
@@ -90,10 +96,10 @@ Deno.serve(async (req) => {
   }
 
   const reales = Deno.env.get("LIGA_NOTIFICACIONES_ENVIOS_REALES") === "true";
+  const modoOperativo = Deno.env.get("LIGA_NOTIFICACIONES_MODO") === "operativo";
   const allowlist = (Deno.env.get("LIGA_NOTIFICACIONES_ALLOWLIST") ?? "").trim();
-  if (!reales || !allowlist) {
-    return apagado(req, "envios_apagados");
-  }
+  if (!reales) return apagado(req, "envios_apagados");
+  if (!modoOperativo && !allowlist) return apagado(req, "modo_prueba");
 
   const webhook = Deno.env.get("LIGA_NOTIFICACIONES_WEBHOOK_SECRET") ?? "";
   if (!webhook) {
@@ -107,6 +113,43 @@ Deno.serve(async (req) => {
     return json(req, 503, { ok: false, error: "procesador_no_configurado" });
   }
   const admin = createCredentialClient(supabaseUrl, credencial);
+
+  const jugadores = Array.isArray(body.jugadores) ? body.jugadores : [];
+  if (jugadores.length > 50) {
+    return json(req, 400, { ok: false, error: "demasiados_destinatarios" });
+  }
+  const tipos = new Set([
+    "bienvenida",
+    "aviso_general",
+    "jornada",
+    "cambio_horario",
+    "felicitacion",
+    "personalizado",
+  ]);
+  const tipo = (body.tipo ?? "").trim();
+  for (const jugador of jugadores) {
+    const jugadorId = jugador?.jugador_id?.trim() ?? "";
+    if (!UUID.test(jugadorId)) continue;
+    const patch: Record<string, string> = {
+      lote_id: loteId,
+      updated_at: new Date().toISOString(),
+    };
+    const asunto = jugador.asunto?.trim() ?? "";
+    const cuerpo = jugador.cuerpo?.trim() ?? "";
+    if (asunto) patch.asunto = asunto.slice(0, 180);
+    if (cuerpo) patch.cuerpo_texto = cuerpo.slice(0, 8000);
+    let consulta = admin
+      .from("liga_notificaciones_queue")
+      .update(patch)
+      .eq("liga_id", ligaId)
+      .eq("liga_jugador_id", jugadorId)
+      .eq("estado", "pendiente");
+    if (tipos.has(tipo)) consulta = consulta.eq("tipo", tipo);
+    const { error: adopcionError } = await consulta;
+    if (adopcionError) {
+      return json(req, 500, { ok: false, error: "cola_no_disponible" });
+    }
+  }
 
   const { count, error: countError } = await admin
     .from("liga_notificaciones_queue")
@@ -149,7 +192,7 @@ Deno.serve(async (req) => {
           "x-liga-notificaciones-secret": webhook,
         },
         body: JSON.stringify({ lote_id: loteId }),
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(55000),
       },
     );
   } catch {
@@ -191,6 +234,7 @@ Deno.serve(async (req) => {
     errores: Number(resultado.errores ?? 0),
     procesados: Number(resultado.procesados ?? 0),
     fuera_allowlist: Number(resultado.fuera_allowlist ?? 0),
+    pendientes: Number(resultado.pendientes ?? resultado.fuera_allowlist ?? 0),
     motivo: typeof resultado.motivo === "string" ? resultado.motivo : null,
   });
 });

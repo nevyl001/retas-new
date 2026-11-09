@@ -462,7 +462,7 @@ describe("LigaNotificacionesPanel", () => {
     });
     expect(mockEncolar).not.toHaveBeenCalled();
     const enviar = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "ENVIAR CORREO A 1 JUGADOR"
+      (button) => button.textContent === "CONFIRMAR Y ENVIAR A 1 JUGADOR"
     );
     await act(async () => {
       enviar?.click();
@@ -578,7 +578,7 @@ describe("LigaNotificacionesPanel", () => {
     });
     const enviar = () =>
       Array.from(container.querySelectorAll("button")).find(
-        (button) => button.textContent === "ENVIAR CORREO A 1 JUGADOR"
+        (button) => button.textContent === "CONFIRMAR Y ENVIAR A 1 JUGADOR"
       );
     await act(async () => {
       enviar()?.click();
@@ -651,7 +651,7 @@ describe("LigaNotificacionesPanel", () => {
       revisar?.click();
     });
     const enviar = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "ENVIAR CORREO A 3 JUGADORES"
+      (button) => button.textContent === "CONFIRMAR Y ENVIAR A 3 JUGADORES"
     );
     await act(async () => {
       enviar?.click();
@@ -713,7 +713,7 @@ describe("LigaNotificacionesPanel", () => {
       revisar?.click();
     });
     const enviar = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "ENVIAR CORREO A 1 JUGADOR"
+      (button) => button.textContent === "CONFIRMAR Y ENVIAR A 1 JUGADOR"
     );
     await act(async () => {
       enviar?.click();
@@ -776,7 +776,7 @@ describe("LigaNotificacionesPanel", () => {
     });
     const enviar = () =>
       Array.from(container.querySelectorAll("button")).find(
-        (button) => button.textContent === "ENVIAR CORREO A 1 JUGADOR"
+        (button) => button.textContent === "CONFIRMAR Y ENVIAR A 1 JUGADOR"
       );
     await act(async () => {
       enviar()?.click();
@@ -861,15 +861,18 @@ describe("LigaNotificacionesPanel", () => {
       revisar?.click();
     });
     const enviar = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "ENVIAR CORREO A 1 JUGADOR"
+      (button) => button.textContent === "CONFIRMAR Y ENVIAR A 1 JUGADOR"
     );
     await act(async () => {
       enviar?.click();
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(container.textContent).toContain("Resend aceptó 1 correo");
+    expect(container.textContent).toContain(
+      "1 aceptado · 2 pendientes · 0 errores"
+    );
     expect(container.textContent).toContain("no entran en esta prueba");
+    expect(container.textContent).not.toContain("Entregado");
     expect(container.textContent).not.toContain("Procesando…");
   });
 
@@ -912,7 +915,7 @@ describe("LigaNotificacionesPanel", () => {
     });
     const enviar = () =>
       Array.from(container.querySelectorAll("button")).find((button) =>
-        button.textContent?.includes("ENVIAR CORREO")
+        button.textContent?.includes("CONFIRMAR Y ENVIAR")
       ) as HTMLButtonElement;
     const boton = enviar();
     await act(async () => {
@@ -1024,7 +1027,7 @@ describe("LigaNotificacionesPanel", () => {
     expect(filas[0].textContent).toContain("Aceptado");
     expect(filas[0].textContent).not.toContain("Borrar");
     expect(filas[1].textContent).toContain("Pendiente");
-    expect(filas[1].textContent).toContain("Procesar");
+    expect(filas[1].textContent).not.toContain("Procesar");
     expect(filas[1].textContent).toContain("Borrar");
     const servicioEnvio = jest.requireMock(
       "../../services/ligaNotificacionesService"
@@ -1032,22 +1035,7 @@ describe("LigaNotificacionesPanel", () => {
       solicitarProcesamientoLote: jest.Mock;
       solicitarComunicacionManual: jest.Mock;
     };
-    servicioEnvio.solicitarComunicacionManual.mockClear();
-    servicioEnvio.solicitarProcesamientoLote.mockClear();
-    const procesar = Array.from(filas[1].querySelectorAll("button")).find(
-      (button) => button.textContent === "Procesar"
-    );
-    await act(async () => {
-      procesar?.click();
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-    expect(servicioEnvio.solicitarComunicacionManual).not.toHaveBeenCalled();
-    expect(servicioEnvio.solicitarProcesamientoLote).toHaveBeenCalledWith({
-      ligaId: "liga-1",
-      loteId: "11111111-1111-4111-8111-111111111111",
-      reintentar: true,
-    });
+    expect(servicioEnvio.solicitarProcesamientoLote).not.toHaveBeenCalled();
     const borrar = Array.from(filas[1].querySelectorAll("button")).find(
       (button) => button.textContent === "Borrar"
     );
