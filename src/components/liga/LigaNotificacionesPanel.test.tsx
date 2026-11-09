@@ -134,12 +134,11 @@ describe("LigaNotificacionesPanel", () => {
   it("muestra al jugador deshabilitado, sin un control para habilitar a todos", async () => {
     await renderPanel();
     expect(container.textContent).toContain("Saúl Moreno de la Torre del Valle");
-    expect(container.textContent).toContain("Correo por verificar");
+    expect(container.textContent).toContain("Pendiente de verificación");
     expect(container.textContent).toContain("0 seleccionados");
     expect(container.textContent).toContain("1 excluidos");
     expect(container.textContent?.toLowerCase()).not.toContain("habilitar a todos");
     expect(container.textContent).not.toContain("Marcar correo verificado");
-    expect(container.textContent).toContain("Correo por verificar");
     expect(container.textContent).not.toContain("Solicitar verificación");
     const checkbox = container.querySelector(
       'input[type="checkbox"]'
@@ -221,8 +220,8 @@ describe("LigaNotificacionesPanel", () => {
     const badges = Array.from(
       container.querySelectorAll(".liga-notificaciones__badge")
     ).map((badge) => badge.textContent);
-    expect(badges).toContain("Correo por verificar");
-    expect(badges).not.toContain("Habilitado");
+    expect(badges).toContain("Pendiente de verificación");
+    expect(badges).not.toContain("Listo para recibir");
   });
 
   it("con backend incompleto muestra revisión visual y no escribe", async () => {
@@ -241,7 +240,7 @@ describe("LigaNotificacionesPanel", () => {
     });
     await renderPanel();
     expect(container.textContent).toContain("Vista de revisión");
-    expect(container.textContent).toContain("sin generar escrituras");
+    expect(container.textContent).toContain("permanecen desactivados");
     const checkbox = container.querySelector(
       'input[type="checkbox"]'
     ) as HTMLInputElement;
