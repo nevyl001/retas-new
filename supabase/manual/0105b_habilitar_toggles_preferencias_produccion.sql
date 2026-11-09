@@ -1,0 +1,49 @@
+-- =============================================================================
+-- HABILITAR TOGGLES (admin_habilitado) EN PRODUCTION — SECUENCIA MÍNIMA
+-- =============================================================================
+-- NO EJECUTAR sin autorización explícita + backup.
+-- Objetivo: que el dueño pueda activar/desactivar notificaciones por jugador
+-- y persistir. NO activa Resend ni envíos.
+--
+-- Causa frontend corregida en repo: sin 0101 el select pedía columnas de
+-- verificación y apagaba escriturasActivas. Tras desplegar ese fix, si las
+-- tablas 0100 ya existen, los toggles deben funcionar sin migraciones nuevas.
+--
+-- -----------------------------------------------------------------------------
+-- PASO A — Lectura (¿faltan tablas 0100?)
+-- -----------------------------------------------------------------------------
+-- SELECT to_regclass('public.liga_notificaciones_preferencias') AS preferencias,
+--        to_regclass('public.liga_notificaciones_config') AS config,
+--        to_regclass('public.liga_notificaciones_queue') AS cola,
+--        to_regclass('public.liga_notificaciones_log') AS log;
+--
+-- Si alguna es NULL: instalar 0100 (objetos) + repair baseline — ver
+-- supabase/manual/0102_plan_instalacion_segura_liga_notificaciones.sql
+-- NO re-ejecutar 0100 a ciegas si los objetos ya existen.
+--
+-- -----------------------------------------------------------------------------
+-- PASO B — Conciliar trigger preferencias_guardar (si fingerprint DIFF)
+-- -----------------------------------------------------------------------------
+-- Archivo: supabase/manual/0100_fix_preferencias_guardar_propuesta.sql
+-- Solo CREATE OR REPLACE. No DROP. No toca datos deportivos.
+--
+-- -----------------------------------------------------------------------------
+-- PASO C — Comprobar RLS / grants (lectura)
+-- -----------------------------------------------------------------------------
+-- SELECT has_table_privilege('authenticated','public.liga_notificaciones_preferencias','INSERT') AS ins,
+--        has_table_privilege('authenticated','public.liga_notificaciones_preferencias','UPDATE') AS upd;
+-- Esperado: true / true.
+--
+-- -----------------------------------------------------------------------------
+-- PASO D — Prueba manual (mismo club dueño)
+-- -----------------------------------------------------------------------------
+-- 1) En UI: Activar interruptor de un jugador de prueba.
+-- 2) SELECT admin_habilitado FROM liga_notificaciones_preferencias
+--      WHERE liga_id = '…' AND liga_jugador_id = '…';
+-- 3) Recargar UI → sigue activado.
+-- 4) Desactivar → recargar → desactivado.
+-- 5) Cero filas nuevas en cola con estado enviado; Resend apagado.
+--
+-- 0101–0104 NO son necesarias para toggles.
+-- 0101 sí para verificación de correo / envío real (aparte, con otra autorización).
+-- =============================================================================
