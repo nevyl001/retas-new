@@ -1024,7 +1024,30 @@ describe("LigaNotificacionesPanel", () => {
     expect(filas[0].textContent).toContain("Aceptado");
     expect(filas[0].textContent).not.toContain("Borrar");
     expect(filas[1].textContent).toContain("Pendiente");
+    expect(filas[1].textContent).toContain("Procesar");
     expect(filas[1].textContent).toContain("Borrar");
+    const servicioEnvio = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ) as {
+      solicitarProcesamientoLote: jest.Mock;
+      solicitarComunicacionManual: jest.Mock;
+    };
+    servicioEnvio.solicitarComunicacionManual.mockClear();
+    servicioEnvio.solicitarProcesamientoLote.mockClear();
+    const procesar = Array.from(filas[1].querySelectorAll("button")).find(
+      (button) => button.textContent === "Procesar"
+    );
+    await act(async () => {
+      procesar?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(servicioEnvio.solicitarComunicacionManual).not.toHaveBeenCalled();
+    expect(servicioEnvio.solicitarProcesamientoLote).toHaveBeenCalledWith({
+      ligaId: "liga-1",
+      loteId: "11111111-1111-4111-8111-111111111111",
+      reintentar: true,
+    });
     const borrar = Array.from(filas[1].querySelectorAll("button")).find(
       (button) => button.textContent === "Borrar"
     );

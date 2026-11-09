@@ -1799,6 +1799,16 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                           Reintentar
                         </button>
                       ) : null}
+                      {item.estado === "pendiente" && item.lote_id ? (
+                        <button
+                          type="button"
+                          className="liga-notificaciones__ghost"
+                          disabled={!puedeEscribir || enviandoLote}
+                          onClick={() => void reintentarLote(item.lote_id!)}
+                        >
+                          Procesar
+                        </button>
+                      ) : null}
                       {item.id && sePuedeBorrarHistorial(item.estado, null) ? (
                         <button
                           type="button"
