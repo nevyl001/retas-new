@@ -156,6 +156,7 @@ interface FilaDestinatario {
   fotoUrl: string | null;
   categoria: string | null;
   perfilesConMismoCorreo: number;
+  registroAutorizadoAt: string | null;
   preferencia: PreferenciaNotificacionRow | null;
   visual: EstadoVisualNotificacion;
   yaEnviado: boolean;
@@ -383,6 +384,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           contacto?.identidadGlobalId ?? enPool?.riviera_jugador_id ?? null,
         rivieraJugadorId:
           contacto?.rivieraJugadorId ?? enPool?.riviera_jugador_id ?? null,
+        registroAutorizadoAt:
+          contacto?.origen === "global_source" || contacto?.origen === "global_local"
+            ? contacto.registroAutorizadoAt
+            : null,
       };
     });
 
@@ -421,11 +426,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         fotoUrl: enPool?.foto_url ?? null,
         categoria: categoriaVisible(enPool?.categoria),
         perfilesConMismoCorreo: perfiles,
+        registroAutorizadoAt: item.registroAutorizadoAt,
         preferencia,
         visual: estadoVisual({
           email,
           perfilesConMismoCorreo: perfiles,
           preferencia: preferenciaPolitica,
+          registroAutorizadoAt: item.registroAutorizadoAt,
           reboteProveedor,
           sigueInscrito: true,
           esSalienteDeSustitucion: false,
@@ -896,7 +903,39 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             <h3 className="liga-notificaciones__drawer-section-title">
               Autorización de comunicaciones
             </h3>
-            {preferencia.consentimientoEstado === "autorizado" ? (
+            {preferencia.consentimientoEstado !== "autorizado" &&
+            preferencia.consentimientoEstado !== "revocado" &&
+            fila.registroAutorizadoAt ? (
+              <>
+                <p className="liga-notificaciones__drawer-status">
+                  Autorización del registro del jugador ·{" "}
+                  {new Date(fila.registroAutorizadoAt).toLocaleDateString("es-MX")}
+                </p>
+                <p className="liga-notificaciones__hint">
+                  Viene del alta del Riviera ID y del aviso de privacidad. No hace
+                  falta repetirla. El interruptor sigue siendo aparte.
+                </p>
+                <button
+                  type="button"
+                  className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
+                  disabled={ocupado || !puedeEscribir}
+                  onClick={() =>
+                    void guardarFila(
+                      fila,
+                      { consentimiento_estado: "revocado" },
+                      () =>
+                        revocarConsentimientoJugador({
+                          ligaId,
+                          jugadorId: fila.jugadorId,
+                          rivieraJugadorId: fila.rivieraJugadorId,
+                        })
+                    )
+                  }
+                >
+                  Revocar autorización
+                </button>
+              </>
+            ) : preferencia.consentimientoEstado === "autorizado" ? (
               <>
                 <p className="liga-notificaciones__drawer-status">
                   Autorización documentada

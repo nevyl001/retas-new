@@ -72,6 +72,7 @@ describe("resolveInscritoContacto", () => {
       rivieraJugadorId: "rj-1",
       identidadGlobalId: "rj-source",
       origen: "global_source",
+      registroAutorizadoAt: null,
     });
   });
 });

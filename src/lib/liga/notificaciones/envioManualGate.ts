@@ -38,6 +38,7 @@ export type FilaSimulada = {
   consentimientoEstado: string | null;
   consentimientoOrigen: string | null;
   consentimientoRegistradoAt: string | null;
+  registroAutorizadoAt?: string | null;
 };
 
 export type ResultadoSimulado = {
@@ -85,6 +86,7 @@ export function simularLoteManual(input: {
       consentimientoEstado: fila.consentimientoEstado,
       consentimientoOrigen: fila.consentimientoOrigen,
       consentimientoRegistradoAt: fila.consentimientoRegistradoAt,
+      registroAutorizadoAt: fila.registroAutorizadoAt,
     });
     if (!decision.reclamar && decision.motivo === "fuera_de_allowlist") {
       fuera += 1;
@@ -126,6 +128,7 @@ export function decidirReclamoEnvio(input: {
   consentimientoEstado: string | null | undefined;
   consentimientoOrigen: string | null | undefined;
   consentimientoRegistradoAt: string | null | undefined;
+  registroAutorizadoAt?: string | null;
 }): DecisionReclamo {
   const email = normalizarEmailAllowlist(input.email);
   if (!email || !input.allowlist.has(email)) {
@@ -136,12 +139,16 @@ export function decidirReclamoEnvio(input: {
   }
   const origen = input.consentimientoOrigen?.trim().toLowerCase() ?? "";
   const origenBasura = ["inscripcion", "confirmacion_inscripcion", "tiene_correo", "email"];
-  if (
-    input.consentimientoEstado !== "autorizado" ||
-    !origen ||
-    origenBasura.includes(origen) ||
-    !input.consentimientoRegistradoAt?.trim()
-  ) {
+  if (input.consentimientoEstado === "revocado") {
+    return { reclamar: false, motivo: "sin_autorizacion" };
+  }
+  const consentimientoPosterior =
+    input.consentimientoEstado === "autorizado" &&
+    Boolean(origen) &&
+    !origenBasura.includes(origen) &&
+    Boolean(input.consentimientoRegistradoAt?.trim());
+  const registro = input.registroAutorizadoAt?.trim() ?? "";
+  if (!consentimientoPosterior && !registro) {
     return { reclamar: false, motivo: "sin_autorizacion" };
   }
   return { reclamar: true, motivo: null };

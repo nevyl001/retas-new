@@ -132,6 +132,35 @@ describe("allowlist fail-closed", () => {
     expect(resultado.enviados).toBe(0);
   });
 
+  it("el alta del jugador no sustituye la allowlist ni el interruptor", () => {
+    const conRegistro = simularLoteManual({
+      enviosReales: "true",
+      allowlistRaw: "jugador@example.com",
+      filas: [
+        {
+          ...filaLista,
+          consentimientoEstado: "sin_autorizacion",
+          consentimientoOrigen: null,
+          consentimientoRegistradoAt: null,
+          registroAutorizadoAt: "2024-03-01T00:00:00.000Z",
+        },
+      ],
+    });
+    expect(conRegistro.reclamadas).toEqual(["fila-1"]);
+    const apagado = simularLoteManual({
+      enviosReales: "true",
+      allowlistRaw: "jugador@example.com",
+      filas: [
+        {
+          ...filaLista,
+          adminHabilitado: false,
+          registroAutorizadoAt: "2024-03-01T00:00:00.000Z",
+        },
+      ],
+    });
+    expect(apagado.reclamadas).toEqual([]);
+  });
+
   it("la allowlist no sustituye consentimiento ni el interruptor", () => {
     const resultado = simularLoteManual({
       enviosReales: "true",

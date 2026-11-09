@@ -18,6 +18,8 @@ export interface ContactoInscritoResuelto {
   rivieraJugadorId: string | null;
   identidadGlobalId: string | null;
   origen: ContactoInscritoOrigen;
+  /** Alta del Riviera ID. Ausente hasta 0107, o si solo hay correo de roster. */
+  registroAutorizadoAt: string | null;
 }
 
 export function mapContactoInscritoRow(row: {
@@ -27,6 +29,7 @@ export function mapContactoInscritoRow(row: {
   riviera_jugador_id?: unknown;
   identidad_global_id?: unknown;
   origen?: unknown;
+  registro_autorizado_at?: unknown;
 }): ContactoInscritoResuelto | null {
   const ligaJugadorId =
     typeof row.liga_jugador_id === "string" ? row.liga_jugador_id.trim() : "";
@@ -57,6 +60,11 @@ export function mapContactoInscritoRow(row: {
         ? row.identidad_global_id
         : null,
     origen,
+    registroAutorizadoAt:
+      typeof row.registro_autorizado_at === "string" &&
+      row.registro_autorizado_at.trim()
+        ? row.registro_autorizado_at.trim()
+        : null,
   };
 }
 

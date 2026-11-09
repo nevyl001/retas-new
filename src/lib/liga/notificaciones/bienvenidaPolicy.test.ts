@@ -543,3 +543,99 @@ describe("bienvenida de liga — artefactos de seguridad", () => {
     expect(sql0104).toContain("idempotency_key");
   });
 });
+
+describe("autorización del registro", () => {
+  const listo = {
+    adminHabilitado: true,
+    consentimientoEstado: "sin_autorizacion" as const,
+  };
+
+  it("registro del Riviera ID + interruptor + correo queda listo", () => {
+    const fila = destinatario({
+      preferencia: listo,
+      registroAutorizadoAt: "2024-03-01T00:00:00.000Z",
+    });
+    expect(estadoVisual(fila)).toBe("habilitado");
+    expect(
+      puedeEncolarBienvenida({
+        destinatario: fila,
+        ligaPausada: false,
+        yaEnviado: false,
+        origen: "accion_admin",
+      }).encolar
+    ).toBe(true);
+  });
+
+  it("un consentimiento posterior también deja listo", () => {
+    expect(
+      estadoVisual(
+        destinatario({
+          preferencia: {
+            adminHabilitado: true,
+            consentimientoEstado: "autorizado",
+            consentimientoOrigen: "manifestacion_presencial",
+            consentimientoRegistradoAt: "2026-01-01T00:00:00.000Z",
+          },
+        })
+      )
+    ).toBe("habilitado");
+  });
+
+  it("sin evidencia no inventa autorización aunque haya correo", () => {
+    expect(
+      estadoVisual(destinatario({ preferencia: listo }))
+    ).toBe("sin_autorizacion");
+  });
+
+  it("la revocación gana al alta del jugador", () => {
+    expect(
+      estadoVisual(
+        destinatario({
+          preferencia: {
+            adminHabilitado: true,
+            consentimientoEstado: "revocado",
+          },
+          registroAutorizadoAt: "2024-03-01T00:00:00.000Z",
+        })
+      )
+    ).toBe("excluido");
+  });
+
+  it("el interruptor apagado no se compensa con el registro", () => {
+    expect(
+      estadoVisual(
+        destinatario({
+          preferencia: { adminHabilitado: false },
+          registroAutorizadoAt: "2024-03-01T00:00:00.000Z",
+        })
+      )
+    ).toBe("deshabilitado");
+  });
+
+  it("correo ambiguo sigue excluido", () => {
+    expect(
+      estadoVisual(
+        destinatario({
+          perfilesConMismoCorreo: 2,
+          preferencia: listo,
+          registroAutorizadoAt: "2024-03-01T00:00:00.000Z",
+        })
+      )
+    ).toBe("correo_ambiguo");
+  });
+
+  it("0107 no trata el correo como consentimiento y conserva la revocación", () => {
+    const sql = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "supabase/migrations/0107_liga_autorizacion_registro_jugador.sql"
+      ),
+      "utf8"
+    );
+    expect(sql).toContain("consentimiento_estado = 'revocado'");
+    expect(sql).toContain("global_source");
+    expect(sql).toContain("registro_autorizado_at");
+    expect(sql).not.toContain("tiene_correo' THEN");
+    expect(sql).toContain("RETURN 'sin_autorizacion'");
+  });
+});

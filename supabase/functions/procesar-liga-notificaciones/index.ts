@@ -85,6 +85,7 @@ function decidirReclamo(input: {
   email: string | null;
   allowlist: Set<string>;
   pref: PrefRow | null;
+  registroAutorizadoAt?: string | null;
 }): { reclamar: boolean; motivo: string } {
   const email = input.email?.trim().toLowerCase() ?? "";
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !email.endsWith("@padel.local");
@@ -94,13 +95,16 @@ function decidirReclamo(input: {
   if (!input.pref?.admin_habilitado) {
     return { reclamar: false, motivo: "deshabilitado" };
   }
+  if (input.pref.consentimiento_estado === "revocado") {
+    return { reclamar: false, motivo: "sin_autorizacion" };
+  }
   const origen = input.pref.consentimiento_origen?.trim().toLowerCase() ?? "";
-  if (
-    input.pref.consentimiento_estado !== "autorizado" ||
-    !origen ||
-    ["inscripcion", "confirmacion_inscripcion", "tiene_correo", "email"].includes(origen) ||
-    !input.pref.consentimiento_registrado_at
-  ) {
+  const consentimientoPosterior =
+    input.pref.consentimiento_estado === "autorizado" &&
+    Boolean(origen) &&
+    !["inscripcion", "confirmacion_inscripcion", "tiene_correo", "email"].includes(origen) &&
+    Boolean(input.pref.consentimiento_registrado_at);
+  if (!consentimientoPosterior && !input.registroAutorizadoAt?.trim()) {
     return { reclamar: false, motivo: "sin_autorizacion" };
   }
   return { reclamar: true, motivo: "ok" };
@@ -202,6 +206,7 @@ Deno.serve(async (req) => {
       email: previo.email,
       allowlist,
       pref: previo.pref,
+      registroAutorizadoAt: previo.registroAutorizadoAt,
     });
     if (!decision.reclamar) {
       if (decision.motivo === "fuera_de_allowlist") {
@@ -269,7 +274,7 @@ Deno.serve(async (req) => {
 async function leerElegibilidad0100(
   supabase: ReturnType<typeof createCredentialClient>,
   row: { liga_id: string; liga_jugador_id: string },
-): Promise<{ pref: PrefRow | null; email: string | null; nombre: string; ligaNombre: string }> {
+): Promise<{ pref: PrefRow | null; email: string | null; nombre: string; ligaNombre: string; registroAutorizadoAt: string | null }> {
   const { data: pref } = await supabase
     .from("liga_notificaciones_preferencias")
     .select(
@@ -292,8 +297,13 @@ async function leerElegibilidad0100(
     p_liga_jugador_id: row.liga_jugador_id,
   });
   const filaContacto = Array.isArray(contacto) ? contacto[0] : contacto;
-  const emailGlobal = (filaContacto as { email?: string | null } | null)?.email ?? null;
+  const contactoTipado = filaContacto as {
+    email?: string | null;
+    registro_autorizado_at?: string | null;
+  } | null;
+  const emailGlobal = contactoTipado?.email ?? null;
   if (emailGlobal) email = emailGlobal;
+  const registroAutorizadoAt = contactoTipado?.registro_autorizado_at?.trim() || null;
 
   const { data: liga } = await supabase
     .from("ligas")
@@ -306,6 +316,7 @@ async function leerElegibilidad0100(
     email: isFakeOrInvalidEmail(email) ? null : email,
     nombre,
     ligaNombre: String(liga?.nombre ?? "tu liga"),
+    registroAutorizadoAt,
   };
 }
 
@@ -330,6 +341,7 @@ async function enviarReclamado(
     email: otraVez.email,
     allowlist,
     pref: otraVez.pref,
+    registroAutorizadoAt: otraVez.registroAutorizadoAt,
   });
   if (!decision.reclamar) {
     await finalizarMensaje(supabase, row, {
