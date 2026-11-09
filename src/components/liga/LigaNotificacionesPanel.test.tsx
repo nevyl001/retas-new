@@ -134,9 +134,11 @@ describe("LigaNotificacionesPanel", () => {
   it("muestra al jugador deshabilitado, sin un control para habilitar a todos", async () => {
     await renderPanel();
     expect(container.textContent).toContain("Saúl Moreno de la Torre del Valle");
-    expect(container.textContent).toContain("Pendiente de verificación");
+    expect(container.textContent).toContain("Por verificar");
     expect(container.textContent).toContain("0 seleccionados");
     expect(container.textContent).toContain("1 excluidos");
+    expect(container.querySelector(".liga-notificaciones__grid")).not.toBeNull();
+    expect(container.querySelector("table")).toBeNull();
     expect(container.textContent?.toLowerCase()).not.toContain("habilitar a todos");
     expect(container.textContent).not.toContain("Marcar correo verificado");
     expect(container.textContent).not.toContain("Solicitar verificación");
@@ -220,8 +222,8 @@ describe("LigaNotificacionesPanel", () => {
     const badges = Array.from(
       container.querySelectorAll(".liga-notificaciones__badge")
     ).map((badge) => badge.textContent);
-    expect(badges).toContain("Pendiente de verificación");
-    expect(badges).not.toContain("Listo para recibir");
+    expect(badges).toContain("Por verificar");
+    expect(badges).not.toContain("Listo");
   });
 
   it("con backend incompleto muestra revisión visual y no escribe", async () => {

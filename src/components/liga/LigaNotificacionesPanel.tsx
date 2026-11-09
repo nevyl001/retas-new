@@ -100,6 +100,18 @@ const ESTADO_PRINCIPAL_LABEL: Record<EstadoVisualNotificacion, string> = {
   correo_ambiguo: "Correo ambiguo",
 };
 
+/** Etiquetas compactas para las tarjetas del grid. */
+const ESTADO_GRID_LABEL: Record<EstadoVisualNotificacion, string> = {
+  habilitado: "Listo",
+  deshabilitado: "Deshabilitado",
+  sin_correo: "Sin correo",
+  correo_por_verificar: "Por verificar",
+  sin_autorizacion: "Sin autorización",
+  correo_ambiguo: "Correo ambiguo",
+};
+
+const MOBILE_PAGE_SIZE = 6;
+
 interface FilaDestinatario {
   jugadorId: string;
   nombre: string;
@@ -174,26 +186,6 @@ function estadoTone(visual: EstadoVisualNotificacion): string {
   }
 }
 
-function detalleEstado(fila: FilaDestinatario): string | null {
-  if (fila.visual === "habilitado") return null;
-  if (fila.visual === "correo_por_verificar") {
-    return "Debe confirmar el correo con el enlace.";
-  }
-  if (fila.visual === "sin_autorizacion") {
-    return "Falta consentimiento documentado.";
-  }
-  if (fila.visual === "deshabilitado") {
-    return "El club aún no autoriza notificaciones.";
-  }
-  if (fila.visual === "correo_ambiguo") {
-    return "Varios perfiles comparten este correo.";
-  }
-  if (fila.visual === "sin_correo") {
-    return "Añade un correo en el perfil del jugador.";
-  }
-  return null;
-}
-
 function esPendiente(fila: FilaDestinatario): boolean {
   return (
     fila.visual === "correo_por_verificar" ||
@@ -210,7 +202,7 @@ function FotoRetrato({
 }: {
   fotoUrl: string | null;
   nombre: string;
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "card";
 }) {
   const { src, onError } = useRetryableImage(fotoUrl);
   const initials = getJugadorInitials(nombre);
@@ -245,7 +237,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   pool,
   sustituciones,
 }) => {
-  const isMobile = useMobileViewport(767);
+  const isMobileGrid = useMobileViewport(679);
   const { manifest } = useClubExperience();
   const clubNombre = manifest.displayName?.trim() || "Riviera Open";
   const logoUrl = resolveClubLogo(manifest, "dark");
@@ -255,6 +247,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const [area, setArea] = useState<Area>("destinatarios");
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busqueda, setBusqueda] = useState("");
+  const [paginaMovil, setPaginaMovil] = useState(0);
   const [snapshot, setSnapshot] = useState<NotificacionesLigaSnapshot | null>(
     null
   );
@@ -373,6 +366,24 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     if (filtro === "excluidos") return !habilitado || fila.visual !== "habilitado";
     return true;
   });
+
+  useEffect(() => {
+    setPaginaMovil(0);
+  }, [busqueda, filtro, isMobileGrid]);
+
+  const paginasMovil = Math.max(
+    1,
+    Math.ceil(visibles.length / MOBILE_PAGE_SIZE)
+  );
+  const paginaMovilSegura = Math.min(paginaMovil, paginasMovil - 1);
+  const mostrarPaginacionMovil =
+    isMobileGrid && visibles.length > MOBILE_PAGE_SIZE;
+  const visiblesPagina = mostrarPaginacionMovil
+    ? visibles.slice(
+        paginaMovilSegura * MOBILE_PAGE_SIZE,
+        paginaMovilSegura * MOBILE_PAGE_SIZE + MOBILE_PAGE_SIZE
+      )
+    : visibles;
 
   const conteo = contarDestinatarios(
     filas.map(
@@ -787,39 +798,45 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     );
   }
 
-  function celdaJugador(fila: FilaDestinatario) {
+  function tarjetaDestinatario(fila: FilaDestinatario) {
     return (
-      <div className="liga-notificaciones__identidad">
-        <FotoRetrato
-          fotoUrl={fila.fotoUrl}
-          nombre={fila.nombre}
-          size={isMobile ? "lg" : "md"}
-        />
-        <div className="liga-notificaciones__identidad-copy">
-          <p className="liga-notificaciones__nombre">{fila.nombre}</p>
-          {fila.rivieraId ? (
-            <p className="liga-notificaciones__riviera-id">{fila.rivieraId}</p>
-          ) : null}
+      <article className="liga-notificaciones__card" role="listitem">
+        <div className="liga-notificaciones__card-top">
+          <FotoRetrato
+            fotoUrl={fila.fotoUrl}
+            nombre={fila.nombre}
+            size="card"
+          />
+          <div className="liga-notificaciones__identidad-copy">
+            <p className="liga-notificaciones__nombre">{fila.nombre}</p>
+            {fila.rivieraId ? (
+              <p className="liga-notificaciones__riviera-id">{fila.rivieraId}</p>
+            ) : null}
+            <p className="liga-notificaciones__correo">
+              {fila.email?.trim() || "Sin correo"}
+            </p>
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  function celdaEstado(fila: FilaDestinatario) {
-    const detalle = detalleEstado(fila);
-    return (
-      <div className="liga-notificaciones__estado">
-        <span
-          className={`liga-notificaciones__badge liga-notificaciones__badge--${estadoTone(
-            fila.visual
-          )}`}
-        >
-          {ESTADO_PRINCIPAL_LABEL[fila.visual]}
-        </span>
-        {detalle ? (
-          <p className="liga-notificaciones__estado-detail">{detalle}</p>
-        ) : null}
-      </div>
+        <div className="liga-notificaciones__card-mid">
+          <span
+            className={`liga-notificaciones__badge liga-notificaciones__badge--${estadoTone(
+              fila.visual
+            )}`}
+          >
+            {ESTADO_GRID_LABEL[fila.visual]}
+          </span>
+        </div>
+        <div className="liga-notificaciones__card-foot">
+          {switchNotificaciones(fila)}
+          <button
+            type="button"
+            className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
+            onClick={() => setGestionId(fila.jugadorId)}
+          >
+            Gestionar
+          </button>
+        </div>
+      </article>
     );
   }
 
@@ -996,68 +1013,53 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                 Prueba otro filtro o limpia la búsqueda.
               </p>
             </div>
-          ) : isMobile ? (
-            <div className="liga-notificaciones__cards">
-              {visibles.map((fila) => (
-                <article
-                  key={fila.jugadorId}
-                  className="liga-notificaciones__card"
-                >
-                  {celdaJugador(fila)}
-                  <p className="liga-notificaciones__correo">
-                    {fila.email?.trim() || "Sin correo"}
-                  </p>
-                  {celdaEstado(fila)}
-                  <div className="liga-notificaciones__card-foot">
-                    {switchNotificaciones(fila)}
-                    <button
-                      type="button"
-                      className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
-                      onClick={() => setGestionId(fila.jugadorId)}
-                    >
-                      Gestionar
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
           ) : (
-            <div className="liga-notificaciones__table-shell">
-              <table className="liga-notificaciones__table">
-                <thead>
-                  <tr>
-                    <th scope="col">Jugador</th>
-                    <th scope="col">Correo</th>
-                    <th scope="col">Estado</th>
-                    <th scope="col">Notificaciones</th>
-                    <th scope="col">Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibles.map((fila) => (
-                    <tr key={fila.jugadorId}>
-                      <td>{celdaJugador(fila)}</td>
-                      <td>
-                        <span className="liga-notificaciones__correo">
-                          {fila.email?.trim() || "Sin correo"}
-                        </span>
-                      </td>
-                      <td>{celdaEstado(fila)}</td>
-                      <td>{switchNotificaciones(fila)}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
-                          onClick={() => setGestionId(fila.jugadorId)}
-                        >
-                          Gestionar
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <>
+              <div
+                className="liga-notificaciones__grid"
+                role="list"
+                aria-label="Destinatarios"
+              >
+                {visiblesPagina.map((fila) => (
+                  <React.Fragment key={fila.jugadorId}>
+                    {tarjetaDestinatario(fila)}
+                  </React.Fragment>
+                ))}
+              </div>
+              {mostrarPaginacionMovil ? (
+                <div
+                  className="liga-notificaciones__pager"
+                  role="navigation"
+                  aria-label="Páginas de destinatarios"
+                >
+                  <button
+                    type="button"
+                    className="liga-notificaciones__ghost"
+                    disabled={paginaMovilSegura <= 0}
+                    onClick={() =>
+                      setPaginaMovil((prev) => Math.max(0, prev - 1))
+                    }
+                  >
+                    Anterior
+                  </button>
+                  <span className="liga-notificaciones__pager-label">
+                    {paginaMovilSegura + 1} / {paginasMovil}
+                  </span>
+                  <button
+                    type="button"
+                    className="liga-notificaciones__ghost"
+                    disabled={paginaMovilSegura >= paginasMovil - 1}
+                    onClick={() =>
+                      setPaginaMovil((prev) =>
+                        Math.min(paginasMovil - 1, prev + 1)
+                      )
+                    }
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              ) : null}
+            </>
           )}
 
           {gestionFila ? (
@@ -1111,7 +1113,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     <p className="liga-notificaciones__correo">
                       {preview.email?.trim() || "Sin correo"}
                     </p>
-                    {celdaEstado(preview)}
+                    <span
+                      className={`liga-notificaciones__badge liga-notificaciones__badge--${estadoTone(
+                        preview.visual
+                      )}`}
+                    >
+                      {ESTADO_GRID_LABEL[preview.visual]}
+                    </span>
                   </div>
                 </div>
                 <button
