@@ -72,6 +72,7 @@ export interface ResultadoProcesamientoLote {
   omitidos: number;
   errores: number;
   procesados: number;
+  fueraAllowlist: number;
   motivo: string | null;
 }
 
@@ -89,6 +90,8 @@ export interface NotificacionesLigaSnapshot {
   historial: HistorialNotificacionRow[];
   cola: ColaNotificacionRow[];
   verificaciones: VerificacionSolicitudRow[];
+  /** La cola o el log no pudieron leerse. Los registros que sí llegaron se conservan. */
+  errorCarga?: string | null;
 }
 
 export interface ResultadoNotificacion {
@@ -393,15 +396,9 @@ export async function cargarNotificacionesLiga(
         ? null
         : ((cola.data ?? []) as ColaNotificacionRow[]);
 
-  if (historialRows === null || colaRows === null) {
-    aviso("no_disponible");
-    return {
-      ...VACIO,
-      disponible: true,
-      escriturasActivas: false,
-      verificacionDisponible: false,
-    };
-  }
+  const errorCarga =
+    historialRows === null || colaRows === null ? "no_disponible" : null;
+  if (errorCarga) aviso("no_disponible");
 
   const verificacionDisponible = !(
     verificaciones.error && esEsquemaAusente(verificaciones.error.message)
@@ -417,8 +414,9 @@ export async function cargarNotificacionesLiga(
     verificacionDisponible,
     preferencias: preferencias.rows,
     config: config.data,
-    historial: historialRows,
-    cola: colaRows,
+    historial: historialRows ?? [],
+    cola: colaRows ?? [],
+    errorCarga,
     verificaciones: verificacionDisponible
       ? ((verificaciones.data ?? []) as VerificacionSolicitudRow[])
       : [],
@@ -765,6 +763,7 @@ export async function solicitarProcesamientoLote(input: {
     omitidos: 0,
     errores: 0,
     procesados: 0,
+    fueraAllowlist: 0,
     motivo: "no_disponible",
   };
   const { data, error } = await supabase.functions.invoke(
@@ -775,16 +774,24 @@ export async function solicitarProcesamientoLote(input: {
         lote_id: input.loteId,
         reintentar: input.reintentar === true,
       },
+      timeout: 20000,
     }
   );
   if (error) {
-    if (esEsquemaAusente(error.message)) {
+    const http = error as { message?: string; context?: { status?: number } };
+    const status = http.context?.status;
+    if (status === 401) return { ...vacio, motivo: "sesion_invalida" };
+    if (status === 403) return { ...vacio, motivo: "sin_permiso" };
+    if (status === 404) return { ...vacio, motivo: "lote_no_encontrado" };
+    if (esEsquemaAusente(http.message ?? "")) {
       return { ...vacio, motivo: "funcion_no_disponible" };
     }
     aviso("no_disponible");
-    return vacio;
+    return { ...vacio, motivo: "procesador_no_disponible" };
   }
-  const row = (data ?? {}) as Partial<ResultadoProcesamientoLote>;
+  const row = (data ?? {}) as Partial<ResultadoProcesamientoLote> & {
+    fuera_allowlist?: number;
+  };
   return {
     ok: row.ok === true,
     enviosReales: row.enviosReales === true,
@@ -792,7 +799,8 @@ export async function solicitarProcesamientoLote(input: {
     omitidos: Number(row.omitidos ?? 0),
     errores: Number(row.errores ?? 0),
     procesados: Number(row.procesados ?? 0),
-    motivo: motivoSeguro(row.motivo),
+    fueraAllowlist: Number(row.fueraAllowlist ?? row.fuera_allowlist ?? 0),
+    motivo: motivoSeguro(row.motivo ?? (row as { error?: unknown }).error),
   };
 }
 

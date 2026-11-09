@@ -108,6 +108,7 @@ const MOTIVO_LABEL: Record<string, string> = {
   envios_apagados: "El envío real sigue apagado",
   funcion_no_disponible: "El procesamiento del lote todavía no está disponible",
   procesador_no_disponible: "No se pudo pedir el procesamiento",
+  sesion_invalida: "La sesión no pudo autorizar el procesamiento",
   lote_no_encontrado: "Ese lote no está en esta liga",
   conserva_enviado: "Ese correo ya fue aceptado y se conserva",
   no_encontrado: "Ese correo ya no está en el historial",
@@ -205,19 +206,32 @@ function categoriaVisible(value: string | null | undefined): string | null {
 function mensajeResultadoEnvio(
   ok: number,
   proceso: {
+    ok?: boolean;
     enviosReales: boolean;
     enviados: number;
     errores: number;
     omitidos: number;
+    fueraAllowlist?: number;
     motivo: string | null;
   } | null
 ): string {
   const jugadores = `${ok} jugador${ok === 1 ? "" : "es"}`;
-  if (!proceso || !proceso.enviosReales) {
+  if (!proceso || proceso.ok === false) {
+    return "Correo preparado, pero no se pudo completar el procesamiento. Revisa Historial.";
+  }
+  const fuera = proceso.fueraAllowlist ?? 0;
+  const excluidos =
+    fuera > 0
+      ? ` ${fuera} destinatario${fuera === 1 ? "" : "s"} siguen pendientes porque no entran en esta prueba.`
+      : "";
+  if (!proceso.enviosReales) {
     return `En cola para ${jugadores}. Pendiente de procesamiento. No se entregó.`;
   }
   if (proceso.enviados > 0 && proceso.errores === 0) {
-    return `Resend aceptó ${proceso.enviados} correo${proceso.enviados === 1 ? "" : "s"}.`;
+    return `Resend aceptó ${proceso.enviados} correo${proceso.enviados === 1 ? "" : "s"}.${excluidos}`;
+  }
+  if (fuera > 0 && proceso.errores === 0) {
+    return `${fuera} destinatario${fuera === 1 ? "" : "s"} siguen pendientes porque no entran en esta prueba. No se entregó.`;
   }
   if (proceso.errores > 0) {
     return `Error al entregar. ${motivoVisible(proceso.motivo)}. Puedes reintentar desde el historial.`;
@@ -329,6 +343,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   );
   const [envioPaso, setEnvioPaso] = useState<"idle" | "preparado">("idle");
   const [enviandoLote, setEnviandoLote] = useState(false);
+  const [faseEnvio, setFaseEnvio] = useState<
+    "idle" | "preparando" | "encolado" | "procesando"
+  >("idle");
   const [plantillaId, setPlantillaId] =
     useState<TipoComunicacionLiga>("bienvenida");
   const [asuntoDraft, setAsuntoDraft] = useState(
@@ -736,6 +753,12 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     setEnvioPaso("idle");
   }
 
+  async function refrescarHistorial() {
+    const fresco = await cargarNotificacionesLiga(ligaId);
+    if (fresco.disponible) setSnapshot(fresco);
+    return fresco;
+  }
+
   async function confirmarEnvioManual() {
     if (!puedeEscribir || enviandoLote) return;
     const lote = incluidosEnvio;
@@ -754,73 +777,92 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         : `lote-${Date.now()}`);
     setLoteEnvioId(loteId);
     setEnviandoLote(true);
-    let ok = 0;
+    setFaseEnvio("preparando");
+    let preparados = 0;
     let fallidos = 0;
     let ultimoMotivo: string | null = null;
     const colaNueva: ColaNotificacionRow[] = [];
-    for (const fila of lote) {
-      const asuntoResuelto = renderComunicacionEmail({
-        clubNombre,
-        ligaNombre,
-        jugadorNombre: fila.nombre,
-        asunto: asuntoDraft,
-        cuerpo: cuerpoDraft,
-        vistaPrevia: false,
-      }).subject;
-      const cuerpoResuelto = cuerpoDraft
-        .replace(/\{\{\s*nombre\s*\}\}/gi, fila.nombre)
-        .replace(/\{\{\s*liga\s*\}\}/gi, ligaNombre)
-        .replace(/\{\{\s*club\s*\}\}/gi, clubNombre);
-      const resultado = await solicitarComunicacionManual({
-        ligaId,
-        jugadorId: fila.jugadorId,
-        tipo: plantillaId,
-        asunto: asuntoResuelto,
-        cuerpo: cuerpoResuelto,
-        loteId,
-      });
-      if (resultado.ok && resultado.encolado) {
-        ok += 1;
-        colaNueva.push({
-          liga_jugador_id: fila.jugadorId,
-          estado: "pendiente",
-          attempts: 0,
-          motivo: null,
-          lote_id: loteId,
-        });
-      } else {
-        fallidos += 1;
-        ultimoMotivo = resultado.motivo;
-      }
-    }
-    if (colaNueva.length > 0) {
-      setSnapshot((prev) =>
-        prev
-          ? {
-              ...prev,
-              cola: [...colaNueva, ...prev.cola],
-            }
-          : prev
-      );
-    }
     let proceso: Awaited<ReturnType<typeof solicitarProcesamientoLote>> | null =
       null;
-    if (ok > 0) {
-      proceso = await solicitarProcesamientoLote({ ligaId, loteId });
-      const fresco = await cargarNotificacionesLiga(ligaId);
-      if (fresco.disponible) setSnapshot(fresco);
+    try {
+      for (const fila of lote) {
+        const asuntoResuelto = renderComunicacionEmail({
+          clubNombre,
+          ligaNombre,
+          jugadorNombre: fila.nombre,
+          asunto: asuntoDraft,
+          cuerpo: cuerpoDraft,
+          vistaPrevia: false,
+        }).subject;
+        const cuerpoResuelto = cuerpoDraft
+          .replace(/\{\{\s*nombre\s*\}\}/gi, fila.nombre)
+          .replace(/\{\{\s*liga\s*\}\}/gi, ligaNombre)
+          .replace(/\{\{\s*club\s*\}\}/gi, clubNombre);
+        const resultado = await solicitarComunicacionManual({
+          ligaId,
+          jugadorId: fila.jugadorId,
+          tipo: plantillaId,
+          asunto: asuntoResuelto,
+          cuerpo: cuerpoResuelto,
+          loteId,
+        });
+        const yaEstaba =
+          resultado.ok && resultado.motivo === "ya_encolado";
+        if (resultado.ok && (resultado.encolado || yaEstaba)) {
+          preparados += 1;
+          if (resultado.encolado) {
+            colaNueva.push({
+              liga_jugador_id: fila.jugadorId,
+              estado: "pendiente",
+              attempts: 0,
+              motivo: null,
+              lote_id: loteId,
+            });
+          }
+        } else {
+          fallidos += 1;
+          ultimoMotivo = resultado.motivo;
+        }
+      }
+      if (colaNueva.length > 0) {
+        setSnapshot((prev) =>
+          prev
+            ? {
+                ...prev,
+                cola: [...colaNueva, ...prev.cola],
+              }
+            : prev
+        );
+      }
+      if (preparados > 0) {
+        setFaseEnvio("encolado");
+        setFaseEnvio("procesando");
+        proceso = await solicitarProcesamientoLote({ ligaId, loteId });
+      }
+      await refrescarHistorial();
+    } catch {
+      ultimoMotivo = "procesador_no_disponible";
+    } finally {
+      setEnviandoLote(false);
+      setFaseEnvio("idle");
     }
-    setEnviandoLote(false);
-    if (ok > 0 && fallidos === 0) {
+    if (preparados > 0 && proceso?.ok === false) {
+      setArea("historial");
+      confirmar(
+        "Correo preparado, pero no se pudo completar el procesamiento. Revisa Historial."
+      );
+      return;
+    }
+    if (preparados > 0 && fallidos === 0) {
       setEnvioPaso("idle");
       setEnvioSeleccion({});
-      confirmar(mensajeResultadoEnvio(ok, proceso));
+      confirmar(mensajeResultadoEnvio(preparados, proceso));
       setArea("historial");
       return;
     }
     confirmar(
-      fallidos > 0 && ok > 0
-        ? `Pendiente de procesamiento: ${ok}. ${fallidos} no se encolaron: ${motivoVisible(ultimoMotivo)}.`
+      fallidos > 0 && preparados > 0
+        ? `Pendiente de procesamiento: ${preparados}. ${fallidos} no se encolaron: ${motivoVisible(ultimoMotivo)}.`
         : `${motivoVisible(ultimoMotivo ?? "no_disponible")}. Puedes corregir y volver a confirmar.`
     );
   }
@@ -862,14 +904,22 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   async function reintentarLote(loteId: string) {
     if (!puedeEscribir || enviandoLote) return;
     setEnviandoLote(true);
-    const proceso = await solicitarProcesamientoLote({
-      ligaId,
-      loteId,
-      reintentar: true,
-    });
-    const fresco = await cargarNotificacionesLiga(ligaId);
-    if (fresco.disponible) setSnapshot(fresco);
-    setEnviandoLote(false);
+    setFaseEnvio("procesando");
+    let proceso: Awaited<ReturnType<typeof solicitarProcesamientoLote>> | null =
+      null;
+    try {
+      proceso = await solicitarProcesamientoLote({
+        ligaId,
+        loteId,
+        reintentar: true,
+      });
+      await refrescarHistorial();
+    } catch {
+      proceso = null;
+    } finally {
+      setEnviandoLote(false);
+      setFaseEnvio("idle");
+    }
     confirmar(mensajeResultadoEnvio(1, proceso));
   }
 
@@ -1551,7 +1601,11 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     onClick={() => void confirmarEnvioManual()}
                   >
                     {enviandoLote
-                      ? "Procesando…"
+                      ? faseEnvio === "preparando"
+                        ? "Preparando envío…"
+                        : faseEnvio === "encolado"
+                          ? "Encolado…"
+                          : "Procesando…"
                       : `ENVIAR CORREO A ${incluidosEnvio.length} JUGADOR${
                           incluidosEnvio.length === 1 ? "" : "ES"
                         }`}
@@ -1612,6 +1666,19 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
 
       {area === "historial" ? (
         <div className="liga-notificaciones__historial">
+          {snapshot?.errorCarga ? (
+            <p className="liga-notificaciones__hint">
+              {motivoVisible(snapshot.errorCarga)}. El historial no se pudo
+              actualizar por completo.
+              <button
+                type="button"
+                className="liga-notificaciones__ghost"
+                onClick={() => void refrescarHistorial()}
+              >
+                Actualizar
+              </button>
+            </p>
+          ) : null}
           {(snapshot?.cola.length ?? 0) === 0 &&
           (snapshot?.historial.length ?? 0) === 0 ? (
             <div className="liga-notificaciones__empty">
@@ -1625,13 +1692,20 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             </div>
           ) : (
             <div className="liga-notificaciones__history-list">
-              {(snapshot?.cola ?? []).some((item) =>
-                sePuedeBorrarHistorial(item.estado, null)
-              ) ||
-              (snapshot?.historial ?? []).some((item) =>
-                sePuedeBorrarHistorial(item.estado, item.proveedor_estado)
-              ) ? (
-                <div className="liga-notificaciones__history-toolbar">
+              <div className="liga-notificaciones__history-toolbar">
+                <button
+                  type="button"
+                  className="liga-notificaciones__ghost"
+                  onClick={() => void refrescarHistorial()}
+                >
+                  Actualizar
+                </button>
+                {(snapshot?.cola ?? []).some((item) =>
+                  sePuedeBorrarHistorial(item.estado, null)
+                ) ||
+                (snapshot?.historial ?? []).some((item) =>
+                  sePuedeBorrarHistorial(item.estado, item.proveedor_estado)
+                ) ? (
                   <button
                     type="button"
                     className="liga-notificaciones__ghost"
@@ -1640,8 +1714,8 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   >
                     Borrar no enviados
                   </button>
-                </div>
-              ) : null}
+                ) : null}
+              </div>
               {(snapshot?.historial ?? []).map((item) => {
                 const jugador =
                   filas.find((fila) => fila.jugadorId === item.liga_jugador_id)

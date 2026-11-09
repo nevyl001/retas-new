@@ -95,6 +95,7 @@ describe("ligaNotificacionesService", () => {
       omitidos: 0,
       errores: 0,
       procesados: 0,
+      fueraAllowlist: 0,
       motivo: "envios_apagados",
     });
     expect(invoke).toHaveBeenCalledWith("procesar-lote-liga-notificaciones", {
@@ -103,7 +104,52 @@ describe("ligaNotificacionesService", () => {
         lote_id: "11111111-1111-4111-8111-111111111111",
         reintentar: false,
       },
+      timeout: 20000,
     });
+  });
+
+  it("401, 500 y timeout del lote no se reportan como entrega", async () => {
+    invoke.mockResolvedValueOnce({
+      data: null,
+      error: { message: "unauthorized", context: { status: 401 } },
+    });
+    await expect(
+      solicitarProcesamientoLote({
+        ligaId: "liga-1",
+        loteId: "11111111-1111-4111-8111-111111111111",
+      })
+    ).resolves.toMatchObject({ ok: false, enviados: 0, motivo: "sesion_invalida" });
+
+    invoke.mockResolvedValueOnce({
+      data: null,
+      error: { message: "fallo", context: { status: 500 } },
+    });
+    await expect(
+      solicitarProcesamientoLote({
+        ligaId: "liga-1",
+        loteId: "11111111-1111-4111-8111-111111111111",
+      })
+    ).resolves.toMatchObject({
+      ok: false,
+      enviados: 0,
+      motivo: "procesador_no_disponible",
+    });
+
+    invoke.mockResolvedValueOnce({
+      data: null,
+      error: { message: "AbortError" },
+    });
+    await expect(
+      solicitarProcesamientoLote({
+        ligaId: "liga-1",
+        loteId: "11111111-1111-4111-8111-111111111111",
+      })
+    ).resolves.toMatchObject({
+      ok: false,
+      enviados: 0,
+      motivo: "procesador_no_disponible",
+    });
+    expect(invoke).toHaveBeenCalledTimes(3);
   });
 
   it("pide quitar solo los no enviados y no llama al worker", async () => {

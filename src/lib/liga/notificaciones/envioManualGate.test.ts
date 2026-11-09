@@ -119,6 +119,34 @@ describe("allowlist fail-closed", () => {
     expect(resultado.fuera_allowlist).toBe(0);
   });
 
+  it("A. de tres destinatarios solo reclama el incluido en la allowlist", () => {
+    const resultado = simularLoteManual({
+      enviosReales: "true",
+      allowlistRaw: "edgardo@example.com",
+      loteId: "lote-prueba",
+      filas: [
+        { ...filaLista, id: "zaid", email: "zaid@example.com", loteId: "lote-prueba" },
+        {
+          ...filaLista,
+          id: "edgardo",
+          email: "edgardo@example.com",
+          loteId: "lote-prueba",
+        },
+        {
+          ...filaLista,
+          id: "eduardo",
+          email: "eduardo@example.com",
+          loteId: "lote-prueba",
+        },
+      ],
+    });
+    expect(resultado.reclamadas).toEqual(["edgardo"]);
+    expect(resultado.llamadasResend).toBe(1);
+    expect(resultado.excluidasSinEscritura.sort()).toEqual(["eduardo", "zaid"]);
+    expect(resultado.fuera_allowlist).toBe(2);
+    expect(resultado.escrituras).toBe(1);
+  });
+
   it("deja fuera de la lista sin escritura ni Resend", () => {
     const resultado = simularLoteManual({
       enviosReales: "true",
@@ -222,5 +250,22 @@ describe("allowlist fail-closed", () => {
     expect(worker).toContain("enviados: 0");
     expect(worker).toContain("fuera_allowlist");
     expect(worker).not.toContain("correo_verificacion_origen");
+  });
+
+  it("la función de lote corta al worker si no responde y no llama con envíos apagados", () => {
+    const fuente = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "supabase/functions/procesar-lote-liga-notificaciones/index.ts"
+      ),
+      "utf8"
+    );
+    const apagado = fuente.indexOf('return apagado(req, "envios_apagados")');
+    const worker = fuente.indexOf("procesar-liga-notificaciones");
+    expect(apagado).toBeGreaterThan(-1);
+    expect(apagado).toBeLessThan(worker);
+    expect(fuente).toContain("AbortSignal.timeout(20000)");
+    expect(fuente).toContain("x-liga-notificaciones-secret");
+    expect(fuente).toContain("fuera_allowlist");
   });
 });

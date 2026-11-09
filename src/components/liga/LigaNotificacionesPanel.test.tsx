@@ -118,6 +118,27 @@ describe("LigaNotificacionesPanel", () => {
       cola: [],
       verificaciones: [],
     });
+    const servicio = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ) as {
+      solicitarProcesamientoLote: jest.Mock;
+      solicitarComunicacionManual: jest.Mock;
+    };
+    servicio.solicitarProcesamientoLote.mockResolvedValue({
+      ok: true,
+      enviosReales: false,
+      enviados: 0,
+      omitidos: 0,
+      errores: 0,
+      procesados: 0,
+      fueraAllowlist: 0,
+      motivo: "envios_apagados",
+    });
+    servicio.solicitarComunicacionManual.mockResolvedValue({
+      ok: false,
+      encolado: false,
+      motivo: "deshabilitado",
+    });
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -643,6 +664,277 @@ describe("LigaNotificacionesPanel", () => {
     expect(lotes.size).toBe(1);
     expect(container.textContent).toContain("Pendiente de procesamiento");
     expect(container.textContent).not.toContain("Correo enviado");
+    expect(container.textContent).not.toContain("Procesando…");
+  });
+
+  it("C. un 401 del lote se muestra y no vuelve a llamar al procesador", async () => {
+    const servicio = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ) as {
+      solicitarComunicacionManual: jest.Mock;
+      solicitarProcesamientoLote: jest.Mock;
+    };
+    servicio.solicitarComunicacionManual.mockResolvedValue({
+      ok: true,
+      encolado: true,
+      motivo: null,
+    });
+    servicio.solicitarProcesamientoLote.mockResolvedValue({
+      ok: false,
+      enviosReales: false,
+      enviados: 0,
+      omitidos: 0,
+      errores: 0,
+      procesados: 0,
+      fueraAllowlist: 0,
+      motivo: "sesion_invalida",
+    });
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: false,
+      preferencias: [preferenciaLista("jug-1")],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await renderPanel();
+    await abrirRedactar();
+    await marcarEnSelector("Saúl Moreno de la Torre del Valle");
+    const revisar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "REVISAR CORREO"
+    );
+    await act(async () => {
+      revisar?.click();
+    });
+    const enviar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "ENVIAR CORREO A 1 JUGADOR"
+    );
+    await act(async () => {
+      enviar?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(container.textContent).toContain(
+      "Correo preparado, pero no se pudo completar el procesamiento"
+    );
+    expect(container.textContent).not.toContain("Procesando…");
+    expect(servicio.solicitarProcesamientoLote).toHaveBeenCalledTimes(1);
+  });
+
+  it("D. un fallo del procesador libera el botón y reintenta el mismo lote", async () => {
+    const servicio = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ) as {
+      solicitarComunicacionManual: jest.Mock;
+      solicitarProcesamientoLote: jest.Mock;
+    };
+    servicio.solicitarComunicacionManual
+      .mockResolvedValueOnce({ ok: true, encolado: true, motivo: null })
+      .mockResolvedValueOnce({
+        ok: true,
+        encolado: false,
+        motivo: "ya_encolado",
+      });
+    servicio.solicitarProcesamientoLote.mockResolvedValue({
+      ok: false,
+      enviosReales: false,
+      enviados: 0,
+      omitidos: 0,
+      errores: 1,
+      procesados: 0,
+      fueraAllowlist: 0,
+      motivo: "procesador_no_disponible",
+    });
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: false,
+      preferencias: [preferenciaLista("jug-1")],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await renderPanel();
+    await abrirRedactar();
+    await marcarEnSelector("Saúl Moreno de la Torre del Valle");
+    const revisar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "REVISAR CORREO"
+    );
+    await act(async () => {
+      revisar?.click();
+    });
+    const enviar = () =>
+      Array.from(container.querySelectorAll("button")).find(
+        (button) => button.textContent === "ENVIAR CORREO A 1 JUGADOR"
+      );
+    await act(async () => {
+      enviar()?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(container.textContent).toContain(
+      "Correo preparado, pero no se pudo completar el procesamiento"
+    );
+    const lote = servicio.solicitarComunicacionManual.mock.calls[0][0].loteId;
+    await act(async () => {
+      const tab = Array.from(container.querySelectorAll("button")).find(
+        (button) => button.textContent === "Redactar correo"
+      );
+      tab?.click();
+    });
+    await act(async () => {
+      const otra = Array.from(container.querySelectorAll("button")).find(
+        (button) => button.textContent === "REVISAR CORREO"
+      );
+      otra?.click();
+    });
+    await act(async () => {
+      enviar()?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(servicio.solicitarComunicacionManual.mock.calls[1][0].loteId).toBe(
+      lote
+    );
+    expect(servicio.solicitarProcesamientoLote).toHaveBeenCalledTimes(2);
+    expect(
+      servicio.solicitarProcesamientoLote.mock.calls.every(
+        (call) => call[0].loteId === lote
+      )
+    ).toBe(true);
+  });
+
+  it("E. una aceptación de Resend se muestra sin dejar el botón cargando", async () => {
+    const servicio = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ) as {
+      solicitarComunicacionManual: jest.Mock;
+      solicitarProcesamientoLote: jest.Mock;
+    };
+    servicio.solicitarComunicacionManual.mockResolvedValue({
+      ok: true,
+      encolado: true,
+      motivo: null,
+    });
+    servicio.solicitarProcesamientoLote.mockResolvedValue({
+      ok: true,
+      enviosReales: true,
+      enviados: 1,
+      omitidos: 0,
+      errores: 0,
+      procesados: 1,
+      fueraAllowlist: 2,
+      motivo: null,
+    });
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: false,
+      preferencias: [preferenciaLista("jug-1")],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await renderPanel();
+    await abrirRedactar();
+    await marcarEnSelector("Saúl Moreno de la Torre del Valle");
+    const revisar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "REVISAR CORREO"
+    );
+    await act(async () => {
+      revisar?.click();
+    });
+    const enviar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "ENVIAR CORREO A 1 JUGADOR"
+    );
+    await act(async () => {
+      enviar?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(container.textContent).toContain("Resend aceptó 1 correo");
+    expect(container.textContent).toContain("no entran en esta prueba");
+    expect(container.textContent).not.toContain("Procesando…");
+  });
+
+  it("G. un segundo clic mientras prepara no vuelve a encolar", async () => {
+    const servicio = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ) as { solicitarComunicacionManual: jest.Mock };
+    let soltar: (valor: {
+      ok: boolean;
+      encolado: boolean;
+      motivo: null;
+    }) => void = () => undefined;
+    servicio.solicitarComunicacionManual.mockReturnValue(
+      new Promise((resolve) => {
+        soltar = resolve;
+      })
+    );
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: false,
+      preferencias: [preferenciaLista("jug-1")],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await renderPanel();
+    await abrirRedactar();
+    await marcarEnSelector("Saúl Moreno de la Torre del Valle");
+    const revisar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "REVISAR CORREO"
+    );
+    await act(async () => {
+      revisar?.click();
+    });
+    const enviar = () =>
+      Array.from(container.querySelectorAll("button")).find((button) =>
+        button.textContent?.includes("ENVIAR CORREO")
+      ) as HTMLButtonElement;
+    const boton = enviar();
+    await act(async () => {
+      boton.click();
+    });
+    expect(boton.disabled).toBe(true);
+    expect(boton.textContent).toContain("Preparando envío");
+    await act(async () => {
+      boton.click();
+    });
+    expect(servicio.solicitarComunicacionManual).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      soltar({ ok: true, encolado: true, motivo: null });
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(container.textContent).not.toContain("Preparando envío");
+    servicio.solicitarComunicacionManual.mockResolvedValue({
+      ok: false,
+      encolado: false,
+      motivo: "deshabilitado",
+    });
   });
 
   it("E. una revocación se muestra y no se puede marcar", async () => {

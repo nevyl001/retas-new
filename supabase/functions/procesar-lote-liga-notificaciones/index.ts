@@ -100,12 +100,13 @@ Deno.serve(async (req) => {
     return json(req, 503, { ok: false, error: "procesador_no_configurado" });
   }
 
-  let admin;
+  let credencial = "";
   try {
-    admin = createCredentialClient(supabaseUrl, readSecretCredential());
+    credencial = readSecretCredential();
   } catch {
     return json(req, 503, { ok: false, error: "procesador_no_configurado" });
   }
+  const admin = createCredentialClient(supabaseUrl, credencial);
 
   const { count, error: countError } = await admin
     .from("liga_notificaciones_queue")
@@ -135,17 +136,34 @@ Deno.serve(async (req) => {
     }
   }
 
-  const worker = await fetch(
-    `${supabaseUrl}/functions/v1/procesar-liga-notificaciones`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-liga-notificaciones-secret": webhook,
+  let worker: Response;
+  try {
+    worker = await fetch(
+      `${supabaseUrl}/functions/v1/procesar-liga-notificaciones`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: credencial,
+          Authorization: `Bearer ${credencial}`,
+          "x-liga-notificaciones-secret": webhook,
+        },
+        body: JSON.stringify({ lote_id: loteId }),
+        signal: AbortSignal.timeout(20000),
       },
-      body: JSON.stringify({ lote_id: loteId }),
-    },
-  );
+    );
+  } catch {
+    return json(req, 504, {
+      ok: false,
+      enviosReales: true,
+      enviados: 0,
+      omitidos: 0,
+      errores: 1,
+      procesados: 0,
+      fuera_allowlist: 0,
+      motivo: "procesador_no_disponible",
+    });
+  }
 
   let resultado: Record<string, unknown> = {};
   try {
@@ -172,6 +190,7 @@ Deno.serve(async (req) => {
     omitidos: Number(resultado.omitidos ?? 0),
     errores: Number(resultado.errores ?? 0),
     procesados: Number(resultado.procesados ?? 0),
+    fuera_allowlist: Number(resultado.fuera_allowlist ?? 0),
     motivo: typeof resultado.motivo === "string" ? resultado.motivo : null,
   });
 });
