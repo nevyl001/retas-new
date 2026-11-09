@@ -149,14 +149,163 @@ const PREFERENCIAS_SELECT_0101 =
 const PREFERENCIAS_SELECT_0100 =
   "liga_jugador_id, riviera_jugador_id, admin_habilitado, consentimiento_estado, consentimiento_origen, consentimiento_registrado_at, correo_verificado";
 
-function mapPreferenciaRow(
-  row: PreferenciaNotificacionRow | Record<string, unknown>
-): PreferenciaNotificacionRow {
-  const base = row as PreferenciaNotificacionRow;
+type ConsultaDominioError = { message: string };
+
+type PreferenciasConsultaResultado = {
+  rows: PreferenciaNotificacionRow[];
+  error: ConsultaDominioError | null;
+};
+
+type ConfigConsultaResultado = {
+  data: ConfigNotificacionLiga;
+  modoOperacionPresente: boolean;
+  error: ConsultaDominioError | null;
+};
+
+function mapPreferenciaRow(row: Record<string, unknown>): PreferenciaNotificacionRow {
+  const origenRaw = row.correo_verificacion_origen;
+  const origen =
+    origenRaw === "enlace_de_confirmacion" ? "enlace_de_confirmacion" : null;
+  const emailRaw = row.correo_verificado_email;
+  const estadoRaw = row.consentimiento_estado;
+  const consentimiento_estado: PreferenciaNotificacionRow["consentimiento_estado"] =
+    estadoRaw === "autorizado" || estadoRaw === "revocado"
+      ? estadoRaw
+      : "sin_autorizacion";
+
   return {
-    ...base,
-    correo_verificacion_origen: base.correo_verificacion_origen ?? null,
-    correo_verificado_email: base.correo_verificado_email ?? null,
+    liga_jugador_id: String(row.liga_jugador_id ?? ""),
+    riviera_jugador_id:
+      typeof row.riviera_jugador_id === "string" ? row.riviera_jugador_id : null,
+    admin_habilitado: row.admin_habilitado === true,
+    consentimiento_estado,
+    consentimiento_origen:
+      typeof row.consentimiento_origen === "string"
+        ? row.consentimiento_origen
+        : null,
+    consentimiento_registrado_at:
+      typeof row.consentimiento_registrado_at === "string"
+        ? row.consentimiento_registrado_at
+        : null,
+    correo_verificado: row.correo_verificado === true,
+    // 0100 no trae estas columnas; quedan null hasta 0101.
+    correo_verificacion_origen: origen,
+    correo_verificado_email: typeof emailRaw === "string" ? emailRaw : null,
+  };
+}
+
+function esFalloColumnasPreferencias0101(message: string): boolean {
+  if (!esEsquemaAusente(message)) return false;
+  return (
+    /correo_verificacion_origen|correo_verificado_email/i.test(message) ||
+    /column|schema cache/i.test(message)
+  );
+}
+
+/**
+ * Intenta select 0101; si faltan columnas, cae a 0100 y normaliza al dominio.
+ * No reasigna variables inferidas con shapes PostgREST incompatibles.
+ */
+async function consultarPreferenciasLiga(
+  ligaId: string
+): Promise<PreferenciasConsultaResultado> {
+  const intento0101 = await supabase
+    .from("liga_notificaciones_preferencias")
+    .select(PREFERENCIAS_SELECT_0101)
+    .eq("liga_id", ligaId);
+
+  if (!intento0101.error) {
+    return {
+      rows: ((intento0101.data ?? []) as Record<string, unknown>[]).map(
+        mapPreferenciaRow
+      ),
+      error: null,
+    };
+  }
+
+  if (!esFalloColumnasPreferencias0101(intento0101.error.message)) {
+    return {
+      rows: [],
+      error: { message: intento0101.error.message },
+    };
+  }
+
+  const intento0100 = await supabase
+    .from("liga_notificaciones_preferencias")
+    .select(PREFERENCIAS_SELECT_0100)
+    .eq("liga_id", ligaId);
+
+  if (intento0100.error) {
+    return {
+      rows: [],
+      error: { message: intento0100.error.message },
+    };
+  }
+
+  return {
+    rows: ((intento0100.data ?? []) as Record<string, unknown>[]).map(
+      mapPreferenciaRow
+    ),
+    error: null,
+  };
+}
+
+async function consultarConfigLiga(
+  ligaId: string
+): Promise<ConfigConsultaResultado> {
+  const intento0103 = await supabase
+    .from("liga_notificaciones_config")
+    .select("bienvenida_pausada, modo_prueba, modo_operacion")
+    .eq("liga_id", ligaId)
+    .maybeSingle();
+
+  if (!intento0103.error) {
+    const row = (intento0103.data ?? null) as Record<string, unknown> | null;
+    return {
+      data: {
+        bienvenida_pausada: row?.bienvenida_pausada !== false,
+        modo_prueba: row?.modo_prueba !== false,
+        modo_operacion: normalizarModoOperacion(row?.modo_operacion),
+      },
+      modoOperacionPresente: true,
+      error: null,
+    };
+  }
+
+  if (
+    !/modo_operacion/i.test(intento0103.error.message) ||
+    !esEsquemaAusente(intento0103.error.message)
+  ) {
+    return {
+      data: CONFIG_INICIAL,
+      modoOperacionPresente: false,
+      error: { message: intento0103.error.message },
+    };
+  }
+
+  const intento0100 = await supabase
+    .from("liga_notificaciones_config")
+    .select("bienvenida_pausada, modo_prueba")
+    .eq("liga_id", ligaId)
+    .maybeSingle();
+
+  if (intento0100.error) {
+    return {
+      data: CONFIG_INICIAL,
+      modoOperacionPresente: false,
+      error: { message: intento0100.error.message },
+    };
+  }
+
+  const row = (intento0100.data ?? null) as Record<string, unknown> | null;
+  return {
+    data: {
+      bienvenida_pausada: row?.bienvenida_pausada !== false,
+      modo_prueba: row?.modo_prueba !== false,
+      modo_operacion: "manual",
+    },
+    modoOperacionPresente: false,
+    error: null,
   };
 }
 
@@ -167,94 +316,43 @@ function mapPreferenciaRow(
 export async function cargarNotificacionesLiga(
   ligaId: string
 ): Promise<NotificacionesLigaSnapshot> {
-  let preferencias = await supabase
-    .from("liga_notificaciones_preferencias")
-    .select(PREFERENCIAS_SELECT_0101)
-    .eq("liga_id", ligaId);
-
-  // 0100 sin columnas de verificación (0101): reintenta select mínimo.
-  if (
-    preferencias.error &&
-    esEsquemaAusente(preferencias.error.message) &&
-    /correo_verificacion_origen|correo_verificado_email/i.test(
-      preferencias.error.message
-    )
-  ) {
-    preferencias = await supabase
-      .from("liga_notificaciones_preferencias")
-      .select(PREFERENCIAS_SELECT_0100)
-      .eq("liga_id", ligaId);
-  }
-
-  // PostgREST a veces solo dice "column ... does not exist" sin nombrar ambas.
-  if (
-    preferencias.error &&
-    esEsquemaAusente(preferencias.error.message) &&
-    /column|schema cache/i.test(preferencias.error.message)
-  ) {
-    preferencias = await supabase
-      .from("liga_notificaciones_preferencias")
-      .select(PREFERENCIAS_SELECT_0100)
-      .eq("liga_id", ligaId);
-  }
-
-  let config = await supabase
-    .from("liga_notificaciones_config")
-    .select("bienvenida_pausada, modo_prueba, modo_operacion")
-    .eq("liga_id", ligaId)
-    .maybeSingle();
-
-  let modoOperacionPresente = true;
-  if (
-    config.error &&
-    /modo_operacion/i.test(config.error.message) &&
-    esEsquemaAusente(config.error.message)
-  ) {
-    modoOperacionPresente = false;
-    config = await supabase
-      .from("liga_notificaciones_config")
-      .select("bienvenida_pausada, modo_prueba")
-      .eq("liga_id", ligaId)
-      .maybeSingle();
-  }
-
-  const [historial, cola, verificaciones] = await Promise.all([
-    supabase
-      .from("liga_notificaciones_log")
-      .select(
-        "id, liga_jugador_id, tipo, estado, attempts, motivo, proveedor_estado, created_at"
-      )
-      .eq("liga_id", ligaId)
-      .order("created_at", { ascending: false })
-      .limit(100),
-    supabase
-      .from("liga_notificaciones_queue")
-      .select("liga_jugador_id, estado, attempts, motivo")
-      .eq("liga_id", ligaId)
-      .order("updated_at", { ascending: false })
-      .limit(100),
-    supabase
-      .from("liga_notificaciones_verificaciones")
-      .select(
-        "id, liga_jugador_id, estado, expires_at, confirmed_at, created_at"
-      )
-      .eq("liga_id", ligaId)
-      .order("created_at", { ascending: false })
-      .limit(200),
-  ]);
-
-  const configData = config.data as Record<string, unknown> | null;
-  const configError = config.error;
+  const [preferencias, config, historial, cola, verificaciones] =
+    await Promise.all([
+      consultarPreferenciasLiga(ligaId),
+      consultarConfigLiga(ligaId),
+      supabase
+        .from("liga_notificaciones_log")
+        .select(
+          "id, liga_jugador_id, tipo, estado, attempts, motivo, proveedor_estado, created_at"
+        )
+        .eq("liga_id", ligaId)
+        .order("created_at", { ascending: false })
+        .limit(100),
+      supabase
+        .from("liga_notificaciones_queue")
+        .select("liga_jugador_id, estado, attempts, motivo")
+        .eq("liga_id", ligaId)
+        .order("updated_at", { ascending: false })
+        .limit(100),
+      supabase
+        .from("liga_notificaciones_verificaciones")
+        .select(
+          "id, liga_jugador_id, estado, expires_at, confirmed_at, created_at"
+        )
+        .eq("liga_id", ligaId)
+        .order("created_at", { ascending: false })
+        .limit(200),
+    ]);
 
   // Núcleo 0100 ausente → sin escrituras.
   if (
     (preferencias.error && esEsquemaAusente(preferencias.error.message)) ||
-    (configError && esEsquemaAusente(configError.message))
+    (config.error && esEsquemaAusente(config.error.message))
   ) {
     return VACIO;
   }
 
-  if (preferencias.error || configError) {
+  if (preferencias.error || config.error) {
     aviso("no_disponible");
     return {
       ...VACIO,
@@ -294,23 +392,13 @@ export async function cargarNotificacionesLiga(
     aviso("no_disponible");
   }
 
-  const configNormalizada: ConfigNotificacionLiga = {
-    bienvenida_pausada: configData?.bienvenida_pausada !== false,
-    modo_prueba: configData?.modo_prueba !== false,
-    modo_operacion: modoOperacionPresente
-      ? normalizarModoOperacion(configData?.modo_operacion)
-      : "manual",
-  };
-
   return {
     disponible: true,
     // Toggles/consentimiento: 0100 basta. Verificación/envíos son independientes.
     escriturasActivas: true,
     verificacionDisponible,
-    preferencias: (preferencias.data ?? []).map((row) =>
-      mapPreferenciaRow(row as PreferenciaNotificacionRow)
-    ),
-    config: configNormalizada,
+    preferencias: preferencias.rows,
+    config: config.data,
     historial: historialRows,
     cola: colaRows,
     verificaciones: verificacionDisponible

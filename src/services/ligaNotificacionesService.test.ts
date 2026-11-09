@@ -137,7 +137,10 @@ describe("ligaNotificacionesService", () => {
     const vacio = chainResult({ data: [], error: null });
     const sinTabla = chainResult({
       data: null,
-      error: { message: "Could not find the table liga_notificaciones_verificaciones in the schema cache" },
+      error: {
+        message:
+          "Could not find the table liga_notificaciones_verificaciones in the schema cache",
+      },
     });
 
     let prefsCalls = 0;
@@ -161,6 +164,52 @@ describe("ligaNotificacionesService", () => {
     expect(snap.verificacionDisponible).toBe(false);
     expect(snap.preferencias).toHaveLength(1);
     expect(snap.preferencias[0].admin_habilitado).toBe(false);
+    expect(snap.preferencias[0].correo_verificacion_origen).toBeNull();
+    expect(snap.preferencias[0].correo_verificado_email).toBeNull();
     expect(snap.config.modo_operacion).toBe("manual");
+  });
+
+  it("0101 con columnas de verificación normaliza y mantiene escriturasActivas", async () => {
+    const prefs0101 = chainResult({
+      data: [
+        {
+          liga_jugador_id: "jug-2",
+          riviera_jugador_id: "riv-2",
+          admin_habilitado: true,
+          consentimiento_estado: "autorizado",
+          consentimiento_origen: "manifestacion_presencial",
+          consentimiento_registrado_at: "2026-01-01T00:00:00.000Z",
+          correo_verificado: true,
+          correo_verificacion_origen: "enlace_de_confirmacion",
+          correo_verificado_email: "saul@example.com",
+        },
+      ],
+      error: null,
+    });
+    const config = chainResult({
+      data: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      error: null,
+    });
+    const vacio = chainResult({ data: [], error: null });
+
+    from.mockImplementation((table: string) => {
+      if (table === "liga_notificaciones_preferencias") return prefs0101;
+      if (table === "liga_notificaciones_config") return config;
+      return vacio;
+    });
+
+    const snap = await cargarNotificacionesLiga("liga-2");
+    expect(snap.escriturasActivas).toBe(true);
+    expect(snap.verificacionDisponible).toBe(true);
+    expect(snap.preferencias[0]).toMatchObject({
+      admin_habilitado: true,
+      correo_verificado: true,
+      correo_verificacion_origen: "enlace_de_confirmacion",
+      correo_verificado_email: "saul@example.com",
+    });
   });
 });
