@@ -5,6 +5,7 @@ import {
   esEsquemaAusente,
   establecerCorreoVerificado,
   solicitarBienvenidaJugador,
+  solicitarComunicacionManual,
   solicitarVerificacionCorreo,
   simulacionNotificacionesClienteActiva,
 } from "./ligaNotificacionesService";
@@ -35,6 +36,29 @@ describe("ligaNotificacionesService", () => {
   beforeEach(() => {
     rpc.mockReset();
     from.mockReset();
+  });
+
+  it("el lote manual viaja en p_lote_id y no se envía solo", async () => {
+    rpc.mockResolvedValue({
+      data: { ok: true, encolado: true, motivo: null },
+      error: null,
+    });
+    await solicitarComunicacionManual({
+      ligaId: "liga-1",
+      jugadorId: "jug-1",
+      tipo: "aviso_general",
+      asunto: "Aviso",
+      cuerpo: "Hola",
+      loteId: "11111111-1111-4111-8111-111111111111",
+    });
+    expect(rpc).toHaveBeenCalledWith("encolar_comunicacion_manual_liga", {
+      p_liga_id: "liga-1",
+      p_liga_jugador_id: "jug-1",
+      p_tipo: "aviso_general",
+      p_asunto: "Aviso",
+      p_cuerpo: "Hola",
+      p_lote_id: "11111111-1111-4111-8111-111111111111",
+    });
   });
 
   it("Fase 1: la inscripción no auto-encola (manual / auto real apagado)", async () => {

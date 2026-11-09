@@ -1,8 +1,12 @@
+import fs from "fs";
+import path from "path";
 import {
   decidirReclamoEnvio,
   parseAllowlist,
   parseReplyTo,
   puedeDocumentarAutorizacionVerbal,
+  simularLoteManual,
+  type FilaSimulada,
 } from "./envioManualGate";
 import { renderComunicacionEmail } from "./comunicacionTemplates";
 
@@ -60,5 +64,105 @@ describe("envio manual simulado", () => {
     expect(puedeDocumentarAutorizacionVerbal("revocado")).toBe(false);
     expect(puedeDocumentarAutorizacionVerbal("autorizado")).toBe(false);
     expect(puedeDocumentarAutorizacionVerbal(null)).toBe(true);
+  });
+});
+
+const filaLista: FilaSimulada = {
+  id: "fila-1",
+  email: "jugador@example.com",
+  adminHabilitado: true,
+  consentimientoEstado: "autorizado",
+  consentimientoOrigen: "manifestacion_presencial",
+  consentimientoRegistradoAt: "2026-11-09T12:00:00.000Z",
+};
+
+describe("allowlist fail-closed", () => {
+  it.each([undefined, null, "", "   ", "\n\t"])(
+    "lista inactiva (%j) no escribe ni llama a Resend",
+    (raw) => {
+      const resultado = simularLoteManual({
+        enviosReales: "true",
+        allowlistRaw: raw,
+        filas: [filaLista],
+      });
+      expect(resultado).toMatchObject({
+        procesados: 0,
+        enviados: 0,
+        escrituras: 0,
+        llamadasResend: 0,
+        fuera_allowlist: 0,
+      });
+    }
+  );
+
+  it("un flag distinto de true tampoco procesa", () => {
+    const resultado = simularLoteManual({
+      enviosReales: "false",
+      allowlistRaw: "jugador@example.com",
+      filas: [filaLista],
+    });
+    expect(resultado.procesados).toBe(0);
+    expect(resultado.enviados).toBe(0);
+    expect(resultado.llamadasResend).toBe(0);
+    expect(resultado.escrituras).toBe(0);
+  });
+
+  it("acepta mayúsculas y coincidencia exacta", () => {
+    const resultado = simularLoteManual({
+      enviosReales: "true",
+      allowlistRaw: "  Jugador@Example.com  ",
+      filas: [filaLista],
+    });
+    expect(resultado.reclamadas).toEqual(["fila-1"]);
+    expect(resultado.enviados).toBe(1);
+    expect(resultado.llamadasResend).toBe(1);
+    expect(resultado.fuera_allowlist).toBe(0);
+  });
+
+  it("deja fuera de la lista sin escritura ni Resend", () => {
+    const resultado = simularLoteManual({
+      enviosReales: "true",
+      allowlistRaw: "otro@example.com",
+      filas: [filaLista],
+    });
+    expect(resultado.fuera_allowlist).toBe(1);
+    expect(resultado.excluidasSinEscritura).toEqual(["fila-1"]);
+    expect(resultado.escrituras).toBe(0);
+    expect(resultado.llamadasResend).toBe(0);
+    expect(resultado.enviados).toBe(0);
+  });
+
+  it("la allowlist no sustituye consentimiento ni el interruptor", () => {
+    const resultado = simularLoteManual({
+      enviosReales: "true",
+      allowlistRaw: "jugador@example.com",
+      filas: [{ ...filaLista, adminHabilitado: false }],
+    });
+    expect(resultado.reclamadas).toEqual([]);
+    expect(resultado.llamadasResend).toBe(0);
+    expect(resultado.escrituras).toBe(1);
+  });
+
+  it("el worker autentica antes del flag y corta la allowlist vacía antes de la cola", () => {
+    const worker = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "supabase/functions/procesar-liga-notificaciones/index.ts"
+      ),
+      "utf8"
+    );
+    const auth = worker.indexOf("LIGA_NOTIFICACIONES_WEBHOOK_SECRET");
+    const flag = worker.indexOf('LIGA_NOTIFICACIONES_ENVIOS_REALES") === "true"');
+    const corte = worker.indexOf("allowlist.size === 0");
+    const cola = worker.indexOf('from("liga_notificaciones_queue")');
+    const resend = worker.indexOf("await sendByResend");
+    expect(auth).toBeGreaterThan(-1);
+    expect(auth).toBeLessThan(flag);
+    expect(flag).toBeLessThan(corte);
+    expect(corte).toBeLessThan(cola);
+    expect(cola).toBeLessThan(resend);
+    expect(worker).toContain("enviados: 0");
+    expect(worker).toContain("fuera_allowlist");
+    expect(worker).not.toContain("correo_verificacion_origen");
   });
 });

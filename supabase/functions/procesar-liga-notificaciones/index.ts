@@ -143,7 +143,20 @@ Deno.serve(async (req) => {
       ok: true,
       enviosReales: false,
       procesados: 0,
+      enviados: 0,
       escritos: 0,
+    });
+  }
+
+  const allowlist = parseAllowlist(Deno.env.get("LIGA_NOTIFICACIONES_ALLOWLIST"));
+  if (allowlist.size === 0) {
+    return json(req, 200, {
+      ok: true,
+      enviosReales: true,
+      procesados: 0,
+      enviados: 0,
+      escritos: 0,
+      fuera_allowlist: 0,
     });
   }
 
@@ -159,7 +172,6 @@ Deno.serve(async (req) => {
   logCredentialSelection({ module: MODULE, secret: secretKey });
   logResendConfig(MODULE);
   const supabase = createCredentialClient(SUPABASE_URL, secretKey);
-  const allowlist = parseAllowlist(Deno.env.get("LIGA_NOTIFICACIONES_ALLOWLIST"));
   const replyTo = parseReplyTo(Deno.env.get("LIGA_NOTIFICACIONES_REPLY_TO"));
 
   let procesados = 0;
@@ -247,8 +259,9 @@ Deno.serve(async (req) => {
     escritos,
     aceptados,
     omitidos,
+    enviados: aceptados,
     errores,
-    fueraAllowlist,
+    fuera_allowlist: fueraAllowlist,
     replyTo: Boolean(replyTo),
   });
 });
