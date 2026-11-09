@@ -197,3 +197,4 @@ describe("Rediseño Premium de Templates de Correo", () => {
     expect(getClubInitials("")).toBe("RO");
   });
 });
+

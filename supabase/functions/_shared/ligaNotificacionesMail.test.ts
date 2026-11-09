@@ -158,3 +158,34 @@ Deno.test("7. Validación segura de correos", () => {
   assertEquals(isFakeOrInvalidEmail(""), true);
   assertEquals(isFakeOrInvalidEmail("no-es-correo"), true);
 });
+
+Deno.test("8. Render de Próxima Jornada en worker (tarjeta estructurada, botón VER MI JORNADA y cierre oficial)", () => {
+  const mail = renderComunicacionWorker({
+    clubNombre: "Hack Pádel",
+    ligaNombre: "Liga 5ta Advance",
+    asunto: "¡Tu próxima jornada te espera! — Liga 5ta Advance",
+    cuerpoTexto:
+      "Hola Edgardo T,\n\n¡La emoción continúa en Liga 5ta Advance!\n\nUna nueva jornada está por comenzar.\n\nFecha: Sábado 15 de Noviembre\nHorario: 10:00 AM\nSede: Hack Pádel",
+    tipo: "jornada",
+    ligaUrl: "https://appriviera.rivieraopen.com/public/liga/liga-123",
+  });
+
+  assertStringIncludes(mail.html, "¡Tu próxima jornada te espera!");
+  assertStringIncludes(mail.html, "FECHA");
+  assertStringIncludes(mail.html, "Sábado 15 de Noviembre");
+  assertStringIncludes(mail.html, "HORARIO");
+  assertStringIncludes(mail.html, "10:00 AM");
+  assertStringIncludes(mail.html, "SEDE");
+  assertStringIncludes(mail.html, "Hack Pádel");
+  assertStringIncludes(mail.html, "VER MI JORNADA");
+  assertStringIncludes(mail.html, "https://appriviera.rivieraopen.com/public/liga/liga-123");
+  assertStringIncludes(mail.html, "RIVIERA OPEN");
+  assertStringIncludes(mail.html, "Compite. Juega limpio. Vive Riviera Open.");
+  assertStringIncludes(mail.html, "Cada partido cuenta.");
+  assertStringIncludes(mail.html, "#0D0F12");
+  assertStringIncludes(mail.html, "max-width:640px");
+
+  assertStringIncludes(mail.text, "TARJETA DE JORNADA:");
+  assertStringIncludes(mail.text, "VER MI JORNADA: https://appriviera.rivieraopen.com/public/liga/liga-123");
+});
+

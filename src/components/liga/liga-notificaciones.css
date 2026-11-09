@@ -1191,6 +1191,52 @@
   overflow: auto;
 }
 
+.liga-notificaciones__auto {
+  display: grid;
+  gap: 12px;
+}
+
+.liga-notificaciones__auto-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--liga-border, var(--ro-border));
+  border-radius: 12px;
+  background: var(--liga-surface, var(--ro-surface, #fff));
+}
+
+.liga-notificaciones__auto-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.liga-notificaciones__auto-head h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.liga-notificaciones__auto-status {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--liga-text-muted, var(--ro-text-muted));
+}
+
+@media (max-width: 720px) {
+  .liga-notificaciones__auto-card {
+    padding: 14px;
+  }
+
+  .liga-notificaciones__auto-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .liga-notificaciones *,
   .liga-notificaciones *::before,

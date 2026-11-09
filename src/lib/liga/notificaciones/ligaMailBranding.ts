@@ -102,3 +102,4 @@ export function resolveLigaMailBranding(options: {
     initials: getClubInitials(clubNombre),
   };
 }
+

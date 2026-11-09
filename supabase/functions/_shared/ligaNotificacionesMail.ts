@@ -169,14 +169,17 @@ export interface WorkerEmailLayoutInput {
   title: string;
   paragraphsHtml: string;
   infoCards?: Array<{ label: string; value: string | null | undefined }>;
+  jornadaCard?: { fecha: string; horario: string; sede: string } | null;
   actionButton?: {
     label: string;
     url: string;
   } | null;
   cierreTexto?: string | null;
+  cierreDetalleHtml?: string | null;
   footerNotice?: string | null;
   ligaUrl?: string | null;
   vistaPrevia?: boolean;
+  maxWidth?: number;
 }
 
 export function renderPremiumEmailLayout(input: WorkerEmailLayoutInput): string {
@@ -217,6 +220,49 @@ export function renderPremiumEmailLayout(input: WorkerEmailLayoutInput): string 
       </div>`
     : "";
 
+  let jornadaCardHtml = "";
+  if (input.jornadaCard) {
+    jornadaCardHtml = `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F8FAFC;border:1px solid #E5E7EB;border-radius:8px;margin:22px 0 24px;">
+        <tr>
+          <td style="padding:22px 24px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding:0 0 4px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748B;">
+                  FECHA
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;line-height:1.4;color:#111827;">
+                  ${escapeHtml(input.jornadaCard.fecha)}
+                </td>
+              </tr>
+              <tr>
+                <td style="border-top:1px solid #E5E7EB;padding-top:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748B;">
+                  HORARIO
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:4px 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;line-height:1.4;color:#111827;">
+                  ${escapeHtml(input.jornadaCard.horario)}
+                </td>
+              </tr>
+              <tr>
+                <td style="border-top:1px solid #E5E7EB;padding-top:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748B;">
+                  SEDE
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:4px 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;line-height:1.4;color:#111827;">
+                  ${escapeHtml(input.jornadaCard.sede)}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>`;
+  }
+
   const cards = (input.infoCards || []).filter((c) => c.value && String(c.value).trim());
   let infoCardsHtml = "";
   if (cards.length > 0) {
@@ -252,8 +298,8 @@ export function renderPremiumEmailLayout(input: WorkerEmailLayoutInput): string 
     actionButtonHtml = `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 24px;">
         <tr>
-          <td align="center" style="border-radius:6px;background-color:${escapeHtml(branding.brandPrimaryColor)};">
-            <a href="${escapeHtml(input.actionButton.url.trim())}" style="display:inline-block;padding:13px 26px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;line-height:1;letter-spacing:0.08em;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;border:1px solid rgba(255,255,255,0.12);text-transform:uppercase;">
+          <td align="center" style="border-radius:6px;background-color:#0D0F12;">
+            <a href="${escapeHtml(input.actionButton.url.trim())}" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;line-height:1;letter-spacing:0.08em;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:6px;background-color:#0D0F12;border:1px solid rgba(255,255,255,0.12);text-transform:uppercase;">
               ${escapeHtml(input.actionButton.label)}
             </a>
           </td>
@@ -261,7 +307,9 @@ export function renderPremiumEmailLayout(input: WorkerEmailLayoutInput): string 
       </table>`;
   }
 
-  const cierreTextoHtml = input.cierreTexto?.trim()
+  const cierreTextoHtml = input.cierreDetalleHtml?.trim()
+    ? input.cierreDetalleHtml
+    : input.cierreTexto?.trim()
     ? `<p style="margin:24px 0 8px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#4B5563;font-style:italic;">
         ${escapeHtml(input.cierreTexto.trim())}
       </p>`
@@ -279,6 +327,8 @@ export function renderPremiumEmailLayout(input: WorkerEmailLayoutInput): string 
       </p>`
     : "";
 
+  const maxWidth = input.maxWidth || 600;
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -293,17 +343,17 @@ ${escapeHtml(preheaderSnippet)}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F3F4F6;margin:0;padding:24px 12px;">
 <tr>
 <td align="center" valign="top">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;margin-bottom:8px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:${maxWidth}px;margin-bottom:8px;">
     <tr>
       <td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;color:#6B7280;letter-spacing:0.02em;text-align:left;padding:0 4px;">
         Comunicación deportiva oficial · ${escapeHtml(brandName)}
       </td>
     </tr>
   </table>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background-color:#FFFFFF;border:1px solid #E5E7EB;border-top:3px solid ${escapeHtml(branding.brandAccentColor)};border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:${maxWidth}px;background-color:#FFFFFF;border:1px solid #E5E7EB;border-top:3px solid ${escapeHtml(branding.brandAccentColor)};border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
     ${previewBanner}
     <tr>
-      <td style="background-color:${escapeHtml(branding.brandPrimaryColor)};padding:24px 28px;">
+      <td style="background-color:#0D0F12;padding:24px 28px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
             <td align="left" valign="middle">
@@ -324,6 +374,7 @@ ${escapeHtml(preheaderSnippet)}
           ${escapeHtml(input.title)}
         </h1>
         ${input.paragraphsHtml}
+        ${jornadaCardHtml}
         ${infoCardsHtml}
         ${actionButtonHtml}
         ${cierreTextoHtml}
@@ -449,6 +500,67 @@ export function renderVerificacionWorker(input: {
   return { asunto, html, text };
 }
 
+export function extractJornadaDetailsFromTextWorker(
+  cuerpo: string,
+  fallbackSede?: string
+): {
+  cleanBody: string;
+  jornadaCard: { fecha: string; horario: string; sede: string } | null;
+} {
+  const fechaMatch = cuerpo.match(/^[ \t]*Fecha:[ \t]*(.+)$/im);
+  const horarioMatch = cuerpo.match(/^[ \t]*Horario:[ \t]*(.+)$/im);
+  const sedeMatch = cuerpo.match(/^[ \t]*Sede:[ \t]*(.+)$/im);
+
+  if (!fechaMatch && !horarioMatch) {
+    return { cleanBody: cuerpo, jornadaCard: null };
+  }
+
+  const fecha = fechaMatch ? fechaMatch[1].trim() : "Por definir";
+  const horario = horarioMatch ? horarioMatch[1].trim() : "Por definir";
+  const sede = sedeMatch ? sedeMatch[1].trim() : fallbackSede || "Por definir";
+
+  const cleanBody = cuerpo
+    .replace(/^[ \t]*Fecha:[ \t]*.+$/gim, "")
+    .replace(/^[ \t]*Horario:[ \t]*.+$/gim, "")
+    .replace(/^[ \t]*Sede:[ \t]*.+$/gim, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return {
+    cleanBody,
+    jornadaCard: {
+      fecha: fecha || "Por definir",
+      horario: horario || "Por definir",
+      sede: sede || "Por definir",
+    },
+  };
+}
+
+const MARCA_RESULTADOS = /^RESULTADOS_URL:(\S+)\s*$/m;
+
+/** Acepta la ruta pública real de la jornada. Rechaza el panel /liga/. */
+export function extraerUrlPublicaJornadaWorker(cuerpo: string, base: string): string | null {
+  const match = cuerpo.match(MARCA_RESULTADOS);
+  if (!match) return null;
+  const raw = match[1];
+  const origen = base.trim().replace(/\/+$/, "");
+  const absoluta = raw.startsWith("/public/liga/")
+    ? `${origen}${raw}`
+    : raw;
+  try {
+    const parsed = new URL(absoluta);
+    if (parsed.protocol !== "https:") return null;
+    if (!/^\/public\/liga\/[^/]+\/jornada\/\d+$/.test(parsed.pathname)) return null;
+    return absoluta;
+  } catch {
+    return null;
+  }
+}
+
+export function cuerpoSinMarcaResultados(cuerpo: string): string {
+  return cuerpo.replace(MARCA_RESULTADOS, "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 /** Mensaje manual: asunto/cuerpo ya resueltos; se escapan al HTML con diseño premium. */
 export function renderComunicacionWorker(input: {
   clubNombre: string;
@@ -457,18 +569,31 @@ export function renderComunicacionWorker(input: {
   cuerpoTexto: string;
   replyTo?: string | null;
   branding?: LigaMailBranding;
+  tipo?: string | null;
+  ligaUrl?: string | null;
 }): { asunto: string; html: string; text: string } {
   const club = input.clubNombre.trim() || "Riviera Open";
   const liga = input.ligaNombre.trim() || "tu liga";
   const asunto = input.asunto.trim().slice(0, 180) || `Mensaje de ${liga}`;
-  const cuerpo = input.cuerpoTexto.trim().slice(0, 8000);
+  const origenPublico = (() => {
+    try {
+      return new URL(input.ligaUrl ?? "").origin;
+    } catch {
+      return "";
+    }
+  })();
+  const resultadosUrl = extraerUrlPublicaJornadaWorker(input.cuerpoTexto, origenPublico);
+  const cuerpo = cuerpoSinMarcaResultados(input.cuerpoTexto).slice(0, 8000);
   const reply = input.replyTo?.trim() ?? "";
   const footerNotice = reply
     ? "Puedes responder directamente a este correo para comunicarte con el club."
     : "Este aviso no recibe respuestas por correo. El club administra las comunicaciones de la liga.";
   const branding = input.branding ?? resolveLigaMailBrandingWorker({ clubNombre: club });
 
-  const paragraphsHtml = cuerpo
+  const parsed = extractJornadaDetailsFromTextWorker(cuerpo, club);
+  const esJornada = input.tipo === "jornada" || Boolean(parsed.jornadaCard);
+
+  const paragraphsHtml = parsed.cleanBody
     .split(/\n{2,}/)
     .map((block) => block.trim())
     .filter(Boolean)
@@ -478,29 +603,82 @@ export function renderComunicacionWorker(input: {
     })
     .join("");
 
+  const esResultados = input.tipo === "resultados_jornada";
+  let actionButton = null;
+  if (esResultados && resultadosUrl) {
+    actionButton = {
+      label: "VER RESULTADOS DE LA JORNADA",
+      url: resultadosUrl,
+    };
+  } else if ((esJornada || input.tipo === "recordatorio_jornada") && (resultadosUrl || input.ligaUrl?.trim())) {
+    actionButton = {
+      label: input.tipo === "recordatorio_jornada" ? "VER LA JORNADA" : "VER MI JORNADA",
+      url: resultadosUrl || input.ligaUrl!.trim(),
+    };
+  }
+
+  const cierreDetalleHtml = esResultados
+    ? `<div style="margin:28px 0 0;padding-top:20px;border-top:1px solid #E5E7EB;">
+        <p style="margin:0 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#4B5563;">Sigue compitiendo, superándote y construyendo tu historia dentro de Riviera Open.</p>
+        <p style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#4B5563;font-style:italic;">¡Nos vemos en la próxima jornada!</p>
+        <p style="margin:0 0 6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#111827;">RIVIERA OPEN</p>
+        <p style="margin:0 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#475569;font-style:italic;">Compite. Juega limpio. Vive Riviera Open.</p>
+        <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;color:#0D0F12;">Cada partido cuenta.</p>
+      </div>`
+    : esJornada
+    ? `<div style="margin:28px 0 0;padding-top:20px;border-top:1px solid #E5E7EB;">
+        <p style="margin:0 0 6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#111827;">
+          RIVIERA OPEN
+        </p>
+        <p style="margin:0 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#475569;font-style:italic;">
+          Compite. Juega limpio. Vive Riviera Open.
+        </p>
+        <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;color:#0D0F12;">
+          Cada partido cuenta.
+        </p>
+      </div>`
+    : null;
+
+  const title = esResultados
+    ? "¡Tu jornada ha terminado, pero tu historia continúa!"
+    : esJornada && asunto.toLowerCase().includes("jornada")
+    ? "¡Tu próxima jornada te espera!"
+    : asunto;
+
   const html = renderPremiumEmailLayout({
     branding,
     asunto,
-    preheaderSnippet: cuerpo.slice(0, 140).replace(/\s+/g, " "),
+    preheaderSnippet: parsed.cleanBody.slice(0, 140).replace(/\s+/g, " "),
     badgeLabel: liga,
-    title: asunto,
+    title,
     paragraphsHtml: paragraphsHtml || `<p style="margin:0;color:#374151;"> </p>`,
+    jornadaCard: parsed.jornadaCard,
+    actionButton,
+    cierreDetalleHtml,
     footerNotice,
+    ligaUrl: input.ligaUrl,
+    maxWidth: esJornada ? 640 : 600,
   });
 
-  const text = [
+  const textLines = [
     club,
-    branding.isClubBranded ? branding.brandSupportLabel : "",
+    branding.isClubBranded ? branding.brandSupportLabel : "by Riviera Open",
     liga,
-    asunto,
-    cuerpo,
+    title,
+    parsed.cleanBody,
+    parsed.jornadaCard
+      ? `TARJETA DE JORNADA:\nFecha: ${parsed.jornadaCard.fecha}\nHorario: ${parsed.jornadaCard.horario}\nSede: ${parsed.jornadaCard.sede}`
+      : "",
+    actionButton ? `${actionButton.label}: ${actionButton.url}` : "",
+    esJornada
+      ? "RIVIERA OPEN\nCompite. Juega limpio. Vive Riviera Open.\nCada partido cuenta."
+      : "",
     footerNotice,
+    input.ligaUrl ? `Ver la liga: ${input.ligaUrl}` : "",
     "Gestionado con Riviera Open",
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+  ].filter(Boolean);
 
-  return { asunto, html, text };
+  return { asunto, html, text: textLines.join("\n\n") };
 }
 
 export function isFakeOrInvalidEmail(email: string | null | undefined): boolean {

@@ -1,5 +1,10 @@
 import { supabase } from "../lib/supabaseClient";
 import {
+  completarConfigAutomatica,
+  type EsperaResultadosMinutos,
+  type HorasRecordatorio,
+} from "../lib/liga/notificaciones/automatizacion";
+import {
   mapContactoInscritoRow,
   type ContactoInscritoResuelto,
 } from "../lib/liga/notificaciones/resolveInscritoContacto";
@@ -30,8 +35,13 @@ export type ModoOperacionNotificaciones = "manual" | "automatico";
 export interface ConfigNotificacionLiga {
   bienvenida_pausada: boolean;
   modo_prueba: boolean;
-  /** manual = default. automatico = opt-in persistido; no dispara envíos reales en Fase 1. */
+  /** manual = compositor. automatico = muestra las automatizaciones; no las enciende. */
   modo_operacion: ModoOperacionNotificaciones;
+  resultados_auto?: boolean;
+  resultados_espera_minutos?: 0 | 5 | 15;
+  recordatorio_auto?: boolean;
+  recordatorio_horas?: 24 | 12 | 2;
+  bienvenida_auto?: boolean;
 }
 
 /** Automatización de envíos reales: apagada hasta activación expresa de producto. */
@@ -58,6 +68,11 @@ export interface ColaNotificacionRow {
   attempts: number;
   motivo: string | null;
   lote_id?: string | null;
+  tipo?: string | null;
+  origen?: string | null;
+  programado_para?: string | null;
+  processed_at?: string | null;
+  jornada_numero?: number | null;
 }
 
 export interface ResultadoDescarte {
@@ -105,6 +120,7 @@ const CONFIG_INICIAL: ConfigNotificacionLiga = {
   bienvenida_pausada: true,
   modo_prueba: true,
   modo_operacion: "manual",
+  ...completarConfigAutomatica(null),
 };
 
 function normalizarModoOperacion(raw: unknown): ModoOperacionNotificaciones {
@@ -273,9 +289,54 @@ async function consultarPreferenciasLiga(
   };
 }
 
+function mapConfig(row: Record<string, unknown> | null, modo: ModoOperacionNotificaciones): ConfigNotificacionLiga {
+  const auto = completarConfigAutomatica({
+    resultados_auto: row?.resultados_auto === true,
+    resultados_espera_minutos: row?.resultados_espera_minutos as EsperaResultadosMinutos,
+    recordatorio_auto: row?.recordatorio_auto === true,
+    recordatorio_horas: row?.recordatorio_horas as HorasRecordatorio,
+    bienvenida_auto: row?.bienvenida_auto === true,
+  });
+  return {
+    bienvenida_pausada: row?.bienvenida_pausada !== false,
+    modo_prueba: row?.modo_prueba !== false,
+    modo_operacion: modo,
+    ...auto,
+  };
+}
+
 async function consultarConfigLiga(
   ligaId: string
 ): Promise<ConfigConsultaResultado> {
+  const intentoAuto = await supabase
+    .from("liga_notificaciones_config")
+    .select(
+      "bienvenida_pausada, modo_prueba, modo_operacion, resultados_auto, resultados_espera_minutos, recordatorio_auto, recordatorio_horas, bienvenida_auto"
+    )
+    .eq("liga_id", ligaId)
+    .maybeSingle();
+
+  if (!intentoAuto.error) {
+    const row = (intentoAuto.data ?? null) as Record<string, unknown> | null;
+    return {
+      data: mapConfig(row, normalizarModoOperacion(row?.modo_operacion)),
+      modoOperacionPresente: true,
+      error: null,
+    };
+  }
+
+  const faltaAuto =
+    /resultados_auto|recordatorio_auto|bienvenida_auto|resultados_espera_minutos|recordatorio_horas/i.test(
+      intentoAuto.error.message
+    ) && esEsquemaAusente(intentoAuto.error.message);
+  if (!faltaAuto && !(/modo_operacion/i.test(intentoAuto.error.message) && esEsquemaAusente(intentoAuto.error.message))) {
+    return {
+      data: CONFIG_INICIAL,
+      modoOperacionPresente: false,
+      error: { message: intentoAuto.error.message },
+    };
+  }
+
   const intento0103 = await supabase
     .from("liga_notificaciones_config")
     .select("bienvenida_pausada, modo_prueba, modo_operacion")
@@ -285,11 +346,7 @@ async function consultarConfigLiga(
   if (!intento0103.error) {
     const row = (intento0103.data ?? null) as Record<string, unknown> | null;
     return {
-      data: {
-        bienvenida_pausada: row?.bienvenida_pausada !== false,
-        modo_prueba: row?.modo_prueba !== false,
-        modo_operacion: normalizarModoOperacion(row?.modo_operacion),
-      },
+      data: mapConfig(row, normalizarModoOperacion(row?.modo_operacion)),
       modoOperacionPresente: true,
       error: null,
     };
@@ -322,14 +379,34 @@ async function consultarConfigLiga(
 
   const row = (intento0100.data ?? null) as Record<string, unknown> | null;
   return {
-    data: {
-      bienvenida_pausada: row?.bienvenida_pausada !== false,
-      modo_prueba: row?.modo_prueba !== false,
-      modo_operacion: "manual",
-    },
+    data: mapConfig(row, "manual"),
     modoOperacionPresente: false,
     error: null,
   };
+}
+
+async function consultarColaLiga(ligaId: string) {
+  const extendida = await supabase
+    .from("liga_notificaciones_queue")
+    .select(
+      "id, liga_jugador_id, estado, attempts, motivo, lote_id, tipo, origen, programado_para, processed_at, jornada_numero"
+    )
+    .eq("liga_id", ligaId)
+    .order("updated_at", { ascending: false })
+    .limit(100);
+  if (
+    extendida.error &&
+    esEsquemaAusente(extendida.error.message) &&
+    /origen|programado_para|jornada_numero/i.test(extendida.error.message)
+  ) {
+    return supabase
+      .from("liga_notificaciones_queue")
+      .select("id, liga_jugador_id, estado, attempts, motivo, lote_id, tipo")
+      .eq("liga_id", ligaId)
+      .order("updated_at", { ascending: false })
+      .limit(100);
+  }
+  return extendida;
 }
 
 /**
@@ -351,12 +428,7 @@ export async function cargarNotificacionesLiga(
         .eq("liga_id", ligaId)
         .order("created_at", { ascending: false })
         .limit(100),
-      supabase
-        .from("liga_notificaciones_queue")
-        .select("id, liga_jugador_id, estado, attempts, motivo, lote_id")
-        .eq("liga_id", ligaId)
-        .order("updated_at", { ascending: false })
-        .limit(100),
+      consultarColaLiga(ligaId),
       supabase
         .from("liga_notificaciones_verificaciones")
         .select(
@@ -678,6 +750,7 @@ export async function guardarConfigLiga(
   ligaId: string,
   config: ConfigNotificacionLiga
 ): Promise<ResultadoNotificacion> {
+  const auto = completarConfigAutomatica(config);
   const payloadBase = {
     liga_id: ligaId,
     bienvenida_pausada: config.bienvenida_pausada,
@@ -688,9 +761,27 @@ export async function guardarConfigLiga(
     ...payloadBase,
     modo_operacion: normalizarModoOperacion(config.modo_operacion),
   };
+  const completo = {
+    ...conModo,
+    ...auto,
+  };
   let { error } = await supabase
     .from("liga_notificaciones_config")
-    .upsert(conModo, { onConflict: "liga_id" });
+    .upsert(completo, { onConflict: "liga_id" });
+  if (
+    error &&
+    esEsquemaAusente(error.message) &&
+    /resultados_auto|recordatorio_auto|bienvenida_auto|resultados_espera_minutos|recordatorio_horas/i.test(
+      error.message
+    )
+  ) {
+    if (auto.resultados_auto || auto.recordatorio_auto || auto.bienvenida_auto) {
+      return { ok: false, motivo: "esquema_pendiente" };
+    }
+    ({ error } = await supabase
+      .from("liga_notificaciones_config")
+      .upsert(conModo, { onConflict: "liga_id" }));
+  }
   if (
     error &&
     /modo_operacion/i.test(error.message) &&

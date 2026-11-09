@@ -20,6 +20,7 @@ import {
 } from "../_shared/resendEmail.ts";
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import {
+  extraerUrlPublicaJornadaWorker,
   isFakeOrInvalidEmail,
   renderBienvenidaWorker,
   renderComunicacionWorker,
@@ -61,6 +62,8 @@ const TIPOS_LOG = new Set([
   "cambio_horario",
   "felicitacion",
   "personalizado",
+  "resultados_jornada",
+  "recordatorio_jornada",
 ]);
 
 function parseAllowlist(raw: string | null | undefined): Set<string> {
@@ -127,13 +130,18 @@ function publicBase(): string {
   return raw || "https://appriviera.rivieraopen.com";
 }
 
-async function leerLoteId(req: Request): Promise<string | null> {
+async function leerPedido(
+  req: Request,
+): Promise<{ loteId: string | null; programadas: boolean }> {
   try {
     const body = await req.json();
     const raw = typeof body?.lote_id === "string" ? body.lote_id.trim() : "";
-    return UUID.test(raw) ? raw : null;
+    return {
+      loteId: UUID.test(raw) ? raw : null,
+      programadas: body?.programadas === true,
+    };
   } catch {
-    return null;
+    return { loteId: null, programadas: false };
   }
 }
 
@@ -178,8 +186,9 @@ Deno.serve(async (req) => {
     });
   }
 
-  const loteId = await leerLoteId(req);
-  if (!loteId) {
+  const pedido = await leerPedido(req);
+  const loteId = pedido.loteId;
+  if (!loteId && !pedido.programadas) {
     return json(req, 200, {
       ok: true,
       enviosReales: true,
@@ -212,13 +221,19 @@ Deno.serve(async (req) => {
   let reintentos = 0;
   let fueraAllowlist = 0;
 
-  const { data: pendientes, error: listErr } = await supabase
+  let consulta = supabase
     .from("liga_notificaciones_queue")
     .select(
       "id, liga_id, liga_jugador_id, idempotency_key, estado, attempts, tipo, asunto, cuerpo_texto, lote_id",
     )
-    .eq("estado", "pendiente")
-    .eq("lote_id", loteId)
+    .eq("estado", "pendiente");
+  consulta = loteId
+    ? consulta.eq("lote_id", loteId)
+    : consulta
+      .eq("origen", "automatico")
+      .lte("programado_para", new Date().toISOString())
+      .in("tipo", ["resultados_jornada", "recordatorio_jornada", "bienvenida"]);
+  const { data: pendientes, error: listErr } = await consulta
     .order("created_at", { ascending: true })
     .limit(MAX_BATCH);
 
@@ -420,24 +435,59 @@ async function enviarReclamado(
   }
 
   const emailNorm = otraVez.email!.trim().toLowerCase();
+  const cuerpoResuelto = (row.cuerpo_texto ?? "")
+    .replace(/\{\{\s*nombre\s*\}\}/gi, otraVez.nombre)
+    .replace(/\{\{\s*liga\s*\}\}/gi, otraVez.ligaNombre)
+    .replace(/\{\{\s*club\s*\}\}/gi, otraVez.clubNombre);
+  if (cuerpoResuelto.includes("{{") || (row.asunto ?? "").includes("{{")) {
+    await finalizarMensaje(supabase, row, {
+      estado: "omitido",
+      motivo: "plantilla_incompleta",
+      proveedor: null,
+    });
+    return "omitido";
+  }
+  if (
+    row.tipo === "resultados_jornada" &&
+    !extraerUrlPublicaJornadaWorker(cuerpoResuelto, publicBase())
+  ) {
+    await finalizarMensaje(supabase, row, {
+      estado: "omitido",
+      motivo: "sin_url_publica",
+      proveedor: null,
+    });
+    return "omitido";
+  }
   const esManual = Boolean(row.lote_id || row.cuerpo_texto);
+  const ligaUrl = `${publicBase()}/public/liga/${row.liga_id}`;
   const mail = esManual
     ? renderComunicacionWorker({
       clubNombre: otraVez.clubNombre,
       ligaNombre: otraVez.ligaNombre,
-      asunto: row.asunto ?? `Mensaje de ${otraVez.ligaNombre}`,
-      cuerpoTexto: row.cuerpo_texto ?? "",
+      asunto: (row.asunto ?? `Mensaje de ${otraVez.ligaNombre}`).replace(/\{\{\s*club\s*\}\}/gi, otraVez.clubNombre),
+      cuerpoTexto: cuerpoResuelto,
       replyTo,
       branding: otraVez.branding,
+      tipo: row.tipo,
+      ligaUrl,
     })
     : renderBienvenidaWorker({
       clubNombre: otraVez.clubNombre,
       ligaNombre: otraVez.ligaNombre,
       jugadorNombre: otraVez.nombre,
-      perfilUrl: `${publicBase()}/public/liga/${row.liga_id}`,
-      ligaUrl: `${publicBase()}/public/liga/${row.liga_id}`,
+      perfilUrl: ligaUrl,
+      ligaUrl,
       branding: otraVez.branding,
     });
+
+  if (mail.asunto.includes("{{") || mail.html.includes("{{") || mail.text.includes("{{")) {
+    await finalizarMensaje(supabase, row, {
+      estado: "omitido",
+      motivo: "plantilla_incompleta",
+      proveedor: null,
+    });
+    return "omitido";
+  }
 
   const send = await sendByResend(
     emailNorm,
@@ -459,6 +509,14 @@ async function enviarReclamado(
   }
 
   const clase = classifyResendFailure(send.status);
+  if (send.status === 0 && !row.lote_id) {
+    await finalizarMensaje(supabase, row, {
+      estado: "error",
+      motivo: "respuesta_ambigua",
+      proveedor: null,
+    });
+    return "error";
+  }
   if (clase === "temporal" && row.attempts < MAX_ATTEMPTS) {
     await supabase
       .from("liga_notificaciones_queue")

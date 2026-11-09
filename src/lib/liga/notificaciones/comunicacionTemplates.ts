@@ -45,9 +45,9 @@ export const PLANTILLAS_COMUNICACION: PlantillaComunicacion[] = [
   {
     id: "jornada",
     label: "Información de próxima jornada",
-    asunto: "Próxima jornada — {{liga}}",
+    asunto: "¡Tu próxima jornada te espera! — {{liga}}",
     cuerpo:
-      "Hola {{nombre}},\n\nTe informamos sobre la próxima jornada de {{liga}}.\n\nFecha:\nHorario:\nSede:\n\n{{club}}",
+      "Hola {{nombre}},\n\n¡La emoción continúa en {{liga}}!\n\nUna nueva jornada está por comenzar y es momento de volver a la cancha, demostrar tu nivel y seguir superándote.\n\nCada game cuenta, cada partido suma y cada jornada es una oportunidad para mejorar tu ranking y seguir construyendo tu historia deportiva.\n\nLlega con toda la actitud, disfruta cada punto y deja todo en la cancha.\n\n¡Nos vemos en la próxima jornada!\n\nFecha: {{fecha}}\nHorario: {{horario}}\nSede: {{club}}",
   },
   {
     id: "cambio_horario",
@@ -80,14 +80,62 @@ export function plantillaPorId(
   );
 }
 
+export interface VariablesComunicacion {
+  nombre: string;
+  liga: string;
+  club: string;
+  fecha?: string | null;
+  horario?: string | null;
+}
+
 export function resolverVariablesComunicacion(
   plantilla: string,
-  vars: { nombre: string; liga: string; club: string }
+  vars: VariablesComunicacion
 ): string {
+  const fechaVal = vars.fecha?.trim() || "Por definir";
+  const horarioVal = vars.horario?.trim() || "Por definir";
   return plantilla
     .replace(/\{\{\s*nombre\s*\}\}/gi, vars.nombre)
     .replace(/\{\{\s*liga\s*\}\}/gi, vars.liga)
-    .replace(/\{\{\s*club\s*\}\}/gi, vars.club);
+    .replace(/\{\{\s*club\s*\}\}/gi, vars.club)
+    .replace(/\{\{\s*fecha\s*\}\}/gi, fechaVal)
+    .replace(/\{\{\s*horario\s*\}\}/gi, horarioVal);
+}
+
+export function extractJornadaDetailsFromText(
+  cuerpo: string,
+  fallbackSede?: string
+): {
+  cleanBody: string;
+  jornadaCard: { fecha: string; horario: string; sede: string } | null;
+} {
+  const fechaMatch = cuerpo.match(/^[ \t]*Fecha:[ \t]*(.+)$/im);
+  const horarioMatch = cuerpo.match(/^[ \t]*Horario:[ \t]*(.+)$/im);
+  const sedeMatch = cuerpo.match(/^[ \t]*Sede:[ \t]*(.+)$/im);
+
+  if (!fechaMatch && !horarioMatch) {
+    return { cleanBody: cuerpo, jornadaCard: null };
+  }
+
+  const fecha = fechaMatch ? fechaMatch[1].trim() : "Por definir";
+  const horario = horarioMatch ? horarioMatch[1].trim() : "Por definir";
+  const sede = sedeMatch ? sedeMatch[1].trim() : fallbackSede || "Por definir";
+
+  const cleanBody = cuerpo
+    .replace(/^[ \t]*Fecha:[ \t]*.+$/gim, "")
+    .replace(/^[ \t]*Horario:[ \t]*.+$/gim, "")
+    .replace(/^[ \t]*Sede:[ \t]*.+$/gim, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return {
+    cleanBody,
+    jornadaCard: {
+      fecha: fecha || "Por definir",
+      horario: horario || "Por definir",
+      sede: sede || "Por definir",
+    },
+  };
 }
 
 /** HTML seguro: texto plano con saltos → párrafos escapados con diseño premium. */
@@ -100,11 +148,18 @@ export function renderComunicacionEmail(input: {
   vistaPrevia: boolean;
   branding?: LigaMailBranding;
   replyTo?: string | null;
+  tipo?: TipoComunicacionLiga;
+  fecha?: string | null;
+  horario?: string | null;
+  ligaUrl?: string | null;
+  maxWidth?: number;
 }): { subject: string; html: string; text: string } {
-  const vars = {
+  const vars: VariablesComunicacion = {
     nombre: input.jugadorNombre.trim() || "Jugador",
     liga: input.ligaNombre.trim() || "la liga",
     club: input.clubNombre.trim() || "el club",
+    fecha: input.fecha,
+    horario: input.horario,
   };
   const subject = resolverVariablesComunicacion(input.asunto, vars).slice(0, 180);
   const cuerpoResuelto = resolverVariablesComunicacion(input.cuerpo, vars);
@@ -114,7 +169,10 @@ export function renderComunicacionEmail(input: {
       clubNombre: vars.club,
     });
 
-  const paragraphsHtml = cuerpoResuelto
+  const parsed = extractJornadaDetailsFromText(cuerpoResuelto, vars.club);
+  const esJornada = input.tipo === "jornada" || Boolean(parsed.jornadaCard);
+
+  const paragraphsHtml = parsed.cleanBody
     .split(/\n{2,}/)
     .map((block) => block.trim())
     .filter(Boolean)
@@ -129,25 +187,64 @@ export function renderComunicacionEmail(input: {
     ? "Puedes responder directamente a este correo para comunicarte con el club."
     : "Este aviso no recibe respuestas por correo. El club administra las comunicaciones de la liga.";
 
+  let actionButton = null;
+  if (esJornada && input.ligaUrl?.trim()) {
+    actionButton = {
+      label: "VER MI JORNADA",
+      url: input.ligaUrl.trim(),
+    };
+  }
+
+  const cierreDetalleHtml = esJornada
+    ? `<div style="margin:28px 0 0;padding-top:20px;border-top:1px solid #E5E7EB;">
+        <p style="margin:0 0 6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#111827;">
+          RIVIERA OPEN
+        </p>
+        <p style="margin:0 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#475569;font-style:italic;">
+          Compite. Juega limpio. Vive Riviera Open.
+        </p>
+        <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;color:#0D0F12;">
+          Cada partido cuenta.
+        </p>
+      </div>`
+    : null;
+
+  const title = esJornada && subject.toLowerCase().includes("jornada")
+    ? "¡Tu próxima jornada te espera!"
+    : subject;
+
   const html = renderPremiumEmailHtml({
     branding,
     asunto: subject,
-    preheaderSnippet: cuerpoResuelto.slice(0, 140).replace(/\s+/g, " "),
+    preheaderSnippet: parsed.cleanBody.slice(0, 140).replace(/\s+/g, " "),
     badgeLabel: vars.liga,
-    title: subject,
+    title,
     paragraphsHtml: paragraphsHtml || `<p style="margin:0;color:#374151;"> </p>`,
+    jornadaCard: parsed.jornadaCard,
+    actionButton,
+    cierreDetalleHtml,
     footerNotice,
+    ligaUrl: input.ligaUrl,
     vistaPrevia: input.vistaPrevia,
+    maxWidth: input.maxWidth ?? (esJornada ? 640 : 600),
   });
 
   const textLines = [
     input.vistaPrevia ? "VISTA PREVIA — este mensaje no se ha enviado" : "",
     branding.brandName,
-    branding.isClubBranded ? branding.brandSupportLabel : "",
+    branding.isClubBranded ? branding.brandSupportLabel : "by Riviera Open",
     vars.liga,
-    subject,
-    cuerpoResuelto,
+    title,
+    parsed.cleanBody,
+    parsed.jornadaCard
+      ? `TARJETA DE JORNADA:\nFecha: ${parsed.jornadaCard.fecha}\nHorario: ${parsed.jornadaCard.horario}\nSede: ${parsed.jornadaCard.sede}`
+      : "",
+    actionButton ? `${actionButton.label}: ${actionButton.url}` : "",
+    esJornada
+      ? "RIVIERA OPEN\nCompite. Juega limpio. Vive Riviera Open.\nCada partido cuenta."
+      : "",
     footerNotice,
+    input.ligaUrl ? `Ver la liga: ${input.ligaUrl}` : "",
     "Gestionado con Riviera Open",
   ].filter(Boolean);
 

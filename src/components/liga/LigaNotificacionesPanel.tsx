@@ -25,6 +25,7 @@ import {
 import {
   PLANTILLAS_COMUNICACION,
   renderComunicacionEmail,
+  resolverVariablesComunicacion,
   type TipoComunicacionLiga,
 } from "../../lib/liga/notificaciones/comunicacionTemplates";
 import {
@@ -32,6 +33,11 @@ import {
   plantillaParaRedactar,
 } from "../../lib/liga/notificaciones/plantillasGuardadas";
 import { resolveLigaMailBranding } from "../../lib/liga/notificaciones/ligaMailBranding";
+import {
+  completarConfigAutomatica,
+  etiquetaOrigenComunicacion,
+  etiquetaTipoComunicacion,
+} from "../../lib/liga/notificaciones/automatizacion";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import {
@@ -97,7 +103,7 @@ const MOTIVO_LABEL: Record<string, string> = {
   ya_encolado: "Ya hay un envío pendiente",
   liga_pausada: "Las comunicaciones automáticas están en pausa",
   ya_no_inscrito: "Ya no está inscrito",
-  esquema_pendiente: "Falta aplicar la migración de comunicaciones manuales",
+  esquema_pendiente: "Falta aplicar la migración de comunicaciones en el servidor",
   no_disponible: "No se pudo guardar",
   consentimiento_sin_evidencia: "Falta una constancia del consentimiento",
   revocado: "La autorización está revocada y no se sobrescribe",
@@ -110,6 +116,13 @@ const MOTIVO_LABEL: Record<string, string> = {
   tipo_no_soportado: "Plantilla no soportada",
   modo_manual: "Esta liga está en modo manual",
   envios_apagados: "El envío real sigue apagado",
+  partidos_pendientes: "La jornada todavía tiene partidos pendientes",
+  sin_url_publica: "No hay un enlace público de la jornada",
+  plantilla_incompleta: "Faltó resolver el mensaje",
+  respuesta_ambigua: "El proveedor no confirmó el envío",
+  cancelado: "La jornada cambió y el envío se canceló",
+  automatizacion_apagada: "La automatización está desactivada",
+  recordatorio_vencido: "El horario del recordatorio ya pasó",
   funcion_no_disponible: "El procesamiento del lote todavía no está disponible",
   procesador_no_disponible: "No se pudo pedir el procesamiento",
   sesion_invalida: "La sesión no pudo autorizar el procesamiento",
@@ -436,6 +449,8 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const [cuerpoDraft, setCuerpoDraft] = useState(
     () => plantillaParaRedactar(ligaId, "bienvenida").cuerpo
   );
+  const [fechaDraft, setFechaDraft] = useState("");
+  const [horarioDraft, setHorarioDraft] = useState("");
   const [loteEnvioId, setLoteEnvioId] = useState<string | null>(null);
   const [selectorAbierto, setSelectorAbierto] = useState(false);
   const [borradorSeleccion, setBorradorSeleccion] = useState<
@@ -640,7 +655,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     bienvenida_pausada: true,
     modo_prueba: true,
     modo_operacion: "manual",
+    ...completarConfigAutomatica(null),
   };
+  const automatica = completarConfigAutomatica(config);
   const puedeEscribir = Boolean(
     snapshot?.disponible && snapshot?.escriturasActivas
   );
@@ -893,6 +910,17 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       null;
     try {
       for (const fila of lote) {
+        const canonicalLigaUrl =
+          typeof window !== "undefined"
+            ? `${window.location.origin}/public/liga/${ligaId}`
+            : `/public/liga/${ligaId}`;
+        const varsComun = {
+          nombre: fila.nombre,
+          liga: ligaNombre,
+          club: clubNombre,
+          fecha: fechaDraft.trim() || undefined,
+          horario: horarioDraft.trim() || undefined,
+        };
         const asuntoResuelto = renderComunicacionEmail({
           clubNombre,
           ligaNombre,
@@ -901,11 +929,12 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           cuerpo: cuerpoDraft,
           vistaPrevia: false,
           branding: mailBranding,
+          tipo: plantillaId,
+          fecha: fechaDraft,
+          horario: horarioDraft,
+          ligaUrl: canonicalLigaUrl,
         }).subject;
-        const cuerpoResuelto = cuerpoDraft
-          .replace(/\{\{\s*nombre\s*\}\}/gi, fila.nombre)
-          .replace(/\{\{\s*liga\s*\}\}/gi, ligaNombre)
-          .replace(/\{\{\s*club\s*\}\}/gi, clubNombre);
+        const cuerpoResuelto = resolverVariablesComunicacion(cuerpoDraft, varsComun);
         const resultado = await solicitarComunicacionManual({
           ligaId,
           jugadorId: fila.jugadorId,
@@ -1071,14 +1100,30 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       confirmar(motivoVisible("esquema_pendiente"));
       return;
     }
+    const previa = completarConfigAutomatica(config);
+    const siguiente = completarConfigAutomatica(next);
+    const encender =
+      (!previa.resultados_auto && siguiente.resultados_auto) ||
+      (!previa.recordatorio_auto && siguiente.recordatorio_auto) ||
+      (!previa.bienvenida_auto && siguiente.bienvenida_auto);
+    if (
+      encender &&
+      !window.confirm(
+        "Vas a activar envíos automáticos reales para esta liga. Salen desde el servidor cuando corresponda, no desde este navegador. ¿Continuar?"
+      )
+    ) {
+      return;
+    }
     setGuardandoId("config");
-    const resultado = await guardarConfigLiga(ligaId, next);
+    const resultado = await guardarConfigLiga(ligaId, { ...next, ...siguiente });
     setGuardandoId(null);
     if (!resultado.ok) {
       confirmar(motivoVisible(resultado.motivo));
       return;
     }
-    setSnapshot((prev) => (prev ? { ...prev, config: next } : prev));
+    setSnapshot((prev) =>
+      prev ? { ...prev, config: { ...next, ...siguiente } } : prev
+    );
     confirmar("Cambios guardados");
   }
 
@@ -1371,6 +1416,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         cuerpo: cuerpoDraft,
         vistaPrevia: true,
         branding: mailBranding,
+        tipo: plantillaId,
+        fecha: fechaDraft,
+        horario: horarioDraft,
+        ligaUrl:
+          typeof window !== "undefined"
+            ? `${window.location.origin}/public/liga/${ligaId}`
+            : `/public/liga/${ligaId}`,
       }).html
     : "";
 
@@ -1669,6 +1721,41 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               />
             </label>
 
+            {plantillaId === "jornada" ? (
+              <div
+                className="liga-notificaciones__jornada-fields"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "12px",
+                  margin: "4px 0",
+                }}
+              >
+                <label className="liga-notificaciones__field" htmlFor="fecha-jornada">
+                  <span>Fecha de la jornada</span>
+                  <input
+                    id="fecha-jornada"
+                    className="liga-notificaciones__select"
+                    placeholder="ej. Sábado 15 de Noviembre"
+                    value={fechaDraft}
+                    maxLength={100}
+                    onChange={(event) => setFechaDraft(event.target.value)}
+                  />
+                </label>
+                <label className="liga-notificaciones__field" htmlFor="horario-jornada">
+                  <span>Horario de la jornada</span>
+                  <input
+                    id="horario-jornada"
+                    className="liga-notificaciones__select"
+                    placeholder="ej. 10:00 AM"
+                    value={horarioDraft}
+                    maxLength={100}
+                    onChange={(event) => setHorarioDraft(event.target.value)}
+                  />
+                </label>
+              </div>
+            ) : null}
+
             <label className="liga-notificaciones__field" htmlFor="cuerpo-correo">
               <span>Mensaje</span>
               <textarea
@@ -1689,7 +1776,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               GUARDAR PLANTILLA
             </button>
             <p className="liga-notificaciones__hint">
-              Variables: {"{{nombre}}"}, {"{{liga}}"}, {"{{club}}"}. Se escapan
+              Variables: {"{{nombre}}"}, {"{{liga}}"}, {"{{club}}"}, {"{{fecha}}"}, {"{{horario}}"}. Se escapan
               al renderizar. Sin HTML libre.
             </p>
 
@@ -1878,6 +1965,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   item.proveedor_estado,
                   item.motivo
                 );
+                const colaItem = (snapshot?.cola ?? []).find(
+                  (fila) => fila.id === item.queue_id
+                );
+                const enviado = Boolean(item.proveedor_estado) || item.estado === "enviado";
                 return (
                   <article
                     key={item.id}
@@ -1886,8 +1977,15 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     <div>
                       <p className="liga-notificaciones__nombre">{jugador}</p>
                       <p className="liga-notificaciones__meta">
-                        Bienvenida ·{" "}
-                        {new Date(item.created_at).toLocaleString("es-MX")}
+                        {etiquetaTipoComunicacion(item.tipo)} ·{" "}
+                        {etiquetaOrigenComunicacion(colaItem?.origen, item.tipo)}
+                        {colaItem?.jornada_numero
+                          ? ` · Jornada ${colaItem.jornada_numero}`
+                          : ""}
+                        {" · "}
+                        {enviado
+                          ? `Enviado ${new Date(item.created_at).toLocaleString("es-MX")}`
+                          : `Registrado ${new Date(item.created_at).toLocaleString("es-MX")}`}
                       </p>
                     </div>
                     <p className="liga-notificaciones__meta">{estado}</p>
@@ -1923,6 +2021,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                           ? `Proveedor: ${item.proveedor_estado}`
                           : motivoVisible(item.motivo)}{" "}
                         · {item.attempts} intentos
+                        {colaItem?.programado_para
+                          ? ` · Programado ${new Date(colaItem.programado_para).toLocaleString("es-MX")}`
+                          : ""}
                       </p>
                     ) : null}
                   </article>
@@ -1946,7 +2047,17 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   <article key={key} className="liga-notificaciones__history-row">
                     <div>
                       <p className="liga-notificaciones__nombre">{jugador}</p>
-                      <p className="liga-notificaciones__meta">Bienvenida · cola</p>
+                      <p className="liga-notificaciones__meta">
+                        {etiquetaTipoComunicacion(item.tipo)} ·{" "}
+                        {etiquetaOrigenComunicacion(item.origen, item.tipo)}
+                        {item.jornada_numero ? ` · Jornada ${item.jornada_numero}` : ""}
+                        {item.programado_para
+                          ? ` · Programado ${new Date(item.programado_para).toLocaleString("es-MX")}`
+                          : ""}
+                        {item.processed_at && item.estado === "enviado"
+                          ? ` · Enviado ${new Date(item.processed_at).toLocaleString("es-MX")}`
+                          : ""}
+                      </p>
                     </div>
                     <p className="liga-notificaciones__meta">
                       {etiquetaEntrega(item.estado, null, item.motivo)}
@@ -2048,10 +2159,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                 Automático
               </span>
               <span className="liga-notificaciones__mode-card-copy">
-                Permite enviar notificaciones según los eventos configurados.
-              </span>
-              <span className="liga-notificaciones__mode-card-note">
-                Todavía no habilitado para envíos reales.
+                Los envíos salen desde el servidor, según cada automatización.
               </span>
             </button>
           </div>
@@ -2063,48 +2171,140 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             </p>
           ) : null}
 
-          <div className="liga-notificaciones__config-block">
-            <label className="liga-notificaciones__toggle liga-notificaciones__toggle--block">
-              <input
-                type="checkbox"
-                checked={!config.bienvenida_pausada}
-                disabled={guardandoId === "config" || !puedeEscribir}
-                onChange={(event) =>
-                  void cambiarConfig({
-                    ...config,
-                    bienvenida_pausada: !event.target.checked,
-                  })
-                }
-              />
-              <span className="liga-notificaciones__toggle-ui" aria-hidden />
-              <span>
-                <strong>Bienvenida activa</strong>
-                <span className="liga-notificaciones__hint">
-                  Solo para jugadores ya autorizados y verificados.
-                </span>
-              </span>
-            </label>
-            <label className="liga-notificaciones__toggle liga-notificaciones__toggle--block">
-              <input
-                type="checkbox"
-                checked={config.modo_prueba}
-                disabled={guardandoId === "config" || !puedeEscribir}
-                onChange={(event) =>
-                  void cambiarConfig({
-                    ...config,
-                    modo_prueba: event.target.checked,
-                  })
-                }
-              />
-              <span className="liga-notificaciones__toggle-ui" aria-hidden />
-              <span>
-                <strong>Modo de prueba</strong>
-                <span className="liga-notificaciones__hint">
-                  No envía correos ni entrega enlaces de verificación al panel.
-                </span>
-              </span>
-            </label>
-          </div>
+          {config.modo_operacion === "automatico" ? (
+            <div className="liga-notificaciones__auto">
+              <p className="liga-notificaciones__hint">
+                Cada automatización nace desactivada. El envío manual sigue
+                disponible aunque actives alguna.
+              </p>
+              <section className="liga-notificaciones__auto-card">
+                <div className="liga-notificaciones__auto-head">
+                  <h3>Resultados de jornada</h3>
+                  <span className="liga-notificaciones__auto-status">
+                    {automatica.resultados_auto ? "Activa" : "Desactivada"}
+                  </span>
+                </div>
+                <label className="liga-notificaciones__toggle liga-notificaciones__toggle--block">
+                  <input
+                    type="checkbox"
+                    checked={automatica.resultados_auto}
+                    disabled={guardandoId === "config" || !puedeEscribir}
+                    onChange={(event) =>
+                      void cambiarConfig({
+                        ...config,
+                        resultados_auto: event.target.checked,
+                      })
+                    }
+                  />
+                  <span className="liga-notificaciones__toggle-ui" aria-hidden />
+                  <span>
+                    <strong>Enviar resultados automáticamente</strong>
+                    <span className="liga-notificaciones__hint">
+                      Al finalizar oficialmente una jornada, los participantes
+                      reciben un correo con los resultados y un enlace para
+                      consultarlos.
+                    </span>
+                  </span>
+                </label>
+                <label className="liga-notificaciones__field">
+                  <span>Momento de envío</span>
+                  <select
+                    className="liga-notificaciones__select"
+                    value={automatica.resultados_espera_minutos}
+                    disabled={guardandoId === "config" || !puedeEscribir}
+                    onChange={(event) =>
+                      void cambiarConfig({
+                        ...config,
+                        resultados_espera_minutos: Number(event.target.value) as 0 | 5 | 15,
+                      })
+                    }
+                  >
+                    <option value={0}>Inmediatamente</option>
+                    <option value={5}>5 minutos después</option>
+                    <option value={15}>15 minutos después</option>
+                  </select>
+                </label>
+              </section>
+              <section className="liga-notificaciones__auto-card">
+                <div className="liga-notificaciones__auto-head">
+                  <h3>Recordatorio de jornada</h3>
+                  <span className="liga-notificaciones__auto-status">
+                    {automatica.recordatorio_auto ? "Activa" : "Desactivada"}
+                  </span>
+                </div>
+                <label className="liga-notificaciones__toggle liga-notificaciones__toggle--block">
+                  <input
+                    type="checkbox"
+                    checked={automatica.recordatorio_auto}
+                    disabled={guardandoId === "config" || !puedeEscribir}
+                    onChange={(event) =>
+                      void cambiarConfig({
+                        ...config,
+                        recordatorio_auto: event.target.checked,
+                      })
+                    }
+                  />
+                  <span className="liga-notificaciones__toggle-ui" aria-hidden />
+                  <span>
+                    <strong>Enviar recordatorio de próxima jornada</strong>
+                    <span className="liga-notificaciones__hint">
+                      Usa la fecha y la hora real de la jornada. Si el horario
+                      cambia o la jornada se cierra, el recordatorio pendiente
+                      se actualiza o se cancela.
+                    </span>
+                  </span>
+                </label>
+                <label className="liga-notificaciones__field">
+                  <span>Anticipación</span>
+                  <select
+                    className="liga-notificaciones__select"
+                    value={automatica.recordatorio_horas}
+                    disabled={guardandoId === "config" || !puedeEscribir}
+                    onChange={(event) =>
+                      void cambiarConfig({
+                        ...config,
+                        recordatorio_horas: Number(event.target.value) as 24 | 12 | 2,
+                      })
+                    }
+                  >
+                    <option value={24}>24 horas antes</option>
+                    <option value={12}>12 horas antes</option>
+                    <option value={2}>2 horas antes</option>
+                  </select>
+                </label>
+              </section>
+              <section className="liga-notificaciones__auto-card">
+                <div className="liga-notificaciones__auto-head">
+                  <h3>Bienvenida</h3>
+                  <span className="liga-notificaciones__auto-status">
+                    {automatica.bienvenida_auto ? "Activa" : "Desactivada"}
+                  </span>
+                </div>
+                <label className="liga-notificaciones__toggle liga-notificaciones__toggle--block">
+                  <input
+                    type="checkbox"
+                    checked={automatica.bienvenida_auto}
+                    disabled={guardandoId === "config" || !puedeEscribir}
+                    onChange={(event) =>
+                      void cambiarConfig({
+                        ...config,
+                        bienvenida_auto: event.target.checked,
+                      })
+                    }
+                  />
+                  <span className="liga-notificaciones__toggle-ui" aria-hidden />
+                  <span>
+                    <strong>Enviar correo de bienvenida a nuevos participantes</strong>
+                    <span className="liga-notificaciones__hint">
+                      Se envía cuando el jugador queda inscrito y cumple las
+                      condiciones de autorización. No alcanza a quienes ya
+                      estaban inscritos.
+                    </span>
+                  </span>
+                </label>
+              </section>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
