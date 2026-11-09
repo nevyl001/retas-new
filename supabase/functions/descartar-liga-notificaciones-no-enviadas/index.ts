@@ -121,13 +121,20 @@ Deno.serve(async (req) => {
       .eq("liga_id", ligaId)
       .in("estado", COLA_FILA);
     if (deleteError) return json(req, 500, { ok: false, error: "cola_no_disponible" });
+    const { error: logsError } = await admin
+      .from("liga_notificaciones_log")
+      .delete()
+      .eq("liga_id", ligaId)
+      .eq("queue_id", queueId)
+      .neq("estado", "procesando");
+    if (logsError) return json(req, 500, { ok: false, error: "cola_no_disponible" });
     return json(req, 200, { ok: true, descartados: 1 });
   }
 
   if (logId) {
     const { data: row, error } = await admin
       .from("liga_notificaciones_log")
-      .select("id, estado, proveedor_estado")
+      .select("id, estado, proveedor_estado, queue_id")
       .eq("id", logId)
       .eq("liga_id", ligaId)
       .maybeSingle();
@@ -143,6 +150,15 @@ Deno.serve(async (req) => {
       .eq("liga_id", ligaId)
       .neq("estado", "procesando");
     if (deleteError) return json(req, 500, { ok: false, error: "cola_no_disponible" });
+    if (row.queue_id) {
+      const { error: colaError } = await admin
+        .from("liga_notificaciones_queue")
+        .delete()
+        .eq("id", row.queue_id)
+        .eq("liga_id", ligaId)
+        .in("estado", COLA_FILA);
+      if (colaError) return json(req, 500, { ok: false, error: "cola_no_disponible" });
+    }
     return json(req, 200, { ok: true, descartados: 1 });
   }
 

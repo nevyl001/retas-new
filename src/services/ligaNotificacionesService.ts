@@ -42,6 +42,7 @@ export function automatizacionEnviosRealesDisponible(): boolean {
 export interface HistorialNotificacionRow {
   id: string;
   liga_jugador_id: string;
+  queue_id?: string | null;
   tipo: string;
   estado: string;
   attempts: number;
@@ -345,7 +346,7 @@ export async function cargarNotificacionesLiga(
       supabase
         .from("liga_notificaciones_log")
         .select(
-          "id, liga_jugador_id, tipo, estado, attempts, motivo, proveedor_estado, created_at"
+          "id, liga_jugador_id, queue_id, tipo, estado, attempts, motivo, proveedor_estado, created_at"
         )
         .eq("liga_id", ligaId)
         .order("created_at", { ascending: false })

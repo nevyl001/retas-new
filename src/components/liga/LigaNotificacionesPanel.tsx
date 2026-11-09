@@ -125,6 +125,52 @@ function esCorreoNoEnviado(
   return true;
 }
 
+function rangoEntrega(row: {
+  estado: string;
+  proveedor_estado?: string | null;
+}): number {
+  if (row.proveedor_estado === "entregado") return 5;
+  if (row.proveedor_estado === "aceptado" || row.estado === "enviado") return 4;
+  if (row.estado === "error") return 3;
+  if (row.estado === "omitido" || row.estado === "pausado") return 2;
+  return 1;
+}
+
+function logsSinRepetir(
+  logs: HistorialNotificacionRow[]
+): HistorialNotificacionRow[] {
+  const elegidos = new Map<string, HistorialNotificacionRow>();
+  for (const log of logs) {
+    const clave = log.queue_id || log.id;
+    const previo = elegidos.get(clave);
+    if (
+      !previo ||
+      rangoEntrega(log) > rangoEntrega(previo) ||
+      (rangoEntrega(log) === rangoEntrega(previo) &&
+        log.created_at > previo.created_at)
+    ) {
+      elegidos.set(clave, log);
+    }
+  }
+  return Array.from(elegidos.values()).sort((a, b) =>
+    b.created_at.localeCompare(a.created_at)
+  );
+}
+
+function colaYaMostradaEnHistorial(
+  item: ColaNotificacionRow,
+  logs: HistorialNotificacionRow[]
+): boolean {
+  if (item.estado !== "enviado") return false;
+  return logs.some((log) => {
+    const mismo =
+      log.queue_id && item.id
+        ? log.queue_id === item.id
+        : log.liga_jugador_id === item.liga_jugador_id;
+    return mismo && rangoEntrega(log) >= 4;
+  });
+}
+
 function sePuedeBorrarHistorial(estado: string): boolean {
   return estado !== "procesando";
 }
@@ -1760,11 +1806,16 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   </button>
                 ) : null}
               </div>
-              {(snapshot?.historial ?? []).map((item) => {
+              {(logsSinRepetir(snapshot?.historial ?? [])).map((item) => {
                 const jugador =
                   filas.find((fila) => fila.jugadorId === item.liga_jugador_id)
                     ?.nombre ?? "Jugador";
                 const abierto = historialDetalleId === item.id;
+                const estado = etiquetaEntrega(
+                  item.estado,
+                  item.proveedor_estado,
+                  item.motivo
+                );
                 return (
                   <article
                     key={item.id}
@@ -1772,13 +1823,14 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   >
                     <div>
                       <p className="liga-notificaciones__nombre">{jugador}</p>
-                      <p className="liga-notificaciones__meta">Bienvenida</p>
+                      <p className="liga-notificaciones__meta">
+                        Bienvenida ·{" "}
+                        {new Date(item.created_at).toLocaleString("es-MX")}
+                      </p>
                     </div>
-                    <p className="liga-notificaciones__meta">
-                      {new Date(item.created_at).toLocaleString("es-MX")}
-                    </p>
+                    <p className="liga-notificaciones__meta">{estado}</p>
                     <span className="liga-notificaciones__badge liga-notificaciones__badge--pending">
-                      {etiquetaEntrega(item.estado, item.proveedor_estado, item.motivo)}
+                      {estado}
                     </span>
                     <span className="liga-notificaciones__history-actions">
                       {sePuedeBorrarHistorial(item.estado) ? (
@@ -1814,7 +1866,15 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   </article>
                 );
               })}
-              {(snapshot?.cola ?? []).map((item, index) => {
+              {(snapshot?.cola ?? [])
+                .filter(
+                  (item) =>
+                    !colaYaMostradaEnHistorial(
+                      item,
+                      logsSinRepetir(snapshot?.historial ?? [])
+                    )
+                )
+                .map((item, index) => {
                 const key = `${item.liga_jugador_id}-${item.estado}-${index}`;
                 const jugador =
                   filas.find((fila) => fila.jugadorId === item.liga_jugador_id)

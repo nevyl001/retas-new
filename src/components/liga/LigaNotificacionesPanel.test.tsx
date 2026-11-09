@@ -1065,4 +1065,65 @@ describe("LigaNotificacionesPanel", () => {
     });
     expect(servicioEnvio.solicitarProcesamientoLote).not.toHaveBeenCalled();
   });
+
+  it("muestra una sola fila aceptada y no repite la cola", async () => {
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: true,
+      preferencias: [],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [
+        {
+          id: "log-1",
+          queue_id: "q-1",
+          liga_jugador_id: "jug-1",
+          tipo: "bienvenida",
+          estado: "enviado",
+          attempts: 1,
+          motivo: null,
+          proveedor_estado: "aceptado",
+          created_at: "2026-11-09T19:15:00Z",
+        },
+        {
+          id: "log-previo",
+          queue_id: "q-1",
+          liga_jugador_id: "jug-1",
+          tipo: "bienvenida",
+          estado: "pendiente",
+          attempts: 1,
+          motivo: "error_temporal",
+          proveedor_estado: null,
+          created_at: "2026-11-09T19:14:00Z",
+        },
+      ],
+      cola: [
+        {
+          id: "q-1",
+          liga_jugador_id: "jug-1",
+          estado: "enviado",
+          attempts: 1,
+          motivo: null,
+          lote_id: null,
+        },
+      ],
+      verificaciones: [],
+    });
+    await renderPanel();
+    const tab = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Historial"
+    );
+    await act(async () => {
+      tab?.click();
+    });
+    const filas = container.querySelectorAll(".liga-notificaciones__history-row");
+    expect(filas).toHaveLength(1);
+    expect(filas[0].textContent).toContain("Aceptado");
+    expect(filas[0].textContent).not.toContain("cola");
+    expect(container.textContent).not.toContain("Pendiente de reintento");
+  });
 });
