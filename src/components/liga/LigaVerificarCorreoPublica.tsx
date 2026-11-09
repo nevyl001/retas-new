@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
+  confirmarSupervisionCorreo,
   confirmarVerificacionCorreo,
+  inspeccionarSupervisionCorreo,
   inspeccionarVerificacionCorreo,
 } from "../../services/ligaNotificacionesService";
 import { tokenDesdeQuery } from "../../lib/liga/notificaciones/verificacionPolicy";
@@ -40,6 +42,7 @@ function vistaDesdeEstado(estado: string): Vista {
   if (estado === "cancelado") return "cancelado";
   if (estado === "invalidado") return "invalidado";
   if (estado === "correo_cambio") return "correo_cambio";
+  if (estado === "limite_alcanzado") return "invalidado";
   if (estado === "error_temporal") return "error_temporal";
   return "invalido";
 }
@@ -48,16 +51,23 @@ export const LigaVerificarCorreoPublica: React.FC = () => {
   const [vista, setVista] = useState<Vista>("cargando");
   const [token, setToken] = useState<string | null>(null);
 
+  const [esSupervision, setEsSupervision] = useState(false);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const parsed = tokenDesdeQuery(params.get("t"));
+    const supervision = tokenDesdeQuery(params.get("s"));
+    const parsed = supervision ?? tokenDesdeQuery(params.get("t"));
+    setEsSupervision(Boolean(supervision));
     setToken(parsed);
     if (!parsed) {
       setVista("invalido");
       return;
     }
     let activo = true;
-    void inspeccionarVerificacionCorreo(parsed).then((resultado) => {
+    void (supervision
+      ? inspeccionarSupervisionCorreo(parsed)
+      : inspeccionarVerificacionCorreo(parsed)
+    ).then((resultado) => {
       if (!activo) return;
       setVista(vistaDesdeEstado(resultado.estado));
     });
@@ -69,7 +79,9 @@ export const LigaVerificarCorreoPublica: React.FC = () => {
   async function confirmar() {
     if (!token || vista !== "listo") return;
     setVista("confirmando");
-    const resultado = await confirmarVerificacionCorreo(token);
+    const resultado = esSupervision
+      ? await confirmarSupervisionCorreo(token)
+      : await confirmarVerificacionCorreo(token);
     setVista(vistaDesdeEstado(resultado.ok ? "confirmado" : resultado.estado));
   }
 
@@ -77,10 +89,15 @@ export const LigaVerificarCorreoPublica: React.FC = () => {
     <LigaPageShell>
       <section className="liga-verificar-correo" aria-label="Verificación de correo">
         <p className="liga-verificar-correo__eyebrow">Riviera Open</p>
-        <h1 className="liga-verificar-correo__title">Confirma tu correo electrónico</h1>
+        <h1 className="liga-verificar-correo__title">
+          {esSupervision
+            ? "Confirma el correo de supervisión"
+            : "Confirma tu correo electrónico"}
+        </h1>
         <p className="liga-verificar-correo__copy">
-          Estamos verificando que esta dirección de correo te pertenece para
-          mantenerte informado sobre tu participación deportiva.
+          {esSupervision
+            ? "Este enlace acredita que la dirección puede recibir copias de supervisión de la liga. No muestra datos de jugadores."
+            : "Estamos verificando que esta dirección de correo te pertenece para mantenerte informado sobre tu participación deportiva."}
         </p>
 
         {vista === "cargando" || vista === "confirmando" ? (
@@ -96,7 +113,7 @@ export const LigaVerificarCorreoPublica: React.FC = () => {
             className="liga-verificar-correo__cta"
             onClick={() => void confirmar()}
           >
-            CONFIRMAR MI CORREO
+            {esSupervision ? "CONFIRMAR SUPERVISIÓN" : "CONFIRMAR MI CORREO"}
           </Button>
         ) : null}
 
@@ -104,7 +121,9 @@ export const LigaVerificarCorreoPublica: React.FC = () => {
         vista !== "listo" &&
         vista !== "confirmando" ? (
           <p className="liga-verificar-correo__status" role="status">
-            {MENSAJES[vista]}
+            {esSupervision && vista === "exito"
+              ? "El correo de supervisión quedó verificado."
+              : MENSAJES[vista]}
           </p>
         ) : null}
 

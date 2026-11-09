@@ -42,6 +42,11 @@ export interface ConfigNotificacionLiga {
   recordatorio_auto?: boolean;
   recordatorio_horas?: 24 | 12 | 2;
   bienvenida_auto?: boolean;
+  supervision_email?: string | null;
+  supervision_email_verificado?: string | null;
+  supervision_verificado_at?: string | null;
+  supervision_activa?: boolean;
+  supervision_alcance?: "resultados" | "todas";
 }
 
 /** Automatización de envíos reales: apagada hasta activación expresa de producto. */
@@ -59,6 +64,12 @@ export interface HistorialNotificacionRow {
   motivo: string | null;
   proveedor_estado: string | null;
   created_at: string;
+  origen?: string | null;
+  jornada_numero?: number | null;
+  procesados?: number | null;
+  aceptados?: number | null;
+  errores?: number | null;
+  reintentos?: number | null;
 }
 
 export interface ColaNotificacionRow {
@@ -297,11 +308,23 @@ function mapConfig(row: Record<string, unknown> | null, modo: ModoOperacionNotif
     recordatorio_horas: row?.recordatorio_horas as HorasRecordatorio,
     bienvenida_auto: row?.bienvenida_auto === true,
   });
+  const alcance = row?.supervision_alcance === "todas" ? "todas" : "resultados";
   return {
     bienvenida_pausada: row?.bienvenida_pausada !== false,
     modo_prueba: row?.modo_prueba !== false,
     modo_operacion: modo,
     ...auto,
+    supervision_email: typeof row?.supervision_email === "string" ? row.supervision_email : null,
+    supervision_email_verificado:
+      typeof row?.supervision_email_verificado === "string"
+        ? row.supervision_email_verificado
+        : null,
+    supervision_verificado_at:
+      typeof row?.supervision_verificado_at === "string"
+        ? row.supervision_verificado_at
+        : null,
+    supervision_activa: row?.supervision_activa === true,
+    supervision_alcance: alcance,
   };
 }
 
@@ -311,7 +334,7 @@ async function consultarConfigLiga(
   const intentoAuto = await supabase
     .from("liga_notificaciones_config")
     .select(
-      "bienvenida_pausada, modo_prueba, modo_operacion, resultados_auto, resultados_espera_minutos, recordatorio_auto, recordatorio_horas, bienvenida_auto"
+      "bienvenida_pausada, modo_prueba, modo_operacion, resultados_auto, resultados_espera_minutos, recordatorio_auto, recordatorio_horas, bienvenida_auto, supervision_email, supervision_email_verificado, supervision_verificado_at, supervision_activa, supervision_alcance"
     )
     .eq("liga_id", ligaId)
     .maybeSingle();
@@ -326,7 +349,7 @@ async function consultarConfigLiga(
   }
 
   const faltaAuto =
-    /resultados_auto|recordatorio_auto|bienvenida_auto|resultados_espera_minutos|recordatorio_horas/i.test(
+    /resultados_auto|recordatorio_auto|bienvenida_auto|resultados_espera_minutos|recordatorio_horas|supervision_email|supervision_activa/i.test(
       intentoAuto.error.message
     ) && esEsquemaAusente(intentoAuto.error.message);
   if (!faltaAuto && !(/modo_operacion/i.test(intentoAuto.error.message) && esEsquemaAusente(intentoAuto.error.message))) {
@@ -385,6 +408,32 @@ async function consultarConfigLiga(
   };
 }
 
+async function consultarHistorialLiga(ligaId: string) {
+  const extendida = await supabase
+    .from("liga_notificaciones_log")
+    .select(
+      "id, liga_jugador_id, queue_id, tipo, estado, attempts, motivo, proveedor_estado, created_at, origen, jornada_numero, procesados, aceptados, errores, reintentos"
+    )
+    .eq("liga_id", ligaId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (
+    extendida.error &&
+    esEsquemaAusente(extendida.error.message) &&
+    /origen|jornada_numero|procesados|reintentos/i.test(extendida.error.message)
+  ) {
+    return supabase
+      .from("liga_notificaciones_log")
+      .select(
+        "id, liga_jugador_id, queue_id, tipo, estado, attempts, motivo, proveedor_estado, created_at"
+      )
+      .eq("liga_id", ligaId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+  }
+  return extendida;
+}
+
 async function consultarColaLiga(ligaId: string) {
   const extendida = await supabase
     .from("liga_notificaciones_queue")
@@ -420,14 +469,7 @@ export async function cargarNotificacionesLiga(
     await Promise.all([
       consultarPreferenciasLiga(ligaId),
       consultarConfigLiga(ligaId),
-      supabase
-        .from("liga_notificaciones_log")
-        .select(
-          "id, liga_jugador_id, queue_id, tipo, estado, attempts, motivo, proveedor_estado, created_at"
-        )
-        .eq("liga_id", ligaId)
-        .order("created_at", { ascending: false })
-        .limit(100),
+      consultarHistorialLiga(ligaId),
       consultarColaLiga(ligaId),
       supabase
         .from("liga_notificaciones_verificaciones")
@@ -1022,4 +1064,96 @@ export async function encolarBienvenidaTrasInscripcion(
   } catch {
     aviso("no_disponible");
   }
+}
+
+export async function guardarSupervisionLiga(input: {
+  ligaId: string;
+  email: string;
+  activa: boolean;
+  alcance: "resultados" | "todas";
+}): Promise<ResultadoNotificacion> {
+  const { data, error } = await supabase.rpc(
+    "liga_notificaciones_guardar_supervision",
+    {
+      p_liga_id: input.ligaId,
+      p_email: input.email,
+      p_activa: input.activa,
+      p_alcance: input.alcance,
+    }
+  );
+  if (error) {
+    if (esEsquemaAusente(error.message)) {
+      return { ok: false, motivo: "esquema_pendiente" };
+    }
+    aviso("no_disponible");
+    return { ok: false, motivo: "no_disponible" };
+  }
+  const row = (data ?? {}) as { ok?: boolean; motivo?: string | null };
+  if (row.ok === false) {
+    return { ok: false, motivo: motivoSeguro(row.motivo) };
+  }
+  return { ok: true, motivo: null };
+}
+
+async function invocarSupervision(
+  funcion: string,
+  ligaId: string
+): Promise<ResultadoNotificacion & { enviosReales: boolean }> {
+  const { data, error } = await supabase.functions.invoke(funcion, {
+    body: { liga_id: ligaId },
+  });
+  if (error) {
+    aviso("no_disponible");
+    return { ok: false, motivo: "funcion_no_disponible", enviosReales: false };
+  }
+  const row = (data ?? {}) as { ok?: boolean; motivo?: string | null; enviosReales?: boolean };
+  return {
+    ok: row.ok !== false,
+    motivo: motivoSeguro(row.motivo),
+    enviosReales: row.enviosReales === true,
+  };
+}
+
+export function solicitarVerificacionSupervision(ligaId: string) {
+  return invocarSupervision("enviar-verificacion-supervision-liga", ligaId);
+}
+
+export function enviarPruebaSupervision(ligaId: string) {
+  return invocarSupervision("enviar-prueba-supervision-liga", ligaId);
+}
+
+export async function confirmarSupervisionCorreo(
+  token: string
+): Promise<{ ok: boolean; estado: string }> {
+  const { data, error } = await supabase.rpc(
+    "confirmar_verificacion_supervision_liga",
+    { p_token: token }
+  );
+  if (error) {
+    if (esEsquemaAusente(error.message)) return { ok: false, estado: "invalido" };
+    return { ok: false, estado: "error_temporal" };
+  }
+  const row = (data ?? {}) as { ok?: boolean; motivo?: string };
+  return {
+    ok: row.ok === true,
+    estado: typeof row.motivo === "string" ? row.motivo : "invalido",
+  };
+}
+
+export async function inspeccionarSupervisionCorreo(
+  token: string
+): Promise<{ ok: boolean; estado: string }> {
+  const { data, error } = await supabase.rpc(
+    "inspeccionar_verificacion_supervision_liga",
+    { p_token: token }
+  );
+  if (error) {
+    if (esEsquemaAusente(error.message)) return { ok: false, estado: "invalido" };
+    return { ok: false, estado: "error_temporal" };
+  }
+  const row = (data ?? {}) as { ok?: boolean; motivo?: string };
+  return {
+    ok: row.ok === true,
+    estado: typeof row.motivo === "string" ? row.motivo : "invalido",
+  };
 }

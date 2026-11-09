@@ -389,6 +389,12 @@ verify_jwt = true
 [functions.descartar-liga-notificaciones-no-enviadas]
 verify_jwt = true
 
+[functions.enviar-verificacion-supervision-liga]
+verify_jwt = true
+
+[functions.enviar-prueba-supervision-liga]
+verify_jwt = true
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

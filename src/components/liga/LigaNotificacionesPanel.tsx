@@ -35,8 +35,12 @@ import {
 import { resolveLigaMailBranding } from "../../lib/liga/notificaciones/ligaMailBranding";
 import {
   completarConfigAutomatica,
+  construirCorreoPrueba,
+  correoSupervisionValido,
   etiquetaOrigenComunicacion,
   etiquetaTipoComunicacion,
+  esCorreoDeJugador,
+  supervisionVerificada,
 } from "../../lib/liga/notificaciones/automatizacion";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
@@ -47,6 +51,9 @@ import {
   solicitarProcesamientoLote,
   establecerHabilitacionJugador,
   guardarConfigLiga,
+  guardarSupervisionLiga,
+  enviarPruebaSupervision,
+  solicitarVerificacionSupervision,
   registrarConsentimientoJugador,
   revocarConsentimientoJugador,
   solicitarComunicacionManual,
@@ -115,7 +122,9 @@ const MOTIVO_LABEL: Record<string, string> = {
   lote_requerido: "Confirma el envío desde el compositor",
   tipo_no_soportado: "Plantilla no soportada",
   modo_manual: "Esta liga está en modo manual",
-  envios_apagados: "El envío real sigue apagado",
+  correo_sin_verificacion: "Verifica el correo de supervisión antes de activar las copias",
+  limite_alcanzado: "Espera un momento antes de pedir otro envío",
+  envios_apagados: "El envío real sigue apagado. No se mandó ningún correo",
   partidos_pendientes: "La jornada todavía tiene partidos pendientes",
   sin_url_publica: "No hay un enlace público de la jornada",
   plantilla_incompleta: "Faltó resolver el mensaje",
@@ -460,6 +469,12 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const [filtroSelector, setFiltroSelector] = useState<"todos" | "listos">(
     "todos"
   );
+  const [supervisionEmail, setSupervisionEmail] = useState("");
+  const [supervisionActiva, setSupervisionActiva] = useState(false);
+  const [supervisionAlcance, setSupervisionAlcance] = useState<
+    "resultados" | "todas"
+  >("resultados");
+  const [vistaPrueba, setVistaPrueba] = useState(false);
 
   useEffect(() => {
     let activo = true;
@@ -477,6 +492,21 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       activo = false;
     };
   }, [ligaId]);
+
+  useEffect(() => {
+    const cfg = snapshot?.config;
+    if (!cfg) return;
+    setSupervisionEmail(cfg.supervision_email ?? "");
+    setSupervisionActiva(cfg.supervision_activa === true);
+    setSupervisionAlcance(
+      cfg.supervision_alcance === "todas" ? "todas" : "resultados"
+    );
+  }, [
+    snapshot?.config,
+    snapshot?.config?.supervision_email,
+    snapshot?.config?.supervision_activa,
+    snapshot?.config?.supervision_alcance,
+  ]);
 
   useEffect(() => {
     if (!gestionId) return;
@@ -1125,6 +1155,96 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       prev ? { ...prev, config: { ...next, ...siguiente } } : prev
     );
     confirmar("Cambios guardados");
+  }
+
+  async function guardarSupervision() {
+    if (!puedeEscribir) {
+      confirmar(motivoVisible("esquema_pendiente"));
+      return;
+    }
+    if (!correoSupervisionValido(supervisionEmail)) {
+      confirmar(motivoVisible("correo_invalido"));
+      return;
+    }
+    const verificado = supervisionVerificada({
+      email: supervisionEmail,
+      emailVerificado: config.supervision_email_verificado,
+      verificadoAt: config.supervision_verificado_at,
+    });
+    if (supervisionActiva && !verificado) {
+      confirmar(motivoVisible("correo_sin_verificacion"));
+      return;
+    }
+    setGuardandoId("supervision");
+    const email = supervisionEmail.trim().toLowerCase();
+    const resultado = await guardarSupervisionLiga({
+      ligaId,
+      email,
+      activa: supervisionActiva,
+      alcance: supervisionAlcance,
+    });
+    setGuardandoId(null);
+    if (!resultado.ok) {
+      confirmar(motivoVisible(resultado.motivo));
+      return;
+    }
+    setSnapshot((prev) =>
+      prev
+        ? {
+            ...prev,
+            config: {
+              ...prev.config,
+              supervision_email: email,
+              supervision_activa: supervisionActiva && verificado,
+              supervision_alcance: supervisionAlcance,
+              supervision_email_verificado:
+                prev.config.supervision_email_verificado === email
+                  ? prev.config.supervision_email_verificado
+                  : null,
+              supervision_verificado_at:
+                prev.config.supervision_email_verificado === email
+                  ? prev.config.supervision_verificado_at
+                  : null,
+            },
+          }
+        : prev
+    );
+    confirmar("Configuración de supervisión guardada");
+  }
+
+  async function pedirVerificacionSupervision() {
+    if (!correoSupervisionValido(supervisionEmail)) {
+      confirmar(motivoVisible("correo_invalido"));
+      return;
+    }
+    setGuardandoId("supervision-verificar");
+    const resultado = await solicitarVerificacionSupervision(ligaId);
+    setGuardandoId(null);
+    if (resultado.motivo === "envios_apagados") {
+      confirmar("El enlace no se envió. El envío real sigue apagado.");
+      return;
+    }
+    confirmar(
+      resultado.ok
+        ? "Enviamos el enlace de confirmación."
+        : motivoVisible(resultado.motivo)
+    );
+  }
+
+  async function confirmarPruebaSupervision() {
+    setVistaPrueba(false);
+    setGuardandoId("supervision-prueba");
+    const resultado = await enviarPruebaSupervision(ligaId);
+    setGuardandoId(null);
+    if (resultado.motivo === "envios_apagados") {
+      confirmar("La prueba no se envió. El envío real sigue apagado.");
+      return;
+    }
+    confirmar(
+      resultado.ok
+        ? "La prueba fue aceptada por el proveedor."
+        : motivoVisible(resultado.motivo)
+    );
   }
 
   function switchNotificaciones(fila: FilaDestinatario) {
@@ -1956,9 +2076,11 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                 ) : null}
               </div>
               {(logsSinRepetir(snapshot?.historial ?? [])).map((item) => {
-                const jugador =
-                  filas.find((fila) => fila.jugadorId === item.liga_jugador_id)
-                    ?.nombre ?? "Jugador";
+                const deJugador = esCorreoDeJugador(item.tipo);
+                const jugador = deJugador
+                  ? filas.find((fila) => fila.jugadorId === item.liga_jugador_id)
+                      ?.nombre ?? "Jugador"
+                  : etiquetaTipoComunicacion(item.tipo);
                 const abierto = historialDetalleId === item.id;
                 const estado = etiquetaEntrega(
                   item.estado,
@@ -2021,6 +2143,12 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                           ? `Proveedor: ${item.proveedor_estado}`
                           : motivoVisible(item.motivo)}{" "}
                         · {item.attempts} intentos
+                        {typeof item.procesados === "number"
+                          ? ` · Procesados ${item.procesados} · Aceptados ${item.aceptados ?? 0} · Errores ${item.errores ?? 0}`
+                          : ""}
+                        {item.reintentos
+                          ? ` · ${item.reintentos} reintentos pendientes`
+                          : ""}
                         {colaItem?.programado_para
                           ? ` · Programado ${new Date(colaItem.programado_para).toLocaleString("es-MX")}`
                           : ""}
@@ -2303,10 +2431,142 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   </span>
                 </label>
               </section>
+              <section className="liga-notificaciones__auto-card">
+                <div className="liga-notificaciones__auto-head">
+                  <h3>Supervisión de correos</h3>
+                  <span className="liga-notificaciones__auto-status">
+                    {supervisionVerificada({
+                      email: config.supervision_email,
+                      emailVerificado: config.supervision_email_verificado,
+                      verificadoAt: config.supervision_verificado_at,
+                    })
+                      ? "Verificado"
+                      : "Sin verificar"}
+                  </span>
+                </div>
+                <label className="liga-notificaciones__field">
+                  <span>Correo de supervisión</span>
+                  <input
+                    className="liga-notificaciones__select"
+                    type="email"
+                    value={supervisionEmail}
+                    disabled={guardandoId === "supervision" || !puedeEscribir}
+                    onChange={(event) => setSupervisionEmail(event.target.value)}
+                  />
+                </label>
+                <label className="liga-notificaciones__toggle liga-notificaciones__toggle--block">
+                  <input
+                    type="checkbox"
+                    checked={supervisionActiva}
+                    disabled={!puedeEscribir}
+                    onChange={(event) => setSupervisionActiva(event.target.checked)}
+                  />
+                  <span className="liga-notificaciones__toggle-ui" aria-hidden />
+                  <span>
+                    <strong>Recibir copia de notificaciones automáticas</strong>
+                    <span className="liga-notificaciones__hint">
+                      Una sola copia por jornada, después de procesar el lote.
+                      No incluye correos de jugadores.
+                    </span>
+                  </span>
+                </label>
+                <label className="liga-notificaciones__field">
+                  <span>Qué copias recibir</span>
+                  <select
+                    className="liga-notificaciones__select"
+                    value={supervisionAlcance}
+                    disabled={!puedeEscribir}
+                    onChange={(event) =>
+                      setSupervisionAlcance(
+                        event.target.value === "todas" ? "todas" : "resultados"
+                      )
+                    }
+                  >
+                    <option value="resultados">Solo resultados de jornadas.</option>
+                    <option value="todas">Todas las notificaciones automáticas.</option>
+                  </select>
+                </label>
+                <div className="liga-notificaciones__auto-actions">
+                  <button
+                    type="button"
+                    className="liga-notificaciones__ghost"
+                    disabled={!puedeEscribir || guardandoId === "supervision"}
+                    onClick={() => void guardarSupervision()}
+                  >
+                    GUARDAR CONFIGURACIÓN
+                  </button>
+                  <button
+                    type="button"
+                    className="liga-notificaciones__ghost"
+                    disabled={!puedeEscribir || guardandoId === "supervision-verificar"}
+                    onClick={() => void pedirVerificacionSupervision()}
+                  >
+                    ENVIAR ENLACE DE VERIFICACIÓN
+                  </button>
+                  <button
+                    type="button"
+                    className="liga-notificaciones__ghost"
+                    disabled={!puedeEscribir}
+                    onClick={() => {
+                      if (
+                        !supervisionVerificada({
+                          email: config.supervision_email,
+                          emailVerificado: config.supervision_email_verificado,
+                          verificadoAt: config.supervision_verificado_at,
+                        })
+                      ) {
+                        confirmar(motivoVisible("correo_sin_verificacion"));
+                        return;
+                      }
+                      setVistaPrueba(true);
+                    }}
+                  >
+                    ENVIAR CORREO DE PRUEBA
+                  </button>
+                </div>
+              </section>
             </div>
           ) : null}
         </div>
       ) : null}
+
+      {vistaPrueba && typeof document !== "undefined"
+        ? createPortal(
+            <div className="liga-notificaciones__overlay">
+              <button
+                type="button"
+                className="liga-notificaciones__overlay-scrim"
+                aria-label="Cerrar vista previa"
+                onClick={() => setVistaPrueba(false)}
+              />
+              <div
+                className="liga-notificaciones__picker"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Vista previa de la prueba"
+              >
+                <h3 className="liga-notificaciones__section-title">
+                  Correo de prueba
+                </h3>
+                <p className="liga-notificaciones__hint">
+                  Plantilla de notificación de jornada, con datos de ejemplo.
+                </p>
+                <pre className="liga-notificaciones__preview-text">
+                  {construirCorreoPrueba().text}
+                </pre>
+                <button
+                  type="button"
+                  className="liga-notificaciones__ghost"
+                  disabled={guardandoId === "supervision-prueba"}
+                  onClick={() => void confirmarPruebaSupervision()}
+                >
+                  CONFIRMAR Y ENVIAR PRUEBA
+                </button>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
 
       {selectorAbierto && typeof document !== "undefined"
         ? createPortal(

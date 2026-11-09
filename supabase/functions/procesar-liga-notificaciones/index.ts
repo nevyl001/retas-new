@@ -46,6 +46,8 @@ type QueueRow = {
   asunto: string | null;
   cuerpo_texto: string | null;
   lote_id: string | null;
+  jornada_id?: string | null;
+  jornada_numero?: number | null;
 };
 
 type PrefRow = {
@@ -224,7 +226,9 @@ Deno.serve(async (req) => {
   let consulta = supabase
     .from("liga_notificaciones_queue")
     .select(
-      "id, liga_id, liga_jugador_id, idempotency_key, estado, attempts, tipo, asunto, cuerpo_texto, lote_id",
+      loteId
+        ? "id, liga_id, liga_jugador_id, idempotency_key, estado, attempts, tipo, asunto, cuerpo_texto, lote_id"
+        : "id, liga_id, liga_jugador_id, idempotency_key, estado, attempts, tipo, asunto, cuerpo_texto, lote_id, jornada_id, jornada_numero",
     )
     .eq("estado", "pendiente");
   consulta = loteId
@@ -299,6 +303,13 @@ Deno.serve(async (req) => {
     else if (outcome === "omitido") omitidos += 1;
     else if (outcome === "reintento") reintentos += 1;
     else errores += 1;
+  }
+
+  if (!loteId) {
+    await emitirCopiasSupervision(
+      supabase,
+      (pendientes ?? []) as QueueRow[],
+    );
   }
 
   return json(req, 200, {
@@ -585,4 +596,135 @@ async function finalizarMensaje(
     motivo: result.motivo,
     proveedor_estado: result.proveedor,
   });
+}
+
+async function emitirCopiasSupervision(
+  supabase: ReturnType<typeof createCredentialClient>,
+  filas: QueueRow[],
+): Promise<void> {
+  const grupos = new Map<string, { ligaId: string; tipo: string; eventoId: string; numero: number | null }>();
+  for (const fila of filas) {
+    const eventoId = fila.tipo === "bienvenida" ? fila.liga_jugador_id : fila.jornada_id;
+    if (!eventoId) continue;
+    const clave = `supervision:${fila.tipo}:${fila.liga_id}:${eventoId}`;
+    if (!grupos.has(clave)) {
+      grupos.set(clave, {
+        ligaId: fila.liga_id,
+        tipo: fila.tipo,
+        eventoId,
+        numero: fila.jornada_numero ?? null,
+      });
+    }
+  }
+
+  for (const [clave, grupo] of grupos) {
+    try {
+      await enviarCopiaSupervision(supabase, clave, grupo);
+    } catch {
+      // La copia no puede repetir ni deshacer el envío a los jugadores.
+    }
+  }
+}
+
+async function enviarCopiaSupervision(
+  supabase: ReturnType<typeof createCredentialClient>,
+  clave: string,
+  grupo: { ligaId: string; tipo: string; eventoId: string; numero: number | null },
+): Promise<void> {
+  const { data: config } = await supabase
+    .from("liga_notificaciones_config")
+    .select("supervision_activa, supervision_alcance, supervision_email, supervision_email_verificado, supervision_verificado_at")
+    .eq("liga_id", grupo.ligaId)
+    .maybeSingle();
+  const email = String(config?.supervision_email ?? "").trim().toLowerCase();
+  const verificado = String(config?.supervision_email_verificado ?? "").trim().toLowerCase();
+  const alcance = config?.supervision_alcance === "todas" ? "todas" : "resultados";
+  const tipoPermitido = alcance === "todas" || grupo.tipo === "resultados_jornada";
+  if (
+    config?.supervision_activa !== true ||
+    !config?.supervision_verificado_at ||
+    !email ||
+    email !== verificado ||
+    !tipoPermitido
+  ) {
+    return;
+  }
+
+  let estadosQuery = supabase
+    .from("liga_notificaciones_queue")
+    .select("estado")
+    .eq("liga_id", grupo.ligaId)
+    .eq("tipo", grupo.tipo)
+    .eq("origen", "automatico");
+  estadosQuery = grupo.tipo === "bienvenida"
+    ? estadosQuery.eq("liga_jugador_id", grupo.eventoId)
+    : estadosQuery.eq("jornada_id", grupo.eventoId);
+  const { data: estados } = await estadosQuery;
+  const lista = estados ?? [];
+  const aceptados = lista.filter((fila) => fila.estado === "enviado").length;
+  const errores = lista.filter((fila) => fila.estado === "error").length;
+  const reintentos = lista.filter((fila) => fila.estado === "pendiente").length;
+  const { data: liga } = await supabase
+    .from("ligas")
+    .select("nombre")
+    .eq("id", grupo.ligaId)
+    .maybeSingle();
+  const ligaNombre = String(liga?.nombre ?? "Liga").slice(0, 120);
+  const numero = grupo.numero ?? "";
+  const url = grupo.tipo === "resultados_jornada" && numero
+    ? `${publicBase()}/public/liga/${grupo.ligaId}/jornada/${numero}`
+    : "";
+  const texto = [
+    "Copia de supervisión",
+    `Liga: ${ligaNombre}`,
+    `Club: ${ligaNombre}`,
+    `Jornada: ${numero || "—"}`,
+    "Fecha: la de la jornada",
+    "Horario: el publicado en la jornada",
+    `Tipo: ${grupo.tipo}`,
+    `Destinatarios procesados: ${lista.length}`,
+    `Aceptados por el proveedor: ${aceptados}`,
+    `Errores: ${errores}`,
+    reintentos > 0
+      ? `Hay ${reintentos} reintentos pendientes.`
+      : "No hay reintentos pendientes.",
+    url ? `VER RESULTADOS: ${url}` : "",
+  ].filter(Boolean).join("\n");
+  if (texto.includes("@")) return;
+
+  const { error: alta } = await supabase.from("liga_notificaciones_log").insert({
+    liga_id: grupo.ligaId,
+    liga_jugador_id: null,
+    tipo: "supervision",
+    origen: "automatico",
+    estado: "procesando",
+    attempts: 1,
+    idempotency_key: clave,
+    jornada_id: grupo.tipo === "bienvenida" ? null : grupo.eventoId,
+    jornada_numero: grupo.numero,
+    procesados: lista.length,
+    aceptados,
+    errores,
+    reintentos,
+  });
+  if (alta) return;
+
+  const send = await sendByResend(
+    email,
+    `Supervisión — ${ligaNombre}`.slice(0, 180),
+    texto,
+    `<p>${texto.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br />")}</p>`,
+    { function: MODULE, tipo: "supervision" },
+    clave,
+    null,
+  );
+  await supabase
+    .from("liga_notificaciones_log")
+    .update({
+      estado: send.ok ? "enviado" : "error",
+      motivo: send.ok ? null : send.status === 0 ? "respuesta_ambigua" : "error_proveedor",
+      proveedor_estado: send.ok ? "aceptado" : null,
+    })
+    .eq("idempotency_key", clave)
+    .eq("estado", "procesando");
 }

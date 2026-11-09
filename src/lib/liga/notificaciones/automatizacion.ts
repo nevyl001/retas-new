@@ -383,6 +383,10 @@ export function etiquetaTipoComunicacion(tipo: string | null | undefined): strin
       return "Felicitación";
     case "personalizado":
       return "Mensaje";
+    case "supervision":
+      return "Copia de supervisión";
+    case "prueba":
+      return "Prueba";
     case "jornada":
       return "Jornada";
     default:
@@ -393,8 +397,9 @@ export function etiquetaTipoComunicacion(tipo: string | null | undefined): strin
 export function etiquetaOrigenComunicacion(
   origen: string | null | undefined,
   tipo: string | null | undefined
-): "Automático" | "Manual" {
-  if (origen === "automatico") return "Automático";
+): "Automático" | "Manual" | "Prueba" {
+  if (tipo === "prueba") return "Prueba";
+  if (tipo === "supervision" || origen === "automatico") return "Automático";
   if (tipo === "resultados_jornada" || tipo === "recordatorio_jornada") {
     return "Automático";
   }
@@ -416,3 +421,195 @@ export const MOTIVOS_AUTOMATICOS = [
   "respuesta_ambigua",
   "cancelado",
 ] as const;
+
+export type AlcanceSupervision = "resultados" | "todas";
+
+export const SUPERVISION_MAX_INTENTOS = 5;
+export const SUPERVISION_VIGENCIA_MINUTOS = 30;
+export const SUPERVISION_MAX_SOLICITUDES = 3;
+export const PRUEBA_MAX_POR_HORA = 3;
+
+export function correoSupervisionValido(email: string | null | undefined): boolean {
+  const value = email?.trim().toLowerCase() ?? "";
+  if (!value || value.length > 180 || value.endsWith("@padel.local")) return false;
+  return /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(value);
+}
+
+export function normalizarAlcanceSupervision(raw: unknown): AlcanceSupervision {
+  return raw === "todas" ? "todas" : "resultados";
+}
+
+export function supervisionVerificada(input: {
+  email: string | null | undefined;
+  emailVerificado: string | null | undefined;
+  verificadoAt: string | null | undefined;
+}): boolean {
+  const email = input.email?.trim().toLowerCase() ?? "";
+  const verificado = input.emailVerificado?.trim().toLowerCase() ?? "";
+  return Boolean(
+    correoSupervisionValido(email) &&
+      verificado &&
+      email === verificado &&
+      input.verificadoAt
+  );
+}
+
+export function puedeActivarCopia(input: {
+  activa: boolean;
+  email: string | null | undefined;
+  emailVerificado: string | null | undefined;
+  verificadoAt: string | null | undefined;
+  alcance: unknown;
+  tipo: string;
+}): boolean {
+  if (!input.activa) return false;
+  if (!supervisionVerificada(input)) return false;
+  const alcance = normalizarAlcanceSupervision(input.alcance);
+  if (alcance === "resultados") return input.tipo === "resultados_jornada";
+  return (
+    input.tipo === "resultados_jornada" ||
+    input.tipo === "recordatorio_jornada" ||
+    input.tipo === "bienvenida"
+  );
+}
+
+export function claveSupervision(ligaId: string, tipo: string, eventoId: string): string {
+  return `supervision:${tipo}:${ligaId}:${eventoId}`;
+}
+
+export function copiaYaRegistrada(claves: string[], clave: string): boolean {
+  return claves.includes(clave);
+}
+
+export function permiteOtroEnvio(input: {
+  conteo: number;
+  ventana: Date | null;
+  ahora: Date;
+  maximo: number;
+}): boolean {
+  if (!input.ventana || input.ahora.getTime() - input.ventana.getTime() >= 3_600_000) {
+    return true;
+  }
+  return input.conteo < input.maximo;
+}
+
+export function decidirConfirmacionToken(input: {
+  expira: Date;
+  intentos: number;
+  ahora: Date;
+}): "ok" | "vencido" | "limite" {
+  if (input.ahora.getTime() > input.expira.getTime()) return "vencido";
+  if (input.intentos >= SUPERVISION_MAX_INTENTOS) return "limite";
+  return "ok";
+}
+
+export function resumenSupervision(input: {
+  procesados: number;
+  aceptados: number;
+  errores: number;
+  reintentos: number;
+}): string {
+  const pendiente = input.reintentos > 0
+    ? `Hay ${input.reintentos} reintentos pendientes.`
+    : "No hay reintentos pendientes.";
+  return [
+    `Destinatarios procesados: ${input.procesados}`,
+    `Aceptados por el proveedor: ${input.aceptados}`,
+    `Errores: ${input.errores}`,
+    pendiente,
+  ].join("\n");
+}
+
+export function construirCorreoSupervision(input: {
+  liga: string;
+  club: string;
+  jornada: string;
+  fecha: string;
+  horario: string;
+  tipo: string;
+  procesados: number;
+  aceptados: number;
+  errores: number;
+  reintentos: number;
+  urlResultados: string | null;
+}): { ok: true; asunto: string; html: string; text: string } | { ok: false; motivo: "datos_privados" | "sin_url_publica" } {
+  const texto = [
+    input.liga,
+    input.club,
+    input.jornada,
+    input.fecha,
+    input.horario,
+    input.tipo,
+  ].join("\n");
+  if (texto.includes("@") || texto.includes("{{")) {
+    return { ok: false, motivo: "datos_privados" };
+  }
+  const resultados = input.tipo === "resultados_jornada";
+  if (resultados && !urlPublicaJornadaValida(input.urlResultados)) {
+    return { ok: false, motivo: "sin_url_publica" };
+  }
+  const asunto = `Supervisión — ${input.liga} | ${etiquetaTipoComunicacion(input.tipo)}`.slice(0, 180);
+  const cuerpo = [
+    "Copia de supervisión",
+    `Liga: ${input.liga}`,
+    `Club: ${input.club}`,
+    `Jornada: ${input.jornada}`,
+    `Fecha: ${input.fecha}`,
+    `Horario: ${input.horario}`,
+    `Tipo: ${etiquetaTipoComunicacion(input.tipo)}`,
+    resumenSupervision(input),
+  ].join("\n");
+  if (cuerpo.includes("@")) return { ok: false, motivo: "datos_privados" };
+  const branding = resolveLigaMailBranding({ clubNombre: input.club });
+  const html = renderPremiumEmailHtml({
+    branding,
+    asunto,
+    title: "Copia de supervisión",
+    paragraphsHtml: cuerpo
+      .split("\n")
+      .map((linea) => `<p style="margin:0 0 8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:#374151;">${escapeHtml(linea)}</p>`)
+      .join(""),
+    actionButton: resultados && input.urlResultados
+      ? { label: "VER RESULTADOS", url: input.urlResultados }
+      : null,
+  });
+  return { ok: true, asunto, html, text: cuerpo };
+}
+
+export function construirCorreoPrueba(): {
+  asunto: string;
+  html: string;
+  text: string;
+} {
+  const asunto = "[PRUEBA] AppRiviera — Notificación de jornada";
+  const aviso = "ESTE ES UN CORREO DE PRUEBA. NO CORRESPONDE A UNA NOTIFICACIÓN OFICIAL.";
+  const cuerpo = [
+    aviso,
+    "Liga de ejemplo",
+    "Club de ejemplo",
+    "Jornada de ejemplo",
+    "Fecha de ejemplo",
+    "Horario de ejemplo",
+    "Los datos de esta vista son ficticios.",
+    "Esta demostración no abre resultados oficiales ni acciones de administración.",
+  ].join("\n\n");
+  const branding = resolveLigaMailBranding({ clubNombre: "Club de ejemplo" });
+  const html = renderPremiumEmailHtml({
+    branding,
+    asunto,
+    title: aviso,
+    paragraphsHtml: cuerpo
+      .split(/\n{2,}/)
+      .map((bloque) => `<p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:#374151;">${escapeHtml(bloque)}</p>`)
+      .join(""),
+    actionButton: {
+      label: "DEMOSTRACIÓN",
+      url: "https://appriviera.rivieraopen.com/",
+    },
+  });
+  return { asunto, html, text: `${cuerpo}\n\nDEMOSTRACIÓN: https://appriviera.rivieraopen.com/` };
+}
+
+export function esCorreoDeJugador(tipo: string | null | undefined): boolean {
+  return tipo !== "supervision" && tipo !== "prueba" && tipo !== "verificacion";
+}

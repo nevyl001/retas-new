@@ -1226,6 +1226,21 @@
   color: var(--liga-text-muted, var(--ro-text-muted));
 }
 
+.liga-notificaciones__auto-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.liga-notificaciones__preview-text {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--liga-text, var(--ro-text-primary));
+}
+
 @media (max-width: 720px) {
   .liga-notificaciones__auto-card {
     padding: 14px;
