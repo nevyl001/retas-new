@@ -38,7 +38,7 @@ export const PLANTILLAS_COMUNICACION: PlantillaComunicacion[] = [
     label: "Información de próxima jornada",
     asunto: "Próxima jornada — {{liga}}",
     cuerpo:
-      "Hola {{nombre}},\n\nTe informamos sobre la próxima jornada de {{liga}}.\n\nFecha:\nHorario:\nSede:\n\nCualquier duda, responde a este correo.\n\n{{club}}",
+      "Hola {{nombre}},\n\nTe informamos sobre la próxima jornada de {{liga}}.\n\nFecha:\nHorario:\nSede:\n\n{{club}}",
   },
   {
     id: "cambio_horario",
@@ -131,7 +131,7 @@ ${previewBanner}
         ${paragraphs || `<p style="margin:0;color:#111;"> </p>`}
       </td></tr>
       <tr><td style="padding:8px 28px 28px;">
-        <p style="margin:0;font-size:12px;color:#777;">Comunicación deportiva de ${escapeHtml(vars.liga)}. No es publicidad.</p>
+        <p style="margin:0;font-size:12px;color:#777;">Comunicación deportiva de ${escapeHtml(vars.liga)}. Este aviso no recibe respuestas por correo.</p>
       </td></tr>
     </table>
   </td></tr>

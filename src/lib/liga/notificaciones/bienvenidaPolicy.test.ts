@@ -520,7 +520,12 @@ describe("bienvenida de liga — artefactos de seguridad", () => {
     expect(worker).toContain("enviosReales: false");
     expect(worker).toContain("escritos: 0");
     expect(worker).toContain("idempotency_key");
+    expect(worker).toContain("LIGA_NOTIFICACIONES_ALLOWLIST");
+    expect(worker).toContain("fuera_de_allowlist");
+    expect(worker).not.toContain("correo_verificacion_origen");
+    expect(worker).not.toContain("liga_notificaciones_verificacion_envio");
     expect(resend).toContain("Idempotency-Key");
+    expect(resend).toContain("reply_to");
     expect(worker).not.toMatch(/from\(["']notificaciones_eventos_queue/);
   });
 

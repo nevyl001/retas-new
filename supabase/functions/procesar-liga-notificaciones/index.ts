@@ -23,7 +23,6 @@ import {
   isFakeOrInvalidEmail,
   renderBienvenidaWorker,
   renderComunicacionWorker,
-  renderVerificacionWorker,
 } from "../_shared/ligaNotificacionesMail.ts";
 
 const MODULE = "procesar-liga-notificaciones";
@@ -51,10 +50,61 @@ type PrefRow = {
   consentimiento_estado: string;
   consentimiento_origen: string | null;
   consentimiento_registrado_at: string | null;
-  correo_verificado: boolean;
-  correo_verificacion_origen: string | null;
-  correo_verificado_email: string | null;
 };
+
+const TIPOS_LOG = new Set([
+  "bienvenida",
+  "aviso_general",
+  "jornada",
+  "cambio_horario",
+  "felicitacion",
+  "personalizado",
+]);
+
+function parseAllowlist(raw: string | null | undefined): Set<string> {
+  const set = new Set<string>();
+  for (const part of (raw ?? "").split(/[,;\s]+/)) {
+    const value = part.trim().toLowerCase();
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && !value.endsWith("@padel.local")) {
+      set.add(value);
+    }
+  }
+  return set;
+}
+
+function parseReplyTo(raw: string | null | undefined): string | null {
+  const value = (raw ?? "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || value.endsWith("@padel.local")) {
+    return null;
+  }
+  return value;
+}
+
+/** Allowlist antes de reclamar. Sin columnas de 0101. */
+function decidirReclamo(input: {
+  email: string | null;
+  allowlist: Set<string>;
+  pref: PrefRow | null;
+}): { reclamar: boolean; motivo: string } {
+  const email = input.email?.trim().toLowerCase() ?? "";
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !email.endsWith("@padel.local");
+  if (!emailOk || !input.allowlist.has(email)) {
+    return { reclamar: false, motivo: emailOk ? "fuera_de_allowlist" : "sin_correo" };
+  }
+  if (!input.pref?.admin_habilitado) {
+    return { reclamar: false, motivo: "deshabilitado" };
+  }
+  const origen = input.pref.consentimiento_origen?.trim().toLowerCase() ?? "";
+  if (
+    input.pref.consentimiento_estado !== "autorizado" ||
+    !origen ||
+    ["inscripcion", "confirmacion_inscripcion", "tiene_correo", "email"].includes(origen) ||
+    !input.pref.consentimiento_registrado_at
+  ) {
+    return { reclamar: false, motivo: "sin_autorizacion" };
+  }
+  return { reclamar: true, motivo: "ok" };
+}
 
 function json(req: Request, status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), {
@@ -109,14 +159,16 @@ Deno.serve(async (req) => {
   logCredentialSelection({ module: MODULE, secret: secretKey });
   logResendConfig(MODULE);
   const supabase = createCredentialClient(SUPABASE_URL, secretKey);
+  const allowlist = parseAllowlist(Deno.env.get("LIGA_NOTIFICACIONES_ALLOWLIST"));
+  const replyTo = parseReplyTo(Deno.env.get("LIGA_NOTIFICACIONES_REPLY_TO"));
 
   let procesados = 0;
   let escritos = 0;
   let aceptados = 0;
   let omitidos = 0;
   let errores = 0;
+  let fueraAllowlist = 0;
 
-  // ---- Cola manual / bienvenida (sin exigir verificación por enlace) ----
   const { data: pendientes, error: listErr } = await supabase
     .from("liga_notificaciones_queue")
     .select(
@@ -133,6 +185,25 @@ Deno.serve(async (req) => {
   for (const raw of pendientes ?? []) {
     const row = raw as QueueRow;
     procesados += 1;
+    const previo = await leerElegibilidad0100(supabase, row);
+    const decision = decidirReclamo({
+      email: previo.email,
+      allowlist,
+      pref: previo.pref,
+    });
+    if (!decision.reclamar) {
+      if (decision.motivo === "fuera_de_allowlist") {
+        fueraAllowlist += 1;
+        continue;
+      }
+      await finalizarMensaje(supabase, row, {
+        estado: decision.motivo === "deshabilitado" ? "pausado" : "omitido",
+        motivo: decision.motivo,
+        proveedor: null,
+      });
+      omitidos += 1;
+      continue;
+    }
 
     const nextAttempts = Number(row.attempts ?? 0) + 1;
     const { data: claimed, error: claimErr } = await supabase
@@ -152,7 +223,7 @@ Deno.serve(async (req) => {
     if (claimErr || !claimed) continue;
     escritos += 1;
 
-    const outcome = await procesarMensajeCola(supabase, {
+    const outcome = await enviarReclamado(supabase, {
       id: claimed.id as string,
       liga_id: claimed.liga_id as string,
       liga_jugador_id: claimed.liga_jugador_id as string,
@@ -162,32 +233,10 @@ Deno.serve(async (req) => {
       asunto: (claimed.asunto as string | null) ?? row.asunto,
       cuerpo_texto: (claimed.cuerpo_texto as string | null) ?? row.cuerpo_texto,
       lote_id: (claimed.lote_id as string | null) ?? row.lote_id,
-    });
+    }, replyTo);
 
     if (outcome === "aceptado") aceptados += 1;
     else if (outcome === "omitido") omitidos += 1;
-    else errores += 1;
-  }
-
-  // ---- Verificación ----
-  const { data: verificaciones } = await supabase
-    .from("liga_notificaciones_verificacion_envio")
-    .select("solicitud_id, liga_id, email_normalizado, token_claro, idempotency_key")
-    .order("created_at", { ascending: true })
-    .limit(MAX_BATCH);
-
-  for (const item of verificaciones ?? []) {
-    procesados += 1;
-    const result = await procesarVerificacion(supabase, {
-      solicitud_id: String(item.solicitud_id),
-      liga_id: String(item.liga_id),
-      email_normalizado: String(item.email_normalizado),
-      token_claro: String(item.token_claro),
-      idempotency_key: String(item.idempotency_key),
-    });
-    if (result.escrito) escritos += 1;
-    if (result.kind === "aceptado") aceptados += 1;
-    else if (result.kind === "omitido") omitidos += 1;
     else errores += 1;
   }
 
@@ -199,10 +248,55 @@ Deno.serve(async (req) => {
     aceptados,
     omitidos,
     errores,
+    fueraAllowlist,
+    replyTo: Boolean(replyTo),
   });
 });
 
-async function procesarMensajeCola(
+async function leerElegibilidad0100(
+  supabase: ReturnType<typeof createCredentialClient>,
+  row: { liga_id: string; liga_jugador_id: string },
+): Promise<{ pref: PrefRow | null; email: string | null; nombre: string; ligaNombre: string }> {
+  const { data: pref } = await supabase
+    .from("liga_notificaciones_preferencias")
+    .select(
+      "admin_habilitado, consentimiento_estado, consentimiento_origen, consentimiento_registrado_at",
+    )
+    .eq("liga_id", row.liga_id)
+    .eq("liga_jugador_id", row.liga_jugador_id)
+    .maybeSingle();
+
+  const { data: jugador } = await supabase
+    .from("liga_jugadores")
+    .select("nombre, email")
+    .eq("id", row.liga_jugador_id)
+    .maybeSingle();
+
+  let email = (jugador?.email as string | null) ?? null;
+  const nombre = (jugador?.nombre as string | null) ?? "Jugador";
+
+  const { data: contacto } = await supabase.rpc("liga_jugador_resolver_contacto", {
+    p_liga_jugador_id: row.liga_jugador_id,
+  });
+  const filaContacto = Array.isArray(contacto) ? contacto[0] : contacto;
+  const emailGlobal = (filaContacto as { email?: string | null } | null)?.email ?? null;
+  if (emailGlobal) email = emailGlobal;
+
+  const { data: liga } = await supabase
+    .from("ligas")
+    .select("nombre")
+    .eq("id", row.liga_id)
+    .maybeSingle();
+
+  return {
+    pref: (pref as PrefRow | null) ?? null,
+    email: isFakeOrInvalidEmail(email) ? null : email,
+    nombre,
+    ligaNombre: String(liga?.nombre ?? "tu liga"),
+  };
+}
+
+async function enviarReclamado(
   supabase: ReturnType<typeof createCredentialClient>,
   row: {
     id: string;
@@ -215,119 +309,40 @@ async function procesarMensajeCola(
     cuerpo_texto: string | null;
     lote_id: string | null;
   },
+  replyTo: string | null,
 ): Promise<"aceptado" | "omitido" | "error"> {
-  const esManualCompositor = Boolean(row.lote_id || row.cuerpo_texto);
-
-  // Pausa histórica solo aplica a bienvenida automática sin payload manual.
-  if (!esManualCompositor && row.tipo === "bienvenida") {
-    const { data: config } = await supabase
-      .from("liga_notificaciones_config")
-      .select("bienvenida_pausada")
-      .eq("liga_id", row.liga_id)
-      .maybeSingle();
-
-    if (config?.bienvenida_pausada !== false) {
-      await finalizarBienvenida(supabase, row, {
-        estado: "pausado",
-        motivo: "liga_pausada",
-        proveedor: null,
-      });
-      return "omitido";
-    }
-  }
-
-  const { data: pref } = await supabase
-    .from("liga_notificaciones_preferencias")
-    .select(
-      "admin_habilitado, consentimiento_estado, consentimiento_origen, consentimiento_registrado_at, correo_verificado, correo_verificacion_origen, correo_verificado_email",
-    )
-    .eq("liga_id", row.liga_id)
-    .eq("liga_jugador_id", row.liga_jugador_id)
-    .maybeSingle();
-
-  const preferencia = pref as PrefRow | null;
-  if (!preferencia?.admin_habilitado) {
-    await finalizarBienvenida(supabase, row, {
-      estado: "pausado",
-      motivo: "deshabilitado",
-      proveedor: null,
-    });
-    return "omitido";
-  }
-  if (
-    preferencia.consentimiento_estado !== "autorizado" ||
-    !preferencia.consentimiento_origen ||
-    !preferencia.consentimiento_registrado_at
-  ) {
-    await finalizarBienvenida(supabase, row, {
+  const otraVez = await leerElegibilidad0100(supabase, row);
+  const allowlist = parseAllowlist(Deno.env.get("LIGA_NOTIFICACIONES_ALLOWLIST"));
+  const decision = decidirReclamo({
+    email: otraVez.email,
+    allowlist,
+    pref: otraVez.pref,
+  });
+  if (!decision.reclamar) {
+    await finalizarMensaje(supabase, row, {
       estado: "omitido",
-      motivo: "sin_autorizacion",
-      proveedor: null,
-    });
-    return "omitido";
-  }
-  // Verificación por enlace: NO requerida para comunicaciones manuales.
-
-  const { data: jugador } = await supabase
-    .from("liga_jugadores")
-    .select("nombre, email")
-    .eq("id", row.liga_jugador_id)
-    .maybeSingle();
-
-  let email = (jugador?.email as string | null) ?? null;
-  let nombre = (jugador?.nombre as string | null) ?? "Jugador";
-  let rivieraId: string | null = null;
-
-  const { data: riviera } = await supabase
-    .from("riviera_jugadores")
-    .select("id, nombre, email")
-    .eq("legacy_liga_jugador_id", row.liga_jugador_id)
-    .neq("estado", "archivado")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (riviera) {
-    rivieraId = String(riviera.id);
-    if (!email) email = (riviera.email as string | null) ?? null;
-    if (riviera.nombre) nombre = String(riviera.nombre);
-  }
-
-  if (isFakeOrInvalidEmail(email)) {
-    await finalizarBienvenida(supabase, row, {
-      estado: "omitido",
-      motivo: "correo_invalido",
+      motivo: decision.motivo,
       proveedor: null,
     });
     return "omitido";
   }
 
-  const emailNorm = email!.trim().toLowerCase();
-
-  const { data: liga } = await supabase
-    .from("ligas")
-    .select("nombre")
-    .eq("id", row.liga_id)
-    .maybeSingle();
-
-  const base = publicBase();
-  const perfilUrl = rivieraId && UUID.test(rivieraId)
-    ? `${base}/players/${rivieraId}`
-    : `${base}/public/liga/${row.liga_id}`;
-
-  const mail = esManualCompositor
+  const emailNorm = otraVez.email!.trim().toLowerCase();
+  const esManual = Boolean(row.lote_id || row.cuerpo_texto);
+  const mail = esManual
     ? renderComunicacionWorker({
-      clubNombre: "Riviera Open",
-      ligaNombre: String(liga?.nombre ?? "tu liga"),
-      asunto: row.asunto ?? `Mensaje de ${String(liga?.nombre ?? "tu liga")}`,
+      clubNombre: otraVez.ligaNombre,
+      ligaNombre: otraVez.ligaNombre,
+      asunto: row.asunto ?? `Mensaje de ${otraVez.ligaNombre}`,
       cuerpoTexto: row.cuerpo_texto ?? "",
+      replyTo,
     })
     : renderBienvenidaWorker({
-      clubNombre: "Riviera Open",
-      ligaNombre: String(liga?.nombre ?? "tu liga"),
-      jugadorNombre: nombre,
-      perfilUrl,
-      ligaUrl: `${base}/public/liga/${row.liga_id}`,
+      clubNombre: otraVez.ligaNombre,
+      ligaNombre: otraVez.ligaNombre,
+      jugadorNombre: otraVez.nombre,
+      perfilUrl: `${publicBase()}/public/liga/${row.liga_id}`,
+      ligaUrl: `${publicBase()}/public/liga/${row.liga_id}`,
     });
 
   const send = await sendByResend(
@@ -337,10 +352,11 @@ async function procesarMensajeCola(
     mail.html,
     { function: MODULE, tipo: row.tipo, queue_id: row.id },
     row.idempotency_key,
+    replyTo,
   );
 
   if (send.ok) {
-    await finalizarBienvenida(supabase, row, {
+    await finalizarMensaje(supabase, row, {
       estado: "enviado",
       motivo: null,
       proveedor: "aceptado",
@@ -357,12 +373,13 @@ async function procesarMensajeCola(
         motivo: "error_temporal",
         updated_at: new Date().toISOString(),
       })
-      .eq("id", row.id);
+      .eq("id", row.id)
+      .eq("estado", "procesando");
     await supabase.from("liga_notificaciones_log").insert({
       liga_id: row.liga_id,
       liga_jugador_id: row.liga_jugador_id,
       queue_id: row.id,
-      tipo: "bienvenida",
+      tipo: TIPOS_LOG.has(row.tipo) ? row.tipo : "bienvenida",
       estado: "pendiente",
       attempts: row.attempts,
       motivo: "error_temporal",
@@ -371,7 +388,7 @@ async function procesarMensajeCola(
     return "error";
   }
 
-  await finalizarBienvenida(supabase, row, {
+  await finalizarMensaje(supabase, row, {
     estado: "error",
     motivo: clase === "temporal" ? "error_temporal" : "error_permanente",
     proveedor: null,
@@ -379,15 +396,22 @@ async function procesarMensajeCola(
   return "error";
 }
 
-async function finalizarBienvenida(
+async function finalizarMensaje(
   supabase: ReturnType<typeof createCredentialClient>,
-  row: { id: string; liga_id: string; liga_jugador_id: string; attempts: number },
+  row: {
+    id: string;
+    liga_id: string;
+    liga_jugador_id: string;
+    attempts: number;
+    tipo?: string;
+  },
   result: {
     estado: string;
     motivo: string | null;
     proveedor: "aceptado" | "entregado" | null;
   },
 ) {
+  const tipo = row.tipo && TIPOS_LOG.has(row.tipo) ? row.tipo : "bienvenida";
   await supabase
     .from("liga_notificaciones_queue")
     .update({
@@ -396,136 +420,17 @@ async function finalizarBienvenida(
       processed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq("id", row.id);
+    .eq("id", row.id)
+    .in("estado", ["pendiente", "procesando"]);
 
   await supabase.from("liga_notificaciones_log").insert({
     liga_id: row.liga_id,
     liga_jugador_id: row.liga_jugador_id,
     queue_id: row.id,
-    tipo: "bienvenida",
+    tipo,
     estado: result.estado,
     attempts: row.attempts,
     motivo: result.motivo,
     proveedor_estado: result.proveedor,
   });
-}
-
-async function procesarVerificacion(
-  supabase: ReturnType<typeof createCredentialClient>,
-  item: {
-    solicitud_id: string;
-    liga_id: string;
-    email_normalizado: string;
-    token_claro: string;
-    idempotency_key: string;
-  },
-): Promise<{ escrito: boolean; kind: "aceptado" | "omitido" | "error" }> {
-  if (isFakeOrInvalidEmail(item.email_normalizado)) {
-    await supabase
-      .from("liga_notificaciones_verificacion_outbox")
-      .update({ estado: "omitido" })
-      .eq("solicitud_id", item.solicitud_id)
-      .eq("estado", "pendiente");
-    await supabase
-      .from("liga_notificaciones_verificacion_envio")
-      .delete()
-      .eq("solicitud_id", item.solicitud_id);
-    return { escrito: true, kind: "omitido" };
-  }
-
-  const { data: solicitud } = await supabase
-    .from("liga_notificaciones_verificaciones")
-    .select("liga_jugador_id, estado, expires_at")
-    .eq("id", item.solicitud_id)
-    .maybeSingle();
-
-  if (!solicitud || solicitud.estado !== "pendiente") {
-    await supabase
-      .from("liga_notificaciones_verificacion_envio")
-      .delete()
-      .eq("solicitud_id", item.solicitud_id);
-    return { escrito: true, kind: "omitido" };
-  }
-
-  if (Date.parse(String(solicitud.expires_at)) <= Date.now()) {
-    await supabase
-      .from("liga_notificaciones_verificacion_outbox")
-      .update({ estado: "omitido" })
-      .eq("solicitud_id", item.solicitud_id);
-    await supabase
-      .from("liga_notificaciones_verificacion_envio")
-      .delete()
-      .eq("solicitud_id", item.solicitud_id);
-    return { escrito: true, kind: "omitido" };
-  }
-
-  const { data: liga } = await supabase
-    .from("ligas")
-    .select("nombre")
-    .eq("id", item.liga_id)
-    .maybeSingle();
-  const { data: jugador } = await supabase
-    .from("liga_jugadores")
-    .select("nombre")
-    .eq("id", solicitud.liga_jugador_id)
-    .maybeSingle();
-
-  const mail = renderVerificacionWorker({
-    clubNombre: "Riviera Open",
-    ligaNombre: String(liga?.nombre ?? "tu liga"),
-    jugadorNombre: (jugador?.nombre as string | null) ?? null,
-    verificarUrl: `${publicBase()}/public/verificar-correo?t=${item.token_claro}`,
-  });
-
-  const send = await sendByResend(
-    item.email_normalizado,
-    mail.asunto,
-    mail.text,
-    mail.html,
-    { function: MODULE, tipo: "verificacion", solicitud_id: item.solicitud_id },
-    item.idempotency_key,
-  );
-
-  if (send.ok) {
-    await supabase
-      .from("liga_notificaciones_verificacion_outbox")
-      .update({ estado: "enviado" })
-      .eq("solicitud_id", item.solicitud_id);
-    await supabase.from("liga_notificaciones_log").insert({
-      liga_id: item.liga_id,
-      liga_jugador_id: solicitud.liga_jugador_id,
-      tipo: "verificacion",
-      estado: "enviado",
-      attempts: 1,
-      motivo: null,
-      proveedor_estado: "aceptado",
-    });
-    await supabase
-      .from("liga_notificaciones_verificacion_envio")
-      .delete()
-      .eq("solicitud_id", item.solicitud_id);
-    return { escrito: true, kind: "aceptado" };
-  }
-
-  await supabase
-    .from("liga_notificaciones_verificacion_outbox")
-    .update({ estado: "error" })
-    .eq("solicitud_id", item.solicitud_id);
-  await supabase.from("liga_notificaciones_log").insert({
-    liga_id: item.liga_id,
-    liga_jugador_id: solicitud.liga_jugador_id,
-    tipo: "verificacion",
-    estado: "error",
-    attempts: 1,
-    motivo: "error_permanente",
-    proveedor_estado: null,
-  });
-  // Conserva el token para reintento manual del worker en el próximo tick si es temporal.
-  if (classifyResendFailure(send.status) === "permanente") {
-    await supabase
-      .from("liga_notificaciones_verificacion_envio")
-      .delete()
-      .eq("solicitud_id", item.solicitud_id);
-  }
-  return { escrito: true, kind: "error" };
 }

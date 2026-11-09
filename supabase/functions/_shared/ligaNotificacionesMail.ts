@@ -82,30 +82,39 @@ export function renderComunicacionWorker(input: {
   ligaNombre: string;
   asunto: string;
   cuerpoTexto: string;
+  /** Solo si hay un buzón real. Nunca invita a responder a noreply. */
+  replyTo?: string | null;
 }): { asunto: string; html: string; text: string } {
   const club = input.clubNombre.trim() || "Riviera Open";
   const liga = input.ligaNombre.trim() || "tu liga";
   const asunto = input.asunto.trim().slice(0, 180) || `Mensaje de ${liga}`;
   const cuerpo = input.cuerpoTexto.trim().slice(0, 8000);
+  const reply = input.replyTo?.trim() ?? "";
+  const cierre = reply
+    ? `Puedes responder a este mensaje.`
+    : `Este aviso no recibe respuestas por correo. El club administra las comunicaciones de la liga.`;
   const paragraphs = cuerpo
     .split(/\n{2,}/)
     .map((block) => block.trim())
     .filter(Boolean)
     .map((block) => {
       const lines = escapeHtml(block).replace(/\n/g, "<br />");
-      return `<p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:#f5f5f5;">${lines}</p>`;
+      return `<p style="margin:0 0 16px;font-size:16px;line-height:1.55;color:#141414;">${lines}</p>`;
     })
     .join("");
-  const html = `<!DOCTYPE html><html lang="es"><body style="margin:0;background:#050505;color:#f5f5f5;font-family:Arial,Helvetica,sans-serif;">
-<div style="max-width:600px;margin:0 auto;padding:24px;background:#0c0c0c;border:1px solid #2a2a2a;">
-<p style="letter-spacing:0.12em;color:#a3a3a3;font-size:13px;">${escapeHtml(club)}</p>
-<h1 style="color:#fff;font-size:24px;">${escapeHtml(asunto)}</h1>
+  const html = `<!DOCTYPE html><html lang="es"><body style="margin:0;background:#f3f1ec;color:#141414;font-family:Georgia,'Times New Roman',serif;">
+<div style="max-width:640px;margin:0 auto;padding:28px 16px;">
+<div style="background:#0c0c0c;color:#f7f4ee;padding:22px 28px;">
+<p style="margin:0;letter-spacing:0.16em;font-size:12px;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(club)}</p>
+<p style="margin:8px 0 0;font-size:13px;font-family:Arial,Helvetica,sans-serif;color:#c8c2b8;">${escapeHtml(liga)}</p>
+</div>
+<div style="background:#fffdf8;padding:28px;border:1px solid #e4dfd4;">
+<h1 style="margin:0 0 18px;font-size:26px;line-height:1.25;color:#111;">${escapeHtml(asunto)}</h1>
 ${paragraphs || `<p style="margin:0;"> </p>`}
-<p style="color:#a3a3a3;font-size:12px;">Comunicación deportiva de ${escapeHtml(liga)}. Riviera Open.</p>
+<p style="margin:20px 0 0;font-size:12px;line-height:1.45;font-family:Arial,Helvetica,sans-serif;color:#6b6560;">${escapeHtml(cierre)}</p>
+</div>
 </div></body></html>`;
-  const text = [club, asunto, cuerpo, `Comunicación deportiva de ${liga}.`].join(
-    "\n\n",
-  );
+  const text = [club, liga, asunto, cuerpo, cierre].join("\n\n");
   return { asunto, html, text };
 }
 

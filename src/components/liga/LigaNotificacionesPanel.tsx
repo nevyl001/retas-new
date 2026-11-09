@@ -7,6 +7,7 @@ import type {
   LigaJugadorPoolItem,
   LigaSustitucion,
 } from "../../lib/liga/types";
+import { puedeDocumentarAutorizacionVerbal } from "../../lib/liga/notificaciones/envioManualGate";
 import {
   contarDestinatarios,
   estadoVisual,
@@ -295,6 +296,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     PLANTILLAS_COMUNICACION[0].cuerpo
   );
   const [loteEnvioId, setLoteEnvioId] = useState<string | null>(null);
+  const [consentSeleccion, setConsentSeleccion] = useState<Record<string, boolean>>({});
+  const [declaracionVerbal, setDeclaracionVerbal] = useState(false);
+  const [guardandoConsentLote, setGuardandoConsentLote] = useState(false);
 
   useEffect(() => {
     let activo = true;
@@ -657,6 +661,66 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           origen: evidencia.consentimientoOrigen,
           registradoAt: evidencia.consentimientoRegistradoAt,
         })
+    );
+  }
+
+  async function documentarVerbalSeleccionados() {
+    if (!puedeEscribir || guardandoConsentLote) return;
+    if (!declaracionVerbal) {
+      confirmar(
+        "Marca la declaración: solo documenta autorizaciones verbales que realmente ocurrieron."
+      );
+      return;
+    }
+    const elegidos = filas.filter(
+      (fila) =>
+        consentSeleccion[fila.jugadorId] &&
+        puedeDocumentarAutorizacionVerbal(fila.preferencia?.consentimiento_estado)
+    );
+    const omitidos = filas.filter(
+      (fila) =>
+        consentSeleccion[fila.jugadorId] &&
+        !puedeDocumentarAutorizacionVerbal(fila.preferencia?.consentimiento_estado)
+    ).length;
+    if (elegidos.length === 0) {
+      confirmar(
+        omitidos
+          ? "Ninguno se documentó. Las revocaciones y autorizaciones ya registradas no se sobrescriben."
+          : "Selecciona jugadores sin autorización documentada."
+      );
+      return;
+    }
+    const registradoAt = new Date().toISOString();
+    setGuardandoConsentLote(true);
+    let ok = 0;
+    for (const fila of elegidos) {
+      const resultado = await registrarConsentimientoJugador({
+        ligaId,
+        jugadorId: fila.jugadorId,
+        rivieraJugadorId: fila.rivieraJugadorId,
+        origen: "manifestacion_presencial",
+        registradoAt,
+      });
+      if (resultado.ok) {
+        ok += 1;
+        reemplazarPreferencia({
+          liga_jugador_id: fila.jugadorId,
+          riviera_jugador_id: fila.rivieraJugadorId,
+          admin_habilitado: fila.preferencia?.admin_habilitado ?? false,
+          consentimiento_estado: "autorizado",
+          consentimiento_origen: "manifestacion_presencial",
+          consentimiento_registrado_at: registradoAt,
+          correo_verificado: fila.preferencia?.correo_verificado ?? false,
+          correo_verificacion_origen: fila.preferencia?.correo_verificacion_origen ?? null,
+          correo_verificado_email: fila.preferencia?.correo_verificado_email ?? null,
+        });
+      }
+    }
+    setGuardandoConsentLote(false);
+    setDeclaracionVerbal(false);
+    setConsentSeleccion({});
+    confirmar(
+      `Autorización verbal documentada en ${ok} jugador${ok === 1 ? "" : "es"}. ${omitidos} no se modificaron.`
     );
   }
 
@@ -1052,10 +1116,36 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               />
               <span>Para envío</span>
             </label>
-          ) : null}
+          ) : (
+            <p className="liga-notificaciones__hint">
+              {ESTADO_GRID_LABEL[fila.visual]}
+              {fila.visual !== "habilitado"
+                ? ". Falta correo válido, autorización o el interruptor."
+                : ""}
+            </p>
+          )}
         </div>
         <div className="liga-notificaciones__card-foot">
           {switchNotificaciones(fila)}
+          {puedeDocumentarAutorizacionVerbal(
+            fila.preferencia?.consentimiento_estado
+          ) ? (
+            <label className="liga-notificaciones__pick-row">
+              <input
+                type="checkbox"
+                checked={Boolean(consentSeleccion[fila.jugadorId])}
+                disabled={!puedeEscribir}
+                aria-label={`Incluir a ${fila.nombre} en autorización verbal`}
+                onChange={(event) =>
+                  setConsentSeleccion((prev) => ({
+                    ...prev,
+                    [fila.jugadorId]: event.target.checked,
+                  }))
+                }
+              />
+              <span>Autorización verbal</span>
+            </label>
+          ) : null}
           <button
             type="button"
             className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
@@ -1208,7 +1298,6 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               {conteo.seleccionados} seleccionados, {conteo.excluidos} excluidos
             </span>
           </p>
-
           {visibles.length === 0 ? (
             <div className="liga-notificaciones__empty">
               <p className="liga-notificaciones__empty-title">
@@ -1266,6 +1355,36 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               ) : null}
             </>
           )}
+
+          <div className="liga-notificaciones__consent-box">
+            <label className="liga-notificaciones__pick-row">
+              <input
+                type="checkbox"
+                checked={declaracionVerbal}
+                disabled={!puedeEscribir}
+                onChange={(event) => setDeclaracionVerbal(event.target.checked)}
+              />
+              <span>
+                Declaro que los jugadores marcados autorizaron verbalmente las
+                comunicaciones deportivas de esta liga.
+              </span>
+            </label>
+            <button
+              type="button"
+              className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
+              disabled={!puedeEscribir || guardandoConsentLote}
+              onClick={() => void documentarVerbalSeleccionados()}
+            >
+              {guardandoConsentLote
+                ? "Guardando…"
+                : "Registrar autorización verbal"}
+            </button>
+            <p className="liga-notificaciones__hint">
+              No modifica autorizaciones revocadas ni las que ya están documentadas.
+              El interruptor sigue siendo independiente: hay que activarlo para que
+              queden listos para enviar.
+            </p>
+          </div>
 
           {gestionFila && typeof document !== "undefined"
             ? createPortal(

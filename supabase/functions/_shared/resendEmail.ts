@@ -51,6 +51,7 @@ export async function sendByResend(
   html?: string,
   context?: Record<string, unknown>,
   idempotencyKey?: string | null,
+  replyTo?: string | null,
 ): Promise<ResendSendResult> {
   const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
   const from = resolveResendFrom();
@@ -71,13 +72,17 @@ export async function sendByResend(
     return { ok: false, status: 0, responseBody: err, error: err };
   }
 
-  const payload = {
+  const reply = replyTo?.trim() ?? "";
+  const payload: Record<string, unknown> = {
     from,
     to: [to],
     subject,
     html: html ?? message.replace(/\n/g, "<br/>"),
     text: message,
   };
+  if (reply && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reply)) {
+    payload.reply_to = reply;
+  }
 
   const headers: Record<string, string> = {
     Authorization: `Bearer ${apiKey}`,
