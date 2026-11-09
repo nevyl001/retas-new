@@ -96,6 +96,7 @@ describe("LigaNotificacionesPanel", () => {
   let root: Root;
 
   beforeEach(() => {
+    localStorage.removeItem("ro-liga-plantillas:liga-1");
     window.matchMedia = jest.fn().mockImplementation((query: string) => ({
       matches: false,
       media: query,
@@ -1305,5 +1306,41 @@ describe("LigaNotificacionesPanel", () => {
     const filas = container.querySelectorAll(".liga-notificaciones__history-row");
     expect(filas).toHaveLength(3);
     expect(container.textContent).not.toContain("cola");
+  });
+
+  it("guarda el texto editado y lo vuelve a abrir en la misma plantilla", async () => {
+    await renderPanel();
+    await abrirRedactar();
+    const asunto = container.querySelector("#asunto-correo") as HTMLInputElement;
+    const cuerpo = container.querySelector("#cuerpo-correo") as HTMLTextAreaElement;
+    const escribir = (elemento: HTMLInputElement | HTMLTextAreaElement, valor: string) => {
+      const proto =
+        elemento instanceof HTMLTextAreaElement
+          ? HTMLTextAreaElement.prototype
+          : HTMLInputElement.prototype;
+      Object.getOwnPropertyDescriptor(proto, "value")?.set?.call(elemento, valor);
+      elemento.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    await act(async () => {
+      escribir(asunto, "Aviso de la semana");
+      escribir(cuerpo, "Hola {{nombre}},\n\nEste es mi texto.");
+    });
+    const guardar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "GUARDAR PLANTILLA"
+    );
+    await act(async () => {
+      guardar?.click();
+    });
+    expect(container.textContent).toContain("Plantilla guardada");
+    act(() => {
+      root.unmount();
+    });
+    root = createRoot(container);
+    await renderPanel();
+    await abrirRedactar();
+    const asuntoOtraVez = container.querySelector(
+      "#asunto-correo"
+    ) as HTMLInputElement;
+    expect(asuntoOtraVez.value).toBe("Aviso de la semana");
   });
 });

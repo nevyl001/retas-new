@@ -24,10 +24,13 @@ import {
 } from "../../lib/liga/notificaciones/resolveInscritoContacto";
 import {
   PLANTILLAS_COMUNICACION,
-  plantillaPorId,
   renderComunicacionEmail,
   type TipoComunicacionLiga,
 } from "../../lib/liga/notificaciones/comunicacionTemplates";
+import {
+  guardarPlantillaLiga,
+  plantillaParaRedactar,
+} from "../../lib/liga/notificaciones/plantillasGuardadas";
 import { resolveLigaMailBranding } from "../../lib/liga/notificaciones/ligaMailBranding";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
@@ -428,10 +431,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const [plantillaId, setPlantillaId] =
     useState<TipoComunicacionLiga>("bienvenida");
   const [asuntoDraft, setAsuntoDraft] = useState(
-    PLANTILLAS_COMUNICACION[0].asunto
+    () => plantillaParaRedactar(ligaId, "bienvenida").asunto
   );
   const [cuerpoDraft, setCuerpoDraft] = useState(
-    PLANTILLAS_COMUNICACION[0].cuerpo
+    () => plantillaParaRedactar(ligaId, "bienvenida").cuerpo
   );
   const [loteEnvioId, setLoteEnvioId] = useState<string | null>(null);
   const [selectorAbierto, setSelectorAbierto] = useState(false);
@@ -670,6 +673,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   );
 
   useEffect(() => {
+    const inicial = plantillaParaRedactar(ligaId, "bienvenida");
+    setPlantillaId("bienvenida");
+    setAsuntoDraft(inicial.asunto);
+    setCuerpoDraft(inicial.cuerpo);
     setEnvioSeleccion({});
     setEnvioPaso("idle");
     setLoteEnvioId(null);
@@ -825,11 +832,25 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   }
 
   function aplicarPlantilla(id: TipoComunicacionLiga) {
-    const plantilla = plantillaPorId(id);
+    const plantilla = plantillaParaRedactar(ligaId, id);
     setPlantillaId(plantilla.id);
     setAsuntoDraft(plantilla.asunto);
     setCuerpoDraft(plantilla.cuerpo);
     setEnvioPaso("idle");
+  }
+
+  function guardarPlantillaActual() {
+    const ok = guardarPlantillaLiga(
+      ligaId,
+      plantillaId,
+      asuntoDraft,
+      cuerpoDraft
+    );
+    confirmar(
+      ok
+        ? "Plantilla guardada. La próxima vez se abre con este texto."
+        : "No se pudo guardar la plantilla en este navegador."
+    );
   }
 
   async function refrescarHistorial() {
@@ -1659,6 +1680,14 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                 onChange={(event) => setCuerpoDraft(event.target.value)}
               />
             </label>
+            <button
+              type="button"
+              className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
+              disabled={!asuntoDraft.trim() || !cuerpoDraft.trim()}
+              onClick={guardarPlantillaActual}
+            >
+              GUARDAR PLANTILLA
+            </button>
             <p className="liga-notificaciones__hint">
               Variables: {"{{nombre}}"}, {"{{liga}}"}, {"{{club}}"}. Se escapan
               al renderizar. Sin HTML libre.
