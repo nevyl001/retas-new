@@ -4,6 +4,7 @@ import { useClubExperience } from "../../club-experience/ClubExperienceContext";
 import type {
   LigaEquipo,
   LigaInscripcion,
+  LigaJornada,
   LigaJugadorPoolItem,
   LigaSustitucion,
 } from "../../lib/liga/types";
@@ -24,8 +25,10 @@ import {
 } from "../../lib/liga/notificaciones/resolveInscritoContacto";
 import {
   PLANTILLAS_COMUNICACION,
+  jornadaEnCursoParaCorreo,
   renderComunicacionEmail,
   resolverVariablesComunicacion,
+  rutaPublicaJornada,
   type TipoComunicacionLiga,
 } from "../../lib/liga/notificaciones/comunicacionTemplates";
 import {
@@ -67,6 +70,8 @@ import { useMobileViewport } from "../../hooks/useMobileViewport";
 import { useRetryableImage } from "../../hooks/useRetryableImage";
 import { getJugadorInitials } from "../jugadores/JugadorAvatar";
 import "./liga-notificaciones.css";
+
+const JORNADAS_VACIAS: ReadonlyArray<Pick<LigaJornada, "numero" | "estado">> = [];
 
 type Area = "destinatarios" | "bienvenida" | "historial" | "configuracion";
 type Filtro = "todos" | "habilitados" | "pendientes" | "excluidos";
@@ -404,6 +409,7 @@ export interface LigaNotificacionesPanelProps {
   equipos: LigaEquipo[];
   pool: LigaJugadorPoolItem[];
   sustituciones: LigaSustitucion[];
+  jornadas?: ReadonlyArray<Pick<LigaJornada, "numero" | "estado">>;
 }
 
 export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = ({
@@ -413,6 +419,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   equipos,
   pool,
   sustituciones,
+  jornadas = JORNADAS_VACIAS,
 }) => {
   const isMobileGrid = useMobileViewport(679);
   const { manifest } = useClubExperience();
@@ -475,6 +482,19 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     "resultados" | "todas"
   >("resultados");
   const [vistaPrueba, setVistaPrueba] = useState(false);
+  const jornadaDestino = useMemo(
+    () => jornadaEnCursoParaCorreo(jornadas),
+    [jornadas]
+  );
+
+  function urlJornadaDestino(): string | null {
+    if (!jornadaDestino) return null;
+    const ruta = rutaPublicaJornada(ligaId, jornadaDestino.numero);
+    if (!ruta) return null;
+    const origen =
+      typeof window !== "undefined" ? window.location.origin : "https://appriviera.rivieraopen.com";
+    return `${origen}${ruta}`;
+  }
 
   useEffect(() => {
     let activo = true;
@@ -951,6 +971,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           fecha: fechaDraft.trim() || undefined,
           horario: horarioDraft.trim() || undefined,
         };
+        const jornadaUrl = urlJornadaDestino();
         const asuntoResuelto = renderComunicacionEmail({
           clubNombre,
           ligaNombre,
@@ -963,14 +984,24 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           fecha: fechaDraft,
           horario: horarioDraft,
           ligaUrl: canonicalLigaUrl,
+          jornadaUrl,
         }).subject;
         const cuerpoResuelto = resolverVariablesComunicacion(cuerpoDraft, varsComun);
+        const rutaJornada = jornadaDestino
+          ? rutaPublicaJornada(ligaId, jornadaDestino.numero)
+          : null;
+        const cuerpoParaEnviar =
+          plantillaId === "jornada" &&
+          rutaJornada &&
+          !cuerpoResuelto.includes("RESULTADOS_URL:")
+            ? `${cuerpoResuelto}\n\nRESULTADOS_URL:${rutaJornada}`
+            : cuerpoResuelto;
         const resultado = await solicitarComunicacionManual({
           ligaId,
           jugadorId: fila.jugadorId,
           tipo: plantillaId,
           asunto: asuntoResuelto,
-          cuerpo: cuerpoResuelto,
+          cuerpo: cuerpoParaEnviar,
           loteId,
         });
         const yaEstaba =
@@ -982,7 +1013,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           jugadoresLote.push({
             jugadorId: fila.jugadorId,
             asunto: asuntoResuelto,
-            cuerpo: cuerpoResuelto,
+            cuerpo: cuerpoParaEnviar,
           });
           if (resultado.encolado) {
             colaNueva.push({
@@ -1543,6 +1574,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           typeof window !== "undefined"
             ? `${window.location.origin}/public/liga/${ligaId}`
             : `/public/liga/${ligaId}`,
+        jornadaUrl: urlJornadaDestino(),
       }).html
     : "";
 
@@ -1842,6 +1874,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             </label>
 
             {plantillaId === "jornada" ? (
+              <>
               <div
                 className="liga-notificaciones__jornada-fields"
                 style={{
@@ -1874,6 +1907,14 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   />
                 </label>
               </div>
+              <p className="liga-notificaciones__hint">
+                {jornadaDestino
+                  ? `El botón abre la Jornada ${jornadaDestino.numero}${
+                      jornadaDestino.estado === "in_progress" ? ", en curso." : "."
+                    }`
+                  : "El botón se activa cuando haya una jornada en curso o próxima."}
+              </p>
+              </>
             ) : null}
 
             <label className="liga-notificaciones__field" htmlFor="cuerpo-correo">
@@ -1982,13 +2023,6 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                 <div className="liga-notificaciones__action-bar">
                   <button
                     type="button"
-                    className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
-                    onClick={abrirSelectorDestinatarios}
-                  >
-                    SELECCIONAR DESTINATARIOS
-                  </button>
-                  <button
-                    type="button"
                     className="liga-notificaciones__btn liga-notificaciones__btn--primary"
                     disabled={
                       !puedeEscribir ||
@@ -2001,11 +2035,6 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   >
                     REVISAR CORREO
                   </button>
-                  {incluidosEnvio.length === 0 ? (
-                    <p className="liga-notificaciones__hint">
-                      Selecciona al menos un jugador listo para enviar.
-                    </p>
-                  ) : null}
                 </div>
               )}
             </div>

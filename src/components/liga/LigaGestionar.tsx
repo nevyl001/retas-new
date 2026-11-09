@@ -1690,6 +1690,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
               equipos={detalle.equipos}
               pool={jugadoresPool}
               sustituciones={sustituciones}
+              jornadas={detalle.jornadas}
             />
           </React.Suspense>
         </ModeSectionPanel>

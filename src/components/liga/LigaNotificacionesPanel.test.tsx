@@ -448,6 +448,7 @@ describe("LigaNotificacionesPanel", () => {
     await renderPanel();
     await abrirRedactar();
     expect(container.textContent).toContain("+ SELECCIONAR JUGADORES");
+    expect(container.textContent).not.toContain("SELECCIONAR DESTINATARIOS");
     expect(container.textContent).toContain("REVISAR CORREO");
     const revisarAntes = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent === "REVISAR CORREO"
@@ -473,6 +474,85 @@ describe("LigaNotificacionesPanel", () => {
     expect(mockEncolar.mock.calls[0][0].jugadorId).toBe("jug-1");
     expect(container.textContent).toContain("Pendiente de procesamiento");
     expect(container.textContent).not.toContain("Correo enviado");
+  });
+
+  it("el botón del correo abre la jornada en curso y hay un solo selector", async () => {
+    const mockEncolar = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ).solicitarComunicacionManual as jest.Mock;
+    mockEncolar.mockResolvedValue({ ok: true, encolado: true, motivo: null });
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: false,
+      preferencias: [preferenciaLista("jug-1")],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await act(async () => {
+      root.render(
+        <LigaNotificacionesPanel
+          ligaId="liga-1"
+          ligaNombre="Liga Nocturna"
+          inscripciones={inscripciones}
+          equipos={[]}
+          pool={pool}
+          sustituciones={[]}
+          jornadas={[
+            { numero: 2, estado: "completed" },
+            { numero: 3, estado: "in_progress" },
+            { numero: 4, estado: "upcoming" },
+          ]}
+        />
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await abrirRedactar();
+    const selectores = Array.from(container.querySelectorAll("button")).filter(
+      (button) => button.textContent === "+ SELECCIONAR JUGADORES"
+    );
+    expect(selectores).toHaveLength(1);
+    const plantilla = container.querySelector(
+      "#plantilla-correo"
+    ) as HTMLSelectElement;
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLSelectElement.prototype,
+      "value"
+    )?.set;
+    await act(async () => {
+      setter?.call(plantilla, "jornada");
+      plantilla.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    const frame = container.querySelector("iframe");
+    expect(frame?.getAttribute("srcdoc")).toContain(
+      "/public/liga/liga-1/jornada/3"
+    );
+    expect(frame?.getAttribute("srcdoc")).toContain("VER MI JORNADA");
+    expect(container.textContent).toContain("El botón abre la Jornada 3, en curso.");
+    await marcarEnSelector("Saúl Moreno de la Torre del Valle");
+    const revisar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "REVISAR CORREO"
+    );
+    await act(async () => {
+      revisar?.click();
+    });
+    const enviar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "CONFIRMAR Y ENVIAR A 1 JUGADOR"
+    );
+    await act(async () => {
+      enviar?.click();
+      await Promise.resolve();
+    });
+    expect(mockEncolar.mock.calls[0][0].cuerpo).toContain(
+      "RESULTADOS_URL:/public/liga/liga-1/jornada/3"
+    );
   });
 
   it("C. volver a editar no encola", async () => {

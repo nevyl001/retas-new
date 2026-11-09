@@ -165,7 +165,7 @@ Deno.test("8. Render de Próxima Jornada en worker (tarjeta estructurada, botón
     ligaNombre: "Liga 5ta Advance",
     asunto: "¡Tu próxima jornada te espera! — Liga 5ta Advance",
     cuerpoTexto:
-      "Hola Edgardo T,\n\n¡La emoción continúa en Liga 5ta Advance!\n\nUna nueva jornada está por comenzar.\n\nFecha: Sábado 15 de Noviembre\nHorario: 10:00 AM\nSede: Hack Pádel",
+      "Hola Edgardo T,\n\n¡La emoción continúa en Liga 5ta Advance!\n\nUna nueva jornada está por comenzar.\n\nFecha: Sábado 15 de Noviembre\nHorario: 10:00 AM\nSede: Hack Pádel\n\nRESULTADOS_URL:/public/liga/liga-123/jornada/4",
     tipo: "jornada",
     ligaUrl: "https://appriviera.rivieraopen.com/public/liga/liga-123",
   });
@@ -178,7 +178,11 @@ Deno.test("8. Render de Próxima Jornada en worker (tarjeta estructurada, botón
   assertStringIncludes(mail.html, "SEDE");
   assertStringIncludes(mail.html, "Hack Pádel");
   assertStringIncludes(mail.html, "VER MI JORNADA");
-  assertStringIncludes(mail.html, "https://appriviera.rivieraopen.com/public/liga/liga-123");
+  assertStringIncludes(
+    mail.html,
+    'href="https://appriviera.rivieraopen.com/public/liga/liga-123/jornada/4"'
+  );
+  assertEquals(mail.html.includes("RESULTADOS_URL"), false);
   assertStringIncludes(mail.html, "RIVIERA OPEN");
   assertStringIncludes(mail.html, "Compite. Juega limpio. Vive Riviera Open.");
   assertStringIncludes(mail.html, "Cada partido cuenta.");
@@ -186,6 +190,6 @@ Deno.test("8. Render de Próxima Jornada en worker (tarjeta estructurada, botón
   assertStringIncludes(mail.html, "max-width:640px");
 
   assertStringIncludes(mail.text, "TARJETA DE JORNADA:");
-  assertStringIncludes(mail.text, "VER MI JORNADA: https://appriviera.rivieraopen.com/public/liga/liga-123");
+  assertStringIncludes(mail.text, "VER MI JORNADA: https://appriviera.rivieraopen.com/public/liga/liga-123/jornada/4");
 });
 

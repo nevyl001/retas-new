@@ -610,10 +610,10 @@ export function renderComunicacionWorker(input: {
       label: "VER RESULTADOS DE LA JORNADA",
       url: resultadosUrl,
     };
-  } else if ((esJornada || input.tipo === "recordatorio_jornada") && (resultadosUrl || input.ligaUrl?.trim())) {
+  } else if ((esJornada || input.tipo === "recordatorio_jornada") && resultadosUrl) {
     actionButton = {
       label: input.tipo === "recordatorio_jornada" ? "VER LA JORNADA" : "VER MI JORNADA",
-      url: resultadosUrl || input.ligaUrl!.trim(),
+      url: resultadosUrl,
     };
   }
 

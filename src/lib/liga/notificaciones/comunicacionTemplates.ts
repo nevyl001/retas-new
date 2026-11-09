@@ -80,6 +80,42 @@ export function plantillaPorId(
   );
 }
 
+/** La jornada que el correo debe abrir: la que está en juego, o la próxima si ninguna empezó. */
+export function jornadaEnCursoParaCorreo(
+  jornadas: ReadonlyArray<{ numero: number; estado: string }>
+): { numero: number; estado: "in_progress" | "upcoming" } | null {
+  const validas = jornadas.filter(
+    (jornada) => Number.isInteger(jornada.numero) && jornada.numero >= 1
+  );
+  const enCurso = validas
+    .filter((jornada) => jornada.estado === "in_progress")
+    .sort((a, b) => a.numero - b.numero)[0];
+  if (enCurso) return { numero: enCurso.numero, estado: "in_progress" };
+  const proxima = validas
+    .filter((jornada) => jornada.estado === "upcoming")
+    .sort((a, b) => a.numero - b.numero)[0];
+  if (proxima) return { numero: proxima.numero, estado: "upcoming" };
+  return null;
+}
+
+export function rutaPublicaJornada(ligaId: string, numero: number): string | null {
+  if (!/^[A-Za-z0-9-]+$/.test(ligaId)) return null;
+  if (!Number.isInteger(numero) || numero < 1) return null;
+  return `/public/liga/${ligaId}/jornada/${numero}`;
+}
+
+export function esUrlPublicaJornada(url: string | null | undefined): boolean {
+  if (!url?.trim()) return false;
+  try {
+    const parsed = new URL(url.trim(), "https://appriviera.rivieraopen.com");
+    return (
+      parsed.protocol === "https:" || parsed.protocol === "http:"
+    ) && /^\/public\/liga\/[^/]+\/jornada\/\d+$/.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
 export interface VariablesComunicacion {
   nombre: string;
   liga: string;
@@ -152,6 +188,7 @@ export function renderComunicacionEmail(input: {
   fecha?: string | null;
   horario?: string | null;
   ligaUrl?: string | null;
+  jornadaUrl?: string | null;
   maxWidth?: number;
 }): { subject: string; html: string; text: string } {
   const vars: VariablesComunicacion = {
@@ -187,11 +224,12 @@ export function renderComunicacionEmail(input: {
     ? "Puedes responder directamente a este correo para comunicarte con el club."
     : "Este aviso no recibe respuestas por correo. El club administra las comunicaciones de la liga.";
 
+  const jornadaUrl = input.jornadaUrl?.trim() ?? "";
   let actionButton = null;
-  if (esJornada && input.ligaUrl?.trim()) {
+  if (esJornada && esUrlPublicaJornada(jornadaUrl)) {
     actionButton = {
       label: "VER MI JORNADA",
-      url: input.ligaUrl.trim(),
+      url: jornadaUrl,
     };
   }
 
