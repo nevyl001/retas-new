@@ -228,3 +228,21 @@
   max-width: 640px;
 }
 
+.liga-notificaciones__modo {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.liga-notificaciones__modo-legend {
+  padding: 0 4px;
+  font-size: 0.85rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--ro-text-primary);
+}
+

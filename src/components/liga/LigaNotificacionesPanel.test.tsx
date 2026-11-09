@@ -92,7 +92,11 @@ describe("LigaNotificacionesPanel", () => {
     mockCargar.mockResolvedValue({
       disponible: true,
       preferencias: [],
-      config: { bienvenida_pausada: true, modo_prueba: true },
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
       historial: [],
       cola: [],
       verificaciones: [],
@@ -197,7 +201,11 @@ describe("LigaNotificacionesPanel", () => {
           correo_verificado_email: null,
         },
       ],
-      config: { bienvenida_pausada: true, modo_prueba: true },
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
       historial: [],
       cola: [],
       verificaciones: [],

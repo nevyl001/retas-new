@@ -19,20 +19,12 @@ describe("ligaNotificacionesService", () => {
     rpc.mockReset();
   });
 
-  it("si la migración no está aplicada, la inscripción sigue sin lanzar", async () => {
-    rpc.mockResolvedValue({
-      data: null,
-      error: { message: "Could not find the function public.encolar_bienvenida_liga" },
-    });
-
+  it("Fase 1: la inscripción no auto-encola (manual / auto real apagado)", async () => {
     await expect(
       encolarBienvenidaTrasInscripcion("liga", "jugador")
     ).resolves.toBeUndefined();
+    expect(rpc).not.toHaveBeenCalled();
     expect(esEsquemaAusente("Could not find the function")).toBe(true);
-    expect(rpc).toHaveBeenCalledWith("encolar_bienvenida_liga", {
-      p_liga_id: "liga",
-      p_liga_jugador_id: "jugador",
-    });
   });
 
   it("un jugador no elegible no queda marcado como encolado", async () => {

@@ -305,6 +305,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const config: ConfigNotificacionLiga = snapshot?.config ?? {
     bienvenida_pausada: true,
     modo_prueba: true,
+    modo_operacion: "manual",
   };
   const preview = filas.find((fila) => fila.jugadorId === previewId) ?? filas[0] ?? null;
 
@@ -881,8 +882,51 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       {area === "configuracion" ? (
         <div className="liga-notificaciones__config">
           <p className="liga-notificaciones__count">
-            {listos} jugadores cumplen todas las condiciones. {filas.length - listos} están excluidos.
+            {listos} jugadores cumplen todas las condiciones.{" "}
+            {filas.length - listos} quedan excluidos.
           </p>
+
+          <fieldset className="liga-notificaciones__modo">
+            <legend className="liga-notificaciones__modo-legend">
+              Modo de operación
+            </legend>
+            <label className="liga-notificaciones__switch">
+              <input
+                type="radio"
+                name="liga-notif-modo"
+                checked={config.modo_operacion === "manual"}
+                disabled={guardandoId === "config" || !snapshot?.disponible}
+                onChange={() =>
+                  void cambiarConfig({
+                    ...config,
+                    modo_operacion: "manual",
+                  })
+                }
+              />
+              Manual (predeterminado)
+            </label>
+            <label className="liga-notificaciones__switch">
+              <input
+                type="radio"
+                name="liga-notif-modo"
+                checked={config.modo_operacion === "automatico"}
+                disabled={guardandoId === "config" || !snapshot?.disponible}
+                onChange={() =>
+                  void cambiarConfig({
+                    ...config,
+                    modo_operacion: "automatico",
+                  })
+                }
+              />
+              Automático (opcional)
+            </label>
+            <p className="liga-notificaciones__nota">
+              {config.modo_operacion === "manual"
+                ? "En Manual eliges destinatarios, revisas la vista previa y confirmas cada envío. No hay eventos automáticos por inscripciones."
+                : "Automático queda guardado, pero los envíos reales automáticos aún no están procesados. Hasta la activación expresa del producto no se encola ni se envía nada por eventos deportivos."}
+            </p>
+          </fieldset>
+
           <label className="liga-notificaciones__switch">
             <input
               type="checkbox"
@@ -916,6 +960,8 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             verificación al panel. Los tokens solo aparecen en entornos locales
             con simulación de servidor expresamente activada. Los envíos reales
             siguen apagados hasta una autorización aparte. No hay envío masivo.
+            Consentimiento, correo verificado, pausa e idempotencia aplican en
+            ambos modos.
           </p>
         </div>
       ) : null}

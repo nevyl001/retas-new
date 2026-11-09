@@ -1,0 +1,70 @@
+-- =============================================================================
+-- INSTALACIÓN DEFINITIVA FASE 1 — Centro de notificaciones de liga
+-- =============================================================================
+-- ÚNICA PROPUESTA DE DESPLIEGUE. No es un diagnóstico más.
+-- NO EJECUTAR escrituras hasta autorización explícita del dueño.
+-- =============================================================================
+--
+-- ESTADO CONOCIDO DE PRODUCTION (fingerprint + evidencia):
+--   * Objetos 0100 presentes; 0100 NO registrada en schema_migrations
+--   * 0101/0102/0103 ausentes
+--   * Única DIFF real: liga_notificaciones_preferencias_guardar() (cuerpo)
+--   * Las “FALTA” de firmas uuid fueron falso positivo PG16 (ya corregido en fingerprint)
+--   * Un Success de REVOKE/GRANT NO implica que el cuerpo del trigger se haya reemplazado
+--
+-- -----------------------------------------------------------------------------
+-- PASO 0 — Backup
+-- -----------------------------------------------------------------------------
+-- Dashboard Supabase → Database → Backups (o pg_dump del schema public).
+--
+-- -----------------------------------------------------------------------------
+-- PASO 1 — Conciliar la única DIFF (autorización requerida)
+-- -----------------------------------------------------------------------------
+-- Archivo: supabase/manual/0100_fix_preferencias_guardar_propuesta.sql
+-- Solo CREATE OR REPLACE de preferencias_guardar (consentimiento + verificación).
+-- Luego, lectura:
+--   SELECT prosecdef,
+--          array_to_string(proconfig,',') AS config,
+--          (prosrc ILIKE '%correo_sin_verificacion%') AS ok_correo,
+--          (prosrc ILIKE '%consentimiento_sin_evidencia%') AS ok_consent
+--   FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+--   WHERE n.nspname='public' AND p.proname='liga_notificaciones_preferencias_guardar';
+-- Esperado: prosecdef=false, config con search_path, ok_correo/ok_consent true.
+--
+-- Re-fingerprint (solo lectura): IDENTICA_PARA_BASELINE
+--
+-- -----------------------------------------------------------------------------
+-- PASO 2 — Baseline historial 0100 (sin recrear objetos)
+-- -----------------------------------------------------------------------------
+--   supabase migration repair --status applied 0100
+-- o INSERT solo de version='0100' en schema_migrations (si la tabla lo permite).
+--
+-- -----------------------------------------------------------------------------
+-- PASO 3 — Apply en bloque (orden fijo)
+-- -----------------------------------------------------------------------------
+--   0101_liga_notificaciones_verificacion_correo.sql  (tokens solo con GUC servidor)
+--   0102_liga_notificaciones_simulacion_servidor.sql  (reafirma)
+--   0103_liga_notificaciones_modo_operacion.sql       (manual/automatico)
+-- Preferible CLI (`supabase db push`) frente a pegar a medias en SQL Editor.
+--
+-- Precheck: current_setting('app.liga_notificaciones_simulacion', true) IS DISTINCT FROM 'true'
+--
+-- -----------------------------------------------------------------------------
+-- PASO 4 — Verificación post-apply (lectura)
+-- -----------------------------------------------------------------------------
+--   * versions 0100–0103 registradas
+--   * solicitar_verificacion usa liga_notificaciones_simulacion_activa; NO IF v_modo_prueba
+--   * anon/authenticated SIN EXECUTE en simulacion_activa
+--   * modo_operacion DEFAULT 'manual'
+--   * Torneo Express + notificaciones_eventos_queue intactos
+--   * Resend APAGADO / cero correos
+--
+-- -----------------------------------------------------------------------------
+-- PRODUCTO FASE 1 (frontend ya preparado en repo)
+-- -----------------------------------------------------------------------------
+--   Manual (default): selección, preview, confirmación explícita
+--   Automático (opt-in UI): persistible; NO procesa envíos reales hasta
+--     REACT_APP_LIGA_NOTIFICACIONES_AUTO=true (apagado en Production)
+--   Sin auto-encolado por inscripción mientras el flag esté off
+--
+-- NO activar Resend. NO GUC simulación=true en Production. NO push desde este plan.

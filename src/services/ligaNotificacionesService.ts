@@ -21,9 +21,18 @@ export interface VerificacionSolicitudRow {
   created_at: string;
 }
 
+export type ModoOperacionNotificaciones = "manual" | "automatico";
+
 export interface ConfigNotificacionLiga {
   bienvenida_pausada: boolean;
   modo_prueba: boolean;
+  /** manual = default. automatico = opt-in persistido; no dispara envíos reales en Fase 1. */
+  modo_operacion: ModoOperacionNotificaciones;
+}
+
+/** Automatización de envíos reales: apagada hasta activación expresa de producto. */
+export function automatizacionEnviosRealesDisponible(): boolean {
+  return process.env.REACT_APP_LIGA_NOTIFICACIONES_AUTO === "true";
 }
 
 export interface HistorialNotificacionRow {
@@ -61,7 +70,12 @@ export interface ResultadoNotificacion {
 const CONFIG_INICIAL: ConfigNotificacionLiga = {
   bienvenida_pausada: true,
   modo_prueba: true,
+  modo_operacion: "manual",
 };
+
+function normalizarModoOperacion(raw: unknown): ModoOperacionNotificaciones {
+  return raw === "automatico" ? "automatico" : "manual";
+}
 
 const VACIO: NotificacionesLigaSnapshot = {
   disponible: false,
@@ -108,7 +122,7 @@ export async function cargarNotificacionesLiga(
         .eq("liga_id", ligaId),
       supabase
         .from("liga_notificaciones_config")
-        .select("bienvenida_pausada, modo_prueba")
+        .select("bienvenida_pausada, modo_prueba, modo_operacion")
         .eq("liga_id", ligaId)
         .maybeSingle(),
       supabase
@@ -135,19 +149,43 @@ export async function cargarNotificacionesLiga(
         .limit(200),
     ]);
 
+  let configData = config.data as Record<string, unknown> | null;
+  let configError = config.error;
+
+  // 0100/0101 sin 0103: la columna modo_operacion puede no existir aún.
+  if (
+    configError &&
+    /modo_operacion/i.test(configError.message) &&
+    esEsquemaAusente(configError.message)
+  ) {
+    const retry = await supabase
+      .from("liga_notificaciones_config")
+      .select("bienvenida_pausada, modo_prueba")
+      .eq("liga_id", ligaId)
+      .maybeSingle();
+    configData = retry.data as Record<string, unknown> | null;
+    configError = retry.error;
+  }
+
   const errores = [
     preferencias.error,
-    config.error,
+    configError,
     historial.error,
     cola.error,
     verificaciones.error,
   ].flatMap((error) => (error ? [error.message] : []));
 
+  const configNormalizada: ConfigNotificacionLiga = {
+    bienvenida_pausada: configData?.bienvenida_pausada !== false,
+    modo_prueba: configData?.modo_prueba !== false,
+    modo_operacion: normalizarModoOperacion(configData?.modo_operacion),
+  };
+
   if (errores.some(esEsquemaAusente)) {
     // 0100 sin 0101: el panel de bienvenida sigue usable.
     if (
       !preferencias.error &&
-      !config.error &&
+      !configError &&
       !historial.error &&
       !cola.error &&
       verificaciones.error &&
@@ -163,7 +201,7 @@ export async function cargarNotificacionesLiga(
           correo_verificado_email:
             (row as PreferenciaNotificacionRow).correo_verificado_email ?? null,
         })),
-        config: (config.data as ConfigNotificacionLiga | null) ?? CONFIG_INICIAL,
+        config: configNormalizada,
         historial: (historial.data ?? []) as HistorialNotificacionRow[],
         cola: (cola.data ?? []) as ColaNotificacionRow[],
         verificaciones: [],
@@ -176,12 +214,10 @@ export async function cargarNotificacionesLiga(
     return { ...VACIO, disponible: true };
   }
 
-  const configRow = config.data as ConfigNotificacionLiga | null;
-
   return {
     disponible: true,
     preferencias: (preferencias.data ?? []) as PreferenciaNotificacionRow[],
-    config: configRow ?? CONFIG_INICIAL,
+    config: configNormalizada,
     historial: (historial.data ?? []) as HistorialNotificacionRow[],
     cola: (cola.data ?? []) as ColaNotificacionRow[],
     verificaciones: (verificaciones.data ?? []) as VerificacionSolicitudRow[],
@@ -416,15 +452,28 @@ export async function guardarConfigLiga(
   ligaId: string,
   config: ConfigNotificacionLiga
 ): Promise<ResultadoNotificacion> {
-  const { error } = await supabase.from("liga_notificaciones_config").upsert(
-    {
-      liga_id: ligaId,
-      bienvenida_pausada: config.bienvenida_pausada,
-      modo_prueba: config.modo_prueba,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "liga_id" }
-  );
+  const payloadBase = {
+    liga_id: ligaId,
+    bienvenida_pausada: config.bienvenida_pausada,
+    modo_prueba: config.modo_prueba,
+    updated_at: new Date().toISOString(),
+  };
+  const conModo = {
+    ...payloadBase,
+    modo_operacion: normalizarModoOperacion(config.modo_operacion),
+  };
+  let { error } = await supabase
+    .from("liga_notificaciones_config")
+    .upsert(conModo, { onConflict: "liga_id" });
+  if (
+    error &&
+    /modo_operacion/i.test(error.message) &&
+    esEsquemaAusente(error.message)
+  ) {
+    ({ error } = await supabase
+      .from("liga_notificaciones_config")
+      .upsert(payloadBase, { onConflict: "liga_id" }));
+  }
   if (error) {
     if (esEsquemaAusente(error.message)) {
       return { ok: false, motivo: "esquema_pendiente" };
@@ -458,12 +507,27 @@ export async function solicitarBienvenidaJugador(
   };
 }
 
-/** Tras una inscripción nueva. No lanza y no crea fila si el jugador no está listo. */
+/**
+ * Hook post-inscripción.
+ * Fase 1: MANUAL es el default y no hay auto-encolado por eventos deportivos.
+ * AUTOMÁTICO solo encola si el producto activó envíos reales
+ * (REACT_APP_LIGA_NOTIFICACIONES_AUTO=true) y la liga guardó modo_operacion=automatico.
+ */
 export async function encolarBienvenidaTrasInscripcion(
   ligaId: string,
   jugadorId: string
 ): Promise<void> {
+  if (!automatizacionEnviosRealesDisponible()) {
+    return;
+  }
   try {
+    const snapshot = await cargarNotificacionesLiga(ligaId);
+    if (!snapshot.disponible || snapshot.config.modo_operacion !== "automatico") {
+      return;
+    }
+    if (snapshot.config.bienvenida_pausada) {
+      return;
+    }
     await solicitarBienvenidaJugador(ligaId, jugadorId);
   } catch {
     aviso("no_disponible");

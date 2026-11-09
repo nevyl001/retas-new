@@ -4,6 +4,11 @@
 -- Depende de 0100 (tablas liga_notificaciones_* y liga_notificacion_evaluar_correo).
 -- No llama a Resend. No toca Torneo Express. No altera resultados ni jornadas.
 -- La verificación acredita posesión del correo; no es consentimiento ni habilitación.
+--
+-- SEGURIDAD (Production): el token en claro / enlace_simulado NUNCA vuelve al
+-- cliente por modo_prueba de la liga. Solo si el servidor fijó
+-- app.liga_notificaciones_simulacion=true (GUC). Así 0101 sola no filtra tokens
+-- aunque 0102 aún no se haya aplicado.
 
 ALTER TABLE public.liga_notificaciones_preferencias
   ADD COLUMN IF NOT EXISTS correo_verificacion_origen text
@@ -154,6 +159,23 @@ BEGIN
 END;
 $$;
 
+-- Helper de simulación de servidor (también definida en 0102; CREATE OR REPLACE idempotente).
+-- El organizador / modo_prueba de la liga NO pueden activarla.
+CREATE OR REPLACE FUNCTION public.liga_notificaciones_simulacion_activa()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SET search_path = public, pg_temp
+AS $$
+  SELECT coalesce(
+    nullif(current_setting('app.liga_notificaciones_simulacion', true), ''),
+    ''
+  ) = 'true';
+$$;
+
+COMMENT ON FUNCTION public.liga_notificaciones_simulacion_activa() IS
+  'true solo si el servidor fijó app.liga_notificaciones_simulacion=true. El organizador no puede activarlo.';
+
 CREATE OR REPLACE FUNCTION public.solicitar_verificacion_correo_liga(
   p_liga_id uuid,
   p_liga_jugador_id uuid
@@ -173,14 +195,18 @@ DECLARE
   v_correo_eval text;
   v_email text;
   v_norm text;
-  v_modo_prueba boolean := true;
   v_recientes integer;
   v_ultima timestamptz;
   v_token text;
   v_hash text;
   v_id uuid;
   v_expires timestamptz := now() + interval '24 hours';
-  v_base text := coalesce(nullif(current_setting('app.public_url', true), ''), 'https://appriviera.rivieraopen.com');
+  v_base text := coalesce(
+    nullif(current_setting('app.public_url', true), ''),
+    'https://appriviera.rivieraopen.com'
+  );
+  v_sim boolean := public.liga_notificaciones_simulacion_activa();
+  v_outbox_estado text := CASE WHEN v_sim THEN 'simulado' ELSE 'omitido' END;
 BEGIN
   IF v_caller IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'motivo', 'anon');
@@ -243,12 +269,6 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'motivo', 'ya_verificado');
   END IF;
 
-  -- Sin fila de config, modo_prueba queda true (simulación).
-  SELECT COALESCE(
-    (SELECT modo_prueba FROM public.liga_notificaciones_config WHERE liga_id = p_liga_id),
-    true
-  ) INTO v_modo_prueba;
-
   SELECT count(*)::integer, max(created_at)
     INTO v_recientes, v_ultima
   FROM public.liga_notificaciones_verificaciones
@@ -288,30 +308,37 @@ BEGIN
     v_id,
     p_liga_id,
     public.liga_notificacion_enmascarar_correo(v_norm),
-    'simulado'
+    v_outbox_estado
   );
 
   INSERT INTO public.liga_notificaciones_log (
     liga_id, liga_jugador_id, tipo, estado, attempts, motivo
   ) VALUES (
-    p_liga_id, p_liga_jugador_id, 'verificacion', 'omitido', 0, 'verificacion_solicitada'
+    p_liga_id,
+    p_liga_jugador_id,
+    'verificacion',
+    'omitido',
+    0,
+    CASE WHEN v_sim THEN 'verificacion_simulada' ELSE 'verificacion_solicitada' END
   );
 
-  IF v_modo_prueba THEN
+  -- El token en claro no vuelve al cliente salvo simulación de servidor.
+  -- modo_prueba de la liga no abre esta puerta (ni con 0101 sola en Production).
+  IF v_sim THEN
     RETURN jsonb_build_object(
       'ok', true,
       'motivo', NULL,
       'simulado', true,
       'solicitud_id', v_id,
-      'enlace_simulado', rtrim(v_base, '/') || '/public/verificar-correo?t=' || v_token
+      'enlace_simulado',
+        rtrim(v_base, '/') || '/public/verificar-correo?t=' || v_token
     );
   END IF;
 
-  -- Sin modo de prueba: el enlace no vuelve al cliente. El envío real queda pendiente.
   RETURN jsonb_build_object(
     'ok', true,
     'motivo', NULL,
-    'simulado', true,
+    'simulado', false,
     'solicitud_id', v_id
   );
 END;
@@ -507,6 +534,8 @@ REVOKE ALL ON TABLE public.liga_notificaciones_verificacion_outbox FROM PUBLIC, 
 GRANT SELECT ON TABLE public.liga_notificaciones_verificaciones TO authenticated;
 GRANT SELECT ON TABLE public.liga_notificaciones_verificacion_outbox TO authenticated;
 
+REVOKE ALL ON FUNCTION public.liga_notificaciones_simulacion_activa()
+  FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.liga_notificacion_hash_token(text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.liga_notificacion_enmascarar_correo(text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.solicitar_verificacion_correo_liga(uuid, uuid) FROM PUBLIC, anon;

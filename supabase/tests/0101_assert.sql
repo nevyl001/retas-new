@@ -79,8 +79,25 @@ SELECT public._assert(
   'correo compartido no recibe enlace'
 );
 
--- Tras 0102 el token solo sale con este GUC de servidor.
--- Con 0101 solo, modo_prueba=true bastaba; el GUC no molesta en ese caso.
+-- El token solo sale con GUC de servidor (desde 0101 endurecida; 0102 reafirma).
+-- modo_prueba=true de la liga NO basta.
+SELECT set_config('app.liga_notificaciones_simulacion', '', false);
+SELECT public._assert(
+  NOT ((public.solicitar_verificacion_correo_liga(
+    '33333333-3333-4333-8333-333333333333',
+    '55555555-5555-4555-8555-555555555555'
+  )) ? 'enlace_simulado'),
+  'modo_prueba no filtra enlace_simulado sin GUC'
+);
+-- Limpia la solicitud creada arriba para no chocar con demasiado_pronto/limite.
+UPDATE public.liga_notificaciones_verificaciones
+  SET estado = 'invalidado', invalidated_at = now()
+  WHERE liga_jugador_id = '55555555-5555-4555-8555-555555555555'
+    AND estado = 'pendiente';
+UPDATE public.liga_notificaciones_verificaciones
+  SET created_at = now() - interval '20 minutes'
+  WHERE liga_jugador_id = '55555555-5555-4555-8555-555555555555';
+
 SELECT set_config('app.liga_notificaciones_simulacion', 'true', false);
 
 DO $$
