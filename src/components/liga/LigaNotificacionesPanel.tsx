@@ -16,6 +16,7 @@ import {
   registrarConsentimiento,
   type EstadoVisualNotificacion,
 } from "../../lib/liga/notificaciones/bienvenidaPolicy";
+import { puedeDocumentarAutorizacionVerbal } from "../../lib/liga/notificaciones/envioManualGate";
 import {
   contarPerfilesPorCorreo,
   correoEfectivoDestinatario,
@@ -65,31 +66,11 @@ const FILTROS: { id: Filtro; label: string }[] = [
 ];
 
 const ORIGENES = [
-  {
-    id: "manifestacion_presencial",
-    label: "Autorizó verbalmente al registrarse",
-    requiereFecha: false,
-  },
-  {
-    id: "mensaje_del_jugador",
-    label: "Autorizó por mensaje",
-    requiereFecha: false,
-  },
-  {
-    id: "formulario_registro",
-    label: "Autorizó mediante formulario",
-    requiereFecha: true,
-  },
-  {
-    id: "documento_firmado",
-    label: "Autorizó mediante documento",
-    requiereFecha: true,
-  },
-  {
-    id: "consentimiento_previo_registro",
-    label: "Constancia previa al registrarse",
-    requiereFecha: true,
-  },
+  { id: "manifestacion_presencial", label: "En persona" },
+  { id: "mensaje_del_jugador", label: "Por mensaje" },
+  { id: "formulario_registro", label: "En un formulario" },
+  { id: "documento_firmado", label: "En un documento" },
+  { id: "consentimiento_previo_registro", label: "Constancia previa" },
 ] as const;
 
 const ORIGEN_LABEL: Record<string, string> = Object.fromEntries(
@@ -112,6 +93,9 @@ const MOTIVO_LABEL: Record<string, string> = {
   esquema_pendiente: "Falta aplicar la migración de comunicaciones manuales",
   no_disponible: "No se pudo guardar",
   consentimiento_sin_evidencia: "Falta una constancia del consentimiento",
+  revocado: "La autorización está revocada y no se sobrescribe",
+  ya_autorizado: "Ya hay una autorización documentada",
+  fecha_invalida: "Indica la fecha real en que el jugador autorizó",
   anon: "Hace falta una sesión",
   sin_permiso: "No tienes permiso en esta liga",
   mensaje_incompleto: "Completa asunto y mensaje",
@@ -618,22 +602,27 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   }
 
   async function confirmarConsentimiento(fila: FilaDestinatario) {
-    const origenMeta = ORIGENES.find((item) => item.id === origenDraft);
-    let registradoAt = new Date().toISOString();
-    if (origenMeta?.requiereFecha) {
-      if (!fechaConsentimientoDraft.trim()) {
-        confirmar(
-          "Indica la fecha del consentimiento original. No inventamos fechas."
-        );
-        return;
-      }
-      const parsed = Date.parse(`${fechaConsentimientoDraft}T12:00:00`);
-      if (Number.isNaN(parsed)) {
-        confirmar(motivoVisible("consentimiento_sin_evidencia"));
-        return;
-      }
-      registradoAt = new Date(parsed).toISOString();
+    const estado = preferenciaEfectiva(
+      preferenciaParaPolitica(fila.preferencia)
+    ).consentimientoEstado;
+    if (!puedeDocumentarAutorizacionVerbal(estado)) {
+      confirmar(
+        motivoVisible(estado === "revocado" ? "revocado" : "ya_autorizado")
+      );
+      return;
     }
+    if (!fechaConsentimientoDraft.trim()) {
+      confirmar(motivoVisible("fecha_invalida"));
+      return;
+    }
+    const parsed = Date.parse(`${fechaConsentimientoDraft}T12:00:00`);
+    const hoy = new Date();
+    hoy.setHours(23, 59, 59, 999);
+    if (Number.isNaN(parsed) || parsed > hoy.getTime()) {
+      confirmar(motivoVisible("fecha_invalida"));
+      return;
+    }
+    const registradoAt = new Date(parsed).toISOString();
     const evidencia = registrarConsentimiento({
       origen: origenDraft,
       registradoAt,
@@ -822,9 +811,6 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       preferenciaParaPolitica(fila.preferencia)
     );
     const ocupado = guardandoId === fila.jugadorId;
-    const origenRequiereFecha = ORIGENES.some(
-      (item) => item.id === origenDraft && item.requiereFecha
-    );
     const origenDocumentado =
       preferencia.consentimientoOrigen &&
       (ORIGEN_LABEL[preferencia.consentimientoOrigen] ??
@@ -903,39 +889,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             <h3 className="liga-notificaciones__drawer-section-title">
               Autorización de comunicaciones
             </h3>
-            {preferencia.consentimientoEstado !== "autorizado" &&
-            preferencia.consentimientoEstado !== "revocado" &&
-            fila.registroAutorizadoAt ? (
-              <>
-                <p className="liga-notificaciones__drawer-status">
-                  Autorización del registro del jugador ·{" "}
-                  {new Date(fila.registroAutorizadoAt).toLocaleDateString("es-MX")}
-                </p>
-                <p className="liga-notificaciones__hint">
-                  Viene del alta del Riviera ID y del aviso de privacidad. No hace
-                  falta repetirla. El interruptor sigue siendo aparte.
-                </p>
-                <button
-                  type="button"
-                  className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
-                  disabled={ocupado || !puedeEscribir}
-                  onClick={() =>
-                    void guardarFila(
-                      fila,
-                      { consentimiento_estado: "revocado" },
-                      () =>
-                        revocarConsentimientoJugador({
-                          ligaId,
-                          jugadorId: fila.jugadorId,
-                          rivieraJugadorId: fila.rivieraJugadorId,
-                        })
-                    )
-                  }
-                >
-                  Revocar autorización
-                </button>
-              </>
-            ) : preferencia.consentimientoEstado === "autorizado" ? (
+            {preferencia.consentimientoEstado === "autorizado" ? (
               <>
                 <p className="liga-notificaciones__drawer-status">
                   Autorización documentada
@@ -943,8 +897,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   {fechaDocumentada ? ` · ${fechaDocumentada}` : ""}
                 </p>
                 <p className="liga-notificaciones__hint">
-                  Cubre avisos deportivos de esta liga. No autoriza mensajes
-                  promocionales.
+                  Alcance: avisos deportivos de esta liga. No incluye
+                  promociones. Quedó a nombre de quien la guardó. El interruptor
+                  no cambió y no se envió ningún correo.
                 </p>
                 <button
                   type="button"
@@ -966,22 +921,24 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   Revocar autorización
                 </button>
               </>
+            ) : preferencia.consentimientoEstado === "revocado" ? (
+              <p className="liga-notificaciones__hint">
+                Autorización revocada. No se documenta otra encima.
+              </p>
             ) : (
               <div className="liga-notificaciones__consent-box">
                 <p className="liga-notificaciones__hint">
-                  {preferencia.consentimientoEstado === "revocado"
-                    ? "Autorización revocada."
-                    : "Sin autorización documentada. La inscripción sola no basta."}{" "}
-                  Documenta solo evidencia real; no inventes fechas ni
-                  conversaciones.
+                  Documenta una autorización ya otorgada para avisos deportivos
+                  de esta liga. Queda a tu nombre. No cambia el interruptor y
+                  no envía correo.
                 </p>
                 <label className="liga-notificaciones__field">
-                  <span>Constancia</span>
+                  <span>Medio</span>
                   <select
                     className="liga-notificaciones__select"
                     value={origenDraft}
                     onChange={(event) => setOrigenDraft(event.target.value)}
-                    aria-label={`Origen de la autorización de ${fila.nombre}`}
+                    aria-label={`Medio de la autorización de ${fila.nombre}`}
                     disabled={!puedeEscribir}
                   >
                     {ORIGENES.map((origen) => (
@@ -991,29 +948,27 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     ))}
                   </select>
                 </label>
-                {origenRequiereFecha ? (
-                  <label className="liga-notificaciones__field">
-                    <span>Fecha de la autorización</span>
-                    <input
-                      type="date"
-                      className="liga-notificaciones__select"
-                      value={fechaConsentimientoDraft}
-                      max={new Date().toISOString().slice(0, 10)}
-                      onChange={(event) =>
-                        setFechaConsentimientoDraft(event.target.value)
-                      }
-                      disabled={!puedeEscribir}
-                      aria-label={`Fecha de la autorización de ${fila.nombre}`}
-                    />
-                  </label>
-                ) : null}
+                <label className="liga-notificaciones__field">
+                  <span>Fecha real de la autorización</span>
+                  <input
+                    type="date"
+                    className="liga-notificaciones__select"
+                    value={fechaConsentimientoDraft}
+                    max={new Date().toISOString().slice(0, 10)}
+                    onChange={(event) =>
+                      setFechaConsentimientoDraft(event.target.value)
+                    }
+                    disabled={!puedeEscribir}
+                    aria-label={`Fecha de la autorización de ${fila.nombre}`}
+                  />
+                </label>
                 <button
                   type="button"
                   className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
                   disabled={ocupado || !puedeEscribir}
                   onClick={() => void confirmarConsentimiento(fila)}
                 >
-                  Documentar autorización
+                  Guardar autorización
                 </button>
               </div>
             )}

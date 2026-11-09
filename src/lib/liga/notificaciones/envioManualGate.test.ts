@@ -132,7 +132,7 @@ describe("allowlist fail-closed", () => {
     expect(resultado.enviados).toBe(0);
   });
 
-  it("el alta del jugador no sustituye la allowlist ni el interruptor", () => {
+  it("la fecha de alta no autoriza ni sustituye el interruptor", () => {
     const conRegistro = simularLoteManual({
       enviosReales: "true",
       allowlistRaw: "jugador@example.com",
@@ -146,7 +146,7 @@ describe("allowlist fail-closed", () => {
         },
       ],
     });
-    expect(conRegistro.reclamadas).toEqual(["fila-1"]);
+    expect(conRegistro.reclamadas).toEqual([]);
     const apagado = simularLoteManual({
       enviosReales: "true",
       allowlistRaw: "jugador@example.com",

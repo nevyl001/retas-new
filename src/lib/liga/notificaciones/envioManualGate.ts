@@ -147,8 +147,7 @@ export function decidirReclamoEnvio(input: {
     Boolean(origen) &&
     !origenBasura.includes(origen) &&
     Boolean(input.consentimientoRegistradoAt?.trim());
-  const registro = input.registroAutorizadoAt?.trim() ?? "";
-  if (!consentimientoPosterior && !registro) {
+  if (!consentimientoPosterior) {
     return { reclamar: false, motivo: "sin_autorizacion" };
   }
   return { reclamar: true, motivo: null };

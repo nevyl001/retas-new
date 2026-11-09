@@ -5,6 +5,7 @@ import {
   esEsquemaAusente,
   establecerCorreoVerificado,
   solicitarBienvenidaJugador,
+  registrarConsentimientoJugador,
   solicitarComunicacionManual,
   solicitarVerificacionCorreo,
   simulacionNotificacionesClienteActiva,
@@ -235,5 +236,23 @@ describe("ligaNotificacionesService", () => {
       correo_verificacion_origen: "enlace_de_confirmacion",
       correo_verificado_email: "saul@example.com",
     });
+  });
+
+  it("no sobrescribe una revocación al documentar autorización", async () => {
+    from.mockImplementation(() =>
+      chainResult({
+        data: { consentimiento_estado: "revocado" },
+        error: null,
+      })
+    );
+    await expect(
+      registrarConsentimientoJugador({
+        ligaId: "liga-1",
+        jugadorId: "jug-1",
+        rivieraJugadorId: null,
+        origen: "mensaje_del_jugador",
+        registradoAt: "2026-11-01T12:00:00.000Z",
+      })
+    ).resolves.toEqual({ ok: false, motivo: "revocado" });
   });
 });

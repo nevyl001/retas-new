@@ -173,8 +173,8 @@ export interface DestinatarioBienvenida {
   sigueInscrito: boolean;
   esSalienteDeSustitucion: boolean;
   /**
-   * Alta del Riviera ID (aviso de privacidad, finalidades de contacto deportivo).
-   * No es el correo ni la inscripción. Una revocación posterior lo anula.
+   * La fecha de alta no es autorización. Se conserva solo para no romper
+   * llamadas anteriores; el estado visual no la usa.
    */
   registroAutorizadoAt?: string | null;
 }
@@ -195,8 +195,7 @@ export function estadoVisual(
 
   const preferencia = preferenciaEfectiva(destinatario.preferencia);
   if (preferencia.consentimientoEstado === "revocado") return "excluido";
-  const registro = destinatario.registroAutorizadoAt?.trim() ?? "";
-  if (preferencia.consentimientoEstado !== "autorizado" && !registro) {
+  if (preferencia.consentimientoEstado !== "autorizado") {
     return "sin_autorizacion";
   }
   if (!preferencia.adminHabilitado) return "deshabilitado";

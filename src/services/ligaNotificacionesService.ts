@@ -489,6 +489,25 @@ export async function registrarConsentimientoJugador(input: {
   /** Fecha real del consentimiento previo; el trigger la conserva si viene. */
   registradoAt?: string | null;
 }): Promise<ResultadoNotificacion> {
+  const actual = await supabase
+    .from("liga_notificaciones_preferencias")
+    .select("consentimiento_estado")
+    .eq("liga_id", input.ligaId)
+    .eq("liga_jugador_id", input.jugadorId)
+    .maybeSingle();
+
+  if (actual.error) {
+    if (esEsquemaAusente(actual.error.message)) {
+      return { ok: false, motivo: "esquema_pendiente" };
+    }
+    aviso("no_disponible");
+    return { ok: false, motivo: "no_disponible" };
+  }
+
+  const estado = actual.data?.consentimiento_estado;
+  if (estado === "revocado") return { ok: false, motivo: "revocado" };
+  if (estado === "autorizado") return { ok: false, motivo: "ya_autorizado" };
+
   const patch: Record<string, unknown> = {
     consentimiento_estado: "autorizado",
     consentimiento_origen: input.origen,

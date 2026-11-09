@@ -152,6 +152,54 @@ describe("LigaNotificacionesPanel", () => {
     expect(checkbox.checked).toBe(false);
   });
 
+  it("guarda la fecha real indicada y no mueve el interruptor", async () => {
+    const servicio = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ) as { registrarConsentimientoJugador: jest.Mock };
+    servicio.registrarConsentimientoJugador.mockResolvedValue({
+      ok: true,
+      motivo: null,
+    });
+    mockHabilitar.mockClear();
+    await renderPanel();
+    const gestionar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Gestionar"
+    );
+    await act(async () => {
+      gestionar?.click();
+    });
+    const fecha = document.body.querySelector(
+      'input[type="date"]'
+    ) as HTMLInputElement;
+    expect(fecha).not.toBeNull();
+    const asignar = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      "value"
+    )?.set;
+    await act(async () => {
+      asignar?.call(fecha, "2026-06-15");
+      fecha.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const guardar = Array.from(document.body.querySelectorAll("button")).find(
+      (button) => button.textContent === "Guardar autorización"
+    );
+    await act(async () => {
+      guardar?.click();
+      await Promise.resolve();
+    });
+    expect(servicio.registrarConsentimientoJugador).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jugadorId: "jug-1",
+        origen: "manifestacion_presencial",
+        registradoAt: expect.stringContaining("2026-06-15"),
+      })
+    );
+    const enviado = servicio.registrarConsentimientoJugador.mock.calls[0][0]
+      .registradoAt as string;
+    expect(enviado.startsWith("2026-11-09")).toBe(false);
+    expect(mockHabilitar).not.toHaveBeenCalled();
+  });
+
   it("guarda la autorización individual sin convertirla en consentimiento", async () => {
     await renderPanel();
     const checkbox = container.querySelector(

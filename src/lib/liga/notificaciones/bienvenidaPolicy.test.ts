@@ -544,18 +544,18 @@ describe("bienvenida de liga — artefactos de seguridad", () => {
   });
 });
 
-describe("autorización del registro", () => {
+describe("autorización documentada", () => {
   const listo = {
     adminHabilitado: true,
     consentimientoEstado: "sin_autorizacion" as const,
   };
 
-  it("registro del Riviera ID + interruptor + correo queda listo", () => {
+  it("la fecha de alta no deja listo aunque el interruptor esté activo", () => {
     const fila = destinatario({
       preferencia: listo,
       registroAutorizadoAt: "2024-03-01T00:00:00.000Z",
     });
-    expect(estadoVisual(fila)).toBe("habilitado");
+    expect(estadoVisual(fila)).toBe("sin_autorizacion");
     expect(
       puedeEncolarBienvenida({
         destinatario: fila,
@@ -563,7 +563,7 @@ describe("autorización del registro", () => {
         yaEnviado: false,
         origen: "accion_admin",
       }).encolar
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("un consentimiento posterior también deja listo", () => {
@@ -601,7 +601,7 @@ describe("autorización del registro", () => {
     ).toBe("excluido");
   });
 
-  it("el interruptor apagado no se compensa con el registro", () => {
+  it("el interruptor apagado no se compensa con la fecha de alta", () => {
     expect(
       estadoVisual(
         destinatario({
@@ -609,7 +609,7 @@ describe("autorización del registro", () => {
           registroAutorizadoAt: "2024-03-01T00:00:00.000Z",
         })
       )
-    ).toBe("deshabilitado");
+    ).toBe("sin_autorizacion");
   });
 
   it("correo ambiguo sigue excluido", () => {
@@ -624,7 +624,7 @@ describe("autorización del registro", () => {
     ).toBe("correo_ambiguo");
   });
 
-  it("0107 no trata el correo como consentimiento y conserva la revocación", () => {
+  it("0107 está descartada y no reemplaza funciones", () => {
     const sql = fs.readFileSync(
       path.join(
         process.cwd(),
@@ -632,10 +632,26 @@ describe("autorización del registro", () => {
       ),
       "utf8"
     );
-    expect(sql).toContain("consentimiento_estado = 'revocado'");
-    expect(sql).toContain("global_source");
-    expect(sql).toContain("registro_autorizado_at");
-    expect(sql).not.toContain("tiene_correo' THEN");
-    expect(sql).toContain("RETURN 'sin_autorizacion'");
+    expect(sql).toContain("0107 descartada");
+    expect(sql).toContain("RAISE EXCEPTION");
+    expect(sql).not.toContain("CREATE OR REPLACE FUNCTION");
+    expect(sql).not.toContain("CREATE FUNCTION");
+    expect(sql).not.toContain("registro_autorizado_at");
+  });
+
+  it("0108 guarda solo contacto deportivo y no se aplica sola", () => {
+    const sql = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "supabase/migrations/0108_riviera_autorizacion_contacto_deportivo.sql"
+      ),
+      "utf8"
+    );
+    expect(sql).toContain("NO APLICAR");
+    expect(sql).toContain("comunicaciones_deportivas_liga");
+    expect(sql).toContain("aviso_version");
+    expect(sql).toContain("No autoriza promociones");
+    expect(sql).not.toContain("liga_notificaciones_preferencias");
+    expect(sql).not.toContain("liga_notificaciones_queue");
   });
 });
