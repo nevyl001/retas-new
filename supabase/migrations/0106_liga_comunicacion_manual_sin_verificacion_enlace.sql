@@ -35,9 +35,45 @@ COMMENT ON COLUMN public.liga_notificaciones_queue.lote_id IS
 
 -- ---------------------------------------------------------------------------
 -- 2) Ampliar tipos permitidos (compatible con CHECK previo de solo bienvenida)
+--    En Production el nombre del CHECK inline de 0100 puede variar: se eliminan
+--    todos los CHECK de la columna tipo antes de recrear el canónico.
 -- ---------------------------------------------------------------------------
-ALTER TABLE public.liga_notificaciones_queue
-  DROP CONSTRAINT IF EXISTS liga_notificaciones_queue_tipo_check;
+DO $$
+DECLARE
+  r record;
+BEGIN
+  FOR r IN
+    SELECT c.conname
+    FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    JOIN pg_namespace n ON n.oid = t.relnamespace
+    WHERE n.nspname = 'public'
+      AND t.relname = 'liga_notificaciones_queue'
+      AND c.contype = 'c'
+      AND pg_get_constraintdef(c.oid) ILIKE '%tipo%'
+  LOOP
+    EXECUTE format(
+      'ALTER TABLE public.liga_notificaciones_queue DROP CONSTRAINT IF EXISTS %I',
+      r.conname
+    );
+  END LOOP;
+
+  FOR r IN
+    SELECT c.conname
+    FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    JOIN pg_namespace n ON n.oid = t.relnamespace
+    WHERE n.nspname = 'public'
+      AND t.relname = 'liga_notificaciones_log'
+      AND c.contype = 'c'
+      AND pg_get_constraintdef(c.oid) ILIKE '%tipo%'
+  LOOP
+    EXECUTE format(
+      'ALTER TABLE public.liga_notificaciones_log DROP CONSTRAINT IF EXISTS %I',
+      r.conname
+    );
+  END LOOP;
+END $$;
 
 ALTER TABLE public.liga_notificaciones_queue
   ADD CONSTRAINT liga_notificaciones_queue_tipo_check
@@ -49,9 +85,6 @@ ALTER TABLE public.liga_notificaciones_queue
     'felicitacion',
     'personalizado'
   ));
-
-ALTER TABLE public.liga_notificaciones_log
-  DROP CONSTRAINT IF EXISTS liga_notificaciones_log_tipo_check;
 
 ALTER TABLE public.liga_notificaciones_log
   ADD CONSTRAINT liga_notificaciones_log_tipo_check
