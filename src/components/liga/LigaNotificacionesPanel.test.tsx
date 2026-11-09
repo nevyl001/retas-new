@@ -721,7 +721,7 @@ describe("LigaNotificacionesPanel", () => {
       await Promise.resolve();
     });
     expect(container.textContent).toContain(
-      "Correo preparado, pero no se pudo completar el procesamiento"
+      "La sesión no pudo autorizar el procesamiento"
     );
     expect(container.textContent).not.toContain("Procesando…");
     expect(servicio.solicitarProcesamientoLote).toHaveBeenCalledTimes(1);
@@ -1125,5 +1125,185 @@ describe("LigaNotificacionesPanel", () => {
     expect(filas[0].textContent).toContain("Aceptado");
     expect(filas[0].textContent).not.toContain("cola");
     expect(container.textContent).not.toContain("Pendiente de reintento");
+  });
+
+  it("una confirmación nueva usa otro lote después de un envío aceptado", async () => {
+    const servicio = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ) as {
+      solicitarComunicacionManual: jest.Mock;
+      solicitarProcesamientoLote: jest.Mock;
+    };
+    servicio.solicitarComunicacionManual.mockResolvedValue({
+      ok: true,
+      encolado: true,
+      motivo: null,
+    });
+    servicio.solicitarProcesamientoLote.mockResolvedValue({
+      ok: true,
+      enviosReales: true,
+      enviados: 1,
+      omitidos: 0,
+      errores: 0,
+      procesados: 1,
+      fueraAllowlist: 0,
+      motivo: null,
+    });
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: false,
+      preferencias: [preferenciaLista("jug-1")],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await renderPanel();
+    await abrirRedactar();
+    await marcarEnSelector("Saúl Moreno de la Torre del Valle");
+    const revisar = () =>
+      Array.from(container.querySelectorAll("button")).find(
+        (button) => button.textContent === "REVISAR CORREO"
+      );
+    const enviar = () =>
+      Array.from(container.querySelectorAll("button")).find(
+        (button) => button.textContent === "CONFIRMAR Y ENVIAR A 1 JUGADOR"
+      );
+    await act(async () => {
+      revisar()?.click();
+    });
+    await act(async () => {
+      enviar()?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await abrirRedactar();
+    await marcarEnSelector("Saúl Moreno de la Torre del Valle");
+    await act(async () => {
+      revisar()?.click();
+    });
+    await act(async () => {
+      enviar()?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const lotes = servicio.solicitarComunicacionManual.mock.calls.map(
+      (call) => call[0].loteId as string
+    );
+    expect(lotes).toHaveLength(2);
+    expect(lotes[0]).not.toBe(lotes[1]);
+    expect(container.textContent).toContain("1 aceptado · 0 pendientes · 0 errores");
+    expect(container.textContent).not.toContain(
+      "no se pudo completar el procesamiento"
+    );
+  });
+
+  it("un lote que no se pudo guardar no se reporta como fallo genérico", async () => {
+    const servicio = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ) as {
+      solicitarComunicacionManual: jest.Mock;
+      solicitarProcesamientoLote: jest.Mock;
+    };
+    servicio.solicitarComunicacionManual.mockResolvedValue({
+      ok: true,
+      encolado: true,
+      motivo: null,
+    });
+    servicio.solicitarProcesamientoLote.mockResolvedValue({
+      ok: false,
+      enviosReales: true,
+      enviados: 0,
+      omitidos: 0,
+      errores: 0,
+      procesados: 0,
+      fueraAllowlist: 0,
+      motivo: "lote_no_encontrado",
+    });
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: false,
+      preferencias: [preferenciaLista("jug-1")],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await renderPanel();
+    await abrirRedactar();
+    await marcarEnSelector("Saúl Moreno de la Torre del Valle");
+    const revisar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "REVISAR CORREO"
+    );
+    await act(async () => {
+      revisar?.click();
+    });
+    const enviar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "CONFIRMAR Y ENVIAR A 1 JUGADOR"
+    );
+    await act(async () => {
+      enviar?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(container.textContent).toContain("No se creó un envío nuevo");
+    expect(container.textContent).not.toContain(
+      "no se pudo completar el procesamiento"
+    );
+  });
+
+  it("tres envíos aceptados del mismo jugador se ven como tres operaciones", async () => {
+    const historial = [1, 2, 3].map((n) => ({
+      id: `log-${n}`,
+      queue_id: `q-${n}`,
+      liga_jugador_id: "jug-1",
+      tipo: "bienvenida",
+      estado: "enviado",
+      attempts: 1,
+      motivo: null,
+      proveedor_estado: "aceptado",
+      created_at: `2026-11-09T19:${10 + n}:00Z`,
+    }));
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: true,
+      preferencias: [],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial,
+      cola: historial.map((item) => ({
+        id: item.queue_id,
+        liga_jugador_id: "jug-1",
+        estado: "enviado",
+        attempts: 1,
+        motivo: null,
+        lote_id: `lote-${item.queue_id}`,
+      })),
+      verificaciones: [],
+    });
+    await renderPanel();
+    const tab = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Historial"
+    );
+    await act(async () => {
+      tab?.click();
+    });
+    const filas = container.querySelectorAll(".liga-notificaciones__history-row");
+    expect(filas).toHaveLength(3);
+    expect(container.textContent).not.toContain("cola");
   });
 });

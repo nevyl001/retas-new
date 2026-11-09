@@ -258,6 +258,19 @@ function categoriaVisible(value: string | null | undefined): string | null {
   return null;
 }
 
+function mensajeFalloProceso(motivo: string | null): string {
+  if (motivo === "lote_no_encontrado") {
+    return "No se creó un envío nuevo. La bienvenida anterior sigue aceptada y la cola no permite guardar otra hasta ajustar esa restricción.";
+  }
+  if (motivo === "sesion_invalida") {
+    return "La sesión no pudo autorizar el procesamiento. Revisa Historial.";
+  }
+  if (motivo === "sin_permiso") {
+    return "No tienes permiso en esta liga.";
+  }
+  return "Correo preparado, pero no se pudo completar el procesamiento. Revisa Historial.";
+}
+
 function mensajeResultadoEnvio(
   ok: number,
   proceso: {
@@ -843,6 +856,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     setFaseEnvio("preparando");
     let preparados = 0;
     let fallidos = 0;
+    let yaEnviados = 0;
     let ultimoMotivo: string | null = null;
     const colaNueva: ColaNotificacionRow[] = [];
     const jugadoresLote: { jugadorId: string; asunto: string; cuerpo: string }[] =
@@ -873,7 +887,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         });
         const yaEstaba =
           resultado.ok && resultado.motivo === "ya_encolado";
-        if (resultado.ok && (resultado.encolado || yaEstaba)) {
+        if (resultado.ok && resultado.motivo === "ya_enviado") {
+          yaEnviados += 1;
+        } else if (resultado.ok && (resultado.encolado || yaEstaba)) {
           preparados += 1;
           jugadoresLote.push({
             jugadorId: fila.jugadorId,
@@ -921,14 +937,22 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       setEnviandoLote(false);
       setFaseEnvio("idle");
     }
-    if (preparados > 0 && proceso?.ok === false) {
-      setArea("historial");
+    if (preparados === 0 && yaEnviados > 0 && fallidos === 0) {
+      setLoteEnvioId(null);
+      setEnvioPaso("idle");
       confirmar(
-        "Correo preparado, pero no se pudo completar el procesamiento. Revisa Historial."
+        "Ese envío ya fue aceptado. Confírmalo otra vez para mandarlo de nuevo."
       );
       return;
     }
+    if (preparados > 0 && proceso?.ok === false) {
+      if (proceso.motivo !== "procesador_no_disponible") setLoteEnvioId(null);
+      setArea("historial");
+      confirmar(mensajeFalloProceso(proceso.motivo));
+      return;
+    }
     if (preparados > 0 && fallidos === 0) {
+      setLoteEnvioId(null);
       setEnvioPaso("idle");
       setEnvioSeleccion({});
       confirmar(mensajeResultadoEnvio(preparados, proceso));

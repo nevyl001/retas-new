@@ -188,3 +188,69 @@ export function puedeDocumentarAutorizacionVerbal(
 ): boolean {
   return estado !== "revocado" && estado !== "autorizado";
 }
+
+/** Una confirmación, un lote, una clave. Otra confirmación no reutiliza la anterior. */
+export function claveIdempotenciaManual(input: {
+  tipo: string;
+  ligaId: string;
+  loteId: string;
+  jugadorId: string;
+}): string {
+  return `manual:${input.tipo}:${input.ligaId}:${input.loteId}:${input.jugadorId}`;
+}
+
+export type FilaEncolada = {
+  clave: string;
+  loteId: string;
+  jugadorId: string;
+  estado: "pendiente" | "procesando" | "enviado" | "error";
+};
+
+/**
+ * Nueva confirmación inserta otra fila. La misma clave solo reintenta esa operación.
+ * `permiteOtroEnviado` es falso mientras el índice único incluya las ya enviadas.
+ */
+export function decidirEncoladoManual(input: {
+  filas: FilaEncolada[];
+  tipo: string;
+  ligaId: string;
+  loteId: string;
+  jugadorId: string;
+  permiteOtroEnviado: boolean;
+}): {
+  motivo: "encolado" | "ya_encolado" | "ya_enviado" | "bloqueado_por_enviado";
+  filas: FilaEncolada[];
+} {
+  const clave = claveIdempotenciaManual(input);
+  const misma = input.filas.find((fila) => fila.clave === clave);
+  if (misma?.estado === "enviado") {
+    return { motivo: "ya_enviado", filas: input.filas };
+  }
+  if (misma && (misma.estado === "pendiente" || misma.estado === "procesando")) {
+    return { motivo: "ya_encolado", filas: input.filas };
+  }
+  const enCurso = input.filas.some(
+    (fila) =>
+      fila.jugadorId === input.jugadorId &&
+      (fila.estado === "pendiente" || fila.estado === "procesando")
+  );
+  if (enCurso) return { motivo: "ya_encolado", filas: input.filas };
+  const yaAceptada = input.filas.some(
+    (fila) => fila.jugadorId === input.jugadorId && fila.estado === "enviado"
+  );
+  if (yaAceptada && !input.permiteOtroEnviado) {
+    return { motivo: "bloqueado_por_enviado", filas: input.filas };
+  }
+  return {
+    motivo: "encolado",
+    filas: [
+      ...input.filas,
+      {
+        clave,
+        loteId: input.loteId,
+        jugadorId: input.jugadorId,
+        estado: "pendiente",
+      },
+    ],
+  };
+}

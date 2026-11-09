@@ -1,11 +1,14 @@
 import fs from "fs";
 import path from "path";
 import {
+  claveIdempotenciaManual,
+  decidirEncoladoManual,
   decidirReclamoEnvio,
   parseAllowlist,
   parseReplyTo,
   puedeDocumentarAutorizacionVerbal,
   simularLoteManual,
+  type FilaEncolada,
   type FilaSimulada,
 } from "./envioManualGate";
 import { renderComunicacionEmail } from "./comunicacionTemplates";
@@ -451,5 +454,96 @@ describe("modo operativo manual simulado", () => {
     });
     expect(resultado.reclamadas).toEqual(["nuevo"]);
     expect(resultado.procesados).toBe(2);
+  });
+});
+
+describe("reenvío manual intencional", () => {
+  const base = {
+    tipo: "bienvenida",
+    ligaId: "liga-1",
+    jugadorId: "edgardo",
+    permiteOtroEnviado: true,
+  };
+
+  function confirmar(filas: FilaEncolada[], loteId: string, permite = true) {
+    return decidirEncoladoManual({
+      ...base,
+      filas,
+      loteId,
+      permiteOtroEnviado: permite,
+    });
+  }
+
+  it("tres confirmaciones iguales crean tres lotes y tres claves", () => {
+    let filas: FilaEncolada[] = [];
+    const lotes = ["lote-1", "lote-2", "lote-3"];
+    for (const loteId of lotes) {
+      const paso = confirmar(filas, loteId);
+      expect(paso.motivo).toBe("encolado");
+      filas = paso.filas.map((fila) =>
+        fila.loteId === loteId ? { ...fila, estado: "enviado" } : fila
+      );
+    }
+    expect(filas.map((fila) => fila.loteId)).toEqual(lotes);
+    expect(new Set(filas.map((fila) => fila.clave)).size).toBe(3);
+  });
+
+  it("el doble clic de la misma confirmación no crea otra fila", () => {
+    const primero = confirmar([], "lote-1");
+    const segundo = confirmar(
+      primero.filas,
+      "lote-1"
+    );
+    expect(segundo.motivo).toBe("ya_encolado");
+    expect(segundo.filas).toHaveLength(1);
+    expect(claveIdempotenciaManual({ ...base, loteId: "lote-1" })).toBe(
+      claveIdempotenciaManual({ ...base, loteId: "lote-1" })
+    );
+  });
+
+  it("un aceptado de la misma operación no se reintenta y uno nuevo sí", () => {
+    const primero = confirmar([], "lote-1");
+    const aceptado = primero.filas.map((fila) => ({
+      ...fila,
+      estado: "enviado" as const,
+    }));
+    expect(confirmar(aceptado, "lote-1").motivo).toBe("ya_enviado");
+    expect(confirmar(aceptado, "lote-2").motivo).toBe("encolado");
+    expect(confirmar(aceptado, "lote-2", false).motivo).toBe(
+      "bloqueado_por_enviado"
+    );
+  });
+
+  it("un fallo parcial no vuelve a encolar al que ya fue aceptado", () => {
+    const filas: FilaEncolada[] = [
+      {
+        clave: claveIdempotenciaManual({ ...base, loteId: "lote-1" }),
+        loteId: "lote-1",
+        jugadorId: "edgardo",
+        estado: "enviado",
+      },
+    ];
+    const otro = decidirEncoladoManual({
+      ...base,
+      jugadorId: "zaid",
+      filas,
+      loteId: "lote-1",
+    });
+    expect(otro.motivo).toBe("encolado");
+    expect(otro.filas.filter((fila) => fila.jugadorId === "edgardo")).toHaveLength(1);
+  });
+
+  it("la migración deja libres las bienvenidas enviadas y conserva el envío en curso", () => {
+    const sql = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "supabase/migrations/0110_liga_bienvenida_reenvio_manual.sql"
+      ),
+      "utf8"
+    );
+    const indice = sql.slice(sql.indexOf("CREATE UNIQUE INDEX"));
+    expect(indice).toContain("estado IN ('pendiente', 'procesando')");
+    expect(indice).not.toContain("'enviado'");
+    expect(sql).toContain("DROP INDEX IF EXISTS public.liga_notificaciones_queue_una_bienvenida");
   });
 });
