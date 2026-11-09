@@ -384,7 +384,7 @@ function FotoRetrato({
 }: {
   fotoUrl: string | null;
   nombre: string;
-  size?: "md" | "lg" | "card";
+  size?: "sm" | "md" | "lg" | "card";
 }) {
   const { src, onError } = useRetryableImage(fotoUrl);
   const initials = getJugadorInitials(nombre);
@@ -753,9 +753,11 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const seleccionadosEnvio = candidatosEnvio.filter(
     (fila) => envioSeleccion[fila.jugadorId]
   );
-  const incluidosEnvio = seleccionadosEnvio.filter(
-    (fila) => decisionEncolar(fila).encolar
-  );
+  const incluidosEnvio = seleccionadosEnvio
+    .filter((fila) => decisionEncolar(fila).encolar)
+    .sort((a, b) =>
+      a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" })
+    );
   const excluidosEnvio: { fila: FilaDestinatario; motivo: string }[] =
     filas
       .filter(
@@ -1813,10 +1815,17 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
 
             <div className="liga-notificaciones__para">
               <div className="liga-notificaciones__para-head">
-                <span>Para</span>
+                <p className="liga-notificaciones__para-label">
+                  <span>Para</span>
+                  {incluidosEnvio.length > 0 ? (
+                    <span className="liga-notificaciones__para-count">
+                      {incluidosEnvio.length}
+                    </span>
+                  ) : null}
+                </p>
                 <button
                   type="button"
-                  className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
+                  className="liga-notificaciones__btn liga-notificaciones__btn--secondary liga-notificaciones__para-add"
                   onClick={abrirSelectorDestinatarios}
                 >
                   + SELECCIONAR JUGADORES
@@ -1830,35 +1839,32 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     : ""}
                 </p>
               ) : (
-                <>
-                  <p className="liga-notificaciones__drawer-status">
-                    Destinatarios seleccionados — {incluidosEnvio.length}
-                  </p>
-                  <ul className="liga-notificaciones__chips">
-                    {incluidosEnvio.map((fila) => (
-                      <li key={fila.jugadorId}>
-                        <FotoRetrato
-                          fotoUrl={fila.fotoUrl}
-                          nombre={fila.nombre}
-                          size="md"
-                        />
-                        <span>{fila.nombre}</span>
-                        <button
-                          type="button"
-                          className="liga-notificaciones__ghost"
-                          onClick={() =>
-                            setEnvioSeleccion((prev) => ({
-                              ...prev,
-                              [fila.jugadorId]: false,
-                            }))
-                          }
-                        >
-                          Quitar
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </>
+                <ul className="liga-notificaciones__destinatarios">
+                  {incluidosEnvio.map((fila) => (
+                    <li key={fila.jugadorId}>
+                      <FotoRetrato
+                        fotoUrl={fila.fotoUrl}
+                        nombre={fila.nombre}
+                        size="sm"
+                      />
+                      <span className="liga-notificaciones__destinatario-nombre">
+                        {fila.nombre}
+                      </span>
+                      <button
+                        type="button"
+                        className="liga-notificaciones__ghost liga-notificaciones__quitar"
+                        onClick={() =>
+                          setEnvioSeleccion((prev) => ({
+                            ...prev,
+                            [fila.jugadorId]: false,
+                          }))
+                        }
+                      >
+                        Quitar
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
 

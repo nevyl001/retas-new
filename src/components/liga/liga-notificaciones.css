@@ -342,6 +342,13 @@
   letter-spacing: 0.02em;
 }
 
+.liga-notificaciones__foto--sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
 .liga-notificaciones__foto--md {
   width: 48px;
   height: 64px;
@@ -1144,7 +1151,85 @@
   gap: 10px;
 }
 
-.liga-notificaciones__para-head,
+.liga-notificaciones__para-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.liga-notificaciones__para-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  color: var(--liga-text-muted, var(--ro-text-muted));
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+.liga-notificaciones__para-count {
+  color: var(--liga-text, var(--ro-text-primary));
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.liga-notificaciones__para-add {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.liga-notificaciones__destinatarios {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 280px;
+  overflow: auto;
+  border: 0.5px solid var(--liga-border, var(--ro-border));
+  border-radius: 12px;
+  background: var(--liga-surface-deep, #111111);
+}
+
+.liga-notificaciones__destinatarios li {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border-top: 0.5px solid var(--liga-border, var(--ro-border));
+}
+
+.liga-notificaciones__destinatarios li:first-child {
+  border-top: 0;
+}
+
+.liga-notificaciones__destinatario-nombre {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--liga-text, var(--ro-text-primary));
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.liga-notificaciones__quitar {
+  justify-self: end;
+  min-height: 32px;
+  padding: 0 2px;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
 .liga-notificaciones__action-bar,
 .liga-notificaciones__picker-tools {
   display: flex;
