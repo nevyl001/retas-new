@@ -307,6 +307,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     modo_prueba: true,
     modo_operacion: "manual",
   };
+  const puedeEscribir = Boolean(
+    snapshot?.disponible && snapshot?.escriturasActivas
+  );
   const preview = filas.find((fila) => fila.jugadorId === previewId) ?? filas[0] ?? null;
 
   function confirmar(texto: string) {
@@ -333,6 +336,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     patch: Partial<PreferenciaNotificacionRow>,
     accion: () => Promise<{ ok: boolean; motivo: string | null }>
   ) {
+    if (!puedeEscribir) {
+      confirmar(motivoVisible("esquema_pendiente"));
+      return;
+    }
     setGuardandoId(fila.jugadorId);
     const resultado = await accion();
     setGuardandoId(null);
@@ -357,6 +364,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   }
 
   async function pedirVerificacion(fila: FilaDestinatario) {
+    if (!puedeEscribir) {
+      confirmar(motivoVisible("esquema_pendiente"));
+      return;
+    }
     setGuardandoId(fila.jugadorId);
     const resultado = await solicitarVerificacionCorreo({
       ligaId,
@@ -442,6 +453,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   }
 
   async function cambiarConfig(next: ConfigNotificacionLiga) {
+    if (!puedeEscribir) {
+      confirmar(motivoVisible("esquema_pendiente"));
+      return;
+    }
     setGuardandoId("config");
     const resultado = await guardarConfigLiga(ligaId, next);
     setGuardandoId(null);
@@ -454,6 +469,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   }
 
   async function generarBienvenida(fila: FilaDestinatario) {
+    if (!puedeEscribir) {
+      confirmar(motivoVisible("esquema_pendiente"));
+      return;
+    }
     setGuardandoId(fila.jugadorId);
     const resultado = await solicitarBienvenidaJugador(ligaId, fila.jugadorId);
     setGuardandoId(null);
@@ -525,7 +544,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           <input
             type="checkbox"
             checked={preferencia.adminHabilitado}
-            disabled={ocupado || !snapshot?.disponible}
+            disabled={ocupado || !puedeEscribir}
             onChange={(event) =>
               void cambiarHabilitacion(fila, event.target.checked)
             }
@@ -542,7 +561,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           <button
             type="button"
             className="liga-notificaciones__accion"
-            disabled={ocupado || !snapshot?.disponible}
+            disabled={ocupado || !puedeEscribir}
             onClick={() => void pedirVerificacion(fila)}
           >
             Solicitar verificación
@@ -558,7 +577,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           <button
             type="button"
             className="liga-notificaciones__accion"
-            disabled={ocupado || !snapshot?.disponible}
+            disabled={ocupado || !puedeEscribir}
             onClick={() =>
               void guardarFila(fila, { consentimiento_estado: "revocado" }, () =>
                 revocarConsentimientoJugador({
@@ -575,7 +594,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           <button
             type="button"
             className="liga-notificaciones__accion"
-            disabled={ocupado || !snapshot?.disponible}
+            disabled={ocupado || !puedeEscribir}
             onClick={() => setConsentimientoDe(fila.jugadorId)}
           >
             Registrar consentimiento
@@ -592,6 +611,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               value={origenDraft}
               onChange={(event) => setOrigenDraft(event.target.value)}
               aria-label={`Origen del consentimiento de ${fila.nombre}`}
+              disabled={!puedeEscribir}
             >
               {ORIGENES.map((origen) => (
                 <option key={origen.id} value={origen.id}>
@@ -602,7 +622,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             <button
               type="button"
               className="liga-notificaciones__accion"
-              disabled={ocupado}
+              disabled={ocupado || !puedeEscribir}
               onClick={() => void confirmarConsentimiento(fila)}
             >
               Confirmar consentimiento
@@ -613,7 +633,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           <button
             type="button"
             className="liga-notificaciones__accion"
-            disabled={ocupado}
+            disabled={ocupado || !puedeEscribir}
             onClick={() => void generarBienvenida(fila)}
           >
             Generar bienvenida
@@ -692,6 +712,14 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           La migración de notificaciones todavía no está aplicada. Puedes
           revisar la lista, pero los cambios no se guardarán y no se enviará
           ningún correo.
+        </p>
+      ) : null}
+      {!cargando && snapshot?.disponible && !snapshot.escriturasActivas ? (
+        <p className="liga-notificaciones__nota" role="status">
+          Vista de revisión: las funciones de envío y guardado siguen
+          pendientes de activación en el servidor. Puedes explorar
+          destinatarios, pestañas y la vista previa del correo sin generar
+          escrituras ni correos.
         </p>
       ) : null}
       <div className="liga-notificaciones__areas" role="tablist" aria-label="Áreas de notificaciones">
@@ -810,6 +838,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               type="button"
               className="liga-notificaciones__accion"
               disabled={
+                !puedeEscribir ||
                 guardandoId === preview.jugadorId ||
                 !puedeEncolarBienvenida({
                   destinatario: {
@@ -895,7 +924,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                 type="radio"
                 name="liga-notif-modo"
                 checked={config.modo_operacion === "manual"}
-                disabled={guardandoId === "config" || !snapshot?.disponible}
+                disabled={guardandoId === "config" || !puedeEscribir}
                 onChange={() =>
                   void cambiarConfig({
                     ...config,
@@ -910,7 +939,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                 type="radio"
                 name="liga-notif-modo"
                 checked={config.modo_operacion === "automatico"}
-                disabled={guardandoId === "config" || !snapshot?.disponible}
+                disabled={guardandoId === "config" || !puedeEscribir}
                 onChange={() =>
                   void cambiarConfig({
                     ...config,
@@ -931,7 +960,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             <input
               type="checkbox"
               checked={!config.bienvenida_pausada}
-              disabled={guardandoId === "config" || !snapshot?.disponible}
+              disabled={guardandoId === "config" || !puedeEscribir}
               onChange={(event) =>
                 void cambiarConfig({
                   ...config,
@@ -945,7 +974,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             <input
               type="checkbox"
               checked={config.modo_prueba}
-              disabled={guardandoId === "config" || !snapshot?.disponible}
+              disabled={guardandoId === "config" || !puedeEscribir}
               onChange={(event) =>
                 void cambiarConfig({
                   ...config,

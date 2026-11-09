@@ -91,6 +91,7 @@ describe("LigaNotificacionesPanel", () => {
     mockHabilitar.mockResolvedValue({ ok: true, motivo: null });
     mockCargar.mockResolvedValue({
       disponible: true,
+      escriturasActivas: true,
       preferencias: [],
       config: {
         bienvenida_pausada: true,
@@ -188,6 +189,7 @@ describe("LigaNotificacionesPanel", () => {
   it("24. una preferencia guardada sigue marcada al volver a abrir el panel", async () => {
     mockCargar.mockResolvedValue({
       disponible: true,
+      escriturasActivas: true,
       preferencias: [
         {
           liga_jugador_id: "jug-1",
@@ -221,5 +223,33 @@ describe("LigaNotificacionesPanel", () => {
     ).map((badge) => badge.textContent);
     expect(badges).toContain("Correo por verificar");
     expect(badges).not.toContain("Habilitado");
+  });
+
+  it("con backend incompleto muestra revisión visual y no escribe", async () => {
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: false,
+      preferencias: [],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await renderPanel();
+    expect(container.textContent).toContain("Vista de revisión");
+    expect(container.textContent).toContain("sin generar escrituras");
+    const checkbox = container.querySelector(
+      'input[type="checkbox"]'
+    ) as HTMLInputElement;
+    expect(checkbox.disabled).toBe(true);
+    await act(async () => {
+      checkbox.click();
+      await Promise.resolve();
+    });
+    expect(mockHabilitar).not.toHaveBeenCalled();
   });
 });
