@@ -1,4 +1,10 @@
--- Asserts de 0105 (contacto identidad global). Base desechable.
+-- Asserts de 0105 (contacto identidad global).
+--
+-- ORDEN OBLIGATORIO:
+--   1) Aplicar primero: supabase/migrations/0105_liga_inscritos_contacto_identidad_global.sql
+--   2) Luego este assert.
+-- Si sales con "FAIL: rpc contacto inscritos / migración 0105 no aplicada",
+-- la migración no está en esa base todavía.
 
 CREATE OR REPLACE FUNCTION public._assert(cond boolean, msg text)
 RETURNS void
@@ -14,16 +20,29 @@ $$;
 
 SELECT public._assert(
   to_regprocedure('public.liga_inscritos_contacto_autorizado(uuid)') IS NOT NULL,
-  'rpc contacto inscritos'
+  'rpc contacto inscritos / migración 0105 no aplicada'
 );
 
 SELECT public._assert(
-  NOT has_function_privilege('anon', 'public.liga_inscritos_contacto_autorizado(uuid)', 'EXECUTE'),
+  to_regprocedure('public.liga_jugador_resolver_contacto(uuid)') IS NOT NULL,
+  'rpc resolver contacto / migración 0105 incompleta'
+);
+
+SELECT public._assert(
+  NOT has_function_privilege(
+    'anon',
+    'public.liga_inscritos_contacto_autorizado(uuid)',
+    'EXECUTE'
+  ),
   'anon sin EXECUTE contacto'
 );
 
 SELECT public._assert(
-  has_function_privilege('authenticated', 'public.liga_inscritos_contacto_autorizado(uuid)', 'EXECUTE'),
+  has_function_privilege(
+    'authenticated',
+    'public.liga_inscritos_contacto_autorizado(uuid)',
+    'EXECUTE'
+  ),
   'authenticated con EXECUTE contacto'
 );
 
