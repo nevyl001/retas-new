@@ -112,6 +112,7 @@ const MOTIVO_LABEL: Record<string, string> = {
   demasiado_pronto: "Espera unos minutos antes de pedir otro enlace",
   limite_alcanzado: "Se alcanzó el límite de solicitudes",
   correo_sin_verificacion: "La verificación solo se acredita con el enlace",
+  modo_manual: "Esta liga está en modo manual",
 };
 
 const ESTADO_PRINCIPAL_LABEL: Record<EstadoVisualNotificacion, string> = {

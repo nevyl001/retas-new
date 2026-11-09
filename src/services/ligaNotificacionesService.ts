@@ -519,13 +519,42 @@ export async function guardarConfigLiga(
 
 export async function solicitarBienvenidaJugador(
   ligaId: string,
-  jugadorId: string
+  jugadorId: string,
+  origen: "accion_admin" | "inscripcion_confirmada" = "accion_admin"
 ): Promise<ResultadoNotificacion & { encolado: boolean }> {
   const { data, error } = await supabase.rpc("encolar_bienvenida_liga", {
     p_liga_id: ligaId,
     p_liga_jugador_id: jugadorId,
+    p_origen: origen,
   });
   if (error) {
+    const firmaAntigua =
+      origen === "accion_admin" &&
+      (/Could not find the function[^\n]*encolar_bienvenida_liga/i.test(
+        error.message
+      ) ||
+        /p_origen/i.test(error.message));
+    if (firmaAntigua) {
+      const fallback = await supabase.rpc("encolar_bienvenida_liga", {
+        p_liga_id: ligaId,
+        p_liga_jugador_id: jugadorId,
+      });
+      if (!fallback.error) {
+        const row = (fallback.data ?? {}) as {
+          ok?: boolean;
+          encolado?: boolean;
+          motivo?: unknown;
+        };
+        return {
+          ok: row.ok !== false,
+          encolado: row.encolado === true,
+          motivo: motivoSeguro(row.motivo),
+        };
+      }
+      if (esEsquemaAusente(fallback.error.message)) {
+        return { ok: false, encolado: false, motivo: "esquema_pendiente" };
+      }
+    }
     if (esEsquemaAusente(error.message)) {
       return { ok: false, encolado: false, motivo: "esquema_pendiente" };
     }
@@ -542,9 +571,9 @@ export async function solicitarBienvenidaJugador(
 
 /**
  * Hook post-inscripción.
- * Fase 1: MANUAL es el default y no hay auto-encolado por eventos deportivos.
- * AUTOMÁTICO solo encola si el producto activó envíos reales
- * (REACT_APP_LIGA_NOTIFICACIONES_AUTO=true) y la liga guardó modo_operacion=automatico.
+ * MANUAL (default en Postgres): no encola.
+ * AUTOMÁTICO requiere flag de producto + modo_operacion=automatico;
+ * el RPC rechaza origen automático si la liga sigue en manual.
  */
 export async function encolarBienvenidaTrasInscripcion(
   ligaId: string,
@@ -561,7 +590,11 @@ export async function encolarBienvenidaTrasInscripcion(
     if (snapshot.config.bienvenida_pausada) {
       return;
     }
-    await solicitarBienvenidaJugador(ligaId, jugadorId);
+    await solicitarBienvenidaJugador(
+      ligaId,
+      jugadorId,
+      "inscripcion_confirmada"
+    );
   } catch {
     aviso("no_disponible");
   }

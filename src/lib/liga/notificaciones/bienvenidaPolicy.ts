@@ -43,7 +43,8 @@ export type MotivoBienvenida =
   | "es_saliente"
   | "origen_no_permitido"
   | "tipo_no_soportado"
-  | "envios_reales_apagados";
+  | "envios_reales_apagados"
+  | "modo_manual";
 
 export interface PreferenciaNotificacion {
   adminHabilitado: boolean;
@@ -180,6 +181,19 @@ export function estadoVisual(
 
 export function origenPermiteCrearBienvenida(origen: string): boolean {
   return ORIGENES_DE_ESCRITURA.has(origen);
+}
+
+/**
+ * El origen automático solo encola si la liga guardó modo_operacion=automatico
+ * en Postgres. El flag de React no basta.
+ */
+export function origenAutomaticoPermitidoPorModo(
+  origen: string,
+  modoOperacion: string | null | undefined
+): boolean {
+  if (origen === "accion_admin") return true;
+  if (origen !== "inscripcion_confirmada") return false;
+  return (modoOperacion ?? "manual") === "automatico";
 }
 
 export function puedeEncolarBienvenida(input: {

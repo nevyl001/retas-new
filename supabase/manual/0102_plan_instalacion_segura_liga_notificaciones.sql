@@ -45,7 +45,9 @@
 --   0101_liga_notificaciones_verificacion_correo.sql  (tokens solo con GUC servidor)
 --   0102_liga_notificaciones_simulacion_servidor.sql  (reafirma)
 --   0103_liga_notificaciones_modo_operacion.sql       (manual/automatico)
+--   0104_liga_notificaciones_worker_resend.sql        (gate MANUAL + staging verificación)
 -- Preferible CLI (`supabase db push`) frente a pegar a medias en SQL Editor.
+-- Secuencia completa: supabase/manual/0104_secuencia_produccion_liga_notificaciones.sql
 --
 -- Precheck: current_setting('app.liga_notificaciones_simulacion', true) IS DISTINCT FROM 'true'
 --

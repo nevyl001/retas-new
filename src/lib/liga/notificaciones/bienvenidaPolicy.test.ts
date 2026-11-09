@@ -10,6 +10,7 @@ import {
   enmascararCorreo,
   enviosRealesAutorizados,
   estadoVisual,
+  origenAutomaticoPermitidoPorModo,
   origenPermiteCrearBienvenida,
   puedeConsultarNotificacionesLiga,
   puedeEncolarBienvenida,
@@ -437,6 +438,35 @@ describe("bienvenida de liga — elegibilidad", () => {
       excluidos: 2,
     });
   });
+
+  it("el origen automático exige modo automatico en backend, no solo React", () => {
+    expect(origenAutomaticoPermitidoPorModo("accion_admin", "manual")).toBe(
+      true
+    );
+    expect(
+      origenAutomaticoPermitidoPorModo("inscripcion_confirmada", "manual")
+    ).toBe(false);
+    expect(
+      origenAutomaticoPermitidoPorModo("inscripcion_confirmada", "automatico")
+    ).toBe(true);
+  });
+
+  it("reintento con la misma clave no crea otra identidad de envío", () => {
+    const a = claveIdempotenciaBienvenida({
+      ligaId: LIGA,
+      inscripcionId: INSCRIPCION,
+      jugadorId: JUGADOR,
+    });
+    const b = claveIdempotenciaBienvenida({
+      ligaId: LIGA,
+      inscripcionId: INSCRIPCION,
+      jugadorId: JUGADOR,
+    });
+    expect(a).toBe(b);
+    expect(decidirReclamoBienvenida({ estado: "enviado", attempts: 1 })).toEqual(
+      { write: false }
+    );
+  });
 });
 
 describe("bienvenida de liga — artefactos de seguridad", () => {
@@ -467,11 +497,32 @@ describe("bienvenida de liga — artefactos de seguridad", () => {
     expect(sql).toContain("correo_sin_verificacion");
   });
 
-  it("el worker no llama a Resend ni escribe mientras los envíos reales están apagados", () => {
-    expect(worker).not.toContain("sendByResend");
-    expect(worker).not.toContain("resendEmail");
-    expect(worker).not.toMatch(/from\(["']notificaciones_eventos_queue/);
-    expect(worker).toContain("LIGA_NOTIFICACIONES_ENVIOS_REALES");
+  it("el worker tiene Resend detrás del flag y no toca Torneo Express", () => {
+    const resend = fs.readFileSync(
+      path.join(root, "supabase/functions/_shared/resendEmail.ts"),
+      "utf8"
+    );
+    expect(worker).toContain("sendByResend");
+    expect(worker).toContain("resendEmail");
+    expect(worker).toContain('LIGA_NOTIFICACIONES_ENVIOS_REALES") === "true"');
+    expect(worker).toContain("enviosReales: false");
     expect(worker).toContain("escritos: 0");
+    expect(worker).toContain("idempotency_key");
+    expect(resend).toContain("Idempotency-Key");
+    expect(worker).not.toMatch(/from\(["']notificaciones_eventos_queue/);
+  });
+
+  it("0104 exige modo automatico en el backend para origen de inscripción", () => {
+    const sql0104 = fs.readFileSync(
+      path.join(
+        root,
+        "supabase/migrations/0104_liga_notificaciones_worker_resend.sql"
+      ),
+      "utf8"
+    );
+    expect(sql0104).toContain("modo_manual");
+    expect(sql0104).toContain("inscripcion_confirmada");
+    expect(sql0104).toContain("liga_notificaciones_verificacion_envio");
+    expect(sql0104).toContain("idempotency_key");
   });
 });

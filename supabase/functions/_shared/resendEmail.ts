@@ -50,6 +50,7 @@ export async function sendByResend(
   message: string,
   html?: string,
   context?: Record<string, unknown>,
+  idempotencyKey?: string | null,
 ): Promise<ResendSendResult> {
   const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
   const from = resolveResendFrom();
@@ -78,22 +79,29 @@ export async function sendByResend(
     text: message,
   };
 
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
+  };
+  const idem = idempotencyKey?.trim() ?? "";
+  if (idem && idem.length <= 256) {
+    headers["Idempotency-Key"] = idem;
+  }
+
   console.log(
     JSON.stringify({
       event: "resend_send_attempt",
       from,
       to,
       subject,
+      idempotency_key: idem || null,
       ...context,
     }),
   );
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify(payload),
   });
 

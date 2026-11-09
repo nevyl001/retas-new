@@ -1,0 +1,77 @@
+-- =============================================================================
+-- SECUENCIA ÚNICA DE PRODUCCIÓN — Correos manuales de liga
+-- =============================================================================
+-- NO EJECUTAR hasta autorización explícita del dueño.
+-- Detener ante cualquier DIFF crítica. Sin reparaciones improvisadas.
+-- =============================================================================
+--
+-- PRECONDICIONES
+--   * Frontend en main con Centro de Notificaciones (commit >= c973bfff)
+--   * Backup verificado (Dashboard Supabase → Backups o pg_dump)
+--   * Fingerprint lectura: IDENTICA_PARA_BASELINE tras conciliar preferencias_guardar
+--   * LIGA_NOTIFICACIONES_ENVIOS_REALES NO está en "true"
+--   * app.liga_notificaciones_simulacion IS DISTINCT FROM 'true'
+--
+-- -----------------------------------------------------------------------------
+-- PASO 1 — Backup
+-- -----------------------------------------------------------------------------
+-- Confirmar punto de restauración reciente antes de cualquier CREATE OR REPLACE.
+--
+-- -----------------------------------------------------------------------------
+-- PASO 2 — Conciliar 0100 (única DIFF conocida del cuerpo)
+-- -----------------------------------------------------------------------------
+-- Archivo: supabase/manual/0100_fix_preferencias_guardar_propuesta.sql
+-- Luego: supabase/migrations/0101 … reemplaza el trigger con reglas de
+-- verificación + conservación de fecha documentada.
+--
+-- Lectura post-apply:
+--   prosecdef=false, search_path fijado,
+--   prosrc contiene consentimiento_sin_evidencia y correo_sin_verificacion.
+--
+-- -----------------------------------------------------------------------------
+-- PASO 3 — Baseline historial 0100 (sin recrear objetos)
+-- -----------------------------------------------------------------------------
+--   supabase migration repair --status applied 0100
+--
+-- -----------------------------------------------------------------------------
+-- PASO 4 — Apply orden fijo
+-- -----------------------------------------------------------------------------
+--   0101_liga_notificaciones_verificacion_correo.sql
+--   0102_liga_notificaciones_simulacion_servidor.sql
+--   0103_liga_notificaciones_modo_operacion.sql
+--   0104_liga_notificaciones_worker_resend.sql
+-- Preferible: supabase db push (con revisión del plan).
+--
+-- -----------------------------------------------------------------------------
+-- PASO 5 — Verificación post-apply (solo lectura)
+-- -----------------------------------------------------------------------------
+--   * schema_migrations: 0100–0104
+--   * modo_operacion DEFAULT 'manual'
+--   * encolar(..., 'inscripcion_confirmada') → motivo modo_manual en liga nueva
+--   * authenticated SIN SELECT en liga_notificaciones_verificacion_envio
+--   * anon SIN EXECUTE en RPCs sensibles
+--   * Torneo Express + notificaciones_eventos_queue intactos
+--   * Cero filas enviadas por el worker (flag apagado)
+--
+-- -----------------------------------------------------------------------------
+-- PASO 6 — Publicar frontend + Edge Function (envíos APAGADOS)
+-- -----------------------------------------------------------------------------
+--   * Deploy Production del frontend
+--   * Deploy procesar-liga-notificaciones
+--   * Secrets: LIGA_NOTIFICACIONES_WEBHOOK_SECRET, RESEND_API_KEY
+--   * LIGA_NOTIFICACIONES_ENVIOS_REALES debe ausentarse o ser distinto de "true"
+--
+-- -----------------------------------------------------------------------------
+-- PASO 7 — Primera prueba real (autorización separada)
+-- -----------------------------------------------------------------------------
+-- Con UN solo correo propio y controlado:
+--   1) Documentar consentimiento (origen + fecha real)
+--   2) Activar jugador
+--   3) Solicitar verificación → worker con ENVIOS_REALES=true solo para la prueba
+--   4) Confirmar enlace
+--   5) PREPARAR CORREO → ENVIAR A 1 → worker → historial aceptado
+--   6) Repetir encolar → ya_enviado / ya_encolado (sin duplicar Resend gracias a
+--      Idempotency-Key = idempotency_key de cola)
+--   7) Apagar ENVIOS_REALES de inmediato tras la prueba si no hay go-live
+--
+-- NO envíos masivos. NO modo automático activo. NO inventar consentimientos.
