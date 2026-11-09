@@ -376,6 +376,15 @@ allow_dynamic_registration = false
 [functions.procesar-notificaciones-evento]
 verify_jwt = false
 
+# Webhook interno. La autorización es x-liga-notificaciones-secret.
+# Sin lote_id no lee la cola.
+[functions.procesar-liga-notificaciones]
+verify_jwt = false
+
+# Lo llama el administrador autenticado. No recibe el secreto del worker.
+[functions.procesar-lote-liga-notificaciones]
+verify_jwt = true
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

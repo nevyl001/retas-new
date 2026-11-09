@@ -33,6 +33,7 @@ import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import {
   cargarContactoInscritosLiga,
   cargarNotificacionesLiga,
+  solicitarProcesamientoLote,
   establecerHabilitacionJugador,
   guardarConfigLiga,
   registrarConsentimientoJugador,
@@ -40,6 +41,7 @@ import {
   solicitarComunicacionManual,
   type ConfigNotificacionLiga,
   type HistorialNotificacionRow,
+  type ColaNotificacionRow,
   type NotificacionesLigaSnapshot,
   type PreferenciaNotificacionRow,
 } from "../../services/ligaNotificacionesService";
@@ -102,7 +104,24 @@ const MOTIVO_LABEL: Record<string, string> = {
   lote_requerido: "Confirma el envío desde el compositor",
   tipo_no_soportado: "Plantilla no soportada",
   modo_manual: "Esta liga está en modo manual",
+  envios_apagados: "El envío real sigue apagado",
+  funcion_no_disponible: "El procesamiento del lote todavía no está disponible",
+  procesador_no_disponible: "No se pudo pedir el procesamiento",
+  lote_no_encontrado: "Ese lote no está en esta liga",
 };
+
+function etiquetaEntrega(
+  estado: string,
+  proveedor: string | null | undefined
+): string {
+  if (proveedor === "entregado") return "Entregado";
+  if (estado === "enviado" || proveedor === "aceptado") return "Aceptado";
+  if (estado === "procesando") return "Procesando";
+  if (estado === "pendiente") return "Pendiente";
+  if (estado === "error") return "Error";
+  if (estado === "omitido" || estado === "pausado") return "Omitido";
+  return estado;
+}
 
 const ESTADO_PRINCIPAL_LABEL: Record<EstadoVisualNotificacion, string> = {
   habilitado: "Listo para enviar",
@@ -168,6 +187,32 @@ function categoriaVisible(value: string | null | undefined): string | null {
     return JUGADOR_CATEGORIA_LABELS[value as RivieraJugadorCategoria];
   }
   return null;
+}
+
+function mensajeResultadoEnvio(
+  ok: number,
+  proceso: {
+    enviosReales: boolean;
+    enviados: number;
+    errores: number;
+    omitidos: number;
+    motivo: string | null;
+  } | null
+): string {
+  const jugadores = `${ok} jugador${ok === 1 ? "" : "es"}`;
+  if (!proceso || !proceso.enviosReales) {
+    return `En cola para ${jugadores}. Pendiente de procesamiento. No se entregó.`;
+  }
+  if (proceso.enviados > 0 && proceso.errores === 0) {
+    return `Resend aceptó ${proceso.enviados} correo${proceso.enviados === 1 ? "" : "s"}.`;
+  }
+  if (proceso.errores > 0) {
+    return `Error al entregar. ${motivoVisible(proceso.motivo)}. Puedes reintentar desde el historial.`;
+  }
+  if (proceso.omitidos > 0) {
+    return "Omitido por la validación. No se entregó.";
+  }
+  return `En cola para ${jugadores}. Pendiente de procesamiento. No se entregó.`;
 }
 
 function motivoVisible(motivo: string | null): string {
@@ -699,12 +744,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     let ok = 0;
     let fallidos = 0;
     let ultimoMotivo: string | null = null;
-    const colaNueva: {
-      liga_jugador_id: string;
-      estado: "pendiente";
-      attempts: number;
-      motivo: string | null;
-    }[] = [];
+    const colaNueva: ColaNotificacionRow[] = [];
     for (const fila of lote) {
       const asuntoResuelto = renderComunicacionEmail({
         clubNombre,
@@ -733,6 +773,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           estado: "pendiente",
           attempts: 0,
           motivo: null,
+          lote_id: loteId,
         });
       } else {
         fallidos += 1;
@@ -749,13 +790,18 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           : prev
       );
     }
+    let proceso: Awaited<ReturnType<typeof solicitarProcesamientoLote>> | null =
+      null;
+    if (ok > 0) {
+      proceso = await solicitarProcesamientoLote({ ligaId, loteId });
+      const fresco = await cargarNotificacionesLiga(ligaId);
+      if (fresco.disponible) setSnapshot(fresco);
+    }
     setEnviandoLote(false);
     if (ok > 0 && fallidos === 0) {
       setEnvioPaso("idle");
       setEnvioSeleccion({});
-      confirmar(
-        `Correo preparado. Pendiente de procesamiento para ${ok} jugador${ok === 1 ? "" : "es"}. No se entregó.`
-      );
+      confirmar(mensajeResultadoEnvio(ok, proceso));
       setArea("historial");
       return;
     }
@@ -764,6 +810,20 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         ? `Pendiente de procesamiento: ${ok}. ${fallidos} no se encolaron: ${motivoVisible(ultimoMotivo)}.`
         : `${motivoVisible(ultimoMotivo ?? "no_disponible")}. Puedes corregir y volver a confirmar.`
     );
+  }
+
+  async function reintentarLote(loteId: string) {
+    if (!puedeEscribir || enviandoLote) return;
+    setEnviandoLote(true);
+    const proceso = await solicitarProcesamientoLote({
+      ligaId,
+      loteId,
+      reintentar: true,
+    });
+    const fresco = await cargarNotificacionesLiga(ligaId);
+    if (fresco.disponible) setSnapshot(fresco);
+    setEnviandoLote(false);
+    confirmar(mensajeResultadoEnvio(1, proceso));
   }
 
   async function cambiarConfig(next: ConfigNotificacionLiga) {
@@ -1430,8 +1490,8 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     </ul>
                   ) : null}
                   <p className="liga-notificaciones__hint">
-                    Confirmar solo encola el mensaje. Con el worker apagado queda
-                    pendiente de procesamiento y no se muestra como enviado.
+                    Confirmar pide procesar solo este lote. Si el envío real está
+                    apagado, queda pendiente y no se muestra como enviado.
                   </p>
                   <button
                     type="button"
@@ -1444,7 +1504,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     onClick={() => void confirmarEnvioManual()}
                   >
                     {enviandoLote
-                      ? "Encolando…"
+                      ? "Procesando…"
                       : `ENVIAR CORREO A ${incluidosEnvio.length} JUGADOR${
                           incluidosEnvio.length === 1 ? "" : "ES"
                         }`}
@@ -1536,7 +1596,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                       {new Date(item.created_at).toLocaleString("es-MX")}
                     </p>
                     <span className="liga-notificaciones__badge liga-notificaciones__badge--pending">
-                      {item.estado}
+                      {etiquetaEntrega(item.estado, item.proveedor_estado)}
                     </span>
                     <button
                       type="button"
@@ -1570,10 +1630,22 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                       <p className="liga-notificaciones__nombre">{jugador}</p>
                       <p className="liga-notificaciones__meta">Bienvenida · cola</p>
                     </div>
-                    <p className="liga-notificaciones__meta">En cola</p>
+                    <p className="liga-notificaciones__meta">
+                      {etiquetaEntrega(item.estado, null)}
+                    </p>
                     <span className="liga-notificaciones__badge liga-notificaciones__badge--pending">
-                      {item.estado}
+                      {etiquetaEntrega(item.estado, null)}
                     </span>
+                    {item.estado === "error" && item.lote_id ? (
+                      <button
+                        type="button"
+                        className="liga-notificaciones__ghost"
+                        disabled={enviandoLote}
+                        onClick={() => void reintentarLote(item.lote_id!)}
+                      >
+                        Reintentar
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="liga-notificaciones__ghost"

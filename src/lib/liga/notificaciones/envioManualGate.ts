@@ -33,6 +33,7 @@ export function allowlistActiva(raw: string | null | undefined): boolean {
 
 export type FilaSimulada = {
   id: string;
+  loteId?: string | null;
   email: string | null;
   adminHabilitado: boolean;
   consentimientoEstado: string | null;
@@ -58,6 +59,7 @@ export type ResultadoSimulado = {
 export function simularLoteManual(input: {
   enviosReales: string | null | undefined;
   allowlistRaw: string | null | undefined;
+  loteId?: string | null;
   filas: FilaSimulada[];
 }): ResultadoSimulado {
   const quieto: ResultadoSimulado = {
@@ -72,13 +74,19 @@ export function simularLoteManual(input: {
   if (input.enviosReales !== "true" || !allowlistActiva(input.allowlistRaw)) {
     return quieto;
   }
+  if (input.loteId === null || input.loteId === "") {
+    return quieto;
+  }
+  const filas = input.loteId
+    ? input.filas.filter((fila) => fila.loteId === input.loteId)
+    : input.filas;
   const allowlist = parseAllowlist(input.allowlistRaw);
   const reclamadas: string[] = [];
   const excluidasSinEscritura: string[] = [];
   let escrituras = 0;
   let enviados = 0;
   let fuera = 0;
-  for (const fila of input.filas) {
+  for (const fila of filas) {
     const decision = decidirReclamoEnvio({
       email: fila.email,
       allowlist,
@@ -102,7 +110,7 @@ export function simularLoteManual(input: {
     reclamadas.push(fila.id);
   }
   return {
-    procesados: input.filas.length,
+    procesados: filas.length,
     enviados,
     escrituras,
     llamadasResend: enviados,

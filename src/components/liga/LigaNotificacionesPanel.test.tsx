@@ -43,6 +43,15 @@ jest.mock("../../services/ligaNotificacionesService", () => ({
     encolado: false,
     motivo: "deshabilitado",
   }),
+  solicitarProcesamientoLote: jest.fn().mockResolvedValue({
+    ok: true,
+    enviosReales: false,
+    enviados: 0,
+    omitidos: 0,
+    errores: 0,
+    procesados: 0,
+    motivo: "envios_apagados",
+  }),
   solicitarBienvenidaJugador: jest.fn().mockResolvedValue({
     ok: false,
     encolado: false,

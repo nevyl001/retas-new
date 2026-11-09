@@ -85,7 +85,6 @@ function decidirReclamo(input: {
   email: string | null;
   allowlist: Set<string>;
   pref: PrefRow | null;
-  registroAutorizadoAt?: string | null;
 }): { reclamar: boolean; motivo: string } {
   const email = input.email?.trim().toLowerCase() ?? "";
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !email.endsWith("@padel.local");
@@ -104,7 +103,7 @@ function decidirReclamo(input: {
     Boolean(origen) &&
     !["inscripcion", "confirmacion_inscripcion", "tiene_correo", "email"].includes(origen) &&
     Boolean(input.pref.consentimiento_registrado_at);
-  if (!consentimientoPosterior && !input.registroAutorizadoAt?.trim()) {
+  if (!consentimientoPosterior) {
     return { reclamar: false, motivo: "sin_autorizacion" };
   }
   return { reclamar: true, motivo: "ok" };
@@ -122,6 +121,16 @@ function publicBase(): string {
     .trim()
     .replace(/\/+$/, "");
   return raw || "https://appriviera.rivieraopen.com";
+}
+
+async function leerLoteId(req: Request): Promise<string | null> {
+  try {
+    const body = await req.json();
+    const raw = typeof body?.lote_id === "string" ? body.lote_id.trim() : "";
+    return UUID.test(raw) ? raw : null;
+  } catch {
+    return null;
+  }
 }
 
 function classifyResendFailure(status: number): "temporal" | "permanente" {
@@ -164,6 +173,18 @@ Deno.serve(async (req) => {
     });
   }
 
+  const loteId = await leerLoteId(req);
+  if (!loteId) {
+    return json(req, 200, {
+      ok: true,
+      enviosReales: true,
+      procesados: 0,
+      enviados: 0,
+      escritos: 0,
+      motivo: "lote_requerido",
+    });
+  }
+
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
   if (!SUPABASE_URL) {
     return json(req, 500, { ok: false, error: "supabase_url_ausente" });
@@ -191,6 +212,7 @@ Deno.serve(async (req) => {
       "id, liga_id, liga_jugador_id, idempotency_key, estado, attempts, tipo, asunto, cuerpo_texto, lote_id",
     )
     .eq("estado", "pendiente")
+    .eq("lote_id", loteId)
     .order("created_at", { ascending: true })
     .limit(MAX_BATCH);
 
@@ -206,7 +228,6 @@ Deno.serve(async (req) => {
       email: previo.email,
       allowlist,
       pref: previo.pref,
-      registroAutorizadoAt: previo.registroAutorizadoAt,
     });
     if (!decision.reclamar) {
       if (decision.motivo === "fuera_de_allowlist") {
@@ -274,7 +295,7 @@ Deno.serve(async (req) => {
 async function leerElegibilidad0100(
   supabase: ReturnType<typeof createCredentialClient>,
   row: { liga_id: string; liga_jugador_id: string },
-): Promise<{ pref: PrefRow | null; email: string | null; nombre: string; ligaNombre: string; registroAutorizadoAt: string | null }> {
+): Promise<{ pref: PrefRow | null; email: string | null; nombre: string; ligaNombre: string }> {
   const { data: pref } = await supabase
     .from("liga_notificaciones_preferencias")
     .select(
@@ -299,11 +320,9 @@ async function leerElegibilidad0100(
   const filaContacto = Array.isArray(contacto) ? contacto[0] : contacto;
   const contactoTipado = filaContacto as {
     email?: string | null;
-    registro_autorizado_at?: string | null;
   } | null;
   const emailGlobal = contactoTipado?.email ?? null;
   if (emailGlobal) email = emailGlobal;
-  const registroAutorizadoAt = contactoTipado?.registro_autorizado_at?.trim() || null;
 
   const { data: liga } = await supabase
     .from("ligas")
@@ -316,7 +335,6 @@ async function leerElegibilidad0100(
     email: isFakeOrInvalidEmail(email) ? null : email,
     nombre,
     ligaNombre: String(liga?.nombre ?? "tu liga"),
-    registroAutorizadoAt,
   };
 }
 
@@ -341,7 +359,6 @@ async function enviarReclamado(
     email: otraVez.email,
     allowlist,
     pref: otraVez.pref,
-    registroAutorizadoAt: otraVez.registroAutorizadoAt,
   });
   if (!decision.reclamar) {
     await finalizarMensaje(supabase, row, {

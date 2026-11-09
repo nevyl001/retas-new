@@ -51,9 +51,21 @@ export interface HistorialNotificacionRow {
 }
 
 export interface ColaNotificacionRow {
+  id?: string;
   liga_jugador_id: string;
   estado: string;
   attempts: number;
+  motivo: string | null;
+  lote_id?: string | null;
+}
+
+export interface ResultadoProcesamientoLote {
+  ok: boolean;
+  enviosReales: boolean;
+  enviados: number;
+  omitidos: number;
+  errores: number;
+  procesados: number;
   motivo: string | null;
 }
 
@@ -330,7 +342,7 @@ export async function cargarNotificacionesLiga(
         .limit(100),
       supabase
         .from("liga_notificaciones_queue")
-        .select("liga_jugador_id, estado, attempts, motivo")
+        .select("id, liga_jugador_id, estado, attempts, motivo, lote_id")
         .eq("liga_id", ligaId)
         .order("updated_at", { ascending: false })
         .limit(100),
@@ -727,6 +739,53 @@ export async function solicitarComunicacionManual(input: {
   return {
     ok: row.ok !== false,
     encolado: row.encolado === true,
+    motivo: motivoSeguro(row.motivo),
+  };
+}
+
+/**
+ * Pide al servidor procesar solo este lote. No lleva secretos.
+ * Con envíos reales apagados el servidor no escribe la cola.
+ */
+export async function solicitarProcesamientoLote(input: {
+  ligaId: string;
+  loteId: string;
+  reintentar?: boolean;
+}): Promise<ResultadoProcesamientoLote> {
+  const vacio: ResultadoProcesamientoLote = {
+    ok: false,
+    enviosReales: false,
+    enviados: 0,
+    omitidos: 0,
+    errores: 0,
+    procesados: 0,
+    motivo: "no_disponible",
+  };
+  const { data, error } = await supabase.functions.invoke(
+    "procesar-lote-liga-notificaciones",
+    {
+      body: {
+        liga_id: input.ligaId,
+        lote_id: input.loteId,
+        reintentar: input.reintentar === true,
+      },
+    }
+  );
+  if (error) {
+    if (esEsquemaAusente(error.message)) {
+      return { ...vacio, motivo: "funcion_no_disponible" };
+    }
+    aviso("no_disponible");
+    return vacio;
+  }
+  const row = (data ?? {}) as Partial<ResultadoProcesamientoLote>;
+  return {
+    ok: row.ok === true,
+    enviosReales: row.enviosReales === true,
+    enviados: Number(row.enviados ?? 0),
+    omitidos: Number(row.omitidos ?? 0),
+    errores: Number(row.errores ?? 0),
+    procesados: Number(row.procesados ?? 0),
     motivo: motivoSeguro(row.motivo),
   };
 }

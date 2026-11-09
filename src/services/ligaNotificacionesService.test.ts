@@ -7,16 +7,22 @@ import {
   solicitarBienvenidaJugador,
   registrarConsentimientoJugador,
   solicitarComunicacionManual,
+  solicitarProcesamientoLote,
   solicitarVerificacionCorreo,
   simulacionNotificacionesClienteActiva,
 } from "./ligaNotificacionesService";
 
 jest.mock("../lib/supabaseClient", () => ({
-  supabase: { rpc: jest.fn(), from: jest.fn() },
+  supabase: {
+    rpc: jest.fn(),
+    from: jest.fn(),
+    functions: { invoke: jest.fn() },
+  },
 }));
 
 const rpc = supabase.rpc as jest.Mock;
 const from = supabase.from as jest.Mock;
+const invoke = supabase.functions.invoke as jest.Mock;
 
 function chainResult(result: { data: unknown; error: unknown }) {
   const chain: Record<string, jest.Mock> = {};
@@ -37,6 +43,7 @@ describe("ligaNotificacionesService", () => {
   beforeEach(() => {
     rpc.mockReset();
     from.mockReset();
+    invoke.mockReset();
   });
 
   it("el lote manual viaja en p_lote_id y no se envía solo", async () => {
@@ -59,6 +66,42 @@ describe("ligaNotificacionesService", () => {
       p_asunto: "Aviso",
       p_cuerpo: "Hola",
       p_lote_id: "11111111-1111-4111-8111-111111111111",
+    });
+  });
+
+  it("pide procesar solo el lote y no trata un apagado como entrega", async () => {
+    invoke.mockResolvedValue({
+      data: {
+        ok: true,
+        enviosReales: false,
+        enviados: 0,
+        omitidos: 0,
+        errores: 0,
+        procesados: 0,
+        motivo: "envios_apagados",
+      },
+      error: null,
+    });
+    await expect(
+      solicitarProcesamientoLote({
+        ligaId: "liga-1",
+        loteId: "11111111-1111-4111-8111-111111111111",
+      })
+    ).resolves.toEqual({
+      ok: true,
+      enviosReales: false,
+      enviados: 0,
+      omitidos: 0,
+      errores: 0,
+      procesados: 0,
+      motivo: "envios_apagados",
+    });
+    expect(invoke).toHaveBeenCalledWith("procesar-lote-liga-notificaciones", {
+      body: {
+        liga_id: "liga-1",
+        lote_id: "11111111-1111-4111-8111-111111111111",
+        reintentar: false,
+      },
     });
   });
 

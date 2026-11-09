@@ -172,6 +172,32 @@ describe("allowlist fail-closed", () => {
     expect(resultado.escrituras).toBe(1);
   });
 
+  it("sin lote no procesa y un lote ajeno no se toca", () => {
+    const sinLote = simularLoteManual({
+      enviosReales: "true",
+      allowlistRaw: "jugador@example.com",
+      loteId: null,
+      filas: [filaLista],
+    });
+    expect(sinLote).toMatchObject({
+      procesados: 0,
+      enviados: 0,
+      escrituras: 0,
+      llamadasResend: 0,
+    });
+    const soloPropio = simularLoteManual({
+      enviosReales: "true",
+      allowlistRaw: "jugador@example.com",
+      loteId: "lote-propio",
+      filas: [
+        { ...filaLista, loteId: "lote-propio" },
+        { ...filaLista, id: "ajena", loteId: "lote-ajeno" },
+      ],
+    });
+    expect(soloPropio.reclamadas).toEqual(["fila-1"]);
+    expect(soloPropio.procesados).toBe(1);
+  });
+
   it("el worker autentica antes del flag y corta la allowlist vacía antes de la cola", () => {
     const worker = fs.readFileSync(
       path.join(
@@ -183,12 +209,15 @@ describe("allowlist fail-closed", () => {
     const auth = worker.indexOf("LIGA_NOTIFICACIONES_WEBHOOK_SECRET");
     const flag = worker.indexOf('LIGA_NOTIFICACIONES_ENVIOS_REALES") === "true"');
     const corte = worker.indexOf("allowlist.size === 0");
+    const lote = worker.indexOf("lote_requerido");
     const cola = worker.indexOf('from("liga_notificaciones_queue")');
     const resend = worker.indexOf("await sendByResend");
     expect(auth).toBeGreaterThan(-1);
     expect(auth).toBeLessThan(flag);
     expect(flag).toBeLessThan(corte);
-    expect(corte).toBeLessThan(cola);
+    expect(corte).toBeLessThan(lote);
+    expect(lote).toBeLessThan(cola);
+    expect(worker).toContain('.eq("lote_id", loteId)');
     expect(cola).toBeLessThan(resend);
     expect(worker).toContain("enviados: 0");
     expect(worker).toContain("fuera_allowlist");
