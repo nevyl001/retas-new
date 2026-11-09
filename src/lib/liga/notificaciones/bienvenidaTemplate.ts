@@ -6,6 +6,14 @@ import {
   buildOfficialPlayerUrl,
   getRivieraAppPublicBase,
 } from "../../rivieraOfficialSite";
+import {
+  type LigaMailBranding,
+  resolveLigaMailBranding,
+} from "./ligaMailBranding";
+import {
+  escapeHtml,
+  renderPremiumEmailHtml,
+} from "./renderPremiumEmailHtml";
 
 /** Misma forma que parseJugadoresPath: la ficha abre UUID versión 1 a 5. */
 const UUID =
@@ -25,6 +33,7 @@ export interface BienvenidaTemplateInput {
   ligaUrl: string;
   footerLine: string | null;
   vistaPrevia: boolean;
+  branding?: LigaMailBranding;
 }
 
 export function enlacePerfilBienvenida(input: {
@@ -62,15 +71,6 @@ export function acentoSeguro(hex: string | null | undefined): string | null {
   const esMorado = saturation > 0.25 && hue >= 260 && hue <= 320;
   if (esDorado || esVerde || esMorado) return null;
   return value;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 export function logoSeguro(url: string | null | undefined): string | null {
@@ -111,54 +111,42 @@ export function renderBienvenidaEmail(input: BienvenidaTemplateInput): {
   const ligaUrl = input.ligaUrl.trim();
   const asunto = `Bienvenido a ${liga}`;
 
-  const datos = [
-    filaDato("Club", club),
-    filaDato("Liga", liga),
-    filaDato("Categoría", input.categoria),
-    filaDato("Temporada", input.temporada),
-  ].join("");
+  const branding: LigaMailBranding =
+    input.branding ??
+    resolveLigaMailBranding({
+      clubNombre: club,
+      logoUrl: logo,
+      acentoHex: acento,
+    });
 
-  const atribucion = mostrarAtribucion
-    ? `<p style="margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.4;letter-spacing:0.08em;color:#a3a3a3;">${escapeHtml(RIVIERA_CO_BRAND_ATTRIBUTION)}</p>`
-    : "";
+  const paragraphsHtml = `<p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:#374151;">Hola, ${escapeHtml(jugador)}:<br><br>Tu inscripción a ${escapeHtml(liga)} ha sido confirmada.<br><br>Nos alegra que formes parte de esta temporada.<br><br>Desde tu perfil podrás consultar tu participación, resultados e historial deportivo conforme avance la competencia.</p>`;
 
-  const logoHtml = logo
-    ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(club)}" width="120" style="display:block;border:0;outline:none;text-decoration:none;max-width:120px;height:auto;">`
-    : `<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.3;color:#f5f5f5;">${escapeHtml(club)}</p>`;
+  const infoCards = [
+    { label: "Club", value: club },
+    { label: "Liga", value: liga },
+    { label: "Categoría", value: input.categoria },
+    { label: "Temporada", value: input.temporada },
+  ];
 
-  const avisoPrevia = input.vistaPrevia
-    ? `<tr><td style="padding:14px 28px;background:#171717;border-bottom:1px solid #2a2a2a;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.4;letter-spacing:0.12em;color:#f5f5f5;">VISTA PREVIA — este mensaje no se ha enviado</td></tr>`
-    : "";
-
-  const footerExtra = input.footerLine?.trim()
-    ? `<p style="margin:12px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;color:#d4d4d4;">${escapeHtml(input.footerLine.trim())}</p>`
-    : "";
-
-  const html = `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(asunto)}</title>
-</head>
-<body style="margin:0;padding:0;background:#050505;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050505;">
-<tr><td align="center" style="padding:24px 12px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#0c0c0c;border:1px solid #2a2a2a;border-top:3px solid ${acento};">
-${avisoPrevia}
-<tr><td style="padding:32px 28px 12px;">${logoHtml}${atribucion}</td></tr>
-<tr><td style="padding:12px 28px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;letter-spacing:0.14em;color:#a3a3a3;">${escapeHtml(liga)}</td></tr>
-<tr><td style="padding:12px 28px 0;font-family:Arial,Helvetica,sans-serif;font-size:32px;line-height:1.15;color:#ffffff;">¡Bienvenido a tu liga!</td></tr>
-<tr><td style="padding:22px 28px 0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#f5f5f5;">Hola, ${escapeHtml(jugador)}:<br><br>Tu inscripción a ${escapeHtml(liga)} ha sido confirmada.<br><br>Nos alegra que formes parte de esta temporada.<br><br>Desde tu perfil podrás consultar tu participación, resultados e historial deportivo conforme avance la competencia.</td></tr>
-<tr><td style="padding:28px 28px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${datos}</table></td></tr>
-<tr><td style="padding:8px 28px 8px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td bgcolor="#f5f5f5" style="border-radius:2px;"><a href="${escapeHtml(perfil)}" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1;letter-spacing:0.12em;color:#0a0a0a;text-decoration:none;font-weight:700;">VER MI PERFIL</a></td></tr></table></td></tr>
-<tr><td style="padding:28px 28px 8px;font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.5;color:#f5f5f5;">${escapeHtml(CIERRE)}</td></tr>
-<tr><td style="padding:8px 28px 32px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#a3a3a3;">Riviera Open<br>Las preferencias de comunicación de esta liga las administra el club. Si no deseas recibir estos avisos, solicita al organizador que desactive tus notificaciones.<br><a href="${escapeHtml(ligaUrl)}" style="color:#f5f5f5;text-decoration:underline;">Ver la liga</a>${footerExtra}</td></tr>
-</table>
-</td></tr>
-</table>
-</body>
-</html>`;
+  const html = renderPremiumEmailHtml({
+    branding,
+    asunto,
+    preheaderSnippet: `Tu inscripción a ${liga} ha sido confirmada.`,
+    badgeLabel: liga,
+    title: "¡Bienvenido a tu liga!",
+    paragraphsHtml,
+    infoCards,
+    actionButton: {
+      label: "VER MI PERFIL",
+      url: perfil,
+    },
+    cierreTexto: CIERRE,
+    footerNotice:
+      "Las preferencias de comunicación de esta liga las administra el club. Si no deseas recibir estos avisos, solicita al organizador que desactive tus notificaciones.",
+    ligaUrl,
+    footerLine: input.footerLine,
+    vistaPrevia: input.vistaPrevia,
+  });
 
   const lineas = [
     input.vistaPrevia ? "VISTA PREVIA — este mensaje no se ha enviado" : "",

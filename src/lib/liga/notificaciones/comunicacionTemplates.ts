@@ -3,6 +3,15 @@
  * El cuerpo se personaliza en UI; variables se resuelven y escapan al renderizar.
  */
 
+import {
+  type LigaMailBranding,
+  resolveLigaMailBranding,
+} from "./ligaMailBranding";
+import {
+  escapeHtml,
+  renderPremiumEmailHtml,
+} from "./renderPremiumEmailHtml";
+
 export type TipoComunicacionLiga =
   | "bienvenida"
   | "aviso_general"
@@ -71,15 +80,6 @@ export function plantillaPorId(
   );
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
 export function resolverVariablesComunicacion(
   plantilla: string,
   vars: { nombre: string; liga: string; club: string }
@@ -90,7 +90,7 @@ export function resolverVariablesComunicacion(
     .replace(/\{\{\s*club\s*\}\}/gi, vars.club);
 }
 
-/** HTML seguro: texto plano con saltos → párrafos escapados. */
+/** HTML seguro: texto plano con saltos → párrafos escapados con diseño premium. */
 export function renderComunicacionEmail(input: {
   clubNombre: string;
   ligaNombre: string;
@@ -98,7 +98,9 @@ export function renderComunicacionEmail(input: {
   asunto: string;
   cuerpo: string;
   vistaPrevia: boolean;
-}): { subject: string; html: string } {
+  branding?: LigaMailBranding;
+  replyTo?: string | null;
+}): { subject: string; html: string; text: string } {
   const vars = {
     nombre: input.jugadorNombre.trim() || "Jugador",
     liga: input.ligaNombre.trim() || "la liga",
@@ -106,37 +108,48 @@ export function renderComunicacionEmail(input: {
   };
   const subject = resolverVariablesComunicacion(input.asunto, vars).slice(0, 180);
   const cuerpoResuelto = resolverVariablesComunicacion(input.cuerpo, vars);
-  const paragraphs = cuerpoResuelto
+  const branding =
+    input.branding ??
+    resolveLigaMailBranding({
+      clubNombre: vars.club,
+    });
+
+  const paragraphsHtml = cuerpoResuelto
     .split(/\n{2,}/)
     .map((block) => block.trim())
     .filter(Boolean)
     .map((block) => {
       const lines = escapeHtml(block).replace(/\n/g, "<br />");
-      return `<p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:#111;">${lines}</p>`;
+      return `<p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:#374151;">${lines}</p>`;
     })
     .join("");
 
-  const previewBanner = input.vistaPrevia
-    ? `<div style="background:#111;color:#fff;text-align:center;padding:8px 12px;font-size:12px;letter-spacing:.08em;">VISTA PREVIA</div>`
-    : "";
+  const reply = input.replyTo?.trim() ?? "";
+  const footerNotice = reply
+    ? "Puedes responder directamente a este correo para comunicarte con el club."
+    : "Este aviso no recibe respuestas por correo. El club administra las comunicaciones de la liga.";
 
-  const html = `<!DOCTYPE html><html><body style="margin:0;background:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-${previewBanner}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:24px 12px;">
-  <tr><td align="center">
-    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border:1px solid #e5e5e5;">
-      <tr><td style="padding:28px 28px 8px;">
-        <p style="margin:0 0 4px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#666;">${escapeHtml(vars.club)}</p>
-        <h1 style="margin:0 0 20px;font-size:22px;line-height:1.25;color:#111;">${escapeHtml(subject)}</h1>
-        ${paragraphs || `<p style="margin:0;color:#111;"> </p>`}
-      </td></tr>
-      <tr><td style="padding:8px 28px 28px;">
-        <p style="margin:0;font-size:12px;color:#777;">Comunicación deportiva de ${escapeHtml(vars.liga)}. Este aviso no recibe respuestas por correo.</p>
-      </td></tr>
-    </table>
-  </td></tr>
-</table>
-</body></html>`;
+  const html = renderPremiumEmailHtml({
+    branding,
+    asunto: subject,
+    preheaderSnippet: cuerpoResuelto.slice(0, 140).replace(/\s+/g, " "),
+    badgeLabel: vars.liga,
+    title: subject,
+    paragraphsHtml: paragraphsHtml || `<p style="margin:0;color:#374151;"> </p>`,
+    footerNotice,
+    vistaPrevia: input.vistaPrevia,
+  });
 
-  return { subject, html };
+  const textLines = [
+    input.vistaPrevia ? "VISTA PREVIA — este mensaje no se ha enviado" : "",
+    branding.brandName,
+    branding.isClubBranded ? branding.brandSupportLabel : "",
+    vars.liga,
+    subject,
+    cuerpoResuelto,
+    footerNotice,
+    "Gestionado con Riviera Open",
+  ].filter(Boolean);
+
+  return { subject, html, text: textLines.join("\n\n") };
 }

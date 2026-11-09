@@ -28,6 +28,7 @@ import {
   renderComunicacionEmail,
   type TipoComunicacionLiga,
 } from "../../lib/liga/notificaciones/comunicacionTemplates";
+import { resolveLigaMailBranding } from "../../lib/liga/notificaciones/ligaMailBranding";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import {
@@ -391,6 +392,12 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const isMobileGrid = useMobileViewport(679);
   const { manifest } = useClubExperience();
   const clubNombre = manifest.displayName?.trim() || "Riviera Open";
+  const mailBranding = useMemo(() => {
+    return resolveLigaMailBranding({
+      clubNombre,
+      manifest,
+    });
+  }, [clubNombre, manifest]);
   const [area, setArea] = useState<Area>("destinatarios");
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busqueda, setBusqueda] = useState("");
@@ -872,6 +879,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           asunto: asuntoDraft,
           cuerpo: cuerpoDraft,
           vistaPrevia: false,
+          branding: mailBranding,
         }).subject;
         const cuerpoResuelto = cuerpoDraft
           .replace(/\{\{\s*nombre\s*\}\}/gi, fila.nombre)
@@ -1341,6 +1349,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         asunto: asuntoDraft,
         cuerpo: cuerpoDraft,
         vistaPrevia: true,
+        branding: mailBranding,
       }).html
     : "";
 

@@ -23,6 +23,8 @@ import {
   isFakeOrInvalidEmail,
   renderBienvenidaWorker,
   renderComunicacionWorker,
+  resolveLigaMailBrandingWorker,
+  type LigaMailBranding,
 } from "../_shared/ligaNotificacionesMail.ts";
 
 const MODULE = "procesar-liga-notificaciones";
@@ -302,7 +304,14 @@ Deno.serve(async (req) => {
 async function leerElegibilidad0100(
   supabase: ReturnType<typeof createCredentialClient>,
   row: { liga_id: string; liga_jugador_id: string },
-): Promise<{ pref: PrefRow | null; email: string | null; nombre: string; ligaNombre: string }> {
+): Promise<{
+  pref: PrefRow | null;
+  email: string | null;
+  nombre: string;
+  ligaNombre: string;
+  clubNombre: string;
+  branding: LigaMailBranding;
+}> {
   const { data: pref } = await supabase
     .from("liga_notificaciones_preferencias")
     .select(
@@ -333,15 +342,48 @@ async function leerElegibilidad0100(
 
   const { data: liga } = await supabase
     .from("ligas")
-    .select("nombre")
+    .select("nombre, organizador_id")
     .eq("id", row.liga_id)
     .maybeSingle();
+
+  const ligaNombre = String(liga?.nombre ?? "tu liga");
+  let clubNombre = "Riviera Open";
+  let brandingKey: string | null = null;
+  let premiumEnabled = false;
+
+  const organizadorId = (liga as { organizador_id?: string | null } | null)?.organizador_id ?? null;
+  if (organizadorId) {
+    const { data: ogm } = await supabase
+      .from("organizador_game_modes")
+      .select("branding_key, premium_branding_enabled")
+      .eq("organizador_id", organizadorId)
+      .maybeSingle();
+
+    brandingKey = (ogm as { branding_key?: string | null } | null)?.branding_key ?? null;
+    premiumEnabled = Boolean((ogm as { premium_branding_enabled?: boolean } | null)?.premium_branding_enabled);
+
+    const { data: displayName } = await supabase.rpc("get_organizador_display_name", {
+      p_organizador_id: organizadorId,
+    });
+    if (displayName && typeof displayName === "string" && displayName.trim()) {
+      clubNombre = displayName.trim();
+    }
+  }
+
+  const branding = resolveLigaMailBrandingWorker({
+    clubNombre,
+    brandingKey,
+    premiumBrandingEnabled: premiumEnabled,
+    appBaseUrl: publicBase(),
+  });
 
   return {
     pref: (pref as PrefRow | null) ?? null,
     email: isFakeOrInvalidEmail(email) ? null : email,
     nombre,
-    ligaNombre: String(liga?.nombre ?? "tu liga"),
+    ligaNombre,
+    clubNombre: branding.brandName,
+    branding,
   };
 }
 
@@ -381,18 +423,20 @@ async function enviarReclamado(
   const esManual = Boolean(row.lote_id || row.cuerpo_texto);
   const mail = esManual
     ? renderComunicacionWorker({
-      clubNombre: otraVez.ligaNombre,
+      clubNombre: otraVez.clubNombre,
       ligaNombre: otraVez.ligaNombre,
       asunto: row.asunto ?? `Mensaje de ${otraVez.ligaNombre}`,
       cuerpoTexto: row.cuerpo_texto ?? "",
       replyTo,
+      branding: otraVez.branding,
     })
     : renderBienvenidaWorker({
-      clubNombre: otraVez.ligaNombre,
+      clubNombre: otraVez.clubNombre,
       ligaNombre: otraVez.ligaNombre,
       jugadorNombre: otraVez.nombre,
       perfilUrl: `${publicBase()}/public/liga/${row.liga_id}`,
       ligaUrl: `${publicBase()}/public/liga/${row.liga_id}`,
+      branding: otraVez.branding,
     });
 
   const send = await sendByResend(
