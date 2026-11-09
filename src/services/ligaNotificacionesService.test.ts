@@ -1,6 +1,7 @@
 import { supabase } from "../lib/supabaseClient";
 import {
   cargarNotificacionesLiga,
+  guardarConfigLiga,
   encolarBienvenidaTrasInscripcion,
   esEsquemaAusente,
   establecerCorreoVerificado,
@@ -309,6 +310,82 @@ describe("ligaNotificacionesService", () => {
     expect(snap.preferencias[0].correo_verificacion_origen).toBeNull();
     expect(snap.preferencias[0].correo_verificado_email).toBeNull();
     expect(snap.config.modo_operacion).toBe("manual");
+  });
+
+  it("conserva modo y automatizaciones si falta la supervisión", async () => {
+    const fallo = chainResult({
+      data: null,
+      error: {
+        message:
+          "column liga_notificaciones_config.supervision_email does not exist",
+      },
+    });
+    const config = chainResult({
+      data: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "automatico",
+        resultados_auto: true,
+        resultados_espera_minutos: 15,
+        recordatorio_auto: true,
+        recordatorio_horas: 12,
+        bienvenida_auto: false,
+      },
+      error: null,
+    });
+    const vacio = chainResult({ data: [], error: null });
+    let configCalls = 0;
+    from.mockImplementation((table: string) => {
+      if (table === "liga_notificaciones_config") {
+        configCalls += 1;
+        return configCalls === 1 ? fallo : config;
+      }
+      return vacio;
+    });
+
+    const snap = await cargarNotificacionesLiga("liga-1");
+    expect(snap.config.modo_operacion).toBe("automatico");
+    expect(snap.config.resultados_auto).toBe(true);
+    expect(snap.config.resultados_espera_minutos).toBe(15);
+    expect(snap.config.recordatorio_auto).toBe(true);
+    expect(snap.config.recordatorio_horas).toBe(12);
+    expect(snap.config.bienvenida_auto).toBe(false);
+  });
+
+  it("no descarta las automatizaciones cuando falta la columna de modo", async () => {
+    const payloads: Record<string, unknown>[] = [];
+    from.mockImplementation(() => ({
+      upsert: jest.fn(async (payload: Record<string, unknown>) => {
+        payloads.push(payload);
+        if ("modo_operacion" in payload) {
+          return {
+            error: {
+              message:
+                "column liga_notificaciones_config.modo_operacion does not exist",
+            },
+          };
+        }
+        return { error: null };
+      }),
+    }));
+
+    const resultado = await guardarConfigLiga("liga-1", {
+      bienvenida_pausada: true,
+      modo_prueba: true,
+      modo_operacion: "manual",
+      resultados_auto: true,
+      resultados_espera_minutos: 15,
+      recordatorio_auto: false,
+      recordatorio_horas: 24,
+      bienvenida_auto: false,
+    });
+
+    expect(resultado).toEqual({ ok: true, motivo: null });
+    expect(payloads[1]).toMatchObject({
+      resultados_auto: true,
+      resultados_espera_minutos: 15,
+    });
+    expect(payloads[1]).not.toHaveProperty("modo_operacion");
   });
 
   it("0101 con columnas de verificación normaliza y mantiene escriturasActivas", async () => {

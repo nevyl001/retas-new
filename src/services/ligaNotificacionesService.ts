@@ -328,83 +328,44 @@ function mapConfig(row: Record<string, unknown> | null, modo: ModoOperacionNotif
   };
 }
 
+const SELECTS_CONFIG = [
+  "bienvenida_pausada, modo_prueba, modo_operacion, resultados_auto, resultados_espera_minutos, recordatorio_auto, recordatorio_horas, bienvenida_auto, supervision_email, supervision_email_verificado, supervision_verificado_at, supervision_activa, supervision_alcance",
+  "bienvenida_pausada, modo_prueba, modo_operacion, resultados_auto, resultados_espera_minutos, recordatorio_auto, recordatorio_horas, bienvenida_auto",
+  "bienvenida_pausada, modo_prueba, resultados_auto, resultados_espera_minutos, recordatorio_auto, recordatorio_horas, bienvenida_auto",
+  "bienvenida_pausada, modo_prueba, modo_operacion",
+  "bienvenida_pausada, modo_prueba",
+] as const;
+
 async function consultarConfigLiga(
   ligaId: string
 ): Promise<ConfigConsultaResultado> {
-  const intentoAuto = await supabase
-    .from("liga_notificaciones_config")
-    .select(
-      "bienvenida_pausada, modo_prueba, modo_operacion, resultados_auto, resultados_espera_minutos, recordatorio_auto, recordatorio_horas, bienvenida_auto, supervision_email, supervision_email_verificado, supervision_verificado_at, supervision_activa, supervision_alcance"
-    )
-    .eq("liga_id", ligaId)
-    .maybeSingle();
-
-  if (!intentoAuto.error) {
-    const row = (intentoAuto.data ?? null) as Record<string, unknown> | null;
-    return {
-      data: mapConfig(row, normalizarModoOperacion(row?.modo_operacion)),
-      modoOperacionPresente: true,
-      error: null,
-    };
+  let ultimoError = "no_disponible";
+  for (const columnas of SELECTS_CONFIG) {
+    const intento = await supabase
+      .from("liga_notificaciones_config")
+      .select(columnas)
+      .eq("liga_id", ligaId)
+      .maybeSingle();
+    if (!intento.error) {
+      const row = (intento.data ?? null) as Record<string, unknown> | null;
+      const tieneModo = columnas.includes("modo_operacion");
+      return {
+        data: mapConfig(
+          row,
+          tieneModo ? normalizarModoOperacion(row?.modo_operacion) : "manual"
+        ),
+        modoOperacionPresente: tieneModo,
+        error: null,
+      };
+    }
+    ultimoError = intento.error.message;
+    if (!esEsquemaAusente(ultimoError)) break;
   }
 
-  const faltaAuto =
-    /resultados_auto|recordatorio_auto|bienvenida_auto|resultados_espera_minutos|recordatorio_horas|supervision_email|supervision_activa/i.test(
-      intentoAuto.error.message
-    ) && esEsquemaAusente(intentoAuto.error.message);
-  if (!faltaAuto && !(/modo_operacion/i.test(intentoAuto.error.message) && esEsquemaAusente(intentoAuto.error.message))) {
-    return {
-      data: CONFIG_INICIAL,
-      modoOperacionPresente: false,
-      error: { message: intentoAuto.error.message },
-    };
-  }
-
-  const intento0103 = await supabase
-    .from("liga_notificaciones_config")
-    .select("bienvenida_pausada, modo_prueba, modo_operacion")
-    .eq("liga_id", ligaId)
-    .maybeSingle();
-
-  if (!intento0103.error) {
-    const row = (intento0103.data ?? null) as Record<string, unknown> | null;
-    return {
-      data: mapConfig(row, normalizarModoOperacion(row?.modo_operacion)),
-      modoOperacionPresente: true,
-      error: null,
-    };
-  }
-
-  if (
-    !/modo_operacion/i.test(intento0103.error.message) ||
-    !esEsquemaAusente(intento0103.error.message)
-  ) {
-    return {
-      data: CONFIG_INICIAL,
-      modoOperacionPresente: false,
-      error: { message: intento0103.error.message },
-    };
-  }
-
-  const intento0100 = await supabase
-    .from("liga_notificaciones_config")
-    .select("bienvenida_pausada, modo_prueba")
-    .eq("liga_id", ligaId)
-    .maybeSingle();
-
-  if (intento0100.error) {
-    return {
-      data: CONFIG_INICIAL,
-      modoOperacionPresente: false,
-      error: { message: intento0100.error.message },
-    };
-  }
-
-  const row = (intento0100.data ?? null) as Record<string, unknown> | null;
   return {
-    data: mapConfig(row, "manual"),
+    data: CONFIG_INICIAL,
     modoOperacionPresente: false,
-    error: null,
+    error: { message: ultimoError },
   };
 }
 
@@ -793,6 +754,7 @@ export async function guardarConfigLiga(
   config: ConfigNotificacionLiga
 ): Promise<ResultadoNotificacion> {
   const auto = completarConfigAutomatica(config);
+  const modo = normalizarModoOperacion(config.modo_operacion);
   const payloadBase = {
     liga_id: ligaId,
     bienvenida_pausada: config.bienvenida_pausada,
@@ -801,15 +763,29 @@ export async function guardarConfigLiga(
   };
   const conModo = {
     ...payloadBase,
-    modo_operacion: normalizarModoOperacion(config.modo_operacion),
+    modo_operacion: modo,
   };
   const completo = {
     ...conModo,
     ...auto,
   };
+  const automatizacionEncendida =
+    auto.resultados_auto || auto.recordatorio_auto || auto.bienvenida_auto;
   let { error } = await supabase
     .from("liga_notificaciones_config")
     .upsert(completo, { onConflict: "liga_id" });
+  if (
+    error &&
+    esEsquemaAusente(error.message) &&
+    /modo_operacion/i.test(error.message)
+  ) {
+    ({ error } = await supabase
+      .from("liga_notificaciones_config")
+      .upsert({ ...payloadBase, ...auto }, { onConflict: "liga_id" }));
+    if (!error && modo === "automatico") {
+      return { ok: false, motivo: "esquema_pendiente" };
+    }
+  }
   if (
     error &&
     esEsquemaAusente(error.message) &&
@@ -817,7 +793,7 @@ export async function guardarConfigLiga(
       error.message
     )
   ) {
-    if (auto.resultados_auto || auto.recordatorio_auto || auto.bienvenida_auto) {
+    if (automatizacionEncendida) {
       return { ok: false, motivo: "esquema_pendiente" };
     }
     ({ error } = await supabase
@@ -832,6 +808,9 @@ export async function guardarConfigLiga(
     ({ error } = await supabase
       .from("liga_notificaciones_config")
       .upsert(payloadBase, { onConflict: "liga_id" }));
+    if (!error && (modo === "automatico" || automatizacionEncendida)) {
+      return { ok: false, motivo: "esquema_pendiente" };
+    }
   }
   if (error) {
     if (esEsquemaAusente(error.message)) {
