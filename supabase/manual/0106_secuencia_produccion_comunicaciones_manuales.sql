@@ -1,0 +1,45 @@
+-- =============================================================================
+-- PRODUCCIÓN — Comunicaciones manuales (sin verificación por enlace)
+-- =============================================================================
+-- NO EJECUTAR sin autorización explícita + backup.
+-- NO activa Resend. NO envía correos. NO instala 0101–0104.
+--
+-- Prerrequisitos conocidos:
+--   * 0100 tablas preferencias/config/queue/log presentes
+--   * 0105 contacto global aplicada
+--   * Frontend con política manual ya desplegado (o desplegar junto)
+--
+-- -----------------------------------------------------------------------------
+-- PASO 1 — Lectura previa
+-- -----------------------------------------------------------------------------
+-- SELECT to_regclass('public.liga_notificaciones_preferencias');
+-- SELECT to_regprocedure('public.liga_inscritos_contacto_autorizado(uuid)');
+-- SELECT to_regprocedure('public.encolar_bienvenida_liga(uuid,uuid)');
+--
+-- -----------------------------------------------------------------------------
+-- PASO 2 — Aplicar SOLO la migración incremental
+-- -----------------------------------------------------------------------------
+-- Archivo: supabase/migrations/0106_liga_comunicacion_manual_sin_verificacion_enlace.sql
+-- (opcional si fingerprint DIFF de preferencias_guardar):
+--   supabase/manual/0100_fix_preferencias_guardar_propuesta.sql
+--
+-- -----------------------------------------------------------------------------
+-- PASO 3 — Assert
+-- -----------------------------------------------------------------------------
+-- supabase/tests/0106_assert.sql
+--
+-- -----------------------------------------------------------------------------
+-- PASO 4 — Prueba controlada (UI dueño)
+-- -----------------------------------------------------------------------------
+-- 1) Documentar autorización verbal de UN jugador de prueba.
+-- 2) Activar interruptor → recargar → sigue ON.
+-- 3) Redactar correo → seleccionar solo ese jugador → REVISAR → ENVIAR.
+-- 4) Verificar fila pendiente en liga_notificaciones_queue.
+-- 5) Confirmar LIGA_NOTIFICACIONES_ENVIOS_REALES unset → cero entregas Resend.
+--
+-- -----------------------------------------------------------------------------
+-- PASO 5 — Worker / Resend (OTRA autorización)
+-- -----------------------------------------------------------------------------
+-- Solo entonces: desplegar Edge Function + flag ENVIOS_REALES=true + prueba a
+-- una dirección propia. No mezclar con este paso.
+-- =============================================================================

@@ -854,6 +854,13 @@
   font-size: 14px;
 }
 
+.liga-notificaciones__textarea {
+  min-height: 160px;
+  resize: vertical;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
 .liga-notificaciones__preview-layout {
   display: grid;
   grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.4fr);

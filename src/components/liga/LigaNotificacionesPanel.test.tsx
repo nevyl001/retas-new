@@ -38,12 +38,10 @@ jest.mock("../../services/ligaNotificacionesService", () => ({
   registrarConsentimientoJugador: jest.fn().mockResolvedValue({ ok: true, motivo: null }),
   revocarConsentimientoJugador: jest.fn().mockResolvedValue({ ok: true, motivo: null }),
   guardarConfigLiga: jest.fn().mockResolvedValue({ ok: true, motivo: null }),
-  solicitarVerificacionCorreo: jest.fn().mockResolvedValue({
+  solicitarComunicacionManual: jest.fn().mockResolvedValue({
     ok: false,
+    encolado: false,
     motivo: "deshabilitado",
-    simulado: false,
-    enlaceSimulado: null,
-    solicitudId: null,
   }),
   solicitarBienvenidaJugador: jest.fn().mockResolvedValue({
     ok: false,
@@ -138,14 +136,15 @@ describe("LigaNotificacionesPanel", () => {
   it("muestra al jugador deshabilitado, sin un control para habilitar a todos", async () => {
     await renderPanel();
     expect(container.textContent).toContain("Saúl Moreno de la Torre del Valle");
-    expect(container.textContent).toContain("Por verificar");
+    expect(container.textContent).toContain("Sin autorización");
     expect(container.textContent).toContain("0 seleccionados");
     expect(container.textContent).toContain("1 excluidos");
     expect(container.querySelector(".liga-notificaciones__grid")).not.toBeNull();
     expect(container.querySelector("table")).toBeNull();
     expect(container.textContent?.toLowerCase()).not.toContain("habilitar a todos");
     expect(container.textContent).not.toContain("Marcar correo verificado");
-    expect(container.textContent).not.toContain("Solicitar verificación");
+    expect(container.textContent).not.toContain("Iniciar verificación");
+    expect(container.textContent).not.toContain("Por verificar");
     const checkbox = container.querySelector(
       'input[type="checkbox"]'
     ) as HTMLInputElement;
@@ -172,10 +171,10 @@ describe("LigaNotificacionesPanel", () => {
     expect(container.textContent).not.toContain("saul@example.com enviado");
   });
 
-  it("la vista previa se identifica como vista previa y no incluye el correo en el enlace", async () => {
+  it("la vista previa se identifica como vista previa y no incluye el correo", async () => {
     await renderPanel();
     const preview = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Correo de bienvenida"
+      (button) => button.textContent === "Redactar correo"
     );
     await act(async () => {
       preview?.click();
@@ -184,11 +183,7 @@ describe("LigaNotificacionesPanel", () => {
     const frame = container.querySelector("iframe");
     expect(frame?.getAttribute("srcdoc")).toContain("VISTA PREVIA");
     expect(frame?.getAttribute("srcdoc")).toContain("Saúl Moreno de la Torre del Valle");
-    expect(frame?.getAttribute("srcdoc")).toContain(
-      "/players/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
-    );
     expect(frame?.getAttribute("srcdoc")).not.toContain("saul@example.com");
-    expect(frame?.getAttribute("srcdoc")).toContain("by Riviera Open");
   });
 
   it("24. una preferencia guardada sigue marcada al volver a abrir el panel", async () => {
@@ -227,8 +222,8 @@ describe("LigaNotificacionesPanel", () => {
     const badges = Array.from(
       container.querySelectorAll(".liga-notificaciones__badge")
     ).map((badge) => badge.textContent);
-    expect(badges).toContain("Por verificar");
-    expect(badges).not.toContain("Listo");
+    expect(badges).toContain("Sin autorización");
+    expect(badges).not.toContain("Listo para enviar");
   });
 
   it("con backend incompleto muestra revisión visual y no escribe", async () => {
@@ -295,14 +290,14 @@ describe("LigaNotificacionesPanel", () => {
     expect(container.textContent).not.toContain("Sin correo");
   });
 
-  it("PREPARAR CORREO muestra confirmación sin encolar hasta ENVIAR", async () => {
+  it("REVISAR DESTINATARIOS muestra confirmación sin encolar hasta ENVIAR", async () => {
     const mockEncolar = jest.requireMock(
       "../../services/ligaNotificacionesService"
-    ).solicitarBienvenidaJugador as jest.Mock;
+    ).solicitarComunicacionManual as jest.Mock;
     mockCargar.mockResolvedValue({
       disponible: true,
       escriturasActivas: true,
-      verificacionDisponible: true,
+      verificacionDisponible: false,
       preferencias: [
         {
           liga_jugador_id: "jug-1",
@@ -311,9 +306,9 @@ describe("LigaNotificacionesPanel", () => {
           consentimiento_estado: "autorizado",
           consentimiento_origen: "manifestacion_presencial",
           consentimiento_registrado_at: "2026-01-01T00:00:00.000Z",
-          correo_verificado: true,
-          correo_verificacion_origen: "enlace_de_confirmacion",
-          correo_verificado_email: "saul@example.com",
+          correo_verificado: false,
+          correo_verificacion_origen: null,
+          correo_verificado_email: null,
         },
       ],
       config: {
@@ -327,20 +322,35 @@ describe("LigaNotificacionesPanel", () => {
     });
     await renderPanel();
     const tab = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Correo de bienvenida"
+      (button) => button.textContent === "Redactar correo"
     );
     await act(async () => {
       tab?.click();
     });
+    const pick = Array.from(
+      container.querySelectorAll('input[type="checkbox"]')
+    ).find((input) =>
+      (input.getAttribute("aria-label") ?? "").includes("Seleccionar")
+    ) as HTMLInputElement | undefined;
+    // En el compositor los checks no usan aria-label; marcar el primero de la lista.
+    const envioChecks = Array.from(
+      container.querySelectorAll(".liga-notificaciones__envio-list input[type='checkbox']")
+    ) as HTMLInputElement[];
+    const target = pick ?? envioChecks[0];
+    expect(target).toBeTruthy();
+    await act(async () => {
+      target!.click();
+      await Promise.resolve();
+    });
     const preparar = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "PREPARAR CORREO"
+      (button) => button.textContent === "REVISAR DESTINATARIOS"
     );
     expect(preparar).toBeTruthy();
     await act(async () => {
       preparar?.click();
     });
     expect(container.textContent).toContain("ENVIAR A 1 JUGADOR");
-    expect(container.textContent).toContain("Recibirán el correo");
+    expect(container.textContent).toContain("Válidos");
     expect(mockEncolar).not.toHaveBeenCalled();
     const cancelar = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent === "Cancelar"
@@ -349,6 +359,6 @@ describe("LigaNotificacionesPanel", () => {
       cancelar?.click();
     });
     expect(mockEncolar).not.toHaveBeenCalled();
-    expect(container.textContent).toContain("PREPARAR CORREO");
+    expect(container.textContent).toContain("REVISAR DESTINATARIOS");
   });
 });

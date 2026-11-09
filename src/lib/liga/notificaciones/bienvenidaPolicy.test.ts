@@ -75,7 +75,7 @@ describe("bienvenida de liga — elegibilidad", () => {
     });
     expect(decision).toEqual({
       encolar: false,
-      motivo: "correo_por_verificar",
+      motivo: "sin_autorizacion",
     });
     expect(estadoVisual(destinatario())).not.toBe("habilitado");
   });
@@ -97,14 +97,25 @@ describe("bienvenida de liga — elegibilidad", () => {
     expect(decision).toEqual({ encolar: false, motivo: "sin_autorizacion" });
   });
 
-  it("4. habilitado y con consentimiento documentado puede generar la bienvenida", () => {
+  it("4. habilitado y con consentimiento documentado puede generar sin enlace", () => {
+    const preferenciaSinEnlace = {
+      adminHabilitado: true,
+      consentimientoEstado: "autorizado" as const,
+      consentimientoOrigen: "manifestacion_presencial",
+      consentimientoRegistradoAt: "2026-11-06T12:00:00.000Z",
+      correoVerificado: false,
+      correoVerificacionOrigen: null,
+    };
     const decision = puedeEncolarBienvenida({
-      destinatario: destinatario({ preferencia: preferenciaLista() }),
+      destinatario: destinatario({ preferencia: preferenciaSinEnlace }),
       ligaPausada: false,
       yaEnviado: false,
       origen: "accion_admin",
     });
     expect(decision).toEqual({ encolar: true, motivo: null });
+    expect(
+      estadoVisual(destinatario({ preferencia: preferenciaSinEnlace }))
+    ).toBe("habilitado");
   });
 
   it("5. sin correo no lanza y no encola", () => {
@@ -362,7 +373,7 @@ describe("bienvenida de liga — elegibilidad", () => {
     });
   });
 
-  it("un interruptor no convierte un correo registrado en verificado", () => {
+  it("un interruptor no convierte un correo registrado en verificado por enlace", () => {
     const preferencia = preferenciaEfectiva({
       adminHabilitado: true,
       correoVerificado: true,
@@ -372,6 +383,7 @@ describe("bienvenida de liga — elegibilidad", () => {
     });
     expect(preferencia.correoVerificado).toBe(false);
     expect(preferencia.correoVerificacionOrigen).toBeNull();
+    // Manual: con autorización + admin + correo válido sí está listo para enviar.
     expect(
       estadoVisual(
         destinatario({
@@ -384,7 +396,7 @@ describe("bienvenida de liga — elegibilidad", () => {
           },
         })
       )
-    ).toBe("correo_por_verificar");
+    ).toBe("habilitado");
   });
 
   it("no acepta la inscripción ni el correo como consentimiento", () => {

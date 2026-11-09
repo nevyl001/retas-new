@@ -22,6 +22,7 @@ import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import {
   isFakeOrInvalidEmail,
   renderBienvenidaWorker,
+  renderComunicacionWorker,
   renderVerificacionWorker,
 } from "../_shared/ligaNotificacionesMail.ts";
 
@@ -40,6 +41,9 @@ type QueueRow = {
   estado: string;
   attempts: number;
   tipo: string;
+  asunto: string | null;
+  cuerpo_texto: string | null;
+  lote_id: string | null;
 };
 
 type PrefRow = {
@@ -112,12 +116,13 @@ Deno.serve(async (req) => {
   let omitidos = 0;
   let errores = 0;
 
-  // ---- Bienvenida ----
+  // ---- Cola manual / bienvenida (sin exigir verificación por enlace) ----
   const { data: pendientes, error: listErr } = await supabase
     .from("liga_notificaciones_queue")
-    .select("id, liga_id, liga_jugador_id, idempotency_key, estado, attempts, tipo")
+    .select(
+      "id, liga_id, liga_jugador_id, idempotency_key, estado, attempts, tipo, asunto, cuerpo_texto, lote_id",
+    )
     .eq("estado", "pendiente")
-    .eq("tipo", "bienvenida")
     .order("created_at", { ascending: true })
     .limit(MAX_BATCH);
 
@@ -139,18 +144,24 @@ Deno.serve(async (req) => {
       })
       .eq("id", row.id)
       .eq("estado", "pendiente")
-      .select("id, liga_id, liga_jugador_id, idempotency_key, attempts")
+      .select(
+        "id, liga_id, liga_jugador_id, idempotency_key, attempts, tipo, asunto, cuerpo_texto, lote_id",
+      )
       .maybeSingle();
 
     if (claimErr || !claimed) continue;
     escritos += 1;
 
-    const outcome = await procesarBienvenida(supabase, {
+    const outcome = await procesarMensajeCola(supabase, {
       id: claimed.id as string,
       liga_id: claimed.liga_id as string,
       liga_jugador_id: claimed.liga_jugador_id as string,
       idempotency_key: claimed.idempotency_key as string,
       attempts: Number(claimed.attempts ?? nextAttempts),
+      tipo: String(claimed.tipo ?? row.tipo ?? "bienvenida"),
+      asunto: (claimed.asunto as string | null) ?? row.asunto,
+      cuerpo_texto: (claimed.cuerpo_texto as string | null) ?? row.cuerpo_texto,
+      lote_id: (claimed.lote_id as string | null) ?? row.lote_id,
     });
 
     if (outcome === "aceptado") aceptados += 1;
@@ -191,7 +202,7 @@ Deno.serve(async (req) => {
   });
 });
 
-async function procesarBienvenida(
+async function procesarMensajeCola(
   supabase: ReturnType<typeof createCredentialClient>,
   row: {
     id: string;
@@ -199,21 +210,30 @@ async function procesarBienvenida(
     liga_jugador_id: string;
     idempotency_key: string;
     attempts: number;
+    tipo: string;
+    asunto: string | null;
+    cuerpo_texto: string | null;
+    lote_id: string | null;
   },
 ): Promise<"aceptado" | "omitido" | "error"> {
-  const { data: config } = await supabase
-    .from("liga_notificaciones_config")
-    .select("bienvenida_pausada")
-    .eq("liga_id", row.liga_id)
-    .maybeSingle();
+  const esManualCompositor = Boolean(row.lote_id || row.cuerpo_texto);
 
-  if (config?.bienvenida_pausada !== false) {
-    await finalizarBienvenida(supabase, row, {
-      estado: "pausado",
-      motivo: "liga_pausada",
-      proveedor: null,
-    });
-    return "omitido";
+  // Pausa histórica solo aplica a bienvenida automática sin payload manual.
+  if (!esManualCompositor && row.tipo === "bienvenida") {
+    const { data: config } = await supabase
+      .from("liga_notificaciones_config")
+      .select("bienvenida_pausada")
+      .eq("liga_id", row.liga_id)
+      .maybeSingle();
+
+    if (config?.bienvenida_pausada !== false) {
+      await finalizarBienvenida(supabase, row, {
+        estado: "pausado",
+        motivo: "liga_pausada",
+        proveedor: null,
+      });
+      return "omitido";
+    }
   }
 
   const { data: pref } = await supabase
@@ -246,17 +266,7 @@ async function procesarBienvenida(
     });
     return "omitido";
   }
-  if (
-    !preferencia.correo_verificado ||
-    preferencia.correo_verificacion_origen !== "enlace_de_confirmacion"
-  ) {
-    await finalizarBienvenida(supabase, row, {
-      estado: "omitido",
-      motivo: "correo_por_verificar",
-      proveedor: null,
-    });
-    return "omitido";
-  }
+  // Verificación por enlace: NO requerida para comunicaciones manuales.
 
   const { data: jugador } = await supabase
     .from("liga_jugadores")
@@ -293,17 +303,6 @@ async function procesarBienvenida(
   }
 
   const emailNorm = email!.trim().toLowerCase();
-  if (
-    preferencia.correo_verificado_email &&
-    preferencia.correo_verificado_email !== emailNorm
-  ) {
-    await finalizarBienvenida(supabase, row, {
-      estado: "omitido",
-      motivo: "correo_por_verificar",
-      proveedor: null,
-    });
-    return "omitido";
-  }
 
   const { data: liga } = await supabase
     .from("ligas")
@@ -315,20 +314,28 @@ async function procesarBienvenida(
   const perfilUrl = rivieraId && UUID.test(rivieraId)
     ? `${base}/players/${rivieraId}`
     : `${base}/public/liga/${row.liga_id}`;
-  const mail = renderBienvenidaWorker({
-    clubNombre: "Riviera Open",
-    ligaNombre: String(liga?.nombre ?? "tu liga"),
-    jugadorNombre: nombre,
-    perfilUrl,
-    ligaUrl: `${base}/public/liga/${row.liga_id}`,
-  });
+
+  const mail = esManualCompositor
+    ? renderComunicacionWorker({
+      clubNombre: "Riviera Open",
+      ligaNombre: String(liga?.nombre ?? "tu liga"),
+      asunto: row.asunto ?? `Mensaje de ${String(liga?.nombre ?? "tu liga")}`,
+      cuerpoTexto: row.cuerpo_texto ?? "",
+    })
+    : renderBienvenidaWorker({
+      clubNombre: "Riviera Open",
+      ligaNombre: String(liga?.nombre ?? "tu liga"),
+      jugadorNombre: nombre,
+      perfilUrl,
+      ligaUrl: `${base}/public/liga/${row.liga_id}`,
+    });
 
   const send = await sendByResend(
     emailNorm,
     mail.asunto,
     mail.text,
     mail.html,
-    { function: MODULE, tipo: "bienvenida", queue_id: row.id },
+    { function: MODULE, tipo: row.tipo, queue_id: row.id },
     row.idempotency_key,
   );
 

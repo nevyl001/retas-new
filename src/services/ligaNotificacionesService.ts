@@ -673,6 +673,45 @@ export async function guardarConfigLiga(
   return { ok: true, motivo: null };
 }
 
+/**
+ * Encola una comunicación manual del compositor (plantilla + asunto + cuerpo).
+ * Requiere migración 0106. No envía: solo escribe en la cola.
+ */
+export async function solicitarComunicacionManual(input: {
+  ligaId: string;
+  jugadorId: string;
+  tipo: string;
+  asunto: string;
+  cuerpo: string;
+  loteId: string;
+}): Promise<ResultadoNotificacion & { encolado: boolean }> {
+  const { data, error } = await supabase.rpc("encolar_comunicacion_manual_liga", {
+    p_liga_id: input.ligaId,
+    p_liga_jugador_id: input.jugadorId,
+    p_tipo: input.tipo,
+    p_asunto: input.asunto,
+    p_cuerpo: input.cuerpo,
+    p_lote_id: input.loteId,
+  });
+  if (error) {
+    if (esEsquemaAusente(error.message)) {
+      // Sin 0106: bienvenida legacy sigue disponible para ese tipo.
+      if (input.tipo === "bienvenida") {
+        return solicitarBienvenidaJugador(input.ligaId, input.jugadorId);
+      }
+      return { ok: false, encolado: false, motivo: "esquema_pendiente" };
+    }
+    aviso("no_disponible");
+    return { ok: false, encolado: false, motivo: "no_disponible" };
+  }
+  const row = (data ?? {}) as { ok?: boolean; encolado?: boolean; motivo?: unknown };
+  return {
+    ok: row.ok !== false,
+    encolado: row.encolado === true,
+    motivo: motivoSeguro(row.motivo),
+  };
+}
+
 export async function solicitarBienvenidaJugador(
   ligaId: string,
   jugadorId: string,

@@ -1,7 +1,10 @@
 /**
- * Reglas de la bienvenida por correo de una liga.
+ * Reglas de comunicaciones manuales de una liga.
  * El módulo no habla con Supabase ni con Resend: la RPC y el panel usan
  * estas mismas decisiones. Si falta un dato, la respuesta es no enviar.
+ *
+ * Producto: NO exige verificación por enlace. Elegibilidad =
+ * correo canónico válido + autorización documentada + admin_habilitado.
  */
 
 export const TIPO_BIENVENIDA = "bienvenida" as const;
@@ -12,9 +15,13 @@ export type EstadoVisualNotificacion =
   | "habilitado"
   | "deshabilitado"
   | "sin_correo"
-  | "correo_por_verificar"
+  | "correo_invalido"
   | "sin_autorizacion"
-  | "correo_ambiguo";
+  | "correo_ambiguo"
+  | "excluido"
+  | "rebote"
+  /** @deprecated Legacy; no forma parte del flujo manual. */
+  | "correo_por_verificar";
 
 export type EstadoColaBienvenida =
   | "pendiente"
@@ -36,6 +43,8 @@ export type MotivoBienvenida =
   | "correo_invalido"
   | "correo_ambiguo"
   | "correo_por_verificar"
+  | "excluido"
+  | "rebote"
   | "ya_enviado"
   | "ya_encolado"
   | "liga_pausada"
@@ -51,8 +60,11 @@ export interface PreferenciaNotificacion {
   consentimientoEstado: ConsentimientoEstado;
   consentimientoOrigen: string | null;
   consentimientoRegistradoAt: string | null;
+  /**
+   * Solo true si hubo confirmación por enlace (capacidad opcional futura).
+   * No es requisito para comunicaciones manuales.
+   */
   correoVerificado: boolean;
-  /** Solo un enlace de confirmación cuenta. Un interruptor del administrador no. */
   correoVerificacionOrigen: "enlace_de_confirmacion" | null;
 }
 
@@ -126,6 +138,7 @@ export function preferenciaEfectiva(
     consentimientoEstado = "revocado";
   }
 
+  // Titularidad por enlace: solo informativa. No acredita elegibilidad manual.
   const verificacion = row.correoVerificacionOrigen?.trim().toLowerCase() ?? "";
   const correoVerificado =
     row.correoVerificado === true && verificacion === "enlace_de_confirmacion";
@@ -153,30 +166,51 @@ export interface DestinatarioBienvenida {
   email: string | null;
   perfilesConMismoCorreo: number;
   preferencia: PreferenciaGuardada | null;
-  /** Correo normalizado acreditado por el enlace. Si cambia, la verificación caduca. */
+  /** Legacy: correo acreditado por enlace. No bloquea el flujo manual. */
   emailVerificado?: string | null;
+  /** Si el proveedor reportó rebote para este destinatario. */
+  reboteProveedor?: boolean;
   sigueInscrito: boolean;
   esSalienteDeSustitucion: boolean;
 }
 
+/**
+ * Estado operativo del destinatario.
+ * Orden: contacto → exclusión/rebote → autorización → habilitación admin.
+ * NO exige verificación por enlace.
+ */
 export function estadoVisual(
   destinatario: DestinatarioBienvenida
 ): EstadoVisualNotificacion {
   const correo = normalizarCorreo(destinatario.email);
-  if (!correo || !correoEsValido(destinatario.email)) return "sin_correo";
+  if (!correo) return "sin_correo";
+  if (!correoEsValido(destinatario.email)) return "correo_invalido";
   if (destinatario.perfilesConMismoCorreo > 1) return "correo_ambiguo";
+  if (destinatario.reboteProveedor) return "rebote";
 
   const preferencia = preferenciaEfectiva(destinatario.preferencia);
-  const verificadoActual =
-    preferencia.correoVerificado &&
-    (!destinatario.emailVerificado ||
-      normalizarCorreo(destinatario.emailVerificado) === correo);
-  if (!verificadoActual) return "correo_por_verificar";
+  if (preferencia.consentimientoEstado === "revocado") return "excluido";
   if (preferencia.consentimientoEstado !== "autorizado") {
     return "sin_autorizacion";
   }
   if (!preferencia.adminHabilitado) return "deshabilitado";
   return "habilitado";
+}
+
+/** Contacto usable (sin decidir aún consentimiento/admin). */
+export function contactoDisponible(
+  destinatario: Pick<
+    DestinatarioBienvenida,
+    "email" | "perfilesConMismoCorreo" | "reboteProveedor"
+  >
+): boolean {
+  const correo = normalizarCorreo(destinatario.email);
+  return Boolean(
+    correo &&
+      correoEsValido(destinatario.email) &&
+      destinatario.perfilesConMismoCorreo <= 1 &&
+      !destinatario.reboteProveedor
+  );
 }
 
 export function origenPermiteCrearBienvenida(origen: string): boolean {
@@ -204,7 +238,17 @@ export function puedeEncolarBienvenida(input: {
   origen: string;
   tipo?: string;
 }): { encolar: boolean; motivo: MotivoBienvenida | null } {
-  if ((input.tipo ?? TIPO_BIENVENIDA) !== TIPO_BIENVENIDA) {
+  const tipo = input.tipo ?? TIPO_BIENVENIDA;
+  if (
+    ![
+      "bienvenida",
+      "aviso_general",
+      "jornada",
+      "cambio_horario",
+      "felicitacion",
+      "personalizado",
+    ].includes(tipo)
+  ) {
     return { encolar: false, motivo: "tipo_no_soportado" };
   }
   if (!origenPermiteCrearBienvenida(input.origen)) {
@@ -219,10 +263,6 @@ export function puedeEncolarBienvenida(input: {
 
   const visual = estadoVisual(input.destinatario);
   if (visual !== "habilitado") {
-    const correo = normalizarCorreo(input.destinatario.email);
-    if (visual === "sin_correo" && correo && !correoEsValido(correo)) {
-      return { encolar: false, motivo: "correo_invalido" };
-    }
     return { encolar: false, motivo: motivoDeEstado(visual) };
   }
 
@@ -235,6 +275,7 @@ export function puedeEncolarBienvenida(input: {
 function motivoDeEstado(
   visual: Exclude<EstadoVisualNotificacion, "habilitado">
 ): MotivoBienvenida {
+  if (visual === "correo_por_verificar") return "sin_autorizacion";
   return visual;
 }
 
@@ -387,10 +428,13 @@ export function enmascararCorreo(email: string | null | undefined): string | nul
 }
 
 export const ESTADO_VISUAL_LABEL: Record<EstadoVisualNotificacion, string> = {
-  habilitado: "Habilitado",
+  habilitado: "Listo para enviar",
   deshabilitado: "Deshabilitado",
   sin_correo: "Sin correo",
-  correo_por_verificar: "Correo por verificar",
+  correo_invalido: "Correo inválido",
   sin_autorizacion: "Sin autorización",
   correo_ambiguo: "Correo ambiguo",
+  excluido: "Contacto excluido",
+  rebote: "Rebote",
+  correo_por_verificar: "Sin autorización",
 };

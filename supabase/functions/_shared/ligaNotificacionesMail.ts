@@ -76,6 +76,39 @@ export function renderVerificacionWorker(input: {
   return { asunto, html, text };
 }
 
+/** Mensaje manual: asunto/cuerpo ya resueltos; se escapan al HTML. */
+export function renderComunicacionWorker(input: {
+  clubNombre: string;
+  ligaNombre: string;
+  asunto: string;
+  cuerpoTexto: string;
+}): { asunto: string; html: string; text: string } {
+  const club = input.clubNombre.trim() || "Riviera Open";
+  const liga = input.ligaNombre.trim() || "tu liga";
+  const asunto = input.asunto.trim().slice(0, 180) || `Mensaje de ${liga}`;
+  const cuerpo = input.cuerpoTexto.trim().slice(0, 8000);
+  const paragraphs = cuerpo
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => {
+      const lines = escapeHtml(block).replace(/\n/g, "<br />");
+      return `<p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:#f5f5f5;">${lines}</p>`;
+    })
+    .join("");
+  const html = `<!DOCTYPE html><html lang="es"><body style="margin:0;background:#050505;color:#f5f5f5;font-family:Arial,Helvetica,sans-serif;">
+<div style="max-width:600px;margin:0 auto;padding:24px;background:#0c0c0c;border:1px solid #2a2a2a;">
+<p style="letter-spacing:0.12em;color:#a3a3a3;font-size:13px;">${escapeHtml(club)}</p>
+<h1 style="color:#fff;font-size:24px;">${escapeHtml(asunto)}</h1>
+${paragraphs || `<p style="margin:0;"> </p>`}
+<p style="color:#a3a3a3;font-size:12px;">Comunicación deportiva de ${escapeHtml(liga)}. Riviera Open.</p>
+</div></body></html>`;
+  const text = [club, asunto, cuerpo, `Comunicación deportiva de ${liga}.`].join(
+    "\n\n",
+  );
+  return { asunto, html, text };
+}
+
 export function isFakeOrInvalidEmail(email: string | null | undefined): boolean {
   const value = email?.trim().toLowerCase() ?? "";
   if (!value || value.endsWith("@padel.local")) return true;
