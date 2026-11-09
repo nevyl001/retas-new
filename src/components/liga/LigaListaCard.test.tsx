@@ -38,11 +38,14 @@ describe("LigaListaCard helpers", () => {
     ).toBe("1 pareja");
   });
 
-  it("avance de jornadas solo con datos reales", () => {
+  it("avance de jornadas con la jornada actual y el total", () => {
     expect(ligaAvanceLabel(liga())).toBe("Jornada 3 de 8");
-    expect(ligaAvanceLabel(liga({ jornada_actual_numero: null }))).toBe(
-      "8 jornadas"
-    );
+    expect(
+      ligaAvanceLabel(
+        liga({ estado: "completed", jornada_actual_numero: 8 })
+      )
+    ).toBe("Jornada 8 de 8");
+    expect(ligaAvanceLabel(liga({ jornada_actual_numero: null }))).toBeNull();
     expect(
       ligaAvanceLabel(liga({ jornadas_count: 0, jornada_actual_numero: null }))
     ).toBeNull();

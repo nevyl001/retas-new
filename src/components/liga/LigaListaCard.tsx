@@ -39,15 +39,9 @@ export function ligaParticipantesLabel(liga: Liga): string {
 
 export function ligaAvanceLabel(liga: Liga): string | null {
   const total = liga.jornadas_count ?? 0;
-  if (total <= 0) return null;
   const actual = liga.jornada_actual_numero;
-  if (actual != null && actual > 0) {
-    return `Jornada ${actual} de ${total}`;
-  }
-  if (liga.estado === "completed") {
-    return `${total} jornadas`;
-  }
-  return `${total} jornadas`;
+  if (total <= 0 || actual == null || actual <= 0) return null;
+  return `Jornada ${actual} de ${total}`;
 }
 
 export type LigaListaCardProps = {

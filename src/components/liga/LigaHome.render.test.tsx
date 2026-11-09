@@ -56,7 +56,7 @@ describe("LigaHome — dashboard de tarjetas", () => {
         id: "liga-2",
         nombre: "Liga 4ta Advance",
         estado: "completed",
-        jornada_actual_numero: null,
+        jornada_actual_numero: 6,
       }),
     ]);
     mockDeleteLiga.mockResolvedValue(undefined);
@@ -89,6 +89,8 @@ describe("LigaHome — dashboard de tarjetas", () => {
     expect(container.textContent).toContain("Liga 4ta Advance");
     expect(container.textContent).toContain("Liga individual · Parejas rotativas");
     expect(container.textContent).toContain("Gestionar liga");
+    expect(container.textContent).toContain("Jornada 2 de 6");
+    expect(container.textContent).toContain("Jornada 6 de 6");
     expect(
       Array.from(container.querySelectorAll("button")).some(
         (b) => b.textContent?.trim() === "Eliminar"

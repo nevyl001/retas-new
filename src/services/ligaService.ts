@@ -21,6 +21,7 @@ import {
   validateEquiposParaPlayoffsCalendario,
   validateInscripcionesParaCalendario,
 } from "../lib/liga/calendario";
+import { jornadaEnLaQueVa } from "../lib/liga/jornadaAvance";
 import { scheduleJornadaRoundRobin } from "../lib/liga/jornadaRoundRobinSchedule";
 import {
   fetchEquiposForLiga,
@@ -290,14 +291,15 @@ export async function getLigas(): Promise<Liga[]> {
   }
 
   const jornadasTotal = new Map<string, number>();
-  const jornadaActual = new Map<string, number>();
+  const jornadasEstado = new Map<string, { numero: number; estado: string }[]>();
   for (const row of jornadaRows ?? []) {
     const lid = String(row.liga_id);
     jornadasTotal.set(lid, (jornadasTotal.get(lid) ?? 0) + 1);
-    if (String(row.estado) === "in_progress") {
-      const n = Number(row.numero);
-      if (Number.isFinite(n)) jornadaActual.set(lid, n);
-    }
+    const numero = Number(row.numero);
+    if (!Number.isInteger(numero) || numero < 1) continue;
+    const lista = jornadasEstado.get(lid) ?? [];
+    lista.push({ numero, estado: String(row.estado) });
+    jornadasEstado.set(lid, lista);
   }
 
   return ligas.map((l) => {
@@ -307,7 +309,7 @@ export async function getLigas(): Promise<Liga[]> {
       inscripciones_count: countMap.get(id) ?? 0,
       equipos_count: equiposMap.get(id) ?? 0,
       jornadas_count: jornadasTotal.get(id) ?? 0,
-      jornada_actual_numero: jornadaActual.get(id) ?? null,
+      jornada_actual_numero: jornadaEnLaQueVa(jornadasEstado.get(id) ?? []),
     } as Record<string, unknown>);
   });
 }

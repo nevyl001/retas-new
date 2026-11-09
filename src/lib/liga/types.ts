@@ -34,7 +34,7 @@ export interface Liga {
   equipos_count?: number;
   /** Total de jornadas registradas (listado admin). */
   jornadas_count?: number;
-  /** Número de la jornada en curso, si existe. */
+  /** Jornada en la que va la liga: abierta, próxima o última jugada. */
   jornada_actual_numero?: number | null;
   /** Fotografía 1..N (+ classification_bye opcional) al cerrar fase regular. */
   playoff_seeds?: Record<string, string> | null;
