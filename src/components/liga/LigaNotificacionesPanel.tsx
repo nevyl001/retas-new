@@ -111,17 +111,22 @@ const MOTIVO_LABEL: Record<string, string> = {
   sesion_invalida: "La sesión no pudo autorizar el procesamiento",
   lote_no_encontrado: "Ese lote no está en esta liga",
   conserva_enviado: "Ese correo ya fue aceptado y se conserva",
+  en_proceso: "Ese correo se está procesando y no se puede quitar",
   no_encontrado: "Ese correo ya no está en el historial",
   identificador_invalido: "No se pudo identificar el correo",
 };
 
-function sePuedeBorrarHistorial(
+function esCorreoNoEnviado(
   estado: string,
   proveedor: string | null | undefined
 ): boolean {
   if (estado === "enviado" || estado === "procesando") return false;
   if (proveedor === "aceptado" || proveedor === "entregado") return false;
   return true;
+}
+
+function sePuedeBorrarHistorial(estado: string): boolean {
+  return estado !== "procesando";
 }
 
 function etiquetaEntrega(
@@ -897,9 +902,22 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   }) {
     if (!puedeEscribir || enviandoLote) return;
     const uno = Boolean(objetivo?.queueId || objetivo?.logId);
+    const filaCola = objetivo?.queueId
+      ? (snapshot?.cola ?? []).find((item) => item.id === objetivo.queueId)
+      : null;
+    const filaLog = objetivo?.logId
+      ? (snapshot?.historial ?? []).find((item) => item.id === objetivo.logId)
+      : null;
+    const enviado = filaCola
+      ? !esCorreoNoEnviado(filaCola.estado, null)
+      : filaLog
+        ? !esCorreoNoEnviado(filaLog.estado, filaLog.proveedor_estado)
+        : false;
     const seguro = window.confirm(
       uno
-        ? "¿Quitar este correo del historial? No se envió y no se entregará."
+        ? enviado
+          ? "¿Quitar este correo aceptado del historial? No se reenvía."
+          : "¿Quitar este correo del historial? No se envió y no se entregará."
         : "¿Quitar del historial los correos que no se enviaron? Los aceptados o entregados se quedan."
     );
     if (!seguro) return;
@@ -918,9 +936,11 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     }
     confirmar(
       resultado.descartados > 0
-        ? `Se quitaron ${resultado.descartados} correo${
-            resultado.descartados === 1 ? "" : "s"
-          } que no se enviaron.`
+        ? enviado
+          ? "Se quitó del historial. No se reenvió."
+          : `Se quitaron ${resultado.descartados} correo${
+              resultado.descartados === 1 ? "" : "s"
+            } que no se enviaron.`
         : "No había correos sin enviar para quitar."
     );
   }
@@ -1725,10 +1745,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   Actualizar
                 </button>
                 {(snapshot?.cola ?? []).some((item) =>
-                  sePuedeBorrarHistorial(item.estado, null)
+                  esCorreoNoEnviado(item.estado, null)
                 ) ||
                 (snapshot?.historial ?? []).some((item) =>
-                  sePuedeBorrarHistorial(item.estado, item.proveedor_estado)
+                  esCorreoNoEnviado(item.estado, item.proveedor_estado)
                 ) ? (
                   <button
                     type="button"
@@ -1761,7 +1781,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                       {etiquetaEntrega(item.estado, item.proveedor_estado, item.motivo)}
                     </span>
                     <span className="liga-notificaciones__history-actions">
-                      {sePuedeBorrarHistorial(item.estado, item.proveedor_estado) ? (
+                      {sePuedeBorrarHistorial(item.estado) ? (
                         <button
                           type="button"
                           className="liga-notificaciones__ghost"
@@ -1823,7 +1843,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                           Reintentar
                         </button>
                       ) : null}
-                      {item.id && sePuedeBorrarHistorial(item.estado, null) ? (
+                      {item.id && sePuedeBorrarHistorial(item.estado) ? (
                         <button
                           type="button"
                           className="liga-notificaciones__ghost"

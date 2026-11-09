@@ -816,8 +816,8 @@ export async function solicitarProcesamientoLote(input: {
 }
 
 /**
- * Quita correos que no salieron. Sin id, limpia los no enviados de la liga.
- * No pide borrar aceptados, entregados ni los que están en proceso.
+ * Sin id, limpia los no enviados de la liga.
+ * Con id, también quita un aceptado o entregado. No toca uno en proceso.
  */
 export async function descartarCorreosNoEnviados(input: {
   ligaId: string;

@@ -1025,7 +1025,7 @@ describe("LigaNotificacionesPanel", () => {
     });
     const filas = container.querySelectorAll(".liga-notificaciones__history-row");
     expect(filas[0].textContent).toContain("Aceptado");
-    expect(filas[0].textContent).not.toContain("Borrar");
+    expect(filas[0].textContent).toContain("Borrar");
     expect(filas[1].textContent).toContain("Pendiente");
     expect(filas[1].textContent).not.toContain("Procesar");
     expect(filas[1].textContent).toContain("Borrar");
@@ -1048,5 +1048,21 @@ describe("LigaNotificacionesPanel", () => {
       queueId: "cola-1",
       logId: undefined,
     });
+    const borrarAceptado = Array.from(filas[0].querySelectorAll("button")).find(
+      (button) => button.textContent === "Borrar"
+    );
+    await act(async () => {
+      borrarAceptado?.click();
+      await Promise.resolve();
+    });
+    expect(window.confirm).toHaveBeenCalledWith(
+      "¿Quitar este correo aceptado del historial? No se reenvía."
+    );
+    expect(servicio.descartarCorreosNoEnviados).toHaveBeenCalledWith({
+      ligaId: "liga-1",
+      queueId: undefined,
+      logId: "log-enviado",
+    });
+    expect(servicioEnvio.solicitarProcesamientoLote).not.toHaveBeenCalled();
   });
 });

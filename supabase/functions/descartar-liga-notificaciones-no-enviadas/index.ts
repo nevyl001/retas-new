@@ -1,6 +1,7 @@
 /**
- * El administrador autenticado quita de su liga los correos que no se enviaron.
- * No borra aceptados, entregados ni los que el worker está procesando.
+ * El administrador autenticado quita filas de su historial.
+ * Una fila concreta puede ser aceptada o entregada. La limpieza general
+ * sigue limitada a lo que no se envió. Nunca borra un envío en proceso.
  */
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import {
@@ -12,7 +13,8 @@ import {
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-const COLA_DESCARTABLE = ["pendiente", "error", "omitido", "pausado"];
+const COLA_NO_ENVIADA = ["pendiente", "error", "omitido", "pausado"];
+const COLA_FILA = [...COLA_NO_ENVIADA, "enviado"];
 
 function json(req: Request, status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), {
@@ -109,15 +111,15 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (error) return json(req, 500, { ok: false, error: "cola_no_disponible" });
     if (!row) return json(req, 404, { ok: false, error: "no_encontrado" });
-    if (!COLA_DESCARTABLE.includes(row.estado)) {
-      return json(req, 409, { ok: false, error: "conserva_enviado" });
+    if (row.estado === "procesando" || !COLA_FILA.includes(row.estado)) {
+      return json(req, 409, { ok: false, error: "en_proceso" });
     }
     const { error: deleteError } = await admin
       .from("liga_notificaciones_queue")
       .delete()
       .eq("id", queueId)
       .eq("liga_id", ligaId)
-      .in("estado", COLA_DESCARTABLE);
+      .in("estado", COLA_FILA);
     if (deleteError) return json(req, 500, { ok: false, error: "cola_no_disponible" });
     return json(req, 200, { ok: true, descartados: 1 });
   }
@@ -131,14 +133,15 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (error) return json(req, 500, { ok: false, error: "cola_no_disponible" });
     if (!row) return json(req, 404, { ok: false, error: "no_encontrado" });
-    if (!logDescartable(row)) {
-      return json(req, 409, { ok: false, error: "conserva_enviado" });
+    if (row.estado === "procesando") {
+      return json(req, 409, { ok: false, error: "en_proceso" });
     }
     const { error: deleteError } = await admin
       .from("liga_notificaciones_log")
       .delete()
       .eq("id", logId)
-      .eq("liga_id", ligaId);
+      .eq("liga_id", ligaId)
+      .neq("estado", "procesando");
     if (deleteError) return json(req, 500, { ok: false, error: "cola_no_disponible" });
     return json(req, 200, { ok: true, descartados: 1 });
   }
@@ -147,7 +150,7 @@ Deno.serve(async (req) => {
     .from("liga_notificaciones_queue")
     .delete()
     .eq("liga_id", ligaId)
-    .in("estado", COLA_DESCARTABLE)
+    .in("estado", COLA_NO_ENVIADA)
     .select("id");
   if (colaError) return json(req, 500, { ok: false, error: "cola_no_disponible" });
 
