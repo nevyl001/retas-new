@@ -40,6 +40,7 @@
 --   0102_liga_notificaciones_simulacion_servidor.sql
 --   0103_liga_notificaciones_modo_operacion.sql
 --   0104_liga_notificaciones_worker_resend.sql
+--   0105_liga_inscritos_contacto_identidad_global.sql
 -- Preferible: supabase db push (con revisión del plan).
 --
 -- -----------------------------------------------------------------------------

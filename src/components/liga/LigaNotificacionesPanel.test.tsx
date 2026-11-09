@@ -24,10 +24,12 @@ jest.mock("../../club-experience/ClubExperienceContext", () => ({
 }));
 
 const mockCargar = jest.fn();
+const mockContacto = jest.fn();
 const mockHabilitar = jest.fn();
 
 jest.mock("../../services/ligaNotificacionesService", () => ({
   cargarNotificacionesLiga: (...args: unknown[]) => mockCargar(...args),
+  cargarContactoInscritosLiga: (...args: unknown[]) => mockContacto(...args),
   establecerHabilitacionJugador: (...args: unknown[]) => mockHabilitar(...args),
   establecerCorreoVerificado: jest.fn().mockResolvedValue({
     ok: false,
@@ -89,6 +91,7 @@ describe("LigaNotificacionesPanel", () => {
       removeEventListener: jest.fn(),
     })) as unknown as typeof window.matchMedia;
     mockHabilitar.mockResolvedValue({ ok: true, motivo: null });
+    mockContacto.mockResolvedValue([]);
     mockCargar.mockResolvedValue({
       disponible: true,
       escriturasActivas: true,
@@ -255,6 +258,41 @@ describe("LigaNotificacionesPanel", () => {
       await Promise.resolve();
     });
     expect(mockHabilitar).not.toHaveBeenCalled();
+  });
+
+  it("muestra el correo global cuando el roster local está vacío", async () => {
+    const poolSinCorreo = [
+      {
+        ...pool[0],
+        email: null,
+      },
+    ];
+    mockContacto.mockResolvedValue([
+      {
+        ligaJugadorId: "jug-1",
+        email: "saul.global@example.com",
+        telefono: null,
+        rivieraJugadorId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        identidadGlobalId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        origen: "global_source",
+      },
+    ]);
+    await act(async () => {
+      root.render(
+        <LigaNotificacionesPanel
+          ligaId="liga-1"
+          ligaNombre="Liga Nocturna"
+          inscripciones={inscripciones}
+          equipos={[]}
+          pool={poolSinCorreo}
+          sustituciones={[]}
+        />
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(container.textContent).toContain("saul.global@example.com");
+    expect(container.textContent).not.toContain("Sin correo");
   });
 
   it("PREPARAR CORREO muestra confirmación sin encolar hasta ENVIAR", async () => {

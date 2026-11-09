@@ -1,4 +1,8 @@
 import { supabase } from "../lib/supabaseClient";
+import {
+  mapContactoInscritoRow,
+  type ContactoInscritoResuelto,
+} from "../lib/liga/notificaciones/resolveInscritoContacto";
 
 export interface PreferenciaNotificacionRow {
   liga_jugador_id: string;
@@ -116,6 +120,27 @@ function aviso(motivo: string | null): void {
 /** El cliente solo muestra enlace_simulado si el build lo autorizó de forma explícita. */
 export function simulacionNotificacionesClienteActiva(): boolean {
   return process.env.REACT_APP_LIGA_NOTIFICACIONES_SIMULACION === "true";
+}
+
+/**
+ * Contacto canónico de inscritos (Riviera ID / cesión). Solo lectura.
+ * Si 0105 no está aplicada, devuelve [] y el panel usa el email local.
+ */
+export async function cargarContactoInscritosLiga(
+  ligaId: string
+): Promise<ContactoInscritoResuelto[]> {
+  const { data, error } = await supabase.rpc(
+    "liga_inscritos_contacto_autorizado",
+    { p_liga_id: ligaId }
+  );
+  if (error) {
+    if (esEsquemaAusente(error.message)) return [];
+    aviso("no_disponible");
+    return [];
+  }
+  return ((data ?? []) as Record<string, unknown>[])
+    .map((row) => mapContactoInscritoRow(row))
+    .filter((row): row is ContactoInscritoResuelto => row !== null);
 }
 
 export async function cargarNotificacionesLiga(

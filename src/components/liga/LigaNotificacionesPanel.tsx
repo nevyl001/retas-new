@@ -19,6 +19,11 @@ import {
   type EstadoVisualNotificacion,
 } from "../../lib/liga/notificaciones/bienvenidaPolicy";
 import {
+  contarPerfilesPorCorreo,
+  correoEfectivoDestinatario,
+  type ContactoInscritoResuelto,
+} from "../../lib/liga/notificaciones/resolveInscritoContacto";
+import {
   enlacePerfilBienvenida,
   renderBienvenidaEmail,
 } from "../../lib/liga/notificaciones/bienvenidaTemplate";
@@ -31,6 +36,7 @@ import {
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import {
+  cargarContactoInscritosLiga,
   cargarNotificacionesLiga,
   establecerHabilitacionJugador,
   guardarConfigLiga,
@@ -275,6 +281,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const [snapshot, setSnapshot] = useState<NotificacionesLigaSnapshot | null>(
     null
   );
+  const [contactos, setContactos] = useState<ContactoInscritoResuelto[]>([]);
   const [cargando, setCargando] = useState(true);
   const [aviso, setAviso] = useState<string | null>(null);
   const [enlacePrueba, setEnlacePrueba] = useState<string | null>(null);
@@ -296,9 +303,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   useEffect(() => {
     let activo = true;
     setCargando(true);
-    void cargarNotificacionesLiga(ligaId).then((data) => {
+    void Promise.all([
+      cargarNotificacionesLiga(ligaId),
+      cargarContactoInscritosLiga(ligaId),
+    ]).then(([data, contactoRows]) => {
       if (!activo) return;
       setSnapshot(data);
+      setContactos(contactoRows);
       setCargando(false);
     });
     return () => {
@@ -327,6 +338,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
 
   const filas = useMemo(() => {
     const poolById = new Map(pool.map((jugador) => [jugador.id, jugador]));
+    const contactoById = new Map(
+      contactos.map((item) => [item.ligaJugadorId, item])
+    );
     const ids = new Set<string>();
     for (const inscripcion of inscripciones) ids.add(inscripcion.jugador_id);
     for (const equipo of equipos) {
@@ -340,38 +354,61 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     );
     Array.from(salientes).forEach((id) => ids.delete(id));
 
-    const correos = new Map<string, Set<string>>();
-    for (const jugador of pool) {
-      const correo = normalizarCorreo(jugador.email);
-      if (!correo) continue;
-      const grupo = correos.get(correo) ?? new Set<string>();
-      grupo.add(jugador.id);
-      correos.set(correo, grupo);
-    }
-
     const preferencias = new Map(
       (snapshot?.preferencias ?? []).map((row) => [row.liga_jugador_id, row])
     );
     const cola = snapshot?.cola ?? [];
     const verificaciones = snapshot?.verificaciones ?? [];
 
-    return Array.from(ids).map((jugadorId): FilaDestinatario => {
+    const base = Array.from(ids).map((jugadorId) => {
       const enPool = poolById.get(jugadorId);
       const inscripcion = inscripciones.find(
         (item) => item.jugador_id === jugadorId
       );
-      const email = enPool?.email ?? inscripcion?.jugador?.email ?? null;
-      const correo = normalizarCorreo(email);
-      const preferencia = preferencias.get(jugadorId) ?? null;
-      const envios = cola.filter((item) => item.liga_jugador_id === jugadorId);
-      const solicitud = ultimaSolicitud(verificaciones, jugadorId);
-      const preferenciaPolitica = preferenciaParaPolitica(preferencia);
-      const perfiles = correo ? correos.get(correo)?.size ?? 1 : 0;
+      const contacto = contactoById.get(jugadorId) ?? null;
+      const emailLocal = enPool?.email ?? inscripcion?.jugador?.email ?? null;
+      const email = correoEfectivoDestinatario({
+        emailLocal,
+        emailGlobal: contacto?.email ?? null,
+      });
       return {
         jugadorId,
+        enPool,
+        email,
+        identidadGlobalId:
+          contacto?.identidadGlobalId ?? enPool?.riviera_jugador_id ?? null,
+        rivieraJugadorId:
+          contacto?.rivieraJugadorId ?? enPool?.riviera_jugador_id ?? null,
+      };
+    });
+
+    const perfilesPorCorreo = contarPerfilesPorCorreo(
+      base.map((item) => ({
+        email: item.email,
+        identidadGlobalId: item.identidadGlobalId,
+        jugadorId: item.jugadorId,
+      }))
+    );
+
+    return base.map((item): FilaDestinatario => {
+      const enPool = item.enPool;
+      const inscripcion = inscripciones.find(
+        (row) => row.jugador_id === item.jugadorId
+      );
+      const correo = normalizarCorreo(item.email);
+      const preferencia = preferencias.get(item.jugadorId) ?? null;
+      const envios = cola.filter(
+        (row) => row.liga_jugador_id === item.jugadorId
+      );
+      const solicitud = ultimaSolicitud(verificaciones, item.jugadorId);
+      const preferenciaPolitica = preferenciaParaPolitica(preferencia);
+      const perfiles = correo ? perfilesPorCorreo.get(correo) ?? 1 : 0;
+      const email = item.email;
+      return {
+        jugadorId: item.jugadorId,
         nombre: enPool?.nombre ?? inscripcion?.jugador?.nombre ?? "Jugador",
         rivieraId: enPool?.riviera_id ?? null,
-        rivieraJugadorId: enPool?.riviera_jugador_id ?? null,
+        rivieraJugadorId: item.rivieraJugadorId,
         email,
         fotoUrl: enPool?.foto_url ?? null,
         categoria: categoriaVisible(enPool?.categoria),
@@ -393,13 +430,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           solicitud,
         }),
         solicitud,
-        yaEnviado: envios.some((item) => item.estado === "enviado"),
+        yaEnviado: envios.some((row) => row.estado === "enviado"),
         yaEncolado: envios.some(
-          (item) => item.estado === "pendiente" || item.estado === "procesando"
+          (row) => row.estado === "pendiente" || row.estado === "procesando"
         ),
       };
     });
-  }, [equipos, inscripciones, pool, snapshot, sustituciones]);
+  }, [contactos, equipos, inscripciones, pool, snapshot, sustituciones]);
 
   const visibles = filas.filter((fila) => {
     const q = busqueda.trim().toLocaleLowerCase("es");
