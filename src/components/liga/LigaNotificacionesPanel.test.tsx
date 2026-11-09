@@ -240,7 +240,7 @@ describe("LigaNotificacionesPanel", () => {
     });
     await renderPanel();
     expect(container.textContent).toContain("Vista de revisión");
-    expect(container.textContent).toContain("permanecen desactivados");
+    expect(container.textContent).toContain("están desactivados");
     const checkbox = container.querySelector(
       'input[type="checkbox"]'
     ) as HTMLInputElement;

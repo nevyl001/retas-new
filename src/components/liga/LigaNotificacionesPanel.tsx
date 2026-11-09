@@ -851,15 +851,12 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     >
       {!cargando && snapshot?.disponible && !snapshot.escriturasActivas ? (
         <div className="liga-notificaciones__banner" role="status">
-          Vista de revisión: puedes explorar el diseño. El guardado y los envíos
-          permanecen desactivados.
+          Vista de revisión. El guardado y los envíos están desactivados.
         </div>
       ) : null}
       {!cargando && snapshot && !snapshot.disponible ? (
         <div className="liga-notificaciones__banner" role="status">
-          La migración de notificaciones todavía no está aplicada. Puedes
-          revisar la lista; los cambios no se guardarán y no se enviará ningún
-          correo.
+          Vista de revisión. El guardado y los envíos están desactivados.
         </div>
       ) : null}
 
