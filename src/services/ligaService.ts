@@ -2277,6 +2277,56 @@ export async function resetPartidoResult(
     .eq("estado", "completed");
 }
 
+export interface CorreccionPuntosLiga {
+  id: string;
+  liga_id: string;
+  jugador_id: string;
+  puntos_antes: number | null;
+  puntos_despues: number;
+  motivo: string;
+  created_at: string;
+}
+
+function motivoCorreccionValido(motivo: string): string {
+  const motivoTrim = motivo.trim().slice(0, 240);
+  if (motivoTrim.length < 3) {
+    throw new Error(
+      "Indica el motivo del ajuste (mínimo 3 caracteres) para que el jugador lo vea."
+    );
+  }
+  return motivoTrim;
+}
+
+export async function listarCorreccionesPuntos(
+  ligaId: string
+): Promise<CorreccionPuntosLiga[]> {
+  const { data, error } = await supabase
+    .from("liga_puntos_correcciones")
+    .select(
+      "id, liga_id, jugador_id, puntos_antes, puntos_despues, motivo, created_at"
+    )
+    .eq("liga_id", ligaId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    if (/liga_puntos_correcciones|schema cache|does not exist/i.test(error.message)) {
+      return [];
+    }
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((row) => ({
+    id: String(row.id),
+    liga_id: String(row.liga_id),
+    jugador_id: String(row.jugador_id),
+    puntos_antes:
+      row.puntos_antes == null ? null : Number(row.puntos_antes),
+    puntos_despues: Number(row.puntos_despues),
+    motivo: String(row.motivo ?? ""),
+    created_at: String(row.created_at),
+  }));
+}
+
 export async function actualizarPuntosInscripcion(
   ligaId: string,
   jugadorId: string,
@@ -2290,19 +2340,23 @@ export async function actualizarPuntosInscripcion(
     throw new Error("Puntos inválidos.");
   }
 
-  const motivoTrim = motivo.trim();
-  if (motivoTrim.length < 3) {
-    throw new Error(
-      "Indica el motivo del ajuste (mínimo 3 caracteres) para que el jugador lo vea."
-    );
-  }
+  const motivoTrim = motivoCorreccionValido(motivo);
+  const ahora = new Date().toISOString();
+
+  const previo = await supabase
+    .from("liga_inscripciones")
+    .select("puntos")
+    .eq("liga_id", ligaId)
+    .eq("jugador_id", jugadorId)
+    .maybeSingle();
+  if (previo.error) throw new Error(previo.error.message);
 
   const { error } = await supabase
     .from("liga_inscripciones")
     .update({
       puntos: valor,
-      puntos_ajuste_motivo: motivoTrim.slice(0, 240),
-      puntos_ajuste_at: new Date().toISOString(),
+      puntos_ajuste_motivo: motivoTrim,
+      puntos_ajuste_at: ahora,
     })
     .eq("liga_id", ligaId)
     .eq("jugador_id", jugadorId);
@@ -2313,6 +2367,65 @@ export async function actualizarPuntosInscripcion(
         " (¿El esquema de liga en Supabase permite actualizar puntos?)"
     );
   }
+
+  const { error: historialError } = await supabase
+    .from("liga_puntos_correcciones")
+    .insert({
+      liga_id: ligaId,
+      jugador_id: jugadorId,
+      puntos_antes: previo.data?.puntos ?? null,
+      puntos_despues: valor,
+      motivo: motivoTrim,
+      created_at: ahora,
+      updated_at: ahora,
+    });
+  if (historialError) throw new Error(historialError.message);
+}
+
+export async function actualizarMotivoCorreccion(input: {
+  id: string;
+  ligaId: string;
+  jugadorId: string;
+  motivo: string;
+}): Promise<void> {
+  await requireUserId();
+  const motivoTrim = motivoCorreccionValido(input.motivo);
+  const ahora = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("liga_puntos_correcciones")
+    .update({ motivo: motivoTrim, updated_at: ahora })
+    .eq("id", input.id)
+    .eq("liga_id", input.ligaId)
+    .eq("jugador_id", input.jugadorId);
+  if (error) throw new Error(error.message);
+
+  const reciente = await supabase
+    .from("liga_puntos_correcciones")
+    .select("id")
+    .eq("liga_id", input.ligaId)
+    .eq("jugador_id", input.jugadorId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (reciente.error) throw new Error(reciente.error.message);
+  if (reciente.data?.id !== input.id) return;
+
+  const vigente = await supabase
+    .from("liga_inscripciones")
+    .select("puntos_ajuste_motivo")
+    .eq("liga_id", input.ligaId)
+    .eq("jugador_id", input.jugadorId)
+    .maybeSingle();
+  if (vigente.error) throw new Error(vigente.error.message);
+  if (!vigente.data?.puntos_ajuste_motivo) return;
+
+  const { error: syncError } = await supabase
+    .from("liga_inscripciones")
+    .update({ puntos_ajuste_motivo: motivoTrim })
+    .eq("liga_id", input.ligaId)
+    .eq("jugador_id", input.jugadorId);
+  if (syncError) throw new Error(syncError.message);
 }
 
 export async function finishLiga(ligaId: string): Promise<LigaCareerCloseResult> {

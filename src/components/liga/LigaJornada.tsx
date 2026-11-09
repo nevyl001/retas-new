@@ -9,7 +9,10 @@ import type {
   RankingItem,
 } from "../../lib/liga/types";
 import {
+  actualizarMotivoCorreccion,
   actualizarPuntosInscripcion,
+  listarCorreccionesPuntos,
+  type CorreccionPuntosLiga,
   finishJornada,
   getLigaById,
   getRanking,
@@ -144,6 +147,25 @@ const PAREJAS_JORNADA_RANKING_COLUMNS: JornadaStandingsColumn[] = [
   },
 ];
 
+function IconoLapiz() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5z" />
+    </svg>
+  );
+}
+
 export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   ligaId,
   numero,
@@ -176,6 +198,9 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const [manualMotivos, setManualMotivos] = useState<Record<string, string>>(
     {}
   );
+  const [correcciones, setCorrecciones] = useState<CorreccionPuntosLiga[]>([]);
+  const [editCorreccionId, setEditCorreccionId] = useState<string | null>(null);
+  const [editCorreccionTexto, setEditCorreccionTexto] = useState("");
   const [showManualEdit, setShowManualEdit] = useState(false);
   const [canchaFilter, setCanchaFilter] = useState<number | "all">("all");
   const [jugadorFotos, setJugadorFotos] = useState<
@@ -194,10 +219,15 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         const rEq = await getRankingEquipos(ligaId);
         setRankingEquipos(rEq);
         setRanking([]);
+        setCorrecciones([]);
         setManualPuntos({});
       } else {
-        const rank = await getRanking(ligaId);
+        const [rank, historial] = await Promise.all([
+          getRanking(ligaId),
+          listarCorreccionesPuntos(ligaId),
+        ]);
         setRanking(rank);
+        setCorrecciones(historial);
         setRankingEquipos([]);
         setManualPuntos(
           Object.fromEntries(rank.map((r) => [r.jugador_id, String(r.puntos)]))
@@ -828,6 +858,32 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         return next;
       });
       setMessage("Puntos actualizados. El motivo queda visible para el jugador.");
+      setEditCorreccionId(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleGuardarTextoCorreccion = async (item: CorreccionPuntosLiga) => {
+    const texto = editCorreccionTexto.trim();
+    if (texto.length < 3) {
+      setError("El texto de la corrección necesita al menos 3 caracteres.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await actualizarMotivoCorreccion({
+        id: item.id,
+        ligaId,
+        jugadorId: item.jugador_id,
+        motivo: texto,
+      });
+      setEditCorreccionId(null);
+      setMessage("Texto de la corrección actualizado.");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -1328,9 +1384,9 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                     Corrección de puntos
                   </p>
                   <p className="liga-jornada-manual__panel-hint">
-                    Solo para excepciones. El motivo queda visible para el
-                    jugador en el ranking. Recalcular desde partidos borra el
-                    ajuste.
+                    Solo para excepciones. El historial conserva cada
+                    corrección. El lápiz cambia solo el texto. Recalcular
+                    desde partidos borra el ajuste visible en el ranking.
                   </p>
                 </header>
                 <ul className="liga-jornada-manual__list">
@@ -1344,6 +1400,9 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                     const motivo = manualMotivos[row.jugador_id] ?? "";
                     const canSave =
                       changed && motivo.trim().length >= 3 && !busy;
+                    const historial = correcciones.filter(
+                      (item) => item.jugador_id === row.jugador_id
+                    );
                     return (
                       <li
                         key={row.jugador_id}
@@ -1359,11 +1418,91 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                             Actual: {row.puntos}
                           </span>
                         </div>
-                        {row.puntos_ajuste_motivo ? (
-                          <p className="liga-jornada-manual__prev-motivo">
-                            Último motivo: {row.puntos_ajuste_motivo}
-                          </p>
-                        ) : null}
+                        <div className="liga-jornada-manual__historial">
+                          <span className="liga-jornada-manual__field-label">
+                            Historial
+                          </span>
+                          {historial.length === 0 ? (
+                            <p className="liga-jornada-manual__historial-vacio">
+                              Sin correcciones
+                            </p>
+                          ) : (
+                            <ul className="liga-jornada-manual__historial-list">
+                              {historial.map((item) => {
+                                const editando = editCorreccionId === item.id;
+                                return (
+                                  <li
+                                    key={item.id}
+                                    className="liga-jornada-manual__historial-item"
+                                  >
+                                    <div className="liga-jornada-manual__historial-copy">
+                                      <span className="liga-jornada-manual__historial-meta">
+                                        {new Date(item.created_at).toLocaleString(
+                                          "es-MX",
+                                          {
+                                            dateStyle: "medium",
+                                            timeStyle: "short",
+                                          }
+                                        )}
+                                        {" · "}
+                                        {item.puntos_antes == null
+                                          ? `${item.puntos_despues} pts`
+                                          : `${item.puntos_antes} → ${item.puntos_despues}`}
+                                      </span>
+                                      {editando ? (
+                                        <input
+                                          type="text"
+                                          className="liga-jornada-manual__motivo"
+                                          value={editCorreccionTexto}
+                                          maxLength={240}
+                                          disabled={busy}
+                                          aria-label={`Texto de la corrección de ${row.nombre}`}
+                                          onChange={(event) =>
+                                            setEditCorreccionTexto(
+                                              event.target.value
+                                            )
+                                          }
+                                        />
+                                      ) : (
+                                        <p className="liga-jornada-manual__historial-texto">
+                                          {item.motivo}
+                                        </p>
+                                      )}
+                                    </div>
+                                    {editando ? (
+                                      <button
+                                        type="button"
+                                        className="liga-jornada-manual__lapiz"
+                                        disabled={
+                                          busy ||
+                                          editCorreccionTexto.trim().length < 3
+                                        }
+                                        onClick={() =>
+                                          void handleGuardarTextoCorreccion(item)
+                                        }
+                                      >
+                                        Guardar
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        className="liga-jornada-manual__lapiz"
+                                        aria-label={`Editar texto de la corrección de ${row.nombre}`}
+                                        disabled={busy}
+                                        onClick={() => {
+                                          setEditCorreccionId(item.id);
+                                          setEditCorreccionTexto(item.motivo);
+                                        }}
+                                      >
+                                        <IconoLapiz />
+                                      </button>
+                                    )}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </div>
                         <div className="liga-jornada-manual__card-fields">
                           <label
                             className="liga-jornada-manual__field"
