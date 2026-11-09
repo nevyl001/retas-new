@@ -385,6 +385,10 @@ verify_jwt = false
 [functions.procesar-lote-liga-notificaciones]
 verify_jwt = true
 
+# Quita solo correos no enviados de la liga del administrador.
+[functions.descartar-liga-notificaciones-no-enviadas]
+verify_jwt = true
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

@@ -7,6 +7,7 @@ import {
   solicitarBienvenidaJugador,
   registrarConsentimientoJugador,
   solicitarComunicacionManual,
+  descartarCorreosNoEnviados,
   solicitarProcesamientoLote,
   solicitarVerificacionCorreo,
   simulacionNotificacionesClienteActiva,
@@ -103,6 +104,30 @@ describe("ligaNotificacionesService", () => {
         reintentar: false,
       },
     });
+  });
+
+  it("pide quitar solo los no enviados y no llama al worker", async () => {
+    invoke.mockResolvedValue({
+      data: { ok: true, descartados: 3 },
+      error: null,
+    });
+    await expect(
+      descartarCorreosNoEnviados({ ligaId: "liga-1" })
+    ).resolves.toEqual({ ok: true, descartados: 3, motivo: null });
+    expect(invoke).toHaveBeenCalledWith(
+      "descartar-liga-notificaciones-no-enviadas",
+      {
+        body: {
+          liga_id: "liga-1",
+          queue_id: undefined,
+          log_id: undefined,
+        },
+      }
+    );
+    expect(invoke).not.toHaveBeenCalledWith(
+      "procesar-liga-notificaciones",
+      expect.anything()
+    );
   });
 
   it("Fase 1: la inscripción no auto-encola (manual / auto real apagado)", async () => {

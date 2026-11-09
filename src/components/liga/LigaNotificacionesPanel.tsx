@@ -33,6 +33,7 @@ import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import {
   cargarContactoInscritosLiga,
   cargarNotificacionesLiga,
+  descartarCorreosNoEnviados,
   solicitarProcesamientoLote,
   establecerHabilitacionJugador,
   guardarConfigLiga,
@@ -108,7 +109,19 @@ const MOTIVO_LABEL: Record<string, string> = {
   funcion_no_disponible: "El procesamiento del lote todavía no está disponible",
   procesador_no_disponible: "No se pudo pedir el procesamiento",
   lote_no_encontrado: "Ese lote no está en esta liga",
+  conserva_enviado: "Ese correo ya fue aceptado y se conserva",
+  no_encontrado: "Ese correo ya no está en el historial",
+  identificador_invalido: "No se pudo identificar el correo",
 };
+
+function sePuedeBorrarHistorial(
+  estado: string,
+  proveedor: string | null | undefined
+): boolean {
+  if (estado === "enviado" || estado === "procesando") return false;
+  if (proveedor === "aceptado" || proveedor === "entregado") return false;
+  return true;
+}
 
 function etiquetaEntrega(
   estado: string,
@@ -809,6 +822,40 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       fallidos > 0 && ok > 0
         ? `Pendiente de procesamiento: ${ok}. ${fallidos} no se encolaron: ${motivoVisible(ultimoMotivo)}.`
         : `${motivoVisible(ultimoMotivo ?? "no_disponible")}. Puedes corregir y volver a confirmar.`
+    );
+  }
+
+  async function descartarNoEnviados(objetivo?: {
+    queueId?: string;
+    logId?: string;
+  }) {
+    if (!puedeEscribir || enviandoLote) return;
+    const uno = Boolean(objetivo?.queueId || objetivo?.logId);
+    const seguro = window.confirm(
+      uno
+        ? "¿Quitar este correo del historial? No se envió y no se entregará."
+        : "¿Quitar del historial los correos que no se enviaron? Los aceptados o entregados se quedan."
+    );
+    if (!seguro) return;
+    setEnviandoLote(true);
+    const resultado = await descartarCorreosNoEnviados({
+      ligaId,
+      queueId: objetivo?.queueId,
+      logId: objetivo?.logId,
+    });
+    const fresco = await cargarNotificacionesLiga(ligaId);
+    if (fresco.disponible) setSnapshot(fresco);
+    setEnviandoLote(false);
+    if (!resultado.ok) {
+      confirmar(motivoVisible(resultado.motivo));
+      return;
+    }
+    confirmar(
+      resultado.descartados > 0
+        ? `Se quitaron ${resultado.descartados} correo${
+            resultado.descartados === 1 ? "" : "s"
+          } que no se enviaron.`
+        : "No había correos sin enviar para quitar."
     );
   }
 
@@ -1578,6 +1625,23 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             </div>
           ) : (
             <div className="liga-notificaciones__history-list">
+              {(snapshot?.cola ?? []).some((item) =>
+                sePuedeBorrarHistorial(item.estado, null)
+              ) ||
+              (snapshot?.historial ?? []).some((item) =>
+                sePuedeBorrarHistorial(item.estado, item.proveedor_estado)
+              ) ? (
+                <div className="liga-notificaciones__history-toolbar">
+                  <button
+                    type="button"
+                    className="liga-notificaciones__ghost"
+                    disabled={!puedeEscribir || enviandoLote}
+                    onClick={() => void descartarNoEnviados()}
+                  >
+                    Borrar no enviados
+                  </button>
+                </div>
+              ) : null}
               {(snapshot?.historial ?? []).map((item) => {
                 const jugador =
                   filas.find((fila) => fila.jugadorId === item.liga_jugador_id)
@@ -1598,15 +1662,29 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     <span className="liga-notificaciones__badge liga-notificaciones__badge--pending">
                       {etiquetaEntrega(item.estado, item.proveedor_estado)}
                     </span>
-                    <button
-                      type="button"
-                      className="liga-notificaciones__ghost"
-                      onClick={() =>
-                        setHistorialDetalleId(abierto ? null : item.id)
-                      }
-                    >
-                      {abierto ? "Ocultar" : "Detalles"}
-                    </button>
+                    <span className="liga-notificaciones__history-actions">
+                      {sePuedeBorrarHistorial(item.estado, item.proveedor_estado) ? (
+                        <button
+                          type="button"
+                          className="liga-notificaciones__ghost"
+                          disabled={!puedeEscribir || enviandoLote}
+                          onClick={() =>
+                            void descartarNoEnviados({ logId: item.id })
+                          }
+                        >
+                          Borrar
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="liga-notificaciones__ghost"
+                        onClick={() =>
+                          setHistorialDetalleId(abierto ? null : item.id)
+                        }
+                      >
+                        {abierto ? "Ocultar" : "Detalles"}
+                      </button>
+                    </span>
                     {abierto ? (
                       <p className="liga-notificaciones__hint liga-notificaciones__history-detail">
                         {item.proveedor_estado
@@ -1636,25 +1714,39 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     <span className="liga-notificaciones__badge liga-notificaciones__badge--pending">
                       {etiquetaEntrega(item.estado, null)}
                     </span>
-                    {item.estado === "error" && item.lote_id ? (
+                    <span className="liga-notificaciones__history-actions">
+                      {item.estado === "error" && item.lote_id ? (
+                        <button
+                          type="button"
+                          className="liga-notificaciones__ghost"
+                          disabled={enviandoLote}
+                          onClick={() => void reintentarLote(item.lote_id!)}
+                        >
+                          Reintentar
+                        </button>
+                      ) : null}
+                      {item.id && sePuedeBorrarHistorial(item.estado, null) ? (
+                        <button
+                          type="button"
+                          className="liga-notificaciones__ghost"
+                          disabled={!puedeEscribir || enviandoLote}
+                          onClick={() =>
+                            void descartarNoEnviados({ queueId: item.id })
+                          }
+                        >
+                          Borrar
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         className="liga-notificaciones__ghost"
-                        disabled={enviandoLote}
-                        onClick={() => void reintentarLote(item.lote_id!)}
+                        onClick={() =>
+                          setHistorialDetalleId(abierto ? null : key)
+                        }
                       >
-                        Reintentar
+                        {abierto ? "Ocultar" : "Detalles"}
                       </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      className="liga-notificaciones__ghost"
-                      onClick={() =>
-                        setHistorialDetalleId(abierto ? null : key)
-                      }
-                    >
-                      {abierto ? "Ocultar" : "Detalles"}
-                    </button>
+                    </span>
                     {abierto ? (
                       <p className="liga-notificaciones__hint liga-notificaciones__history-detail">
                         {item.motivo

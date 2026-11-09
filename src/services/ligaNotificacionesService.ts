@@ -59,6 +59,12 @@ export interface ColaNotificacionRow {
   lote_id?: string | null;
 }
 
+export interface ResultadoDescarte {
+  ok: boolean;
+  descartados: number;
+  motivo: string | null;
+}
+
 export interface ResultadoProcesamientoLote {
   ok: boolean;
   enviosReales: boolean;
@@ -787,6 +793,40 @@ export async function solicitarProcesamientoLote(input: {
     errores: Number(row.errores ?? 0),
     procesados: Number(row.procesados ?? 0),
     motivo: motivoSeguro(row.motivo),
+  };
+}
+
+/**
+ * Quita correos que no salieron. Sin id, limpia los no enviados de la liga.
+ * No pide borrar aceptados, entregados ni los que están en proceso.
+ */
+export async function descartarCorreosNoEnviados(input: {
+  ligaId: string;
+  queueId?: string;
+  logId?: string;
+}): Promise<ResultadoDescarte> {
+  const { data, error } = await supabase.functions.invoke(
+    "descartar-liga-notificaciones-no-enviadas",
+    {
+      body: {
+        liga_id: input.ligaId,
+        queue_id: input.queueId,
+        log_id: input.logId,
+      },
+    }
+  );
+  if (error) {
+    if (esEsquemaAusente(error.message)) {
+      return { ok: false, descartados: 0, motivo: "funcion_no_disponible" };
+    }
+    aviso("no_disponible");
+    return { ok: false, descartados: 0, motivo: "no_disponible" };
+  }
+  const row = (data ?? {}) as { ok?: boolean; descartados?: number; error?: unknown };
+  return {
+    ok: row.ok === true,
+    descartados: Number(row.descartados ?? 0),
+    motivo: row.ok === true ? null : motivoSeguro(row.error),
   };
 }
 

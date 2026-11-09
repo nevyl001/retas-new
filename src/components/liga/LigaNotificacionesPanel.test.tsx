@@ -52,6 +52,11 @@ jest.mock("../../services/ligaNotificacionesService", () => ({
     procesados: 0,
     motivo: "envios_apagados",
   }),
+  descartarCorreosNoEnviados: jest.fn().mockResolvedValue({
+    ok: true,
+    descartados: 1,
+    motivo: null,
+  }),
   solicitarBienvenidaJugador: jest.fn().mockResolvedValue({
     ok: false,
     encolado: false,
@@ -670,5 +675,75 @@ describe("LigaNotificacionesPanel", () => {
     ) as HTMLInputElement;
     expect(check.disabled).toBe(true);
     expect(document.body.textContent).toContain("autorización revocada");
+  });
+
+  it("borra del historial un pendiente y conserva el aceptado", async () => {
+    const servicio = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ) as { descartarCorreosNoEnviados: jest.Mock };
+    servicio.descartarCorreosNoEnviados.mockResolvedValue({
+      ok: true,
+      descartados: 1,
+      motivo: null,
+    });
+    window.confirm = jest.fn(() => true);
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: true,
+      preferencias: [],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [
+        {
+          id: "log-enviado",
+          liga_jugador_id: "jug-1",
+          tipo: "bienvenida",
+          estado: "enviado",
+          attempts: 1,
+          motivo: null,
+          proveedor_estado: "aceptado",
+          created_at: "2026-11-09T12:00:00Z",
+        },
+      ],
+      cola: [
+        {
+          id: "cola-1",
+          liga_jugador_id: "jug-1",
+          estado: "pendiente",
+          attempts: 0,
+          motivo: null,
+          lote_id: "11111111-1111-4111-8111-111111111111",
+        },
+      ],
+      verificaciones: [],
+    });
+    await renderPanel();
+    const tab = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Historial"
+    );
+    await act(async () => {
+      tab?.click();
+    });
+    const filas = container.querySelectorAll(".liga-notificaciones__history-row");
+    expect(filas[0].textContent).toContain("Aceptado");
+    expect(filas[0].textContent).not.toContain("Borrar");
+    expect(filas[1].textContent).toContain("Pendiente");
+    expect(filas[1].textContent).toContain("Borrar");
+    const borrar = Array.from(filas[1].querySelectorAll("button")).find(
+      (button) => button.textContent === "Borrar"
+    );
+    await act(async () => {
+      borrar?.click();
+      await Promise.resolve();
+    });
+    expect(servicio.descartarCorreosNoEnviados).toHaveBeenCalledWith({
+      ligaId: "liga-1",
+      queueId: "cola-1",
+      logId: undefined,
+    });
   });
 });
