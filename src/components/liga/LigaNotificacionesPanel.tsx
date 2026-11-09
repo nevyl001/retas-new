@@ -54,7 +54,6 @@ import {
   solicitarProcesamientoLote,
   establecerHabilitacionJugador,
   guardarConfigLiga,
-  guardarSupervisionLiga,
   enviarPruebaSupervision,
   solicitarVerificacionSupervision,
   registrarConsentimientoJugador,
@@ -1195,26 +1194,32 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       confirmar(motivoVisible("esquema_pendiente"));
       return;
     }
-    if (!correoSupervisionValido(supervisionEmail)) {
+    const email = supervisionEmail.trim().toLowerCase();
+    if (email && !correoSupervisionValido(email)) {
       confirmar(motivoVisible("correo_invalido"));
       return;
     }
-    const verificado = supervisionVerificada({
-      email: supervisionEmail,
-      emailVerificado: config.supervision_email_verificado,
-      verificadoAt: config.supervision_verificado_at,
-    });
-    if (supervisionActiva && !verificado) {
-      confirmar(motivoVisible("correo_sin_verificacion"));
+    if (supervisionActiva && !email) {
+      confirmar(motivoVisible("correo_invalido"));
       return;
     }
+    const verificado =
+      email !== "" &&
+      email === (config.supervision_email_verificado ?? "").trim().toLowerCase() &&
+      Boolean(config.supervision_verificado_at);
     setGuardandoId("supervision");
-    const email = supervisionEmail.trim().toLowerCase();
-    const resultado = await guardarSupervisionLiga({
-      ligaId,
-      email,
-      activa: supervisionActiva,
-      alcance: supervisionAlcance,
+    const resultado = await guardarConfigLiga(ligaId, {
+      ...config,
+      ...automatica,
+      supervision_email: email || null,
+      supervision_activa: supervisionActiva && email !== "",
+      supervision_alcance: supervisionAlcance,
+      supervision_email_verificado: verificado
+        ? config.supervision_email_verificado
+        : null,
+      supervision_verificado_at: verificado
+        ? config.supervision_verificado_at
+        : null,
     });
     setGuardandoId(null);
     if (!resultado.ok) {
@@ -1227,22 +1232,21 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             ...prev,
             config: {
               ...prev.config,
-              supervision_email: email,
-              supervision_activa: supervisionActiva && verificado,
+              ...automatica,
+              supervision_email: email || null,
+              supervision_activa: supervisionActiva && email !== "",
               supervision_alcance: supervisionAlcance,
-              supervision_email_verificado:
-                prev.config.supervision_email_verificado === email
-                  ? prev.config.supervision_email_verificado
-                  : null,
-              supervision_verificado_at:
-                prev.config.supervision_email_verificado === email
-                  ? prev.config.supervision_verificado_at
-                  : null,
+              supervision_email_verificado: verificado
+                ? prev.config.supervision_email_verificado
+                : null,
+              supervision_verificado_at: verificado
+                ? prev.config.supervision_verificado_at
+                : null,
             },
           }
         : prev
     );
-    confirmar("Configuración de supervisión guardada");
+    confirmar("Cambios guardados");
   }
 
   async function pedirVerificacionSupervision() {
@@ -2524,11 +2528,11 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                 <div className="liga-notificaciones__auto-actions">
                   <button
                     type="button"
-                    className="liga-notificaciones__ghost"
+                    className="liga-notificaciones__btn liga-notificaciones__btn--primary"
                     disabled={!puedeEscribir || guardandoId === "supervision"}
                     onClick={() => void guardarSupervision()}
                   >
-                    GUARDAR CONFIGURACIÓN
+                    {guardandoId === "supervision" ? "Guardando…" : "GUARDAR"}
                   </button>
                   <button
                     type="button"

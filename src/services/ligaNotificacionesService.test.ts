@@ -388,6 +388,39 @@ describe("ligaNotificacionesService", () => {
     expect(payloads[1]).not.toHaveProperty("modo_operacion");
   });
 
+  it("guarda el correo de supervisión junto con las automatizaciones", async () => {
+    const payloads: Record<string, unknown>[] = [];
+    from.mockImplementation(() => ({
+      upsert: jest.fn(async (payload: Record<string, unknown>) => {
+        payloads.push(payload);
+        return { error: null };
+      }),
+    }));
+
+    const resultado = await guardarConfigLiga("liga-1", {
+      bienvenida_pausada: true,
+      modo_prueba: true,
+      modo_operacion: "automatico",
+      resultados_auto: true,
+      resultados_espera_minutos: 5,
+      recordatorio_auto: false,
+      recordatorio_horas: 24,
+      bienvenida_auto: false,
+      supervision_email: "club@example.com",
+      supervision_activa: true,
+      supervision_alcance: "todas",
+    });
+
+    expect(resultado).toEqual({ ok: true, motivo: null });
+    expect(payloads[0]).toMatchObject({
+      modo_operacion: "automatico",
+      resultados_auto: true,
+      supervision_email: "club@example.com",
+      supervision_activa: true,
+      supervision_alcance: "todas",
+    });
+  });
+
   it("0101 con columnas de verificación normaliza y mantiene escriturasActivas", async () => {
     const prefs0101 = chainResult({
       data: [
