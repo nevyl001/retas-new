@@ -7,7 +7,6 @@ import type {
   LigaJugadorPoolItem,
   LigaSustitucion,
 } from "../../lib/liga/types";
-import { puedeDocumentarAutorizacionVerbal } from "../../lib/liga/notificaciones/envioManualGate";
 import {
   contarDestinatarios,
   estadoVisual,
@@ -296,9 +295,14 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     PLANTILLAS_COMUNICACION[0].cuerpo
   );
   const [loteEnvioId, setLoteEnvioId] = useState<string | null>(null);
-  const [consentSeleccion, setConsentSeleccion] = useState<Record<string, boolean>>({});
-  const [declaracionVerbal, setDeclaracionVerbal] = useState(false);
-  const [guardandoConsentLote, setGuardandoConsentLote] = useState(false);
+  const [selectorAbierto, setSelectorAbierto] = useState(false);
+  const [borradorSeleccion, setBorradorSeleccion] = useState<
+    Record<string, boolean>
+  >({});
+  const [busquedaSelector, setBusquedaSelector] = useState("");
+  const [filtroSelector, setFiltroSelector] = useState<"todos" | "listos">(
+    "todos"
+  );
 
   useEffect(() => {
     let activo = true;
@@ -520,16 +524,12 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     [filas]
   );
 
-  const candidatosEnvioKey = candidatosEnvio
-    .map((fila) => fila.jugadorId)
-    .join("|");
-
   useEffect(() => {
-    // Selección de envío: no se simula guardada; nace vacía al cambiar candidatos.
     setEnvioSeleccion({});
     setEnvioPaso("idle");
     setLoteEnvioId(null);
-  }, [ligaId, candidatosEnvioKey]);
+    setSelectorAbierto(false);
+  }, [ligaId]);
 
   const seleccionadosEnvio = candidatosEnvio.filter(
     (fila) => envioSeleccion[fila.jugadorId]
@@ -537,26 +537,16 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const incluidosEnvio = seleccionadosEnvio.filter(
     (fila) => decisionEncolar(fila).encolar
   );
-  const excluidosEnvio: { fila: FilaDestinatario; motivo: string }[] = [
-    ...seleccionadosEnvio
-      .filter((fila) => !decisionEncolar(fila).encolar)
-      .map((fila) => ({
-        fila,
-        motivo: motivoVisible(decisionEncolar(fila).motivo),
-      })),
-    ...candidatosEnvio
-      .filter((fila) => !envioSeleccion[fila.jugadorId])
-      .map((fila) => ({
-        fila,
-        motivo: "No seleccionado para este envío",
-      })),
-    ...filas
-      .filter((fila) => fila.visual !== "habilitado")
+  const excluidosEnvio: { fila: FilaDestinatario; motivo: string }[] =
+    filas
+      .filter(
+        (fila) =>
+          envioSeleccion[fila.jugadorId] && !decisionEncolar(fila).encolar
+      )
       .map((fila) => ({
         fila,
         motivo: motivoVisible(decisionEncolar(fila).motivo ?? fila.visual),
-      })),
-  ];
+      }));
 
   function confirmar(texto: string) {
     setAviso(texto);
@@ -664,64 +654,24 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     );
   }
 
-  async function documentarVerbalSeleccionados() {
-    if (!puedeEscribir || guardandoConsentLote) return;
-    if (!declaracionVerbal) {
-      confirmar(
-        "Marca la declaración: solo documenta autorizaciones verbales que realmente ocurrieron."
-      );
-      return;
-    }
-    const elegidos = filas.filter(
-      (fila) =>
-        consentSeleccion[fila.jugadorId] &&
-        puedeDocumentarAutorizacionVerbal(fila.preferencia?.consentimiento_estado)
-    );
-    const omitidos = filas.filter(
-      (fila) =>
-        consentSeleccion[fila.jugadorId] &&
-        !puedeDocumentarAutorizacionVerbal(fila.preferencia?.consentimiento_estado)
-    ).length;
-    if (elegidos.length === 0) {
-      confirmar(
-        omitidos
-          ? "Ninguno se documentó. Las revocaciones y autorizaciones ya registradas no se sobrescriben."
-          : "Selecciona jugadores sin autorización documentada."
-      );
-      return;
-    }
-    const registradoAt = new Date().toISOString();
-    setGuardandoConsentLote(true);
-    let ok = 0;
-    for (const fila of elegidos) {
-      const resultado = await registrarConsentimientoJugador({
-        ligaId,
-        jugadorId: fila.jugadorId,
-        rivieraJugadorId: fila.rivieraJugadorId,
-        origen: "manifestacion_presencial",
-        registradoAt,
-      });
-      if (resultado.ok) {
-        ok += 1;
-        reemplazarPreferencia({
-          liga_jugador_id: fila.jugadorId,
-          riviera_jugador_id: fila.rivieraJugadorId,
-          admin_habilitado: fila.preferencia?.admin_habilitado ?? false,
-          consentimiento_estado: "autorizado",
-          consentimiento_origen: "manifestacion_presencial",
-          consentimiento_registrado_at: registradoAt,
-          correo_verificado: fila.preferencia?.correo_verificado ?? false,
-          correo_verificacion_origen: fila.preferencia?.correo_verificacion_origen ?? null,
-          correo_verificado_email: fila.preferencia?.correo_verificado_email ?? null,
-        });
+  function abrirSelectorDestinatarios() {
+    setBorradorSeleccion({ ...envioSeleccion });
+    setBusquedaSelector("");
+    setFiltroSelector("todos");
+    setSelectorAbierto(true);
+  }
+
+  function agregarDestinatarios() {
+    const next: Record<string, boolean> = {};
+    for (const fila of filas) {
+      if (fila.visual === "habilitado" && borradorSeleccion[fila.jugadorId]) {
+        next[fila.jugadorId] = true;
       }
     }
-    setGuardandoConsentLote(false);
-    setDeclaracionVerbal(false);
-    setConsentSeleccion({});
-    confirmar(
-      `Autorización verbal documentada en ${ok} jugador${ok === 1 ? "" : "es"}. ${omitidos} no se modificaron.`
-    );
+    setEnvioSeleccion(next);
+    setSelectorAbierto(false);
+    const primero = filas.find((fila) => next[fila.jugadorId]);
+    if (primero) setPreviewId(primero.jugadorId);
   }
 
   function aplicarPlantilla(id: TipoComunicacionLiga) {
@@ -804,22 +754,20 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       );
     }
     setEnviandoLote(false);
-    setEnvioPaso("idle");
     if (ok > 0 && fallidos === 0) {
+      setEnvioPaso("idle");
+      setEnvioSeleccion({});
       confirmar(
-        `Envío encolado para ${ok} jugador${ok === 1 ? "" : "es"}. No se entregó correo todavía.`
+        `Correo preparado. Pendiente de procesamiento para ${ok} jugador${ok === 1 ? "" : "es"}. No se entregó.`
       );
       setArea("historial");
       return;
     }
-    if (ok > 0) {
-      confirmar(
-        `Encolados ${ok}. ${fallidos} no se pudieron preparar. Revisa el historial.`
-      );
-      setArea("historial");
-      return;
-    }
-    confirmar(motivoVisible(ultimoMotivo ?? "no_disponible"));
+    confirmar(
+      fallidos > 0 && ok > 0
+        ? `Pendiente de procesamiento: ${ok}. ${fallidos} no se encolaron: ${motivoVisible(ultimoMotivo)}.`
+        : `${motivoVisible(ultimoMotivo ?? "no_disponible")}. Puedes corregir y volver a confirmar.`
+    );
   }
 
   async function cambiarConfig(next: ConfigNotificacionLiga) {
@@ -1100,52 +1048,14 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           >
             {ESTADO_GRID_LABEL[fila.visual]}
           </span>
-          {elegible ? (
-            <label className="liga-notificaciones__pick-row">
-              <input
-                type="checkbox"
-                checked={Boolean(envioSeleccion[fila.jugadorId])}
-                disabled={!puedeEscribir}
-                aria-label={`Seleccionar a ${fila.nombre} para envío`}
-                onChange={(event) =>
-                  setEnvioSeleccion((prev) => ({
-                    ...prev,
-                    [fila.jugadorId]: event.target.checked,
-                  }))
-                }
-              />
-              <span>Para envío</span>
-            </label>
-          ) : (
+          {elegible ? null : (
             <p className="liga-notificaciones__hint">
-              {ESTADO_GRID_LABEL[fila.visual]}
-              {fila.visual !== "habilitado"
-                ? ". Falta correo válido, autorización o el interruptor."
-                : ""}
+              {motivoVisible(decisionEncolar(fila).motivo ?? fila.visual)}
             </p>
           )}
         </div>
         <div className="liga-notificaciones__card-foot">
           {switchNotificaciones(fila)}
-          {puedeDocumentarAutorizacionVerbal(
-            fila.preferencia?.consentimiento_estado
-          ) ? (
-            <label className="liga-notificaciones__pick-row">
-              <input
-                type="checkbox"
-                checked={Boolean(consentSeleccion[fila.jugadorId])}
-                disabled={!puedeEscribir}
-                aria-label={`Incluir a ${fila.nombre} en autorización verbal`}
-                onChange={(event) =>
-                  setConsentSeleccion((prev) => ({
-                    ...prev,
-                    [fila.jugadorId]: event.target.checked,
-                  }))
-                }
-              />
-              <span>Autorización verbal</span>
-            </label>
-          ) : null}
           <button
             type="button"
             className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
@@ -1356,36 +1266,6 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             </>
           )}
 
-          <div className="liga-notificaciones__consent-box">
-            <label className="liga-notificaciones__pick-row">
-              <input
-                type="checkbox"
-                checked={declaracionVerbal}
-                disabled={!puedeEscribir}
-                onChange={(event) => setDeclaracionVerbal(event.target.checked)}
-              />
-              <span>
-                Declaro que los jugadores marcados autorizaron verbalmente las
-                comunicaciones deportivas de esta liga.
-              </span>
-            </label>
-            <button
-              type="button"
-              className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
-              disabled={!puedeEscribir || guardandoConsentLote}
-              onClick={() => void documentarVerbalSeleccionados()}
-            >
-              {guardandoConsentLote
-                ? "Guardando…"
-                : "Registrar autorización verbal"}
-            </button>
-            <p className="liga-notificaciones__hint">
-              No modifica autorizaciones revocadas ni las que ya están documentadas.
-              El interruptor sigue siendo independiente: hay que activarlo para que
-              queden listos para enviar.
-            </p>
-          </div>
-
           {gestionFila && typeof document !== "undefined"
             ? createPortal(
                 <div className="liga-notificaciones__overlay">
@@ -1432,6 +1312,57 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               </select>
             </label>
 
+            <div className="liga-notificaciones__para">
+              <div className="liga-notificaciones__para-head">
+                <span>Para</span>
+                <button
+                  type="button"
+                  className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
+                  onClick={abrirSelectorDestinatarios}
+                >
+                  + SELECCIONAR JUGADORES
+                </button>
+              </div>
+              {incluidosEnvio.length === 0 ? (
+                <p className="liga-notificaciones__hint">
+                  Selecciona al menos un jugador listo para enviar.
+                  {listos === 0
+                    ? ` Ahora hay 0 listos: ${sinAutorizacion} sin autorización documentada, ${filas.filter((fila) => fila.visual === "deshabilitado").length} con el interruptor apagado, ${filas.filter((fila) => fila.visual === "sin_correo" || fila.visual === "correo_invalido").length} sin correo válido.`
+                    : ""}
+                </p>
+              ) : (
+                <>
+                  <p className="liga-notificaciones__drawer-status">
+                    Destinatarios seleccionados — {incluidosEnvio.length}
+                  </p>
+                  <ul className="liga-notificaciones__chips">
+                    {incluidosEnvio.map((fila) => (
+                      <li key={fila.jugadorId}>
+                        <FotoRetrato
+                          fotoUrl={fila.fotoUrl}
+                          nombre={fila.nombre}
+                          size="md"
+                        />
+                        <span>{fila.nombre}</span>
+                        <button
+                          type="button"
+                          className="liga-notificaciones__ghost"
+                          onClick={() =>
+                            setEnvioSeleccion((prev) => ({
+                              ...prev,
+                              [fila.jugadorId]: false,
+                            }))
+                          }
+                        >
+                          Quitar
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+
             <label className="liga-notificaciones__field" htmlFor="asunto-correo">
               <span>Asunto</span>
               <input
@@ -1476,64 +1407,11 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             </label>
 
             <div className="liga-notificaciones__envio-panel">
-              <h4 className="liga-notificaciones__drawer-section-title">
-                Destinatarios
-              </h4>
-              {candidatosEnvio.length === 0 ? (
-                <p className="liga-notificaciones__hint">
-                  Ningún jugador está listo (correo válido, autorización
-                  documentada y habilitado). Gestiona destinatarios primero.
-                </p>
-              ) : (
-                <ul className="liga-notificaciones__envio-list">
-                  {candidatosEnvio.map((fila) => (
-                    <li key={fila.jugadorId}>
-                      <label className="liga-notificaciones__pick-row">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(envioSeleccion[fila.jugadorId])}
-                          disabled={!puedeEscribir || enviandoLote}
-                          onChange={(event) =>
-                            setEnvioSeleccion((prev) => ({
-                              ...prev,
-                              [fila.jugadorId]: event.target.checked,
-                            }))
-                          }
-                        />
-                        <FotoRetrato
-                          fotoUrl={fila.fotoUrl}
-                          nombre={fila.nombre}
-                          size="md"
-                        />
-                        <span>{fila.nombre}</span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {envioPaso === "idle" ? (
-                <button
-                  type="button"
-                  className="liga-notificaciones__btn liga-notificaciones__btn--primary"
-                  disabled={
-                    !puedeEscribir ||
-                    enviandoLote ||
-                    seleccionadosEnvio.length === 0 ||
-                    !asuntoDraft.trim() ||
-                    !cuerpoDraft.trim()
-                  }
-                  onClick={() => setEnvioPaso("preparado")}
-                >
-                  REVISAR DESTINATARIOS
-                </button>
-              ) : (
+              {envioPaso === "preparado" ? (
                 <>
                   <p className="liga-notificaciones__drawer-status">
-                    Asunto: {asuntoDraft}
-                  </p>
-                  <p className="liga-notificaciones__drawer-status">
-                    Válidos ({incluidosEnvio.length})
+                    {incluidosEnvio.length} jugador
+                    {incluidosEnvio.length === 1 ? "" : "es"}
                   </p>
                   <ul className="liga-notificaciones__envio-list">
                     {incluidosEnvio.map((fila) => (
@@ -1544,19 +1422,22 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     ))}
                   </ul>
                   <p className="liga-notificaciones__drawer-status">
-                    Excluidos ({excluidosEnvio.length})
+                    Asunto: {asuntoDraft}
                   </p>
-                  <ul className="liga-notificaciones__envio-list">
-                    {excluidosEnvio.slice(0, 40).map(({ fila, motivo }) => (
-                      <li key={`ex-${fila.jugadorId}`}>
-                        <span>{fila.nombre}</span>
-                        <span>{motivo}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <p className="liga-notificaciones__hint">{cuerpoDraft}</p>
+                  {excluidosEnvio.length > 0 ? (
+                    <ul className="liga-notificaciones__envio-list">
+                      {excluidosEnvio.map(({ fila, motivo }) => (
+                        <li key={`ex-${fila.jugadorId}`}>
+                          <span>{fila.nombre}</span>
+                          <span>{motivo}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                   <p className="liga-notificaciones__hint">
-                    Confirmar encola el mensaje. La entrega real solo ocurre si el
-                    worker Resend está autorizado por separado.
+                    Confirmar solo encola el mensaje. Con el worker apagado queda
+                    pendiente de procesamiento y no se muestra como enviado.
                   </p>
                   <button
                     type="button"
@@ -1570,7 +1451,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   >
                     {enviandoLote
                       ? "Encolando…"
-                      : `ENVIAR A ${incluidosEnvio.length} JUGADOR${
+                      : `ENVIAR CORREO A ${incluidosEnvio.length} JUGADOR${
                           incluidosEnvio.length === 1 ? "" : "ES"
                         }`}
                   </button>
@@ -1580,9 +1461,38 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     disabled={enviandoLote}
                     onClick={() => setEnvioPaso("idle")}
                   >
-                    Cancelar
+                    VOLVER A EDITAR
                   </button>
                 </>
+              ) : (
+                <div className="liga-notificaciones__action-bar">
+                  <button
+                    type="button"
+                    className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
+                    onClick={abrirSelectorDestinatarios}
+                  >
+                    SELECCIONAR DESTINATARIOS
+                  </button>
+                  <button
+                    type="button"
+                    className="liga-notificaciones__btn liga-notificaciones__btn--primary"
+                    disabled={
+                      !puedeEscribir ||
+                      enviandoLote ||
+                      incluidosEnvio.length === 0 ||
+                      !asuntoDraft.trim() ||
+                      !cuerpoDraft.trim()
+                    }
+                    onClick={() => setEnvioPaso("preparado")}
+                  >
+                    REVISAR CORREO
+                  </button>
+                  {incluidosEnvio.length === 0 ? (
+                    <p className="liga-notificaciones__hint">
+                      Selecciona al menos un jugador listo para enviar.
+                    </p>
+                  ) : null}
+                </div>
               )}
             </div>
           </aside>
@@ -1799,6 +1709,155 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           </div>
         </div>
       ) : null}
+
+      {selectorAbierto && typeof document !== "undefined"
+        ? createPortal(
+            <div className="liga-notificaciones__overlay">
+              <button
+                type="button"
+                className="liga-notificaciones__overlay-scrim"
+                aria-label="Cerrar selector"
+                onClick={() => setSelectorAbierto(false)}
+              />
+              <div
+                className="liga-notificaciones__picker"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Seleccionar jugadores"
+              >
+                <h3 className="liga-notificaciones__section-title">Para</h3>
+                <label className="liga-notificaciones__field">
+                  <span>Buscar</span>
+                  <input
+                    className="liga-notificaciones__select"
+                    value={busquedaSelector}
+                    placeholder="Nombre o Riviera ID"
+                    aria-label="Buscar jugador para este correo"
+                    onChange={(event) => setBusquedaSelector(event.target.value)}
+                  />
+                </label>
+                <div className="liga-notificaciones__filters" role="group">
+                  <button
+                    type="button"
+                    className="liga-notificaciones__chip"
+                    aria-pressed={filtroSelector === "listos"}
+                    onClick={() => setFiltroSelector("listos")}
+                  >
+                    Listos para enviar
+                  </button>
+                  <button
+                    type="button"
+                    className="liga-notificaciones__chip"
+                    aria-pressed={filtroSelector === "todos"}
+                    onClick={() => setFiltroSelector("todos")}
+                  >
+                    Todos
+                  </button>
+                </div>
+                <div className="liga-notificaciones__picker-tools">
+                  <button
+                    type="button"
+                    className="liga-notificaciones__ghost"
+                    onClick={() => {
+                      const next = { ...borradorSeleccion };
+                      for (const fila of filas) {
+                        if (fila.visual === "habilitado") next[fila.jugadorId] = true;
+                      }
+                      setBorradorSeleccion(next);
+                    }}
+                  >
+                    Seleccionar elegibles
+                  </button>
+                  <button
+                    type="button"
+                    className="liga-notificaciones__ghost"
+                    onClick={() => setBorradorSeleccion({})}
+                  >
+                    Deseleccionar todos
+                  </button>
+                </div>
+                <ul className="liga-notificaciones__picker-list">
+                  {filas
+                    .filter((fila) => {
+                      const q = busquedaSelector.trim().toLocaleLowerCase("es");
+                      if (q) {
+                        const nombre = fila.nombre.toLocaleLowerCase("es");
+                        const id = (fila.rivieraId ?? "").toLocaleLowerCase("es");
+                        if (!nombre.includes(q) && !id.includes(q)) return false;
+                      }
+                      if (filtroSelector === "listos") {
+                        return fila.visual === "habilitado";
+                      }
+                      return true;
+                    })
+                    .map((fila) => {
+                      const listo = fila.visual === "habilitado";
+                      return (
+                        <li key={fila.jugadorId}>
+                          <label className="liga-notificaciones__pick-row">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(borradorSeleccion[fila.jugadorId]) && listo}
+                              disabled={!listo}
+                              aria-label={`Agregar a ${fila.nombre} a este correo`}
+                              onChange={(event) =>
+                                setBorradorSeleccion((prev) => ({
+                                  ...prev,
+                                  [fila.jugadorId]: event.target.checked,
+                                }))
+                              }
+                            />
+                            <FotoRetrato
+                              fotoUrl={fila.fotoUrl}
+                              nombre={fila.nombre}
+                              size="md"
+                            />
+                            <span>
+                              <strong>{fila.nombre}</strong>
+                              {fila.rivieraId ? ` · ${fila.rivieraId}` : ""}
+                              <br />
+                              {fila.email?.trim() || "Sin correo"}
+                              {" · "}
+                              {ESTADO_GRID_LABEL[fila.visual]}
+                              {listo
+                                ? ""
+                                : ` · ${motivoVisible(
+                                    decisionEncolar(fila).motivo ?? fila.visual
+                                  )}`}
+                            </span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                </ul>
+                <p className="liga-notificaciones__drawer-status">
+                  {
+                    filas.filter(
+                      (fila) =>
+                        fila.visual === "habilitado" &&
+                        borradorSeleccion[fila.jugadorId]
+                    ).length
+                  }{" "}
+                  seleccionados
+                </p>
+                <button
+                  type="button"
+                  className="liga-notificaciones__btn liga-notificaciones__btn--primary"
+                  onClick={agregarDestinatarios}
+                >
+                  {`AGREGAR ${
+                    filas.filter(
+                      (fila) =>
+                        fila.visual === "habilitado" &&
+                        borradorSeleccion[fila.jugadorId]
+                    ).length
+                  } DESTINATARIOS`}
+                </button>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </section>
   );
 };

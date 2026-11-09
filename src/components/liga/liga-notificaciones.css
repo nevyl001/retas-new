@@ -1126,6 +1126,59 @@
   }
 }
 
+.liga-notificaciones__para {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.liga-notificaciones__para-head,
+.liga-notificaciones__action-bar,
+.liga-notificaciones__picker-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.liga-notificaciones__chips,
+.liga-notificaciones__picker-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.liga-notificaciones__chips li,
+.liga-notificaciones__picker-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.liga-notificaciones__picker {
+  position: relative;
+  z-index: 1;
+  width: min(480px, 100%);
+  height: 100%;
+  overflow: auto;
+  padding: 20px;
+  background: #0a0a0a;
+  color: var(--liga-text, var(--ro-text-primary));
+  border-left: 0.5px solid var(--liga-border, var(--ro-border));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.liga-notificaciones__picker-list {
+  max-height: 50vh;
+  overflow: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .liga-notificaciones *,
   .liga-notificaciones *::before,

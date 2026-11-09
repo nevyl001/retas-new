@@ -142,6 +142,7 @@ describe("LigaNotificacionesPanel", () => {
     expect(container.querySelector(".liga-notificaciones__grid")).not.toBeNull();
     expect(container.querySelector("table")).toBeNull();
     expect(container.textContent?.toLowerCase()).not.toContain("habilitar a todos");
+    expect(container.textContent).not.toContain("Autorización verbal");
     expect(container.textContent).not.toContain("Marcar correo verificado");
     expect(container.textContent).not.toContain("Iniciar verificación");
     expect(container.textContent).not.toContain("Por verificar");
@@ -290,79 +291,58 @@ describe("LigaNotificacionesPanel", () => {
     expect(container.textContent).not.toContain("Sin correo");
   });
 
-  it("REVISAR DESTINATARIOS muestra confirmación sin encolar hasta ENVIAR", async () => {
-    const mockEncolar = jest.requireMock(
-      "../../services/ligaNotificacionesService"
-    ).solicitarComunicacionManual as jest.Mock;
-    mockCargar.mockResolvedValue({
-      disponible: true,
-      escriturasActivas: true,
-      verificacionDisponible: false,
-      preferencias: [
-        {
-          liga_jugador_id: "jug-1",
-          riviera_jugador_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-          admin_habilitado: true,
-          consentimiento_estado: "autorizado",
-          consentimiento_origen: "manifestacion_presencial",
-          consentimiento_registrado_at: "2026-01-01T00:00:00.000Z",
-          correo_verificado: false,
-          correo_verificacion_origen: null,
-          correo_verificado_email: null,
-        },
-      ],
-      config: {
-        bienvenida_pausada: false,
-        modo_prueba: true,
-        modo_operacion: "manual",
-      },
-      historial: [],
-      cola: [],
-      verificaciones: [],
-    });
-    await renderPanel();
+  function preferenciaLista(
+    id: string,
+    extra: Record<string, unknown> = {}
+  ) {
+    return {
+      liga_jugador_id: id,
+      riviera_jugador_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      admin_habilitado: true,
+      consentimiento_estado: "autorizado",
+      consentimiento_origen: "manifestacion_presencial",
+      consentimiento_registrado_at: "2026-01-01T00:00:00.000Z",
+      correo_verificado: false,
+      correo_verificacion_origen: null,
+      correo_verificado_email: null,
+      ...extra,
+    };
+  }
+
+  async function abrirRedactar() {
     const tab = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent === "Redactar correo"
     );
     await act(async () => {
       tab?.click();
     });
-    const pick = Array.from(
-      container.querySelectorAll('input[type="checkbox"]')
-    ).find((input) =>
-      (input.getAttribute("aria-label") ?? "").includes("Seleccionar")
-    ) as HTMLInputElement | undefined;
-    // En el compositor los checks no usan aria-label; marcar el primero de la lista.
-    const envioChecks = Array.from(
-      container.querySelectorAll(".liga-notificaciones__envio-list input[type='checkbox']")
-    ) as HTMLInputElement[];
-    const target = pick ?? envioChecks[0];
-    expect(target).toBeTruthy();
-    await act(async () => {
-      target!.click();
-      await Promise.resolve();
-    });
-    const preparar = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "REVISAR DESTINATARIOS"
-    );
-    expect(preparar).toBeTruthy();
-    await act(async () => {
-      preparar?.click();
-    });
-    expect(container.textContent).toContain("ENVIAR A 1 JUGADOR");
-    expect(container.textContent).toContain("Válidos");
-    expect(mockEncolar).not.toHaveBeenCalled();
-    const cancelar = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Cancelar"
-    );
-    await act(async () => {
-      cancelar?.click();
-    });
-    expect(mockEncolar).not.toHaveBeenCalled();
-    expect(container.textContent).toContain("REVISAR DESTINATARIOS");
-  });
+  }
 
-  it("confirma una sola vez y reutiliza el mismo lote", async () => {
+  async function marcarEnSelector(nombre: string) {
+    const abrir = Array.from(document.body.querySelectorAll("button")).find(
+      (button) => button.textContent === "+ SELECCIONAR JUGADORES"
+    );
+    await act(async () => {
+      abrir?.click();
+    });
+    const check = document.body.querySelector(
+      `input[aria-label="Agregar a ${nombre} a este correo"]`
+    ) as HTMLInputElement;
+    expect(check).toBeTruthy();
+    if (!check.checked) {
+      await act(async () => {
+        check.click();
+      });
+    }
+    const agregar = Array.from(document.body.querySelectorAll("button")).find(
+      (button) => button.textContent?.startsWith("AGREGAR ")
+    );
+    await act(async () => {
+      agregar?.click();
+    });
+  }
+
+  it("A. selecciona un jugador, revisa y encola una sola fila", async () => {
     const mockEncolar = jest.requireMock(
       "../../services/ligaNotificacionesService"
     ).solicitarComunicacionManual as jest.Mock;
@@ -371,18 +351,91 @@ describe("LigaNotificacionesPanel", () => {
       disponible: true,
       escriturasActivas: true,
       verificacionDisponible: false,
+      preferencias: [preferenciaLista("jug-1")],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await renderPanel();
+    await abrirRedactar();
+    expect(container.textContent).toContain("+ SELECCIONAR JUGADORES");
+    expect(container.textContent).toContain("REVISAR CORREO");
+    const revisarAntes = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "REVISAR CORREO"
+    ) as HTMLButtonElement;
+    expect(revisarAntes.disabled).toBe(true);
+    await marcarEnSelector("Saúl Moreno de la Torre del Valle");
+    const revisar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "REVISAR CORREO"
+    ) as HTMLButtonElement;
+    expect(revisar.disabled).toBe(false);
+    await act(async () => {
+      revisar.click();
+    });
+    expect(mockEncolar).not.toHaveBeenCalled();
+    const enviar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "ENVIAR CORREO A 1 JUGADOR"
+    );
+    await act(async () => {
+      enviar?.click();
+      await Promise.resolve();
+    });
+    expect(mockEncolar).toHaveBeenCalledTimes(1);
+    expect(mockEncolar.mock.calls[0][0].jugadorId).toBe("jug-1");
+    expect(container.textContent).toContain("Pendiente de procesamiento");
+    expect(container.textContent).not.toContain("Correo enviado");
+  });
+
+  it("C. volver a editar no encola", async () => {
+    const mockEncolar = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ).solicitarComunicacionManual as jest.Mock;
+    mockEncolar.mockClear();
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: false,
+      preferencias: [preferenciaLista("jug-1")],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await renderPanel();
+    await abrirRedactar();
+    await marcarEnSelector("Saúl Moreno de la Torre del Valle");
+    const revisar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "REVISAR CORREO"
+    );
+    await act(async () => {
+      revisar?.click();
+    });
+    const volver = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "VOLVER A EDITAR"
+    );
+    await act(async () => {
+      volver?.click();
+    });
+    expect(mockEncolar).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("REVISAR CORREO");
+  });
+
+  it("D y E. desactivado o revocado no se puede agregar", async () => {
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: false,
       preferencias: [
-        {
-          liga_jugador_id: "jug-1",
-          riviera_jugador_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-          admin_habilitado: true,
-          consentimiento_estado: "autorizado",
-          consentimiento_origen: "manifestacion_presencial",
-          consentimiento_registrado_at: "2026-01-01T00:00:00.000Z",
-          correo_verificado: false,
-          correo_verificacion_origen: null,
-          correo_verificado_email: null,
-        },
+        preferenciaLista("jug-1", { admin_habilitado: false }),
       ],
       config: {
         bienvenida_pausada: true,
@@ -394,89 +447,171 @@ describe("LigaNotificacionesPanel", () => {
       verificaciones: [],
     });
     await renderPanel();
-    const abrir = async () => {
-      const tab = Array.from(container.querySelectorAll("button")).find(
-        (button) => button.textContent === "Redactar correo"
-      );
-      await act(async () => {
-        tab?.click();
-      });
-      const envioChecks = Array.from(
-        container.querySelectorAll(
-          ".liga-notificaciones__envio-list input[type='checkbox']"
-        )
-      ) as HTMLInputElement[];
-      if (envioChecks[0] && !envioChecks[0].checked) {
-        await act(async () => {
-          envioChecks[0].click();
-        });
-      }
-      const preparar = Array.from(container.querySelectorAll("button")).find(
-        (button) => button.textContent === "REVISAR DESTINATARIOS"
-      );
-      await act(async () => {
-        preparar?.click();
-      });
-      const enviar = Array.from(container.querySelectorAll("button")).find(
-        (button) => button.textContent === "ENVIAR A 1 JUGADOR"
-      );
-      await act(async () => {
-        enviar?.click();
-        await Promise.resolve();
-      });
-    };
-    await abrir();
-    await abrir();
-    expect(mockEncolar).toHaveBeenCalledTimes(2);
-    const loteA = mockEncolar.mock.calls[0][0].loteId;
-    const loteB = mockEncolar.mock.calls[1][0].loteId;
-    expect(loteA).toBe(loteB);
-    expect(String(loteA).length).toBeGreaterThan(8);
+    await abrirRedactar();
+    const abrir = Array.from(document.body.querySelectorAll("button")).find(
+      (button) => button.textContent === "+ SELECCIONAR JUGADORES"
+    );
+    await act(async () => {
+      abrir?.click();
+    });
+    const check = document.body.querySelector(
+      'input[aria-label="Agregar a Saúl Moreno de la Torre del Valle a este correo"]'
+    ) as HTMLInputElement;
+    expect(check.disabled).toBe(true);
+    expect(document.body.textContent).toContain("Sigue deshabilitado");
   });
 
-  it("la autorización verbal no toca revocados, interruptores ni la cola", async () => {
-    const servicio = jest.requireMock("../../services/ligaNotificacionesService");
-    const registrar = servicio.registrarConsentimientoJugador as jest.Mock;
-    const encolar = servicio.solicitarComunicacionManual as jest.Mock;
-    registrar.mockResolvedValue({ ok: true, motivo: null });
-    encolar.mockClear();
-    mockHabilitar.mockClear();
+  it("G. un error del RPC se muestra y se puede reintentar con el mismo lote", async () => {
+    const mockEncolar = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ).solicitarComunicacionManual as jest.Mock;
+    mockEncolar.mockResolvedValue({
+      ok: false,
+      encolado: false,
+      motivo: "sin_autorizacion",
+    });
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: false,
+      preferencias: [preferenciaLista("jug-1")],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
     await renderPanel();
-    const verbal = container.querySelector(
-      'input[aria-label="Incluir a Saúl Moreno de la Torre del Valle en autorización verbal"]'
-    ) as HTMLInputElement;
-    expect(verbal).toBeTruthy();
-    await act(async () => {
-      verbal.click();
-    });
-    const registrarBtn = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Registrar autorización verbal"
+    await abrirRedactar();
+    await marcarEnSelector("Saúl Moreno de la Torre del Valle");
+    const revisar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "REVISAR CORREO"
     );
     await act(async () => {
-      registrarBtn?.click();
-      await Promise.resolve();
+      revisar?.click();
     });
-    expect(registrar).not.toHaveBeenCalled();
-    const declaracion = Array.from(
-      container.querySelectorAll('input[type="checkbox"]')
-    ).find((input) =>
-      (input.parentElement?.textContent ?? "").includes(
-        "autorizaron verbalmente"
-      )
-    ) as HTMLInputElement;
+    const enviar = () =>
+      Array.from(container.querySelectorAll("button")).find(
+        (button) => button.textContent === "ENVIAR CORREO A 1 JUGADOR"
+      );
     await act(async () => {
-      declaracion.click();
-      registrarBtn?.click();
+      enviar()?.click();
       await Promise.resolve();
     });
-    expect(registrar).toHaveBeenCalledWith(
-      expect.objectContaining({
-        ligaId: "liga-1",
-        jugadorId: "jug-1",
-        origen: "manifestacion_presencial",
-      })
+    expect(container.textContent).toContain("Falta autorización documentada");
+    await act(async () => {
+      enviar()?.click();
+      await Promise.resolve();
+    });
+    expect(mockEncolar).toHaveBeenCalledTimes(2);
+    expect(mockEncolar.mock.calls[0][0].loteId).toBe(
+      mockEncolar.mock.calls[1][0].loteId
     );
-    expect(mockHabilitar).not.toHaveBeenCalled();
-    expect(encolar).not.toHaveBeenCalled();
+  });
+
+  it("B. tres jugadores elegibles generan tres encolados del mismo lote", async () => {
+    const mockEncolar = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ).solicitarComunicacionManual as jest.Mock;
+    mockEncolar.mockResolvedValue({ ok: true, encolado: true, motivo: null });
+    const ids = ["jug-1", "jug-2", "jug-3"];
+    const nombres = ["Saúl Moreno de la Torre del Valle", "Axel A", "Zaid"];
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: false,
+      preferencias: ids.map((id) => preferenciaLista(id)),
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await act(async () => {
+      root.render(
+        <LigaNotificacionesPanel
+          ligaId="liga-1"
+          ligaNombre="Liga Nocturna"
+          inscripciones={ids.map((id, index) => ({
+            id: `ins-${index}`,
+            liga_id: "liga-1",
+            jugador_id: id,
+            puntos: 0,
+          })) as LigaInscripcion[]}
+          equipos={[]}
+          pool={ids.map((id, index) => ({
+            ...pool[0],
+            id,
+            nombre: nombres[index],
+            email: `jugador${index}@example.com`,
+          }))}
+          sustituciones={[]}
+        />
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await abrirRedactar();
+    for (const nombre of nombres) {
+      await marcarEnSelector(nombre);
+    }
+    const revisar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "REVISAR CORREO"
+    );
+    await act(async () => {
+      revisar?.click();
+    });
+    const enviar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "ENVIAR CORREO A 3 JUGADORES"
+    );
+    await act(async () => {
+      enviar?.click();
+      await Promise.resolve();
+    });
+    expect(mockEncolar).toHaveBeenCalledTimes(3);
+    const jugadores = mockEncolar.mock.calls.map((call) => call[0].jugadorId);
+    expect(new Set(jugadores).size).toBe(3);
+    const lotes = new Set(mockEncolar.mock.calls.map((call) => call[0].loteId));
+    expect(lotes.size).toBe(1);
+    expect(container.textContent).toContain("Pendiente de procesamiento");
+    expect(container.textContent).not.toContain("Correo enviado");
+  });
+
+  it("E. una revocación se muestra y no se puede marcar", async () => {
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: false,
+      preferencias: [
+        preferenciaLista("jug-1", { consentimiento_estado: "revocado" }),
+      ],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    await renderPanel();
+    await abrirRedactar();
+    const abrir = Array.from(document.body.querySelectorAll("button")).find(
+      (button) => button.textContent === "+ SELECCIONAR JUGADORES"
+    );
+    await act(async () => {
+      abrir?.click();
+    });
+    const check = document.body.querySelector(
+      'input[aria-label="Agregar a Saúl Moreno de la Torre del Valle a este correo"]'
+    ) as HTMLInputElement;
+    expect(check.disabled).toBe(true);
+    expect(document.body.textContent).toContain("autorización revocada");
   });
 });
