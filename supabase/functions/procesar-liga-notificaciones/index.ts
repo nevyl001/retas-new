@@ -22,6 +22,7 @@ import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import {
   extraerUrlPublicaJornadaWorker,
   isFakeOrInvalidEmail,
+  recordatorioTieneHorarioOficial,
   renderBienvenidaWorker,
   renderComunicacionWorker,
   resolveLigaMailBrandingWorker,
@@ -450,6 +451,17 @@ async function enviarReclamado(
     .replace(/\{\{\s*nombre\s*\}\}/gi, otraVez.nombre)
     .replace(/\{\{\s*liga\s*\}\}/gi, otraVez.ligaNombre)
     .replace(/\{\{\s*club\s*\}\}/gi, otraVez.clubNombre);
+  if (
+    row.tipo === "recordatorio_jornada" &&
+    !recordatorioTieneHorarioOficial(cuerpoResuelto)
+  ) {
+    await finalizarMensaje(supabase, row, {
+      estado: "omitido",
+      motivo: "jornada_sin_horario",
+      proveedor: null,
+    });
+    return "omitido";
+  }
   if (cuerpoResuelto.includes("{{") || (row.asunto ?? "").includes("{{")) {
     await finalizarMensaje(supabase, row, {
       estado: "omitido",

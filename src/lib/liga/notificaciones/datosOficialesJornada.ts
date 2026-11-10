@@ -164,6 +164,51 @@ export function etiquetaJornada(datos: DatosOficialesJornada): string {
   return `Jornada ${datos.numero} — ${fecha}`;
 }
 
+export function fechaCortaOficial(fecha: string | null | undefined): string | null {
+  const iso = dateInputValue(fecha);
+  if (!iso) return null;
+  const [year, month, day] = iso.split("-");
+  if (!year || !month || !day) return null;
+  return `${day}/${month}/${year}`;
+}
+
+/**
+ * Texto que guarda la cola y que el worker renderiza.
+ * {{nombre}}, {{liga}} y {{club}} los resuelve el mismo sustituidor del envío.
+ * No incluye una hora inventada.
+ */
+export function cuerpoRecordatorioOficial(input: {
+  ligaId: string;
+  ligaNombre: string;
+  numero: number;
+  fechaIso: string;
+  horaInicio: string;
+}): { asunto: string; cuerpo: string } | null {
+  const corta = fechaCortaOficial(input.fechaIso);
+  const hora = timeInputValue(input.horaInicio);
+  const ruta = rutaPublicaJornada(input.ligaId, input.numero);
+  if (!corta || !hora || !ruta) return null;
+  const liga = input.ligaNombre.trim() || "tu liga";
+  return {
+    asunto: `Recordatorio — ${liga} | Jornada ${input.numero}`.slice(0, 180),
+    cuerpo: [
+      "Hola {{nombre}},",
+      "",
+      `La Jornada ${input.numero} de {{liga}} es el ${corta} a las ${hora} hrs.`,
+      "",
+      `Fecha: ${corta}`,
+      `Horario: ${hora} hrs`,
+      "Sede: {{club}}",
+      "",
+      `RESULTADOS_URL:${ruta}`,
+    ].join("\n"),
+  };
+}
+
+export function recordatorioTieneHorarioOficial(cuerpo: string | null | undefined): boolean {
+  return /^[ \t]*Horario:[ \t]*([01]\d|2[0-3]):[0-5]\d hrs[ \t]*$/im.test(cuerpo ?? "");
+}
+
 export function recordatorioOficial(input: {
   datos: DatosOficialesJornada;
   horas: unknown;

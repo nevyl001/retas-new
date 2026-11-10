@@ -1,0 +1,57 @@
+-- NO EJECUTAR. No instala cron. No contiene secretos.
+-- Preparación para cuando se autorice el envío automático.
+--
+-- Frecuencia: cada 5 minutos. Cubre el recordatorio de 2 horas sin
+-- disparar un lote por minuto. El worker ya limita el lote a 50 filas.
+--
+-- Autenticación, igual que el webhook de notificaciones ya documentado:
+--   vault liga_notificaciones_publishable_key   clave publishable, nunca sb_secret_
+--   vault liga_notificaciones_webhook_secret    el mismo valor que el secreto
+--                                                LIGA_NOTIFICACIONES_WEBHOOK_SECRET
+--                                                de la edge function
+-- El cron lee Vault en el momento de la llamada. El valor no se escribe en este archivo.
+-- Cabecera: x-liga-notificaciones-secret
+-- Cuerpo: {"programadas": true}
+-- URL: functions/v1/procesar-liga-notificaciones
+-- verify_jwt de esa función debe seguir en false; el secreto es la autorización.
+--
+-- El worker, antes de leer la cola, exige LIGA_NOTIFICACIONES_ENVIOS_REALES
+-- exactamente "true". Si no lo es, responde sin leer ni escribir.
+-- Además, sin LIGA_NOTIFICACIONES_MODO exactamente "operativo" y sin
+-- allowlist, no reclama filas.
+--
+-- Solo entra estado pendiente, origen automatico, programado_para <= ahora,
+-- tipos resultados_jornada, recordatorio_jornada y bienvenida.
+-- Un recordatorio sin la línea "Horario: HH:MM hrs" se omite y no se envía.
+-- La reclamación exige que la fila siga pendiente: dos workers no reclaman la misma.
+-- Reintento: error temporal de Resend y menos de 3 intentos vuelve a pendiente.
+-- Error permanente u omisión quedan cerrados. Idempotency-Key evita un segundo envío.
+--
+-- Monitoreo: la respuesta trae procesados, aceptados, omitidos, errores.
+-- En liga_notificaciones_log, proveedor_estado aceptado es aceptación del
+-- proveedor, no entrega en el buzón.
+--
+-- Desactivar sin borrar la cola:
+--   1. cron.unschedule del job, cuando exista.
+--   2. o quitar el valor exacto "true" de LIGA_NOTIFICACIONES_ENVIOS_REALES.
+--      El worker deja de leer la cola.
+--   3. o pasar la liga a modo manual / apagar recordatorio_auto.
+--      El trigger omite los pendientes de esa liga.
+--
+-- Ejemplo, todavía comentado y sin secretos:
+--
+-- SELECT cron.schedule(
+--   'liga-notificaciones-programadas',
+--   '*/5 * * * *',
+--   $$SELECT net.http_post(
+--       url := 'https://giswxhmjgjepoobdoljb.supabase.co/functions/v1/procesar-liga-notificaciones',
+--       body := '{"programadas":true}'::jsonb,
+--       params := '{}'::jsonb,
+--       headers := jsonb_build_object(
+--         'Content-Type', 'application/json',
+--         'apikey', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'liga_notificaciones_publishable_key' LIMIT 1),
+--         'x-liga-notificaciones-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'liga_notificaciones_webhook_secret' LIMIT 1)
+--       ),
+--       timeout_milliseconds := 8000
+--     )$$
+-- );

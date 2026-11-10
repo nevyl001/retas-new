@@ -1,10 +1,13 @@
+import { renderComunicacionEmail } from "./comunicacionTemplates";
 import {
+  cuerpoRecordatorioOficial,
   datosOficialesJornada,
   fechaLegibleOficial,
   jornadaParaAviso,
   jornadaParaResultados,
   presentarInstanteLiga,
   recordatorioOficial,
+  recordatorioTieneHorarioOficial,
 } from "./datosOficialesJornada";
 
 const jornada2 = {
@@ -168,6 +171,58 @@ describe("datos oficiales de jornada", () => {
         activa: true,
       })
     ).toEqual({ ok: false, motivo: "recordatorio_vencido" });
+  });
+
+  it("in_progress no vence el recordatorio si el inicio oficial todavía no llega", () => {
+    const datos = datosOficialesJornada({
+      ligaId: "liga-1",
+      clubNombre: "Hack Pádel",
+      jornada: jornada2,
+    });
+    expect(datos.estado).toBe("in_progress");
+    expect(
+      recordatorioOficial({
+        datos,
+        horas: 12,
+        ahora: new Date("2026-11-10T15:00:00.000Z"),
+        activa: true,
+      })
+    ).toMatchObject({ ok: true, cuandoIso: "2026-11-11T15:00:00.000Z" });
+  });
+
+  it("el cuerpo oficial lleva fecha, hora, sede y enlace, y el HTML no deja placeholders", () => {
+    const pieza = cuerpoRecordatorioOficial({
+      ligaId: "liga-1",
+      ligaNombre: "Liga Nocturna",
+      numero: 2,
+      fechaIso: "2026-11-11",
+      horaInicio: "21:00",
+    });
+    expect(pieza?.cuerpo).toContain("Fecha: 11/11/2026");
+    expect(pieza?.cuerpo).toContain("Horario: 21:00 hrs");
+    expect(pieza?.cuerpo).toContain("Sede: {{club}}");
+    expect(pieza?.cuerpo).toContain("RESULTADOS_URL:/public/liga/liga-1/jornada/2");
+    expect(pieza?.asunto).toBe("Recordatorio — Liga Nocturna | Jornada 2");
+    expect(recordatorioTieneHorarioOficial(pieza?.cuerpo)).toBe(true);
+    expect(recordatorioTieneHorarioOficial("Fecha: 11/11/2026\nSede: Club")).toBe(false);
+    const view = renderComunicacionEmail({
+      clubNombre: "Hack Pádel",
+      ligaNombre: "Liga Nocturna",
+      jugadorNombre: "Ana",
+      asunto: pieza?.asunto ?? "",
+      cuerpo: pieza?.cuerpo ?? "",
+      vistaPrevia: true,
+      tipo: "jornada",
+      etiquetaBoton: "VER LA JORNADA",
+      jornadaUrl: "https://appriviera.rivieraopen.com/public/liga/liga-1/jornada/2",
+    });
+    expect(view.html).toContain("21:00 hrs");
+    expect(view.html).toContain("11/11/2026");
+    expect(view.html).toContain("Hack Pádel");
+    expect(view.html).toContain("/public/liga/liga-1/jornada/2");
+    expect(view.html).toContain("VER LA JORNADA");
+    expect(view.html).not.toContain("{{");
+    expect(view.subject).not.toContain("{{");
   });
 
   it("formatea la fecha desde el calendario, sin correrla al día anterior", () => {

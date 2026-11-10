@@ -189,6 +189,7 @@ export function renderComunicacionEmail(input: {
   horario?: string | null;
   ligaUrl?: string | null;
   jornadaUrl?: string | null;
+  etiquetaBoton?: string | null;
   maxWidth?: number;
 }): { subject: string; html: string; text: string } {
   const vars: VariablesComunicacion = {
@@ -228,7 +229,7 @@ export function renderComunicacionEmail(input: {
   let actionButton = null;
   if (esJornada && esUrlPublicaJornada(jornadaUrl)) {
     actionButton = {
-      label: "VER MI JORNADA",
+      label: input.etiquetaBoton?.trim() || "VER MI JORNADA",
       url: jornadaUrl,
     };
   }

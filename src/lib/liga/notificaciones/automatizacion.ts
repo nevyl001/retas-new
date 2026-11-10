@@ -415,6 +415,7 @@ export const MOTIVOS_AUTOMATICOS = [
   "plantilla_incompleta",
   "jornada_finalizada",
   "jornada_sin_horario",
+  "horarios_distintos",
   "recordatorio_vencido",
   "sin_alta_nueva",
   "ya_enviada",

@@ -500,6 +500,11 @@ export function renderVerificacionWorker(input: {
   return { asunto, html, text };
 }
 
+/** Misma regla que recordatorioTieneHorarioOficial en el cliente. */
+export function recordatorioTieneHorarioOficial(cuerpo: string | null | undefined): boolean {
+  return /^[ \t]*Horario:[ \t]*([01]\d|2[0-3]):[0-5]\d hrs[ \t]*$/im.test(cuerpo ?? "");
+}
+
 export function extractJornadaDetailsFromTextWorker(
   cuerpo: string,
   fallbackSede?: string

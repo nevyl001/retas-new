@@ -31,12 +31,14 @@ import {
   type TipoComunicacionLiga,
 } from "../../lib/liga/notificaciones/comunicacionTemplates";
 import {
+  cuerpoRecordatorioOficial,
   datosOficialesJornada,
   etiquetaJornada,
   jornadaParaAviso,
   jornadaParaResultados,
   presentarInstanteLiga,
   recordatorioOficial,
+  recordatorioTieneHorarioOficial,
   type JornadaFuente,
 } from "../../lib/liga/notificaciones/datosOficialesJornada";
 import {
@@ -141,6 +143,9 @@ const MOTIVO_LABEL: Record<string, string> = {
   cancelado: "La jornada cambió y el envío se canceló",
   automatizacion_apagada: "La automatización está desactivada",
   recordatorio_vencido: "El horario del recordatorio ya pasó",
+  jornada_sin_horario: "Falta la hora oficial de la ronda 1",
+  horarios_distintos: "La ronda 1 tiene horarios distintos",
+  jornada_finalizada: "La jornada ya está finalizada",
   funcion_no_disponible: "El procesamiento del lote todavía no está disponible",
   procesador_no_disponible: "No se pudo pedir el procesamiento",
   sesion_invalida: "La sesión no pudo autorizar el procesamiento",
@@ -1625,7 +1630,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         ? window.location.origin
         : "https://appriviera.rivieraopen.com";
     const notas = [
-      "Vista previa. No envía correos ni modifica la cola.",
+      vistaAuto === "programado"
+        ? "Correo programado. Es el texto guardado en la cola, no una simulación."
+        : "Vista de configuración. Muestra cómo se armaría un correo nuevo. No está en la cola y no se envía.",
     ];
     if (vistaAuto === "programado") {
       const fila = (snapshot?.cola ?? []).find(
@@ -1657,13 +1664,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           ? `Oficial: Jornada ${oficial.numero}, ${oficial.fechaLegible ?? "sin fecha"}, ${oficial.horarioLegible ?? "sin horario"}.`
           : "No hay jornada oficial vinculada."
       );
-      if (
-        oficial?.horaInicio &&
-        fila.cuerpo_texto &&
-        !fila.cuerpo_texto.includes(oficial.horaInicio)
-      ) {
+      if (fila.tipo === "recordatorio_jornada" && !recordatorioTieneHorarioOficial(fila.cuerpo_texto)) {
         notas.push(
-          "El texto guardado en la cola no incluye el horario oficial. Esto es lo que saldría, no una versión reconstruida."
+          "El texto guardado no tiene el horario oficial. El worker no debe enviarlo hasta reparar la cola."
         );
       }
       return { titulo: "Correo programado", html: render.html, notas };
@@ -1698,18 +1701,37 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           activa: automaticaLocal.recordatorio_auto,
         })
       : null;
+    const recordatorio =
+      vistaAuto === "recordatorio" && datos?.fechaIso && datos.horaInicio
+        ? cuerpoRecordatorioOficial({
+            ligaId,
+            ligaNombre,
+            numero: datos.numero,
+            fechaIso: datos.fechaIso,
+            horaInicio: datos.horaInicio,
+          })
+        : null;
+    if (vistaAuto === "recordatorio" && !recordatorio) {
+      return {
+        titulo: "Recordatorio",
+        html: "",
+        notas: datos?.faltantes.length
+          ? datos.faltantes
+          : ["Falta la fecha o la hora oficial. No se arma un correo con datos inventados."],
+      };
+    }
     const cuerpo =
       vistaAuto === "bienvenida"
         ? plantillaParaRedactar(ligaId, "bienvenida").cuerpo
         : vistaAuto === "resultados"
           ? `Hola {{nombre}},\n\nLos resultados oficiales de la Jornada ${datos?.numero} de {{liga}} ya están disponibles.\n\nFecha: ${datos?.fechaLegible ?? ""}\nHorario: ${datos?.horarioLegible ?? ""}\nSede: {{club}}`
-          : `Hola {{nombre}},\n\nLa Jornada ${datos?.numero} de {{liga}} es el ${datos?.fechaLegible ?? ""}.\n\nFecha: ${datos?.fechaLegible ?? ""}\nHorario: ${datos?.horarioLegible ?? ""}\nSede: {{club}}`;
+          : recordatorio?.cuerpo ?? "";
     const asunto =
       vistaAuto === "bienvenida"
         ? plantillaParaRedactar(ligaId, "bienvenida").asunto
         : vistaAuto === "resultados"
-          ? `Resultados oficiales — {{liga}} | Jornada ${datos?.numero}`
-          : `Recordatorio — {{liga}} | Jornada ${datos?.numero}`;
+          ? `Resultados oficiales — ${ligaNombre} | Jornada ${datos?.numero}`
+          : recordatorio?.asunto ?? "";
     const render = renderComunicacionEmail({
       clubNombre,
       ligaNombre,
@@ -1721,13 +1743,26 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       tipo: vistaAuto === "bienvenida" ? "bienvenida" : "jornada",
       fecha: vistaAuto === "bienvenida" ? null : datos?.fechaLegible,
       horario: vistaAuto === "bienvenida" ? null : datos?.horarioLegible,
+      etiquetaBoton:
+        vistaAuto === "resultados"
+          ? "VER RESULTADOS DE LA JORNADA"
+          : vistaAuto === "recordatorio"
+            ? "VER LA JORNADA"
+            : null,
       ligaUrl: `${origen}/public/liga/${ligaId}`,
       jornadaUrl:
         vistaAuto === "bienvenida" || !datos?.urlPublica
           ? null
           : `${origen}${datos.urlPublica}`,
     });
-    notas.push(`Destinatario de ejemplo: ${nombre}.`);
+    const elegibles = filas.filter((fila) => fila.visual === "habilitado").length;
+    notas.push(
+      `Tipo: ${vistaAuto}.`,
+      `Liga: ${ligaNombre}.`,
+      `Destinatario de ejemplo: ${nombre}.`,
+      `Destinatarios elegibles ahora: ${elegibles}.`,
+      `Asunto final: ${render.subject}.`
+    );
     if (datos) {
       notas.push(
         `Jornada ${datos.numero} · ${datos.estado}.`,

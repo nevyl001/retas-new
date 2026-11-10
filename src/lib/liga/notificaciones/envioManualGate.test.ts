@@ -255,6 +255,13 @@ describe("allowlist fail-closed", () => {
     expect(cola).toBeLessThan(resend);
     expect(worker).toContain("enviados: 0");
     expect(worker).toContain("fuera_allowlist");
+    expect(worker).toContain('programadas: body?.programadas === true');
+    expect(worker).toContain('.eq("estado", "pendiente")');
+    expect(worker).toContain('.eq("origen", "automatico")');
+    expect(worker).toContain('.lte("programado_para"');
+    expect(worker).toContain("recordatorioTieneHorarioOficial");
+    expect(worker).toContain("jornada_sin_horario");
+    expect(worker).toContain(".eq(\"estado\", \"pendiente\")");
     expect(worker).not.toContain("correo_verificacion_origen");
   });
 
