@@ -1084,6 +1084,16 @@
   margin: -0.15rem 0 0.55rem;
 }
 
+.liga-pantalla-ranking__ajuste {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--liga-pub-text-muted);
+  text-transform: none;
+}
+
 .liga-pantalla-ranking__subtitle {
   font-size: 0.68rem;
   font-weight: 600;

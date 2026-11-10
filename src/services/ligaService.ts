@@ -479,6 +479,18 @@ export async function getLigaById(
         ? ((row as { ingreso_jornada_numero?: number | null })
             .ingreso_jornada_numero ?? null)
         : null;
+    const motivoRaw =
+      "puntos_ajuste_motivo" in row
+        ? (row as { puntos_ajuste_motivo?: string | null }).puntos_ajuste_motivo
+        : null;
+    const ajusteAt =
+      "puntos_ajuste_at" in row
+        ? (row as { puntos_ajuste_at?: string | null }).puntos_ajuste_at
+        : null;
+    const motivo =
+      typeof motivoRaw === "string" && motivoRaw.trim()
+        ? motivoRaw.trim()
+        : null;
     return {
       id: String(row.id),
       liga_id: String(row.liga_id),
@@ -487,6 +499,8 @@ export async function getLigaById(
       puntos_heredados: heredados,
       ingreso_jornada_numero:
         ingreso == null ? null : Number(ingreso),
+      puntos_ajuste_motivo: motivo,
+      puntos_ajuste_at: ajusteAt ?? null,
       jugador: j,
     };
   });

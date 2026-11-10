@@ -7,14 +7,23 @@ import type { LigaInscripcion, LigaJornada } from "./types";
 export type RankingIndividualAcumuladoRow = {
   jugadorId: string;
   nombre: string;
-  /** Suma oficial hasta la jornada (partidos completed + herencia de plaza). */
+  /**
+   * Puntos oficiales del corte:
+   * - Si el corte cubre todas las jornadas completed actuales → liga_inscripciones.puntos
+   *   (incluye penalizaciones/bonificaciones/ajustes administrativos vigentes).
+   * - Si el corte es histórico estricto (hay completed posteriores) → solo partidos ≤ N
+   *   + herencia aplicable (sin inventar jornada de ajuste: el ledger no la guarda).
+   */
   puntos: number;
-  /** Puntos propios de partidos en jornadas completed ≤ hastaNumero. */
+  /** Suma de games/puntos de partidos completed con numero ≤ hastaNumero. */
   puntosPartidos: number;
   /** Puntos de plaza transferidos (si la plaza ya aplica en este corte). */
   puntosHeredados: number;
   /** Puntos solo de la jornada de corte, si esa jornada ya aporta. */
   puntosJornada: number;
+  /** Residual oficial vs partidos+herencia cuando el corte usa insc.puntos. */
+  puntosAjuste: number;
+  puntosAjusteMotivo: string | null;
   jornadasJugadas: number;
   posicion: number;
   ingresoJornadaNumero: number | null;
@@ -28,15 +37,36 @@ export type SustitucionAcumuladoInput = {
 
 type InscripcionAcumulado = Pick<
   LigaInscripcion,
-  "jugador_id" | "puntos_heredados" | "ingreso_jornada_numero" | "jugador"
+  | "jugador_id"
+  | "puntos"
+  | "puntos_heredados"
+  | "ingreso_jornada_numero"
+  | "puntos_ajuste_motivo"
+  | "puntos_ajuste_at"
+  | "jugador"
 >;
 
+/** Máximo numero de jornada que ya aporta al total oficial (fully completed). */
+export function maxJornadaCompletaQueAporta(
+  jornadas: readonly LigaJornada[]
+): number {
+  let max = 0;
+  for (const j of jornadas) {
+    if (!jornadaCompletaAportaPuntos(j)) continue;
+    if (j.numero > max) max = j.numero;
+  }
+  return max;
+}
+
 /**
- * Clasificación individual acumulada hasta `hastaNumero`, misma base que
- * recalcularPuntosLiga / getRanking: solo jornadas fully completed, más
- * puntos_heredados de la plaza cuando el titular ya ingresó.
+ * Clasificación individual acumulada hasta `hastaNumero`.
  *
- * No incluye puntos de jornadas posteriores ni de jornadas incompletas.
+ * Misma fuente que getRanking cuando el corte incluye todas las jornadas
+ * completed vigentes: `liga_inscripciones.puntos` (partidos + herencia +
+ * ajustes administrativos absolutos).
+ *
+ * El ledger `liga_puntos_correcciones` no guarda jornada efectiva; por eso no
+ * se redistribuyen ajustes a cortes históricos anteriores a completed posteriores.
  */
 export function computeRankingIndividualAcumuladoHasta(input: {
   jornadas: readonly LigaJornada[];
@@ -46,6 +76,8 @@ export function computeRankingIndividualAcumuladoHasta(input: {
   sustituciones?: readonly SustitucionAcumuladoInput[];
 }): RankingIndividualAcumuladoRow[] {
   const hasta = Math.max(0, Math.floor(Number(input.hastaNumero) || 0));
+  const maxCompleta = maxJornadaCompletaQueAporta(input.jornadas);
+  const usarTotalOficialInscripcion = hasta >= maxCompleta && maxCompleta > 0;
   const jornadasHasta = input.jornadas.filter((j) => j.numero <= hasta);
 
   const totales = new Map<string, number>();
@@ -101,20 +133,36 @@ export function computeRankingIndividualAcumuladoHasta(input: {
     vistos.add(jugadorId);
     const puntosPartidos = totales.get(jugadorId) ?? 0;
     const puntosHeredados = Math.max(0, Number(insc.puntos_heredados ?? 0));
+    const basePartidosHerencia = puntosPartidos + puntosHeredados;
+    const puntosOficialesInsc = Math.max(0, Number(insc.puntos ?? 0));
+    const motivoRaw =
+      typeof insc.puntos_ajuste_motivo === "string"
+        ? insc.puntos_ajuste_motivo.trim()
+        : "";
+    const motivo = motivoRaw || null;
+
+    const puntos = usarTotalOficialInscripcion
+      ? puntosOficialesInsc
+      : basePartidosHerencia;
+    const puntosAjuste = usarTotalOficialInscripcion
+      ? puntos - basePartidosHerencia
+      : 0;
+
     rows.push({
       jugadorId,
       nombre: nombres.get(jugadorId) ?? insc.jugador?.nombre ?? "Jugador",
-      puntos: puntosPartidos + puntosHeredados,
+      puntos,
       puntosPartidos,
       puntosHeredados,
       puntosJornada: puntosJornadaCorte.get(jugadorId) ?? 0,
+      puntosAjuste,
+      puntosAjusteMotivo: usarTotalOficialInscripcion ? motivo : null,
       jornadasJugadas: jornadasPorJugador.get(jugadorId)?.size ?? 0,
       ingresoJornadaNumero: ingreso,
     });
   }
 
-  // Jugadores con puntos en jornadas ≤ N que ya no tienen inscripción vigente
-  // (p. ej. saliente visible solo antes de que aplique la herencia en este corte).
+  // Jugadores con puntos en jornadas ≤ N que ya no tienen inscripción vigente.
   const herenciaActivaEnCorte = input.inscripciones.some((insc) => {
     const ingreso =
       insc.ingreso_jornada_numero == null
@@ -129,9 +177,8 @@ export function computeRankingIndividualAcumuladoHasta(input: {
   for (const [jugadorId, puntosPartidos] of Array.from(totales.entries())) {
     if (vistos.has(jugadorId)) continue;
     if (salientesExcluidos.has(jugadorId)) continue;
-    // Sin RPC de sustituciones: si ya hay herencia activa en el corte,
-    // no listar huérfanos para no duplicar puntos de plaza transferidos.
     if (sinListaSustituciones && herenciaActivaEnCorte) continue;
+    // Sin inscripción vigente no hay total oficial ni ajuste administrativo.
     rows.push({
       jugadorId,
       nombre: nombres.get(jugadorId) ?? "Jugador",
@@ -139,6 +186,8 @@ export function computeRankingIndividualAcumuladoHasta(input: {
       puntosPartidos,
       puntosHeredados: 0,
       puntosJornada: puntosJornadaCorte.get(jugadorId) ?? 0,
+      puntosAjuste: 0,
+      puntosAjusteMotivo: null,
       jornadasJugadas: jornadasPorJugador.get(jugadorId)?.size ?? 0,
       ingresoJornadaNumero: null,
     });

@@ -1016,7 +1016,17 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                               <td className="liga-pantalla-ranking__rank">
                                 {row.posicion}
                               </td>
-                              <td>{row.nombre}</td>
+                              <td>
+                                <span className="liga-pantalla-ranking__player-name">
+                                  {row.nombre}
+                                </span>
+                                {row.puntosAjusteMotivo ? (
+                                  <span className="liga-pantalla-ranking__ajuste">
+                                    {" "}
+                                    Ajuste: {row.puntosAjusteMotivo}
+                                  </span>
+                                ) : null}
+                              </td>
                               <td className="liga-pantalla-ranking__stat">
                                 {row.puntosJornada}
                               </td>
