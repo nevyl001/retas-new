@@ -1,4 +1,5 @@
-import type { BrandAttributionStyle } from "./motherBrand";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import type { BrandAttributionStyle } from "./motherBrand.ts";
 
 /** Clave técnica de identidad — coincide con `data-brand` en `<html>`. */
 export type ClubBrandingKey = "riviera" | string;

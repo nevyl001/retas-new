@@ -2,11 +2,13 @@
  * Único generador HTML de las comunicaciones de liga.
  * Lo usan la vista previa y el worker. No envía correos ni lee secretos.
  */
-import type { LigaMailBranding } from "./ligaMailBranding";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import type { LigaMailBranding } from "./ligaMailBranding.ts";
 import {
   escapeHtml,
   renderPremiumEmailHtml,
-} from "./renderPremiumEmailHtml";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+} from "./renderPremiumEmailHtml.ts";
 
 const MARCA_RESULTADOS = /^RESULTADOS_URL:(\S+)\s*$/m;
 const AVISO_PRUEBA =

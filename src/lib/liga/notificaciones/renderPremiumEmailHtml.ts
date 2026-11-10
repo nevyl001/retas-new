@@ -1,4 +1,5 @@
-import type { LigaMailBranding } from "./ligaMailBranding";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import type { LigaMailBranding } from "./ligaMailBranding.ts";
 
 export interface InfoCardItem {
   label: string;

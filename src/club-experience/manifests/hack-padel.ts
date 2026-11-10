@@ -1,6 +1,9 @@
-import { createBrandManifest } from "../manifestFactory";
-import { RIVIERA_MOTHER_BRAND_NAME } from "../motherBrand";
-import type { BrandManifest } from "../types";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import { createBrandManifest } from "../manifestFactory.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import { RIVIERA_MOTHER_BRAND_NAME } from "../motherBrand.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import type { BrandManifest } from "../types.ts";
 
 /** Manifiesto Hack Padel — primer club con experiencia personalizada. */
 export const HACK_PADEL_MANIFEST: BrandManifest = createBrandManifest({

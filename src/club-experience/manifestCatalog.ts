@@ -1,10 +1,17 @@
-import { ACAPULCO_PADEL_TOUR_MANIFEST } from "./manifests/acapulco-padel-tour";
-import { HACK_PADEL_MANIFEST } from "./manifests/hack-padel";
-import { PADEL_COURT_SERIES_MANIFEST } from "./manifests/padel-court-series";
-import { PADELITO_WAREHOUSE_MANIFEST } from "./manifests/padelito-warehouse";
-import { VALVIDUB_SPORTS_MANIFEST } from "./manifests/valvidub-sports";
-import { RIVIERA_DEFAULT_MANIFEST } from "./manifests/riviera-default";
-import type { BrandManifest, ClubBrandingKey } from "./types";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import { ACAPULCO_PADEL_TOUR_MANIFEST } from "./manifests/acapulco-padel-tour.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import { HACK_PADEL_MANIFEST } from "./manifests/hack-padel.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import { PADEL_COURT_SERIES_MANIFEST } from "./manifests/padel-court-series.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import { PADELITO_WAREHOUSE_MANIFEST } from "./manifests/padelito-warehouse.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import { VALVIDUB_SPORTS_MANIFEST } from "./manifests/valvidub-sports.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import { RIVIERA_DEFAULT_MANIFEST } from "./manifests/riviera-default.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import type { BrandManifest, ClubBrandingKey } from "./types.ts";
 
 const MANIFESTS_BY_KEY: Record<string, BrandManifest> = {
   riviera: RIVIERA_DEFAULT_MANIFEST,

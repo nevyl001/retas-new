@@ -3,7 +3,8 @@ import {
   RIVIERA_DEFAULT_SLOGAN,
   RIVIERA_MOTHER_BRAND_NAME,
   RIVIERA_PRODUCT_NAME,
-} from "./motherBrand";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+} from "./motherBrand.ts";
 import type {
   BrandManifest,
   BrandManifestInput,
@@ -13,7 +14,8 @@ import type {
   ClubImages,
   ClubLandingExperience,
   ClubLogos,
-} from "./types";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+} from "./types.ts";
 
 const EMPTY_LOGOS: ClubLogos = {
   light: null,

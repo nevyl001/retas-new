@@ -1,10 +1,13 @@
-import { createBrandManifest } from "../manifestFactory";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import { createBrandManifest } from "../manifestFactory.ts";
 import {
   RIVIERA_DEFAULT_SLOGAN,
   RIVIERA_MOTHER_BRAND_NAME,
   RIVIERA_PRODUCT_NAME,
-} from "../motherBrand";
-import type { BrandManifest } from "../types";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+} from "../motherBrand.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import type { BrandManifest } from "../types.ts";
 
 /** Experiencia por defecto — organizador sin identidad de club propia. */
 export const RIVIERA_DEFAULT_MANIFEST: BrandManifest = createBrandManifest({

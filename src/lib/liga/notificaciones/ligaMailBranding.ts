@@ -2,13 +2,17 @@ import {
   isRivieraOwnAccountName,
   RIVIERA_CO_BRAND_ATTRIBUTION,
   RIVIERA_PRODUCT_NAME,
-} from "../../../club-experience/motherBrand";
-import { getRivieraAppPublicBase } from "../../rivieraOfficialSite";
-import type { BrandManifest } from "../../../club-experience/types";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+} from "../../../club-experience/motherBrand.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import { getRivieraAppPublicBase } from "../../rivieraOfficialSite.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import type { BrandManifest } from "../../../club-experience/types.ts";
 import {
   getManifestByKey,
   listRegisteredManifestKeys,
-} from "../../../club-experience/manifestCatalog";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+} from "../../../club-experience/manifestCatalog.ts";
 
 export interface LigaMailBranding {
   brandName: string;
