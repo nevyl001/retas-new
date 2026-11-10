@@ -5,6 +5,10 @@ import {
 } from "../../../club-experience/motherBrand";
 import { getRivieraAppPublicBase } from "../../rivieraOfficialSite";
 import type { BrandManifest } from "../../../club-experience/types";
+import {
+  getManifestByKey,
+  listRegisteredManifestKeys,
+} from "../../../club-experience/manifestCatalog";
 
 export interface LigaMailBranding {
   brandName: string;
@@ -65,6 +69,36 @@ export function hexSeguro(hex: string | null | undefined, fallback: string): str
   return fallback;
 }
 
+export function lookupManifestByClubName(clubNombre: string): BrandManifest | null {
+  const norm = clubNombre
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+  if (!norm) return null;
+  for (const key of listRegisteredManifestKeys()) {
+    if (key === "riviera") continue;
+    const m = getManifestByKey(key);
+    const keyNorm = key.replace(/[^a-z0-9]/g, "");
+    const dispNorm = (m.displayName || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
+    if (
+      norm === keyNorm ||
+      norm === dispNorm ||
+      norm.includes(keyNorm) ||
+      keyNorm.includes(norm) ||
+      norm.includes(dispNorm) ||
+      dispNorm.includes(norm)
+    ) {
+      if (m.active) return m;
+    }
+  }
+  return null;
+}
+
 export function resolveLigaMailBranding(options: {
   clubNombre?: string | null;
   logoUrl?: string | null;
@@ -72,8 +106,11 @@ export function resolveLigaMailBranding(options: {
   manifest?: BrandManifest | null;
   appBaseUrl?: string | null;
 }): LigaMailBranding {
-  const manifest = options.manifest;
-  const clubNombre = options.clubNombre?.trim() || manifest?.displayName?.trim() || RIVIERA_PRODUCT_NAME;
+  const rawClubNombre = options.clubNombre?.trim();
+  const manifest =
+    options.manifest ?? (rawClubNombre ? lookupManifestByClubName(rawClubNombre) : null);
+  const clubNombre =
+    rawClubNombre || manifest?.displayName?.trim() || RIVIERA_PRODUCT_NAME;
   const isRiviera = isRivieraOwnAccountName(clubNombre);
 
   if (isRiviera) {

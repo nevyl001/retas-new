@@ -102,8 +102,15 @@ export function renderCorreoComunicacion(input: {
   replyTo?: string | null;
   aviso?: string | null;
 }): { asunto: string; html: string; text: string } {
-  const club = input.clubNombre.trim() || "el club";
-  const liga = input.ligaNombre.trim() || "la liga";
+  const rawClub = input.clubNombre.trim();
+  const rawLiga = input.ligaNombre.trim();
+  const liga = rawLiga || "la liga";
+  const club =
+    !rawClub || rawClub.toLowerCase() === rawLiga.toLowerCase()
+      ? input.branding.isClubBranded
+        ? input.branding.brandName
+        : "el club"
+      : rawClub;
   const asunto = input.asunto.trim().slice(0, 180) || `Mensaje de ${liga}`;
   const enlace = enlacePublicoJornada(input);
   const cuerpo = cuerpoSinMarcaResultados(input.cuerpo).slice(0, 8000);
@@ -148,10 +155,10 @@ export function renderCorreoComunicacion(input: {
 
   const cierreDetalleHtml = esResultados
     ? `<div style="margin:28px 0 0;padding-top:20px;border-top:1px solid #E5E7EB;">
-        <p style="margin:0 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#4B5563;">Sigue compitiendo, superándote y construyendo tu historia dentro de Riviera Open.</p>
-        <p style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#4B5563;font-style:italic;">¡Nos vemos en la próxima jornada!</p>
+        <p style="margin:0 0 10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#4B5563;">Sigue compitiendo, superándote y construyendo tu historia dentro de Riviera Open.</p>
+        <p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#4B5563;font-style:italic;">¡Nos vemos en la próxima jornada!</p>
         <p style="margin:0 0 6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#111827;">RIVIERA OPEN</p>
-        <p style="margin:0 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#475569;font-style:italic;">Compite. Juega limpio. Vive Riviera Open.</p>
+        <p style="margin:0 0 4px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#64748B;font-style:italic;">Compite. Juega limpio. Vive Riviera Open.</p>
         <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;color:#0D0F12;">Cada partido cuenta.</p>
       </div>`
     : esJornada
@@ -159,7 +166,7 @@ export function renderCorreoComunicacion(input: {
         <p style="margin:0 0 6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#111827;">
           RIVIERA OPEN
         </p>
-        <p style="margin:0 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#475569;font-style:italic;">
+        <p style="margin:0 0 4px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#64748B;font-style:italic;">
           Compite. Juega limpio. Vive Riviera Open.
         </p>
         <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;color:#0D0F12;">
