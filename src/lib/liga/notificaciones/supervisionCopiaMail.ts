@@ -2,12 +2,15 @@
  * Composer de copia de supervisión para el worker y pruebas.
  * Sin dependencias de jornadaTemporal para que el bundler de Edge lo resuelva.
  */
-import type { LigaMailBranding } from "./ligaMailBranding";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import type { LigaMailBranding } from "./ligaMailBranding.ts";
 import {
   extractJornadaDetailsFromText,
   renderCorreoComunicacion,
-} from "./correoCompartido";
-import { escapeHtml } from "./renderPremiumEmailHtml";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+} from "./correoCompartido.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import { escapeHtml } from "./renderPremiumEmailHtml.ts";
 
 /** Nombre de ejemplo en copias de supervisión (no es un destinatario real). */
 export const NOMBRE_EJEMPLO_SUPERVISION = "Jugador (ejemplo)";
