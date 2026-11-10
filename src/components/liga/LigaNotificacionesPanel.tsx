@@ -54,6 +54,13 @@ import {
   etiquetaTipoComunicacion,
   esCorreoDeJugador,
 } from "../../lib/liga/notificaciones/automatizacion";
+import {
+  esComunicacionOperativaHistorial,
+  esExclusionElegibilidadHistorial,
+  etiquetaEntregaComunicacion,
+  etiquetaMotivoExclusionCorta,
+  resumenElegibilidadDestinatarios,
+} from "../../lib/liga/notificaciones/historialComunicaciones";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import {
@@ -227,16 +234,7 @@ function etiquetaEntrega(
   proveedor: string | null | undefined,
   motivo?: string | null
 ): string {
-  if (proveedor === "entregado") return "Entregado";
-  if (estado === "enviado" || proveedor === "aceptado") return "Aceptado";
-  if (estado === "procesando") return "Procesando";
-  if (estado === "pendiente" && motivo === "error_temporal") {
-    return "Pendiente de reintento";
-  }
-  if (estado === "pendiente") return "Pendiente";
-  if (estado === "error") return "Error";
-  if (estado === "omitido" || estado === "pausado") return "Omitido";
-  return estado;
+  return etiquetaEntregaComunicacion(estado, proveedor, motivo);
 }
 
 const ESTADO_PRINCIPAL_LABEL: Record<EstadoVisualNotificacion, string> = {
@@ -812,6 +810,49 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     () => filas.filter((fila) => fila.visual === "habilitado"),
     [filas]
   );
+
+  const resumenElegibilidad = useMemo(
+    () => resumenElegibilidadDestinatarios(filas),
+    [filas]
+  );
+
+  const logsOperativos = useMemo(
+    () =>
+      logsSinRepetir(snapshot?.historial ?? []).filter((item) =>
+        esComunicacionOperativaHistorial(item)
+      ),
+    [snapshot?.historial]
+  );
+
+  const colaOperativa = useMemo(
+    () =>
+      (snapshot?.cola ?? []).filter((item) =>
+        esComunicacionOperativaHistorial(item)
+      ),
+    [snapshot?.cola]
+  );
+
+  const exclusionesHistoricas = useMemo(() => {
+    const desdeLogs = logsSinRepetir(snapshot?.historial ?? []).filter((item) =>
+      esExclusionElegibilidadHistorial(item)
+    );
+    const desdeCola = (snapshot?.cola ?? []).filter((item) =>
+      esExclusionElegibilidadHistorial(item)
+    );
+    return { desdeLogs, desdeCola };
+  }, [snapshot?.historial, snapshot?.cola]);
+
+  const exclusionesActuales = useMemo(() => {
+    const conteo = new Map<string, number>();
+    for (const fila of filas) {
+      if (fila.visual === "habilitado") continue;
+      const clave =
+        ESTADO_GRID_LABEL[fila.visual] ??
+        etiquetaMotivoExclusionCorta(fila.visual);
+      conteo.set(clave, (conteo.get(clave) ?? 0) + 1);
+    }
+    return Array.from(conteo.entries()).sort((a, b) => b[1] - a[1]);
+  }, [filas]);
 
   useEffect(() => {
     const inicial = plantillaParaRedactar(ligaId, "bienvenida");
@@ -1908,12 +1949,12 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           ? null
           : `${origen}${datos.urlPublica}`,
     });
-    const elegibles = filas.filter((fila) => fila.visual === "habilitado").length;
     notas.push(
       `Tipo: ${vistaAuto}.`,
       `Liga: ${ligaNombre}.`,
       `Destinatario de ejemplo: ${nombre}.`,
-      `Destinatarios elegibles ahora: ${elegibles}.`,
+      `Destinatarios elegibles ahora: ${resumenElegibilidad.elegibles}.`,
+      `Excluidos ahora: ${resumenElegibilidad.excluidos}.`,
       `Asunto final: ${render.subject}.`
     );
     if (datos) {
@@ -2515,28 +2556,36 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               </button>
             </p>
           ) : null}
-          {(snapshot?.cola.length ?? 0) === 0 &&
-          (snapshot?.historial.length ?? 0) === 0 ? (
+          <p className="liga-notificaciones__hint">
+            {resumenElegibilidad.elegibles} jugadores recibirán comunicaciones
+            elegibles. {resumenElegibilidad.excluidos} no cumplen los
+            requisitos.
+          </p>
+          {colaOperativa.length === 0 && logsOperativos.length === 0 ? (
             <div className="liga-notificaciones__empty">
               <p className="liga-notificaciones__empty-title">
-                Aún no hay correos enviados.
+                Aún no hay comunicaciones operativas.
               </p>
               <p className="liga-notificaciones__empty-copy">
-                Cuando prepares una bienvenida aparecerá aquí el seguimiento.
-                Prepararla no entrega un correo.
+                Aquí aparecen programadas, pendientes, aceptadas y errores.
+                Las exclusiones por elegibilidad se listan aparte.
               </p>
             </div>
           ) : (
-            <div className="liga-notificaciones__history-list">
+            <div
+              className="liga-notificaciones__history-list"
+              data-historial-seccion="comunicaciones"
+            >
               <div className="liga-notificaciones__history-toolbar">
                 <span className="liga-notificaciones__meta">
+                  Comunicaciones
                   {historialActualizadoEn
-                    ? `Actualizado ${historialActualizadoEn.toLocaleTimeString("es-MX", {
+                    ? ` · Actualizado ${historialActualizadoEn.toLocaleTimeString("es-MX", {
                         hour: "2-digit",
                         minute: "2-digit",
                         second: "2-digit",
                       })}`
-                    : "Sin actualizar"}
+                    : ""}
                 </span>
                 <button
                   type="button"
@@ -2547,10 +2596,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                 >
                   {actualizandoHistorial ? "Actualizando…" : "Actualizar"}
                 </button>
-                {(snapshot?.cola ?? []).some((item) =>
+                {colaOperativa.some((item) =>
                   esCorreoNoEnviado(item.estado, null)
                 ) ||
-                (snapshot?.historial ?? []).some((item) =>
+                logsOperativos.some((item) =>
                   esCorreoNoEnviado(item.estado, item.proveedor_estado)
                 ) ? (
                   <button
@@ -2563,7 +2612,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   </button>
                 ) : null}
               </div>
-              {(logsSinRepetir(snapshot?.historial ?? [])).map((item) => {
+              {logsOperativos.map((item) => {
                 const deJugador = esCorreoDeJugador(item.tipo);
                 const jugador = deJugador
                   ? filas.find((fila) => fila.jugadorId === item.liga_jugador_id)
@@ -2645,13 +2694,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   </article>
                 );
               })}
-              {(snapshot?.cola ?? [])
+              {colaOperativa
                 .filter(
                   (item) =>
-                    !colaYaMostradaEnHistorial(
-                      item,
-                      logsSinRepetir(snapshot?.historial ?? [])
-                    )
+                    !colaYaMostradaEnHistorial(item, logsOperativos)
                 )
                 .map((item, index) => {
                 const key = `${item.liga_jugador_id}-${item.estado}-${index}`;
@@ -2747,14 +2793,72 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               })}
             </div>
           )}
+          <div
+            className="liga-notificaciones__history-list liga-notificaciones__history-list--exclusiones"
+            data-historial-seccion="exclusiones"
+          >
+            <div className="liga-notificaciones__history-toolbar">
+              <span className="liga-notificaciones__meta">Exclusiones</span>
+            </div>
+            <p className="liga-notificaciones__hint">
+              {resumenElegibilidad.elegibles} elegibles ·{" "}
+              {resumenElegibilidad.excluidos} no cumplen requisitos. Solo
+              motivos, sin correos.
+            </p>
+            {exclusionesActuales.length === 0 ? (
+              <p className="liga-notificaciones__meta">
+                No hay exclusiones actuales por elegibilidad.
+              </p>
+            ) : (
+              exclusionesActuales.map(([motivo, cantidad]) => (
+                <article
+                  key={motivo}
+                  className="liga-notificaciones__history-row"
+                >
+                  <div>
+                    <p className="liga-notificaciones__nombre">{motivo}</p>
+                    <p className="liga-notificaciones__meta">
+                      Jugadores inscritos que no se programan automáticamente
+                    </p>
+                  </div>
+                  <p className="liga-notificaciones__meta">{cantidad}</p>
+                  <span className="liga-notificaciones__badge liga-notificaciones__badge--pending">
+                    Excluido
+                  </span>
+                </article>
+              ))
+            )}
+            {exclusionesHistoricas.desdeCola.length +
+              exclusionesHistoricas.desdeLogs.length >
+            0 ? (
+              <p className="liga-notificaciones__meta">
+                Auditoría conservada:{" "}
+                {exclusionesHistoricas.desdeCola.length +
+                  exclusionesHistoricas.desdeLogs.length}{" "}
+                registro
+                {exclusionesHistoricas.desdeCola.length +
+                  exclusionesHistoricas.desdeLogs.length ===
+                1
+                  ? ""
+                  : "s"}{" "}
+                histórico
+                {exclusionesHistoricas.desdeCola.length +
+                  exclusionesHistoricas.desdeLogs.length ===
+                1
+                  ? ""
+                  : "s"}{" "}
+                de exclusión (no se borran).
+              </p>
+            ) : null}
+          </div>
         </div>
       ) : null}
 
       {area === "configuracion" ? (
         <div className="liga-notificaciones__config">
           <p className="liga-notificaciones__hint">
-            {listos} jugadores cumplen todas las condiciones.{" "}
-            {filas.length - listos} quedan excluidos.
+            {resumenElegibilidad.elegibles} jugadores cumplen todas las
+            condiciones. {resumenElegibilidad.excluidos} quedan excluidos.
           </p>
 
           <div className="liga-notificaciones__mode-grid">
@@ -2917,6 +3021,53 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     <option value={2}>2 horas antes</option>
                   </select>
                 </label>
+                {(() => {
+                  const cuando = datosAviso
+                    ? recordatorioOficial({
+                        datos: datosAviso,
+                        horas: automatica.recordatorio_horas,
+                        ahora: new Date(),
+                        activa: automatica.recordatorio_auto,
+                      })
+                    : null;
+                  const origen =
+                    typeof window !== "undefined" ? window.location.origin : "";
+                  return (
+                    <div className="liga-notificaciones__auto-summary">
+                      <p className="liga-notificaciones__meta">
+                        {datosAviso
+                          ? `Jornada ${datosAviso.numero}`
+                          : "Sin jornada programable"}
+                        {datosAviso?.fechaLegible
+                          ? ` · ${datosAviso.fechaLegible}`
+                          : ""}
+                        {datosAviso?.horarioLegible
+                          ? ` · ${datosAviso.horarioLegible}`
+                          : ""}
+                      </p>
+                      <p className="liga-notificaciones__meta">
+                        {cuando?.ok
+                          ? `Momento programado: ${cuando.cuandoLegible} · America/Mexico_City`
+                          : "Momento programado: no se programa con los datos actuales"}
+                      </p>
+                      <p className="liga-notificaciones__meta">
+                        {resumenElegibilidad.elegibles} destinatarios elegibles ·{" "}
+                        {resumenElegibilidad.excluidos} excluidos
+                      </p>
+                      <p className="liga-notificaciones__meta">
+                        Enlace público:{" "}
+                        {datosAviso?.urlPublica
+                          ? `${origen}${datosAviso.urlPublica}`
+                          : "sin URL"}
+                      </p>
+                      {datosAviso?.faltantes.length ? (
+                        <p className="liga-notificaciones__hint">
+                          {datosAviso.faltantes.join(" ")}
+                        </p>
+                      ) : null}
+                    </div>
+                  );
+                })()}
                 <button
                   type="button"
                   className="liga-notificaciones__ghost"

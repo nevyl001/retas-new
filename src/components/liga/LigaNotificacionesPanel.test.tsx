@@ -1188,7 +1188,9 @@ describe("LigaNotificacionesPanel", () => {
     await act(async () => {
       tab?.click();
     });
-    const filas = container.querySelectorAll(".liga-notificaciones__history-row");
+    const filas = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
     expect(filas[0].textContent).toContain("Aceptado");
     expect(filas[0].textContent).toContain("Borrar");
     expect(filas[1].textContent).toContain("Pendiente");
@@ -1285,11 +1287,91 @@ describe("LigaNotificacionesPanel", () => {
     await act(async () => {
       tab?.click();
     });
-    const filas = container.querySelectorAll(".liga-notificaciones__history-row");
+    const filas = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
     expect(filas).toHaveLength(1);
     expect(filas[0].textContent).toContain("Aceptado");
     expect(filas[0].textContent).not.toContain("cola");
     expect(container.textContent).not.toContain("Pendiente de reintento");
+    expect(container.textContent).toContain("Exclusiones");
+  });
+
+  it("separa exclusiones de elegibilidad del historial operativo", async () => {
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: true,
+      preferencias: [],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [
+        {
+          id: "log-ok",
+          queue_id: "q-ok",
+          liga_jugador_id: "jug-1",
+          tipo: "bienvenida",
+          estado: "enviado",
+          attempts: 1,
+          motivo: null,
+          proveedor_estado: "aceptado",
+          created_at: "2026-11-09T19:15:00Z",
+        },
+      ],
+      cola: [
+        {
+          id: "q-ok",
+          liga_jugador_id: "jug-1",
+          tipo: "bienvenida",
+          origen: "manual",
+          estado: "enviado",
+          attempts: 1,
+          motivo: null,
+          lote_id: null,
+        },
+        {
+          id: "q-omit",
+          liga_jugador_id: "jug-2",
+          tipo: "recordatorio_jornada",
+          origen: "automatico",
+          estado: "omitido",
+          attempts: 0,
+          motivo: "sin_correo",
+          lote_id: null,
+        },
+        {
+          id: "q-cancel",
+          liga_jugador_id: "jug-1",
+          tipo: "recordatorio_jornada",
+          origen: "automatico",
+          estado: "omitido",
+          motivo: "cancelado",
+          attempts: 0,
+          lote_id: null,
+        },
+      ],
+      verificaciones: [],
+    });
+    await renderPanel();
+    const tab = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Historial"
+    );
+    await act(async () => {
+      tab?.click();
+    });
+    const operativas = Array.from(
+      container.querySelectorAll(
+        '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+      )
+    ).map((node) => node.textContent ?? "");
+    expect(operativas.some((text) => text.includes("Aceptado"))).toBe(true);
+    expect(operativas.some((text) => text.includes("Cancelado"))).toBe(true);
+    expect(operativas.some((text) => text.includes("Sin correo"))).toBe(false);
+    expect(container.textContent).toContain("Exclusiones");
+    expect(container.textContent).toMatch(/registro[s]? histórico/);
   });
 
   it("una confirmación nueva usa otro lote después de un envío aceptado", async () => {
@@ -1469,9 +1551,12 @@ describe("LigaNotificacionesPanel", () => {
     await act(async () => {
       tab?.click();
     });
-    const filas = container.querySelectorAll(".liga-notificaciones__history-row");
+    const filas = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
     expect(filas).toHaveLength(3);
     expect(container.textContent).not.toContain("cola");
+    expect(container.textContent).toContain("Exclusiones");
   });
 
   it("Actualizar vuelve a leer el historial y muestra el estado nuevo", async () => {
