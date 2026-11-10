@@ -2,7 +2,7 @@
  * Plantillas premium para el worker de liga y comunicaciones.
  * El HTML de la comunicación sale de correoCompartido, el mismo de la vista previa.
  */
-import { getManifestByKey, listRegisteredManifestKeys } from "../../../src/club-experience/manifestRegistry.ts";
+import { getManifestByKey, listRegisteredManifestKeys } from "../../../src/club-experience/manifestCatalog.ts";
 import { renderCorreoComunicacion } from "../../../src/lib/liga/notificaciones/correoCompartido.ts";
 import { resolveLigaMailBranding } from "../../../src/lib/liga/notificaciones/ligaMailBranding.ts";
 

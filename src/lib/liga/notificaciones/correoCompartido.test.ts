@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { getManifestByKey } from "../../../club-experience/manifestRegistry";
+import { getManifestByKey } from "../../../club-experience/manifestCatalog";
 import { resolveLigaMailBranding } from "./ligaMailBranding";
 import { renderComunicacionEmail } from "./comunicacionTemplates";
 import {

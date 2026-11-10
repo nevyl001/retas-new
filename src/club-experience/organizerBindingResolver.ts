@@ -1,4 +1,4 @@
-import { getManifestByKey } from "./manifestRegistry";
+import { getManifestByKey } from "./manifestCatalog";
 import { ORGANIZADOR_CLUB_BINDINGS } from "./organizadorClubIndex";
 import { RIVIERA_DEFAULT_MANIFEST } from "./manifests/riviera-default";
 import type { ClubBrandingKey, ClubOrganizerBinding } from "./types";
