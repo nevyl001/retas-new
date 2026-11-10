@@ -84,6 +84,8 @@ export interface ColaNotificacionRow {
   programado_para?: string | null;
   processed_at?: string | null;
   jornada_numero?: number | null;
+  asunto?: string | null;
+  cuerpo_texto?: string | null;
 }
 
 export interface ResultadoDescarte {
@@ -399,7 +401,7 @@ async function consultarColaLiga(ligaId: string) {
   const extendida = await supabase
     .from("liga_notificaciones_queue")
     .select(
-      "id, liga_jugador_id, estado, attempts, motivo, lote_id, tipo, origen, programado_para, processed_at, jornada_numero"
+      "id, liga_jugador_id, estado, attempts, motivo, lote_id, tipo, origen, programado_para, processed_at, jornada_numero, asunto, cuerpo_texto"
     )
     .eq("liga_id", ligaId)
     .order("updated_at", { ascending: false })
@@ -407,7 +409,7 @@ async function consultarColaLiga(ligaId: string) {
   if (
     extendida.error &&
     esEsquemaAusente(extendida.error.message) &&
-    /origen|programado_para|jornada_numero/i.test(extendida.error.message)
+    /origen|programado_para|jornada_numero|asunto|cuerpo_texto/i.test(extendida.error.message)
   ) {
     return supabase
       .from("liga_notificaciones_queue")

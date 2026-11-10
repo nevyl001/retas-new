@@ -957,6 +957,42 @@
   margin-right: auto;
 }
 
+.liga-notificaciones__jornada-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.liga-notificaciones__mail-view {
+  position: relative;
+  z-index: 1;
+  width: min(760px, 100%);
+  height: 100%;
+  margin-left: auto;
+  overflow: auto;
+  padding: 20px;
+  background: #0a0a0a;
+  color: var(--liga-text, var(--ro-text-primary));
+  border-left: 0.5px solid var(--liga-border, var(--ro-border));
+  pointer-events: auto;
+}
+
+.liga-notificaciones__mail-view-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.liga-notificaciones__mail-frame {
+  display: block;
+  max-width: 100%;
+  height: 720px;
+  margin-top: 12px;
+  border: 0;
+  background: #fff;
+}
+
 .liga-notificaciones__history-actions {
   display: flex;
   gap: 8px;

@@ -4,7 +4,6 @@ import { useClubExperience } from "../../club-experience/ClubExperienceContext";
 import type {
   LigaEquipo,
   LigaInscripcion,
-  LigaJornada,
   LigaJugadorPoolItem,
   LigaSustitucion,
 } from "../../lib/liga/types";
@@ -31,6 +30,15 @@ import {
   rutaPublicaJornada,
   type TipoComunicacionLiga,
 } from "../../lib/liga/notificaciones/comunicacionTemplates";
+import {
+  datosOficialesJornada,
+  etiquetaJornada,
+  jornadaParaAviso,
+  jornadaParaResultados,
+  presentarInstanteLiga,
+  recordatorioOficial,
+  type JornadaFuente,
+} from "../../lib/liga/notificaciones/datosOficialesJornada";
 import {
   guardarPlantillaLiga,
   plantillaParaRedactar,
@@ -67,7 +75,7 @@ import { useRetryableImage } from "../../hooks/useRetryableImage";
 import { getJugadorInitials } from "../jugadores/JugadorAvatar";
 import "./liga-notificaciones.css";
 
-const JORNADAS_VACIAS: ReadonlyArray<Pick<LigaJornada, "numero" | "estado">> = [];
+const JORNADAS_VACIAS: ReadonlyArray<JornadaFuente> = [];
 
 type Area = "destinatarios" | "bienvenida" | "historial" | "configuracion";
 type Filtro = "todos" | "habilitados" | "pendientes" | "excluidos";
@@ -405,7 +413,7 @@ export interface LigaNotificacionesPanelProps {
   equipos: LigaEquipo[];
   pool: LigaJugadorPoolItem[];
   sustituciones: LigaSustitucion[];
-  jornadas?: ReadonlyArray<Pick<LigaJornada, "numero" | "estado">>;
+  jornadas?: ReadonlyArray<JornadaFuente>;
 }
 
 export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = ({
@@ -449,9 +457,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     useState<Date | null>(null);
   const historialTicket = useRef(0);
   const manualEnCurso = useRef(0);
-  const refrescarHistorialRef = useRef<
-    (opciones?: { manual?: boolean }) => Promise<NotificacionesLigaSnapshot | null>
-  >(async () => null);
+  const [datosCorreoEditados, setDatosCorreoEditados] = useState(false);
+  const [jornadaAvisoNumero, setJornadaAvisoNumero] = useState<number | null>(null);
+  const [vistaAuto, setVistaAuto] = useState<
+    "resultados" | "recordatorio" | "bienvenida" | "programado" | null
+  >(null);
+  const [programadoClave, setProgramadoClave] = useState<string | null>(null);
+  const [vistaAncho, setVistaAncho] = useState<640 | 390>(640);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [envioSeleccion, setEnvioSeleccion] = useState<Record<string, boolean>>(
     {}
@@ -489,6 +501,34 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     () => jornadaEnCursoParaCorreo(jornadas),
     [jornadas]
   );
+  const avisoFuente = useMemo(() => {
+    if (jornadaAvisoNumero != null) {
+      return (
+        jornadas.find((jornada) => jornada.numero === jornadaAvisoNumero) ??
+        jornadaParaAviso(jornadas)
+      );
+    }
+    return jornadaParaAviso(jornadas);
+  }, [jornadas, jornadaAvisoNumero]);
+  const datosAviso = useMemo(() => {
+    if (!avisoFuente) return null;
+    return datosOficialesJornada({
+      ligaId,
+      clubNombre,
+      jornada: avisoFuente,
+    });
+  }, [avisoFuente, ligaId, clubNombre]);
+  const datosResultados = useMemo(() => {
+    const fuente = jornadaParaResultados(jornadas);
+    if (!fuente) return null;
+    return datosOficialesJornada({ ligaId, clubNombre, jornada: fuente });
+  }, [jornadas, ligaId, clubNombre]);
+
+  useEffect(() => {
+    if (plantillaId !== "jornada" || datosCorreoEditados || !datosAviso) return;
+    setFechaDraft(datosAviso.fechaLegible ?? "");
+    setHorarioDraft(datosAviso.horarioLegible ?? "");
+  }, [plantillaId, datosCorreoEditados, datosAviso]);
 
   function urlJornadaDestino(): string | null {
     if (!jornadaDestino) return null;
@@ -910,6 +950,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     setAsuntoDraft(plantilla.asunto);
     setCuerpoDraft(plantilla.cuerpo);
     setEnvioPaso("idle");
+    setDatosCorreoEditados(false);
   }
 
   function guardarPlantillaActual() {
@@ -967,28 +1008,6 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       }
     }
   }
-  refrescarHistorialRef.current = refrescarHistorial;
-
-  useEffect(() => {
-    if (area !== "historial") return;
-    let vivo = true;
-    const pedir = () => {
-      if (!vivo || document.visibilityState === "hidden") return;
-      void refrescarHistorialRef.current();
-    };
-    pedir();
-    const id = window.setInterval(pedir, 4000);
-    const alVolver = () => {
-      if (document.visibilityState === "visible") pedir();
-    };
-    document.addEventListener("visibilitychange", alVolver);
-    return () => {
-      vivo = false;
-      historialTicket.current += 1;
-      window.clearInterval(id);
-      document.removeEventListener("visibilitychange", alVolver);
-    };
-  }, [area, ligaId]);
 
   async function confirmarEnvioManual() {
     if (!puedeEscribir || enviandoLote) return;
@@ -1592,6 +1611,156 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     );
   }
 
+  function correoDeVista(): {
+    titulo: string;
+    html: string;
+    notas: string[];
+  } | null {
+    if (!vistaAuto) return null;
+    const jugador =
+      filas.find((fila) => fila.jugadorId === previewId) ?? filas[0] ?? null;
+    const nombre = jugador?.nombre ?? "Jugador";
+    const origen =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://appriviera.rivieraopen.com";
+    const notas = [
+      "Vista previa. No envía correos ni modifica la cola.",
+    ];
+    if (vistaAuto === "programado") {
+      const fila = (snapshot?.cola ?? []).find(
+        (item) => item.id === programadoClave
+      );
+      if (!fila) {
+        return { titulo: "Correo programado", html: "", notas: ["Ese pendiente ya no está en la cola."] };
+      }
+      const fuente = jornadas.find((jornada) => jornada.numero === fila.jornada_numero);
+      const oficial = fuente
+        ? datosOficialesJornada({ ligaId, clubNombre, jornada: fuente })
+        : null;
+      const render = renderComunicacionEmail({
+        clubNombre,
+        ligaNombre,
+        jugadorNombre: nombre,
+        asunto: fila.asunto?.trim() || "Aviso de la liga",
+        cuerpo: fila.cuerpo_texto?.trim() || "",
+        vistaPrevia: true,
+        branding: mailBranding,
+        tipo: fila.tipo === "bienvenida" ? "bienvenida" : "jornada",
+        ligaUrl: `${origen}/public/liga/${ligaId}`,
+        jornadaUrl: oficial?.urlPublica ? `${origen}${oficial.urlPublica}` : null,
+      });
+      notas.push(
+        `Destinatario de ejemplo: ${nombre}.`,
+        `Programado: ${presentarInstanteLiga(fila.programado_para) ?? "sin hora"} · America/Mexico_City.`,
+        oficial
+          ? `Oficial: Jornada ${oficial.numero}, ${oficial.fechaLegible ?? "sin fecha"}, ${oficial.horarioLegible ?? "sin horario"}.`
+          : "No hay jornada oficial vinculada."
+      );
+      if (
+        oficial?.horaInicio &&
+        fila.cuerpo_texto &&
+        !fila.cuerpo_texto.includes(oficial.horaInicio)
+      ) {
+        notas.push(
+          "El texto guardado en la cola no incluye el horario oficial. Esto es lo que saldría, no una versión reconstruida."
+        );
+      }
+      return { titulo: "Correo programado", html: render.html, notas };
+    }
+    const datos = vistaAuto === "resultados" ? datosResultados : datosAviso;
+    if (vistaAuto !== "bienvenida") {
+      if (!datos) {
+        return {
+          titulo: vistaAuto === "resultados" ? "Resultados" : "Recordatorio",
+          html: "",
+          notas: [
+            vistaAuto === "resultados"
+              ? "No hay una jornada finalizada para armar este correo."
+              : "No hay una jornada en curso o próxima.",
+          ],
+        };
+      }
+      if (datos.faltantes.length > 0 && vistaAuto === "recordatorio") {
+        return {
+          titulo: "Recordatorio",
+          html: "",
+          notas: datos.faltantes,
+        };
+      }
+    }
+    const automaticaLocal = completarConfigAutomatica(config);
+    const cuando = datos
+      ? recordatorioOficial({
+          datos,
+          horas: automaticaLocal.recordatorio_horas,
+          ahora: new Date(),
+          activa: automaticaLocal.recordatorio_auto,
+        })
+      : null;
+    const cuerpo =
+      vistaAuto === "bienvenida"
+        ? plantillaParaRedactar(ligaId, "bienvenida").cuerpo
+        : vistaAuto === "resultados"
+          ? `Hola {{nombre}},\n\nLos resultados oficiales de la Jornada ${datos?.numero} de {{liga}} ya están disponibles.\n\nFecha: ${datos?.fechaLegible ?? ""}\nHorario: ${datos?.horarioLegible ?? ""}\nSede: {{club}}`
+          : `Hola {{nombre}},\n\nLa Jornada ${datos?.numero} de {{liga}} es el ${datos?.fechaLegible ?? ""}.\n\nFecha: ${datos?.fechaLegible ?? ""}\nHorario: ${datos?.horarioLegible ?? ""}\nSede: {{club}}`;
+    const asunto =
+      vistaAuto === "bienvenida"
+        ? plantillaParaRedactar(ligaId, "bienvenida").asunto
+        : vistaAuto === "resultados"
+          ? `Resultados oficiales — {{liga}} | Jornada ${datos?.numero}`
+          : `Recordatorio — {{liga}} | Jornada ${datos?.numero}`;
+    const render = renderComunicacionEmail({
+      clubNombre,
+      ligaNombre,
+      jugadorNombre: nombre,
+      asunto,
+      cuerpo,
+      vistaPrevia: true,
+      branding: mailBranding,
+      tipo: vistaAuto === "bienvenida" ? "bienvenida" : "jornada",
+      fecha: vistaAuto === "bienvenida" ? null : datos?.fechaLegible,
+      horario: vistaAuto === "bienvenida" ? null : datos?.horarioLegible,
+      ligaUrl: `${origen}/public/liga/${ligaId}`,
+      jornadaUrl:
+        vistaAuto === "bienvenida" || !datos?.urlPublica
+          ? null
+          : `${origen}${datos.urlPublica}`,
+    });
+    notas.push(`Destinatario de ejemplo: ${nombre}.`);
+    if (datos) {
+      notas.push(
+        `Jornada ${datos.numero} · ${datos.estado}.`,
+        `Fecha oficial: ${datos.fechaLegible ?? "falta"}.`,
+        `Horario oficial: ${datos.horarioLegible ?? "falta"}.`,
+        `Sede: ${datos.sede}.`,
+        `Enlace: ${datos.urlPublica ? `${origen}${datos.urlPublica}` : "sin URL"}.`
+      );
+    }
+    if (vistaAuto === "recordatorio") {
+      notas.push(
+        cuando && cuando.ok
+          ? `Se enviaría: ${cuando.cuandoLegible} · America/Mexico_City.`
+          : "Con los datos actuales ese recordatorio no se programaría."
+      );
+    }
+    if (vistaAuto === "resultados") {
+      notas.push("Usa la última jornada finalizada, no la próxima.");
+    }
+    return {
+      titulo:
+        vistaAuto === "bienvenida"
+          ? "Bienvenida"
+          : vistaAuto === "resultados"
+            ? "Resultados"
+            : "Recordatorio",
+      html: render.html,
+      notas,
+    };
+  }
+
+  const vistaCorreo = correoDeVista();
+
   const previewHtml = preview
     ? renderComunicacionEmail({
         clubNombre,
@@ -1913,45 +2082,89 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
 
             {plantillaId === "jornada" ? (
               <>
-              <div
-                className="liga-notificaciones__jornada-fields"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "12px",
-                  margin: "4px 0",
-                }}
-              >
-                <label className="liga-notificaciones__field" htmlFor="fecha-jornada">
-                  <span>Fecha de la jornada</span>
-                  <input
-                    id="fecha-jornada"
+                <label className="liga-notificaciones__field" htmlFor="jornada-aviso">
+                  <span>Jornada</span>
+                  <select
+                    id="jornada-aviso"
                     className="liga-notificaciones__select"
-                    placeholder="ej. Sábado 15 de Noviembre"
-                    value={fechaDraft}
-                    maxLength={100}
-                    onChange={(event) => setFechaDraft(event.target.value)}
-                  />
+                    value={datosAviso?.numero ?? ""}
+                    onChange={(event) => {
+                      setJornadaAvisoNumero(Number(event.target.value));
+                      setDatosCorreoEditados(false);
+                    }}
+                  >
+                    {jornadas
+                      .filter((jornada) => jornada.estado !== "completed")
+                      .map((jornada) => {
+                        const datos = datosOficialesJornada({
+                          ligaId,
+                          clubNombre,
+                          jornada,
+                        });
+                        return (
+                          <option key={jornada.numero} value={jornada.numero}>
+                            {etiquetaJornada(datos)}
+                          </option>
+                        );
+                      })}
+                  </select>
                 </label>
-                <label className="liga-notificaciones__field" htmlFor="horario-jornada">
-                  <span>Horario de la jornada</span>
-                  <input
-                    id="horario-jornada"
-                    className="liga-notificaciones__select"
-                    placeholder="ej. 10:00 AM"
-                    value={horarioDraft}
-                    maxLength={100}
-                    onChange={(event) => setHorarioDraft(event.target.value)}
-                  />
-                </label>
-              </div>
-              <p className="liga-notificaciones__hint">
-                {jornadaDestino
-                  ? `El botón abre la Jornada ${jornadaDestino.numero}${
-                      jornadaDestino.estado === "in_progress" ? ", en curso." : "."
-                    }`
-                  : "El botón se activa cuando haya una jornada en curso o próxima."}
-              </p>
+                {datosAviso?.faltantes.length ? (
+                  <p className="liga-notificaciones__hint">
+                    {datosAviso.faltantes.join(" ")} Corrige la jornada antes de enviar ese dato.
+                  </p>
+                ) : null}
+                <div className="liga-notificaciones__jornada-fields">
+                  <label className="liga-notificaciones__field" htmlFor="fecha-jornada">
+                    <span>Fecha</span>
+                    <input
+                      id="fecha-jornada"
+                      className="liga-notificaciones__select"
+                      value={fechaDraft}
+                      maxLength={100}
+                      readOnly={!datosCorreoEditados}
+                      onChange={(event) => setFechaDraft(event.target.value)}
+                    />
+                  </label>
+                  <label className="liga-notificaciones__field" htmlFor="horario-jornada">
+                    <span>Horario</span>
+                    <input
+                      id="horario-jornada"
+                      className="liga-notificaciones__select"
+                      value={horarioDraft}
+                      maxLength={100}
+                      readOnly={!datosCorreoEditados}
+                      onChange={(event) => setHorarioDraft(event.target.value)}
+                    />
+                  </label>
+                </div>
+                <p className="liga-notificaciones__hint">
+                  Sede: {datosAviso?.sede ?? clubNombre}. Zona: America/Mexico_City.
+                  {" "}
+                  {datosAviso
+                    ? `El botón abre la Jornada ${datosAviso.numero}${
+                        datosAviso.estado === "in_progress" ? ", en curso." : "."
+                      }`
+                    : "El botón se activa cuando haya una jornada en curso o próxima."}
+                </p>
+                {datosCorreoEditados ? (
+                  <p className="liga-notificaciones__hint">
+                    Estos datos solo cambian este correo. No modifican la jornada.
+                    {datosAviso &&
+                    (fechaDraft.trim() !== (datosAviso.fechaLegible ?? "") ||
+                      horarioDraft.trim() !== (datosAviso.horarioLegible ?? ""))
+                      ? " El texto ya no coincide con la fecha u hora oficiales."
+                      : ""}
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    className="liga-notificaciones__ghost"
+                    onClick={() => setDatosCorreoEditados(true)}
+                  >
+                    EDITAR DATOS PARA ESTE CORREO
+                  </button>
+                )}
               </>
             ) : null}
 
@@ -2230,7 +2443,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                           ? ` · ${item.reintentos} reintentos pendientes`
                           : ""}
                         {colaItem?.programado_para
-                          ? ` · Programado ${new Date(colaItem.programado_para).toLocaleString("es-MX")}`
+                          ? ` · Programado ${presentarInstanteLiga(colaItem.programado_para) ?? ""} (Ciudad de México)`
                           : ""}
                       </p>
                     ) : null}
@@ -2260,7 +2473,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                         {etiquetaOrigenComunicacion(item.origen, item.tipo)}
                         {item.jornada_numero ? ` · Jornada ${item.jornada_numero}` : ""}
                         {item.programado_para
-                          ? ` · Programado ${new Date(item.programado_para).toLocaleString("es-MX")}`
+                          ? ` · Programado ${presentarInstanteLiga(item.programado_para) ?? ""} (Ciudad de México)`
                           : ""}
                         {item.processed_at && item.estado === "enviado"
                           ? ` · Enviado ${new Date(item.processed_at).toLocaleString("es-MX")}`
@@ -2307,12 +2520,31 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                       </button>
                     </span>
                     {abierto ? (
-                      <p className="liga-notificaciones__hint liga-notificaciones__history-detail">
-                        {item.motivo
-                          ? motivoVisible(item.motivo)
-                          : "Sin envío al proveedor"}{" "}
-                        · {item.attempts} intentos
-                      </p>
+                      <div className="liga-notificaciones__hint liga-notificaciones__history-detail">
+                        <p>
+                          {item.motivo
+                            ? motivoVisible(item.motivo)
+                            : "Sin envío al proveedor"}{" "}
+                          · {item.attempts} intentos
+                          {item.programado_para
+                            ? ` · Programado ${presentarInstanteLiga(item.programado_para)} (Ciudad de México)`
+                            : ""}
+                        </p>
+                        {item.id && item.cuerpo_texto ? (
+                          <button
+                            type="button"
+                            className="liga-notificaciones__ghost"
+                            onClick={() => {
+                              setProgramadoClave(item.id ?? null);
+                              setVistaAuto("programado");
+                            }}
+                          >
+                            VER CORREO PROGRAMADO
+                          </button>
+                        ) : (
+                          <p>Este pendiente no tiene el texto guardado en la cola.</p>
+                        )}
+                      </div>
                     ) : null}
                   </article>
                 );
@@ -2382,8 +2614,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           {config.modo_operacion === "automatico" ? (
             <div className="liga-notificaciones__auto">
               <p className="liga-notificaciones__hint">
-                Cada automatización nace desactivada. El envío manual sigue
-                disponible aunque actives alguna.
+                Cada automatización nace desactivada. Activarla guarda la
+                preferencia. El correo sale solo si el proceso del servidor
+                está en marcha. Esta pantalla no lo ejecuta. VER CORREO no envía nada.
               </p>
               <section className="liga-notificaciones__auto-card">
                 <div className="liga-notificaciones__auto-head">
@@ -2432,6 +2665,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     <option value={15}>15 minutos después</option>
                   </select>
                 </label>
+                <button
+                  type="button"
+                  className="liga-notificaciones__ghost"
+                  onClick={() => setVistaAuto("resultados")}
+                >
+                  VER CORREO
+                </button>
               </section>
               <section className="liga-notificaciones__auto-card">
                 <div className="liga-notificaciones__auto-head">
@@ -2480,6 +2720,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     <option value={2}>2 horas antes</option>
                   </select>
                 </label>
+                <button
+                  type="button"
+                  className="liga-notificaciones__ghost"
+                  onClick={() => setVistaAuto("recordatorio")}
+                >
+                  VER CORREO
+                </button>
               </section>
               <section className="liga-notificaciones__auto-card">
                 <div className="liga-notificaciones__auto-head">
@@ -2510,6 +2757,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     </span>
                   </span>
                 </label>
+                <button
+                  type="button"
+                  className="liga-notificaciones__ghost"
+                  onClick={() => setVistaAuto("bienvenida")}
+                >
+                  VER CORREO
+                </button>
               </section>
               <section className="liga-notificaciones__auto-card">
                 <div className="liga-notificaciones__auto-head">
@@ -2581,6 +2835,71 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           ) : null}
         </div>
       ) : null}
+
+      {vistaCorreo && typeof document !== "undefined"
+        ? createPortal(
+            <div className="liga-notificaciones__overlay">
+              <button
+                type="button"
+                className="liga-notificaciones__overlay-scrim"
+                aria-label="Cerrar vista previa"
+                onClick={() => setVistaAuto(null)}
+              />
+              <div
+                className="liga-notificaciones__mail-view"
+                role="dialog"
+                aria-modal="true"
+                aria-label={vistaCorreo.titulo}
+              >
+                <div className="liga-notificaciones__mail-view-head">
+                  <h3 className="liga-notificaciones__section-title">
+                    {vistaCorreo.titulo}
+                  </h3>
+                  <div className="liga-notificaciones__history-actions">
+                    <button
+                      type="button"
+                      className="liga-notificaciones__ghost"
+                      aria-pressed={vistaAncho === 640}
+                      onClick={() => setVistaAncho(640)}
+                    >
+                      Escritorio
+                    </button>
+                    <button
+                      type="button"
+                      className="liga-notificaciones__ghost"
+                      aria-pressed={vistaAncho === 390}
+                      onClick={() => setVistaAncho(390)}
+                    >
+                      Móvil
+                    </button>
+                    <button
+                      type="button"
+                      className="liga-notificaciones__ghost"
+                      onClick={() => setVistaAuto(null)}
+                    >
+                      CERRAR
+                    </button>
+                  </div>
+                </div>
+                {vistaCorreo.notas.map((nota) => (
+                  <p key={nota} className="liga-notificaciones__hint">
+                    {nota}
+                  </p>
+                ))}
+                {vistaCorreo.html ? (
+                  <iframe
+                    className="liga-notificaciones__mail-frame"
+                    title="Vista previa del correo automático"
+                    sandbox=""
+                    style={{ width: vistaAncho }}
+                    srcDoc={vistaCorreo.html}
+                  />
+                ) : null}
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
 
       {selectorAbierto && typeof document !== "undefined"
         ? createPortal(
