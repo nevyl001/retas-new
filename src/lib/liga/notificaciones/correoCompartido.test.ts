@@ -170,6 +170,8 @@ describe("correo compartido", () => {
     expect(verificacion).not.toContain("liga_notificaciones_queue");
     expect(verificacion).not.toContain("resultado.token,");
     expect(prueba).not.toContain("liga_notificaciones_queue");
+    expect(prueba).not.toContain("Liga de ejemplo");
+    expect(prueba).toContain("resolveLigaMailBrandingWorker");
     expect(prueba).toContain("destino_no_permitido");
     expect(prueba).toContain("reserva.email");
     expect(sql0113).not.toContain("COALESCE(v_hora");

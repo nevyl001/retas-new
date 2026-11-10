@@ -9,16 +9,14 @@ import {
   readPublishableCredential,
   readSecretCredential,
 } from "../_shared/supabaseCredentials.ts";
+import { resolveLigaMailBrandingWorker } from "../_shared/ligaNotificacionesMail.ts";
 import {
   autorizarPruebaSupervision,
-  brandingNeutro,
   prepararPruebaSupervision,
 } from "../../../src/lib/liga/notificaciones/correoCompartido.ts";
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const ASUNTO = "[PRUEBA] AppRiviera — Notificación de jornada";
-const AVISO = "ESTE ES UN CORREO DE PRUEBA. NO CORRESPONDE A UNA NOTIFICACIÓN OFICIAL.";
 const DESTINO_PROHIBIDO = ["email", "to", "destinatario", "destinatarios", "liga_jugador_id"];
 
 type PlantillaPrueba = {
@@ -58,21 +56,6 @@ Deno.serve(async (req) => {
   }
   const ligaId = body.liga_id?.trim() ?? "";
   if (!UUID.test(ligaId)) return json(req, 400, { ok: false, error: "liga_invalida" });
-  const plantilla = body.plantilla;
-  let preparado: ReturnType<typeof prepararPruebaSupervision> | null = null;
-  if (plantilla) {
-    preparado = prepararPruebaSupervision({
-      asunto: String(plantilla.asunto ?? ""),
-      cuerpo: String(plantilla.cuerpo ?? ""),
-      tipo: plantilla.tipo,
-      clubNombre: String(plantilla.club_nombre ?? ""),
-      ligaNombre: String(plantilla.liga_nombre ?? ""),
-      branding: brandingNeutro(String(plantilla.club_nombre ?? "")),
-      ligaUrl: plantilla.liga_url,
-      jornadaUrl: plantilla.jornada_url,
-    });
-  }
-
   const puerta = autorizarPruebaSupervision({
     pruebaHabilitada: Deno.env.get("LIGA_NOTIFICACIONES_PRUEBA_SUPERVISION") === "true",
     admin: true,
@@ -86,6 +69,10 @@ Deno.serve(async (req) => {
       enviosReales: false,
       motivo: puerta.motivo,
     });
+  }
+  const plantilla = body.plantilla;
+  if (!plantilla?.asunto?.trim() || !plantilla.cuerpo?.trim()) {
+    return json(req, 200, { ok: false, enviosReales: false, motivo: "plantilla_incompleta" });
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -105,7 +92,7 @@ Deno.serve(async (req) => {
 
   const { data: liga } = await userClient
     .from("ligas")
-    .select("id, organizador_id")
+    .select("id, organizador_id, nombre")
     .eq("id", ligaId)
     .maybeSingle();
   let permitido = liga?.organizador_id === user.id;
@@ -124,10 +111,46 @@ Deno.serve(async (req) => {
   if (!((Deno.env.get("RESEND_API_KEY") ?? "").startsWith("re_"))) {
     return json(req, 503, { ok: false, error: "resend_no_configurado" });
   }
-  if (preparado && preparado.ok === false) {
-    return json(req, 200, { ok: false, enviosReales: true, motivo: preparado.motivo });
-  }
   const admin = createCredentialClient(supabaseUrl, credencial);
+  const organizadorId = (liga as { organizador_id?: string | null } | null)?.organizador_id ?? null;
+  let brandingKey: string | null = null;
+  let premiumEnabled = false;
+  let clubNombre = "Riviera Open";
+  if (organizadorId) {
+    const { data: modos } = await admin
+      .from("organizador_game_modes")
+      .select("branding_key, premium_branding_enabled")
+      .eq("organizador_id", organizadorId)
+      .maybeSingle();
+    brandingKey = (modos as { branding_key?: string | null } | null)?.branding_key ?? null;
+    premiumEnabled = Boolean((modos as { premium_branding_enabled?: boolean } | null)?.premium_branding_enabled);
+    const { data: displayName } = await admin.rpc("get_organizador_display_name", {
+      p_organizador_id: organizadorId,
+    });
+    if (typeof displayName === "string" && displayName.trim()) clubNombre = displayName.trim();
+  }
+  const base = (Deno.env.get("PUBLIC_APP_URL") ?? "https://appriviera.rivieraopen.com")
+    .trim()
+    .replace(/\/+$/, "");
+  const branding = resolveLigaMailBrandingWorker({
+    clubNombre,
+    brandingKey,
+    premiumBrandingEnabled: premiumEnabled,
+    appBaseUrl: base || "https://appriviera.rivieraopen.com",
+  });
+  const preparado = prepararPruebaSupervision({
+    asunto: String(plantilla.asunto),
+    cuerpo: String(plantilla.cuerpo),
+    tipo: plantilla.tipo,
+    clubNombre: branding.brandName,
+    ligaNombre: String((liga as { nombre?: string | null } | null)?.nombre ?? plantilla.liga_nombre ?? ""),
+    branding,
+    ligaUrl: plantilla.liga_url,
+    jornadaUrl: plantilla.jornada_url,
+  });
+  if (!preparado.ok) {
+    return json(req, 200, { ok: false, enviosReales: false, motivo: preparado.motivo });
+  }
   const { data, error } = await admin.rpc(
     "liga_notificaciones_reservar_prueba_supervision",
     { p_liga_id: ligaId, p_actor: user.id },
@@ -140,25 +163,12 @@ Deno.serve(async (req) => {
       motivo: reserva.motivo || "correo_sin_verificacion",
     });
   }
-  const ficticio = [
-    AVISO,
-    "Liga de ejemplo",
-    "Club de ejemplo",
-    "Jornada de ejemplo",
-    "Fecha de ejemplo",
-    "Horario de ejemplo",
-    "Los datos de esta vista son ficticios.",
-    "Esta demostración no abre resultados oficiales ni acciones de administración.",
-    "DEMOSTRACIÓN: https://appriviera.rivieraopen.com/",
-  ].join("\n\n");
   const clave = `prueba:${ligaId}:${crypto.randomUUID()}`;
   const send = await sendByResend(
     reserva.email,
-    preparado?.ok ? preparado.asunto : ASUNTO,
-    preparado?.ok ? preparado.text : ficticio,
-    preparado?.ok
-      ? preparado.html
-      : `<p>${AVISO}</p><p>Liga de ejemplo<br />Club de ejemplo<br />Jornada de ejemplo</p><p><a href="https://appriviera.rivieraopen.com/">DEMOSTRACIÓN</a></p>`,
+    preparado.asunto,
+    preparado.text,
+    preparado.html,
     { function: "enviar-prueba-supervision-liga", tipo: "prueba" },
     clave,
     null,
