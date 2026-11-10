@@ -44,6 +44,8 @@ describe("automatización de comunicaciones", () => {
     expect(completarConfigAutomatica({}).resultados_auto).toBe(false);
     expect(normalizarEsperaResultados(15)).toBe(15);
     expect(normalizarEsperaResultados(9)).toBe(5);
+    expect(completarConfigAutomatica({ recordatorio_horas: "6" as unknown as 6 }).recordatorio_horas).toBe(6);
+    expect(completarConfigAutomatica({ recordatorio_horas: 6 }).recordatorio_horas).toBe(6);
   });
 
   it("2. el manual sigue disponible con automatizaciones activas", () => {

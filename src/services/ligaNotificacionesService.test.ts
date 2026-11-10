@@ -368,7 +368,27 @@ describe("ligaNotificacionesService", () => {
         }
         return { error: null };
       }),
+      select: jest.fn(() =>
+        chainResult({
+          data: {
+            bienvenida_pausada: true,
+            modo_prueba: true,
+            resultados_auto: true,
+            resultados_espera_minutos: 15,
+            recordatorio_auto: false,
+            recordatorio_horas: 24,
+            bienvenida_auto: false,
+          },
+          error: null,
+        })
+      ),
     }));
+
+    rpc.mockResolvedValue({
+      error: {
+        message: "Could not find the function liga_notificaciones_guardar_automatizacion",
+      },
+    });
 
     const resultado = await guardarConfigLiga("liga-1", {
       bienvenida_pausada: true,
@@ -381,7 +401,7 @@ describe("ligaNotificacionesService", () => {
       bienvenida_auto: false,
     });
 
-    expect(resultado).toEqual({ ok: true, motivo: null });
+    expect(resultado.ok).toBe(true);
     expect(payloads[1]).toMatchObject({
       resultados_auto: true,
       resultados_espera_minutos: 15,
@@ -389,13 +409,90 @@ describe("ligaNotificacionesService", () => {
     expect(payloads[1]).not.toHaveProperty("modo_operacion");
   });
 
+  it("guarda automatización por RPC y confirma la anticipación persistida", async () => {
+    rpc.mockResolvedValue({
+      data: {
+        ok: true,
+        motivo: null,
+        modo_operacion: "automatico",
+        resultados_auto: true,
+        resultados_espera_minutos: 5,
+        recordatorio_auto: true,
+        recordatorio_horas: 6,
+        bienvenida_auto: false,
+        pendientes_recordatorio: 10,
+        procesando_recordatorio: 0,
+      },
+      error: null,
+    });
+    from.mockImplementation(() =>
+      chainResult({
+        data: {
+          bienvenida_pausada: true,
+          modo_prueba: true,
+          modo_operacion: "automatico",
+          resultados_auto: true,
+          resultados_espera_minutos: 5,
+          recordatorio_auto: true,
+          recordatorio_horas: 6,
+          bienvenida_auto: false,
+        },
+        error: null,
+      })
+    );
+
+    const resultado = await guardarConfigLiga("liga-1", {
+      bienvenida_pausada: true,
+      modo_prueba: true,
+      modo_operacion: "automatico",
+      resultados_auto: true,
+      resultados_espera_minutos: 5,
+      recordatorio_auto: true,
+      recordatorio_horas: 6,
+      bienvenida_auto: false,
+    });
+
+    expect(rpc).toHaveBeenCalledWith("liga_notificaciones_guardar_automatizacion", {
+      p_liga_id: "liga-1",
+      p_modo_operacion: "automatico",
+      p_resultados_auto: true,
+      p_resultados_espera_minutos: 5,
+      p_recordatorio_auto: true,
+      p_recordatorio_horas: 6,
+      p_bienvenida_auto: false,
+    });
+    expect(resultado.ok).toBe(true);
+    expect(resultado.config?.recordatorio_horas).toBe(6);
+    expect(resultado.pendientesRecordatorio).toBe(10);
+  });
+
   it("guarda el correo de supervisión junto con las automatizaciones", async () => {
     const payloads: Record<string, unknown>[] = [];
+    rpc.mockResolvedValue({
+      error: {
+        message: "Could not find the function liga_notificaciones_guardar_automatizacion",
+      },
+    });
     from.mockImplementation(() => ({
       upsert: jest.fn(async (payload: Record<string, unknown>) => {
         payloads.push(payload);
         return { error: null };
       }),
+      select: jest.fn(() =>
+        chainResult({
+          data: {
+            bienvenida_pausada: true,
+            modo_prueba: true,
+            modo_operacion: "automatico",
+            resultados_auto: true,
+            resultados_espera_minutos: 5,
+            recordatorio_auto: false,
+            recordatorio_horas: 24,
+            bienvenida_auto: false,
+          },
+          error: null,
+        })
+      ),
     }));
 
     const resultado = await guardarConfigLiga("liga-1", {
@@ -412,7 +509,7 @@ describe("ligaNotificacionesService", () => {
       supervision_alcance: "todas",
     });
 
-    expect(resultado).toEqual({ ok: true, motivo: null });
+    expect(resultado.ok).toBe(true);
     expect(payloads[0]).toMatchObject({
       modo_operacion: "automatico",
       resultados_auto: true,

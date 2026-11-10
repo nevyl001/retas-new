@@ -751,12 +751,90 @@ export async function confirmarVerificacionCorreo(
   return { ok: row.ok === true, estado };
 }
 
+export type ResultadoGuardarAutomatizacion = ResultadoNotificacion & {
+  config?: ConfigNotificacionLiga;
+  pendientesRecordatorio?: number;
+  procesandoRecordatorio?: number;
+};
+
 export async function guardarConfigLiga(
   ligaId: string,
   config: ConfigNotificacionLiga
-): Promise<ResultadoNotificacion> {
+): Promise<ResultadoGuardarAutomatizacion> {
   const auto = completarConfigAutomatica(config);
   const modo = normalizarModoOperacion(config.modo_operacion);
+
+  const rpc = await supabase.rpc("liga_notificaciones_guardar_automatizacion", {
+    p_liga_id: ligaId,
+    p_modo_operacion: modo,
+    p_resultados_auto: auto.resultados_auto,
+    p_resultados_espera_minutos: auto.resultados_espera_minutos,
+    p_recordatorio_auto: auto.recordatorio_auto,
+    p_recordatorio_horas: auto.recordatorio_horas,
+    p_bienvenida_auto: auto.bienvenida_auto,
+  });
+
+  if (!rpc.error) {
+    const row = (rpc.data ?? {}) as {
+      ok?: boolean;
+      motivo?: unknown;
+      modo_operacion?: unknown;
+      resultados_auto?: unknown;
+      resultados_espera_minutos?: unknown;
+      recordatorio_auto?: unknown;
+      recordatorio_horas?: unknown;
+      bienvenida_auto?: unknown;
+      pendientes_recordatorio?: unknown;
+      procesando_recordatorio?: unknown;
+    };
+    if (row.ok !== true) {
+      const motivo =
+        typeof row.motivo === "string" && /^[a-z_]{1,40}$/.test(row.motivo)
+          ? row.motivo
+          : "no_disponible";
+      return { ok: false, motivo };
+    }
+    const persistida = completarConfigAutomatica({
+      resultados_auto: row.resultados_auto === true,
+      resultados_espera_minutos: row.resultados_espera_minutos as EsperaResultadosMinutos,
+      recordatorio_auto: row.recordatorio_auto === true,
+      recordatorio_horas: row.recordatorio_horas as HorasRecordatorio,
+      bienvenida_auto: row.bienvenida_auto === true,
+    });
+    if (persistida.recordatorio_horas !== auto.recordatorio_horas) {
+      return { ok: false, motivo: "no_persistido" };
+    }
+    const confirmacion = await consultarConfigLiga(ligaId);
+    const leida = confirmacion.data
+      ? completarConfigAutomatica(confirmacion.data)
+      : persistida;
+    if (leida.recordatorio_horas !== auto.recordatorio_horas) {
+      return { ok: false, motivo: "no_persistido" };
+    }
+    return {
+      ok: true,
+      motivo: null,
+      config: {
+        ...config,
+        modo_operacion: modo,
+        ...leida,
+      },
+      pendientesRecordatorio:
+        typeof row.pendientes_recordatorio === "number"
+          ? row.pendientes_recordatorio
+          : undefined,
+      procesandoRecordatorio:
+        typeof row.procesando_recordatorio === "number"
+          ? row.procesando_recordatorio
+          : undefined,
+    };
+  }
+
+  if (!esEsquemaAusente(rpc.error.message)) {
+    aviso("no_disponible");
+    return { ok: false, motivo: "no_disponible" };
+  }
+
   const payloadBase = {
     liga_id: ligaId,
     bienvenida_pausada: config.bienvenida_pausada,
@@ -821,7 +899,23 @@ export async function guardarConfigLiga(
     aviso("no_disponible");
     return { ok: false, motivo: "no_disponible" };
   }
-  return { ok: true, motivo: null };
+
+  const confirmacion = await consultarConfigLiga(ligaId);
+  const leida = confirmacion.data
+    ? completarConfigAutomatica(confirmacion.data)
+    : null;
+  if (!leida || leida.recordatorio_horas !== auto.recordatorio_horas) {
+    return { ok: false, motivo: "no_persistido" };
+  }
+  return {
+    ok: true,
+    motivo: null,
+    config: {
+      ...config,
+      modo_operacion: modo,
+      ...leida,
+    },
+  };
 }
 
 /**

@@ -32,11 +32,13 @@ export const CONFIG_AUTOMATICA_INICIAL: ConfigAutomaticaLiga = {
 };
 
 export function normalizarEsperaResultados(raw: unknown): EsperaResultadosMinutos {
-  return raw === 0 || raw === 15 ? raw : 5;
+  const n = typeof raw === "number" ? raw : Number(raw);
+  return n === 0 || n === 15 ? n : 5;
 }
 
 export function normalizarHorasRecordatorio(raw: unknown): HorasRecordatorio {
-  return raw === 12 || raw === 6 || raw === 2 ? raw : 24;
+  const n = typeof raw === "number" ? raw : Number(raw);
+  return n === 12 || n === 6 || n === 2 ? n : 24;
 }
 
 export function completarConfigAutomatica(raw: Partial<ConfigAutomaticaLiga> | null | undefined): ConfigAutomaticaLiga {

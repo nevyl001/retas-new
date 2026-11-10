@@ -156,6 +156,7 @@ const MOTIVO_LABEL: Record<string, string> = {
   respuesta_ambigua: "El proveedor no confirmó el envío",
   cancelado: "La jornada cambió y el envío se canceló",
   automatizacion_apagada: "La automatización está desactivada",
+  no_persistido: "El servidor no confirmó el cambio. Revisa e inténtalo de nuevo",
   recordatorio_vencido: "El horario del recordatorio ya pasó",
   jornada_sin_horario: "Falta la hora oficial de la ronda 1",
   horarios_distintos: "La ronda 1 tiene horarios distintos",
@@ -513,6 +514,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const [supervisionAlcance, setSupervisionAlcance] = useState<
     "resultados" | "todas"
   >("resultados");
+  const [borradorHorasRecordatorio, setBorradorHorasRecordatorio] = useState<
+    24 | 12 | 6 | 2 | null
+  >(null);
   const jornadaDestino = useMemo(
     () => jornadaEnCursoParaCorreo(jornadas),
     [jornadas]
@@ -779,7 +783,15 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     modo_operacion: "manual",
     ...completarConfigAutomatica(null),
   };
-  const automatica = completarConfigAutomatica(config);
+  const automaticaPersistida = completarConfigAutomatica(config);
+  const automatica = {
+    ...automaticaPersistida,
+    recordatorio_horas:
+      borradorHorasRecordatorio ?? automaticaPersistida.recordatorio_horas,
+  };
+  const anticipacionPendienteGuardar =
+    borradorHorasRecordatorio !== null &&
+    borradorHorasRecordatorio !== automaticaPersistida.recordatorio_horas;
   const puedeEscribir = Boolean(
     snapshot?.disponible && snapshot?.escriturasActivas
   );
@@ -1376,14 +1388,38 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     setGuardandoId("config");
     const resultado = await guardarConfigLiga(ligaId, { ...next, ...siguiente });
     setGuardandoId(null);
-    if (!resultado.ok) {
-      confirmar(motivoVisible(resultado.motivo));
+    if (!resultado.ok || !resultado.config) {
+      confirmar(motivoVisible(resultado.motivo ?? "no_persistido"));
       return;
     }
+    const confirmada = completarConfigAutomatica(resultado.config);
+    if (confirmada.recordatorio_horas !== siguiente.recordatorio_horas) {
+      confirmar(motivoVisible("no_persistido"));
+      return;
+    }
+    setBorradorHorasRecordatorio(null);
     setSnapshot((prev) =>
-      prev ? { ...prev, config: { ...next, ...siguiente } } : prev
+      prev
+        ? {
+            ...prev,
+            config: {
+              ...prev.config,
+              ...resultado.config,
+            },
+          }
+        : prev
     );
-    confirmar("Cambios guardados");
+    if ((resultado.procesandoRecordatorio ?? 0) > 0) {
+      confirmar(
+        `Guardado. ${resultado.procesandoRecordatorio} recordatorio(s) ya se estaban procesando y no se reprogramaron.`
+      );
+      return;
+    }
+    confirmar(
+      typeof resultado.pendientesRecordatorio === "number"
+        ? `Guardado y sincronizado. ${resultado.pendientesRecordatorio} recordatorio(s) pendiente(s) con la nueva anticipación.`
+        : "Cambios guardados y confirmados en el servidor"
+    );
   }
 
   async function guardarSupervision() {
@@ -3009,10 +3045,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     value={automatica.recordatorio_horas}
                     disabled={guardandoId === "config" || !puedeEscribir}
                     onChange={(event) =>
-                      void cambiarConfig({
-                        ...config,
-                        recordatorio_horas: Number(event.target.value) as 24 | 12 | 6 | 2,
-                      })
+                      setBorradorHorasRecordatorio(
+                        Number(event.target.value) as 24 | 12 | 6 | 2
+                      )
                     }
                   >
                     <option value={24}>24 horas antes</option>
@@ -3021,6 +3056,37 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     <option value={2}>2 horas antes</option>
                   </select>
                 </label>
+                {anticipacionPendienteGuardar ? (
+                  <div className="liga-notificaciones__auto-actions">
+                    <p className="liga-notificaciones__hint">
+                      Hay un cambio sin guardar. La cola se reprogramará solo
+                      después de confirmar.
+                    </p>
+                    <button
+                      type="button"
+                      className="liga-notificaciones__btn"
+                      disabled={guardandoId === "config" || !puedeEscribir}
+                      onClick={() =>
+                        void cambiarConfig({
+                          ...config,
+                          recordatorio_horas: automatica.recordatorio_horas,
+                        })
+                      }
+                    >
+                      {guardandoId === "config"
+                        ? "Guardando…"
+                        : "GUARDAR CAMBIOS"}
+                    </button>
+                    <button
+                      type="button"
+                      className="liga-notificaciones__ghost"
+                      disabled={guardandoId === "config"}
+                      onClick={() => setBorradorHorasRecordatorio(null)}
+                    >
+                      Descartar
+                    </button>
+                  </div>
+                ) : null}
                 {(() => {
                   const cuando = datosAviso
                     ? recordatorioOficial({
