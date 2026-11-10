@@ -1,6 +1,7 @@
 import { supabase } from "../lib/supabaseClient";
 import {
   cargarNotificacionesLiga,
+  consultarHistorialPeriodoLiga,
   guardarConfigLiga,
   guardarSupervisionLiga,
   encolarBienvenidaTrasInscripcion,
@@ -32,7 +33,11 @@ function chainResult(result: { data: unknown; error: unknown }) {
   const self = () => chain;
   chain.select = jest.fn(self);
   chain.eq = jest.fn(self);
+  chain.gte = jest.fn(self);
+  chain.lt = jest.fn(self);
+  chain.or = jest.fn(self);
   chain.order = jest.fn(self);
+  chain.range = jest.fn(self);
   chain.limit = jest.fn(self);
   chain.maybeSingle = jest.fn(async () => result);
   // thenable for await supabase.from(...).select().eq()
@@ -610,5 +615,77 @@ describe("ligaNotificacionesService", () => {
         registradoAt: "2026-11-01T12:00:00.000Z",
       })
     ).resolves.toEqual({ ok: false, motivo: "revocado" });
+  });
+
+  it("consulta historial restringido al período mensual en America/Mexico_City y pagina", async () => {
+    const logChain = chainResult({
+      data: [
+        {
+          id: "log-1",
+          liga_jugador_id: "jug-1",
+          tipo: "bienvenida",
+          estado: "enviado",
+          attempts: 1,
+          motivo: null,
+          proveedor_estado: "aceptado",
+          created_at: "2026-11-10T18:00:00.000Z",
+        },
+      ],
+      error: null,
+    });
+    const colaChain = chainResult({
+      data: [
+        {
+          id: "q-1",
+          liga_jugador_id: "jug-1",
+          tipo: "recordatorio_jornada",
+          origen: "automatico",
+          estado: "pendiente",
+          attempts: 0,
+          motivo: null,
+          programado_para: "2026-11-11T19:00:00.000Z",
+          jornada_numero: 2,
+        },
+      ],
+      error: null,
+    });
+
+    from.mockImplementation((table: string) => {
+      if (table === "liga_notificaciones_log") return logChain;
+      if (table === "liga_notificaciones_queue") return colaChain;
+      return chainResult({ data: [], error: null });
+    });
+
+    const resultado = await consultarHistorialPeriodoLiga({
+      ligaId: "liga-1",
+      periodo: { year: 2026, month: 11 },
+      filtro: "todos",
+      busqueda: "",
+      page: 0,
+      pageSize: 20,
+      nombresPorJugadorId: new Map([["jug-1", "Saúl Moreno"]]),
+    });
+
+    expect(resultado.ok).toBe(true);
+    expect(logChain.gte).toHaveBeenCalledWith(
+      "created_at",
+      "2026-11-01T06:00:00.000Z"
+    );
+    expect(logChain.lt).toHaveBeenCalledWith(
+      "created_at",
+      "2026-12-01T06:00:00.000Z"
+    );
+    expect(colaChain.or).toHaveBeenCalledWith(
+      expect.stringContaining("programado_para.gte.2026-11-01T06:00:00.000Z")
+    );
+    expect(resultado.pagina.resumenPeriodo).toEqual({
+      aceptados: 1,
+      pendientes: 1,
+      errores: 0,
+      pruebas: 0,
+    });
+    expect(resultado.pagina.gruposDia).toHaveLength(2);
+    expect(resultado.pagina.gruposDia[0].diaClave).toBe("2026-11-11");
+    expect(resultado.pagina.gruposDia[1].diaClave).toBe("2026-11-10");
   });
 });

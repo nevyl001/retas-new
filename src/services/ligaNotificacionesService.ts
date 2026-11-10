@@ -5,6 +5,15 @@ import {
   type HorasRecordatorio,
 } from "../lib/liga/notificaciones/automatizacion";
 import {
+  filtrarYPaginarHistorialPeriodo,
+  HISTORIAL_PAGE_SIZE,
+  rangoMesCdmx,
+  unificarRegistrosHistorial,
+  type FiltroEstadoHistorial,
+  type PeriodoMensualHistorial,
+  type ResultadoPaginaHistorialPeriodo,
+} from "../lib/liga/notificaciones/historialPeriodo";
+import {
   mapContactoInscritoRow,
   type ContactoInscritoResuelto,
 } from "../lib/liga/notificaciones/resolveInscritoContacto";
@@ -56,7 +65,7 @@ export function automatizacionEnviosRealesDisponible(): boolean {
 
 export interface HistorialNotificacionRow {
   id: string;
-  liga_jugador_id: string;
+  liga_jugador_id: string | null;
   queue_id?: string | null;
   tipo: string;
   estado: string;
@@ -83,9 +92,29 @@ export interface ColaNotificacionRow {
   origen?: string | null;
   programado_para?: string | null;
   processed_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   jornada_numero?: number | null;
   asunto?: string | null;
   cuerpo_texto?: string | null;
+}
+
+export interface ConsultaHistorialPeriodoInput {
+  ligaId: string;
+  periodo: PeriodoMensualHistorial;
+  filtro: FiltroEstadoHistorial;
+  busqueda: string;
+  page: number;
+  pageSize?: number;
+  nombresPorJugadorId?: ReadonlyMap<string, string>;
+}
+
+export interface ConsultaHistorialPeriodoResultado {
+  ok: boolean;
+  errorCarga: string | null;
+  logs: HistorialNotificacionRow[];
+  cola: ColaNotificacionRow[];
+  pagina: ResultadoPaginaHistorialPeriodo;
 }
 
 export interface ResultadoDescarte {
@@ -401,7 +430,7 @@ async function consultarColaLiga(ligaId: string) {
   const extendida = await supabase
     .from("liga_notificaciones_queue")
     .select(
-      "id, liga_jugador_id, estado, attempts, motivo, lote_id, tipo, origen, programado_para, processed_at, jornada_numero, asunto, cuerpo_texto"
+      "id, liga_jugador_id, estado, attempts, motivo, lote_id, tipo, origen, programado_para, processed_at, created_at, updated_at, jornada_numero, asunto, cuerpo_texto"
     )
     .eq("liga_id", ligaId)
     .order("updated_at", { ascending: false })
@@ -413,12 +442,194 @@ async function consultarColaLiga(ligaId: string) {
   ) {
     return supabase
       .from("liga_notificaciones_queue")
-      .select("id, liga_jugador_id, estado, attempts, motivo, lote_id, tipo")
+      .select(
+        "id, liga_jugador_id, estado, attempts, motivo, lote_id, tipo, created_at, updated_at, processed_at"
+      )
       .eq("liga_id", ligaId)
       .order("updated_at", { ascending: false })
       .limit(100);
   }
   return extendida;
+}
+
+type BuilderRango = {
+  eq: (col: string, val: unknown) => BuilderRango;
+  gte?: (col: string, val: unknown) => BuilderRango;
+  lt?: (col: string, val: unknown) => BuilderRango;
+  or?: (expr: string) => BuilderRango;
+  order: (col: string, opts?: { ascending?: boolean }) => BuilderRango;
+  range?: (from: number, to: number) => BuilderRango;
+  limit: (n: number) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
+} & PromiseLike<{ data: unknown; error: { message: string } | null }>;
+
+async function consultarLogsPeriodoLiga(
+  ligaId: string,
+  desdeIso: string,
+  hastaIso: string,
+  maxRows: number
+) {
+  const ejecutar = (columnas: string) => {
+    let q = (
+      supabase.from("liga_notificaciones_log").select(columnas) as unknown as BuilderRango
+    ).eq("liga_id", ligaId);
+    if (typeof q.gte === "function") q = q.gte("created_at", desdeIso);
+    if (typeof q.lt === "function") q = q.lt("created_at", hastaIso);
+    q = q.order("created_at", { ascending: false });
+    if (typeof q.range === "function") {
+      return q.range(0, Math.max(0, maxRows - 1));
+    }
+    return q.limit(maxRows);
+  };
+
+  const extendida = await ejecutar(
+    "id, liga_jugador_id, queue_id, tipo, estado, attempts, motivo, proveedor_estado, created_at, origen, jornada_numero, procesados, aceptados, errores, reintentos"
+  );
+  if (
+    extendida.error &&
+    esEsquemaAusente(extendida.error.message) &&
+    /origen|jornada_numero|procesados|reintentos/i.test(extendida.error.message)
+  ) {
+    return ejecutar(
+      "id, liga_jugador_id, queue_id, tipo, estado, attempts, motivo, proveedor_estado, created_at"
+    );
+  }
+  return extendida;
+}
+
+async function consultarColaPeriodoLiga(
+  ligaId: string,
+  desdeIso: string,
+  hastaIso: string,
+  maxRows: number
+) {
+  const filtroOr = [
+    `and(programado_para.gte.${desdeIso},programado_para.lt.${hastaIso})`,
+    `and(programado_para.is.null,created_at.gte.${desdeIso},created_at.lt.${hastaIso})`,
+    `and(processed_at.gte.${desdeIso},processed_at.lt.${hastaIso})`,
+  ].join(",");
+
+  let qExtendida = (
+    supabase
+      .from("liga_notificaciones_queue")
+      .select(
+        "id, liga_jugador_id, estado, attempts, motivo, lote_id, tipo, origen, programado_para, processed_at, created_at, updated_at, jornada_numero, asunto, cuerpo_texto"
+      ) as unknown as BuilderRango
+  ).eq("liga_id", ligaId);
+
+  if (typeof qExtendida.or === "function") {
+    qExtendida = qExtendida.or(filtroOr);
+  } else {
+    if (typeof qExtendida.gte === "function") {
+      qExtendida = qExtendida.gte("created_at", desdeIso);
+    }
+    if (typeof qExtendida.lt === "function") {
+      qExtendida = qExtendida.lt("created_at", hastaIso);
+    }
+  }
+  qExtendida = qExtendida.order("updated_at", { ascending: false });
+  const extendida =
+    typeof qExtendida.range === "function"
+      ? await qExtendida.range(0, Math.max(0, maxRows - 1))
+      : await qExtendida.limit(maxRows);
+
+  if (
+    extendida.error &&
+    esEsquemaAusente(extendida.error.message) &&
+    /origen|programado_para|jornada_numero|asunto|cuerpo_texto/i.test(
+      extendida.error.message
+    )
+  ) {
+    let qBasica = (
+      supabase
+        .from("liga_notificaciones_queue")
+        .select(
+          "id, liga_jugador_id, estado, attempts, motivo, lote_id, tipo, created_at, updated_at, processed_at"
+        ) as unknown as BuilderRango
+    ).eq("liga_id", ligaId);
+    if (typeof qBasica.gte === "function") {
+      qBasica = qBasica.gte("created_at", desdeIso);
+    }
+    if (typeof qBasica.lt === "function") {
+      qBasica = qBasica.lt("created_at", hastaIso);
+    }
+    qBasica = qBasica.order("updated_at", { ascending: false });
+    return typeof qBasica.range === "function"
+      ? qBasica.range(0, Math.max(0, maxRows - 1))
+      : qBasica.limit(maxRows);
+  }
+  return extendida;
+}
+
+/**
+ * Consulta paginada del historial de comunicaciones restringida al período mensual
+ * en zona horaria America/Mexico_City.
+ */
+export async function consultarHistorialPeriodoLiga(
+  input: ConsultaHistorialPeriodoInput
+): Promise<ConsultaHistorialPeriodoResultado> {
+  const pageSize = Math.max(1, input.pageSize ?? HISTORIAL_PAGE_SIZE);
+  const page = Math.max(0, Math.trunc(input.page));
+  const rango = rangoMesCdmx(input.periodo);
+  // Límite acotado al período mensual para soportar resumen del mes y paginación.
+  const maxRowsPeriodo = Math.max(200, (page + 2) * pageSize * 2, 1000);
+
+  const [historialRes, colaRes] = await Promise.all([
+    consultarLogsPeriodoLiga(
+      input.ligaId,
+      rango.desdeIso,
+      rango.hastaIso,
+      maxRowsPeriodo
+    ),
+    consultarColaPeriodoLiga(
+      input.ligaId,
+      rango.desdeIso,
+      rango.hastaIso,
+      maxRowsPeriodo
+    ),
+  ]);
+
+  const historialRows =
+    historialRes.error && esEsquemaAusente(historialRes.error.message)
+      ? []
+      : historialRes.error
+        ? null
+        : ((historialRes.data ?? []) as HistorialNotificacionRow[]);
+  const colaRows =
+    colaRes.error && esEsquemaAusente(colaRes.error.message)
+      ? []
+      : colaRes.error
+        ? null
+        : ((colaRes.data ?? []) as ColaNotificacionRow[]);
+
+  const errorCarga =
+    historialRows === null || colaRows === null ? "no_disponible" : null;
+  if (errorCarga) aviso("no_disponible");
+
+  const logsSeguros = historialRows ?? [];
+  const colaSegura = colaRows ?? [];
+  const unificados = unificarRegistrosHistorial({
+    logs: logsSeguros,
+    cola: colaSegura,
+    nombresPorJugadorId: input.nombresPorJugadorId ?? new Map(),
+  });
+
+  const pagina = filtrarYPaginarHistorialPeriodo({
+    registros: unificados,
+    periodo: input.periodo,
+    filtro: input.filtro,
+    busqueda: input.busqueda,
+    page,
+    pageSize,
+    incluirSinFecha: false,
+  });
+
+  return {
+    ok: errorCarga === null,
+    errorCarga,
+    logs: logsSeguros,
+    cola: colaSegura,
+    pagina,
+  };
 }
 
 /**

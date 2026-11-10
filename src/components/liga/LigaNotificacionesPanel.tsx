@@ -50,22 +50,32 @@ import { prepararPruebaSupervision } from "../../lib/liga/notificaciones/correoC
 import {
   completarConfigAutomatica,
   correoSupervisionValido,
-  etiquetaOrigenComunicacion,
-  etiquetaTipoComunicacion,
-  esCorreoDeJugador,
 } from "../../lib/liga/notificaciones/automatizacion";
 import {
   esComunicacionOperativaHistorial,
   esExclusionElegibilidadHistorial,
-  etiquetaEntregaComunicacion,
   etiquetaMotivoExclusionCorta,
   resumenElegibilidadDestinatarios,
 } from "../../lib/liga/notificaciones/historialComunicaciones";
+import {
+  FILTROS_ESTADO_HISTORIAL,
+  HISTORIAL_PAGE_SIZE,
+  etiquetaPeriodoMensual,
+  filtrarYPaginarHistorialPeriodo,
+  mesActualCdmx,
+  navegarMesHistorial,
+  periodoDeInstanteCdmx,
+  resolverDiasExpandidosHistorial,
+  unificarRegistrosHistorial,
+  type FiltroEstadoHistorial,
+  type PeriodoMensualHistorial,
+} from "../../lib/liga/notificaciones/historialPeriodo";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import {
   cargarContactoInscritosLiga,
   cargarNotificacionesLiga,
+  consultarHistorialPeriodoLiga,
   descartarCorreosNoEnviados,
   solicitarProcesamientoLote,
   establecerHabilitacionJugador,
@@ -76,6 +86,7 @@ import {
   revocarConsentimientoJugador,
   solicitarComunicacionManual,
   type ConfigNotificacionLiga,
+  type ConsultaHistorialPeriodoResultado,
   type HistorialNotificacionRow,
   type ColaNotificacionRow,
   type NotificacionesLigaSnapshot,
@@ -210,32 +221,6 @@ function logsSinRepetir(
   return Array.from(elegidos.values()).sort((a, b) =>
     b.created_at.localeCompare(a.created_at)
   );
-}
-
-function colaYaMostradaEnHistorial(
-  item: ColaNotificacionRow,
-  logs: HistorialNotificacionRow[]
-): boolean {
-  if (item.estado !== "enviado") return false;
-  return logs.some((log) => {
-    const mismo =
-      log.queue_id && item.id
-        ? log.queue_id === item.id
-        : log.liga_jugador_id === item.liga_jugador_id;
-    return mismo && rangoEntrega(log) >= 4;
-  });
-}
-
-function sePuedeBorrarHistorial(estado: string): boolean {
-  return estado !== "procesando";
-}
-
-function etiquetaEntrega(
-  estado: string,
-  proveedor: string | null | undefined,
-  motivo?: string | null
-): string {
-  return etiquetaEntregaComunicacion(estado, proveedor, motivo);
 }
 
 const ESTADO_PRINCIPAL_LABEL: Record<EstadoVisualNotificacion, string> = {
@@ -469,6 +454,22 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const [historialDetalleId, setHistorialDetalleId] = useState<string | null>(
     null
   );
+  const [periodoHistorial, setPeriodoHistorial] =
+    useState<PeriodoMensualHistorial>(() => mesActualCdmx());
+  const [filtroHistorial, setFiltroHistorial] =
+    useState<FiltroEstadoHistorial>("todos");
+  const [busquedaHistorialInput, setBusquedaHistorialInput] = useState("");
+  const [busquedaHistorialAplicada, setBusquedaHistorialAplicada] =
+    useState("");
+  const [paginaHistorial, setPaginaHistorial] = useState(0);
+  const [diasExpandidosOverride, setDiasExpandidosOverride] = useState<
+    Record<string, boolean>
+  >({});
+  const [historialRemoto, setHistorialRemoto] =
+    useState<ConsultaHistorialPeriodoResultado | null>(null);
+  const [cargandoPaginaHistorial, setCargandoPaginaHistorial] = useState(false);
+  const [historialRefreshSeq, setHistorialRefreshSeq] = useState(0);
+  const periodoRequestTicket = useRef(0);
   const [actualizandoHistorial, setActualizandoHistorial] = useState(false);
   const [historialActualizadoEn, setHistorialActualizadoEn] =
     useState<Date | null>(null);
@@ -866,6 +867,206 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     return Array.from(conteo.entries()).sort((a, b) => b[1] - a[1]);
   }, [filas]);
 
+  const nombresPorJugadorId = useMemo(
+    () => new Map(filas.map((fila) => [fila.jugadorId, fila.nombre])),
+    [filas]
+  );
+
+  const periodoActualRef = useMemo(() => mesActualCdmx(), []);
+  const esMesActualHistorial =
+    periodoHistorial.year === periodoActualRef.year &&
+    periodoHistorial.month === periodoActualRef.month;
+
+  useEffect(() => {
+    const limpio = busquedaHistorialInput.trim();
+    if (!limpio) {
+      setBusquedaHistorialAplicada((prev) => {
+        if (prev === "") return prev;
+        setPaginaHistorial(0);
+        setDiasExpandidosOverride({});
+        return "";
+      });
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setBusquedaHistorialAplicada((prev) => {
+        if (prev === busquedaHistorialInput) return prev;
+        setPaginaHistorial(0);
+        setDiasExpandidosOverride({});
+        return busquedaHistorialInput;
+      });
+    }, 220);
+    return () => window.clearTimeout(timer);
+  }, [busquedaHistorialInput]);
+
+  useEffect(() => {
+    if (area !== "historial") return;
+    if (typeof consultarHistorialPeriodoLiga !== "function") {
+      setHistorialRemoto(null);
+      return;
+    }
+    let activo = true;
+    const ticket = ++periodoRequestTicket.current;
+    setCargandoPaginaHistorial(true);
+    void Promise.resolve(
+      consultarHistorialPeriodoLiga({
+        ligaId,
+        periodo: periodoHistorial,
+        filtro: filtroHistorial,
+        busqueda: busquedaHistorialAplicada,
+        page: paginaHistorial,
+        pageSize: HISTORIAL_PAGE_SIZE,
+        nombresPorJugadorId,
+      })
+    )
+      .then((res) => {
+        if (!activo || ticket !== periodoRequestTicket.current) return;
+        if (res && res.pagina) {
+          setHistorialRemoto(res);
+        } else {
+          setHistorialRemoto(null);
+        }
+      })
+      .catch(() => {
+        if (!activo || ticket !== periodoRequestTicket.current) return;
+        setHistorialRemoto(null);
+      })
+      .finally(() => {
+        if (activo && ticket === periodoRequestTicket.current) {
+          setCargandoPaginaHistorial(false);
+        }
+      });
+    return () => {
+      activo = false;
+    };
+  }, [
+    area,
+    ligaId,
+    periodoHistorial,
+    filtroHistorial,
+    busquedaHistorialAplicada,
+    paginaHistorial,
+    historialRefreshSeq,
+    nombresPorJugadorId,
+  ]);
+
+  const fuenteLogsHistorial = useMemo(
+    () => (historialRemoto ? historialRemoto.logs : snapshot?.historial ?? []),
+    [historialRemoto, snapshot?.historial]
+  );
+
+  const fuenteColaHistorial = useMemo(
+    () => {
+      if (!historialRemoto) return snapshot?.cola ?? [];
+      if (!esMesActualHistorial) return historialRemoto.cola;
+      const idsEnRemoto = new Set(
+        historialRemoto.cola
+          .map((item) => item.id)
+          .filter((id): id is string => Boolean(id))
+      );
+      const sinFechaDeSnapshot = (snapshot?.cola ?? []).filter(
+        (item) =>
+          (!item.id || !idsEnRemoto.has(item.id)) &&
+          !item.programado_para &&
+          !item.created_at &&
+          !item.updated_at &&
+          !item.processed_at
+      );
+      return sinFechaDeSnapshot.length > 0
+        ? [...historialRemoto.cola, ...sinFechaDeSnapshot]
+        : historialRemoto.cola;
+    },
+    [esMesActualHistorial, historialRemoto, snapshot?.cola]
+  );
+
+  const registrosUnificadosHistorial = useMemo(
+    () =>
+      unificarRegistrosHistorial({
+        logs: fuenteLogsHistorial,
+        cola: fuenteColaHistorial,
+        nombresPorJugadorId,
+      }),
+    [fuenteColaHistorial, fuenteLogsHistorial, nombresPorJugadorId]
+  );
+
+  const paginaHistorialDatos = useMemo(
+    () =>
+      filtrarYPaginarHistorialPeriodo({
+        registros: registrosUnificadosHistorial,
+        periodo: periodoHistorial,
+        filtro: filtroHistorial,
+        busqueda: busquedaHistorialAplicada,
+        page: paginaHistorial,
+        pageSize: HISTORIAL_PAGE_SIZE,
+        incluirSinFecha: esMesActualHistorial,
+      }),
+    [
+      busquedaHistorialAplicada,
+      esMesActualHistorial,
+      filtroHistorial,
+      paginaHistorial,
+      periodoHistorial,
+      registrosUnificadosHistorial,
+    ]
+  );
+
+  const diasExpandidosHistorial = useMemo(
+    () =>
+      resolverDiasExpandidosHistorial(
+        paginaHistorialDatos.gruposDia,
+        diasExpandidosOverride
+      ),
+    [diasExpandidosOverride, paginaHistorialDatos.gruposDia]
+  );
+
+  const periodoProgramadoExterno = useMemo(() => {
+    for (const item of snapshot?.cola ?? []) {
+      if (item.estado !== "pendiente" || !item.programado_para) continue;
+      const periodoProg = periodoDeInstanteCdmx(item.programado_para);
+      if (
+        periodoProg &&
+        (periodoProg.year !== periodoHistorial.year ||
+          periodoProg.month !== periodoHistorial.month)
+      ) {
+        return periodoProg;
+      }
+    }
+    return null;
+  }, [periodoHistorial.month, periodoHistorial.year, snapshot?.cola]);
+
+  function cambiarPeriodoHistorial(siguiente: PeriodoMensualHistorial) {
+    periodoRequestTicket.current += 1;
+    setHistorialRemoto(null);
+    setPeriodoHistorial(siguiente);
+    setPaginaHistorial(0);
+    setDiasExpandidosOverride({});
+    setHistorialDetalleId(null);
+  }
+
+  function cambiarFiltroHistorial(siguiente: FiltroEstadoHistorial) {
+    periodoRequestTicket.current += 1;
+    setFiltroHistorial(siguiente);
+    setPaginaHistorial(0);
+    setDiasExpandidosOverride({});
+    setHistorialDetalleId(null);
+  }
+
+  function aplicarBusquedaHistorialInmediata(valor: string) {
+    periodoRequestTicket.current += 1;
+    setBusquedaHistorialInput(valor);
+    setBusquedaHistorialAplicada(valor);
+    setPaginaHistorial(0);
+    setDiasExpandidosOverride({});
+    setHistorialDetalleId(null);
+  }
+
+  function alternarDiaHistorial(diaClave: string, expandidoActual: boolean) {
+    setDiasExpandidosOverride((prev) => ({
+      ...prev,
+      [diaClave]: !expandidoActual,
+    }));
+  }
+
   useEffect(() => {
     const inicial = plantillaParaRedactar(ligaId, "bienvenida");
     setPlantillaId("bienvenida");
@@ -875,6 +1076,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     setEnvioPaso("idle");
     setLoteEnvioId(null);
     setSelectorAbierto(false);
+    setPeriodoHistorial(mesActualCdmx());
+    setFiltroHistorial("todos");
+    setBusquedaHistorialInput("");
+    setBusquedaHistorialAplicada("");
+    setPaginaHistorial(0);
+    setDiasExpandidosOverride({});
+    setHistorialRemoto(null);
   }, [ligaId]);
 
   const seleccionadosEnvio = candidatosEnvio.filter(
@@ -1077,6 +1285,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             }
           : fresco
       );
+      setHistorialRefreshSeq((prev) => prev + 1);
       setHistorialActualizadoEn(new Date());
       return fresco;
     } catch {
@@ -1236,11 +1445,22 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             .join(" · ")
         : "";
 
+    const irAHistorialLote = () => {
+      setPeriodoHistorial(mesActualCdmx());
+      setFiltroHistorial("todos");
+      setBusquedaHistorialInput("");
+      setBusquedaHistorialAplicada("");
+      setPaginaHistorial(0);
+      setDiasExpandidosOverride({});
+      setHistorialRefreshSeq((prev) => prev + 1);
+      setArea("historial");
+    };
+
     if (preparados === 0 && yaEnviados > 0 && fallidos === 0) {
       setLoteEnvioId(null);
       setEnvioPaso("idle");
       setEnvioSeleccion({});
-      setArea("historial");
+      irAHistorialLote();
       confirmar(
         "Ese envío ya fue aceptado. Confírmalo otra vez para mandarlo de nuevo."
       );
@@ -1255,7 +1475,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       // Conserva loteId + selección si la respuesta es incierta para reintentar
       // el mismo lote sin duplicarlo. Siempre cierra el paso de confirmación.
       setEnvioPaso("idle");
-      setArea("historial");
+      irAHistorialLote();
       confirmar(
         fallidos > 0
           ? `${mensajeFalloProceso(proceso.motivo)} Se procesaron ${preparados} destinatario${
@@ -1269,7 +1489,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       setLoteEnvioId(null);
       setEnvioPaso("idle");
       setEnvioSeleccion({});
-      setArea("historial");
+      irAHistorialLote();
       if (fallidos > 0) {
         const aceptados = proceso?.enviosReales
           ? proceso.enviados
@@ -1302,10 +1522,14 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     if (!puedeEscribir || enviandoLote) return;
     const uno = Boolean(objetivo?.queueId || objetivo?.logId);
     const filaCola = objetivo?.queueId
-      ? (snapshot?.cola ?? []).find((item) => item.id === objetivo.queueId)
+      ? (snapshot?.cola ?? []).find((item) => item.id === objetivo.queueId) ??
+        fuenteColaHistorial.find((item) => item.id === objetivo.queueId) ??
+        null
       : null;
     const filaLog = objetivo?.logId
-      ? (snapshot?.historial ?? []).find((item) => item.id === objetivo.logId)
+      ? (snapshot?.historial ?? []).find((item) => item.id === objetivo.logId) ??
+        fuenteLogsHistorial.find((item) => item.id === objetivo.logId) ??
+        null
       : null;
     const enviado = filaCola
       ? !esCorreoNoEnviado(filaCola.estado, null)
@@ -1328,6 +1552,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     });
     const fresco = await cargarNotificacionesLiga(ligaId);
     if (fresco.disponible) setSnapshot(fresco);
+    setHistorialRefreshSeq((prev) => prev + 1);
     setEnviandoLote(false);
     if (!resultado.ok) {
       confirmar(motivoVisible(resultado.motivo));
@@ -1859,9 +2084,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         : "Vista de configuración. Muestra cómo se armaría un correo nuevo. No está en la cola y no se envía.",
     ];
     if (vistaAuto === "programado") {
-      const fila = (snapshot?.cola ?? []).find(
-        (item) => item.id === programadoClave
-      );
+      const fila =
+        (snapshot?.cola ?? []).find((item) => item.id === programadoClave) ??
+        fuenteColaHistorial.find((item) => item.id === programadoClave);
       if (!fila) {
         return { titulo: "Correo programado", html: "", notas: ["Ese pendiente ya no está en la cola."] };
       }
@@ -2577,10 +2802,12 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
 
       {area === "historial" ? (
         <div className="liga-notificaciones__historial">
-          {snapshot?.errorCarga ? (
+          {snapshot?.errorCarga || historialRemoto?.errorCarga ? (
             <p className="liga-notificaciones__hint">
-              {motivoVisible(snapshot.errorCarga)}. El historial no se pudo
-              actualizar por completo.
+              {motivoVisible(
+                snapshot?.errorCarga ?? historialRemoto?.errorCarga ?? "no_disponible"
+              )}
+              . El historial no se pudo actualizar por completo.
               <button
                 type="button"
                 className="liga-notificaciones__ghost"
@@ -2597,7 +2824,140 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             elegibles. {resumenElegibilidad.excluidos} no cumplen los
             requisitos.
           </p>
-          {colaOperativa.length === 0 && logsOperativos.length === 0 ? (
+
+          <div
+            className="liga-notificaciones__history-period-bar"
+            aria-label="Selector de período y resumen mensual"
+          >
+            <div
+              className="liga-notificaciones__period-selector"
+              role="group"
+              aria-label="Período del historial"
+            >
+              <button
+                type="button"
+                className="liga-notificaciones__period-nav"
+                aria-label="Mes anterior"
+                onClick={() =>
+                  cambiarPeriodoHistorial(navegarMesHistorial(periodoHistorial, -1))
+                }
+              >
+                ←
+              </button>
+              <span
+                className="liga-notificaciones__period-label"
+                data-testid="historial-periodo-label"
+              >
+                {etiquetaPeriodoMensual(periodoHistorial)}
+              </span>
+              <button
+                type="button"
+                className="liga-notificaciones__period-nav"
+                aria-label="Mes siguiente"
+                onClick={() =>
+                  cambiarPeriodoHistorial(navegarMesHistorial(periodoHistorial, 1))
+                }
+              >
+                →
+              </button>
+              {!esMesActualHistorial ? (
+                <button
+                  type="button"
+                  className="liga-notificaciones__ghost liga-notificaciones__period-today"
+                  onClick={() => cambiarPeriodoHistorial(mesActualCdmx())}
+                >
+                  Mes actual
+                </button>
+              ) : null}
+            </div>
+
+            <div
+              className="liga-notificaciones__period-summary"
+              aria-label="Resumen del período seleccionado"
+              data-testid="historial-resumen-periodo"
+            >
+              <div className="liga-notificaciones__period-stat">
+                <span className="liga-notificaciones__period-stat-value">
+                  {paginaHistorialDatos.resumenPeriodo.aceptados}
+                </span>
+                <span className="liga-notificaciones__period-stat-label">
+                  ACEPTADOS
+                </span>
+              </div>
+              <div className="liga-notificaciones__period-stat">
+                <span className="liga-notificaciones__period-stat-value">
+                  {paginaHistorialDatos.resumenPeriodo.pendientes}
+                </span>
+                <span className="liga-notificaciones__period-stat-label">
+                  PENDIENTES
+                </span>
+              </div>
+              <div className="liga-notificaciones__period-stat">
+                <span className="liga-notificaciones__period-stat-value">
+                  {paginaHistorialDatos.resumenPeriodo.errores}
+                </span>
+                <span className="liga-notificaciones__period-stat-label">
+                  ERRORES
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="liga-notificaciones__history-controls">
+            <label className="liga-notificaciones__search liga-notificaciones__history-search">
+              <span className="liga-notificaciones__search-icon" aria-hidden>
+                ⌕
+              </span>
+              <input
+                type="search"
+                value={busquedaHistorialInput}
+                placeholder="BUSCAR JUGADOR O COMUNICACIÓN"
+                aria-label="BUSCAR JUGADOR O COMUNICACIÓN"
+                onChange={(event) => setBusquedaHistorialInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    aplicarBusquedaHistorialInmediata(busquedaHistorialInput);
+                  }
+                }}
+              />
+            </label>
+            <div
+              className="liga-notificaciones__filters"
+              role="group"
+              aria-label="Filtrar comunicaciones por estado"
+            >
+              {FILTROS_ESTADO_HISTORIAL.map((chip) => (
+                <button
+                  key={chip.id}
+                  type="button"
+                  className="liga-notificaciones__chip"
+                  aria-pressed={filtroHistorial === chip.id}
+                  onClick={() => cambiarFiltroHistorial(chip.id)}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {periodoProgramadoExterno && paginaHistorialDatos.totalPeriodo === 0 ? (
+            <p className="liga-notificaciones__hint" role="status">
+              Tienes comunicaciones programadas para{" "}
+              <strong>{etiquetaPeriodoMensual(periodoProgramadoExterno)}</strong>.{" "}
+              <button
+                type="button"
+                className="liga-notificaciones__ghost"
+                onClick={() => cambiarPeriodoHistorial(periodoProgramadoExterno)}
+              >
+                Ir a {etiquetaPeriodoMensual(periodoProgramadoExterno)}
+              </button>
+            </p>
+          ) : null}
+
+          {paginaHistorialDatos.totalPeriodo === 0 &&
+          colaOperativa.length === 0 &&
+          logsOperativos.length === 0 ? (
             <div className="liga-notificaciones__empty">
               <p className="liga-notificaciones__empty-title">
                 Aún no hay comunicaciones operativas.
@@ -2614,7 +2974,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             >
               <div className="liga-notificaciones__history-toolbar">
                 <span className="liga-notificaciones__meta">
-                  Comunicaciones
+                  Comunicaciones · {etiquetaPeriodoMensual(periodoHistorial)}
                   {historialActualizadoEn
                     ? ` · Actualizado ${historialActualizadoEn.toLocaleTimeString("es-MX", {
                         hour: "2-digit",
@@ -2637,6 +2997,9 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                 ) ||
                 logsOperativos.some((item) =>
                   esCorreoNoEnviado(item.estado, item.proveedor_estado)
+                ) ||
+                registrosUnificadosHistorial.some((item) =>
+                  esCorreoNoEnviado(item.estado, item.proveedorEstado)
                 ) ? (
                   <button
                     type="button"
@@ -2648,185 +3011,217 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   </button>
                 ) : null}
               </div>
-              {logsOperativos.map((item) => {
-                const deJugador = esCorreoDeJugador(item.tipo);
-                const jugador = deJugador
-                  ? filas.find((fila) => fila.jugadorId === item.liga_jugador_id)
-                      ?.nombre ?? "Jugador"
-                  : etiquetaTipoComunicacion(item.tipo);
-                const abierto = historialDetalleId === item.id;
-                const estado = etiquetaEntrega(
-                  item.estado,
-                  item.proveedor_estado,
-                  item.motivo
-                );
-                const colaItem = (snapshot?.cola ?? []).find(
-                  (fila) => fila.id === item.queue_id
-                );
-                const enviado = Boolean(item.proveedor_estado) || item.estado === "enviado";
-                return (
-                  <article
-                    key={item.id}
-                    className="liga-notificaciones__history-row"
+
+              {paginaHistorialDatos.totalFiltrados === 0 ? (
+                <div className="liga-notificaciones__history-empty-filter">
+                  <p className="liga-notificaciones__empty-title">
+                    {paginaHistorialDatos.totalPeriodo === 0
+                      ? `Sin comunicaciones registradas en ${etiquetaPeriodoMensual(periodoHistorial)}.`
+                      : "Sin coincidencias para esta búsqueda o filtro."}
+                  </p>
+                  <p className="liga-notificaciones__empty-copy">
+                    {paginaHistorialDatos.totalPeriodo === 0
+                      ? "Navega a otro mes para consultar envíos anteriores o programados."
+                      : "Prueba otro nombre de jugador, tipo de comunicación, jornada o filtro de estado."}
+                  </p>
+                  {(filtroHistorial !== "todos" ||
+                    busquedaHistorialAplicada.trim() !== "") && (
+                    <button
+                      type="button"
+                      className="liga-notificaciones__ghost"
+                      onClick={() => {
+                        cambiarFiltroHistorial("todos");
+                        aplicarBusquedaHistorialInmediata("");
+                      }}
+                    >
+                      Limpiar filtros
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="liga-notificaciones__day-groups">
+                  {paginaHistorialDatos.gruposDia.map((grupo) => {
+                    const expandido = Boolean(
+                      diasExpandidosHistorial[grupo.diaClave]
+                    );
+                    return (
+                      <section
+                        key={grupo.diaClave}
+                        className="liga-notificaciones__day-group"
+                        data-dia-clave={grupo.diaClave}
+                      >
+                        <button
+                          type="button"
+                          className="liga-notificaciones__day-header"
+                          aria-expanded={expandido}
+                          onClick={() =>
+                            alternarDiaHistorial(grupo.diaClave, expandido)
+                          }
+                        >
+                          <span className="liga-notificaciones__day-title">
+                            {grupo.etiquetaDia}
+                          </span>
+                          <span className="liga-notificaciones__day-meta">
+                            <span>{grupo.etiquetaConteo}</span>
+                            <span
+                              className="liga-notificaciones__day-chevron"
+                              aria-hidden="true"
+                            >
+                              {expandido ? "▾" : "▸"}
+                            </span>
+                          </span>
+                        </button>
+
+                        {expandido ? (
+                          <div className="liga-notificaciones__day-rows">
+                            {grupo.registros.map((registro) => {
+                              const abierto =
+                                historialDetalleId === registro.claveUnica;
+                              return (
+                                <article
+                                  key={registro.claveUnica}
+                                  className="liga-notificaciones__history-row"
+                                >
+                                  <div className="liga-notificaciones__history-main">
+                                    <p className="liga-notificaciones__nombre">
+                                      {registro.jugadorNombre}
+                                    </p>
+                                    <p className="liga-notificaciones__meta">
+                                      {registro.tipoLabel} ·{" "}
+                                      {registro.origenLabel}
+                                      {registro.jornadaNumero !== null
+                                        ? ` · Jornada ${registro.jornadaNumero}`
+                                        : ""}
+                                      {" · "}
+                                      {registro.fechaEfectiva.etiquetaFecha}
+                                    </p>
+                                  </div>
+                                  <span
+                                    className={`liga-notificaciones__badge liga-notificaciones__badge--${
+                                      registro.tonoEstado === "accepted"
+                                        ? "ready"
+                                        : registro.tonoEstado === "error"
+                                          ? "blocked"
+                                          : "pending"
+                                    }`}
+                                  >
+                                    {registro.estadoBadge}
+                                  </span>
+                                  <span className="liga-notificaciones__history-actions">
+                                    {registro.puedeReintentar &&
+                                    registro.loteId ? (
+                                      <button
+                                        type="button"
+                                        className="liga-notificaciones__ghost"
+                                        disabled={enviandoLote}
+                                        onClick={() =>
+                                          void reintentarLote(registro.loteId!)
+                                        }
+                                      >
+                                        Reintentar
+                                      </button>
+                                    ) : null}
+                                    {registro.puedeBorrar ? (
+                                      <button
+                                        type="button"
+                                        className="liga-notificaciones__ghost"
+                                        disabled={!puedeEscribir || enviandoLote}
+                                        onClick={() =>
+                                          void descartarNoEnviados(
+                                            registro.fuente === "log"
+                                              ? { logId: registro.logId }
+                                              : { queueId: registro.queueId }
+                                          )
+                                        }
+                                      >
+                                        Borrar
+                                      </button>
+                                    ) : null}
+                                    <button
+                                      type="button"
+                                      className="liga-notificaciones__ghost"
+                                      onClick={() =>
+                                        setHistorialDetalleId(
+                                          abierto ? null : registro.claveUnica
+                                        )
+                                      }
+                                    >
+                                      {abierto ? "Ocultar" : "Detalles"}
+                                    </button>
+                                  </span>
+                                  {abierto ? (
+                                    <div className="liga-notificaciones__hint liga-notificaciones__history-detail">
+                                      <p>
+                                        {registro.fuente === "log"
+                                          ? registro.proveedorEstado
+                                            ? `Proveedor: ${registro.proveedorEstado}`
+                                            : motivoVisible(registro.motivo)
+                                          : registro.motivo
+                                            ? motivoVisible(registro.motivo)
+                                            : "Sin envío al proveedor"}{" "}
+                                        · {registro.attempts} intentos
+                                        {typeof registro.procesados === "number"
+                                          ? ` · Procesados ${registro.procesados} · Aceptados ${registro.aceptadosCount ?? 0} · Errores ${registro.erroresCount ?? 0}`
+                                          : ""}
+                                        {registro.reintentosCount
+                                          ? ` · ${registro.reintentosCount} reintentos pendientes`
+                                          : ""}
+                                        {registro.programadoPara
+                                          ? ` · Programado ${presentarInstanteLiga(registro.programadoPara) ?? ""} (Ciudad de México)`
+                                          : ""}
+                                      </p>
+                                      {registro.fuente === "cola" ? (
+                                        registro.queueId &&
+                                        registro.cuerpoTexto ? (
+                                          <button
+                                            type="button"
+                                            className="liga-notificaciones__ghost"
+                                            onClick={() => {
+                                              setProgramadoClave(
+                                                registro.queueId ?? null
+                                              );
+                                              setVistaAuto("programado");
+                                            }}
+                                          >
+                                            VER CORREO PROGRAMADO
+                                          </button>
+                                        ) : (
+                                          <p>
+                                            Este pendiente no tiene el texto
+                                            guardado en la cola.
+                                          </p>
+                                        )
+                                      ) : null}
+                                    </div>
+                                  ) : null}
+                                </article>
+                              );
+                            })}
+                          </div>
+                        ) : null}
+                      </section>
+                    );
+                  })}
+                </div>
+              )}
+
+              {paginaHistorialDatos.hasMore ? (
+                <div className="liga-notificaciones__history-load-more">
+                  <span className="liga-notificaciones__meta">
+                    Mostrando {paginaHistorialDatos.registrosPagina.length} de{" "}
+                    {paginaHistorialDatos.totalFiltrados} comunicaciones
+                  </span>
+                  <button
+                    type="button"
+                    className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
+                    disabled={cargandoPaginaHistorial}
+                    aria-busy={cargandoPaginaHistorial}
+                    onClick={() => setPaginaHistorial((prev) => prev + 1)}
                   >
-                    <div>
-                      <p className="liga-notificaciones__nombre">{jugador}</p>
-                      <p className="liga-notificaciones__meta">
-                        {etiquetaTipoComunicacion(item.tipo)} ·{" "}
-                        {etiquetaOrigenComunicacion(colaItem?.origen, item.tipo)}
-                        {colaItem?.jornada_numero
-                          ? ` · Jornada ${colaItem.jornada_numero}`
-                          : ""}
-                        {" · "}
-                        {enviado
-                          ? `Enviado ${new Date(item.created_at).toLocaleString("es-MX")}`
-                          : `Registrado ${new Date(item.created_at).toLocaleString("es-MX")}`}
-                      </p>
-                    </div>
-                    <p className="liga-notificaciones__meta">{estado}</p>
-                    <span className="liga-notificaciones__badge liga-notificaciones__badge--pending">
-                      {estado}
-                    </span>
-                    <span className="liga-notificaciones__history-actions">
-                      {sePuedeBorrarHistorial(item.estado) ? (
-                        <button
-                          type="button"
-                          className="liga-notificaciones__ghost"
-                          disabled={!puedeEscribir || enviandoLote}
-                          onClick={() =>
-                            void descartarNoEnviados({ logId: item.id })
-                          }
-                        >
-                          Borrar
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="liga-notificaciones__ghost"
-                        onClick={() =>
-                          setHistorialDetalleId(abierto ? null : item.id)
-                        }
-                      >
-                        {abierto ? "Ocultar" : "Detalles"}
-                      </button>
-                    </span>
-                    {abierto ? (
-                      <p className="liga-notificaciones__hint liga-notificaciones__history-detail">
-                        {item.proveedor_estado
-                          ? `Proveedor: ${item.proveedor_estado}`
-                          : motivoVisible(item.motivo)}{" "}
-                        · {item.attempts} intentos
-                        {typeof item.procesados === "number"
-                          ? ` · Procesados ${item.procesados} · Aceptados ${item.aceptados ?? 0} · Errores ${item.errores ?? 0}`
-                          : ""}
-                        {item.reintentos
-                          ? ` · ${item.reintentos} reintentos pendientes`
-                          : ""}
-                        {colaItem?.programado_para
-                          ? ` · Programado ${presentarInstanteLiga(colaItem.programado_para) ?? ""} (Ciudad de México)`
-                          : ""}
-                      </p>
-                    ) : null}
-                  </article>
-                );
-              })}
-              {colaOperativa
-                .filter(
-                  (item) =>
-                    !colaYaMostradaEnHistorial(item, logsOperativos)
-                )
-                .map((item, index) => {
-                const key = `${item.liga_jugador_id}-${item.estado}-${index}`;
-                const jugador =
-                  filas.find((fila) => fila.jugadorId === item.liga_jugador_id)
-                    ?.nombre ?? "Jugador";
-                const abierto = historialDetalleId === key;
-                return (
-                  <article key={key} className="liga-notificaciones__history-row">
-                    <div>
-                      <p className="liga-notificaciones__nombre">{jugador}</p>
-                      <p className="liga-notificaciones__meta">
-                        {etiquetaTipoComunicacion(item.tipo)} ·{" "}
-                        {etiquetaOrigenComunicacion(item.origen, item.tipo)}
-                        {item.jornada_numero ? ` · Jornada ${item.jornada_numero}` : ""}
-                        {item.programado_para
-                          ? ` · Programado ${presentarInstanteLiga(item.programado_para) ?? ""} (Ciudad de México)`
-                          : ""}
-                        {item.processed_at && item.estado === "enviado"
-                          ? ` · Enviado ${new Date(item.processed_at).toLocaleString("es-MX")}`
-                          : ""}
-                      </p>
-                    </div>
-                    <p className="liga-notificaciones__meta">
-                      {etiquetaEntrega(item.estado, null, item.motivo)}
-                    </p>
-                    <span className="liga-notificaciones__badge liga-notificaciones__badge--pending">
-                      {etiquetaEntrega(item.estado, null, item.motivo)}
-                    </span>
-                    <span className="liga-notificaciones__history-actions">
-                      {(item.estado === "error" || item.estado === "pendiente") &&
-                      item.lote_id ? (
-                        <button
-                          type="button"
-                          className="liga-notificaciones__ghost"
-                          disabled={enviandoLote}
-                          onClick={() => void reintentarLote(item.lote_id!)}
-                        >
-                          Reintentar
-                        </button>
-                      ) : null}
-                      {item.id && sePuedeBorrarHistorial(item.estado) ? (
-                        <button
-                          type="button"
-                          className="liga-notificaciones__ghost"
-                          disabled={!puedeEscribir || enviandoLote}
-                          onClick={() =>
-                            void descartarNoEnviados({ queueId: item.id })
-                          }
-                        >
-                          Borrar
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="liga-notificaciones__ghost"
-                        onClick={() =>
-                          setHistorialDetalleId(abierto ? null : key)
-                        }
-                      >
-                        {abierto ? "Ocultar" : "Detalles"}
-                      </button>
-                    </span>
-                    {abierto ? (
-                      <div className="liga-notificaciones__hint liga-notificaciones__history-detail">
-                        <p>
-                          {item.motivo
-                            ? motivoVisible(item.motivo)
-                            : "Sin envío al proveedor"}{" "}
-                          · {item.attempts} intentos
-                          {item.programado_para
-                            ? ` · Programado ${presentarInstanteLiga(item.programado_para)} (Ciudad de México)`
-                            : ""}
-                        </p>
-                        {item.id && item.cuerpo_texto ? (
-                          <button
-                            type="button"
-                            className="liga-notificaciones__ghost"
-                            onClick={() => {
-                              setProgramadoClave(item.id ?? null);
-                              setVistaAuto("programado");
-                            }}
-                          >
-                            VER CORREO PROGRAMADO
-                          </button>
-                        ) : (
-                          <p>Este pendiente no tiene el texto guardado en la cola.</p>
-                        )}
-                      </div>
-                    ) : null}
-                  </article>
-                );
-              })}
+                    {cargandoPaginaHistorial ? "CARGANDO…" : "CARGAR MÁS"}
+                  </button>
+                </div>
+              ) : null}
             </div>
           )}
           <aside

@@ -26,9 +26,12 @@ jest.mock("../../club-experience/ClubExperienceContext", () => ({
 const mockCargar = jest.fn();
 const mockContacto = jest.fn();
 const mockHabilitar = jest.fn();
+const mockConsultarPeriodo = jest.fn();
 
 jest.mock("../../services/ligaNotificacionesService", () => ({
   cargarNotificacionesLiga: (...args: unknown[]) => mockCargar(...args),
+  consultarHistorialPeriodoLiga: (...args: unknown[]) =>
+    mockConsultarPeriodo(...args),
   cargarContactoInscritosLiga: (...args: unknown[]) => mockContacto(...args),
   establecerHabilitacionJugador: (...args: unknown[]) => mockHabilitar(...args),
   establecerCorreoVerificado: jest.fn().mockResolvedValue({
@@ -111,6 +114,8 @@ describe("LigaNotificacionesPanel", () => {
     })) as unknown as typeof window.matchMedia;
     mockHabilitar.mockResolvedValue({ ok: true, motivo: null });
     mockContacto.mockResolvedValue([]);
+    mockConsultarPeriodo.mockReset();
+    mockConsultarPeriodo.mockResolvedValue(null);
     mockCargar.mockResolvedValue({
       disponible: true,
       escriturasActivas: true,
@@ -1662,5 +1667,388 @@ describe("LigaNotificacionesPanel", () => {
       "#asunto-correo"
     ) as HTMLInputElement;
     expect(asuntoOtraVez.value).toBe("Aviso de la semana");
+  });
+
+  it("Historial: muestra mes actual, resumen del período, agrupa por día (CDMX) y permite abrir/cerrar días y navegar meses/años", async () => {
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: true,
+      preferencias: [],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [
+        {
+          id: "log-dia-10",
+          liga_jugador_id: "jug-1",
+          tipo: "bienvenida",
+          estado: "enviado",
+          attempts: 1,
+          motivo: null,
+          proveedor_estado: "aceptado",
+          created_at: "2026-11-10T18:00:00.000Z", // Martes 10 nov CDMX
+        },
+        {
+          id: "log-dia-08",
+          liga_jugador_id: "jug-1",
+          tipo: "jornada",
+          jornada_numero: 2,
+          estado: "error",
+          attempts: 2,
+          motivo: "error_proveedor",
+          proveedor_estado: null,
+          created_at: "2026-11-08T18:00:00.000Z", // Domingo 8 nov CDMX
+        },
+      ],
+      cola: [
+        {
+          id: "cola-prog-10",
+          liga_jugador_id: "jug-1",
+          tipo: "recordatorio_jornada",
+          origen: "automatico",
+          jornada_numero: 2,
+          estado: "pendiente",
+          attempts: 0,
+          motivo: null,
+          programado_para: "2026-11-10T23:00:00.000Z", // Martes 10 nov CDMX
+        },
+      ],
+      verificaciones: [],
+    });
+
+    await renderPanel();
+    const tabHistorial = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Historial"
+    );
+    await act(async () => {
+      tabHistorial?.click();
+      await Promise.resolve();
+    });
+
+    // 1. Muestra el período actual y resumen superior
+    const periodoLabel = container.querySelector(
+      '[data-testid="historial-periodo-label"]'
+    );
+    expect(periodoLabel?.textContent).toBe("NOVIEMBRE 2026");
+
+    const resumen = container.querySelector(
+      '[data-testid="historial-resumen-periodo"]'
+    );
+    expect(resumen?.textContent).toContain("1ACEPTADOS");
+    expect(resumen?.textContent).toContain("1PENDIENTES");
+    expect(resumen?.textContent).toContain("1ERRORES");
+
+    // 2. Día más reciente (10 de noviembre) expandido por defecto; día anterior (8 de noviembre) contraído
+    const headersDias = Array.from(
+      container.querySelectorAll(".liga-notificaciones__day-header")
+    ) as HTMLButtonElement[];
+    expect(headersDias).toHaveLength(2);
+    expect(headersDias[0].textContent).toContain("MARTES 10 DE NOVIEMBRE");
+    expect(headersDias[0].textContent).toContain("2 comunicaciones");
+    expect(headersDias[0].getAttribute("aria-expanded")).toBe("true");
+    expect(headersDias[1].textContent).toContain("DOMINGO 8 DE NOVIEMBRE");
+    expect(headersDias[1].textContent).toContain("1 comunicación");
+    expect(headersDias[1].getAttribute("aria-expanded")).toBe("false");
+
+    // Solo se renderizan las 2 filas del día expandido (10 de noviembre)
+    const filasIniciales = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
+    expect(filasIniciales).toHaveLength(2);
+
+    // 3. Abrir manualmente el día 8 de noviembre y cerrar el 10 de noviembre
+    await act(async () => {
+      headersDias[1].click();
+      headersDias[0].click();
+    });
+    expect(headersDias[0].getAttribute("aria-expanded")).toBe("false");
+    expect(headersDias[1].getAttribute("aria-expanded")).toBe("true");
+    const filasTrasToggle = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
+    expect(filasTrasToggle).toHaveLength(1);
+    expect(filasTrasToggle[0].textContent).toContain("Jornada 2");
+
+    // 4. Navegación de mes y cambio de año (Noviembre 2026 → Diciembre 2026 → Enero 2027)
+    const btnSiguiente = container.querySelector(
+      'button[aria-label="Mes siguiente"]'
+    ) as HTMLButtonElement;
+    await act(async () => {
+      btnSiguiente.click();
+    });
+    expect(periodoLabel?.textContent).toBe("DICIEMBRE 2026");
+    await act(async () => {
+      btnSiguiente.click();
+    });
+    expect(periodoLabel?.textContent).toBe("ENERO 2027");
+  });
+
+  it("Historial: filtra por estado (ACEPTADOS, PENDIENTES, ERRORES, PRUEBAS) y busca por jugador, tipo y jornada", async () => {
+    const ids = ["jug-1", "jug-2"];
+    const nombres = ["Saúl Moreno de la Torre del Valle", "Axel A"];
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: true,
+      preferencias: [],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: [
+        {
+          id: "log-aceptado",
+          liga_jugador_id: "jug-1",
+          tipo: "bienvenida",
+          estado: "enviado",
+          attempts: 1,
+          motivo: null,
+          proveedor_estado: "aceptado",
+          created_at: "2026-11-10T18:00:00.000Z",
+        },
+        {
+          id: "log-error",
+          liga_jugador_id: "jug-2",
+          tipo: "resultados_jornada",
+          jornada_numero: 3,
+          estado: "error",
+          attempts: 2,
+          motivo: "error_proveedor",
+          proveedor_estado: null,
+          created_at: "2026-11-10T18:10:00.000Z",
+        },
+        {
+          id: "log-prueba",
+          liga_jugador_id: null,
+          tipo: "prueba",
+          estado: "enviado",
+          attempts: 1,
+          motivo: null,
+          proveedor_estado: "aceptado",
+          created_at: "2026-11-10T18:20:00.000Z",
+        },
+      ],
+      cola: [
+        {
+          id: "cola-pend",
+          liga_jugador_id: "jug-2",
+          tipo: "recordatorio_jornada",
+          origen: "automatico",
+          jornada_numero: 2,
+          estado: "pendiente",
+          attempts: 0,
+          motivo: null,
+          programado_para: "2026-11-10T22:00:00.000Z",
+        },
+      ],
+      verificaciones: [],
+    });
+
+    await act(async () => {
+      root.render(
+        <LigaNotificacionesPanel
+          ligaId="liga-1"
+          ligaNombre="Liga Nocturna"
+          inscripciones={ids.map((id, idx) => ({
+            id: `ins-${idx}`,
+            liga_id: "liga-1",
+            jugador_id: id,
+            puntos: 0,
+          }))}
+          equipos={[]}
+          pool={ids.map((id, idx) => ({
+            ...pool[0],
+            id,
+            nombre: nombres[idx],
+            email: `j${idx}@example.com`,
+          }))}
+          sustituciones={[]}
+        />
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const tabHistorial = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Historial"
+    );
+    await act(async () => {
+      tabHistorial?.click();
+    });
+
+    const clickChip = async (label: string) => {
+      const chip = Array.from(container.querySelectorAll("button")).find(
+        (b) => b.textContent === label
+      );
+      await act(async () => {
+        chip?.click();
+      });
+    };
+
+    await clickChip("ACEPTADOS");
+    let filas = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
+    expect(filas).toHaveLength(1);
+    expect(filas[0].textContent).toContain("Saúl Moreno");
+
+    await clickChip("PENDIENTES");
+    filas = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
+    expect(filas).toHaveLength(1);
+    expect(filas[0].textContent).toContain("Axel A");
+    expect(filas[0].textContent).toContain("Programado");
+
+    await clickChip("ERRORES");
+    filas = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
+    expect(filas).toHaveLength(1);
+    expect(filas[0].textContent).toContain("Resultados de jornada");
+
+    await clickChip("PRUEBAS");
+    filas = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
+    expect(filas).toHaveLength(1);
+    expect(filas[0].textContent).toContain("Prueba enviada");
+
+    await clickChip("TODOS");
+    const inputBusqueda = container.querySelector(
+      'input[aria-label="BUSCAR JUGADOR O COMUNICACIÓN"]'
+    ) as HTMLInputElement;
+    const setValor = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value"
+    )?.set;
+
+    await act(async () => {
+      setValor?.call(inputBusqueda, "Jornada 2");
+      inputBusqueda.dispatchEvent(new Event("input", { bubbles: true }));
+      inputBusqueda.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
+      );
+    });
+    filas = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
+    expect(filas).toHaveLength(1);
+    expect(filas[0].textContent).toContain("Jornada 2");
+  });
+
+  it("Historial: soporta 1,000 registros con paginación CARGAR MÁS de 20 en 20 y descarta respuestas obsoletas al cambiar filtros rápido", async () => {
+    const logsMasivos = Array.from({ length: 1000 }, (_, i) => ({
+      id: `log-1000-${String(i).padStart(4, "0")}`,
+      liga_jugador_id: "jug-1",
+      tipo: "bienvenida",
+      estado: "enviado",
+      attempts: 1,
+      motivo: null,
+      proveedor_estado: "aceptado",
+      created_at: `2026-11-10T${String(10 + (i % 10)).padStart(2, "0")}:${String(
+        i % 60
+      ).padStart(2, "0")}:00.000Z`,
+    }));
+
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: true,
+      preferencias: [],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      historial: logsMasivos,
+      cola: [],
+      verificaciones: [],
+    });
+
+    await renderPanel();
+    const tabHistorial = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Historial"
+    );
+    await act(async () => {
+      tabHistorial?.click();
+    });
+
+    // Solo 20 filas en la primera página, pero el resumen muestra 1000 aceptados
+    let filas = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
+    expect(filas).toHaveLength(20);
+    expect(
+      container.querySelector('[data-testid="historial-resumen-periodo"]')
+        ?.textContent
+    ).toContain("1000ACEPTADOS");
+    expect(container.textContent).toContain("Mostrando 20 de 1000 comunicaciones");
+
+    const cargarMas = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "CARGAR MÁS"
+    );
+    expect(cargarMas).toBeTruthy();
+
+    await act(async () => {
+      cargarMas?.click();
+    });
+    filas = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
+    expect(filas).toHaveLength(40);
+    expect(container.textContent).toContain("Mostrando 40 de 1000 comunicaciones");
+
+    // Simular respuesta lenta obsoleta de consultarHistorialPeriodoLiga tras cambio rápido de filtro
+    let resolverObsoleta: ((val: unknown) => void) | null = null;
+    mockConsultarPeriodo.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolverObsoleta = resolve;
+        })
+    );
+
+    const chipErrores = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent === "ERRORES"
+    );
+    const chipAceptados = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent === "ACEPTADOS"
+    );
+    await act(async () => {
+      chipErrores?.click();
+    });
+    await act(async () => {
+      chipAceptados?.click();
+    });
+
+    // Al resolver tarde la petición obsoleta de ERRORES, no debe sobrescribir ACEPTADOS
+    await act(async () => {
+      resolverObsoleta?.({
+        ok: true,
+        errorCarga: null,
+        logs: [],
+        cola: [],
+        pagina: {
+          registrosPagina: [],
+          gruposDia: [],
+          resumenPeriodo: { aceptados: 0, pendientes: 0, errores: 0, pruebas: 0 },
+          totalPeriodo: 0,
+          totalFiltrados: 0,
+          hasMore: false,
+          page: 0,
+          pageSize: 20,
+        },
+      });
+      await Promise.resolve();
+    });
+
+    filas = container.querySelectorAll(
+      '[data-historial-seccion="comunicaciones"] .liga-notificaciones__history-row'
+    );
+    expect(filas).toHaveLength(20);
   });
 });

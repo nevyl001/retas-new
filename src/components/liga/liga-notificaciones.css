@@ -1079,17 +1079,186 @@
   border-top: 0.5px solid var(--liga-border-subtle, var(--liga-border, var(--ro-border)));
 }
 
+.liga-notificaciones__history-period-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 12px 16px;
+  border: 0.5px solid var(--liga-border, var(--ro-border));
+  border-radius: var(--liga-radius-md, 12px);
+  background: color-mix(
+    in srgb,
+    var(--liga-surface, var(--ro-surface, #121212)) 90%,
+    transparent
+  );
+}
+
+.liga-notificaciones__period-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.liga-notificaciones__period-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0.5px solid var(--liga-border, var(--ro-border));
+  border-radius: 8px;
+  background: transparent;
+  color: var(--liga-text, var(--ro-text-primary));
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color var(--ln-ease), background var(--ln-ease);
+}
+
+.liga-notificaciones__period-nav:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--ln-accent) 45%, var(--liga-border, var(--ro-border)));
+  background: color-mix(in srgb, #fff 5%, transparent);
+}
+
+.liga-notificaciones__period-label {
+  min-width: 152px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--liga-text, var(--ro-text-primary));
+}
+
+.liga-notificaciones__period-today {
+  margin-left: 4px;
+  font-size: 12px;
+}
+
+.liga-notificaciones__period-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+}
+
+.liga-notificaciones__period-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.liga-notificaciones__period-stat-value {
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--liga-text, var(--ro-text-primary));
+}
+
+.liga-notificaciones__period-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--liga-text-muted, var(--ro-text-muted));
+}
+
+.liga-notificaciones__history-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
+}
+
+.liga-notificaciones__history-search {
+  flex: 1 1 280px;
+}
+
+.liga-notificaciones__day-groups {
+  display: flex;
+  flex-direction: column;
+}
+
+.liga-notificaciones__day-group {
+  border-top: 0.5px solid var(--liga-border-subtle, var(--liga-border));
+}
+
+.liga-notificaciones__day-group:first-child {
+  border-top: 0;
+}
+
+.liga-notificaciones__day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 16px;
+  border: 0;
+  background: color-mix(in srgb, #fff 2.5%, transparent);
+  color: var(--liga-text, var(--ro-text-primary));
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--ln-ease);
+}
+
+.liga-notificaciones__day-header:hover {
+  background: color-mix(in srgb, #fff 5%, transparent);
+}
+
+.liga-notificaciones__day-header[aria-expanded="true"] {
+  border-bottom: 0.5px solid var(--liga-border-subtle, var(--liga-border));
+}
+
+.liga-notificaciones__day-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--liga-text, var(--ro-text-primary));
+}
+
+.liga-notificaciones__day-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--liga-text-muted, var(--ro-text-muted));
+}
+
+.liga-notificaciones__day-chevron {
+  font-size: 12px;
+  color: var(--ln-accent, var(--brand-accent, #c9a227));
+}
+
+.liga-notificaciones__day-rows {
+  display: flex;
+  flex-direction: column;
+}
+
 .liga-notificaciones__history-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 10px 16px;
   align-items: center;
-  padding: 14px 16px;
+  padding: 13px 16px;
   border-bottom: 0.5px solid var(--liga-border-subtle, var(--liga-border));
 }
 
 .liga-notificaciones__history-row:last-child {
   border-bottom: 0;
+}
+
+.liga-notificaciones__history-main {
+  min-width: 0;
 }
 
 .liga-notificaciones__history-detail {
@@ -1098,14 +1267,35 @@
 
 .liga-notificaciones__history-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  padding: 8px 16px 0;
+  padding: 10px 16px;
+  border-bottom: 0.5px solid var(--liga-border-subtle, var(--liga-border));
 }
 
 .liga-notificaciones__history-toolbar .liga-notificaciones__meta {
   margin-right: auto;
+}
+
+.liga-notificaciones__history-empty-filter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 20px 16px;
+}
+
+.liga-notificaciones__history-load-more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 0.5px solid var(--liga-border-subtle, var(--liga-border));
+  background: color-mix(in srgb, #fff 1.5%, transparent);
 }
 
 .liga-notificaciones__jornada-fields {
@@ -1270,6 +1460,39 @@
 
   .liga-notificaciones__drawer {
     width: 100%;
+  }
+
+  .liga-notificaciones__history-period-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .liga-notificaciones__period-selector {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .liga-notificaciones__period-summary {
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 0.5px solid var(--liga-border-subtle, var(--liga-border));
+  }
+
+  .liga-notificaciones__history-row {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .liga-notificaciones__history-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .liga-notificaciones__history-load-more {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
