@@ -554,7 +554,7 @@ describe("LigaNotificacionesPanel", () => {
     });
     expect(mockEncolar).toHaveBeenCalledTimes(1);
     expect(mockEncolar.mock.calls[0][0].jugadorId).toBe("jug-1");
-    expect(container.textContent).toContain("Pendiente de procesamiento");
+    expect(container.textContent).toContain("El envío real estaba apagado");
     expect(container.textContent).not.toContain("Correo enviado");
   });
 
@@ -825,7 +825,7 @@ describe("LigaNotificacionesPanel", () => {
     expect(new Set(jugadores).size).toBe(3);
     const lotes = new Set(mockEncolar.mock.calls.map((call) => call[0].loteId));
     expect(lotes.size).toBe(1);
-    expect(container.textContent).toContain("Pendiente de procesamiento");
+    expect(container.textContent).toContain("El envío real estaba apagado");
     expect(container.textContent).not.toContain("Correo enviado");
     expect(container.textContent).not.toContain("Procesando…");
   });

@@ -335,7 +335,7 @@ function mensajeResultadoEnvio(
     return "Correo preparado, pero no se pudo completar el procesamiento. Revisa Historial.";
   }
   if (!proceso.enviosReales) {
-    return `En cola para ${jugadores}. Pendiente de procesamiento. No se entregó.`;
+    return `En cola para ${jugadores}. El envío real estaba apagado, así que no se entregó. Reactívalo e inténtalo de nuevo desde Historial.`;
   }
   const aceptados = proceso.enviados;
   const pendientes = proceso.pendientes ?? proceso.fueraAllowlist ?? 0;
@@ -1170,6 +1170,15 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       setEnvioSeleccion({});
       confirmar(mensajeResultadoEnvio(preparados, proceso));
       setArea("historial");
+      return;
+    }
+    if (preparados > 0 && proceso && proceso.enviosReales !== true) {
+      setArea("historial");
+      confirmar(
+        fallidos > 0
+          ? `${mensajeResultadoEnvio(preparados, proceso)} ${fallidos} no se encolaron: ${motivoVisible(ultimoMotivo)}.`
+          : mensajeResultadoEnvio(preparados, proceso)
+      );
       return;
     }
     confirmar(
@@ -2619,7 +2628,8 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                       {etiquetaEntrega(item.estado, null, item.motivo)}
                     </span>
                     <span className="liga-notificaciones__history-actions">
-                      {item.estado === "error" && item.lote_id ? (
+                      {(item.estado === "error" || item.estado === "pendiente") &&
+                      item.lote_id ? (
                         <button
                           type="button"
                           className="liga-notificaciones__ghost"
