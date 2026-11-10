@@ -17,7 +17,7 @@ Deno.test("1. Render con club con branding completo (Hack Pádel)", () => {
 
   assertEquals(branding.isClubBranded, true);
   assertEquals(branding.brandSupportLabel, "by Riviera Open");
-  assertEquals(branding.brandAccentColor, "#BFFF00");
+  assertEquals(branding.brandAccentColor, "#bfff00");
   assertStringIncludes(branding.brandLogoUrl ?? "", "brands/hack-padel/logo-transparent.png");
 
   const mail = renderBienvenidaWorker({
@@ -34,11 +34,11 @@ Deno.test("1. Render con club con branding completo (Hack Pádel)", () => {
   assertStringIncludes(mail.html, "by Riviera Open");
   assertStringIncludes(mail.html, "Liga 5ta Advance");
   assertStringIncludes(mail.html, "Edgardo T");
-  assertStringIncludes(mail.html, "#BFFF00");
+  assertStringIncludes(mail.html, "#bfff00");
   assertStringIncludes(mail.html, "VER MI PERFIL");
-  assertStringIncludes(mail.html, "Enviado por Hack Pádel");
+  assertStringIncludes(mail.html, "Enviado por Hack Padel");
   assertStringIncludes(mail.html, "Gestionado con Riviera Open");
-  assertStringIncludes(mail.text, "Hack Pádel");
+  assertStringIncludes(mail.text, "Hack Padel");
 });
 
 Deno.test("2. Render con club sin logo (monograma y badge sobrio)", () => {

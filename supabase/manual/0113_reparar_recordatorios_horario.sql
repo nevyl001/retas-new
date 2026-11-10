@@ -40,6 +40,20 @@ WHERE j.numero = 2
   AND j.fecha = DATE '2026-11-11'
 GROUP BY j.id, j.numero, j.estado, j.fecha, j.liga_id;
 
+-- Respaldo, antes de la reparación y fuera del repositorio.
+-- No guarda correos ni nombres. Sirve para comprobar que ninguna fila
+-- fue aceptada por el proveedor y para restaurar texto y programación.
+--
+-- SELECT q.id, q.idempotency_key, q.liga_jugador_id, q.estado, q.motivo,
+--        q.programado_para, q.asunto, q.cuerpo_texto, q.attempts, q.processed_at
+-- FROM public.liga_notificaciones_queue q
+-- JOIN public.liga_jornadas j ON j.id = q.jornada_id
+-- WHERE j.numero = 2
+--   AND j.fecha = DATE '2026-11-11'
+--   AND q.tipo = 'recordatorio_jornada'
+--   AND q.origen = 'automatico'
+--   AND q.estado IN ('pendiente', 'omitido');
+--
 -- NO EJECUTAR. Después de aplicar 0113 y de confirmar que hora_ronda_1
 -- es 21:00 y horas_distintas es 1, esto regenera solo pendiente/omitido
 -- de esa jornada. Conserva la clave de idempotencia. No toca enviados.

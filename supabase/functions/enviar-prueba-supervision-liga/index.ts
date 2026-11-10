@@ -1,7 +1,6 @@
 /**
  * Envía un solo correo de prueba al correo de supervisión ya verificado.
- * Si los envíos reales están apagados, no reserva cupo, no escribe historial
- * y no llama a Resend.
+ * Usa LIGA_NOTIFICACIONES_PRUEBA_SUPERVISION. No lee ni habilita la cola de jugadores.
  */
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { sendByResend } from "../_shared/resendEmail.ts";
@@ -10,11 +9,27 @@ import {
   readPublishableCredential,
   readSecretCredential,
 } from "../_shared/supabaseCredentials.ts";
+import {
+  autorizarPruebaSupervision,
+  brandingNeutro,
+  prepararPruebaSupervision,
+} from "../../../src/lib/liga/notificaciones/correoCompartido.ts";
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ASUNTO = "[PRUEBA] AppRiviera — Notificación de jornada";
 const AVISO = "ESTE ES UN CORREO DE PRUEBA. NO CORRESPONDE A UNA NOTIFICACIÓN OFICIAL.";
+const DESTINO_PROHIBIDO = ["email", "to", "destinatario", "destinatarios", "liga_jugador_id"];
+
+type PlantillaPrueba = {
+  asunto?: string;
+  cuerpo?: string;
+  tipo?: string;
+  liga_nombre?: string;
+  club_nombre?: string;
+  liga_url?: string;
+  jornada_url?: string;
+};
 
 function json(req: Request, status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), {
@@ -32,17 +47,45 @@ Deno.serve(async (req) => {
   if (!authHeader.startsWith("Bearer ")) {
     return json(req, 401, { ok: false, error: "sesion_requerida" });
   }
-  let body: { liga_id?: string };
+  let body: { liga_id?: string; plantilla?: PlantillaPrueba; confirmar?: boolean };
   try {
     body = await req.json();
   } catch {
     return json(req, 400, { ok: false, error: "cuerpo_invalido" });
   }
+  if (DESTINO_PROHIBIDO.some((clave) => Object.prototype.hasOwnProperty.call(body, clave))) {
+    return json(req, 400, { ok: false, error: "destino_no_permitido" });
+  }
   const ligaId = body.liga_id?.trim() ?? "";
   if (!UUID.test(ligaId)) return json(req, 400, { ok: false, error: "liga_invalida" });
+  const plantilla = body.plantilla;
+  let preparado: ReturnType<typeof prepararPruebaSupervision> | null = null;
+  if (plantilla) {
+    preparado = prepararPruebaSupervision({
+      asunto: String(plantilla.asunto ?? ""),
+      cuerpo: String(plantilla.cuerpo ?? ""),
+      tipo: plantilla.tipo,
+      clubNombre: String(plantilla.club_nombre ?? ""),
+      ligaNombre: String(plantilla.liga_nombre ?? ""),
+      branding: brandingNeutro(String(plantilla.club_nombre ?? "")),
+      ligaUrl: plantilla.liga_url,
+      jornadaUrl: plantilla.jornada_url,
+    });
+  }
 
-  if (Deno.env.get("LIGA_NOTIFICACIONES_ENVIOS_REALES") !== "true") {
-    return json(req, 200, { ok: true, enviosReales: false, motivo: "envios_apagados" });
+  const puerta = autorizarPruebaSupervision({
+    pruebaHabilitada: Deno.env.get("LIGA_NOTIFICACIONES_PRUEBA_SUPERVISION") === "true",
+    admin: true,
+    confirmada: body.confirmar === true,
+    verificada: true,
+    enviosEnLaUltimaHora: 0,
+  });
+  if (!puerta.ok && (puerta.motivo === "prueba_apagada" || puerta.motivo === "confirmacion_requerida")) {
+    return json(req, 200, {
+      ok: false,
+      enviosReales: false,
+      motivo: puerta.motivo,
+    });
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -81,6 +124,9 @@ Deno.serve(async (req) => {
   if (!((Deno.env.get("RESEND_API_KEY") ?? "").startsWith("re_"))) {
     return json(req, 503, { ok: false, error: "resend_no_configurado" });
   }
+  if (preparado && preparado.ok === false) {
+    return json(req, 200, { ok: false, enviosReales: true, motivo: preparado.motivo });
+  }
   const admin = createCredentialClient(supabaseUrl, credencial);
   const { data, error } = await admin.rpc(
     "liga_notificaciones_reservar_prueba_supervision",
@@ -94,8 +140,7 @@ Deno.serve(async (req) => {
       motivo: reserva.motivo || "correo_sin_verificacion",
     });
   }
-
-  const texto = [
+  const ficticio = [
     AVISO,
     "Liga de ejemplo",
     "Club de ejemplo",
@@ -109,9 +154,11 @@ Deno.serve(async (req) => {
   const clave = `prueba:${ligaId}:${crypto.randomUUID()}`;
   const send = await sendByResend(
     reserva.email,
-    ASUNTO,
-    texto,
-    `<p>${AVISO}</p><p>Liga de ejemplo<br />Club de ejemplo<br />Jornada de ejemplo</p><p><a href="https://appriviera.rivieraopen.com/">DEMOSTRACIÓN</a></p>`,
+    preparado?.ok ? preparado.asunto : ASUNTO,
+    preparado?.ok ? preparado.text : ficticio,
+    preparado?.ok
+      ? preparado.html
+      : `<p>${AVISO}</p><p>Liga de ejemplo<br />Club de ejemplo<br />Jornada de ejemplo</p><p><a href="https://appriviera.rivieraopen.com/">DEMOSTRACIÓN</a></p>`,
     { function: "enviar-prueba-supervision-liga", tipo: "prueba" },
     clave,
     null,

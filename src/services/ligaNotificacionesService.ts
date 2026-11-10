@@ -1112,10 +1112,11 @@ export async function guardarSupervisionLiga(input: {
 
 async function invocarSupervision(
   funcion: string,
-  ligaId: string
+  ligaId: string,
+  extra?: Record<string, unknown>
 ): Promise<ResultadoNotificacion & { enviosReales: boolean }> {
   const { data, error } = await supabase.functions.invoke(funcion, {
-    body: { liga_id: ligaId },
+    body: { liga_id: ligaId, ...extra },
   });
   if (error) {
     aviso("no_disponible");
@@ -1133,8 +1134,25 @@ export function solicitarVerificacionSupervision(ligaId: string) {
   return invocarSupervision("enviar-verificacion-supervision-liga", ligaId);
 }
 
-export function enviarPruebaSupervision(ligaId: string) {
-  return invocarSupervision("enviar-prueba-supervision-liga", ligaId);
+export function enviarPruebaSupervision(
+  ligaId: string,
+  pedido?: {
+    confirmar?: boolean;
+    plantilla?: {
+      asunto: string;
+      cuerpo: string;
+      tipo?: string;
+      liga_nombre?: string;
+      club_nombre?: string;
+      liga_url?: string;
+      jornada_url?: string;
+    };
+  }
+) {
+  return invocarSupervision("enviar-prueba-supervision-liga", ligaId, {
+    confirmar: pedido?.confirmar === true,
+    ...(pedido?.plantilla ? { plantilla: pedido.plantilla } : {}),
+  });
 }
 
 export async function confirmarSupervisionCorreo(

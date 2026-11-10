@@ -20,7 +20,7 @@ export interface LigaMailBranding {
 
 export const RIVIERA_DEFAULT_MAIL_BRANDING: LigaMailBranding = {
   brandName: RIVIERA_PRODUCT_NAME,
-  brandLogoUrl: `${getRivieraAppPublicBase()}/logo-riviera.png`,
+      brandLogoUrl: `${getRivieraAppPublicBase()}/logo-riviera.png`,
   brandPrimaryColor: "#15191F",
   brandSecondaryColor: "#232830",
   brandAccentColor: "#BFFF00",
@@ -41,11 +41,11 @@ export function getClubInitials(name: string): string {
     .join("");
 }
 
-export function logoSeguro(url: string | null | undefined): string | null {
+export function logoSeguro(url: string | null | undefined, baseUrl?: string | null): string | null {
   if (!url?.trim()) return null;
   const trimmed = url.trim();
   if (trimmed.startsWith("/")) {
-    const base = getRivieraAppPublicBase().replace(/\/+$/, "");
+    const base = (baseUrl?.trim() || getRivieraAppPublicBase()).replace(/\/+$/, "");
     return `${base}${trimmed}`;
   }
   try {
@@ -70,20 +70,28 @@ export function resolveLigaMailBranding(options: {
   logoUrl?: string | null;
   acentoHex?: string | null;
   manifest?: BrandManifest | null;
+  appBaseUrl?: string | null;
 }): LigaMailBranding {
   const manifest = options.manifest;
   const clubNombre = options.clubNombre?.trim() || manifest?.displayName?.trim() || RIVIERA_PRODUCT_NAME;
   const isRiviera = isRivieraOwnAccountName(clubNombre);
 
   if (isRiviera) {
+    const base = (options.appBaseUrl?.trim() || getRivieraAppPublicBase()).replace(/\/+$/, "");
     return {
       ...RIVIERA_DEFAULT_MAIL_BRANDING,
+      brandLogoUrl: `${base}/logo-riviera.png`,
       brandAccentColor: hexSeguro(options.acentoHex, RIVIERA_DEFAULT_MAIL_BRANDING.brandAccentColor),
     };
   }
 
-  const rawLogo = options.logoUrl || manifest?.logos?.light || manifest?.logos?.dark || null;
-  const brandLogoUrl = logoSeguro(rawLogo);
+  const rawLogo =
+    options.logoUrl ||
+    manifest?.logos?.dark ||
+    manifest?.logos?.light ||
+    manifest?.logos?.square ||
+    null;
+  const brandLogoUrl = logoSeguro(rawLogo, options.appBaseUrl);
 
   const primary = hexSeguro(manifest?.colors?.primary, "#15191F");
   const secondary = hexSeguro(manifest?.colors?.secondary, "#232830");

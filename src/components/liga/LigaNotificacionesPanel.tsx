@@ -1653,9 +1653,8 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         cuerpo: fila.cuerpo_texto?.trim() || "",
         vistaPrevia: true,
         branding: mailBranding,
-        tipo: fila.tipo === "bienvenida" ? "bienvenida" : "jornada",
+        tipo: fila.tipo,
         ligaUrl: `${origen}/public/liga/${ligaId}`,
-        jornadaUrl: oficial?.urlPublica ? `${origen}${oficial.urlPublica}` : null,
       });
       notas.push(
         `Destinatario de ejemplo: ${nombre}.`,
@@ -1740,7 +1739,14 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       cuerpo,
       vistaPrevia: true,
       branding: mailBranding,
-      tipo: vistaAuto === "bienvenida" ? "bienvenida" : "jornada",
+      tipo:
+        vistaAuto === "bienvenida"
+          ? "bienvenida"
+          : vistaAuto === "resultados"
+            ? "resultados_jornada"
+            : vistaAuto === "recordatorio"
+              ? "recordatorio_jornada"
+              : "jornada",
       fecha: vistaAuto === "bienvenida" ? null : datos?.fechaLegible,
       horario: vistaAuto === "bienvenida" ? null : datos?.horarioLegible,
       etiquetaBoton:

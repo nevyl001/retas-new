@@ -1,7 +1,8 @@
 /**
  * Pide el enlace de posesión del correo de supervisión.
- * No envía ni crea el token si los envíos reales están apagados.
- * El token no vuelve en la respuesta.
+ * No crea el token ni escribe si la verificación no está habilitada.
+ * Ese interruptor no abre la cola de jugadores.
+ * El token no vuelve en la respuesta ni se registra en el asunto.
  */
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { sendByResend } from "../_shared/resendEmail.ts";
@@ -10,6 +11,10 @@ import {
   readPublishableCredential,
   readSecretCredential,
 } from "../_shared/supabaseCredentials.ts";
+import {
+  brandingNeutro,
+  renderVerificacionSupervision,
+} from "../../../src/lib/liga/notificaciones/correoCompartido.ts";
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -39,8 +44,8 @@ Deno.serve(async (req) => {
   const ligaId = body.liga_id?.trim() ?? "";
   if (!UUID.test(ligaId)) return json(req, 400, { ok: false, error: "liga_invalida" });
 
-  if (Deno.env.get("LIGA_NOTIFICACIONES_ENVIOS_REALES") !== "true") {
-    return json(req, 200, { ok: true, enviosReales: false, motivo: "envios_apagados" });
+  if (Deno.env.get("LIGA_NOTIFICACIONES_VERIFICACION_SUPERVISION") !== "true") {
+    return json(req, 200, { ok: true, enviosReales: false, motivo: "verificacion_apagada" });
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -60,7 +65,7 @@ Deno.serve(async (req) => {
 
   const { data: liga } = await userClient
     .from("ligas")
-    .select("id, organizador_id")
+    .select("id, organizador_id, nombre")
     .eq("id", ligaId)
     .maybeSingle();
   let permitido = liga?.organizador_id === user.id;
@@ -94,11 +99,21 @@ Deno.serve(async (req) => {
     .trim()
     .replace(/\/+$/, "");
   const enlace = `${base}/public/verificar-correo?s=${resultado.token}`;
+  const correo = renderVerificacionSupervision({
+    branding: brandingNeutro(String(liga?.nombre ?? "")),
+    enlace,
+  });
+  if (!correo) {
+    await admin.rpc("liga_notificaciones_anular_verificacion_supervision", {
+      p_liga_id: ligaId,
+    });
+    return json(req, 200, { ok: false, enviosReales: true, motivo: "enlace_invalido" });
+  }
   const send = await sendByResend(
     resultado.email,
-    "Confirma tu correo de supervisión",
-    `Confirma que este correo puede recibir copias de supervisión de tu liga.\n\n${enlace}\n\nEl enlace caduca en 30 minutos.`,
-    `<p>Confirma que este correo puede recibir copias de supervisión de tu liga.</p><p><a href="${enlace}">CONFIRMAR CORREO DE SUPERVISIÓN</a></p><p>El enlace caduca en 30 minutos.</p>`,
+    correo.asunto,
+    correo.text,
+    correo.html,
     { function: "enviar-verificacion-supervision-liga" },
     `supervision-verificacion:${ligaId}:${crypto.randomUUID()}`,
     null,

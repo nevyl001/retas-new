@@ -7,10 +7,9 @@ import {
   type LigaMailBranding,
   resolveLigaMailBranding,
 } from "./ligaMailBranding";
-import {
-  escapeHtml,
-  renderPremiumEmailHtml,
-} from "./renderPremiumEmailHtml";
+import { extractJornadaDetailsFromText, renderCorreoComunicacion } from "./correoCompartido";
+
+export { extractJornadaDetailsFromText };
 
 export type TipoComunicacionLiga =
   | "bienvenida"
@@ -138,43 +137,7 @@ export function resolverVariablesComunicacion(
     .replace(/\{\{\s*horario\s*\}\}/gi, horarioVal);
 }
 
-export function extractJornadaDetailsFromText(
-  cuerpo: string,
-  fallbackSede?: string
-): {
-  cleanBody: string;
-  jornadaCard: { fecha: string; horario: string; sede: string } | null;
-} {
-  const fechaMatch = cuerpo.match(/^[ \t]*Fecha:[ \t]*(.+)$/im);
-  const horarioMatch = cuerpo.match(/^[ \t]*Horario:[ \t]*(.+)$/im);
-  const sedeMatch = cuerpo.match(/^[ \t]*Sede:[ \t]*(.+)$/im);
-
-  if (!fechaMatch && !horarioMatch) {
-    return { cleanBody: cuerpo, jornadaCard: null };
-  }
-
-  const fecha = fechaMatch ? fechaMatch[1].trim() : "Por definir";
-  const horario = horarioMatch ? horarioMatch[1].trim() : "Por definir";
-  const sede = sedeMatch ? sedeMatch[1].trim() : fallbackSede || "Por definir";
-
-  const cleanBody = cuerpo
-    .replace(/^[ \t]*Fecha:[ \t]*.+$/gim, "")
-    .replace(/^[ \t]*Horario:[ \t]*.+$/gim, "")
-    .replace(/^[ \t]*Sede:[ \t]*.+$/gim, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-
-  return {
-    cleanBody,
-    jornadaCard: {
-      fecha: fecha || "Por definir",
-      horario: horario || "Por definir",
-      sede: sede || "Por definir",
-    },
-  };
-}
-
-/** HTML seguro: texto plano con saltos → párrafos escapados con diseño premium. */
+/** HTML seguro: resuelve variables y usa el mismo generador que el worker. */
 export function renderComunicacionEmail(input: {
   clubNombre: string;
   ligaNombre: string;
@@ -184,13 +147,12 @@ export function renderComunicacionEmail(input: {
   vistaPrevia: boolean;
   branding?: LigaMailBranding;
   replyTo?: string | null;
-  tipo?: TipoComunicacionLiga;
+  tipo?: string | null;
   fecha?: string | null;
   horario?: string | null;
   ligaUrl?: string | null;
   jornadaUrl?: string | null;
   etiquetaBoton?: string | null;
-  maxWidth?: number;
 }): { subject: string; html: string; text: string } {
   const vars: VariablesComunicacion = {
     nombre: input.jugadorNombre.trim() || "Jugador",
@@ -199,93 +161,23 @@ export function renderComunicacionEmail(input: {
     fecha: input.fecha,
     horario: input.horario,
   };
-  const subject = resolverVariablesComunicacion(input.asunto, vars).slice(0, 180);
-  const cuerpoResuelto = resolverVariablesComunicacion(input.cuerpo, vars);
   const branding =
     input.branding ??
     resolveLigaMailBranding({
       clubNombre: vars.club,
     });
-
-  const parsed = extractJornadaDetailsFromText(cuerpoResuelto, vars.club);
-  const esJornada = input.tipo === "jornada" || Boolean(parsed.jornadaCard);
-
-  const paragraphsHtml = parsed.cleanBody
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean)
-    .map((block) => {
-      const lines = escapeHtml(block).replace(/\n/g, "<br />");
-      return `<p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:#374151;">${lines}</p>`;
-    })
-    .join("");
-
-  const reply = input.replyTo?.trim() ?? "";
-  const footerNotice = reply
-    ? "Puedes responder directamente a este correo para comunicarte con el club."
-    : "Este aviso no recibe respuestas por correo. El club administra las comunicaciones de la liga.";
-
-  const jornadaUrl = input.jornadaUrl?.trim() ?? "";
-  let actionButton = null;
-  if (esJornada && esUrlPublicaJornada(jornadaUrl)) {
-    actionButton = {
-      label: input.etiquetaBoton?.trim() || "VER MI JORNADA",
-      url: jornadaUrl,
-    };
-  }
-
-  const cierreDetalleHtml = esJornada
-    ? `<div style="margin:28px 0 0;padding-top:20px;border-top:1px solid #E5E7EB;">
-        <p style="margin:0 0 6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#111827;">
-          RIVIERA OPEN
-        </p>
-        <p style="margin:0 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#475569;font-style:italic;">
-          Compite. Juega limpio. Vive Riviera Open.
-        </p>
-        <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;color:#0D0F12;">
-          Cada partido cuenta.
-        </p>
-      </div>`
-    : null;
-
-  const title = esJornada && subject.toLowerCase().includes("jornada")
-    ? "¡Tu próxima jornada te espera!"
-    : subject;
-
-  const html = renderPremiumEmailHtml({
+  const render = renderCorreoComunicacion({
+    clubNombre: vars.club,
+    ligaNombre: vars.liga,
+    asunto: resolverVariablesComunicacion(input.asunto, vars),
+    cuerpo: resolverVariablesComunicacion(input.cuerpo, vars),
     branding,
-    asunto: subject,
-    preheaderSnippet: parsed.cleanBody.slice(0, 140).replace(/\s+/g, " "),
-    badgeLabel: vars.liga,
-    title,
-    paragraphsHtml: paragraphsHtml || `<p style="margin:0;color:#374151;"> </p>`,
-    jornadaCard: parsed.jornadaCard,
-    actionButton,
-    cierreDetalleHtml,
-    footerNotice,
+    tipo: input.tipo,
     ligaUrl: input.ligaUrl,
+    jornadaUrl: input.jornadaUrl,
+    etiquetaBoton: input.etiquetaBoton,
     vistaPrevia: input.vistaPrevia,
-    maxWidth: input.maxWidth ?? (esJornada ? 640 : 600),
+    replyTo: input.replyTo,
   });
-
-  const textLines = [
-    input.vistaPrevia ? "VISTA PREVIA — este mensaje no se ha enviado" : "",
-    branding.brandName,
-    branding.isClubBranded ? branding.brandSupportLabel : "by Riviera Open",
-    vars.liga,
-    title,
-    parsed.cleanBody,
-    parsed.jornadaCard
-      ? `TARJETA DE JORNADA:\nFecha: ${parsed.jornadaCard.fecha}\nHorario: ${parsed.jornadaCard.horario}\nSede: ${parsed.jornadaCard.sede}`
-      : "",
-    actionButton ? `${actionButton.label}: ${actionButton.url}` : "",
-    esJornada
-      ? "RIVIERA OPEN\nCompite. Juega limpio. Vive Riviera Open.\nCada partido cuenta."
-      : "",
-    footerNotice,
-    input.ligaUrl ? `Ver la liga: ${input.ligaUrl}` : "",
-    "Gestionado con Riviera Open",
-  ].filter(Boolean);
-
-  return { subject, html, text: textLines.join("\n\n") };
+  return { subject: render.asunto, html: render.html, text: render.text };
 }

@@ -4,12 +4,20 @@
  * - Ranking interno por club (app): /ranking/o/{organizador_id}
  * - Sitio oficial (solo jugadores «Público»): www.rivieraopen.com/rankings
  */
+function readPublicEnv(value: string | undefined): string {
+  return typeof value === "string" ? value.replace(/\/+$/, "") : "";
+}
+
 const APP_BASE =
-  process.env.REACT_APP_PUBLIC_URL?.replace(/\/+$/, "") ||
+  (typeof process === "undefined"
+    ? ""
+    : readPublicEnv(process.env.REACT_APP_PUBLIC_URL)) ||
   "https://appriviera.rivieraopen.com";
 
 const MARKETING_BASE =
-  process.env.REACT_APP_RIVIERA_OFFICIAL_URL?.replace(/\/+$/, "") ||
+  (typeof process === "undefined"
+    ? ""
+    : readPublicEnv(process.env.REACT_APP_RIVIERA_OFFICIAL_URL)) ||
   "https://www.rivieraopen.com";
 
 export function getRivieraAppPublicBase(): string {

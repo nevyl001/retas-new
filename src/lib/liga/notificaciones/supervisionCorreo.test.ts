@@ -156,9 +156,12 @@ describe("supervisión de correos", () => {
       path.join(process.cwd(), "supabase/migrations/0111_liga_notificaciones_automaticas.sql"),
       "utf8"
     );
-    expect(prueba.indexOf('LIGA_NOTIFICACIONES_ENVIOS_REALES") !== "true"')).toBeLessThan(
+    expect(prueba).not.toContain("LIGA_NOTIFICACIONES_ENVIOS_REALES");
+    expect(prueba.indexOf('LIGA_NOTIFICACIONES_PRUEBA_SUPERVISION") === "true"')).toBeLessThan(
       prueba.indexOf("await sendByResend")
     );
+    expect(prueba.indexOf("body.confirmar === true")).toBeLessThan(prueba.indexOf("await sendByResend"));
+    expect(prueba).not.toContain("liga_notificaciones_queue");
     expect(worker.indexOf("LIGA_NOTIFICACIONES_WEBHOOK_SECRET")).toBeLessThan(
       worker.indexOf('from("liga_notificaciones_queue")')
     );

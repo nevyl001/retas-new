@@ -1,8 +1,10 @@
 /**
  * Plantillas premium para el worker de liga y comunicaciones.
- * Sistema visual unificado con co-branding "by Riviera Open", compatible con
- * Gmail, Apple Mail, Outlook y dispositivos móviles (max-width 600px).
+ * El HTML de la comunicación sale de correoCompartido, el mismo de la vista previa.
  */
+import { getManifestByKey, listRegisteredManifestKeys } from "../../../src/club-experience/manifestRegistry.ts";
+import { renderCorreoComunicacion } from "../../../src/lib/liga/notificaciones/correoCompartido.ts";
+import { resolveLigaMailBranding } from "../../../src/lib/liga/notificaciones/ligaMailBranding.ts";
 
 export interface LigaMailBranding {
   brandName: string;
@@ -16,140 +18,32 @@ export interface LigaMailBranding {
   initials: string;
 }
 
-interface KnownClubConfig {
-  name: string;
-  logoPath: string;
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  textOnPrimary: string;
-  initials: string;
-}
-
-const KNOWN_CLUBS: Record<string, KnownClubConfig> = {
-  "hack-padel": {
-    name: "Hack Pádel",
-    logoPath: "/brands/hack-padel/logo-transparent.png",
-    primaryColor: "#0D0E11",
-    secondaryColor: "#1B1E24",
-    accentColor: "#BFFF00",
-    textOnPrimary: "#FFFFFF",
-    initials: "HP",
-  },
-  "padel-court-series": {
-    name: "Padel Court Series",
-    logoPath: "/brands/padel-court-series/logo-light.png",
-    primaryColor: "#192E2C",
-    secondaryColor: "#242424",
-    accentColor: "#FC9908",
-    textOnPrimary: "#FFFFFF",
-    initials: "PCS",
-  },
-  "padelito-warehouse": {
-    name: "Padelito Warehouse",
-    logoPath: "/brands/padelito-warehouse/logo-light.png",
-    primaryColor: "#172E6F",
-    secondaryColor: "#10204E",
-    accentColor: "#D6EF3A",
-    textOnPrimary: "#FFFFFF",
-    initials: "PW",
-  },
-  "valvidub-sports": {
-    name: "Valvidub Sports",
-    logoPath: "/brands/valvidub-sports/logo-light.png",
-    primaryColor: "#2A1C16",
-    secondaryColor: "#3D2A22",
-    accentColor: "#C4A892",
-    textOnPrimary: "#FFFFFF",
-    initials: "VS",
-  },
-  "acapulco-padel-tour": {
-    name: "Acapulco Padel Tour",
-    logoPath: "/brands/acapulco-padel-tour/logo-light.png",
-    primaryColor: "#002B6B",
-    secondaryColor: "#001F4D",
-    accentColor: "#A7D800",
-    textOnPrimary: "#FFFFFF",
-    initials: "APT",
-  },
-};
-
-export function getClubInitialsWorker(name: string): string {
-  const clean = (name || "").trim().replace(/[^\p{L}\p{N}\s]/gu, "");
-  const words = clean.split(/\s+/).filter(Boolean);
-  if (words.length === 0) return "RO";
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-  return words
-    .slice(0, 3)
-    .map((w) => w[0].toUpperCase())
-    .join("");
-}
-
-export function isRivieraOwnAccountNameWorker(name: string | null | undefined): boolean {
-  const trimmed = (name ?? "").trim().toLowerCase();
-  if (!trimmed) return true;
-  return (
-    trimmed === "riviera open" ||
-    trimmed === "riviera" ||
-    trimmed === "club deportivo riviera" ||
-    trimmed === "club riviera"
-  );
-}
-
+/** Misma resolución que la vista previa: el manifiesto del club, no un mapa aparte. */
 export function resolveLigaMailBrandingWorker(options: {
   clubNombre?: string | null;
   brandingKey?: string | null;
   premiumBrandingEnabled?: boolean;
   appBaseUrl?: string;
 }): LigaMailBranding {
-  const base = (options.appBaseUrl || "https://appriviera.rivieraopen.com").replace(/\/+$/, "");
-  const rawKey = (options.brandingKey || "").trim().toLowerCase();
-  const known = KNOWN_CLUBS[rawKey];
-
-  if (known && options.premiumBrandingEnabled !== false) {
-    const brandName = options.clubNombre?.trim() || known.name;
-    return {
-      brandName,
-      brandLogoUrl: `${base}${known.logoPath}`,
-      brandPrimaryColor: known.primaryColor,
-      brandSecondaryColor: known.secondaryColor,
-      brandAccentColor: known.accentColor,
-      brandTextOnPrimary: known.textOnPrimary,
-      brandSupportLabel: "by Riviera Open",
-      isClubBranded: true,
-      initials: known.initials,
-    };
+  const key = (options.brandingKey || "").trim().toLowerCase();
+  const premium = options.premiumBrandingEnabled !== false;
+  const registrado = key.length > 0
+    && key !== "riviera"
+    && listRegisteredManifestKeys().includes(key);
+  if (premium && registrado) {
+    const manifest = getManifestByKey(key);
+    if (manifest.active && manifest.brandingKey !== "riviera") {
+      return resolveLigaMailBranding({
+        clubNombre: manifest.displayName,
+        manifest,
+        appBaseUrl: options.appBaseUrl,
+      });
+    }
   }
-
-  const rawClub = (options.clubNombre || "").trim();
-  const isRiviera = isRivieraOwnAccountNameWorker(rawClub);
-
-  if (isRiviera || !rawClub) {
-    return {
-      brandName: "Riviera Open",
-      brandLogoUrl: `${base}/logo-riviera.png`,
-      brandPrimaryColor: "#15191F",
-      brandSecondaryColor: "#232830",
-      brandAccentColor: "#BFFF00",
-      brandTextOnPrimary: "#FFFFFF",
-      brandSupportLabel: "",
-      isClubBranded: false,
-      initials: "RO",
-    };
-  }
-
-  // Club con nombre personalizado pero sin branding key registrada
-  return {
-    brandName: rawClub,
-    brandLogoUrl: null,
-    brandPrimaryColor: "#15191F",
-    brandSecondaryColor: "#232830",
-    brandAccentColor: "#BFFF00",
-    brandTextOnPrimary: "#FFFFFF",
-    brandSupportLabel: "by Riviera Open",
-    isClubBranded: true,
-    initials: getClubInitialsWorker(rawClub),
-  };
+  return resolveLigaMailBranding({
+    clubNombre: options.clubNombre,
+    appBaseUrl: options.appBaseUrl,
+  });
 }
 
 export function escapeHtml(value: string): string {
@@ -505,42 +399,6 @@ export function recordatorioTieneHorarioOficial(cuerpo: string | null | undefine
   return /^[ \t]*Horario:[ \t]*([01]\d|2[0-3]):[0-5]\d hrs[ \t]*$/im.test(cuerpo ?? "");
 }
 
-export function extractJornadaDetailsFromTextWorker(
-  cuerpo: string,
-  fallbackSede?: string
-): {
-  cleanBody: string;
-  jornadaCard: { fecha: string; horario: string; sede: string } | null;
-} {
-  const fechaMatch = cuerpo.match(/^[ \t]*Fecha:[ \t]*(.+)$/im);
-  const horarioMatch = cuerpo.match(/^[ \t]*Horario:[ \t]*(.+)$/im);
-  const sedeMatch = cuerpo.match(/^[ \t]*Sede:[ \t]*(.+)$/im);
-
-  if (!fechaMatch && !horarioMatch) {
-    return { cleanBody: cuerpo, jornadaCard: null };
-  }
-
-  const fecha = fechaMatch ? fechaMatch[1].trim() : "Por definir";
-  const horario = horarioMatch ? horarioMatch[1].trim() : "Por definir";
-  const sede = sedeMatch ? sedeMatch[1].trim() : fallbackSede || "Por definir";
-
-  const cleanBody = cuerpo
-    .replace(/^[ \t]*Fecha:[ \t]*.+$/gim, "")
-    .replace(/^[ \t]*Horario:[ \t]*.+$/gim, "")
-    .replace(/^[ \t]*Sede:[ \t]*.+$/gim, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-
-  return {
-    cleanBody,
-    jornadaCard: {
-      fecha: fecha || "Por definir",
-      horario: horario || "Por definir",
-      sede: sede || "Por definir",
-    },
-  };
-}
-
 const MARCA_RESULTADOS = /^RESULTADOS_URL:(\S+)\s*$/m;
 
 /** Acepta la ruta pública real de la jornada. Rechaza el panel /liga/. */
@@ -562,11 +420,7 @@ export function extraerUrlPublicaJornadaWorker(cuerpo: string, base: string): st
   }
 }
 
-export function cuerpoSinMarcaResultados(cuerpo: string): string {
-  return cuerpo.replace(MARCA_RESULTADOS, "").replace(/\n{3,}/g, "\n\n").trim();
-}
-
-/** Mensaje manual: asunto/cuerpo ya resueltos; se escapan al HTML con diseño premium. */
+/** Mismo HTML que la vista previa. El asunto y el cuerpo ya vienen resueltos. */
 export function renderComunicacionWorker(input: {
   clubNombre: string;
   ligaNombre: string;
@@ -579,111 +433,18 @@ export function renderComunicacionWorker(input: {
 }): { asunto: string; html: string; text: string } {
   const club = input.clubNombre.trim() || "Riviera Open";
   const liga = input.ligaNombre.trim() || "tu liga";
-  const asunto = input.asunto.trim().slice(0, 180) || `Mensaje de ${liga}`;
-  const origenPublico = (() => {
-    try {
-      return new URL(input.ligaUrl ?? "").origin;
-    } catch {
-      return "";
-    }
-  })();
-  const resultadosUrl = extraerUrlPublicaJornadaWorker(input.cuerpoTexto, origenPublico);
-  const cuerpo = cuerpoSinMarcaResultados(input.cuerpoTexto).slice(0, 8000);
-  const reply = input.replyTo?.trim() ?? "";
-  const footerNotice = reply
-    ? "Puedes responder directamente a este correo para comunicarte con el club."
-    : "Este aviso no recibe respuestas por correo. El club administra las comunicaciones de la liga.";
   const branding = input.branding ?? resolveLigaMailBrandingWorker({ clubNombre: club });
-
-  const parsed = extractJornadaDetailsFromTextWorker(cuerpo, club);
-  const esJornada = input.tipo === "jornada" || Boolean(parsed.jornadaCard);
-
-  const paragraphsHtml = parsed.cleanBody
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean)
-    .map((block) => {
-      const lines = escapeHtml(block).replace(/\n/g, "<br />");
-      return `<p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:#374151;">${lines}</p>`;
-    })
-    .join("");
-
-  const esResultados = input.tipo === "resultados_jornada";
-  let actionButton = null;
-  if (esResultados && resultadosUrl) {
-    actionButton = {
-      label: "VER RESULTADOS DE LA JORNADA",
-      url: resultadosUrl,
-    };
-  } else if ((esJornada || input.tipo === "recordatorio_jornada") && resultadosUrl) {
-    actionButton = {
-      label: input.tipo === "recordatorio_jornada" ? "VER LA JORNADA" : "VER MI JORNADA",
-      url: resultadosUrl,
-    };
-  }
-
-  const cierreDetalleHtml = esResultados
-    ? `<div style="margin:28px 0 0;padding-top:20px;border-top:1px solid #E5E7EB;">
-        <p style="margin:0 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#4B5563;">Sigue compitiendo, superándote y construyendo tu historia dentro de Riviera Open.</p>
-        <p style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#4B5563;font-style:italic;">¡Nos vemos en la próxima jornada!</p>
-        <p style="margin:0 0 6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#111827;">RIVIERA OPEN</p>
-        <p style="margin:0 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#475569;font-style:italic;">Compite. Juega limpio. Vive Riviera Open.</p>
-        <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;color:#0D0F12;">Cada partido cuenta.</p>
-      </div>`
-    : esJornada
-    ? `<div style="margin:28px 0 0;padding-top:20px;border-top:1px solid #E5E7EB;">
-        <p style="margin:0 0 6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#111827;">
-          RIVIERA OPEN
-        </p>
-        <p style="margin:0 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#475569;font-style:italic;">
-          Compite. Juega limpio. Vive Riviera Open.
-        </p>
-        <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;color:#0D0F12;">
-          Cada partido cuenta.
-        </p>
-      </div>`
-    : null;
-
-  const title = esResultados
-    ? "¡Tu jornada ha terminado, pero tu historia continúa!"
-    : esJornada && asunto.toLowerCase().includes("jornada")
-    ? "¡Tu próxima jornada te espera!"
-    : asunto;
-
-  const html = renderPremiumEmailLayout({
+  return renderCorreoComunicacion({
+    clubNombre: club,
+    ligaNombre: liga,
+    asunto: input.asunto,
+    cuerpo: input.cuerpoTexto,
     branding,
-    asunto,
-    preheaderSnippet: parsed.cleanBody.slice(0, 140).replace(/\s+/g, " "),
-    badgeLabel: liga,
-    title,
-    paragraphsHtml: paragraphsHtml || `<p style="margin:0;color:#374151;"> </p>`,
-    jornadaCard: parsed.jornadaCard,
-    actionButton,
-    cierreDetalleHtml,
-    footerNotice,
+    tipo: input.tipo,
     ligaUrl: input.ligaUrl,
-    maxWidth: esJornada ? 640 : 600,
+    replyTo: input.replyTo,
+    vistaPrevia: false,
   });
-
-  const textLines = [
-    club,
-    branding.isClubBranded ? branding.brandSupportLabel : "by Riviera Open",
-    liga,
-    title,
-    parsed.cleanBody,
-    parsed.jornadaCard
-      ? `TARJETA DE JORNADA:\nFecha: ${parsed.jornadaCard.fecha}\nHorario: ${parsed.jornadaCard.horario}\nSede: ${parsed.jornadaCard.sede}`
-      : "",
-    actionButton ? `${actionButton.label}: ${actionButton.url}` : "",
-    esJornada
-      ? "RIVIERA OPEN\nCompite. Juega limpio. Vive Riviera Open.\nCada partido cuenta."
-      : "",
-    footerNotice,
-    input.ligaUrl ? `Ver la liga: ${input.ligaUrl}` : "",
-    "Gestionado con Riviera Open",
-  ].filter(Boolean);
-
-  return { asunto, html, text: textLines.join("\n\n") };
 }
 
 export function isFakeOrInvalidEmail(email: string | null | undefined): boolean {
