@@ -879,9 +879,11 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 </p>
                 <div className="liga-pantalla-ranking__dual liga-pantalla-ranking__dual--rotativo">
                   <div className="liga-pantalla-ranking__panel liga-pantalla-ranking__panel--parejas">
-                    <h3 className="liga-pantalla-ranking__subtitle liga-pantalla-ranking__subtitle--flush">
-                      Parejas
-                    </h3>
+                    <header className="liga-pantalla-ranking__section-head">
+                      <h3 className="liga-pantalla-ranking__section-title">
+                        Parejas
+                      </h3>
+                    </header>
                     {jornadaStats.rankingParejas.length === 0 ? (
                       <p className="liga-pantalla__loading">Sin resultados aún.</p>
                     ) : (
@@ -978,12 +980,14 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                   </div>
 
                   <div className="liga-pantalla-ranking__panel">
-                    <h3 className="liga-pantalla-ranking__subtitle liga-pantalla-ranking__subtitle--flush">
-                      Clasificación individual
-                    </h3>
-                    <p className="liga-pantalla-ranking__hint liga-pantalla-ranking__hint--flush">
-                      Acumulado hasta la Jornada {jornada?.numero ?? numero}
-                    </p>
+                    <header className="liga-pantalla-ranking__section-head">
+                      <h3 className="liga-pantalla-ranking__section-title">
+                        Clasificación individual
+                      </h3>
+                      <p className="liga-pantalla-ranking__section-sub">
+                        Acumulado hasta la Jornada {jornada?.numero ?? numero}
+                      </p>
+                    </header>
                     {rankingIndividualAcumulado.length === 0 ? (
                       <p className="liga-pantalla__loading">Sin resultados aún.</p>
                     ) : (

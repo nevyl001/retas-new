@@ -328,6 +328,35 @@
   opacity: 0.9;
 }
 
+/* Hints dentro de paneles duales: nunca centrar (rompe alineación con el título). */
+.liga-pantalla--jornada-fijas
+  .liga-pantalla-ranking__panel
+  .liga-pantalla-ranking__hint,
+.liga-pantalla--jornada-fijas
+  .liga-pantalla-ranking__hint--flush {
+  margin-inline: 0;
+  max-width: 100%;
+  text-align: left;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__section-head {
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--liga-prem-hairline, rgba(255, 255, 255, 0.14)) 85%,
+    transparent
+  );
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__section-title {
+  color: var(--liga-prem-ink);
+  letter-spacing: 0.16em;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__section-sub {
+  color: var(--liga-prem-muted, rgba(244, 244, 244, 0.62));
+  opacity: 0.95;
+}
+
 .liga-pantalla--jornada-fijas .liga-pub-standings--jornada {
   gap: clamp(0.55rem, 1vw, 0.85rem) clamp(0.6rem, 1.1vw, 0.95rem);
 }

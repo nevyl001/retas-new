@@ -1084,6 +1084,40 @@
   margin: -0.15rem 0 0.55rem;
 }
 
+/* Encabezado de panel (Parejas / Clasificación individual): bloque único, izq. */
+.liga-pantalla-ranking__section-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.28rem;
+  margin: 0 0 0.85rem;
+  padding: 0 0 0.7rem;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--liga-pub-border, rgba(255, 255, 255, 0.12)) 80%, transparent);
+  text-align: left;
+}
+
+.liga-pantalla-ranking__section-title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--liga-pub-text, #f4f4f4);
+  line-height: 1.25;
+}
+
+.liga-pantalla-ranking__section-sub {
+  margin: 0;
+  max-width: 100%;
+  font-size: 0.78rem;
+  font-weight: 450;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+  color: var(--liga-pub-text-muted, rgba(244, 244, 244, 0.62));
+  text-transform: none;
+}
+
 .liga-pantalla-ranking__ajuste {
   display: block;
   margin-top: 0.15rem;
@@ -1913,10 +1947,17 @@
   min-width: 0;
 }
 
-.liga-pantalla--jornada-fijas
-  .liga-pantalla-ranking__subtitle.liga-pantalla-ranking__subtitle--flush {
-  margin: 0 0 0.55rem;
-  text-align: left;
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__section-head {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.65rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__section-title {
+  font-size: clamp(0.7rem, 1.05vw, 0.78rem);
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__section-sub {
+  font-size: clamp(0.74rem, 1.1vw, 0.82rem);
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-ranking__table--compact {
