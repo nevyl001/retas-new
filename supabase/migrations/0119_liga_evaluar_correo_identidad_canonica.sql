@@ -101,6 +101,9 @@ COMMENT ON FUNCTION public.liga_notificacion_evaluar_correo(uuid) IS
   'Evalúa el correo canónico del roster. Ambigüedad solo entre identidades globales distintas o entre varios rosters sin identidad.';
 
 -- Exponer la evaluación en el contacto de inscritos (misma autoridad que el envío).
+-- DROP obligatorio: CREATE OR REPLACE no puede añadir OUT columns al RETURNS TABLE.
+DROP FUNCTION IF EXISTS public.liga_inscritos_contacto_autorizado(uuid);
+
 CREATE OR REPLACE FUNCTION public.liga_inscritos_contacto_autorizado(
   p_liga_id uuid
 )
