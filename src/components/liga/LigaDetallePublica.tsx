@@ -540,7 +540,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
             ) : (
               <>
                 <div className="liga-ind-top3" role="list" aria-label="Podio del ranking">
-                  {(podioOrdenVisual as RankingItem[]).map((row, idx) => {
+                  {(podio as RankingItem[]).map((row, idx) => {
                     const support = supportStatsByJugador.get(row.jugador_id);
                     const showSupport = hasMeaningfulSupportStats(support);
                     const foto = jugadorFotos[row.jugador_id];
