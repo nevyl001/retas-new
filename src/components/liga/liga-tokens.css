@@ -3,34 +3,40 @@
    oscuros del elemento en vez de heredar los valores claros de :root. */
 :root,
 .ro-surface-dark {
+  /* Acento dinámico multitenant — hereda del club o de la marca activa */
+  --liga-accent: var(--brand-accent, var(--ro-accent, #bfff00));
+  --liga-gestionar-accent: var(--brand-accent, var(--ro-accent, #bfff00));
+  --liga-accent-hover: var(--brand-accent-hover, var(--ro-accent-hover, #d4ff4d));
+  --liga-accent-dim: var(--brand-accent-dim, var(--ro-accent-dim, rgba(191, 255, 0, 0.12)));
+
   /* Colores Liga */
-  --liga-gold: var(--ro-accent);
-  --liga-gold-light: var(--ro-accent-hover);
-  --liga-gold-bright: var(--ro-accent);
-  --liga-gold-dim: var(--ro-accent-dim);
-  --liga-gold-border: var(--ro-border-accent);
+  --liga-gold: var(--brand-accent, var(--ro-accent));
+  --liga-gold-light: var(--brand-accent-hover, var(--ro-accent-hover));
+  --liga-gold-bright: var(--brand-accent, var(--ro-accent));
+  --liga-gold-dim: var(--brand-accent-dim, var(--ro-accent-dim));
+  --liga-gold-border: var(--ro-border-accent, rgba(191, 255, 0, 0.35));
   --liga-purple: rgba(91, 79, 207, 0.85);
   --liga-purple-dim: rgba(91, 79, 207, 0.18);
   /* Texto del chip de pareja. En claro (gestión de liga) debe ser púrpura
      OSCURO: #ddd6fe era casi blanco y quedaba invisible sobre el lavanda claro.
      La isla oscura (liga-pantalla pública) lo re-vuelve claro más abajo. */
   --liga-purple-text: #3f37a3;
-  --liga-green: var(--ro-mode-americano);
+  --liga-green: var(--brand-accent, var(--ro-mode-americano, #bfff00));
   --liga-green-light: #6ee7b7;
-  --liga-green-dim: rgba(16, 185, 129, 0.15);
-  --liga-red: var(--ro-error);
-  --liga-bg-base: var(--bg-base);
-  --liga-bg: var(--bg-base);
-  --liga-bg-gradient: var(--bg-base);
-  --liga-surface: var(--bg-card);
-  --liga-surface-hover: var(--bg-card-hover);
+  --liga-green-dim: color-mix(in srgb, var(--brand-accent, #bfff00) 15%, transparent);
+  --liga-red: var(--ro-error, #f87171);
+  --liga-bg-base: var(--brand-surface, var(--bg-base, #000000));
+  --liga-bg: var(--brand-surface, var(--bg-base, #000000));
+  --liga-bg-gradient: var(--brand-surface, var(--bg-base, #000000));
+  --liga-surface: var(--brand-surface-alt, var(--bg-card, #0f0f0f));
+  --liga-surface-hover: var(--bg-card-hover, #181818);
   /* Superficie hundida de formulario — NO usar --ro-scrim-modal (overlay). */
-  --liga-surface-deep: var(--ro-bg-inset);
-  --liga-border: var(--border-default);
-  --liga-border-subtle: var(--border-subtle);
-  --liga-text: var(--text-primary);
-  --liga-text-muted: var(--text-muted);
-  --liga-text-soft: var(--text-secondary);
+  --liga-surface-deep: var(--brand-surface, var(--ro-bg-inset, #050505));
+  --liga-border: var(--brand-border, var(--border-default, #333333));
+  --liga-border-subtle: var(--ro-border-subtle, #222222);
+  --liga-text: var(--brand-text, var(--text-primary, #ffffff));
+  --liga-text-muted: var(--brand-muted, var(--text-muted, #8b93a0));
+  --liga-text-soft: var(--ro-text-secondary, #b0b0b0);
   /* Fase 2B — alineado al patrón real de Torneo Express (--ro-shadow-sm),
    * en vez del valor propio anterior (0 2px 12px rgba(0,0,0,0.25)). */
   --liga-shadow-card: var(--ro-shadow-sm);

@@ -3,7 +3,13 @@
    Color/tipo: tokens --liga-* / --ro-* / --brand-accent del sistema. */
 
 .liga-notificaciones {
-  --ln-accent: var(--brand-accent, var(--liga-gold, var(--ro-accent)));
+  --ln-accent: var(--brand-accent, var(--liga-gold, var(--ro-accent, #bfff00)));
+  --ln-surface: var(--brand-surface-alt, var(--liga-surface, var(--ro-bg-card, #0f0f0f)));
+  --ln-surface-deep: var(--brand-surface, var(--liga-surface-deep, var(--ro-bg-base, #000000)));
+  --ln-surface-hover: var(--liga-surface-hover, var(--ro-bg-card-hover, #181818));
+  --ln-border: var(--brand-border, var(--liga-border, var(--ro-border, #333333)));
+  --ln-text: var(--brand-text, var(--liga-text, var(--ro-text-primary, #ffffff)));
+  --ln-text-muted: var(--brand-muted, var(--liga-text-muted, var(--ro-text-muted, #8b93a0)));
   --ln-ease: 160ms ease;
 
   box-sizing: border-box;
@@ -14,7 +20,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--liga-space-md, 16px);
-  color: var(--liga-text, var(--ro-text-primary));
+  color: var(--ln-text);
   font-family: var(--liga-font-body, var(--ro-font-body, inherit));
   font-size: 14px;
   line-height: 1.45;
@@ -120,30 +126,38 @@
 .liga-notificaciones__metric {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
-  padding: 14px 18px;
-  border: 1px solid #1E232E;
-  border-radius: 10px;
-  background: #0E1117;
-  transition: border-color 150ms ease, background 150ms ease;
+  padding: 16px 20px;
+  border: 1px solid var(--ln-border);
+  border-radius: var(--liga-radius-md, 12px);
+  background: var(--ln-surface);
+  box-shadow: var(--ro-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.2));
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
 }
 
 .liga-notificaciones__metric:hover {
-  background: #121620;
-  border-color: #262D3B;
+  background: var(--ln-surface-hover);
+  border-color: color-mix(in srgb, var(--ln-accent) 30%, var(--ln-border));
+  transform: translateY(-1px);
 }
 
 .liga-notificaciones__metric-value {
-  font-size: clamp(22px, 2.4vw, 26px);
-  font-weight: 750;
+  font-size: clamp(24px, 2.6vw, 28px);
+  font-weight: 800;
   letter-spacing: -0.02em;
-  color: #FFFFFF;
-  line-height: 1.15;
+  color: var(--ln-text);
+  line-height: 1.1;
+  font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
+}
+
+.liga-notificaciones__metric:nth-child(2) .liga-notificaciones__metric-value,
+.liga-notificaciones__metric:nth-child(3) .liga-notificaciones__metric-value {
+  color: var(--ln-accent);
 }
 
 .liga-notificaciones__metric-label {
-  color: #8E9BAE;
+  color: var(--ln-text-muted);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -316,28 +330,16 @@
 .liga-notificaciones__grid {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 10px;
   width: 100%;
-  border: 1px solid #1E232E;
-  border-radius: 10px;
-  background: #0E1117;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .liga-notificaciones__directory-header {
-  display: grid;
-  grid-template-columns: minmax(200px, 2.2fr) minmax(180px, 2fr) minmax(170px, 1.8fr) minmax(130px, 1.3fr) minmax(90px, 0.9fr);
-  align-items: center;
-  gap: 16px;
-  padding: 10px 18px;
-  background: #141720;
-  border-bottom: 1px solid #1E232E;
-  color: #8E9BAE;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  display: none;
 }
 
 .liga-notificaciones__identidad {
@@ -602,31 +604,34 @@
 
 .liga-notificaciones__card {
   display: grid;
-  grid-template-columns: minmax(200px, 2.2fr) minmax(180px, 2fr) minmax(170px, 1.8fr) minmax(130px, 1.3fr) minmax(90px, 0.9fr);
+  grid-template-columns: minmax(240px, 2.5fr) minmax(180px, 1.8fr) minmax(160px, 1.4fr) minmax(130px, 1.1fr) minmax(100px, 0.9fr);
   align-items: center;
   gap: 16px;
-  min-height: 58px;
+  min-height: 72px;
   height: auto;
-  padding: 10px 18px;
-  border: 0;
-  border-bottom: 1px solid #1A1F2A;
-  border-radius: 0;
-  background: transparent;
-  transition: background 120ms ease;
+  padding: 12px 20px;
+  border: 1px solid var(--ln-border);
+  border-radius: var(--liga-radius-md, 12px);
+  background: var(--ln-surface);
+  box-shadow: var(--ro-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.15));
+  transition: all 140ms ease;
 }
 
 .liga-notificaciones__card:last-of-type {
-  border-bottom: 0;
+  border-bottom: 1px solid var(--ln-border);
 }
 
 .liga-notificaciones__card:hover {
-  background: #141822;
+  background: var(--ln-surface-hover);
+  border-color: color-mix(in srgb, var(--ln-accent) 40%, var(--ln-border));
+  box-shadow: var(--ro-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.25));
+  transform: translateY(-1px);
 }
 
 .liga-notificaciones__card-top {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
 }
 
@@ -636,7 +641,7 @@
 
 .liga-notificaciones__col-correo .liga-notificaciones__correo {
   font-size: 13px;
-  color: #9CA3AF;
+  color: var(--ln-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1213,9 +1218,9 @@
     row-gap: 10px;
     min-height: 0;
     padding: 14px;
-    border: 1px solid #1E232E;
-    border-radius: 10px;
-    background: #0E1117;
+    border: 1px solid var(--ln-border);
+    border-radius: var(--liga-radius-md, 12px);
+    background: var(--ln-surface);
   }
 
   .liga-notificaciones__col-jugador {
@@ -1239,7 +1244,7 @@
   .liga-notificaciones__correo--mobile {
     display: block;
     font-size: 12px;
-    color: #9CA3AF;
+    color: var(--ln-text-muted);
   }
 
   .liga-notificaciones__col-estado {
@@ -1256,7 +1261,7 @@
     display: flex;
     align-items: center;
     padding-top: 8px;
-    border-top: 1px solid #1A1F2A;
+    border-top: 1px solid var(--ln-border);
   }
 
   .liga-notificaciones__col-toggle .liga-notificaciones__toggle-label {
@@ -1270,7 +1275,7 @@
     align-items: center;
     justify-content: flex-end;
     padding-top: 8px;
-    border-top: 1px solid #1A1F2A;
+    border-top: 1px solid var(--ln-border);
   }
 }
 
