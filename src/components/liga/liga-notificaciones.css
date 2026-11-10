@@ -109,7 +109,7 @@
 .liga-notificaciones__metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 12px;
   width: 100%;
   padding: 0;
   border: 0;
@@ -120,27 +120,33 @@
 .liga-notificaciones__metric {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
-  padding: 10px 12px;
-  border: 0.5px solid var(--liga-border, var(--ro-border));
-  border-radius: var(--liga-radius-md, 12px);
-  background: var(--liga-surface-deep, var(--ro-bg-inset, transparent));
+  padding: 14px 18px;
+  border: 1px solid #1E232E;
+  border-radius: 10px;
+  background: #0E1117;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.liga-notificaciones__metric:hover {
+  background: #121620;
+  border-color: #262D3B;
 }
 
 .liga-notificaciones__metric-value {
   font-size: clamp(22px, 2.4vw, 26px);
   font-weight: 750;
   letter-spacing: -0.02em;
-  color: var(--liga-text, var(--ro-text-primary));
+  color: #FFFFFF;
   line-height: 1.15;
 }
 
 .liga-notificaciones__metric-label {
-  color: var(--liga-text-muted, var(--ro-text-muted));
+  color: #8E9BAE;
   font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -308,10 +314,30 @@
 }
 
 .liga-notificaciones__grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   width: 100%;
+  border: 1px solid #1E232E;
+  border-radius: 10px;
+  background: #0E1117;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.liga-notificaciones__directory-header {
+  display: grid;
+  grid-template-columns: minmax(200px, 2.2fr) minmax(180px, 2fr) minmax(170px, 1.8fr) minmax(130px, 1.3fr) minmax(90px, 0.9fr);
+  align-items: center;
+  gap: 16px;
+  padding: 10px 18px;
+  background: #141720;
+  border-bottom: 1px solid #1E232E;
+  color: #8E9BAE;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .liga-notificaciones__identidad {
@@ -575,57 +601,94 @@
 }
 
 .liga-notificaciones__card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 172px;
-  height: 100%;
-  padding: 12px;
-  border: 0.5px solid var(--liga-border, var(--ro-border));
-  border-radius: var(--liga-radius-md, 12px);
-  background: var(--liga-surface-deep, var(--ro-bg-inset, transparent));
-  transition: border-color var(--ln-ease), background var(--ln-ease);
+  display: grid;
+  grid-template-columns: minmax(200px, 2.2fr) minmax(180px, 2fr) minmax(170px, 1.8fr) minmax(130px, 1.3fr) minmax(90px, 0.9fr);
+  align-items: center;
+  gap: 16px;
+  min-height: 58px;
+  height: auto;
+  padding: 10px 18px;
+  border: 0;
+  border-bottom: 1px solid #1A1F2A;
+  border-radius: 0;
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.liga-notificaciones__card:last-of-type {
+  border-bottom: 0;
 }
 
 .liga-notificaciones__card:hover {
-  border-color: color-mix(
-    in srgb,
-    var(--ln-accent) 28%,
-    var(--liga-border, var(--ro-border))
-  );
+  background: #141822;
 }
 
 .liga-notificaciones__card-top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   min-width: 0;
 }
 
+.liga-notificaciones__col-correo {
+  min-width: 0;
+}
+
+.liga-notificaciones__col-correo .liga-notificaciones__correo {
+  font-size: 13px;
+  color: #9CA3AF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.liga-notificaciones__correo--mobile {
+  display: none;
+}
+
 .liga-notificaciones__card-mid {
   display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.liga-notificaciones__col-toggle {
+  display: flex;
   align-items: center;
-  min-height: 28px;
+}
+
+.liga-notificaciones__col-toggle .liga-notificaciones__toggle {
+  min-height: 36px;
+  gap: 8px;
 }
 
 .liga-notificaciones__card-foot {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 0.5px solid var(--liga-border-subtle, var(--liga-border, var(--ro-border)));
-}
-
-.liga-notificaciones__card-foot .liga-notificaciones__toggle {
-  min-height: 40px;
+  justify-content: flex-end;
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 0;
 }
 
 .liga-notificaciones__card-foot .liga-notificaciones__btn {
-  min-height: 40px;
-  padding: 0 12px;
+  min-height: 32px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: #171C25;
+  border: 1px solid #283040;
+  color: #E5E7EB;
+  transition: all 120ms ease;
+}
+
+.liga-notificaciones__card-foot .liga-notificaciones__btn:hover {
+  background: #202734;
+  border-color: #384358;
+  color: #FFFFFF;
 }
 
 .liga-notificaciones__pager {
@@ -1074,18 +1137,6 @@
   width: 100%;
 }
 
-@media (max-width: 1439px) {
-  .liga-notificaciones__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1099px) {
-  .liga-notificaciones__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 1100px) {
   .liga-notificaciones__preview-layout {
     grid-template-columns: 1fr;
@@ -1136,54 +1187,90 @@
 
 /* Móvil: 1 columna, tarjeta horizontal compacta */
 @media (max-width: 679px) {
+  .liga-notificaciones__directory-header {
+    display: none;
+  }
+
   .liga-notificaciones__grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 10px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   .liga-notificaciones__card {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 1fr auto;
     grid-template-areas:
-      "foto copy"
+      "top top"
       "mid mid"
-      "foot foot";
+      "toggle accion";
+    align-items: center;
     column-gap: 12px;
-    row-gap: 8px;
+    row-gap: 10px;
     min-height: 0;
-    padding: 12px;
+    padding: 14px;
+    border: 1px solid #1E232E;
+    border-radius: 10px;
+    background: #0E1117;
   }
 
-  .liga-notificaciones__card-top {
-    display: contents;
+  .liga-notificaciones__col-jugador {
+    grid-area: top;
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
-  .liga-notificaciones__card-top .liga-notificaciones__foto {
-    grid-area: foto;
+  .liga-notificaciones__col-jugador .liga-notificaciones__foto {
+    width: 44px;
+    height: 58px;
     align-self: start;
+    flex: 0 0 44px;
   }
 
-  .liga-notificaciones__card-top .liga-notificaciones__identidad-copy {
-    grid-area: copy;
-  }
-
-  .liga-notificaciones__foto--card {
-    width: 52px;
-    height: 68px;
-  }
-
-  .liga-notificaciones__card-mid {
-    grid-area: mid;
-  }
-
-  .liga-notificaciones__card-foot {
-    grid-area: foot;
-    margin-top: 0;
-    padding-top: 8px;
-  }
-
-  .liga-notificaciones__card-foot .liga-notificaciones__toggle-label {
+  .liga-notificaciones__col-correo {
     display: none;
+  }
+
+  .liga-notificaciones__correo--mobile {
+    display: block;
+    font-size: 12px;
+    color: #9CA3AF;
+  }
+
+  .liga-notificaciones__col-estado {
+    grid-area: mid;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .liga-notificaciones__col-toggle {
+    grid-area: toggle;
+    display: flex;
+    align-items: center;
+    padding-top: 8px;
+    border-top: 1px solid #1A1F2A;
+  }
+
+  .liga-notificaciones__col-toggle .liga-notificaciones__toggle-label {
+    display: inline;
+    font-size: 11px;
+  }
+
+  .liga-notificaciones__col-accion {
+    grid-area: accion;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-top: 8px;
+    border-top: 1px solid #1A1F2A;
   }
 }
 

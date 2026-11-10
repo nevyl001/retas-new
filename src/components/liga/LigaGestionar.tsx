@@ -1172,10 +1172,15 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
       {jornadaProgress ? (
         <div className="liga-gestionar-progress" role="status">
-          <p className="liga-gestionar-progress__text">
-            {jornadaProgress.completadas} de {jornadaProgress.total} jornadas
-            completadas
-          </p>
+          <div className="liga-gestionar-progress__header">
+            <p className="liga-gestionar-progress__text">
+              {jornadaProgress.completadas} de {jornadaProgress.total} jornadas
+              completadas
+            </p>
+            <span className="liga-gestionar-progress__percent">
+              {Math.round(jornadaProgress.percent)}%
+            </span>
+          </div>
           <div
             className="liga-gestionar-progress__track"
             aria-hidden="true"

@@ -1572,23 +1572,28 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     const elegible = fila.visual === "habilitado";
     return (
       <article className="liga-notificaciones__card" role="listitem">
-        <div className="liga-notificaciones__card-top">
+        <div className="liga-notificaciones__card-top liga-notificaciones__col-jugador">
           <FotoRetrato
             fotoUrl={fila.fotoUrl}
             nombre={fila.nombre}
-            size="card"
+            size="md"
           />
           <div className="liga-notificaciones__identidad-copy">
             <p className="liga-notificaciones__nombre">{fila.nombre}</p>
             {fila.rivieraId ? (
-              <p className="liga-notificaciones__riviera-id">{fila.rivieraId}</p>
+              <span className="liga-notificaciones__riviera-id">{fila.rivieraId}</span>
             ) : null}
-            <p className="liga-notificaciones__correo">
+            <span className="liga-notificaciones__correo liga-notificaciones__correo--mobile">
               {fila.email?.trim() || "Sin correo"}
-            </p>
+            </span>
           </div>
         </div>
-        <div className="liga-notificaciones__card-mid">
+        <div className="liga-notificaciones__col-correo">
+          <span className="liga-notificaciones__correo" title={fila.email?.trim() || "Sin correo"}>
+            {fila.email?.trim() || "Sin correo"}
+          </span>
+        </div>
+        <div className="liga-notificaciones__card-mid liga-notificaciones__col-estado">
           <span
             className={`liga-notificaciones__badge liga-notificaciones__badge--${estadoTone(
               fila.visual
@@ -1602,8 +1607,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             </p>
           )}
         </div>
-        <div className="liga-notificaciones__card-foot">
+        <div className="liga-notificaciones__col-toggle">
           {switchNotificaciones(fila)}
+        </div>
+        <div className="liga-notificaciones__card-foot liga-notificaciones__col-accion">
           <button
             type="button"
             className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
@@ -1967,6 +1974,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                 role="list"
                 aria-label="Destinatarios"
               >
+                <div className="liga-notificaciones__directory-header" aria-hidden="true">
+                  <span className="liga-notificaciones__th-jugador">JUGADOR</span>
+                  <span className="liga-notificaciones__th-correo">CORREO</span>
+                  <span className="liga-notificaciones__th-estado">AUTORIZACIÓN / ESTADO</span>
+                  <span className="liga-notificaciones__th-toggle">NOTIFICACIONES</span>
+                  <span className="liga-notificaciones__th-accion">ACCIÓN</span>
+                </div>
                 {visiblesPagina.map((fila) => (
                   <React.Fragment key={fila.jugadorId}>
                     {tarjetaDestinatario(fila)}
