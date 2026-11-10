@@ -28,7 +28,6 @@ describe("prueba aislada de supervisión", () => {
     pruebaHabilitada: true,
     admin: true,
     confirmada: true,
-    verificada: true,
     enviosEnLaUltimaHora: 0,
   };
 
@@ -36,9 +35,8 @@ describe("prueba aislada de supervisión", () => {
     expect(autorizarPruebaSupervision(base)).toEqual({ ok: true });
   });
 
-  it("niega administrador, correo sin verificar, token de cupo y falta de confirmación", () => {
+  it("niega administrador, cupo agotado y falta de confirmación", () => {
     expect(autorizarPruebaSupervision({ ...base, admin: false })).toEqual({ ok: false, motivo: "sin_permiso" });
-    expect(autorizarPruebaSupervision({ ...base, verificada: false })).toEqual({ ok: false, motivo: "correo_sin_verificacion" });
     expect(autorizarPruebaSupervision({ ...base, enviosEnLaUltimaHora: 3 })).toEqual({ ok: false, motivo: "limite_alcanzado" });
     expect(autorizarPruebaSupervision({ ...base, confirmada: false })).toEqual({ ok: false, motivo: "confirmacion_requerida" });
     expect(autorizarPruebaSupervision({ ...base, pruebaHabilitada: false })).toEqual({ ok: false, motivo: "prueba_apagada" });
@@ -164,11 +162,21 @@ describe("correo compartido", () => {
     );
     expect(funcion).toContain("renderCorreoComunicacion");
     expect(funcion).not.toContain("renderPremiumEmailLayout");
-    expect(verificacion.indexOf('LIGA_NOTIFICACIONES_VERIFICACION_SUPERVISION") !== "true"')).toBeLessThan(
-      verificacion.indexOf("emitir_verificacion_supervision")
-    );
+    expect(verificacion).toContain("verificacion_retirada");
+    expect(verificacion).not.toContain("sendByResend");
+    expect(verificacion).not.toContain("emitir_verificacion");
     expect(verificacion).not.toContain("liga_notificaciones_queue");
     expect(verificacion).not.toContain("resultado.token,");
+    const sql0116 = fs.readFileSync(
+      path.join(process.cwd(), "supabase/migrations/0116_liga_supervision_sin_verificacion.sql"),
+      "utf8"
+    );
+    expect(sql0116).toContain("limite_alcanzado");
+    expect(sql0116).toContain("correo_invalido");
+    expect(sql0116).not.toContain("supervision_email = supervision_email_verificado");
+    expect(sql0116).not.toContain("liga_notificaciones_queue");
+    expect(sql0116).not.toContain("UPDATE public.liga_jornadas");
+    expect(sql0116).not.toContain("net.http_post");
     expect(prueba).not.toContain("liga_notificaciones_queue");
     expect(prueba).not.toContain("Liga de ejemplo");
     expect(prueba).toContain("resolveLigaMailBrandingWorker");

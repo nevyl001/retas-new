@@ -38,6 +38,12 @@ jest.mock("../../services/ligaNotificacionesService", () => ({
   registrarConsentimientoJugador: jest.fn().mockResolvedValue({ ok: true, motivo: null }),
   revocarConsentimientoJugador: jest.fn().mockResolvedValue({ ok: true, motivo: null }),
   guardarConfigLiga: jest.fn().mockResolvedValue({ ok: true, motivo: null }),
+  guardarSupervisionLiga: jest.fn().mockResolvedValue({ ok: true, motivo: null }),
+  enviarPruebaSupervision: jest.fn().mockResolvedValue({
+    ok: false,
+    enviosReales: false,
+    motivo: "prueba_apagada",
+  }),
   solicitarComunicacionManual: jest.fn().mockResolvedValue({
     ok: false,
     encolado: false,
@@ -186,6 +192,82 @@ describe("LigaNotificacionesPanel", () => {
       'input[type="checkbox"]'
     ) as HTMLInputElement;
     expect(checkbox.checked).toBe(false);
+  });
+
+  it("guarda el correo de supervisión y muestra la prueba sin estado de verificación", async () => {
+    mockCargar.mockResolvedValue({
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: true,
+      preferencias: [],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "automatico",
+        supervision_email: "admin@club.com",
+        supervision_activa: true,
+        supervision_alcance: "resultados",
+      },
+      historial: [],
+      cola: [],
+      verificaciones: [],
+    });
+    const servicio = jest.requireMock(
+      "../../services/ligaNotificacionesService"
+    ) as {
+      guardarSupervisionLiga: jest.Mock;
+      enviarPruebaSupervision: jest.Mock;
+    };
+    servicio.guardarSupervisionLiga.mockResolvedValue({ ok: true, motivo: null });
+    servicio.enviarPruebaSupervision.mockResolvedValue({
+      ok: false,
+      enviosReales: false,
+      motivo: "prueba_apagada",
+    });
+    await renderPanel();
+    const configuracion = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Configuración"
+    );
+    await act(async () => {
+      configuracion?.click();
+    });
+    expect(container.textContent).toContain("Supervisión de correos");
+    expect(container.textContent).toContain("ENVIAR CORREO DE PRUEBA");
+    expect(container.textContent).not.toContain("Sin verificar");
+    expect(container.textContent).not.toContain("Verificado");
+    const guardar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "GUARDAR"
+    );
+    await act(async () => {
+      guardar?.click();
+      await Promise.resolve();
+    });
+    expect(servicio.guardarSupervisionLiga).toHaveBeenCalledWith({
+      ligaId: "liga-1",
+      email: "admin@club.com",
+      activa: true,
+      alcance: "resultados",
+    });
+    const prueba = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "ENVIAR CORREO DE PRUEBA"
+    );
+    await act(async () => {
+      prueba?.click();
+    });
+    expect(document.body.textContent).toContain("Vista previa");
+    expect(servicio.enviarPruebaSupervision).not.toHaveBeenCalled();
+    const confirmarOriginal = window.confirm;
+    window.confirm = jest.fn(() => false);
+    const confirmar = Array.from(document.body.querySelectorAll("button")).find(
+      (button) => button.textContent === "CONFIRMAR ENVÍO"
+    );
+    await act(async () => {
+      confirmar?.click();
+      await Promise.resolve();
+    });
+    expect(window.confirm).toHaveBeenCalled();
+    expect(servicio.enviarPruebaSupervision).not.toHaveBeenCalled();
+    window.confirm = confirmarOriginal;
   });
 
   it("guarda la fecha real indicada y no mueve el interruptor", async () => {

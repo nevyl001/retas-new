@@ -767,49 +767,15 @@ export async function guardarConfigLiga(
     ...payloadBase,
     modo_operacion: modo,
   };
-  const emailSupervision = (config.supervision_email ?? "").trim().toLowerCase();
-  const emailVerificado = (config.supervision_email_verificado ?? "")
-    .trim()
-    .toLowerCase();
-  const verificacionVigente =
-    emailSupervision !== "" &&
-    emailSupervision === emailVerificado &&
-    Boolean(config.supervision_verificado_at);
-  const supervision = {
-    supervision_email: emailSupervision || null,
-    supervision_email_verificado: verificacionVigente ? emailVerificado : null,
-    supervision_verificado_at: verificacionVigente
-      ? config.supervision_verificado_at ?? null
-      : null,
-    supervision_activa: config.supervision_activa === true && emailSupervision !== "",
-    supervision_alcance:
-      config.supervision_alcance === "todas" ? "todas" : "resultados",
-  };
   const completo = {
     ...conModo,
     ...auto,
-  };
-  const conSupervision = {
-    ...completo,
-    ...supervision,
   };
   const automatizacionEncendida =
     auto.resultados_auto || auto.recordatorio_auto || auto.bienvenida_auto;
   let { error } = await supabase
     .from("liga_notificaciones_config")
-    .upsert(conSupervision, { onConflict: "liga_id" });
-  if (
-    error &&
-    esEsquemaAusente(error.message) &&
-    /supervision_/i.test(error.message)
-  ) {
-    if (supervision.supervision_email || supervision.supervision_activa) {
-      return { ok: false, motivo: "esquema_pendiente" };
-    }
-    ({ error } = await supabase
-      .from("liga_notificaciones_config")
-      .upsert(completo, { onConflict: "liga_id" }));
-  }
+    .upsert(completo, { onConflict: "liga_id" });
   if (
     error &&
     esEsquemaAusente(error.message) &&

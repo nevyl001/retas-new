@@ -645,18 +645,18 @@ async function enviarCopiaSupervision(
 ): Promise<void> {
   const { data: config } = await supabase
     .from("liga_notificaciones_config")
-    .select("supervision_activa, supervision_alcance, supervision_email, supervision_email_verificado, supervision_verificado_at")
+    .select("supervision_activa, supervision_alcance, supervision_email")
     .eq("liga_id", grupo.ligaId)
     .maybeSingle();
   const email = String(config?.supervision_email ?? "").trim().toLowerCase();
-  const verificado = String(config?.supervision_email_verificado ?? "").trim().toLowerCase();
   const alcance = config?.supervision_alcance === "todas" ? "todas" : "resultados";
   const tipoPermitido = alcance === "todas" || grupo.tipo === "resultados_jornada";
+  const correoGuardado = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email)
+    && email.length <= 180
+    && !email.endsWith("@padel.local");
   if (
     config?.supervision_activa !== true ||
-    !config?.supervision_verificado_at ||
-    !email ||
-    email !== verificado ||
+    !correoGuardado ||
     !tipoPermitido
   ) {
     return;

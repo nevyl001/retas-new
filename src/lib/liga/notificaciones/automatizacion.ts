@@ -440,31 +440,14 @@ export function normalizarAlcanceSupervision(raw: unknown): AlcanceSupervision {
   return raw === "todas" ? "todas" : "resultados";
 }
 
-export function supervisionVerificada(input: {
-  email: string | null | undefined;
-  emailVerificado: string | null | undefined;
-  verificadoAt: string | null | undefined;
-}): boolean {
-  const email = input.email?.trim().toLowerCase() ?? "";
-  const verificado = input.emailVerificado?.trim().toLowerCase() ?? "";
-  return Boolean(
-    correoSupervisionValido(email) &&
-      verificado &&
-      email === verificado &&
-      input.verificadoAt
-  );
-}
-
 export function puedeActivarCopia(input: {
   activa: boolean;
   email: string | null | undefined;
-  emailVerificado: string | null | undefined;
-  verificadoAt: string | null | undefined;
   alcance: unknown;
   tipo: string;
 }): boolean {
   if (!input.activa) return false;
-  if (!supervisionVerificada(input)) return false;
+  if (!correoSupervisionValido(input.email)) return false;
   const alcance = normalizarAlcanceSupervision(input.alcance);
   if (alcance === "resultados") return input.tipo === "resultados_jornada";
   return (

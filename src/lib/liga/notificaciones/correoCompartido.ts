@@ -241,13 +241,11 @@ export function autorizarPruebaSupervision(input: {
   pruebaHabilitada: boolean;
   admin: boolean;
   confirmada: boolean;
-  verificada: boolean;
   enviosEnLaUltimaHora: number;
 }): { ok: true } | { ok: false; motivo: string } {
   if (input.pruebaHabilitada !== true) return { ok: false, motivo: "prueba_apagada" };
   if (input.admin !== true) return { ok: false, motivo: "sin_permiso" };
   if (input.confirmada !== true) return { ok: false, motivo: "confirmacion_requerida" };
-  if (input.verificada !== true) return { ok: false, motivo: "correo_sin_verificacion" };
   if (!Number.isInteger(input.enviosEnLaUltimaHora) || input.enviosEnLaUltimaHora >= 3) {
     return { ok: false, motivo: "limite_alcanzado" };
   }

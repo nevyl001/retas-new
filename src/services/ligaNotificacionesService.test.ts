@@ -2,6 +2,7 @@ import { supabase } from "../lib/supabaseClient";
 import {
   cargarNotificacionesLiga,
   guardarConfigLiga,
+  guardarSupervisionLiga,
   encolarBienvenidaTrasInscripcion,
   esEsquemaAusente,
   establecerCorreoVerificado,
@@ -415,10 +416,41 @@ describe("ligaNotificacionesService", () => {
     expect(payloads[0]).toMatchObject({
       modo_operacion: "automatico",
       resultados_auto: true,
-      supervision_email: "club@example.com",
-      supervision_activa: true,
-      supervision_alcance: "todas",
     });
+    expect(payloads[0]).not.toHaveProperty("supervision_email");
+    expect(payloads[0]).not.toHaveProperty("supervision_email_verificado");
+    expect(payloads[0]).not.toHaveProperty("supervision_activa");
+  });
+
+  it("guarda la supervisión por la función autorizada, sin columnas de verificación", async () => {
+    rpc.mockResolvedValue({ data: { ok: true, motivo: null }, error: null });
+    await expect(
+      guardarSupervisionLiga({
+        ligaId: "liga-1",
+        email: "club@example.com",
+        activa: true,
+        alcance: "todas",
+      })
+    ).resolves.toEqual({ ok: true, motivo: null });
+    expect(rpc).toHaveBeenCalledWith("liga_notificaciones_guardar_supervision", {
+      p_liga_id: "liga-1",
+      p_email: "club@example.com",
+      p_activa: true,
+      p_alcance: "todas",
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("un administrador sin permiso no guarda la supervisión", async () => {
+    rpc.mockResolvedValue({ data: { ok: false, motivo: "sin_permiso" }, error: null });
+    await expect(
+      guardarSupervisionLiga({
+        ligaId: "liga-1",
+        email: "club@example.com",
+        activa: true,
+        alcance: "resultados",
+      })
+    ).resolves.toEqual({ ok: false, motivo: "sin_permiso" });
   });
 
   it("0101 con columnas de verificación normaliza y mantiene escriturasActivas", async () => {

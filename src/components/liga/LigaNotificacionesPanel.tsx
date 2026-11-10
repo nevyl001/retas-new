@@ -46,13 +46,13 @@ import {
   plantillaParaRedactar,
 } from "../../lib/liga/notificaciones/plantillasGuardadas";
 import { resolveLigaMailBranding } from "../../lib/liga/notificaciones/ligaMailBranding";
+import { prepararPruebaSupervision } from "../../lib/liga/notificaciones/correoCompartido";
 import {
   completarConfigAutomatica,
   correoSupervisionValido,
   etiquetaOrigenComunicacion,
   etiquetaTipoComunicacion,
   esCorreoDeJugador,
-  supervisionVerificada,
 } from "../../lib/liga/notificaciones/automatizacion";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
@@ -63,6 +63,8 @@ import {
   solicitarProcesamientoLote,
   establecerHabilitacionJugador,
   guardarConfigLiga,
+  guardarSupervisionLiga,
+  enviarPruebaSupervision,
   registrarConsentimientoJugador,
   revocarConsentimientoJugador,
   solicitarComunicacionManual,
@@ -133,8 +135,12 @@ const MOTIVO_LABEL: Record<string, string> = {
   lote_requerido: "Confirma el envío desde el compositor",
   tipo_no_soportado: "Plantilla no soportada",
   modo_manual: "Esta liga está en modo manual",
-  correo_sin_verificacion: "Verifica el correo de supervisión antes de activar las copias",
+  correo_sin_verificacion: "Guarda un correo de supervisión válido",
   limite_alcanzado: "Espera un momento antes de pedir otro envío",
+  prueba_apagada: "La prueba no está habilitada en el servidor. No se envió ningún correo",
+  error_proveedor: "El proveedor no aceptó el envío",
+  confirmacion_requerida: "Confirma el envío de la prueba",
+  plantilla_larga: "El mensaje de prueba es demasiado largo",
   envios_apagados: "El envío real sigue apagado. No se mandó ningún correo",
   partidos_pendientes: "La jornada todavía tiene partidos pendientes",
   sin_url_publica: "No hay un enlace público de la jornada",
@@ -465,7 +471,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const [datosCorreoEditados, setDatosCorreoEditados] = useState(false);
   const [jornadaAvisoNumero, setJornadaAvisoNumero] = useState<number | null>(null);
   const [vistaAuto, setVistaAuto] = useState<
-    "resultados" | "recordatorio" | "bienvenida" | "programado" | null
+    "resultados" | "recordatorio" | "bienvenida" | "programado" | "prueba" | null
   >(null);
   const [programadoClave, setProgramadoClave] = useState<string | null>(null);
   const [vistaAncho, setVistaAncho] = useState<640 | 390>(640);
@@ -1290,23 +1296,12 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       confirmar(motivoVisible("correo_invalido"));
       return;
     }
-    const verificado =
-      email !== "" &&
-      email === (config.supervision_email_verificado ?? "").trim().toLowerCase() &&
-      Boolean(config.supervision_verificado_at);
     setGuardandoId("supervision");
-    const resultado = await guardarConfigLiga(ligaId, {
-      ...config,
-      ...automatica,
-      supervision_email: email || null,
-      supervision_activa: supervisionActiva && email !== "",
-      supervision_alcance: supervisionAlcance,
-      supervision_email_verificado: verificado
-        ? config.supervision_email_verificado
-        : null,
-      supervision_verificado_at: verificado
-        ? config.supervision_verificado_at
-        : null,
+    const resultado = await guardarSupervisionLiga({
+      ligaId,
+      email,
+      activa: supervisionActiva && email !== "",
+      alcance: supervisionAlcance,
     });
     setGuardandoId(null);
     if (!resultado.ok) {
@@ -1319,21 +1314,81 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             ...prev,
             config: {
               ...prev.config,
-              ...automatica,
               supervision_email: email || null,
               supervision_activa: supervisionActiva && email !== "",
               supervision_alcance: supervisionAlcance,
-              supervision_email_verificado: verificado
-                ? prev.config.supervision_email_verificado
-                : null,
-              supervision_verificado_at: verificado
-                ? prev.config.supervision_verificado_at
-                : null,
             },
           }
         : prev
     );
-    confirmar("Cambios guardados");
+    confirmar("Correo de supervisión guardado correctamente.");
+  }
+
+  function plantillaPruebaSupervision() {
+    const origen =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://appriviera.rivieraopen.com";
+    const fuente = jornadaParaAviso(jornadas);
+    const oficial = fuente
+      ? datosOficialesJornada({ ligaId, clubNombre, jornada: fuente })
+      : null;
+    const lineas = [
+      "Esta es una prueba de la copia de supervisión.",
+      `Liga: ${ligaNombre}`,
+      `Club: ${clubNombre}`,
+    ];
+    if (oficial?.fechaLegible) lineas.push(`Fecha: ${oficial.fechaLegible}`);
+    if (oficial?.horarioLegible) lineas.push(`Horario: ${oficial.horarioLegible}`);
+    if (oficial?.sede && !oficial.sede.includes("@")) {
+      lineas.push(`Sede: ${oficial.sede}`);
+    }
+    lineas.push("No se envió a los jugadores.");
+    return {
+      asunto: "Prueba de supervisión",
+      cuerpo: lineas.join("\n"),
+      tipo: "recordatorio_jornada",
+      liga_nombre: ligaNombre,
+      club_nombre: clubNombre,
+      liga_url: `${origen}/public/liga/${ligaId}`,
+      ...(oficial?.urlPublica && !oficial.urlPublica.includes("@")
+        ? { jornada_url: `${origen}${oficial.urlPublica}` }
+        : {}),
+    };
+  }
+
+  async function enviarPruebaGuardada() {
+    const guardado = (config.supervision_email ?? "").trim().toLowerCase();
+    if (!correoSupervisionValido(guardado)) {
+      confirmar("Guarda primero el correo de supervisión.");
+      return;
+    }
+    if (supervisionEmail.trim().toLowerCase() !== guardado) {
+      confirmar("Guarda el correo antes de enviar la prueba.");
+      return;
+    }
+    if (
+      !window.confirm(
+        "Se enviará un solo correo al correo de supervisión guardado. No se escribe a los jugadores. ¿Continuar?"
+      )
+    ) {
+      return;
+    }
+    const plantilla = plantillaPruebaSupervision();
+    setGuardandoId("prueba");
+    const resultado = await enviarPruebaSupervision(ligaId, {
+      confirmar: true,
+      plantilla,
+    });
+    setGuardandoId(null);
+    const fresco = await cargarNotificacionesLiga(ligaId);
+    if (fresco.disponible) setSnapshot(fresco);
+    if (resultado.ok && resultado.enviosReales) {
+      setVistaAuto(null);
+      confirmar("El proveedor aceptó el correo de prueba.");
+      return;
+    }
+    confirmar(motivoVisible(resultado.motivo));
   }
 
   function switchNotificaciones(fila: FilaDestinatario) {
@@ -1629,6 +1684,28 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     notas: string[];
   } | null {
     if (!vistaAuto) return null;
+    if (vistaAuto === "prueba") {
+      const plantilla = plantillaPruebaSupervision();
+      const render = prepararPruebaSupervision({
+        asunto: plantilla.asunto,
+        cuerpo: plantilla.cuerpo,
+        tipo: plantilla.tipo,
+        clubNombre,
+        ligaNombre,
+        branding: mailBranding,
+        ligaUrl: plantilla.liga_url,
+        jornadaUrl: plantilla.jornada_url,
+      });
+      return {
+        titulo: "Correo de prueba",
+        html: render.ok ? render.html : "",
+        notas: [
+          "Vista previa. Todavía no se ha enviado.",
+          "El destinatario es el correo de supervisión guardado.",
+          "No incluye jugadores ni permite escribir otro destinatario.",
+        ],
+      };
+    }
     const jugador =
       filas.find((fila) => fila.jugadorId === previewId) ?? filas[0] ?? null;
     const nombre = jugador?.nombre ?? "Jugador";
@@ -2823,15 +2900,6 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               <section className="liga-notificaciones__auto-card">
                 <div className="liga-notificaciones__auto-head">
                   <h3>Supervisión de correos</h3>
-                  <span className="liga-notificaciones__auto-status">
-                    {supervisionVerificada({
-                      email: config.supervision_email,
-                      emailVerificado: config.supervision_email_verificado,
-                      verificadoAt: config.supervision_verificado_at,
-                    })
-                      ? "Verificado"
-                      : "Sin verificar"}
-                  </span>
                 </div>
                 <label className="liga-notificaciones__field">
                   <span>Correo de supervisión</span>
@@ -2884,7 +2952,25 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   >
                     {guardandoId === "supervision" ? "Guardando…" : "GUARDAR"}
                   </button>
+                  <button
+                    type="button"
+                    className="liga-notificaciones__btn liga-notificaciones__btn--secondary"
+                    disabled={
+                      !puedeEscribir ||
+                      guardandoId === "prueba" ||
+                      guardandoId === "supervision" ||
+                      !correoSupervisionValido(config.supervision_email) ||
+                      supervisionEmail.trim().toLowerCase() !==
+                        (config.supervision_email ?? "").trim().toLowerCase()
+                    }
+                    onClick={() => setVistaAuto("prueba")}
+                  >
+                    ENVIAR CORREO DE PRUEBA
+                  </button>
                 </div>
+                <p className="liga-notificaciones__hint">
+                  La prueba usa solo el correo guardado. No admite otro destinatario.
+                </p>
               </section>
             </div>
           ) : null}
@@ -2941,6 +3027,18 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     {nota}
                   </p>
                 ))}
+                {vistaAuto === "prueba" ? (
+                  <div className="liga-notificaciones__auto-actions">
+                    <button
+                      type="button"
+                      className="liga-notificaciones__btn liga-notificaciones__btn--primary"
+                      disabled={guardandoId === "prueba"}
+                      onClick={() => void enviarPruebaGuardada()}
+                    >
+                      {guardandoId === "prueba" ? "Enviando…" : "CONFIRMAR ENVÍO"}
+                    </button>
+                  </div>
+                ) : null}
                 {vistaCorreo.html ? (
                   <iframe
                     className="liga-notificaciones__mail-frame"

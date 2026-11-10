@@ -1,5 +1,5 @@
 /**
- * Envía un solo correo de prueba al correo de supervisión ya verificado.
+ * Envía un solo correo de prueba al correo de supervisión guardado.
  * Usa LIGA_NOTIFICACIONES_PRUEBA_SUPERVISION. No lee ni habilita la cola de jugadores.
  */
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
@@ -60,7 +60,6 @@ Deno.serve(async (req) => {
     pruebaHabilitada: Deno.env.get("LIGA_NOTIFICACIONES_PRUEBA_SUPERVISION") === "true",
     admin: true,
     confirmada: body.confirmar === true,
-    verificada: true,
     enviosEnLaUltimaHora: 0,
   });
   if (!puerta.ok && (puerta.motivo === "prueba_apagada" || puerta.motivo === "confirmacion_requerida")) {
@@ -159,8 +158,8 @@ Deno.serve(async (req) => {
   if (error || reserva.ok === false || !reserva.email) {
     return json(req, 200, {
       ok: false,
-      enviosReales: true,
-      motivo: reserva.motivo || "correo_sin_verificacion",
+      enviosReales: false,
+      motivo: reserva.motivo || "correo_invalido",
     });
   }
   const clave = `prueba:${ligaId}:${crypto.randomUUID()}`;
@@ -173,27 +172,25 @@ Deno.serve(async (req) => {
     clave,
     null,
   );
-  if (!send.ok) {
-    return json(req, 200, {
-      ok: false,
-      enviosReales: true,
-      motivo: send.status === 0 ? "respuesta_ambigua" : "error_proveedor",
-    });
-  }
+  const motivo = send.ok
+    ? null
+    : send.status === 0
+      ? "respuesta_ambigua"
+      : "error_proveedor";
   await admin.from("liga_notificaciones_log").insert({
     liga_id: ligaId,
     liga_jugador_id: null,
     tipo: "prueba",
     origen: "prueba",
-    estado: "enviado",
+    estado: send.ok ? "enviado" : "error",
     attempts: 1,
-    motivo: null,
-    proveedor_estado: "aceptado",
+    motivo,
+    proveedor_estado: send.ok ? "aceptado" : null,
     idempotency_key: clave,
     procesados: 0,
-    aceptados: 1,
-    errores: 0,
+    aceptados: send.ok ? 1 : 0,
+    errores: send.ok ? 0 : 1,
     reintentos: 0,
   });
-  return json(req, 200, { ok: true, enviosReales: true, motivo: null });
+  return json(req, 200, { ok: send.ok, enviosReales: send.ok, motivo });
 });

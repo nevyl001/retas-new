@@ -11,7 +11,6 @@ import {
   manualSigueDisponible,
   permiteOtroEnvio,
   puedeActivarCopia,
-  supervisionVerificada,
   CONFIG_AUTOMATICA_INICIAL,
 } from "./automatizacion";
 
@@ -20,47 +19,37 @@ const JORNADA = "22222222-2222-4222-8222-222222222222";
 const URL = `https://appriviera.rivieraopen.com/public/liga/${LIGA}/jornada/4`;
 
 describe("supervisión de correos", () => {
-  it("valida el correo y exige la misma dirección verificada", () => {
+  it("valida el correo guardado sin pedir una verificación", () => {
     expect(correoSupervisionValido("admin@club.com")).toBe(true);
     expect(correoSupervisionValido("no-es-correo")).toBe(false);
     expect(correoSupervisionValido("alguien@padel.local")).toBe(false);
-    expect(supervisionVerificada({
-      email: "admin@club.com",
-      emailVerificado: "otro@club.com",
-      verificadoAt: "2026-11-09T00:00:00.000Z",
-    })).toBe(false);
-    expect(supervisionVerificada({
-      email: "admin@club.com",
-      emailVerificado: "admin@club.com",
-      verificadoAt: "2026-11-09T00:00:00.000Z",
-    })).toBe(true);
   });
 
-  it("no activa copias sin verificación y respeta el alcance", () => {
+  it("activa copias con el correo guardado y respeta el alcance", () => {
     expect(puedeActivarCopia({
       activa: true,
-      email: "admin@club.com",
-      emailVerificado: null,
-      verificadoAt: null,
+      email: "no-es-correo",
       alcance: "todas",
       tipo: "resultados_jornada",
     })).toBe(false);
     expect(puedeActivarCopia({
       activa: true,
       email: "admin@club.com",
-      emailVerificado: "admin@club.com",
-      verificadoAt: "2026-11-09T00:00:00.000Z",
       alcance: "resultados",
       tipo: "bienvenida",
     })).toBe(false);
     expect(puedeActivarCopia({
       activa: true,
       email: "admin@club.com",
-      emailVerificado: "admin@club.com",
-      verificadoAt: "2026-11-09T00:00:00.000Z",
       alcance: "resultados",
       tipo: "resultados_jornada",
     })).toBe(true);
+    expect(puedeActivarCopia({
+      activa: false,
+      email: "admin@club.com",
+      alcance: "todas",
+      tipo: "resultados_jornada",
+    })).toBe(false);
   });
 
   it("una jornada produce una sola clave aunque haya muchos jugadores", () => {
@@ -169,5 +158,13 @@ describe("supervisión de correos", () => {
     expect(sql).toContain("liga_notificacion_hash_token");
     expect(sql).toContain("supervision_email = supervision_email_verificado");
     expect(sql).not.toContain("net.http_post");
+    const correctiva = fs.readFileSync(
+      path.join(process.cwd(), "supabase/migrations/0116_liga_supervision_sin_verificacion.sql"),
+      "utf8"
+    );
+    expect(correctiva).toContain("supervision_prueba_conteo < 3");
+    expect(correctiva).not.toContain("supervision_verificado_at IS NOT NULL");
+    expect(worker).not.toContain("supervision_email_verificado");
+    expect(worker).toContain("supervision:");
   });
 });
