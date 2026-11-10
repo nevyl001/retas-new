@@ -947,8 +947,14 @@
 
 .liga-notificaciones__history-toolbar {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 12px;
   padding: 8px 16px 0;
+}
+
+.liga-notificaciones__history-toolbar .liga-notificaciones__meta {
+  margin-right: auto;
 }
 
 .liga-notificaciones__history-actions {

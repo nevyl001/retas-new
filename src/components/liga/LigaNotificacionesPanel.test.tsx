@@ -1388,6 +1388,75 @@ describe("LigaNotificacionesPanel", () => {
     expect(container.textContent).not.toContain("cola");
   });
 
+  it("Actualizar vuelve a leer el historial y muestra el estado nuevo", async () => {
+    const base = {
+      disponible: true,
+      escriturasActivas: true,
+      verificacionDisponible: true,
+      preferencias: [],
+      config: {
+        bienvenida_pausada: true,
+        modo_prueba: true,
+        modo_operacion: "manual",
+      },
+      cola: [],
+      verificaciones: [],
+    };
+    mockCargar.mockResolvedValue({
+      ...base,
+      historial: [
+        {
+          id: "log-1",
+          queue_id: "q-1",
+          liga_jugador_id: "jug-1",
+          tipo: "bienvenida",
+          estado: "enviado",
+          attempts: 1,
+          motivo: null,
+          proveedor_estado: "aceptado",
+          created_at: "2026-11-10T14:34:00Z",
+        },
+      ],
+    });
+    await renderPanel();
+    const tab = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Historial"
+    );
+    await act(async () => {
+      tab?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(container.textContent).toContain("Aceptado");
+    mockCargar.mockResolvedValue({
+      ...base,
+      historial: [
+        {
+          id: "log-1",
+          queue_id: "q-1",
+          liga_jugador_id: "jug-1",
+          tipo: "bienvenida",
+          estado: "enviado",
+          attempts: 1,
+          motivo: null,
+          proveedor_estado: "entregado",
+          created_at: "2026-11-10T14:34:00Z",
+        },
+      ],
+    });
+    const actualizar = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Actualizar"
+    );
+    await act(async () => {
+      actualizar?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(container.textContent).toContain("Entregado");
+    expect(container.textContent).toContain("Actualizado");
+    expect(mockCargar.mock.calls.length).toBeGreaterThan(1);
+  });
+
   it("guarda el texto editado y lo vuelve a abrir en la misma plantilla", async () => {
     await renderPanel();
     await abrirRedactar();

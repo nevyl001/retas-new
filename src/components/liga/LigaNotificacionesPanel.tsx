@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useClubExperience } from "../../club-experience/ClubExperienceContext";
 import type {
@@ -444,6 +444,14 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const [historialDetalleId, setHistorialDetalleId] = useState<string | null>(
     null
   );
+  const [actualizandoHistorial, setActualizandoHistorial] = useState(false);
+  const [historialActualizadoEn, setHistorialActualizadoEn] =
+    useState<Date | null>(null);
+  const historialTicket = useRef(0);
+  const manualEnCurso = useRef(0);
+  const refrescarHistorialRef = useRef<
+    (opciones?: { manual?: boolean }) => Promise<NotificacionesLigaSnapshot | null>
+  >(async () => null);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [envioSeleccion, setEnvioSeleccion] = useState<Record<string, boolean>>(
     {}
@@ -501,6 +509,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       if (!activo) return;
       setSnapshot(data);
       setContactos(contactoRows);
+      setHistorialActualizadoEn(new Date());
       setCargando(false);
     });
     return () => {
@@ -917,11 +926,69 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     );
   }
 
-  async function refrescarHistorial() {
-    const fresco = await cargarNotificacionesLiga(ligaId);
-    if (fresco.disponible) setSnapshot(fresco);
-    return fresco;
+  async function refrescarHistorial(opciones?: {
+    manual?: boolean;
+  }): Promise<NotificacionesLigaSnapshot | null> {
+    const ticket = ++historialTicket.current;
+    if (opciones?.manual) {
+      manualEnCurso.current += 1;
+      setActualizandoHistorial(true);
+    }
+    try {
+      const fresco = await cargarNotificacionesLiga(ligaId);
+      if (ticket !== historialTicket.current) return fresco;
+      if (!fresco.disponible || fresco.errorCarga) {
+        if (opciones?.manual) {
+          confirmar("No se pudo actualizar el historial. Inténtalo de nuevo.");
+        }
+        return fresco;
+      }
+      setSnapshot((prev) =>
+        prev
+          ? {
+              ...prev,
+              historial: fresco.historial,
+              cola: fresco.cola,
+              errorCarga: null,
+            }
+          : fresco
+      );
+      setHistorialActualizadoEn(new Date());
+      return fresco;
+    } catch {
+      if (ticket === historialTicket.current && opciones?.manual) {
+        confirmar("No se pudo actualizar el historial. Inténtalo de nuevo.");
+      }
+      return null;
+    } finally {
+      if (opciones?.manual) {
+        manualEnCurso.current = Math.max(0, manualEnCurso.current - 1);
+        if (manualEnCurso.current === 0) setActualizandoHistorial(false);
+      }
+    }
   }
+  refrescarHistorialRef.current = refrescarHistorial;
+
+  useEffect(() => {
+    if (area !== "historial") return;
+    let vivo = true;
+    const pedir = () => {
+      if (!vivo || document.visibilityState === "hidden") return;
+      void refrescarHistorialRef.current();
+    };
+    pedir();
+    const id = window.setInterval(pedir, 4000);
+    const alVolver = () => {
+      if (document.visibilityState === "visible") pedir();
+    };
+    document.addEventListener("visibilitychange", alVolver);
+    return () => {
+      vivo = false;
+      historialTicket.current += 1;
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", alVolver);
+    };
+  }, [area, ligaId]);
 
   async function confirmarEnvioManual() {
     if (!puedeEscribir || enviandoLote) return;
@@ -2032,9 +2099,11 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               <button
                 type="button"
                 className="liga-notificaciones__ghost"
-                onClick={() => void refrescarHistorial()}
+                disabled={actualizandoHistorial}
+                aria-busy={actualizandoHistorial}
+                onClick={() => void refrescarHistorial({ manual: true })}
               >
-                Actualizar
+                {actualizandoHistorial ? "Actualizando…" : "Actualizar"}
               </button>
             </p>
           ) : null}
@@ -2052,12 +2121,23 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
           ) : (
             <div className="liga-notificaciones__history-list">
               <div className="liga-notificaciones__history-toolbar">
+                <span className="liga-notificaciones__meta">
+                  {historialActualizadoEn
+                    ? `Actualizado ${historialActualizadoEn.toLocaleTimeString("es-MX", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      })}`
+                    : "Sin actualizar"}
+                </span>
                 <button
                   type="button"
                   className="liga-notificaciones__ghost"
-                  onClick={() => void refrescarHistorial()}
+                  disabled={actualizandoHistorial}
+                  aria-busy={actualizandoHistorial}
+                  onClick={() => void refrescarHistorial({ manual: true })}
                 >
-                  Actualizar
+                  {actualizandoHistorial ? "Actualizando…" : "Actualizar"}
                 </button>
                 {(snapshot?.cola ?? []).some((item) =>
                   esCorreoNoEnviado(item.estado, null)
