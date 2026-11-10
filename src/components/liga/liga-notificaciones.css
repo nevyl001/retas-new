@@ -996,13 +996,87 @@
   overflow: hidden;
 }
 
-.liga-notificaciones__history-list--exclusiones {
+.liga-notificaciones__exclusiones {
   margin-top: 16px;
+  max-width: 28rem;
+  padding: 14px 16px 12px;
+  border: 0.5px solid var(--liga-border, var(--ro-border));
+  border-radius: var(--liga-radius-md, 12px);
+  background: color-mix(
+    in srgb,
+    var(--liga-surface, var(--ro-surface, #121212)) 92%,
+    transparent
+  );
 }
 
-.liga-notificaciones__history-list--exclusiones .liga-notificaciones__hint,
-.liga-notificaciones__history-list--exclusiones > .liga-notificaciones__meta {
-  padding: 0 16px 12px;
+.liga-notificaciones__exclusiones-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.liga-notificaciones__exclusiones-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--liga-text, var(--ro-text, #f2efe8));
+}
+
+.liga-notificaciones__exclusiones-summary,
+.liga-notificaciones__exclusiones-empty,
+.liga-notificaciones__exclusiones-audit {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--liga-text-muted, var(--ro-text-muted, #8a8680));
+}
+
+.liga-notificaciones__exclusiones-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.liga-notificaciones__exclusiones-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 0.5px solid var(--liga-border-subtle, var(--liga-border, var(--ro-border)));
+  background: color-mix(in srgb, #fff 3%, transparent);
+}
+
+.liga-notificaciones__exclusiones-motivo {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--liga-text, var(--ro-text, #f2efe8));
+}
+
+.liga-notificaciones__exclusiones-count {
+  flex: 0 0 auto;
+  min-width: 1.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 0.5px solid var(--liga-border, var(--ro-border));
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--liga-text, var(--ro-text, #f2efe8));
+}
+
+.liga-notificaciones__exclusiones-audit {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 0.5px solid var(--liga-border-subtle, var(--liga-border, var(--ro-border)));
 }
 
 .liga-notificaciones__history-row {

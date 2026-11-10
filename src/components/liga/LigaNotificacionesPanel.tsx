@@ -2829,45 +2829,42 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
               })}
             </div>
           )}
-          <div
-            className="liga-notificaciones__history-list liga-notificaciones__history-list--exclusiones"
+          <aside
+            className="liga-notificaciones__exclusiones"
             data-historial-seccion="exclusiones"
+            aria-label="Exclusiones por elegibilidad"
           >
-            <div className="liga-notificaciones__history-toolbar">
-              <span className="liga-notificaciones__meta">Exclusiones</span>
+            <div className="liga-notificaciones__exclusiones-head">
+              <h3 className="liga-notificaciones__exclusiones-title">
+                Exclusiones
+              </h3>
+              <p className="liga-notificaciones__exclusiones-summary">
+                {resumenElegibilidad.elegibles} elegibles ·{" "}
+                {resumenElegibilidad.excluidos} no cumplen requisitos
+              </p>
             </div>
-            <p className="liga-notificaciones__hint">
-              {resumenElegibilidad.elegibles} elegibles ·{" "}
-              {resumenElegibilidad.excluidos} no cumplen requisitos. Solo
-              motivos, sin correos.
-            </p>
             {exclusionesActuales.length === 0 ? (
-              <p className="liga-notificaciones__meta">
+              <p className="liga-notificaciones__exclusiones-empty">
                 No hay exclusiones actuales por elegibilidad.
               </p>
             ) : (
-              exclusionesActuales.map(([motivo, cantidad]) => (
-                <article
-                  key={motivo}
-                  className="liga-notificaciones__history-row"
-                >
-                  <div>
-                    <p className="liga-notificaciones__nombre">{motivo}</p>
-                    <p className="liga-notificaciones__meta">
-                      Jugadores inscritos que no se programan automáticamente
-                    </p>
-                  </div>
-                  <p className="liga-notificaciones__meta">{cantidad}</p>
-                  <span className="liga-notificaciones__badge liga-notificaciones__badge--pending">
-                    Excluido
-                  </span>
-                </article>
-              ))
+              <ul className="liga-notificaciones__exclusiones-list">
+                {exclusionesActuales.map(([motivo, cantidad]) => (
+                  <li key={motivo} className="liga-notificaciones__exclusiones-item">
+                    <span className="liga-notificaciones__exclusiones-motivo">
+                      {motivo}
+                    </span>
+                    <span className="liga-notificaciones__exclusiones-count">
+                      {cantidad}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
             {exclusionesHistoricas.desdeCola.length +
               exclusionesHistoricas.desdeLogs.length >
             0 ? (
-              <p className="liga-notificaciones__meta">
+              <p className="liga-notificaciones__exclusiones-audit">
                 Auditoría conservada:{" "}
                 {exclusionesHistoricas.desdeCola.length +
                   exclusionesHistoricas.desdeLogs.length}{" "}
@@ -2882,11 +2879,11 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   exclusionesHistoricas.desdeLogs.length ===
                 1
                   ? ""
-                  : "s"}{" "}
-                de exclusión (no se borran).
+                  : "s"}
+                .
               </p>
             ) : null}
-          </div>
+          </aside>
         </div>
       ) : null}
 
