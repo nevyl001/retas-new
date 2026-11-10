@@ -39,6 +39,22 @@ describe("resolveInscritoContacto", () => {
     expect(counts.get("saul@example.com")).toBe(1);
   });
 
+  it("no inventa ambigüedad si un roster sin Riviera ID comparte el correo canónico", () => {
+    const counts = contarPerfilesPorCorreo([
+      {
+        email: "daniel@example.com",
+        identidadGlobalId: "global-1",
+        jugadorId: "liga-canonico",
+      },
+      {
+        email: "daniel@example.com",
+        identidadGlobalId: null,
+        jugadorId: "liga-huerfano",
+      },
+    ]);
+    expect(counts.get("daniel@example.com")).toBe(1);
+  });
+
   it("sí marca ambiguo cuando dos Riviera ID comparten correo", () => {
     const counts = contarPerfilesPorCorreo([
       {
@@ -49,6 +65,22 @@ describe("resolveInscritoContacto", () => {
       {
         email: "shared@example.com",
         identidadGlobalId: "global-2",
+        jugadorId: "liga-2",
+      },
+    ]);
+    expect(counts.get("shared@example.com")).toBe(2);
+  });
+
+  it("marca ambiguo si varios rosters sin identidad global comparten correo", () => {
+    const counts = contarPerfilesPorCorreo([
+      {
+        email: "shared@example.com",
+        identidadGlobalId: null,
+        jugadorId: "liga-1",
+      },
+      {
+        email: "shared@example.com",
+        identidadGlobalId: null,
         jugadorId: "liga-2",
       },
     ]);
@@ -73,6 +105,7 @@ describe("resolveInscritoContacto", () => {
       identidadGlobalId: "rj-source",
       origen: "global_source",
       registroAutorizadoAt: null,
+      evalCorreo: null,
     });
   });
 });

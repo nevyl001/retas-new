@@ -115,7 +115,8 @@ const MOTIVO_LABEL: Record<string, string> = {
   sin_autorizacion: "Falta autorización documentada",
   sin_correo: "No hay correo",
   correo_invalido: "El correo no es válido",
-  correo_ambiguo: "El correo está repetido entre identidades",
+  correo_ambiguo:
+    "No pudimos identificar de forma única el correo de este jugador. Revisa sus datos antes de enviarlo",
   correo_por_verificar: "Falta autorización documentada",
   excluido: "Contacto excluido / autorización revocada",
   rebote: "El proveedor reportó un rebote",
@@ -330,16 +331,22 @@ function mensajeResultadoEnvio(
     motivo: string | null;
   } | null
 ): string {
-  const jugadores = `${ok} jugador${ok === 1 ? "" : "es"}`;
   if (!proceso || proceso.ok === false) {
     return "Correo preparado, pero no se pudo completar el procesamiento. Revisa Historial.";
   }
   if (!proceso.enviosReales) {
-    return `En cola para ${jugadores}. El envío real estaba apagado, así que no se entregó. Reactívalo e inténtalo de nuevo desde Historial.`;
+    return `${ok} correo${ok === 1 ? "" : "s"} pendiente${
+      ok === 1 ? "" : "s"
+    } de procesamiento. Consulta su estado en Historial.`;
   }
   const aceptados = proceso.enviados;
   const pendientes = proceso.pendientes ?? proceso.fueraAllowlist ?? 0;
   const errores = proceso.errores;
+  if (aceptados > 0 && pendientes === 0 && errores === 0 && proceso.omitidos === 0) {
+    return `${aceptados} correo${aceptados === 1 ? "" : "s"} aceptado${
+      aceptados === 1 ? "" : "s"
+    } por el proveedor.`;
+  }
   const partes = [
     `${aceptados} aceptado${aceptados === 1 ? "" : "s"}`,
     `${pendientes} pendiente${pendientes === 1 ? "" : "s"}`,
@@ -641,6 +648,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         jugadorId,
         enPool,
         email,
+        evalCorreo: contacto?.evalCorreo ?? null,
         identidadGlobalId:
           contacto?.identidadGlobalId ?? enPool?.riviera_jugador_id ?? null,
         rivieraJugadorId:
@@ -671,33 +679,44 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         (row) => row.liga_jugador_id === item.jugadorId
       );
       const preferenciaPolitica = preferenciaParaPolitica(preferencia);
-      const perfiles = correo ? perfilesPorCorreo.get(correo) ?? 1 : 0;
-      const email = item.email;
+      const perfilesCliente = correo ? perfilesPorCorreo.get(correo) ?? 1 : 0;
+      const perfiles =
+        item.evalCorreo === "correo_ambiguo"
+          ? Math.max(2, perfilesCliente)
+          : item.evalCorreo === "ok"
+            ? 1
+            : perfilesCliente;
+      const email =
+        item.evalCorreo === "sin_correo" ? null : item.email;
       const reboteProveedor = historial.some(
         (row) =>
           row.liga_jugador_id === item.jugadorId &&
           (row.motivo === "rebote" || row.proveedor_estado === "rebote")
       );
+      let visual = estadoVisual({
+        email,
+        perfilesConMismoCorreo: perfiles,
+        preferencia: preferenciaPolitica,
+        registroAutorizadoAt: item.registroAutorizadoAt,
+        reboteProveedor,
+        sigueInscrito: true,
+        esSalienteDeSustitucion: false,
+      });
+      if (item.evalCorreo === "correo_ambiguo") visual = "correo_ambiguo";
+      if (item.evalCorreo === "correo_invalido") visual = "correo_invalido";
+      if (item.evalCorreo === "sin_correo") visual = "sin_correo";
       return {
         jugadorId: item.jugadorId,
         nombre: enPool?.nombre ?? inscripcion?.jugador?.nombre ?? "Jugador",
         rivieraId: enPool?.riviera_id ?? null,
         rivieraJugadorId: item.rivieraJugadorId,
-        email,
+        email: item.email,
         fotoUrl: enPool?.foto_url ?? null,
         categoria: categoriaVisible(enPool?.categoria),
         perfilesConMismoCorreo: perfiles,
         registroAutorizadoAt: item.registroAutorizadoAt,
         preferencia,
-        visual: estadoVisual({
-          email,
-          perfilesConMismoCorreo: perfiles,
-          preferencia: preferenciaPolitica,
-          registroAutorizadoAt: item.registroAutorizadoAt,
-          reboteProveedor,
-          sigueInscrito: true,
-          esSalienteDeSustitucion: false,
-        }),
+        visual,
         yaEnviado: envios.some((row) => row.estado === "enviado"),
         yaEncolado: envios.some(
           (row) => row.estado === "pendiente" || row.estado === "procesando"
@@ -1035,6 +1054,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       confirmar(motivoVisible("mensaje_incompleto"));
       return;
     }
+    setAviso(null);
     const loteId =
       loteEnvioId ??
       (typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -1047,6 +1067,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
     let fallidos = 0;
     let yaEnviados = 0;
     let ultimoMotivo: string | null = null;
+    const excluidosLote: { nombre: string; motivo: string }[] = [];
     const colaNueva: ColaNotificacionRow[] = [];
     const jugadoresLote: { jugadorId: string; asunto: string; cuerpo: string }[] =
       [];
@@ -1121,6 +1142,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         } else {
           fallidos += 1;
           ultimoMotivo = resultado.motivo;
+          excluidosLote.push({
+            nombre: fila.nombre,
+            motivo: resultado.motivo ?? "no_disponible",
+          });
         }
       }
       if (colaNueva.length > 0) {
@@ -1150,41 +1175,70 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
       setEnviandoLote(false);
       setFaseEnvio("idle");
     }
+
+    const detalleExcluidos =
+      excluidosLote.length > 0
+        ? excluidosLote
+            .map((item) => `${item.nombre}: ${motivoVisible(item.motivo)}`)
+            .join(" · ")
+        : "";
+
     if (preparados === 0 && yaEnviados > 0 && fallidos === 0) {
       setLoteEnvioId(null);
       setEnvioPaso("idle");
+      setEnvioSeleccion({});
+      setArea("historial");
       confirmar(
         "Ese envío ya fue aceptado. Confírmalo otra vez para mandarlo de nuevo."
       );
       return;
     }
     if (preparados > 0 && proceso?.ok === false) {
-      if (proceso.motivo !== "procesador_no_disponible") setLoteEnvioId(null);
-      setArea("historial");
-      confirmar(mensajeFalloProceso(proceso.motivo));
-      return;
-    }
-    if (preparados > 0 && fallidos === 0) {
-      setLoteEnvioId(null);
+      const respuestaIncierta = proceso.motivo === "procesador_no_disponible";
+      if (!respuestaIncierta) {
+        setLoteEnvioId(null);
+        setEnvioSeleccion({});
+      }
+      // Conserva loteId + selección si la respuesta es incierta para reintentar
+      // el mismo lote sin duplicarlo. Siempre cierra el paso de confirmación.
       setEnvioPaso("idle");
-      setEnvioSeleccion({});
-      confirmar(mensajeResultadoEnvio(preparados, proceso));
-      setArea("historial");
-      return;
-    }
-    if (preparados > 0 && proceso && proceso.enviosReales !== true) {
       setArea("historial");
       confirmar(
         fallidos > 0
-          ? `${mensajeResultadoEnvio(preparados, proceso)} ${fallidos} no se encolaron: ${motivoVisible(ultimoMotivo)}.`
-          : mensajeResultadoEnvio(preparados, proceso)
+          ? `${mensajeFalloProceso(proceso.motivo)} Se procesaron ${preparados} destinatario${
+              preparados === 1 ? "" : "s"
+            }. ${fallidos} requiere${fallidos === 1 ? "" : "n"} revisión. ${detalleExcluidos}`
+          : mensajeFalloProceso(proceso.motivo)
       );
       return;
     }
+    if (preparados > 0) {
+      setLoteEnvioId(null);
+      setEnvioPaso("idle");
+      setEnvioSeleccion({});
+      setArea("historial");
+      if (fallidos > 0) {
+        const aceptados = proceso?.enviosReales
+          ? proceso.enviados
+          : preparados;
+        confirmar(
+          proceso?.enviosReales
+            ? `${aceptados} correo${aceptados === 1 ? "" : "s"} aceptado${
+                aceptados === 1 ? "" : "s"
+              } por el proveedor. ${fallidos} jugador${
+                fallidos === 1 ? "" : "es"
+              } excluido${fallidos === 1 ? "" : "s"}. ${detalleExcluidos}`
+            : `Se procesaron ${preparados} destinatario${
+                preparados === 1 ? "" : "s"
+              }. ${fallidos} requiere${fallidos === 1 ? "" : "n"} revisión. ${detalleExcluidos}`
+        );
+        return;
+      }
+      confirmar(mensajeResultadoEnvio(preparados, proceso));
+      return;
+    }
     confirmar(
-      fallidos > 0 && preparados > 0
-        ? `Pendiente de procesamiento: ${preparados}. ${fallidos} no se encolaron: ${motivoVisible(ultimoMotivo)}.`
-        : `${motivoVisible(ultimoMotivo ?? "no_disponible")}. Puedes corregir y volver a confirmar.`
+      `${motivoVisible(ultimoMotivo ?? "no_disponible")}. Puedes corregir y volver a confirmar.`
     );
   }
 
@@ -1444,7 +1498,7 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         : fila.visual === "correo_invalido"
           ? "Correo inválido"
           : fila.visual === "correo_ambiguo"
-            ? "Correo ambiguo entre identidades"
+            ? "No pudimos identificar de forma única el correo de este jugador"
             : fila.visual === "rebote"
               ? "Rebote reportado por el proveedor"
               : fila.email?.trim()

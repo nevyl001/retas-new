@@ -554,7 +554,8 @@ describe("LigaNotificacionesPanel", () => {
     });
     expect(mockEncolar).toHaveBeenCalledTimes(1);
     expect(mockEncolar.mock.calls[0][0].jugadorId).toBe("jug-1");
-    expect(container.textContent).toContain("El envío real estaba apagado");
+    expect(container.textContent).toContain("pendiente");
+    expect(container.textContent).toContain("procesamiento");
     expect(container.textContent).not.toContain("Correo enviado");
   });
 
@@ -825,7 +826,8 @@ describe("LigaNotificacionesPanel", () => {
     expect(new Set(jugadores).size).toBe(3);
     const lotes = new Set(mockEncolar.mock.calls.map((call) => call[0].loteId));
     expect(lotes.size).toBe(1);
-    expect(container.textContent).toContain("El envío real estaba apagado");
+    expect(container.textContent).toContain("pendiente");
+    expect(container.textContent).toContain("procesamiento");
     expect(container.textContent).not.toContain("Correo enviado");
     expect(container.textContent).not.toContain("Procesando…");
   });
@@ -1360,7 +1362,9 @@ describe("LigaNotificacionesPanel", () => {
     );
     expect(lotes).toHaveLength(2);
     expect(lotes[0]).not.toBe(lotes[1]);
-    expect(container.textContent).toContain("1 aceptado · 0 pendientes · 0 errores");
+    expect(container.textContent).toContain(
+      "1 correo aceptado por el proveedor"
+    );
     expect(container.textContent).not.toContain(
       "no se pudo completar el procesamiento"
     );

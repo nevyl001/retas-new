@@ -20,6 +20,11 @@ export interface ContactoInscritoResuelto {
   origen: ContactoInscritoOrigen;
   /** Alta del Riviera ID. Ausente hasta 0107, o si solo hay correo de roster. */
   registroAutorizadoAt: string | null;
+  /**
+   * Evaluación canónica del servidor (`liga_notificacion_evaluar_correo`).
+   * Ausente si el RPC todavía no expone la columna.
+   */
+  evalCorreo?: string | null;
 }
 
 export function mapContactoInscritoRow(row: {
@@ -30,6 +35,7 @@ export function mapContactoInscritoRow(row: {
   identidad_global_id?: unknown;
   origen?: unknown;
   registro_autorizado_at?: unknown;
+  eval_correo?: unknown;
 }): ContactoInscritoResuelto | null {
   const ligaJugadorId =
     typeof row.liga_jugador_id === "string" ? row.liga_jugador_id.trim() : "";
@@ -42,6 +48,10 @@ export function mapContactoInscritoRow(row: {
     origenRaw === "liga"
       ? origenRaw
       : "ninguno";
+  const evalCorreo =
+    typeof row.eval_correo === "string" && row.eval_correo.trim()
+      ? row.eval_correo.trim().toLowerCase()
+      : null;
   return {
     ligaJugadorId,
     email: normalizarCorreo(
@@ -65,6 +75,7 @@ export function mapContactoInscritoRow(row: {
       row.registro_autorizado_at.trim()
         ? row.registro_autorizado_at.trim()
         : null,
+    evalCorreo,
   };
 }
 
@@ -82,8 +93,10 @@ export function correoEfectivoDestinatario(input: {
 }
 
 /**
- * Ambigüedad solo entre identidades globales distintas.
- * Roster + ficha del mismo jugador no cuenta como dos perfiles.
+ * Ambigüedad alineada con liga_notificacion_evaluar_correo:
+ * - cuenta identidades globales distintas;
+ * - si nadie tiene identidad global, cuenta rosters distintos;
+ * - un roster sin global no inventa una segunda identidad cuando ya hay una global.
  */
 export function contarPerfilesPorCorreo(
   filas: Array<{
@@ -92,19 +105,31 @@ export function contarPerfilesPorCorreo(
     jugadorId: string;
   }>
 ): Map<string, number> {
-  const porCorreo = new Map<string, Set<string>>();
+  const porCorreo = new Map<
+    string,
+    { globals: Set<string>; unlinked: Set<string> }
+  >();
   for (const fila of filas) {
     const correo = normalizarCorreo(fila.email);
     if (!correo) continue;
-    const identidad = (fila.identidadGlobalId ?? fila.jugadorId).trim();
-    if (!identidad) continue;
-    const set = porCorreo.get(correo) ?? new Set<string>();
-    set.add(identidad);
-    porCorreo.set(correo, set);
+    const mutable = porCorreo.get(correo) ?? {
+      globals: new Set<string>(),
+      unlinked: new Set<string>(),
+    };
+    const globalId = (fila.identidadGlobalId ?? "").trim();
+    if (globalId) mutable.globals.add(globalId);
+    else {
+      const jugadorId = fila.jugadorId.trim();
+      if (jugadorId) mutable.unlinked.add(jugadorId);
+    }
+    porCorreo.set(correo, mutable);
   }
   const counts = new Map<string, number>();
-  for (const [correo, set] of Array.from(porCorreo.entries())) {
-    counts.set(correo, set.size);
+  for (const [correo, sets] of Array.from(porCorreo.entries())) {
+    counts.set(
+      correo,
+      sets.globals.size > 0 ? sets.globals.size : sets.unlinked.size
+    );
   }
   return counts;
 }
