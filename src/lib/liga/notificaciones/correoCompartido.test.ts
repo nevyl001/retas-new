@@ -183,6 +183,7 @@ describe("correo compartido", () => {
       "utf8"
     );
     expect(sql0115).toContain("current_user IN ('authenticated', 'anon', 'authenticator')");
+    expect(sql0115).not.toContain("NEW.supervision_activa := false");
     expect(sql0115).not.toContain("liga_notificaciones_sync_recordatorio");
     expect(sql0115).not.toContain("liga_notificaciones_queue");
     const workerBrand = fs.readFileSync(

@@ -1,10 +1,7 @@
--- NO APLICADA. No ejecutar en Production hasta autorización explícita.
--- Si las funciones ya existen, este archivo aborta antes de reemplazarlas.
--- No registra schema_migrations por sí sola. No usa supabase db push.
---
--- Completa solo lo que Production no tiene de la verificación de supervisión:
--- columnas del token, funciones de emisión/confirmación/prueba y el historial
--- mínimo para registrar esa prueba.
+-- NO APLICAR. Medido en Production el 2026-11-10: las funciones y columnas
+-- de verificación ya existen y no están en schema_migrations. Este archivo
+-- aborta antes de reemplazarlas. La protección de columnas ya vive como 0115.
+-- No registra schema_migrations. No usa supabase db push.
 --
 -- No reemplaza liga_notificaciones_sync_recordatorio.
 -- No modifica la cola, jornadas, partidos, resultados, ranking ni autorizaciones.

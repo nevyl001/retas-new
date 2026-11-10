@@ -2,24 +2,20 @@
 --
 -- Production, medido el 2026-11-10:
 --   * schema_migrations >= 0100 solo tiene 0106.
---   * 0111 está parcial: existen sync, programar_resultados,
---     programar_bienvenida y elegible_manual. No existen las funciones
---     de verificación ni las columnas del token.
---   * La función viva de sync ya rechaza 00:00 y escribe Horario.
---     No está registrada. La cola de la jornada 2 no fue reescrita.
---   * 0112 está completa en columnas y en el check de alcance,
---     y tampoco está registrada.
+--   * 0111, 0112 y la verificación de 0114 están materializadas y sin registrar.
+--     sync ya es el cuerpo de 0113: rechaza 00:00, exige un horario y escribe Horario.
+--   * confirmar, emitir, inspeccionar y reservar existen. El token dura 30 minutos
+--     al emitirse, se borra al confirmarse y la reserva exige service_role y menos de 3.
+--   * La cola de la jornada 2 no fue reescrita. No hay cron.
+--   * 0115 ya está aplicada por SQL directo: existe el trigger
+--     liga_notificaciones_proteger_supervision. Su cuerpo vivo todavía
+--     asigna supervision_activa = false si el correo no está verificado.
+--     El archivo del repositorio ya no hace eso. Reemplazarlo requiere autorización.
 --
--- No marcar 0111 como aplicada: ocultaría la parte que falta.
--- No volver a ejecutar 0111: reemplazaría sync por la versión con 00:00.
+-- No marcar 0111 como aplicada: su cuerpo ya no es el que está vivo.
+-- No volver a ejecutar 0111 ni 0114: reemplazarían funciones modernas.
 -- No ejecutar db push.
---
--- Cuando se autorice el historial, el registro fiel es:
---   1. Dejar 0111 sin marcar.
---   2. Aplicar solo 0114_liga_supervision_verificacion.sql.
---   3. Después de comprobar que sync sigue sin 00:00, registrar 0113 y 0114
---      con supabase migration repair. 0112 puede registrarse porque sus
---      objetos ya coinciden. Eso queda fuera de este archivo.
+-- Registrar versiones en schema_migrations queda fuera de este archivo.
 
 SELECT version
 FROM supabase_migrations.schema_migrations

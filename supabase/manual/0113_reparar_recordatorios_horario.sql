@@ -54,12 +54,33 @@ GROUP BY j.id, j.numero, j.estado, j.fecha, j.liga_id;
 --   AND q.origen = 'automatico'
 --   AND q.estado IN ('pendiente', 'omitido');
 --
--- NO EJECUTAR. Después de aplicar 0113 y de confirmar que hora_ronda_1
--- es 21:00 y horas_distintas es 1, esto regenera solo pendiente/omitido
--- de esa jornada. Conserva la clave de idempotencia. No toca enviados.
--- No llama al worker.
+-- NO EJECUTAR. Medido el 2026-11-10: 10 pendientes, programados el
+-- 2026-11-11 09:00 hora de México, con Fecha y enlace, sin Horario.
+-- La hora oficial de la ronda 1 es 21:00 y es única. La función de sync
+-- ya está viva; no hay que aplicar 0113. No llamar a sync para esta
+-- reparación: además del texto puede reescribir estado y programación.
 --
--- SELECT public.liga_notificaciones_sync_recordatorio(j.id)
+-- Este UPDATE solo inserta la línea Horario en esos 10 cuerpos.
+-- No cambia programado_para, estado, motivo, clave, jugador ni intentos.
+-- No toca los dos omitidos ni ningún enviado. Exige que el conteo previo
+-- siga siendo 10 y que falte más de una hora para las 09:00.
+--
+-- UPDATE public.liga_notificaciones_queue q
+-- SET cuerpo_texto = regexp_replace(
+--       q.cuerpo_texto,
+--       '(Fecha: 11/11/2026)(\nSede:)',
+--       E'\\1\nHorario: 21:00 hrs\\2'
+--     ),
+--     updated_at = now()
 -- FROM public.liga_jornadas j
--- WHERE j.numero = 2
---   AND j.fecha = DATE '2026-11-11';
+-- WHERE j.id = q.jornada_id
+--   AND j.numero = 2
+--   AND j.fecha = DATE '2026-11-11'
+--   AND q.tipo = 'recordatorio_jornada'
+--   AND q.origen = 'automatico'
+--   AND q.estado = 'pendiente'
+--   AND q.programado_para = timestamptz '2026-11-11 09:00:00-06'
+--   AND q.cuerpo_texto LIKE E'%Fecha: 11/11/2026\nSede:%'
+--   AND q.cuerpo_texto NOT LIKE '%Horario:%'
+--   AND q.attempts = 0
+--   AND q.processed_at IS NULL;
