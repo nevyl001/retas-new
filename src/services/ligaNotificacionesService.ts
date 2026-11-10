@@ -40,7 +40,7 @@ export interface ConfigNotificacionLiga {
   resultados_auto?: boolean;
   resultados_espera_minutos?: 0 | 5 | 15;
   recordatorio_auto?: boolean;
-  recordatorio_horas?: 24 | 12 | 2;
+  recordatorio_horas?: 24 | 12 | 6 | 2;
   bienvenida_auto?: boolean;
   supervision_email?: string | null;
   supervision_email_verificado?: string | null;

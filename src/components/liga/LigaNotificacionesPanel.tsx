@@ -2843,12 +2843,13 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                     onChange={(event) =>
                       void cambiarConfig({
                         ...config,
-                        recordatorio_horas: Number(event.target.value) as 24 | 12 | 2,
+                        recordatorio_horas: Number(event.target.value) as 24 | 12 | 6 | 2,
                       })
                     }
                   >
                     <option value={24}>24 horas antes</option>
                     <option value={12}>12 horas antes</option>
+                    <option value={6}>6 horas antes</option>
                     <option value={2}>2 horas antes</option>
                   </select>
                 </label>

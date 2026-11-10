@@ -10,7 +10,7 @@ import {
 } from "./renderPremiumEmailHtml";
 
 export const ESPERAS_RESULTADOS_MINUTOS = [0, 5, 15] as const;
-export const HORAS_RECORDATORIO = [24, 12, 2] as const;
+export const HORAS_RECORDATORIO = [24, 12, 6, 2] as const;
 
 export type EsperaResultadosMinutos = (typeof ESPERAS_RESULTADOS_MINUTOS)[number];
 export type HorasRecordatorio = (typeof HORAS_RECORDATORIO)[number];
@@ -36,7 +36,7 @@ export function normalizarEsperaResultados(raw: unknown): EsperaResultadosMinuto
 }
 
 export function normalizarHorasRecordatorio(raw: unknown): HorasRecordatorio {
-  return raw === 12 || raw === 2 ? raw : 24;
+  return raw === 12 || raw === 6 || raw === 2 ? raw : 24;
 }
 
 export function completarConfigAutomatica(raw: Partial<ConfigAutomaticaLiga> | null | undefined): ConfigAutomaticaLiga {

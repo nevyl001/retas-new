@@ -50,7 +50,7 @@ describe("datos oficiales de jornada", () => {
     expect(presentarInstanteLiga("2026-11-11T15:00:00.000Z")).toMatch(/09:00/);
   });
 
-  it("programa 24, 12 y 2 horas antes del inicio oficial", () => {
+  it("programa 24, 12, 6 y 2 horas antes del inicio oficial", () => {
     const datos = datosOficialesJornada({
       ligaId: "liga-1",
       clubNombre: "Hack Pádel",
@@ -65,6 +65,10 @@ describe("datos oficiales de jornada", () => {
     expect(recordatorioOficial({ datos, horas: 12, ahora, activa: true })).toMatchObject({
       ok: true,
       cuandoIso: "2026-11-11T15:00:00.000Z",
+    });
+    expect(recordatorioOficial({ datos, horas: 6, ahora, activa: true })).toMatchObject({
+      ok: true,
+      cuandoIso: "2026-11-11T21:00:00.000Z",
     });
     expect(recordatorioOficial({ datos, horas: 2, ahora, activa: true })).toMatchObject({
       ok: true,
