@@ -31,7 +31,7 @@ import {
 import {
   construirCorreoSupervision,
   NOMBRE_EJEMPLO_SUPERVISION,
-} from "../../../src/lib/liga/notificaciones/automatizacion.ts";
+} from "../../../src/lib/liga/notificaciones/supervisionCopiaMail.ts";
 
 const MODULE = "procesar-liga-notificaciones";
 const SECRET_HEADER = "x-liga-notificaciones-secret";
