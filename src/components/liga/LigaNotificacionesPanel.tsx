@@ -38,7 +38,6 @@ import {
 import { resolveLigaMailBranding } from "../../lib/liga/notificaciones/ligaMailBranding";
 import {
   completarConfigAutomatica,
-  construirCorreoPrueba,
   correoSupervisionValido,
   etiquetaOrigenComunicacion,
   etiquetaTipoComunicacion,
@@ -54,8 +53,6 @@ import {
   solicitarProcesamientoLote,
   establecerHabilitacionJugador,
   guardarConfigLiga,
-  enviarPruebaSupervision,
-  solicitarVerificacionSupervision,
   registrarConsentimientoJugador,
   revocarConsentimientoJugador,
   solicitarComunicacionManual,
@@ -480,7 +477,6 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
   const [supervisionAlcance, setSupervisionAlcance] = useState<
     "resultados" | "todas"
   >("resultados");
-  const [vistaPrueba, setVistaPrueba] = useState(false);
   const jornadaDestino = useMemo(
     () => jornadaEnCursoParaCorreo(jornadas),
     [jornadas]
@@ -1247,41 +1243,6 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         : prev
     );
     confirmar("Cambios guardados");
-  }
-
-  async function pedirVerificacionSupervision() {
-    if (!correoSupervisionValido(supervisionEmail)) {
-      confirmar(motivoVisible("correo_invalido"));
-      return;
-    }
-    setGuardandoId("supervision-verificar");
-    const resultado = await solicitarVerificacionSupervision(ligaId);
-    setGuardandoId(null);
-    if (resultado.motivo === "envios_apagados") {
-      confirmar("El enlace no se envió. El envío real sigue apagado.");
-      return;
-    }
-    confirmar(
-      resultado.ok
-        ? "Enviamos el enlace de confirmación."
-        : motivoVisible(resultado.motivo)
-    );
-  }
-
-  async function confirmarPruebaSupervision() {
-    setVistaPrueba(false);
-    setGuardandoId("supervision-prueba");
-    const resultado = await enviarPruebaSupervision(ligaId);
-    setGuardandoId(null);
-    if (resultado.motivo === "envios_apagados") {
-      confirmar("La prueba no se envió. El envío real sigue apagado.");
-      return;
-    }
-    confirmar(
-      resultado.ok
-        ? "La prueba fue aceptada por el proveedor."
-        : motivoVisible(resultado.motivo)
-    );
   }
 
   function switchNotificaciones(fila: FilaDestinatario) {
@@ -2534,78 +2495,12 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
                   >
                     {guardandoId === "supervision" ? "Guardando…" : "GUARDAR"}
                   </button>
-                  <button
-                    type="button"
-                    className="liga-notificaciones__ghost"
-                    disabled={!puedeEscribir || guardandoId === "supervision-verificar"}
-                    onClick={() => void pedirVerificacionSupervision()}
-                  >
-                    ENVIAR ENLACE DE VERIFICACIÓN
-                  </button>
-                  <button
-                    type="button"
-                    className="liga-notificaciones__ghost"
-                    disabled={!puedeEscribir}
-                    onClick={() => {
-                      if (
-                        !supervisionVerificada({
-                          email: config.supervision_email,
-                          emailVerificado: config.supervision_email_verificado,
-                          verificadoAt: config.supervision_verificado_at,
-                        })
-                      ) {
-                        confirmar(motivoVisible("correo_sin_verificacion"));
-                        return;
-                      }
-                      setVistaPrueba(true);
-                    }}
-                  >
-                    ENVIAR CORREO DE PRUEBA
-                  </button>
                 </div>
               </section>
             </div>
           ) : null}
         </div>
       ) : null}
-
-      {vistaPrueba && typeof document !== "undefined"
-        ? createPortal(
-            <div className="liga-notificaciones__overlay">
-              <button
-                type="button"
-                className="liga-notificaciones__overlay-scrim"
-                aria-label="Cerrar vista previa"
-                onClick={() => setVistaPrueba(false)}
-              />
-              <div
-                className="liga-notificaciones__picker"
-                role="dialog"
-                aria-modal="true"
-                aria-label="Vista previa de la prueba"
-              >
-                <h3 className="liga-notificaciones__section-title">
-                  Correo de prueba
-                </h3>
-                <p className="liga-notificaciones__hint">
-                  Plantilla de notificación de jornada, con datos de ejemplo.
-                </p>
-                <pre className="liga-notificaciones__preview-text">
-                  {construirCorreoPrueba().text}
-                </pre>
-                <button
-                  type="button"
-                  className="liga-notificaciones__ghost"
-                  disabled={guardandoId === "supervision-prueba"}
-                  onClick={() => void confirmarPruebaSupervision()}
-                >
-                  CONFIRMAR Y ENVIAR PRUEBA
-                </button>
-              </div>
-            </div>,
-            document.body
-          )
-        : null}
 
       {selectorAbierto && typeof document !== "undefined"
         ? createPortal(
