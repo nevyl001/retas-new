@@ -9,14 +9,18 @@ import {
   decidirConfirmacionToken,
   esCorreoDeJugador,
   manualSigueDisponible,
+  NOMBRE_EJEMPLO_SUPERVISION,
   permiteOtroEnvio,
   puedeActivarCopia,
   CONFIG_AUTOMATICA_INICIAL,
 } from "./automatizacion";
+import { resolveLigaMailBranding } from "./ligaMailBranding";
 
 const LIGA = "11111111-1111-4111-8111-111111111111";
 const JORNADA = "22222222-2222-4222-8222-222222222222";
 const URL = `https://appriviera.rivieraopen.com/public/liga/${LIGA}/jornada/4`;
+const LIGA_URL = `https://appriviera.rivieraopen.com/public/liga/${LIGA}`;
+const brandingHack = resolveLigaMailBranding({ clubNombre: "Hack Pádel" });
 
 describe("supervisión de correos", () => {
   it("valida el correo guardado sin pedir una verificación", () => {
@@ -79,37 +83,94 @@ describe("supervisión de correos", () => {
     })).toBe("ok");
   });
 
-  it("la copia no incluye correos y la prueba se identifica como tal", () => {
+  it("la copia reutiliza el HTML premium y no inventa datos privados", () => {
+    const cuerpoResultados = [
+      `Hola ${NOMBRE_EJEMPLO_SUPERVISION},`,
+      "",
+      "La Jornada 4 de Liga Norte ya tiene resultados.",
+      "",
+      "Fecha: 12/11/2026",
+      "Horario: 18:00 hrs",
+      "Sede: Hack Pádel",
+      "",
+      `RESULTADOS_URL:/public/liga/${LIGA}/jornada/4`,
+    ].join("\n");
     const copia = construirCorreoSupervision({
       liga: "Liga Norte",
       club: "Hack Pádel",
       jornada: "4",
-      fecha: "12/11/2026",
-      horario: "18:00",
       tipo: "resultados_jornada",
       procesados: 12,
       aceptados: 10,
       errores: 1,
       reintentos: 1,
-      urlResultados: URL,
+      branding: brandingHack,
+      asuntoEnviado: "Resultados — Liga Norte | Jornada 4",
+      cuerpoEnviado: cuerpoResultados,
+      ligaUrl: LIGA_URL,
+      jornadaUrl: URL,
     });
     expect(copia.ok).toBe(true);
     if (!copia.ok) return;
     expect(copia.text).not.toContain("@");
+    expect(copia.html).toContain("Supervisión de envío");
+    expect(copia.html).toContain("Aceptados por proveedor");
+    expect(copia.html).toContain("12/11/2026");
+    expect(copia.html).toContain("18:00 hrs");
+    expect(copia.html).toContain("Hack Pádel");
     expect(copia.html).toContain("VER RESULTADOS");
-    expect(copia.html).toContain("reintentos pendientes");
+    expect(copia.html).toContain(URL);
+    expect(copia.html).toContain("COPIA DE SUPERVISIÓN");
+    expect(copia.html).toContain(NOMBRE_EJEMPLO_SUPERVISION);
+    expect(copia.html).toContain("1 pendientes");
+    expect(copia.html).not.toContain("la de la jornada");
+    expect(copia.html).not.toContain("recordatorio_jornada");
+
+    const recordatorio = construirCorreoSupervision({
+      liga: "Liga 4ta Advance",
+      club: "Hack Pádel",
+      jornada: "2",
+      tipo: "recordatorio_jornada",
+      procesados: 9,
+      aceptados: 9,
+      errores: 0,
+      reintentos: 0,
+      branding: brandingHack,
+      asuntoEnviado: "Recordatorio — Liga 4ta Advance | Jornada 2",
+      cuerpoEnviado: [
+        `Hola ${NOMBRE_EJEMPLO_SUPERVISION},`,
+        "",
+        "La Jornada 2 de Liga 4ta Advance es el 10/11/2026.",
+        "",
+        "Fecha: 10/11/2026",
+        "Horario: 21:00 hrs",
+        "Sede: Hack Pádel",
+        "",
+        `RESULTADOS_URL:/public/liga/${LIGA}/jornada/2`,
+      ].join("\n"),
+      ligaUrl: LIGA_URL,
+      jornadaUrl: `https://appriviera.rivieraopen.com/public/liga/${LIGA}/jornada/2`,
+    });
+    expect(recordatorio.ok).toBe(true);
+    if (!recordatorio.ok) return;
+    expect(recordatorio.html).toContain("Recordatorio de jornada");
+    expect(recordatorio.html).toContain("VER LA JORNADA");
+    expect(recordatorio.html).toContain("21:00 hrs");
+
     expect(construirCorreoSupervision({
       liga: "ana@club.com",
       club: "Club",
       jornada: "1",
-      fecha: "hoy",
-      horario: "18:00",
       tipo: "resultados_jornada",
       procesados: 1,
       aceptados: 1,
       errores: 0,
       reintentos: 0,
-      urlResultados: URL,
+      branding: brandingHack,
+      asuntoEnviado: "Resultados",
+      cuerpoEnviado: "Fecha: hoy\nHorario: 18:00 hrs\nRESULTADOS_URL:" + URL,
+      ligaUrl: LIGA_URL,
+      jornadaUrl: URL,
     })).toEqual({ ok: false, motivo: "datos_privados" });
 
     const prueba = construirCorreoPrueba();
@@ -117,6 +178,17 @@ describe("supervisión de correos", () => {
     expect(prueba.text).toContain("ESTE ES UN CORREO DE PRUEBA");
     expect(prueba.text).not.toContain("/jornada/");
     expect(prueba.html).not.toContain("/liga/");
+  });
+
+  it("el worker de supervisión usa el mismo composer y no el texto plano genérico", () => {
+    const worker = fs.readFileSync(
+      path.join(process.cwd(), "supabase/functions/procesar-liga-notificaciones/index.ts"),
+      "utf8"
+    );
+    expect(worker).toContain("construirCorreoSupervision");
+    expect(worker).toContain("NOMBRE_EJEMPLO_SUPERVISION");
+    expect(worker).not.toContain("Fecha: la de la jornada");
+    expect(worker).not.toContain("Horario: el publicado en la jornada");
   });
 
   it("prueba y supervisión no cuentan como correo de jugador, y el manual sigue disponible", () => {

@@ -28,6 +28,10 @@ import {
   resolveLigaMailBrandingWorker,
   type LigaMailBranding,
 } from "../_shared/ligaNotificacionesMail.ts";
+import {
+  construirCorreoSupervision,
+  NOMBRE_EJEMPLO_SUPERVISION,
+} from "../../../src/lib/liga/notificaciones/automatizacion.ts";
 
 const MODULE = "procesar-liga-notificaciones";
 const SECRET_HEADER = "x-liga-notificaciones-secret";
@@ -638,6 +642,54 @@ async function emitirCopiasSupervision(
   }
 }
 
+async function resolverContextoLigaSupervision(
+  supabase: ReturnType<typeof createCredentialClient>,
+  ligaId: string,
+): Promise<{ ligaNombre: string; clubNombre: string; branding: LigaMailBranding }> {
+  const { data: liga } = await supabase
+    .from("ligas")
+    .select("nombre, organizador_id")
+    .eq("id", ligaId)
+    .maybeSingle();
+  const ligaNombre = String(liga?.nombre ?? "Liga").slice(0, 120);
+  let clubNombre = "Riviera Open";
+  let brandingKey: string | null = null;
+  let premiumEnabled = false;
+  const organizadorId =
+    (liga as { organizador_id?: string | null } | null)?.organizador_id ?? null;
+  if (organizadorId) {
+    const { data: ogm } = await supabase
+      .from("organizador_game_modes")
+      .select("branding_key, premium_branding_enabled")
+      .eq("organizador_id", organizadorId)
+      .maybeSingle();
+    brandingKey =
+      (ogm as { branding_key?: string | null } | null)?.branding_key ?? null;
+    premiumEnabled = Boolean(
+      (ogm as { premium_branding_enabled?: boolean } | null)
+        ?.premium_branding_enabled,
+    );
+    const { data: displayName } = await supabase.rpc(
+      "get_organizador_display_name",
+      { p_organizador_id: organizadorId },
+    );
+    if (displayName && typeof displayName === "string" && displayName.trim()) {
+      clubNombre = displayName.trim();
+    }
+  }
+  const branding = resolveLigaMailBrandingWorker({
+    clubNombre,
+    brandingKey,
+    premiumBrandingEnabled: premiumEnabled,
+    appBaseUrl: publicBase(),
+  });
+  return {
+    ligaNombre,
+    clubNombre: branding.brandName,
+    branding,
+  };
+}
+
 async function enviarCopiaSupervision(
   supabase: ReturnType<typeof createCredentialClient>,
   clave: string,
@@ -664,45 +716,68 @@ async function enviarCopiaSupervision(
 
   let estadosQuery = supabase
     .from("liga_notificaciones_queue")
-    .select("estado")
+    .select("estado, asunto, cuerpo_texto")
     .eq("liga_id", grupo.ligaId)
     .eq("tipo", grupo.tipo)
     .eq("origen", "automatico");
   estadosQuery = grupo.tipo === "bienvenida"
     ? estadosQuery.eq("liga_jugador_id", grupo.eventoId)
     : estadosQuery.eq("jornada_id", grupo.eventoId);
-  const { data: estados } = await estadosQuery;
-  const lista = estados ?? [];
+  const { data: filasCola } = await estadosQuery;
+  const lista = filasCola ?? [];
   const aceptados = lista.filter((fila) => fila.estado === "enviado").length;
   const errores = lista.filter((fila) => fila.estado === "error").length;
   const reintentos = lista.filter((fila) => fila.estado === "pendiente").length;
-  const { data: liga } = await supabase
-    .from("ligas")
-    .select("nombre")
-    .eq("id", grupo.ligaId)
-    .maybeSingle();
-  const ligaNombre = String(liga?.nombre ?? "Liga").slice(0, 120);
-  const numero = grupo.numero ?? "";
-  const url = grupo.tipo === "resultados_jornada" && numero
-    ? `${publicBase()}/public/liga/${grupo.ligaId}/jornada/${numero}`
-    : "";
-  const texto = [
-    "Copia de supervisión",
-    `Liga: ${ligaNombre}`,
-    `Club: ${ligaNombre}`,
-    `Jornada: ${numero || "—"}`,
-    "Fecha: la de la jornada",
-    "Horario: el publicado en la jornada",
-    `Tipo: ${grupo.tipo}`,
-    `Destinatarios procesados: ${lista.length}`,
-    `Aceptados por el proveedor: ${aceptados}`,
-    `Errores: ${errores}`,
-    reintentos > 0
-      ? `Hay ${reintentos} reintentos pendientes.`
-      : "No hay reintentos pendientes.",
-    url ? `VER RESULTADOS: ${url}` : "",
-  ].filter(Boolean).join("\n");
-  if (texto.includes("@")) return;
+
+  const muestra =
+    lista.find((fila) => Boolean(fila.cuerpo_texto?.trim())) ?? lista[0] ?? null;
+  if (!muestra?.cuerpo_texto?.trim()) return;
+
+  const ctx = await resolverContextoLigaSupervision(supabase, grupo.ligaId);
+  const ligaNombre = ctx.ligaNombre;
+  const clubNombre = ctx.clubNombre;
+  const numero = grupo.numero != null ? String(grupo.numero) : "";
+  const ligaUrl = `${publicBase()}/public/liga/${grupo.ligaId}`;
+  const jornadaUrlExplicit =
+    numero && (grupo.tipo === "resultados_jornada" || grupo.tipo === "recordatorio_jornada")
+      ? `${ligaUrl}/jornada/${numero}`
+      : null;
+
+  const cuerpoResuelto = String(muestra.cuerpo_texto)
+    .replace(/\{\{\s*nombre\s*\}\}/gi, NOMBRE_EJEMPLO_SUPERVISION)
+    .replace(/\{\{\s*liga\s*\}\}/gi, ligaNombre)
+    .replace(/\{\{\s*club\s*\}\}/gi, clubNombre);
+  const asuntoResuelto = String(muestra.asunto ?? `Mensaje de ${ligaNombre}`)
+    .replace(/\{\{\s*nombre\s*\}\}/gi, NOMBRE_EJEMPLO_SUPERVISION)
+    .replace(/\{\{\s*liga\s*\}\}/gi, ligaNombre)
+    .replace(/\{\{\s*club\s*\}\}/gi, clubNombre)
+    .slice(0, 180);
+
+  if (cuerpoResuelto.includes("{{") || asuntoResuelto.includes("{{")) return;
+  if (cuerpoResuelto.includes("@") || asuntoResuelto.includes("@")) return;
+
+  const jornadaUrl =
+    jornadaUrlExplicit ??
+    extraerUrlPublicaJornadaWorker(cuerpoResuelto, publicBase());
+
+  const copia = construirCorreoSupervision({
+    liga: ligaNombre,
+    club: clubNombre,
+    jornada: numero,
+    tipo: grupo.tipo,
+    procesados: lista.length,
+    aceptados,
+    errores,
+    reintentos,
+    branding: ctx.branding,
+    asuntoEnviado: asuntoResuelto,
+    cuerpoEnviado: cuerpoResuelto,
+    ligaUrl,
+    jornadaUrl,
+    nombreEjemplo: NOMBRE_EJEMPLO_SUPERVISION,
+  });
+  if (!copia.ok) return;
+  if (copia.text.includes("@") || copia.html.includes("@")) return;
 
   const { error: alta } = await supabase.from("liga_notificaciones_log").insert({
     liga_id: grupo.ligaId,
@@ -723,9 +798,9 @@ async function enviarCopiaSupervision(
 
   const send = await sendByResend(
     email,
-    `Supervisión — ${ligaNombre}`.slice(0, 180),
-    texto,
-    `<p>${texto.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br />")}</p>`,
+    copia.asunto,
+    copia.text,
+    copia.html,
     { function: MODULE, tipo: "supervision" },
     clave,
     null,

@@ -430,6 +430,8 @@ export function renderComunicacionWorker(input: {
   branding?: LigaMailBranding;
   tipo?: string | null;
   ligaUrl?: string | null;
+  jornadaUrl?: string | null;
+  aviso?: string | null;
 }): { asunto: string; html: string; text: string } {
   const club = input.clubNombre.trim() || "Riviera Open";
   const liga = input.ligaNombre.trim() || "tu liga";
@@ -442,7 +444,9 @@ export function renderComunicacionWorker(input: {
     branding,
     tipo: input.tipo,
     ligaUrl: input.ligaUrl,
+    jornadaUrl: input.jornadaUrl,
     replyTo: input.replyTo,
+    aviso: input.aviso,
     vistaPrevia: false,
   });
 }
