@@ -2,6 +2,10 @@
 -- No toca la cola por sí sola. No instala cron. No envía correos.
 -- No reaplicar 0111 ni 0113.
 
+-- También el nombre legacy de 0111; si queda vivo, bloquearía el valor 6.
+ALTER TABLE public.liga_notificaciones_config
+  DROP CONSTRAINT IF EXISTS liga_notificaciones_config_horas_check;
+
 ALTER TABLE public.liga_notificaciones_config
   DROP CONSTRAINT IF EXISTS liga_notificaciones_config_recordatorio_horas_check;
 
