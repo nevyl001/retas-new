@@ -1,7 +1,6 @@
 -- Correctiva. Ambigüedad de correo por identidad canónica.
 --
--- NO APLICAR en Production sin autorización explícita.
--- No toca cola, cron, secretos, rankings ni resultados.
+-- No toca cola, cron, secretos, rankings, jornadas, resultados ni identidades.
 --
 -- Problema: liga_notificacion_evaluar_correo trataba un roster sin Riviera ID
 -- (identidad_global_id NULL) como una segunda identidad distinta al hacer
@@ -16,6 +15,11 @@
 --   * exactamente 1 identidad global   → ok (rosters sin global no inventan otra)
 --
 -- La comprobación global en riviera_jugadores (con cesiones) se conserva.
+--
+-- Contacto RPC: Production ya expone registro_autorizado_at. Se conserva y se
+-- añade eval_correo. Postgres no permite cambiar RETURNS TABLE con
+-- CREATE OR REPLACE, así que se hace DROP FUNCTION sin CASCADE tras verificar
+-- que no hay dependientes de catálogo.
 
 CREATE OR REPLACE FUNCTION public.liga_notificacion_evaluar_correo(p_liga_jugador_id uuid)
 RETURNS text
@@ -100,11 +104,31 @@ $$;
 COMMENT ON FUNCTION public.liga_notificacion_evaluar_correo(uuid) IS
   'Evalúa el correo canónico del roster. Ambigüedad solo entre identidades globales distintas o entre varios rosters sin identidad.';
 
--- Exponer la evaluación en el contacto de inscritos (misma autoridad que el envío).
--- DROP obligatorio: CREATE OR REPLACE no puede añadir OUT columns al RETURNS TABLE.
+-- Fail closed si aparecieran dependientes inesperados (sin CASCADE).
+DO $$
+DECLARE
+  v_deps integer;
+BEGIN
+  SELECT count(*)::integer INTO v_deps
+  FROM pg_depend d
+  JOIN pg_proc p ON p.oid = d.refobjid
+  JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public'
+    AND p.proname = 'liga_inscritos_contacto_autorizado'
+    AND p.pronargs = 1
+    AND d.deptype <> 'i'
+    AND d.objid <> p.oid;
+
+  IF v_deps > 0 THEN
+    RAISE EXCEPTION
+      'liga_inscritos_contacto_autorizado tiene % dependientes; abortar sin DROP CASCADE',
+      v_deps;
+  END IF;
+END $$;
+
 DROP FUNCTION IF EXISTS public.liga_inscritos_contacto_autorizado(uuid);
 
-CREATE OR REPLACE FUNCTION public.liga_inscritos_contacto_autorizado(
+CREATE FUNCTION public.liga_inscritos_contacto_autorizado(
   p_liga_id uuid
 )
 RETURNS TABLE (
@@ -114,6 +138,7 @@ RETURNS TABLE (
   riviera_jugador_id uuid,
   identidad_global_id uuid,
   origen text,
+  registro_autorizado_at timestamp with time zone,
   eval_correo text
 )
 LANGUAGE plpgsql
@@ -145,6 +170,15 @@ BEGIN
     c.riviera_jugador_id,
     c.identidad_global_id,
     c.origen,
+    CASE
+      WHEN c.origen IN ('global_source', 'global_local') THEN (
+        SELECT rj.created_at
+        FROM public.riviera_jugadores rj
+        WHERE rj.id = COALESCE(c.identidad_global_id, c.riviera_jugador_id)
+          AND rj.estado IS DISTINCT FROM 'archivado'
+      )
+      ELSE NULL
+    END,
     public.liga_notificacion_evaluar_correo(insc.jid) AS eval_correo
   FROM (
     SELECT DISTINCT i.jugador_id AS jid
@@ -163,7 +197,12 @@ BEGIN
 END;
 $$;
 
+COMMENT ON FUNCTION public.liga_inscritos_contacto_autorizado(uuid) IS
+  'Contacto de inscritos para el organizador, con evaluación canónica de correo.';
+
 REVOKE ALL ON FUNCTION public.liga_inscritos_contacto_autorizado(uuid)
   FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.liga_inscritos_contacto_autorizado(uuid)
   TO authenticated;
+GRANT EXECUTE ON FUNCTION public.liga_inscritos_contacto_autorizado(uuid)
+  TO service_role;
