@@ -384,11 +384,11 @@
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__portrait {
-    max-height: min(26rem, 52vh);
+    max-height: min(22rem, 42vh);
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__body {
-    padding: 1rem 1.25rem 1.15rem;
+    padding: 0.85rem 1rem 0.95rem;
   }
 }
 
@@ -1046,34 +1046,40 @@
 }
 
 /* =============================================================================
-   Desktop premium — solo .liga-pantalla--individual
-   Evita el estiramiento full-bleed del ranking; usa el ancho con jerarquía.
-   No toca parejas fijas ni otras vistas públicas.
+   Desktop premium landscape — solo .liga-pantalla--individual
+   Podio horizontal (2º · 1º · 3º), sin recortar primeros lugares.
+   Ranking + jornadas caben en viewport; la lista 4+ hace scroll interno.
    ============================================================================= */
 
 @media (min-width: 768px) {
   .liga-pantalla--individual .liga-pantalla__inner.rv-public-board,
   .liga-pantalla--individual .liga-pantalla__inner {
-    max-width: 44rem;
+    max-width: 56rem;
     margin-inline: auto;
     padding-inline: 1.75rem;
+    padding-top: 1.75rem;
+    padding-bottom: 2rem;
+  }
+
+  .liga-pantalla--individual .peds-hero {
+    margin-bottom: 1.15rem;
   }
 
   .liga-pantalla--individual .liga-pantalla-ranking--individual-primary {
     max-width: none;
     margin-inline: 0;
-    padding: 1.35rem 1.35rem 1.2rem;
+    padding: 1.1rem 1.15rem 1rem;
   }
 
   .liga-pantalla--individual .liga-ind-rest__row {
-    grid-template-columns: 2rem 3rem minmax(0, 1fr) auto;
-    gap: 0.85rem;
-    padding: 0.72rem 0.35rem;
+    grid-template-columns: 2rem 2.75rem minmax(0, 1fr) auto;
+    gap: 0.7rem;
+    padding: 0.55rem 0.3rem;
   }
 
   .liga-pantalla--individual .liga-ind-rest__avatar.rj-avatar {
-    width: 46px !important;
-    height: 58px !important;
+    width: 42px !important;
+    height: 52px !important;
   }
 
   .liga-pantalla--individual .liga-ind-jornadas {
@@ -1081,37 +1087,162 @@
   }
 
   .liga-pantalla--individual .liga-ind-jornadas__panel {
-    padding: 1.25rem 1.35rem 1.25rem;
+    padding: 1.1rem 1.15rem 1.1rem;
   }
 }
 
 @media (min-width: 1100px) {
   .liga-pantalla--individual .liga-pantalla__inner.rv-public-board,
   .liga-pantalla--individual .liga-pantalla__inner {
-    max-width: 72rem;
-    padding-inline: 2rem;
+    max-width: min(76rem, 96vw);
+    padding-inline: 1.75rem;
+    padding-top: 1.35rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .liga-pantalla--individual .peds-hero {
+    margin-bottom: 0.95rem;
   }
 
   .liga-pantalla--individual .liga-pantalla__layout--liga.liga-pantalla__layout--individual {
-    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-    gap: 1.75rem 2rem;
-    align-items: start;
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    gap: 1.25rem 1.6rem;
+    align-items: stretch;
+    min-height: 0;
   }
 
   .liga-pantalla--individual .liga-pantalla-ranking--individual-primary {
-    position: sticky;
-    top: 1.25rem;
-    padding: 1.4rem 1.4rem 1.25rem;
-    border-radius: 20px;
+    position: relative;
+    top: auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: calc(100dvh - 7.5rem);
+    padding: 1rem 1.05rem 0.9rem;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .liga-pantalla--individual .liga-pantalla-ranking__title {
+    margin-bottom: 0.75rem;
+    flex: 0 0 auto;
+  }
+
+  /* Podio clásico horizontal: 2º · 1º · 3º — todo visible sin stack vertical */
+  .liga-pantalla--individual .liga-ind-top3 {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr) minmax(0, 1fr);
+    align-items: end;
+    gap: 0.65rem;
+    margin: 0 0 0.75rem;
+    max-width: none;
+    flex: 0 0 auto;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card {
+    overflow: visible;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card--1 {
+    grid-column: auto;
+    order: 2;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card--2 {
+    order: 1;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card--3 {
+    order: 3;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__portrait {
+    aspect-ratio: 3 / 4;
+    max-height: none;
+    height: clamp(7.5rem, 18vh, 11.5rem);
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__portrait {
+    aspect-ratio: auto;
+    height: clamp(9.5rem, 24vh, 14.5rem);
+    max-height: none;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card--2 .liga-ind-top3__portrait,
+  .liga-pantalla--individual .liga-ind-top3__card--3 .liga-ind-top3__portrait {
+    aspect-ratio: auto;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__body {
+    padding: 0.55rem 0.55rem 0.65rem;
+    gap: 0.12rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__body {
+    padding: 0.65rem 0.7rem 0.75rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__name {
+    font-size: 0.78rem;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__name {
+    font-size: 0.92rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__pts-value {
+    font-size: 1.05rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__pts-value {
+    font-size: 1.35rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__pts-label,
+  .liga-pantalla--individual .liga-ind-top3__support,
+  .liga-pantalla--individual .liga-ind-top3__ajuste {
+    font-size: 0.62rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__pts-label,
+  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__support {
+    font-size: 0.68rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-rest {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-top: 0.45rem;
+    margin-inline: -0.15rem;
+    padding-inline: 0.15rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-rest__name {
+    font-size: 0.9rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-rest__pts strong {
+    font-size: 0.92rem;
   }
 
   .liga-pantalla--individual .liga-pantalla-jornadas--individual-secondary {
     align-items: stretch;
     min-width: 0;
+    min-height: 0;
+    max-height: calc(100dvh - 7.5rem);
+    overflow: auto;
   }
 
   .liga-pantalla--individual .liga-pantalla-jornadas--individual-secondary .liga-pantalla-jornadas__title {
     text-align: left;
+    margin-bottom: 0.85rem;
   }
 
   .liga-pantalla--individual .liga-ind-jornadas {
@@ -1122,39 +1253,55 @@
     justify-content: flex-start;
   }
 
-  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__portrait {
-    max-height: min(28rem, 46vh);
-  }
-
-  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__name {
-    font-size: 1.2rem;
-  }
-
-  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__pts-value {
-    font-size: 1.75rem;
-  }
-
-  .liga-pantalla--individual .liga-ind-rest__name {
-    font-size: 0.98rem;
-  }
-
-  .liga-pantalla--individual .liga-ind-rest__pts strong {
-    font-size: 1rem;
+  .liga-pantalla--individual .liga-ind-jornadas__panel {
+    padding: 1rem 1.05rem;
   }
 }
 
 @media (min-width: 1280px) {
   .liga-pantalla--individual .liga-pantalla__inner.rv-public-board,
   .liga-pantalla--individual .liga-pantalla__inner {
-    max-width: 78rem;
-    padding-inline: 2.25rem;
+    max-width: min(82rem, 94vw);
+    padding-inline: 2rem;
   }
 
   .liga-pantalla--individual .liga-pantalla__layout--liga.liga-pantalla__layout--individual {
-    gap: 2rem 2.35rem;
+    gap: 1.4rem 1.9rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3 {
-    gap: 0.8rem;
+    gap: 0.75rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__portrait {
+    height: clamp(8.25rem, 20vh, 12.5rem);
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__portrait {
+    height: clamp(10.5rem, 26vh, 15.5rem);
+  }
+}
+
+/* Landscape desktop corto: prioriza caber el podio completo */
+@media (min-width: 1100px) and (max-height: 820px) {
+  .liga-pantalla--individual .liga-pantalla-ranking--individual-primary,
+  .liga-pantalla--individual .liga-pantalla-jornadas--individual-secondary {
+    max-height: calc(100dvh - 6.25rem);
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__portrait {
+    height: clamp(6.5rem, 16vh, 9.5rem);
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__portrait {
+    height: clamp(8rem, 20vh, 11.5rem);
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__body {
+    padding: 0.4rem 0.45rem 0.5rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-rest__row {
+    padding: 0.42rem 0.25rem;
   }
 }
