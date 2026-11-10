@@ -41,6 +41,7 @@ import {
 } from "./ligaCareerInscripcionSync";
 import { dedupeLigaJugadoresById } from "../lib/liga/dedupeJugadores";
 import { collectMissingJugadorIds } from "../lib/liga/historicalIdentity";
+import { computePuntosPorJugadorDesdePartidos } from "../lib/liga/puntosPorJugador";
 import {
   computeParejasFijasMatchTotals,
   parseSetScoresJson,
@@ -469,11 +470,23 @@ export async function getLigaById(
       ? mapJugador(row.jugador as Record<string, unknown>)
       : undefined;
     if (j) jugadorMap.set(j.id, j);
+    const heredados =
+      "puntos_heredados" in row
+        ? Math.max(0, Number((row as { puntos_heredados?: number }).puntos_heredados ?? 0))
+        : 0;
+    const ingreso =
+      "ingreso_jornada_numero" in row
+        ? ((row as { ingreso_jornada_numero?: number | null })
+            .ingreso_jornada_numero ?? null)
+        : null;
     return {
       id: String(row.id),
       liga_id: String(row.liga_id),
       jugador_id: String(row.jugador_id),
       puntos: Number(row.puntos),
+      puntos_heredados: heredados,
+      ingreso_jornada_numero:
+        ingreso == null ? null : Number(ingreso),
       jugador: j,
     };
   });
@@ -1645,39 +1658,6 @@ type ParejaPuntosRow = {
   jugador1_id: string;
   jugador2_id: string;
 };
-
-function computePuntosPorJugadorDesdePartidos(
-  partidos: PartidoPuntosRow[],
-  parejas: ParejaPuntosRow[]
-): Map<string, number> {
-  const parejaPlayers = new Map<string, { j1: string; j2: string }>();
-  for (const p of parejas) {
-    parejaPlayers.set(String(p.id), {
-      j1: String(p.jugador1_id),
-      j2: String(p.jugador2_id),
-    });
-  }
-
-  const puntosPorJugador = new Map<string, number>();
-
-  for (const m of partidos) {
-    if (m.estado !== "completed") continue;
-    const s1 = Number(m.score_pareja1 ?? 0);
-    const s2 = Number(m.score_pareja2 ?? 0);
-    const p1 = parejaPlayers.get(String(m.pareja1_id));
-    const p2 = parejaPlayers.get(String(m.pareja2_id));
-    if (p1) {
-      puntosPorJugador.set(p1.j1, (puntosPorJugador.get(p1.j1) ?? 0) + s1);
-      puntosPorJugador.set(p1.j2, (puntosPorJugador.get(p1.j2) ?? 0) + s1);
-    }
-    if (p2) {
-      puntosPorJugador.set(p2.j1, (puntosPorJugador.get(p2.j1) ?? 0) + s2);
-      puntosPorJugador.set(p2.j2, (puntosPorJugador.get(p2.j2) ?? 0) + s2);
-    }
-  }
-
-  return puntosPorJugador;
-}
 
 /** Recalcula el ranking acumulado desde todos los partidos completados de la liga. */
 export async function recalcularPuntosLiga(ligaId: string): Promise<void> {

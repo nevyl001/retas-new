@@ -1080,6 +1080,10 @@
   line-height: 1.35;
 }
 
+.liga-pantalla-ranking__hint--flush {
+  margin: -0.15rem 0 0.55rem;
+}
+
 .liga-pantalla-ranking__subtitle {
   font-size: 0.68rem;
   font-weight: 600;

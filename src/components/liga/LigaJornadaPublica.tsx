@@ -3,6 +3,7 @@ import {
   buildJornadaParejaMatchBreakdowns,
   computeJornadaPublicStats,
 } from "../../lib/liga/jornadaStats";
+import { computeRankingIndividualAcumuladoHasta } from "../../lib/liga/rankingIndividualAcumulado";
 import {
   resolveGranFinalCelebrateSides,
   resolveThirdPlaceCelebrateSide,
@@ -314,6 +315,16 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   const jornadaStats = useMemo(
     () => computeJornadaPublicStats(jornada, { parejasFijas: esParejasFijas }),
     [jornada, esParejasFijas]
+  );
+
+  const rankingIndividualAcumulado = useMemo(
+    () =>
+      computeRankingIndividualAcumuladoHasta({
+        jornadas: detalle?.jornadas ?? [],
+        hastaNumero: jornada?.numero ?? numero,
+        inscripciones: detalle?.inscripciones ?? [],
+      }),
+    [detalle?.jornadas, detalle?.inscripciones, jornada?.numero, numero]
   );
 
   const jornadaMatchBreakdowns = useMemo(
@@ -863,8 +874,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                   Ranking de la jornada
                 </h2>
                 <p className="liga-pantalla-ranking__hint">
-                  Por pareja de esta jornada. PTS → DIF (obtenidos − recibidos) → G
-                  (ganados). Jugadores: PTS de la jornada.
+                  Parejas: solo esta jornada (PTS → DIF → G). Jugadores:
+                  clasificación individual acumulada hasta esta jornada.
                 </p>
                 <div className="liga-pantalla-ranking__dual liga-pantalla-ranking__dual--rotativo">
                   <div className="liga-pantalla-ranking__panel liga-pantalla-ranking__panel--parejas">
@@ -968,9 +979,12 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
 
                   <div className="liga-pantalla-ranking__panel">
                     <h3 className="liga-pantalla-ranking__subtitle liga-pantalla-ranking__subtitle--flush">
-                      Jugadores
+                      Clasificación individual
                     </h3>
-                    {jornadaStats.rankingJugadores.length === 0 ? (
+                    <p className="liga-pantalla-ranking__hint liga-pantalla-ranking__hint--flush">
+                      Acumulado hasta la Jornada {jornada?.numero ?? numero}
+                    </p>
+                    {rankingIndividualAcumulado.length === 0 ? (
                       <p className="liga-pantalla__loading">Sin resultados aún.</p>
                     ) : (
                       <table className="liga-pantalla-ranking__table--compact">
@@ -978,11 +992,19 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                           <tr>
                             <th scope="col">POS</th>
                             <th scope="col">Jugador</th>
-                            <th scope="col">PTS</th>
+                            <th
+                              scope="col"
+                              title="Puntos de esta jornada (si ya está consolidada)"
+                            >
+                              Jor.
+                            </th>
+                            <th scope="col" title="Total acumulado hasta esta jornada">
+                              PTS
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
-                          {jornadaStats.rankingJugadores.map((row) => (
+                          {rankingIndividualAcumulado.map((row) => (
                             <tr
                               key={row.jugadorId}
                               className={
@@ -995,6 +1017,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                                 {row.posicion}
                               </td>
                               <td>{row.nombre}</td>
+                              <td className="liga-pantalla-ranking__stat">
+                                {row.puntosJornada}
+                              </td>
                               <td className="liga-pantalla-ranking__pts">
                                 {row.puntos}
                               </td>
