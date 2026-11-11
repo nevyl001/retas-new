@@ -88,7 +88,7 @@ describe("LigaHome — dashboard de tarjetas", () => {
     expect(container.textContent).toContain("Liga 5ta Advance");
     expect(container.textContent).toContain("Liga 4ta Advance");
     expect(container.textContent).toContain("Liga individual · Parejas rotativas");
-    expect(container.textContent).toContain("Gestionar liga");
+    expect(container.textContent).toContain("Gestionar");
     expect(container.textContent).toContain("Jornada 2 de 6");
     expect(container.textContent).toContain("Jornada 6 de 6");
     expect(

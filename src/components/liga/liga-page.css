@@ -387,48 +387,60 @@
   margin: 0 auto;
   padding: 0;
   width: 100%;
-  max-width: 1400px;
+  max-width: 1480px;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.25rem;
+  gap: 0.75rem;
   min-width: 0;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .liga-home__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.35rem;
+    gap: 0.85rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .liga-home__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .liga-home__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.9rem;
   }
 }
 
 .liga-home-card {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.65rem;
   min-width: 0;
-  padding: 1rem 1.1rem 1.05rem;
+  padding: 0.85rem 0.9rem 0.9rem;
   background: var(--liga-surface);
   border: 1px solid var(--liga-border);
-  border-radius: var(--liga-radius-lg);
-  box-shadow: var(--liga-shadow-card);
+  border-radius: var(--liga-radius-md, var(--liga-radius-lg));
+  box-shadow: none;
   transition:
     border-color 0.15s ease,
-    box-shadow 0.15s ease,
     background-color 0.15s ease;
 }
 
 .liga-home-card:hover,
 .liga-home-card:focus-within {
   border-color: var(--liga-border-subtle);
-  box-shadow: var(--liga-shadow-hover);
   background: var(--liga-surface-hover);
+  box-shadow: none;
 }
 
 .liga-home-card__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .liga-home-card__state {
@@ -443,7 +455,7 @@
 .liga-home-card__body {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.3rem;
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -451,55 +463,80 @@
 .liga-home-card__title {
   margin: 0;
   font-family: var(--liga-font-display);
-  font-size: clamp(1.05rem, 2.2vw, 1.3rem);
-  font-weight: 700;
-  line-height: 1.25;
+  font-size: clamp(0.95rem, 1.4vw, 1.05rem);
+  font-weight: 650;
+  line-height: 1.3;
   letter-spacing: -0.01em;
   color: var(--liga-text);
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .liga-home-card__modality {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   line-height: 1.35;
   color: var(--liga-text-muted);
 }
 
 .liga-home-card__meta {
   list-style: none;
-  margin: 0.35rem 0 0;
+  margin: 0.4rem 0 0;
   padding: 0;
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.85rem;
 }
 
 .liga-home-card__meta li {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.35rem;
   min-width: 0;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--liga-text-soft);
 }
 
 .liga-home-card__meta .ti {
   flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
   color: var(--liga-text-muted);
 }
 
 .liga-home-card__footer {
   margin-top: auto;
-  padding-top: 0.25rem;
+  padding-top: 0.35rem;
 }
 
 .liga-home-card__manage {
   width: 100%;
+  min-height: 2.15rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--liga-text);
+  border: 1px solid var(--liga-border);
+  box-shadow: none;
+}
+
+.liga-home-card__manage:hover:not(:disabled),
+.liga-home-card__manage:focus-visible:not(:disabled) {
+  border-color: var(--brand-accent, var(--liga-gold));
+  color: var(--liga-text);
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, var(--liga-gold)) 12%,
+    transparent
+  );
 }
 
 @media (max-width: 767px) {

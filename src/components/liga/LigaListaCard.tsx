@@ -101,12 +101,12 @@ export const LigaListaCard: React.FC<LigaListaCardProps> = ({
 
         <ul className="liga-home-card__meta">
           <li>
-            <TablerIcon name="users" size={16} />
+            <TablerIcon name="users" size={14} />
             <span>{ligaParticipantesLabel(liga)}</span>
           </li>
           {avance ? (
             <li>
-              <TablerIcon name="calendar-event" size={16} />
+              <TablerIcon name="calendar-event" size={14} />
               <span>{avance}</span>
             </li>
           ) : null}
@@ -116,13 +116,14 @@ export const LigaListaCard: React.FC<LigaListaCardProps> = ({
       <footer className="liga-home-card__footer">
         <Button
           type="button"
-          variant="primary"
+          variant="secondary"
+          size="sm"
           className="liga-home-card__manage"
           disabled={deleteDisabled}
           onClick={onManage}
         >
-          Gestionar liga
-          <TablerIcon name="arrow-right" size={18} />
+          Gestionar
+          <TablerIcon name="arrow-right" size={16} />
         </Button>
       </footer>
     </li>
