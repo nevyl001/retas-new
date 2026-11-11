@@ -9,6 +9,8 @@ import {
   renderPremiumEmailHtml,
 // @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
 } from "./renderPremiumEmailHtml.ts";
+// @ts-expect-error El empaquetador de Edge Functions exige la extensión .ts.
+import { asegurarCuerpoRecordatorioMotivante } from "./mensajesMotivantesRecordatorio.ts";
 
 const MARCA_RESULTADOS = /^RESULTADOS_URL:(\S+)\s*$/m;
 const AVISO_PRUEBA =
@@ -149,6 +151,11 @@ export function renderCorreoComunicacion(input: {
   vistaPrevia?: boolean;
   replyTo?: string | null;
   aviso?: string | null;
+  /** Semilla estable para recordatorios (preview = envío = reintento). */
+  jugadorId?: string | null;
+  ligaId?: string | null;
+  jornadaId?: string | null;
+  jornadaNumero?: number | null;
 }): { asunto: string; html: string; text: string } {
   const rawClub = input.clubNombre.trim();
   const rawLiga = input.ligaNombre.trim();
@@ -163,10 +170,19 @@ export function renderCorreoComunicacion(input: {
   const enlaceJornada = enlacePublicoJornada(input);
   const ligaUrl = urlLigaPublicaAbsoluta(input.ligaUrl);
   const esResultados = input.tipo === "resultados_jornada";
+  const esRecordatorio = input.tipo === "recordatorio_jornada";
   const cuerpoBase = cuerpoSinMarcaResultados(input.cuerpo).slice(0, 8000);
-  const cuerpo = esResultados
-    ? cuerpoResultadosSinDuplicados(cuerpoBase)
+  const cuerpoPreparacion = esRecordatorio
+    ? asegurarCuerpoRecordatorioMotivante(cuerpoBase, {
+        jugadorId: input.jugadorId ?? "preview",
+        ligaId: input.ligaId ?? input.ligaNombre,
+        jornadaNumero: Number(input.jornadaNumero) || 0,
+        jornadaId: input.jornadaId,
+      })
     : cuerpoBase;
+  const cuerpo = esResultados
+    ? cuerpoResultadosSinDuplicados(cuerpoPreparacion)
+    : cuerpoPreparacion;
   const parsed = extractJornadaDetailsFromText(cuerpo, club);
   const cuerpoLimpio = esResultados
     ? cuerpoResultadosSinDuplicados(parsed.cleanBody)

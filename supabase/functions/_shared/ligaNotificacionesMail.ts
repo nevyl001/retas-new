@@ -433,6 +433,10 @@ export function renderComunicacionWorker(input: {
   ligaUrl?: string | null;
   jornadaUrl?: string | null;
   aviso?: string | null;
+  jugadorId?: string | null;
+  ligaId?: string | null;
+  jornadaId?: string | null;
+  jornadaNumero?: number | null;
 }): { asunto: string; html: string; text: string } {
   const club = input.clubNombre.trim() || "Riviera Open";
   const liga = input.ligaNombre.trim() || "tu liga";
@@ -449,6 +453,10 @@ export function renderComunicacionWorker(input: {
     replyTo: input.replyTo,
     aviso: input.aviso,
     vistaPrevia: false,
+    jugadorId: input.jugadorId,
+    ligaId: input.ligaId,
+    jornadaId: input.jornadaId,
+    jornadaNumero: input.jornadaNumero,
   });
 }
 

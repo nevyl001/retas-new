@@ -14,7 +14,7 @@ const branding = resolveLigaMailBranding({ clubNombre: "Hack Pádel" });
 const cuerpo = [
   "Hola Ana,",
   "",
-  "La Jornada 2 de Liga Norte es el 11/11/2026 a las 21:00 hrs.",
+  "Cada partido es una oportunidad para mejorar. Confía en tu juego, apoya a tu pareja y deja que el esfuerzo hable en la cancha.",
   "",
   "Fecha: 11/11/2026",
   "Horario: 21:00 hrs",

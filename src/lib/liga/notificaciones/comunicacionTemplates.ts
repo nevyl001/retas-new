@@ -153,6 +153,10 @@ export function renderComunicacionEmail(input: {
   ligaUrl?: string | null;
   jornadaUrl?: string | null;
   etiquetaBoton?: string | null;
+  jugadorId?: string | null;
+  ligaId?: string | null;
+  jornadaId?: string | null;
+  jornadaNumero?: number | null;
 }): { subject: string; html: string; text: string } {
   const vars: VariablesComunicacion = {
     nombre: input.jugadorNombre.trim() || "Jugador",
@@ -178,6 +182,10 @@ export function renderComunicacionEmail(input: {
     etiquetaBoton: input.etiquetaBoton,
     vistaPrevia: input.vistaPrevia,
     replyTo: input.replyTo,
+    jugadorId: input.jugadorId,
+    ligaId: input.ligaId,
+    jornadaId: input.jornadaId,
+    jornadaNumero: input.jornadaNumero,
   });
   return { subject: render.asunto, html: render.html, text: render.text };
 }

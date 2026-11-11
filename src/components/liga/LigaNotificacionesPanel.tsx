@@ -2157,6 +2157,8 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
             numero: datos.numero,
             fechaIso: datos.fechaIso,
             horaInicio: datos.horaInicio,
+            jugadorId: `preview:${ligaId}`,
+            jornadaId: datos.jornadaId,
           })
         : null;
     if (vistaAuto === "recordatorio" && !recordatorio) {
@@ -2209,6 +2211,10 @@ export const LigaNotificacionesPanel: React.FC<LigaNotificacionesPanelProps> = (
         vistaAuto === "bienvenida" || !datos?.urlPublica
           ? null
           : `${origen}${datos.urlPublica}`,
+      jugadorId: `preview:${ligaId}`,
+      ligaId,
+      jornadaId: datos?.jornadaId ?? null,
+      jornadaNumero: datos?.numero ?? null,
     });
     notas.push(
       `Tipo: ${vistaAuto}.`,

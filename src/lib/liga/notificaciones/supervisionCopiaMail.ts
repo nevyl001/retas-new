@@ -206,6 +206,7 @@ export function construirCorreoSupervision(input: {
     return { ok: true, asunto, html: htmlAviso, text: resumenTexto };
   }
 
+  const jornadaNumeroMatch = String(input.jornada || "").match(/\d+/);
   const visual = renderCorreoComunicacion({
     clubNombre: club,
     ligaNombre: liga,
@@ -217,6 +218,9 @@ export function construirCorreoSupervision(input: {
     jornadaUrl,
     vistaPrevia: false,
     aviso: `COPIA DE SUPERVISIÓN — saludo con nombre de ejemplo: ${nombreEjemplo}. El diseño, la jornada y el enlace son los del envío real.`,
+    jugadorId: "supervision-preview",
+    ligaId: liga,
+    jornadaNumero: jornadaNumeroMatch ? Number(jornadaNumeroMatch[0]) : 0,
   });
 
   return {

@@ -9,6 +9,7 @@ import { jornadaEnCursoParaCorreo, rutaPublicaJornada } from "./comunicacionTemp
 import { programarRecordatorio } from "./automatizacion";
 import { dateInputValue, timeInputValue } from "../programacion";
 import { resolveLigaProgramadoStartMs } from "../jornadaTemporal";
+import { seleccionarMensajeMotivanteRecordatorio } from "./mensajesMotivantesRecordatorio";
 
 export const ZONA_HORARIA_LIGA = "America/Mexico_City";
 
@@ -175,7 +176,8 @@ export function fechaCortaOficial(fecha: string | null | undefined): string | nu
 /**
  * Texto que guarda la cola y que el worker renderiza.
  * {{nombre}}, {{liga}} y {{club}} los resuelve el mismo sustituidor del envío.
- * No incluye una hora inventada.
+ * Fecha/horario/sede viven solo en la tarjeta; el párrafo motivante es
+ * determinista por jugador + liga + jornada (sin Math.random).
  */
 export function cuerpoRecordatorioOficial(input: {
   ligaId: string;
@@ -183,18 +185,27 @@ export function cuerpoRecordatorioOficial(input: {
   numero: number;
   fechaIso: string;
   horaInicio: string;
+  jugadorId?: string | null;
+  jornadaId?: string | null;
 }): { asunto: string; cuerpo: string } | null {
   const corta = fechaCortaOficial(input.fechaIso);
   const hora = timeInputValue(input.horaInicio);
   const ruta = rutaPublicaJornada(input.ligaId, input.numero);
   if (!corta || !hora || !ruta) return null;
   const liga = input.ligaNombre.trim() || "tu liga";
+  const jugadorId = (input.jugadorId ?? "").trim() || "preview";
+  const mensaje = seleccionarMensajeMotivanteRecordatorio({
+    jugadorId,
+    ligaId: input.ligaId,
+    jornadaNumero: input.numero,
+    jornadaId: input.jornadaId,
+  });
   return {
     asunto: `Recordatorio — ${liga} | Jornada ${input.numero}`.slice(0, 180),
     cuerpo: [
       "Hola {{nombre}},",
       "",
-      `La Jornada ${input.numero} de {{liga}} es el ${corta} a las ${hora} hrs.`,
+      mensaje,
       "",
       `Fecha: ${corta}`,
       `Horario: ${hora} hrs`,

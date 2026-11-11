@@ -497,6 +497,10 @@ async function enviarReclamado(
       branding: otraVez.branding,
       tipo: row.tipo,
       ligaUrl,
+      jugadorId: row.liga_jugador_id,
+      ligaId: row.liga_id,
+      jornadaId: row.jornada_id ?? null,
+      jornadaNumero: row.jornada_numero ?? null,
     })
     : renderBienvenidaWorker({
       clubNombre: otraVez.clubNombre,

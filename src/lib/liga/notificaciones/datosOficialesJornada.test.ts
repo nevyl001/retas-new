@@ -206,6 +206,7 @@ describe("datos oficiales de jornada", () => {
     expect(pieza?.cuerpo).toContain("Horario: 21:00 hrs");
     expect(pieza?.cuerpo).toContain("Sede: {{club}}");
     expect(pieza?.cuerpo).toContain("RESULTADOS_URL:/public/liga/liga-1/jornada/2");
+    expect(pieza?.cuerpo).not.toMatch(/La Jornada 2 de .+ es el /);
     expect(pieza?.asunto).toBe("Recordatorio — Liga Nocturna | Jornada 2");
     expect(recordatorioTieneHorarioOficial(pieza?.cuerpo)).toBe(true);
     expect(recordatorioTieneHorarioOficial("Fecha: 11/11/2026\nSede: Club")).toBe(false);
@@ -216,15 +217,21 @@ describe("datos oficiales de jornada", () => {
       asunto: pieza?.asunto ?? "",
       cuerpo: pieza?.cuerpo ?? "",
       vistaPrevia: true,
-      tipo: "jornada",
+      tipo: "recordatorio_jornada",
       etiquetaBoton: "VER LA JORNADA",
       jornadaUrl: "https://appriviera.rivieraopen.com/public/liga/liga-1/jornada/2",
+      ligaId: "liga-1",
+      jugadorId: "preview",
+      jornadaNumero: 2,
     });
     expect(view.html).toContain("21:00 hrs");
     expect(view.html).toContain("11/11/2026");
+    expect(view.html.split("11/11/2026").length - 1).toBe(1);
     expect(view.html).toContain("Hack Pádel");
     expect(view.html).toContain("/public/liga/liga-1/jornada/2");
     expect(view.html).toContain("VER LA JORNADA");
+    expect(view.html).toContain("Hola Ana,");
+    expect(view.html).not.toMatch(/La Jornada 2 de .+ es el /);
     expect(view.html).not.toContain("{{");
     expect(view.subject).not.toContain("{{");
   });
