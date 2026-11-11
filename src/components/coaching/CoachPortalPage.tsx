@@ -4,7 +4,7 @@ import {
   fetchCurrentCoachProfile,
   acceptCoachClubInvitation,
   fetchCoachAssignedStudents,
-  recordCoachClassSession,
+  recordCoachClassSessionWithFollowup,
   generateCoachingIdempotencyKey,
   fetchCoachAgenda,
   fetchCoachClassFollowup,
@@ -399,28 +399,20 @@ export const CoachPortalPage: React.FC = () => {
         }
         return;
       }
-      const res = await recordCoachClassSession({
+      // Una sola RPC: descuento + seguimiento. Si falla el seguimiento, no queda debito parcial.
+      const res = await recordCoachClassSessionWithFollowup({
         relationshipId: modalStudent.id,
         sessionId: modalSessionId || undefined,
         workedOn: workedOnList,
         improvements: improvements.trim() || undefined,
+        areasToImprove: areasToImprove.trim() || undefined,
+        recommendations: recommendations.trim() || undefined,
         nextGoals: nextGoals.trim() || undefined,
         motivationalMessage: motivationalMessage.trim() || undefined,
+        privateNotes: classNotes.trim() || undefined,
         durationMinutes,
         idempotencyKey: modalKey,
       });
-      if (res.sessionId) {
-        try {
-          await updateCoachClassFollowup({ sessionId: res.sessionId, ...followup });
-        } catch (followErr) {
-          setModalError(
-            followErr instanceof Error
-              ? `La clase se registró una sola vez. El seguimiento no se guardó: ${followErr.message}`
-              : "La clase se registró una sola vez. El seguimiento no se guardó."
-          );
-          return;
-        }
-      }
 
       setSuccessMessage(
         res.idempotent

@@ -15,6 +15,7 @@ import type {
   InviteCoachResult,
   ClubCoachDetail,
   RecordCoachClassSessionInput,
+  RecordCoachClassWithFollowupInput,
   ClassFollowupInput,
   CoachClassFollowup,
   CoachFollowupDigest,
@@ -820,6 +821,84 @@ export async function updateCoachClassFollowup(input: ClassFollowupInput): Promi
   if (!res || res.ok !== true) {
     throw new Error(res?.error || "No se pudo guardar el seguimiento.");
   }
+}
+
+/**
+ * Registra clase + seguimiento en una sola RPC transaccional.
+ * Si el seguimiento falla, el backend revierte el descuento (sin estado parcial).
+ * Conserva la clave de idempotencia entre reintentos.
+ */
+export async function recordCoachClassSessionWithFollowup(
+  input: RecordCoachClassWithFollowupInput
+): Promise<{
+  ok: boolean;
+  remainingBalance: number;
+  totalClassesGiven: number;
+  sessionId: string;
+  idempotent?: boolean;
+}> {
+  const key = input.idempotencyKey || generateCoachingIdempotencyKey("session");
+
+  return retryTransient(
+    async () => {
+      const { data, error } = await supabase.rpc(
+        "record_coach_class_session_with_followup",
+        {
+          p_relationship_id: input.relationshipId,
+          p_notas: input.notas ?? null,
+          p_idempotency_key: key,
+          p_session_id: input.sessionId ?? null,
+          p_worked_on: input.workedOn ?? [],
+          p_improvements: input.improvements ?? null,
+          p_next_goals: input.nextGoals ?? null,
+          p_motivational_message: input.motivationalMessage ?? null,
+          p_duration_minutes: input.durationMinutes ?? 60,
+          p_areas_to_improve: input.areasToImprove ?? null,
+          p_recommendations: input.recommendations ?? null,
+          p_private_notes: input.privateNotes ?? null,
+        }
+      );
+
+      if (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : typeof error === "object" &&
+                error !== null &&
+                "message" in error &&
+                typeof (error as { message?: unknown }).message === "string"
+              ? (error as { message: string }).message
+              : "";
+        throw new Error(
+          message || "No se pudo registrar la clase con su seguimiento."
+        );
+      }
+
+      const res = data as {
+        ok?: boolean;
+        error?: string;
+        remaining_balance?: number;
+        total_classes_given?: number;
+        session_id?: string;
+        idempotent?: boolean;
+      };
+
+      if (!res || res.ok !== true) {
+        throw new Error(
+          res?.error || "No se pudo registrar la clase con su seguimiento."
+        );
+      }
+
+      return {
+        ok: true,
+        remainingBalance: Number(res.remaining_balance ?? 0),
+        totalClassesGiven: Number(res.total_classes_given ?? 0),
+        sessionId: String(res.session_id ?? ""),
+        idempotent: Boolean(res.idempotent),
+      };
+    },
+    { label: "recordCoachClassSessionWithFollowup" }
+  );
 }
 
 export async function fetchCoachClassFollowup(

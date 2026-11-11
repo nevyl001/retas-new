@@ -1,4 +1,8 @@
-import { mapStudentTrainingSession, updateCoachClassFollowup } from "./coachingApi";
+import {
+  mapStudentTrainingSession,
+  recordCoachClassSessionWithFollowup,
+  updateCoachClassFollowup,
+} from "./coachingApi";
 import { supabase } from "../supabaseClient";
 
 jest.mock("../supabaseClient", () => ({
@@ -8,6 +12,10 @@ jest.mock("../supabaseClient", () => ({
 }));
 
 describe("seguimiento pedagógico", () => {
+  beforeEach(() => {
+    (supabase.rpc as jest.Mock).mockReset();
+  });
+
   it("no copia notas privadas al expediente del alumno", () => {
     const session = mapStudentTrainingSession({
       id: "s1",
@@ -54,5 +62,76 @@ describe("seguimiento pedagógico", () => {
       "record_coach_class_session",
       expect.anything()
     );
+  });
+
+  it("registro nuevo usa RPC atómica e incluye notas privadas", async () => {
+    (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+      data: {
+        ok: true,
+        followup_ok: true,
+        session_id: "s-new",
+        remaining_balance: 5,
+        total_classes_given: 1,
+      },
+      error: null,
+    });
+
+    await recordCoachClassSessionWithFollowup({
+      relationshipId: "rel-1",
+      workedOn: ["Volea"],
+      privateNotes: "interno",
+      areasToImprove: "Bloqueo",
+      idempotencyKey: "session-new-1",
+    });
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "record_coach_class_session_with_followup",
+      expect.objectContaining({
+        p_private_notes: "interno",
+        p_areas_to_improve: "Bloqueo",
+      })
+    );
+  });
+
+  it("un error de Postgres (objeto, no Error) se muestra al entrenador", async () => {
+    (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+      data: null,
+      error: {
+        message:
+          "No se pudo guardar el seguimiento de la clase; se revierte el registro.",
+        code: "P0001",
+      },
+    });
+
+    await expect(
+      recordCoachClassSessionWithFollowup({
+        relationshipId: "rel-1",
+        workedOn: ["Saque"],
+        idempotencyKey: "session-pg-error",
+      })
+    ).rejects.toThrow(/se revierte el registro/);
+
+    expect(supabase.rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it("error de seguimiento en RPC atómica se muestra sin dejar dos llamadas parciales en cliente", async () => {
+    (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+      data: {
+        ok: false,
+        error:
+          "No se pudo guardar el seguimiento de la clase; se revierte el registro.",
+      },
+      error: null,
+    });
+
+    await expect(
+      recordCoachClassSessionWithFollowup({
+        relationshipId: "rel-1",
+        workedOn: ["Saque"],
+        idempotencyKey: "session-rollback-1",
+      })
+    ).rejects.toThrow(/seguimiento|revierte/i);
+
+    expect(supabase.rpc).toHaveBeenCalledTimes(1);
   });
 });

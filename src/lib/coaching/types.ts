@@ -190,6 +190,13 @@ export type RecordCoachClassSessionInput = {
   durationMinutes?: number;
 };
 
+/** Registro atómico: descuento + seguimiento completo (áreas, recomendaciones, notas privadas). */
+export type RecordCoachClassWithFollowupInput = RecordCoachClassSessionInput & {
+  areasToImprove?: string | null;
+  recommendations?: string | null;
+  privateNotes?: string | null;
+};
+
 export type ClassFollowupInput = {
   sessionId: string;
   workedOn: string[];

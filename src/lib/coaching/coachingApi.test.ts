@@ -10,6 +10,8 @@ import {
   acceptCoachClubInvitation,
   assignCoachClasses,
   recordCoachClassSession,
+  recordCoachClassSessionWithFollowup,
+  updateCoachClassFollowup,
   fetchClubClassLedger,
   fetchCoachAssignedStudents,
   fetchStudentCoachingOverview,
@@ -26,8 +28,6 @@ import {
   loginStudentWithIdentifier,
   requestStudentPasswordReset,
   requestStudentAccessLink,
-  resolveStudentLoginIdentifier,
-  resolveStudentSession,
 } from "./coachingApi";
 import type { CreateCoachInput } from "./types";
 import { supabase } from "../supabaseClient";
@@ -940,6 +940,133 @@ describe("coachingApi - Entrega B", () => {
         })
       );
       expect(res.sessionId).toBe("sess-custom-123");
+    });
+
+    it("recordCoachClassSessionWithFollowup registra clase + seguimiento en una sola RPC", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          followup_ok: true,
+          session_id: "sess-atomic-1",
+          remaining_balance: 8,
+          total_classes_given: 2,
+        },
+        error: null,
+      });
+
+      const res = await recordCoachClassSessionWithFollowup({
+        relationshipId: "rel-123",
+        workedOn: ["Volea"],
+        improvements: "Mejor timing",
+        areasToImprove: "Globos",
+        recommendations: "10 min de desplazamiento",
+        nextGoals: "Definición",
+        motivationalMessage: "Excelente sesión",
+        privateNotes: "solo coach",
+        durationMinutes: 60,
+        idempotencyKey: "session-atomic-ui-1",
+      });
+
+      expect(supabase.rpc).toHaveBeenCalledTimes(1);
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        "record_coach_class_session_with_followup",
+        expect.objectContaining({
+          p_relationship_id: "rel-123",
+          p_idempotency_key: "session-atomic-ui-1",
+          p_worked_on: ["Volea"],
+          p_areas_to_improve: "Globos",
+          p_recommendations: "10 min de desplazamiento",
+          p_private_notes: "solo coach",
+        })
+      );
+      expect(supabase.rpc).not.toHaveBeenCalledWith(
+        "record_coach_class_session",
+        expect.anything()
+      );
+      expect(supabase.rpc).not.toHaveBeenCalledWith(
+        "update_coach_class_followup",
+        expect.anything()
+      );
+      expect(res.sessionId).toBe("sess-atomic-1");
+      expect(res.remainingBalance).toBe(8);
+    });
+
+    it("recordCoachClassSessionWithFollowup propaga saldo insuficiente sin llamar followup aparte", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: false,
+          error: "El alumno no tiene clases disponibles. Solicita al club asignar nuevas clases.",
+        },
+        error: null,
+      });
+
+      await expect(
+        recordCoachClassSessionWithFollowup({
+          relationshipId: "rel-123",
+          workedOn: ["Saque"],
+          idempotencyKey: "session-no-balance",
+        })
+      ).rejects.toThrow("El alumno no tiene clases disponibles");
+
+      expect(supabase.rpc).toHaveBeenCalledTimes(1);
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        "record_coach_class_session_with_followup",
+        expect.anything()
+      );
+    });
+
+    it("recordCoachClassSessionWithFollowup reutiliza la misma clave tras fallo de red (sin doble descuento)", async () => {
+      (supabase.rpc as jest.Mock).mockRejectedValueOnce(new Error("Failed to fetch"));
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          idempotent: true,
+          followup_ok: true,
+          session_id: "sess-idem-atomic",
+          remaining_balance: 7,
+          total_classes_given: 3,
+        },
+        error: null,
+      });
+
+      const res = await recordCoachClassSessionWithFollowup({
+        relationshipId: "rel-123",
+        workedOn: ["Bandeja"],
+        privateNotes: "nota",
+      });
+
+      expect(supabase.rpc).toHaveBeenCalledTimes(2);
+      const key1 = (supabase.rpc as jest.Mock).mock.calls[0][1].p_idempotency_key;
+      const key2 = (supabase.rpc as jest.Mock).mock.calls[1][1].p_idempotency_key;
+      expect(key1).toBe(key2);
+      expect(res.idempotent).toBe(true);
+      expect(res.remainingBalance).toBe(7);
+    });
+
+    it("updateCoachClassFollowup edita seguimiento existente sin registrar otra clase", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: { ok: true, session_id: "sess-hist-1" },
+        error: null,
+      });
+
+      await updateCoachClassFollowup({
+        sessionId: "sess-hist-1",
+        workedOn: ["Volea"],
+        areasToImprove: "Anticipación",
+        privateNotes: "histórico intacto salvo seguimiento",
+      });
+
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        "update_coach_class_followup",
+        expect.objectContaining({
+          p_session_id: "sess-hist-1",
+          p_private_notes: "histórico intacto salvo seguimiento",
+        })
+      );
+      expect(supabase.rpc).not.toHaveBeenCalledWith(
+        "record_coach_class_session_with_followup",
+        expect.anything()
+      );
     });
 
     it("assignCoachClasses respects explicit idempotencyKey provided by the caller across UI retries", async () => {
