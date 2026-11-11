@@ -12,10 +12,14 @@ import * as coachingApi from "../../lib/coaching/coachingApi";
 
 const mockUser = { id: "user-student-123", email: "diego@padel.com" };
 let mockCurrentUser: { id: string; email: string } | null = mockUser;
+let mockUserProfile: { name?: string; avatar_url?: string } | null = {
+  name: "Diego Palomares",
+};
 
 jest.mock("../../contexts/UserContext", () => ({
   useUser: () => ({
     user: mockCurrentUser,
+    userProfile: mockUserProfile,
     loading: false,
   }),
 }));
@@ -35,6 +39,7 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     document.body.appendChild(container);
     root = createRoot(container);
     mockCurrentUser = mockUser;
+    mockUserProfile = { name: "Diego Palomares" };
     jest.clearAllMocks();
     jest.spyOn(coachingApi, "fetchStudentTrainingTimeline").mockResolvedValue([]);
   });
@@ -54,10 +59,12 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     });
 
     expect(container.textContent).toContain("Sesión requerida");
-    expect(container.textContent).toContain("Inicia sesión con tu cuenta oficial de Riviera");
+    expect(container.textContent).toContain(
+      "Inicia sesión con tu cuenta oficial de Riviera",
+    );
   });
 
-  it("renders empty state with Riviera ID when student has no active coaching package", async () => {
+  it("renders personalized header, daily mindset quote, and compact empty state without duplicate RV ID when student has no coach", async () => {
     jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockResolvedValueOnce({
       ok: true,
       linked: true,
@@ -69,11 +76,31 @@ describe("StudentCoachingPage & CoachingRouter", () => {
       root.render(<StudentCoachingPage />);
     });
 
-    expect(container.textContent).toContain("Aún no tienes un entrenador asignado");
+    // Encabezado personalizado
+    expect(container.textContent).toContain("Hola, Diego Palomares");
+    expect(container.textContent).toContain("Mi Coaching");
+    expect(container.textContent).toContain(
+      "Tu espacio para entrenar, mejorar y seguir evolucionando.",
+    );
     expect(container.textContent).toContain("RIV-00000356");
+    expect(container.textContent).not.toContain("Riviera ID");
+
+    // El identificador oficial aparece una sola vez en pantalla (en el encabezado)
+    const idOccurrences = (container.textContent ?? "").split("RIV-00000356").length - 1;
+    expect(idOccurrences).toBe(1);
+
+    // Mensaje motivacional diario
+    expect(container.textContent).toContain("MENTALIDAD RIVIERA");
+
+    // Estado sin entrenador asignado
+    expect(container.textContent).toContain("Tu evolución comienza aquí.");
+    expect(container.textContent).toContain(
+      "Cuando tu entrenador te vincule, encontrarás aquí tus clases, avances y próximos objetivos.",
+    );
+    expect(container.textContent).toContain("COPIAR MI RV ID");
   });
 
-  it("renders active coaching relationship with club, coach, class balance, and ledger history", async () => {
+  it("renders active coaching relationship with training summary, player evolution, and ledger history", async () => {
     jest.spyOn(coachingApi, "fetchStudentTrainingTimeline").mockResolvedValue([
       {
         id: "ses-1",
@@ -159,21 +186,36 @@ describe("StudentCoachingPage & CoachingRouter", () => {
 
     // Validar encabezados y badge
     expect(container.textContent).toContain("Mi Coaching");
+    expect(container.textContent).toContain("Hola, Diego Palomares");
     expect(container.textContent).toContain("RIV-00000356");
+    expect(container.textContent).toContain("MENTALIDAD RIVIERA");
 
     // Validar información del coach y club
+    expect(container.textContent).toContain("RESUMEN DEL ENTRENAMIENTO");
     expect(container.textContent).toContain("Prof. Roberto Morales");
     expect(container.textContent).toContain("COACH-007");
     expect(container.textContent).toContain("Bandeja");
     expect(container.textContent).toContain("Hack Pádel");
 
     // Validar métricas de balance
+    expect(container.textContent).toContain("Clases disponibles");
     expect(container.textContent).toContain("4");
     expect(container.textContent).toContain("Paquete Vigente");
+    expect(container.textContent).toContain("Clases completadas");
     expect(container.textContent).toContain("1");
     expect(container.textContent).toContain("Clases Impartidas");
 
-    // Validar historial y ledger
+    // Validar Mi Evolución como Jugador
+    expect(container.textContent).toContain("MI EVOLUCIÓN COMO JUGADOR");
+    expect(container.textContent).toContain("ÚLTIMA CLASE");
+    expect(container.textContent).toContain("EN QUÉ DEBO MEJORAR");
+    expect(container.textContent).toContain("MIS AVANCES");
+    expect(container.textContent).toContain("RECOMENDACIONES");
+    expect(container.textContent).toContain("MI PRÓXIMO OBJETIVO");
+    expect(container.textContent).toContain("Diez minutos de desplazamiento");
+    expect(container.textContent).toContain("Defensa de pared");
+
+    // Validar historial y ledger + privacidad de notas internas
     expect(container.textContent).toContain("Historial de Sesiones y Asignaciones");
     expect(container.textContent).toContain("Armado de bandeja profunda");
     expect(container.textContent).toContain("Mejor control en la volea");
@@ -184,9 +226,58 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     expect(container.textContent).toContain("-1 Clase (Coach)");
   });
 
+  it("does not render empty evolution cards when coach is assigned but no sessions are registered yet", async () => {
+    jest.spyOn(coachingApi, "fetchStudentTrainingTimeline").mockResolvedValue([]);
+    jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockResolvedValueOnce({
+      ok: true,
+      linked: true,
+      rivieraId: "RIV-00000356",
+      relationships: [
+        {
+          relationshipId: "rel-hack-1",
+          status: "ACTIVE",
+          isPrimary: true,
+          startedAt: "2026-10-15T12:00:00Z",
+          endedAt: null,
+          club: {
+            organizadorId: "org-hack-uuid",
+            nombre: "Hack Pádel",
+          },
+          coach: {
+            id: "coach-uuid-1",
+            nombre: "Prof. Roberto Morales",
+            coachCode: "COACH-007",
+            fotoUrl: null,
+            especialidades: [],
+          },
+          player: {
+            id: "player-uuid-1",
+            nombre: "Diego Palomares",
+            rivieraId: "RIV-00000356",
+          },
+          balance: {
+            balanceClasses: 2,
+            totalClassesGiven: 0,
+            updatedAt: "2026-10-15T12:00:00Z",
+          },
+          ledger: [],
+        },
+      ],
+    });
+
+    await act(async () => {
+      root.render(<StudentCoachingPage />);
+    });
+
+    expect(container.textContent).toContain("MI EVOLUCIÓN COMO JUGADOR");
+    expect(container.textContent).not.toContain("EN QUÉ DEBO MEJORAR");
+    expect(container.textContent).not.toContain("RECOMENDACIONES");
+    expect(container.textContent).not.toContain("MI PRÓXIMO OBJETIVO");
+  });
+
   it("renders error alert with retry button when loading fails", async () => {
     jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockRejectedValueOnce(
-      new Error("Conexión perdida con la base de datos")
+      new Error("Conexión perdida con la base de datos"),
     );
 
     await act(async () => {
@@ -211,6 +302,6 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     });
 
     expect(container.textContent).toContain("Mi Coaching");
-    expect(container.textContent).toContain("Aún no tienes un entrenador asignado");
+    expect(container.textContent).toContain("Tu evolución comienza aquí.");
   });
 });

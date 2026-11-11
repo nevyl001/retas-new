@@ -948,92 +948,371 @@
   flex-wrap: wrap;
 }
 
-.coaching-student-badge-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.85rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--ro-radius-pill, 999px);
-  backdrop-filter: blur(8px);
+/* ── RIVIERA COACHING — DASHBOARD DEL ALUMNO 2026 (.coaching-student-page) ── */
+
+.coaching-page.coaching-student-page {
+  --student-bg-page: var(--ro-bg-main, #f8f7f4);
+  --student-bg-card: #ffffff;
+  --student-bg-subtle: #f8fafc;
+  --student-bg-muted: #f1f5f9;
+  --student-text-primary: #0f172a;
+  --student-text-secondary: #475569;
+  --student-text-muted: #64748b;
+  --student-border: rgba(15, 23, 42, 0.08);
+  --student-border-strong: rgba(15, 23, 42, 0.14);
+  --student-accent: #0284c7;
+  --student-accent-strong: #0369a1;
+  --student-accent-soft: rgba(2, 132, 199, 0.08);
+  --student-accent-border: rgba(2, 132, 199, 0.22);
+  --student-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+  --student-shadow-md: 0 8px 24px -6px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+
+  color: var(--student-text-primary);
+  font-family: var(--ro-font-body, "Manrope", -apple-system, BlinkMacSystemFont, sans-serif);
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(1rem, 2.5vw, 2rem) clamp(1rem, 3vw, 2rem) 3.5rem;
+  box-sizing: border-box;
 }
 
-.coaching-student-badge-label {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
-  font-weight: 700;
+/* Botones dentro del dashboard de alumno */
+.coaching-student-page .coaching-back {
+  background: var(--student-bg-card);
+  border: 1px solid var(--student-border-strong);
+  color: var(--student-text-primary);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 0.42rem 0.85rem;
+  border-radius: 999px;
+  box-shadow: var(--student-shadow-sm);
+  margin-bottom: 0;
+  transition: border-color 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
 }
 
-.coaching-student-badge-val {
-  font-size: 0.875rem;
-  color: var(--brand-accent, #38bdf8);
-  font-family: monospace;
-  font-weight: 800;
-  letter-spacing: 0.05em;
+.coaching-student-page .coaching-back:hover {
+  background: var(--student-bg-subtle);
+  border-color: rgba(15, 23, 42, 0.24);
 }
 
-.coaching-badge-copy-btn {
-  background: transparent;
-  border: none;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.7));
-  cursor: pointer;
-  padding: 0.2rem;
+.coaching-student-page .coaching-btn--primary {
+  background: var(--student-text-primary);
+  color: #ffffff;
+  border: 1px solid var(--student-text-primary);
+  box-shadow: var(--student-shadow-sm);
+}
+
+.coaching-student-page .coaching-btn--primary:hover:not(:disabled) {
+  background: #1e293b;
+  border-color: #1e293b;
+}
+
+.coaching-student-page .coaching-btn--secondary {
+  background: var(--student-bg-card);
+  color: var(--student-text-primary);
+  border: 1px solid var(--student-border-strong);
+}
+
+.coaching-student-page .coaching-btn--secondary:hover:not(:disabled) {
+  background: var(--student-bg-subtle);
+  border-color: rgba(15, 23, 42, 0.25);
+}
+
+/* 1. ENCABEZADO PERSONALIZADO */
+.coaching-student-hero {
+  background: var(--student-bg-card);
+  border: 1px solid var(--student-border);
+  border-radius: 16px;
+  padding: clamp(1.15rem, 2.2vw, 1.65rem);
+  margin-bottom: 1rem;
+  box-shadow: var(--student-shadow-sm);
+}
+
+.coaching-student-hero__topbar {
   display: flex;
   align-items: center;
-  border-radius: 4px;
-  transition: all 0.15s ease;
-}
-
-.coaching-badge-copy-btn:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.coaching-student-empty-state {
-  margin-top: 1rem;
-}
-
-.coaching-riviera-share-box {
-  display: inline-flex;
-  align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.75rem 1.25rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: var(--ro-radius-md, 8px);
-  margin-top: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.15rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--student-border);
 }
 
-.coaching-riviera-share-label {
-  font-size: 0.85rem;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.7));
+.coaching-student-hero__brand-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--student-text-muted);
 }
 
-.coaching-riviera-share-code {
-  font-size: 1.15rem;
-  font-weight: 800;
-  font-family: monospace;
-  color: var(--brand-accent, #38bdf8);
+.coaching-student-hero__main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.coaching-student-hero__identity {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+/* Fotografía en formato retrato 3:4 */
+.coaching-student-hero__portrait-frame {
+  width: 64px;
+  height: 84px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--student-bg-muted);
+  border: 1px solid var(--student-border-strong);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coaching-student-hero__portrait-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.coaching-student-hero__portrait-fallback {
+  width: 100%;
+  height: 100%;
+  background: #0f172a;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ro-font-heading, "Bebas Neue", sans-serif);
+  font-size: 1.45rem;
+  font-weight: 700;
   letter-spacing: 0.06em;
 }
 
+.coaching-student-hero__copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.coaching-student-hero__greeting {
+  margin: 0 0 0.15rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--student-accent);
+  letter-spacing: 0.02em;
+}
+
+.coaching-student-page .coaching-student-hero__title {
+  margin: 0;
+  font-family: var(--ro-font-heading, "Bebas Neue", sans-serif);
+  font-size: clamp(1.75rem, 2.8vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.05;
+  color: var(--student-text-primary);
+  text-transform: uppercase;
+}
+
+.coaching-student-page .coaching-student-hero__subtitle {
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--student-text-secondary);
+  max-width: 54ch;
+}
+
+.coaching-student-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.coaching-student-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.38rem 0.45rem 0.38rem 0.8rem;
+  background: var(--student-bg-subtle);
+  border: 1px solid var(--student-border-strong);
+  border-radius: 999px;
+}
+
+.coaching-student-badge-val {
+  font-size: 0.84rem;
+  color: var(--student-text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.coaching-badge-copy-btn {
+  background: #ffffff;
+  border: 1px solid var(--student-border);
+  color: var(--student-text-secondary);
+  cursor: pointer;
+  padding: 0.24rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.coaching-badge-copy-btn:hover {
+  color: var(--student-accent-strong);
+  border-color: var(--student-accent-border);
+  background: var(--student-accent-soft);
+}
+
+.coaching-badge-copy-text {
+  line-height: 1;
+}
+
+.coaching-student-ranking-btn {
+  font-size: 0.8125rem;
+  padding: 0.48rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.coaching-student-admin-redirect {
+  margin-top: 1rem;
+}
+
+/* 2. MENSAJE MOTIVACIONAL DIARIO — MENTALIDAD RIVIERA */
+.coaching-mentalidad {
+  background: var(--student-bg-card);
+  border: 1px solid var(--student-border);
+  border-left: 3px solid var(--student-accent);
+  border-radius: 14px;
+  padding: 1rem 1.35rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--student-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.coaching-mentalidad__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.coaching-mentalidad__eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--student-accent);
+}
+
+.coaching-mentalidad__tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--student-text-muted);
+}
+
+.coaching-mentalidad__quote {
+  margin: 0;
+  font-size: clamp(0.95rem, 1.3vw, 1.08rem);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--student-text-primary);
+  letter-spacing: -0.01em;
+}
+
+/* 3. ESTADO SIN ENTRENADOR ASIGNADO */
+.coaching-student-empty-state {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.coaching-student-page .coaching-student-empty-card {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: clamp(1.75rem, 3vw, 2.35rem) clamp(1.35rem, 3vw, 2.25rem);
+  background: var(--student-bg-card);
+  border: 1px solid var(--student-border);
+  border-radius: 16px;
+  box-shadow: var(--student-shadow-md);
+  text-align: center;
+}
+
+.coaching-student-empty-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--student-accent-soft);
+  border: 1px solid var(--student-accent-border);
+  color: var(--student-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.coaching-student-empty-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--student-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.coaching-student-empty-desc {
+  margin: 0 auto 1.35rem;
+  max-width: 44ch;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--student-text-secondary);
+}
+
+.coaching-student-empty-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.coaching-student-copy-id-btn {
+  padding: 0.65rem 1.35rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .coaching-link-help-card {
-  margin-top: 1.5rem;
-  padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  border-radius: var(--ro-radius-md, 8px);
+  margin-top: 1.25rem;
+  padding: 1.15rem;
+  background: var(--student-bg-subtle);
+  border: 1px solid var(--student-border-strong);
+  border-radius: 12px;
   text-align: left;
 }
 
 .coaching-link-help-text {
-  font-size: 0.85rem;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.7));
-  margin-bottom: 0.85rem;
-  line-height: 1.45;
+  font-size: 0.84rem;
+  color: var(--student-text-secondary);
+  margin: 0 0 0.85rem;
+  line-height: 1.5;
 }
 
 .coaching-link-form {
@@ -1042,50 +1321,213 @@
   flex-wrap: wrap;
 }
 
+.coaching-student-page .coaching-input {
+  background: #ffffff;
+  border: 1px solid var(--student-border-strong);
+  color: var(--student-text-primary);
+  flex: 1 1 180px;
+}
+
+/* 4. DASHBOARD ACTIVO Y RESUMEN DEL ENTRENAMIENTO */
 .coaching-student-dashboard {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  margin-top: 1rem;
+  gap: 1.5rem;
 }
 
 .coaching-student-relation-card {
-  background: var(--ro-bg-surface, rgba(255, 255, 255, 0.03));
-  border: 1px solid var(--ro-border-subtle, rgba(255, 255, 255, 0.08));
-  border-radius: var(--ro-radius-lg, 12px);
-  padding: clamp(1.25rem, 2vw, 1.75rem);
-  backdrop-filter: blur(12px);
-}
-
-.coaching-student-header-grid {
+  background: var(--student-bg-card);
+  border: 1px solid var(--student-border);
+  border-radius: 16px;
+  padding: clamp(1.2rem, 2.2vw, 1.75rem);
+  box-shadow: var(--student-shadow-sm);
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  padding-bottom: 1.25rem;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
 }
 
-.coaching-student-coach-info {
+.coaching-student-summary-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--student-border);
+}
+
+.coaching-student-summary-eyebrow {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--student-accent);
+  margin-bottom: 0.2rem;
+}
+
+.coaching-student-summary-club {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--student-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.coaching-student-member-since {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--student-text-muted);
+}
+
+.coaching-student-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
 }
 
+@media (max-width: 1024px) {
+  .coaching-student-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .coaching-student-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.coaching-student-metric-card {
+  padding: 1.1rem 1.15rem;
+  border-radius: 12px;
+  background: var(--student-bg-subtle);
+  border: 1px solid var(--student-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.coaching-metric--active {
+  background: #ffffff;
+  border-color: var(--student-accent-border);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.05);
+}
+
+.coaching-metric--empty {
+  background: var(--student-bg-subtle);
+  border-color: var(--student-border-strong);
+}
+
+.coaching-metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.coaching-metric-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--student-text-secondary);
+}
+
+.coaching-metric-icon {
+  color: var(--student-accent);
+}
+
+.coaching-metric-value {
+  font-family: var(--ro-font-heading, "Bebas Neue", sans-serif);
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--student-text-primary);
+  letter-spacing: 0.02em;
+}
+
+.coaching-metric-schedule-date {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--student-text-primary);
+  line-height: 1.3;
+}
+
+.coaching-metric-schedule-empty {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--student-text-secondary);
+}
+
+.coaching-metric-desc {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--student-text-muted);
+}
+
+.coaching-status-pill,
+.coaching-metric-subpill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pill--success {
+  background: var(--student-accent-soft);
+  color: var(--student-accent-strong);
+  border: 1px solid var(--student-accent-border);
+}
+
+.pill--warning {
+  background: var(--student-bg-muted);
+  color: var(--student-text-secondary);
+  border: 1px solid var(--student-border-strong);
+}
+
+.coaching-metric-subpill {
+  background: #ffffff;
+  color: var(--student-text-muted);
+  border: 1px solid var(--student-border);
+}
+
+.coaching-code-pill {
+  font-size: 0.68rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  background: #ffffff;
+  border: 1px solid var(--student-border-strong);
+  padding: 0.12rem 0.42rem;
+  border-radius: 6px;
+  color: var(--student-text-secondary);
+}
+
+.coaching-student-coach-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
 .coaching-student-avatar {
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #0f172a;
+  border: 1px solid var(--student-border-strong);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 0.95rem;
   font-weight: 800;
-  color: #fff;
+  color: #ffffff;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -1096,30 +1538,26 @@
   object-fit: cover;
 }
 
-.coaching-student-coach-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.75rem;
-  color: var(--brand-accent, #38bdf8);
-  font-weight: 700;
-  margin-bottom: 0.2rem;
-}
-
-.coaching-code-pill {
-  font-size: 0.68rem;
-  font-family: monospace;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 0.1rem 0.35rem;
-  border-radius: 4px;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.8));
+.coaching-student-coach-inline__body {
+  min-width: 0;
+  flex: 1;
 }
 
 .coaching-student-coach-name {
-  margin: 0 0 0.4rem;
-  font-size: 1.35rem;
+  margin: 0;
+  font-size: 0.98rem;
   font-weight: 800;
-  color: var(--ro-text-primary, #f5f2eb);
+  color: var(--student-text-primary);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.coaching-student-coach-club {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--student-text-muted);
+  margin-top: 0.1rem;
 }
 
 .coaching-student-spec-tags {
@@ -1129,134 +1567,407 @@
 }
 
 .coaching-student-spec-tag {
-  font-size: 0.72rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: var(--ro-radius-pill, 999px);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.8));
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid var(--student-border-strong);
+  color: var(--student-text-secondary);
 }
 
-.coaching-student-club-info {
-  text-align: right;
-}
-
-@media (max-width: 640px) {
-  .coaching-student-club-info {
-    text-align: left;
-  }
-}
-
-.coaching-student-club-eyebrow {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
-}
-
-.coaching-student-club-name {
-  margin: 0.2rem 0;
-  font-size: 1.15rem;
-  font-weight: 750;
-  color: var(--ro-text-primary, #f5f2eb);
+/* 5. MI EVOLUCIÓN COMO JUGADOR (.coaching-follow) */
+.coaching-follow {
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 0.25rem;
 }
 
-@media (max-width: 640px) {
-  .coaching-student-club-name {
-    justify-content: flex-start;
-  }
+.coaching-follow__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.coaching-student-member-since {
-  font-size: 0.78rem;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+.coaching-follow__eyebrow {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--student-accent, #0284c7);
+  margin-bottom: 0.15rem;
 }
 
-/* Métricas del Alumno */
-.coaching-student-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 1.5rem;
+.coaching-follow__title {
+  margin: 0;
+  font-family: var(--ro-font-heading, "Bebas Neue", sans-serif);
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--student-text-primary, #0f172a);
 }
 
-.coaching-student-metric-card {
-  padding: 1.25rem;
-  border-radius: var(--ro-radius-md, 8px);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  position: relative;
-  overflow: hidden;
+.coaching-follow__meta {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--student-text-muted, #64748b);
+  background: var(--student-bg-subtle, #f8fafc);
+  border: 1px solid var(--student-border, rgba(15, 23, 42, 0.08));
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
 }
 
-.coaching-metric--active {
-  background: linear-gradient(145deg, rgba(34, 197, 94, 0.08), rgba(255, 255, 255, 0.02));
-  border-color: rgba(34, 197, 94, 0.25);
+.coaching-follow__empty {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 12px;
+  background: var(--student-bg-subtle, #f8fafc);
+  border: 1px solid var(--student-border, rgba(15, 23, 42, 0.08));
+  color: var(--student-text-secondary, #475569);
+  font-size: 0.86rem;
+  line-height: 1.5;
 }
 
-.coaching-metric--empty {
-  background: linear-gradient(145deg, rgba(234, 179, 8, 0.08), rgba(255, 255, 255, 0.02));
-  border-color: rgba(234, 179, 8, 0.25);
+.coaching-follow__empty svg,
+.coaching-follow__empty i {
+  color: var(--student-accent, #0284c7);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
 }
 
-.coaching-metric-top {
+.coaching-follow__empty strong {
+  display: block;
+  color: var(--student-text-primary, #0f172a);
+  font-size: 0.9rem;
+  margin-bottom: 0.15rem;
+}
+
+.coaching-follow__empty p {
+  margin: 0;
+  color: var(--student-text-secondary, #475569);
+}
+
+.coaching-follow__latest-card {
+  background: #ffffff;
+  border: 1px solid var(--student-border-strong, rgba(15, 23, 42, 0.12));
+  border-radius: 14px;
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-shadow: var(--student-shadow-sm);
+}
+
+.coaching-follow__latest-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.coaching-metric-label {
-  font-size: 0.82rem;
+.coaching-follow__card-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--student-text-primary, #0f172a);
+}
+
+.coaching-follow__card-head svg,
+.coaching-follow__card-head i {
+  color: var(--student-accent, #0284c7);
+}
+
+.coaching-follow__latest-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--student-text-secondary, #475569);
+}
+
+.coaching-follow__worked-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.coaching-follow__sublabel {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--student-text-muted, #64748b);
+}
+
+.coaching-follow__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.coaching-follow__chip {
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  background: var(--student-accent-soft, rgba(2, 132, 199, 0.08));
+  color: var(--student-accent-strong, #0369a1);
+  border: 1px solid var(--student-accent-border, rgba(2, 132, 199, 0.22));
+}
+
+.coaching-follow__coach-note {
+  padding: 0.75rem 0.95rem;
+  border-radius: 10px;
+  background: var(--student-bg-subtle, #f8fafc);
+  border-left: 3px solid var(--student-accent, #0284c7);
+}
+
+.coaching-follow__coach-note-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--student-accent, #0284c7);
+  margin-bottom: 0.2rem;
+}
+
+.coaching-follow__coach-note-quote {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--student-text-primary, #0f172a);
+  line-height: 1.45;
+}
+
+.coaching-follow__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+@media (max-width: 720px) {
+  .coaching-follow__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.coaching-follow__card {
+  border: 1px solid var(--student-border, rgba(15, 23, 42, 0.08));
+  border-radius: 12px;
+  padding: 1.05rem 1.15rem;
+  background: var(--student-bg-subtle, #f8fafc);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.coaching-follow__card--accent {
+  background: #ffffff;
+  border-color: var(--student-accent-border, rgba(2, 132, 199, 0.22));
+}
+
+.coaching-follow__text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--student-text-primary, #0f172a);
+}
+
+.coaching-follow__text--muted {
+  color: var(--student-text-secondary, #475569);
+}
+
+.coaching-follow__list {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.coaching-follow__list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.coaching-follow__list-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--student-accent, #0284c7);
+  margin-top: 0.45rem;
+  flex-shrink: 0;
+}
+
+.coaching-follow__date {
+  font-size: 0.72rem;
+  color: var(--student-text-muted, #64748b);
+}
+
+.coaching-follow__next-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--student-accent-strong, #0369a1);
+  margin-top: 0.2rem;
+}
+
+.coaching-follow__history {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.coaching-follow__history-toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #ffffff;
+  border: 1px solid var(--student-border-strong, rgba(15, 23, 42, 0.14));
+  color: var(--student-text-primary, #0f172a);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.coaching-follow__history-toggle:hover {
+  background: var(--student-bg-subtle, #f8fafc);
+}
+
+.coaching-follow__history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.coaching-follow__session-card {
+  background: #ffffff;
+  border: 1px solid var(--student-border, rgba(15, 23, 42, 0.08));
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.coaching-follow__session-head strong {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--student-text-primary, #0f172a);
+}
+
+.coaching-follow__session-head span {
+  font-size: 0.78rem;
+  color: var(--student-text-muted, #64748b);
+}
+
+.coaching-follow__session-block small {
+  display: block;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.7));
+  color: var(--student-text-muted, #64748b);
+  margin-bottom: 0.2rem;
 }
 
-.coaching-metric-value {
-  font-size: 2.75rem;
-  font-weight: 900;
-  line-height: 1;
-  color: var(--ro-text-primary, #f5f2eb);
-  margin-bottom: 0.5rem;
-  font-family: monospace;
-}
-
-.coaching-metric-desc {
+.coaching-follow__session-block p {
   margin: 0;
-  font-size: 0.8rem;
-  line-height: 1.4;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.6));
+  font-size: 0.84rem;
+  color: var(--student-text-primary, #0f172a);
+  line-height: 1.45;
 }
 
-.coaching-status-pill {
+.coaching-follow__session-quote {
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--student-text-secondary, #475569);
+  border-left: 2px solid var(--student-accent, #0284c7);
+  padding-left: 0.65rem;
+}
+
+/* 6. PRÓXIMAS CLASES AGENDADAS */
+.coaching-student-agenda-section {
+  border-top: 1px solid var(--student-border);
+  padding-top: 1.25rem;
+}
+
+.coaching-upcoming-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.85rem;
+  margin-top: 0.85rem;
+}
+
+.coaching-upcoming-card {
+  background: var(--student-bg-subtle);
+  border: 1px solid var(--student-border-strong);
+  border-radius: 12px;
+  padding: 0.95rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.coaching-upcoming-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.coaching-upcoming-card__date {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--student-text-primary);
+}
+
+.coaching-upcoming-card__duration {
   font-size: 0.72rem;
-  font-weight: 750;
-  padding: 0.15rem 0.5rem;
-  border-radius: var(--ro-radius-pill, 999px);
-  text-transform: uppercase;
+  font-weight: 700;
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  background: var(--student-accent-soft);
+  color: var(--student-accent-strong);
+  border: 1px solid var(--student-accent-border);
 }
 
-.pill--success {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
-  border: 1px solid rgba(34, 197, 94, 0.3);
+.coaching-upcoming-card__meta,
+.coaching-upcoming-card__focus {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--student-text-secondary);
 }
 
-.pill--warning {
-  background: rgba(234, 179, 8, 0.15);
-  color: #facc15;
-  border: 1px solid rgba(234, 179, 8, 0.3);
+.coaching-upcoming-card__focus {
+  color: var(--student-accent-strong);
+  font-weight: 600;
 }
 
-/* Ledger Historial */
+/* 7. HISTORIAL INMUTABLE DE SESIONES Y ASIGNACIONES */
 .coaching-student-ledger-section {
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid var(--student-border);
   padding-top: 1.25rem;
 }
 
@@ -1264,56 +1975,66 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.9rem;
 }
 
 .coaching-ledger-title {
   margin: 0 0 0.2rem;
-  font-size: 1.1rem;
-  font-weight: 750;
-  color: var(--ro-text-primary, #f5f2eb);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--student-text-primary);
   display: flex;
   align-items: center;
   gap: 0.4rem;
 }
 
+.coaching-ledger-title svg,
+.coaching-ledger-title i {
+  color: var(--student-accent);
+}
+
 .coaching-ledger-subtitle {
   margin: 0;
   font-size: 0.8rem;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+  color: var(--student-text-muted);
 }
 
 .coaching-ledger-count {
-  font-size: 0.75rem;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.6));
-  background: rgba(255, 255, 255, 0.04);
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--student-text-secondary);
+  background: var(--student-bg-subtle);
+  border: 1px solid var(--student-border);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
 }
 
 .coaching-ledger-empty {
-  padding: 2rem;
+  padding: 1.5rem;
   text-align: center;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
-  font-size: 0.875rem;
-  background: rgba(255, 255, 255, 0.01);
-  border-radius: var(--ro-radius-md, 8px);
+  color: var(--student-text-muted);
+  font-size: 0.86rem;
+  background: var(--student-bg-subtle);
+  border: 1px solid var(--student-border);
+  border-radius: 12px;
 }
 
 .coaching-ledger-timeline {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
 .coaching-ledger-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 0.9rem 1rem;
-  border-radius: var(--ro-radius-md, 8px);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: var(--student-bg-subtle);
+  border: 1px solid var(--student-border);
   gap: 1rem;
   flex-wrap: wrap;
 }
@@ -1328,148 +2049,161 @@
 .coaching-ledger-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.78rem;
-  font-weight: 800;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 700;
   padding: 0.2rem 0.55rem;
-  border-radius: 4px;
+  border-radius: 6px;
   width: fit-content;
 }
 
 .badge--assign {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid #0f172a;
 }
 
 .badge--session {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: var(--student-accent-soft);
+  color: var(--student-accent-strong);
+  border: 1px solid var(--student-accent-border);
+}
+
+.badge--transfer-out,
+.badge--transfer-in,
+.badge--adjustment {
+  background: #ffffff;
+  color: var(--student-text-secondary);
+  border: 1px solid var(--student-border-strong);
 }
 
 .coaching-ledger-date {
-  font-size: 0.75rem;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.74rem;
+  color: var(--student-text-muted);
 }
 
 .coaching-ledger-row__details {
   flex: 1;
-  min-width: 240px;
-}
-
-.coaching-ledger-notes {
-  margin: 0 0 0.35rem;
-  font-size: 0.85rem;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.85));
+  min-width: 220px;
 }
 
 .coaching-session-box {
-  margin-top: 0.35rem;
-  padding: 0.55rem 0.75rem;
-  background: rgba(255, 255, 255, 0.02);
-  border-left: 2px solid var(--brand-accent, #38bdf8);
-  border-radius: 0 4px 4px 0;
+  padding: 0.65rem 0.85rem;
+  background: #ffffff;
+  border: 1px solid var(--student-border);
+  border-left: 3px solid var(--student-accent);
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.4rem;
+}
+
+.coaching-session-box__head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
 }
 
 .coaching-session-focus {
   margin: 0;
   font-size: 0.82rem;
-  color: var(--ro-text-primary, #f5f2eb);
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
+  font-weight: 700;
+  color: var(--student-text-primary);
 }
 
 .coaching-session-dur {
-  font-size: 0.72rem;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--student-text-muted);
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-.coaching-session-feedback {
-  margin: 0.2rem 0 0;
+.coaching-session-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.coaching-session-chip {
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--student-accent-soft);
+  color: var(--student-accent-strong);
+  border: 1px solid var(--student-accent-border);
+}
+
+.coaching-session-detail {
   font-size: 0.8rem;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.7));
-  font-style: italic;
-}
-
-.coaching-follow {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  margin: 0 0 1.25rem;
-}
-
-.coaching-follow h2,
-.coaching-follow h3,
-.coaching-follow h4 {
-  margin: 0 0 0.35rem;
-  color: var(--ro-text-primary, #f5f5f5);
-  font-weight: 650;
-}
-
-.coaching-follow__card {
-  border: 1px solid var(--ro-border, rgba(255, 255, 255, 0.12));
-  border-radius: 12px;
-  padding: 1rem;
-  background: var(--ro-surface, #111);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.coaching-follow__kicker {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.coaching-follow__meta,
-.coaching-follow__empty,
-.coaching-follow__block p {
-  margin: 0;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.72));
+  color: var(--student-text-secondary);
   line-height: 1.45;
 }
 
-.coaching-follow__message blockquote {
-  margin: 0;
-  padding: 0.75rem 0.9rem;
-  border-left: 2px solid var(--ro-text-primary, #fff);
-  background: rgba(255, 255, 255, 0.04);
+.coaching-session-detail__label {
+  font-weight: 700;
+  color: var(--student-text-primary);
+  margin-right: 0.35rem;
 }
 
-.coaching-follow__message footer {
-  margin-top: 0.4rem;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.55));
+.coaching-session-quote {
+  margin-top: 0.15rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--student-bg-subtle);
+  border-radius: 6px;
+  border-left: 2px solid var(--student-accent);
+  font-size: 0.8rem;
+  color: var(--student-text-primary);
 }
 
-.coaching-follow__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.coaching-follow__list button {
-  background: none;
-  border: 0;
-  padding: 0;
-  color: var(--ro-text-primary, #fff);
-  text-align: left;
-  cursor: pointer;
-}
-
-.coaching-follow__list li span {
+.coaching-session-quote__label {
   display: block;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.72));
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--student-accent);
+  font-weight: 700;
+  margin-bottom: 0.15rem;
 }
+
+/* Responsividad móvil adicional (320px - 640px) */
+@media (max-width: 640px) {
+  .coaching-student-hero__portrait-frame {
+    width: 54px;
+    height: 72px;
+  }
+
+  .coaching-student-hero__actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .coaching-ledger-row__left {
+    min-width: 100%;
+  }
+
+  .coaching-ledger-row__details {
+    min-width: 100%;
+  }
+}
+
+/* Accesibilidad y movimiento reducido */
+.coaching-student-page button:focus-visible,
+.coaching-student-page input:focus-visible {
+  outline: 2px solid var(--student-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coaching-student-page *,
+  .coaching-student-page *::before,
+  .coaching-student-page *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
 

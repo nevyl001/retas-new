@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useUser } from "../../contexts/UserContext";
 import {
   fetchStudentCoachingOverview,
@@ -7,6 +7,7 @@ import {
   type StudentCoachingOverview,
 } from "../../lib/coaching/coachingApi";
 import type { StudentTrainingSession } from "../../lib/coaching/types";
+import { getDailyMentalidadRivieraQuote } from "../../lib/coaching/mentalidadRivieraQuotes";
 import { StudentTrainingSection } from "./StudentTrainingSection";
 import { TablerIcon } from "../ui/TablerIcon";
 import { navigateToAppHome } from "../../lib/appRouting";
@@ -17,9 +18,27 @@ import {
 import { navigateCoaching, navigateStudentAccess } from "./coachingNav";
 import "./coaching.css";
 
+function getInitials(nameOrEmail: string): string {
+  const clean = nameOrEmail.trim();
+  if (!clean) return "RV";
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return clean.slice(0, 2).toUpperCase();
+}
+
 export const StudentCoachingPage: React.FC = () => {
-  const { user, isStudentOnly, isCoachOnly, loading: userLoading } = useUser();
-  const [overview, setOverview] = useState<StudentCoachingOverview | null>(null);
+  const {
+    user,
+    userProfile,
+    isStudentOnly,
+    isCoachOnly,
+    loading: userLoading,
+  } = useUser();
+  const [overview, setOverview] = useState<StudentCoachingOverview | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -31,6 +50,8 @@ export const StudentCoachingPage: React.FC = () => {
   const [copiedRivieraId, setCopiedRivieraId] = useState(false);
   const [training, setTraining] = useState<StudentTrainingSession[]>([]);
   const [trainingError, setTrainingError] = useState<string | null>(null);
+
+  const dailyQuote = useMemo(() => getDailyMentalidadRivieraQuote(), []);
 
   const loadData = useCallback(async () => {
     if (!user) {
@@ -45,7 +66,9 @@ export const StudentCoachingPage: React.FC = () => {
         fetchStudentCoachingOverview(),
         fetchStudentTrainingTimeline().catch((err: unknown) => {
           setTrainingError(
-            err instanceof Error ? err.message : "No se pudo cargar tu seguimiento."
+            err instanceof Error
+              ? err.message
+              : "No se pudo cargar tu seguimiento.",
           );
           return [] as StudentTrainingSession[];
         }),
@@ -63,7 +86,7 @@ export const StudentCoachingPage: React.FC = () => {
       setError(
         err instanceof Error
           ? err.message
-          : "Error al cargar la información de Mi Coaching."
+          : "Error al cargar la información de Mi Coaching.",
       );
     } finally {
       setLoading(false);
@@ -77,7 +100,9 @@ export const StudentCoachingPage: React.FC = () => {
   }, [userLoading, loadData]);
 
   const handleCopyRivieraId = (rivieraId: string) => {
-    navigator.clipboard.writeText(rivieraId);
+    if (navigator?.clipboard?.writeText) {
+      void navigator.clipboard.writeText(rivieraId);
+    }
     setCopiedRivieraId(true);
     setTimeout(() => setCopiedRivieraId(false), 2200);
   };
@@ -91,13 +116,13 @@ export const StudentCoachingPage: React.FC = () => {
     try {
       const res = await linkStudentAccountByRivieraId(manualRivieraId.trim());
       setActionSuccess(
-        `¡Identidad vinculada exitosamente a ${res.nombre || "tu perfil"} (${res.rivieraId})!`
+        `¡Identidad vinculada exitosamente a ${res.nombre || "tu perfil"} (${res.rivieraId})!`,
       );
       setManualRivieraId("");
       await loadData();
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : "Error al vincular tu Riviera ID"
+        err instanceof Error ? err.message : "Error al vincular tu Riviera ID",
       );
     } finally {
       setLinking(false);
@@ -120,6 +145,20 @@ export const StudentCoachingPage: React.FC = () => {
     }
   };
 
+  const formatShortDate = (isoString: string | null | undefined) => {
+    if (!isoString) return "";
+    try {
+      const d = new Date(isoString);
+      return d.toLocaleDateString("es-MX", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    } catch {
+      return isoString;
+    }
+  };
+
   const handleBack = () => {
     if (overview?.rivieraId) {
       navigatePublicJugadorByRivieraId(overview.rivieraId);
@@ -133,16 +172,18 @@ export const StudentCoachingPage: React.FC = () => {
   // 1. Estado de carga
   if (userLoading || loading) {
     return (
-      <div className="coaching-page rv-page">
-        <header className="coaching-hero">
-          <button
-            type="button"
-            className="coaching-back"
-            onClick={handleBack}
-          >
-            <TablerIcon name="arrow-left" size={16} />
-            {overview?.rivieraId ? "Volver a mi Ficha" : "Inicio"}
-          </button>
+      <div className="coaching-page coaching-student-page rv-page">
+        <header className="coaching-hero coaching-student-hero">
+          <div className="coaching-student-hero__topbar">
+            <button
+              type="button"
+              className="coaching-back"
+              onClick={handleBack}
+            >
+              <TablerIcon name="arrow-left" size={16} />
+              {overview?.rivieraId ? "Volver a mi Ficha" : "Inicio"}
+            </button>
+          </div>
           <p className="coaching-kicker">Riviera Coaching</p>
           <h1 className="coaching-title">Mi Coaching</h1>
           <p className="coaching-muted">Cargando tu seguimiento deportivo…</p>
@@ -154,22 +195,26 @@ export const StudentCoachingPage: React.FC = () => {
   // 2. Si no hay sesión autenticada
   if (!user) {
     return (
-      <div className="coaching-page rv-page">
-        <header className="coaching-hero">
-          <button
-            type="button"
-            className="coaching-back"
-            onClick={handleBack}
-          >
-            <TablerIcon name="arrow-left" size={16} />
-            {overview?.rivieraId ? "Volver a mi Ficha" : "Inicio"}
-          </button>
+      <div className="coaching-page coaching-student-page rv-page">
+        <header className="coaching-hero coaching-student-hero">
+          <div className="coaching-student-hero__topbar">
+            <button
+              type="button"
+              className="coaching-back"
+              onClick={handleBack}
+            >
+              <TablerIcon name="arrow-left" size={16} />
+              {overview?.rivieraId ? "Volver a mi Ficha" : "Inicio"}
+            </button>
+          </div>
           <p className="coaching-kicker">Riviera Coaching</p>
           <h1 className="coaching-title">Mi Coaching</h1>
         </header>
 
-        <div className="coaching-empty-card">
-          <TablerIcon name="lock" size={44} className="coaching-empty-icon" />
+        <div className="coaching-empty-card coaching-student-empty-card">
+          <div className="coaching-student-empty-icon-wrap">
+            <TablerIcon name="lock" size={26} />
+          </div>
           <h3>Sesión requerida</h3>
           <p>
             Inicia sesión con tu cuenta oficial de Riviera para consultar tus
@@ -191,16 +236,18 @@ export const StudentCoachingPage: React.FC = () => {
   // 3. Si hubo un error de carga
   if (error) {
     return (
-      <div className="coaching-page rv-page">
-        <header className="coaching-hero">
-          <button
-            type="button"
-            className="coaching-back"
-            onClick={handleBack}
-          >
-            <TablerIcon name="arrow-left" size={16} />
-            {overview?.rivieraId ? "Volver a mi Ficha" : "Inicio"}
-          </button>
+      <div className="coaching-page coaching-student-page rv-page">
+        <header className="coaching-hero coaching-student-hero">
+          <div className="coaching-student-hero__topbar">
+            <button
+              type="button"
+              className="coaching-back"
+              onClick={handleBack}
+            >
+              <TablerIcon name="arrow-left" size={16} />
+              {overview?.rivieraId ? "Volver a mi Ficha" : "Inicio"}
+            </button>
+          </div>
           <p className="coaching-kicker">Riviera Coaching</p>
           <h1 className="coaching-title">Mi Coaching</h1>
         </header>
@@ -226,14 +273,18 @@ export const StudentCoachingPage: React.FC = () => {
   // 3b. Si es una sesión de administrador sin perfil de alumno legítimo, mostrar redirección segura
   if (user && overview && !overview.linked && !isStudentOnly && !isCoachOnly) {
     return (
-      <div className="coaching-page rv-page">
-        <header className="coaching-hero">
-          <p className="coaching-kicker">Riviera Coaching • Panel de Administración</p>
+      <div className="coaching-page coaching-student-page rv-page">
+        <header className="coaching-hero coaching-student-hero">
+          <p className="coaching-kicker">
+            Riviera Coaching • Panel de Administración
+          </p>
           <h1 className="coaching-title">Mi Coaching</h1>
           <p className="coaching-lead">
-            Has iniciado sesión como <strong>Administrador de Club</strong>. La sección de «Mi Coaching» está reservada para el seguimiento deportivo de alumnos.
+            Has iniciado sesión como <strong>Administrador de Club</strong>. La
+            sección de «Mi Coaching» está reservada para el seguimiento
+            deportivo de alumnos.
           </p>
-          <div style={{ marginTop: "1rem" }}>
+          <div className="coaching-student-admin-redirect">
             <button
               type="button"
               className="coaching-btn coaching-btn--primary"
@@ -249,93 +300,110 @@ export const StudentCoachingPage: React.FC = () => {
   }
 
   const relationships = overview?.relationships ?? [];
-  const primaryRel = relationships.find((r) => r.isPrimary) || relationships[0];
+  const primaryRel =
+    relationships.find((r) => r.isPrimary) || relationships[0];
   const primaryPlayer = primaryRel?.player;
   const effectiveRivieraId = overview?.rivieraId || primaryPlayer?.rivieraId;
 
+  const metadataName =
+    typeof user?.user_metadata?.name === "string"
+      ? user.user_metadata.name.trim()
+      : typeof user?.user_metadata?.full_name === "string"
+        ? user.user_metadata.full_name.trim()
+        : "";
+  const metadataAvatar =
+    typeof user?.user_metadata?.avatar_url === "string"
+      ? user.user_metadata.avatar_url.trim()
+      : "";
+
+  const studentName =
+    primaryPlayer?.nombre?.trim() ||
+    userProfile?.name?.trim() ||
+    metadataName ||
+    null;
+
+  const studentPhotoUrl =
+    primaryPlayer?.fotoUrl ||
+    userProfile?.avatar_url ||
+    metadataAvatar ||
+    null;
+
+  const avatarInitials = getInitials(studentName || user?.email || "RV");
+
   return (
-    <div className="coaching-page rv-page">
-      <header className="coaching-hero">
-        <button
-          type="button"
-          className="coaching-back"
-          onClick={handleBack}
-        >
-          <TablerIcon name="arrow-left" size={16} />
-          {effectiveRivieraId ? "Volver a mi Ficha" : "Inicio"}
-        </button>
-        <p className="coaching-kicker">Riviera Coaching • Experiencia del Alumno</p>
-        <div className="coaching-header-row" style={{ marginTop: "0.75rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem", flex: 1, minWidth: "260px" }}>
-            {primaryPlayer?.fotoUrl ? (
-              <img
-                src={primaryPlayer.fotoUrl}
-                alt={primaryPlayer.nombre}
-                style={{
-                  width: "56px",
-                  height: "56px",
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  border: "2px solid #38bdf8",
-                  boxShadow: "0 4px 12px rgba(56, 189, 248, 0.25)",
-                  flexShrink: 0,
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: "56px",
-                  height: "56px",
-                  borderRadius: "50%",
-                  background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
-                  color: "#ffffff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "1.25rem",
-                  fontWeight: 700,
-                  border: "2px solid #38bdf8",
-                  flexShrink: 0,
-                }}
-              >
-                {(primaryPlayer?.nombre || user?.email || "A").slice(0, 2).toUpperCase()}
-              </div>
-            )}
-            <div>
-              <p style={{ margin: "0 0 0.2rem", fontSize: "0.82rem", fontWeight: 700, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Mi Coaching
+    <div className="coaching-page coaching-student-page rv-page">
+      {/* 1. ENCABEZADO PERSONALIZADO */}
+      <header className="coaching-hero coaching-student-hero">
+        <div className="coaching-student-hero__topbar">
+          <button type="button" className="coaching-back" onClick={handleBack}>
+            <TablerIcon name="arrow-left" size={16} />
+            {effectiveRivieraId ? "Volver a mi Ficha" : "Inicio"}
+          </button>
+          <span className="coaching-student-hero__brand-tag">
+            Riviera Open · Entrenamiento
+          </span>
+        </div>
+
+        <div className="coaching-student-hero__main">
+          <div className="coaching-student-hero__identity">
+            <div className="coaching-student-hero__portrait-frame">
+              {studentPhotoUrl ? (
+                <img
+                  src={studentPhotoUrl}
+                  alt={studentName || "Alumno Riviera"}
+                  className="coaching-student-hero__portrait-img"
+                />
+              ) : (
+                <div
+                  className="coaching-student-hero__portrait-fallback"
+                  aria-hidden="true"
+                >
+                  <span>{avatarInitials}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="coaching-student-hero__copy">
+              <p className="coaching-student-hero__greeting">
+                {studentName ? `Hola, ${studentName}` : "Hola, Jugador"}
               </p>
-              <h1 className="coaching-title" style={{ margin: 0, fontSize: "1.6rem" }}>
-                {primaryPlayer?.nombre || "Mi Coaching"}
+              <h1 className="coaching-title coaching-student-hero__title">
+                Mi Coaching
               </h1>
-              <p className="coaching-lead" style={{ margin: "0.2rem 0 0", fontSize: "0.9rem" }}>
-                Supervisa tus paquetes de clases, consulta los comentarios de tu
-                entrenador y revisa el registro oficial de cada sesión impartida.
+              <p className="coaching-lead coaching-student-hero__subtitle">
+                Tu espacio para entrenar, mejorar y seguir evolucionando.
               </p>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-            {effectiveRivieraId && (
-              <div className="coaching-student-badge-pill" title="Tu Riviera ID Oficial">
-                <span className="coaching-student-badge-label">Riviera ID</span>
-                <strong className="coaching-student-badge-val">{effectiveRivieraId}</strong>
+          {effectiveRivieraId && (
+            <div className="coaching-student-hero__actions">
+              <div
+                className="coaching-student-badge-pill"
+                title="Código oficial de jugador"
+              >
+                <strong className="coaching-student-badge-val">
+                  {effectiveRivieraId}
+                </strong>
                 <button
                   type="button"
                   className="coaching-badge-copy-btn"
                   onClick={() => handleCopyRivieraId(effectiveRivieraId)}
-                  aria-label="Copiar Riviera ID"
+                  aria-label={`Copiar ${effectiveRivieraId}`}
                 >
-                  <TablerIcon name={copiedRivieraId ? "check" : "copy"} size={14} />
+                  <TablerIcon
+                    name={copiedRivieraId ? "check" : "copy"}
+                    size={14}
+                  />
+                  <span className="coaching-badge-copy-text">
+                    {copiedRivieraId ? "Copiado" : "Copiar"}
+                  </span>
                 </button>
               </div>
-            )}
 
-            {effectiveRivieraId && (
               <button
                 type="button"
-                className="coaching-btn coaching-btn--secondary"
-                style={{ fontSize: "0.82rem", padding: "0.35rem 0.75rem", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+                className="coaching-btn coaching-btn--secondary coaching-student-ranking-btn"
                 onClick={() => {
                   openPublicJugadorByRivieraIdInNewWindow(effectiveRivieraId);
                 }}
@@ -343,10 +411,26 @@ export const StudentCoachingPage: React.FC = () => {
                 <TablerIcon name="user" size={15} />
                 Ver mi Ficha de Ranking
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </header>
+
+      {/* 2. MENSAJE MOTIVACIONAL DIARIO — MENTALIDAD RIVIERA */}
+      <section
+        className="coaching-mentalidad"
+        aria-label="Mentalidad Riviera"
+      >
+        <div className="coaching-mentalidad__header">
+          <span className="coaching-mentalidad__eyebrow">
+            MENTALIDAD RIVIERA
+          </span>
+          <span className="coaching-mentalidad__tag">Enfoque del día</span>
+        </div>
+        <blockquote className="coaching-mentalidad__quote">
+          “{dailyQuote.quote}”
+        </blockquote>
+      </section>
 
       {actionSuccess && (
         <div className="coaching-alert coaching-alert--success" role="status">
@@ -365,36 +449,43 @@ export const StudentCoachingPage: React.FC = () => {
       {/* CASO A: Sin relaciones de coaching asignadas aún */}
       {relationships.length === 0 ? (
         <div className="coaching-student-empty-state">
-          <div className="coaching-empty-card">
-            <TablerIcon name="ball-tennis" size={48} className="coaching-empty-icon" />
-            <h3>Aún no tienes un entrenador asignado</h3>
-            <p>
-              Tu club y tu coach administran tus clases en Riviera Coaching.
-              Para que tu entrenador te vincule a su lista de alumnos y te asigne
-              tus clases disponibles, facilítale tu Riviera ID oficial:
+          <div className="coaching-empty-card coaching-student-empty-card">
+            <div className="coaching-student-empty-icon-wrap" aria-hidden="true">
+              <TablerIcon name="ball-tennis" size={26} />
+            </div>
+            <h2 className="coaching-student-empty-title">
+              Tu evolución comienza aquí.
+            </h2>
+            <p className="coaching-student-empty-desc">
+              Cuando tu entrenador te vincule, encontrarás aquí tus clases,
+              avances y próximos objetivos.
             </p>
 
-            {overview?.rivieraId ? (
-              <div className="coaching-riviera-share-box">
-                <span className="coaching-riviera-share-label">Tu Riviera ID:</span>
-                <span className="coaching-riviera-share-code">{overview.rivieraId}</span>
+            {effectiveRivieraId ? (
+              <div className="coaching-student-empty-actions">
                 <button
                   type="button"
-                  className="coaching-btn coaching-btn--secondary"
-                  onClick={() => handleCopyRivieraId(overview.rivieraId!)}
+                  className="coaching-btn coaching-btn--primary coaching-student-copy-id-btn"
+                  onClick={() => handleCopyRivieraId(effectiveRivieraId)}
                 >
-                  <TablerIcon name={copiedRivieraId ? "check" : "copy"} size={16} />
-                  {copiedRivieraId ? "Copiado" : "Copiar"}
+                  <TablerIcon
+                    name={copiedRivieraId ? "check" : "copy"}
+                    size={16}
+                  />
+                  {copiedRivieraId ? "RV ID COPIADO" : "COPIAR MI RV ID"}
                 </button>
               </div>
             ) : (
               <div className="coaching-link-help-card">
                 <p className="coaching-link-help-text">
-                  Si ya tienes una credencial de Riviera pero tu cuenta de acceso
-                  se registró con un correo distinto, ingresa tu Riviera ID a continuación
-                  para enlazar tu historial deportivo:
+                  Si ya tienes una credencial de Riviera pero tu cuenta de
+                  acceso se registró con un correo distinto, ingresa tu código
+                  oficial a continuación para enlazar tu historial deportivo:
                 </p>
-                <form onSubmit={handleManualLink} className="coaching-link-form">
+                <form
+                  onSubmit={handleManualLink}
+                  className="coaching-link-form"
+                >
                   <input
                     type="text"
                     className="coaching-input"
@@ -418,181 +509,245 @@ export const StudentCoachingPage: React.FC = () => {
       ) : (
         /* CASO B: Con relaciones de coaching activas */
         <div className="coaching-student-dashboard">
-          <StudentTrainingSection sessions={training} error={trainingError} />
-          {relationships.map((rel) => {
+          {relationships.map((rel, relIndex) => {
             const currentBalance = rel.balance?.balanceClasses ?? 0;
+            const totalCompleted = rel.balance?.totalClassesGiven ?? 0;
             const hasAvailable = currentBalance > 0;
             const coachName = rel.coach?.nombre ?? "Coach";
             const clubName = rel.club?.nombre ?? "Club Riviera";
-            return (
-              <section key={rel.relationshipId} className="coaching-student-relation-card">
-                {/* 1. Header de Club y Coach */}
-                <div className="coaching-student-header-grid">
-                  <div className="coaching-student-coach-info">
-                    <div className="coaching-student-avatar">
-                      {rel.coach?.fotoUrl ? (
-                        <img
-                          src={rel.coach.fotoUrl}
-                          alt={coachName}
-                          className="coaching-student-avatar-img"
-                        />
-                      ) : (
-                        <span>{coachName.slice(0, 2).toUpperCase()}</span>
-                      )}
-                    </div>
-                    <div>
-                      <div className="coaching-student-coach-badge">
-                        <TablerIcon name="certificate" size={13} />
-                        <span>Entrenador Certificado</span>
-                        {rel.coach?.coachCode && (
-                          <span className="coaching-code-pill">{rel.coach.coachCode}</span>
-                        )}
-                      </div>
-                      <h2 className="coaching-student-coach-name">{coachName}</h2>
-                      {rel.coach?.especialidades && rel.coach.especialidades.length > 0 && (
-                        <div className="coaching-student-spec-tags">
-                          {rel.coach.especialidades.map((spec) => (
-                            <span key={spec} className="coaching-student-spec-tag">
-                              {spec}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            const nextUpcoming = rel.upcomingSessions?.[0] ?? null;
+            const fallbackNextScheduled =
+              !nextUpcoming && training[0]?.nextScheduledAt
+                ? training[0].nextScheduledAt
+                : null;
 
-                  <div className="coaching-student-club-info">
-                    <span className="coaching-student-club-eyebrow">Club de Entrenamiento</span>
-                    <h3 className="coaching-student-club-name">
-                      <TablerIcon name="building-community" size={16} />
-                      {clubName}
-                    </h3>
-                    <span className="coaching-student-member-since">
-                      Vinculado desde: {formatDate(rel.startedAt)}
+            return (
+              <section
+                key={rel.relationshipId}
+                className="coaching-student-relation-card"
+              >
+                {/* 1. RESUMEN DEL ENTRENAMIENTO */}
+                <div className="coaching-student-summary-header">
+                  <div>
+                    <span className="coaching-student-summary-eyebrow">
+                      RESUMEN DEL ENTRENAMIENTO
                     </span>
+                    <h2 className="coaching-student-summary-club">
+                      {clubName}
+                    </h2>
                   </div>
+                  <span className="coaching-student-member-since">
+                    Vinculado desde {formatShortDate(rel.startedAt)}
+                  </span>
                 </div>
 
-                {/* 2. Tarjetas de Saldo y Métricas */}
-                <div className="coaching-student-metrics-grid">
-                  <div className={`coaching-student-metric-card ${hasAvailable ? "coaching-metric--active" : "coaching-metric--empty"}`}>
+                <div className="coaching-student-summary-grid">
+                  {/* Indicador 1: Clases disponibles */}
+                  <article
+                    className={`coaching-student-metric-card ${
+                      hasAvailable
+                        ? "coaching-metric--active"
+                        : "coaching-metric--empty"
+                    }`}
+                  >
                     <div className="coaching-metric-top">
-                      <span className="coaching-metric-label">Clases Disponibles</span>
-                      <span className={`coaching-status-pill ${hasAvailable ? "pill--success" : "pill--warning"}`}>
+                      <span className="coaching-metric-label">
+                        Clases disponibles
+                      </span>
+                      <span
+                        className={`coaching-status-pill ${
+                          hasAvailable ? "pill--success" : "pill--warning"
+                        }`}
+                      >
                         {hasAvailable ? "Paquete Vigente" : "Sin Saldo Restante"}
                       </span>
                     </div>
                     <div className="coaching-metric-value">{currentBalance}</div>
                     <p className="coaching-metric-desc">
                       {hasAvailable
-                        ? "Clases listas para impartir o tomar en cancha."
-                        : "Solicita a la recepción o administración de tu club la recarga de tu paquete de clases."}
+                        ? "Clases listas para programar o tomar en cancha."
+                        : "Solicita en la administración de tu club la recarga de tu paquete."}
                     </p>
-                  </div>
+                  </article>
 
-                  <div className="coaching-student-metric-card coaching-metric--neutral">
+                  {/* Indicador 2: Clases completadas */}
+                  <article className="coaching-student-metric-card coaching-metric--neutral">
                     <div className="coaching-metric-top">
-                      <span className="coaching-metric-label">Clases Impartidas</span>
-                      <TablerIcon name="history" size={18} className="coaching-metric-icon" />
+                      <span className="coaching-metric-label">
+                        Clases completadas
+                      </span>
+                      <span className="coaching-metric-subpill">
+                        Clases Impartidas
+                      </span>
                     </div>
-                    <div className="coaching-metric-value">{rel.balance?.totalClassesGiven ?? 0}</div>
+                    <div className="coaching-metric-value">
+                      {totalCompleted}
+                    </div>
                     <p className="coaching-metric-desc">
-                      Total de sesiones presenciales impartidas y descontadas por tu coach.
+                      Sesiones presenciales registradas por tu entrenador.
                     </p>
-                  </div>
+                  </article>
+
+                  {/* Indicador 3: Próxima sesión */}
+                  <article className="coaching-student-metric-card coaching-metric--schedule">
+                    <div className="coaching-metric-top">
+                      <span className="coaching-metric-label">
+                        Próxima sesión
+                      </span>
+                      <TablerIcon
+                        name="calendar-event"
+                        size={16}
+                        className="coaching-metric-icon"
+                      />
+                    </div>
+                    {nextUpcoming ? (
+                      <>
+                        <div className="coaching-metric-schedule-date">
+                          {formatDate(nextUpcoming.startsAt)}
+                        </div>
+                        <p className="coaching-metric-desc">
+                          {nextUpcoming.durationMinutes} min
+                          {nextUpcoming.court
+                            ? ` · Cancha ${nextUpcoming.court}`
+                            : ""}
+                          {nextUpcoming.focus ? ` · ${nextUpcoming.focus}` : ""}
+                        </p>
+                      </>
+                    ) : fallbackNextScheduled ? (
+                      <>
+                        <div className="coaching-metric-schedule-date">
+                          {formatDate(fallbackNextScheduled)}
+                        </div>
+                        <p className="coaching-metric-desc">
+                          Horario programado con {coachName}.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="coaching-metric-schedule-empty">
+                          Por programar
+                        </div>
+                        <p className="coaching-metric-desc">
+                          Sin sesión agendada por el momento.
+                        </p>
+                      </>
+                    )}
+                  </article>
+
+                  {/* Indicador 4: Entrenador asignado */}
+                  <article className="coaching-student-metric-card coaching-metric--coach">
+                    <div className="coaching-metric-top">
+                      <span className="coaching-metric-label">
+                        Entrenador asignado
+                      </span>
+                      {rel.coach?.coachCode && (
+                        <span className="coaching-code-pill">
+                          {rel.coach.coachCode}
+                        </span>
+                      )}
+                    </div>
+                    <div className="coaching-student-coach-inline">
+                      <div className="coaching-student-avatar">
+                        {rel.coach?.fotoUrl ? (
+                          <img
+                            src={rel.coach.fotoUrl}
+                            alt={coachName}
+                            className="coaching-student-avatar-img"
+                          />
+                        ) : (
+                          <span>{getInitials(coachName)}</span>
+                        )}
+                      </div>
+                      <div className="coaching-student-coach-inline__body">
+                        <h3 className="coaching-student-coach-name">
+                          {coachName}
+                        </h3>
+                        <span className="coaching-student-coach-club">
+                          {clubName}
+                        </span>
+                      </div>
+                    </div>
+                    {rel.coach?.especialidades &&
+                      rel.coach.especialidades.length > 0 && (
+                        <div className="coaching-student-spec-tags">
+                          {rel.coach.especialidades.map((spec) => (
+                            <span
+                              key={spec}
+                              className="coaching-student-spec-tag"
+                            >
+                              {spec}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                  </article>
                 </div>
 
-                {/* 3. Próximas Clases Agendadas */}
+                {/* 2. MI EVOLUCIÓN COMO JUGADOR */}
+                {relIndex === 0 && (
+                  <StudentTrainingSection
+                    sessions={training}
+                    error={trainingError}
+                  />
+                )}
+
+                {/* 3. PRÓXIMAS CLASES AGENDADAS */}
                 {rel.upcomingSessions && rel.upcomingSessions.length > 0 && (
-                  <div className="coaching-student-agenda-section" style={{ marginBottom: "1.5rem" }}>
+                  <div className="coaching-student-agenda-section">
                     <div className="coaching-ledger-header">
                       <div>
-                        <h3 className="coaching-ledger-title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <TablerIcon name="calendar-event" size={20} style={{ color: "var(--ro-primary, #10b981)" }} />
+                        <h3 className="coaching-ledger-title">
+                          <TablerIcon name="calendar-event" size={18} />
                           Próximas Clases Agendadas
                         </h3>
-                        <p className="coaching-ledger-desc">
-                          Horarios confirmados de entrenamiento con {coachName} en {clubName}.
+                        <p className="coaching-ledger-subtitle">
+                          Horarios confirmados de entrenamiento con {coachName}{" "}
+                          en {clubName}.
                         </p>
                       </div>
-                      <span className="coaching-badge coaching-badge--active" style={{ fontWeight: 600 }}>
+                      <span className="coaching-ledger-count">
                         {rel.upcomingSessions.length}{" "}
-                        {rel.upcomingSessions.length === 1 ? "sesión programada" : "sesiones programadas"}
+                        {rel.upcomingSessions.length === 1
+                          ? "sesión programada"
+                          : "sesiones programadas"}
                       </span>
                     </div>
 
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                        gap: "1rem",
-                        marginTop: "1rem",
-                      }}
-                    >
+                    <div className="coaching-upcoming-grid">
                       {rel.upcomingSessions.map((sch) => (
-                        <div
+                        <article
                           key={sch.id}
-                          style={{
-                            background: "rgba(16, 185, 129, 0.05)",
-                            border: "1px solid rgba(16, 185, 129, 0.2)",
-                            borderRadius: "12px",
-                            padding: "1rem 1.25rem",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "0.5rem",
-                          }}
+                          className="coaching-upcoming-card"
                         >
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--ro-text-main, #f8fafc)" }}>
+                          <div className="coaching-upcoming-card__top">
+                            <span className="coaching-upcoming-card__date">
                               {formatDate(sch.startsAt)}
                             </span>
-                            <span
-                              style={{
-                                fontSize: "0.75rem",
-                                padding: "0.2rem 0.5rem",
-                                borderRadius: "6px",
-                                background: "rgba(16, 185, 129, 0.2)",
-                                color: "#34d399",
-                                fontWeight: 600,
-                              }}
-                            >
+                            <span className="coaching-upcoming-card__duration">
                               {sch.durationMinutes} min
                             </span>
                           </div>
                           {sch.court && (
-                            <div
-                              style={{
-                                fontSize: "0.82rem",
-                                color: "var(--ro-text-muted, #94a3b8)",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "0.3rem",
-                              }}
-                            >
-                              <TablerIcon name="map-pin" size={14} /> Cancha:{" "}
-                              <strong style={{ color: "var(--ro-text-main)" }}>{sch.court}</strong>
+                            <div className="coaching-upcoming-card__meta">
+                              <TablerIcon name="map-pin" size={14} />
+                              <span>
+                                Cancha: <strong>{sch.court}</strong>
+                              </span>
                             </div>
                           )}
                           {sch.focus && (
-                            <div
-                              style={{
-                                fontSize: "0.82rem",
-                                color: "var(--ro-brand, #38bdf8)",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "0.3rem",
-                              }}
-                            >
-                              <TablerIcon name="target" size={14} /> Tema: {sch.focus}
+                            <div className="coaching-upcoming-card__focus">
+                              <TablerIcon name="target" size={14} />
+                              <span>Tema: {sch.focus}</span>
                             </div>
                           )}
-                        </div>
+                        </article>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* 4. Historial Inmutable de Sesiones (Ledger) */}
+                {/* 4. HISTORIAL INMUTABLE DE SESIONES Y ASIGNACIONES */}
                 <div className="coaching-student-ledger-section">
                   <div className="coaching-ledger-header">
                     <div>
@@ -601,7 +756,8 @@ export const StudentCoachingPage: React.FC = () => {
                         Historial de Sesiones y Asignaciones
                       </h3>
                       <p className="coaching-ledger-subtitle">
-                        Registro oficial inmutable y transparente de tu paquete de clases.
+                        Registro oficial inmutable y transparente de tu paquete
+                        de clases.
                       </p>
                     </div>
                     <span className="coaching-ledger-count">
@@ -611,7 +767,10 @@ export const StudentCoachingPage: React.FC = () => {
 
                   {(rel.ledger ?? []).length === 0 ? (
                     <div className="coaching-ledger-empty">
-                      <p>Aún no se registran movimientos ni clases en este paquete.</p>
+                      <p>
+                        Aún no se registran movimientos ni clases en este
+                        paquete.
+                      </p>
                     </div>
                   ) : (
                     <div className="coaching-ledger-timeline">
@@ -622,8 +781,8 @@ export const StudentCoachingPage: React.FC = () => {
                             case "ASSIGN":
                               return (
                                 <span className="coaching-ledger-badge badge--assign">
-                                  <TablerIcon name="plus" size={13} />
-                                  +{entry.delta} Clases (Club)
+                                  <TablerIcon name="plus" size={13} />+
+                                  {entry.delta} Clases (Club)
                                 </span>
                               );
                             case "CLASS_DEBIT":
@@ -636,61 +795,41 @@ export const StudentCoachingPage: React.FC = () => {
                               );
                             case "TRANSFER_OUT":
                               return (
-                                <span
-                                  className="coaching-ledger-badge"
-                                  style={{
-                                    background: "rgba(245, 158, 11, 0.15)",
-                                    color: "#f59e0b",
-                                    border: "1px solid rgba(245, 158, 11, 0.35)",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "0.25rem",
-                                  }}
-                                >
+                                <span className="coaching-ledger-badge badge--transfer-out">
                                   <TablerIcon name="arrow-right" size={13} />
                                   {entry.delta} Clases transferidas
                                 </span>
                               );
                             case "TRANSFER_IN":
                               return (
-                                <span
-                                  className="coaching-ledger-badge"
-                                  style={{
-                                    background: "rgba(6, 182, 212, 0.15)",
-                                    color: "#22d3ee",
-                                    border: "1px solid rgba(6, 182, 212, 0.35)",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "0.25rem",
-                                  }}
-                                >
-                                  <TablerIcon name="arrow-left" size={13} />
-                                  +{entry.delta} Clases recibidas
+                                <span className="coaching-ledger-badge badge--transfer-in">
+                                  <TablerIcon name="arrow-left" size={13} />+
+                                  {entry.delta} Clases recibidas
                                 </span>
                               );
                             case "ADJUSTMENT":
                               return (
-                                <span
-                                  className="coaching-ledger-badge"
-                                  style={{
-                                    background: "rgba(148, 163, 184, 0.15)",
-                                    color: "#cbd5e1",
-                                    border: "1px solid rgba(148, 163, 184, 0.35)",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "0.25rem",
-                                  }}
-                                >
+                                <span className="coaching-ledger-badge badge--adjustment">
                                   <TablerIcon name="adjustments" size={13} />
-                                  {entry.delta > 0 ? `+${entry.delta}` : entry.delta} Ajuste
+                                  {entry.delta > 0
+                                    ? `+${entry.delta}`
+                                    : entry.delta}{" "}
+                                  Ajuste
                                 </span>
                               );
                             default:
                               return (
                                 <span
-                                  className={`coaching-ledger-badge ${entry.delta > 0 ? "badge--assign" : "badge--session"}`}
+                                  className={`coaching-ledger-badge ${
+                                    entry.delta > 0
+                                      ? "badge--assign"
+                                      : "badge--session"
+                                  }`}
                                 >
-                                  {entry.delta > 0 ? `+${entry.delta}` : entry.delta} {entry.tipo}
+                                  {entry.delta > 0
+                                    ? `+${entry.delta}`
+                                    : entry.delta}{" "}
+                                  {entry.tipo}
                                 </span>
                               );
                           }
@@ -706,10 +845,9 @@ export const StudentCoachingPage: React.FC = () => {
                             </div>
 
                             <div className="coaching-ledger-row__details">
-
                               {entry.session && (
-                                <div className="coaching-session-box" style={{ marginTop: "0.5rem", gap: "0.5rem" }}>
-                                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+                                <div className="coaching-session-box">
+                                  <div className="coaching-session-box__head">
                                     {entry.session.durationMinutes && (
                                       <span className="coaching-session-dur">
                                         <TablerIcon name="clock" size={13} />
@@ -717,83 +855,52 @@ export const StudentCoachingPage: React.FC = () => {
                                       </span>
                                     )}
                                     {entry.session.focus && (
-                                      <span style={{ fontSize: "0.8rem", color: "var(--ro-text-primary)", fontWeight: 600 }}>
+                                      <span className="coaching-session-focus">
                                         {entry.session.focus}
                                       </span>
                                     )}
                                   </div>
 
-                                  {/* Chips de temas trabajados */}
-                                  {entry.session.workedOn && entry.session.workedOn.length > 0 && (
-                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", marginTop: "0.2rem" }}>
-                                      {entry.session.workedOn.map((t) => (
-                                        <span
-                                          key={t}
-                                          style={{
-                                            padding: "0.15rem 0.5rem",
-                                            borderRadius: "12px",
-                                            fontSize: "0.72rem",
-                                            background: "rgba(56, 189, 248, 0.12)",
-                                            color: "#7dd3fc",
-                                            border: "1px solid rgba(56, 189, 248, 0.25)",
-                                          }}
-                                        >
-                                          {t}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
+                                  {entry.session.workedOn &&
+                                    entry.session.workedOn.length > 0 && (
+                                      <div className="coaching-session-chips">
+                                        {entry.session.workedOn.map((t) => (
+                                          <span
+                                            key={t}
+                                            className="coaching-session-chip"
+                                          >
+                                            {t}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
 
-                                  {/* Mejoras observadas */}
                                   {entry.session.improvements && (
-                                    <div style={{ fontSize: "0.8rem", color: "var(--ro-text-secondary)" }}>
-                                      <span style={{ color: "#34d399", fontWeight: 600, marginRight: "0.35rem" }}>
-                                        ✓ Mejoras:
+                                    <div className="coaching-session-detail">
+                                      <span className="coaching-session-detail__label">
+                                        Avances:
                                       </span>
-                                      {entry.session.improvements}
+                                      <span>{entry.session.improvements}</span>
                                     </div>
                                   )}
 
-                                  {/* Próximos objetivos */}
                                   {entry.session.nextGoals && (
-                                    <div style={{ fontSize: "0.8rem", color: "var(--ro-text-secondary)" }}>
-                                      <span style={{ color: "#fbbf24", fontWeight: 600, marginRight: "0.35rem" }}>
-                                        🎯 Próximos objetivos:
+                                    <div className="coaching-session-detail">
+                                      <span className="coaching-session-detail__label">
+                                        Próximo objetivo:
                                       </span>
-                                      {entry.session.nextGoals}
+                                      <span>{entry.session.nextGoals}</span>
                                     </div>
                                   )}
 
-                                  {/* Mensaje motivacional / Feedback personal */}
                                   {entry.session.motivationalMessage && (
-                                    <div
-                                      style={{
-                                        marginTop: "0.25rem",
-                                        padding: "0.6rem 0.85rem",
-                                        background: "rgba(255, 255, 255, 0.04)",
-                                        borderRadius: "6px",
-                                        borderLeft: "3px solid #10b981",
-                                        fontSize: "0.82rem",
-                                        color: "var(--ro-text-primary)",
-                                      }}
-                                    >
-                                      <span
-                                        style={{
-                                          display: "block",
-                                          fontSize: "0.7rem",
-                                          textTransform: "uppercase",
-                                          letterSpacing: "0.05em",
-                                          color: "#34d399",
-                                          fontWeight: 700,
-                                          marginBottom: "0.2rem",
-                                        }}
-                                      >
-                                        Mensaje de tu coach ({coachName})
+                                    <div className="coaching-session-quote">
+                                      <span className="coaching-session-quote__label">
+                                        Mensaje de tu entrenador ({coachName})
                                       </span>
-                                      "{entry.session.motivationalMessage}"
+                                      “{entry.session.motivationalMessage}”
                                     </div>
                                   )}
-
                                 </div>
                               )}
                             </div>
