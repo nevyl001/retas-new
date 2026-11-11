@@ -290,10 +290,21 @@ const CUERPO_RESULTADOS = [
   "Cada game ganado, cada punto disputado y cada partido jugado forman parte de tu crecimiento deportivo.",
   "",
   "Los resultados oficiales de la Jornada {{jornada}} ya están disponibles.",
-  "",
-  "Fecha: {{fecha}}",
-  "Sede: {{club}}",
 ].join("\n");
+
+function urlLigaDesdeUrlJornada(urlJornada: string): string | null {
+  try {
+    const parsed = new URL(urlJornada);
+    const match = parsed.pathname.match(/^(\/public\/liga\/[^/]+)\/jornada\/\d+$/);
+    if (!match) return null;
+    parsed.pathname = match[1];
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
 
 export function construirCorreoResultados(input: {
   nombre: string;
@@ -306,6 +317,10 @@ export function construirCorreoResultados(input: {
   acentoHex?: string | null;
 }): { ok: true; asunto: string; html: string; text: string } | { ok: false; motivo: "plantilla_incompleta" | "sin_url_publica" } {
   if (!urlPublicaJornadaValida(input.url)) {
+    return { ok: false, motivo: "sin_url_publica" };
+  }
+  const ligaUrl = urlLigaDesdeUrlJornada(input.url);
+  if (!ligaUrl) {
     return { ok: false, motivo: "sin_url_publica" };
   }
   const vars = {
@@ -331,7 +346,7 @@ export function construirCorreoResultados(input: {
   const paragraphs = cuerpo
     .split(/\n{2,}/)
     .map((bloque) => bloque.trim())
-    .filter((bloque) => !bloque.startsWith("Fecha:") && !bloque.startsWith("Sede:"))
+    .filter(Boolean)
     .map((bloque) => {
       const lines = escapeHtml(bloque).replace(/\n/g, "<br />");
       return `<p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:#374151;">${lines}</p>`;
@@ -342,14 +357,10 @@ export function construirCorreoResultados(input: {
     asunto,
     title: "¡Tu jornada ha terminado, pero tu historia continúa!",
     paragraphsHtml: paragraphs,
-    jornadaCard: {
-      fecha: vars.fecha,
-      horario: `Jornada ${vars.jornada}`,
-      sede: vars.club,
-    },
+    jornadaCard: null,
     actionButton: {
-      label: "VER RESULTADOS DE LA JORNADA",
-      url: input.url,
+      label: "VER TABLA GENERAL",
+      url: ligaUrl,
     },
     cierreDetalleHtml: `<div style="margin:28px 0 0;padding-top:20px;border-top:1px solid #E5E7EB;">
       <p style="margin:0 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#4B5563;">Sigue compitiendo, superándote y construyendo tu historia dentro de Riviera Open.</p>
@@ -358,14 +369,14 @@ export function construirCorreoResultados(input: {
       <p style="margin:0 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.5;color:#475569;font-style:italic;">Compite. Juega limpio. Vive Riviera Open.</p>
       <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;color:#0D0F12;">Cada partido cuenta.</p>
     </div>`,
-    ligaUrl: input.url,
+    ligaUrl,
   });
   if (!plantillaResuelta(html) || html.includes("**") || html.includes("<script")) {
     return { ok: false, motivo: "plantilla_incompleta" };
   }
   const text = [
     cuerpo,
-    `VER RESULTADOS DE LA JORNADA: ${input.url}`,
+    `VER TABLA GENERAL: ${ligaUrl}`,
     "Sigue compitiendo, superándote y construyendo tu historia dentro de Riviera Open.",
     "¡Nos vemos en la próxima jornada!",
     "RIVIERA OPEN",

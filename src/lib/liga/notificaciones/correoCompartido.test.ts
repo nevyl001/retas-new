@@ -65,6 +65,38 @@ describe("identidad del manifiesto", () => {
 });
 
 describe("correo compartido", () => {
+  it("resultados no muestran fecha y enlazan a la tabla general de la liga", () => {
+    const cuerpoResultados = [
+      "Hola Ana,",
+      "",
+      "Los resultados oficiales de la Jornada 1 de Liga Norte ya están disponibles.",
+      "",
+      "Fecha: 03/11/2026",
+      "Horario: 21:00 hrs",
+      "Sede: Hack Pádel",
+      "",
+      "RESULTADOS_URL:/public/liga/liga-123/jornada/1",
+    ].join("\n");
+    const view = renderCorreoComunicacion({
+      clubNombre: "Hack Pádel",
+      ligaNombre: "Liga Norte",
+      asunto: "Resultados oficiales — Liga Norte | Jornada 1",
+      cuerpo: cuerpoResultados,
+      branding,
+      tipo: "resultados_jornada",
+      ligaUrl: "https://appriviera.rivieraopen.com/public/liga/liga-123",
+      vistaPrevia: false,
+    });
+    expect(view.html).toContain("VER TABLA GENERAL");
+    expect(view.html).toContain("/public/liga/liga-123");
+    expect(view.html).toContain("Sigue compitiendo");
+    expect(view.html).not.toContain("VER RESULTADOS DE LA JORNADA");
+    expect(view.html).not.toContain("03/11/2026");
+    expect(view.html).not.toContain("21:00 hrs");
+    expect(view.html).not.toContain("FECHA");
+    expect(view.html).not.toContain("RESULTADOS_URL");
+  });
+
   it("la vista previa y el generador único producen el mismo HTML", () => {
     const view = renderComunicacionEmail({
       clubNombre: "Hack Pádel",

@@ -184,8 +184,10 @@ describe("automatización de comunicaciones", () => {
     expect(correo.ok).toBe(true);
     if (!correo.ok) return;
     expect(correo.asunto).toBe("Resultados oficiales — Liga Norte | Jornada 4");
-    expect(correo.html).toContain("VER RESULTADOS DE LA JORNADA");
-    expect(correo.html).toContain(URL);
+    expect(correo.html).toContain("VER TABLA GENERAL");
+    expect(correo.html).toContain(`${BASE}/public/liga/${LIGA}`);
+    expect(correo.html).not.toContain("VER RESULTADOS DE LA JORNADA");
+    expect(correo.html).not.toContain("12 nov 2026");
     expect(correo.html).toContain("Ana &lt;script&gt;");
     expect(correo.html).not.toContain("<script>");
     expect(correo.html).not.toContain("{{");

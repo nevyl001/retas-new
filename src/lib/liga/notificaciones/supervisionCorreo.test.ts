@@ -115,11 +115,11 @@ describe("supervisión de correos", () => {
     expect(copia.text).not.toContain("@");
     expect(copia.html).toContain("Supervisión de envío");
     expect(copia.html).toContain("Aceptados por proveedor");
-    expect(copia.html).toContain("12/11/2026");
-    expect(copia.html).toContain("18:00 hrs");
     expect(copia.html).toContain("Hack Pádel");
-    expect(copia.html).toContain("VER RESULTADOS");
-    expect(copia.html).toContain(URL);
+    expect(copia.html).toContain("VER TABLA GENERAL");
+    expect(copia.html).toContain(LIGA_URL);
+    expect(copia.html).not.toContain("VER RESULTADOS DE LA JORNADA");
+    expect(copia.html).not.toContain(">12/11/2026<");
     expect(copia.html).toContain("COPIA DE SUPERVISIÓN");
     expect(copia.html).toContain(NOMBRE_EJEMPLO_SUPERVISION);
     expect(copia.html).toContain("1 pendientes");

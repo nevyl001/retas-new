@@ -144,7 +144,13 @@ export function construirCorreoSupervision(input: {
   }
   const resultados = input.tipo === "resultados_jornada";
   const jornadaUrl = input.jornadaUrl?.trim() || null;
-  if (resultados && !urlPublicaJornadaValida(jornadaUrl)) {
+  if (resultados && !input.ligaUrl.trim()) {
+    return { ok: false, motivo: "sin_url_publica" };
+  }
+  if (
+    input.tipo === "recordatorio_jornada" &&
+    !urlPublicaJornadaValida(jornadaUrl)
+  ) {
     return { ok: false, motivo: "sin_url_publica" };
   }
   if (input.asuntoEnviado.includes("{{") || input.cuerpoEnviado.includes("{{")) {
@@ -153,19 +159,22 @@ export function construirCorreoSupervision(input: {
 
   const parsed = extractJornadaDetailsFromText(input.cuerpoEnviado, club);
   const avisos: string[] = [];
-  if (input.tipo === "recordatorio_jornada" || resultados) {
+  if (input.tipo === "recordatorio_jornada") {
     if (!parsed.jornadaCard?.fecha || parsed.jornadaCard.fecha === "Por definir") {
       avisos.push("Dato faltante: fecha oficial de la jornada.");
     }
     if (
-      input.tipo === "recordatorio_jornada" &&
-      (!parsed.jornadaCard?.horario || parsed.jornadaCard.horario === "Por definir")
+      !parsed.jornadaCard?.horario ||
+      parsed.jornadaCard.horario === "Por definir"
     ) {
       avisos.push("Dato faltante: horario oficial de la jornada.");
     }
+    if (!jornadaUrl) {
+      avisos.push("Dato faltante: URL pública de la jornada.");
+    }
   }
-  if ((input.tipo === "recordatorio_jornada" || resultados) && !jornadaUrl) {
-    avisos.push("Dato faltante: URL pública de la jornada.");
+  if (resultados && !input.ligaUrl.trim()) {
+    avisos.push("Dato faltante: URL pública de la liga.");
   }
 
   const asunto = `Supervisión — ${liga} | ${tipoLabel}`.slice(0, 180);

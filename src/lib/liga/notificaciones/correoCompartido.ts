@@ -90,6 +90,23 @@ function urlJornadaAbsoluta(raw: string | null | undefined): string | null {
   }
 }
 
+/** URL pública de la liga (tabla general), sin jornada. */
+function urlLigaPublicaAbsoluta(raw: string | null | undefined): string | null {
+  if (!raw?.trim()) return null;
+  try {
+    const parsed = new URL(raw.trim());
+    const local = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    if (parsed.protocol !== "https:" && !(parsed.protocol === "http:" && local)) return null;
+    if (!/^\/public\/liga\/[^/]+\/?$/.test(parsed.pathname)) return null;
+    parsed.pathname = parsed.pathname.replace(/\/+$/, "") || parsed.pathname;
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString().replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
+
 export function renderCorreoComunicacion(input: {
   clubNombre: string;
   ligaNombre: string;
@@ -114,11 +131,16 @@ export function renderCorreoComunicacion(input: {
         : "el club"
       : rawClub;
   const asunto = input.asunto.trim().slice(0, 180) || `Mensaje de ${liga}`;
-  const enlace = enlacePublicoJornada(input);
+  const enlaceJornada = enlacePublicoJornada(input);
+  const ligaUrl = urlLigaPublicaAbsoluta(input.ligaUrl);
   const cuerpo = cuerpoSinMarcaResultados(input.cuerpo).slice(0, 8000);
   const parsed = extractJornadaDetailsFromText(cuerpo, club);
   const esResultados = input.tipo === "resultados_jornada";
-  const esJornada = input.tipo === "jornada" || Boolean(parsed.jornadaCard);
+  // Resultados: sin tarjeta de fecha/horario/sede; solo mensaje y enlace a la tabla general.
+  const jornadaCard = esResultados ? null : parsed.jornadaCard;
+  const esJornada =
+    !esResultados &&
+    (input.tipo === "jornada" || Boolean(parsed.jornadaCard));
   const reply = input.replyTo?.trim() ?? "";
   const footerNotice = reply
     ? "Puedes responder directamente a este correo para comunicarte con el club."
@@ -141,16 +163,19 @@ export function renderCorreoComunicacion(input: {
       .join("") || `<p style="margin:0;color:#374151;"> </p>`);
 
   let actionButton: { label: string; url: string } | null = null;
-  if (enlace) {
-    const etiqueta = input.etiquetaBoton?.trim();
+  const etiqueta = input.etiquetaBoton?.trim();
+  if (esResultados && ligaUrl) {
+    actionButton = {
+      label: etiqueta || "VER TABLA GENERAL",
+      url: ligaUrl,
+    };
+  } else if (enlaceJornada) {
     if (etiqueta) {
-      actionButton = { label: etiqueta, url: enlace };
-    } else if (esResultados) {
-      actionButton = { label: "VER RESULTADOS DE LA JORNADA", url: enlace };
+      actionButton = { label: etiqueta, url: enlaceJornada };
     } else if (input.tipo === "recordatorio_jornada" || esJornada) {
       actionButton = {
         label: input.tipo === "recordatorio_jornada" ? "VER LA JORNADA" : "VER MI JORNADA",
-        url: enlace,
+        url: enlaceJornada,
       };
     }
   }
@@ -190,13 +215,13 @@ export function renderCorreoComunicacion(input: {
     badgeLabel: liga,
     title,
     paragraphsHtml,
-    jornadaCard: parsed.jornadaCard,
+    jornadaCard,
     actionButton,
     cierreDetalleHtml,
     footerNotice,
-    ligaUrl: input.ligaUrl,
+    ligaUrl: ligaUrl ?? input.ligaUrl,
     vistaPrevia: input.vistaPrevia === true,
-    maxWidth: esJornada ? 640 : 600,
+    maxWidth: esResultados || esJornada ? 640 : 600,
   });
 
   const textLines = [
@@ -207,15 +232,15 @@ export function renderCorreoComunicacion(input: {
     liga,
     title,
     parsed.cleanBody,
-    parsed.jornadaCard
-      ? `TARJETA DE JORNADA:\nFecha: ${parsed.jornadaCard.fecha}\nHorario: ${parsed.jornadaCard.horario}\nSede: ${parsed.jornadaCard.sede}`
+    jornadaCard
+      ? `TARJETA DE JORNADA:\nFecha: ${jornadaCard.fecha}\nHorario: ${jornadaCard.horario}\nSede: ${jornadaCard.sede}`
       : "",
     actionButton ? `${actionButton.label}: ${actionButton.url}` : "",
-    esJornada
+    esResultados || esJornada
       ? "RIVIERA OPEN\nCompite. Juega limpio. Vive Riviera Open.\nCada partido cuenta."
       : "",
     footerNotice,
-    input.ligaUrl ? `Ver la liga: ${input.ligaUrl}` : "",
+    ligaUrl ? `Ver la liga: ${ligaUrl}` : "",
     "Gestionado con Riviera Open",
   ].filter(Boolean);
 
