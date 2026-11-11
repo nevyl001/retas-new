@@ -436,16 +436,20 @@ export async function fetchCurrentCoachProfile(): Promise<CurrentCoachProfile | 
     .select("id, organizador_id, status, created_at")
     .eq("coach_id", coach.id);
 
-  const clubMemberships: CurrentCoachClubMembership[] = (
-    memberships ?? []
-  ).map((m) => ({
-    membershipId: String(m.id),
-    organizadorId: String(m.organizador_id),
-    status: (m.status === "ACTIVE" || m.status === "PENDING"
-      ? m.status
-      : "INACTIVE") as CoachMembershipStatus,
-    createdAt: String(m.created_at ?? ""),
-  }));
+  const clubMemberships: CurrentCoachClubMembership[] = await Promise.all(
+    (memberships ?? []).map(async (m) => {
+      const organizadorId = String(m.organizador_id);
+      return {
+        membershipId: String(m.id),
+        organizadorId,
+        clubNombre: await resolveCoachClubNombre(organizadorId),
+        status: (m.status === "ACTIVE" || m.status === "PENDING"
+          ? m.status
+          : "INACTIVE") as CoachMembershipStatus,
+        createdAt: String(m.created_at ?? ""),
+      };
+    })
+  );
 
   return {
     id: String(coach.id),
@@ -800,9 +804,28 @@ export function mapStudentTrainingSession(raw: Record<string, unknown>): Student
     motivationalMessage: followupText(raw.motivational_message),
     followupUpdatedAt: raw.followup_updated_at ? String(raw.followup_updated_at) : null,
     coachNombre: String(raw.coach_nombre ?? "Coach"),
-    clubNombre: String(raw.club_nombre ?? "Club"),
+    clubNombre: String(raw.club_nombre ?? ""),
     nextScheduledAt: raw.next_scheduled_at ? String(raw.next_scheduled_at) : null,
+    ...(raw.relationship_id
+      ? { relationshipId: String(raw.relationship_id) }
+      : {}),
+    ...(raw.organizador_id ? { organizadorId: String(raw.organizador_id) } : {}),
   };
+}
+
+async function resolveCoachClubNombre(
+  organizadorId: string
+): Promise<string | undefined> {
+  try {
+    const result = await supabase.rpc("get_organizador_display_name", {
+      p_organizador_id: organizadorId,
+    });
+    if (!result || result.error) return undefined;
+    const name = typeof result.data === "string" ? result.data.trim() : "";
+    return name || undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function updateCoachClassFollowup(input: ClassFollowupInput): Promise<void> {

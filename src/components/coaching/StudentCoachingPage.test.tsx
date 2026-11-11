@@ -117,6 +117,8 @@ describe("StudentCoachingPage & CoachingRouter", () => {
         followupUpdatedAt: null,
         coachNombre: "Prof. Roberto Morales",
         clubNombre: "Hack Pádel",
+        relationshipId: "rel-hack-1",
+        organizadorId: "org-hack-uuid",
         nextScheduledAt: null,
       },
     ]);
@@ -226,6 +228,141 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     expect(container.textContent).not.toContain("Clase presencial 1");
     expect(container.textContent).toContain("+5 Clases (Club)");
     expect(container.textContent).toContain("-1 Clase (Coach)");
+  });
+
+  it("muestra la evolución de cada club por separado y sin notas privadas", async () => {
+    jest.spyOn(coachingApi, "fetchStudentTrainingTimeline").mockResolvedValue([
+      {
+        id: "ses-hack",
+        startsAt: "2026-10-19T17:00:00Z",
+        durationMinutes: 60,
+        workedOn: ["Bandeja"],
+        improvements: "Avance solo de Hack",
+        areasToImprove: null,
+        recommendations: null,
+        nextGoals: null,
+        motivationalMessage: null,
+        followupUpdatedAt: null,
+        coachNombre: "Prof. Roberto Morales",
+        clubNombre: "Club Riviera",
+        relationshipId: "rel-hack-1",
+        organizadorId: "org-hack-uuid",
+        nextScheduledAt: null,
+      },
+      {
+        id: "ses-valvi",
+        startsAt: "2026-10-18T17:00:00Z",
+        durationMinutes: 60,
+        workedOn: ["Volea"],
+        improvements: "Avance solo de Valvidub",
+        areasToImprove: null,
+        recommendations: null,
+        nextGoals: null,
+        motivationalMessage: null,
+        followupUpdatedAt: null,
+        coachNombre: "Coach Ana",
+        clubNombre: "Club Riviera",
+        relationshipId: "rel-valvi-1",
+        organizadorId: "org-valvi-uuid",
+        nextScheduledAt: null,
+        privateNotes: "nota reservada",
+      } as never,
+    ]);
+    jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockResolvedValueOnce({
+      ok: true,
+      linked: true,
+      rivieraId: "RIV-00000356",
+      relationships: [
+        {
+          relationshipId: "rel-hack-1",
+          status: "ACTIVE",
+          isPrimary: true,
+          startedAt: "2026-10-15T12:00:00Z",
+          endedAt: null,
+          club: {
+            organizadorId: "org-hack-uuid",
+            nombre: "Hack Pádel",
+          },
+          coach: {
+            id: "coach-uuid-1",
+            nombre: "Prof. Roberto Morales",
+            coachCode: "COACH-007",
+            fotoUrl: null,
+            especialidades: [],
+          },
+          player: {
+            id: "player-uuid-1",
+            nombre: "Diego Palomares",
+            rivieraId: "RIV-00000356",
+          },
+          balance: {
+            balanceClasses: 4,
+            totalClassesGiven: 1,
+            updatedAt: "2026-10-19T18:00:00Z",
+          },
+          ledger: [
+            {
+              id: "led-hack",
+              delta: -1,
+              tipo: "CLASS_DEBIT",
+              notas: null,
+              createdAt: "2026-10-19T18:00:00Z",
+              session: { id: "ses-hack", startsAt: "2026-10-19T17:00:00Z" },
+            },
+          ],
+        },
+        {
+          relationshipId: "rel-valvi-1",
+          status: "ACTIVE",
+          isPrimary: false,
+          startedAt: "2026-09-01T12:00:00Z",
+          endedAt: null,
+          club: {
+            organizadorId: "org-valvi-uuid",
+            nombre: "Club Riviera",
+          },
+          coach: {
+            id: "coach-uuid-2",
+            nombre: "Coach Ana",
+            coachCode: "COACH-008",
+            fotoUrl: null,
+            especialidades: [],
+          },
+          player: {
+            id: "player-uuid-1",
+            nombre: "Diego Palomares",
+            rivieraId: "RIV-00000356",
+          },
+          balance: {
+            balanceClasses: 2,
+            totalClassesGiven: 3,
+            updatedAt: "2026-10-18T18:00:00Z",
+          },
+          ledger: [
+            {
+              id: "led-valvi",
+              delta: -1,
+              tipo: "CLASS_DEBIT",
+              notas: null,
+              createdAt: "2026-10-18T18:00:00Z",
+              session: { id: "ses-valvi", startsAt: "2026-10-18T17:00:00Z" },
+            },
+          ],
+        },
+      ],
+    });
+
+    await act(async () => {
+      root.render(<StudentCoachingPage />);
+    });
+
+    const sections = container.querySelectorAll(".coaching-student-relation-card");
+    expect(sections).toHaveLength(2);
+    expect(sections[0].textContent).toContain("Avance solo de Hack");
+    expect(sections[0].textContent).not.toContain("Avance solo de Valvidub");
+    expect(sections[1].textContent).toContain("Avance solo de Valvidub");
+    expect(sections[1].textContent).not.toContain("Avance solo de Hack");
+    expect(container.textContent).not.toContain("nota reservada");
   });
 
   it("does not render empty evolution cards when coach is assigned but no sessions are registered yet", async () => {

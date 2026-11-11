@@ -246,6 +246,9 @@ export type StudentTrainingSession = {
   coachNombre: string;
   clubNombre: string;
   nextScheduledAt: string | null;
+  /** Presente cuando la consulta ya identifica la relación. El alumno no recibe notas privadas. */
+  relationshipId?: string;
+  organizadorId?: string;
 };
 
 export type CurrentCoachClubMembership = {

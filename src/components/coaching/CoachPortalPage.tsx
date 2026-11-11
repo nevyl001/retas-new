@@ -18,6 +18,7 @@ import type {
   CoachClassFollowup,
   CoachFollowupDigest,
 } from "../../lib/coaching/types";
+import { selectOperativeCoachClubId } from "../../lib/coaching/studentTrainingScope";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import { TablerIcon } from "../ui/TablerIcon";
 import { Modal } from "../ui/Modal";
@@ -134,15 +135,21 @@ export const CoachPortalPage: React.FC = () => {
     }
   }, []);
 
+  const selectedMembership =
+    profile?.memberships.find(
+      (membership) => membership.organizadorId === selectedClubId
+    ) ?? null;
+  const canOperateClub = selectedMembership?.status === "ACTIVE";
+
   useEffect(() => {
-    if (profile && selectedClubId) {
+    if (profile && selectedClubId && canOperateClub) {
       void loadStudents(profile.id, selectedClubId);
       void loadUpcoming(selectedClubId);
     } else {
       setStudents([]);
       setUpcomingSessions([]);
     }
-  }, [profile, selectedClubId, loadStudents, loadUpcoming]);
+  }, [profile, selectedClubId, canOperateClub, loadStudents, loadUpcoming]);
 
   useEffect(() => {
     let isMounted = true;
@@ -159,8 +166,10 @@ export const CoachPortalPage: React.FC = () => {
         const coachProfile = await fetchCurrentCoachProfile();
         if (isMounted) {
           setProfile(coachProfile);
-          if (coachProfile && coachProfile.memberships.length > 0) {
-            setSelectedClubId(coachProfile.memberships[0].organizadorId);
+          if (coachProfile) {
+            setSelectedClubId(
+              selectOperativeCoachClubId(coachProfile.memberships) ?? ""
+            );
           }
         }
       } catch (err) {
@@ -188,6 +197,17 @@ export const CoachPortalPage: React.FC = () => {
       if (res.success) {
         const updated = await fetchCurrentCoachProfile();
         setProfile(updated);
+        if (updated) {
+          setSelectedClubId((current) => {
+            const stillActive = updated.memberships.some(
+              (membership) =>
+                membership.organizadorId === current &&
+                membership.status === "ACTIVE"
+            );
+            if (stillActive) return current;
+            return selectOperativeCoachClubId(updated.memberships) ?? "";
+          });
+        }
       } else {
         setActionError(res.error || "No se pudo aceptar la invitación.");
       }
@@ -666,8 +686,9 @@ export const CoachPortalPage: React.FC = () => {
         ) : (
           <div className="coaching-grid">
             {profile.memberships.map((m) => {
-              const isActiveClub = m.organizadorId === selectedClubId;
               const isStatusActive = m.status === "ACTIVE";
+              const isActiveClub =
+                isStatusActive && m.organizadorId === selectedClubId;
               const isStatusPending = m.status === "PENDING";
 
               return (
@@ -683,11 +704,8 @@ export const CoachPortalPage: React.FC = () => {
                   <div className="coaching-card__top">
                     <div className="coaching-card__identity">
                       <h3 className="coaching-card__title">
-                        {m.clubNombre || `Club ${m.organizadorId.slice(0, 8)}`}
+                        {m.clubNombre?.trim() || "Club"}
                       </h3>
-                      <span className="coaching-card__code">
-                        ID Club: {m.organizadorId.slice(0, 8)}…
-                      </span>
                     </div>
                     {isStatusActive ? (
                       <span className="coaching-badge coaching-badge--active">
@@ -773,6 +791,8 @@ export const CoachPortalPage: React.FC = () => {
         </div>
       ) : null}
 
+      {canOperateClub ? (
+      <>
       {/* Agenda: Próximas Clases Agendadas del Coach */}
       <section className="coaching-panel" style={{ marginBottom: "1.5rem" }}>
         <div className="coaching-section-header">
@@ -1120,6 +1140,20 @@ export const CoachPortalPage: React.FC = () => {
         )}
       </section>
 
+      </>
+      ) : profile.memberships.length > 0 ? (
+        <section className="coaching-panel" style={{ marginBottom: "1.5rem" }}>
+          <div className="coaching-empty-card">
+            <TablerIcon name="building" size={36} className="coaching-empty-icon" />
+            <h3>Sin club activo para operar</h3>
+            <p>
+              Acepta una invitación pendiente o espera a que el club reactive tu
+              membresía. Mientras tanto no se cargan alumnos ni se registran clases.
+            </p>
+          </div>
+        </section>
+      ) : null}
+
       {/* Modal: Registrar Clase Impartida con Seguimiento Deportivo */}
       <Modal
         open={Boolean(modalStudent)}
@@ -1413,11 +1447,15 @@ export const CoachPortalPage: React.FC = () => {
               <label className="coaching-form-label" htmlFor="class-notes">
                 Notas privadas del coach
               </label>
+              <p className="coach-follow-history__hint">
+                Las consulta el entrenador de la clase, el club que administra
+                esa relación y un administrador maestro. El alumno no las ve.
+              </p>
               <textarea
                 id="class-notes"
                 className="coaching-input"
                 rows={2}
-                placeholder="Solo las ve el entrenador. El alumno no las consulta."
+                placeholder="No se muestran en Mi Coaching."
                 value={classNotes}
                 onChange={(e) => setClassNotes(e.target.value)}
                 disabled={modalBusy}
@@ -1425,7 +1463,7 @@ export const CoachPortalPage: React.FC = () => {
             </div>
 
             {/* Acciones */}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem", alignItems: "center" }}>
+            <div className="coach-class-form__actions">
               {JSON.stringify({
                 workedOn: workedOnList,
                 improvements,
@@ -1468,33 +1506,90 @@ export const CoachPortalPage: React.FC = () => {
         title={`Seguimiento · ${followupStudent?.jugadorNombre || ""}`}
         size="lg"
       >
-        {followupError ? <p className="coaching-follow__empty">{followupError}</p> : null}
+        {followupError ? <p className="coaching-muted">{followupError}</p> : null}
         {followupSessions.length === 0 && !followupError ? (
-          <p className="coaching-follow__empty">Todavía no hay clases impartidas para este alumno.</p>
+          <p className="coaching-muted">Todavía no hay clases impartidas para este alumno.</p>
         ) : (
-          <ul className="coaching-follow__list">
+          <div className="coach-follow-history">
             {followupSessions.map((session) => (
-              <li key={session.id}>
-                <strong>{formatSessionDate(session.startsAt)}</strong>
-                <span>
-                  {session.durationMinutes ? `${session.durationMinutes} min. ` : ""}
-                  {session.workedOn.join(" · ") || "Sin temas registrados"}
-                </span>
-                {session.improvements ? <span>Mejoró: {session.improvements}</span> : null}
-                {session.areasToImprove ? <span>Por mejorar: {session.areasToImprove}</span> : null}
-                {session.recommendations ? <span>Recomendación: {session.recommendations}</span> : null}
-                {session.nextGoals ? <span>Siguiente objetivo: {session.nextGoals}</span> : null}
-                {session.privateNotes ? <span>Nota privada: {session.privateNotes}</span> : null}
-                <button
-                  type="button"
-                  className="coaching-btn coaching-btn--secondary"
-                  onClick={() => openEditFollowup(session)}
-                >
-                  Editar seguimiento de clase
-                </button>
-              </li>
+              <article key={session.id} className="coach-follow-history__item">
+                <header className="coach-follow-history__head">
+                  <strong className="coach-follow-history__date">
+                    {formatSessionDate(session.startsAt)}
+                  </strong>
+                  <span className="coach-follow-history__meta">
+                    {session.durationMinutes
+                      ? `${session.durationMinutes} min`
+                      : "Duración no indicada"}
+                  </span>
+                </header>
+
+                {session.workedOn.length > 0 ? (
+                  <div className="coach-follow-history__block">
+                    <span className="coach-follow-history__label">Temas trabajados</span>
+                    <div className="coach-follow-history__chips">
+                      {session.workedOn.map((topic) => (
+                        <span key={topic} className="coach-follow-history__chip">
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="coach-follow-history__meta">Sin temas registrados</p>
+                )}
+
+                {session.improvements ? (
+                  <div className="coach-follow-history__block">
+                    <span className="coach-follow-history__label">Avances</span>
+                    <p className="coach-follow-history__text">{session.improvements}</p>
+                  </div>
+                ) : null}
+                {session.areasToImprove ? (
+                  <div className="coach-follow-history__block">
+                    <span className="coach-follow-history__label">Aspectos por mejorar</span>
+                    <p className="coach-follow-history__text">{session.areasToImprove}</p>
+                  </div>
+                ) : null}
+                {session.recommendations ? (
+                  <div className="coach-follow-history__block">
+                    <span className="coach-follow-history__label">Recomendaciones</span>
+                    <p className="coach-follow-history__text">{session.recommendations}</p>
+                  </div>
+                ) : null}
+                {session.nextGoals ? (
+                  <div className="coach-follow-history__block">
+                    <span className="coach-follow-history__label">Objetivo siguiente</span>
+                    <p className="coach-follow-history__text">{session.nextGoals}</p>
+                  </div>
+                ) : null}
+                {session.motivationalMessage ? (
+                  <div className="coach-follow-history__message">
+                    <span className="coach-follow-history__label">Mensaje para el alumno</span>
+                    <p className="coach-follow-history__text">{session.motivationalMessage}</p>
+                  </div>
+                ) : null}
+                {session.privateNotes ? (
+                  <div className="coach-follow-history__private">
+                    <span className="coach-follow-history__label">Nota privada</span>
+                    <p className="coach-follow-history__hint">
+                      Entrenador, club de la relación y administrador maestro. El alumno no la ve.
+                    </p>
+                    <p className="coach-follow-history__text">{session.privateNotes}</p>
+                  </div>
+                ) : null}
+                <div className="coach-follow-history__actions">
+                  <button
+                    type="button"
+                    className="coaching-btn coaching-btn--secondary"
+                    onClick={() => openEditFollowup(session)}
+                  >
+                    Editar seguimiento de clase
+                  </button>
+                </div>
+              </article>
             ))}
-          </ul>
+          </div>
         )}
       </Modal>
 

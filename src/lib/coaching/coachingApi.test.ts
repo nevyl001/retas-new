@@ -320,6 +320,56 @@ describe("coachingApi - Entrega B", () => {
       expect(profile?.nombre).toBe("Coach Authenticated");
       expect(profile?.memberships.length).toBe(1);
       expect(profile?.memberships[0].status).toBe("ACTIVE");
+      expect(profile?.memberships[0].clubNombre).toBeUndefined();
+    });
+
+    it("guarda el nombre comercial del club y no un identificador parcial", async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { user: { id: "coach-uid" } } },
+      });
+      (supabase.from as jest.Mock)
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: {
+                  id: "c-100",
+                  auth_user_id: "coach-uid",
+                  coach_code: "RIV-C-00100",
+                  nombre: "Coach Authenticated",
+                  foto_url: null,
+                  bio: null,
+                  filosofia: null,
+                  especialidades: [],
+                  fuerzas: [],
+                },
+                error: null,
+              }),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({
+              data: [
+                {
+                  id: "m-1",
+                  organizador_id: "org-1",
+                  status: "ACTIVE",
+                  created_at: "2026-01-01T00:00:00Z",
+                },
+              ],
+            }),
+          }),
+        });
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: "Hack Pádel",
+        error: null,
+      });
+
+      const profile = await fetchCurrentCoachProfile();
+      expect(profile?.memberships[0].clubNombre).toBe("Hack Pádel");
+      expect(profile?.memberships[0].clubNombre).not.toContain("org-1");
     });
   });
 

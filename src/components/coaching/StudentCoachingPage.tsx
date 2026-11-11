@@ -16,6 +16,7 @@ import {
   openPublicJugadorByRivieraIdInNewWindow,
 } from "../jugadores/jugadoresPublicNav";
 import { navigateCoaching, navigateStudentAccess } from "./coachingNav";
+import { groupTrainingSessionsByRelationship } from "../../lib/coaching/studentTrainingScope";
 import "./coaching.css";
 
 function getInitials(nameOrEmail: string): string {
@@ -52,6 +53,17 @@ export const StudentCoachingPage: React.FC = () => {
   const [trainingError, setTrainingError] = useState<string | null>(null);
 
   const dailyQuote = useMemo(() => getDailyMentalidadRivieraQuote(), []);
+
+  const sessionsByRelationship = useMemo(() => {
+    const rels = overview?.relationships ?? [];
+    return groupTrainingSessionsByRelationship(
+      training,
+      rels.map((rel) => ({
+        relationshipId: rel.relationshipId,
+        organizadorId: rel.club.organizadorId,
+      }))
+    );
+  }, [overview, training]);
 
   const loadData = useCallback(async () => {
     if (!user) {
@@ -510,17 +522,19 @@ export const StudentCoachingPage: React.FC = () => {
       ) : (
         /* CASO B: Con relaciones de coaching activas */
         <div className="coaching-student-dashboard">
-          {relationships.map((rel, relIndex) => {
+          {relationships.map((rel) => {
             const currentBalance = rel.balance?.balanceClasses ?? 0;
             const totalCompleted = rel.balance?.totalClassesGiven ?? 0;
             const hasAvailable = currentBalance > 0;
             const coachName = rel.coach?.nombre ?? "Coach";
             const clubName = rel.club?.nombre ?? "Club Riviera";
+            const clubSessions =
+              sessionsByRelationship.get(rel.relationshipId) ?? [];
             const nextUpcoming = rel.upcomingSessions?.[0] ?? null;
-            const fallbackNextScheduled =
-              !nextUpcoming && training[0]?.nextScheduledAt
-                ? training[0].nextScheduledAt
-                : null;
+            const fallbackNextScheduled = !nextUpcoming
+              ? clubSessions.find((session) => session.nextScheduledAt)
+                  ?.nextScheduledAt ?? null
+              : null;
 
             return (
               <section
@@ -685,12 +699,10 @@ export const StudentCoachingPage: React.FC = () => {
                 </div>
 
                 {/* 2. MI EVOLUCIÓN COMO JUGADOR */}
-                {relIndex === 0 && (
-                  <StudentTrainingSection
-                    sessions={training}
-                    error={trainingError}
-                  />
-                )}
+                <StudentTrainingSection
+                  sessions={clubSessions}
+                  error={trainingError}
+                />
 
                 {/* 3. PRÓXIMAS CLASES AGENDADAS */}
                 {rel.upcomingSessions && rel.upcomingSessions.length > 0 && (

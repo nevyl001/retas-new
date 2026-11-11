@@ -24,6 +24,8 @@ describe("seguimiento pedagógico", () => {
       private_notes: "nota interna del coach",
       notes_summary: "observación que no debe verse",
       areas_to_improve: "Anticipar el globo",
+      relationship_id: "rel-hack",
+      organizador_id: "org-hack",
     });
 
     const serialized = JSON.stringify(session);
@@ -33,6 +35,8 @@ describe("seguimiento pedagógico", () => {
     expect(session.areasToImprove).toBe("Anticipar el globo");
     expect(session).not.toHaveProperty("privateNotes");
     expect(session).not.toHaveProperty("notesSummary");
+    expect(session.relationshipId).toBe("rel-hack");
+    expect(session.organizadorId).toBe("org-hack");
   });
 
   it("edita el seguimiento con una operación distinta al registro de la clase", async () => {
