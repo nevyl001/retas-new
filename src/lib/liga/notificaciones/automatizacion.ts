@@ -281,8 +281,6 @@ export function falloProveedor(status: number, tieneLoteManual: boolean): {
 const ASUNTO_RESULTADOS = "Resultados oficiales — {{liga}} | Jornada {{jornada}}";
 
 const CUERPO_RESULTADOS = [
-  "¡Tu jornada ha terminado, pero tu historia continúa!",
-  "",
   "Hola {{nombre}},",
   "",
   "Una jornada más de {{liga}} ha llegado a su fin.",

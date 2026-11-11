@@ -192,6 +192,13 @@ describe("automatización de comunicaciones", () => {
     expect(correo.html).not.toContain("<script>");
     expect(correo.html).not.toContain("{{");
     expect(correo.html).not.toContain("**");
+    const titulo =
+      "¡Tu jornada ha terminado, pero tu historia continúa!";
+    expect(correo.html.split(titulo).length - 1).toBe(1);
+    expect(correo.html).toContain("Hola Ana &lt;script&gt;,");
+    expect(correo.html.indexOf(titulo)).toBeLessThan(
+      correo.html.indexOf("Hola Ana &lt;script&gt;,")
+    );
     expect(plantillaResuelta(sustituirVariablesCorreo("Hola {{nombre}}", {
       nombre: "Ana",
       liga: "Liga",

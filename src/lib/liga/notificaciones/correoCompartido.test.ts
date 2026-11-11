@@ -97,6 +97,43 @@ describe("correo compartido", () => {
     expect(view.html).not.toContain("RESULTADOS_URL");
   });
 
+  it("resultados no repite el título ni el cierre en el cuerpo", () => {
+    const cuerpoDuplicado = [
+      "¡Tu jornada ha terminado, pero tu historia continúa!",
+      "",
+      "Hola Hector,",
+      "",
+      "Una jornada más de Liga 4ta Advance ha llegado a su fin.",
+      "",
+      "Cada game ganado, cada punto disputado y cada partido jugado forman parte de tu crecimiento deportivo.",
+      "",
+      "Los resultados oficiales de la Jornada 2 ya están disponibles.",
+      "",
+      "Sigue compitiendo, superándote y construyendo tu historia dentro de Riviera Open.",
+      "",
+      "¡Nos vemos en la próxima jornada!",
+      "",
+      "RESULTADOS_URL:/public/liga/liga-123/jornada/2",
+    ].join("\n");
+    const view = renderCorreoComunicacion({
+      clubNombre: "Hack Pádel",
+      ligaNombre: "Liga 4ta Advance",
+      asunto: "Resultados oficiales — Liga 4ta Advance | Jornada 2",
+      cuerpo: cuerpoDuplicado,
+      branding,
+      tipo: "resultados_jornada",
+      ligaUrl: "https://appriviera.rivieraopen.com/public/liga/liga-123",
+    });
+    const titulo =
+      "¡Tu jornada ha terminado, pero tu historia continúa!";
+    expect(view.html.split(titulo).length - 1).toBe(1);
+    expect(view.html.split("Sigue compitiendo, superándote y construyendo tu historia dentro de Riviera Open.").length - 1).toBe(1);
+    expect(view.html.split("¡Nos vemos en la próxima jornada!").length - 1).toBe(1);
+    expect(view.html).toContain("Hola Hector,");
+    expect(view.text.split(titulo).length - 1).toBe(1);
+    expect(view.text).toContain("Hola Hector,");
+  });
+
   it("la vista previa y el generador único producen el mismo HTML", () => {
     const view = renderComunicacionEmail({
       clubNombre: "Hack Pádel",

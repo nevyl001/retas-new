@@ -53,6 +53,35 @@ export function cuerpoSinMarcaResultados(cuerpo: string): string {
   return cuerpo.replace(MARCA_RESULTADOS, "").replace(/\n{3,}/g, "\n\n").trim();
 }
 
+/** Título único del correo de resultados (no debe repetirse en el cuerpo). */
+export const TITULO_RESULTADOS_JORNADA =
+  "¡Tu jornada ha terminado, pero tu historia continúa!";
+
+/**
+ * Quita del cuerpo la misma frase del título y cierres que el layout premium
+ * ya renderiza aparte, para no duplicar texto en el mensaje al jugador.
+ */
+export function cuerpoResultadosSinDuplicados(cuerpo: string): string {
+  return cuerpo
+    .replace(
+      /^[ \t]*¡Tu jornada ha terminado, pero tu historia continúa![ \t]*\n*/i,
+      ""
+    )
+    .replace(
+      /^[ \t]*Sigue compitiendo, superándote y construyendo tu historia dentro de Riviera Open\.[ \t]*\n*/gim,
+      ""
+    )
+    .replace(/^[ \t]*¡Nos vemos en la próxima jornada![ \t]*\n*/gim, "")
+    .replace(/^[ \t]*RIVIERA OPEN[ \t]*\n*/gim, "")
+    .replace(
+      /^[ \t]*Compite\. Juega limpio\. Vive Riviera Open\.[ \t]*\n*/gim,
+      ""
+    )
+    .replace(/^[ \t]*Cada partido cuenta\.[ \t]*\n*/gim, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 /** Enlace absoluto de la jornada. La URL explícita gana; si no, la marca del texto. */
 export function enlacePublicoJornada(input: {
   cuerpo: string;
@@ -133,9 +162,15 @@ export function renderCorreoComunicacion(input: {
   const asunto = input.asunto.trim().slice(0, 180) || `Mensaje de ${liga}`;
   const enlaceJornada = enlacePublicoJornada(input);
   const ligaUrl = urlLigaPublicaAbsoluta(input.ligaUrl);
-  const cuerpo = cuerpoSinMarcaResultados(input.cuerpo).slice(0, 8000);
-  const parsed = extractJornadaDetailsFromText(cuerpo, club);
   const esResultados = input.tipo === "resultados_jornada";
+  const cuerpoBase = cuerpoSinMarcaResultados(input.cuerpo).slice(0, 8000);
+  const cuerpo = esResultados
+    ? cuerpoResultadosSinDuplicados(cuerpoBase)
+    : cuerpoBase;
+  const parsed = extractJornadaDetailsFromText(cuerpo, club);
+  const cuerpoLimpio = esResultados
+    ? cuerpoResultadosSinDuplicados(parsed.cleanBody)
+    : parsed.cleanBody;
   // Resultados: sin tarjeta de fecha/horario/sede; solo mensaje y enlace a la tabla general.
   const jornadaCard = esResultados ? null : parsed.jornadaCard;
   const esJornada =
@@ -152,7 +187,7 @@ export function renderCorreoComunicacion(input: {
     : "";
   const paragraphsHtml =
     avisoHtml +
-    (parsed.cleanBody
+    (cuerpoLimpio
       .split(/\n{2,}/)
       .map((block) => block.trim())
       .filter(Boolean)
@@ -203,7 +238,7 @@ export function renderCorreoComunicacion(input: {
       : null;
 
   const title = esResultados
-    ? "¡Tu jornada ha terminado, pero tu historia continúa!"
+    ? TITULO_RESULTADOS_JORNADA
     : esJornada && asunto.toLowerCase().includes("jornada")
       ? "¡Tu próxima jornada te espera!"
       : asunto;
@@ -211,7 +246,7 @@ export function renderCorreoComunicacion(input: {
   const html = renderPremiumEmailHtml({
     branding: input.branding,
     asunto,
-    preheaderSnippet: parsed.cleanBody.slice(0, 140).replace(/\s+/g, " "),
+    preheaderSnippet: cuerpoLimpio.slice(0, 140).replace(/\s+/g, " "),
     badgeLabel: liga,
     title,
     paragraphsHtml,
@@ -231,7 +266,7 @@ export function renderCorreoComunicacion(input: {
     input.branding.isClubBranded ? input.branding.brandSupportLabel : "by Riviera Open",
     liga,
     title,
-    parsed.cleanBody,
+    cuerpoLimpio,
     jornadaCard
       ? `TARJETA DE JORNADA:\nFecha: ${jornadaCard.fecha}\nHorario: ${jornadaCard.horario}\nSede: ${jornadaCard.sede}`
       : "",
