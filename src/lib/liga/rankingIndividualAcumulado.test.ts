@@ -314,7 +314,7 @@ describe("computeRankingIndividualAcumuladoHasta — ajustes oficiales", () => {
     expect(rows.find((r) => r.jugadorId === A)?.puntos).toBe(12);
   });
 
-  it("8. jornada pendiente conserva total oficial del corte vigente", () => {
+  it("8. jornada pendiente sin partidos cerrados conserva total oficial", () => {
     const rows = computeRankingIndividualAcumuladoHasta({
       jornadas: [jornada1, jornada2Pendiente],
       hastaNumero: 2,
@@ -327,6 +327,39 @@ describe("computeRankingIndividualAcumuladoHasta — ajustes oficiales", () => {
     });
     expect(rows.find((r) => r.jugadorId === A)?.puntosJornada).toBe(0);
     expect(rows.find((r) => r.jugadorId === A)?.puntos).toBe(12);
+  });
+
+  it("8b. jornada en curso suma en vivo cada ronda completed", () => {
+    const jornada2EnCurso = jornada(
+      2,
+      "in_progress",
+      [
+        pareja("p3", "j2", A, C, "Ana", "Carla"),
+        pareja("p4", "j2", B, D, "Beto", "Diego"),
+      ],
+      [
+        partido("m3", "j2", "p3", "p4", 6, 2, "completed"),
+        partido("m4", "j2", "p3", "p4", null, null, "in_progress"),
+      ]
+    );
+    // Ronda 1 cerrada: Ana/Carla 6 · Beto/Diego 2
+    const rows = computeRankingIndividualAcumuladoHasta({
+      jornadas: [jornada1, jornada2EnCurso],
+      hastaNumero: 2,
+      inscripciones: [
+        insc(A, "Ana", { puntos: 12 }),
+        insc(B, "Beto", { puntos: 12 }),
+        insc(C, "Carla", { puntos: 7 }),
+        insc(D, "Diego", { puntos: 7 }),
+      ],
+    });
+    expect(rows.find((r) => r.jugadorId === A)?.puntosJornada).toBe(6);
+    expect(rows.find((r) => r.jugadorId === A)?.puntos).toBe(18);
+    expect(rows.find((r) => r.jugadorId === B)?.puntosJornada).toBe(2);
+    expect(rows.find((r) => r.jugadorId === B)?.puntos).toBe(14);
+    expect(rows.find((r) => r.jugadorId === C)?.puntos).toBe(13);
+    expect(rows.find((r) => r.jugadorId === D)?.puntos).toBe(9);
+    expect(rows[0]?.jugadorId).toBe(A);
   });
 
   it("9. jornada completada suma partidos y respeta insc.puntos del corte", () => {

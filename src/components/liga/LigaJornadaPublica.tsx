@@ -875,7 +875,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                 </h2>
                 <p className="liga-pantalla-ranking__hint">
                   Parejas: solo esta jornada (PTS → DIF → G). Jugadores:
-                  clasificación individual acumulada hasta esta jornada.
+                  clasificación individual acumulada hasta esta jornada (se
+                  actualiza con cada ronda cerrada).
                 </p>
                 <div className="liga-pantalla-ranking__dual liga-pantalla-ranking__dual--rotativo">
                   <div className="liga-pantalla-ranking__panel liga-pantalla-ranking__panel--parejas">
@@ -998,7 +999,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                             <th scope="col">Jugador</th>
                             <th
                               scope="col"
-                              title="Puntos de esta jornada (si ya está consolidada)"
+                              title="Puntos de esta jornada (incluye rondas ya cerradas)"
                             >
                               Jor.
                             </th>

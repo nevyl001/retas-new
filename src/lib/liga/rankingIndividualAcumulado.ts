@@ -65,6 +65,10 @@ export function maxJornadaCompletaQueAporta(
  * completed vigentes: `liga_inscripciones.puntos` (partidos + herencia +
  * ajustes administrativos absolutos).
  *
+ * Si la jornada de corte aún no está consolidada, suma en vivo los partidos
+ * `completed` de esa jornada (por ronda) encima del total oficial previo, para
+ * que la tabla pública avance con cada ronda cerrada.
+ *
  * El ledger `liga_puntos_correcciones` no guarda jornada efectiva; por eso no
  * se redistribuyen ajustes a cortes históricos anteriores a completed posteriores.
  */
@@ -79,6 +83,9 @@ export function computeRankingIndividualAcumuladoHasta(input: {
   const maxCompleta = maxJornadaCompletaQueAporta(input.jornadas);
   const usarTotalOficialInscripcion = hasta >= maxCompleta && maxCompleta > 0;
   const jornadasHasta = input.jornadas.filter((j) => j.numero <= hasta);
+  const jornadaCorte = jornadasHasta.find((j) => j.numero === hasta) ?? null;
+  const corteEnVivo =
+    jornadaCorte != null && !jornadaCompletaAportaPuntos(jornadaCorte);
 
   const totales = new Map<string, number>();
   const jornadasPorJugador = new Map<string, Set<number>>();
@@ -90,16 +97,20 @@ export function computeRankingIndividualAcumuladoHasta(input: {
       if (p.jugador1) nombres.set(p.jugador1_id, p.jugador1.nombre);
       if (p.jugador2) nombres.set(p.jugador2_id, p.jugador2.nombre);
     }
-    if (!jornadaCompletaAportaPuntos(j)) continue;
+    const aportaCompleta = jornadaCompletaAportaPuntos(j);
+    const aportaEnVivo = corteEnVivo && j.numero === hasta;
+    if (!aportaCompleta && !aportaEnVivo) continue;
     const pts = computePuntosPorJugadorDesdePartidos(
       j.partidos ?? [],
       j.parejas ?? []
     );
     for (const [jugadorId, value] of Array.from(pts.entries())) {
       totales.set(jugadorId, (totales.get(jugadorId) ?? 0) + value);
-      const set = jornadasPorJugador.get(jugadorId) ?? new Set<number>();
-      set.add(j.numero);
-      jornadasPorJugador.set(jugadorId, set);
+      if (value > 0 || aportaCompleta) {
+        const set = jornadasPorJugador.get(jugadorId) ?? new Set<number>();
+        set.add(j.numero);
+        jornadasPorJugador.set(jugadorId, set);
+      }
       if (j.numero === hasta) {
         puntosJornadaCorte.set(jugadorId, value);
       }
@@ -135,14 +146,18 @@ export function computeRankingIndividualAcumuladoHasta(input: {
     const puntosHeredados = Math.max(0, Number(insc.puntos_heredados ?? 0));
     const basePartidosHerencia = puntosPartidos + puntosHeredados;
     const puntosOficialesInsc = Math.max(0, Number(insc.puntos ?? 0));
+    const liveExtra = corteEnVivo
+      ? Math.max(0, puntosJornadaCorte.get(jugadorId) ?? 0)
+      : 0;
     const motivoRaw =
       typeof insc.puntos_ajuste_motivo === "string"
         ? insc.puntos_ajuste_motivo.trim()
         : "";
     const motivo = motivoRaw || null;
 
+    // insc.puntos aún no incluye la jornada en curso; se suma el parcial live.
     const puntos = usarTotalOficialInscripcion
-      ? puntosOficialesInsc
+      ? puntosOficialesInsc + liveExtra
       : basePartidosHerencia;
     const puntosAjuste = usarTotalOficialInscripcion
       ? puntos - basePartidosHerencia
