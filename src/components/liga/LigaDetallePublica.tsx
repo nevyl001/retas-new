@@ -121,6 +121,9 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const [jugadorFotos, setJugadorFotos] = useState<
     Record<string, string | null>
   >({});
+  const [jugadorRivieraIds, setJugadorRivieraIds] = useState<
+    Record<string, string | null>
+  >({});
   const [parejaRatings, setParejaRatings] = useState<
     Record<string, number | null>
   >({});
@@ -198,6 +201,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     const organizadorId = detalle?.organizador_id;
     if (!organizadorId || !detalle || isEquiposModalidad(detalle.modalidad)) {
       setJugadorFotos({});
+      setJugadorRivieraIds({});
       return;
     }
 
@@ -224,6 +228,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     }));
     if (entries.length === 0) {
       setJugadorFotos({});
+      setJugadorRivieraIds({});
       return;
     }
 
@@ -232,10 +237,13 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       .then((profiles) => {
         if (cancelled || !profiles) return;
         const fotos: Record<string, string | null> = {};
+        const rivieraIds: Record<string, string | null> = {};
         for (const entry of entries) {
           fotos[entry.id] = profiles[entry.id]?.fotoUrl ?? null;
+          rivieraIds[entry.id] = profiles[entry.id]?.rivieraId ?? null;
         }
         setJugadorFotos(fotos);
+        setJugadorRivieraIds(rivieraIds);
       })
       .catch((err) => {
         console.warn("[liga] fotos ranking individual:", err);
@@ -544,6 +552,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                     const support = supportStatsByJugador.get(row.jugador_id);
                     const showSupport = hasMeaningfulSupportStats(support);
                     const foto = jugadorFotos[row.jugador_id];
+                    const rivieraId = jugadorRivieraIds[row.jugador_id];
                     return (
                       <article
                         key={row.jugador_id}
@@ -569,6 +578,11 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                         </div>
                         <div className="liga-ind-top3__body">
                           <p className="liga-ind-top3__name">{row.nombre}</p>
+                          {rivieraId ? (
+                            <p className="liga-ind-top3__riviera-id">
+                              {rivieraId}
+                            </p>
+                          ) : null}
                           {row.ingreso_jornada_numero ? (
                             <p className="liga-ind-top3__ajuste">
                               Sustituto desde Jornada {row.ingreso_jornada_numero}
@@ -612,6 +626,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                     <ul className="liga-ind-rest__list" aria-label="Resto del ranking">
                       {ranking.slice(3).map((row, idx) => {
                         const foto = jugadorFotos[row.jugador_id];
+                        const rivieraId = jugadorRivieraIds[row.jugador_id];
                         return (
                           <li
                             key={row.jugador_id}
@@ -636,6 +651,11 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                               <span className="liga-ind-rest__name">
                                 {row.nombre}
                               </span>
+                              {rivieraId ? (
+                                <span className="liga-ind-rest__riviera-id">
+                                  {rivieraId}
+                                </span>
+                              ) : null}
                               {row.ingreso_jornada_numero ? (
                                 <span className="liga-ind-rest__ajuste">
                                   Sustituto desde Jornada{" "}

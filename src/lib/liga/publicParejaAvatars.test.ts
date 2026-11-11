@@ -134,4 +134,68 @@ describe("resolveLigaJugadorPublicFotos", () => {
 
     expect(fotos["liga-2"]).toBe("https://cdn.example/b.jpg");
   });
+
+  it("resuelve el identificador oficial Riviera en lote sin exponer UUIDs", async () => {
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === "riviera_public_liga_jugador_profiles") {
+        return Promise.resolve({
+          data: [
+            {
+              liga_jugador_id: "liga-lalo",
+              foto_url: "https://cdn.example/lalo.jpg",
+              rating: 3.85,
+            },
+            {
+              liga_jugador_id: "liga-josue",
+              foto_url: "https://cdn.example/josue.jpg",
+              rating: 3.4,
+            },
+            {
+              liga_jugador_id: "liga-sin-id",
+              foto_url: "https://cdn.example/otro.jpg",
+              rating: 3.1,
+            },
+          ],
+          error: null,
+        });
+      }
+      if (fn === "riviera_ranking_interno_por_organizador") {
+        return Promise.resolve({
+          data: [
+            { id: "rj-lalo", nombre: "Lalo E", rating: 3.85 },
+            { id: "rj-josue", nombre: "Josue", rating: 3.4 },
+            { id: "rj-otro", nombre: "Sin ID", rating: 3.1 },
+          ],
+          error: null,
+        });
+      }
+      if (fn === "get_public_riviera_ids_for_jugadores") {
+        return Promise.resolve({
+          data: [
+            { jugador_id: "rj-lalo", riviera_id: "RIV-00000284" },
+            { jugador_id: "rj-josue", riviera_id: "RV-000192" },
+            {
+              jugador_id: "rj-otro",
+              riviera_id: "550e8400-e29b-41d4-a716-446655440000",
+            },
+          ],
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: [], error: null });
+    });
+
+    const { resolveLigaJugadorPublicProfiles } = await import(
+      "./publicParejaAvatars"
+    );
+    const profiles = await resolveLigaJugadorPublicProfiles("org-1", [
+      { id: "liga-lalo", name: "Lalo E" },
+      { id: "liga-josue", name: "Josue" },
+      { id: "liga-sin-id", name: "Sin ID" },
+    ]);
+
+    expect(profiles["liga-lalo"]?.rivieraId).toBe("RIV-00000284");
+    expect(profiles["liga-josue"]?.rivieraId).toBe("RV-000192");
+    expect(profiles["liga-sin-id"]?.rivieraId).toBeNull();
+  });
 });
