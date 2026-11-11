@@ -84,6 +84,8 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     );
     expect(container.textContent).toContain("RIV-00000356");
     expect(container.textContent).not.toContain("Riviera ID");
+    expect(container.textContent).toContain("Ver mi Ficha de Ranking");
+    expect(container.textContent).not.toContain("Volver a mi Ficha");
 
     // El identificador oficial aparece una sola vez en pantalla (en el encabezado)
     const idOccurrences = (container.textContent ?? "").split("RIV-00000356").length - 1;

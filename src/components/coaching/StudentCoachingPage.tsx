@@ -334,15 +334,14 @@ export const StudentCoachingPage: React.FC = () => {
     <div className="coaching-page coaching-student-page rv-page">
       {/* 1. ENCABEZADO PERSONALIZADO */}
       <header className="coaching-hero coaching-student-hero">
-        <div className="coaching-student-hero__topbar">
-          <button type="button" className="coaching-back" onClick={handleBack}>
-            <TablerIcon name="arrow-left" size={16} />
-            {effectiveRivieraId ? "Volver a mi Ficha" : "Inicio"}
-          </button>
-          <span className="coaching-student-hero__brand-tag">
-            Riviera Open · Entrenamiento
-          </span>
-        </div>
+        {!effectiveRivieraId && (
+          <div className="coaching-student-hero__topbar">
+            <button type="button" className="coaching-back" onClick={handleBack}>
+              <TablerIcon name="arrow-left" size={16} />
+              Inicio
+            </button>
+          </div>
+        )}
 
         <div className="coaching-student-hero__main">
           <div className="coaching-student-hero__identity">
@@ -390,14 +389,12 @@ export const StudentCoachingPage: React.FC = () => {
                   className="coaching-badge-copy-btn"
                   onClick={() => handleCopyRivieraId(effectiveRivieraId)}
                   aria-label={`Copiar ${effectiveRivieraId}`}
+                  title={copiedRivieraId ? "Copiado" : "Copiar código"}
                 >
                   <TablerIcon
                     name={copiedRivieraId ? "check" : "copy"}
                     size={14}
                   />
-                  <span className="coaching-badge-copy-text">
-                    {copiedRivieraId ? "Copiado" : "Copiar"}
-                  </span>
                 </button>
               </div>
 
@@ -450,16 +447,20 @@ export const StudentCoachingPage: React.FC = () => {
       {relationships.length === 0 ? (
         <div className="coaching-student-empty-state">
           <div className="coaching-empty-card coaching-student-empty-card">
-            <div className="coaching-student-empty-icon-wrap" aria-hidden="true">
-              <TablerIcon name="ball-tennis" size={26} />
+            <div className="coaching-student-empty-lead">
+              <div className="coaching-student-empty-icon-wrap" aria-hidden="true">
+                <TablerIcon name="ball-tennis" size={26} />
+              </div>
+              <div className="coaching-student-empty-copy">
+                <h2 className="coaching-student-empty-title">
+                  Tu evolución comienza aquí.
+                </h2>
+                <p className="coaching-student-empty-desc">
+                  Cuando tu entrenador te vincule, encontrarás aquí tus clases,
+                  avances y próximos objetivos.
+                </p>
+              </div>
             </div>
-            <h2 className="coaching-student-empty-title">
-              Tu evolución comienza aquí.
-            </h2>
-            <p className="coaching-student-empty-desc">
-              Cuando tu entrenador te vincule, encontrarás aquí tus clases,
-              avances y próximos objetivos.
-            </p>
 
             {effectiveRivieraId ? (
               <div className="coaching-student-empty-actions">
