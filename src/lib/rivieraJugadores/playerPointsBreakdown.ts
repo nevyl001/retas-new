@@ -41,6 +41,21 @@ export type CareerPointsBreakdownView = Pick<
   "currentClubPoints" | "careerTotalAllClubs" | "pointsByClub"
 >;
 
+/** Suma canónica de puntos por club — fuente de verdad del total de carrera. */
+export function sumCareerClubPoints(
+  pointsByClub: ReadonlyArray<{ points?: number; puntos?: number }>
+): number {
+  return pointsByClub.reduce((sum, entry) => {
+    const pts =
+      typeof entry.points === "number"
+        ? entry.points
+        : typeof entry.puntos === "number"
+          ? entry.puntos
+          : 0;
+    return sum + (Number.isFinite(pts) ? pts : 0);
+  }, 0);
+}
+
 export function breakdownFromCareerResult(
   career: CareerPointsByClubResult,
   currentOrganizadorId: string | null | undefined
@@ -57,13 +72,15 @@ export function breakdownFromCareerResult(
       points: entry.puntos,
     }));
 
+  // Invariante: total carrera = suma de clubes (nunca un careerPuntosTotal divergente).
+  const careerTotalAllClubs = sumCareerClubPoints(pointsByClub);
   const currentClubPoints = viewOrg
     ? career.puntosByOrg.get(viewOrg) ?? 0
-    : career.total;
+    : careerTotalAllClubs;
 
   return {
     currentClubPoints,
-    careerTotalAllClubs: career.total,
+    careerTotalAllClubs,
     pointsByClub,
   };
 }
@@ -78,9 +95,10 @@ export function careerResultFromJugador(
   const puntosByOrg = new Map(
     jugador.careerPuntosByClub.map((entry) => [entry.organizadorId, entry.puntos])
   );
-  const total =
-    jugador.careerPuntosTotal ??
-    jugador.careerPuntosByClub.reduce((sum, entry) => sum + entry.puntos, 0);
+  // Invariante: total = suma de byClub (ignora careerPuntosTotal stale).
+  const total = sumCareerClubPoints(
+    jugador.careerPuntosByClub.map((entry) => ({ puntos: entry.puntos }))
+  );
 
   return {
     byClub: jugador.careerPuntosByClub,

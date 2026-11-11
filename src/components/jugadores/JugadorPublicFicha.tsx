@@ -44,7 +44,6 @@ import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { isValidRivieraId } from "../../lib/rivieraJugadores/rivieraIdDisplay";
 import { RivieraIdBadge } from "./RivieraIdBadge";
 import { JugadorPuntosBreakdown } from "./JugadorPuntosBreakdown";
-import { JugadorOfficialRomcPuntos } from "./JugadorOfficialRomcPuntos";
 import { JugadorPublicHistorial } from "./JugadorPublicHistorial";
 import { JugadorRewardsPanel, isValidClubDisplayName } from "./JugadorRewardsPanel";
 import { RatingNivel } from "./RatingNivel";
@@ -692,11 +691,24 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
               </span>
               <span className="rjp-ficha-position__rank-label">{rankingLabel}</span>
             </div>
-            {(!hasOrgContext || jugador.visible_publico) && (
-              <div className="rjp-ficha-position__official">
-                <JugadorOfficialRomcPuntos jugador={jugador} />
-              </div>
-            )}
+            {/*
+              Un solo sistema de puntos en este bloque: total carrera = suma por club.
+              El número grande y «Total carrera» deben coincidir siempre.
+            */}
+            <div className="rjp-ficha-position__official">
+              {careerTotalPending ? (
+                <span
+                  className="rjp-ficha-stat__val rjp-pts--na"
+                  aria-busy="true"
+                >
+                  Cargando carrera…
+                </span>
+              ) : (
+                <span className="rjp-ficha-stat__val">
+                  {careerTotalPts.toLocaleString("es-MX")} pts
+                </span>
+              )}
+            </div>
             <div className="rjp-ficha-position__breakdown">
               <JugadorPuntosBreakdown
                 key={`pts-breakdown-${clubLabelsEpoch}`}

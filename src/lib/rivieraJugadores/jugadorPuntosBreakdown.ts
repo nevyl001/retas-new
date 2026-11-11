@@ -1,6 +1,7 @@
 import {
   breakdownFromCareerResult,
   careerResultFromJugador,
+  sumCareerClubPoints,
 } from "./playerPointsBreakdown";
 import type {
   CareerPointsBreakdownView,
@@ -141,11 +142,15 @@ export function breakdownToDisplayLines(
     role: row.isContextClub ? "home" : "other",
   }));
 
-  if (multiClub && breakdown.careerTotalAllClubs > 0) {
+  // Invariante UI: Total carrera = suma exacta de las líneas de club visibles.
+  const clubsSum = sumCareerClubPoints(
+    rows.map((row) => ({ points: row.points }))
+  );
+  if (multiClub && clubsSum > 0) {
     lines.push({
       key: "career-total",
       clubLabel: "Total carrera",
-      puntos: breakdown.careerTotalAllClubs,
+      puntos: clubsSum,
       role: "career-total",
     });
   }
@@ -163,7 +168,11 @@ export function resolveCareerTotalAllClubsDisplay(
     if (hasOrgContext && viewingOrganizadorId?.trim()) {
       return jugador.pointsBreakdown.currentClubPoints;
     }
-    return jugador.pointsBreakdown.careerTotalAllClubs;
+    // Preferir suma de clubes por si careerTotalAllClubs llegó stale.
+    const fromClubs = sumCareerClubPoints(jugador.pointsBreakdown.pointsByClub);
+    return fromClubs > 0 || jugador.pointsBreakdown.pointsByClub.length > 0
+      ? fromClubs
+      : jugador.pointsBreakdown.careerTotalAllClubs;
   }
 
   const career = careerResultFromJugador(jugador);

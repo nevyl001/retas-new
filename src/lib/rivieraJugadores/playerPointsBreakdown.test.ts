@@ -1,10 +1,12 @@
 import {
   breakdownFromCareerResult,
+  careerResultFromJugador,
 } from "./playerPointsBreakdown";
 import {
   buildJugadorPuntosBreakdown,
   breakdownToDisplayLines,
   isRankingPointsBreakdownPending,
+  resolveCareerTotalAllClubsDisplay,
 } from "./jugadorPuntosBreakdown";
 import type { CareerPointsByClubResult } from "./careerPointsByClub";
 import type { RivieraJugadorWithStats } from "./types";
@@ -165,5 +167,66 @@ describe("breakdownToDisplayLines", () => {
     );
     const lines = breakdownToDisplayLines(b, HACKPADEL, { forceBreakdown: true });
     expect(lines.every((l) => l.role !== "other" || l.puntos > 0)).toBe(true);
+  });
+
+  it("Total carrera siempre = suma de clubes aunque careerTotalAllClubs venga stale", () => {
+    const lines = breakdownToDisplayLines(
+      {
+        currentClubPoints: 1060,
+        careerTotalAllClubs: 950, // stale / divergente
+        pointsByClub: [
+          { organizador_id: RIVIERA_OPEN, club_name: "Riviera Open", points: 1060 },
+          { organizador_id: HACKPADEL, club_name: "Hack Pádel", points: 540 },
+          {
+            organizador_id: CLUB_TEST,
+            club_name: "Valvidub Sports",
+            points: 150,
+          },
+        ],
+      },
+      null,
+      { forceBreakdown: true }
+    );
+    const clubsSum = 1060 + 540 + 150;
+    const total = lines.find((l) => l.role === "career-total");
+    expect(total?.puntos).toBe(clubsSum);
+    expect(
+      lines.filter((l) => l.role !== "career-total").reduce((s, l) => s + l.puntos, 0)
+    ).toBe(clubsSum);
+  });
+});
+
+describe("invariante total = suma byClub", () => {
+  it("careerResultFromJugador ignora careerPuntosTotal divergente", () => {
+    const j = jugador({
+      careerPuntosByClub: [
+        { organizadorId: RIVIERA_OPEN, puntos: 1060 },
+        { organizadorId: HACKPADEL, puntos: 540 },
+        { organizadorId: CLUB_TEST, puntos: 150 },
+      ],
+      careerPuntosTotal: 950,
+    });
+    const result = careerResultFromJugador(j);
+    expect(result?.total).toBe(1750);
+  });
+
+  it("resolveCareerTotalAllClubsDisplay usa suma de clubes si breakdown está stale", () => {
+    const j = jugador({
+      pointsBreakdown: {
+        currentClubPoints: 1060,
+        careerTotalAllClubs: 950,
+        officialGlobalPoints: 2010,
+        pointsByClub: [
+          { organizador_id: RIVIERA_OPEN, club_name: "Riviera Open", points: 1060 },
+          { organizador_id: HACKPADEL, club_name: "Hack Pádel", points: 540 },
+          {
+            organizador_id: CLUB_TEST,
+            club_name: "Valvidub Sports",
+            points: 150,
+          },
+        ],
+      },
+    });
+    expect(resolveCareerTotalAllClubsDisplay(j, false)).toBe(1750);
   });
 });

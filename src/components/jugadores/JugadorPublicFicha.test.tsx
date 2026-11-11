@@ -45,9 +45,6 @@ jest.mock("../../club-experience", () => ({
 jest.mock("./JugadorPuntosBreakdown", () => ({
   JugadorPuntosBreakdown: () => <div data-testid="puntos-breakdown" />,
 }));
-jest.mock("./JugadorOfficialRomcPuntos", () => ({
-  JugadorOfficialRomcPuntos: () => <div data-testid="romc-puntos" />,
-}));
 jest.mock("./JugadorPublicHistorial", () => ({
   JugadorPublicHistorial: () => <div data-testid="historial" />,
 }));
