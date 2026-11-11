@@ -152,7 +152,7 @@ describe("Rediseño Premium de Templates de Correo", () => {
     expect(email.html).toContain("Gestionado con Riviera Open");
   });
 
-  it("5. Compatibilidad móvil (layout centrado, responsive, max-width 600px, sin flex/grid)", () => {
+  it("5. Compatibilidad móvil (layout centrado, responsive, max-width 640px, sin flex/grid)", () => {
     const email = renderComunicacionEmail({
       clubNombre: "Hack Pádel",
       ligaNombre: "Liga 5ta Advance",
@@ -163,7 +163,7 @@ describe("Rediseño Premium de Templates de Correo", () => {
     });
 
     expect(email.html).toContain('name="viewport"');
-    expect(email.html).toContain("max-width:600px");
+    expect(email.html).toContain("max-width:640px");
     expect(email.html).toContain('role="presentation"');
     expect(email.html).not.toContain("display:flex");
     expect(email.html).not.toContain("display:grid");

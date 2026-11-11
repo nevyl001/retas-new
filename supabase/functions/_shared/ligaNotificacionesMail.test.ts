@@ -128,7 +128,7 @@ Deno.test("5. Compatibilidad móvil y estructura segura de email", () => {
   });
 
   assertStringIncludes(mail.html, 'name="viewport"');
-  assertStringIncludes(mail.html, "max-width:600px");
+  assertStringIncludes(mail.html, "max-width:640px");
   assertStringIncludes(mail.html, 'role="presentation"');
   assertEquals(mail.html.includes("display:flex"), false);
   assertEquals(mail.html.includes("display:grid"), false);

@@ -54,22 +54,23 @@ export function renderPremiumEmailHtml(input: PremiumEmailLayoutInput): string {
     ? `<tr><td style="background-color:#111827;color:#F9FAFB;text-align:center;padding:10px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">VISTA PREVIA — este mensaje no se ha enviado</td></tr>`
     : "";
 
+  // Header fijo: misma altura/logo en recordatorio, resultados y el resto.
   const logoOrMonogram = branding.brandLogoUrl
-    ? `<img src="${escapeHtml(branding.brandLogoUrl)}" alt="${escapeHtml(brandName)}" style="display:block;border:0;outline:none;text-decoration:none;max-height:40px;max-width:180px;width:auto;height:auto;">`
+    ? `<img src="${escapeHtml(branding.brandLogoUrl)}" alt="${escapeHtml(brandName)}" width="160" height="40" style="display:block;border:0;outline:none;text-decoration:none;height:40px;width:auto;max-height:40px;max-width:160px;">`
     : `<table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td style="width:36px;height:36px;border-radius:6px;background-color:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.24);text-align:center;vertical-align:middle;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;color:#FFFFFF;">
+          <td style="width:40px;height:40px;border-radius:6px;background-color:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.24);text-align:center;vertical-align:middle;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;color:#FFFFFF;line-height:40px;">
             ${escapeHtml(branding.initials)}
           </td>
-          <td style="padding-left:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:18px;font-weight:700;color:#FFFFFF;letter-spacing:-0.01em;">
+          <td style="padding-left:12px;height:40px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:18px;font-weight:700;color:#FFFFFF;letter-spacing:-0.01em;line-height:40px;">
             ${escapeHtml(brandName)}
           </td>
         </tr>
       </table>`;
 
   const coBrandPill = brandSupport
-    ? `<td align="right" valign="middle" style="padding-left:12px;">
-        <span style="display:inline-block;padding:4px 10px;border-radius:9999px;background-color:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.04em;color:#E5E7EB;text-transform:uppercase;white-space:nowrap;">
+    ? `<td align="right" valign="middle" style="padding-left:12px;height:40px;">
+        <span style="display:inline-block;padding:4px 10px;border-radius:9999px;background-color:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.04em;color:#E5E7EB;text-transform:uppercase;white-space:nowrap;line-height:1.2;">
           ${escapeHtml(brandSupport)}
         </span>
       </td>`
@@ -194,7 +195,7 @@ export function renderPremiumEmailHtml(input: PremiumEmailLayoutInput): string {
       </p>`
     : "";
 
-  const maxWidth = input.maxWidth || 600;
+  const maxWidth = input.maxWidth || 640;
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -220,10 +221,10 @@ ${escapeHtml(preheaderSnippet)}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:${maxWidth}px;background-color:#FFFFFF;border:1px solid #E5E7EB;border-top:3px solid ${escapeHtml(branding.brandAccentColor)};border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
     ${previewBanner}
     <tr>
-      <td style="background-color:#0D0F12;padding:24px 28px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <td style="background-color:#0D0F12;padding:18px 28px;height:76px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="height:40px;">
           <tr>
-            <td align="left" valign="middle">
+            <td align="left" valign="middle" style="height:40px;">
               ${logoOrMonogram}
             </td>
             ${coBrandPill}

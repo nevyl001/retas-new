@@ -221,7 +221,7 @@ export function renderCorreoComunicacion(input: {
     footerNotice,
     ligaUrl: ligaUrl ?? input.ligaUrl,
     vistaPrevia: input.vistaPrevia === true,
-    maxWidth: esResultados || esJornada ? 640 : 600,
+    maxWidth: 640,
   });
 
   const textLines = [
@@ -343,7 +343,7 @@ export function renderVerificacionSupervision(input: {
     paragraphsHtml: `<p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:#374151;">${escapeHtml(cuerpo)}</p>`,
     actionButton: { label: "CONFIRMAR CORREO DE SUPERVISIÓN", url: input.enlace },
     footerNotice: "Abrir este enlace no envía avisos a los jugadores.",
-    maxWidth: 600,
+    maxWidth: 640,
   });
   return {
     asunto,

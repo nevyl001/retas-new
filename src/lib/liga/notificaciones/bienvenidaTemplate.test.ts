@@ -34,7 +34,7 @@ describe("plantilla de bienvenida", () => {
   it("21. en móvil el documento es legible: viewport, ancho máximo y texto completo", () => {
     const { html, text } = mensaje();
     expect(html).toContain('name="viewport"');
-    expect(html).toContain("max-width:600px");
+    expect(html).toContain("max-width:640px");
     expect(html).not.toContain("display:flex");
     expect(html).not.toContain("display:grid");
     expect(text).toContain("Hola, Saúl Moreno:");
