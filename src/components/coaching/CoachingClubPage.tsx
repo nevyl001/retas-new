@@ -261,6 +261,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   const [coachNombre, setCoachNombre] = useState("");
   const [coachEmail, setCoachEmail] = useState("");
   const [coachPassword, setCoachPassword] = useState("");
+  const [showCoachPassword, setShowCoachPassword] = useState(false);
   const [coachTelefono, setCoachTelefono] = useState("");
   const [coachPais, setCoachPais] = useState("MX");
   const [coachGenero, setCoachGenero] = useState<RivieraJugadorGenero>("M");
@@ -402,6 +403,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
     setCoachNombre("");
     setCoachEmail("");
     setCoachPassword("");
+    setShowCoachPassword(false);
     setCoachTelefono("");
     setCoachPais("MX");
     setCoachGenero("M");
@@ -1212,9 +1214,19 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                     />
                   </label>
                   <label className="coaching-field">
-                    <span>Contraseña inicial *</span>
+                    <span className="coaching-field__label-row">
+                      <span>Contraseña inicial *</span>
+                      <button
+                        type="button"
+                        className="coaching-password-toggle"
+                        onClick={() => setShowCoachPassword((visible) => !visible)}
+                        aria-pressed={showCoachPassword}
+                      >
+                        {showCoachPassword ? "Ocultar" : "Ver contraseña"}
+                      </button>
+                    </span>
                     <input
-                      type="password"
+                      type={showCoachPassword ? "text" : "password"}
                       value={coachPassword}
                       onChange={(e) => setCoachPassword(e.target.value)}
                       placeholder="Mínimo 8 caracteres"

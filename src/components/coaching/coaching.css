@@ -596,6 +596,31 @@
   text-transform: uppercase;
 }
 
+.coaching-field__label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.coaching-password-toggle {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--ro-text-primary, #f5f2eb);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.coaching-password-toggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .coaching-field input,
 .coaching-field select {
   width: 100%;

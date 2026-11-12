@@ -63,6 +63,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [nextPassword, setNextPassword] = useState("");
+  const [showNextPassword, setShowNextPassword] = useState(false);
 
   // Modales
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -1905,6 +1906,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                 try {
                   await setClubCoachPassword(coach.id, nextPassword);
                   setNextPassword("");
+                  setShowNextPassword(false);
                   setActionSuccess("Contraseña actualizada. El coach entra con la nueva clave.");
                 } catch (err) {
                   setActionError(err instanceof Error ? err.message : "No se pudo restablecer la contraseña.");
@@ -1918,15 +1920,28 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
               <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--ro-text-secondary)" }}>
                 La clave no se vuelve a mostrar. Entrégala al coach por el canal del club.
               </p>
-              <input
-                type="password"
-                value={nextPassword}
-                onChange={(e) => setNextPassword(e.target.value)}
-                autoComplete="new-password"
-                placeholder="Nueva contraseña"
-                minLength={8}
-                disabled={busy}
-              />
+              <label className="coaching-field">
+                <span className="coaching-field__label-row">
+                  <span>Nueva contraseña</span>
+                  <button
+                    type="button"
+                    className="coaching-password-toggle"
+                    onClick={() => setShowNextPassword((visible) => !visible)}
+                    aria-pressed={showNextPassword}
+                  >
+                    {showNextPassword ? "Ocultar" : "Ver contraseña"}
+                  </button>
+                </span>
+                <input
+                  type={showNextPassword ? "text" : "password"}
+                  value={nextPassword}
+                  onChange={(e) => setNextPassword(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder="Mínimo 8 caracteres"
+                  minLength={8}
+                  disabled={busy}
+                />
+              </label>
               <button type="submit" className="coaching-btn coaching-btn--secondary" disabled={busy}>
                 Guardar nueva contraseña
               </button>
