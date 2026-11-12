@@ -35,8 +35,16 @@
   --liga-border: var(--brand-border, var(--border-default, #333333));
   --liga-border-subtle: var(--ro-border-subtle, #222222);
   --liga-text: var(--brand-text, var(--text-primary, #ffffff));
-  --liga-text-muted: var(--brand-muted, var(--text-muted, #8b93a0));
-  --liga-text-soft: var(--ro-text-secondary, #b0b0b0);
+  --liga-text-soft: color-mix(
+    in srgb,
+    var(--liga-text, #ffffff) 78%,
+    var(--liga-surface, #0f0f0f)
+  );
+  --liga-text-muted: color-mix(
+    in srgb,
+    var(--liga-text, #ffffff) 62%,
+    var(--liga-surface, #0f0f0f)
+  );
   /* Fase 2B — alineado al patrón real de Torneo Express (--ro-shadow-sm),
    * en vez del valor propio anterior (0 2px 12px rgba(0,0,0,0.25)). */
   --liga-shadow-card: var(--ro-shadow-sm);

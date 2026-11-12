@@ -841,7 +841,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
               setOptionsOpen(false);
             }}
           >
-            <TablerIcon name="share" size={20} aria-hidden={false} />
+            <TablerIcon name="share" size={16} aria-hidden={false} />
             <span>Compartir</span>
           </button>
           <button
@@ -857,7 +857,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
               setShareOpen(false);
             }}
           >
-            <TablerIcon name="dots-vertical" size={20} aria-hidden={false} />
+            <TablerIcon name="dots-vertical" size={16} aria-hidden={false} />
             <span>Opciones</span>
           </button>
           {optionsOpen ? (
@@ -978,7 +978,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
                     setEditingNombre(true);
                   }}
                 >
-                  <TablerIcon name="pencil" size={14} aria-hidden={false} />
+                  <TablerIcon name="pencil" size={15} aria-hidden={false} />
                 </button>
               </div>
             )
@@ -1297,12 +1297,43 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
               <ul className="liga-sustituciones-admin__list">
                 {sustituciones.map((s) => (
                   <li key={s.id} className="liga-sustituciones-admin__row">
-                    <span>
-                      {s.from_nombre ?? "Jugador"} → {s.to_nombre ?? "Jugador"}
+                    <span className="liga-sustituciones-admin__players">
+                      <span className="liga-sustituciones-admin__from">
+                        {s.from_nombre ?? "Jugador"}
+                      </span>
+                      <span
+                        className="liga-sustituciones-admin__arrow"
+                        aria-hidden="true"
+                      >
+                        {" → "}
+                      </span>
+                      <strong className="liga-sustituciones-admin__to">
+                        {s.to_nombre ?? "Jugador"}
+                      </strong>
                     </span>
-                    <span>
-                      Ingreso: Jornada {s.jornada_efectiva_numero} · Puntos
-                      heredados: {s.puntos_heredados} · Sustitución aplicada
+                    <span className="liga-sustituciones-admin__meta">
+                      <span className="liga-sustituciones-admin__meta-item">
+                        Ingreso:{" "}
+                        <strong>Jornada {s.jornada_efectiva_numero}</strong>
+                      </span>
+                      <span
+                        className="liga-sustituciones-admin__sep"
+                        aria-hidden="true"
+                      >
+                        {" · "}
+                      </span>
+                      <span className="liga-sustituciones-admin__meta-item">
+                        Puntos heredados: <strong>{s.puntos_heredados}</strong>
+                      </span>
+                      <span
+                        className="liga-sustituciones-admin__sep"
+                        aria-hidden="true"
+                      >
+                        {" · "}
+                      </span>
+                      <span className="liga-sustituciones-admin__status">
+                        Sustitución aplicada
+                      </span>
                     </span>
                   </li>
                 ))}
