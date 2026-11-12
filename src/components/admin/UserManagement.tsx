@@ -369,7 +369,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const handleDeleteUser = async (user: User) => {
     if (
       !window.confirm(
-        `¿Eliminar por completo a "${user.name || user.email}"?\n\nSe borrarán retas, jugadores, torneos, ligas, duelos, ranking y su cuenta de acceso. Esta acción no se puede deshacer.`
+        user.coach_info
+          ? `¿Eliminar la cuenta de coach de "${user.name || user.email}"?\n\nSe borra su acceso, su ficha de entrenador y su historial en los clubes. No se borran las retas, los jugadores ni el ranking del club. Esta acción no se puede deshacer.`
+          : `¿Eliminar por completo a "${user.name || user.email}"?\n\nSe borrarán retas, jugadores, torneos, ligas, duelos, ranking y su cuenta de acceso. Esta acción no se puede deshacer.`
       )
     ) {
       return;

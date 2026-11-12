@@ -369,6 +369,16 @@ BEGIN
           );
   END IF;
 
+  -- La bitácora de membresía apuntaba al coach con ON DELETE RESTRICT y
+  -- abortaba el borrado aunque la cuenta no tuviera clases ni alumnos.
+  IF to_regclass('public.coach_club_membership_audit_log') IS NOT NULL THEN
+    DELETE FROM public.coach_club_membership_audit_log
+    WHERE to_regclass('public.riviera_coaches') IS NOT NULL
+      AND coach_id IN (
+        SELECT id FROM public.riviera_coaches WHERE auth_user_id = v_uid
+      );
+  END IF;
+
   IF to_regclass('public.riviera_coaches') IS NOT NULL THEN
     DELETE FROM public.riviera_coaches
     WHERE auth_user_id = v_uid;
