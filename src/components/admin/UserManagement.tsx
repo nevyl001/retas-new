@@ -119,6 +119,12 @@ interface User {
     coach_code: string;
     club_count: number;
   } | null;
+  student_info?: {
+    rivieraId: string | null;
+    isActive: boolean;
+    clubCount: number;
+  } | null;
+  account_kind: "club" | "coach" | "student";
 }
 
 interface UserManagementProps {
@@ -141,9 +147,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     | "activity_total"
   >("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [filterBy, setFilterBy] = useState<"all" | "active" | "inactive" | "coaches">(
-    "all"
-  );
+  const [accountKind, setAccountKind] = useState<"club" | "coach" | "student">("club");
+  const [filterBy, setFilterBy] = useState<"all" | "active" | "inactive">("all");
   const [authCleanupNotice, setAuthCleanupNotice] = useState<string | null>(
     null
   );
@@ -174,6 +179,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         { data: publicConfigData, error: publicConfigError },
         { data: coachesData, error: coachesError },
         { data: membershipsData, error: membershipsError },
+        { data: studentLinks, error: studentLinksError },
+        { data: identities, error: identitiesError },
       ] = await Promise.all([
         supabase
           .from("tournaments")
@@ -182,6 +189,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         supabase.from("tournament_public_config").select("*"),
         supabase.from("riviera_coaches").select("id, auth_user_id, coach_code"),
         supabase.from("coach_club_memberships").select("coach_id, organizador_id"),
+        supabase
+          .from("coach_student_account_links")
+          .select("auth_user_id, jugador_id, organizador_id, is_active, student_email, created_at"),
+        supabase
+          .from("riviera_official_player_identity")
+          .select("canonical_riviera_jugador_id, riviera_id"),
       ]);
 
       if (tournamentsError) {
@@ -198,6 +211,47 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       }
       if (membershipsError) {
         console.warn("coach_club_memberships query warning:", membershipsError);
+      }
+      if (studentLinksError) {
+        console.warn("coach_student_account_links query warning:", studentLinksError);
+      }
+      if (identitiesError) {
+        console.warn("riviera_official_player_identity query warning:", identitiesError);
+      }
+
+      const rivieraByJugador = new Map<string, string>();
+      for (const row of identities ?? []) {
+        const jugadorId = String(
+          (row as { canonical_riviera_jugador_id?: string }).canonical_riviera_jugador_id ?? ""
+        );
+        const rivieraId = String((row as { riviera_id?: string }).riviera_id ?? "").trim();
+        if (jugadorId && rivieraId) rivieraByJugador.set(jugadorId, rivieraId);
+      }
+
+      const studentByAuth = new Map<
+        string,
+        { rivieraId: string | null; isActive: boolean; clubs: Set<string>; email: string; createdAt: string }
+      >();
+      for (const row of studentLinks ?? []) {
+        const authId = String((row as { auth_user_id?: string }).auth_user_id ?? "");
+        if (!authId) continue;
+        const current = studentByAuth.get(authId) ?? {
+          rivieraId: null,
+          isActive: false,
+          clubs: new Set<string>(),
+          email: "",
+          createdAt: String((row as { created_at?: string }).created_at ?? ""),
+        };
+        const jugadorId = String((row as { jugador_id?: string }).jugador_id ?? "");
+        const organizadorId = String((row as { organizador_id?: string }).organizador_id ?? "");
+        const email = String((row as { student_email?: string }).student_email ?? "").trim();
+        if (jugadorId && !current.rivieraId) {
+          current.rivieraId = rivieraByJugador.get(jugadorId) ?? null;
+        }
+        if ((row as { is_active?: boolean }).is_active) current.isActive = true;
+        if (organizadorId) current.clubs.add(organizadorId);
+        if (email && !current.email) current.email = email;
+        studentByAuth.set(authId, current);
       }
 
       const coachClubCountMap = new Map<string, number>();
@@ -284,6 +338,19 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           const exA = expressActive[uid] || 0;
           const exF = expressFinished[uid] || 0;
           const coachInfo = authCoachMap.get(uid) || null;
+          const studentRaw = studentByAuth.get(uid);
+          const studentInfo = studentRaw
+            ? {
+                rivieraId: studentRaw.rivieraId,
+                isActive: studentRaw.isActive,
+                clubCount: studentRaw.clubs.size,
+              }
+            : null;
+          const accountKind: User["account_kind"] = coachInfo
+            ? "coach"
+            : studentInfo
+            ? "student"
+            : "club";
 
           return {
             ...user,
@@ -305,9 +372,35 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             activity_total: c.total + exT,
             last_activity: user.updated_at,
             coach_info: coachInfo,
+            student_info: studentInfo,
+            account_kind: accountKind,
           };
         })
         .filter((u) => u.id !== adminUser?.user_id);
+
+      const knownIds = new Set(usersWithCounts.map((user) => user.id));
+      for (const entry of Array.from(studentByAuth.entries())) {
+        const authId = entry[0];
+        const studentRaw = entry[1];
+        if (knownIds.has(authId) || authId === adminUser?.user_id || authCoachMap.has(authId)) {
+          continue;
+        }
+        usersWithCounts.push({
+          id: authId,
+          email: studentRaw.email,
+          name: studentRaw.rivieraId || studentRaw.email || "Alumno",
+          created_at: studentRaw.createdAt || new Date(0).toISOString(),
+          updated_at: studentRaw.createdAt || new Date(0).toISOString(),
+          activity_total: 0,
+          coach_info: null,
+          student_info: {
+            rivieraId: studentRaw.rivieraId,
+            isActive: studentRaw.isActive,
+            clubCount: studentRaw.clubs.size,
+          },
+          account_kind: "student",
+        });
+      }
 
       setUsers(usersWithCounts);
     } catch (error) {
@@ -328,18 +421,26 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     let filtered = users.filter((user) => {
       const name = (user.name ?? "").toLowerCase();
       const email = (user.email ?? "").toLowerCase();
-      const matchesSearch = !q || name.includes(q) || email.includes(q);
+      const coachCode = (user.coach_info?.coach_code ?? "").toLowerCase();
+      const rivieraId = (user.student_info?.rivieraId ?? "").toLowerCase();
+      const matchesSearch =
+        !q ||
+        name.includes(q) ||
+        email.includes(q) ||
+        coachCode.includes(q) ||
+        rivieraId.includes(q);
 
       const hasClassicActive = (user.tournaments_active || 0) > 0;
       const hasExpressActive = (user.express_active || 0) > 0;
 
+      const matchesKind = user.account_kind === accountKind;
       const matchesFilter =
+        accountKind !== "club" ||
         filterBy === "all" ||
-        (filterBy === "coaches" && Boolean(user.coach_info)) ||
         (filterBy === "active" && (hasClassicActive || hasExpressActive)) ||
         (filterBy === "inactive" && !hasClassicActive && !hasExpressActive);
 
-      return matchesSearch && matchesFilter;
+      return matchesSearch && matchesKind && matchesFilter;
     });
 
     filtered.sort((a, b) => {
@@ -357,7 +458,15 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     });
 
     return filtered;
-  }, [users, searchTerm, sortBy, sortOrder, filterBy]);
+  }, [users, searchTerm, sortBy, sortOrder, filterBy, accountKind]);
+
+  const kindCounts = useMemo(() => {
+    return {
+      club: users.filter((user) => user.account_kind === "club").length,
+      coach: users.filter((user) => user.account_kind === "coach").length,
+      student: users.filter((user) => user.account_kind === "student").length,
+    };
+  }, [users]);
 
   const handleUserSelect = (user: User) => {
     if (onUserSelect) {
@@ -369,8 +478,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const handleDeleteUser = async (user: User) => {
     if (
       !window.confirm(
-        user.coach_info
+        user.account_kind === "coach"
           ? `¿Eliminar la cuenta de coach de "${user.name || user.email}"?\n\nSe borra su acceso, su ficha de entrenador y su historial en los clubes. No se borran las retas, los jugadores ni el ranking del club. Esta acción no se puede deshacer.`
+          : user.account_kind === "student"
+          ? `¿Eliminar el acceso de alumno de "${user.name || user.email}"?\n\nSe borra su entrada a Mi Coaching. No se borran las clases ni el ranking del club. Esta acción no se puede deshacer.`
           : `¿Eliminar por completo a "${user.name || user.email}"?\n\nSe borrarán retas, jugadores, torneos, ligas, duelos, ranking y su cuenta de acceso. Esta acción no se puede deshacer.`
       )
     ) {
@@ -443,16 +554,16 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     <div className="user-management">
       <div className="user-management-header">
         <div className="header-title">
-          <h2>Gestión de Usuarios</h2>
-          <span className="user-count">
-            {filteredAndSortedUsers.length} usuarios
-          </span>
+          <h2>Cuentas</h2>
+          <span className="user-count">{filteredAndSortedUsers.length}</span>
         </div>
 
         <div className="header-controls">
-          <Button type="button" variant="primary" size="sm" onClick={() => setCreateModalOpen(true)}>
-            Crear usuario
-          </Button>
+          {accountKind === "club" ? (
+            <Button type="button" variant="primary" size="sm" onClick={() => setCreateModalOpen(true)}>
+              Crear club
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="ghost"
@@ -464,10 +575,35 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           </Button>
         </div>
       </div>
+      <div className="account-segments" role="tablist" aria-label="Tipo de cuenta">
+        <button
+          type="button"
+          className={`account-segment${accountKind === "club" ? " is-on" : ""}`}
+          onClick={() => setAccountKind("club")}
+        >
+          Clubes <span>{kindCounts.club}</span>
+        </button>
+        <button
+          type="button"
+          className={`account-segment${accountKind === "coach" ? " is-on" : ""}`}
+          onClick={() => setAccountKind("coach")}
+        >
+          Coaches <span>{kindCounts.coach}</span>
+        </button>
+        <button
+          type="button"
+          className={`account-segment${accountKind === "student" ? " is-on" : ""}`}
+          onClick={() => setAccountKind("student")}
+        >
+          Alumnos <span>{kindCounts.student}</span>
+        </button>
+      </div>
       <p className="user-management-hint">
-        Pulsa <strong>Gestionar</strong> en una cuenta para bloquear modos de
-        juego, activar el upgrade visual premium y controlar qué jugadores suman
-        al ranking del sitio web.
+        {accountKind === "club"
+          ? "Cuentas que organizan retas, ligas y torneos. Gestionar controla modos de juego, marca y ranking."
+          : accountKind === "coach"
+          ? "Accesos de entrenador. Eliminar la cuenta no borra al club ni a sus alumnos."
+          : "Accesos de Mi Coaching. Eliminar el acceso no borra las clases ni el ranking del club."}
       </p>
 
       {authCleanupNotice && (
@@ -501,7 +637,13 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           <div className="search-input-container">
             <input
               type="text"
-              placeholder="Buscar por nombre o email..."
+              placeholder={
+                accountKind === "student"
+                  ? "Buscar por nombre, correo o Riviera ID"
+                  : accountKind === "coach"
+                  ? "Buscar por nombre, correo o RIV-C"
+                  : "Buscar por nombre o correo"
+              }
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input riviera-input"
@@ -510,16 +652,17 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         </div>
 
         <div className="filter-controls">
+          {accountKind === "club" ? (
           <select
             value={filterBy}
-            onChange={(e) => setFilterBy(e.target.value as "all" | "active" | "inactive" | "coaches")}
+            onChange={(e) => setFilterBy(e.target.value as "all" | "active" | "inactive")}
             className="riviera-input"
           >
-            <option value="all">Todos los usuarios</option>
-            <option value="coaches">Solo coaches oficiales</option>
+            <option value="all">Todos los clubes</option>
             <option value="active">Con actividad en curso</option>
             <option value="inactive">Sin actividad en curso</option>
           </select>
+          ) : null}
 
           <select
             value={sortBy}
@@ -561,8 +704,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       <div className="user-list">
         {filteredAndSortedUsers.length === 0 ? (
           <div className="no-users">
-            <h3>No se encontraron usuarios</h3>
-            <p>Intenta ajustar los filtros de búsqueda</p>
+            <h3>No hay cuentas en esta vista</h3>
+            <p>Prueba con otro grupo o ajusta la búsqueda</p>
           </div>
         ) : (
           <div className="user-grid">
@@ -583,68 +726,71 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 </div>
 
                 <div className="user-info">
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                    <h3 className="user-name" style={{ margin: 0 }}>{user.name || user.email}</h3>
-                    {user.coach_info ? (
-                      <span
-                        style={{
-                          fontSize: "0.72rem",
-                          fontWeight: 700,
-                          padding: "0.15rem 0.5rem",
-                          borderRadius: "4px",
-                          background: "rgba(16, 185, 129, 0.15)",
-                          color: "#34d399",
-                          border: "1px solid rgba(16, 185, 129, 0.3)",
-                          letterSpacing: "0.03em",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        COACH · {user.coach_info.coach_code}
-                        {user.coach_info.club_count > 0 ? (
-                          <span style={{ opacity: 0.85 }}>({user.coach_info.club_count} {user.coach_info.club_count === 1 ? "club" : "clubes"})</span>
-                        ) : null}
-                      </span>
-                    ) : null}
+                  <div className="user-identity">
+                    <h3 className="user-name">{user.name || user.email || "Sin nombre"}</h3>
+                    <p className="user-email">{user.email || "Sin correo"}</p>
                   </div>
-                  <p className="user-email">{user.email}</p>
                   <div className="user-stats">
-                    <span className="stat-item stat-item--strong">
-                      {user.activity_total || 0}{" "}
-                      {(user.activity_total || 0) === 1
-                        ? "actividad"
-                        : "actividades"}
-                    </span>
-                    <span className="stat-item stat-item--muted">
-                      {user.tournaments_total || 0} retas · RR{" "}
-                      {user.retas_round_robin_total || 0} · Am.{" "}
-                      {user.retas_americano_total || 0} · Eq.{" "}
-                      {user.retas_teams_total || 0} · TE{" "}
-                      {user.express_total || 0}
-                    </span>
-                    <span className="stat-item">
-                      {formatDate(user.created_at)}
-                    </span>
+                    {user.account_kind === "coach" ? (
+                      <>
+                        <span className="account-kind account-kind--coach">
+                          {user.coach_info?.coach_code || "Coach"}
+                        </span>
+                        <span className="stat-item">
+                          {user.coach_info?.club_count || 0}{" "}
+                          {(user.coach_info?.club_count || 0) === 1 ? "club" : "clubes"}
+                        </span>
+                      </>
+                    ) : user.account_kind === "student" ? (
+                      <>
+                        <span className="account-kind account-kind--student">
+                          {user.student_info?.rivieraId || "Alumno"}
+                        </span>
+                        <span className="stat-item">
+                          {user.student_info?.isActive ? "Acceso activo" : "Pendiente de activación"}
+                        </span>
+                        <span className="stat-item">
+                          {user.student_info?.clubCount || 0}{" "}
+                          {(user.student_info?.clubCount || 0) === 1 ? "club" : "clubes"}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="account-kind account-kind--club">Club</span>
+                        <span className="stat-item stat-item--strong">
+                          {user.activity_total || 0}{" "}
+                          {(user.activity_total || 0) === 1 ? "actividad" : "actividades"}
+                        </span>
+                        <span className="stat-item stat-item--muted">
+                          {user.tournaments_total || 0} retas · RR{" "}
+                          {user.retas_round_robin_total || 0} · Am.{" "}
+                          {user.retas_americano_total || 0} · Eq.{" "}
+                          {user.retas_teams_total || 0} · TE {user.express_total || 0}
+                        </span>
+                      </>
+                    )}
+                    <span className="stat-item">{formatDate(user.created_at)}</span>
                   </div>
                 </div>
 
                 <div className="user-actions">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleUserSelect(user)}
-                    title="Modos de juego, jugadores y ranking"
-                  >
-                    Gestionar
-                  </Button>
+                  {user.account_kind === "club" ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleUserSelect(user)}
+                      title="Modos de juego, jugadores y ranking"
+                    >
+                      Gestionar
+                    </Button>
+                  ) : null}
                   <Button
                     type="button"
                     variant="danger"
                     size="sm"
                     onClick={() => handleDeleteUser(user)}
-                    title="Eliminar usuario"
+                    title="Eliminar cuenta"
                     loading={deletingUserId === user.id}
                   >
                     {deletingUserId === user.id ? "Eliminando…" : "Eliminar"}
