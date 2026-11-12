@@ -44,9 +44,20 @@ const DEFAULT_PADEL_TOPICS = [
   "Toma de decisiones",
 ];
 
+function getInitials(nameOrEmail: string): string {
+  const clean = nameOrEmail.trim();
+  if (!clean) return "CO";
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return clean.slice(0, 2).toUpperCase();
+}
+
 export const CoachPortalPage: React.FC = () => {
   const { user, loading: userLoading } = useUser();
   const [profile, setProfile] = useState<CurrentCoachProfile | null>(null);
+  const [photoBroken, setPhotoBroken] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedClubId, setSelectedClubId] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -424,20 +435,24 @@ export const CoachPortalPage: React.FC = () => {
 
   if (userLoading || loading) {
     return (
-      <div className="coaching-page rv-page">
-        <header className="coaching-hero">
-          <button
-            type="button"
-            className="coaching-back"
-            onClick={() => navigateToAppHome()}
-          >
-            <TablerIcon name="arrow-left" size={16} />
-            Inicio
-          </button>
-          <p className="coaching-kicker">Riviera Coaching</p>
-          <h1 className="coaching-title">Espacio del Coach</h1>
-          <p className="coaching-muted">Verificando credenciales de coach…</p>
-        </header>
+      <div className="coaching-page coaching-coach-portal rv-page">
+        <div className="coach-portal-container">
+          <header className="coach-portal-hero">
+            <div className="coach-portal-topbar">
+              <button
+                type="button"
+                className="coach-portal-back"
+                onClick={() => navigateToAppHome()}
+              >
+                <TablerIcon name="arrow-left" size={15} />
+                Inicio
+              </button>
+            </div>
+            <p className="coach-portal-kicker">Riviera Coaching · Espacio del Coach</p>
+            <h1 className="coach-portal-title">Espacio del Coach</h1>
+            <p className="coach-portal-subtitle">Verificando credenciales de coach…</p>
+          </header>
+        </div>
       </div>
     );
   }
@@ -445,35 +460,39 @@ export const CoachPortalPage: React.FC = () => {
   // Si no hay sesión autenticada
   if (!user) {
     return (
-      <div className="coaching-page rv-page">
-        <header className="coaching-hero">
-          <button
-            type="button"
-            className="coaching-back"
-            onClick={() => navigateToAppHome()}
-          >
-            <TablerIcon name="arrow-left" size={16} />
-            Inicio
-          </button>
-          <p className="coaching-kicker">Riviera Coaching</p>
-          <h1 className="coaching-title">Espacio del Coach</h1>
-        </header>
+      <div className="coaching-page coaching-coach-portal rv-page">
+        <div className="coach-portal-container">
+          <header className="coach-portal-hero">
+            <div className="coach-portal-topbar">
+              <button
+                type="button"
+                className="coach-portal-back"
+                onClick={() => navigateToAppHome()}
+              >
+                <TablerIcon name="arrow-left" size={15} />
+                Inicio
+              </button>
+            </div>
+            <p className="coach-portal-kicker">Riviera Coaching · Espacio del Coach</p>
+            <h1 className="coach-portal-title">Espacio del Coach</h1>
+          </header>
 
-        <div className="coaching-empty-card">
-          <TablerIcon name="lock" size={44} className="coaching-empty-icon" />
-          <h3>Sesión requerida</h3>
-          <p>
-            Inicia sesión con tu cuenta oficial de Riviera para acceder a tu
-            espacio personal de entrenador.
-          </p>
-          <button
-            type="button"
-            className="coaching-btn coaching-btn--primary"
-            onClick={() => navigateToAppHome()}
-          >
-            <TablerIcon name="login" size={16} />
-            Iniciar sesión
-          </button>
+          <div className="coaching-empty-card" style={{ padding: "2.5rem 1.5rem", textAlign: "center" }}>
+            <TablerIcon name="lock" size={44} className="coaching-empty-icon" />
+            <h3 style={{ marginTop: "1rem", fontSize: "1.2rem" }}>Sesión requerida</h3>
+            <p style={{ maxWidth: "480px", margin: "0.5rem auto 1.5rem" }}>
+              Inicia sesión con tu cuenta oficial de Riviera para acceder a tu
+              espacio personal de entrenador.
+            </p>
+            <button
+              type="button"
+              className="coaching-btn coaching-btn--primary"
+              onClick={() => navigateToAppHome()}
+            >
+              <TablerIcon name="login" size={16} />
+              Iniciar sesión
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -482,619 +501,550 @@ export const CoachPortalPage: React.FC = () => {
   // Si el usuario autenticado no está registrado como coach en public.riviera_coaches
   if (!profile) {
     return (
-      <div className="coaching-page rv-page">
-        <header className="coaching-hero">
-          <button
-            type="button"
-            className="coaching-back"
-            onClick={() => navigateToAppHome()}
-          >
-            <TablerIcon name="arrow-left" size={16} />
-            Inicio
-          </button>
-          <p className="coaching-kicker">Riviera Coaching</p>
-          <h1 className="coaching-title">Espacio del Coach</h1>
-        </header>
+      <div className="coaching-page coaching-coach-portal rv-page">
+        <div className="coach-portal-container">
+          <header className="coach-portal-hero">
+            <div className="coach-portal-topbar">
+              <button
+                type="button"
+                className="coach-portal-back"
+                onClick={() => navigateToAppHome()}
+              >
+                <TablerIcon name="arrow-left" size={15} />
+                Inicio
+              </button>
+            </div>
+            <p className="coach-portal-kicker">Riviera Coaching · Espacio del Coach</p>
+            <h1 className="coach-portal-title">Espacio del Coach</h1>
+          </header>
 
-        <div className="coaching-empty-card">
-          <TablerIcon
-            name="user-x"
-            size={44}
-            className="coaching-empty-icon"
-          />
-          <h3>Acceso exclusivo para entrenadores</h3>
-          <p>
-            La cuenta autenticada (<strong>{user.email}</strong>) no está
-            registrada como coach oficial en Riviera Coaching.
-          </p>
-          <p className="coaching-muted" style={{ maxWidth: "450px", margin: "0.5rem auto 1.5rem" }}>
-            Si entrenas en un club de Riviera Open, el administrador del club
-            registra tu acceso y te entrega las credenciales.
-          </p>
-          <button
-            type="button"
-            className="coaching-btn coaching-btn--primary"
-            onClick={() => navigateToAppHome()}
-          >
-            <TablerIcon name="arrow-left" size={16} />
-            Volver al inicio
-          </button>
+          <div className="coaching-empty-card" style={{ padding: "2.5rem 1.5rem", textAlign: "center" }}>
+            <TablerIcon
+              name="user-x"
+              size={44}
+              className="coaching-empty-icon"
+            />
+            <h3 style={{ marginTop: "1rem", fontSize: "1.2rem" }}>Acceso exclusivo para entrenadores</h3>
+            <p style={{ maxWidth: "480px", margin: "0.5rem auto 0.5rem" }}>
+              La cuenta autenticada (<strong>{user.email}</strong>) no está
+              registrada como coach oficial en Riviera Coaching.
+            </p>
+            <p className="coaching-muted" style={{ maxWidth: "450px", margin: "0.5rem auto 1.5rem" }}>
+              Si entrenas en un club de Riviera Open, el administrador del club
+              registra tu acceso y te entrega las credenciales.
+            </p>
+            <button
+              type="button"
+              className="coaching-btn coaching-btn--primary"
+              onClick={() => navigateToAppHome()}
+            >
+              <TablerIcon name="arrow-left" size={16} />
+              Volver al inicio
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
+  const coachFirstName = profile.nombre.trim().split(/\s+/)[0] || profile.nombre;
+  const coachPhotoUrl =
+    profile.fotoUrl ||
+    (typeof user?.user_metadata?.avatar_url === "string"
+      ? user.user_metadata.avatar_url.trim()
+      : null) ||
+    null;
+  const coachInitials = getInitials(profile.nombre);
+
   return (
-    <div className="coaching-page rv-page">
-      <header className="coaching-hero">
-        <button
-          type="button"
-          className="coaching-back"
-          onClick={() => navigateToAppHome()}
-        >
-          <TablerIcon name="arrow-left" size={16} />
-          Inicio
-        </button>
-        <p className="coaching-kicker">Riviera Coaching · Espacio del Coach</p>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-          <h1 className="coaching-title" style={{ margin: 0 }}>
-            Hola, {profile.nombre}
+    <div className="coaching-page coaching-coach-portal rv-page">
+      <div className="coach-portal-container">
+        {/* Encabezado Principal */}
+        <header className="coach-portal-hero">
+          <div className="coach-portal-topbar">
+            <button
+              type="button"
+              className="coach-portal-back"
+              onClick={() => navigateToAppHome()}
+            >
+              <TablerIcon name="arrow-left" size={15} />
+              Inicio
+            </button>
+          </div>
+          <p className="coach-portal-kicker">Riviera Coaching · Espacio del Coach</p>
+          <h1 className="coach-portal-title">
+            Hola, {coachFirstName}
           </h1>
-          <span
-            className="coaching-badge coaching-badge--primary"
-            style={{ fontSize: "0.85rem", padding: "0.35rem 0.75rem", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
-          >
-            <TablerIcon name="shield-check" size={15} />
-            {profile.coachCode}
-          </span>
-        </div>
-        <p className="coaching-lead" style={{ marginTop: "0.5rem" }}>
-          Panel de control del entrenador oficial. Identidad única verificada
-          mediante la infraestructura de Riviera Open.
-        </p>
-      </header>
+          <p className="coach-portal-subtitle">
+            Gestiona tu actividad como coach desde un solo lugar.
+          </p>
+        </header>
 
-      {/* Tarjeta de Identidad Oficial del Coach */}
-      <div className="coaching-panel" style={{ marginBottom: "1.5rem" }}>
-        <div className="coaching-card" style={{ padding: "1.5rem" }}>
-          <div className="coaching-card__top">
-            <div
-              className="coaching-card__avatar"
-              style={{ width: "56px", height: "56px", fontSize: "1.5rem" }}
-              aria-hidden
-            >
-              {profile.nombre.slice(0, 1).toUpperCase()}
-            </div>
-            <div className="coaching-card__identity">
-              <h2 className="coaching-card__title" style={{ fontSize: "1.25rem" }}>
-                {profile.nombre}
-              </h2>
-              <span className="coaching-card__code" style={{ fontSize: "0.95rem" }}>
-                Código Oficial: <strong>{profile.coachCode}</strong>
-              </span>
-              {profile.bio ? (
-                <p style={{ margin: "0.4rem 0 0", color: "var(--ro-text-secondary)", fontSize: "0.85rem" }}>
-                  {profile.bio}
-                </p>
-              ) : null}
-            </div>
-          </div>
-
-          {profile.fuerzas.length > 0 ? (
-            <div className="coaching-card__tags-section" style={{ marginTop: "1rem" }}>
-              <span className="coaching-card__tag-label">Fuerzas que entrenas</span>
-              <div className="coaching-card__tags">
-                {profile.fuerzas.map((f) => (
-                  <span key={f} className="coaching-tag">
-                    {JUGADOR_CATEGORIA_LABELS[f] || f}
-                  </span>
-                ))}
+        {/* Tarjeta de Identidad Oficial del Coach */}
+        <section className="coach-identity-card" aria-label="Identidad del Coach">
+          <div className="coach-identity-card__header">
+            <div className="coach-identity-avatar-wrap">
+              <div className="coach-identity-avatar" aria-hidden>
+                {coachPhotoUrl && !photoBroken ? (
+                  <img
+                    src={coachPhotoUrl}
+                    alt={profile.nombre}
+                    className="coach-identity-avatar__img"
+                    onError={() => setPhotoBroken(true)}
+                  />
+                ) : (
+                  <div className="coach-identity-avatar__fallback">
+                    {coachInitials}
+                  </div>
+                )}
               </div>
             </div>
-          ) : null}
 
-          {profile.especialidades.length > 0 ? (
-            <div className="coaching-card__tags-section" style={{ marginTop: "0.75rem" }}>
-              <span className="coaching-card__tag-label">Especialidades</span>
-              <div className="coaching-card__tags">
-                {profile.especialidades.map((esp) => (
-                  <span key={esp} className="coaching-tag">
-                    {esp}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Membresías y Clubes Asociados (Aislamiento Multi-Club) */}
-      <section className="coaching-panel" style={{ marginBottom: "1.5rem" }}>
-        <div className="coaching-section-header">
-          <div>
-            <h2 className="coaching-section-title">Clubes afiliados</h2>
-            <p className="coaching-section-desc">
-              Organizaciones y clubes donde tienes membresía técnica registrada.
-            </p>
-          </div>
-        </div>
-
-        {profile.memberships.length === 0 ? (
-          <div className="coaching-empty-card">
-            <TablerIcon name="building" size={36} className="coaching-empty-icon" />
-            <h3>Sin membresía activa en clubes</h3>
-            <p>
-              Tu perfil de coach está listo. En cuanto un club te agregue a su
-              academia, aparecerá aquí su entorno operativo.
-            </p>
-          </div>
-        ) : (
-          <div className="coaching-grid">
-            {profile.memberships.map((m) => {
-              const isStatusActive = m.status === "ACTIVE";
-              const isActiveClub =
-                isStatusActive && m.organizadorId === selectedClubId;
-              const isStatusPending = m.status === "PENDING";
-
-              return (
-                <article
-                  key={m.membershipId}
-                  className={`coaching-card${isActiveClub ? " coaching-card--highlight" : ""}`}
-                  style={{
-                    border: isActiveClub
-                      ? "1px solid var(--ro-border-strong, rgba(255, 255, 255, 0.35))"
-                      : undefined,
-                  }}
-                >
-                  <div className="coaching-card__top">
-                    <div className="coaching-card__identity">
-                      <h3 className="coaching-card__title">
-                        {m.clubNombre?.trim() || "Club"}
-                      </h3>
-                    </div>
-                    {isStatusActive ? (
-                      <span className="coaching-badge coaching-badge--active">
-                        Activo
-                      </span>
-                    ) : isStatusPending ? (
-                      <span className="coaching-badge coaching-badge--pending">
-                        Pendiente de configuración
-                      </span>
-                    ) : (
-                      <span className="coaching-badge coaching-badge--inactive">
-                        Inactivo
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="coaching-card__actions" style={{ marginTop: "1rem" }}>
-                    {isStatusPending ? (
-                      <span className="coaching-muted" style={{ fontSize: "0.8rem" }}>
-                        El club todavía no habilitó este acceso.
-                      </span>
-                    ) : isActiveClub ? (
-                      <span
-                        className="coaching-muted"
-                        style={{
-                          fontSize: "0.8rem",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.25rem",
-                        }}
-                      >
-                        <TablerIcon name="check" size={14} />
-                        Club operativo seleccionado
-                      </span>
-                    ) : isStatusActive ? (
-                      <button
-                        type="button"
-                        className="coaching-btn coaching-btn--secondary"
-                        onClick={() => setSelectedClubId(m.organizadorId)}
-                      >
-                        Operar en este club
-                      </button>
-                    ) : (
-                      <span className="coaching-muted" style={{ fontSize: "0.8rem" }}>
-                        Membresía pausada por el club
-                      </span>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* Mensajes de éxito de operaciones */}
-      {successMessage ? (
-        <div
-          className="coaching-panel"
-          style={{
-            padding: "0.75rem 1rem",
-            background: "rgba(34, 197, 94, 0.12)",
-            border: "1px solid rgba(34, 197, 94, 0.35)",
-            borderRadius: "8px",
-            color: "#86efac",
-            marginBottom: "1.5rem",
-            fontSize: "0.85rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-          }}
-        >
-          <TablerIcon name="check" size={18} />
-          {successMessage}
-        </div>
-      ) : null}
-
-      {canOperateClub ? (
-      <>
-      {/* Agenda: Próximas Clases Agendadas del Coach */}
-      <section className="coaching-panel" style={{ marginBottom: "1.5rem" }}>
-        <div className="coaching-section-header">
-          <div>
-            <h2 className="coaching-section-title">Mis Próximas Clases Agendadas</h2>
-            <p className="coaching-section-desc">
-              Consulta las sesiones programadas por la administración del club, revisa los detalles pedagógicos y registra la clase impartida al concluirla.
-            </p>
-          </div>
-          {selectedClubId && (
-            <button
-              type="button"
-              className="coaching-btn coaching-btn--secondary"
-              style={{ fontSize: "0.8rem", padding: "0.35rem 0.75rem" }}
-              onClick={() => void loadUpcoming(selectedClubId)}
-              disabled={loadingUpcoming}
-            >
-              <TablerIcon name="refresh" size={14} className={loadingUpcoming ? "spin" : ""} />
-              Actualizar
-            </button>
-          )}
-        </div>
-
-        {loadingUpcoming ? (
-          <p className="coaching-muted">Cargando tus próximas clases agendadas…</p>
-        ) : upcomingError ? (
-          <div
-            className="coaching-panel"
-            style={{
-              padding: "0.75rem 1rem",
-              background: "rgba(239, 68, 68, 0.12)",
-              border: "1px solid rgba(239, 68, 68, 0.35)",
-              borderRadius: "8px",
-              color: "#fca5a5",
-              fontSize: "0.85rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "0.5rem",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <TablerIcon name="alert-circle" size={18} />
-              <span>{upcomingError}</span>
-            </div>
-            <button
-              type="button"
-              className="coaching-btn coaching-btn--secondary"
-              style={{ fontSize: "0.8rem", padding: "0.3rem 0.6rem" }}
-              onClick={() => selectedClubId && void loadUpcoming(selectedClubId)}
-            >
-              Reintentar
-            </button>
-          </div>
-        ) : upcomingSessions.length === 0 ? (
-          <div
-            style={{
-              padding: "1.5rem",
-              textAlign: "center",
-              background: "rgba(255, 255, 255, 0.02)",
-              borderRadius: "10px",
-              border: "1px dashed rgba(255, 255, 255, 0.1)",
-            }}
-          >
-            <p className="coaching-muted" style={{ margin: 0 }}>
-              No tienes clases programadas pendientes en este club. Las clases agendadas por la administración aparecerán aquí automáticamente.
-            </p>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-            {upcomingSessions.map((session) => {
-              const formattedDate = formatSessionDate(session.startsAt);
-              return (
-                <div
-                  key={session.id}
-                  style={{
-                    background: "rgba(255, 255, 255, 0.025)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "12px",
-                    padding: "1rem 1.25rem",
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    gap: "1rem",
-                  }}
-                >
-                  {/* Info horario, alumno, pista */}
-                  <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
-                    <div
-                      style={{
-                        background: "rgba(16, 185, 129, 0.1)",
-                        border: "1px solid rgba(16, 185, 129, 0.3)",
-                        borderRadius: "10px",
-                        padding: "0.6rem 0.85rem",
-                        textAlign: "center",
-                        minWidth: "110px",
-                      }}
-                    >
-                      <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--ro-text-main, #f8fafc)" }}>
-                        {formattedDate}
-                      </div>
-                      <div style={{ fontSize: "0.72rem", color: "var(--ro-text-muted, #94a3b8)", marginTop: "2px" }}>
-                        {session.durationMinutes} min {session.court ? `• ${session.court}` : ""}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                        <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--ro-text-main, #f8fafc)" }}>
-                          {session.jugadorNombre || "Alumno"}
-                        </span>
-                        {session.rivieraId && (
-                          <span style={{ fontSize: "0.75rem", color: "var(--ro-primary, #10b981)", fontFamily: "monospace" }}>
-                            {session.rivieraId}
-                          </span>
-                        )}
-                        {session.clubNombre && (
-                          <span style={{ fontSize: "0.75rem", color: "var(--ro-text-muted)" }}>
-                            ({session.clubNombre})
-                          </span>
-                        )}
-                      </div>
-
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.35rem", flexWrap: "wrap" }}>
-                        {session.focus && (
-                          <span style={{ fontSize: "0.78rem", color: "var(--ro-brand, #38bdf8)", display: "inline-flex", alignItems: "center", gap: "3px" }}>
-                            <TablerIcon name="target" size={13} />
-                            {session.focus}
-                          </span>
-                        )}
-                        {session.balanceClasses !== undefined && (
-                          <span
-                            style={{
-                              fontSize: "0.72rem",
-                              padding: "0.15rem 0.45rem",
-                              borderRadius: "4px",
-                              background: session.balanceClasses > 0 ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
-                              color: session.balanceClasses > 0 ? "#34d399" : "#fbbf24",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {session.balanceClasses} clases disp.
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Badges y Acciones */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
-                    <span
-                      className="coaching-badge"
-                      style={{
-                        background: "rgba(16, 185, 129, 0.15)",
-                        color: "#34d399",
-                        border: "1px solid rgba(16, 185, 129, 0.35)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      PROGRAMADA
-                    </span>
-
-                    <button
-                      type="button"
-                      className="coaching-btn coaching-btn--secondary"
-                      style={{ fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}
-                      onClick={() => setDetailsSession(session)}
-                    >
-                      <TablerIcon name="eye" size={14} />
-                      Ver detalles
-                    </button>
-
-                    <button
-                      type="button"
-                      className="coaching-btn coaching-btn--primary"
-                      style={{ fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}
-                      onClick={() => openRecordClassForScheduled(session)}
-                    >
-                      <TablerIcon name="check" size={14} />
-                      Registrar impartida (-1)
-                    </button>
-                  </div>
+            <div className="coach-identity-info">
+              <div className="coach-identity-title-row">
+                <h2 className="coach-identity-name">{profile.nombre}</h2>
+                <div className="coach-identity-badge">
+                  <span className="coach-identity-badge__label">COACH ID</span>
+                  <span className="coach-identity-badge__code">{profile.coachCode}</span>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+              </div>
 
-      {/* Gestión de Alumnos y Clases del Coach */}
-      <section className="coaching-panel" style={{ marginBottom: "1.5rem" }}>
-        <div className="coaching-section-header">
-          <div>
-            <h2 className="coaching-section-title">Alumnos y Control de Clases</h2>
-            <p className="coaching-section-desc">
-              Consulta los alumnos asignados por el club y registra las clases impartidas para descontar su saldo automáticamente.
-            </p>
-          </div>
-        </div>
+              {profile.bio ? (
+                <p className="coach-identity-bio">{profile.bio}</p>
+              ) : null}
 
-        {loadingStudents ? (
-          <p className="coaching-muted">Cargando alumnos y saldos…</p>
-        ) : studentsError ? (
-          <div
-            className="coaching-panel"
-            style={{
-              padding: "0.75rem 1rem",
-              background: "rgba(239, 68, 68, 0.12)",
-              border: "1px solid rgba(239, 68, 68, 0.35)",
-              borderRadius: "8px",
-              color: "#fca5a5",
-              marginBottom: "1rem",
-              fontSize: "0.85rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "0.5rem",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <TablerIcon name="alert-circle" size={18} />
-              <span>{studentsError}</span>
+              {(profile.fuerzas.length > 0 || profile.especialidades.length > 0) && (
+                <div className="coach-identity-meta-grid">
+                  {profile.fuerzas.length > 0 ? (
+                    <div className="coach-identity-group">
+                      <span className="coach-identity-group__label">Fuerzas que entrenas</span>
+                      <div className="coach-identity-chips">
+                        {profile.fuerzas.map((f) => (
+                          <span key={f} className="coach-identity-chip">
+                            {JUGADOR_CATEGORIA_LABELS[f] || f}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {profile.especialidades.length > 0 ? (
+                    <div className="coach-identity-group">
+                      <span className="coach-identity-group__label">Especialidades</span>
+                      <div className="coach-identity-chips">
+                        {profile.especialidades.map((esp) => (
+                          <span key={esp} className="coach-identity-chip coach-identity-chip--spec">
+                            {esp}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </div>
-            <button
-              type="button"
-              className="coaching-btn coaching-btn--secondary"
-              style={{ fontSize: "0.8rem", padding: "0.3rem 0.6rem" }}
-              onClick={() =>
-                profile && selectedClubId && void loadStudents(profile.id, selectedClubId)
-              }
-            >
-              Reintentar
-            </button>
-          </div>
-        ) : students.length === 0 ? (
-          <div className="coaching-empty-card">
-            <TablerIcon name="users" size={36} className="coaching-empty-icon" />
-            <h3>Sin alumnos asignados en este club</h3>
-            <p>
-              El administrador del club te asignará los alumnos con paquetes de clases activos para impartir sesiones.
-            </p>
-          </div>
-        ) : (
-          <div className="coaching-grid">
-            {students.map((s) => {
-              const hasBalance = (s.balanceClasses ?? 0) > 0;
-              const isModalOpenForThis = modalStudent?.id === s.id;
-              const card = digestByRelationship[s.id];
-              const categoryLabel = card?.categoria
-                ? JUGADOR_CATEGORIA_LABELS[card.categoria as keyof typeof JUGADOR_CATEGORIA_LABELS] ||
-                  card.categoria
-                : null;
-
-              return (
-                <article key={s.id} className="coaching-card">
-                  <div className="coaching-card__top">
-                    <div className="coaching-card__avatar" aria-hidden>
-                      {card?.fotoUrl ? (
-                        <img src={card.fotoUrl} alt="" />
-                      ) : (
-                        s.jugadorNombre.slice(0, 1).toUpperCase()
-                      )}
-                    </div>
-                    <div className="coaching-card__identity">
-                      <h3 className="coaching-card__title">{s.jugadorNombre}</h3>
-                      <span className="coaching-card__code">{s.rivieraId}</span>
-                    </div>
-                    <span
-                      className={`coaching-badge coaching-badge--${
-                        s.status === "ACTIVE"
-                          ? "active"
-                          : s.status === "PAUSED"
-                          ? "pending"
-                          : "inactive"
-                      }`}
-                    >
-                      {s.status === "ACTIVE"
-                        ? "Activo"
-                        : s.status === "PAUSED"
-                        ? "En pausa"
-                        : "Inactivo"}
-                    </span>
-                  </div>
-
-                  {/* Estado de Clases Disponibles */}
-                  <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
-                    <span
-                      className={`coaching-badge ${hasBalance ? "coaching-badge--primary" : "coaching-badge--inactive"}`}
-                      style={{ fontWeight: 600, padding: "0.35rem 0.65rem", display: "inline-flex", alignItems: "center", gap: "4px" }}
-                    >
-                      <TablerIcon name="calendar-event" size={14} />
-                      {s.balanceClasses ?? 0} clases disponibles
-                    </span>
-                    {(s.totalClassesGiven ?? 0) > 0 ? (
-                      <span
-                        className="coaching-badge"
-                        style={{ background: "rgba(255, 255, 255, 0.08)", color: "var(--ro-text-muted)" }}
-                      >
-                        {s.totalClassesGiven} impartidas
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <p className="coaching-follow__meta">
-                    {categoryLabel ? `Categoría: ${categoryLabel}. ` : ""}
-                    Última sesión: {card?.lastSessionAt ? formatSessionDate(card.lastSessionAt) : "sin clases impartidas"}.
-                    {" "}
-                    Próxima: {card?.nextSessionAt ? formatSessionDate(card.nextSessionAt) : "sin clase agendada"}.
-                    {card?.lastGoal ? ` Objetivo: ${card.lastGoal}` : ""}
-                  </p>
-
-                  <div className="coaching-card__actions" style={{ marginTop: "1rem" }}>
-                    <button
-                      type="button"
-                      className="coaching-btn coaching-btn--secondary"
-                      onClick={() => void openStudentFollowup(s)}
-                    >
-                      Ver seguimiento
-                    </button>
-                    <button
-                      type="button"
-                      className="coaching-btn coaching-btn--primary"
-                      disabled={!hasBalance || modalBusy || s.status === "PAUSED"}
-                      onClick={() => openRecordClassModal(s)}
-                    >
-                      <TablerIcon name="check" size={15} />
-                      {modalBusy && isModalOpenForThis ? "Registrando…" : "Registrar clase impartida (-1)"}
-                    </button>
-                    {s.status === "PAUSED" ? (
-                      <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block", marginTop: "0.25rem", color: "#fbbf24" }}>
-                        Alumno en pausa. El administrador del club debe reactivarlo para registrar clases.
-                      </span>
-                    ) : !hasBalance ? (
-                      <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block", marginTop: "0.25rem" }}>
-                        Sin saldo. Solicita recarga al administrador del club.
-                      </span>
-                    ) : null}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      </>
-      ) : profile.memberships.length > 0 ? (
-        <section className="coaching-panel" style={{ marginBottom: "1.5rem" }}>
-          <div className="coaching-empty-card">
-            <TablerIcon name="building" size={36} className="coaching-empty-icon" />
-            <h3>Sin club activo para operar</h3>
-            <p>
-              Acepta una invitación pendiente o espera a que el club reactive tu
-              membresía. Mientras tanto no se cargan alumnos ni se registran clases.
-            </p>
           </div>
         </section>
-      ) : null}
+
+        {/* Membresías y Clubes Asociados (Aislamiento Multi-Club) */}
+        <section className="coach-portal-section" aria-label="Clubes afiliados">
+          <div className="coach-portal-section-header">
+            <div>
+              <h2 className="coach-portal-section-title">Clubes afiliados</h2>
+              <p className="coach-portal-section-desc">
+                Organizaciones y clubes donde tienes membresía técnica registrada.
+              </p>
+            </div>
+          </div>
+
+          {profile.memberships.length === 0 ? (
+            <div className="coaching-empty-card" style={{ padding: "2rem", textAlign: "center" }}>
+              <TablerIcon name="building" size={36} className="coaching-empty-icon" />
+              <h3>Sin membresía activa en clubes</h3>
+              <p>
+                Tu perfil de coach está listo. En cuanto un club te agregue a su
+                academia, aparecerá aquí su entorno operativo.
+              </p>
+            </div>
+          ) : (
+            <div className="coach-clubs-grid">
+              {profile.memberships.map((m) => {
+                const isStatusActive = m.status === "ACTIVE";
+                const isActiveClub =
+                  isStatusActive && m.organizadorId === selectedClubId;
+                const isStatusPending = m.status === "PENDING";
+
+                return (
+                  <article
+                    key={m.membershipId}
+                    className={`coach-club-card coaching-card${isActiveClub ? " coaching-card--highlight" : ""}`}
+                  >
+                    <div className="coach-club-card__header">
+                      <h3 className="coach-club-card__name">
+                        {m.clubNombre?.trim() || "Club"}
+                      </h3>
+                      {isStatusActive ? (
+                        <span className="coaching-badge coaching-badge--active">
+                          Activo
+                        </span>
+                      ) : isStatusPending ? (
+                        <span className="coaching-badge coaching-badge--pending">
+                          Pendiente de configuración
+                        </span>
+                      ) : (
+                        <span className="coaching-badge coaching-badge--inactive">
+                          Inactivo
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="coach-club-card__footer">
+                      {isStatusPending ? (
+                        <span className="coach-club-card__note">
+                          El club todavía no habilitó este acceso.
+                        </span>
+                      ) : isActiveClub ? (
+                        <span className="coach-club-status-selected">
+                          <TablerIcon name="check" size={14} />
+                          Club operativo seleccionado
+                        </span>
+                      ) : isStatusActive ? (
+                        <button
+                          type="button"
+                          className="coaching-btn coaching-btn--secondary"
+                          onClick={() => setSelectedClubId(m.organizadorId)}
+                        >
+                          Operar en este club
+                        </button>
+                      ) : (
+                        <span className="coach-club-card__note">
+                          Membresía pausada por el club
+                        </span>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Mensajes de éxito de operaciones */}
+        {successMessage ? (
+          <div className="coach-portal-alert coach-portal-alert--success">
+            <TablerIcon name="check" size={18} />
+            <span>{successMessage}</span>
+          </div>
+        ) : null}
+
+        {canOperateClub ? (
+          <>
+            {/* Agenda: Próximas Clases Agendadas del Coach */}
+            <section className="coach-portal-section" aria-label="Próximas clases">
+              <div className="coach-portal-section-header">
+                <div>
+                  <h2 className="coach-portal-section-title">Mis Próximas Clases Agendadas</h2>
+                  <p className="coach-portal-section-desc">
+                    Consulta las sesiones programadas por la administración del club, revisa los detalles pedagógicos y registra la clase impartida al concluirla.
+                  </p>
+                </div>
+                {selectedClubId && (
+                  <button
+                    type="button"
+                    className="coaching-btn coaching-btn--secondary"
+                    style={{ fontSize: "0.8rem", padding: "0.35rem 0.75rem" }}
+                    onClick={() => void loadUpcoming(selectedClubId)}
+                    disabled={loadingUpcoming}
+                  >
+                    <TablerIcon name="refresh" size={14} className={loadingUpcoming ? "spin" : ""} />
+                    Actualizar
+                  </button>
+                )}
+              </div>
+
+              {loadingUpcoming ? (
+                <p className="coaching-muted">Cargando tus próximas clases agendadas…</p>
+              ) : upcomingError ? (
+                <div className="coach-portal-alert coach-portal-alert--error" style={{ justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <TablerIcon name="alert-circle" size={18} />
+                    <span>{upcomingError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="coaching-btn coaching-btn--secondary"
+                    style={{ fontSize: "0.8rem", padding: "0.3rem 0.6rem" }}
+                    onClick={() => selectedClubId && void loadUpcoming(selectedClubId)}
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              ) : upcomingSessions.length === 0 ? (
+                <div
+                  style={{
+                    padding: "1.75rem",
+                    textAlign: "center",
+                    background: "var(--coach-surface)",
+                    borderRadius: "12px",
+                    border: "1px dashed var(--coach-border)",
+                  }}
+                >
+                  <p className="coaching-muted" style={{ margin: 0 }}>
+                    No tienes clases programadas pendientes en este club. Las clases agendadas por la administración aparecerán aquí automáticamente.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                  {upcomingSessions.map((session) => {
+                    const formattedDate = formatSessionDate(session.startsAt);
+                    return (
+                      <div
+                        key={session.id}
+                        className="coach-session-card"
+                      >
+                        {/* Info horario, alumno, pista */}
+                        <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
+                          <div className="coach-session-card__date-box">
+                            <div className="coach-session-card__date">
+                              {formattedDate}
+                            </div>
+                            <div className="coach-session-card__duration">
+                              {session.durationMinutes} min {session.court ? `• ${session.court}` : ""}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                              <span className="coach-session-card__student-name">
+                                {session.jugadorNombre || "Alumno"}
+                              </span>
+                              {session.rivieraId && (
+                                <span className="coach-session-card__riviera-id">
+                                  {session.rivieraId}
+                                </span>
+                              )}
+                              {session.clubNombre && (
+                                <span className="coach-session-card__club-name">
+                                  ({session.clubNombre})
+                                </span>
+                              )}
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.4rem", flexWrap: "wrap" }}>
+                              {session.focus && (
+                                <span className="coach-session-card__focus">
+                                  <TablerIcon name="target" size={13} />
+                                  {session.focus}
+                                </span>
+                              )}
+                              {session.balanceClasses !== undefined && (
+                                <span
+                                  className="coaching-badge"
+                                  style={{
+                                    background: session.balanceClasses > 0 ? "var(--coach-accent-green-bg)" : "rgba(245, 158, 11, 0.12)",
+                                    color: session.balanceClasses > 0 ? "var(--coach-accent-green)" : "#fbbf24",
+                                    border: session.balanceClasses > 0 ? "1px solid var(--coach-accent-green-border)" : "1px solid rgba(245, 158, 11, 0.3)",
+                                  }}
+                                >
+                                  {session.balanceClasses} clases disp.
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Badges y Acciones */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+                          <span className="coaching-badge coaching-badge--active">
+                            PROGRAMADA
+                          </span>
+
+                          <button
+                            type="button"
+                            className="coaching-btn coaching-btn--secondary"
+                            style={{ fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}
+                            onClick={() => setDetailsSession(session)}
+                          >
+                            <TablerIcon name="eye" size={14} />
+                            Ver detalles
+                          </button>
+
+                          <button
+                            type="button"
+                            className="coaching-btn coaching-btn--primary"
+                            style={{ fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}
+                            onClick={() => openRecordClassForScheduled(session)}
+                          >
+                            <TablerIcon name="check" size={14} />
+                            Registrar impartida (-1)
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* Gestión de Alumnos y Clases del Coach */}
+            <section className="coach-portal-section" aria-label="Alumnos y control de clases">
+              <div className="coach-portal-section-header">
+                <div>
+                  <h2 className="coach-portal-section-title">Alumnos y Control de Clases</h2>
+                  <p className="coach-portal-section-desc">
+                    Consulta los alumnos asignados por el club y registra las clases impartidas para descontar su saldo automáticamente.
+                  </p>
+                </div>
+              </div>
+
+              {loadingStudents ? (
+                <p className="coaching-muted">Cargando alumnos y saldos…</p>
+              ) : studentsError ? (
+                <div className="coach-portal-alert coach-portal-alert--error" style={{ justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <TablerIcon name="alert-circle" size={18} />
+                    <span>{studentsError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="coaching-btn coaching-btn--secondary"
+                    style={{ fontSize: "0.8rem", padding: "0.3rem 0.6rem" }}
+                    onClick={() =>
+                      profile && selectedClubId && void loadStudents(profile.id, selectedClubId)
+                    }
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              ) : students.length === 0 ? (
+                <div className="coaching-empty-card" style={{ padding: "2rem", textAlign: "center" }}>
+                  <TablerIcon name="users" size={36} className="coaching-empty-icon" />
+                  <h3>Sin alumnos asignados en este club</h3>
+                  <p>
+                    El administrador del club te asignará los alumnos con paquetes de clases activos para impartir sesiones.
+                  </p>
+                </div>
+              ) : (
+                <div className="coaching-grid">
+                  {students.map((s) => {
+                    const hasBalance = (s.balanceClasses ?? 0) > 0;
+                    const isModalOpenForThis = modalStudent?.id === s.id;
+                    const card = digestByRelationship[s.id];
+                    const categoryLabel = card?.categoria
+                      ? JUGADOR_CATEGORIA_LABELS[card.categoria as keyof typeof JUGADOR_CATEGORIA_LABELS] ||
+                        card.categoria
+                      : null;
+
+                    return (
+                      <article key={s.id} className="coaching-card" style={{ padding: "1.25rem" }}>
+                        <div className="coaching-card__top">
+                          <div className="coaching-card__avatar" aria-hidden>
+                            {card?.fotoUrl ? (
+                              <img src={card.fotoUrl} alt="" />
+                            ) : (
+                              s.jugadorNombre.slice(0, 1).toUpperCase()
+                            )}
+                          </div>
+                          <div className="coaching-card__identity">
+                            <h3 className="coaching-card__title">{s.jugadorNombre}</h3>
+                            <span className="coaching-card__code">{s.rivieraId}</span>
+                          </div>
+                          <span
+                            className={`coaching-badge coaching-badge--${
+                              s.status === "ACTIVE"
+                                ? "active"
+                                : s.status === "PAUSED"
+                                ? "pending"
+                                : "inactive"
+                            }`}
+                          >
+                            {s.status === "ACTIVE"
+                              ? "Activo"
+                              : s.status === "PAUSED"
+                              ? "En pausa"
+                              : "Inactivo"}
+                          </span>
+                        </div>
+
+                        {/* Estado de Clases Disponibles */}
+                        <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+                          <span
+                            className={`coaching-badge ${hasBalance ? "coaching-badge--active" : "coaching-badge--inactive"}`}
+                            style={{ fontWeight: 600, padding: "0.3rem 0.65rem", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                          >
+                            <TablerIcon name="calendar-event" size={14} />
+                            {s.balanceClasses ?? 0} clases disponibles
+                          </span>
+                          {(s.totalClassesGiven ?? 0) > 0 ? (
+                            <span
+                              className="coaching-badge coaching-badge--inactive"
+                            >
+                              {s.totalClassesGiven} impartidas
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <p className="coaching-follow__meta" style={{ marginTop: "0.6rem" }}>
+                          {categoryLabel ? `Categoría: ${categoryLabel}. ` : ""}
+                          Última sesión: {card?.lastSessionAt ? formatSessionDate(card.lastSessionAt) : "sin clases impartidas"}.
+                          {" "}
+                          Próxima: {card?.nextSessionAt ? formatSessionDate(card.nextSessionAt) : "sin clase agendada"}.
+                          {card?.lastGoal ? ` Objetivo: ${card.lastGoal}` : ""}
+                        </p>
+
+                        <div className="coaching-card__actions" style={{ marginTop: "1rem" }}>
+                          <button
+                            type="button"
+                            className="coaching-btn coaching-btn--secondary"
+                            onClick={() => void openStudentFollowup(s)}
+                          >
+                            Ver seguimiento
+                          </button>
+                          <button
+                            type="button"
+                            className="coaching-btn coaching-btn--primary"
+                            disabled={!hasBalance || modalBusy || s.status === "PAUSED"}
+                            onClick={() => openRecordClassModal(s)}
+                          >
+                            <TablerIcon name="check" size={15} />
+                            {modalBusy && isModalOpenForThis ? "Registrando…" : "Registrar clase impartida (-1)"}
+                          </button>
+                          {s.status === "PAUSED" ? (
+                            <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block", marginTop: "0.25rem", color: "#fbbf24" }}>
+                              Alumno en pausa. El administrador del club debe reactivarlo para registrar clases.
+                            </span>
+                          ) : !hasBalance ? (
+                            <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block", marginTop: "0.25rem" }}>
+                              Sin saldo. Solicita recarga al administrador del club.
+                            </span>
+                          ) : null}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </>
+        ) : profile.memberships.length > 0 ? (
+          <section className="coach-portal-section" aria-label="Sin club activo">
+            <div className="coaching-empty-card" style={{ padding: "2rem", textAlign: "center" }}>
+              <TablerIcon name="building" size={36} className="coaching-empty-icon" />
+              <h3>Sin club activo para operar</h3>
+              <p>
+                Acepta una invitación pendiente o espera a que el club reactive tu
+                membresía. Mientras tanto no se cargan alumnos ni se registran clases.
+              </p>
+            </div>
+          </section>
+        ) : null}
+      </div>
 
       {/* Modal: Registrar Clase Impartida con Seguimiento Deportivo */}
       <Modal
         open={Boolean(modalStudent)}
         onClose={closeClassModal}
+        className="coach-portal-modal"
         title={
           editingFollowup
             ? `Editar seguimiento · ${modalStudent?.jugadorNombre || ""}`
@@ -1440,6 +1390,7 @@ export const CoachPortalPage: React.FC = () => {
       <Modal
         open={Boolean(followupStudent)}
         onClose={() => setFollowupStudent(null)}
+        className="coach-portal-modal"
         title={`Seguimiento · ${followupStudent?.jugadorNombre || ""}`}
         size="lg"
       >
@@ -1534,6 +1485,7 @@ export const CoachPortalPage: React.FC = () => {
       <Modal
         open={Boolean(detailsSession)}
         onClose={() => setDetailsSession(null)}
+        className="coach-portal-modal"
         title="Detalles de la Clase Programada"
       >
         {detailsSession ? (
