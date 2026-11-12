@@ -3,6 +3,7 @@ import {
   formatRivalPair,
   resultadoFromScores,
   type PartidoDetalle,
+  type PartidoDetalleResultado,
 } from "../shared/buildPartidosDetalle";
 
 function sumGamesFromSets(
@@ -14,6 +15,23 @@ function sumGamesFromSets(
     (acc, s) => acc + (side === "a" ? s.a : s.b),
     0
   );
+}
+
+/**
+ * El ganador oficial del duelo manda. Sumar juegos puede dar más puntos
+ * a la pareja que perdió por sets.
+ */
+function resultadoOficialDuelo(
+  ganador: Duelo2v2["ganador"],
+  esParejaA: boolean,
+  favor: number,
+  contra: number
+): PartidoDetalleResultado {
+  if (ganador === "a" || ganador === "b") {
+    const ganaEstaPareja = esParejaA ? ganador === "a" : ganador === "b";
+    return ganaEstaPareja ? "win" : "loss";
+  }
+  return resultadoFromScores(favor, contra);
 }
 
 /** Un duelo = un partido por jugador (games acumulados de sets). */
@@ -49,7 +67,7 @@ export function buildDuelo2vs2PartidosDetalle(params: {
       rival,
       games_favor: favor,
       games_contra: contra,
-      resultado: resultadoFromScores(favor, contra),
+      resultado: resultadoOficialDuelo(duelo.ganador, esParejaA, favor, contra),
       fecha,
     },
   ];

@@ -1,13 +1,51 @@
+import { parsePlayoffsSetScoresJson } from "../liga/parejasFijasPlayoffsMatchScore";
+import { partidoMatchWinnerSide } from "../liga/publicDisplay";
 import type { LigaJornada, LigaJornadaPareja, LigaPartido } from "../liga/types";
 import {
   formatRivalPair,
   resultadoFromScores,
   type PartidoDetalle,
+  type PartidoDetalleResultado,
 } from "../shared/buildPartidosDetalle";
 
 function parejaLabel(p: LigaJornadaPareja | undefined): string {
   if (!p) return "Rival";
   return formatRivalPair(p.jugador1?.nombre ?? "?", p.jugador2?.nombre ?? "?");
+}
+
+function tieneMarcadorPorSets(partido: LigaPartido): boolean {
+  const raw = partido.set_scores;
+  return Boolean(raw && typeof raw === "object");
+}
+
+function marcadorEstructurado(partido: LigaPartido): boolean {
+  const raw = partido.set_scores;
+  if (!raw || typeof raw !== "object") return false;
+  if (parsePlayoffsSetScoresJson(raw)) return true;
+  return "sets" in raw && Array.isArray(raw.sets);
+}
+
+/**
+ * Playoffs y sets oficiales deciden el partido. Si ese marcador existe pero
+ * no tiene ganador válido, no se inventa uno sumando juegos.
+ */
+function resultadoOficialLiga(
+  partido: LigaPartido,
+  jugadorEnPareja1: boolean,
+  favor: number,
+  contra: number
+): PartidoDetalleResultado | null {
+  if (tieneMarcadorPorSets(partido)) {
+    const side = partidoMatchWinnerSide(partido, true);
+    if (side == null) {
+      return marcadorEstructurado(partido)
+        ? null
+        : resultadoFromScores(favor, contra);
+    }
+    const gana = jugadorEnPareja1 ? side === 1 : side === 2;
+    return gana ? "win" : "loss";
+  }
+  return resultadoFromScores(favor, contra);
 }
 
 function partidosForJugador(
@@ -44,6 +82,8 @@ function partidosForJugador(
 
     const favor = in1 ? s1 : s2;
     const contra = in1 ? s2 : s1;
+    const resultado = resultadoOficialLiga(m, in1, favor, contra);
+    if (resultado == null) continue;
     const rival = in1 ? parejaLabel(par2) : parejaLabel(par1);
 
     entries.push({
@@ -53,7 +93,7 @@ function partidosForJugador(
       rival,
       games_favor: favor,
       games_contra: contra,
-      resultado: resultadoFromScores(favor, contra),
+      resultado,
       fecha: m.created_at ?? "",
     });
   }

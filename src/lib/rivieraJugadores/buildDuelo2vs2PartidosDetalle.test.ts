@@ -49,4 +49,24 @@ describe("buildDuelo2vs2PartidosDetalle", () => {
     expect(detalle[0].resultado).toBe("loss");
     expect(detalle[0].rival).toBe("A1 / A2");
   });
+
+  it("no convierte una derrota oficial en victoria aunque sume más juegos", () => {
+    const detalle = buildDuelo2vs2PartidosDetalle({
+      duelo: {
+        ...duelo,
+        ganador: "b",
+        sets_pareja_a: 1,
+        sets_pareja_b: 2,
+        detalle_sets: [
+          { a: 6, b: 4 },
+          { a: 6, b: 3 },
+          { a: 3, b: 7 },
+        ],
+      },
+      esParejaA: true,
+    });
+    expect(detalle[0].games_favor).toBe(15);
+    expect(detalle[0].games_contra).toBe(14);
+    expect(detalle[0].resultado).toBe("loss");
+  });
 });

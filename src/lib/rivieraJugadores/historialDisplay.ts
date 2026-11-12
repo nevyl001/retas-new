@@ -260,11 +260,31 @@ function composeTorneoExpressTitulo(
   return `${nombre} — ${categoriaLabel}`;
 }
 
+/**
+ * En un duelo el resultado oficial es el del cierre, no el conteo de juegos.
+ * Más juegos no convierten una derrota por sets en victoria.
+ */
+function recordOficialDuelo(
+  row: JugadorParticipacion
+): { ganados: number; perdidos: number; empates: number } | null {
+  if (row.tipo_evento !== "duelo_2v2") return null;
+  if (row.resultado === "victoria") return { ganados: 1, perdidos: 0, empates: 0 };
+  if (row.resultado === "derrota") return { ganados: 0, perdidos: 1, empates: 0 };
+  if (row.resultado === "empate") return { ganados: 0, perdidos: 0, empates: 1 };
+  return null;
+}
+
 /** Victorias y derrotas en partidos del evento (no confundir con V/D del marcador de sets). */
 function formatBalanceParticipacion(
   meta: Record<string, unknown>,
   row: JugadorParticipacion
 ): string | undefined {
+  const duelo = recordOficialDuelo(row);
+  if (duelo) {
+    if (duelo.ganados > 0) return "1 victoria";
+    if (duelo.perdidos > 0) return "1 derrota";
+    if (duelo.empates > 0) return "1 empate";
+  }
   let wins = metaNum(meta, "partidos_ganados");
   let losses = metaNum(meta, "partidos_perdidos");
   if (wins == null) wins = metaNum(meta, "victorias_ranking");
@@ -429,6 +449,8 @@ export function extractPartidosFromParticipacion(
   row: JugadorParticipacion
 ): { ganados: number; perdidos: number; empates: number } {
   const meta = row.metadata ?? {};
+  const duelo = recordOficialDuelo(row);
+  if (duelo) return duelo;
 
   if (isLigaInscripcionParticipacion(row)) {
     return { ganados: 0, perdidos: 0, empates: 0 };

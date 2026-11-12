@@ -27,6 +27,46 @@ function row(
 }
 
 describe("extractPartidosFromParticipacion", () => {
+  it("cuenta como derrota un duelo oficial perdido aunque el detalle sume más juegos", () => {
+    const m = extractPartidosFromParticipacion(
+      row({
+        tipo_evento: "duelo_2v2",
+        resultado: "derrota",
+        puntos_obtenidos: 20,
+        sets_favor: 15,
+        sets_contra: 14,
+        metadata: {
+          subtipo: "duelo_2v2_cierre",
+          placement: "subcampeon",
+          partidos_ganados: 1,
+          partidos_perdidos: 0,
+          partidos_detalle: [
+            { games_favor: 15, games_contra: 14, resultado: "win" },
+          ],
+        },
+      })
+    );
+    expect(m).toEqual({ ganados: 0, perdidos: 1, empates: 0 });
+
+    const item = participacionToHistorialItem(
+      row({
+        tipo_evento: "duelo_2v2",
+        resultado: "derrota",
+        puntos_obtenidos: 20,
+        evento_nombre: "Duelo 2v2",
+        metadata: {
+          subtipo: "duelo_2v2_cierre",
+          placement: "subcampeon",
+          partidos_ganados: 1,
+        },
+      })
+    );
+    expect(item.balanceLabel).toBe("1 derrota");
+    expect(item.puntos).toBe(20);
+    expect(item.esSubcampeon).toBe(true);
+    expect(item.esCampeon).toBe(false);
+  });
+
   it("cuenta partidos de jornada de liga cuando metadata trae W/L", () => {
     const m = extractPartidosFromParticipacion(
       row({

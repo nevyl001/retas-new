@@ -96,4 +96,97 @@ describe("buildLigaJornadaPartidosDetalle", () => {
     });
     expect(byJugador.get("j3")![0].resultado).toBe("loss");
   });
+
+  it("usa los sets oficiales cuando suman más juegos del lado que perdió", () => {
+    const byJugador = buildLigaJornadaPartidosDetalleByJugadorId({
+      ...jornada,
+      partidos: [
+        {
+          ...jornada.partidos![0]!,
+          score_pareja1: 14,
+          score_pareja2: 12,
+          set_scores: {
+            sets: [
+              { p1: 6, p2: 0, kind: "regular" },
+              { p1: 4, p2: 6, kind: "regular" },
+              { p1: 4, p2: 6, kind: "regular" },
+            ],
+          },
+        },
+      ],
+    });
+    expect(byJugador.get("j1")![0]).toMatchObject({
+      games_favor: 14,
+      games_contra: 12,
+      resultado: "loss",
+    });
+    expect(byJugador.get("j3")![0].resultado).toBe("win");
+  });
+
+  it("conserva el empate de liga individual cuando no hay sets", () => {
+    const byJugador = buildLigaJornadaPartidosDetalleByJugadorId({
+      ...jornada,
+      partidos: [
+        {
+          ...jornada.partidos![0]!,
+          score_pareja1: 6,
+          score_pareja2: 6,
+        },
+      ],
+    });
+    expect(byJugador.get("j1")![0].resultado).toBe("draw");
+    expect(byJugador.get("j3")![0].resultado).toBe("draw");
+  });
+
+  it("el súper tie-break oficial gana aunque el otro lado sume más juegos", () => {
+    const byJugador = buildLigaJornadaPartidosDetalleByJugadorId({
+      ...jornada,
+      partidos: [
+        {
+          ...jornada.partidos![0]!,
+          score_pareja1: 10,
+          score_pareja2: 9,
+          set_scores: {
+            format: "parejas_fijas_playoffs",
+            sets: [
+              { p1: 4, p2: 6 },
+              { p1: 6, p2: 3 },
+            ],
+            stb: { p1: 4, p2: 10 },
+            wo: false,
+          },
+        },
+      ],
+    });
+    expect(byJugador.get("j1")![0]).toMatchObject({
+      games_favor: 10,
+      games_contra: 9,
+      resultado: "loss",
+    });
+    expect(byJugador.get("j3")![0].resultado).toBe("win");
+  });
+
+  it("no inventa un ganador si el playoff queda 1-1 sin desempate", () => {
+    const byJugador = buildLigaJornadaPartidosDetalleByJugadorId({
+      ...jornada,
+      partidos: [
+        {
+          ...jornada.partidos![0]!,
+          score_pareja1: 10,
+          score_pareja2: 8,
+          set_scores: {
+            format: "parejas_fijas_playoffs",
+            sets: [
+              { p1: 4, p2: 6 },
+              { p1: 6, p2: 2 },
+            ],
+            stb: null,
+            wo: false,
+          },
+        },
+      ],
+    });
+    expect(byJugador.get("j1")).toEqual([]);
+    expect(byJugador.get("j3")).toEqual([]);
+  });
 });
