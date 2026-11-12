@@ -3262,6 +3262,198 @@
   font-weight: 700;
 }
 
+.coach-class-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color-scheme: dark;
+}
+
+.coach-class-form__student {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #343436;
+  border-radius: 12px;
+  background: #222224;
+}
+
+.coach-class-form__kicker {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #858588;
+}
+
+.coach-class-form__student-name,
+.coach-class-form__balance p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f5f5f5;
+}
+
+.coach-class-form__student-name span {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #adadaf;
+}
+
+.coach-class-form__balance {
+  text-align: right;
+}
+
+.coach-class-form__note,
+.coach-class-form__hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #adadaf;
+}
+
+.coach-class-form__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid #343436;
+}
+
+.coach-class-form__section h3 {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 750;
+  color: #f5f5f5;
+}
+
+.coach-portal-modal .coaching-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.coach-portal-modal .coaching-form-label {
+  color: #adadaf;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.coach-portal-modal .coaching-input,
+.coach-portal-modal select.coaching-input,
+.coach-portal-modal textarea.coaching-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #343436;
+  border-radius: 10px;
+  background: #222224;
+  color: #f5f5f5;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 550;
+  line-height: 1.4;
+}
+
+.coach-portal-modal select.coaching-input {
+  min-height: 2.75rem;
+}
+
+.coach-portal-modal textarea.coaching-input {
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
+.coach-portal-modal .coaching-input:focus {
+  outline: none;
+  border-color: #f5f5f5;
+}
+
+.coach-class-form__topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.coach-class-form__topic {
+  padding: 0.38rem 0.7rem;
+  border: 1px solid #343436;
+  border-radius: 999px;
+  background: transparent;
+  color: #adadaf;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.coach-class-form__topic.is-on {
+  border-color: #f5f5f5;
+  background: #f5f5f5;
+  color: #181819;
+}
+
+.coach-class-form__custom {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.coach-class-form__custom .coaching-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.coach-class-form__section--private textarea {
+  background: #141416;
+}
+
+.coach-portal-modal.riviera-modal {
+  display: flex;
+  flex-direction: column;
+  max-height: min(92vh, 860px);
+  overflow: hidden;
+  color-scheme: dark;
+}
+
+.coach-portal-modal .riviera-modal__body {
+  overflow: auto;
+  min-height: 0;
+}
+
+.coach-class-form__actions {
+  position: sticky;
+  bottom: -1.25rem;
+  z-index: 1;
+  margin: 0.25rem -0.25rem -0.25rem;
+  padding: 0.85rem 0.25rem 0.25rem;
+  background: #181819;
+  border-top: 1px solid #343436;
+}
+
+@media (max-width: 640px) {
+  .coach-class-form__student {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .coach-class-form__balance {
+    text-align: left;
+  }
+
+  .coach-class-form__custom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 /* ── Modales del Portal del Coach ── */
 .coach-portal-modal {
   --ro-text-primary: #f5f5f5 !important;

@@ -1055,7 +1055,7 @@ export const CoachPortalPage: React.FC = () => {
         size="lg"
       >
         {modalStudent ? (
-          <form onSubmit={handleConfirmClassRecord} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          <form className="coach-class-form" onSubmit={handleConfirmClassRecord}>
             {modalSessionId && !editingFollowup && (
               <div
                 style={{
@@ -1097,257 +1097,204 @@ export const CoachPortalPage: React.FC = () => {
               </div>
             ) : null}
 
-            <div style={{ background: "rgba(255, 255, 255, 0.04)", borderRadius: "8px", padding: "0.85rem 1rem", border: "1px solid var(--ro-border, rgba(255, 255, 255, 0.08))" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-                <div>
-                  <span style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ro-text-muted)" }}>
-                    Alumno
-                  </span>
-                  <p style={{ margin: "0.2rem 0 0", fontWeight: 600, color: "var(--ro-text-primary)" }}>
-                    {modalStudent.jugadorNombre} ({modalStudent.rivieraId})
-                  </p>
-                </div>
-                <div>
-                  <span style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ro-text-muted)" }}>
-                    Saldo actual
-                  </span>
-                  <p style={{ margin: "0.2rem 0 0", fontWeight: 700, color: "#10b981", textAlign: "right" }}>
-                    {modalStudent.balanceClasses ?? 0} clase(s)
-                  </p>
-                </div>
+            <div className="coach-class-form__student">
+              <div>
+                <span className="coach-class-form__kicker">Alumno</span>
+                <p className="coach-class-form__student-name">
+                  {modalStudent.jugadorNombre}
+                  <span>{modalStudent.rivieraId}</span>
+                </p>
               </div>
-              <p style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", color: "var(--ro-text-secondary)" }}>
-                {editingFollowup
-                  ? "Guardar cambia solo el seguimiento. No descuenta otra clase ni modifica la fecha."
-                  : "Al confirmar, se descontará automáticamente 1 clase del saldo del alumno y la sesión quedará registrada en su historial deportivo."}
-              </p>
-            </div>
-
-            {/* Duración */}
-            <div className="coaching-form-group">
-              <label className="coaching-form-label" htmlFor="class-duration">
-                Duración de la sesión
-              </label>
-              <select
-                id="class-duration"
-                className="coaching-input"
-                value={durationMinutes}
-                onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                disabled={modalBusy || editingFollowup}
-              >
-                <option value={30}>30 minutos</option>
-                <option value={45}>45 minutos</option>
-                <option value={60}>60 minutos (Estándar)</option>
-                <option value={90}>90 minutos (Clase y partido)</option>
-                <option value={120}>120 minutos (Intensivo)</option>
-              </select>
-            </div>
-
-            {/* Chips de temas técnicos */}
-            <div className="coaching-form-group">
-              <label className="coaching-form-label">
-                Temas técnicos trabajados (Pádel)
-              </label>
-              <p style={{ margin: "0 0 0.5rem", fontSize: "0.8rem", color: "var(--ro-text-muted)" }}>
-                Selecciona uno o más conceptos trabajados durante la clase:
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "0.6rem" }}>
-                {DEFAULT_PADEL_TOPICS.map((topic) => {
-                  const selected = workedOnList.includes(topic);
-                  return (
-                    <button
-                      key={topic}
-                      type="button"
-                      onClick={() => toggleTopic(topic)}
-                      disabled={modalBusy}
-                      style={{
-                        padding: "0.35rem 0.7rem",
-                        borderRadius: "20px",
-                        fontSize: "0.8rem",
-                        fontWeight: selected ? 600 : 400,
-                        border: selected
-                          ? "1px solid #10b981"
-                          : "1px solid var(--ro-border, rgba(255, 255, 255, 0.15))",
-                        background: selected ? "rgba(16, 185, 129, 0.2)" : "rgba(255, 255, 255, 0.05)",
-                        color: selected ? "#34d399" : "var(--ro-text-secondary)",
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      {selected ? "✓ " : "+ "}
-                      {topic}
-                    </button>
-                  );
-                })}
+              <div className="coach-class-form__balance">
+                <span className="coach-class-form__kicker">Saldo</span>
+                <p>{modalStudent.balanceClasses ?? 0} clases</p>
               </div>
+            </div>
+            <p className="coach-class-form__note">
+              {editingFollowup
+                ? "Guardar actualiza el seguimiento. No descuenta otra clase ni cambia la fecha."
+                : "Al confirmar se descuenta 1 clase y este seguimiento queda en el historial del alumno."}
+            </p>
 
-              {/* Tema personalizado */}
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <input
-                  type="text"
+            <section className="coach-class-form__section">
+              <h3>La clase</h3>
+              <div className="coaching-form-group">
+                <label className="coaching-form-label" htmlFor="class-duration">
+                  Duración
+                </label>
+                <select
+                  id="class-duration"
                   className="coaching-input"
-                  style={{ flex: 1 }}
-                  placeholder="Otro tema específico (ej. Bajada de pared paralela)…"
-                  value={customTopic}
-                  onChange={(e) => setCustomTopic(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addCustomTopic();
-                    }
-                  }}
+                  value={durationMinutes}
+                  onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                  disabled={modalBusy || editingFollowup}
+                >
+                  <option value={30}>30 minutos</option>
+                  <option value={45}>45 minutos</option>
+                  <option value={60}>60 minutos</option>
+                  <option value={90}>90 minutos</option>
+                  <option value={120}>120 minutos</option>
+                </select>
+              </div>
+
+              <div className="coaching-form-group">
+                <span className="coaching-form-label">Temas trabajados</span>
+                <p className="coach-class-form__hint">Toca los que se practicaron hoy.</p>
+                <div className="coach-class-form__topics">
+                  {DEFAULT_PADEL_TOPICS.map((topic) => {
+                    const selected = workedOnList.includes(topic);
+                    return (
+                      <button
+                        key={topic}
+                        type="button"
+                        className={`coach-class-form__topic${selected ? " is-on" : ""}`}
+                        onClick={() => toggleTopic(topic)}
+                        disabled={modalBusy}
+                        aria-pressed={selected}
+                      >
+                        {topic}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="coach-class-form__custom">
+                  <input
+                    type="text"
+                    className="coaching-input"
+                    placeholder="Otro tema, por ejemplo bajada de pared"
+                    value={customTopic}
+                    onChange={(e) => setCustomTopic(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addCustomTopic();
+                      }
+                    }}
+                    disabled={modalBusy}
+                  />
+                  <button
+                    type="button"
+                    className="coaching-btn coaching-btn--secondary"
+                    onClick={addCustomTopic}
+                    disabled={modalBusy || !customTopic.trim()}
+                  >
+                    Agregar
+                  </button>
+                </div>
+
+                {workedOnList.some((topic) => !DEFAULT_PADEL_TOPICS.includes(topic)) ? (
+                  <div className="coach-class-form__topics">
+                    {workedOnList
+                      .filter((topic) => !DEFAULT_PADEL_TOPICS.includes(topic))
+                      .map((topic) => (
+                        <button
+                          key={topic}
+                          type="button"
+                          className="coach-class-form__topic is-on"
+                          onClick={() => toggleTopic(topic)}
+                          aria-label={`Quitar ${topic}`}
+                        >
+                          {topic}
+                        </button>
+                      ))}
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
+            <section className="coach-class-form__section">
+              <h3>Seguimiento del alumno</h3>
+              <p className="coach-class-form__hint">
+                El alumno ve estos cuatro puntos en su panel. Escríbelos en una frase clara.
+              </p>
+              <div className="coaching-form-group">
+                <label className="coaching-form-label" htmlFor="improvements-field">
+                  Qué mejoró hoy
+                </label>
+                <textarea
+                  id="improvements-field"
+                  className="coaching-input"
+                  rows={2}
+                  placeholder="Ejemplo: las voleas ya llegan más profundas."
+                  value={improvements}
+                  onChange={(e) => setImprovements(e.target.value)}
                   disabled={modalBusy}
                 />
-                <button
-                  type="button"
-                  className="coaching-btn coaching-btn--secondary"
-                  onClick={addCustomTopic}
-                  disabled={modalBusy || !customTopic.trim()}
-                >
-                  Agregar
-                </button>
               </div>
+              <div className="coaching-form-group">
+                <label className="coaching-form-label" htmlFor="areas-field">
+                  Qué debe seguir trabajando
+                </label>
+                <textarea
+                  id="areas-field"
+                  className="coaching-input"
+                  rows={2}
+                  placeholder="Ejemplo: el primer paso hacia la red."
+                  value={areasToImprove}
+                  onChange={(e) => setAreasToImprove(e.target.value)}
+                  disabled={modalBusy}
+                />
+              </div>
+              <div className="coaching-form-group">
+                <label className="coaching-form-label" htmlFor="recommendations-field">
+                  Qué practicar
+                </label>
+                <textarea
+                  id="recommendations-field"
+                  className="coaching-input"
+                  rows={2}
+                  placeholder="Ejemplo: 20 voleas de derecha antes del partido."
+                  value={recommendations}
+                  onChange={(e) => setRecommendations(e.target.value)}
+                  disabled={modalBusy}
+                />
+              </div>
+              <div className="coaching-form-group">
+                <label className="coaching-form-label" htmlFor="next-goals-field">
+                  Objetivo de la siguiente clase
+                </label>
+                <textarea
+                  id="next-goals-field"
+                  className="coaching-input"
+                  rows={2}
+                  placeholder="Ejemplo: bajar la pared sin regalar el punto."
+                  value={nextGoals}
+                  onChange={(e) => setNextGoals(e.target.value)}
+                  disabled={modalBusy}
+                />
+              </div>
+              <div className="coaching-form-group">
+                <label className="coaching-form-label" htmlFor="motivational-field">
+                  Mensaje para el alumno
+                </label>
+                <textarea
+                  id="motivational-field"
+                  className="coaching-input"
+                  rows={2}
+                  placeholder="Una frase que verá en su panel."
+                  value={motivationalMessage}
+                  onChange={(e) => setMotivationalMessage(e.target.value)}
+                  disabled={modalBusy}
+                />
+              </div>
+            </section>
 
-              {workedOnList.length > 0 ? (
-                <div style={{ marginTop: "0.5rem", display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-                  <span style={{ fontSize: "0.75rem", color: "var(--ro-text-muted)", alignSelf: "center", marginRight: "0.25rem" }}>
-                    Seleccionados ({workedOnList.length}):
-                  </span>
-                  {workedOnList.map((t) => (
-                    <span
-                      key={t}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.25rem",
-                        padding: "0.2rem 0.5rem",
-                        borderRadius: "12px",
-                        fontSize: "0.75rem",
-                        background: "rgba(16, 185, 129, 0.15)",
-                        color: "#a7f3d0",
-                        border: "1px solid rgba(16, 185, 129, 0.3)",
-                      }}
-                    >
-                      {t}
-                      <button
-                        type="button"
-                        onClick={() => toggleTopic(t)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#a7f3d0",
-                          cursor: "pointer",
-                          padding: 0,
-                          fontSize: "0.85rem",
-                          lineHeight: 1,
-                        }}
-                        aria-label={`Eliminar ${t}`}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-
-            {/* Mejoras observadas */}
-            <div className="coaching-form-group">
-              <label className="coaching-form-label" htmlFor="improvements-field">
-                Mejoras observadas (Seguimiento técnico)
-              </label>
-              <textarea
-                id="improvements-field"
-                className="coaching-input"
-                rows={2}
-                placeholder="¿Qué avances notaste hoy? (ej. Mayor consistencia en voleas profundas, mejor ajuste de piernas antes del impacto)…"
-                value={improvements}
-                onChange={(e) => setImprovements(e.target.value)}
-                disabled={modalBusy}
-              />
-            </div>
-
-            <div className="coaching-form-group">
-              <label className="coaching-form-label" htmlFor="areas-field">
-                Qué necesita mejorar
-              </label>
-              <textarea
-                id="areas-field"
-                className="coaching-input"
-                rows={3}
-                placeholder="Aspectos que el alumno debe seguir trabajando…"
-                value={areasToImprove}
-                onChange={(e) => setAreasToImprove(e.target.value)}
-                disabled={modalBusy}
-              />
-            </div>
-
-            <div className="coaching-form-group">
-              <label className="coaching-form-label" htmlFor="recommendations-field">
-                Recomendaciones para practicar
-              </label>
-              <textarea
-                id="recommendations-field"
-                className="coaching-input"
-                rows={3}
-                placeholder="Ejercicios o indicaciones concretas del entrenador…"
-                value={recommendations}
-                onChange={(e) => setRecommendations(e.target.value)}
-                disabled={modalBusy}
-              />
-            </div>
-
-            {/* Próximos objetivos */}
-            <div className="coaching-form-group">
-              <label className="coaching-form-label" htmlFor="next-goals-field">
-                Próximos objetivos para el alumno
-              </label>
-              <textarea
-                id="next-goals-field"
-                className="coaching-input"
-                rows={2}
-                placeholder="¿Qué trabajarán en la siguiente sesión? (ej. Transición red-defensa tras globo rival, bajada de pared)…"
-                value={nextGoals}
-                onChange={(e) => setNextGoals(e.target.value)}
-                disabled={modalBusy}
-              />
-            </div>
-
-            {/* Mensaje motivacional / Feedback personal */}
-            <div className="coaching-form-group">
-              <label className="coaching-form-label" htmlFor="motivational-field">
-                Mensaje motivacional / Feedback personal
-              </label>
-              <textarea
-                id="motivational-field"
-                className="coaching-input"
-                rows={2}
-                placeholder="Mensaje que verá tu alumno en su app (ej. ¡Gran intensidad hoy! Mantén esa concentración en los puntos de quiebre)…"
-                value={motivationalMessage}
-                onChange={(e) => setMotivationalMessage(e.target.value)}
-                disabled={modalBusy}
-              />
-            </div>
-
-            {/* Notas internas del coach */}
-            <div className="coaching-form-group">
-              <label className="coaching-form-label" htmlFor="class-notes">
-                Notas privadas del coach
-              </label>
-              <p className="coach-follow-history__hint">
-                Las consulta el entrenador de la clase, el club que administra
-                esa relación y un administrador maestro. El alumno no las ve.
+            <section className="coach-class-form__section coach-class-form__section--private">
+              <h3>Nota privada</h3>
+              <p className="coach-class-form__hint">
+                Solo la ven el coach, el club y un administrador. El alumno no la ve.
               </p>
               <textarea
                 id="class-notes"
                 className="coaching-input"
                 rows={2}
-                placeholder="No se muestran en Mi Coaching."
+                placeholder="Apunte interno de la sesión."
                 value={classNotes}
                 onChange={(e) => setClassNotes(e.target.value)}
                 disabled={modalBusy}
               />
-            </div>
+            </section>
 
             {/* Acciones */}
             <div className="coach-class-form__actions">
