@@ -166,6 +166,34 @@ describe("buildLigaJornadaPartidosDetalle", () => {
     expect(byJugador.get("j3")![0].resultado).toBe("win");
   });
 
+  it("un tie-break de 5 puntos decide el playoff aunque el marcador sea 9 a 7", () => {
+    const byJugador = buildLigaJornadaPartidosDetalleByJugadorId({
+      ...jornada,
+      partidos: [
+        {
+          ...jornada.partidos![0]!,
+          score_pareja1: 9,
+          score_pareja2: 7,
+          set_scores: {
+            format: "parejas_fijas_playoffs",
+            sets: [
+              { p1: 3, p2: 6 },
+              { p1: 6, p2: 1 },
+            ],
+            stb: { p1: 3, p2: 5 },
+            wo: false,
+          },
+        },
+      ],
+    });
+    expect(byJugador.get("j1")![0]).toMatchObject({
+      games_favor: 9,
+      games_contra: 7,
+      resultado: "loss",
+    });
+    expect(byJugador.get("j3")![0].resultado).toBe("win");
+  });
+
   it("no inventa un ganador si el playoff queda 1-1 sin desempate", () => {
     const byJugador = buildLigaJornadaPartidosDetalleByJugadorId({
       ...jornada,

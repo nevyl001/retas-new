@@ -628,7 +628,7 @@ describe("autorización documentada", () => {
     const sql = fs.readFileSync(
       path.join(
         process.cwd(),
-        "supabase/migrations/0107_liga_autorizacion_registro_jugador.sql"
+        "supabase/_archive/migrations/0107_liga_autorizacion_registro_jugador.sql"
       ),
       "utf8"
     );

@@ -1,5 +1,5 @@
 -- 0107 DESCARTADA.
--- No ejecutar supabase/migrations/0107_liga_autorizacion_registro_jugador.sql.
+-- No ejecutar supabase/_archive/migrations/0107_liga_autorizacion_registro_jugador.sql.
 -- Ese archivo aborta a propósito y no reemplaza funciones.
 -- 0108 tampoco se aplica hasta autorización expresa.
 
