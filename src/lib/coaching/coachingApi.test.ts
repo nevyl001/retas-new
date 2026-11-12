@@ -28,6 +28,7 @@ import {
   loginStudentWithIdentifier,
   requestStudentPasswordReset,
   requestStudentAccessLink,
+  saveCoachSessionPreparation,
 } from "./coachingApi";
 import type { CreateCoachInput } from "./types";
 import { supabase } from "../supabaseClient";
@@ -1675,6 +1676,54 @@ describe("coachingApi - Entrega B", () => {
       });
       expect(res.ok).toBe(true);
       expect(res.message).toBe("Enlace de acceso enviado a tu correo.");
+    });
+  });
+
+  describe("saveCoachSessionPreparation", () => {
+    it("calls save_coach_session_preparation RPC and returns session preparation", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: true,
+          session_id: "sess-123",
+          focus: "Bandeja y víbora",
+          notes_summary: "Trabajar técnica y posicionamiento",
+          message: "Preparación guardada exitosamente.",
+        },
+        error: null,
+      });
+
+      const res = await saveCoachSessionPreparation({
+        sessionId: "sess-123",
+        focus: "Bandeja y víbora",
+        notesSummary: "Trabajar técnica y posicionamiento",
+      });
+
+      expect(supabase.rpc).toHaveBeenCalledWith("save_coach_session_preparation", {
+        p_session_id: "sess-123",
+        p_focus: "Bandeja y víbora",
+        p_notes_summary: "Trabajar técnica y posicionamiento",
+      });
+      expect(res.ok).toBe(true);
+      expect(res.sessionId).toBe("sess-123");
+      expect(res.focus).toBe("Bandeja y víbora");
+      expect(res.notesSummary).toBe("Trabajar técnica y posicionamiento");
+    });
+
+    it("throws error when RPC returns ok: false", async () => {
+      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: {
+          ok: false,
+          error: "No tienes autorización para preparar esta clase.",
+        },
+        error: null,
+      });
+
+      await expect(
+        saveCoachSessionPreparation({
+          sessionId: "sess-other",
+          focus: "Defensa",
+        })
+      ).rejects.toThrow("No tienes autorización para preparar esta clase.");
     });
   });
 });

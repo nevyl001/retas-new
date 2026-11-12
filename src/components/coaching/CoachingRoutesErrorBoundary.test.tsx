@@ -234,7 +234,7 @@ describe("Coaching Routes ErrorBoundary Validation", () => {
 
     // Validar contenido esperado de StudentAccessPage (formulario de acceso)
     expect(container.textContent).toContain("Acceso de Alumno");
-    expect(container.textContent).toContain("Correo Electrónico");
+    expect(container.textContent).toContain("Riviera ID");
     expect(container.textContent).toContain("Contraseña");
     expect(container.textContent).toContain("Ingresar a Mi Coaching");
   });

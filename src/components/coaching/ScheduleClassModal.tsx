@@ -26,16 +26,6 @@ export interface ScheduleClassModalProps {
 
 const DURATION_OPTIONS = [60, 90, 120];
 
-const FOCUS_PRESETS = [
-  "Bandeja y víbora",
-  "Defensa de fondo y paredes",
-  "Voleas y control de red",
-  "Remate por 3 / Por 4",
-  "Estrategia de juego y colocación",
-  "Saque y resto",
-  "Sesión de evaluación y técnica",
-];
-
 const COURT_SUGGESTIONS = [
   "Cancha Central",
   "Cancha Techada",
@@ -67,9 +57,6 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
   const [time, setTime] = useState<string>("09:00");
   const [durationMinutes, setDurationMinutes] = useState<number>(60);
   const [court, setCourt] = useState<string>("");
-  const [focus, setFocus] = useState<string>(FOCUS_PRESETS[0]);
-  const [customFocus, setCustomFocus] = useState<string>("");
-  const [notes, setNotes] = useState<string>("");
 
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +64,7 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
   const wasOpenRef = useRef(false);
   const idempotencyKeyRef = useRef<string>("");
 
-  // Inicialización al abrir
+  // Inicialización al abrir el modal
   useEffect(() => {
     if (open && !wasOpenRef.current) {
       setError(null);
@@ -90,28 +77,25 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
       setCoachId(initialCoach);
       setStudentId(preselectedStudentId || "");
 
-      // Default date to today
+      // Fecha por defecto: hoy
       const now = new Date();
       const yyyy = now.getFullYear();
       const mm = String(now.getMonth() + 1).padStart(2, "0");
       const dd = String(now.getDate()).padStart(2, "0");
       setDate(`${yyyy}-${mm}-${dd}`);
 
-      // Default time rounded to next hour
+      // Hora por defecto: siguiente hora redondeada
       const currentHour = now.getHours();
       const nextHour = (currentHour + 1) % 24;
       setTime(`${String(nextHour).padStart(2, "0")}:00`);
 
       setDurationMinutes(60);
       setCourt("");
-      setFocus(FOCUS_PRESETS[0]);
-      setCustomFocus("");
-      setNotes("");
     }
     wasOpenRef.current = open;
   }, [open, preselectedCoachId, preselectedStudentId, activeCoaches]);
 
-  // Cargar alumnos asociados al coach seleccionado
+  // Cargar alumnos asignados al coach seleccionado
   useEffect(() => {
     if (!open || !coachId) {
       setCoachStudents([]);
@@ -170,15 +154,14 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
       return;
     }
 
-    const effectiveFocus =
-      focus === "Otro" ? customFocus.trim() : customFocus.trim() ? `${focus} — ${customFocus.trim()}` : focus;
-
     setSaving(true);
     setError(null);
 
     try {
       const startsAtIso = new Date(`${date}T${time}:00`).toISOString();
 
+      // Regla de producto: El club SOLO agenda la clase administrativa (fecha, hora, duración, pista).
+      // El tema técnico y las notas pedagógicas son responsabilidad exclusiva del coach en su espacio.
       const res = await scheduleCoachClass({
         organizadorId,
         coachId,
@@ -186,8 +169,8 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
         startsAt: startsAtIso,
         durationMinutes,
         court: court.trim() || null,
-        focus: effectiveFocus || null,
-        notes: notes.trim() || null,
+        focus: null,
+        notes: null,
         idempotencyKey: idempotencyKeyRef.current || null,
       });
 
@@ -204,8 +187,18 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Agendar Clase de Coaching">
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.15rem" }}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Agendar clase"
+      className="coach-portal-modal schedule-class-modal"
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="schedule-class-form">
+        <p className="schedule-modal-subtitle">
+          Programa una sesión deportiva entre un entrenador activo y su alumno asignado. La preparación pedagógica y los objetivos técnicos serán definidos por el coach desde su espacio.
+        </p>
+
         {/* Selector de Entrenador */}
         <div className="coaching-form-group">
           <label className="coaching-label" htmlFor="schedule-coach-select">
@@ -213,7 +206,7 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
           </label>
           <select
             id="schedule-coach-select"
-            className="coaching-input"
+            className="coaching-input schedule-input"
             value={coachId}
             onChange={(e) => setCoachId(e.target.value)}
             disabled={saving}
@@ -228,16 +221,17 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
 
         {/* Selector de Alumno */}
         <div className="coaching-form-group">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label className="coaching-label" htmlFor="schedule-student-select">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
+            <label className="coaching-label" htmlFor="schedule-student-select" style={{ margin: 0 }}>
               Alumno Asignado *
             </label>
             {selectedStudent && (
               <span
                 style={{
-                  fontSize: "0.78rem",
+                  fontSize: "0.8rem",
                   fontWeight: 600,
-                  color: selectedStudent.balanceClasses > 0 ? "var(--ro-primary, #10b981)" : "#f59e0b",
+                  color: selectedStudent.balanceClasses > 0 ? "var(--coach-accent-green, #22c55e)" : "#f59e0b",
+                  fontFamily: "var(--font-mono, monospace)",
                 }}
               >
                 {selectedStudent.balanceClasses}{" "}
@@ -247,7 +241,7 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
           </div>
 
           {loadingStudents ? (
-            <div style={{ fontSize: "0.85rem", color: "var(--ro-text-muted, #94a3b8)", padding: "0.5rem 0" }}>
+            <div style={{ fontSize: "0.85rem", color: "var(--coach-text-muted, #858588)", padding: "0.5rem 0" }}>
               Cargando alumnos asignados a este entrenador...
             </div>
           ) : coachStudents.length === 0 ? (
@@ -255,26 +249,25 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
               style={{
                 padding: "0.75rem",
                 background: "rgba(245, 158, 11, 0.1)",
-                border: "1px solid rgba(245, 158, 11, 0.3)",
+                border: "1px solid rgba(245, 158, 11, 0.25)",
                 borderRadius: "8px",
                 color: "#fef3c7",
                 fontSize: "0.82rem",
               }}
             >
-              Este entrenador aún no tiene alumnos asignados en tu club. Puedes asignarle un alumno desde la pestaña
-              "Alumnos".
+              Este entrenador aún no tiene alumnos asignados en tu club. Puedes asignarle un alumno desde la pestaña "Alumnos".
             </div>
           ) : (
             <select
               id="schedule-student-select"
-              className="coaching-input"
+              className="coaching-input schedule-input"
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
               disabled={saving}
             >
               {coachStudents.map((s) => (
                 <option key={s.jugadorId} value={s.jugadorId}>
-                  {s.nombre} ({s.rivieraId}) — {s.balanceClasses} {s.balanceClasses === 1 ? "clase" : "clases"} disp.
+                  {s.nombre} ({s.rivieraId || "Sin ID"})
                 </option>
               ))}
             </select>
@@ -300,8 +293,8 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
           )}
         </div>
 
-        {/* Fecha, Hora y Duración */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+        {/* Fecha y Hora de Inicio */}
+        <div className="schedule-grid-2col">
           <div className="coaching-form-group">
             <label className="coaching-label" htmlFor="schedule-date-input">
               Fecha *
@@ -309,7 +302,7 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
             <input
               id="schedule-date-input"
               type="date"
-              className="coaching-input"
+              className="coaching-input schedule-input"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               disabled={saving}
@@ -324,7 +317,7 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
             <input
               id="schedule-time-input"
               type="time"
-              className="coaching-input"
+              className="coaching-input schedule-input"
               value={time}
               onChange={(e) => setTime(e.target.value)}
               disabled={saving}
@@ -333,30 +326,17 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
           </div>
         </div>
 
-        {/* Duración */}
+        {/* Duración de la clase */}
         <div className="coaching-form-group">
           <label className="coaching-label">Duración de la clase</label>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div className="schedule-duration-group">
             {DURATION_OPTIONS.map((mins) => (
               <button
                 key={mins}
                 type="button"
+                className={`schedule-duration-chip ${durationMinutes === mins ? "schedule-duration-chip--active" : ""}`}
                 onClick={() => setDurationMinutes(mins)}
-                style={{
-                  flex: 1,
-                  padding: "0.5rem",
-                  borderRadius: "8px",
-                  fontSize: "0.82rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  border:
-                    durationMinutes === mins
-                      ? "1px solid var(--ro-primary, #10b981)"
-                      : "1px solid rgba(255,255,255,0.1)",
-                  background: durationMinutes === mins ? "rgba(16, 185, 129, 0.15)" : "transparent",
-                  color: durationMinutes === mins ? "var(--ro-primary, #10b981)" : "var(--ro-text-muted, #94a3b8)",
-                  transition: "all 0.15s ease",
-                }}
+                disabled={saving}
               >
                 {mins} min
               </button>
@@ -364,27 +344,19 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
           </div>
         </div>
 
-        {/* Cancha */}
+        {/* Cancha asignada (Opcional) */}
         <div className="coaching-form-group">
           <label className="coaching-label" htmlFor="schedule-court-input">
             Cancha asignada (Opcional)
           </label>
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.4rem" }}>
+          <div className="schedule-court-suggestions">
             {COURT_SUGGESTIONS.map((c) => (
               <button
                 key={c}
                 type="button"
+                className={`schedule-court-chip ${court === c ? "schedule-court-chip--active" : ""}`}
                 onClick={() => setCourt(court === c ? "" : c)}
-                style={{
-                  padding: "0.3rem 0.6rem",
-                  borderRadius: "6px",
-                  fontSize: "0.75rem",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  border: court === c ? "1px solid var(--ro-primary, #10b981)" : "1px solid rgba(255,255,255,0.08)",
-                  background: court === c ? "rgba(16, 185, 129, 0.15)" : "rgba(255,255,255,0.03)",
-                  color: court === c ? "var(--ro-primary, #10b981)" : "var(--ro-text-muted, #94a3b8)",
-                }}
+                disabled={saving}
               >
                 {c}
               </button>
@@ -393,7 +365,7 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
           <input
             id="schedule-court-input"
             type="text"
-            className="coaching-input"
+            className="coaching-input schedule-input"
             value={court}
             onChange={(e) => setCourt(e.target.value)}
             placeholder="Escribe el nombre de la cancha (ej. Central, Techada 1, Cancha 2…)"
@@ -401,74 +373,15 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
           />
         </div>
 
-        {/* Tema / Enfoque */}
-        <div className="coaching-form-group">
-          <label className="coaching-label" htmlFor="schedule-focus-select">
-            Objetivo o Tema del entrenamiento
-          </label>
-          <select
-            id="schedule-focus-select"
-            className="coaching-input"
-            value={focus}
-            onChange={(e) => setFocus(e.target.value)}
-            disabled={saving}
-          >
-            {FOCUS_PRESETS.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-            <option value="Otro">Otro objetivo personalizado...</option>
-          </select>
-        </div>
-
-        {focus === "Otro" && (
-          <div className="coaching-form-group">
-            <input
-              type="text"
-              className="coaching-input"
-              value={customFocus}
-              onChange={(e) => setCustomFocus(e.target.value)}
-              placeholder="Describe el objetivo del entrenamiento..."
-              disabled={saving}
-              autoFocus
-            />
-          </div>
-        )}
-
-        {/* Notas adicionales */}
-        <div className="coaching-form-group">
-          <label className="coaching-label" htmlFor="schedule-notes-input">
-            Notas de la clase (Opcional)
-          </label>
-          <textarea
-            id="schedule-notes-input"
-            className="coaching-input"
-            rows={2}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="ej. Traer palas de prueba, calentar 10 minutos antes en gimnasio..."
-            disabled={saving}
-          />
-        </div>
-
         {error && (
-          <div
-            style={{
-              padding: "0.75rem",
-              background: "rgba(239, 68, 68, 0.1)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-              borderRadius: "8px",
-              color: "#fca5a5",
-              fontSize: "0.85rem",
-            }}
-          >
-            {error}
+          <div className="coach-portal-alert coach-portal-alert--error" style={{ fontSize: "0.85rem" }}>
+            <TablerIcon name="alert-circle" size={16} />
+            <span>{error}</span>
           </div>
         )}
 
-        {/* Botones */}
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+        {/* Botones de acción */}
+        <div className="schedule-modal-actions">
           <button
             type="button"
             className="coaching-btn-ghost"
@@ -490,7 +403,7 @@ export const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "0.4rem",
+              gap: "0.45rem",
             }}
           >
             {saving ? (

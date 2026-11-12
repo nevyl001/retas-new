@@ -30,6 +30,8 @@ import type {
   ScheduleCoachClassResult,
   RescheduleCoachClassResult,
   CancelCoachClassResult,
+  SaveCoachSessionPreparationParams,
+  SaveCoachSessionPreparationResult,
   CoachScheduledSession,
   StudentCoachingUpcomingSession,
   StudentAccessInfo,
@@ -2253,6 +2255,38 @@ export async function cancelCoachClass(params: {
     ok: true,
     sessionId: res.session_id ? String(res.session_id) : undefined,
     message: String(res.message ?? "Clase cancelada exitosamente."),
+  };
+}
+
+/**
+ * Guarda o actualiza la preparación pedagógica (tema y notas) de una clase programada por el club.
+ * Exclusivo del coach asignado. No deduce saldo ni registra la clase como impartida.
+ */
+export async function saveCoachSessionPreparation(
+  params: SaveCoachSessionPreparationParams
+): Promise<SaveCoachSessionPreparationResult> {
+  const { data, error } = await supabase.rpc("save_coach_session_preparation", {
+    p_session_id: params.sessionId,
+    p_focus: params.focus?.trim() || null,
+    p_notes_summary: params.notesSummary?.trim() || null,
+  });
+
+  if (error) {
+    console.error("[coaching] error saving coach session preparation:", error);
+    throw new Error(error.message);
+  }
+
+  const res = data as Record<string, any> | null;
+  if (!res || res.ok === false) {
+    throw new Error(res?.error || "No se pudo guardar la preparación de la clase.");
+  }
+
+  return {
+    ok: true,
+    sessionId: String(res.session_id ?? params.sessionId),
+    focus: res.focus ? String(res.focus) : null,
+    notesSummary: res.notes_summary ? String(res.notes_summary) : null,
+    message: String(res.message ?? "Preparación guardada exitosamente."),
   };
 }
 

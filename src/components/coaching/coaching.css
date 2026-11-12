@@ -3850,4 +3850,498 @@
   }
 }
 
+/* ── Rediseño Premium 2026: Agendar Clase (Club) ── */
+.schedule-class-modal {
+  max-width: 580px !important;
+}
+
+.schedule-class-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.05rem;
+}
+
+.schedule-modal-subtitle {
+  font-size: 0.82rem;
+  color: var(--coach-text-secondary, #adadaf);
+  line-height: 1.45;
+  margin: -0.25rem 0 0.25rem 0;
+}
+
+.schedule-input {
+  background: var(--coach-surface-elevated, #222224) !important;
+  border: 1px solid var(--coach-border, #343436) !important;
+  color: var(--coach-text-primary, #f5f5f5) !important;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.schedule-input:focus {
+  border-color: var(--coach-accent-green, #22c55e) !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15) !important;
+}
+
+.schedule-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.schedule-duration-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.schedule-duration-chip {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  background: var(--coach-surface-elevated, #222224);
+  border: 1px solid var(--coach-border, #343436);
+  border-radius: 8px;
+  color: var(--coach-text-secondary, #adadaf);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.schedule-duration-chip:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--coach-text-primary, #f5f5f5);
+}
+
+.schedule-duration-chip--active {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: var(--coach-accent-green, #22c55e) !important;
+  color: var(--coach-accent-green, #22c55e) !important;
+}
+
+.schedule-court-suggestions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.45rem;
+}
+
+.schedule-court-chip {
+  padding: 0.28rem 0.6rem;
+  background: var(--coach-surface-elevated, #222224);
+  border: 1px solid var(--coach-border, #343436);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--coach-text-secondary, #adadaf);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.schedule-court-chip:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--coach-text-primary, #f5f5f5);
+}
+
+.schedule-court-chip--active {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: var(--coach-accent-green, #22c55e) !important;
+  color: var(--coach-accent-green, #22c55e) !important;
+}
+
+.schedule-modal-actions {
+  position: sticky;
+  bottom: -1.25rem;
+  margin: 0.5rem -0.25rem -0.25rem;
+  padding: 0.85rem 0.25rem 0.25rem;
+  background: var(--coach-surface, #181819);
+  border-top: 1px solid var(--coach-border, #343436);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  z-index: 2;
+}
+
+/* ── Rediseño Premium 2026: Tarjeta de Próxima Clase (Coach) ── */
+.coach-session-card {
+  background: var(--coach-surface, #181819);
+  border: 1px solid var(--coach-border, #343436);
+  border-radius: 12px;
+  padding: 1.15rem 1.35rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.25rem;
+  transition: border-color 0.15s ease;
+}
+
+.coach-session-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.coach-session-card__left {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.coach-session-student-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--coach-surface-elevated, #222224);
+  border: 1px solid var(--coach-border, #343436);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--coach-text-primary, #f5f5f5);
+}
+
+.coach-session-student-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.coach-session-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.coach-session-card__header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.coach-session-card__student-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--coach-text-primary, #f5f5f5);
+}
+
+.coach-session-card__riviera-id {
+  font-size: 0.78rem;
+  color: var(--coach-text-muted, #858588);
+  font-family: var(--font-mono, monospace);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.coach-session-card__meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: var(--coach-text-secondary, #adadaf);
+}
+
+.coach-session-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--coach-text-secondary, #adadaf);
+}
+
+.coach-session-meta-balance {
+  font-weight: 600;
+  font-size: 0.8rem;
+  font-family: var(--font-mono, monospace);
+}
+
+.coach-session-card__prep-row {
+  margin-top: 0.2rem;
+}
+
+.coach-session-focus-container {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.coach-session-focus-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--coach-text-primary, #f5f5f5);
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  padding: 0.18rem 0.55rem;
+  border-radius: 6px;
+}
+
+.coach-session-notes-preview {
+  font-size: 0.78rem;
+  color: var(--coach-text-muted, #858588);
+  font-style: italic;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coach-session-pending-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--coach-text-muted, #858588);
+  background: var(--coach-surface-elevated, #222224);
+  border: 1px dashed var(--coach-border, #343436);
+  padding: 0.18rem 0.55rem;
+  border-radius: 6px;
+}
+
+.coach-session-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* ── Rediseño Premium 2026: Modal de Preparación del Coach ── */
+.coach-prep-modal {
+  max-width: 640px !important;
+}
+
+.coach-prep-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.coach-prep-admin-card {
+  background: var(--coach-surface-elevated, #222224);
+  border: 1px solid var(--coach-border, #343436);
+  border-radius: 10px;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.coach-prep-section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--coach-text-secondary, #adadaf);
+  text-transform: uppercase;
+}
+
+.coach-prep-section-badge--coach {
+  color: var(--coach-accent-green, #22c55e);
+}
+
+.coach-prep-admin-notice {
+  font-size: 0.8rem;
+  color: var(--coach-text-muted, #858588);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.coach-prep-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.coach-prep-admin-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.coach-prep-admin-label {
+  font-size: 0.72rem;
+  color: var(--coach-text-muted, #858588);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.coach-prep-admin-student {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.coach-prep-student-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #181819;
+  border: 1px solid #343436;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.coach-prep-student-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.coach-prep-admin-value {
+  font-size: 0.88rem;
+  font-weight: 650;
+  color: var(--coach-text-primary, #f5f5f5);
+}
+
+.coach-prep-admin-subvalue {
+  font-size: 0.75rem;
+  color: var(--coach-text-muted, #858588);
+  font-family: var(--font-mono, monospace);
+}
+
+.coach-prep-technical-card {
+  background: var(--coach-surface, #181819);
+  border: 1px solid var(--coach-border, #343436);
+  border-radius: 10px;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.coach-prep-tech-subtitle {
+  font-size: 0.82rem;
+  color: var(--coach-text-secondary, #adadaf);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.coach-prep-presets-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.25rem;
+}
+
+.coach-prep-presets-title {
+  font-size: 0.75rem;
+  color: var(--coach-text-muted, #858588);
+  font-weight: 600;
+}
+
+.coach-prep-presets-chips {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.coach-prep-chip {
+  padding: 0.32rem 0.65rem;
+  background: var(--coach-surface-elevated, #222224);
+  border: 1px solid var(--coach-border, #343436);
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--coach-text-secondary, #adadaf);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.coach-prep-chip:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--coach-text-primary, #f5f5f5);
+}
+
+.coach-prep-chip--active {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: var(--coach-accent-green, #22c55e) !important;
+  color: var(--coach-accent-green, #22c55e) !important;
+  font-weight: 600;
+}
+
+.coach-prep-modal-actions {
+  position: sticky;
+  bottom: -1.25rem;
+  margin: 0.5rem -0.25rem -0.25rem;
+  padding: 0.85rem 0.25rem 0.25rem;
+  background: var(--coach-surface, #181819);
+  border-top: 1px solid var(--coach-border, #343436);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.65rem;
+  z-index: 2;
+  flex-wrap: wrap;
+}
+
+/* ── Mobile responsiveness para agenda y modal de preparación ── */
+@media (max-width: 640px) {
+  .schedule-grid-2col {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .schedule-duration-group {
+    flex-wrap: wrap;
+  }
+
+  .coach-session-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.05rem;
+    gap: 1rem;
+  }
+
+  .coach-session-card__left {
+    align-items: flex-start;
+  }
+
+  .coach-session-card__actions {
+    justify-content: stretch;
+    width: 100%;
+  }
+
+  .coach-session-card__actions button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .coach-prep-admin-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .coach-prep-modal-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .coach-prep-modal-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
 

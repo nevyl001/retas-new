@@ -6,6 +6,7 @@ import {
   recordCoachClassSessionWithFollowup,
   generateCoachingIdempotencyKey,
   fetchCoachAgenda,
+  saveCoachSessionPreparation,
   fetchCoachClassFollowup,
   fetchCoachFollowupDigest,
   updateCoachClassFollowup,
@@ -44,6 +45,17 @@ const DEFAULT_PADEL_TOPICS = [
   "Toma de decisiones",
 ];
 
+const PREP_TOPIC_PRESETS = [
+  "Bandeja y víbora",
+  "Defensa de fondo y paredes",
+  "Voleas y control de red",
+  "Transición y velocidad",
+  "Remate por 3 / Por 4",
+  "Saque y resto",
+  "Estrategia y táctica de juego",
+  "Físico y desplazamientos",
+];
+
 function getInitials(nameOrEmail: string): string {
   const clean = nameOrEmail.trim();
   if (!clean) return "CO";
@@ -71,6 +83,11 @@ export const CoachPortalPage: React.FC = () => {
   const [loadingUpcoming, setLoadingUpcoming] = useState(false);
   const [upcomingError, setUpcomingError] = useState<string | null>(null);
   const [detailsSession, setDetailsSession] = useState<CoachScheduledSession | null>(null);
+  const [prepFocus, setPrepFocus] = useState<string>("");
+  const [prepNotes, setPrepNotes] = useState<string>("");
+  const [savingPrep, setSavingPrep] = useState<boolean>(false);
+  const [prepError, setPrepError] = useState<string | null>(null);
+  const [prepSuccess, setPrepSuccess] = useState<boolean>(false);
   const [modalSessionId, setModalSessionId] = useState<string | null>(null);
 
   // Modal: Registrar Clase Impartida
@@ -247,6 +264,52 @@ export const CoachPortalPage: React.FC = () => {
     setModalKey(generateCoachingIdempotencyKey("session"));
   };
 
+  const handleOpenDetails = (session: CoachScheduledSession) => {
+    setDetailsSession(session);
+    setPrepFocus(session.focus || "");
+    setPrepNotes(session.notesSummary || "");
+    setPrepError(null);
+    setPrepSuccess(false);
+  };
+
+  const handleSavePreparation = async () => {
+    if (!detailsSession) return;
+    setSavingPrep(true);
+    setPrepError(null);
+    setPrepSuccess(false);
+
+    try {
+      const res = await saveCoachSessionPreparation({
+        sessionId: detailsSession.id,
+        focus: prepFocus.trim() || null,
+        notesSummary: prepNotes.trim() || null,
+      });
+
+      const updated: CoachScheduledSession = {
+        ...detailsSession,
+        focus: res.focus ?? null,
+        notesSummary: res.notesSummary ?? null,
+      };
+      setDetailsSession(updated);
+
+      setUpcomingSessions((prev) =>
+        prev.map((s) =>
+          s.id === updated.id
+            ? { ...s, focus: updated.focus, notesSummary: updated.notesSummary }
+            : s
+        )
+      );
+
+      setPrepSuccess(true);
+      setTimeout(() => setPrepSuccess(false), 3500);
+    } catch (err: any) {
+      console.error("[coaching] error saving coach preparation:", err);
+      setPrepError(err?.message || "No se pudo guardar la preparación de la clase.");
+    } finally {
+      setSavingPrep(false);
+    }
+  };
+
   const openRecordClassForScheduled = (sess: CoachScheduledSession) => {
     const matched = students.find((st) => st.jugadorId === sess.jugadorId);
     if (matched && matched.status === "PAUSED") {
@@ -268,9 +331,14 @@ export const CoachPortalPage: React.FC = () => {
       status: "ACTIVE",
     };
 
+    const effectiveFocus =
+      sess.id === detailsSession?.id ? prepFocus.trim() || sess.focus : sess.focus;
+    const effectiveNotes =
+      sess.id === detailsSession?.id ? prepNotes.trim() || sess.notesSummary : sess.notesSummary;
+
     setModalStudent(studentLink);
     setModalSessionId(sess.id);
-    setWorkedOnList(sess.focus ? [sess.focus] : []);
+    setWorkedOnList(effectiveFocus ? [effectiveFocus] : []);
     setCustomTopic("");
     setImprovements("");
     setAreasToImprove("");
@@ -278,17 +346,17 @@ export const CoachPortalPage: React.FC = () => {
     setNextGoals("");
     setMotivationalMessage("");
     setDurationMinutes(sess.durationMinutes || 60);
-    setClassNotes("");
+    setClassNotes(effectiveNotes || "");
     setEditingFollowup(false);
     setFollowupBaseline(
       JSON.stringify({
-        workedOn: sess.focus ? [sess.focus] : [],
+        workedOn: effectiveFocus ? [effectiveFocus] : [],
         improvements: "",
         areas: "",
         recommendations: "",
         nextGoals: "",
         message: "",
-        notes: "",
+        notes: effectiveNotes || "",
       })
     );
     setModalError(null);
@@ -802,19 +870,18 @@ export const CoachPortalPage: React.FC = () => {
                         key={session.id}
                         className="coach-session-card"
                       >
-                        {/* Info horario, alumno, pista */}
-                        <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
-                          <div className="coach-session-card__date-box">
-                            <div className="coach-session-card__date">
-                              {formattedDate}
-                            </div>
-                            <div className="coach-session-card__duration">
-                              {session.durationMinutes} min {session.court ? `• ${session.court}` : ""}
-                            </div>
+                        {/* Información principal: Alumno, Horario, Pista */}
+                        <div className="coach-session-card__left">
+                          <div className="coach-session-student-avatar">
+                            {session.jugadorFoto ? (
+                              <img src={session.jugadorFoto} alt={session.jugadorNombre || "Alumno"} />
+                            ) : (
+                              <span>{getInitials(session.jugadorNombre || "AL")}</span>
+                            )}
                           </div>
 
-                          <div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                          <div className="coach-session-card__info">
+                            <div className="coach-session-card__header-row">
                               <span className="coach-session-card__student-name">
                                 {session.jugadorNombre || "Alumno"}
                               </span>
@@ -823,56 +890,76 @@ export const CoachPortalPage: React.FC = () => {
                                   {session.rivieraId}
                                 </span>
                               )}
-                              {session.clubNombre && (
-                                <span className="coach-session-card__club-name">
-                                  ({session.clubNombre})
+                              <span className="coaching-badge coaching-badge--active">
+                                PROGRAMADA
+                              </span>
+                            </div>
+
+                            <div className="coach-session-card__meta-row">
+                              <span className="coach-session-meta-item">
+                                <TablerIcon name="calendar" size={13} />
+                                {formattedDate}
+                              </span>
+                              <span className="coach-session-meta-item">
+                                <TablerIcon name="clock" size={13} />
+                                {session.durationMinutes} min
+                              </span>
+                              <span className="coach-session-meta-item">
+                                <TablerIcon name="map-pin" size={13} />
+                                {session.court || "Cancha por asignar"}
+                              </span>
+                              {session.balanceClasses !== undefined && (
+                                <span
+                                  className="coach-session-meta-balance"
+                                  style={{
+                                    color: session.balanceClasses > 0 ? "var(--coach-accent-green, #22c55e)" : "#fbbf24",
+                                  }}
+                                >
+                                  {session.balanceClasses} {session.balanceClasses === 1 ? "clase disp." : "clases disp."}
                                 </span>
                               )}
                             </div>
 
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.4rem", flexWrap: "wrap" }}>
-                              {session.focus && (
-                                <span className="coach-session-card__focus">
-                                  <TablerIcon name="target" size={13} />
-                                  {session.focus}
-                                </span>
-                              )}
-                              {session.balanceClasses !== undefined && (
-                                <span
-                                  className="coaching-badge"
-                                  style={{
-                                    background: session.balanceClasses > 0 ? "var(--coach-accent-green-bg)" : "rgba(245, 158, 11, 0.12)",
-                                    color: session.balanceClasses > 0 ? "var(--coach-accent-green)" : "#fbbf24",
-                                    border: session.balanceClasses > 0 ? "1px solid var(--coach-accent-green-border)" : "1px solid rgba(245, 158, 11, 0.3)",
-                                  }}
-                                >
-                                  {session.balanceClasses} clases disp.
+                            {/* Estado y visualización de la preparación pedagógica */}
+                            <div className="coach-session-card__prep-row">
+                              {session.focus ? (
+                                <div className="coach-session-focus-container">
+                                  <span className="coach-session-focus-tag">
+                                    <TablerIcon name="target" size={12} />
+                                    {session.focus}
+                                  </span>
+                                  {session.notesSummary && (
+                                    <span className="coach-session-notes-preview">
+                                      "{session.notesSummary}"
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="coach-session-pending-tag">
+                                  <TablerIcon name="notes" size={12} />
+                                  Sesión por preparar
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
 
-                        {/* Badges y Acciones */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
-                          <span className="coaching-badge coaching-badge--active">
-                            PROGRAMADA
-                          </span>
-
+                        {/* Acciones */}
+                        <div className="coach-session-card__actions">
                           <button
                             type="button"
                             className="coaching-btn coaching-btn--secondary"
-                            style={{ fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}
-                            onClick={() => setDetailsSession(session)}
+                            style={{ fontSize: "0.8rem", padding: "0.45rem 0.85rem" }}
+                            onClick={() => handleOpenDetails(session)}
                           >
-                            <TablerIcon name="eye" size={14} />
-                            Ver detalles
+                            <TablerIcon name="clipboard-list" size={14} />
+                            Ver clase
                           </button>
 
                           <button
                             type="button"
                             className="coaching-btn coaching-btn--primary"
-                            style={{ fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}
+                            style={{ fontSize: "0.8rem", padding: "0.45rem 0.85rem" }}
                             onClick={() => openRecordClassForScheduled(session)}
                           >
                             <TablerIcon name="check" size={14} />
@@ -1501,124 +1588,193 @@ export const CoachPortalPage: React.FC = () => {
         )}
       </Modal>
 
-      {/* Modal: Detalles de la Clase Programada */}
+      {/* Modal: Detalle y Preparación de Clase Programada */}
       <Modal
         open={Boolean(detailsSession)}
         onClose={() => setDetailsSession(null)}
-        className="coach-portal-modal"
-        title="Detalles de la Clase Programada"
+        className="coach-portal-modal coach-prep-modal"
+        title="Detalle y preparación de clase"
+        size="md"
       >
         {detailsSession ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <div
-              style={{
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "10px",
-                padding: "1rem",
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                gap: "0.75rem",
-              }}
-            >
-              <div>
-                <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block" }}>
-                  Alumno
-                </span>
-                <span style={{ fontWeight: 600, color: "var(--ro-text-main, #f8fafc)" }}>
-                  {detailsSession.jugadorNombre || "Alumno"}
-                </span>
-                {detailsSession.rivieraId && (
-                  <span style={{ display: "block", fontSize: "0.75rem", color: "var(--ro-primary, #10b981)", fontFamily: "monospace" }}>
-                    {detailsSession.rivieraId}
+          <div className="coach-prep-modal-body">
+            {/* 1. Bloque Administrativo (Solo Lectura) */}
+            <div className="coach-prep-admin-card">
+              <div className="coach-prep-section-badge">
+                <TablerIcon name="shield-check" size={13} />
+                PROGRAMACIÓN ADMINISTRATIVA DEL CLUB
+              </div>
+              <p className="coach-prep-admin-notice">
+                Horario, pista y alumno fijados por la administración. No modificables desde este espacio.
+              </p>
+
+              <div className="coach-prep-admin-grid">
+                <div className="coach-prep-admin-item">
+                  <span className="coach-prep-admin-label">Alumno</span>
+                  <div className="coach-prep-admin-student">
+                    <div className="coach-prep-student-avatar">
+                      {detailsSession.jugadorFoto ? (
+                        <img src={detailsSession.jugadorFoto} alt={detailsSession.jugadorNombre || "Alumno"} />
+                      ) : (
+                        <span>{getInitials(detailsSession.jugadorNombre || "AL")}</span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="coach-prep-admin-value">
+                        {detailsSession.jugadorNombre || "Alumno"}
+                      </span>
+                      {detailsSession.rivieraId && (
+                        <span className="coach-prep-admin-subvalue">
+                          {detailsSession.rivieraId}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="coach-prep-admin-item">
+                  <span className="coach-prep-admin-label">Fecha y Horario</span>
+                  <span className="coach-prep-admin-value">
+                    {formatSessionDate(detailsSession.startsAt)}
                   </span>
-                )}
-              </div>
+                  <span className="coach-prep-admin-subvalue">
+                    Duración: {detailsSession.durationMinutes} minutos
+                  </span>
+                </div>
 
-              <div>
-                <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block" }}>
-                  Fecha y Hora
-                </span>
-                <span style={{ fontWeight: 600, color: "var(--ro-text-main, #f8fafc)" }}>
-                  {formatSessionDate(detailsSession.startsAt)}
-                </span>
-                <span style={{ display: "block", fontSize: "0.75rem", color: "var(--ro-text-muted)" }}>
-                  {detailsSession.durationMinutes} minutos
-                </span>
-              </div>
+                <div className="coach-prep-admin-item">
+                  <span className="coach-prep-admin-label">Cancha asignada</span>
+                  <span className="coach-prep-admin-value">
+                    {detailsSession.court || "Por definir por el club"}
+                  </span>
+                  <span className="coach-prep-admin-subvalue">
+                    {detailsSession.clubNombre || "Club Riviera"}
+                  </span>
+                </div>
 
-              <div>
-                <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block" }}>
-                  Pista / Cancha
-                </span>
-                <span style={{ fontWeight: 600, color: "var(--ro-text-main, #f8fafc)" }}>
-                  {detailsSession.court || "No especificada"}
-                </span>
-              </div>
-
-              <div>
-                <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block" }}>
-                  Enfoque pedagógico
-                </span>
-                <span style={{ fontWeight: 600, color: "var(--ro-brand, #38bdf8)" }}>
-                  {detailsSession.focus || "Técnica / Táctica general"}
-                </span>
-              </div>
-
-              <div>
-                <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block" }}>
-                  Saldo del alumno
-                </span>
-                <span style={{ fontWeight: 600, color: (detailsSession.balanceClasses ?? 0) > 0 ? "#34d399" : "#fbbf24" }}>
-                  {detailsSession.balanceClasses ?? "—"} clases disponibles
-                </span>
-              </div>
-
-              <div>
-                <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block" }}>
-                  Estado
-                </span>
-                <span
-                  className="coaching-badge"
-                  style={{
-                    display: "inline-block",
-                    background: "rgba(16, 185, 129, 0.15)",
-                    color: "#34d399",
-                    border: "1px solid rgba(16, 185, 129, 0.35)",
-                    fontSize: "0.72rem",
-                  }}
-                >
-                  {detailsSession.status}
-                </span>
+                <div className="coach-prep-admin-item">
+                  <span className="coach-prep-admin-label">Saldo de clases</span>
+                  <span
+                    className="coach-prep-admin-value"
+                    style={{
+                      color: (detailsSession.balanceClasses ?? 0) > 0 ? "var(--coach-accent-green, #22c55e)" : "#fbbf24",
+                    }}
+                  >
+                    {detailsSession.balanceClasses ?? "—"} {detailsSession.balanceClasses === 1 ? "clase disponible" : "clases disponibles"}
+                  </span>
+                  <span className="coach-prep-admin-subvalue">
+                    Estado: {detailsSession.status}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {detailsSession.notesSummary && (
-              <div
-                style={{
-                  background: "rgba(56, 189, 248, 0.05)",
-                  border: "1px solid rgba(56, 189, 248, 0.2)",
-                  borderRadius: "8px",
-                  padding: "0.75rem 1rem",
-                }}
-              >
-                <div style={{ fontSize: "0.75rem", color: "#7dd3fc", fontWeight: 600, marginBottom: "0.25rem" }}>
-                  Instrucciones o Enfoque de la Clase:
-                </div>
-                <div style={{ fontSize: "0.85rem", color: "var(--ro-text-main, #f8fafc)" }}>
-                  {detailsSession.notesSummary}
+            {/* 2. Bloque Técnico del Coach (Editable) */}
+            <div className="coach-prep-technical-card">
+              <div className="coach-prep-section-badge coach-prep-section-badge--coach">
+                <TablerIcon name="target" size={13} />
+                PREPARACIÓN TÉCNICA DEL ENTRENADOR
+              </div>
+              <p className="coach-prep-tech-subtitle">
+                Define el tema pedagógico y tus notas previas. Puedes guardar tu preparación cuantas veces requieras antes de impartir la clase.
+              </p>
+
+              {/* Chips de sugerencias rápidas */}
+              <div className="coach-prep-presets-container">
+                <span className="coach-prep-presets-title">Sugerencias de objetivos:</span>
+                <div className="coach-prep-presets-chips">
+                  {PREP_TOPIC_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      className={`coach-prep-chip ${prepFocus === preset ? "coach-prep-chip--active" : ""}`}
+                      onClick={() => setPrepFocus(prepFocus === preset ? "" : preset)}
+                      disabled={savingPrep}
+                    >
+                      {preset}
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+              {/* Input de tema */}
+              <div className="coaching-form-group" style={{ marginBottom: "0.85rem" }}>
+                <label className="coaching-label" htmlFor="coach-prep-focus-input">
+                  Objetivo o Tema del entrenamiento
+                </label>
+                <input
+                  id="coach-prep-focus-input"
+                  type="text"
+                  className="coaching-input schedule-input"
+                  value={prepFocus}
+                  onChange={(e) => setPrepFocus(e.target.value)}
+                  placeholder="ej. Bandeja y víbora, o escribe un tema personalizado..."
+                  disabled={savingPrep}
+                />
+              </div>
+
+              {/* Textarea de notas */}
+              <div className="coaching-form-group">
+                <label className="coaching-label" htmlFor="coach-prep-notes-input">
+                  Notas de la clase (Coach)
+                </label>
+                <textarea
+                  id="coach-prep-notes-input"
+                  className="coaching-input schedule-input"
+                  rows={3}
+                  value={prepNotes}
+                  onChange={(e) => setPrepNotes(e.target.value)}
+                  placeholder="ej. Trabajar técnica, posicionamiento y control de profundidad..."
+                  disabled={savingPrep}
+                />
+              </div>
+
+              {/* Alertas */}
+              {prepSuccess && (
+                <div className="coach-portal-alert coach-portal-alert--success" style={{ marginTop: "0.5rem" }}>
+                  <TablerIcon name="check" size={16} />
+                  <span>Preparación guardada exitosamente. Los temas quedarán registrados para el seguimiento de la clase.</span>
+                </div>
+              )}
+              {prepError && (
+                <div className="coach-portal-alert coach-portal-alert--error" style={{ marginTop: "0.5rem" }}>
+                  <TablerIcon name="alert-circle" size={16} />
+                  <span>{prepError}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Botones de acción del Modal */}
+            <div className="coach-prep-modal-actions">
               <button
                 type="button"
-                className="coaching-btn coaching-btn--secondary"
+                className="coaching-btn-ghost"
                 onClick={() => setDetailsSession(null)}
+                disabled={savingPrep}
               >
                 Cerrar
               </button>
+
+              <button
+                type="button"
+                className="coaching-btn coaching-btn--secondary"
+                onClick={handleSavePreparation}
+                disabled={savingPrep}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+              >
+                {savingPrep ? (
+                  <>
+                    <TablerIcon name="loader" size={15} className="spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <TablerIcon name="device-floppy" size={15} />
+                    Guardar preparación
+                  </>
+                )}
+              </button>
+
               <button
                 type="button"
                 className="coaching-btn coaching-btn--primary"
@@ -1626,8 +1782,9 @@ export const CoachPortalPage: React.FC = () => {
                   const s = detailsSession;
                   openRecordClassForScheduled(s);
                 }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
               >
-                <TablerIcon name="check" size={16} />
+                <TablerIcon name="check" size={15} />
                 Registrar clase impartida (-1)
               </button>
             </div>

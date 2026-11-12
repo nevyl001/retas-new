@@ -510,6 +510,21 @@ export type CancelCoachClassResult = {
   error?: string;
 };
 
+export type SaveCoachSessionPreparationParams = {
+  sessionId: string;
+  focus?: string | null;
+  notesSummary?: string | null;
+};
+
+export type SaveCoachSessionPreparationResult = {
+  ok: boolean;
+  sessionId?: string;
+  focus?: string | null;
+  notesSummary?: string | null;
+  message?: string;
+  error?: string;
+};
+
 export type StudentAccessStatus =
   | "NO_ACCESS"
   | "INVITATION_PENDING"
