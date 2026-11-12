@@ -1272,12 +1272,92 @@ export interface StudentCoachingRelationship {
   ledger: StudentCoachingLedgerEntry[];
 }
 
+/** Perfil deportivo propio del alumno (editable desde Mi Coaching). Nunca incluye correo. */
+export interface StudentSelfProfile {
+  id: string;
+  organizadorId?: string | null;
+  nombre?: string | null;
+  fotoUrl: string | null;
+  rivieraId?: string | null;
+  edad: number | null;
+  enCancha: string | null;
+  instagramUrl: string | null;
+  facebookUrl: string | null;
+  tiktokUrl: string | null;
+}
+
 export interface StudentCoachingOverview {
   ok: boolean;
   linked: boolean;
   rivieraId: string | null;
   relationships: StudentCoachingRelationship[];
+  studentProfile?: StudentSelfProfile | null;
   error?: string;
+}
+
+function mapStudentSelfProfile(raw: unknown): StudentSelfProfile | null {
+  if (!raw || typeof raw !== "object") return null;
+  const p = raw as Record<string, unknown>;
+  if (!p.id) return null;
+  const str = (v: unknown) =>
+    typeof v === "string" && v.trim() ? v.trim() : null;
+  return {
+    id: String(p.id),
+    organizadorId: str(p.organizador_id),
+    nombre: str(p.nombre),
+    fotoUrl: str(p.foto_url),
+    rivieraId: str(p.riviera_id) ?? str(p.rivieraId),
+    edad: p.edad != null && Number.isFinite(Number(p.edad)) ? Number(p.edad) : null,
+    enCancha: str(p.en_cancha),
+    instagramUrl: str(p.instagram_url),
+    facebookUrl: str(p.facebook_url),
+    tiktokUrl: str(p.tiktok_url),
+  };
+}
+
+export interface UpdateStudentProfileInput {
+  fotoUrl?: string | null;
+  edad?: number | null;
+  enCancha?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  tiktokUrl?: string | null;
+}
+
+/**
+ * Actualiza foto, edad, posición en la cancha y redes del alumno autenticado.
+ * Solo se envían los campos presentes. El correo NO es editable desde aquí.
+ */
+export async function updateStudentCoachingProfile(
+  input: UpdateStudentProfileInput
+): Promise<StudentSelfProfile> {
+  const has = (k: keyof UpdateStudentProfileInput) => input[k] !== undefined;
+  const { data, error } = await supabase.rpc("update_student_coaching_profile", {
+    p_foto_url: input.fotoUrl ?? null,
+    p_update_foto: has("fotoUrl"),
+    p_edad: input.edad ?? null,
+    p_update_edad: has("edad"),
+    p_en_cancha: input.enCancha ?? null,
+    p_update_en_cancha: has("enCancha"),
+    p_instagram_url: input.instagramUrl ?? null,
+    p_update_instagram: has("instagramUrl"),
+    p_facebook_url: input.facebookUrl ?? null,
+    p_update_facebook: has("facebookUrl"),
+    p_tiktok_url: input.tiktokUrl ?? null,
+    p_update_tiktok: has("tiktokUrl"),
+  });
+  if (error) {
+    throw new Error("No se pudo guardar tu perfil: " + error.message);
+  }
+  const raw = data as Record<string, unknown> | null;
+  if (!raw || raw.ok !== true) {
+    throw new Error(
+      typeof raw?.error === "string" ? raw.error : "No se pudo guardar tu perfil."
+    );
+  }
+  const profile = mapStudentSelfProfile(raw.profile);
+  if (!profile) throw new Error("Respuesta de perfil inválida.");
+  return profile;
 }
 
 /**
@@ -1373,6 +1453,7 @@ export async function fetchStudentCoachingOverview(): Promise<StudentCoachingOve
     linked: Boolean(raw.linked),
     rivieraId: raw.riviera_id ? String(raw.riviera_id) : null,
     relationships,
+    studentProfile: mapStudentSelfProfile(raw.student_profile),
   };
 }
 

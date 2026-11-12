@@ -2211,6 +2211,229 @@
   outline-offset: 2px;
 }
 
+/* ── Foto del alumno: acción "Cambiar foto" ── */
+.coaching-student-hero__portrait-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.coaching-student-hero__photo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 28px;
+  padding: 0.2rem 0.6rem;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--student-text-secondary);
+  background: var(--student-bg-card);
+  border: 1px solid var(--student-border-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.coaching-student-hero__photo-btn:hover:not(:disabled) {
+  color: var(--student-accent-strong);
+  border-color: var(--student-accent-border);
+  background: var(--student-accent-soft);
+}
+
+.coaching-student-hero__photo-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.coaching-student-hero__photo-input {
+  display: none;
+}
+
+.coaching-student-photo-error {
+  margin: 0 0 1rem;
+}
+
+/* ── MI PERFIL ── */
+.coaching-student-profile {
+  background: var(--student-bg-card);
+  border: 1px solid var(--student-border);
+  border-radius: 14px;
+  padding: 1rem 1.35rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--student-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.coaching-student-profile__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.coaching-student-profile__eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--student-accent);
+}
+
+.coaching-student-profile__edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 32px;
+  padding: 0.3rem 0.8rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--student-text-primary);
+  background: var(--student-bg-card);
+  border: 1px solid var(--student-border-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.coaching-student-profile__edit:hover {
+  background: var(--student-bg-subtle);
+  border-color: rgba(15, 23, 42, 0.25);
+}
+
+.coaching-student-profile__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem 1.5rem;
+  margin: 0;
+}
+
+.coaching-student-profile__field {
+  min-width: 0;
+}
+
+.coaching-student-profile__field dt {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--student-text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.coaching-student-profile__field dd {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--student-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.coaching-student-profile__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.coaching-student-profile__chip {
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.22rem 0.7rem;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--student-accent-strong);
+  background: var(--student-accent-soft);
+  border: 1px solid var(--student-accent-border);
+}
+
+.coaching-student-profile__form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+}
+
+.coaching-student-profile__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--student-text-secondary);
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.coaching-student-profile__label legend {
+  padding: 0;
+  margin-bottom: 0.3rem;
+}
+
+.coaching-student-profile__segmented {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.coaching-student-profile__segment {
+  min-height: 40px;
+  padding: 0.4rem 1.1rem;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--student-text-secondary);
+  background: #ffffff;
+  border: 1px solid var(--student-border-strong);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.coaching-student-profile__segment.is-active {
+  color: #ffffff;
+  background: var(--student-text-primary);
+  border-color: var(--student-text-primary);
+}
+
+.coaching-student-profile__error {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.coaching-student-profile__success {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--student-accent-strong);
+}
+
+.coaching-student-profile__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+@media (max-width: 720px) {
+  .coaching-student-profile__grid,
+  .coaching-student-profile__form {
+    grid-template-columns: 1fr;
+  }
+
+  .coaching-student-profile__actions .coaching-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .coaching-student-page *,
   .coaching-student-page *::before,

@@ -414,6 +414,223 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     expect(container.textContent).not.toContain("MI PRÓXIMO OBJETIVO");
   });
 
+  it("muestra la foto real y el perfil del alumno aunque no tenga entrenador, sin campo de correo", async () => {
+    jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockResolvedValueOnce({
+      ok: true,
+      linked: true,
+      rivieraId: "RIV-00000356",
+      relationships: [],
+      studentProfile: {
+        id: "player-1",
+        nombre: "Diego Palomares",
+        fotoUrl: "https://cdn.test/diego.jpg",
+        rivieraId: "RIV-00000356",
+        edad: 28,
+        enCancha: "reves",
+        instagramUrl: "instagram.com/diego",
+        facebookUrl: null,
+        tiktokUrl: null,
+      },
+    });
+
+    await act(async () => {
+      root.render(<StudentCoachingPage />);
+    });
+
+    const img = container.querySelector(
+      ".coaching-student-hero__portrait-img",
+    ) as HTMLImageElement | null;
+    expect(img?.src).toContain("diego.jpg");
+    expect(container.textContent).toContain("Cambiar foto");
+    expect(container.textContent).toContain("MI PERFIL");
+    expect(container.textContent).toContain("28 años");
+    expect(container.textContent).toContain("Revés");
+    expect(container.textContent).toContain("Instagram");
+  });
+
+  it("muestra iniciales cuando no hay foto", async () => {
+    jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockResolvedValueOnce({
+      ok: true,
+      linked: true,
+      rivieraId: "RIV-00000356",
+      relationships: [],
+      studentProfile: {
+        id: "player-1",
+        nombre: "Diego Palomares",
+        fotoUrl: null,
+        edad: null,
+        enCancha: null,
+        instagramUrl: null,
+        facebookUrl: null,
+        tiktokUrl: null,
+      },
+    });
+
+    await act(async () => {
+      root.render(<StudentCoachingPage />);
+    });
+
+    expect(container.querySelector(".coaching-student-hero__portrait-img")).toBeNull();
+    expect(
+      container.querySelector(".coaching-student-hero__portrait-fallback")?.textContent,
+    ).toBe("DP");
+  });
+
+  it("edita edad, posición y redes y nunca ofrece el correo como campo", async () => {
+    jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockResolvedValueOnce({
+      ok: true,
+      linked: true,
+      rivieraId: "RIV-00000356",
+      relationships: [],
+      studentProfile: {
+        id: "player-1",
+        nombre: "Diego Palomares",
+        fotoUrl: null,
+        edad: null,
+        enCancha: null,
+        instagramUrl: null,
+        facebookUrl: null,
+        tiktokUrl: null,
+      },
+    });
+    const saveSpy = jest
+      .spyOn(coachingApi, "updateStudentCoachingProfile")
+      .mockResolvedValue({
+        id: "player-1",
+        nombre: "Diego Palomares",
+        fotoUrl: null,
+        edad: 30,
+        enCancha: "drive",
+        instagramUrl: "instagram.com/diego",
+        facebookUrl: null,
+        tiktokUrl: null,
+      });
+
+    await act(async () => {
+      root.render(<StudentCoachingPage />);
+    });
+
+    const editBtn = Array.from(container.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("Editar perfil"),
+    ) as HTMLButtonElement;
+    await act(async () => {
+      editBtn.click();
+    });
+
+    expect(container.querySelector('input[type="email"]')).toBeNull();
+    expect(container.textContent?.toLowerCase()).not.toContain("correo");
+
+    const setValue = (el: HTMLInputElement, value: string) => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )!.set!;
+      setter.call(el, value);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    const inputs = container.querySelectorAll(
+      ".coaching-student-profile__form input",
+    );
+    await act(async () => {
+      setValue(inputs[0] as HTMLInputElement, "30");
+      setValue(inputs[1] as HTMLInputElement, "instagram.com/diego");
+    });
+    const drive = Array.from(container.querySelectorAll('[role="radio"]')).find(
+      (b) => b.textContent === "Drive",
+    ) as HTMLButtonElement;
+    await act(async () => {
+      drive.click();
+    });
+    const form = container.querySelector(
+      ".coaching-student-profile__form",
+    ) as HTMLFormElement;
+    await act(async () => {
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+
+    expect(saveSpy).toHaveBeenCalledWith({
+      edad: 30,
+      enCancha: "drive",
+      instagramUrl: "https://instagram.com/diego",
+      facebookUrl: null,
+      tiktokUrl: null,
+    });
+    expect(container.textContent).toContain("30 años");
+    expect(container.textContent).toContain("Drive");
+  });
+
+  it("valida edad fuera de 5–99 y enlaces inválidos sin llamar al servidor", async () => {
+    jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockResolvedValueOnce({
+      ok: true,
+      linked: true,
+      rivieraId: "RIV-00000356",
+      relationships: [],
+      studentProfile: {
+        id: "player-1",
+        nombre: "Diego Palomares",
+        fotoUrl: null,
+        edad: null,
+        enCancha: null,
+        instagramUrl: null,
+        facebookUrl: null,
+        tiktokUrl: null,
+      },
+    });
+    const saveSpy = jest.spyOn(coachingApi, "updateStudentCoachingProfile");
+    saveSpy.mockClear();
+
+    await act(async () => {
+      root.render(<StudentCoachingPage />);
+    });
+    const editBtn = Array.from(container.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("Editar perfil"),
+    ) as HTMLButtonElement;
+    await act(async () => {
+      editBtn.click();
+    });
+
+    const setValue = (el: HTMLInputElement, value: string) => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )!.set!;
+      setter.call(el, value);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    const submit = async () => {
+      const form = container.querySelector(
+        ".coaching-student-profile__form",
+      ) as HTMLFormElement;
+      await act(async () => {
+        form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      });
+    };
+    const inputs = () =>
+      container.querySelectorAll(
+        ".coaching-student-profile__form input",
+      ) as NodeListOf<HTMLInputElement>;
+
+    await act(async () => {
+      setValue(inputs()[0], "4");
+    });
+    await submit();
+    expect(container.textContent).toContain("entre 5 y 99");
+
+    await act(async () => {
+      setValue(inputs()[0], "100");
+    });
+    await submit();
+    expect(container.textContent).toContain("entre 5 y 99");
+
+    await act(async () => {
+      setValue(inputs()[0], "25");
+      setValue(inputs()[1], "ftp://malicioso");
+    });
+    await submit();
+    expect(container.textContent).toContain("enlace de Instagram no es válido");
+    expect(saveSpy).not.toHaveBeenCalled();
+  });
+
   it("renders error alert with retry button when loading fails", async () => {
     jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockRejectedValueOnce(
       new Error("Conexión perdida con la base de datos"),

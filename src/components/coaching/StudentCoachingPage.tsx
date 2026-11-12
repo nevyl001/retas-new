@@ -1,11 +1,23 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useUser } from "../../contexts/UserContext";
 import {
   fetchStudentCoachingOverview,
   fetchStudentTrainingTimeline,
   linkStudentAccountByRivieraId,
+  updateStudentCoachingProfile,
   type StudentCoachingOverview,
+  type StudentSelfProfile,
+  type UpdateStudentProfileInput,
 } from "../../lib/coaching/coachingApi";
+import { uploadJugadorAvatarCroppedFileWithinLimit } from "../../lib/rivieraJugadores/uploadAvatar";
+import { JugadorAvatarCropModal } from "../jugadores/JugadorAvatarCropModal";
+import { StudentProfileCard } from "./StudentProfileCard";
 import type { StudentTrainingSession } from "../../lib/coaching/types";
 import { getDailyMentalidadRivieraQuote } from "../../lib/coaching/mentalidadRivieraQuotes";
 import { StudentTrainingSection } from "./StudentTrainingSection";
@@ -52,7 +64,36 @@ export const StudentCoachingPage: React.FC = () => {
   const [training, setTraining] = useState<StudentTrainingSession[]>([]);
   const [trainingError, setTrainingError] = useState<string | null>(null);
 
+  // Perfil propio del alumno (foto + datos editables)
+  const [profileOverride, setProfileOverride] =
+    useState<StudentSelfProfile | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoBroken, setPhotoBroken] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+
   const dailyQuote = useMemo(() => getDailyMentalidadRivieraQuote(), []);
+
+  const handleSaveProfile = useCallback(
+    async (input: UpdateStudentProfileInput) => {
+      const updated = await updateStudentCoachingProfile(input);
+      setProfileOverride(updated);
+    },
+    [],
+  );
+
+  const handlePhotoSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("Selecciona un archivo de imagen (JPG, PNG o WebP).");
+      return;
+    }
+    setPhotoError(null);
+    setPhotoFile(file);
+  };
 
   const sessionsByRelationship = useMemo(() => {
     const rels = overview?.relationships ?? [];
@@ -328,19 +369,65 @@ export const StudentCoachingPage: React.FC = () => {
       ? user.user_metadata.avatar_url.trim()
       : "";
 
+  const studentProfile: StudentSelfProfile | null =
+    profileOverride ??
+    overview?.studentProfile ??
+    (primaryPlayer?.id
+      ? {
+          id: primaryPlayer.id,
+          nombre: primaryPlayer.nombre,
+          fotoUrl: primaryPlayer.fotoUrl ?? null,
+          rivieraId: primaryPlayer.rivieraId ?? null,
+          edad: null,
+          enCancha: null,
+          instagramUrl: null,
+          facebookUrl: null,
+          tiktokUrl: null,
+        }
+      : null);
+
   const studentName =
+    studentProfile?.nombre?.trim() ||
     primaryPlayer?.nombre?.trim() ||
     userProfile?.name?.trim() ||
     metadataName ||
     null;
 
   const studentPhotoUrl =
+    studentProfile?.fotoUrl ||
     primaryPlayer?.fotoUrl ||
     userProfile?.avatar_url ||
     metadataAvatar ||
     null;
 
   const avatarInitials = getInitials(studentName || user?.email || "RV");
+
+  const canEditProfile = Boolean(studentProfile?.id && user?.id);
+
+  const handlePhotoConfirm = async (cropped: File) => {
+    if (!user?.id || !studentProfile?.id) return;
+    setPhotoUploading(true);
+    setPhotoError(null);
+    try {
+      const url = await uploadJugadorAvatarCroppedFileWithinLimit(
+        user.id,
+        studentProfile.id,
+        cropped,
+      );
+      const updated = await updateStudentCoachingProfile({ fotoUrl: url });
+      setProfileOverride(updated);
+      setPhotoBroken(false);
+    } catch (err) {
+      setPhotoError(
+        err instanceof Error
+          ? err.message
+          : "No se pudo actualizar tu foto. Intenta de nuevo.",
+      );
+    } finally {
+      setPhotoUploading(false);
+      setPhotoFile(null);
+    }
+  };
 
   return (
     <div className="coaching-page coaching-student-page rv-page">
@@ -357,20 +444,45 @@ export const StudentCoachingPage: React.FC = () => {
 
         <div className="coaching-student-hero__main">
           <div className="coaching-student-hero__identity">
-            <div className="coaching-student-hero__portrait-frame">
-              {studentPhotoUrl ? (
-                <img
-                  src={studentPhotoUrl}
-                  alt={studentName || "Alumno Riviera"}
-                  className="coaching-student-hero__portrait-img"
-                />
-              ) : (
-                <div
-                  className="coaching-student-hero__portrait-fallback"
-                  aria-hidden="true"
-                >
-                  <span>{avatarInitials}</span>
-                </div>
+            <div className="coaching-student-hero__portrait-wrap">
+              <div className="coaching-student-hero__portrait-frame">
+                {studentPhotoUrl && !photoBroken ? (
+                  <img
+                    src={studentPhotoUrl}
+                    alt={studentName || "Alumno Riviera"}
+                    className="coaching-student-hero__portrait-img"
+                    onError={() => setPhotoBroken(true)}
+                  />
+                ) : (
+                  <div
+                    className="coaching-student-hero__portrait-fallback"
+                    aria-hidden="true"
+                  >
+                    <span>{avatarInitials}</span>
+                  </div>
+                )}
+              </div>
+              {canEditProfile && (
+                <>
+                  <button
+                    type="button"
+                    className="coaching-student-hero__photo-btn"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={photoUploading}
+                    aria-label="Cambiar foto"
+                  >
+                    <TablerIcon name="camera" size={13} />
+                    {photoUploading ? "Subiendo…" : "Cambiar foto"}
+                  </button>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="coaching-student-hero__photo-input"
+                    data-testid="student-photo-input"
+                    onChange={handlePhotoSelected}
+                  />
+                </>
               )}
             </div>
 
@@ -424,6 +536,31 @@ export const StudentCoachingPage: React.FC = () => {
           )}
         </div>
       </header>
+
+      {photoError && (
+        <p
+          className="coaching-student-profile__error coaching-student-photo-error"
+          role="alert"
+        >
+          {photoError}
+        </p>
+      )}
+
+      <JugadorAvatarCropModal
+        open={Boolean(photoFile)}
+        file={photoFile}
+        playerName={studentName || "Alumno"}
+        onClose={() => setPhotoFile(null)}
+        onConfirm={(f) => void handlePhotoConfirm(f)}
+      />
+
+      {/* MI PERFIL — foto y datos editables (sin correo) */}
+      {studentProfile && canEditProfile && (
+        <StudentProfileCard
+          profile={studentProfile}
+          onSave={handleSaveProfile}
+        />
+      )}
 
       {/* 2. MENSAJE MOTIVACIONAL DIARIO — MENTALIDAD RIVIERA */}
       <section

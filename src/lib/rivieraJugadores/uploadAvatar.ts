@@ -80,20 +80,25 @@ export function computeSquareCrop(
 }
 
 /** Recorta cuadrado, redimensiona y devuelve JPEG nítido para avatar y hero. */
-export async function resizeAvatarFile(file: File): Promise<Blob> {
+export async function resizeAvatarFile(
+  file: File,
+  options?: { size?: number; quality?: number }
+): Promise<Blob> {
+  const outputSize = options?.size ?? OUTPUT_SIZE;
+  const quality = options?.quality ?? JPEG_QUALITY;
   const { source, width, height, release } = await loadDrawableSource(file);
   try {
     const { sx, sy, side } = computeSquareCrop(width, height);
 
     const canvas = document.createElement("canvas");
-    canvas.width = OUTPUT_SIZE;
-    canvas.height = OUTPUT_SIZE;
+    canvas.width = outputSize;
+    canvas.height = outputSize;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas no disponible");
 
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(source, sx, sy, side, side, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+    ctx.drawImage(source, sx, sy, side, side, 0, 0, outputSize, outputSize);
 
     return new Promise((resolve, reject) => {
       canvas.toBlob(
@@ -102,12 +107,41 @@ export async function resizeAvatarFile(file: File): Promise<Blob> {
           else reject(new Error("Error al procesar imagen"));
         },
         "image/jpeg",
-        JPEG_QUALITY
+        quality
       );
     });
   } finally {
     release();
   }
+}
+
+/** Límite del bucket jugadores-avatars (512 KB) con margen de seguridad. */
+export const AVATAR_BUCKET_MAX_BYTES = 500 * 1024;
+
+const AVATAR_SIZE_LADDER: Array<{ size: number; quality: number }> = [
+  { size: 1200, quality: 0.92 },
+  { size: 1000, quality: 0.85 },
+  { size: 800, quality: 0.8 },
+  { size: 640, quality: 0.75 },
+  { size: 480, quality: 0.7 },
+];
+
+/**
+ * Igual que `resizeAvatarFile` pero reduce tamaño/calidad hasta caber en el
+ * límite del bucket. El primer escalón es idéntico al flujo existente.
+ */
+export async function resizeAvatarFileWithinLimit(
+  file: File,
+  maxBytes = AVATAR_BUCKET_MAX_BYTES
+): Promise<Blob> {
+  let last: Blob | null = null;
+  for (const step of AVATAR_SIZE_LADDER) {
+    last = await resizeAvatarFile(file, step);
+    if (last.size <= maxBytes) return last;
+  }
+  throw new Error(
+    "La imagen es demasiado pesada. Elige una foto más ligera e inténtalo de nuevo."
+  );
 }
 
 /** Sube JPEG ya recortado (p. ej. desde cropper interactivo). */
@@ -146,4 +180,14 @@ export async function uploadJugadorAvatarCroppedFile(
 ): Promise<string> {
   const blob = await resizeAvatarFile(croppedFile);
   return uploadJugadorAvatarBlob(organizadorId, jugadorId, blob);
+}
+
+/** Variante para alumnos: garantiza que el JPEG cabe en el límite del bucket. */
+export async function uploadJugadorAvatarCroppedFileWithinLimit(
+  ownerFolderId: string,
+  jugadorId: string,
+  croppedFile: File
+): Promise<string> {
+  const blob = await resizeAvatarFileWithinLimit(croppedFile);
+  return uploadJugadorAvatarBlob(ownerFolderId, jugadorId, blob);
 }
