@@ -187,6 +187,44 @@ export async function resolveOfficialGlobalPuntos(
   return puntos;
 }
 
+export type OfficialPointsByClubRow = {
+  organizadorId: string;
+  points: number;
+};
+
+/**
+ * Desglose del ranking oficial por club emisor.
+ * null = la lectura falló (no sustituir con la carrera local ni con 0).
+ * [] = el ledger no tiene puntos por club para este perfil.
+ */
+export async function resolveOfficialPointsByClub(
+  jugadorId: string
+): Promise<OfficialPointsByClubRow[] | null> {
+  const id = jugadorId.trim();
+  if (!id) return null;
+
+  const { data, error } = await supabase.rpc(
+    "riviera_official_points_by_club_for_jugador",
+    { p_riviera_jugador_id: id }
+  );
+
+  if (error || data == null) return null;
+  if (!Array.isArray(data)) return null;
+
+  const rows: OfficialPointsByClubRow[] = [];
+  for (const raw of data) {
+    if (!raw || typeof raw !== "object") return null;
+    const record = raw as { organizador_id?: unknown; points?: unknown };
+    const organizadorId =
+      typeof record.organizador_id === "string" ? record.organizador_id.trim() : "";
+    const points =
+      typeof record.points === "number" ? record.points : Number(record.points);
+    if (!organizadorId || !Number.isFinite(points)) return null;
+    rows.push({ organizadorId, points });
+  }
+  return rows;
+}
+
 /** @deprecated Use resolveOfficialGlobalPuntos */
 export const fetchOfficialDisplayPuntosForJugador = resolveOfficialGlobalPuntos;
 

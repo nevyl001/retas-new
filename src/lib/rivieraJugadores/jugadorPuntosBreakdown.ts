@@ -158,6 +158,49 @@ export function breakdownToDisplayLines(
   return lines;
 }
 
+/**
+ * Clubes que componen el ranking oficial.
+ * Solo se muestran si su suma es exactamente el total del ledger.
+ * Un fallo de lectura o un desglose que no cuadra devuelve []: el total
+ * oficial sigue visible y no se sustituye por la carrera local.
+ */
+export function buildOfficialRankingClubLines(
+  jugador: RivieraJugadorWithStats,
+  options?: {
+    contextualOrganizerId?: string | null;
+    registrationOrganizerId?: string | null;
+  }
+): JugadorPuntosBreakdownLine[] {
+  const official = resolveOfficialPuntosDisplay(jugador);
+  const clubs = jugador.pointsBreakdown?.officialPointsByClub;
+  if (official.kind !== "available" || !clubs || clubs.length === 0) return [];
+
+  const summed = new Map<string, PlayerPointsBreakdownClub>();
+  for (const club of clubs) {
+    const id = club.organizador_id?.trim();
+    if (!id || !Number.isFinite(club.points)) return [];
+    const prev = summed.get(id);
+    summed.set(id, {
+      organizador_id: id,
+      club_name: club.club_name?.trim() || prev?.club_name || "",
+      points: (prev?.points ?? 0) + club.points,
+    });
+  }
+
+  const merged = Array.from(summed.values());
+  if (sumCareerClubPoints(merged) !== official.puntos) return [];
+
+  return buildClubPointsDisplayRows(merged, {
+    contextualOrganizerId: options?.contextualOrganizerId,
+    registrationOrganizerId: options?.registrationOrganizerId,
+  }).map((row) => ({
+    key: row.organizerId,
+    clubLabel: row.clubName,
+    puntos: row.points,
+    role: row.isContextClub ? ("home" as const) : ("other" as const),
+  }));
+}
+
 /** Puntos de carrera local (todos los clubes); nunca ROMC. */
 export function resolveCareerTotalAllClubsDisplay(
   jugador: RivieraJugadorWithStats,

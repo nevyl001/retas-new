@@ -16,7 +16,10 @@ import {
   resolvePlayerPoints,
 } from "./playerIdentityService";
 import type { ResolvedPlayerIdentity } from "./playerIdentityService";
-import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
+import {
+  resolveOfficialGlobalPuntos,
+  resolveOfficialPointsByClub,
+} from "./rivieraOfficialActivity";
 import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
 
 export type PlayerPointsBreakdownClub = {
@@ -32,6 +35,11 @@ export type PlayerPointsBreakdown = {
   careerTotalAllClubs: number;
   /** Puntos ledger ROMC; null = sin identidad oficial / RPC no disponible. */
   officialGlobalPoints: number | null;
+  /**
+   * Ledger ROMC agrupado por club emisor.
+   * null o ausente = la lectura falló. No rellenar con la carrera local.
+   */
+  officialPointsByClub?: PlayerPointsBreakdownClub[] | null;
   pointsByClub: PlayerPointsBreakdownClub[];
 };
 
@@ -120,9 +128,20 @@ async function withOfficialGlobalPoints(
   jugador: RivieraJugadorWithStats,
   breakdown: CareerPointsBreakdownView
 ): Promise<PlayerPointsBreakdown> {
+  const [officialGlobalPoints, officialRows] = await Promise.all([
+    resolveOfficialGlobalPointsForJugador(jugador),
+    resolveOfficialPointsByClub(jugador.id),
+  ]);
   return {
     ...breakdown,
-    officialGlobalPoints: await resolveOfficialGlobalPointsForJugador(jugador),
+    officialGlobalPoints,
+    officialPointsByClub: officialRows
+      ? officialRows.map((row) => ({
+          organizador_id: row.organizadorId,
+          club_name: getCachedOrganizerDisplayName(row.organizadorId) ?? "",
+          points: row.points,
+        }))
+      : null,
   };
 }
 

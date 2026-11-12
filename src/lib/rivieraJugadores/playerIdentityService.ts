@@ -730,11 +730,39 @@ export async function getPublicPlayerProfileData(
     currentOrganizadorId: org,
     participaciones: historialGlobal,
   });
-  jugador = { ...jugador, pointsBreakdown };
+  jugador = {
+    ...jugador,
+    pointsBreakdown,
+    ...(jugador.officialPuntosGlobal == null &&
+    pointsBreakdown.officialGlobalPoints != null
+      ? { officialPuntosGlobal: pointsBreakdown.officialGlobalPoints }
+      : {}),
+  };
 
-  const localRankingPos = skipRankingPosicion
-    ? null
-    : localRankingPosFromLite;
+  let localRankingPos = skipRankingPosicion ? null : localRankingPosFromLite;
+
+  // La ficha global (sin club en la URL) usa el mismo ranking que rivieraopen.com/rankings.
+  if (!skipRankingPosicion && !hasOrgContext) {
+    try {
+      const pos = await resolveRankingPosicionForPublicFicha(jugador, {
+        orgId: null,
+        preferClubRanking: false,
+      });
+      localRankingPos = pos != null && pos > 0 ? pos : null;
+      try {
+        onRankingPosReady?.(localRankingPos);
+      } catch {
+        /* el caller no debe tumbar el perfil */
+      }
+    } catch {
+      localRankingPos = null;
+      try {
+        onRankingPosReady?.(null);
+      } catch {
+        /* el caller no debe tumbar el perfil */
+      }
+    }
+  }
 
   const debug: PlayerIdentityDebugSnapshot | undefined = includeDebug
     ? {

@@ -11,6 +11,7 @@ import { getJugadorPerfilMeta } from "../../lib/rivieraJugadores/jugadorPerfilDi
 import {
   isRankingPointsBreakdownPending,
   resolveCareerTotalAllClubsDisplay,
+  resolveOfficialPuntosDisplay,
 } from "../../lib/rivieraJugadores/jugadorPuntosBreakdown";
 import {
   computePublicProfileStats,
@@ -265,6 +266,9 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         ...(profile.jugador.pointsBreakdown?.pointsByClub.map(
           (c) => c.organizador_id
         ) ?? []),
+        ...(profile.jugador.pointsBreakdown?.officialPointsByClub?.map(
+          (c) => c.organizador_id
+        ) ?? []),
       ])
         .then(() => {
           if (isCurrent()) setClubLabelsEpoch((n) => n + 1);
@@ -511,6 +515,8 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const careerTotalPending = isRankingPointsBreakdownPending(jugador, {
     hasOrgContext,
   });
+  const officialRanking = resolveOfficialPuntosDisplay(jugador);
+  const showOfficialRanking = !hasOrgContext;
 
   return (
     <ClubExperienceScope
@@ -644,7 +650,19 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                 <div className="rjp-ficha-player-card__score">
                   <p className="rjp-ficha-player-card__eyebrow">Puntaje Riviera</p>
                   <div className="rjp-ficha-player-card__score-val">
-                    {careerTotalPending ? (
+                    {showOfficialRanking ? (
+                      detailLoading ? (
+                        <span className="rjp-ficha-stat__val rjp-pts--na" aria-busy="true">
+                          Cargando ranking…
+                        </span>
+                      ) : officialRanking.kind === "available" ? (
+                        <span className="rjp-ficha-stat__val">
+                          {officialRanking.puntos.toLocaleString("es-MX")} pts
+                        </span>
+                      ) : (
+                        <span className="rjp-ficha-stat__val rjp-pts--na">—</span>
+                      )
+                    ) : careerTotalPending ? (
                       <span
                         className="rjp-ficha-stat__val rjp-pts--na"
                         aria-busy="true"
@@ -666,6 +684,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                     clubOrganizadorId={viewingOrgId}
                     hasOrgContext={hasOrgContext}
                     profileCard
+                    pointsSource={showOfficialRanking ? "official" : "career"}
                     registrationOrganizerId={registrationOrgId}
                     className="rjp-ficha-player-card__breakdown"
                   />
@@ -691,12 +710,20 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
               </span>
               <span className="rjp-ficha-position__rank-label">{rankingLabel}</span>
             </div>
-            {/*
-              Un solo sistema de puntos en este bloque: total carrera = suma por club.
-              El número grande y «Total carrera» deben coincidir siempre.
-            */}
             <div className="rjp-ficha-position__official">
-              {careerTotalPending ? (
+              {showOfficialRanking ? (
+                detailLoading ? (
+                  <span className="rjp-ficha-stat__val rjp-pts--na" aria-busy="true">
+                    Cargando ranking…
+                  </span>
+                ) : officialRanking.kind === "available" ? (
+                  <span className="rjp-ficha-stat__val">
+                    {officialRanking.puntos.toLocaleString("es-MX")} pts
+                  </span>
+                ) : (
+                  <span className="rjp-ficha-stat__val rjp-pts--na">—</span>
+                )
+              ) : careerTotalPending ? (
                 <span
                   className="rjp-ficha-stat__val rjp-pts--na"
                   aria-busy="true"
@@ -716,6 +743,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                 clubOrganizadorId={viewingOrgId}
                 hasOrgContext={hasOrgContext}
                 profileCard
+                pointsSource={showOfficialRanking ? "official" : "career"}
                 registrationOrganizerId={registrationOrgId}
               />
             </div>

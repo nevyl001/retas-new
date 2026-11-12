@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import {
   buildJugadorPuntosBreakdown,
+  buildOfficialRankingClubLines,
   isRankingPointsBreakdownPending,
   resolveCareerTotalAllClubsDisplay,
 } from "../../lib/rivieraJugadores/jugadorPuntosBreakdown";
@@ -12,6 +13,8 @@ type JugadorPuntosBreakdownProps = {
   hasOrgContext?: boolean;
   /** Card de perfil público: desglose de carrera local por club. */
   profileCard?: boolean;
+  /** official = ledger del ranking. career = participaciones locales. */
+  pointsSource?: "official" | "career";
   /** Club de registro / origen (para ordenar tras el contextual). */
   registrationOrganizerId?: string | null;
   className?: string;
@@ -25,6 +28,10 @@ function breakdownJugadorSignature(jugador: RivieraJugadorWithStats): string {
     jugador.pointsBreakdown?.careerTotalAllClubs ?? "",
     jugador.pointsBreakdown?.currentClubPoints ?? "",
     jugador.careerPuntosByClub?.map((c) => `${c.organizadorId}:${c.puntos}`).join("|") ?? "",
+    jugador.pointsBreakdown?.officialGlobalPoints ?? "",
+    jugador.pointsBreakdown?.officialPointsByClub
+      ?.map((c) => `${c.organizador_id}:${c.points}`)
+      .join("|") ?? "",
     jugador.stats?.puntos_totales ?? "",
   ].join("::");
 }
@@ -34,19 +41,26 @@ function JugadorPuntosBreakdownInner({
   clubOrganizadorId,
   hasOrgContext = false,
   profileCard = false,
+  pointsSource = "career",
   registrationOrganizerId = null,
   className = "",
 }: JugadorPuntosBreakdownProps) {
   const lines = useMemo(
     () =>
-      buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
-        hasOrgContext,
-        profileCard,
-        registrationOrganizerId,
-      }),
+      pointsSource === "official"
+        ? buildOfficialRankingClubLines(jugador, {
+            contextualOrganizerId: clubOrganizadorId,
+            registrationOrganizerId,
+          })
+        : buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
+            hasOrgContext,
+            profileCard,
+            registrationOrganizerId,
+          }),
     [
       clubOrganizadorId,
       hasOrgContext,
+      pointsSource,
       profileCard,
       registrationOrganizerId,
       jugador,
@@ -64,7 +78,9 @@ function JugadorPuntosBreakdownInner({
     );
   }
 
-  if (lines.length === 0) {
+  if (pointsSource === "official") {
+    if (lines.length === 0) return null;
+  } else if (lines.length === 0) {
     const pts = resolveCareerTotalAllClubsDisplay(
       jugador,
       hasOrgContext,
@@ -103,6 +119,7 @@ function propsAreEqual(
     prev.clubOrganizadorId === next.clubOrganizadorId &&
     prev.hasOrgContext === next.hasOrgContext &&
     prev.profileCard === next.profileCard &&
+    prev.pointsSource === next.pointsSource &&
     prev.registrationOrganizerId === next.registrationOrganizerId &&
     prev.className === next.className &&
     breakdownJugadorSignature(prev.jugador) ===
