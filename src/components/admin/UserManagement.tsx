@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { useAdmin } from "../../contexts/AdminContext";
 import { navigateAdminUser } from "../../lib/admin/adminNav";
 import { deleteUserComplete } from "../../lib/admin/deleteUserComplete";
-import { Button } from "../ui";
+import { TablerIcon } from "../ui/TablerIcon";
 import { AdminCreateUserModal } from "./AdminCreateUserModal";
 import "./UserManagement.css";
 
@@ -552,253 +552,328 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   return (
     <div className="user-management">
-      <div className="user-management-header">
-        <div className="header-title">
-          <h2>Cuentas</h2>
-          <span className="user-count">{filteredAndSortedUsers.length}</span>
+      {/* Header con título y acciones principales */}
+      <div className="um-header">
+        <div className="um-header-title-wrap">
+          <h2 className="um-header-title">Gestión de Cuentas</h2>
+          <span className="um-header-count">
+            {filteredAndSortedUsers.length} {filteredAndSortedUsers.length === 1 ? "cuenta" : "cuentas"}
+          </span>
         </div>
 
-        <div className="header-controls">
+        <div className="um-header-actions">
           {accountKind === "club" ? (
-            <Button type="button" variant="primary" size="sm" onClick={() => setCreateModalOpen(true)}>
-              Crear club
-            </Button>
+            <button
+              type="button"
+              className="um-btn um-btn--primary"
+              onClick={() => setCreateModalOpen(true)}
+            >
+              <TablerIcon name="plus" size={16} />
+              <span>Crear club</span>
+            </button>
           ) : null}
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
+            className="um-btn um-btn--ghost"
             onClick={() => void loadUsers()}
-            title="Actualizar lista"
+            title="Actualizar lista de cuentas"
           >
-            Actualizar
-          </Button>
+            <TablerIcon name="refresh" size={15} />
+            <span>Actualizar</span>
+          </button>
         </div>
       </div>
-      <div className="account-segments" role="tablist" aria-label="Tipo de cuenta">
-        <button
-          type="button"
-          className={`account-segment${accountKind === "club" ? " is-on" : ""}`}
-          onClick={() => setAccountKind("club")}
-        >
-          Clubes <span>{kindCounts.club}</span>
-        </button>
-        <button
-          type="button"
-          className={`account-segment${accountKind === "coach" ? " is-on" : ""}`}
-          onClick={() => setAccountKind("coach")}
-        >
-          Coaches <span>{kindCounts.coach}</span>
-        </button>
-        <button
-          type="button"
-          className={`account-segment${accountKind === "student" ? " is-on" : ""}`}
-          onClick={() => setAccountKind("student")}
-        >
-          Alumnos <span>{kindCounts.student}</span>
-        </button>
-      </div>
-      <p className="user-management-hint">
-        {accountKind === "club"
-          ? "Cuentas que organizan retas, ligas y torneos. Gestionar controla modos de juego, marca y ranking."
-          : accountKind === "coach"
-          ? "Accesos de entrenador. Eliminar la cuenta no borra al club ni a sus alumnos."
-          : "Accesos de Mi Coaching. Eliminar el acceso no borra las clases ni el ranking del club."}
-      </p>
 
+      {/* Selector segmentado de Tipo de Cuenta */}
+      <div className="um-tabs-container">
+        <div className="um-tabs" role="tablist" aria-label="Tipo de cuenta">
+          <button
+            type="button"
+            className={`um-tab ${accountKind === "club" ? "um-tab--active" : ""}`}
+            onClick={() => setAccountKind("club")}
+          >
+            <TablerIcon name="building-community" size={16} />
+            <span>Clubes</span>
+            <span className="um-tab-count">{kindCounts.club}</span>
+          </button>
+          <button
+            type="button"
+            className={`um-tab ${accountKind === "coach" ? "um-tab--active" : ""}`}
+            onClick={() => setAccountKind("coach")}
+          >
+            <TablerIcon name="whistle" size={16} />
+            <span>Coaches</span>
+            <span className="um-tab-count">{kindCounts.coach}</span>
+          </button>
+          <button
+            type="button"
+            className={`um-tab ${accountKind === "student" ? "um-tab--active" : ""}`}
+            onClick={() => setAccountKind("student")}
+          >
+            <TablerIcon name="user" size={16} />
+            <span>Alumnos</span>
+            <span className="um-tab-count">{kindCounts.student}</span>
+          </button>
+        </div>
+
+        <p className="um-hint">
+          {accountKind === "club"
+            ? "Clubes y organizaciones deportivas que operan retas, torneos, ligas y coaching. 'Gestionar' abre su configuración y ranking."
+            : accountKind === "coach"
+            ? "Entrenadores oficiales con credencial RIV-C y acceso al Espacio del Coach. Eliminar la cuenta no borra las retas ni alumnos del club."
+            : "Alumnos con acceso a Mi Coaching. Eliminar la cuenta no borra las clases impartidas ni su historial en el club."}
+        </p>
+      </div>
+
+      {/* Notificación de Limpieza o Error */}
       {authCleanupNotice && (
         <div
-          className={
-            authCleanupNoticeError
-              ? "user-management-notice user-management-notice--error"
-              : "user-management-notice"
-          }
+          className={`um-notice ${authCleanupNoticeError ? "um-notice--error" : "um-notice--success"}`}
           role="status"
         >
-          <p>{authCleanupNotice}</p>
-          <div className="user-management-notice-actions">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setAuthCleanupNotice(null);
-                setAuthCleanupNoticeError(false);
-              }}
-            >
-              Entendido
-            </Button>
+          <div className="um-notice-content">
+            <TablerIcon
+              name={authCleanupNoticeError ? "alert-circle" : "check"}
+              size={18}
+            />
+            <span>{authCleanupNotice}</span>
           </div>
+          <button
+            type="button"
+            className="um-notice-close"
+            onClick={() => {
+              setAuthCleanupNotice(null);
+              setAuthCleanupNoticeError(false);
+            }}
+          >
+            Entendido
+          </button>
         </div>
       )}
 
-      <div className="user-management-filters">
-        <div className="search-container">
-          <div className="search-input-container">
-            <input
-              type="text"
-              placeholder={
-                accountKind === "student"
-                  ? "Buscar por nombre, correo o Riviera ID"
-                  : accountKind === "coach"
-                  ? "Buscar por nombre, correo o RIV-C"
-                  : "Buscar por nombre o correo"
-              }
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input riviera-input"
-            />
-          </div>
+      {/* Toolbar con Búsqueda y Filtros */}
+      <div className="um-toolbar">
+        <div className="um-search-box">
+          <TablerIcon name="search" size={16} className="um-search-icon" />
+          <input
+            type="text"
+            className="um-search-input"
+            placeholder={
+              accountKind === "student"
+                ? "Buscar alumno por nombre, correo o Riviera ID..."
+                : accountKind === "coach"
+                ? "Buscar coach por nombre, correo o RIV-C..."
+                : "Buscar club por nombre o correo..."
+            }
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              className="um-search-clear"
+              onClick={() => setSearchTerm("")}
+              title="Borrar búsqueda"
+            >
+              <TablerIcon name="x" size={14} />
+            </button>
+          )}
         </div>
 
-        <div className="filter-controls">
+        <div className="um-toolbar-filters">
           {accountKind === "club" ? (
-          <select
-            value={filterBy}
-            onChange={(e) => setFilterBy(e.target.value as "all" | "active" | "inactive")}
-            className="riviera-input"
-          >
-            <option value="all">Todos los clubes</option>
-            <option value="active">Con actividad en curso</option>
-            <option value="inactive">Sin actividad en curso</option>
-          </select>
+            <div className="um-select-wrapper">
+              <select
+                value={filterBy}
+                onChange={(e) => setFilterBy(e.target.value as "all" | "active" | "inactive")}
+                className="um-select"
+              >
+                <option value="all">Todos los clubes</option>
+                <option value="active">Con actividad en curso</option>
+                <option value="inactive">Sin actividad en curso</option>
+              </select>
+            </div>
           ) : null}
 
-          <select
-            value={sortBy}
-            onChange={(e) =>
-              setSortBy(
-                e.target.value as
-                  | "name"
-                  | "email"
-                  | "created_at"
-                  | "updated_at"
-                  | "tournaments_total"
-                  | "activity_total"
-              )
-            }
-            className="riviera-input"
-          >
-            <option value="created_at">Ordenar por fecha de registro</option>
-            <option value="updated_at">Ordenar por última actualización</option>
-            <option value="name">Ordenar por nombre</option>
-            <option value="email">Ordenar por email</option>
-            <option value="tournaments_total">Ordenar por retas (app)</option>
-            <option value="activity_total">Ordenar por actividad total</option>
-          </select>
+          <div className="um-select-wrapper">
+            <select
+              value={sortBy}
+              onChange={(e) =>
+                setSortBy(
+                  e.target.value as
+                    | "name"
+                    | "email"
+                    | "created_at"
+                    | "updated_at"
+                    | "tournaments_total"
+                    | "activity_total"
+                )
+              }
+              className="um-select"
+            >
+              <option value="created_at">Fecha de registro</option>
+              <option value="updated_at">Última actualización</option>
+              <option value="name">Nombre alfabético</option>
+              <option value="email">Correo electrónico</option>
+              {accountKind === "club" ? (
+                <>
+                  <option value="tournaments_total">Retas (app)</option>
+                  <option value="activity_total">Actividad total</option>
+                </>
+              ) : null}
+            </select>
+          </div>
 
-          <Button
+          <button
             type="button"
-            variant="secondary"
-            size="sm"
+            className="um-sort-toggle"
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            title={`Ordenar ${
-              sortOrder === "asc" ? "descendente" : "ascendente"
-            }`}
+            title={`Ordenar ${sortOrder === "asc" ? "descendente" : "ascendente"}`}
           >
-            {sortOrder === "asc" ? "Asc" : "Desc"}
-          </Button>
+            <TablerIcon name={sortOrder === "asc" ? "sort-ascending" : "sort-descending"} size={16} />
+            <span>{sortOrder === "asc" ? "Asc" : "Desc"}</span>
+          </button>
         </div>
       </div>
 
-      <div className="user-list">
+      {/* Lista de Cuentas en Tarjetas Elegantes */}
+      <div className="um-cards-list">
         {filteredAndSortedUsers.length === 0 ? (
-          <div className="no-users">
-            <h3>No hay cuentas en esta vista</h3>
-            <p>Prueba con otro grupo o ajusta la búsqueda</p>
+          <div className="um-empty-state">
+            <TablerIcon name="users" size={40} className="um-empty-icon" />
+            <h3 className="um-empty-title">No se encontraron cuentas</h3>
+            <p className="um-empty-desc">
+              {searchTerm
+                ? `No hay coincidencias para "${searchTerm}". Prueba con otros términos.`
+                : "No hay registros disponibles en esta categoría."}
+            </p>
           </div>
         ) : (
-          <div className="user-grid">
-            {filteredAndSortedUsers.map((user) => (
-              <div key={user.id} className="user-card">
-                <div className="user-avatar">
+          filteredAndSortedUsers.map((user) => (
+            <div key={user.id} className="um-card">
+              {/* Columna Izquierda: Identidad */}
+              <div className="um-card-identity">
+                <div className="um-avatar">
                   {user.avatar_url ? (
                     <img
                       src={user.avatar_url}
                       alt={user.name || user.email}
-                      className="user-avatar-img"
+                      className="um-avatar-img"
                     />
                   ) : (
-                    <span className="user-avatar-initials">
+                    <span className="um-avatar-initials">
                       {getInitials(user.name, user.email)}
                     </span>
                   )}
                 </div>
 
-                <div className="user-info">
-                  <div className="user-identity">
-                    <h3 className="user-name">{user.name || user.email || "Sin nombre"}</h3>
-                    <p className="user-email">{user.email || "Sin correo"}</p>
-                  </div>
-                  <div className="user-stats">
-                    {user.account_kind === "coach" ? (
-                      <>
-                        <span className="account-kind account-kind--coach">
-                          {user.coach_info?.coach_code || "Coach"}
-                        </span>
-                        <span className="stat-item">
-                          {user.coach_info?.club_count || 0}{" "}
-                          {(user.coach_info?.club_count || 0) === 1 ? "club" : "clubes"}
-                        </span>
-                      </>
-                    ) : user.account_kind === "student" ? (
-                      <>
-                        <span className="account-kind account-kind--student">
-                          {user.student_info?.rivieraId || "Alumno"}
-                        </span>
-                        <span className="stat-item">
-                          {user.student_info?.isActive ? "Acceso activo" : "Pendiente de activación"}
-                        </span>
-                        <span className="stat-item">
-                          {user.student_info?.clubCount || 0}{" "}
-                          {(user.student_info?.clubCount || 0) === 1 ? "club" : "clubes"}
-                        </span>
-                      </>
+                <div className="um-identity-info">
+                  <div className="um-name-row">
+                    <h3 className="um-name" title={user.name || user.email}>
+                      {user.name || user.email || "Sin nombre"}
+                    </h3>
+                    {user.account_kind === "club" ? (
+                      <span className="um-badge um-badge--club">Club</span>
+                    ) : user.account_kind === "coach" ? (
+                      <span className="um-badge um-badge--coach">
+                        {user.coach_info?.coach_code || "Coach"}
+                      </span>
                     ) : (
-                      <>
-                        <span className="account-kind account-kind--club">Club</span>
-                        <span className="stat-item stat-item--strong">
-                          {user.activity_total || 0}{" "}
-                          {(user.activity_total || 0) === 1 ? "actividad" : "actividades"}
-                        </span>
-                        <span className="stat-item stat-item--muted">
-                          {user.tournaments_total || 0} retas · RR{" "}
-                          {user.retas_round_robin_total || 0} · Am.{" "}
-                          {user.retas_americano_total || 0} · Eq.{" "}
-                          {user.retas_teams_total || 0} · TE {user.express_total || 0}
-                        </span>
-                      </>
+                      <span className="um-badge um-badge--student">
+                        {user.student_info?.rivieraId || "Alumno"}
+                      </span>
                     )}
-                    <span className="stat-item">{formatDate(user.created_at)}</span>
                   </div>
-                </div>
-
-                <div className="user-actions">
-                  {user.account_kind === "club" ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleUserSelect(user)}
-                      title="Modos de juego, jugadores y ranking"
-                    >
-                      Gestionar
-                    </Button>
-                  ) : null}
-                  <Button
-                    type="button"
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleDeleteUser(user)}
-                    title="Eliminar cuenta"
-                    loading={deletingUserId === user.id}
-                  >
-                    {deletingUserId === user.id ? "Eliminando…" : "Eliminar"}
-                  </Button>
+                  <p className="um-email" title={user.email}>
+                    {user.email || "Sin correo"}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
+
+              {/* Columna Central: Métricas y Datos Estructurados */}
+              <div className="um-card-metrics">
+                {user.account_kind === "coach" ? (
+                  <div className="um-metrics-group">
+                    <div className="um-metrics-chips">
+                      <span className="um-stat-chip">
+                        <TablerIcon name="building-community" size={13} />
+                        {user.coach_info?.club_count || 0}{" "}
+                        {(user.coach_info?.club_count || 0) === 1 ? "club asignado" : "clubes asignados"}
+                      </span>
+                    </div>
+                    <span className="um-date-label">
+                      <TablerIcon name="calendar" size={12} />
+                      Creado el {formatDate(user.created_at)}
+                    </span>
+                  </div>
+                ) : user.account_kind === "student" ? (
+                  <div className="um-metrics-group">
+                    <div className="um-metrics-chips">
+                      <span
+                        className={`um-stat-chip ${
+                          user.student_info?.isActive ? "um-stat-chip--active" : "um-stat-chip--pending"
+                        }`}
+                      >
+                        <TablerIcon name={user.student_info?.isActive ? "check" : "clock"} size={13} />
+                        {user.student_info?.isActive ? "Acceso activo" : "Pendiente de activación"}
+                      </span>
+                      <span className="um-stat-chip">
+                        <TablerIcon name="building-community" size={13} />
+                        {user.student_info?.clubCount || 0}{" "}
+                        {(user.student_info?.clubCount || 0) === 1 ? "club vinculado" : "clubes vinculados"}
+                      </span>
+                    </div>
+                    <span className="um-date-label">
+                      <TablerIcon name="calendar" size={12} />
+                      Creado el {formatDate(user.created_at)}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="um-metrics-group">
+                    <div className="um-club-stats-row">
+                      <span className="um-stat-chip um-stat-chip--highlight">
+                        <TablerIcon name="activity" size={13} />
+                        {user.activity_total || 0}{" "}
+                        {(user.activity_total || 0) === 1 ? "actividad" : "actividades"}
+                      </span>
+                      <span className="um-retas-summary">
+                        {user.tournaments_total || 0} retas · RR {user.retas_round_robin_total || 0} · Am. {user.retas_americano_total || 0} · Eq. {user.retas_teams_total || 0} · TE {user.express_total || 0}
+                      </span>
+                    </div>
+                    <span className="um-date-label">
+                      <TablerIcon name="calendar" size={12} />
+                      Registrado el {formatDate(user.created_at)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Columna Derecha: Acciones */}
+              <div className="um-card-actions">
+                {user.account_kind === "club" ? (
+                  <button
+                    type="button"
+                    className="um-action-btn um-action-btn--manage"
+                    onClick={() => handleUserSelect(user)}
+                    title="Modos de juego, jugadores y ranking"
+                  >
+                    <TablerIcon name="settings" size={14} />
+                    <span>Gestionar</span>
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="um-action-btn um-action-btn--delete"
+                  onClick={() => handleDeleteUser(user)}
+                  disabled={deletingUserId === user.id}
+                  title="Eliminar cuenta"
+                >
+                  <TablerIcon name="trash" size={14} />
+                  <span>{deletingUserId === user.id ? "Eliminando…" : "Eliminar"}</span>
+                </button>
+              </div>
+            </div>
+          ))
         )}
       </div>
 
