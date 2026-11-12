@@ -8,6 +8,7 @@ import {
   unarchiveCoachFromClub,
   assignCoachClasses,
   removeCoachFromClub,
+  setClubCoachPassword,
   generateCoachingIdempotencyKey,
   loadCoachingClubSnapshot,
   fetchClubCoachingAgenda,
@@ -61,6 +62,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [nextPassword, setNextPassword] = useState("");
 
   // Modales
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -231,7 +233,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
 
   // Cancelar invitación pendiente
   const handleCancelInvitation = async () => {
-    if (!window.confirm("¿Seguro que deseas cancelar esta invitación? El coach no podrá activarse con este código.")) {
+    if (!window.confirm("¿Retirar este registro incompleto del club? El identificador y el historial no se borran.")) {
       return;
     }
     setBusy(true);
@@ -489,7 +491,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
         return (
           <span className="coaching-badge coaching-badge--pending">
             <TablerIcon name="clock" size={13} />
-            Invitación pendiente
+            Pendiente de configuración
           </span>
         );
       case "INACTIVE":
@@ -692,7 +694,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
             </h3>
             <span className="coaching-student-member-since">
               {membership.status === "PENDING"
-                ? `Invitación emitida: ${formatDate(membership.invitedAt)}`
+                ? `Registro sin acceso: ${formatDate(membership.invitedAt)}`
                 : membership.activatedAt
                 ? `Activo desde: ${formatDate(membership.activatedAt)}`
                 : `Registrado: ${formatDate(membership.createdAt)}`}
@@ -702,8 +704,8 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
       </header>
 
       {/* ── MÉTRICAS CLAVE EN ESTE CLUB ────────────────────────────── */}
-      <div className="coaching-student-metrics-grid" style={{ marginBottom: "1.5rem" }}>
-        <div className="coaching-student-metric-card coaching-metric--active">
+      <div className="coaching-coach-metrics" style={{ marginBottom: "1.5rem" }}>
+        <div className="coaching-student-metric-card coaching-metric--neutral">
           <div className="coaching-metric-top">
             <span className="coaching-metric-label">Alumnos Activos</span>
             <TablerIcon name="users" size={16} />
@@ -1870,9 +1872,9 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
           {/* ACCIÓN SEGÚN EL ESTADO */}
           {membership.status === "PENDING" && (
             <div style={{ background: "rgba(255, 184, 108, 0.08)", border: "1px solid rgba(255, 184, 108, 0.25)", padding: "1rem", borderRadius: "8px" }}>
-              <h4 style={{ margin: "0 0 0.4rem", color: "#ffb86c", fontSize: "0.95rem" }}>Invitación en espera</h4>
+              <h4 style={{ margin: "0 0 0.4rem", color: "#ffb86c", fontSize: "0.95rem" }}>Pendiente de configuración</h4>
               <p style={{ margin: "0 0 0.85rem", fontSize: "0.85rem", color: "var(--ro-text-secondary)" }}>
-                El coach aún no ha aceptado la invitación desde su cuenta personal de Riviera Open. Si fue enviada por error o ya no se requiere, puedes cancelarla.
+                Este coach todavía no tiene un acceso habilitado. Configura sus credenciales desde Agregar coach, o retíralo del club si ya no corresponde.
               </p>
               <button
                 type="button"
@@ -1882,10 +1884,54 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                 disabled={busy}
               >
                 <TablerIcon name="trash" size={15} />
-                {busy ? "Cancelando…" : "Cancelar invitación"}
+                {busy ? "Retirando…" : "Retirar registro"}
               </button>
             </div>
           )}
+
+          {membership.status !== "REMOVED" ? (
+            <form
+              onSubmit={async (event) => {
+                event.preventDefault();
+                if (nextPassword.trim().length < 8) {
+                  setActionError("La nueva contraseña necesita al menos 8 caracteres.");
+                  return;
+                }
+                if (!window.confirm("Se reemplaza la contraseña de acceso de este coach.")) {
+                  return;
+                }
+                setBusy(true);
+                setActionError(null);
+                try {
+                  await setClubCoachPassword(coach.id, nextPassword);
+                  setNextPassword("");
+                  setActionSuccess("Contraseña actualizada. El coach entra con la nueva clave.");
+                } catch (err) {
+                  setActionError(err instanceof Error ? err.message : "No se pudo restablecer la contraseña.");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}
+            >
+              <h4 style={{ margin: 0, fontSize: "0.95rem" }}>Restablecer contraseña</h4>
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--ro-text-secondary)" }}>
+                La clave no se vuelve a mostrar. Entrégala al coach por el canal del club.
+              </p>
+              <input
+                type="password"
+                value={nextPassword}
+                onChange={(e) => setNextPassword(e.target.value)}
+                autoComplete="new-password"
+                placeholder="Nueva contraseña"
+                minLength={8}
+                disabled={busy}
+              />
+              <button type="submit" className="coaching-btn coaching-btn--secondary" disabled={busy}>
+                Guardar nueva contraseña
+              </button>
+            </form>
+          ) : null}
 
           {membership.status === "ACTIVE" && (
             <div style={{ background: "rgba(255, 71, 87, 0.08)", border: "1px solid rgba(255, 71, 87, 0.25)", padding: "1rem", borderRadius: "8px" }}>
@@ -1911,7 +1957,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
               <div style={{ background: "rgba(34, 197, 94, 0.08)", border: "1px solid rgba(34, 197, 94, 0.25)", padding: "1rem", borderRadius: "8px" }}>
                 <h4 style={{ margin: "0 0 0.4rem", color: "#4ade80", fontSize: "0.95rem" }}>Reincorporar coach</h4>
                 <p style={{ margin: "0 0 0.85rem", fontSize: "0.85rem", color: "var(--ro-text-secondary)" }}>
-                  Envía una nueva solicitud de incorporación formal para que el coach la acepte y vuelva a activarse en tu club.
+                  El club vuelve a habilitar el acceso. El coach entra con sus credenciales, sin aceptar nada.
                 </p>
                 <button
                   type="button"
@@ -1920,7 +1966,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                   disabled={busy}
                 >
                   <TablerIcon name="user-check" size={15} />
-                  {busy ? "Solicitando…" : "Solicitar reincorporación"}
+                  {busy ? "Activando…" : "Activar acceso"}
                 </button>
               </div>
 

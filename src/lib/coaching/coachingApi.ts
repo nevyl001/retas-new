@@ -268,6 +268,7 @@ export async function inviteClubCoach(
         fuerzas: input.fuerzas,
         especialidades: input.especialidades,
         bio: input.bio || null,
+        password: input.password,
       },
       headers: {
         Authorization: `Bearer ${session.access_token}`,
@@ -302,7 +303,7 @@ export async function inviteClubCoach(
   }
 
   const membershipStatus: CoachMembershipStatus =
-    res.membershipStatus || (res.isNewUser ? "PENDING" : "ACTIVE");
+    res.membershipStatus || "ACTIVE";
 
   let snapshot: CoachingClubSnapshot;
   try {
@@ -383,13 +384,13 @@ export async function updateCoachMembershipStatus(
 
     if (error) {
       throw new Error(
-        "No se pudo solicitar la reincorporación del coach: " + error.message
+        "No se pudo activar el acceso del coach: " + error.message
       );
     }
 
     const res = data as { ok?: boolean; error?: string };
     if (res && res.ok === false) {
-      throw new Error(res.error || "No se pudo registrar la solicitud.");
+      throw new Error(res.error || "No se pudo activar el acceso del coach.");
     }
   }
 
@@ -470,46 +471,50 @@ export async function fetchCurrentCoachProfile(): Promise<CurrentCoachProfile | 
 }
 
 /**
- * Permite al coach autenticado aceptar formalmente una invitación pendiente para afiliarse a un club.
+ * El coach no activa su propio acceso. El club lo habilita o lo revoca.
  */
 export async function acceptCoachClubInvitation(
-  membershipId: string
+  _membershipId: string
 ): Promise<{ success: boolean; error?: string }> {
-  try {
-    const { data, error } = await supabase.rpc("accept_coach_club_invitation", {
-      p_membership_id: membershipId,
-    });
+  return {
+    success: false,
+    error: "El club administra el acceso de sus coaches. No hay invitaciones que aceptar.",
+  };
+}
 
-    if (!error) {
-      const res = data as { ok?: boolean; error?: string };
-      if (res && res.ok === false) {
-        return { success: false, error: res.error || "No se pudo aceptar la invitación." };
-      }
-      return { success: true };
-    }
+/**
+ * El club define una nueva contraseña. La clave no se guarda en la base de la app.
+ */
+export async function setClubCoachPassword(
+  coachId: string,
+  password: string
+): Promise<void> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-    // Fallback directo vía RLS si la migración de la función aún no se aplica
-    const { error: updateError } = await supabase
-      .from("coach_club_memberships")
-      .update({
-        status: "ACTIVE",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", membershipId);
+  if (!session?.access_token) {
+    throw new Error("Sesión de organizador requerida para restablecer la contraseña.");
+  }
 
-    if (updateError) {
-      return {
-        success: false,
-        error: "No se pudo aceptar la invitación: " + updateError.message,
-      };
-    }
+  const { data, error } = await supabase.functions.invoke("coaching-invite-coach", {
+    body: {
+      action: "reset_password",
+      coachId,
+      password,
+    },
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
 
-    return { success: true };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : "Error inesperado",
-    };
+  if (error) {
+    throw new Error(error.message || "No se pudo restablecer la contraseña.");
+  }
+
+  const res = data as { ok?: boolean; error?: string };
+  if (!res || res.ok !== true) {
+    throw new Error(res?.error || "No se pudo restablecer la contraseña.");
   }
 }
 

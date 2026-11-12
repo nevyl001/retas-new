@@ -154,7 +154,7 @@ describe("CoachingClubPage UX/UI Redesign", () => {
     });
 
     const addCoachBtn = container.querySelector(".coaching-btn--primary");
-    expect(addCoachBtn?.textContent).toContain("Nuevo coach");
+    expect(addCoachBtn?.textContent).toContain("Agregar coach");
 
     const coachTitle = container.querySelector(".coaching-card__title");
     expect(coachTitle?.textContent).toBe("Coach Rodrigo");
@@ -221,7 +221,7 @@ describe("CoachingClubPage UX/UI Redesign", () => {
     const badges = container.querySelectorAll(".coaching-badge");
     const badgeTexts = Array.from(badges).map((b) => b.textContent?.trim());
     expect(badgeTexts).toContain("Activo");
-    expect(badgeTexts).toContain("Invitación pendiente");
+    expect(badgeTexts).toContain("Pendiente de configuración");
     expect(badgeTexts).toContain("Inactivo");
   });
 

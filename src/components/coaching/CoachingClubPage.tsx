@@ -6,7 +6,6 @@ import {
   linkExistingCoach,
   loadCoachingClubSnapshot,
   searchCoachForInvitation,
-  updateCoachMembershipStatus,
   updateLinkStatus,
   assignCoachClasses,
   fetchClubClassLedger,
@@ -261,6 +260,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   // Coach form (mismos datos base que jugador + fuerzas/especialidades)
   const [coachNombre, setCoachNombre] = useState("");
   const [coachEmail, setCoachEmail] = useState("");
+  const [coachPassword, setCoachPassword] = useState("");
   const [coachTelefono, setCoachTelefono] = useState("");
   const [coachPais, setCoachPais] = useState("MX");
   const [coachGenero, setCoachGenero] = useState<RivieraJugadorGenero>("M");
@@ -401,6 +401,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   const resetCoachForm = () => {
     setCoachNombre("");
     setCoachEmail("");
+    setCoachPassword("");
     setCoachTelefono("");
     setCoachPais("MX");
     setCoachGenero("M");
@@ -432,12 +433,17 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
       setFormError("Selecciona al menos una fuerza que entrena el coach.");
       return;
     }
+    if (coachPassword.trim().length < 8) {
+      setFormError("Define una contraseña inicial de al menos 8 caracteres.");
+      return;
+    }
     setBusy(true);
     setFormError(null);
     try {
       const res = await inviteClubCoach(organizadorId, {
         nombre: coachNombre.trim(),
         email,
+        password: coachPassword,
         telefono: coachTelefono.trim() || undefined,
         paisCodigo: coachPais || null,
         genero: coachGenero,
@@ -451,23 +457,10 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
       setSnapshot(res.snapshot);
       resetCoachForm();
       setIsCoachModalOpen(false);
-
-      if (res.isNewUser && res.initialPassword) {
-        setCreatedCoachCredentials({
-          nombre: coachNombre.trim(),
-          coachCode: res.coachCode,
-          email,
-          password: res.initialPassword,
-          verificationUrl: res.verificationUrl ?? null,
-        });
-      } else {
-        setSuccessMessage(
-          res.message ||
-          (res.isNewUser
-            ? `Invitación oficial enviada a ${email}. Código de coach oficial: ${res.coachCode}.`
-            : `Coach incorporado exitosamente a tu club con código oficial ${res.coachCode}.`)
-        );
-      }
+      setSuccessMessage(
+        res.message ||
+          `Coach activo en tu club. Código ${res.coachCode}. Entra con el correo y la contraseña que definiste.`
+      );
     } catch (err) {
       setFormError(
         err instanceof Error
@@ -521,36 +514,6 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
         err instanceof Error
           ? err.message
           : "Error al eliminar definitivamente al entrenador del club."
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleToggleCoachStatus = async (
-    coachId: string,
-    nextStatus: "ACTIVE" | "INACTIVE"
-  ) => {
-    if (!organizadorId) return;
-    setBusy(true);
-    setFormError(null);
-    try {
-      const next = await updateCoachMembershipStatus(
-        organizadorId,
-        coachId,
-        nextStatus
-      );
-      setSnapshot(next);
-      setSuccessMessage(
-        nextStatus === "ACTIVE"
-          ? "Solicitud de incorporación registrada. El coach debe aceptarla desde su cuenta para activarse."
-          : "Membresía del coach desactivada en el club."
-      );
-    } catch (err) {
-      setFormError(
-        err instanceof Error
-          ? err.message
-          : "No se pudo actualizar el estado de la membresía del coach."
       );
     } finally {
       setBusy(false);
@@ -835,12 +798,12 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
             }}
           />
         ) : (
-          <section className="coaching-panel" aria-label="Coaches">
+          <section className="coaching-panel coaching-coaches-layout" aria-label="Coaches">
             <div className="coaching-section-header">
               <div>
-                <h2 className="coaching-section-title">Coaches del club</h2>
+                <h2 className="coaching-section-title">Coaches</h2>
                 <p className="coaching-section-desc">
-                  Entrenadores dados de alta en la academia deportiva.
+                  Administra tu equipo de entrenadores y sus accesos.
                 </p>
               </div>
               <button
@@ -849,7 +812,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                 onClick={() => setIsCoachModalOpen(true)}
               >
                 <TablerIcon name="plus" size={16} />
-                Nuevo coach
+                Agregar coach
               </button>
             </div>
 
@@ -866,24 +829,9 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                 { id: "ALL", label: "Todos", count: coachCounts.ALL },
                 { id: "ACTIVE", label: "Activos", count: coachCounts.ACTIVE },
                 {
-                  id: "PENDING",
-                  label: "Invitaciones pendientes",
-                  count: coachCounts.PENDING,
-                },
-                {
                   id: "INACTIVE",
                   label: "Inactivos",
                   count: coachCounts.INACTIVE,
-                },
-                {
-                  id: "ARCHIVED",
-                  label: "Archivados",
-                  count: coachCounts.ARCHIVED,
-                },
-                {
-                  id: "REMOVED",
-                  label: "Eliminados",
-                  count: coachCounts.REMOVED,
                 },
               ].map((f) => (
                 <button
@@ -929,22 +877,14 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                   className="coaching-empty-icon"
                 />
                 <h3>
-                  {coachStatusFilter === "ARCHIVED"
-                    ? "No hay entrenadores archivados"
-                    : coachStatusFilter === "PENDING"
-                    ? "No hay invitaciones pendientes"
-                    : coachStatusFilter === "INACTIVE"
+                  {coachStatusFilter === "INACTIVE"
                     ? "No hay entrenadores inactivos"
                     : "No hay coaches registrados"}
                 </h3>
                 <p>
-                  {coachStatusFilter === "ARCHIVED"
-                    ? "Los entrenadores archivados aparecerán aquí cuando decidas archivar membresías inactivas para limpiar la lista operativa."
-                    : coachStatusFilter === "PENDING"
-                    ? "Las invitaciones pendientes de aceptación aparecerán aquí."
-                    : coachStatusFilter === "INACTIVE"
+                  {coachStatusFilter === "INACTIVE"
                     ? "Los entrenadores desactivados aparecerán aquí."
-                    : "Comienza agregando el primer entrenador para asignarle alumnos y organizar la academia de pádel."}
+                    : "Agrega un entrenador, define su acceso y queda habilitado en tu club."}
                 </p>
                 {coachStatusFilter !== "ARCHIVED" ? (
                   <button
@@ -958,7 +898,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                 ) : null}
               </div>
             ) : (
-              <div className="coaching-grid">
+              <div className="coaching-grid coaching-grid--coaches">
                 {filteredCoaches.map((c) => {
                   const displayFuerzas =
                     c.clubFuerzas && c.clubFuerzas.length > 0
@@ -970,7 +910,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                       : c.especialidades;
 
                   return (
-                    <article key={c.id} className="coaching-card">
+                    <article key={c.id} className="coaching-card coaching-card--coach">
                       <div className="coaching-card__top">
                         <div className="coaching-card__avatar" aria-hidden>
                           {c.nombre.slice(0, 1).toUpperCase()}
@@ -999,7 +939,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                           </span>
                         ) : c.membershipStatus === "PENDING" ? (
                           <span className="coaching-badge coaching-badge--pending">
-                            Invitación pendiente
+                            Pendiente de configuración
                           </span>
                         ) : c.membershipStatus === "ARCHIVED" ? (
                           <span
@@ -1036,11 +976,14 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                             Entrena fuerzas
                           </span>
                           <div className="coaching-card__tags">
-                            {displayFuerzas.map((f) => (
+                            {displayFuerzas.slice(0, 4).map((f) => (
                               <span key={f} className="coaching-tag">
                                 {JUGADOR_CATEGORIA_LABELS[f] || f}
                               </span>
                             ))}
+                            {displayFuerzas.length > 4 ? (
+                              <span className="coaching-tag">+{displayFuerzas.length - 4}</span>
+                            ) : null}
                           </div>
                         </div>
                       ) : null}
@@ -1051,11 +994,14 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                             Especialidades
                           </span>
                           <div className="coaching-card__tags">
-                            {displayEspecialidades.map((esp) => (
+                            {displayEspecialidades.slice(0, 4).map((esp) => (
                               <span key={esp} className="coaching-tag">
                                 {esp}
                               </span>
                             ))}
+                            {displayEspecialidades.length > 4 ? (
+                              <span className="coaching-tag">+{displayEspecialidades.length - 4}</span>
+                            ) : null}
                           </div>
                         </div>
                       ) : null}
@@ -1088,112 +1034,8 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                           className="coaching-btn coaching-btn--primary"
                           onClick={() => setSelectedCoachId(c.id)}
                         >
-                          <TablerIcon name="user-circle" size={16} />
-                          Ver panel del coach
+                          Gestionar coach
                         </button>
-
-                        {c.membershipStatus === "ACTIVE" ? (
-                          <>
-                            <button
-                              type="button"
-                              className="coaching-btn coaching-btn--secondary"
-                              onClick={() => {
-                                navigateCoaching(coachingTabPath("jugadores"));
-                              }}
-                            >
-                              <TablerIcon name="users" size={15} />
-                              Ver alumnos
-                            </button>
-                            <button
-                              type="button"
-                              className="coaching-btn coaching-btn--ghost"
-                              onClick={() =>
-                                handleToggleCoachStatus(c.id, "INACTIVE")
-                              }
-                              disabled={busy}
-                            >
-                              <TablerIcon name="user-off" size={15} />
-                              Desactivar
-                            </button>
-                          </>
-                        ) : c.membershipStatus === "PENDING" ? (
-                          <span
-                            className="coaching-badge coaching-badge--pending"
-                            style={{
-                              fontSize: "0.8rem",
-                              padding: "0.4rem 0.65rem",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "0.3rem",
-                            }}
-                          >
-                            <TablerIcon name="clock" size={14} />
-                            Pendiente de aceptación
-                          </span>
-                        ) : c.membershipStatus === "ARCHIVED" ? (
-                          <span
-                            className="coaching-badge"
-                            style={{
-                              fontSize: "0.8rem",
-                              padding: "0.4rem 0.65rem",
-                              background: "rgba(255,255,255,0.05)",
-                              color: "var(--ro-text-muted)",
-                            }}
-                          >
-                            Membresía archivada
-                          </span>
-                        ) : c.membershipStatus === "REMOVED" ? (
-                          <span
-                            className="coaching-badge"
-                            style={{
-                              fontSize: "0.8rem",
-                              padding: "0.4rem 0.65rem",
-                              background: "rgba(239, 68, 68, 0.12)",
-                              border: "1px solid rgba(239, 68, 68, 0.3)",
-                              color: "#fca5a5",
-                            }}
-                          >
-                            Eliminado del club
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="coaching-btn coaching-btn--ghost"
-                            onClick={() =>
-                              handleToggleCoachStatus(c.id, "ACTIVE")
-                            }
-                            disabled={busy}
-                          >
-                            <TablerIcon name="user-check" size={15} />
-                            Reincorporar
-                          </button>
-                        )}
-
-                        {c.membershipStatus === "REMOVED" ? (
-                          <button
-                            type="button"
-                            className="coaching-btn coaching-btn--ghost"
-                            style={{ color: "#ef4444" }}
-                            onClick={() => setCoachToFinalizeRemoval(c)}
-                            disabled={busy}
-                            title="Borrar definitivamente a este coach de la lista de mi club"
-                          >
-                            <TablerIcon name="trash-x" size={15} />
-                            Eliminar definitivamente
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="coaching-btn coaching-btn--ghost"
-                            style={{ color: "#f87171" }}
-                            onClick={() => setCoachToRemove(c)}
-                            disabled={busy}
-                            title="Eliminar este coach de mi club"
-                          >
-                            <TablerIcon name="trash" size={15} />
-                            Eliminar de mi club
-                          </button>
-                        )}
                       </div>
                     </article>
                   );
@@ -1305,7 +1147,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                         disabled={busy}
                       >
                         <TablerIcon name="link" size={16} />
-                        {busy ? "Vinculando…" : "Vincular a este club"}
+                        {busy ? "Habilitando…" : "Habilitar en este club"}
                       </button>
                     ) : null}
                   </div>
@@ -1358,14 +1200,28 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                     />
                   </label>
                   <label className="coaching-field">
-                    <span>Email de contacto *</span>
+                    <span>Correo de acceso *</span>
                     <input
                       type="email"
                       value={coachEmail}
                       onChange={(e) => setCoachEmail(e.target.value)}
                       placeholder="coach@club.com"
+                      autoComplete="off"
                       disabled={busy}
                       required
+                    />
+                  </label>
+                  <label className="coaching-field">
+                    <span>Contraseña inicial *</span>
+                    <input
+                      type="password"
+                      value={coachPassword}
+                      onChange={(e) => setCoachPassword(e.target.value)}
+                      placeholder="Mínimo 8 caracteres"
+                      autoComplete="new-password"
+                      disabled={busy}
+                      required
+                      minLength={8}
                     />
                   </label>
                   <label className="coaching-field">

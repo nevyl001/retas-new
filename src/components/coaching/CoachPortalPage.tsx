@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import {
   fetchCurrentCoachProfile,
-  acceptCoachClubInvitation,
   fetchCoachAssignedStudents,
   recordCoachClassSessionWithFollowup,
   generateCoachingIdempotencyKey,
@@ -50,8 +49,6 @@ export const CoachPortalPage: React.FC = () => {
   const [profile, setProfile] = useState<CurrentCoachProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedClubId, setSelectedClubId] = useState<string>("");
-  const [acceptingId, setAcceptingId] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const [students, setStudents] = useState<CoachingPlayerLink[]>([]);
@@ -188,37 +185,6 @@ export const CoachPortalPage: React.FC = () => {
       isMounted = false;
     };
   }, [user, userLoading]);
-
-  const handleAcceptInvitation = async (membershipId: string) => {
-    setAcceptingId(membershipId);
-    setActionError(null);
-    try {
-      const res = await acceptCoachClubInvitation(membershipId);
-      if (res.success) {
-        const updated = await fetchCurrentCoachProfile();
-        setProfile(updated);
-        if (updated) {
-          setSelectedClubId((current) => {
-            const stillActive = updated.memberships.some(
-              (membership) =>
-                membership.organizadorId === current &&
-                membership.status === "ACTIVE"
-            );
-            if (stillActive) return current;
-            return selectOperativeCoachClubId(updated.memberships) ?? "";
-          });
-        }
-      } else {
-        setActionError(res.error || "No se pudo aceptar la invitación.");
-      }
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Error al procesar la invitación"
-      );
-    } finally {
-      setAcceptingId(null);
-    }
-  };
 
   const formatSessionDate = (iso: string) => {
     if (!iso) return "";
@@ -542,8 +508,8 @@ export const CoachPortalPage: React.FC = () => {
             registrada como coach oficial en Riviera Coaching.
           </p>
           <p className="coaching-muted" style={{ maxWidth: "450px", margin: "0.5rem auto 1.5rem" }}>
-            Si eres entrenador de un club asociado a Riviera Open, solicita al
-            administrador del club que envíe tu invitación oficial de coach.
+            Si entrenas en un club de Riviera Open, el administrador del club
+            registra tu acceso y te entrega las credenciales.
           </p>
           <button
             type="button"
@@ -653,27 +619,6 @@ export const CoachPortalPage: React.FC = () => {
           </div>
         </div>
 
-        {actionError ? (
-          <div
-            className="coaching-panel"
-            style={{
-              padding: "0.75rem 1rem",
-              background: "rgba(239, 68, 68, 0.12)",
-              border: "1px solid rgba(239, 68, 68, 0.35)",
-              borderRadius: "8px",
-              color: "#fca5a5",
-              marginBottom: "1rem",
-              fontSize: "0.85rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-            }}
-          >
-            <TablerIcon name="alert-circle" size={18} />
-            {actionError}
-          </div>
-        ) : null}
-
         {profile.memberships.length === 0 ? (
           <div className="coaching-empty-card">
             <TablerIcon name="building" size={36} className="coaching-empty-icon" />
@@ -713,7 +658,7 @@ export const CoachPortalPage: React.FC = () => {
                       </span>
                     ) : isStatusPending ? (
                       <span className="coaching-badge coaching-badge--pending">
-                        Invitación pendiente
+                        Pendiente de configuración
                       </span>
                     ) : (
                       <span className="coaching-badge coaching-badge--inactive">
@@ -724,17 +669,9 @@ export const CoachPortalPage: React.FC = () => {
 
                   <div className="coaching-card__actions" style={{ marginTop: "1rem" }}>
                     {isStatusPending ? (
-                      <button
-                        type="button"
-                        className="coaching-btn coaching-btn--primary"
-                        disabled={acceptingId === m.membershipId}
-                        onClick={() => handleAcceptInvitation(m.membershipId)}
-                      >
-                        <TablerIcon name="check" size={15} />
-                        {acceptingId === m.membershipId
-                          ? "Aceptando…"
-                          : "Aceptar invitación al club"}
-                      </button>
+                      <span className="coaching-muted" style={{ fontSize: "0.8rem" }}>
+                        El club todavía no habilitó este acceso.
+                      </span>
                     ) : isActiveClub ? (
                       <span
                         className="coaching-muted"

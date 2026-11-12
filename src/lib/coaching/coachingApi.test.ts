@@ -448,7 +448,7 @@ describe("coachingApi - Entrega B", () => {
 
       await expect(
         updateCoachMembershipStatus("org-123", "coach-1", "ACTIVE")
-      ).rejects.toThrow("No se pudo solicitar la reincorporación del coach: database rpc failure");
+      ).rejects.toThrow("No se pudo activar el acceso del coach: database rpc failure");
     });
   });
 
@@ -816,54 +816,12 @@ describe("coachingApi - Entrega B", () => {
   });
 
   describe("acceptCoachClubInvitation", () => {
-    it("calls accept_coach_club_invitation RPC and returns success", async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
-        data: { ok: true, status: "ACTIVE" },
-        error: null,
-      });
-
-      const res = await acceptCoachClubInvitation("mem-pending-1");
-      expect(supabase.rpc).toHaveBeenCalledWith("accept_coach_club_invitation", {
-        p_membership_id: "mem-pending-1",
-      });
-      expect(res.success).toBe(true);
-    });
-
-    it("falls back to direct update if RPC is not yet present and succeeds", async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
-        data: null,
-        error: { message: "function public.accept_coach_club_invitation does not exist" },
-      });
-
-      const mockEq = jest.fn().mockResolvedValue({ error: null });
-      const mockUpdate = jest.fn().mockReturnValue({ eq: mockEq });
-
-      (supabase.from as jest.Mock).mockReturnValue({ update: mockUpdate });
-
-      const res = await acceptCoachClubInvitation("mem-pending-1");
-      expect(res.success).toBe(true);
-      expect(mockUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ status: "ACTIVE" })
-      );
-      expect(mockEq).toHaveBeenCalledWith("id", "mem-pending-1");
-    });
-
-    it("returns controlled error when both RPC and update fail", async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValueOnce({
-        data: null,
-        error: { message: "RPC not found" },
-      });
-
-      const mockEq = jest.fn().mockResolvedValue({
-        error: { message: "Row level security denied update" },
-      });
-      const mockUpdate = jest.fn().mockReturnValue({ eq: mockEq });
-
-      (supabase.from as jest.Mock).mockReturnValue({ update: mockUpdate });
-
+    it("refuses coach self-activation and does not write the membership", async () => {
       const res = await acceptCoachClubInvitation("mem-pending-1");
       expect(res.success).toBe(false);
-      expect(res.error).toContain("Row level security denied update");
+      expect(res.error).toContain("El club administra el acceso");
+      expect(supabase.rpc).not.toHaveBeenCalled();
+      expect(supabase.from).not.toHaveBeenCalled();
     });
   });
 

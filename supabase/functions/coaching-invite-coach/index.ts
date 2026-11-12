@@ -11,6 +11,9 @@ import { safeClientMessage, internalErrorDetail } from "../_shared/errors.ts";
 import { checkRateLimit, rateLimitedResponse } from "../_shared/rateLimit.ts";
 
 interface RequestBody {
+  action?: string;
+  coachId?: string;
+  password?: string;
   email?: string;
   nombre?: string;
   telefono?: string;
@@ -40,6 +43,10 @@ if (!SUPABASE_URL) {
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function passwordIsUsable(password: string): boolean {
+  return password.length >= 8 && password.length <= 72;
 }
 
 function generateSecurePassword(): string {
@@ -129,6 +136,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(400, { ok: false, error: "Cuerpo de solicitud inválido" });
   }
 
+  const requestedPassword = (body.password ?? "").trim();
   const email = (body.email ?? "").trim().toLowerCase();
   const nombre = (body.nombre ?? "").trim();
   const fuerzas = Array.isArray(body.fuerzas) ? body.fuerzas : [];
@@ -227,9 +235,86 @@ Deno.serve(async (req: Request) => {
     }
   }
 
+  if (body.action === "reset_password") {
+    const coachId = (body.coachId ?? "").trim();
+    if (!coachId || !passwordIsUsable(requestedPassword)) {
+      return jsonResponse(400, {
+        ok: false,
+        error: "Indica el coach y una contraseña de al menos 8 caracteres.",
+      });
+    }
+
+    const { data: membership, error: membershipLookupError } = await supabaseAdmin
+      .from("coach_club_memberships")
+      .select("id, status")
+      .eq("coach_id", coachId)
+      .eq("organizador_id", caller.id)
+      .maybeSingle();
+
+    if (membershipLookupError || !membership) {
+      return jsonResponse(403, {
+        ok: false,
+        error: "Ese coach no pertenece a tu club.",
+      });
+    }
+
+    if (membership.status === "REMOVED" || membership.status === "ARCHIVED") {
+      return jsonResponse(409, {
+        ok: false,
+        error: "Este coach ya no está en tu club.",
+      });
+    }
+
+    const { data: coachRow } = await supabaseAdmin
+      .from("riviera_coaches")
+      .select("auth_user_id")
+      .eq("id", coachId)
+      .maybeSingle();
+
+    if (!coachRow?.auth_user_id) {
+      return jsonResponse(409, {
+        ok: false,
+        error: "El coach todavía no tiene credenciales.",
+      });
+    }
+
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+      coachRow.auth_user_id,
+      { password: requestedPassword }
+    );
+
+    if (updateError) {
+      logError({
+        correlationId,
+        module: MODULE,
+        errorType: "password_reset_failed",
+        detail: updateError.message,
+      });
+      return jsonResponse(500, {
+        ok: false,
+        error: "No se pudo restablecer la contraseña.",
+      });
+    }
+
+    await supabaseAdmin.from("coach_club_membership_audit_log").insert({
+      membership_id: membership.id,
+      coach_id: coachId,
+      organizador_id: caller.id,
+      action: "RESET_PASSWORD",
+      performed_by: caller.id,
+      previous_status: membership.status,
+      new_status: membership.status,
+      details: { credential_reset: true },
+    });
+
+    return jsonResponse(200, {
+      ok: true,
+      message: "Contraseña actualizada. El coach entra con la nueva clave.",
+    });
+  }
+
   try {
-    // 3.1. Pre-flight check: Verificar que la base de datos admite los estados y estructura requerida (migración 0064)
-    // Comprobamos la columna invited_at en coach_club_memberships antes de emitir cualquier invitación de Auth
+    // 3.1. Pre-flight check: Verificar que la base de datos admite la membresía del coach
     const { error: preflightError } = await supabaseAdmin
       .from("coach_club_memberships")
       .select("id, status, invited_at")
@@ -245,7 +330,7 @@ Deno.serve(async (req: Request) => {
       return jsonResponse(500, {
         ok: false,
         error:
-          "La base de datos requiere la migración 0064 para registrar incorporaciones en estado PENDING. Operación detenida por seguridad antes de emitir invitaciones.",
+          "La base de datos de Coaching no está lista para registrar coaches. Operación detenida.",
       });
     }
 
@@ -259,20 +344,19 @@ Deno.serve(async (req: Request) => {
     let targetUserId = "";
     let isNewUser = false;
     let initialPassword: string | null = null;
-    let verificationUrl: string | null = null;
+    const verificationUrl: string | null = null;
 
     if (existingUser?.id) {
       targetUserId = existingUser.id;
       isNewUser = false;
     } else {
-      const siteUrl = (
-        Deno.env.get("SITE_URL") ||
-        Deno.env.get("PUBLIC_SITE_URL") ||
-        req.headers.get("origin") ||
-        "https://appriviera.rivieraopen.com"
-      ).replace(/\/$/, "");
-
-      const generatedPassword = generateSecurePassword();
+      if (!passwordIsUsable(requestedPassword)) {
+        return jsonResponse(400, {
+          ok: false,
+          error: "Define una contraseña inicial de al menos 8 caracteres.",
+        });
+      }
+      const generatedPassword = requestedPassword;
 
       const { data: createData, error: initialCreateError } =
         await supabaseAdmin.auth.admin.createUser({
@@ -329,41 +413,7 @@ Deno.serve(async (req: Request) => {
       if (!targetUserId && createData?.user) {
         targetUserId = createData.user.id;
         isNewUser = true;
-        initialPassword = generatedPassword;
-
-        try {
-          const { data: mlData, error: mlErr } =
-            await supabaseAdmin.auth.admin.generateLink({
-              type: "magiclink",
-              email,
-              options: {
-                redirectTo: `${siteUrl}/auth/callback?next=/coaching/mi-espacio`,
-              },
-            });
-          if (!mlErr && mlData?.properties?.action_link) {
-            verificationUrl = mlData.properties.action_link;
-          } else {
-            const { data: suData } =
-              await supabaseAdmin.auth.admin.generateLink({
-                type: "signup",
-                email,
-                password: generatedPassword,
-                options: {
-                  redirectTo: `${siteUrl}/auth/callback?next=/coaching/mi-espacio`,
-                },
-              });
-            if (suData?.properties?.action_link) {
-              verificationUrl = suData.properties.action_link;
-            }
-          }
-        } catch (linkEx) {
-          logWarn({
-            correlationId,
-            module: MODULE,
-            event: "generate_link_warn",
-            detail: String(linkEx),
-          });
-        }
+        initialPassword = null;
       }
 
       // Sincronizar o crear fila en public.users de forma idempotente
@@ -389,6 +439,25 @@ Deno.serve(async (req: Request) => {
         return jsonResponse(500, {
           ok: false,
           error: "No se pudo crear el perfil de usuario del coach.",
+        });
+      }
+    }
+
+    if (!isNewUser && passwordIsUsable(requestedPassword)) {
+      const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(
+        targetUserId,
+        { password: requestedPassword }
+      );
+      if (passwordError) {
+        logError({
+          correlationId,
+          module: MODULE,
+          errorType: "existing_user_password_failed",
+          detail: passwordError.message,
+        });
+        return jsonResponse(500, {
+          ok: false,
+          error: "No se pudo asignar la contraseña de acceso.",
         });
       }
     }
@@ -500,33 +569,27 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Si ya tiene una solicitud PENDING en este club, devolver estado sin duplicar
-    if (existingMembership?.status === "PENDING") {
-      return jsonResponse(200, {
-        ok: true,
-        alreadyMember: false,
-        coach: coachRecord,
-        coachCode: coachRecord.coach_code,
-        isNewUser,
-        membershipStatus: "PENDING",
-        message: `La solicitud de vinculación para ${coachRecord.nombre} ya se encuentra pendiente de aceptación.`,
-      });
-    }
+    const previousStatus = existingMembership?.status ?? null;
 
-    // 8. Para coaches nuevos y existentes: registrar solicitud de incorporación en estado PENDING
-    const { error: membershipError } = await supabaseAdmin
+    // 8. El club habilita el acceso de inmediato. No hay aceptación del coach.
+    const { data: membershipRow, error: membershipError } = await supabaseAdmin
       .from("coach_club_memberships")
       .upsert(
         {
           coach_id: coachRecord.id,
           organizador_id: clubOrganizadorId,
-          status: "PENDING",
+          status: "ACTIVE",
           invited_by: caller.id,
           invited_at: new Date().toISOString(),
+          activated_at: new Date().toISOString(),
+          deactivated_at: null,
+          cancelled_at: null,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "coach_id,organizador_id" }
-      );
+      )
+      .select("id")
+      .single();
 
     if (membershipError) {
       // Si la base de datos no tiene aplicada la migración 0064, fallar de forma controlada
@@ -544,8 +607,8 @@ Deno.serve(async (req: Request) => {
         });
         return jsonResponse(500, {
           ok: false,
-          error:
-            "La base de datos requiere la migración 0064 para registrar incorporaciones en estado PENDING. Operación detenida por seguridad.",
+        error:
+          "La base de datos de Coaching no admite el alta del coach. Operación detenida.",
         });
       }
 
@@ -557,7 +620,20 @@ Deno.serve(async (req: Request) => {
       });
       return jsonResponse(500, {
         ok: false,
-        error: "No se pudo registrar la solicitud de incorporación del coach en tu club.",
+        error: "No se pudo habilitar el acceso del coach en tu club.",
+      });
+    }
+
+    if (membershipRow?.id) {
+      await supabaseAdmin.from("coach_club_membership_audit_log").insert({
+        membership_id: membershipRow.id,
+        coach_id: coachRecord.id,
+        organizador_id: clubOrganizadorId,
+        action: previousStatus ? "CLUB_ACTIVATE" : "CLUB_REGISTER",
+        performed_by: caller.id,
+        previous_status: previousStatus,
+        new_status: "ACTIVE",
+        details: { access: "club_controlled" },
       });
     }
 
@@ -567,12 +643,10 @@ Deno.serve(async (req: Request) => {
       coach: coachRecord,
       coachCode: coachRecord.coach_code,
       isNewUser,
-      initialPassword: isNewUser ? initialPassword : null,
-      verificationUrl: isNewUser ? verificationUrl : null,
-      membershipStatus: "PENDING",
-      message: isNewUser
-        ? `Cuenta creada exitosamente para ${email}. Código de coach oficial asignado: ${coachRecord.coach_code}.`
-        : `Solicitud de vinculación enviada al coach ${coachRecord.nombre} (${coachRecord.coach_code}). Pendiente de aceptación desde su cuenta oficial.`,
+      initialPassword: null,
+      verificationUrl,
+      membershipStatus: "ACTIVE",
+      message: `Coach ${coachRecord.nombre} activo en tu club. Código ${coachRecord.coach_code}. Entra con el correo y la contraseña que definiste.`,
     });
   } catch (err) {
     logError({

@@ -31,6 +31,8 @@ export type CreateCoachInput = {
   /** Enfoque de entrenamiento (schema `especialidades`). */
   especialidades: string[];
   bio?: string | null;
+  /** Contraseña inicial. Solo viaja a la función segura y no se guarda en la app. */
+  password?: string;
 };
 
 export type CoachingCoach = {

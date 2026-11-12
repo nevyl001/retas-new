@@ -145,45 +145,20 @@ describe("CoachPortalPage & CoachingRouter", () => {
       ],
     };
 
-    const activeProfile: CurrentCoachProfile = {
-      ...mockCoachProfile,
-      memberships: [
-        {
-          membershipId: "mem-pending-42",
-          organizadorId: "club-pending-uuid",
-          clubNombre: "Club Deportivo Padel",
-          status: "ACTIVE",
-          createdAt: "2026-03-01T00:00:00Z",
-        },
-      ],
-    };
-
-    const fetchSpy = jest
+    jest
       .spyOn(coachingApi, "fetchCurrentCoachProfile")
-      .mockResolvedValueOnce(pendingProfile)
-      .mockResolvedValueOnce(activeProfile);
-
-    const acceptSpy = jest
-      .spyOn(coachingApi, "acceptCoachClubInvitation")
-      .mockResolvedValueOnce({ success: true });
+      .mockResolvedValueOnce(pendingProfile);
 
     await act(async () => {
       root.render(<CoachPortalPage />);
     });
 
-    expect(container.textContent).toContain("Invitación pendiente");
+    expect(container.textContent).toContain("Pendiente de configuración");
+    expect(container.textContent).toContain("El club todavía no habilitó este acceso.");
     const acceptBtn = Array.from(container.querySelectorAll("button")).find((b) =>
-      b.textContent?.includes("Aceptar invitación al club")
+      b.textContent?.includes("Aceptar invitación")
     );
-    expect(acceptBtn).toBeTruthy();
-
-    await act(async () => {
-      acceptBtn?.click();
-    });
-
-    expect(acceptSpy).toHaveBeenCalledWith("mem-pending-42");
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
-    expect(container.textContent).toContain("Activo");
+    expect(acceptBtn).toBeUndefined();
   });
 
   it("allows switching operative club in multi-club setup", async () => {
@@ -310,7 +285,7 @@ describe("CoachPortalPage & CoachingRouter", () => {
     });
 
     expect(container.textContent).toContain("Sin club activo para operar");
-    expect(container.textContent).toContain("Invitación pendiente");
+    expect(container.textContent).toContain("Pendiente de configuración");
     expect(container.textContent).not.toContain("Registrar clase impartida");
     expect(studentsSpy).not.toHaveBeenCalled();
     expect(agendaSpy).not.toHaveBeenCalled();
