@@ -2713,14 +2713,17 @@
   color: var(--coach-text-primary);
   min-height: 100vh;
   box-sizing: border-box;
-  padding: 1.5rem clamp(1.25rem, 2.5vw, 2.25rem) 4rem;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  padding: 1.5rem clamp(1.5rem, 2.5vw, 2.25rem) 4rem;
 }
 
-/* Centrado responsivo con max-width */
+/* Aprovechamiento total del ancho de pantalla del sistema Riviera Open */
 .coach-portal-container {
   width: 100%;
-  max-width: 1080px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -2786,7 +2789,6 @@
   font-size: 0.95rem;
   color: var(--coach-text-secondary);
   line-height: 1.45;
-  max-width: 650px;
 }
 
 /* ── Tarjeta de Identidad del Coach ── */
@@ -2975,7 +2977,6 @@
   font-size: 0.88rem;
   color: var(--coach-text-secondary) !important;
   line-height: 1.4;
-  max-width: 720px;
 }
 
 /* ── Clubes Afiliados ── */
