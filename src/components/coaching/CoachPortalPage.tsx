@@ -887,14 +887,20 @@ export const CoachPortalPage: React.FC = () => {
             </section>
 
             {/* Gestión de Alumnos y Clases del Coach */}
-            <section className="coach-portal-section" aria-label="Alumnos y control de clases">
+            <section className="coach-portal-section coach-students-section" aria-label="Alumnos y control de clases">
               <div className="coach-portal-section-header">
                 <div>
                   <h2 className="coach-portal-section-title">Alumnos y Control de Clases</h2>
                   <p className="coach-portal-section-desc">
-                    Consulta los alumnos asignados por el club y registra las clases impartidas para descontar su saldo automáticamente.
+                    Supervisa a tus alumnos asignados, consulta sus clases restantes y registra las sesiones impartidas.
                   </p>
                 </div>
+                {students.length > 0 ? (
+                  <span className="coach-students-count-badge">
+                    <TablerIcon name="users" size={14} />
+                    {students.length} {students.length === 1 ? "alumno" : "alumnos"}
+                  </span>
+                ) : null}
               </div>
 
               {loadingStudents ? (
@@ -917,15 +923,17 @@ export const CoachPortalPage: React.FC = () => {
                   </button>
                 </div>
               ) : students.length === 0 ? (
-                <div className="coaching-empty-card" style={{ padding: "2rem", textAlign: "center" }}>
-                  <TablerIcon name="users" size={36} className="coaching-empty-icon" />
-                  <h3>Sin alumnos asignados en este club</h3>
-                  <p>
-                    El administrador del club te asignará los alumnos con paquetes de clases activos para impartir sesiones.
+                <div className="coach-students-empty">
+                  <div className="coach-students-empty__icon">
+                    <TablerIcon name="users" size={28} />
+                  </div>
+                  <h3 className="coach-students-empty__title">Sin alumnos asignados en este club</h3>
+                  <p className="coach-students-empty__desc">
+                    El administrador del club te asignará los alumnos con paquetes de clases activos para impartir y registrar sesiones.
                   </p>
                 </div>
               ) : (
-                <div className="coaching-grid">
+                <div className="coach-students-grid">
                   {students.map((s) => {
                     const hasBalance = (s.balanceClasses ?? 0) > 0;
                     const isModalOpenForThis = modalStudent?.id === s.id;
@@ -934,91 +942,156 @@ export const CoachPortalPage: React.FC = () => {
                       ? JUGADOR_CATEGORIA_LABELS[card.categoria as keyof typeof JUGADOR_CATEGORIA_LABELS] ||
                         card.categoria
                       : null;
+                    const studentInitials = getInitials(s.jugadorNombre);
 
                     return (
-                      <article key={s.id} className="coaching-card" style={{ padding: "1.25rem" }}>
-                        <div className="coaching-card__top">
-                          <div className="coaching-card__avatar" aria-hidden>
+                      <article key={s.id} className="coach-student-card coaching-card">
+                        {/* 1. Header: Avatar + Nombre + Estado + Riviera ID */}
+                        <div className="coach-student-card__header">
+                          <div className="coach-student-avatar" aria-hidden>
                             {card?.fotoUrl ? (
-                              <img src={card.fotoUrl} alt="" />
+                              <img
+                                src={card.fotoUrl}
+                                alt=""
+                                className="coach-student-avatar__img"
+                              />
                             ) : (
-                              s.jugadorNombre.slice(0, 1).toUpperCase()
+                              <div className="coach-student-avatar__fallback">
+                                {studentInitials}
+                              </div>
                             )}
                           </div>
-                          <div className="coaching-card__identity">
-                            <h3 className="coaching-card__title">{s.jugadorNombre}</h3>
-                            <span className="coaching-card__code">{s.rivieraId}</span>
+
+                          <div className="coach-student-identity">
+                            <div className="coach-student-identity__top">
+                              <h3 className="coach-student-name" title={s.jugadorNombre}>
+                                {s.jugadorNombre}
+                              </h3>
+                              <span
+                                className={`coaching-badge coach-student-badge--status coaching-badge--${
+                                  s.status === "ACTIVE"
+                                    ? "active"
+                                    : s.status === "PAUSED"
+                                    ? "pending"
+                                    : "inactive"
+                                }`}
+                              >
+                                {s.status === "ACTIVE"
+                                  ? "Activo"
+                                  : s.status === "PAUSED"
+                                  ? "En pausa"
+                                  : "Inactivo"}
+                              </span>
+                            </div>
+                            <span className="coach-student-id">{s.rivieraId}</span>
                           </div>
-                          <span
-                            className={`coaching-badge coaching-badge--${
-                              s.status === "ACTIVE"
-                                ? "active"
-                                : s.status === "PAUSED"
-                                ? "pending"
-                                : "inactive"
-                            }`}
-                          >
-                            {s.status === "ACTIVE"
-                              ? "Activo"
-                              : s.status === "PAUSED"
-                              ? "En pausa"
-                              : "Inactivo"}
-                          </span>
                         </div>
 
-                        {/* Estado de Clases Disponibles */}
-                        <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
-                          <span
-                            className={`coaching-badge ${hasBalance ? "coaching-badge--active" : "coaching-badge--inactive"}`}
-                            style={{ fontWeight: 600, padding: "0.3rem 0.65rem", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                        {/* 2. Banner de Clases Disponibles (Nivel 1 de Jerarquía) */}
+                        <div className="coach-student-balance-banner">
+                          <div
+                            className={`coach-student-balance-pill ${
+                              hasBalance
+                                ? "coach-student-balance-pill--positive"
+                                : "coach-student-balance-pill--empty"
+                            }`}
                           >
-                            <TablerIcon name="calendar-event" size={14} />
-                            {s.balanceClasses ?? 0} clases disponibles
-                          </span>
+                            <TablerIcon name="calendar-event" size={16} />
+                            <span>
+                              <strong>{s.balanceClasses ?? 0}</strong>{" "}
+                              {s.balanceClasses === 1 ? "clase disponible" : "clases disponibles"}
+                            </span>
+                          </div>
                           {(s.totalClassesGiven ?? 0) > 0 ? (
-                            <span
-                              className="coaching-badge coaching-badge--inactive"
-                            >
-                              {s.totalClassesGiven} impartidas
+                            <span className="coach-student-impartidas-tag">
+                              {s.totalClassesGiven}{" "}
+                              {s.totalClassesGiven === 1 ? "impartida" : "impartidas"}
                             </span>
                           ) : null}
                         </div>
 
-                        <p className="coaching-follow__meta" style={{ marginTop: "0.6rem" }}>
-                          {categoryLabel ? `Categoría: ${categoryLabel}. ` : ""}
-                          Última sesión: {card?.lastSessionAt ? formatSessionDate(card.lastSessionAt) : "sin clases impartidas"}.
-                          {" "}
-                          Próxima: {card?.nextSessionAt ? formatSessionDate(card.nextSessionAt) : "sin clase agendada"}.
-                          {card?.lastGoal ? ` Objetivo: ${card.lastGoal}` : ""}
-                        </p>
+                        {/* 3. Resumen Operativo: Categoría, Última sesión, Próxima clase */}
+                        <div className="coach-student-summary-grid">
+                          <div className="coach-student-summary-item">
+                            <span className="coach-student-summary-label">Categoría</span>
+                            <span className="coach-student-summary-value coach-student-summary-value--accent">
+                              {categoryLabel || "Sin categoría"}
+                            </span>
+                          </div>
 
-                        <div className="coaching-card__actions" style={{ marginTop: "1rem" }}>
+                          <div className="coach-student-summary-item">
+                            <span className="coach-student-summary-label">Última sesión</span>
+                            <span
+                              className={`coach-student-summary-value ${
+                                card?.lastSessionAt ? "" : "coach-student-summary-value--muted"
+                              }`}
+                            >
+                              {card?.lastSessionAt
+                                ? formatSessionDate(card.lastSessionAt)
+                                : "Sin clases impartidas"}
+                            </span>
+                          </div>
+
+                          <div className="coach-student-summary-item coach-student-summary-item--full">
+                            <span className="coach-student-summary-label">Próxima clase</span>
+                            <span
+                              className={`coach-student-summary-value ${
+                                card?.nextSessionAt ? "" : "coach-student-summary-value--muted"
+                              }`}
+                            >
+                              {card?.nextSessionAt
+                                ? formatSessionDate(card.nextSessionAt)
+                                : "Sin clase agendada"}
+                            </span>
+                          </div>
+
+                          {card?.lastGoal ? (
+                            <div className="coach-student-summary-item coach-student-summary-item--full">
+                              <span className="coach-student-summary-label">Último objetivo</span>
+                              <span className="coach-student-summary-value coach-student-summary-value--goal">
+                                “{card.lastGoal}”
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {/* 4. Acciones del Coach */}
+                        <div className="coach-student-actions">
                           <button
                             type="button"
-                            className="coaching-btn coaching-btn--secondary"
+                            className="coaching-btn coaching-btn--secondary coach-student-btn--followup"
                             onClick={() => void openStudentFollowup(s)}
                           >
+                            <TablerIcon name="history" size={15} />
                             Ver seguimiento
                           </button>
                           <button
                             type="button"
-                            className="coaching-btn coaching-btn--primary"
+                            className="coaching-btn coaching-btn--primary coach-student-btn--record"
                             disabled={!hasBalance || modalBusy || s.status === "PAUSED"}
                             onClick={() => openRecordClassModal(s)}
                           >
                             <TablerIcon name="check" size={15} />
-                            {modalBusy && isModalOpenForThis ? "Registrando…" : "Registrar clase impartida (-1)"}
+                            <span>
+                              {modalBusy && isModalOpenForThis
+                                ? "Registrando…"
+                                : "Registrar clase impartida (-1)"}
+                            </span>
                           </button>
-                          {s.status === "PAUSED" ? (
-                            <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block", marginTop: "0.25rem", color: "#fbbf24" }}>
-                              Alumno en pausa. El administrador del club debe reactivarlo para registrar clases.
-                            </span>
-                          ) : !hasBalance ? (
-                            <span className="coaching-muted" style={{ fontSize: "0.75rem", display: "block", marginTop: "0.25rem" }}>
-                              Sin saldo. Solicita recarga al administrador del club.
-                            </span>
-                          ) : null}
                         </div>
+
+                        {/* Alertas contextuales si aplica */}
+                        {s.status === "PAUSED" ? (
+                          <div className="coach-student-alert coach-student-alert--warning">
+                            <TablerIcon name="alert-triangle" size={14} />
+                            <span>Alumno en pausa. El club debe reactivarlo para registrar clases.</span>
+                          </div>
+                        ) : !hasBalance ? (
+                          <div className="coach-student-alert coach-student-alert--muted">
+                            <TablerIcon name="info-circle" size={14} />
+                            <span>Sin saldo disponible. Solicita recarga al administrador del club.</span>
+                          </div>
+                        ) : null}
                       </article>
                     );
                   })}
