@@ -7,6 +7,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { StudentCoachingPage } from "./StudentCoachingPage";
 import { CoachingRouter } from "./CoachingRouter";
 import * as coachingApi from "../../lib/coaching/coachingApi";
+import * as uploadAvatarModule from "../../lib/rivieraJugadores/uploadAvatar";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -28,6 +29,32 @@ jest.mock("../../lib/appRouting", () => ({
   navigateToAppHome: jest.fn(),
   navigateAppTo: jest.fn(),
   normalizeAppPathname: (p: string) => p,
+}));
+
+jest.mock("../jugadores/JugadorAvatarCropModal", () => ({
+  JugadorAvatarCropModal: ({ open, onConfirm, onClose }: any) =>
+    open ? (
+      <div data-testid="crop-modal">
+        <button
+          data-testid="crop-confirm"
+          onClick={() =>
+            onConfirm(new File(["dummy"], "avatar.jpg", { type: "image/jpeg" }))
+          }
+        >
+          Usar recorte
+        </button>
+        <button data-testid="crop-close" onClick={onClose}>
+          Cerrar
+        </button>
+      </div>
+    ) : null,
+}));
+
+jest.mock("../../lib/rivieraJugadores/uploadAvatar", () => ({
+  ...jest.requireActual("../../lib/rivieraJugadores/uploadAvatar"),
+  uploadJugadorAvatarCroppedFileWithinLimit: jest
+    .fn()
+    .mockResolvedValue("https://cdn.test/storage/diego-new.jpg?v=1"),
 }));
 
 describe("StudentCoachingPage & CoachingRouter", () => {
@@ -659,5 +686,177 @@ describe("StudentCoachingPage & CoachingRouter", () => {
 
     expect(container.textContent).toContain("Mi Coaching");
     expect(container.textContent).toContain("Tu evolución comienza aquí.");
+  });
+
+  it("permite seleccionar una foto, confirmarla en el modal y actualizar el retrato inmediatamente", async () => {
+    jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockResolvedValueOnce({
+      ok: true,
+      linked: true,
+      rivieraId: "RIV-00000356",
+      relationships: [],
+      studentProfile: {
+        id: "player-1",
+        nombre: "Diego Palomares",
+        fotoUrl: null,
+        edad: null,
+        enCancha: null,
+        instagramUrl: null,
+        facebookUrl: null,
+        tiktokUrl: null,
+      },
+    });
+
+    jest
+      .spyOn(uploadAvatarModule, "uploadJugadorAvatarCroppedFileWithinLimit")
+      .mockResolvedValue("https://cdn.test/storage/diego-new.jpg?v=1");
+
+    const updateSpy = jest
+      .spyOn(coachingApi, "updateStudentCoachingProfile")
+      .mockResolvedValueOnce({
+        id: "player-1",
+        nombre: "Diego Palomares",
+        fotoUrl: "https://cdn.test/storage/diego-new.jpg?v=1",
+        edad: null,
+        enCancha: null,
+        instagramUrl: null,
+        facebookUrl: null,
+        tiktokUrl: null,
+      });
+
+    await act(async () => {
+      root.render(<StudentCoachingPage />);
+    });
+
+    // Inicialmente muestra iniciales
+    expect(container.querySelector(".coaching-student-hero__portrait-fallback")?.textContent).toBe("DP");
+
+    // Seleccionar foto desde input
+    const fileInput = container.querySelector(
+      'input[data-testid="student-photo-input"]',
+    ) as HTMLInputElement;
+    const testFile = new File(["dummy image"], "photo.png", { type: "image/png" });
+
+    await act(async () => {
+      Object.defineProperty(fileInput, "files", {
+        value: [testFile],
+        configurable: true,
+      });
+      fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    // Modal de recorte aparece
+    expect(container.querySelector('[data-testid="crop-modal"]')).not.toBeNull();
+
+    // Confirmar en modal
+    const confirmBtn = container.querySelector(
+      '[data-testid="crop-confirm"]',
+    ) as HTMLButtonElement;
+    await act(async () => {
+      confirmBtn.click();
+    });
+
+    // Se llamó al guardado de foto
+    expect(updateSpy).toHaveBeenCalledWith({
+      fotoUrl: "https://cdn.test/storage/diego-new.jpg?v=1",
+    });
+
+    // Retrato actualizado inmediatamente a la nueva imagen
+    const newImg = container.querySelector(
+      ".coaching-student-hero__portrait-img",
+    ) as HTMLImageElement | null;
+    expect(newImg?.src).toContain("diego-new.jpg");
+  });
+
+  it("persiste los cambios de perfil y fotografía tras recargar la página", async () => {
+    // 1. Carga inicial sin datos
+    const profileState = {
+      id: "player-1",
+      nombre: "Diego Palomares",
+      fotoUrl: null as string | null,
+      edad: null as number | null,
+      enCancha: null as string | null,
+      instagramUrl: null as string | null,
+      facebookUrl: null as string | null,
+      tiktokUrl: null as string | null,
+    };
+
+    jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockImplementation(async () => ({
+      ok: true,
+      linked: true,
+      rivieraId: "RIV-00000356",
+      relationships: [],
+      studentProfile: { ...profileState },
+    }));
+
+    jest.spyOn(coachingApi, "updateStudentCoachingProfile").mockImplementation(async (input) => {
+      if (input.fotoUrl !== undefined) profileState.fotoUrl = input.fotoUrl;
+      if (input.edad !== undefined) profileState.edad = input.edad;
+      if (input.enCancha !== undefined) profileState.enCancha = input.enCancha;
+      if (input.instagramUrl !== undefined) profileState.instagramUrl = input.instagramUrl;
+      if (input.facebookUrl !== undefined) profileState.facebookUrl = input.facebookUrl;
+      if (input.tiktokUrl !== undefined) profileState.tiktokUrl = input.tiktokUrl;
+      return { ...profileState };
+    });
+
+    await act(async () => {
+      root.render(<StudentCoachingPage />);
+    });
+
+    // Editar perfil
+    const editBtn = Array.from(container.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("Editar perfil"),
+    ) as HTMLButtonElement;
+    await act(async () => {
+      editBtn.click();
+    });
+
+    const setValue = (el: HTMLInputElement, value: string) => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )!.set!;
+      setter.call(el, value);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    const inputs = container.querySelectorAll(
+      ".coaching-student-profile__form input",
+    );
+    await act(async () => {
+      setValue(inputs[0] as HTMLInputElement, "29");
+      setValue(inputs[1] as HTMLInputElement, "instagram.com/diego_padel");
+    });
+    const reves = Array.from(container.querySelectorAll('[role="radio"]')).find(
+      (b) => b.textContent === "Revés",
+    ) as HTMLButtonElement;
+    await act(async () => {
+      reves.click();
+    });
+    const form = container.querySelector(
+      ".coaching-student-profile__form",
+    ) as HTMLFormElement;
+    await act(async () => {
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+
+    expect(container.textContent).toContain("29 años");
+    expect(container.textContent).toContain("Revés");
+
+    // 2. Simular recarga de página (desmontar y volver a montar)
+    await act(async () => {
+      root.unmount();
+    });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root.render(<StudentCoachingPage />);
+    });
+
+    // Verificamos que los datos persisten tras la nueva carga
+    expect(container.textContent).toContain("29 años");
+    expect(container.textContent).toContain("Revés");
+    expect(container.textContent).toContain("Instagram");
+    expect(container.querySelector('a[href*="instagram.com/diego_padel"]')).not.toBeNull();
   });
 });
