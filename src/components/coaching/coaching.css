@@ -417,11 +417,6 @@
   white-space: nowrap;
 }
 
-.coaching-coaches-layout {
-  width: min(100%, 1080px);
-  margin-inline: auto;
-}
-
 .coaching-grid--coaches {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 340px));
   justify-content: start;

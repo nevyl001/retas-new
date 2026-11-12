@@ -798,7 +798,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
             }}
           />
         ) : (
-          <section className="coaching-panel coaching-coaches-layout" aria-label="Coaches">
+          <section className="coaching-panel" aria-label="Coaches">
             <div className="coaching-section-header">
               <div>
                 <h2 className="coaching-section-title">Coaches</h2>
