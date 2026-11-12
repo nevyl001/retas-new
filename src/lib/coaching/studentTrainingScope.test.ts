@@ -148,6 +148,26 @@ describe("evolución del alumno por club", () => {
   });
 });
 
+describe("formulario de perfil del alumno", () => {
+  it("mantiene los inputs en una línea y no hereda el alto flexible", () => {
+    const css = readFileSync(
+      join(__dirname, "../../components/coaching/coaching.css"),
+      "utf8"
+    );
+    const form = css.slice(css.indexOf(".coaching-student-profile__form {"));
+    expect(form.startsWith(".coaching-student-profile__form {")).toBe(true);
+    expect(form).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
+    expect(form).toContain("align-items: end");
+    const input = form.slice(form.indexOf(".coaching-student-profile__form .coaching-input {"));
+    expect(input.startsWith(".coaching-student-profile__form .coaching-input {")).toBe(true);
+    expect(input).toContain("flex: 0 0 auto");
+    expect(input).toContain("height: 42px");
+    expect(input).not.toContain("flex: 1 1 180px");
+    expect(form).toContain("@media (max-width: 720px)");
+    expect(form).toContain("grid-template-columns: 1fr");
+  });
+});
+
 describe("historial del entrenador en el estilo actual", () => {
   it("se apila en vertical y no desborda en móvil", () => {
     const css = readFileSync(
