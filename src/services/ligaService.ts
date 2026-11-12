@@ -42,6 +42,7 @@ import {
 import { dedupeLigaJugadoresById } from "../lib/liga/dedupeJugadores";
 import { collectMissingJugadorIds } from "../lib/liga/historicalIdentity";
 import { computePuntosPorJugadorDesdePartidos } from "../lib/liga/puntosPorJugador";
+import { puntosOficialesConAjuste, deltaAjusteDesdeTotal } from "../lib/liga/puntosConAjuste";
 import {
   computeParejasFijasMatchTotals,
   parseSetScoresJson,
@@ -657,6 +658,7 @@ async function resetPuntosLiga(ligaId: string): Promise<void> {
       ingreso_jornada_numero: null,
       puntos_ajuste_motivo: null,
       puntos_ajuste_at: null,
+      puntos_ajuste_delta: 0,
     })
     .eq("liga_id", ligaId);
   if (error) throw new Error(error.message);
@@ -1694,22 +1696,6 @@ export async function recalcularPuntosLiga(ligaId: string): Promise<void> {
     return;
   }
 
-  // Conserva puntos_heredados (transferencia de plaza). Solo limpia ajuste manual.
-  const { error: resetErr } = await supabase
-    .from("liga_inscripciones")
-    .update({
-      puntos_ajuste_motivo: null,
-      puntos_ajuste_at: null,
-    })
-    .eq("liga_id", ligaId);
-
-  if (resetErr) {
-    throw new Error(
-      resetErr.message +
-        " (¿El esquema de liga en Supabase permite actualizar puntos?)"
-    );
-  }
-
   const { data: jornadas, error: jErr } = await supabase
     .from("liga_jornadas")
     .select("id")
@@ -1813,23 +1799,26 @@ export async function recalcularPuntosLiga(ligaId: string): Promise<void> {
 
   const { data: inscRows, error: inscErr } = await supabase
     .from("liga_inscripciones")
-    .select("jugador_id, puntos_heredados")
+    .select("jugador_id, puntos_heredados, puntos_ajuste_delta")
     .eq("liga_id", ligaId);
 
   if (inscErr) throw new Error(inscErr.message);
 
-  // Cada plaza: puntos propios de partidos del titular actual + heredados de plaza.
+  // Cada plaza: juegos de las jornadas cerradas + herencia + delta del ajuste.
   const results = await Promise.all(
     (inscRows ?? []).map((row) => {
       const jugadorId = String(row.jugador_id);
       const heredados = Math.max(0, Number(row.puntos_heredados ?? 0));
       const propios = totales.get(jugadorId) ?? 0;
+      const delta = Math.trunc(Number(row.puntos_ajuste_delta ?? 0));
       return supabase
         .from("liga_inscripciones")
         .update({
-          puntos: propios + heredados,
-          puntos_ajuste_motivo: null,
-          puntos_ajuste_at: null,
+          puntos: puntosOficialesConAjuste({
+            puntosPartidos: propios,
+            puntosHeredados: heredados,
+            ajusteDelta: delta,
+          }),
         })
         .eq("liga_id", ligaId)
         .eq("jugador_id", jugadorId);
@@ -2323,6 +2312,68 @@ export async function listarCorreccionesPuntos(
   }));
 }
 
+async function puntosPartidosCompletadosPorJugador(
+  ligaId: string
+): Promise<Map<string, number>> {
+  const { data: jornadas, error: jErr } = await supabase
+    .from("liga_jornadas")
+    .select("id")
+    .eq("liga_id", ligaId);
+
+  if (jErr) throw new Error(jErr.message);
+  const jornadaIds = (jornadas ?? []).map((j) => String(j.id));
+  const totales = new Map<string, number>();
+  if (jornadaIds.length === 0) return totales;
+
+  const [{ data: partidosRows, error: pErr }, { data: parejasRows, error: parErr }] =
+    await Promise.all([
+      supabase
+        .from("liga_partidos")
+        .select(
+          "jornada_id, score_pareja1, score_pareja2, pareja1_id, pareja2_id, estado"
+        )
+        .in("jornada_id", jornadaIds),
+      supabase
+        .from("liga_jornada_parejas")
+        .select("id, jornada_id, jugador1_id, jugador2_id")
+        .in("jornada_id", jornadaIds),
+    ]);
+
+  if (pErr) throw new Error(pErr.message);
+  if (parErr) throw new Error(parErr.message);
+
+  const partidosByJornada = new Map<string, PartidoPuntosRow[]>();
+  for (const row of partidosRows ?? []) {
+    const jornadaId = String((row as { jornada_id: string }).jornada_id);
+    const list = partidosByJornada.get(jornadaId) ?? [];
+    list.push(row as PartidoPuntosRow);
+    partidosByJornada.set(jornadaId, list);
+  }
+  const parejasByJornada = new Map<string, ParejaPuntosRow[]>();
+  for (const row of parejasRows ?? []) {
+    const jornadaId = String((row as { jornada_id: string }).jornada_id);
+    const list = parejasByJornada.get(jornadaId) ?? [];
+    list.push(row as ParejaPuntosRow);
+    parejasByJornada.set(jornadaId, list);
+  }
+
+  for (const jornadaId of jornadaIds) {
+    const lista = partidosByJornada.get(jornadaId) ?? [];
+    const completa =
+      lista.length > 0 && lista.every((p) => p.estado === "completed");
+    if (!completa) continue;
+    const pts = computePuntosPorJugadorDesdePartidos(
+      lista,
+      parejasByJornada.get(jornadaId) ?? []
+    );
+    for (const [jugadorId, value] of Array.from(pts.entries())) {
+      totales.set(jugadorId, (totales.get(jugadorId) ?? 0) + value);
+    }
+  }
+
+  return totales;
+}
+
 export async function actualizarPuntosInscripcion(
   ligaId: string,
   jugadorId: string,
@@ -2341,11 +2392,19 @@ export async function actualizarPuntosInscripcion(
 
   const previo = await supabase
     .from("liga_inscripciones")
-    .select("puntos")
+    .select("puntos, puntos_heredados")
     .eq("liga_id", ligaId)
     .eq("jugador_id", jugadorId)
     .maybeSingle();
   if (previo.error) throw new Error(previo.error.message);
+
+  const partidos = await puntosPartidosCompletadosPorJugador(ligaId);
+  const heredados = Math.max(0, Number(previo.data?.puntos_heredados ?? 0));
+  const delta = deltaAjusteDesdeTotal({
+    totalDeseado: valor,
+    puntosPartidos: partidos.get(jugadorId) ?? 0,
+    puntosHeredados: heredados,
+  });
 
   const { error } = await supabase
     .from("liga_inscripciones")
@@ -2353,6 +2412,7 @@ export async function actualizarPuntosInscripcion(
       puntos: valor,
       puntos_ajuste_motivo: motivoTrim,
       puntos_ajuste_at: ahora,
+      puntos_ajuste_delta: delta,
     })
     .eq("liga_id", ligaId)
     .eq("jugador_id", jugadorId);
