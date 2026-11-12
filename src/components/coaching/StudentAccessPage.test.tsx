@@ -564,7 +564,7 @@ describe("StudentAccessPage Component Tests", () => {
     const passInput = container.querySelector("input[type='password']") as HTMLInputElement;
     const submitBtn = container.querySelector("button[type='submit']") as HTMLButtonElement;
 
-    expect(container.textContent).toContain("Correo Electrónico o Riviera ID");
+    expect(container.textContent).toContain("Riviera ID");
 
     await act(async () => {
       const nativeSetterText = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;

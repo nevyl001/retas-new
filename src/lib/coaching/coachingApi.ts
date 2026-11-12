@@ -2402,6 +2402,9 @@ export async function getClubStudentAccessStatus(
     isActive: res.is_active !== undefined ? Boolean(res.is_active) : undefined,
     deactivatedAt: res.deactivated_at || null,
     createdAt: res.created_at || null,
+    activatedAt: res.activated_at || null,
+    passwordConfigured: Boolean(res.password_configured),
+    invitationExpired: Boolean(res.invitation_expired),
     invitedAt: res.invited_at || null,
     expiresAt: res.expires_at || null,
     accountType: res.account_type || null,
@@ -2645,7 +2648,7 @@ export async function loginStudentWithIdentifier(
   if (!cleanId || !cleanPass) {
     return {
       ok: false,
-      error: "Ingresa tu correo o Riviera ID y tu contraseña.",
+      error: "Ingresa tu Riviera ID y tu contraseña.",
     };
   }
 
@@ -2716,7 +2719,7 @@ export async function requestStudentPasswordReset(
 ): Promise<{ ok: boolean; message?: string; error?: string }> {
   const cleanId = identifier.trim();
   if (!cleanId) {
-    return { ok: false, error: "Ingresa tu correo o Riviera ID registrado." };
+    return { ok: false, error: "Ingresa tu Riviera ID." };
   }
 
   try {

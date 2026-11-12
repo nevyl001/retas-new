@@ -19,6 +19,7 @@ interface ManageStudentAccessModalProps {
   coachId?: string;
   coachName?: string;
   clubName?: string;
+  fotoUrl?: string | null;
   initialEmail?: string;
   onAccessUpdated?: () => void;
 }
@@ -33,6 +34,7 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
   coachId,
   coachName,
   clubName,
+  fotoUrl,
   initialEmail,
   onAccessUpdated,
 }) => {
@@ -89,9 +91,10 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
       );
       setAccessInfo(res);
       setSuccessMsg(
-        res.status === "ACTIVE"
-          ? "¡Cuenta vinculada exitosamente!"
-          : "¡Invitación enviada por correo al alumno exitosamente!"
+        res.message ||
+          (res.status === "ACTIVE"
+            ? "El alumno ya tiene su cuenta activa."
+            : "Invitación enviada al correo del alumno.")
       );
       if (onAccessUpdated) onAccessUpdated();
     } catch (err: any) {
@@ -110,9 +113,13 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
       setAccessInfo((prev) => ({
         ...prev,
         ...res,
-        status: "INVITATION_PENDING",
+        status: res.status || "INVITATION_PENDING",
       }));
-      setSuccessMsg("Invitación reenviada por correo exitosamente.");
+      setSuccessMsg(
+        res.status === "ACTIVE"
+          ? "El alumno ya activó su cuenta. No se envió otro correo."
+          : "Invitación enviada al correo del alumno."
+      );
       if (onAccessUpdated) onAccessUpdated();
     } catch (err: any) {
       setErrorMsg(err.message || "Error al reenviar la invitación.");
@@ -127,7 +134,8 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
     setSuccessMsg(null);
     try {
       const res = await deactivateStudentAccess(organizadorId, jugadorId);
-      setAccessInfo((prev) => (prev ? { ...prev, status: "DEACTIVATED" } : null));
+      const next = await getClubStudentAccessStatus(organizadorId, jugadorId);
+      setAccessInfo(next);
       setSuccessMsg(res.message || "Acceso desactivado.");
       setConfirmDeactivate(false);
       if (onAccessUpdated) onAccessUpdated();
@@ -144,8 +152,9 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
     setSuccessMsg(null);
     try {
       const res = await reactivateStudentAccess(organizadorId, jugadorId);
-      setAccessInfo((prev) => (prev ? { ...prev, status: "ACTIVE" } : null));
-      setSuccessMsg(res.message || "Acceso reactivado exitosamente.");
+      const next = await getClubStudentAccessStatus(organizadorId, jugadorId);
+      setAccessInfo(next);
+      setSuccessMsg(res.message || "Acceso reactivado.");
       if (onAccessUpdated) onAccessUpdated();
     } catch (err: any) {
       setErrorMsg(err.message || "Error al reactivar el acceso.");
@@ -157,6 +166,17 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
   if (!isOpen) return null;
 
   const currentStatus: StudentAccessStatus = accessInfo?.status || "NO_ACCESS";
+  const activationDate = accessInfo?.activatedAt || accessInfo?.createdAt;
+  const formatDate = (value?: string | null) => {
+    if (!value) return "";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "";
+    return parsed.toLocaleDateString("es-MX", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   return (
     <div className="student-access-modal-overlay" onClick={onClose}>
@@ -181,60 +201,60 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
         <div className="student-access-modal-content">
           {/* Ficha descriptiva del alumno */}
           <div className="student-access-card">
-            <div className="student-access-card-row">
-              <span className="student-access-card-label">Alumno:</span>
-              <span className="student-access-card-value">{studentName}</span>
-            </div>
-            <div className="student-access-card-row">
-              <span className="student-access-card-label">Riviera ID oficial:</span>
-              <span
-                className="student-access-card-value"
-                style={{
-                  fontFamily: "monospace",
-                  color: "#34d399",
-                  fontWeight: 700,
-                }}
-              >
-                {rivieraId || "SIN-ID"}
-              </span>
+            <div className="student-access-identity">
+              <div className="student-access-avatar" aria-hidden>
+                {fotoUrl ? (
+                  <img src={fotoUrl} alt="" />
+                ) : (
+                  (studentName || "A").slice(0, 1).toUpperCase()
+                )}
+              </div>
+              <div>
+                <p className="student-access-identity-name">{studentName}</p>
+                <p className="student-access-identity-id">{rivieraId || "Sin Riviera ID"}</p>
+              </div>
             </div>
             {coachName && (
               <div className="student-access-card-row">
-                <span className="student-access-card-label">Coach:</span>
+                <span className="student-access-card-label">Coach</span>
                 <span className="student-access-card-value">{coachName}</span>
               </div>
             )}
             {clubName && (
               <div className="student-access-card-row">
-                <span className="student-access-card-label">Club:</span>
+                <span className="student-access-card-label">Club</span>
                 <span className="student-access-card-value">{clubName}</span>
               </div>
             )}
             <div className="student-access-card-row">
-              <span className="student-access-card-label">Estado de acceso:</span>
+              <span className="student-access-card-label">Correo vinculado</span>
+              <span className="student-access-card-value">
+                {accessInfo?.email || emailInput || "Sin correo"}
+              </span>
+            </div>
+            <div className="student-access-card-row">
+              <span className="student-access-card-label">Activación</span>
               <span className="student-access-card-value">
                 {currentStatus === "ACTIVE" && (
-                  <span className="status-pill status-pill-active">
-                    Acceso Activo
-                  </span>
+                  <span className="status-pill status-pill-active">Acceso activo</span>
                 )}
                 {currentStatus === "INVITATION_PENDING" && (
-                  <span className="status-pill status-pill-pending">
-                    Invitación Pendiente
-                  </span>
+                  <span className="status-pill status-pill-pending">Pendiente de activación</span>
                 )}
                 {currentStatus === "DEACTIVATED" && (
-                  <span className="status-pill status-pill-deactivated">
-                    Acceso Desactivado
-                  </span>
+                  <span className="status-pill status-pill-deactivated">Acceso desactivado</span>
                 )}
                 {currentStatus === "NO_ACCESS" && (
-                  <span className="status-pill status-pill-no-access">
-                    Sin Acceso
-                  </span>
+                  <span className="status-pill status-pill-no-access">Sin acceso</span>
                 )}
               </span>
             </div>
+            {currentStatus === "ACTIVE" && activationDate ? (
+              <div className="student-access-card-row">
+                <span className="student-access-card-label">Activó su cuenta</span>
+                <span className="student-access-card-value">{formatDate(activationDate)}</span>
+              </div>
+            ) : null}
           </div>
 
           {errorMsg && (
@@ -282,119 +302,63 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
                     >
                       {actionLoading
                         ? "Generando acceso..."
-                        : "Crear Acceso del Alumno"}
+                        : "Enviar invitación"}
                     </button>
                   </div>
                 </form>
               )}
 
-              {/* CASO 2: INVITACIÓN PENDIENTE */}
               {currentStatus === "INVITATION_PENDING" && (
                 <div>
-                  <div className="student-activation-row" style={{ marginBottom: "0.75rem" }}>
-                    <span className="student-activation-label">Correo invitado:</span>
-                    <span className="student-activation-val">
-                      {accessInfo?.email || emailInput}
-                    </span>
+                  <div className="modal-info-note">
+                    {accessInfo?.invitationExpired
+                      ? "La invitación venció y el alumno todavía no creó su contraseña. Reenviar genera un enlace nuevo, de un solo uso, sin duplicar su Riviera ID."
+                      : "La invitación está enviada. El alumno entra al correo, activa su cuenta y crea su contraseña. Hasta entonces no tiene acceso, aunque ya tenga clases asignadas."}
                   </div>
-
-                  <div
-                    className="modal-info-note"
-                    style={{
-                      background: "#f0fdf4",
-                      border: "1px solid #bbf7d0",
-                      padding: "12px",
-                      borderRadius: "8px",
-                      margin: "12px 0",
-                      color: "#166534",
-                      fontSize: "0.875rem",
-                      lineHeight: "1.4",
-                    }}
-                  >
-                    <strong>Enlace enviado al buzón del alumno:</strong> El enlace oficial de verificación y activación fue enviado exclusivamente al correo <strong>{accessInfo?.email || emailInput}</strong>. Por política de seguridad, los administradores no tienen acceso a los enlaces de verificación ni pueden modificar la contraseña del jugador.
-                  </div>
-
                   <div className="modal-actions-container">
                     <button
                       type="button"
-                      className="btn-action-secondary"
+                      className="btn-action-primary"
                       onClick={handleResend}
                       disabled={actionLoading}
                     >
-                      {actionLoading
-                        ? "Reenviando..."
-                        : "Reenviar Invitación por Correo"}
+                      {actionLoading ? "Enviando..." : "Reenviar invitación"}
                     </button>
-
                     <button
                       type="button"
                       className="btn-action-danger"
                       onClick={handleDeactivate}
                       disabled={actionLoading}
                     >
-                      Cancelar Invitación
+                      Cancelar invitación
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* CASO 3: ACCESO ACTIVO */}
               {currentStatus === "ACTIVE" && (
                 <div>
-                  <div className="student-activation-row" style={{ marginBottom: "0.5rem" }}>
-                    <span className="student-activation-label">Correo vinculado:</span>
-                    <span className="student-activation-val">{accessInfo?.email}</span>
-                  </div>
-                  {accessInfo?.createdAt && (
-                    <div className="student-activation-row" style={{ marginBottom: "1rem" }}>
-                      <span className="student-activation-label">Activo desde:</span>
-                      <span className="student-activation-val">
-                        {new Date(accessInfo.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
-
                   <div className="modal-info-note">
-                    El alumno tiene acceso privado a <code>/coaching/mi-coaching</code>. Sus clases contratadas, entrenamientos y seguimiento deportivo se sincronizan en tiempo real.
+                    El alumno ya activó su cuenta. Entra a Mi Coaching con su Riviera ID y su contraseña. Si la olvida, la recupera desde el acceso del alumno.
                   </div>
-
                   <div className="modal-actions-container">
                     {confirmDeactivate ? (
-                      <div
-                        style={{
-                          background: "rgba(239, 68, 68, 0.1)",
-                          padding: "1rem",
-                          borderRadius: "8px",
-                          border: "1px solid rgba(239, 68, 68, 0.3)",
-                        }}
-                      >
-                        <p
-                          style={{
-                            margin: "0 0 0.75rem",
-                            fontSize: "0.85rem",
-                            color: "#fca5a5",
-                          }}
-                        >
-                          ¿Estás seguro de pausar el acceso de este alumno?
-                          <br />
-                          <strong>
-                            No se borrará su Riviera ID ni sus clases contratadas.
-                          </strong>
+                      <div className="student-access-confirm">
+                        <p>
+                          Se suspende el ingreso a Mi Coaching. Su Riviera ID, sus clases y su seguimiento se conservan.
                         </p>
-                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <div className="student-access-confirm-actions">
                           <button
                             type="button"
                             className="btn-action-danger"
-                            style={{ flex: 1 }}
                             onClick={handleDeactivate}
                             disabled={actionLoading}
                           >
-                            {actionLoading ? "Pausando..." : "Confirmar Pausa"}
+                            {actionLoading ? "Desactivando..." : "Confirmar"}
                           </button>
                           <button
                             type="button"
                             className="btn-action-secondary"
-                            style={{ flex: 1 }}
                             onClick={() => setConfirmDeactivate(false)}
                             disabled={actionLoading}
                           >
@@ -409,29 +373,38 @@ export const ManageStudentAccessModal: React.FC<ManageStudentAccessModalProps> =
                         onClick={() => setConfirmDeactivate(true)}
                         disabled={actionLoading}
                       >
-                        Desactivar Acceso del Alumno
+                        Desactivar acceso
                       </button>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* CASO 4: ACCESO DESACTIVADO */}
               {currentStatus === "DEACTIVATED" && (
                 <div>
-                  <div className="student-alert student-alert-warning">
-                    El acceso de este alumno se encuentra actualmente pausado. El alumno no puede ingresar a su portal, pero su Riviera ID, balance de clases y notas permanecen intactos.
+                  <div className="modal-info-note">
+                    El club suspendió el ingreso. Las clases asignadas siguen en el expediente.
                   </div>
-
                   <div className="modal-actions-container">
-                    <button
-                      type="button"
-                      className="btn-action-primary"
-                      onClick={handleReactivate}
-                      disabled={actionLoading}
-                    >
-                      {actionLoading ? "Reactivando..." : "Reactivar Acceso del Alumno"}
-                    </button>
+                    {accessInfo?.passwordConfigured ? (
+                      <button
+                        type="button"
+                        className="btn-action-primary"
+                        onClick={handleReactivate}
+                        disabled={actionLoading}
+                      >
+                        {actionLoading ? "Reactivando..." : "Reactivar acceso"}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn-action-primary"
+                        onClick={handleResend}
+                        disabled={actionLoading}
+                      >
+                        {actionLoading ? "Enviando..." : "Enviar invitación"}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

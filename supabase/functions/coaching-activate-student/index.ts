@@ -85,7 +85,7 @@ Deno.serve(async (req: Request) => {
     if (!rawIdentifier || !rawPassword) {
       return jsonResponse(400, {
         ok: false,
-        error: "Ingresa tu identificador (correo o Riviera ID) y tu contraseña.",
+        error: "Ingresa tu Riviera ID y tu contraseña.",
       });
     }
 
@@ -143,10 +143,10 @@ Deno.serve(async (req: Request) => {
 
         if (rpcErr || !rpcRes || rpcRes.ok !== true || !rpcRes.email) {
           // Error genérico sin revelar si el Riviera ID existe
-          return jsonResponse(401, {
-            ok: false,
-            error: "Credenciales incorrectas. Verifica tu identificador y contraseña.",
-          });
+        return jsonResponse(401, {
+          ok: false,
+          error: "Credenciales incorrectas. Verifica tu Riviera ID y tu contraseña.",
+        });
         }
         emailToAuth = String(rpcRes.email).trim().toLowerCase();
       }
@@ -163,7 +163,32 @@ Deno.serve(async (req: Request) => {
       if (authError || !authData?.session || !authData.user) {
         return jsonResponse(401, {
           ok: false,
-          error: "Credenciales incorrectas. Verifica tu identificador y contraseña.",
+          error: "Credenciales incorrectas. Verifica tu Riviera ID y tu contraseña.",
+        });
+      }
+
+      const { data: accessLinks, error: accessLinkError } = await supabaseAdmin
+        .from("coach_student_account_links")
+        .select("is_active")
+        .eq("auth_user_id", authData.user.id);
+
+      if (accessLinkError) {
+        await supabaseAnonAuth.auth.signOut();
+        return jsonResponse(500, {
+          ok: false,
+          error: "No se pudo comprobar el acceso del alumno.",
+        });
+      }
+
+      const linkRows = accessLinks ?? [];
+      const hasActiveAccess = linkRows.some((row) => row.is_active === true);
+      if (!hasActiveAccess) {
+        await supabaseAnonAuth.auth.signOut();
+        return jsonResponse(403, {
+          ok: false,
+          error: linkRows.length > 0
+            ? "Tu club desactivó el acceso a Riviera Coaching."
+            : "Credenciales incorrectas. Verifica tu Riviera ID y tu contraseña.",
         });
       }
 

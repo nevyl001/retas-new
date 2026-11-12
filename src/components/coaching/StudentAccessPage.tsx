@@ -189,7 +189,7 @@ export const StudentAccessPage: React.FC = () => {
     e.preventDefault();
     const rawIdentifier = loginEmail.trim();
     if (!rawIdentifier || !loginPassword.trim()) {
-      setLoginError("Ingresa tu correo o Riviera ID y tu contraseña.");
+      setLoginError("Ingresa tu Riviera ID y tu contraseña.");
       return;
     }
 
@@ -201,7 +201,7 @@ export const StudentAccessPage: React.FC = () => {
       const res = await loginStudentWithIdentifier(rawIdentifier, loginPassword);
       if (!res.ok) {
         setLoginError(
-          res.error || "Credenciales incorrectas. Verifica tu correo/Riviera ID y tu contraseña."
+          res.error || "Credenciales incorrectas. Verifica tu Riviera ID y tu contraseña."
         );
         return;
       }
@@ -463,7 +463,7 @@ export const StudentAccessPage: React.FC = () => {
     e.preventDefault();
     const rawInput = recoveryEmail.trim();
     if (!rawInput) {
-      setRecoveryError("Ingresa tu correo electrónico registrado o Riviera ID.");
+      setRecoveryError("Ingresa tu Riviera ID.");
       return;
     }
 
@@ -515,7 +515,7 @@ export const StudentAccessPage: React.FC = () => {
               ? "Define tu contraseña de acceso exclusivo a Riviera Coaching."
               : mode === "recovery"
               ? "Te enviaremos un enlace a tu correo para restablecer tu contraseña."
-              : "Consulta tus clases, entrenamientos y seguimiento deportivo."}
+              : "Entra con tu Riviera ID y tu contraseña."}
           </p>
         </div>
 
@@ -805,16 +805,19 @@ export const StudentAccessPage: React.FC = () => {
                 )}
 
                 <div className="student-form-group">
-                  <label className="student-form-label">Correo Electrónico o Riviera ID</label>
+                  <label className="student-form-label" htmlFor="student-riviera-id">Riviera ID</label>
                   <input
+                    id="student-riviera-id"
                     type="text"
                     className="student-form-input"
-                    placeholder="alumno@ejemplo.com o RIV-00000107"
+                    placeholder="RIV-00000107"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     disabled={loginLoading}
                     required
                     autoComplete="username"
+                    autoCapitalize="characters"
+                    spellCheck={false}
                   />
                 </div>
 
@@ -910,18 +913,24 @@ export const StudentAccessPage: React.FC = () => {
                   )}
 
                   <div className="student-form-group">
-                    <label className="student-form-label">
-                      Correo Electrónico Registrado o Riviera ID
+                    <label className="student-form-label" htmlFor="student-recovery-id">
+                      Riviera ID
                     </label>
                     <input
+                      id="student-recovery-id"
                       type="text"
                       className="student-form-input"
-                      placeholder="alumno@ejemplo.com o RIV-00000107"
+                      placeholder="RIV-00000107"
                       value={recoveryEmail}
                       onChange={(e) => setRecoveryEmail(e.target.value)}
                       disabled={recoveryLoading}
                       required
+                      autoCapitalize="characters"
+                      spellCheck={false}
                     />
+                    <p className="student-form-hint">
+                      El enlace llega al correo verificado de tu cuenta.
+                    </p>
                   </div>
 
                   <button

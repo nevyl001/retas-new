@@ -69,6 +69,76 @@
   padding: 1.5rem;
 }
 
+.student-access-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid #27272a;
+}
+
+.student-access-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: #27272a;
+  color: #fafafa;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.student-access-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.student-access-identity-name,
+.student-access-identity-id {
+  margin: 0;
+}
+
+.student-access-identity-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fafafa;
+}
+
+.student-access-identity-id {
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: #d4d4d8;
+}
+
+.student-access-confirm {
+  padding: 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.student-access-confirm p {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #fca5a5;
+}
+
+.student-access-confirm-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.student-access-confirm-actions .btn-action-danger,
+.student-access-confirm-actions .btn-action-secondary {
+  flex: 1;
+}
+
 /* Ficha del alumno */
 .student-access-card {
   background: #18181b;

@@ -9,6 +9,7 @@ import { newCorrelationId, logError, logWarn } from "../_shared/logger.ts";
 import { safeClientMessage, internalErrorDetail } from "../_shared/errors.ts";
 import { checkRateLimit, rateLimitedResponse } from "../_shared/rateLimit.ts";
 import { sendByResend, resendApiKeyConfigured } from "../_shared/resendEmail.ts";
+import { renderStudentCoachingInviteEmail } from "../_shared/studentCoachingInviteEmail.ts";
 
 interface RequestBody {
   organizadorId?: string;
@@ -235,12 +236,20 @@ Deno.serve(async (req: Request) => {
       .eq("jugador_id", jugadorId)
       .maybeSingle();
 
-    if (existingLink?.is_active) {
+    let existingPasswordReady = false;
+    if (existingLink?.auth_user_id) {
+      const { data: hasPassword } = await supabaseAdmin.rpc("student_auth_has_password", {
+        p_user_id: existingLink.auth_user_id,
+      });
+      existingPasswordReady = hasPassword === true;
+    }
+
+    if (existingLink?.is_active && existingPasswordReady) {
       return jsonResponse(200, {
         ok: true,
         alreadyActive: true,
         status: "ACTIVE",
-        message: "El alumno ya cuenta con un acceso activo a Riviera Coaching en este club.",
+        message: "El alumno ya activó su cuenta y tiene acceso en este club. No se envió otro correo.",
       });
     }
 
@@ -286,6 +295,14 @@ Deno.serve(async (req: Request) => {
 
     const isExistingAccount = Boolean(acctCheck.exists);
     const existingAuthUserId: string | null = acctCheck.user_id || null;
+    let accountHasPassword = existingPasswordReady;
+    if (!accountHasPassword && existingAuthUserId) {
+      const { data: hasPassword } = await supabaseAdmin.rpc("student_auth_has_password", {
+        p_user_id: existingAuthUserId,
+      });
+      accountHasPassword = hasPassword === true;
+    }
+    const needsPassword = !accountHasPassword;
 
     // 8. Generar token criptográfico y su hash SHA-256
     const token = generateSecureToken();
@@ -299,11 +316,11 @@ Deno.serve(async (req: Request) => {
     let authUserId: string | null = existingAuthUserId;
     let verificationUrl: string | null = null;
 
-    // 9. Si es una cuenta nueva, generar enlace de verificación oficial mediante Supabase Auth
-    if (!isExistingAccount) {
+    // 9. Si todavía no hay contraseña, el botón del correo abre el enlace oficial de activación.
+    if (needsPassword) {
       const { data: linkData, error: linkError } =
         await supabaseAdmin.auth.admin.generateLink({
-          type: "invite",
+          type: isExistingAccount ? "magiclink" : "invite",
           email: email,
           options: {
             redirectTo: invitationUrl,
@@ -344,18 +361,19 @@ Deno.serve(async (req: Request) => {
       authUserId = linkData.user.id;
       verificationUrl = actionLink;
 
-      // Proteger app_metadata con rol exclusivo STUDENT_ONLY
-      await supabaseAdmin.auth.admin.updateUserById(linkData.user.id, {
-        app_metadata: {
-          role: "student",
-          account_type: "STUDENT_ONLY",
-          roles: ["student"],
-        },
-        user_metadata: {
-          name: jugador.nombre,
-          account_type: "STUDENT_ONLY",
-        },
-      });
+      if (!isExistingAccount) {
+        await supabaseAdmin.auth.admin.updateUserById(linkData.user.id, {
+          app_metadata: {
+            role: "student",
+            account_type: "STUDENT_ONLY",
+            roles: ["student"],
+          },
+          user_metadata: {
+            name: jugador.nombre,
+            account_type: "STUDENT_ONLY",
+          },
+        });
+      }
     }
 
     // Revocar invitaciones anteriores pendientes para este club y alumno
@@ -419,80 +437,47 @@ Deno.serve(async (req: Request) => {
     }
 
     try {
-      if (isExistingAccount) {
-        const sendResult = await sendByResend(
-          email,
-          `Riviera Coaching — Vinculación con ${clubName}`,
-          `Hola ${jugador.nombre},\n\nEl club ${clubName} te ha invitado a consultar tus clases con el coach ${coachName} en Riviera Coaching.\n\nPara vincular tu perfil a tu cuenta existente de AppRiviera, ingresa aquí:\n${invitationUrl}`,
-          `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #09090b; background: #ffffff; border-radius: 8px; border: 1px solid #e4e4e7;">
-            <div style="font-size: 11px; letter-spacing: 0.1em; color: #71717a; font-weight: 700; text-transform: uppercase; margin-bottom: 12px;">Riviera Coaching</div>
-            <h2 style="color: #09090b; margin-top: 0; font-size: 20px; font-weight: 700;">Vinculación de Perfil Deportivo</h2>
-            <p style="font-size: 14px; line-height: 1.6; color: #27272a;">Hola <strong>${jugador.nombre}</strong>,</p>
-            <p style="font-size: 14px; line-height: 1.6; color: #27272a;"><strong>${clubName}</strong> te ha registrado como alumno del coach <strong>${coachName}</strong> en Riviera Coaching con tu identificador oficial <strong>${officialRivieraId || "N/A"}</strong>.</p>
-            <p style="font-size: 14px; line-height: 1.6; color: #27272a;">Ya tienes una cuenta registrada en AppRiviera con este correo. Inicia sesión con tu contraseña habitual para vincular tu perfil de coaching sin modificar tus credenciales:</p>
-            <div style="margin: 28px 0;">
-              <a href="${invitationUrl}" style="background-color: #09090b; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-block;">Vincular Perfil Deportivo</a>
-            </div>
-            <p style="color: #71717a; font-size: 12px; margin-top: 28px; border-top: 1px solid #f4f4f5; padding-top: 16px;">Si no solicitaste este acceso, puedes ignorar este correo.</p>
-          </div>`,
-          { correlationId, module: MODULE, jugadorId }
-        );
+      const actionUrl = needsPassword ? verificationUrl : invitationUrl;
+      if (!actionUrl) {
+        logError({
+          correlationId,
+          module: MODULE,
+          errorType: "missing_verification_url",
+          detail: "No hay enlace de activación para el correo del alumno.",
+        });
+        return jsonResponse(500, {
+          ok: false,
+          error: "No se pudo obtener el enlace de activación para el alumno.",
+        });
+      }
 
-        if (!sendResult.ok) {
-          logError({
-            correlationId,
-            module: MODULE,
-            errorType: "resend_send_failed",
-            detail: sendResult.error || sendResult.responseBody,
-          });
-          return jsonResponse(502, {
-            ok: false,
-            error: `No se pudo enviar el correo de vinculación al alumno (${sendResult.error || "error del proveedor de correo"}).`,
-          });
-        }
-      } else {
-        if (!verificationUrl) {
-          logError({
-            correlationId,
-            module: MODULE,
-            errorType: "missing_verification_url",
-            detail: "verificationUrl no disponible para cuenta nueva.",
-          });
-          return jsonResponse(500, {
-            ok: false,
-            error: "No se pudo obtener el enlace de verificación oficial para el alumno.",
-          });
-        }
-        const sendResult = await sendByResend(
-          email,
-          `Invitación a Riviera Coaching — ${clubName}`,
-          `Hola ${jugador.nombre},\n\nEl club ${clubName} te ha registrado como alumno con el coach ${coachName} en Riviera Coaching (Riviera ID: ${officialRivieraId || "N/A"}).\n\nPara verificar la propiedad de tu correo y establecer tu contraseña de acceso, haz clic en el siguiente enlace:\n${verificationUrl}`,
-          `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #09090b; background: #ffffff; border-radius: 8px; border: 1px solid #e4e4e7;">
-            <div style="font-size: 11px; letter-spacing: 0.1em; color: #71717a; font-weight: 700; text-transform: uppercase; margin-bottom: 12px;">Riviera Coaching</div>
-            <h2 style="color: #09090b; margin-top: 0; font-size: 20px; font-weight: 700;">Verificación de Acceso de Alumno</h2>
-            <p style="font-size: 14px; line-height: 1.6; color: #27272a;">Hola <strong>${jugador.nombre}</strong>,</p>
-            <p style="font-size: 14px; line-height: 1.6; color: #27272a;"><strong>${clubName}</strong> te ha registrado como alumno con el coach <strong>${coachName}</strong> en Riviera Coaching con tu identificador oficial <strong>${officialRivieraId || "N/A"}</strong>.</p>
-            <p style="font-size: 14px; line-height: 1.6; color: #27272a;">Por seguridad y para comprobar la posesión de tu correo electrónico, haz clic en el siguiente botón para verificar tu cuenta y definir tu contraseña:</p>
-            <div style="margin: 28px 0;">
-              <a href="${verificationUrl}" style="background-color: #09090b; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-block;">Verificar Correo y Activar Cuenta</a>
-            </div>
-            <p style="color: #71717a; font-size: 12px; margin-top: 28px; border-top: 1px solid #f4f4f5; padding-top: 16px;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br/><a href="${verificationUrl}" style="color: #09090b; word-break: break-all;">${verificationUrl}</a></p>
-          </div>`,
-          { correlationId, module: MODULE, jugadorId }
-        );
+      const rendered = renderStudentCoachingInviteEmail({
+        studentName: jugador.nombre,
+        clubName,
+        coachName: coachRow?.nombre?.trim() || "",
+        rivieraId: officialRivieraId,
+        actionUrl,
+        needsPassword,
+      });
+      const sendResult = await sendByResend(
+        email,
+        rendered.subject,
+        rendered.text,
+        rendered.html,
+        { correlationId, module: MODULE, jugadorId }
+      );
 
-        if (!sendResult.ok) {
-          logError({
-            correlationId,
-            module: MODULE,
-            errorType: "resend_send_failed",
-            detail: sendResult.error || sendResult.responseBody,
-          });
-          return jsonResponse(502, {
-            ok: false,
-            error: `No se pudo enviar el correo de verificación al alumno (${sendResult.error || "error del proveedor de correo"}).`,
-          });
-        }
+      if (!sendResult.ok) {
+        logError({
+          correlationId,
+          module: MODULE,
+          errorType: "resend_send_failed",
+          detail: sendResult.error || sendResult.responseBody,
+        });
+        return jsonResponse(502, {
+          ok: false,
+          error: `No se pudo enviar el correo de activación al alumno (${sendResult.error || "error del proveedor de correo"}).`,
+        });
       }
     } catch (emailErr) {
       logError({
@@ -516,9 +501,9 @@ Deno.serve(async (req: Request) => {
       studentName: jugador.nombre,
       rivieraId: officialRivieraId,
       expiresAt: invitation.expires_at,
-      message: isExistingAccount
-        ? `Invitación enviada al correo ${email} para vincular su cuenta existente.`
-        : `Invitación y enlace de verificación enviados al buzón ${email}.`,
+      message: needsPassword
+        ? "El servicio de correo aceptó la invitación. El alumno debe abrirla, activar su cuenta y crear su contraseña."
+        : "El servicio de correo aceptó la invitación. El alumno entra con su Riviera ID y su contraseña.",
     });
   } catch (err) {
     logError({

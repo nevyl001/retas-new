@@ -103,6 +103,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
     jugadorId: string;
     studentName: string;
     rivieraId?: string;
+    fotoUrl?: string | null;
     coachId?: string;
     coachName?: string;
   } | null>(null);
@@ -1141,6 +1142,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                           jugadorId: st.jugadorId,
                           studentName: st.nombre,
                           rivieraId: st.rivieraId,
+                          fotoUrl: st.fotoUrl,
                           coachId: coachId,
                           coachName: coach.nombre,
                         })
@@ -1280,6 +1282,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
                             jugadorId: st.jugadorId,
                             studentName: st.nombre,
                             rivieraId: st.rivieraId,
+                            fotoUrl: st.fotoUrl,
                             coachId: detail?.coach.id || coachId,
                             coachName: detail?.coach.nombre || coach.nombre,
                           })
@@ -2344,6 +2347,7 @@ export const ClubCoachDetailView: React.FC<ClubCoachDetailViewProps> = ({
           jugadorId={managingAccessStudent.jugadorId}
           studentName={managingAccessStudent.studentName}
           rivieraId={managingAccessStudent.rivieraId}
+          fotoUrl={managingAccessStudent.fotoUrl}
           coachId={managingAccessStudent.coachId || coachId}
           coachName={managingAccessStudent.coachName || coach.nombre}
           clubName={clubName}

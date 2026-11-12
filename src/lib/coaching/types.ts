@@ -524,6 +524,9 @@ export type StudentAccessInfo = {
   isActive?: boolean;
   deactivatedAt?: string | null;
   createdAt?: string | null;
+  activatedAt?: string | null;
+  passwordConfigured?: boolean;
+  invitationExpired?: boolean;
   invitedAt?: string | null;
   expiresAt?: string | null;
   isExistingAccount?: boolean;
