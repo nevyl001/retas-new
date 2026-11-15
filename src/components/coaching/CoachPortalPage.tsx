@@ -19,6 +19,12 @@ import type {
   CoachFollowupDigest,
 } from "../../lib/coaching/types";
 import { selectOperativeCoachClubId } from "../../lib/coaching/studentTrainingScope";
+import {
+  PREP_FOCUS_MAX_TOPICS,
+  parsePrepFocusTopics,
+  serializePrepFocusTopics,
+  togglePrepFocusTopic,
+} from "../../lib/coaching/prepFocusTopics";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import { TablerIcon } from "../ui/TablerIcon";
 import { Modal } from "../ui/Modal";
@@ -83,7 +89,8 @@ export const CoachPortalPage: React.FC = () => {
   const [loadingUpcoming, setLoadingUpcoming] = useState(false);
   const [upcomingError, setUpcomingError] = useState<string | null>(null);
   const [detailsSession, setDetailsSession] = useState<CoachScheduledSession | null>(null);
-  const [prepFocus, setPrepFocus] = useState<string>("");
+  const [prepTopics, setPrepTopics] = useState<string[]>([]);
+  const [prepCustomTopic, setPrepCustomTopic] = useState<string>("");
   const [prepNotes, setPrepNotes] = useState<string>("");
   const [savingPrep, setSavingPrep] = useState<boolean>(false);
   const [prepError, setPrepError] = useState<string | null>(null);
@@ -266,8 +273,38 @@ export const CoachPortalPage: React.FC = () => {
 
   const handleOpenDetails = (session: CoachScheduledSession) => {
     setDetailsSession(session);
-    setPrepFocus(session.focus || "");
+    setPrepTopics(parsePrepFocusTopics(session.focus));
+    setPrepCustomTopic("");
     setPrepNotes(session.notesSummary || "");
+    setPrepError(null);
+    setPrepSuccess(false);
+  };
+
+  const handleTogglePrepTopic = (topic: string) => {
+    setPrepTopics((prev) => {
+      if (!prev.includes(topic) && prev.length >= PREP_FOCUS_MAX_TOPICS) {
+        setPrepError(`Puedes elegir máximo ${PREP_FOCUS_MAX_TOPICS} temas para la clase.`);
+        return prev;
+      }
+      setPrepError(null);
+      return togglePrepFocusTopic(prev, topic);
+    });
+    setPrepSuccess(false);
+  };
+
+  const handleAddCustomPrepTopic = () => {
+    const clean = prepCustomTopic.trim();
+    if (!clean) return;
+    if (prepTopics.includes(clean)) {
+      setPrepCustomTopic("");
+      return;
+    }
+    if (prepTopics.length >= PREP_FOCUS_MAX_TOPICS) {
+      setPrepError(`Puedes elegir máximo ${PREP_FOCUS_MAX_TOPICS} temas para la clase.`);
+      return;
+    }
+    setPrepTopics((prev) => [...prev, clean]);
+    setPrepCustomTopic("");
     setPrepError(null);
     setPrepSuccess(false);
   };
@@ -279,9 +316,10 @@ export const CoachPortalPage: React.FC = () => {
     setPrepSuccess(false);
 
     try {
+      const focusValue = serializePrepFocusTopics(prepTopics);
       const res = await saveCoachSessionPreparation({
         sessionId: detailsSession.id,
-        focus: prepFocus.trim() || null,
+        focus: focusValue,
         notesSummary: prepNotes.trim() || null,
       });
 
@@ -291,6 +329,7 @@ export const CoachPortalPage: React.FC = () => {
         notesSummary: res.notesSummary ?? null,
       };
       setDetailsSession(updated);
+      setPrepTopics(parsePrepFocusTopics(updated.focus));
 
       setUpcomingSessions((prev) =>
         prev.map((s) =>
@@ -332,13 +371,16 @@ export const CoachPortalPage: React.FC = () => {
     };
 
     const effectiveFocus =
-      sess.id === detailsSession?.id ? prepFocus.trim() || sess.focus : sess.focus;
+      sess.id === detailsSession?.id
+        ? serializePrepFocusTopics(prepTopics) || sess.focus
+        : sess.focus;
+    const effectiveTopics = parsePrepFocusTopics(effectiveFocus);
     const effectiveNotes =
       sess.id === detailsSession?.id ? prepNotes.trim() || sess.notesSummary : sess.notesSummary;
 
     setModalStudent(studentLink);
     setModalSessionId(sess.id);
-    setWorkedOnList(effectiveFocus ? [effectiveFocus] : []);
+    setWorkedOnList(effectiveTopics);
     setCustomTopic("");
     setImprovements("");
     setAreasToImprove("");
@@ -350,7 +392,7 @@ export const CoachPortalPage: React.FC = () => {
     setEditingFollowup(false);
     setFollowupBaseline(
       JSON.stringify({
-        workedOn: effectiveFocus ? [effectiveFocus] : [],
+        workedOn: effectiveTopics,
         improvements: "",
         areas: "",
         recommendations: "",
@@ -924,10 +966,12 @@ export const CoachPortalPage: React.FC = () => {
                             <div className="coach-session-card__prep-row">
                               {session.focus ? (
                                 <div className="coach-session-focus-container">
-                                  <span className="coach-session-focus-tag">
-                                    <TablerIcon name="target" size={12} />
-                                    {session.focus}
-                                  </span>
+                                  {parsePrepFocusTopics(session.focus).map((topic) => (
+                                    <span key={topic} className="coach-session-focus-tag">
+                                      <TablerIcon name="target" size={12} />
+                                      {topic}
+                                    </span>
+                                  ))}
                                   {session.notesSummary && (
                                     <span className="coach-session-notes-preview">
                                       "{session.notesSummary}"
@@ -1676,47 +1720,90 @@ export const CoachPortalPage: React.FC = () => {
                 PREPARACIÓN TÉCNICA DEL ENTRENADOR
               </div>
               <p className="coach-prep-tech-subtitle">
-                Define el tema pedagógico y tus notas previas. Puedes guardar tu preparación cuantas veces requieras antes de impartir la clase.
+                Elige 1, 2 o hasta 3 temas que trabajarás en cancha. El alumno los verá en la programación de su clase. Puedes guardar la preparación cuantas veces necesites antes de impartirla.
               </p>
 
-              {/* Chips de sugerencias rápidas */}
               <div className="coach-prep-presets-container">
-                <span className="coach-prep-presets-title">Sugerencias de objetivos:</span>
+                <div className="coach-prep-presets-header">
+                  <span className="coach-prep-presets-title">Temas de la clase</span>
+                  <span className="coach-prep-presets-count">
+                    {prepTopics.length}/{PREP_FOCUS_MAX_TOPICS} seleccionados
+                  </span>
+                </div>
                 <div className="coach-prep-presets-chips">
-                  {PREP_TOPIC_PRESETS.map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      className={`coach-prep-chip ${prepFocus === preset ? "coach-prep-chip--active" : ""}`}
-                      onClick={() => setPrepFocus(prepFocus === preset ? "" : preset)}
-                      disabled={savingPrep}
-                    >
-                      {preset}
-                    </button>
-                  ))}
+                  {PREP_TOPIC_PRESETS.map((preset) => {
+                    const selected = prepTopics.includes(preset);
+                    const blocked =
+                      !selected && prepTopics.length >= PREP_FOCUS_MAX_TOPICS;
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={`coach-prep-chip${selected ? " coach-prep-chip--active" : ""}${blocked ? " coach-prep-chip--blocked" : ""}`}
+                        onClick={() => handleTogglePrepTopic(preset)}
+                        disabled={savingPrep}
+                        aria-pressed={selected}
+                      >
+                        {preset}
+                      </button>
+                    );
+                  })}
+                  {prepTopics
+                    .filter((topic) => !PREP_TOPIC_PRESETS.includes(topic))
+                    .map((topic) => (
+                      <button
+                        key={topic}
+                        type="button"
+                        className="coach-prep-chip coach-prep-chip--active"
+                        onClick={() => handleTogglePrepTopic(topic)}
+                        disabled={savingPrep}
+                        aria-pressed
+                        aria-label={`Quitar ${topic}`}
+                      >
+                        {topic} ×
+                      </button>
+                    ))}
                 </div>
               </div>
 
-              {/* Input de tema */}
               <div className="coaching-form-group" style={{ marginBottom: "0.85rem" }}>
-                <label className="coaching-label" htmlFor="coach-prep-focus-input">
-                  Objetivo o Tema del entrenamiento
+                <label className="coaching-label" htmlFor="coach-prep-custom-topic">
+                  Tema personalizado (opcional)
                 </label>
-                <input
-                  id="coach-prep-focus-input"
-                  type="text"
-                  className="coaching-input schedule-input"
-                  value={prepFocus}
-                  onChange={(e) => setPrepFocus(e.target.value)}
-                  placeholder="ej. Bandeja y víbora, o escribe un tema personalizado..."
-                  disabled={savingPrep}
-                />
+                <div className="coach-prep-custom-row">
+                  <input
+                    id="coach-prep-custom-topic"
+                    type="text"
+                    className="coaching-input schedule-input"
+                    value={prepCustomTopic}
+                    onChange={(e) => setPrepCustomTopic(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddCustomPrepTopic();
+                      }
+                    }}
+                    placeholder="ej. Control de profundidad en bandeja..."
+                    disabled={savingPrep || prepTopics.length >= PREP_FOCUS_MAX_TOPICS}
+                  />
+                  <button
+                    type="button"
+                    className="coaching-btn coaching-btn--secondary"
+                    onClick={handleAddCustomPrepTopic}
+                    disabled={
+                      savingPrep ||
+                      !prepCustomTopic.trim() ||
+                      prepTopics.length >= PREP_FOCUS_MAX_TOPICS
+                    }
+                  >
+                    Añadir
+                  </button>
+                </div>
               </div>
 
-              {/* Textarea de notas */}
               <div className="coaching-form-group">
                 <label className="coaching-label" htmlFor="coach-prep-notes-input">
-                  Notas de la clase (Coach)
+                  Notas de la clase (solo coach)
                 </label>
                 <textarea
                   id="coach-prep-notes-input"
@@ -1729,11 +1816,16 @@ export const CoachPortalPage: React.FC = () => {
                 />
               </div>
 
-              {/* Alertas */}
               {prepSuccess && (
                 <div className="coach-portal-alert coach-portal-alert--success" style={{ marginTop: "0.5rem" }}>
                   <TablerIcon name="check" size={16} />
-                  <span>Preparación guardada exitosamente. Los temas quedarán registrados para el seguimiento de la clase.</span>
+                  <span>
+                    Preparación guardada. El alumno ya puede ver{" "}
+                    {prepTopics.length === 1
+                      ? "el tema"
+                      : "los temas"}{" "}
+                    en la programación de su clase.
+                  </span>
                 </div>
               )}
               {prepError && (

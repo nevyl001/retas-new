@@ -29,6 +29,10 @@ import {
 } from "../jugadores/jugadoresPublicNav";
 import { navigateCoaching, navigateStudentAccess } from "./coachingNav";
 import { groupTrainingSessionsByRelationship } from "../../lib/coaching/studentTrainingScope";
+import {
+  parsePrepFocusTopics,
+  serializePrepFocusTopics,
+} from "../../lib/coaching/prepFocusTopics";
 import "./coaching.css";
 
 function getInitials(nameOrEmail: string): string {
@@ -762,7 +766,13 @@ export const StudentCoachingPage: React.FC = () => {
                           {nextUpcoming.court
                             ? ` · Cancha ${nextUpcoming.court}`
                             : ""}
-                          {nextUpcoming.focus ? ` · ${nextUpcoming.focus}` : ""}
+                          {nextUpcoming.focus
+                            ? ` · ${
+                                serializePrepFocusTopics(
+                                  parsePrepFocusTopics(nextUpcoming.focus)
+                                ) || nextUpcoming.focus
+                              }`
+                            : ""}
                         </p>
                       </>
                     ) : fallbackNextScheduled ? (
@@ -887,8 +897,24 @@ export const StudentCoachingPage: React.FC = () => {
                           )}
                           {sch.focus && (
                             <div className="coaching-upcoming-card__focus">
-                              <TablerIcon name="target" size={14} />
-                              <span>Tema: {sch.focus}</span>
+                              <div className="coaching-upcoming-card__focus-label">
+                                <TablerIcon name="target" size={14} />
+                                <span>
+                                  {parsePrepFocusTopics(sch.focus).length > 1
+                                    ? "Temas de la clase"
+                                    : "Tema de la clase"}
+                                </span>
+                              </div>
+                              <div className="coaching-upcoming-card__focus-chips">
+                                {parsePrepFocusTopics(sch.focus).map((topic) => (
+                                  <span
+                                    key={topic}
+                                    className="coaching-upcoming-card__focus-chip"
+                                  >
+                                    {topic}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
                           )}
                         </article>
