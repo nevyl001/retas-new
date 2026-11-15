@@ -28,6 +28,8 @@ import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import { TablerIcon } from "../ui/TablerIcon";
 import { Modal } from "../ui/Modal";
 import { navigateToAppHome } from "../../lib/appRouting";
+import { CoachProfileEditor } from "./CoachProfileEditor";
+import { CoachPublicDetails, coachHasPublicStory } from "./CoachPublicStory";
 import "./coaching.css";
 
 const DEFAULT_PADEL_TOPICS = [
@@ -75,6 +77,8 @@ export const CoachPortalPage: React.FC = () => {
   const { user, loading: userLoading } = useUser();
   const [profile, setProfile] = useState<CurrentCoachProfile | null>(null);
   const [photoBroken, setPhotoBroken] = useState(false);
+  const [profileEditorOpen, setProfileEditorOpen] = useState(false);
+  const [profileStoryOpen, setProfileStoryOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedClubId, setSelectedClubId] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -664,12 +668,7 @@ export const CoachPortalPage: React.FC = () => {
   }
 
   const coachFirstName = profile.nombre.trim().split(/\s+/)[0] || profile.nombre;
-  const coachPhotoUrl =
-    profile.fotoUrl ||
-    (typeof user?.user_metadata?.avatar_url === "string"
-      ? user.user_metadata.avatar_url.trim()
-      : null) ||
-    null;
+  const coachPhotoUrl = profile.fotoUrl || null;
   const coachInitials = getInitials(profile.nombre);
 
   return (
@@ -719,9 +718,18 @@ export const CoachPortalPage: React.FC = () => {
             <div className="coach-identity-info">
               <div className="coach-identity-title-row">
                 <h2 className="coach-identity-name">{profile.nombre}</h2>
-                <div className="coach-identity-badge">
-                  <span className="coach-identity-badge__label">COACH ID</span>
-                  <span className="coach-identity-badge__code">{profile.coachCode}</span>
+                <div className="coach-identity-title-actions">
+                  <div className="coach-identity-badge">
+                    <span className="coach-identity-badge__label">COACH ID</span>
+                    <span className="coach-identity-badge__code">{profile.coachCode}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="coaching-btn coaching-btn--secondary coach-profile-edit-btn"
+                    onClick={() => setProfileEditorOpen(true)}
+                  >
+                    Editar mi perfil
+                  </button>
                 </div>
               </div>
 
@@ -761,6 +769,45 @@ export const CoachPortalPage: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {coachHasPublicStory(profile) ? (
+          <section className="coach-story-card" aria-label="Mi perfil como entrenador">
+            <div className="coach-story-card__head">
+              <h2>Mi perfil como entrenador</h2>
+              <button
+                type="button"
+                className="coaching-btn-ghost"
+                onClick={() => setProfileStoryOpen((open) => !open)}
+              >
+                {profileStoryOpen ? "Ocultar" : "Ver perfil completo"}
+              </button>
+            </div>
+            {profile.bio ? <p className="coach-story-lead">{profile.bio}</p> : null}
+            <p className="coach-story-meta">
+              {[
+                profile.anosExperiencia != null
+                  ? `${profile.anosExperiencia} años de experiencia`
+                  : null,
+                profile.metodologiaEnsenanza,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+            {profileStoryOpen ? <CoachPublicDetails profile={profile} /> : null}
+          </section>
+        ) : null}
+
+        <CoachProfileEditor
+          open={profileEditorOpen}
+          profile={profile}
+          onClose={() => setProfileEditorOpen(false)}
+          onSaved={(saved) => {
+            setProfile((current) => (current ? { ...current, ...saved } : current));
+            setPhotoBroken(false);
+            setSuccessMessage("Perfil actualizado.");
+            setProfileEditorOpen(false);
+          }}
+        />
 
         {/* Membresías y Clubes Asociados (Aislamiento Multi-Club) */}
         <section className="coach-portal-section" aria-label="Clubes afiliados">

@@ -12,6 +12,8 @@ import type {
   CreateCoachInput,
   CurrentCoachClubMembership,
   CurrentCoachProfile,
+  CoachProfessionalProfile,
+  CoachPlayPosition,
   InviteCoachResult,
   ClubCoachDetail,
   RecordCoachClassSessionInput,
@@ -403,6 +405,68 @@ export async function updateCoachMembershipStatus(
  * Obtiene el perfil de coach del usuario actualmente autenticado (si está registrado como coach).
  * Valida sesión real mediante Supabase Auth sin depender de parámetros manipulables.
  */
+const COACH_PROFILE_COLUMNS = `
+      id,
+      auth_user_id,
+      coach_code,
+      nombre,
+      foto_url,
+      bio,
+      filosofia,
+      especialidades,
+      fuerzas,
+      certificaciones,
+      edad,
+      anos_experiencia,
+      posicion_juego,
+      instagram_url,
+      facebook_url,
+      tiktok_url,
+      areas_entrenamiento,
+      fortalezas,
+      metodologia_ensenanza,
+      enfoque_tecnico,
+      objetivos_alumnos,
+      estructura_entrenamientos,
+      habilidades_principales
+    `;
+
+function asTextList(value: unknown): string[] {
+  return Array.isArray(value) ? value.map((item) => String(item)).filter(Boolean) : [];
+}
+
+function asPlayPosition(value: unknown): CoachPlayPosition | null {
+  return value === "reves" || value === "drive" || value === "ambas" ? value : null;
+}
+
+export function mapCoachProfessionalProfile(row: Record<string, unknown>): CoachProfessionalProfile {
+  return {
+    fotoUrl: row.foto_url ? String(row.foto_url) : null,
+    bio: row.bio ? String(row.bio) : null,
+    edad: row.edad != null && Number.isFinite(Number(row.edad)) ? Number(row.edad) : null,
+    anosExperiencia:
+      row.anos_experiencia != null && Number.isFinite(Number(row.anos_experiencia))
+        ? Number(row.anos_experiencia)
+        : null,
+    posicionJuego: asPlayPosition(row.posicion_juego),
+    instagramUrl: row.instagram_url ? String(row.instagram_url) : null,
+    facebookUrl: row.facebook_url ? String(row.facebook_url) : null,
+    tiktokUrl: row.tiktok_url ? String(row.tiktok_url) : null,
+    especialidades: asTextList(row.especialidades),
+    areasEntrenamiento: asTextList(row.areas_entrenamiento),
+    fortalezas: asTextList(row.fortalezas),
+    certificaciones: row.certificaciones ? String(row.certificaciones) : null,
+    metodologiaEnsenanza: row.metodologia_ensenanza ? String(row.metodologia_ensenanza) : null,
+    enfoqueTecnico: row.enfoque_tecnico ? String(row.enfoque_tecnico) : null,
+    objetivosAlumnos: row.objetivos_alumnos ? String(row.objetivos_alumnos) : null,
+    estructuraEntrenamientos: row.estructura_entrenamientos
+      ? String(row.estructura_entrenamientos)
+      : null,
+    habilidadesPrincipales: asTextList(row.habilidades_principales),
+    fuerzas: asTextList(row.fuerzas) as RivieraJugadorCategoria[],
+  };
+}
+
 export async function fetchCurrentCoachProfile(): Promise<CurrentCoachProfile | null> {
   const {
     data: { session },
@@ -414,19 +478,7 @@ export async function fetchCurrentCoachProfile(): Promise<CurrentCoachProfile | 
 
   const { data: coach, error: coachError } = await supabase
     .from("riviera_coaches")
-    .select(
-      `
-      id,
-      auth_user_id,
-      coach_code,
-      nombre,
-      foto_url,
-      bio,
-      filosofia,
-      especialidades,
-      fuerzas
-    `
-    )
+    .select(COACH_PROFILE_COLUMNS)
     .eq("auth_user_id", session.user.id)
     .maybeSingle();
 
@@ -436,7 +488,7 @@ export async function fetchCurrentCoachProfile(): Promise<CurrentCoachProfile | 
 
   const { data: memberships } = await supabase
     .from("coach_club_memberships")
-    .select("id, organizador_id, status, created_at")
+    .select("id, organizador_id, status, created_at, club_fuerzas")
     .eq("coach_id", coach.id);
 
   const clubMemberships: CurrentCoachClubMembership[] = await Promise.all(
@@ -450,6 +502,7 @@ export async function fetchCurrentCoachProfile(): Promise<CurrentCoachProfile | 
           ? m.status
           : "INACTIVE") as CoachMembershipStatus,
         createdAt: String(m.created_at ?? ""),
+        clubFuerzas: asTextList(m.club_fuerzas) as RivieraJugadorCategoria[],
       };
     })
   );
@@ -459,16 +512,59 @@ export async function fetchCurrentCoachProfile(): Promise<CurrentCoachProfile | 
     authUserId: String(coach.auth_user_id),
     coachCode: String(coach.coach_code ?? ""),
     nombre: String(coach.nombre ?? ""),
-    fotoUrl: (coach.foto_url as string | null) ?? null,
-    bio: (coach.bio as string | null) ?? null,
     filosofia: (coach.filosofia as string | null) ?? null,
-    especialidades: Array.isArray(coach.especialidades)
-      ? coach.especialidades
-      : [],
-    fuerzas: Array.isArray(coach.fuerzas)
-      ? (coach.fuerzas as RivieraJugadorCategoria[])
-      : [],
+    ...mapCoachProfessionalProfile(coach as Record<string, unknown>),
     memberships: clubMemberships,
+  };
+}
+
+export async function updateOwnCoachProfile(
+  profile: CoachProfessionalProfile
+): Promise<CoachProfessionalProfile> {
+  const { data, error } = await supabase.rpc("update_own_coach_profile", {
+    p_profile: {
+      foto_url: profile.fotoUrl,
+      bio: profile.bio,
+      certificaciones: profile.certificaciones,
+      edad: profile.edad,
+      anos_experiencia: profile.anosExperiencia,
+      posicion_juego: profile.posicionJuego,
+      instagram_url: profile.instagramUrl,
+      facebook_url: profile.facebookUrl,
+      tiktok_url: profile.tiktokUrl,
+      especialidades: profile.especialidades,
+      areas_entrenamiento: profile.areasEntrenamiento,
+      fortalezas: profile.fortalezas,
+      metodologia_ensenanza: profile.metodologiaEnsenanza,
+      enfoque_tecnico: profile.enfoqueTecnico,
+      objetivos_alumnos: profile.objetivosAlumnos,
+      estructura_entrenamientos: profile.estructuraEntrenamientos,
+      habilidades_principales: profile.habilidadesPrincipales,
+      fuerzas: profile.fuerzas,
+    },
+  });
+  if (error) throw new Error(error.message);
+  const res = data as Record<string, unknown> | null;
+  if (!res || res.ok === false) {
+    throw new Error(String(res?.error || "No se pudo guardar el perfil."));
+  }
+  return mapCoachProfessionalProfile(res);
+}
+
+export async function fetchCoachPublicProfile(
+  coachId: string
+): Promise<(CoachProfessionalProfile & { id: string; nombre: string; coachCode: string }) | null> {
+  const { data, error } = await supabase.rpc("get_coach_public_profile", {
+    p_coach_id: coachId,
+  });
+  if (error) throw new Error(error.message);
+  const res = data as Record<string, unknown> | null;
+  if (!res || res.ok === false) return null;
+  return {
+    id: String(res.id ?? coachId),
+    nombre: String(res.nombre ?? ""),
+    coachCode: String(res.coach_code ?? ""),
+    ...mapCoachProfessionalProfile(res),
   };
 }
 

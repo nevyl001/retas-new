@@ -9,6 +9,7 @@ import { useUser } from "../../contexts/UserContext";
 import {
   fetchStudentCoachingOverview,
   fetchStudentTrainingTimeline,
+  fetchCoachPublicProfile,
   linkStudentAccountByRivieraId,
   updateStudentCoachingProfile,
   type StudentCoachingOverview,
@@ -18,9 +19,10 @@ import {
 import { uploadJugadorAvatarCroppedFileWithinLimit } from "../../lib/rivieraJugadores/uploadAvatar";
 import { JugadorAvatarCropModal } from "../jugadores/JugadorAvatarCropModal";
 import { StudentProfileCard } from "./StudentProfileCard";
-import type { StudentTrainingSession } from "../../lib/coaching/types";
+import type { CoachProfessionalProfile, StudentTrainingSession } from "../../lib/coaching/types";
 import { getDailyMentalidadRivieraQuote } from "../../lib/coaching/mentalidadRivieraQuotes";
 import { StudentTrainingSection } from "./StudentTrainingSection";
+import { CoachPublicDetails, coachHasPublicStory } from "./CoachPublicStory";
 import { TablerIcon } from "../ui/TablerIcon";
 import { navigateToAppHome } from "../../lib/appRouting";
 import {
@@ -76,8 +78,34 @@ export const StudentCoachingPage: React.FC = () => {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [photoBroken, setPhotoBroken] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const [coachPublic, setCoachPublic] = useState<
+    (CoachProfessionalProfile & { id: string; nombre: string; coachCode: string }) | null
+  >(null);
+  const [coachProfileOpen, setCoachProfileOpen] = useState(false);
 
   const dailyQuote = useMemo(() => getDailyMentalidadRivieraQuote(), []);
+  const assignedCoachId =
+    overview?.relationships?.find((rel) => rel.isPrimary)?.coach?.id ||
+    overview?.relationships?.[0]?.coach?.id ||
+    null;
+
+  useEffect(() => {
+    if (!assignedCoachId) {
+      setCoachPublic(null);
+      return;
+    }
+    let cancelled = false;
+    fetchCoachPublicProfile(assignedCoachId)
+      .then((profile) => {
+        if (!cancelled) setCoachPublic(profile);
+      })
+      .catch(() => {
+        if (!cancelled) setCoachPublic(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [assignedCoachId]);
 
   const handleSaveProfile = useCallback(
     async (input: UpdateStudentProfileInput) => {
@@ -842,6 +870,32 @@ export const StudentCoachingPage: React.FC = () => {
                           ))}
                         </div>
                       )}
+                    {coachPublic && coachHasPublicStory(coachPublic) ? (
+                      <div className="student-coach-story">
+                        {coachPublic.bio ? <p>{coachPublic.bio}</p> : null}
+                        {coachPublic.anosExperiencia != null ? (
+                          <p>
+                            {coachPublic.anosExperiencia}{" "}
+                            {coachPublic.anosExperiencia === 1
+                              ? "año de experiencia"
+                              : "años de experiencia"}
+                          </p>
+                        ) : null}
+                        {coachPublic.metodologiaEnsenanza ? (
+                          <p>{coachPublic.metodologiaEnsenanza}</p>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="coaching-btn-ghost"
+                          onClick={() => setCoachProfileOpen((open) => !open)}
+                        >
+                          {coachProfileOpen ? "Ocultar perfil" : "Ver perfil completo"}
+                        </button>
+                        {coachProfileOpen ? (
+                          <CoachPublicDetails profile={coachPublic} />
+                        ) : null}
+                      </div>
+                    ) : null}
                   </article>
                 </div>
 

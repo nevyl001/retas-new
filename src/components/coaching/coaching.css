@@ -2987,6 +2987,136 @@
   gap: 0.75rem;
 }
 
+.coach-identity-title-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.coach-profile-edit-btn {
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+}
+
+.coach-story-card,
+.student-coach-story {
+  margin-top: 0.85rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--coach-border, #343436);
+  border-radius: 12px;
+  background: var(--coach-surface, #181819);
+}
+
+.coach-story-card__head,
+.student-coach-story {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.coach-story-card__head {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.coach-story-card h2,
+.coach-story-block span {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--coach-text-secondary, #adadaf);
+}
+
+.coach-story-lead,
+.coach-story-meta,
+.coach-story-block p,
+.student-coach-story p {
+  margin: 0.2rem 0 0;
+  color: var(--coach-text-primary, #f5f5f5);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.coach-story-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.coach-profile-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.coach-profile-editor section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.coach-profile-editor h3 {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--coach-accent-green, #22c55e);
+}
+
+.coach-profile-editor label,
+.coach-profile-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--coach-text-secondary, #adadaf);
+}
+
+.coach-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.coach-profile-photo-row,
+.coach-profile-photo-actions,
+.coach-profile-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.coach-profile-lock {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--coach-text-muted, #858588);
+}
+
+.coach-profile-modal {
+  max-width: 680px !important;
+}
+
+.coach-profile-editor .coach-prep-modal-actions {
+  position: sticky;
+  bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .coach-profile-grid,
+  .coach-story-card__head {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .coach-identity-name {
   margin: 0;
   font-size: 1.35rem;

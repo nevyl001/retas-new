@@ -259,18 +259,39 @@ export type CurrentCoachClubMembership = {
   clubNombre?: string;
   status: CoachMembershipStatus;
   createdAt: string;
+  clubFuerzas?: RivieraJugadorCategoria[];
 };
 
-export type CurrentCoachProfile = {
+export type CoachPlayPosition = "reves" | "drive" | "ambas";
+
+/** Datos públicos del entrenador. Sin correo, acceso ni notas del club. */
+export type CoachProfessionalProfile = {
+  fotoUrl: string | null;
+  bio: string | null;
+  edad: number | null;
+  anosExperiencia: number | null;
+  posicionJuego: CoachPlayPosition | null;
+  instagramUrl: string | null;
+  facebookUrl: string | null;
+  tiktokUrl: string | null;
+  especialidades: string[];
+  areasEntrenamiento: string[];
+  fortalezas: string[];
+  certificaciones: string | null;
+  metodologiaEnsenanza: string | null;
+  enfoqueTecnico: string | null;
+  objetivosAlumnos: string | null;
+  estructuraEntrenamientos: string | null;
+  habilidadesPrincipales: string[];
+  fuerzas: RivieraJugadorCategoria[];
+};
+
+export type CurrentCoachProfile = CoachProfessionalProfile & {
   id: string;
   authUserId: string;
   coachCode: string;
   nombre: string;
-  fotoUrl: string | null;
-  bio: string | null;
   filosofia?: string | null;
-  especialidades: string[];
-  fuerzas: RivieraJugadorCategoria[];
   memberships: CurrentCoachClubMembership[];
 };
 
