@@ -1876,7 +1876,7 @@ export const CoachPortalPage: React.FC = () => {
             <div className="coach-prep-modal-actions">
               <button
                 type="button"
-                className="coaching-btn-ghost"
+                className="coaching-btn coaching-btn--ghost coaching-btn-ghost coach-prep-close-btn"
                 onClick={() => setDetailsSession(null)}
                 disabled={savingPrep}
               >

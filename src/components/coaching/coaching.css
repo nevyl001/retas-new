@@ -663,19 +663,21 @@
   gap: 0.4rem;
   padding: 0.6rem 1rem;
   border-radius: var(--ro-radius-md, 8px);
-  border: 1px solid var(--ro-border, rgba(255, 255, 255, 0.14));
-  background: var(--ro-bg-surface, rgba(255, 255, 255, 0.05));
-  color: var(--ro-text-primary, #f5f2eb);
+  border: 1px solid var(--coach-border, #343436);
+  background: var(--coach-surface-elevated, #222224);
+  color: var(--coach-text-primary, #f5f5f5);
   font-size: 0.84rem;
   font-weight: 650;
   cursor: pointer;
   transition: all 0.16s ease;
   white-space: nowrap;
+  font-family: inherit;
 }
 
 .coaching-btn:hover:not(:disabled) {
-  background: var(--ro-bg-elevated, rgba(255, 255, 255, 0.1));
+  background: var(--coach-surface-hover, #2a2a2d);
   border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 
 .coaching-btn:disabled {
@@ -683,35 +685,109 @@
   cursor: not-allowed;
 }
 
-.coaching-btn--primary {
-  background: var(--ro-text-primary, #f5f2eb);
-  border-color: var(--ro-text-primary, #f5f2eb);
-  color: var(--ro-bg-base, #0a0a0a);
-  font-weight: 750;
+.coaching-btn--primary,
+.coaching-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.05rem;
+  border-radius: var(--ro-radius-md, 8px);
+  background: #f5f5f5 !important;
+  border: 1px solid #f5f5f5 !important;
+  color: #0c0c0d !important;
+  font-size: 0.84rem;
+  font-weight: 750 !important;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
 }
 
-.coaching-btn--primary:hover:not(:disabled) {
-  background: #ffffff;
-  border-color: #ffffff;
-  color: #000000;
-  box-shadow: 0 2px 12px rgba(255, 255, 255, 0.2);
+.coaching-btn--primary *,
+.coaching-btn-primary * {
+  color: #0c0c0d !important;
 }
 
-.coaching-btn--secondary {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: var(--ro-text-primary, #f5f2eb);
+.coaching-btn--primary:hover:not(:disabled),
+.coaching-btn-primary:hover:not(:disabled) {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.22) !important;
 }
 
-.coaching-btn--ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.6));
+.coaching-btn--primary:hover:not(:disabled) *,
+.coaching-btn-primary:hover:not(:disabled) * {
+  color: #000000 !important;
 }
 
-.coaching-btn--ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--ro-text-primary, #f5f2eb);
+.coaching-btn--secondary,
+.coaching-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--ro-radius-md, 8px);
+  background: #222224 !important;
+  border: 1px solid #343436 !important;
+  color: #f5f5f5 !important;
+  font-size: 0.84rem;
+  font-weight: 650 !important;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+}
+
+.coaching-btn--secondary *,
+.coaching-btn-secondary * {
+  color: #f5f5f5 !important;
+}
+
+.coaching-btn--secondary:hover:not(:disabled),
+.coaching-btn-secondary:hover:not(:disabled) {
+  background: #2a2a2d !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+}
+
+.coaching-btn--secondary:hover:not(:disabled) *,
+.coaching-btn-secondary:hover:not(:disabled) * {
+  color: #ffffff !important;
+}
+
+.coaching-btn--ghost,
+.coaching-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--ro-radius-md, 8px);
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: #adadaf !important;
+  font-size: 0.84rem;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+}
+
+.coaching-btn--ghost *,
+.coaching-btn-ghost * {
+  color: #adadaf !important;
+}
+
+.coaching-btn--ghost:hover:not(:disabled),
+.coaching-btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+.coaching-btn--ghost:hover:not(:disabled) *,
+.coaching-btn-ghost:hover:not(:disabled) * {
+  color: #ffffff !important;
 }
 
 /* ── Modal de Coach ────────────────────────────────────────── */
@@ -3837,8 +3913,19 @@
   --ro-text-secondary: #adadaf !important;
   --ro-text-muted: #858588 !important;
   --ro-text-main: #f5f5f5 !important;
+  --ro-bg-base: #0c0c0d !important;
+  --ro-bg-surface: #181819 !important;
   --ro-bg-card: #181819 !important;
   --ro-border: #343436 !important;
+  --coach-bg: #0c0c0d;
+  --coach-surface: #181819;
+  --coach-surface-elevated: #222224;
+  --coach-surface-hover: #262629;
+  --coach-border: #343436;
+  --coach-text-primary: #f5f5f5;
+  --coach-text-secondary: #adadaf;
+  --coach-text-muted: #858588;
+  --coach-accent-green: #4ade80;
   background: #181819 !important;
   border: 1px solid #343436 !important;
   color: #f5f5f5 !important;
@@ -3850,6 +3937,81 @@
 
 .coach-portal-modal .riviera-modal__title {
   color: #f5f5f5 !important;
+}
+
+.coach-portal-modal .coaching-btn--primary,
+.coach-portal-modal .coaching-btn-primary {
+  background: #f5f5f5 !important;
+  border: 1px solid #f5f5f5 !important;
+  color: #0c0c0d !important;
+  font-weight: 750 !important;
+}
+
+.coach-portal-modal .coaching-btn--primary *,
+.coach-portal-modal .coaching-btn-primary * {
+  color: #0c0c0d !important;
+}
+
+.coach-portal-modal .coaching-btn--primary:hover:not(:disabled),
+.coach-portal-modal .coaching-btn-primary:hover:not(:disabled) {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.22) !important;
+}
+
+.coach-portal-modal .coaching-btn--primary:hover:not(:disabled) *,
+.coach-portal-modal .coaching-btn-primary:hover:not(:disabled) * {
+  color: #000000 !important;
+}
+
+.coach-portal-modal .coaching-btn--secondary,
+.coach-portal-modal .coaching-btn-secondary {
+  background: #222224 !important;
+  border: 1px solid #343436 !important;
+  color: #f5f5f5 !important;
+  font-weight: 650 !important;
+}
+
+.coach-portal-modal .coaching-btn--secondary *,
+.coach-portal-modal .coaching-btn-secondary * {
+  color: #f5f5f5 !important;
+}
+
+.coach-portal-modal .coaching-btn--secondary:hover:not(:disabled),
+.coach-portal-modal .coaching-btn-secondary:hover:not(:disabled) {
+  background: #2a2a2d !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+}
+
+.coach-portal-modal .coaching-btn--secondary:hover:not(:disabled) *,
+.coach-portal-modal .coaching-btn-secondary:hover:not(:disabled) * {
+  color: #ffffff !important;
+}
+
+.coach-portal-modal .coaching-btn--ghost,
+.coach-portal-modal .coaching-btn-ghost {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: #adadaf !important;
+  font-weight: 600 !important;
+}
+
+.coach-portal-modal .coaching-btn--ghost *,
+.coach-portal-modal .coaching-btn-ghost * {
+  color: #adadaf !important;
+}
+
+.coach-portal-modal .coaching-btn--ghost:hover:not(:disabled),
+.coach-portal-modal .coaching-btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+.coach-portal-modal .coaching-btn--ghost:hover:not(:disabled) *,
+.coach-portal-modal .coaching-btn-ghost:hover:not(:disabled) * {
+  color: #ffffff !important;
 }
 
 /* ── Media queries móvil (320px - 640px) ── */
@@ -4258,10 +4420,10 @@
 }
 
 .coach-prep-record-btn:disabled {
-  opacity: 0.72;
-  color: #111;
-  background: #d4d4d8;
-  border-color: #d4d4d8;
+  opacity: 0.45 !important;
+  color: #858588 !important;
+  background: #343436 !important;
+  border-color: #343436 !important;
 }
 
 .coach-prep-student-avatar {
@@ -4404,6 +4566,91 @@
   gap: 0.65rem;
   z-index: 2;
   flex-wrap: wrap;
+}
+
+.coach-prep-modal-actions .coaching-btn-ghost,
+.coach-prep-modal-actions .coaching-btn--ghost,
+.coach-prep-modal-actions .coach-prep-close-btn {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: #adadaf !important;
+  font-weight: 600 !important;
+  padding: 0.55rem 0.95rem !important;
+}
+
+.coach-prep-modal-actions .coaching-btn-ghost *,
+.coach-prep-modal-actions .coaching-btn--ghost *,
+.coach-prep-modal-actions .coach-prep-close-btn * {
+  color: #adadaf !important;
+}
+
+.coach-prep-modal-actions .coaching-btn-ghost:hover:not(:disabled),
+.coach-prep-modal-actions .coaching-btn--ghost:hover:not(:disabled),
+.coach-prep-modal-actions .coach-prep-close-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+.coach-prep-modal-actions .coaching-btn-ghost:hover:not(:disabled) *,
+.coach-prep-modal-actions .coaching-btn--ghost:hover:not(:disabled) *,
+.coach-prep-modal-actions .coach-prep-close-btn:hover:not(:disabled) * {
+  color: #ffffff !important;
+}
+
+.coach-prep-modal-actions .coach-prep-save-btn {
+  background: #222224 !important;
+  border: 1px solid #343436 !important;
+  color: #f5f5f5 !important;
+  font-weight: 650 !important;
+  padding: 0.55rem 1rem !important;
+}
+
+.coach-prep-modal-actions .coach-prep-save-btn * {
+  color: #f5f5f5 !important;
+}
+
+.coach-prep-modal-actions .coach-prep-save-btn:hover:not(:disabled) {
+  background: #2b2b2e !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+}
+
+.coach-prep-modal-actions .coach-prep-save-btn:hover:not(:disabled) * {
+  color: #ffffff !important;
+}
+
+.coach-prep-modal-actions .coach-prep-record-btn {
+  background: #f5f5f5 !important;
+  border: 1px solid #f5f5f5 !important;
+  color: #0c0c0d !important;
+  font-weight: 750 !important;
+  padding: 0.55rem 1.1rem !important;
+}
+
+.coach-prep-modal-actions .coach-prep-record-btn * {
+  color: #0c0c0d !important;
+}
+
+.coach-prep-modal-actions .coach-prep-record-btn:hover:not(:disabled) {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.22) !important;
+}
+
+.coach-prep-modal-actions .coach-prep-record-btn:hover:not(:disabled) * {
+  color: #000000 !important;
+}
+
+.coach-prep-modal-actions .coach-prep-record-btn:disabled {
+  opacity: 0.45 !important;
+  background: #343436 !important;
+  border-color: #343436 !important;
+  color: #858588 !important;
+}
+
+.coach-prep-modal-actions .coach-prep-record-btn:disabled * {
+  color: #858588 !important;
 }
 
 /* ── Mobile responsiveness para agenda y modal de preparación ── */
