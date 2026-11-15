@@ -339,8 +339,8 @@ export const CoachPortalPage: React.FC = () => {
         )
       );
 
-      setPrepSuccess(true);
-      setTimeout(() => setPrepSuccess(false), 3500);
+      setSuccessMessage("Preparación guardada. El alumno ya puede verla en su próxima clase.");
+      setDetailsSession(null);
     } catch (err: any) {
       console.error("[coaching] error saving coach preparation:", err);
       setPrepError(err?.message || "No se pudo guardar la preparación de la clase.");
