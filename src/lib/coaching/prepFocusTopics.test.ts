@@ -1,18 +1,20 @@
 import {
-  PREP_FOCUS_MAX_TOPICS,
   parsePrepFocusTopics,
   serializePrepFocusTopics,
   togglePrepFocusTopic,
 } from "./prepFocusTopics";
 
 describe("prepFocusTopics", () => {
-  it("parses joined focus into up to three topics", () => {
+  it("parses every joined topic", () => {
     expect(
-      parsePrepFocusTopics("Bandeja y víbora · Saque y resto · Físico y desplazamientos")
+      parsePrepFocusTopics(
+        "Bandeja y víbora · Saque y resto · Físico y desplazamientos · Voleas"
+      )
     ).toEqual([
       "Bandeja y víbora",
       "Saque y resto",
       "Físico y desplazamientos",
+      "Voleas",
     ]);
   });
 
@@ -22,25 +24,18 @@ describe("prepFocusTopics", () => {
     ]);
   });
 
-  it("serializes and clamps to three topics", () => {
-    expect(
-      serializePrepFocusTopics([
-        "A",
-        "B",
-        "C",
-        "D",
-      ])
-    ).toBe("A · B · C");
+  it("serializes every topic", () => {
+    expect(serializePrepFocusTopics(["A", "B", "C", "D"])).toBe("A · B · C · D");
     expect(serializePrepFocusTopics(["  ", ""])).toBeNull();
   });
 
-  it("toggles topics and blocks a fourth selection", () => {
+  it("toggles any number of topics and removes one when selected again", () => {
     let topics: string[] = [];
     topics = togglePrepFocusTopic(topics, "A");
     topics = togglePrepFocusTopic(topics, "B");
     topics = togglePrepFocusTopic(topics, "C");
-    expect(topics).toHaveLength(PREP_FOCUS_MAX_TOPICS);
-    expect(togglePrepFocusTopic(topics, "D")).toEqual(["A", "B", "C"]);
-    expect(togglePrepFocusTopic(topics, "B")).toEqual(["A", "C"]);
+    topics = togglePrepFocusTopic(topics, "D");
+    expect(topics).toEqual(["A", "B", "C", "D"]);
+    expect(togglePrepFocusTopic(topics, "B")).toEqual(["A", "C", "D"]);
   });
 });

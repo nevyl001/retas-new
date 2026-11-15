@@ -20,7 +20,6 @@ import type {
 } from "../../lib/coaching/types";
 import { selectOperativeCoachClubId } from "../../lib/coaching/studentTrainingScope";
 import {
-  PREP_FOCUS_MAX_TOPICS,
   parsePrepFocusTopics,
   serializePrepFocusTopics,
   togglePrepFocusTopic,
@@ -283,14 +282,8 @@ export const CoachPortalPage: React.FC = () => {
   };
 
   const handleTogglePrepTopic = (topic: string) => {
-    setPrepTopics((prev) => {
-      if (!prev.includes(topic) && prev.length >= PREP_FOCUS_MAX_TOPICS) {
-        setPrepError(`Puedes elegir máximo ${PREP_FOCUS_MAX_TOPICS} temas para la clase.`);
-        return prev;
-      }
-      setPrepError(null);
-      return togglePrepFocusTopic(prev, topic);
-    });
+    setPrepTopics((prev) => togglePrepFocusTopic(prev, topic));
+    setPrepError(null);
     setPrepSuccess(false);
   };
 
@@ -299,10 +292,6 @@ export const CoachPortalPage: React.FC = () => {
     if (!clean) return;
     if (prepTopics.includes(clean)) {
       setPrepCustomTopic("");
-      return;
-    }
-    if (prepTopics.length >= PREP_FOCUS_MAX_TOPICS) {
-      setPrepError(`Puedes elegir máximo ${PREP_FOCUS_MAX_TOPICS} temas para la clase.`);
       return;
     }
     setPrepTopics((prev) => [...prev, clean]);
@@ -1737,26 +1726,25 @@ export const CoachPortalPage: React.FC = () => {
                 PREPARACIÓN TÉCNICA DEL ENTRENADOR
               </div>
               <p className="coach-prep-tech-subtitle">
-                Elige 1, 2 o hasta 3 temas que trabajarás en cancha. El alumno los verá en la programación de su clase. Puedes guardar la preparación cuantas veces necesites antes de impartirla.
+                Elige todos los temas que trabajarás en cancha. El alumno los verá en la programación de su clase. Puedes guardar la preparación cuantas veces necesites antes de impartirla.
               </p>
 
               <div className="coach-prep-presets-container">
                 <div className="coach-prep-presets-header">
                   <span className="coach-prep-presets-title">Temas de la clase</span>
                   <span className="coach-prep-presets-count">
-                    {prepTopics.length}/{PREP_FOCUS_MAX_TOPICS} seleccionados
+                    {prepTopics.length}{" "}
+                    {prepTopics.length === 1 ? "seleccionado" : "seleccionados"}
                   </span>
                 </div>
                 <div className="coach-prep-presets-chips">
                   {PREP_TOPIC_PRESETS.map((preset) => {
                     const selected = prepTopics.includes(preset);
-                    const blocked =
-                      !selected && prepTopics.length >= PREP_FOCUS_MAX_TOPICS;
                     return (
                       <button
                         key={preset}
                         type="button"
-                        className={`coach-prep-chip${selected ? " coach-prep-chip--active" : ""}${blocked ? " coach-prep-chip--blocked" : ""}`}
+                        className={`coach-prep-chip${selected ? " coach-prep-chip--active" : ""}`}
                         onClick={() => handleTogglePrepTopic(preset)}
                         disabled={savingPrep}
                         aria-pressed={selected}
@@ -1801,17 +1789,13 @@ export const CoachPortalPage: React.FC = () => {
                       }
                     }}
                     placeholder="ej. Control de profundidad en bandeja..."
-                    disabled={savingPrep || prepTopics.length >= PREP_FOCUS_MAX_TOPICS}
+                    disabled={savingPrep}
                   />
                   <button
                     type="button"
                     className="coaching-btn coaching-btn--secondary"
                     onClick={handleAddCustomPrepTopic}
-                    disabled={
-                      savingPrep ||
-                      !prepCustomTopic.trim() ||
-                      prepTopics.length >= PREP_FOCUS_MAX_TOPICS
-                    }
+                    disabled={savingPrep || !prepCustomTopic.trim()}
                   >
                     Añadir
                   </button>
