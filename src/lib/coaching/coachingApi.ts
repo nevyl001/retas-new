@@ -1428,6 +1428,9 @@ export async function fetchStudentCoachingOverview(): Promise<StudentCoachingOve
           durationMinutes: Number(sch.duration_minutes ?? 60),
           court: sch.court ? String(sch.court) : null,
           focus: sch.focus ? String(sch.focus) : null,
+          messageToStudent: sch.prep_message_to_student
+            ? String(sch.prep_message_to_student)
+            : null,
           status: String(sch.status ?? "SCHEDULED"),
         }))
       : [],
@@ -2269,6 +2272,7 @@ export async function saveCoachSessionPreparation(
     p_session_id: params.sessionId,
     p_focus: params.focus?.trim() || null,
     p_notes_summary: params.notesSummary?.trim() || null,
+    p_message_to_student: params.messageToStudent?.trim() || null,
   });
 
   if (error) {
@@ -2286,6 +2290,9 @@ export async function saveCoachSessionPreparation(
     sessionId: String(res.session_id ?? params.sessionId),
     focus: res.focus ? String(res.focus) : null,
     notesSummary: res.notes_summary ? String(res.notes_summary) : null,
+    messageToStudent: res.prep_message_to_student
+      ? String(res.prep_message_to_student)
+      : null,
     message: String(res.message ?? "Preparación guardada exitosamente."),
   };
 }
@@ -2338,6 +2345,9 @@ export async function fetchClubCoachingAgenda(params: {
     court: row.court ? String(row.court) : null,
     focus: row.focus ? String(row.focus) : null,
     notesSummary: row.notes_summary ? String(row.notes_summary) : null,
+    messageToStudent: row.prep_message_to_student
+      ? String(row.prep_message_to_student)
+      : null,
     status: row.status as any,
     workedOn: Array.isArray(row.worked_on) ? row.worked_on : [],
     cancellationReason: row.cancellation_reason ? String(row.cancellation_reason) : null,
@@ -2393,6 +2403,9 @@ export async function fetchCoachAgenda(params?: {
     court: row.court ? String(row.court) : null,
     focus: row.focus ? String(row.focus) : null,
     notesSummary: row.notes_summary ? String(row.notes_summary) : null,
+    messageToStudent: row.prep_message_to_student
+      ? String(row.prep_message_to_student)
+      : null,
     status: row.status as any,
     workedOn: Array.isArray(row.worked_on) ? row.worked_on : [],
     cancellationReason: row.cancellation_reason ? String(row.cancellation_reason) : null,

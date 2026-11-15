@@ -1686,7 +1686,8 @@ describe("coachingApi - Entrega B", () => {
           ok: true,
           session_id: "sess-123",
           focus: "Bandeja y víbora",
-          notes_summary: "Trabajar técnica y posicionamiento",
+          notes_summary: "Nota privada del coach",
+          prep_message_to_student: "Venga, máquina. Trabajaremos bandeja.",
           message: "Preparación guardada exitosamente.",
         },
         error: null,
@@ -1695,18 +1696,21 @@ describe("coachingApi - Entrega B", () => {
       const res = await saveCoachSessionPreparation({
         sessionId: "sess-123",
         focus: "Bandeja y víbora",
-        notesSummary: "Trabajar técnica y posicionamiento",
+        notesSummary: "Nota privada del coach",
+        messageToStudent: "Venga, máquina. Trabajaremos bandeja.",
       });
 
       expect(supabase.rpc).toHaveBeenCalledWith("save_coach_session_preparation", {
         p_session_id: "sess-123",
         p_focus: "Bandeja y víbora",
-        p_notes_summary: "Trabajar técnica y posicionamiento",
+        p_notes_summary: "Nota privada del coach",
+        p_message_to_student: "Venga, máquina. Trabajaremos bandeja.",
       });
       expect(res.ok).toBe(true);
       expect(res.sessionId).toBe("sess-123");
       expect(res.focus).toBe("Bandeja y víbora");
-      expect(res.notesSummary).toBe("Trabajar técnica y posicionamiento");
+      expect(res.notesSummary).toBe("Nota privada del coach");
+      expect(res.messageToStudent).toBe("Venga, máquina. Trabajaremos bandeja.");
     });
 
     it("throws error when RPC returns ok: false", async () => {

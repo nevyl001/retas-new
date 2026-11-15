@@ -2074,6 +2074,33 @@
   line-height: 1.2;
 }
 
+.coaching-upcoming-prep {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.15rem;
+}
+
+.coaching-upcoming-card__message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.coaching-upcoming-card__message-text {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--student-text-primary, #f5f5f5);
+}
+
+.coaching-upcoming-card__pending {
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  color: var(--student-text-muted, #858588);
+  font-style: italic;
+}
+
 /* 7. HISTORIAL INMUTABLE DE SESIONES Y ASIGNACIONES */
 .coaching-student-ledger-section {
   border-top: 1px solid var(--student-border);
@@ -4205,6 +4232,36 @@
   display: flex;
   align-items: center;
   gap: 0.65rem;
+}
+
+.coach-prep-student-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.coach-prep-field-hint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--coach-text-muted, #858588);
+  line-height: 1.35;
+}
+
+.coach-prep-save-btn,
+.coach-prep-record-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.coach-prep-record-btn:disabled {
+  opacity: 0.72;
+  color: #111;
+  background: #d4d4d8;
+  border-color: #d4d4d8;
 }
 
 .coach-prep-student-avatar {

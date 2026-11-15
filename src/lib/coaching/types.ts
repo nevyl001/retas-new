@@ -328,6 +328,8 @@ export type StudentCoachingUpcomingSession = {
   durationMinutes: number;
   court?: string | null;
   focus?: string | null;
+  /** Mensaje público del coach; nunca incluye notes_summary. */
+  messageToStudent?: string | null;
   status: string;
 };
 
@@ -452,6 +454,8 @@ export type CoachScheduledSession = {
   court: string | null;
   focus: string | null;
   notesSummary: string | null;
+  /** Mensaje visible para el alumno en la preparación de la clase. */
+  messageToStudent?: string | null;
   status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
   workedOn?: string[];
   cancellationReason?: string | null;
@@ -514,6 +518,7 @@ export type SaveCoachSessionPreparationParams = {
   sessionId: string;
   focus?: string | null;
   notesSummary?: string | null;
+  messageToStudent?: string | null;
 };
 
 export type SaveCoachSessionPreparationResult = {
@@ -521,6 +526,7 @@ export type SaveCoachSessionPreparationResult = {
   sessionId?: string;
   focus?: string | null;
   notesSummary?: string | null;
+  messageToStudent?: string | null;
   message?: string;
   error?: string;
 };

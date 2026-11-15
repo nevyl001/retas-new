@@ -895,26 +895,45 @@ export const StudentCoachingPage: React.FC = () => {
                               </span>
                             </div>
                           )}
-                          {sch.focus && (
-                            <div className="coaching-upcoming-card__focus">
-                              <div className="coaching-upcoming-card__focus-label">
-                                <TablerIcon name="target" size={14} />
-                                <span>
-                                  {parsePrepFocusTopics(sch.focus).length > 1
-                                    ? "Temas de la clase"
-                                    : "Tema de la clase"}
-                                </span>
-                              </div>
-                              <div className="coaching-upcoming-card__focus-chips">
-                                {parsePrepFocusTopics(sch.focus).map((topic) => (
-                                  <span
-                                    key={topic}
-                                    className="coaching-upcoming-card__focus-chip"
-                                  >
-                                    {topic}
-                                  </span>
-                                ))}
-                              </div>
+                          {sch.focus || sch.messageToStudent ? (
+                            <div className="coaching-upcoming-prep">
+                              {sch.focus ? (
+                                <div className="coaching-upcoming-card__focus">
+                                  <div className="coaching-upcoming-card__focus-label">
+                                    <TablerIcon name="target" size={14} />
+                                    <span>
+                                      {parsePrepFocusTopics(sch.focus).length > 1
+                                        ? "Lo que vamos a trabajar"
+                                        : "Lo que vamos a trabajar"}
+                                    </span>
+                                  </div>
+                                  <div className="coaching-upcoming-card__focus-chips">
+                                    {parsePrepFocusTopics(sch.focus).map((topic) => (
+                                      <span
+                                        key={topic}
+                                        className="coaching-upcoming-card__focus-chip"
+                                      >
+                                        {topic}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
+                              {sch.messageToStudent ? (
+                                <div className="coaching-upcoming-card__message">
+                                  <div className="coaching-upcoming-card__focus-label">
+                                    <TablerIcon name="message" size={14} />
+                                    <span>Mensaje de tu entrenador</span>
+                                  </div>
+                                  <p className="coaching-upcoming-card__message-text">
+                                    {sch.messageToStudent}
+                                  </p>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <div className="coaching-upcoming-card__pending">
+                              Tu entrenador está preparando esta sesión.
                             </div>
                           )}
                         </article>

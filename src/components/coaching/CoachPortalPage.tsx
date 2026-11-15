@@ -91,7 +91,8 @@ export const CoachPortalPage: React.FC = () => {
   const [detailsSession, setDetailsSession] = useState<CoachScheduledSession | null>(null);
   const [prepTopics, setPrepTopics] = useState<string[]>([]);
   const [prepCustomTopic, setPrepCustomTopic] = useState<string>("");
-  const [prepNotes, setPrepNotes] = useState<string>("");
+  const [prepMessageToStudent, setPrepMessageToStudent] = useState<string>("");
+  const [prepPrivateNotes, setPrepPrivateNotes] = useState<string>("");
   const [savingPrep, setSavingPrep] = useState<boolean>(false);
   const [prepError, setPrepError] = useState<string | null>(null);
   const [prepSuccess, setPrepSuccess] = useState<boolean>(false);
@@ -275,7 +276,8 @@ export const CoachPortalPage: React.FC = () => {
     setDetailsSession(session);
     setPrepTopics(parsePrepFocusTopics(session.focus));
     setPrepCustomTopic("");
-    setPrepNotes(session.notesSummary || "");
+    setPrepMessageToStudent(session.messageToStudent || "");
+    setPrepPrivateNotes(session.notesSummary || "");
     setPrepError(null);
     setPrepSuccess(false);
   };
@@ -320,21 +322,30 @@ export const CoachPortalPage: React.FC = () => {
       const res = await saveCoachSessionPreparation({
         sessionId: detailsSession.id,
         focus: focusValue,
-        notesSummary: prepNotes.trim() || null,
+        messageToStudent: prepMessageToStudent.trim() || null,
+        notesSummary: prepPrivateNotes.trim() || null,
       });
 
       const updated: CoachScheduledSession = {
         ...detailsSession,
         focus: res.focus ?? null,
+        messageToStudent: res.messageToStudent ?? null,
         notesSummary: res.notesSummary ?? null,
       };
       setDetailsSession(updated);
       setPrepTopics(parsePrepFocusTopics(updated.focus));
+      setPrepMessageToStudent(updated.messageToStudent || "");
+      setPrepPrivateNotes(updated.notesSummary || "");
 
       setUpcomingSessions((prev) =>
         prev.map((s) =>
           s.id === updated.id
-            ? { ...s, focus: updated.focus, notesSummary: updated.notesSummary }
+            ? {
+                ...s,
+                focus: updated.focus,
+                messageToStudent: updated.messageToStudent,
+                notesSummary: updated.notesSummary,
+              }
             : s
         )
       );
@@ -375,8 +386,14 @@ export const CoachPortalPage: React.FC = () => {
         ? serializePrepFocusTopics(prepTopics) || sess.focus
         : sess.focus;
     const effectiveTopics = parsePrepFocusTopics(effectiveFocus);
-    const effectiveNotes =
-      sess.id === detailsSession?.id ? prepNotes.trim() || sess.notesSummary : sess.notesSummary;
+    const effectivePrivateNotes =
+      sess.id === detailsSession?.id
+        ? prepPrivateNotes.trim() || sess.notesSummary
+        : sess.notesSummary;
+    const effectiveStudentMessage =
+      sess.id === detailsSession?.id
+        ? prepMessageToStudent.trim() || sess.messageToStudent
+        : sess.messageToStudent;
 
     setModalStudent(studentLink);
     setModalSessionId(sess.id);
@@ -386,9 +403,9 @@ export const CoachPortalPage: React.FC = () => {
     setAreasToImprove("");
     setRecommendations("");
     setNextGoals("");
-    setMotivationalMessage("");
+    setMotivationalMessage(effectiveStudentMessage || "");
     setDurationMinutes(sess.durationMinutes || 60);
-    setClassNotes(effectiveNotes || "");
+    setClassNotes(effectivePrivateNotes || "");
     setEditingFollowup(false);
     setFollowupBaseline(
       JSON.stringify({
@@ -397,8 +414,8 @@ export const CoachPortalPage: React.FC = () => {
         areas: "",
         recommendations: "",
         nextGoals: "",
-        message: "",
-        notes: effectiveNotes || "",
+        message: effectiveStudentMessage || "",
+        notes: effectivePrivateNotes || "",
       })
     );
     setModalError(null);
@@ -972,11 +989,11 @@ export const CoachPortalPage: React.FC = () => {
                                       {topic}
                                     </span>
                                   ))}
-                                  {session.notesSummary && (
+                                  {session.messageToStudent ? (
                                     <span className="coach-session-notes-preview">
-                                      "{session.notesSummary}"
+                                      Mensaje al alumno listo
                                     </span>
-                                  )}
+                                  ) : null}
                                 </div>
                               ) : (
                                 <span className="coach-session-pending-tag">
@@ -1663,15 +1680,15 @@ export const CoachPortalPage: React.FC = () => {
                         <span>{getInitials(detailsSession.jugadorNombre || "AL")}</span>
                       )}
                     </div>
-                    <div>
+                    <div className="coach-prep-student-identity">
                       <span className="coach-prep-admin-value">
                         {detailsSession.jugadorNombre || "Alumno"}
                       </span>
-                      {detailsSession.rivieraId && (
+                      {detailsSession.rivieraId ? (
                         <span className="coach-prep-admin-subvalue">
                           {detailsSession.rivieraId}
                         </span>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -1802,16 +1819,40 @@ export const CoachPortalPage: React.FC = () => {
               </div>
 
               <div className="coaching-form-group">
+                <label className="coaching-label" htmlFor="coach-prep-message-input">
+                  Mensaje para el alumno
+                </label>
+                <textarea
+                  id="coach-prep-message-input"
+                  className="coaching-input schedule-input"
+                  rows={3}
+                  value={prepMessageToStudent}
+                  onChange={(e) => {
+                    setPrepMessageToStudent(e.target.value);
+                    setPrepSuccess(false);
+                  }}
+                  placeholder="ej. Venga, máquina. En esta clase trabajaremos bandeja y víbora..."
+                  disabled={savingPrep}
+                />
+                <span className="coach-prep-field-hint">
+                  Visible en Mi Coaching dentro de la próxima clase programada.
+                </span>
+              </div>
+
+              <div className="coaching-form-group">
                 <label className="coaching-label" htmlFor="coach-prep-notes-input">
-                  Notas de la clase (solo coach)
+                  Notas privadas del entrenador
                 </label>
                 <textarea
                   id="coach-prep-notes-input"
                   className="coaching-input schedule-input"
-                  rows={3}
-                  value={prepNotes}
-                  onChange={(e) => setPrepNotes(e.target.value)}
-                  placeholder="ej. Trabajar técnica, posicionamiento y control de profundidad..."
+                  rows={2}
+                  value={prepPrivateNotes}
+                  onChange={(e) => {
+                    setPrepPrivateNotes(e.target.value);
+                    setPrepSuccess(false);
+                  }}
+                  placeholder="Solo para ti. El alumno no ve estas notas."
                   disabled={savingPrep}
                 />
               </div>
@@ -1820,11 +1861,7 @@ export const CoachPortalPage: React.FC = () => {
                 <div className="coach-portal-alert coach-portal-alert--success" style={{ marginTop: "0.5rem" }}>
                   <TablerIcon name="check" size={16} />
                   <span>
-                    Preparación guardada. El alumno ya puede ver{" "}
-                    {prepTopics.length === 1
-                      ? "el tema"
-                      : "los temas"}{" "}
-                    en la programación de su clase.
+                    Preparación guardada. El alumno ya puede ver el tema y el mensaje en su próxima clase.
                   </span>
                 </div>
               )}
@@ -1836,7 +1873,6 @@ export const CoachPortalPage: React.FC = () => {
               )}
             </div>
 
-            {/* Botones de acción del Modal */}
             <div className="coach-prep-modal-actions">
               <button
                 type="button"
@@ -1849,10 +1885,9 @@ export const CoachPortalPage: React.FC = () => {
 
               <button
                 type="button"
-                className="coaching-btn coaching-btn--secondary"
+                className="coaching-btn coaching-btn--secondary coach-prep-save-btn"
                 onClick={handleSavePreparation}
                 disabled={savingPrep}
-                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
               >
                 {savingPrep ? (
                   <>
@@ -1869,12 +1904,12 @@ export const CoachPortalPage: React.FC = () => {
 
               <button
                 type="button"
-                className="coaching-btn coaching-btn--primary"
+                className="coaching-btn coaching-btn--primary coach-prep-record-btn"
                 onClick={() => {
                   const s = detailsSession;
                   openRecordClassForScheduled(s);
                 }}
-                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+                disabled={savingPrep}
               >
                 <TablerIcon name="check" size={15} />
                 Registrar clase impartida (-1)
