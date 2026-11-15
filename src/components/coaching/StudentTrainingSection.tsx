@@ -1,5 +1,5 @@
 /**
- * StudentTrainingSection — "MI EVOLUCIÓN COMO JUGADOR"
+ * StudentTrainingSection — "Mi evolución"
  *
  * Presenta el seguimiento real registrado por el entrenador en sesiones previas:
  * - ÚLTIMA CLASE (fecha, entrenador, club, duración y resumen de lo trabajado)
@@ -71,7 +71,7 @@ export const StudentTrainingSection: React.FC<Props> = ({
               Seguimiento en cancha
             </span>
             <h2 className="coaching-follow__title">
-              MI EVOLUCIÓN COMO JUGADOR
+              Mi evolución
             </h2>
           </div>
         </div>
@@ -94,7 +94,7 @@ export const StudentTrainingSection: React.FC<Props> = ({
               Seguimiento en cancha
             </span>
             <h2 className="coaching-follow__title">
-              MI EVOLUCIÓN COMO JUGADOR
+              Mi evolución
             </h2>
           </div>
         </div>
@@ -118,20 +118,14 @@ export const StudentTrainingSection: React.FC<Props> = ({
               Seguimiento en cancha
             </span>
             <h2 className="coaching-follow__title">
-              MI EVOLUCIÓN COMO JUGADOR
+              Mi evolución
             </h2>
           </div>
         </div>
         <div className="coaching-follow__empty">
           <TablerIcon name="sparkles" size={18} />
           <div>
-            <strong>
-              Tu seguimiento técnico aparecerá tras tu primera sesión registrada.
-            </strong>
-            <p>
-              Aquí podrás consultar lo trabajado en tu última clase, áreas de
-              mejora, avances, recomendaciones y próximo objetivo.
-            </p>
+            <strong>Tu evolución aparecerá después de tu primera clase.</strong>
           </div>
         </div>
       </section>
@@ -162,7 +156,7 @@ export const StudentTrainingSection: React.FC<Props> = ({
           <span className="coaching-follow__eyebrow">
             Seguimiento en cancha
           </span>
-          <h2 className="coaching-follow__title">MI EVOLUCIÓN COMO JUGADOR</h2>
+          <h2 className="coaching-follow__title">Mi evolución</h2>
         </div>
         <span className="coaching-follow__meta">
           {sessions.length}{" "}

@@ -106,9 +106,6 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     // Encabezado personalizado
     expect(container.textContent).toContain("Hola, Diego Palomares");
     expect(container.textContent).toContain("Mi Coaching");
-    expect(container.textContent).toContain(
-      "Tu espacio para entrenar, mejorar y seguir evolucionando.",
-    );
     expect(container.textContent).toContain("RIV-00000356");
     expect(container.textContent).not.toContain("Riviera ID");
     expect(container.textContent).toContain("Ver mi Ficha de Ranking");
@@ -118,8 +115,7 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     const idOccurrences = (container.textContent ?? "").split("RIV-00000356").length - 1;
     expect(idOccurrences).toBe(1);
 
-    // Mensaje motivacional diario
-    expect(container.textContent).toContain("MENTALIDAD RIVIERA");
+    expect(container.textContent).not.toContain("MENTALIDAD RIVIERA");
 
     // Estado sin entrenador asignado
     expect(container.textContent).toContain("Tu evolución comienza aquí.");
@@ -182,6 +178,18 @@ describe("StudentCoachingPage & CoachingRouter", () => {
             totalClassesGiven: 1,
             updatedAt: "2026-10-19T18:00:00Z",
           },
+          upcomingSessions: [
+            {
+              id: "sch-1",
+              startsAt: "2026-11-17T18:00:00Z",
+              endsAt: "2026-11-17T19:00:00Z",
+              durationMinutes: 60,
+              court: "Cancha 2",
+              focus: "Bandeja y víbora",
+              messageToStudent: "Hoy trabajaremos tu bandeja.",
+              status: "SCHEDULED",
+            },
+          ],
           ledger: [
             {
               id: "led-1",
@@ -219,25 +227,26 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     expect(container.textContent).toContain("Mi Coaching");
     expect(container.textContent).toContain("Hola, Diego Palomares");
     expect(container.textContent).toContain("RIV-00000356");
-    expect(container.textContent).toContain("MENTALIDAD RIVIERA");
+    expect(container.textContent).toContain("Mi próxima clase");
+    expect(container.textContent).toContain("Qué vamos a entrenar");
+    expect(container.textContent).toContain("Bandeja y víbora");
+    expect(container.textContent).toContain("Mensaje de tu coach");
+    expect(container.textContent).toContain("Hoy trabajaremos tu bandeja.");
+    expect(container.textContent).toContain("Cancha 2");
 
     // Validar información del coach y club
-    expect(container.textContent).toContain("RESUMEN DEL ENTRENAMIENTO");
+    expect(container.textContent).toContain("Mi entrenador");
     expect(container.textContent).toContain("Prof. Roberto Morales");
     expect(container.textContent).toContain("COACH-007");
     expect(container.textContent).toContain("Bandeja");
     expect(container.textContent).toContain("Hack Pádel");
 
     // Validar métricas de balance
-    expect(container.textContent).toContain("Clases disponibles");
+    expect(container.textContent).toContain("clases disponibles");
     expect(container.textContent).toContain("4");
-    expect(container.textContent).toContain("Paquete Vigente");
-    expect(container.textContent).toContain("Clases completadas");
-    expect(container.textContent).toContain("1");
-    expect(container.textContent).toContain("Clases Impartidas");
 
     // Validar Mi Evolución como Jugador
-    expect(container.textContent).toContain("MI EVOLUCIÓN COMO JUGADOR");
+    expect(container.textContent).toContain("Mi evolución");
     expect(container.textContent).toContain("ÚLTIMA CLASE");
     expect(container.textContent).toContain("EN QUÉ DEBO MEJORAR");
     expect(container.textContent).toContain("MIS AVANCES");
@@ -247,7 +256,7 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     expect(container.textContent).toContain("Defensa de pared");
 
     // Validar historial y ledger + privacidad de notas internas
-    expect(container.textContent).toContain("Historial de Sesiones y Asignaciones");
+    expect(container.textContent).toContain("Mi historial");
     expect(container.textContent).toContain("Armado de bandeja profunda");
     expect(container.textContent).toContain("Mejor control en la volea");
     expect(container.textContent).toContain("Anticipar el globo");
@@ -435,7 +444,10 @@ describe("StudentCoachingPage & CoachingRouter", () => {
       root.render(<StudentCoachingPage />);
     });
 
-    expect(container.textContent).toContain("MI EVOLUCIÓN COMO JUGADOR");
+    expect(container.textContent).toContain("Mi evolución");
+    expect(container.textContent).toContain(
+      "Tu evolución aparecerá después de tu primera clase."
+    );
     expect(container.textContent).not.toContain("EN QUÉ DEBO MEJORAR");
     expect(container.textContent).not.toContain("RECOMENDACIONES");
     expect(container.textContent).not.toContain("MI PRÓXIMO OBJETIVO");

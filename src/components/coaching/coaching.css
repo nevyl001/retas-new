@@ -1120,10 +1120,128 @@
   color: var(--student-text-primary);
   font-family: var(--ro-font-body, "Manrope", -apple-system, BlinkMacSystemFont, sans-serif);
   width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: 1.25rem clamp(1rem, 2vw, 2rem) 3.5rem;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem max(1rem, env(safe-area-inset-right)) 3.5rem max(1rem, env(safe-area-inset-left));
   box-sizing: border-box;
+}
+
+.coaching-student-page .student-next-class,
+.coaching-student-page .student-coach-card,
+.coaching-student-page .coaching-student-relation-card,
+.coaching-student-page .coaching-follow,
+.coaching-student-page .student-history {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.student-next-class,
+.student-coach-card {
+  background: var(--student-bg-card);
+  border: 1px solid var(--student-border);
+  border-radius: 16px;
+  padding: 1rem 1.05rem;
+  margin-bottom: 0.85rem;
+  box-shadow: var(--student-shadow-sm);
+}
+
+.student-next-class h2,
+.student-coach-card h2,
+.coaching-student-hero__balance {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--student-accent-strong);
+}
+
+.student-next-class__when {
+  margin: 0.35rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.student-next-class__meta,
+.student-next-class__status,
+.student-next-class__pending,
+.student-coach-card__club {
+  margin: 0.25rem 0 0;
+  color: var(--student-text-secondary);
+  font-size: 0.9rem;
+}
+
+.student-next-class h3 {
+  margin: 0.9rem 0 0.35rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--student-text-muted);
+}
+
+.student-next-class__topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.student-next-class__topics span {
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  background: var(--student-accent-soft);
+  color: var(--student-accent-strong);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.student-next-class__message,
+.student-coach-card__name {
+  margin: 0.15rem 0 0;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--student-text-primary);
+}
+
+.student-next-class__more {
+  margin-top: 0.85rem;
+}
+
+.student-next-class__more summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--student-accent-strong);
+}
+
+.student-coach-card__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.student-coach-card__row > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.student-history > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.student-history > summary::-webkit-details-marker {
+  display: none;
+}
+
+.coaching-student-page .coaching-ledger-row__left,
+.coaching-student-page .coaching-ledger-row__details,
+.coaching-student-page .coaching-ledger-badge {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.coaching-student-page .coaching-ledger-badge {
+  white-space: normal;
 }
 
 /* Botones dentro del dashboard de alumno */
@@ -2393,12 +2511,15 @@
     justify-content: space-between;
   }
 
-  .coaching-ledger-row__left {
-    min-width: 100%;
+  .coaching-ledger-row {
+    flex-direction: column;
   }
 
+  .coaching-ledger-row__left,
   .coaching-ledger-row__details {
-    min-width: 100%;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
   }
 }
 
