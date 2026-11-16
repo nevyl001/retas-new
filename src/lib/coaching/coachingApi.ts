@@ -1387,6 +1387,8 @@ export interface StudentSelfProfile {
   instagramUrl: string | null;
   facebookUrl: string | null;
   tiktokUrl: string | null;
+  /** Presentación opcional. Solo Mi Coaching; no forma parte de la ficha pública. */
+  sobreMi?: string | null;
 }
 
 export interface StudentCoachingOverview {
@@ -1415,6 +1417,7 @@ function mapStudentSelfProfile(raw: unknown): StudentSelfProfile | null {
     instagramUrl: str(p.instagram_url),
     facebookUrl: str(p.facebook_url),
     tiktokUrl: str(p.tiktok_url),
+    sobreMi: str(p.coaching_sobre_mi),
   };
 }
 
@@ -1425,6 +1428,7 @@ export interface UpdateStudentProfileInput {
   instagramUrl?: string | null;
   facebookUrl?: string | null;
   tiktokUrl?: string | null;
+  sobreMi?: string | null;
 }
 
 /**
@@ -1448,6 +1452,8 @@ export async function updateStudentCoachingProfile(
     p_update_facebook: has("facebookUrl"),
     p_tiktok_url: input.tiktokUrl ?? null,
     p_update_tiktok: has("tiktokUrl"),
+    p_sobre_mi: input.sobreMi ?? null,
+    p_update_sobre_mi: has("sobreMi"),
   });
   if (error) {
     throw new Error("No se pudo guardar tu perfil: " + error.message);

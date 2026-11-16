@@ -1156,10 +1156,54 @@
 }
 
 .student-next-class__when {
-  margin: 0.35rem 0 0;
-  font-size: 1.35rem;
+  margin: 0.45rem 0 0;
+  font-size: 1.45rem;
+  font-weight: 750;
+  line-height: 1.15;
+  color: #0f172a;
+}
+
+.student-next-class__time {
+  margin: 0.15rem 0 0;
+  font-size: 1.15rem;
   font-weight: 750;
   line-height: 1.2;
+  color: #0f172a;
+}
+
+.student-next-class__topic {
+  margin: 0.15rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.student-next-class__topic-more {
+  margin: 0.15rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #334155;
+}
+
+.student-coach-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  margin-top: 0.9rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--student-border);
+}
+
+.student-coach-inline .student-coach-card__name {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.student-coach-inline .coaching-student-ranking-btn {
+  flex: 0 0 auto;
 }
 
 .student-next-class__meta,
@@ -1317,24 +1361,22 @@
 
 .coaching-student-hero__main {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.25rem;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  min-width: 0;
 }
 
 .coaching-student-hero__identity {
   display: flex;
-  align-items: center;
-  gap: 1.1rem;
-  flex: 1 1 320px;
+  align-items: flex-start;
+  gap: 0.85rem;
+  flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
 }
 
-/* Fotografía en formato retrato 3:4 */
 .coaching-student-hero__portrait-frame {
-  width: 64px;
-  height: 84px;
+  width: 76px;
+  height: 76px;
   border-radius: 10px;
   overflow: hidden;
   flex-shrink: 0;
@@ -1371,14 +1413,37 @@
 .coaching-student-hero__copy {
   min-width: 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
 }
 
-.coaching-student-hero__greeting {
-  margin: 0 0 0.15rem;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--student-accent);
-  letter-spacing: 0.02em;
+.coaching-student-hero__kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--student-accent-strong);
+}
+
+.coaching-student-hero__facts,
+.coaching-student-hero__about {
+  margin: 0.2rem 0 0;
+  color: #0f172a;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.coaching-student-hero__about {
+  color: #334155;
+  max-width: 42rem;
+}
+
+.coaching-student-hero__copy .coaching-student-badge-pill {
+  margin-top: 0.45rem;
+  max-width: 100%;
 }
 
 .coaching-student-page .coaching-student-hero__title {
@@ -1423,6 +1488,7 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 700;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .coaching-badge-copy-btn {
@@ -1447,10 +1513,18 @@
 }
 
 .coaching-student-ranking-btn {
-  font-size: 0.8125rem;
-  padding: 0.48rem 0.9rem;
-  border-radius: 999px;
-  font-weight: 600;
+  width: auto;
+  margin: 0;
+  padding: 0.35rem 0.15rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--student-accent-strong);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .coaching-student-admin-redirect {
@@ -2500,9 +2574,85 @@
 }
 
 /* Responsividad móvil adicional (320px - 640px) */
+.coaching-follow--empty {
+  gap: 0.2rem;
+  padding: 0.15rem 0 0.35rem;
+}
+
+.coaching-follow--empty .coaching-follow__title {
+  font-size: 1.2rem;
+}
+
+.coaching-follow__empty-line {
+  margin: 0;
+  color: #334155;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.student-profile-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0.75rem max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+}
+
+.student-profile-dialog__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(15, 23, 42, 0.46);
+}
+
+.student-profile-dialog__panel {
+  position: relative;
+  width: min(100%, 520px);
+  max-height: min(88vh, 720px);
+  overflow: auto;
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 16px;
+  padding: 1rem 1rem 1.1rem;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.2);
+}
+
+.student-profile-dialog__panel h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+}
+
+.student-profile-dialog__section {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--student-accent-strong, #0369a1);
+}
+
+.student-profile-dialog__about {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.student-profile-dialog__count {
+  align-self: flex-end;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+@media (min-width: 768px) {
+  .student-profile-dialog {
+    align-items: center;
+  }
+}
+
 @media (max-width: 640px) {
   .coaching-student-hero__portrait-frame {
-    width: 54px;
+    width: 72px;
     height: 72px;
   }
 

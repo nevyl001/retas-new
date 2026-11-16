@@ -112,22 +112,10 @@ export const StudentTrainingSection: React.FC<Props> = ({
         className="coaching-follow coaching-follow--empty"
         aria-label="Mi evolución como jugador"
       >
-        <div className="coaching-follow__header">
-          <div>
-            <span className="coaching-follow__eyebrow">
-              Seguimiento en cancha
-            </span>
-            <h2 className="coaching-follow__title">
-              Mi evolución
-            </h2>
-          </div>
-        </div>
-        <div className="coaching-follow__empty">
-          <TablerIcon name="sparkles" size={18} />
-          <div>
-            <strong>Tu evolución aparecerá después de tu primera clase.</strong>
-          </div>
-        </div>
+        <h2 className="coaching-follow__title">Mi evolución</h2>
+        <p className="coaching-follow__empty-line">
+          Tu evolución aparecerá después de tu primera clase.
+        </p>
       </section>
     );
   }

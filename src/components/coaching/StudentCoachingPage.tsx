@@ -16,6 +16,8 @@ import {
   type StudentSelfProfile,
   type UpdateStudentProfileInput,
 } from "../../lib/coaching/coachingApi";
+import { EN_CANCHA_LABELS } from "../../lib/rivieraJugadores/constants";
+import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
 import { uploadJugadorAvatarCroppedFileWithinLimit } from "../../lib/rivieraJugadores/uploadAvatar";
 import { JugadorAvatarCropModal } from "../jugadores/JugadorAvatarCropModal";
 import { StudentProfileCard } from "./StudentProfileCard";
@@ -77,7 +79,8 @@ export const StudentCoachingPage: React.FC = () => {
   const [coachPublic, setCoachPublic] = useState<
     (CoachProfessionalProfile & { id: string; nombre: string; coachCode: string }) | null
   >(null);
-  const [coachProfileOpen, setCoachProfileOpen] = useState(false);
+  const [openCoachId, setOpenCoachId] = useState<string | null>(null);
+  const [profileEditorOpen, setProfileEditorOpen] = useState(false);
 
   const assignedCoachId =
     overview?.relationships?.find((rel) => rel.isPrimary)?.coach?.id ||
@@ -106,6 +109,7 @@ export const StudentCoachingPage: React.FC = () => {
     async (input: UpdateStudentProfileInput) => {
       const updated = await updateStudentCoachingProfile(input);
       setProfileOverride(updated);
+      setActionSuccess("Perfil actualizado.");
     },
     [],
   );
@@ -222,6 +226,27 @@ export const StudentCoachingPage: React.FC = () => {
       });
     } catch {
       return isoString;
+    }
+  };
+
+  const formatWhen = (isoString: string) => {
+    if (!isoString) return { date: "", time: "" };
+    try {
+      const d = new Date(isoString);
+      return {
+        date: d.toLocaleDateString("es-MX", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
+        time: d.toLocaleTimeString("es-MX", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+    } catch {
+      return { date: isoString, time: "" };
     }
   };
 
@@ -416,6 +441,23 @@ export const StudentCoachingPage: React.FC = () => {
   const avatarInitials = getInitials(studentName || user?.email || "RV");
 
   const canEditProfile = Boolean(studentProfile?.id && user?.id);
+  const posicionLabel =
+    studentProfile?.enCancha &&
+    studentProfile.enCancha in EN_CANCHA_LABELS
+      ? EN_CANCHA_LABELS[studentProfile.enCancha as keyof typeof EN_CANCHA_LABELS]
+      : null;
+  const personalFacts = [
+    studentProfile?.edad != null ? `${studentProfile.edad} años` : null,
+    posicionLabel,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const redes = getRedesPublicas({
+    instagram_url: studentProfile?.instagramUrl ?? null,
+    facebook_url: studentProfile?.facebookUrl ?? null,
+    tiktok_url: studentProfile?.tiktokUrl ?? null,
+  });
+  const sobreMi = studentProfile?.sobreMi?.trim() || "";
 
   const handlePhotoConfirm = async (cropped: File) => {
     if (!user?.id || !studentProfile?.id) return;
@@ -475,37 +517,26 @@ export const StudentCoachingPage: React.FC = () => {
                   </div>
                 )}
               </div>
-              {canEditProfile && (
-                <>
-                  <button
-                    type="button"
-                    className="coaching-student-hero__photo-btn"
-                    onClick={() => photoInputRef.current?.click()}
-                    disabled={photoUploading}
-                    aria-label="Cambiar foto"
-                  >
-                    <TablerIcon name="camera" size={13} />
-                    {photoUploading ? "Subiendo…" : "Cambiar foto"}
-                  </button>
-                  <input
-                    ref={photoInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="coaching-student-hero__photo-input"
-                    data-testid="student-photo-input"
-                    onChange={handlePhotoSelected}
-                  />
-                </>
-              )}
+              {canEditProfile ? (
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="coaching-student-hero__photo-input"
+                  data-testid="student-photo-input"
+                  onChange={handlePhotoSelected}
+                />
+              ) : null}
             </div>
 
             <div className="coaching-student-hero__copy">
-              <p className="coaching-student-hero__greeting">
-                {studentName ? `Hola, ${studentName}` : "Hola, Jugador"}
-              </p>
+              <p className="coaching-student-hero__kicker">Mi Coaching</p>
               <h1 className="coaching-title coaching-student-hero__title">
-                Mi Coaching
+                {studentName || "Jugador"}
               </h1>
+              {personalFacts ? (
+                <p className="coaching-student-hero__facts">{personalFacts}</p>
+              ) : null}
               {primaryRel ? (
                 <p className="coaching-student-hero__balance">
                   {primaryRel.balance?.balanceClasses ?? 0}{" "}
@@ -514,44 +545,72 @@ export const StudentCoachingPage: React.FC = () => {
                     : "clases disponibles"}
                 </p>
               ) : null}
+              {effectiveRivieraId ? (
+                <div className="coaching-student-badge-pill" title="Código oficial de jugador">
+                  <strong className="coaching-student-badge-val">{effectiveRivieraId}</strong>
+                  <button
+                    type="button"
+                    className="coaching-badge-copy-btn"
+                    onClick={() => handleCopyRivieraId(effectiveRivieraId)}
+                    aria-label={`Copiar ${effectiveRivieraId}`}
+                    title={copiedRivieraId ? "Copiado" : "Copiar código"}
+                  >
+                    <TablerIcon name={copiedRivieraId ? "check" : "copy"} size={14} />
+                  </button>
+                </div>
+              ) : null}
+              <div className="coaching-student-hero__actions">
+                {canEditProfile ? (
+                  <button
+                    type="button"
+                    className="coaching-student-profile__edit"
+                    onClick={() => setProfileEditorOpen(true)}
+                  >
+                    <TablerIcon name="pencil" size={14} />
+                    Editar perfil
+                  </button>
+                ) : null}
+                {canEditProfile ? (
+                  <button
+                    type="button"
+                    className="coaching-student-hero__photo-btn"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={photoUploading}
+                  >
+                    <TablerIcon name="camera" size={13} />
+                    {photoUploading ? "Subiendo…" : "Cambiar foto"}
+                  </button>
+                ) : null}
+                {effectiveRivieraId ? (
+                  <button
+                    type="button"
+                    className="coaching-student-ranking-btn"
+                    onClick={() => {
+                      openPublicJugadorByRivieraIdInNewWindow(effectiveRivieraId);
+                    }}
+                  >
+                    Ver mi Ficha de Ranking
+                  </button>
+                ) : null}
+              </div>
+              {redes.length > 0 ? (
+                <p className="coaching-student-profile__chips">
+                  {redes.map((red) => (
+                    <a
+                      key={red.id}
+                      href={red.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="coaching-student-profile__chip"
+                    >
+                      {red.label}
+                    </a>
+                  ))}
+                </p>
+              ) : null}
+              {sobreMi ? <p className="coaching-student-hero__about">{sobreMi}</p> : null}
             </div>
           </div>
-
-          {effectiveRivieraId && (
-            <div className="coaching-student-hero__actions">
-              <div
-                className="coaching-student-badge-pill"
-                title="Código oficial de jugador"
-              >
-                <strong className="coaching-student-badge-val">
-                  {effectiveRivieraId}
-                </strong>
-                <button
-                  type="button"
-                  className="coaching-badge-copy-btn"
-                  onClick={() => handleCopyRivieraId(effectiveRivieraId)}
-                  aria-label={`Copiar ${effectiveRivieraId}`}
-                  title={copiedRivieraId ? "Copiado" : "Copiar código"}
-                >
-                  <TablerIcon
-                    name={copiedRivieraId ? "check" : "copy"}
-                    size={14}
-                  />
-                </button>
-              </div>
-
-              <button
-                type="button"
-                className="coaching-btn coaching-btn--secondary coaching-student-ranking-btn"
-                onClick={() => {
-                  openPublicJugadorByRivieraIdInNewWindow(effectiveRivieraId);
-                }}
-              >
-                <TablerIcon name="user" size={15} />
-                Ver mi Ficha de Ranking
-              </button>
-            </div>
-          )}
         </div>
       </header>
 
@@ -663,6 +722,65 @@ export const StudentCoachingPage: React.FC = () => {
               ? clubSessions.find((session) => session.nextScheduledAt)
                   ?.nextScheduledAt ?? null
               : null;
+            const hasNextClass = Boolean(nextUpcoming || fallbackNextScheduled);
+            const coachOpen = openCoachId === rel.relationshipId;
+            const coachPhoto = coachPublic?.fotoUrl || rel.coach?.fotoUrl || "";
+            const topics = nextUpcoming?.focus
+              ? parsePrepFocusTopics(nextUpcoming.focus)
+              : [];
+            const when = nextUpcoming
+              ? formatWhen(nextUpcoming.startsAt)
+              : fallbackNextScheduled
+                ? formatWhen(fallbackNextScheduled)
+                : null;
+            const coachRow = (
+              <div className="student-coach-inline">
+                <div className="coaching-student-avatar" aria-hidden="true">
+                  {coachPhoto ? (
+                    <img src={coachPhoto} alt="" className="coaching-student-avatar-img" />
+                  ) : (
+                    <span>{getInitials(coachName)}</span>
+                  )}
+                </div>
+                <p className="student-coach-card__name">{coachName}</p>
+                <button
+                  type="button"
+                  className="coaching-student-ranking-btn"
+                  aria-expanded={coachOpen}
+                  onClick={() =>
+                    setOpenCoachId((current) =>
+                      current === rel.relationshipId ? null : rel.relationshipId,
+                    )
+                  }
+                >
+                  {coachOpen ? "Ocultar perfil" : "Ver perfil"}
+                </button>
+              </div>
+            );
+            const coachStory = coachOpen ? (
+              coachPublic && coachHasPublicStory(coachPublic) ? (
+                <div className="student-coach-story">
+                  {coachPublic.bio ? <p>{coachPublic.bio}</p> : null}
+                  {coachPublic.anosExperiencia != null ? (
+                    <p>
+                      {coachPublic.anosExperiencia}{" "}
+                      {coachPublic.anosExperiencia === 1
+                        ? "año de experiencia"
+                        : "años de experiencia"}
+                    </p>
+                  ) : null}
+                  {coachPublic.especialidades.length > 0 ? (
+                    <p>{coachPublic.especialidades.join(" · ")}</p>
+                  ) : null}
+                  {rel.coach?.coachCode ? <p>{rel.coach.coachCode}</p> : null}
+                  <CoachPublicDetails profile={coachPublic} />
+                </div>
+              ) : (
+                <p className="student-next-class__pending">
+                  Tu entrenador todavía no completó su perfil.
+                </p>
+              )
+            ) : null;
 
             return (
               <section
@@ -671,31 +789,36 @@ export const StudentCoachingPage: React.FC = () => {
               >
                 <article className="student-next-class" aria-label="Mi próxima clase">
                   <h2>Mi próxima clase</h2>
-                  {nextUpcoming ? (
+                  {hasNextClass && when ? (
                     <>
-                      <p className="student-next-class__when">
-                        {formatDate(nextUpcoming.startsAt)}
-                      </p>
+                      <p className="student-next-class__when">{when.date}</p>
+                      {when.time ? (
+                        <p className="student-next-class__time">{when.time}</p>
+                      ) : null}
                       <p className="student-next-class__meta">
-                        {nextUpcoming.durationMinutes} min
-                        {nextUpcoming.court ? ` · ${nextUpcoming.court}` : ""}
-                        {` · ${coachName}`}
-                        {` · ${clubName}`}
+                        {nextUpcoming
+                          ? `${nextUpcoming.durationMinutes} min${
+                              nextUpcoming.court ? ` · ${nextUpcoming.court}` : ""
+                            } · ${clubName}`
+                          : clubName}
                       </p>
                       <p className="student-next-class__status">Programada</p>
                       <h3>Qué vamos a entrenar</h3>
-                      {nextUpcoming.focus ? (
-                        <div className="student-next-class__topics">
-                          {parsePrepFocusTopics(nextUpcoming.focus).map((topic) => (
-                            <span key={topic}>{topic}</span>
-                          ))}
-                        </div>
+                      {topics.length > 0 ? (
+                        <>
+                          <p className="student-next-class__topic">{topics[0]}</p>
+                          {topics.length > 1 ? (
+                            <p className="student-next-class__topic-more">
+                              {topics.slice(1).join(" · ")}
+                            </p>
+                          ) : null}
+                        </>
                       ) : (
                         <p className="student-next-class__pending">
                           Tu coach aún no ha definido el tema de esta sesión.
                         </p>
                       )}
-                      {nextUpcoming.messageToStudent ? (
+                      {nextUpcoming?.messageToStudent ? (
                         <>
                           <h3>Mensaje de tu coach</h3>
                           <p className="student-next-class__message">
@@ -703,18 +826,8 @@ export const StudentCoachingPage: React.FC = () => {
                           </p>
                         </>
                       ) : null}
-                    </>
-                  ) : fallbackNextScheduled ? (
-                    <>
-                      <p className="student-next-class__when">
-                        {formatDate(fallbackNextScheduled)}
-                      </p>
-                      <p className="student-next-class__meta">
-                        Con {coachName} · {clubName}
-                      </p>
-                      <p className="student-next-class__pending">
-                        Tu coach aún no ha definido el tema de esta sesión.
-                      </p>
+                      {coachRow}
+                      {coachStory}
                     </>
                   ) : (
                     <p className="student-next-class__pending">
@@ -744,59 +857,13 @@ export const StudentCoachingPage: React.FC = () => {
                   ) : null}
                 </article>
 
-                <article className="student-coach-card" aria-label="Mi entrenador">
-                  <div className="student-coach-card__row">
-                    <div className="coaching-student-avatar">
-                      {coachPublic?.fotoUrl || rel.coach?.fotoUrl ? (
-                        <img
-                          src={coachPublic?.fotoUrl || rel.coach?.fotoUrl || ""}
-                          alt={coachName}
-                          className="coaching-student-avatar-img"
-                        />
-                      ) : (
-                        <span>{getInitials(coachName)}</span>
-                      )}
-                    </div>
-                    <div>
-                      <h2>Mi entrenador</h2>
-                      <p className="student-coach-card__name">{coachName}</p>
-                      <p className="student-coach-card__club">
-                        {clubName}
-                        {rel.coach?.coachCode ? ` · ${rel.coach.coachCode}` : ""}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="coaching-btn coaching-btn--secondary"
-                      onClick={() => setCoachProfileOpen((open) => !open)}
-                    >
-                      {coachProfileOpen ? "Ocultar perfil" : "Ver perfil"}
-                    </button>
-                  </div>
-                  {coachProfileOpen ? (
-                    coachPublic && coachHasPublicStory(coachPublic) ? (
-                      <div className="student-coach-story">
-                        {coachPublic.bio ? <p>{coachPublic.bio}</p> : null}
-                        {coachPublic.anosExperiencia != null ? (
-                          <p>
-                            {coachPublic.anosExperiencia}{" "}
-                            {coachPublic.anosExperiencia === 1
-                              ? "año de experiencia"
-                              : "años de experiencia"}
-                          </p>
-                        ) : null}
-                        {coachPublic.especialidades.length > 0 ? (
-                          <p>{coachPublic.especialidades.join(" · ")}</p>
-                        ) : null}
-                        <CoachPublicDetails profile={coachPublic} />
-                      </div>
-                    ) : (
-                      <p className="student-next-class__pending">
-                        Tu entrenador todavía no completó su perfil.
-                      </p>
-                    )
-                  ) : null}
-                </article>
+                {!hasNextClass ? (
+                  <article className="student-coach-card" aria-label="Mi entrenador">
+                    {coachRow}
+                    <p className="student-coach-card__club">{clubName}</p>
+                    {coachStory}
+                  </article>
+                ) : null}
 
                 {/* 2. MI EVOLUCIÓN COMO JUGADOR */}
                 <StudentTrainingSection
@@ -969,12 +1036,16 @@ export const StudentCoachingPage: React.FC = () => {
         </div>
       )}
 
-      {studentProfile && canEditProfile && (
+      {studentProfile && canEditProfile ? (
         <StudentProfileCard
+          open={profileEditorOpen}
           profile={studentProfile}
+          onClose={() => setProfileEditorOpen(false)}
           onSave={handleSaveProfile}
+          onChangePhoto={() => photoInputRef.current?.click()}
+          photoUploading={photoUploading}
         />
-      )}
+      ) : null}
     </div>
   );
 };

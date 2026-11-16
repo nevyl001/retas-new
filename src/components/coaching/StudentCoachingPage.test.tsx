@@ -104,7 +104,7 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     });
 
     // Encabezado personalizado
-    expect(container.textContent).toContain("Hola, Diego Palomares");
+    expect(container.textContent).toContain("Diego Palomares");
     expect(container.textContent).toContain("Mi Coaching");
     expect(container.textContent).toContain("RIV-00000356");
     expect(container.textContent).not.toContain("Riviera ID");
@@ -225,7 +225,7 @@ describe("StudentCoachingPage & CoachingRouter", () => {
 
     // Validar encabezados y badge
     expect(container.textContent).toContain("Mi Coaching");
-    expect(container.textContent).toContain("Hola, Diego Palomares");
+    expect(container.textContent).toContain("Diego Palomares");
     expect(container.textContent).toContain("RIV-00000356");
     expect(container.textContent).toContain("Mi próxima clase");
     expect(container.textContent).toContain("Qué vamos a entrenar");
@@ -235,9 +235,9 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     expect(container.textContent).toContain("Cancha 2");
 
     // Validar información del coach y club
-    expect(container.textContent).toContain("Mi entrenador");
     expect(container.textContent).toContain("Prof. Roberto Morales");
-    expect(container.textContent).toContain("COACH-007");
+    expect(container.textContent).toContain("Ver perfil");
+    expect(container.textContent).not.toContain("COACH-007");
     expect(container.textContent).toContain("Bandeja");
     expect(container.textContent).toContain("Hack Pádel");
 
@@ -481,7 +481,8 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     ) as HTMLImageElement | null;
     expect(img?.src).toContain("diego.jpg");
     expect(container.textContent).toContain("Cambiar foto");
-    expect(container.textContent).toContain("MI PERFIL");
+    expect(container.textContent).not.toContain("MI PERFIL");
+    expect(container.textContent).not.toContain("Sobre mí");
     expect(container.textContent).toContain("28 años");
     expect(container.textContent).toContain("Revés");
     expect(container.textContent).toContain("Instagram");
@@ -590,6 +591,7 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     expect(saveSpy).toHaveBeenCalledWith({
       edad: 30,
       enCancha: "drive",
+      sobreMi: null,
       instagramUrl: "https://instagram.com/diego",
       facebookUrl: null,
       tiktokUrl: null,

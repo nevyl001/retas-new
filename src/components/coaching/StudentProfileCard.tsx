@@ -1,48 +1,57 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type {
   StudentSelfProfile,
   UpdateStudentProfileInput,
 } from "../../lib/coaching/coachingApi";
 import { EN_CANCHA_LABELS, EN_CANCHA_ORDER } from "../../lib/rivieraJugadores/constants";
-import { getRedesPublicas, normalizeSocialUrl } from "../../lib/rivieraJugadores/jugadorRedes";
-import { TablerIcon } from "../ui/TablerIcon";
+import { normalizeSocialUrl } from "../../lib/rivieraJugadores/jugadorRedes";
 
-/** Debe coincidir con la validación de update_student_coaching_profile (0126). */
+/** Debe coincidir con la validación de update_student_coaching_profile. */
 const SOCIAL_URL_RE =
   /^https?:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}(\/\S*)?$/i;
 
-interface StudentProfileCardProps {
-  profile: StudentSelfProfile;
-  onSave: (input: UpdateStudentProfileInput) => Promise<void>;
-}
-
 const EDAD_MIN = 5;
 const EDAD_MAX = 99;
+export const STUDENT_ABOUT_MAX = 200;
+
+interface StudentProfileCardProps {
+  open: boolean;
+  profile: StudentSelfProfile;
+  onClose: () => void;
+  onSave: (input: UpdateStudentProfileInput) => Promise<void>;
+  onChangePhoto?: () => void;
+  photoUploading?: boolean;
+}
 
 export const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
+  open,
   profile,
+  onClose,
   onSave,
+  onChangePhoto,
+  photoUploading = false,
 }) => {
-  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [edad, setEdad] = useState("");
   const [enCancha, setEnCancha] = useState("");
+  const [sobreMi, setSobreMi] = useState("");
   const [instagram, setInstagram] = useState("");
   const [facebook, setFacebook] = useState("");
   const [tiktok, setTiktok] = useState("");
 
-  const startEdit = () => {
+  useEffect(() => {
+    if (!open) return;
     setEdad(profile.edad != null ? String(profile.edad) : "");
     setEnCancha(profile.enCancha ?? "");
+    setSobreMi(profile.sobreMi ?? "");
     setInstagram(profile.instagramUrl ?? "");
     setFacebook(profile.facebookUrl ?? "");
     setTiktok(profile.tiktokUrl ?? "");
     setError(null);
-    setSuccess(false);
-    setEditing(true);
-  };
+  }, [open, profile]);
+
+  if (!open) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +65,12 @@ export const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
         return;
       }
       edadValue = n;
+    }
+
+    const about = sobreMi.trim();
+    if (about.length > STUDENT_ABOUT_MAX) {
+      setError(`La descripción puede tener hasta ${STUDENT_ABOUT_MAX} caracteres.`);
+      return;
     }
 
     const socials = [
@@ -76,12 +91,12 @@ export const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
       await onSave({
         edad: edadValue,
         enCancha: enCancha || null,
+        sobreMi: about || null,
         instagramUrl: socials[0].url || null,
         facebookUrl: socials[1].url || null,
         tiktokUrl: socials[2].url || null,
       });
-      setEditing(false);
-      setSuccess(true);
+      onClose();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "No se pudo guardar tu perfil.",
@@ -91,67 +106,36 @@ export const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
     }
   };
 
-  const redes = getRedesPublicas({
-    instagram_url: profile.instagramUrl,
-    facebook_url: profile.facebookUrl,
-    tiktok_url: profile.tiktokUrl,
-  });
-  const posicionLabel =
-    profile.enCancha && profile.enCancha in EN_CANCHA_LABELS
-      ? EN_CANCHA_LABELS[profile.enCancha as keyof typeof EN_CANCHA_LABELS]
-      : null;
-
   return (
-    <section className="coaching-student-profile" aria-label="Mi perfil">
-      <div className="coaching-student-profile__header">
-        <span className="coaching-student-profile__eyebrow">MI PERFIL</span>
-        {!editing && (
-          <button
-            type="button"
-            className="coaching-student-profile__edit"
-            onClick={startEdit}
-          >
-            <TablerIcon name="pencil" size={14} />
-            Editar perfil
-          </button>
-        )}
-      </div>
-
-      {!editing ? (
-        <dl className="coaching-student-profile__grid">
-          <div className="coaching-student-profile__field">
-            <dt>Edad</dt>
-            <dd>{profile.edad != null ? `${profile.edad} años` : "Sin especificar"}</dd>
-          </div>
-          <div className="coaching-student-profile__field">
-            <dt>Posición en la cancha</dt>
-            <dd>{posicionLabel ?? "Sin especificar"}</dd>
-          </div>
-          <div className="coaching-student-profile__field coaching-student-profile__field--wide">
-            <dt>Redes sociales</dt>
-            <dd>
-              {redes.length > 0 ? (
-                <span className="coaching-student-profile__chips">
-                  {redes.map((r) => (
-                    <a
-                      key={r.id}
-                      href={r.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="coaching-student-profile__chip"
-                    >
-                      {r.label}
-                    </a>
-                  ))}
-                </span>
-              ) : (
-                "Sin redes agregadas"
-              )}
-            </dd>
-          </div>
-        </dl>
-      ) : (
+    <div className="student-profile-dialog">
+      <button
+        type="button"
+        className="student-profile-dialog__backdrop"
+        aria-label="Cerrar"
+        onClick={() => {
+          if (!saving) onClose();
+        }}
+      />
+      <div
+        className="student-profile-dialog__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="student-profile-title"
+      >
+        <h2 id="student-profile-title">Editar perfil</h2>
         <form className="coaching-student-profile__form" onSubmit={handleSubmit}>
+          <p className="student-profile-dialog__section">Información personal</p>
+          {onChangePhoto ? (
+            <button
+              type="button"
+              className="coaching-student-hero__photo-btn"
+              onClick={onChangePhoto}
+              disabled={saving || photoUploading}
+            >
+              {photoUploading ? "Subiendo…" : "Cambiar foto"}
+            </button>
+          ) : null}
+
           <label className="coaching-student-profile__label">
             Edad
             <input
@@ -188,6 +172,23 @@ export const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
             </div>
           </fieldset>
 
+          <label className="coaching-student-profile__label">
+            Sobre mí
+            <textarea
+              className="coaching-input student-profile-dialog__about"
+              rows={3}
+              maxLength={STUDENT_ABOUT_MAX}
+              placeholder="Cuéntanos brevemente sobre ti y tu pasión por el pádel."
+              value={sobreMi}
+              onChange={(e) => setSobreMi(e.target.value.slice(0, STUDENT_ABOUT_MAX))}
+              disabled={saving}
+            />
+            <span className="student-profile-dialog__count">
+              {sobreMi.length}/{STUDENT_ABOUT_MAX}
+            </span>
+          </label>
+
+          <p className="student-profile-dialog__section">Redes sociales</p>
           <label className="coaching-student-profile__label">
             Instagram
             <input
@@ -232,7 +233,7 @@ export const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
             <button
               type="button"
               className="coaching-btn coaching-btn--secondary"
-              onClick={() => setEditing(false)}
+              onClick={onClose}
               disabled={saving}
             >
               Cancelar
@@ -246,13 +247,7 @@ export const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
             </button>
           </div>
         </form>
-      )}
-
-      {success && !editing && (
-        <p className="coaching-student-profile__success" role="status">
-          Perfil actualizado.
-        </p>
-      )}
-    </section>
+      </div>
+    </div>
   );
 };
