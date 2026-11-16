@@ -124,6 +124,22 @@ interface PublicTournamentViewProps {
   tournamentId: string;
 }
 
+function samePublicLabel(
+  left: string | null | undefined,
+  right: string | null | undefined
+): boolean {
+  const normalize = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+  const a = left?.trim();
+  const b = right?.trim();
+  if (!a || !b) return false;
+  return normalize(a) === normalize(b);
+}
+
 const RetaPublicHeader: React.FC<{
   formatKicker: string;
   publicTournamentName: string | null;
@@ -1373,11 +1389,14 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             </StatusBadge>
           }
           nombreEvento={publicTournamentName || "Resultados en tiempo real"}
-          club={showClubBranding ? organizerName : undefined}
           descripcion={publicTournamentDescription || undefined}
           nivel={nivelPublico || undefined}
           fecha={fechaHorarioLine || undefined}
-          lugar={lugarPublico || undefined}
+          lugar={
+            lugarPublico && !samePublicLabel(lugarPublico, organizerName)
+              ? lugarPublico
+              : undefined
+          }
           meta={heroMeta}
         />
       ) : (
@@ -1387,7 +1406,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           publicTournamentDescription={publicTournamentDescription}
           statusLabel={eventScheduleStatus.label}
           fechaHorario={fechaHorarioLine}
-          lugar={lugarPublico}
+          lugar={
+            lugarPublico && !samePublicLabel(lugarPublico, organizerName)
+              ? lugarPublico
+              : null
+          }
           nivel={nivelPublico}
         />
       )}
