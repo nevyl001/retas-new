@@ -225,20 +225,6 @@ export const StudentCoachingPage: React.FC = () => {
     }
   };
 
-  const formatShortDate = (isoString: string | null | undefined) => {
-    if (!isoString) return "";
-    try {
-      const d = new Date(isoString);
-      return d.toLocaleDateString("es-MX", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
-    } catch {
-      return isoString;
-    }
-  };
-
   const handleBack = () => {
     if (overview?.rivieraId) {
       navigatePublicJugadorByRivieraId(overview.rivieraId);
@@ -668,9 +654,6 @@ export const StudentCoachingPage: React.FC = () => {
         /* CASO B: Con relaciones de coaching activas */
         <div className="coaching-student-dashboard">
           {relationships.map((rel) => {
-            const currentBalance = rel.balance?.balanceClasses ?? 0;
-            const totalCompleted = rel.balance?.totalClassesGiven ?? 0;
-            const hasAvailable = currentBalance > 0;
             const coachName = rel.coach?.nombre ?? "Coach";
             const clubName = rel.club?.nombre ?? "Club Riviera";
             const clubSessions =
