@@ -514,9 +514,7 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     expect(container.textContent).toContain(
       "Tu coach aún no ha definido el enfoque de esta sesión.",
     );
-    expect(container.textContent).toContain(
-      "Tu entrenador podrá dejarte aquí una nota antes de tu clase.",
-    );
+    expect(container.textContent).not.toContain("Mensaje de tu coach");
     expect(container.textContent).toContain("Gabriel Duran");
     expect(container.textContent).toContain("Ver perfil");
   });
