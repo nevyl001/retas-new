@@ -84,8 +84,8 @@ export const PublicDuelMatchBoard: React.FC<{
               label={`${right.name1} y ${right.name2}`}
             />
           </div>
-          <div className="liga-jornada-match-card__final-score">
-            {played ? (
+          {played ? (
+            <div className="liga-jornada-match-card__final-score">
               <LigaJornadaMatchScoreGrid
                 board={{
                   kind: "simple",
@@ -95,25 +95,8 @@ export const PublicDuelMatchBoard: React.FC<{
                 summaryOnly
                 isDraw={isTie}
               />
-            ) : (
-              <div
-                className="liga-jornada-match-score liga-jornada-match-score--summary-only"
-                aria-label="Sin marcador"
-              >
-                <div className="liga-jornada-match-score__summary">
-                  <span className="liga-jornada-match-score__summary-num">
-                    —
-                  </span>
-                  <span className="liga-jornada-match-score__summary-sep">
-                    –
-                  </span>
-                  <span className="liga-jornada-match-score__summary-num">
-                    —
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
