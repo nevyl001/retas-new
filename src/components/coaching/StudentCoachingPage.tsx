@@ -260,10 +260,10 @@ export const StudentCoachingPage: React.FC = () => {
     }
   };
 
-  // 1. Estado de carga
+  // 1. Estado de carga con skeletons premium
   if (userLoading || loading) {
     return (
-      <div className="coaching-page coaching-student-page rv-page">
+      <div className="coaching-page coaching-student-page rv-page" aria-busy="true">
         <header className="coaching-hero coaching-student-hero">
           <div className="coaching-student-hero__topbar">
             <button
@@ -275,10 +275,27 @@ export const StudentCoachingPage: React.FC = () => {
               {overview?.rivieraId ? "Volver a mi Ficha" : "Inicio"}
             </button>
           </div>
-          <p className="coaching-kicker">Riviera Coaching</p>
-          <h1 className="coaching-title">Mi Coaching</h1>
-          <p className="coaching-muted">Cargando tu seguimiento deportivo…</p>
+          <div className="coaching-student-skeleton-hero">
+            <div className="coaching-student-skeleton coaching-student-skeleton--portrait" />
+            <div className="coaching-student-skeleton-lines">
+              <p className="coaching-kicker">Riviera Coaching</p>
+              <h1 className="coaching-title">Mi Coaching</h1>
+              <p className="coaching-muted" style={{ padding: "0.2rem 0 0" }}>
+                Cargando tu seguimiento deportivo…
+              </p>
+              <div className="coaching-student-skeleton coaching-student-skeleton--pill" />
+            </div>
+          </div>
         </header>
+        <div className="coaching-student-skeleton-card" aria-hidden="true">
+          <div className="coaching-student-skeleton coaching-student-skeleton--kicker" />
+          <div className="coaching-student-skeleton coaching-student-skeleton--heading" />
+          <div className="coaching-student-skeleton coaching-student-skeleton--meta" />
+          <div className="coaching-student-skeleton-grid">
+            <div className="coaching-student-skeleton coaching-student-skeleton--box" />
+            <div className="coaching-student-skeleton coaching-student-skeleton--box" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -839,53 +856,115 @@ export const StudentCoachingPage: React.FC = () => {
                 key={rel.relationshipId}
                 className="coaching-student-relation-card"
               >
-                <article className="student-next-class" aria-label="Mi próxima clase">
-                  <h2>Mi próxima clase</h2>
+                <article
+                  className={`student-next-class${
+                    hasNextClass ? " student-next-class--scheduled" : " student-next-class--empty"
+                  }`}
+                  aria-label="Mi próxima clase"
+                >
+                  <div className="student-next-class__top">
+                    <h2>Mi próxima clase</h2>
+                  </div>
+
                   {hasNextClass && when ? (
                     <>
-                      <p className="student-next-class__when">{when.date}</p>
-                      {when.time ? (
-                        <p className="student-next-class__time">{when.time}</p>
-                      ) : null}
-                      <p className="student-next-class__meta">
-                        {nextUpcoming
-                          ? `${nextUpcoming.durationMinutes} min${
-                              nextUpcoming.court ? ` · ${nextUpcoming.court}` : ""
-                            } · ${clubName}`
-                          : clubName}
-                      </p>
-                      <p className="student-next-class__status">Programada</p>
-                      <h3>Qué vamos a entrenar</h3>
-                      {topics.length > 0 ? (
-                        <>
-                          <p className="student-next-class__topic">{topics[0]}</p>
-                          {topics.length > 1 ? (
-                            <p className="student-next-class__topic-more">
-                              {topics.slice(1).join(" · ")}
-                            </p>
-                          ) : null}
-                        </>
-                      ) : (
-                        <p className="student-next-class__pending">
-                          Tu coach aún no ha definido el tema de esta sesión.
+                      <div className="student-next-class__datetime">
+                        <p className="student-next-class__when">{when.date}</p>
+                        {when.time ? (
+                          <p className="student-next-class__time">{when.time}</p>
+                        ) : null}
+                      </div>
+
+                      <div className="student-next-class__meta-bar">
+                        <p className="student-next-class__meta">
+                          {nextUpcoming
+                            ? `${nextUpcoming.durationMinutes} min${
+                                nextUpcoming.court ? ` · ${nextUpcoming.court}` : ""
+                              } · ${clubName}`
+                            : clubName}
                         </p>
-                      )}
-                      {nextUpcoming?.messageToStudent ? (
-                        <>
-                          <h3>Mensaje de tu coach</h3>
-                          <p className="student-next-class__message">
-                            {nextUpcoming.messageToStudent}
-                          </p>
-                        </>
-                      ) : null}
+                        <p className="student-next-class__status">
+                          <span
+                            className="student-next-class__status-dot"
+                            aria-hidden="true"
+                          />
+                          Programada
+                        </p>
+                      </div>
+
+                      <div className="student-next-class__prep-grid">
+                        <div className="student-next-class__focus-box">
+                          <div className="student-next-class__block-head">
+                            <TablerIcon
+                              name="target"
+                              size={14}
+                              className="student-next-class__block-icon"
+                            />
+                            <h3>Qué vamos a entrenar</h3>
+                          </div>
+                          {topics.length > 0 ? (
+                            <div className="student-next-class__focus-content">
+                              <p className="student-next-class__topic">
+                                {topics[0]}
+                              </p>
+                              {topics.length > 1 ? (
+                                <p className="student-next-class__topic-more">
+                                  {topics.slice(1).join(" · ")}
+                                </p>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <p className="student-next-class__pending">
+                              Tu coach aún no ha definido el enfoque de esta
+                              sesión.
+                            </p>
+                          )}
+                        </div>
+
+                        <div
+                          className={`student-next-class__message-box${
+                            nextUpcoming?.messageToStudent
+                              ? " is-filled"
+                              : " is-empty"
+                          }`}
+                        >
+                          <div className="student-next-class__block-head">
+                            <TablerIcon
+                              name="message-circle"
+                              size={14}
+                              className="student-next-class__block-icon student-next-class__block-icon--accent"
+                            />
+                            <h3>Mensaje de tu coach</h3>
+                          </div>
+                          {nextUpcoming?.messageToStudent ? (
+                            <p className="student-next-class__message">
+                              {nextUpcoming.messageToStudent}
+                            </p>
+                          ) : (
+                            <p className="student-next-class__pending">
+                              Tu entrenador podrá dejarte aquí una nota antes de
+                              tu clase.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
                       {coachRow}
                       {coachStory}
                     </>
                   ) : (
-                    <p className="student-next-class__pending">
-                      Aún no tienes clases programadas.
-                    </p>
+                    <div className="student-next-class__empty-state">
+                      <TablerIcon
+                        name="calendar-event"
+                        size={18}
+                        className="student-next-class__empty-icon"
+                      />
+                      <p className="student-next-class__pending">
+                        Aún no tienes una clase programada.
+                      </p>
+                    </div>
                   )}
+
                   {(rel.upcomingSessions?.length ?? 0) > 1 ? (
                     <details className="student-next-class__more">
                       <summary>

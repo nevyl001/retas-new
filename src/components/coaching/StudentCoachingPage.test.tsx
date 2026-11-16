@@ -448,9 +448,77 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     expect(container.textContent).toContain(
       "Tu evolución aparecerá después de tu primera clase."
     );
+    expect(container.textContent).toContain("Aún no tienes una clase programada.");
     expect(container.textContent).not.toContain("EN QUÉ DEBO MEJORAR");
     expect(container.textContent).not.toContain("RECOMENDACIONES");
     expect(container.textContent).not.toContain("MI PRÓXIMO OBJETIVO");
+  });
+
+  it("muestra estado calmado y elegante cuando la próxima clase aún no tiene preparación del coach", async () => {
+    jest.spyOn(coachingApi, "fetchStudentTrainingTimeline").mockResolvedValue([]);
+    jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockResolvedValueOnce({
+      ok: true,
+      linked: true,
+      rivieraId: "RIV-00000356",
+      relationships: [
+        {
+          relationshipId: "rel-hack-1",
+          status: "ACTIVE",
+          isPrimary: true,
+          startedAt: "2026-10-15T12:00:00Z",
+          endedAt: null,
+          club: {
+            organizadorId: "org-hack-uuid",
+            nombre: "Hack Pádel",
+          },
+          coach: {
+            id: "coach-uuid-1",
+            nombre: "Gabriel Duran",
+            coachCode: "RIV-C-00072",
+            fotoUrl: null,
+            especialidades: [],
+          },
+          player: {
+            id: "player-uuid-1",
+            nombre: "Diego Palomares",
+            rivieraId: "RIV-00000356",
+          },
+          balance: {
+            balanceClasses: 5,
+            totalClassesGiven: 0,
+            updatedAt: "2026-10-15T12:00:00Z",
+          },
+          upcomingSessions: [
+            {
+              id: "sch-empty-prep",
+              startsAt: "2026-11-17T23:00:00Z",
+              endsAt: "2026-11-18T00:00:00Z",
+              durationMinutes: 60,
+              court: "Cancha 2",
+              focus: null,
+              messageToStudent: null,
+              status: "SCHEDULED",
+            },
+          ],
+          ledger: [],
+        },
+      ],
+    });
+
+    await act(async () => {
+      root.render(<StudentCoachingPage />);
+    });
+
+    expect(container.textContent).toContain("Mi próxima clase");
+    expect(container.textContent).toContain("Programada");
+    expect(container.textContent).toContain(
+      "Tu coach aún no ha definido el enfoque de esta sesión.",
+    );
+    expect(container.textContent).toContain(
+      "Tu entrenador podrá dejarte aquí una nota antes de tu clase.",
+    );
+    expect(container.textContent).toContain("Gabriel Duran");
+    expect(container.textContent).toContain("Ver perfil");
   });
 
   it("muestra la foto real y el perfil del alumno aunque no tenga entrenador, sin campo de correo", async () => {

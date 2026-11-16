@@ -1137,89 +1137,321 @@
 
 .student-next-class,
 .student-coach-card {
-  background: var(--student-bg-card);
-  border: 1px solid var(--student-border);
+  background: linear-gradient(180deg, #ffffff 0%, #fafcff 100%);
+  border: 1px solid rgba(15, 23, 42, 0.1);
   border-radius: 16px;
-  padding: 1rem 1.05rem;
-  margin-bottom: 0.85rem;
-  box-shadow: var(--student-shadow-sm);
+  padding: clamp(1.15rem, 2.2vw, 1.5rem);
+  margin-bottom: 0.25rem;
+  box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+  box-sizing: border-box;
+}
+
+.student-next-class--scheduled {
+  border-color: rgba(2, 132, 199, 0.22);
+  box-shadow: 0 10px 28px -10px rgba(2, 132, 199, 0.09), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+}
+
+.student-next-class__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .student-next-class h2,
 .student-coach-card h2 {
   margin: 0;
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
   color: var(--student-accent-strong);
 }
 
+.student-next-class__datetime {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.45rem 1rem;
+  margin-top: 0.55rem;
+}
+
 .student-next-class__when {
-  margin: 0.45rem 0 0;
-  font-size: 1.45rem;
-  font-weight: 750;
-  line-height: 1.15;
+  margin: 0;
+  font-size: clamp(1.5rem, 2.5vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
   color: #0f172a;
 }
 
 .student-next-class__time {
-  margin: 0.15rem 0 0;
-  font-size: 1.15rem;
-  font-weight: 750;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.24rem 0.68rem;
+  border-radius: 8px;
+  background: var(--student-accent-soft);
+  border: 1px solid var(--student-accent-border);
+  font-size: 0.92rem;
+  font-weight: 800;
   line-height: 1.2;
-  color: #0f172a;
+  letter-spacing: 0.01em;
+  color: var(--student-accent-strong);
+  white-space: nowrap;
+}
+
+.student-next-class__meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.85rem;
+  margin-top: 0.65rem;
+  padding-bottom: 0.95rem;
+  border-bottom: 1px solid var(--student-border);
+}
+
+.student-next-class__meta,
+.student-coach-card__club {
+  margin: 0;
+  color: var(--student-text-secondary);
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.student-coach-card__club {
+  margin-top: 0.45rem;
+}
+
+.student-next-class__status {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.18rem 0.58rem;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.24);
+  color: #047857;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.student-next-class__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  flex-shrink: 0;
+}
+
+.student-next-class__prep-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 0.9rem;
+  margin-top: 1rem;
+  align-items: stretch;
+}
+
+@media (max-width: 767px) {
+  .student-next-class__prep-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .student-next-class__datetime {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+}
+
+.student-next-class__focus-box {
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  padding: 0.95rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.student-next-class__message-box {
+  border-radius: 12px;
+  padding: 0.95rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.student-next-class__message-box.is-filled {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, rgba(2, 132, 199, 0.03) 100%);
+  border: 1px solid rgba(2, 132, 199, 0.22);
+  border-left: 3px solid var(--student-accent);
+}
+
+.student-next-class__message-box.is-empty {
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.student-next-class__block-head {
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+  margin-bottom: 0.45rem;
+}
+
+.student-next-class__block-icon {
+  color: var(--student-text-muted);
+  flex-shrink: 0;
+}
+
+.student-next-class__block-icon--accent {
+  color: var(--student-accent-strong);
+}
+
+.student-next-class h3 {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--student-text-muted);
+}
+
+.student-next-class__message-box.is-filled h3 {
+  color: var(--student-accent-strong);
+}
+
+.student-next-class__focus-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+  min-width: 0;
 }
 
 .student-next-class__topic {
-  margin: 0.15rem 0 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  line-height: 1.35;
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
   color: #0f172a;
+  overflow-wrap: anywhere;
 }
 
 .student-next-class__topic-more {
-  margin: 0.15rem 0 0;
-  font-size: 0.95rem;
+  margin: 0;
+  padding-left: 0.65rem;
+  border-left: 2px solid rgba(2, 132, 199, 0.32);
+  font-size: 0.88rem;
+  font-weight: 600;
   line-height: 1.4;
-  color: #334155;
+  color: #475569;
+  overflow-wrap: anywhere;
+}
+
+.student-next-class__message {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+
+.student-next-class__pending {
+  margin: 0;
+  color: var(--student-text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.student-next-class__empty-state {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.student-next-class__empty-icon {
+  color: var(--student-accent);
+  flex-shrink: 0;
 }
 
 .student-coach-inline {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.75rem;
   min-width: 0;
-  margin-top: 0.9rem;
-  padding-top: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
   border-top: 1px solid var(--student-border);
+}
+
+.student-coach-card .student-coach-inline {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .student-coach-inline .student-coach-card__name {
   flex: 1;
   min-width: 0;
   margin: 0;
+  font-size: 0.95rem;
+  font-weight: 750;
+  line-height: 1.3;
+  color: var(--student-text-primary);
+  overflow-wrap: anywhere;
 }
 
 .student-coach-inline .coaching-student-ranking-btn {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.34rem 0.78rem;
+  border-radius: 999px;
+  background: var(--student-bg-subtle);
+  border: 1px solid var(--student-border-strong);
+  color: var(--student-accent-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.student-next-class__meta,
-.student-next-class__status,
-.student-next-class__pending,
-.student-coach-card__club {
-  margin: 0.25rem 0 0;
+.student-coach-inline .coaching-student-ranking-btn:hover {
+  background: var(--student-accent-soft);
+  border-color: var(--student-accent-border);
+  color: var(--student-accent-strong);
+}
+
+.coaching-student-page .student-coach-story {
+  margin-top: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--student-border-strong);
+  border-radius: 12px;
+  background: var(--student-bg-subtle);
+  color: var(--student-text-primary);
+}
+
+.coaching-student-page .student-coach-story p {
   color: var(--student-text-secondary);
-  font-size: 0.9rem;
-}
-
-.student-next-class h3 {
-  margin: 0.9rem 0 0.35rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--student-text-muted);
 }
 
 .student-next-class__topics {
@@ -1237,22 +1469,27 @@
   font-weight: 700;
 }
 
-.student-next-class__message,
-.student-coach-card__name {
-  margin: 0.15rem 0 0;
-  font-size: 1rem;
-  line-height: 1.45;
-  color: var(--student-text-primary);
-}
-
 .student-next-class__more {
   margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--student-border-strong);
 }
 
 .student-next-class__more summary {
   cursor: pointer;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--student-accent-strong);
+}
+
+.student-next-class__more ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.84rem;
+  color: var(--student-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
 .student-coach-card__row {
@@ -1265,6 +1502,95 @@
 .student-coach-card__row > div:nth-child(2) {
   flex: 1;
   min-width: 0;
+}
+
+/* Skeletons de carga sin brincos de layout */
+@keyframes studentSkeletonPulse {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.coaching-student-skeleton {
+  background: #e2e8f0;
+  border-radius: 8px;
+  animation: studentSkeletonPulse 1.6s ease-in-out infinite;
+}
+
+.coaching-student-skeleton-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+}
+
+.coaching-student-skeleton--portrait {
+  width: 84px;
+  height: 112px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.coaching-student-skeleton-lines {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.coaching-student-skeleton--pill {
+  width: 140px;
+  height: 24px;
+  border-radius: 999px;
+  margin-top: 0.35rem;
+}
+
+.coaching-student-skeleton-card {
+  background: var(--student-bg-card);
+  border: 1px solid var(--student-border);
+  border-radius: 16px;
+  padding: clamp(1.15rem, 2.2vw, 1.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  box-shadow: var(--student-shadow-sm);
+}
+
+.coaching-student-skeleton--kicker {
+  width: 120px;
+  height: 12px;
+}
+
+.coaching-student-skeleton--heading {
+  width: min(260px, 75%);
+  height: 28px;
+}
+
+.coaching-student-skeleton--meta {
+  width: min(200px, 60%);
+  height: 16px;
+}
+
+.coaching-student-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.coaching-student-skeleton--box {
+  height: 84px;
+  border-radius: 12px;
+}
+
+@media (max-width: 767px) {
+  .coaching-student-skeleton-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .student-history > summary {
