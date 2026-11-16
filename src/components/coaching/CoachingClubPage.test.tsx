@@ -53,9 +53,13 @@ const mockSnapshot: CoachingClubSnapshot = {
       coachNombre: "Coach Rodrigo",
       jugadorId: "jug-1",
       jugadorNombre: "Carlos Alumno",
+      jugadorFotoUrl: "https://example.com/carlos.jpg",
+      jugadorCategoria: "4ta_fuerza",
       rivieraId: "RIV-00000042",
       status: "ACTIVE",
       isPrimary: true,
+      balanceClasses: 4,
+      totalClassesGiven: 2,
     },
     {
       id: "link-2",
@@ -66,6 +70,8 @@ const mockSnapshot: CoachingClubSnapshot = {
       rivieraId: "RIV-00000099",
       status: "PAUSED",
       isPrimary: false,
+      balanceClasses: 0,
+      totalClassesGiven: 0,
     },
   ],
 };
@@ -225,7 +231,26 @@ describe("CoachingClubPage UX/UI Redesign", () => {
     expect(badgeTexts).toContain("Inactivo");
   });
 
-  it("renders Jugadores tab with information banner, player cards and class assignment actions", async () => {
+  it("renders Jugadores tab with information banner, player cards, contextual actions menu and ledger filters", async () => {
+    jest.spyOn(coachingApi, "fetchClubClassLedger").mockResolvedValue([
+      {
+        id: "led-1",
+        relationshipId: "link-1",
+        organizadorId: "org-test-123",
+        coachId: "coach-1",
+        coachNombre: "Coach Rodrigo",
+        jugadorId: "jug-1",
+        jugadorNombre: "Carlos Alumno",
+        sessionId: null,
+        delta: 5,
+        tipo: "PACKAGE_CREDIT",
+        notas: "Paquete mensual",
+        idempotencyKey: null,
+        recordedBy: "org-test-123",
+        createdAt: "2026-11-12T20:00:00Z",
+      },
+    ]);
+
     await act(async () => {
       root.render(<CoachingClubPage pathname="/coaching/jugadores" />);
     });
@@ -235,14 +260,38 @@ describe("CoachingClubPage UX/UI Redesign", () => {
       "Como administrador del club, tú registras y asignas alumnos"
     );
 
-    // Initial default filter is "Activos", so Carlos Alumno is shown
+    // Initial default filter is "Activos", so Carlos Alumno is shown with photo, category and balance
     expect(container.textContent).toContain("Carlos Alumno");
+    expect(container.textContent).toContain("4ta fuerza");
     expect(container.textContent).toContain("Asignar clases");
     expect(container.textContent).toContain("Pausar");
     expect(container.textContent).toContain("Terminar");
 
-    // Click "Todos" filter
-    const chips = Array.from(container.querySelectorAll(".coaching-chip"));
+    const studentCard = container.querySelector(".coaching-student-card");
+    expect(studentCard).not.toBeNull();
+    const avatarImg = studentCard?.querySelector(".coaching-student-card__avatar img") as HTMLImageElement | null;
+    expect(avatarImg?.src).toContain("https://example.com/carlos.jpg");
+
+    // Verify contextual menu trigger opens and closes the secondary actions popover
+    const menuTrigger = studentCard?.querySelector(".coaching-student-menu__trigger") as HTMLButtonElement | null;
+    const menuPopover = studentCard?.querySelector(".coaching-student-menu__popover");
+    expect(menuTrigger).not.toBeNull();
+    expect(menuPopover?.classList.contains("is-open")).toBe(false);
+
+    await act(async () => {
+      menuTrigger?.click();
+    });
+    expect(menuPopover?.classList.contains("is-open")).toBe(true);
+
+    // Ledger table & filters render properly
+    const ledgerTable = container.querySelector(".coaching-ledger-table");
+    expect(ledgerTable).not.toBeNull();
+    expect(ledgerTable?.textContent).toContain("+5 Clases asignadas");
+    expect(ledgerTable?.textContent).toContain("Paquete mensual");
+    expect(ledgerTable?.textContent).toContain("Corregir");
+
+    // Click "Todos" filter in student directory
+    const chips = Array.from(container.querySelectorAll(".coaching-students-filters .coaching-chip"));
     const todosChip = chips.find((c) => c.textContent?.includes("Todos"));
     expect(todosChip).toBeDefined();
 

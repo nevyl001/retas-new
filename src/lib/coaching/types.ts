@@ -70,6 +70,8 @@ export type CoachingPlayerLink = {
   coachNombre: string;
   jugadorId: string;
   jugadorNombre: string;
+  jugadorFotoUrl?: string | null;
+  jugadorCategoria?: RivieraJugadorCategoria | null;
   /** Riviera ID exacto (RIV-########) — vínculo canónico. */
   rivieraId: string;
   status: CoachPlayerStatus;

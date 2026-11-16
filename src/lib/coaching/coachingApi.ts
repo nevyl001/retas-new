@@ -165,7 +165,7 @@ export async function loadCoachingClubSnapshot(
           status,
           is_primary,
           coach:riviera_coaches ( nombre ),
-          jugador:riviera_jugadores ( nombre )
+          jugador:riviera_jugadores ( nombre, foto_url, categoria )
         `
         )
         .eq("organizador_id", organizadorId)
@@ -219,6 +219,14 @@ export async function loadCoachingClubSnapshot(
             coachNombre: String(coach?.nombre ?? "Coach"),
             jugadorId,
             jugadorNombre: String(jugador?.nombre ?? "Jugador"),
+            jugadorFotoUrl:
+              typeof jugador?.foto_url === "string" && jugador.foto_url.trim()
+                ? jugador.foto_url.trim()
+                : null,
+            jugadorCategoria:
+              typeof jugador?.categoria === "string" && jugador.categoria.trim()
+                ? (jugador.categoria.trim() as RivieraJugadorCategoria)
+                : null,
             rivieraId,
             status: r.status as CoachingPlayerLink["status"],
             isPrimary: Boolean(r.is_primary),

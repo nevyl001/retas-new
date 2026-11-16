@@ -178,8 +178,29 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
   const [cancellingSession, setCancellingSession] = useState<CoachScheduledSession | null>(null);
   // Control de estado y finalización de alumnos
   const [studentStatusFilter, setStudentStatusFilter] = useState<"ACTIVE" | "PAUSED" | "ENDED" | "ALL">("ACTIVE");
+  const [studentSearchQuery, setStudentSearchQuery] = useState<string>("");
+  const [openStudentMenuId, setOpenStudentMenuId] = useState<string | null>(null);
+  const [ledgerTypeFilter, setLedgerTypeFilter] = useState<"ALL" | "ASSIGN" | "CLASSES" | "ADJUST">("ALL");
   const [endingLink, setEndingLink] = useState<CoachingPlayerLink | null>(null);
   const [endingReason, setEndingReason] = useState<string>("");
+
+  useEffect(() => {
+    if (!openStudentMenuId) return;
+    const handlePointerDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest(".coaching-student-menu")) return;
+      setOpenStudentMenuId(null);
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenStudentMenuId(null);
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openStudentMenuId]);
 
   const loadAgenda = useCallback(async (orgId: string, coachFilter?: string, statusFilter?: string) => {
     if (!orgId) return;
@@ -395,9 +416,57 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
 
   const filteredLinks = useMemo(() => {
     const all = snapshot?.links ?? [];
-    if (studentStatusFilter === "ALL") return all;
-    return all.filter((l) => l.status === studentStatusFilter);
-  }, [snapshot, studentStatusFilter]);
+    const byStatus =
+      studentStatusFilter === "ALL"
+        ? all
+        : all.filter((l) => l.status === studentStatusFilter);
+    const q = studentSearchQuery.trim().toLowerCase();
+    if (!q) return byStatus;
+    return byStatus.filter(
+      (l) =>
+        l.jugadorNombre.toLowerCase().includes(q) ||
+        l.rivieraId.toLowerCase().includes(q) ||
+        l.coachNombre.toLowerCase().includes(q)
+    );
+  }, [snapshot, studentStatusFilter, studentSearchQuery]);
+
+  const ledgerCounts = useMemo(() => {
+    return {
+      ALL: ledgerEntries.length,
+      ASSIGN: ledgerEntries.filter(
+        (e) =>
+          (e.tipo as string) === "PACKAGE_CREDIT" ||
+          (e.tipo as string) === "ASSIGN" ||
+          (e.tipo as string) === "TRANSFER_IN"
+      ).length,
+      CLASSES: ledgerEntries.filter((e) => (e.tipo as string) === "CLASS_DEBIT").length,
+      ADJUST: ledgerEntries.filter(
+        (e) =>
+          (e.tipo as string) === "ADJUSTMENT" ||
+          (e.tipo as string) === "TRANSFER_OUT"
+      ).length,
+    };
+  }, [ledgerEntries]);
+
+  const filteredLedgerEntries = useMemo(() => {
+    if (ledgerTypeFilter === "ALL") return ledgerEntries;
+    if (ledgerTypeFilter === "ASSIGN") {
+      return ledgerEntries.filter(
+        (e) =>
+          (e.tipo as string) === "PACKAGE_CREDIT" ||
+          (e.tipo as string) === "ASSIGN" ||
+          (e.tipo as string) === "TRANSFER_IN"
+      );
+    }
+    if (ledgerTypeFilter === "CLASSES") {
+      return ledgerEntries.filter((e) => (e.tipo as string) === "CLASS_DEBIT");
+    }
+    return ledgerEntries.filter(
+      (e) =>
+        (e.tipo as string) === "ADJUSTMENT" ||
+        (e.tipo as string) === "TRANSFER_OUT"
+    );
+  }, [ledgerEntries, ledgerTypeFilter]);
 
   const resetCoachForm = () => {
     setCoachNombre("");
@@ -1416,9 +1485,9 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
       ) : null}
 
       {!loading && tab === "jugadores" ? (
-        <section className="coaching-panel" aria-label="Jugadores">
-          <div className="coaching-section-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
-            <div>
+        <section className="coaching-panel coaching-students-panel" aria-label="Jugadores">
+          <div className="coaching-section-header coaching-students-header">
+            <div className="coaching-students-header__titles">
               <h2 className="coaching-section-title">Alumnos vinculados</h2>
               <p className="coaching-section-desc">
                 Jugadores asociados a tus entrenadores con control de clases y seguimiento deportivo.
@@ -1426,7 +1495,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
             </div>
             <button
               type="button"
-              className="coaching-btn coaching-btn--primary"
+              className="coaching-btn coaching-btn--primary coaching-students-add-btn"
               onClick={() => setIsAddStudentModalOpen(true)}
             >
               <TablerIcon name="user-plus" size={16} />
@@ -1434,90 +1503,68 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
             </button>
           </div>
 
-          <div
-            className="coaching-panel"
-            style={{
-              padding: "1rem 1.25rem",
-              background: "rgba(59, 130, 246, 0.08)",
-              border: "1px solid rgba(59, 130, 246, 0.25)",
-              borderRadius: "10px",
-              marginBottom: "1.5rem",
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "0.75rem",
-            }}
-          >
-            <span
-              style={{
-                color: "var(--ro-brand, #38bdf8)",
-                flexShrink: 0,
-                marginTop: "2px",
-                display: "inline-flex",
-              }}
-            >
-              <TablerIcon name="info-circle" size={20} />
+          <div className="coaching-students-notice">
+            <span className="coaching-students-notice__icon" aria-hidden>
+              <TablerIcon name="shield-check" size={18} />
             </span>
-            <div style={{ fontSize: "0.85rem", lineHeight: 1.5 }}>
-              <strong
-                style={{
-                  color: "#fff",
-                  display: "block",
-                  marginBottom: "0.25rem",
-                }}
-              >
+            <div className="coaching-students-notice__content">
+              <strong className="coaching-students-notice__title">
                 Gestión y control de clases de la academia
               </strong>
-              Como administrador del club, tú registras y asignas alumnos a tus entrenadores mediante su <strong>Riviera ID</strong> oficial. Desde este panel autorizas paquetes de clases disponibles, mientras los coaches se encargan exclusivamente de impartir las clases y registrar su seguimiento deportivo.
+              <p className="coaching-students-notice__desc">
+                Como administrador del club, tú registras y asignas alumnos a tus entrenadores mediante su <strong>Riviera ID</strong> oficial. Desde este panel autorizas paquetes de clases disponibles, mientras los coaches se encargan exclusivamente de impartir las clases y registrar su seguimiento deportivo.
+              </p>
             </div>
           </div>
 
-          {/* Filtros de estado de alumnos */}
-          <div
-            style={{
-              display: "flex",
-              gap: "0.5rem",
-              marginBottom: "1.25rem",
-              flexWrap: "wrap",
-            }}
-          >
-            {[
-              { id: "ACTIVE", label: "Activos", count: studentCounts.ACTIVE },
-              { id: "PAUSED", label: "En pausa", count: studentCounts.PAUSED },
-              { id: "ENDED", label: "Historial / Terminados", count: studentCounts.ENDED },
-              { id: "ALL", label: "Todos", count: studentCounts.ALL },
-            ].map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                className={`coaching-chip${
-                  studentStatusFilter === f.id ? " is-on" : ""
-                }`}
-                onClick={() => setStudentStatusFilter(f.id as any)}
-                style={{
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.45rem",
-                  padding: "0.35rem 0.8rem",
-                  fontSize: "0.82rem",
-                }}
-              >
-                <span>{f.label}</span>
-                <span
-                  style={{
-                    fontSize: "0.72rem",
-                    padding: "0.1rem 0.45rem",
-                    borderRadius: "999px",
-                    background:
-                      studentStatusFilter === f.id
-                        ? "rgba(255, 255, 255, 0.25)"
-                        : "rgba(255, 255, 255, 0.08)",
-                  }}
+          {/* Barra de filtros y búsqueda del directorio */}
+          <div className="coaching-students-toolbar">
+            <div className="coaching-students-filters" role="group" aria-label="Filtrar alumnos por estado">
+              {[
+                { id: "ACTIVE", label: "Activos", count: studentCounts.ACTIVE },
+                { id: "PAUSED", label: "En pausa", count: studentCounts.PAUSED },
+                { id: "ENDED", label: "Historial / Terminados", count: studentCounts.ENDED },
+                { id: "ALL", label: "Todos", count: studentCounts.ALL },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  className={`coaching-chip coaching-students-filter-chip${
+                    studentStatusFilter === f.id ? " is-on" : ""
+                  }`}
+                  onClick={() => setStudentStatusFilter(f.id as any)}
                 >
-                  {f.count}
-                </span>
-              </button>
-            ))}
+                  <span>{f.label}</span>
+                  <span className="coaching-students-filter-chip__count">
+                    {f.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {(snapshot?.links ?? []).length > 0 ? (
+              <div className="coaching-students-search">
+                <TablerIcon name="search" size={15} className="coaching-students-search__icon" />
+                <input
+                  type="search"
+                  className="coaching-students-search__input"
+                  placeholder="Buscar alumno, Riviera ID o coach…"
+                  value={studentSearchQuery}
+                  onChange={(e) => setStudentSearchQuery(e.target.value)}
+                  aria-label="Buscar alumno"
+                />
+                {studentSearchQuery ? (
+                  <button
+                    type="button"
+                    className="coaching-students-search__clear"
+                    onClick={() => setStudentSearchQuery("")}
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <TablerIcon name="x" size={14} />
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           {(snapshot?.links ?? []).length === 0 ? (
@@ -1540,202 +1587,332 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
           ) : filteredLinks.length === 0 ? (
             <div className="coaching-empty-card" style={{ padding: "2rem" }}>
               <TablerIcon name="users" size={36} className="coaching-empty-icon" />
-              <h3>No hay alumnos en esta categoría</h3>
-              <p>No se encontraron alumnos con el filtro seleccionado ({
-                studentStatusFilter === "ACTIVE"
-                  ? "Activos"
-                  : studentStatusFilter === "PAUSED"
-                  ? "En pausa"
-                  : studentStatusFilter === "ENDED"
-                  ? "Historial / Terminados"
-                  : "Todos"
-              }).</p>
+              <h3>No hay alumnos en esta vista</h3>
+              <p>
+                {studentSearchQuery.trim()
+                  ? `No se encontraron resultados para "${studentSearchQuery.trim()}".`
+                  : `No se encontraron alumnos con el filtro seleccionado (${
+                      studentStatusFilter === "ACTIVE"
+                        ? "Activos"
+                        : studentStatusFilter === "PAUSED"
+                        ? "En pausa"
+                        : studentStatusFilter === "ENDED"
+                        ? "Historial / Terminados"
+                        : "Todos"
+                    }).`}
+              </p>
             </div>
           ) : (
-            <div className="coaching-grid">
-              {filteredLinks.map((l) => (
-                <article key={l.id} className="coaching-card">
-                  <div className="coaching-card__top">
-                    <div className="coaching-card__avatar" aria-hidden>
-                      {l.jugadorNombre.slice(0, 1).toUpperCase()}
+            <div className="coaching-grid coaching-students-grid">
+              {filteredLinks.map((l) => {
+                const isMenuOpen = openStudentMenuId === l.id;
+                const balance = l.balanceClasses ?? 0;
+                const given = l.totalClassesGiven ?? 0;
+                const initials = l.jugadorNombre
+                  .trim()
+                  .split(/\s+/)
+                  .slice(0, 2)
+                  .map((w) => w.slice(0, 1).toUpperCase())
+                  .join("");
+
+                return (
+                  <article
+                    key={l.id}
+                    className={`coaching-card coaching-student-card coaching-student-card--${l.status.toLowerCase()}${
+                      isMenuOpen ? " has-open-menu" : ""
+                    }`}
+                  >
+                    <div className="coaching-card__top coaching-student-card__header">
+                      <div className="coaching-card__avatar coaching-student-card__avatar" aria-hidden>
+                        {l.jugadorFotoUrl ? (
+                          <img src={l.jugadorFotoUrl} alt={l.jugadorNombre} />
+                        ) : (
+                          initials || "A"
+                        )}
+                      </div>
+                      <div className="coaching-card__identity coaching-student-card__identity">
+                        <div className="coaching-student-card__title-row">
+                          <h3 className="coaching-card__title">{l.jugadorNombre}</h3>
+                          <span
+                            className={`coaching-badge coaching-badge--${l.status.toLowerCase()}`}
+                          >
+                            {l.status === "ACTIVE"
+                              ? "Activo"
+                              : l.status === "PAUSED"
+                              ? "En pausa"
+                              : "Terminado"}
+                          </span>
+                        </div>
+                        <div className="coaching-student-card__subrow">
+                          <span className="coaching-card__code">{l.rivieraId}</span>
+                          {l.jugadorCategoria ? (
+                            <span className="coaching-student-card__cat">
+                              {JUGADOR_CATEGORIA_LABELS[l.jugadorCategoria] || l.jugadorCategoria}
+                            </span>
+                          ) : null}
+                          {l.isPrimary ? (
+                            <span className="coaching-badge coaching-badge--primary">
+                              Primario
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
-                    <div className="coaching-card__identity">
-                      <h3 className="coaching-card__title">
-                        {l.jugadorNombre}
-                      </h3>
-                      <span className="coaching-card__code">{l.rivieraId}</span>
-                      <div className="coaching-card__meta">
-                        <span className="coaching-card__meta-item">
+
+                    <div className="coaching-student-card__metrics">
+                      <div
+                        className={`coaching-student-card__metric coaching-student-card__metric--balance${
+                          balance > 0 ? " is-positive" : " is-zero"
+                        }`}
+                      >
+                        <span className="coaching-student-card__metric-label">
+                          <TablerIcon name="calendar-event" size={13} />
+                          Clases disponibles
+                        </span>
+                        <div className="coaching-student-card__metric-main">
+                          <span className="coaching-student-card__balance-number">
+                            {balance}
+                          </span>
+                          <span className="coaching-student-card__balance-caption">
+                            {balance === 1 ? "clase disponible" : "clases disponibles"}
+                          </span>
+                        </div>
+                        <span className="coaching-student-card__metric-sub">
+                          {given > 0
+                            ? `${given} ${given === 1 ? "clase impartida" : "clases impartidas"}`
+                            : "Sin clases impartidas aún"}
+                        </span>
+                      </div>
+
+                      <div className="coaching-student-card__metric coaching-student-card__metric--coach">
+                        <span className="coaching-student-card__metric-label">
+                          <TablerIcon name="user-star" size={13} />
+                          Entrenador asignado
+                        </span>
+                        <span className="coaching-student-card__coach-name">
                           Coach: {l.coachNombre}
                         </span>
-                        {l.isPrimary ? (
-                          <span className="coaching-badge coaching-badge--primary">
-                            Primario
-                          </span>
-                        ) : null}
-                      </div>
-
-                      {/* Saldo de clases disponibles */}
-                      <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
-                        <span className="coaching-badge coaching-badge--primary" style={{ fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                          <TablerIcon name="calendar-event" size={13} />
-                          {l.balanceClasses ?? 0} clases disponibles
+                        <span className="coaching-student-card__metric-sub">
+                          {l.isPrimary ? "Relación titular en el club" : "Entrenador vinculado"}
                         </span>
-                        {(l.totalClassesGiven ?? 0) > 0 ? (
-                          <span className="coaching-badge" style={{ background: "rgba(255, 255, 255, 0.08)", color: "var(--ro-text-muted)" }}>
-                            {l.totalClassesGiven} impartidas
-                          </span>
-                        ) : null}
                       </div>
                     </div>
-                    <span
-                      className={`coaching-badge coaching-badge--${l.status.toLowerCase()}`}
-                    >
-                      {l.status === "ACTIVE"
-                        ? "Activo"
-                        : l.status === "PAUSED"
-                        ? "En pausa"
-                        : "Terminado"}
-                    </span>
-                  </div>
 
-                  <div className="coaching-card__actions">
-                    {l.status === "ACTIVE" && (
+                    <div className="coaching-card__actions coaching-student-card__footer">
+                      {l.status === "ACTIVE" ? (
+                        <button
+                          type="button"
+                          className="coaching-btn coaching-btn--primary coaching-student-card__primary-action"
+                          disabled={busy}
+                          onClick={() => {
+                            setAssigningLink(l);
+                            setClassCountInput(10);
+                            setClassNotesInput("");
+                            setAssignIdempotencyKey(generateCoachingIdempotencyKey("assign"));
+                          }}
+                        >
+                          <TablerIcon name="plus" size={15} />
+                          Asignar clases
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="coaching-btn coaching-btn--primary coaching-student-card__primary-action"
+                          disabled={busy}
+                          onClick={() => void handleStatus(l.id, "ACTIVE")}
+                        >
+                          <TablerIcon name="play" size={15} />
+                          {l.status === "ENDED" ? "Reactivar" : "Activar"}
+                        </button>
+                      )}
+
                       <button
                         type="button"
-                        className="coaching-btn coaching-btn--primary"
+                        className="coaching-btn coaching-btn--secondary coaching-student-card__secondary-action"
                         disabled={busy}
                         onClick={() => {
-                          setAssigningLink(l);
-                          setClassCountInput(10);
-                          setClassNotesInput("");
-                          setAssignIdempotencyKey(generateCoachingIdempotencyKey("assign"));
+                          setManagingAccessStudent({
+                            jugadorId: l.jugadorId,
+                            studentName: l.jugadorNombre,
+                            rivieraId: l.rivieraId,
+                            coachId: l.coachId,
+                            coachNombre: l.coachNombre,
+                          });
                         }}
+                        title="Gestionar acceso exclusivo del alumno por Riviera ID"
                       >
-                        <TablerIcon name="plus" size={14} />
-                        Asignar clases
+                        <TablerIcon name="key" size={14} />
+                        <span>Acceso</span>
                       </button>
-                    )}
 
-                    {l.status === "ACTIVE" ? (
-                      <button
-                        type="button"
-                        className="coaching-btn coaching-btn--secondary"
-                        disabled={busy}
-                        onClick={() => void handleStatus(l.id, "PAUSED")}
-                      >
-                        <TablerIcon name="player-pause" size={14} />
-                        Pausar
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="coaching-btn coaching-btn--secondary"
-                        disabled={busy}
-                        onClick={() => void handleStatus(l.id, "ACTIVE")}
-                      >
-                        <TablerIcon name="play" size={14} />
-                        {l.status === "ENDED" ? "Reactivar" : "Activar"}
-                      </button>
-                    )}
+                      <div className="coaching-student-menu">
+                        <button
+                          type="button"
+                          className={`coaching-btn coaching-btn--secondary coaching-student-menu__trigger${
+                            isMenuOpen ? " is-open" : ""
+                          }`}
+                          disabled={busy}
+                          aria-expanded={isMenuOpen}
+                          aria-haspopup="menu"
+                          aria-label={`Más acciones para ${l.jugadorNombre}`}
+                          onClick={() =>
+                            setOpenStudentMenuId((prev) => (prev === l.id ? null : l.id))
+                          }
+                          title="Más acciones"
+                        >
+                          <TablerIcon name="dots" size={16} />
+                          <span className="coaching-student-menu__trigger-label">Acciones</span>
+                        </button>
 
-                    <button
-                      type="button"
-                      className="coaching-btn coaching-btn--secondary"
-                      disabled={busy}
-                      onClick={() => setReassigningLink(l)}
-                      title="Cambiar a otro entrenador del club"
-                    >
-                      <TablerIcon name="arrows-exchange" size={14} />
-                      Cambiar entrenador
-                    </button>
-                    <button
-                      type="button"
-                      className="coaching-btn coaching-btn--secondary"
-                      disabled={busy}
-                      onClick={() => {
-                        setAdjustingBalance({
-                          coachId: l.coachId,
-                          coachNombre: l.coachNombre,
-                          studentId: l.jugadorId,
-                          studentNombre: l.jugadorNombre,
-                          rivieraId: l.rivieraId,
-                          currentBalance: l.balanceClasses ?? 0,
-                          referenceLedgerId: null,
-                        });
-                      }}
-                      title="Corregir o ajustar saldo de clases"
-                    >
-                      <TablerIcon name="adjustments" size={14} />
-                      Corregir saldo
-                    </button>
-                    <button
-                      type="button"
-                      className="coaching-btn coaching-btn--secondary"
-                      disabled={busy}
-                      onClick={() => {
-                        setManagingAccessStudent({
-                          jugadorId: l.jugadorId,
-                          studentName: l.jugadorNombre,
-                          rivieraId: l.rivieraId,
-                          coachId: l.coachId,
-                          coachNombre: l.coachNombre,
-                        });
-                      }}
-                      title="Gestionar acceso exclusivo del alumno por Riviera ID"
-                    >
-                      <TablerIcon name="key" size={14} />
-                      Gestionar acceso
-                    </button>
-                    {l.status !== "ENDED" && (
-                      <button
-                        type="button"
-                        className="coaching-btn coaching-btn--ghost"
-                        disabled={busy}
-                        onClick={() => {
-                          setEndingLink(l);
-                          setEndingReason("");
-                        }}
-                      >
-                        <TablerIcon name="x" size={14} />
-                        Terminar
-                      </button>
-                    )}
-                  </div>
-                </article>
-              ))}
+                        <div
+                          className={`coaching-student-menu__popover${
+                            isMenuOpen ? " is-open" : ""
+                          }`}
+                          role="menu"
+                          aria-hidden={!isMenuOpen}
+                        >
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="coaching-student-menu__item"
+                            disabled={busy}
+                            onClick={() => {
+                              setOpenStudentMenuId(null);
+                              setReassigningLink(l);
+                            }}
+                          >
+                            <TablerIcon name="arrows-exchange" size={15} />
+                            <span>Cambiar entrenador</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="coaching-student-menu__item"
+                            disabled={busy}
+                            onClick={() => {
+                              setOpenStudentMenuId(null);
+                              setAdjustingBalance({
+                                coachId: l.coachId,
+                                coachNombre: l.coachNombre,
+                                studentId: l.jugadorId,
+                                studentNombre: l.jugadorNombre,
+                                rivieraId: l.rivieraId,
+                                currentBalance: l.balanceClasses ?? 0,
+                                referenceLedgerId: null,
+                              });
+                            }}
+                          >
+                            <TablerIcon name="adjustments" size={15} />
+                            <span>Corregir saldo</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="coaching-student-menu__item"
+                            disabled={busy}
+                            onClick={() => {
+                              setOpenStudentMenuId(null);
+                              setManagingAccessStudent({
+                                jugadorId: l.jugadorId,
+                                studentName: l.jugadorNombre,
+                                rivieraId: l.rivieraId,
+                                coachId: l.coachId,
+                                coachNombre: l.coachNombre,
+                              });
+                            }}
+                          >
+                            <TablerIcon name="key" size={15} />
+                            <span>Gestionar acceso</span>
+                          </button>
+
+                          <div className="coaching-student-menu__divider" role="separator" />
+
+                          {l.status === "ACTIVE" ? (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="coaching-student-menu__item"
+                              disabled={busy}
+                              onClick={() => {
+                                setOpenStudentMenuId(null);
+                                void handleStatus(l.id, "PAUSED");
+                              }}
+                            >
+                              <TablerIcon name="player-pause" size={15} />
+                              <span>Pausar</span>
+                            </button>
+                          ) : null}
+
+                          {l.status !== "ENDED" ? (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="coaching-student-menu__item coaching-student-menu__item--danger"
+                              disabled={busy}
+                              onClick={() => {
+                                setOpenStudentMenuId(null);
+                                setEndingLink(l);
+                                setEndingReason("");
+                              }}
+                            >
+                              <TablerIcon name="x" size={15} />
+                              <span>Terminar</span>
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
 
           {/* Historial de Movimientos de Clases del Club */}
-          <div style={{ marginTop: "2.5rem", borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "1.5rem" }}>
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "0.35rem" }}>
-              Historial de Clases y Movimientos
-            </h3>
-            <p className="coaching-muted" style={{ fontSize: "0.85rem", marginBottom: "1rem" }}>
-              Registro inmutable de asignaciones y deducciones de clases realizadas en tu club.
-            </p>
+          <div className="coaching-ledger-section">
+            <div className="coaching-ledger-header">
+              <div className="coaching-ledger-header__titles">
+                <h3 className="coaching-ledger-title">
+                  Historial de Clases y Movimientos
+                </h3>
+                <p className="coaching-muted coaching-ledger-subtitle">
+                  Registro inmutable de asignaciones y deducciones de clases realizadas en tu club.
+                </p>
+              </div>
+
+              {ledgerEntries.length > 0 ? (
+                <div className="coaching-ledger-filters" role="group" aria-label="Filtrar historial por tipo">
+                  {[
+                    { id: "ALL", label: "Todos", count: ledgerCounts.ALL },
+                    { id: "ASSIGN", label: "Asignaciones", count: ledgerCounts.ASSIGN },
+                    { id: "CLASSES", label: "Clases impartidas", count: ledgerCounts.CLASSES },
+                    { id: "ADJUST", label: "Ajustes", count: ledgerCounts.ADJUST },
+                  ].map((lf) => (
+                    <button
+                      key={lf.id}
+                      type="button"
+                      className={`coaching-chip coaching-students-filter-chip${
+                        ledgerTypeFilter === lf.id ? " is-on" : ""
+                      }`}
+                      onClick={() => setLedgerTypeFilter(lf.id as any)}
+                    >
+                      <span>{lf.label}</span>
+                      <span className="coaching-students-filter-chip__count">
+                        {lf.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
 
             {loadingLedger ? (
               <p className="coaching-muted">Cargando historial…</p>
             ) : ledgerError ? (
-              <div
-                className="coaching-panel"
-                style={{
-                  padding: "0.75rem 1rem",
-                  background: "rgba(239, 68, 68, 0.12)",
-                  border: "1px solid rgba(239, 68, 68, 0.35)",
-                  borderRadius: "8px",
-                  color: "#fca5a5",
-                  marginBottom: "1rem",
-                  fontSize: "0.85rem",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "0.5rem",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <div className="coaching-ledger-error">
+                <div className="coaching-ledger-error__msg">
                   <TablerIcon name="alert-circle" size={18} />
                   <span>{ledgerError}</span>
                 </div>
@@ -1749,190 +1926,126 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                 </button>
               </div>
             ) : ledgerEntries.length === 0 ? (
-              <p className="coaching-muted">Aún no hay movimientos de clases registrados en el club.</p>
+              <div className="coaching-ledger-empty">
+                <TablerIcon name="history" size={28} />
+                <p className="coaching-muted">Aún no hay movimientos de clases registrados en el club.</p>
+              </div>
+            ) : filteredLedgerEntries.length === 0 ? (
+              <div className="coaching-ledger-empty">
+                <TablerIcon name="filter" size={24} />
+                <p className="coaching-muted">No hay movimientos para el filtro seleccionado.</p>
+              </div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", textAlign: "left" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.1)", color: "var(--ro-text-muted)" }}>
-                      <th style={{ padding: "0.6rem 0.75rem" }}>Fecha</th>
-                      <th style={{ padding: "0.6rem 0.75rem" }}>Alumno</th>
-                      <th style={{ padding: "0.6rem 0.75rem" }}>Coach</th>
-                      <th style={{ padding: "0.6rem 0.75rem" }}>Movimiento</th>
-                      <th style={{ padding: "0.6rem 0.75rem" }}>Notas / Referencia</th>
-                      <th style={{ padding: "0.6rem 0.75rem" }}>Responsable</th>
-                      <th style={{ padding: "0.6rem 0.75rem", textAlign: "right" }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ledgerEntries.map((entry) => {
-                      const renderMovementBadge = () => {
-                        switch (entry.tipo as string) {
-                          case "PACKAGE_CREDIT":
-                          case "ASSIGN":
-                            return (
-                              <span
-                                className="coaching-badge coaching-badge--active"
-                                style={{ fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.25rem" }}
-                              >
-                                <TablerIcon name="plus" size={13} />
-                                +{entry.delta} Clases asignadas
-                              </span>
-                            );
-                          case "CLASS_DEBIT":
-                            return (
-                              <span
-                                className="coaching-badge coaching-badge--primary"
-                                style={{ fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.25rem" }}
-                              >
-                                <TablerIcon name="check" size={13} />
-                                {entry.delta} Clase impartida
-                              </span>
-                            );
-                          case "TRANSFER_OUT":
-                            return (
-                              <span
-                                className="coaching-badge"
-                                style={{
-                                  background: "rgba(245, 158, 11, 0.15)",
-                                  color: "#f59e0b",
-                                  border: "1px solid rgba(245, 158, 11, 0.35)",
-                                  fontWeight: 600,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "0.25rem",
-                                }}
-                              >
-                                <TablerIcon name="arrow-right" size={13} />
-                                {entry.delta} Clases transferidas
-                              </span>
-                            );
-                          case "TRANSFER_IN":
-                            return (
-                              <span
-                                className="coaching-badge"
-                                style={{
-                                  background: "rgba(6, 182, 212, 0.15)",
-                                  color: "#22d3ee",
-                                  border: "1px solid rgba(6, 182, 212, 0.35)",
-                                  fontWeight: 600,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "0.25rem",
-                                }}
-                              >
-                                <TablerIcon name="arrow-left" size={13} />
-                                +{entry.delta} Clases recibidas
-                              </span>
-                            );
-                          case "ADJUSTMENT":
-                            return (
-                              <span
-                                className="coaching-badge"
-                                style={{
-                                  background: "rgba(148, 163, 184, 0.15)",
-                                  color: "#cbd5e1",
-                                  border: "1px solid rgba(148, 163, 184, 0.35)",
-                                  fontWeight: 600,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "0.25rem",
-                                }}
-                              >
-                                <TablerIcon name="adjustments" size={13} />
-                                {entry.delta > 0 ? `+${entry.delta}` : entry.delta} Ajuste
-                              </span>
-                            );
-                          default:
-                            return (
-                              <span
-                                className={`coaching-badge ${entry.delta > 0 ? "coaching-badge--active" : "coaching-badge--primary"}`}
-                                style={{ fontWeight: 600 }}
-                              >
-                                {entry.delta > 0 ? `+${entry.delta}` : entry.delta} {entry.tipo}
-                              </span>
-                            );
-                        }
-                      };
+              <div className="coaching-ledger-card">
+                <div className="coaching-ledger-table-wrap">
+                  <table className="coaching-ledger-table">
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Alumno</th>
+                        <th>Coach</th>
+                        <th>Movimiento</th>
+                        <th>Notas / Referencia</th>
+                        <th>Responsable</th>
+                        <th className="is-right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredLedgerEntries.map((entry) => {
+                        const renderMovementBadge = () => {
+                          switch (entry.tipo as string) {
+                            case "PACKAGE_CREDIT":
+                            case "ASSIGN":
+                              return (
+                                <span className="coaching-badge coaching-badge--active coaching-ledger-badge">
+                                  <TablerIcon name="plus" size={13} />
+                                  +{entry.delta} Clases asignadas
+                                </span>
+                              );
+                            case "CLASS_DEBIT":
+                              return (
+                                <span className="coaching-badge coaching-badge--primary coaching-ledger-badge">
+                                  <TablerIcon name="check" size={13} />
+                                  {entry.delta} Clase impartida
+                                </span>
+                              );
+                            case "TRANSFER_OUT":
+                              return (
+                                <span className="coaching-badge coaching-ledger-badge coaching-ledger-badge--transfer-out">
+                                  <TablerIcon name="arrow-right" size={13} />
+                                  {entry.delta} Clases transferidas
+                                </span>
+                              );
+                            case "TRANSFER_IN":
+                              return (
+                                <span className="coaching-badge coaching-ledger-badge coaching-ledger-badge--transfer-in">
+                                  <TablerIcon name="arrow-left" size={13} />
+                                  +{entry.delta} Clases recibidas
+                                </span>
+                              );
+                            case "ADJUSTMENT":
+                              return (
+                                <span className="coaching-badge coaching-ledger-badge coaching-ledger-badge--adjust">
+                                  <TablerIcon name="adjustments" size={13} />
+                                  {entry.delta > 0 ? `+${entry.delta}` : entry.delta} Ajuste
+                                </span>
+                              );
+                            default:
+                              return (
+                                <span
+                                  className={`coaching-badge coaching-ledger-badge ${
+                                    entry.delta > 0 ? "coaching-badge--active" : "coaching-badge--primary"
+                                  }`}
+                                >
+                                  {entry.delta > 0 ? `+${entry.delta}` : entry.delta} {entry.tipo}
+                                </span>
+                              );
+                          }
+                        };
 
-                      return (
-                        <tr key={entry.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                          <td style={{ padding: "0.6rem 0.75rem", whiteSpace: "nowrap" }}>
-                            {new Date(entry.createdAt).toLocaleDateString()} {new Date(entry.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                          </td>
-                          <td style={{ padding: "0.6rem 0.75rem", fontWeight: 500 }}>
-                            {entry.jugadorNombre || "Alumno"}
-                          </td>
-                          <td style={{ padding: "0.6rem 0.75rem" }}>
-                            {entry.coachNombre || "Coach"}
-                          </td>
-                          <td style={{ padding: "0.6rem 0.75rem" }}>
-                            {renderMovementBadge()}
-                          </td>
-                          <td style={{ padding: "0.6rem 0.75rem", color: "var(--ro-text-muted)" }}>
-                            {entry.notas || "—"}
-                          </td>
-                          <td style={{ padding: "0.6rem 0.75rem", fontSize: "0.8rem", color: "var(--ro-text-muted)" }}>
-                            {entry.tipo === "CLASS_DEBIT" ? "Coach" : "Club"}
-                          </td>
-                          <td style={{ padding: "0.6rem 0.75rem", textAlign: "right", whiteSpace: "nowrap" }}>
-                            {(entry.tipo === "PACKAGE_CREDIT" ||
-                              entry.tipo === "ADJUSTMENT") && (
-                              <button
-                                type="button"
-                                className="coaching-btn coaching-btn--secondary"
-                                style={{
-                                  fontSize: "0.75rem",
-                                  padding: "0.25rem 0.55rem",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "0.25rem",
-                                }}
-                                onClick={() => {
-                                  const link = snapshot?.links.find(
-                                    (l) => l.jugadorId === entry.jugadorId && l.coachId === entry.coachId
-                                  );
-                                  setAdjustingBalance({
-                                    coachId: entry.coachId,
-                                    coachNombre: entry.coachNombre || "Coach",
-                                    studentId: entry.jugadorId,
-                                    studentNombre: entry.jugadorNombre || "Alumno",
-                                    rivieraId: link?.rivieraId,
-                                    currentBalance: link?.balanceClasses ?? 0,
-                                    referenceLedgerId: entry.id,
-                                  });
-                                }}
-                                title="Corregir saldo de clases para este alumno"
-                              >
-                                <TablerIcon name="adjustments" size={13} />
-                                Corregir
-                              </button>
-                            )}
-                            {entry.tipo === "CLASS_DEBIT" && (
-                              <button
-                                type="button"
-                                className="coaching-btn"
-                                style={{
-                                  fontSize: "0.75rem",
-                                  padding: "0.25rem 0.55rem",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "0.25rem",
-                                  background: "rgba(245, 158, 11, 0.15)",
-                                  color: "#fbbf24",
-                                  border: "1px solid rgba(245, 158, 11, 0.35)",
-                                }}
-                                onClick={() => {
-                                  if (entry.sessionId) {
-                                    setRevertingSession({
-                                      id: entry.sessionId,
-                                      startsAt: entry.createdAt,
-                                      jugadorNombre: entry.jugadorNombre,
-                                      coachNombre: entry.coachNombre,
-                                      durationMinutes: 60,
-                                      focus: entry.notas || "Clase impartida",
-                                    });
-                                  } else {
+                        const formattedDate = new Date(entry.createdAt).toLocaleDateString();
+                        const formattedTime = new Date(entry.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        });
+
+                        return (
+                          <tr key={entry.id} className="coaching-ledger-row">
+                            <td data-label="Fecha" className="coaching-ledger-cell--date">
+                              <span className="coaching-ledger-date">{formattedDate}</span>
+                              <span className="coaching-ledger-time">{formattedTime}</span>
+                            </td>
+                            <td data-label="Alumno" className="coaching-ledger-cell--student">
+                              <span className="coaching-ledger-person">
+                                <span className="coaching-ledger-person__dot" aria-hidden>
+                                  {(entry.jugadorNombre || "A").slice(0, 1).toUpperCase()}
+                                </span>
+                                <span className="coaching-ledger-person__name">
+                                  {entry.jugadorNombre || "Alumno"}
+                                </span>
+                              </span>
+                            </td>
+                            <td data-label="Coach" className="coaching-ledger-cell--coach">
+                              {entry.coachNombre || "Coach"}
+                            </td>
+                            <td data-label="Movimiento" className="coaching-ledger-cell--movement">
+                              {renderMovementBadge()}
+                            </td>
+                            <td data-label="Notas / Referencia" className="coaching-ledger-cell--notes">
+                              {entry.notas || "—"}
+                            </td>
+                            <td data-label="Responsable" className="coaching-ledger-cell--actor">
+                              <span className="coaching-ledger-actor-pill">
+                                {entry.tipo === "CLASS_DEBIT" ? "Coach" : "Club"}
+                              </span>
+                            </td>
+                            <td data-label="Acciones" className="coaching-ledger-cell--actions is-right">
+                              {(entry.tipo === "PACKAGE_CREDIT" ||
+                                entry.tipo === "ADJUSTMENT") && (
+                                <button
+                                  type="button"
+                                  className="coaching-btn coaching-btn--secondary coaching-ledger-action-btn"
+                                  onClick={() => {
                                     const link = snapshot?.links.find(
                                       (l) => l.jugadorId === entry.jugadorId && l.coachId === entry.coachId
                                     );
@@ -1945,20 +2058,55 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                                       currentBalance: link?.balanceClasses ?? 0,
                                       referenceLedgerId: entry.id,
                                     });
-                                  }
-                                }}
-                                title="Revertir clase impartida por error (+1 clase)"
-                              >
-                                <TablerIcon name="rotate-2" size={13} />
-                                Revertir
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                                  }}
+                                  title="Corregir saldo de clases para este alumno"
+                                >
+                                  <TablerIcon name="adjustments" size={13} />
+                                  Corregir
+                                </button>
+                              )}
+                              {entry.tipo === "CLASS_DEBIT" && (
+                                <button
+                                  type="button"
+                                  className="coaching-btn coaching-ledger-action-btn coaching-ledger-action-btn--revert"
+                                  onClick={() => {
+                                    if (entry.sessionId) {
+                                      setRevertingSession({
+                                        id: entry.sessionId,
+                                        startsAt: entry.createdAt,
+                                        jugadorNombre: entry.jugadorNombre,
+                                        coachNombre: entry.coachNombre,
+                                        durationMinutes: 60,
+                                        focus: entry.notas || "Clase impartida",
+                                      });
+                                    } else {
+                                      const link = snapshot?.links.find(
+                                        (l) => l.jugadorId === entry.jugadorId && l.coachId === entry.coachId
+                                      );
+                                      setAdjustingBalance({
+                                        coachId: entry.coachId,
+                                        coachNombre: entry.coachNombre || "Coach",
+                                        studentId: entry.jugadorId,
+                                        studentNombre: entry.jugadorNombre || "Alumno",
+                                        rivieraId: link?.rivieraId,
+                                        currentBalance: link?.balanceClasses ?? 0,
+                                        referenceLedgerId: entry.id,
+                                      });
+                                    }
+                                  }}
+                                  title="Revertir clase impartida por error (+1 clase)"
+                                >
+                                  <TablerIcon name="rotate-2" size={13} />
+                                  Revertir
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
