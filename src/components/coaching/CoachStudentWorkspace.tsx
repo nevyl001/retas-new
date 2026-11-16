@@ -203,30 +203,35 @@ export const CoachStudentWorkspace: React.FC<CoachStudentWorkspaceProps> = ({
           />
         </label>
         <div className="coach-roster__tools">
-          {(
-            [
-              ["all", "Todos"],
-              ["scheduled", "Con próxima clase"],
-              ["unscheduled", "Sin clases programadas"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              className={filter === id ? "is-on" : ""}
-              onClick={() => setFilter(id)}
+          <div className="coach-roster__filters" role="group" aria-label="Filtrar alumnos">
+            {(
+              [
+                ["all", "Todos"],
+                ["scheduled", "Con próxima clase"],
+                ["unscheduled", "Sin clases programadas"],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={filter === id ? "is-on" : ""}
+                onClick={() => setFilter(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <label className="coach-roster__sort">
+            <span>Ordenar</span>
+            <select
+              aria-label="Ordenar alumnos"
+              value={sort}
+              onChange={(event) => setSort(event.target.value as RosterSort)}
             >
-              {label}
-            </button>
-          ))}
-          <select
-            aria-label="Ordenar alumnos"
-            value={sort}
-            onChange={(event) => setSort(event.target.value as RosterSort)}
-          >
-            <option value="next">Próxima sesión</option>
-            <option value="name">Nombre</option>
-          </select>
+              <option value="next">Próxima sesión</option>
+              <option value="name">Nombre</option>
+            </select>
+          </label>
         </div>
 
         {loadingStudents ? (
