@@ -41,15 +41,15 @@ export const NewPairManager: React.FC<NewPairManagerProps> = ({
     <div className="elegant-pair-manager">
       <div className="elegant-pair-header">
         <div className="elegant-header-content">
-          <div className="elegant-header-title">
+          <div className="elegant-header-title elegant-pair-summary">
             <div className="elegant-pair-count">{pairs.length} parejas</div>
             {!showPoolHint ? (
-              <div className="elegant-pair-count" style={{ opacity: 0.85 }}>
-                Disponibles: {available.length}
-                {paired.length > 0 ? ` · Emparejados: ${paired.length}` : ""}
+              <div className="elegant-pair-count elegant-pair-count--meta">
+                Disponibles {available.length}
+                {paired.length > 0 ? ` · Emparejados ${paired.length}` : ""}
               </div>
             ) : (
-              <div className="elegant-pair-count" style={{ opacity: 0.7 }}>
+              <div className="elegant-pair-count elegant-pair-count--meta">
                 Cargando pool…
               </div>
             )}
@@ -67,6 +67,9 @@ export const NewPairManager: React.FC<NewPairManagerProps> = ({
           {pairs.map((pair) => {
             const isHovered = hoveredPair === pair.id;
 
+            const player1Name = pair.player1?.name || "Jugador 1";
+            const player2Name = pair.player2?.name || "Jugador 2";
+
             return (
               <div
                 key={pair.id}
@@ -77,11 +80,12 @@ export const NewPairManager: React.FC<NewPairManagerProps> = ({
                 <div className="elegant-card-background"></div>
 
                 <div className="elegant-pair-content">
-                  <div className="elegant-pair-names">
-                    <h4>
-                      {pair.player1?.name || "Jugador 1"} /{" "}
-                      {pair.player2?.name || "Jugador 2"}
-                    </h4>
+                  <div
+                    className="elegant-pair-names"
+                    aria-label={`${player1Name} y ${player2Name}`}
+                  >
+                    <span className="elegant-pair-player">{player1Name}</span>
+                    <span className="elegant-pair-player">{player2Name}</span>
                   </div>
 
                   <Button
