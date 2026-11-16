@@ -64,15 +64,15 @@
   z-index: 0;
 }
 
-/* Home / reta activa — un solo contenedor de contenido */
+/* Home / reta activa — un solo contenedor de contenido a ancho completo */
 .main-layout > .home-inner,
 .main-layout > .reta-content {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1320px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
   box-sizing: border-box;
 }
 
@@ -152,8 +152,8 @@
 
 .home-inner {
   width: 100%;
-  max-width: 1320px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   position: relative;
   z-index: 1;
 }

@@ -13,10 +13,9 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  /* Home: mismo riel 1320 + gutter que .home-inner / .main-layout */
-  max-width: calc(1320px + 2 * var(--mode-shell-pad-x));
-  margin: 0 auto;
-  padding: var(--space-md) var(--mode-shell-pad-x);
+  max-width: none;
+  margin: 0;
+  padding: var(--space-md) clamp(1.5rem, 2.5vw, 2.25rem);
   box-sizing: border-box;
 }
 

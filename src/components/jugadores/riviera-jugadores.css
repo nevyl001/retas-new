@@ -8,14 +8,16 @@
 }
 
 .rj-page__inner {
-  max-width: 1600px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
   padding: 1rem 1.5rem 2.5rem;
+  box-sizing: border-box;
 }
 
 @media (min-width: 1024px) {
   .rj-page__inner {
-    padding: 1.5rem 2.5rem 3rem;
+    padding: 1.5rem clamp(1.5rem, 2.5vw, 2.25rem) 3rem;
   }
 }
 

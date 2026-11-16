@@ -1135,8 +1135,8 @@
 
 .coaching-student-shell {
   width: 100%;
-  max-width: 1380px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -1146,7 +1146,7 @@
 
 @media (min-width: 768px) and (max-width: 1199px) {
   .coaching-student-shell {
-    max-width: 960px;
+    max-width: none;
   }
 }
 
@@ -6123,9 +6123,10 @@
 
 /* ============================================================
    REDISEÑO PREMIUM 2026 — ALUMNOS VINCULADOS E HISTORIAL DEL CLUB
-   Consola SaaS deportiva: contenedor centrado 1400px, cuadrícula
-   escalable de 3–4 tarjetas, acciones limpias con menú contextual
-   y tabla/tarjetas de historial de alta legibilidad.
+   Consola SaaS deportiva a ancho completo (márgenes 24–36px),
+   cuadrícula escalable de 3–4 tarjetas, acciones limpias con menú
+   contextual y tabla/tarjetas de historial compatibles con tema
+   claro (Riviera Open) y oscuro (Clubes con upgrade).
    ============================================================ */
 
 .coaching-page:not(.coaching-student-page):not(.coaching-coach-portal) > .coaching-hero,
@@ -6134,9 +6135,9 @@
 .coaching-page:not(.coaching-student-page):not(.coaching-coach-portal) > .coaching-success-banner,
 .coaching-page:not(.coaching-student-page):not(.coaching-coach-portal) > .coaching-error,
 .coaching-page:not(.coaching-student-page):not(.coaching-coach-portal) > .coaching-muted {
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
   width: 100%;
   box-sizing: border-box;
 }
@@ -6182,7 +6183,6 @@
   font-size: 0.875rem;
   font-weight: 700;
   border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 /* ── Aviso Ejecutivo Refinado (reemplaza alerta técnica azul) ── */
@@ -6192,13 +6192,9 @@
   gap: 0.85rem;
   padding: 0.9rem 1.15rem;
   border-radius: 12px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--brand-accent, #10b981) 8%, rgba(255, 255, 255, 0.03)) 0%,
-    rgba(255, 255, 255, 0.02) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 3px solid var(--brand-accent, #10b981);
+  background: var(--ro-bg-card);
+  border: 1px solid var(--ro-border-subtle);
+  border-left: 3px solid var(--brand-accent, var(--ro-accent));
 }
 
 .coaching-students-notice__icon {
@@ -6210,9 +6206,9 @@
   border-radius: 9px;
   flex-shrink: 0;
   margin-top: 1px;
-  background: color-mix(in srgb, var(--brand-accent, #10b981) 14%, rgba(255, 255, 255, 0.03));
-  border: 1px solid color-mix(in srgb, var(--brand-accent, #10b981) 28%, transparent);
-  color: var(--brand-accent, #10b981);
+  background: color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 12%, var(--ro-bg-surface));
+  border: 1px solid color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 28%, transparent);
+  color: var(--brand-accent, var(--ro-accent));
 }
 
 .coaching-students-notice__content {
@@ -6224,7 +6220,7 @@
   display: block;
   font-size: 0.875rem;
   font-weight: 700;
-  color: var(--ro-text-primary, #ffffff);
+  color: var(--ro-text-primary);
   margin: 0 0 0.2rem;
 }
 
@@ -6232,7 +6228,7 @@
   margin: 0;
   font-size: 0.8125rem;
   line-height: 1.48;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.72));
+  color: var(--ro-text-secondary);
 }
 
 /* ── Barra de Filtros y Buscador ───────────────────────────── */
@@ -6267,11 +6263,11 @@
   font-weight: 700;
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.09);
+  background: color-mix(in srgb, var(--ro-text-primary) 10%, transparent);
 }
 
 .coaching-students-filter-chip.is-on .coaching-students-filter-chip__count {
-  background: rgba(0, 0, 0, 0.22);
+  background: rgba(0, 0, 0, 0.18);
 }
 
 .coaching-students-search {
@@ -6286,7 +6282,7 @@
 .coaching-students-search__icon {
   position: absolute;
   left: 0.75rem;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.45));
+  color: var(--ro-text-muted);
   pointer-events: none;
 }
 
@@ -6295,9 +6291,9 @@
   min-height: 38px;
   padding: 0.4rem 2rem 0.4rem 2.2rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--ro-text-primary, #ffffff);
+  border: 1px solid var(--ro-border-subtle);
+  background: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font-size: 0.8125rem;
   font-family: inherit;
   box-sizing: border-box;
@@ -6305,13 +6301,12 @@
 }
 
 .coaching-students-search__input::placeholder {
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.45));
+  color: var(--ro-text-muted);
 }
 
 .coaching-students-search__input:focus {
   outline: none;
-  border-color: color-mix(in srgb, var(--brand-accent, #10b981) 55%, rgba(255, 255, 255, 0.25));
-  background: rgba(255, 255, 255, 0.06);
+  border-color: color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 55%, var(--ro-border));
 }
 
 .coaching-students-search__clear {
@@ -6324,14 +6319,14 @@
   height: 24px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.75));
+  background: var(--ro-bg-surface);
+  color: var(--ro-text-secondary);
   cursor: pointer;
 }
 
 .coaching-students-search__clear:hover {
-  background: rgba(255, 255, 255, 0.16);
-  color: #ffffff;
+  background: var(--ro-bg-elevated);
+  color: var(--ro-text-primary);
 }
 
 /* ── Directorio de Alumnos: Grid Escalable (1 / 2 / 3 / 4 cols) ── */
@@ -6367,28 +6362,24 @@
   overflow: visible;
   padding: 1.2rem 1.25rem;
   border-radius: 16px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.042) 0%,
-    rgba(255, 255, 255, 0.022) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.26);
+  background: var(--ro-bg-card);
+  border: 1px solid var(--ro-border-subtle);
+  box-shadow: var(--ro-shadow-sm);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 1rem;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .coaching-card.coaching-student-card:hover {
-  border-color: color-mix(in srgb, var(--brand-accent, #10b981) 35%, rgba(255, 255, 255, 0.18));
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.34);
+  border-color: color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 38%, var(--ro-border));
+  box-shadow: var(--ro-shadow-md);
 }
 
 .coaching-card.coaching-student-card.has-open-menu {
   z-index: 40;
-  border-color: color-mix(in srgb, var(--brand-accent, #10b981) 50%, rgba(255, 255, 255, 0.25));
+  border-color: color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 50%, var(--ro-border));
 }
 
 .coaching-student-card__header {
@@ -6403,14 +6394,9 @@
   border-radius: 14px;
   font-size: 1.1rem;
   font-weight: 800;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--brand-accent, #10b981) 18%, rgba(255, 255, 255, 0.1)),
-    rgba(255, 255, 255, 0.05)
-  );
-  border: 1px solid color-mix(in srgb, var(--brand-accent, #10b981) 28%, rgba(255, 255, 255, 0.14));
-  color: var(--ro-text-primary, #ffffff);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  background: color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 14%, var(--ro-bg-surface));
+  border: 1px solid color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 28%, var(--ro-border-subtle));
+  color: var(--ro-text-primary);
 }
 
 .coaching-student-card__identity {
@@ -6433,7 +6419,7 @@
   font-size: 1.125rem;
   font-weight: 800;
   letter-spacing: -0.015em;
-  color: var(--ro-text-primary, #ffffff);
+  color: var(--ro-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -6451,11 +6437,11 @@
   align-items: center;
   padding: 0.14rem 0.5rem;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--ro-bg-surface);
+  border: 1px solid var(--ro-border-subtle);
   font-size: 0.74rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--ro-text-secondary);
 }
 
 .coaching-student-card__cat {
@@ -6463,11 +6449,11 @@
   align-items: center;
   padding: 0.14rem 0.5rem;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-surface);
+  border: 1px solid var(--ro-border-subtle);
   font-size: 0.72rem;
   font-weight: 600;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.72));
+  color: var(--ro-text-secondary);
 }
 
 /* ── Bloques de Métricas (Saldo + Coach Asignado) ──────────── */
@@ -6486,8 +6472,8 @@
 .coaching-student-card__metric {
   padding: 0.75rem 0.85rem;
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--ro-bg-surface);
+  border: 1px solid var(--ro-border-subtle);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -6496,8 +6482,8 @@
 }
 
 .coaching-student-card__metric--balance.is-positive {
-  background: color-mix(in srgb, var(--brand-accent, #10b981) 7%, rgba(0, 0, 0, 0.3));
-  border-color: color-mix(in srgb, var(--brand-accent, #10b981) 28%, rgba(255, 255, 255, 0.08));
+  background: color-mix(in srgb, var(--brand-accent, var(--ro-success)) 8%, var(--ro-bg-surface));
+  border-color: color-mix(in srgb, var(--brand-accent, var(--ro-success)) 28%, var(--ro-border-subtle));
 }
 
 .coaching-student-card__metric-label {
@@ -6508,11 +6494,11 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.52));
+  color: var(--ro-text-muted);
 }
 
 .coaching-student-card__metric--balance.is-positive .coaching-student-card__metric-label {
-  color: color-mix(in srgb, var(--brand-accent, #10b981) 80%, #ffffff);
+  color: var(--ro-text-secondary);
 }
 
 .coaching-student-card__metric-main {
@@ -6527,23 +6513,23 @@
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.02em;
-  color: var(--ro-text-primary, #ffffff);
+  color: var(--ro-text-primary);
 }
 
 .coaching-student-card__metric--balance.is-positive .coaching-student-card__balance-number {
-  color: var(--brand-accent, #4ade80);
+  color: var(--brand-accent, var(--ro-success));
 }
 
 .coaching-student-card__balance-caption {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.78));
+  color: var(--ro-text-secondary);
 }
 
 .coaching-student-card__coach-name {
   font-size: 0.9rem;
   font-weight: 700;
-  color: var(--ro-text-primary, #ffffff);
+  color: var(--ro-text-primary);
   line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -6552,7 +6538,7 @@
 
 .coaching-student-card__metric-sub {
   font-size: 0.72rem;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+  color: var(--ro-text-muted);
   line-height: 1.3;
 }
 
@@ -6562,7 +6548,7 @@
   align-items: center;
   gap: 0.5rem;
   padding-top: 0.85rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid var(--ro-border-subtle);
   flex-wrap: nowrap;
 }
 
@@ -6606,9 +6592,9 @@
 }
 
 .coaching-student-menu__trigger.is-open {
-  border-color: color-mix(in srgb, var(--brand-accent, #10b981) 55%, rgba(255, 255, 255, 0.3));
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  border-color: color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 55%, var(--ro-border));
+  background: var(--ro-bg-elevated);
+  color: var(--ro-text-primary);
 }
 
 @media (max-width: 400px) {
@@ -6626,9 +6612,9 @@
   min-width: 215px;
   padding: 0.4rem;
   border-radius: 12px;
-  background: #14171c;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.65);
+  background: var(--ro-bg-elevated);
+  border: 1px solid var(--ro-border);
+  box-shadow: var(--ro-shadow-lg);
   flex-direction: column;
   gap: 2px;
 }
@@ -6647,7 +6633,7 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--ro-text-primary);
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 600;
@@ -6657,30 +6643,30 @@
 }
 
 .coaching-student-menu__item:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background: var(--ro-bg-surface);
+  color: var(--ro-text-primary);
 }
 
 .coaching-student-menu__item--danger {
-  color: #fca5a5;
+  color: var(--ro-error, #ef4444);
 }
 
 .coaching-student-menu__item--danger:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.14);
-  color: #fecaca;
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--ro-error, #ef4444);
 }
 
 .coaching-student-menu__divider {
   height: 1px;
   margin: 0.25rem 0.35rem;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ro-border-subtle);
 }
 
 /* ── Historial de Clases y Movimientos Premium ─────────────── */
 .coaching-ledger-section {
   margin-top: 1.25rem;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--ro-border-subtle);
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -6699,7 +6685,7 @@
   font-size: 1.15rem;
   font-weight: 750;
   letter-spacing: -0.015em;
-  color: var(--ro-text-primary, #ffffff);
+  color: var(--ro-text-primary);
 }
 
 .coaching-ledger-subtitle {
@@ -6718,7 +6704,7 @@
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.32);
   border-radius: 12px;
-  color: #fca5a5;
+  color: var(--ro-error, #ef4444);
   font-size: 0.85rem;
   display: flex;
   align-items: center;
@@ -6741,9 +6727,9 @@
   gap: 0.5rem;
   padding: 2.25rem 1.25rem;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px dashed rgba(255, 255, 255, 0.1);
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+  background: var(--ro-bg-card);
+  border: 1px dashed var(--ro-border);
+  color: var(--ro-text-muted);
   text-align: center;
 }
 
@@ -6754,9 +6740,9 @@
 
 .coaching-ledger-card {
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  background: var(--ro-bg-card);
+  border: 1px solid var(--ro-border-subtle);
+  box-shadow: var(--ro-shadow-sm);
   overflow: hidden;
 }
 
@@ -6773,8 +6759,8 @@
 }
 
 .coaching-ledger-table thead tr {
-  background: rgba(255, 255, 255, 0.035);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-surface);
+  border-bottom: 1px solid var(--ro-border-subtle);
 }
 
 .coaching-ledger-table th {
@@ -6783,7 +6769,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.55));
+  color: var(--ro-text-muted);
   white-space: nowrap;
 }
 
@@ -6793,7 +6779,7 @@
 }
 
 .coaching-ledger-row {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  border-bottom: 1px solid var(--ro-border-subtle);
   transition: background 0.15s ease;
 }
 
@@ -6802,13 +6788,13 @@
 }
 
 .coaching-ledger-row:hover {
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--ro-bg-surface);
 }
 
 .coaching-ledger-table td {
   padding: 0.85rem 1rem;
   vertical-align: middle;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.82));
+  color: var(--ro-text-secondary);
 }
 
 .coaching-ledger-cell--date {
@@ -6818,13 +6804,13 @@
 .coaching-ledger-date {
   display: inline-block;
   font-weight: 600;
-  color: var(--ro-text-primary, #ffffff);
+  color: var(--ro-text-primary);
   margin-right: 0.45rem;
 }
 
 .coaching-ledger-time {
   font-size: 0.76rem;
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+  color: var(--ro-text-muted);
 }
 
 .coaching-ledger-person {
@@ -6840,21 +6826,21 @@
   width: 26px;
   height: 26px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--ro-bg-surface);
+  border: 1px solid var(--ro-border-subtle);
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--ro-text-primary, #ffffff);
+  color: var(--ro-text-primary);
   flex-shrink: 0;
 }
 
 .coaching-ledger-person__name {
   font-weight: 700;
-  color: var(--ro-text-primary, #ffffff);
+  color: var(--ro-text-primary);
 }
 
 .coaching-ledger-cell--notes {
-  color: var(--ro-text-muted, rgba(255, 255, 255, 0.6));
+  color: var(--ro-text-muted);
   max-width: 280px;
 }
 
@@ -6863,11 +6849,11 @@
   align-items: center;
   padding: 0.16rem 0.55rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--ro-bg-surface);
+  border: 1px solid var(--ro-border-subtle);
   font-size: 0.74rem;
   font-weight: 600;
-  color: var(--ro-text-secondary, rgba(255, 255, 255, 0.78));
+  color: var(--ro-text-secondary);
 }
 
 .coaching-ledger-badge {
@@ -6879,20 +6865,20 @@
 
 .coaching-ledger-badge--transfer-out {
   background: rgba(245, 158, 11, 0.14);
-  color: #fbbf24;
+  color: #d97706;
   border: 1px solid rgba(245, 158, 11, 0.32);
 }
 
 .coaching-ledger-badge--transfer-in {
   background: rgba(6, 182, 212, 0.14);
-  color: #22d3ee;
+  color: #0891b2;
   border: 1px solid rgba(6, 182, 212, 0.32);
 }
 
 .coaching-ledger-badge--adjust {
-  background: rgba(148, 163, 184, 0.14);
-  color: #cbd5e1;
-  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: var(--ro-bg-surface);
+  color: var(--ro-text-secondary);
+  border: 1px solid var(--ro-border);
 }
 
 .coaching-ledger-action-btn {
@@ -6908,13 +6894,12 @@
 
 .coaching-ledger-action-btn--revert {
   background: rgba(245, 158, 11, 0.14);
-  color: #fbbf24;
+  color: #d97706;
   border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 .coaching-ledger-action-btn--revert:hover:not(:disabled) {
   background: rgba(245, 158, 11, 0.22);
-  color: #fde68a;
 }
 
 /* ── Adaptación Móvil del Historial (Tarjetas sin scroll horizontal) ── */
@@ -6948,7 +6933,7 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 0.45rem;
     padding: 0.9rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--ro-border-subtle);
   }
 
   .coaching-ledger-table td {
@@ -6966,7 +6951,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--ro-text-muted, rgba(255, 255, 255, 0.5));
+    color: var(--ro-text-muted);
     text-align: left;
     flex-shrink: 0;
   }

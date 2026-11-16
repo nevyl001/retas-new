@@ -17,13 +17,13 @@
   margin-top: 0.25rem;
 }
 
-/* Contenedor ancho: dashboard compacto y alineado (1360–1440px) */
+/* Contenedor ancho completo sin márgenes laterales vacíos */
 .home-inner,
 .main-layout > .home-inner {
   width: 100%;
-  max-width: 1400px;
+  max-width: none;
   min-width: 0;
-  margin-inline: auto;
+  margin-inline: 0;
   overflow-x: clip;
 }
 
@@ -1527,17 +1527,17 @@
 
 @media (min-width: 768px) {
   .main-layout:has(> .home-inner--dashboard) {
-    --mode-shell-pad-x: clamp(24px, 3vw, 40px);
+    --mode-shell-pad-x: clamp(24px, 2.5vw, 36px);
     --mode-shell-pad-y: 16px;
     --mode-shell-pad-bottom: 14px;
   }
 
   body:has(.home-inner--dashboard) .user-header-content {
-    max-width: calc(1400px + 2 * clamp(24px, 3vw, 40px));
+    max-width: none;
     padding-top: 10px;
     padding-bottom: 10px;
-    padding-left: clamp(24px, 3vw, 40px);
-    padding-right: clamp(24px, 3vw, 40px);
+    padding-left: clamp(24px, 2.5vw, 36px);
+    padding-right: clamp(24px, 2.5vw, 36px);
   }
 
   .home-inner--dashboard .app-site-foot {
