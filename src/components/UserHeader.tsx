@@ -19,8 +19,8 @@ export const UserHeader: React.FC = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const desktopRef = useRef<HTMLDivElement>(null);
+  const mobileRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = async () => {
     if (isSigningOut) return;
@@ -46,32 +46,83 @@ export const UserHeader: React.FC = () => {
   };
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    if (!showDropdown) return;
+    const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
-
       if (
-        showDropdown &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(target) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(target)
+        desktopRef.current?.contains(target) ||
+        mobileRef.current?.contains(target)
       ) {
-        setShowDropdown(false);
+        return;
       }
+      setShowDropdown(false);
     };
-
-    if (showDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [showDropdown]);
 
   useEffect(() => {
     setAvatarLoadFailed(false);
   }, [userProfile?.avatar_url]);
+
+  const closeMenu = () => setShowDropdown(false);
+
+  const renderAccountMenu = () => (
+    <>
+      {canAccessClubCoaching && (
+        <button
+          type="button"
+          className="user-dropdown-item"
+          role="menuitem"
+          onClick={() => {
+            closeMenu();
+            navigateCoaching("/coaching");
+          }}
+        >
+          <span>🎾</span>
+          <span>Riviera Coaching</span>
+        </button>
+      )}
+      {canAccessCoachPortal && (
+        <button
+          type="button"
+          className="user-dropdown-item"
+          role="menuitem"
+          onClick={() => {
+            closeMenu();
+            navigateCoachPortal();
+          }}
+        >
+          <span>📋</span>
+          <span>Mi Espacio</span>
+        </button>
+      )}
+      {canAccessStudentCoaching && (
+        <button
+          type="button"
+          className="user-dropdown-item"
+          role="menuitem"
+          onClick={() => {
+            closeMenu();
+            navigateStudentCoaching();
+          }}
+        >
+          <span>🎾</span>
+          <span>Mi Coaching</span>
+        </button>
+      )}
+      <button
+        type="button"
+        className="logout-button"
+        role="menuitem"
+        onClick={handleSignOut}
+        disabled={isSigningOut}
+      >
+        <span>🚪</span>
+        <span>{isSigningOut ? "Cerrando..." : "Cerrar Sesión"}</span>
+      </button>
+    </>
+  );
 
   const avatarContent =
     userProfile?.avatar_url && !avatarLoadFailed ? (
@@ -96,13 +147,14 @@ export const UserHeader: React.FC = () => {
           </div>
 
           <div className="user-header-actions desktop-only">
-            <div className="user-profile-wrapper">
+            <div className="user-profile-wrapper" ref={desktopRef}>
               <button
-                ref={buttonRef}
+                type="button"
                 className="user-profile-btn"
-                onClick={() => setShowDropdown(!showDropdown)}
+                onClick={() => setShowDropdown((open) => !open)}
                 aria-expanded={showDropdown}
                 aria-haspopup="menu"
+                aria-label="Menú de cuenta"
               >
                 <div className="user-avatar">{avatarContent}</div>
                 <div className="user-info">
@@ -117,60 +169,29 @@ export const UserHeader: React.FC = () => {
               </button>
 
               {showDropdown && (
-                <div ref={dropdownRef} className="user-dropdown-menu">
-                  {canAccessClubCoaching && (
-                    <button
-                      className="user-dropdown-item"
-                      onClick={() => {
-                        setShowDropdown(false);
-                        navigateCoaching("/coaching");
-                      }}
-                    >
-                      <span>🎾</span>
-                      <span>Riviera Coaching</span>
-                    </button>
-                  )}
-                  {canAccessCoachPortal && (
-                    <button
-                      className="user-dropdown-item"
-                      onClick={() => {
-                        setShowDropdown(false);
-                        navigateCoachPortal();
-                      }}
-                    >
-                      <span>📋</span>
-                      <span>Mi Espacio</span>
-                    </button>
-                  )}
-                  {canAccessStudentCoaching && (
-                    <button
-                      className="user-dropdown-item"
-                      onClick={() => {
-                        setShowDropdown(false);
-                        navigateStudentCoaching();
-                      }}
-                    >
-                      <span>🎾</span>
-                      <span>Mi Coaching</span>
-                    </button>
-                  )}
-                  <button
-                    className="logout-button"
-                    onClick={handleSignOut}
-                    disabled={isSigningOut}
-                  >
-                    <span>🚪</span>
-                    <span>
-                      {isSigningOut ? "Cerrando..." : "Cerrar Sesión"}
-                    </span>
-                  </button>
+                <div className="user-dropdown-menu" role="menu">
+                  {renderAccountMenu()}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="user-header-mobile mobile-only" aria-hidden>
-            <div className="user-header-mobile-avatar user-avatar">{avatarContent}</div>
+          <div className="user-header-mobile mobile-only" ref={mobileRef}>
+            <button
+              type="button"
+              className="user-header-mobile-btn"
+              onClick={() => setShowDropdown((open) => !open)}
+              aria-expanded={showDropdown}
+              aria-haspopup="menu"
+              aria-label="Menú de cuenta"
+            >
+              <span className="user-header-mobile-avatar user-avatar">{avatarContent}</span>
+            </button>
+            {showDropdown && (
+              <div className="user-header-mobile-panel" role="menu">
+                {renderAccountMenu()}
+              </div>
+            )}
           </div>
         </div>
       </div>
