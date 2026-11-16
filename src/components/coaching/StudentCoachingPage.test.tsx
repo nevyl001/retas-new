@@ -516,6 +516,44 @@ describe("StudentCoachingPage & CoachingRouter", () => {
     ).toBe("DP");
   });
 
+  it("muestra el bloque editorial Sobre mí antes de las redes sociales cuando el alumno lo escribió", async () => {
+    jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockResolvedValueOnce({
+      ok: true,
+      linked: true,
+      rivieraId: "RIV-00000356",
+      relationships: [],
+      studentProfile: {
+        id: "player-1",
+        nombre: "Diego Palomares",
+        fotoUrl: "https://cdn.test/diego.jpg",
+        rivieraId: "RIV-00000356",
+        edad: 31,
+        enCancha: "reves",
+        sobreMi: "Jugador ofensivo buscando perfeccionar víbora y salida de pared.",
+        instagramUrl: "instagram.com/diego",
+        facebookUrl: null,
+        tiktokUrl: "tiktok.com/@diego",
+      },
+    });
+
+    await act(async () => {
+      root.render(<StudentCoachingPage />);
+    });
+
+    const aboutBlock = container.querySelector(".coaching-student-hero__about-block");
+    expect(aboutBlock).not.toBeNull();
+    expect(aboutBlock?.textContent).toContain("Sobre mí");
+    expect(aboutBlock?.textContent).toContain(
+      "Jugador ofensivo buscando perfeccionar víbora y salida de pared.",
+    );
+
+    const extrasText =
+      container.querySelector(".coaching-student-hero__extras")?.textContent ?? "";
+    expect(extrasText.indexOf("Sobre mí")).toBeLessThan(
+      extrasText.indexOf("Instagram"),
+    );
+  });
+
   it("edita edad, posición y redes y nunca ofrece el correo como campo", async () => {
     jest.spyOn(coachingApi, "fetchStudentCoachingOverview").mockResolvedValueOnce({
       ok: true,

@@ -538,78 +538,130 @@ export const StudentCoachingPage: React.FC = () => {
                 <p className="coaching-student-hero__facts">{personalFacts}</p>
               ) : null}
               {primaryRel ? (
-                <p className="coaching-student-hero__balance">
-                  {primaryRel.balance?.balanceClasses ?? 0}{" "}
-                  {(primaryRel.balance?.balanceClasses ?? 0) === 1
-                    ? "clase disponible"
-                    : "clases disponibles"}
-                </p>
+                <div className="coaching-student-hero__balance-pill">
+                  <span
+                    className="coaching-student-hero__balance-dot"
+                    aria-hidden="true"
+                  />
+                  <p className="coaching-student-hero__balance">
+                    {primaryRel.balance?.balanceClasses ?? 0}{" "}
+                    {(primaryRel.balance?.balanceClasses ?? 0) === 1
+                      ? "clase disponible"
+                      : "clases disponibles"}
+                  </p>
+                </div>
               ) : null}
-              {effectiveRivieraId ? (
-                <div className="coaching-student-badge-pill" title="Código oficial de jugador">
-                  <strong className="coaching-student-badge-val">{effectiveRivieraId}</strong>
+            </div>
+
+            {effectiveRivieraId ? (
+              <div className="coaching-student-hero__id-slot">
+                <div
+                  className="coaching-student-badge-pill"
+                  title="Código oficial de jugador"
+                >
+                  <span className="coaching-student-badge-code-group">
+                    <TablerIcon
+                      name="id"
+                      size={15}
+                      className="coaching-student-badge-icon"
+                    />
+                    <strong className="coaching-student-badge-val">
+                      {effectiveRivieraId}
+                    </strong>
+                  </span>
                   <button
                     type="button"
-                    className="coaching-badge-copy-btn"
+                    className={`coaching-badge-copy-btn${
+                      copiedRivieraId ? " is-copied" : ""
+                    }`}
                     onClick={() => handleCopyRivieraId(effectiveRivieraId)}
                     aria-label={`Copiar ${effectiveRivieraId}`}
                     title={copiedRivieraId ? "Copiado" : "Copiar código"}
                   >
-                    <TablerIcon name={copiedRivieraId ? "check" : "copy"} size={14} />
+                    <TablerIcon
+                      name={copiedRivieraId ? "check" : "copy"}
+                      size={14}
+                    />
                   </button>
                 </div>
-              ) : null}
+              </div>
+            ) : null}
+
+            {canEditProfile || effectiveRivieraId ? (
               <div className="coaching-student-hero__actions">
                 {canEditProfile ? (
-                  <button
-                    type="button"
-                    className="coaching-student-profile__edit"
-                    onClick={() => setProfileEditorOpen(true)}
-                  >
-                    <TablerIcon name="pencil" size={14} />
-                    Editar perfil
-                  </button>
-                ) : null}
-                {canEditProfile ? (
-                  <button
-                    type="button"
-                    className="coaching-student-hero__photo-btn"
-                    onClick={() => photoInputRef.current?.click()}
-                    disabled={photoUploading}
-                  >
-                    <TablerIcon name="camera" size={13} />
-                    {photoUploading ? "Subiendo…" : "Cambiar foto"}
-                  </button>
+                  <div className="coaching-student-hero__actions-primary">
+                    <button
+                      type="button"
+                      className="coaching-student-profile__edit"
+                      onClick={() => setProfileEditorOpen(true)}
+                    >
+                      <TablerIcon name="pencil" size={14} />
+                      Editar perfil
+                    </button>
+                    <button
+                      type="button"
+                      className="coaching-student-hero__photo-btn"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={photoUploading}
+                    >
+                      <TablerIcon name="camera" size={14} />
+                      {photoUploading ? "Subiendo…" : "Cambiar foto"}
+                    </button>
+                  </div>
                 ) : null}
                 {effectiveRivieraId ? (
                   <button
                     type="button"
-                    className="coaching-student-ranking-btn"
+                    className="coaching-student-ranking-btn coaching-student-hero__ranking-link"
                     onClick={() => {
                       openPublicJugadorByRivieraIdInNewWindow(effectiveRivieraId);
                     }}
                   >
-                    Ver mi Ficha de Ranking
+                    <span>Ver mi Ficha de Ranking</span>
+                    <TablerIcon name="arrow-up-right" size={14} />
                   </button>
                 ) : null}
               </div>
-              {redes.length > 0 ? (
-                <p className="coaching-student-profile__chips">
-                  {redes.map((red) => (
-                    <a
-                      key={red.id}
-                      href={red.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="coaching-student-profile__chip"
-                    >
-                      {red.label}
-                    </a>
-                  ))}
-                </p>
-              ) : null}
-              {sobreMi ? <p className="coaching-student-hero__about">{sobreMi}</p> : null}
-            </div>
+            ) : null}
+
+            {sobreMi || redes.length > 0 ? (
+              <div className="coaching-student-hero__extras">
+                {sobreMi ? (
+                  <div className="coaching-student-hero__about-block">
+                    <span className="coaching-student-hero__about-label">
+                      Sobre mí
+                    </span>
+                    <p className="coaching-student-hero__about">{sobreMi}</p>
+                  </div>
+                ) : null}
+                {redes.length > 0 ? (
+                  <div className="coaching-student-profile__chips">
+                    {redes.map((red) => (
+                      <a
+                        key={red.id}
+                        href={red.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="coaching-student-profile__chip"
+                      >
+                        <TablerIcon
+                          name={
+                            red.id === "instagram"
+                              ? "brand-instagram"
+                              : red.id === "facebook"
+                                ? "brand-facebook"
+                                : "brand-tiktok"
+                          }
+                          size={14}
+                        />
+                        <span>{red.label}</span>
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
       </header>
