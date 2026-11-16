@@ -10,7 +10,9 @@
   margin-inline: 0;
   padding: 1.5rem clamp(1.5rem, 2.5vw, 2.25rem) 4rem; /* Márgenes exteriores uniformes 24–36px */
   box-sizing: border-box;
-  background: var(--ro-bg-app, #070707);
+  /* Riviera: marfil de la cuenta principal. Un upgrade ya redefine --ro-bg-base. */
+  background: var(--ro-bg-base, #e9e4dc);
+  color: var(--ro-text-primary, #14161a);
 }
 
 @media (max-width: 768px) {
