@@ -11,7 +11,7 @@
 /* Prep Quick Mode — padding unificado (tokens --qm-prep-* → --mode-shell-*) */
 .duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) {
   padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
-    var(--mode-shell-pad-bottom, max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom)));
+    var(--mode-shell-pad-bottom);
 }
 
 .duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) .duelo2v2-toolbar.riviera-back-toolbar {
@@ -109,9 +109,9 @@
 @media (min-width: 769px) {
   .duelo2v2-page.duelo2v2-nuevo:not(.duelo2v2-page--public) {
     --qm-prep-pad-x: clamp(1.5rem, 2vw, 2rem);
-    --qm-prep-pad-y: clamp(1.25rem, 1.8vw, 1.75rem);
+    --qm-prep-pad-y: var(--mode-shell-pad-y);
     padding-inline: clamp(1.5rem, 2vw, 2rem);
-    padding-top: clamp(1.25rem, 1.8vw, 1.75rem);
+    padding-top: var(--mode-shell-pad-y);
   }
 }
 

@@ -27,6 +27,8 @@ body:has(.americano-screen) .user-header-content,
 body:has(.duelo2v2-page:not(.duelo2v2-page--public)) .user-header-content,
 body:has(.torneo-express-page:not(.te-public)) .user-header-content {
   max-width: none;
+  padding-top: max(8px, env(safe-area-inset-top, 0px));
+  padding-bottom: 8px;
 }
 
 .user-header-main {

@@ -21,13 +21,13 @@
   margin: 0;
   overflow-x: visible;
   padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
-    max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom));
+    var(--mode-shell-pad-bottom);
 }
 
 @media (max-width: 899px) {
   .americano-screen:has(.qm-ws) {
     padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
-      calc(40px + var(--ro-safe-bottom));
+      max(var(--mode-shell-pad-bottom), var(--mobile-app-navigation-offset));
   }
 
   .americano-registration--workspace .americano-btn {

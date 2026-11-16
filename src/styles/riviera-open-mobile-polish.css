@@ -188,17 +188,18 @@ body,
 
   /* Padding shells */
   .torneo-express-page.rv-page {
-    padding: clamp(14px, 3.5vw, 20px) var(--ro-mobile-page-padding)
-      calc(48px + var(--ro-safe-bottom));
+    padding: var(--mode-shell-pad-y) var(--ro-mobile-page-padding)
+      max(var(--mode-shell-pad-bottom), var(--mobile-app-navigation-offset));
   }
 
   .americano-screen.rv-page {
-    padding: 12px var(--ro-mobile-page-padding) calc(40px + var(--ro-safe-bottom));
+    padding: var(--mode-shell-pad-y) var(--ro-mobile-page-padding)
+      max(var(--mode-shell-pad-bottom), var(--mobile-app-navigation-offset));
   }
 
   .americano-screen.rv-page:has(.qm-ws) {
     padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
-      calc(40px + var(--ro-safe-bottom));
+      max(var(--mode-shell-pad-bottom), var(--mobile-app-navigation-offset));
   }
 
   .duelo2v2-page__inner.rv-shell {

@@ -76,10 +76,15 @@
   box-sizing: border-box;
 }
 
-/* Reta activa: .main-layout sin padding (reta-layout) — el aire va aquí */
+/* Reta activa: el aire vive en .reta-content. El shell no vuelve a sumar arriba ni abajo. */
+.main-layout:has(> .reta-content) {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .main-layout > .reta-content {
   padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
-    max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom));
+    var(--mode-shell-pad-bottom);
 }
 
 /* Prep Quick Mode + competencia en curso — full-bleed (sin columna 1280) */
@@ -92,7 +97,7 @@
   margin-left: 0;
   margin-right: 0;
   padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
-    var(--mode-shell-pad-bottom, max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom)));
+    var(--mode-shell-pad-bottom);
   box-sizing: border-box;
 }
 

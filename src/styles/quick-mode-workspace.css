@@ -8,7 +8,7 @@
   /* Ritmo único del prep — alineado al shell de modos (Liga / Eventos) */
   --qm-prep-pad-y: var(--mode-shell-pad-y, clamp(16px, 2.5vw, 28px));
   --qm-prep-pad-x: var(--mode-shell-pad-x, clamp(12px, 2vw, 24px));
-  --qm-prep-toolbar-gap: 0.75rem;
+  --qm-prep-toolbar-gap: 0.4rem;
   --qm-stack-gap: 0.75rem;
   --qm-main-gap: 0.65rem;
   --qm-col-gap: 1rem;
@@ -3222,9 +3222,8 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   .main-layout:has(.qm-ws--create-compose),
   .duelo2v2-page:has(.qm-ws--create-compose):not(.duelo2v2-page--public) {
     --mode-shell-pad-x: clamp(1.5rem, 2vw, 2rem); /* 24px–32px */
-    --mode-shell-pad-y: clamp(1.25rem, 1.8vw, 1.75rem); /* 20px–28px */
     padding: var(--mode-shell-pad-y) var(--mode-shell-pad-x)
-      var(--mode-shell-pad-bottom, 2.5rem);
+      var(--mode-shell-pad-bottom);
   }
 
   body:has(.qm-ws--create-compose) .user-header .user-header-content {

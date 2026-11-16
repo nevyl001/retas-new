@@ -2,11 +2,11 @@
 
 .riviera-organizer-reta {
   animation: fadeInUp 0.45s ease-out both;
-  gap: clamp(22px, 3vw, 32px) !important;
+  gap: 0.65rem !important;
 }
 
 .riviera-organizer-reta .tournament-details {
-  gap: clamp(22px, 3vw, 32px);
+  gap: 0.75rem;
 }
 
 /* —— Iniciar reta (equipos / round robin) —— */

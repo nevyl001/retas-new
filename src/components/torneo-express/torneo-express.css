@@ -24,8 +24,8 @@
   background: var(--te-bg);
   color: var(--te-text);
   font-family: var(--riviera-font-body);
-  padding: var(--riviera-space-5) var(--riviera-space-6)
-    calc(var(--riviera-space-16) + env(safe-area-inset-bottom, 0px));
+  padding: var(--mode-shell-pad-y) var(--mode-shell-pad-x)
+    var(--mode-shell-pad-bottom);
   box-sizing: border-box;
   animation: fadeInUp 0.45s ease-out both;
 }
@@ -56,8 +56,8 @@
 
 @media (max-width: 720px) {
   .torneo-express-page {
-    padding: var(--riviera-space-4) var(--riviera-space-4)
-      calc(var(--riviera-space-12) + env(safe-area-inset-bottom, 0px));
+    padding: var(--mode-shell-pad-y) var(--mode-shell-pad-x)
+      var(--mode-shell-pad-bottom);
   }
 
   .torneo-express-page--offset {
