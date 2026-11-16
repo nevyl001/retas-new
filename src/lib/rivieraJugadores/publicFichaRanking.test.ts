@@ -71,7 +71,7 @@ function j(
 }
 
 describe("publicFichaRanking", () => {
-  it("ficha con org en URL usa ranking del club", () => {
+  it("ficha con org en URL conserva la posición del club", () => {
     const aime = j(25, "aime", { visible_publico: true });
     expect(
       resolvePublicFichaRankingTarget(aime, {
@@ -80,7 +80,18 @@ describe("publicFichaRanking", () => {
       })
     ).toBe("club");
     expect(rankingLabelForPublicFicha(aime, true)).toBe("Ranking");
-    expect(shouldUseClubLocalPuntosOnPublicFicha(aime, true)).toBe(true);
+  });
+
+  it("jugador publicado no sustituye el ledger por la carrera local aunque haya org", () => {
+    const published = j(1750, "nevyl", {
+      visible_publico: true,
+      riviera_id: "RIV-00000011",
+      officialPuntosGlobal: 2010,
+    });
+    expect(shouldUseClubLocalPuntosOnPublicFicha(published, true)).toBe(false);
+    expect(rankingLabelForPublicFicha(published, false)).toBe(
+      "Ranking Riviera Open"
+    );
   });
 
   it("ficha oficial sin org usa ranking global", () => {

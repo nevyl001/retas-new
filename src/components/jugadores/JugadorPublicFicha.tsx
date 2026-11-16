@@ -23,6 +23,7 @@ import { prefetchOrganizerDisplayNames } from "../../lib/rivieraJugadores/grante
 import {
   rankingLabelForPublicFicha,
   resolveRegistrationOrganizadorIdForPublicFicha,
+  shouldUseClubLocalPuntosOnPublicFicha,
 } from "../../lib/rivieraJugadores/publicFichaRanking";
 import { clearPublicFichaHandoff, takePublicFichaHandoff } from "../../lib/rivieraJugadores/publicFichaHandoff";
 import { getOrganizerDisplayNameSync } from "../../lib/organizer/organizerDisplayName";
@@ -500,7 +501,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     : null;
   const redes = getRedesPublicas(jugador);
   const rankingVal = rankingPos != null ? `#${rankingPos}` : "—";
-  const rankingLabel = rankingLabelForPublicFicha(jugador, hasOrgContext);
   const showRivieraId = isValidRivieraId(jugador.riviera_id);
   const perfilMeta = getJugadorPerfilMeta(jugador);
   const hasPhoto = Boolean(jugador.foto_url?.trim());
@@ -516,7 +516,14 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     hasOrgContext,
   });
   const officialRanking = resolveOfficialPuntosDisplay(jugador);
-  const showOfficialRanking = !hasOrgContext;
+  const showOfficialRanking = !shouldUseClubLocalPuntosOnPublicFicha(
+    jugador,
+    hasOrgContext
+  );
+  const rankingLabel = rankingLabelForPublicFicha(
+    jugador,
+    hasOrgContext && !showOfficialRanking
+  );
 
   return (
     <ClubExperienceScope

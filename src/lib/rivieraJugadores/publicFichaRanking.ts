@@ -65,7 +65,11 @@ export function resolveRegistrationOrganizadorIdForPublicFicha(
   );
 }
 
-/** Ficha desde ranking interno del club: solo puntos ganados en ese organizador. */
+/**
+ * Puntos locales del club solo si la ficha no es la del ranking oficial.
+ * Un jugador publicado en el sitio oficial muestra el ledger aunque la URL
+ * traiga ?org=: un saldo local negativo no puede ocultar puntos oficiales.
+ */
 export function shouldUseClubLocalPuntosOnPublicFicha(
   jugador: Pick<
     RivieraJugadorWithStats,
@@ -73,6 +77,7 @@ export function shouldUseClubLocalPuntosOnPublicFicha(
   >,
   internalClub: boolean
 ): boolean {
-  void jugador;
-  return internalClub;
+  if (!internalClub) return false;
+  if (isJugadorPublicadoSitioOficial(jugador)) return false;
+  return true;
 }
