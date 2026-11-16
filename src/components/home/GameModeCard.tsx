@@ -47,10 +47,10 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
         } as React.CSSProperties
       }
     >
-      {!disabled && category === "competencia" ? (
+      {!disabled ? (
         <TablerIcon
           name="chevron-right"
-          size={18}
+          size={16}
           className="game-mode-card__chevron"
         />
       ) : null}

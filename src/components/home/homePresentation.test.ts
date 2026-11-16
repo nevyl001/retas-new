@@ -145,8 +145,8 @@ describe("home presentation", () => {
       );
 
       expect(view).toContain("home-inner--dashboard");
-      expect(view).toContain("home-greeting");
-      expect(view).toContain("Hola, Test User");
+      expect(view).not.toContain("home-greeting");
+      expect(view).not.toContain("Hola, Test User");
       expect(view).toContain("home-question");
       expect(view).toContain("¿Qué quieres organizar hoy?");
       expect(view).toContain("Retas rápidas");
@@ -166,11 +166,11 @@ describe("home presentation", () => {
       expect(view).not.toContain("home-create-event__cta");
       expect(view).not.toContain("home-quick-card");
       expect(view).not.toContain("Gestionar mis retas");
-      // Accesos rápidos: sección propia y visible, no franja de enlaces.
       expect(view).toContain("home-access");
-      expect(view).toContain("Accesos rápidos");
+      expect(view).toContain("Gestión del club");
+      expect(view).not.toContain("Accesos rápidos");
       expect(view).toContain("Riviera Rewards");
-      expect(view).toContain("Campañas, puntos, premios y canjes.");
+      expect(view).not.toContain("Campañas, puntos, premios y canjes.");
       expect(view).toContain("Registro de jugadores");
       expect(view).toContain("Cómo funciona el ranking");
       expect(view).toContain("Historial");

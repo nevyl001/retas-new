@@ -39,10 +39,8 @@ import { QuickStartSheet, type QuickStartPayload } from "./QuickStartSheet";
 import { AppSiteFooter } from "../legal/AppSiteFooter";
 import {
   getAccountModeDisabledMessage,
-  getOrganizerRegistryCardSubtitle,
   useBranding,
 } from "../../club-experience";
-import { useUser } from "../../contexts/UserContext";
 import "./home.css";
 
 interface HomeDashboardProps {
@@ -57,20 +55,11 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   onShowAllRetas,
 }) => {
   const { nombre: organizerName } = useBranding();
-  const { userProfile, user } = useUser();
   const { isModeEnabled } = useAccountFeatures();
   const [createModeId, setCreateModeId] = useState<GameModeId | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retas, setRetas] = useState<HomeRetaItem[]>([]);
-
-  const greetingName =
-    userProfile?.name?.trim() ||
-    user?.user_metadata?.name?.trim() ||
-    user?.email?.split("@")[0] ||
-    "";
-
-  const greeting = greetingName ? `Hola, ${greetingName}` : "Hola";
 
   useEffect(() => {
     if (!userId) {
@@ -213,7 +202,6 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   return (
     <div className="home-inner home-inner--dashboard rv-page">
       <header className="home-hero">
-        <p className="home-greeting">{greeting}</p>
         <h1 className="home-question">¿Qué quieres organizar hoy?</h1>
       </header>
 
@@ -230,8 +218,8 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         </div>
       </div>
 
-      <section className="home-access" aria-label="Accesos rápidos">
-        <h2 className="home-section-title">Accesos rápidos</h2>
+      <section className="home-access" aria-label="Gestión del club">
+        <h2 className="home-section-title">Gestión del club</h2>
         <div className="home-access__grid">
           <button
             type="button"
@@ -241,12 +229,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             <span className="home-access-card__icon" aria-hidden>
               <TablerIcon name="user-star" size={20} />
             </span>
-            <span className="home-access-card__body">
-              <span className="home-access-card__title">Riviera Coaching</span>
-              <span className="home-access-card__desc">
-                Coaches, jugadores y agenda del club.
-              </span>
-            </span>
+            <span className="home-access-card__title">Riviera Coaching</span>
             <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
           </button>
 
@@ -258,12 +241,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             <span className="home-access-card__icon" aria-hidden>
               <TablerIcon name="gift" size={20} />
             </span>
-            <span className="home-access-card__body">
-              <span className="home-access-card__title">Riviera Rewards</span>
-              <span className="home-access-card__desc">
-                Campañas, puntos, premios y canjes.
-              </span>
-            </span>
+            <span className="home-access-card__title">Riviera Rewards</span>
             <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
           </button>
 
@@ -275,12 +253,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             <span className="home-access-card__icon" aria-hidden>
               <TablerIcon name="users" size={20} />
             </span>
-            <span className="home-access-card__body">
-              <span className="home-access-card__title">Registro de jugadores</span>
-              <span className="home-access-card__desc">
-                {getOrganizerRegistryCardSubtitle(organizerName)}
-              </span>
-            </span>
+            <span className="home-access-card__title">Registro de jugadores</span>
             <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
           </button>
 
@@ -292,12 +265,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             <span className="home-access-card__icon" aria-hidden>
               <TablerIcon name="trophy" size={20} />
             </span>
-            <span className="home-access-card__body">
-              <span className="home-access-card__title">Cómo funciona el ranking</span>
-              <span className="home-access-card__desc">
-                Conoce el sistema de puntos y niveles.
-              </span>
-            </span>
+            <span className="home-access-card__title">Cómo funciona el ranking</span>
             <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
           </button>
 
@@ -306,12 +274,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               <span className="home-access-card__icon" aria-hidden>
                 <TablerIcon name="history" size={20} />
               </span>
-              <span className="home-access-card__body">
-                <span className="home-access-card__title">Historial</span>
-                <span className="home-access-card__desc">
-                  Consulta eventos pasados y resultados.
-                </span>
-              </span>
+              <span className="home-access-card__title">Historial</span>
               <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
             </button>
           ) : null}

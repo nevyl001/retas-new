@@ -17,11 +17,11 @@
   margin-top: 0.25rem;
 }
 
-/* Contenedor ancho: dashboard compacto y alineado (1280–1360px) */
+/* Contenedor ancho: dashboard compacto y alineado (1360–1440px) */
 .home-inner,
 .main-layout > .home-inner {
   width: 100%;
-  max-width: 1320px;
+  max-width: 1400px;
   min-width: 0;
   margin-inline: auto;
   overflow-x: clip;
@@ -42,9 +42,9 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2px;
-  min-height: 52px;
-  margin: 0 0 18px;
+  gap: 0;
+  min-height: 0;
+  margin: 0 0 16px;
 }
 
 .home-greeting {
@@ -59,11 +59,12 @@
 .home-question {
   margin: 0;
   font-family: var(--font-display, var(--ro-font-heading), sans-serif);
-  font-size: clamp(1.35rem, 1.9vw, 1.625rem);
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  line-height: 1.18;
+  font-size: clamp(1.55rem, 2.1vw, 1.9rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
   color: var(--text-primary, var(--ro-text-primary));
+  -webkit-text-fill-color: var(--text-primary, var(--ro-text-primary));
 }
 
 /* —— Cuerpo del Home: modos a ancho completo —— */
@@ -262,39 +263,29 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-start;
   width: 100%;
-  min-height: 98px;
-  padding: 12px;
+  min-height: 0;
+  padding: 14px 14px 12px;
   text-align: left;
   cursor: pointer;
   color: var(--text-primary);
   font-family: var(--font-body);
   background: var(--bg-card);
-  border: 0.5px solid var(--border-subtle);
-  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  box-shadow: none;
   opacity: 0;
-  animation: fadeInUp 0.4s ease-out forwards;
+  animation: fadeInUp 0.35s ease-out forwards;
   transition:
     transform 180ms ease,
     border-color 180ms ease,
-    box-shadow 180ms ease,
     background 180ms ease;
-}
-
-@media (min-width: 640px) {
-  .home-inner .game-mode-card {
-    min-height: 112px;
-    padding: 14px 16px;
-    border-radius: 14px;
-  }
 }
 
 @media (min-width: 1024px) {
   .home-inner .game-mode-card {
-    min-height: 118px;
-    padding: 14px 16px;
-    border-radius: 14px;
+    padding: 16px 16px 14px;
   }
 }
 
@@ -304,35 +295,31 @@
   align-items: center;
   justify-content: flex-start;
   gap: 12px;
-  min-height: 68px;
-  padding: 12px 14px;
+  min-height: 64px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--bg-card) 88%, var(--bg-canvas, #0a0a0a));
 }
 
 .home-inner .game-mode-card.game-mode-card--competencia.game-mode-card--disabled {
   flex-wrap: wrap;
 }
 
-@media (min-width: 640px) {
-  .home-inner .game-mode-card.game-mode-card--competencia {
-    gap: 14px;
-    min-height: 82px;
-    padding: 14px 16px;
-  }
-}
-
 @media (min-width: 1024px) {
   .home-inner .game-mode-card.game-mode-card--competencia {
-    gap: 14px;
-    min-height: 88px;
+    min-height: 72px;
     padding: 14px 18px;
   }
 }
 
 .home-inner .game-mode-card:hover:not(:disabled) {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--brand-accent, var(--ro-border)) 45%, var(--border-default));
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--brand-accent, var(--ro-border)) 55%, var(--border-default));
   background: var(--bg-card-hover);
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
+}
+
+.home-inner .game-mode-card:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .home-inner .game-mode-card:focus-visible {
@@ -380,34 +367,28 @@
   width: auto;
 }
 
-/* Iconografía uniforme y profesional con acento dinámico del club */
+/* Iconos monocromáticos. El color del club solo aparece al interactuar. */
 .home-inner .rv-mode-card__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 12%, var(--bg-card));
-  border: 0.5px solid color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 30%, transparent);
-  color: var(--brand-accent, var(--ro-text-primary));
+  width: 22px;
+  height: 22px;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  color: var(--ro-text-secondary, #b5b5b8);
+  -webkit-text-fill-color: var(--ro-text-secondary, #b5b5b8);
   font-size: 1.05rem;
   line-height: 1;
+  transition: color 180ms ease;
 }
 
-@media (min-width: 640px) {
-  .home-inner .rv-mode-card__icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-  }
-
-  .home-inner .game-mode-card--competencia .rv-mode-card__icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 11px;
-  }
+.home-inner .game-mode-card:hover:not(:disabled) .rv-mode-card__icon,
+.home-inner .game-mode-card:focus-visible .rv-mode-card__icon {
+  color: var(--brand-accent, var(--ro-text-primary));
+  -webkit-text-fill-color: var(--brand-accent, var(--ro-text-primary));
 }
 
 .home-inner .rv-mode-card__title {
@@ -437,15 +418,13 @@
 }
 
 .home-inner .rv-mode-card__desc {
-  font-size: 0.71875rem;
-  line-height: 1.32;
+  font-size: 0.75rem;
+  line-height: 1.3;
   color: var(--ro-text-secondary);
   margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-clamp: 2;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (min-width: 640px) {
@@ -466,9 +445,16 @@
   }
 }
 
+.home-inner .game-mode-card--reta-rapida .game-mode-card__chevron {
+  position: absolute;
+  top: 14px;
+  right: 12px;
+}
+
 .home-inner .game-mode-card__chevron {
   flex-shrink: 0;
   color: var(--ro-text-muted);
+  -webkit-text-fill-color: var(--ro-text-muted);
   transition: transform 160ms ease, color 160ms ease;
 }
 
@@ -514,28 +500,34 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
-@media (min-width: 600px) {
+@media (min-width: 390px) {
   .home-access__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .home-access__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
   }
 }
 
-@media (min-width: 960px) {
+@media (min-width: 1280px) {
   .home-access__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px 14px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
   }
 }
 
 .home-access-card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  min-height: 54px;
-  padding: 9px 12px;
-  border: 0.5px solid var(--border-subtle);
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   background: var(--bg-card);
   color: inherit;
@@ -546,21 +538,12 @@
   touch-action: manipulation;
   transition:
     border-color 160ms ease,
-    background 160ms ease,
-    transform 160ms ease;
-}
-
-@media (min-width: 960px) {
-  .home-access-card {
-    min-height: 60px;
-    padding: 10px 14px;
-  }
+    background 160ms ease;
 }
 
 .home-access-card:hover {
-  border-color: color-mix(in srgb, var(--brand-accent, var(--ro-border)) 45%, var(--border-default));
+  border-color: color-mix(in srgb, var(--brand-accent, var(--ro-border)) 55%, var(--border-default));
   background: var(--bg-card-hover);
-  transform: translateY(-1px);
 }
 
 .home-access-card:focus-visible {
@@ -575,12 +558,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 10%, var(--ro-bg-inset));
-  border: 0.5px solid color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 24%, var(--ro-border-subtle));
-  color: var(--brand-accent, var(--ro-text-secondary));
+  width: 20px;
+  height: 20px;
+  border: 0;
+  background: transparent;
+  color: var(--ro-text-secondary, #b5b5b8);
+  -webkit-text-fill-color: var(--ro-text-secondary, #b5b5b8);
+  transition: color 160ms ease;
+}
+
+.home-access-card:hover .home-access-card__icon,
+.home-access-card:focus-visible .home-access-card__icon {
+  color: var(--brand-accent, var(--ro-text-primary));
+  -webkit-text-fill-color: var(--brand-accent, var(--ro-text-primary));
 }
 
 .home-access-card__body {
@@ -593,11 +583,14 @@
 
 .home-access-card__title,
 .home-access-card--primary .home-access-card__title {
-  font-size: 0.875rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.84rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--ro-text-primary);
-  line-height: 1.22;
+  -webkit-text-fill-color: var(--ro-text-primary);
+  line-height: 1.25;
 }
 
 .home-access-card__desc {
@@ -623,7 +616,7 @@
 }
 
 .home-access-card--primary {
-  border-color: color-mix(in srgb, var(--brand-accent, var(--border-default)) 28%, var(--border-default));
+  border-color: var(--border-subtle);
 }
 
 /* —— Retas recientes / detalle de modo: tarjeta compartida —— */
@@ -1473,7 +1466,7 @@
   }
 
   body:has(.home-inner--dashboard) .user-header-content {
-    max-width: calc(1320px + 2 * clamp(24px, 3vw, 40px));
+    max-width: calc(1400px + 2 * clamp(24px, 3vw, 40px));
     padding-top: 10px;
     padding-bottom: 10px;
     padding-left: clamp(24px, 3vw, 40px);
@@ -1515,12 +1508,12 @@
   }
 
   .home-inner--dashboard .home-hero {
-    min-height: 46px;
-    margin-bottom: 14px;
+    min-height: 0;
+    margin-bottom: 12px;
   }
 
   .home-inner--dashboard .home-question {
-    font-size: 1.375rem;
+    font-size: 1.85rem;
   }
 
   .home-inner--dashboard .game-modes-groups {
@@ -1533,13 +1526,13 @@
   }
 
   .home-inner--dashboard .game-mode-card {
-    min-height: 110px;
-    padding: 12px 14px;
+    min-height: 0;
+    padding: 12px 14px 10px;
   }
 
   .home-inner--dashboard .game-mode-card.game-mode-card--competencia {
-    min-height: 84px;
-    padding: 12px 16px;
+    min-height: 64px;
+    padding: 10px 14px;
   }
 
   .home-inner--dashboard .home-access {
@@ -1552,8 +1545,8 @@
   }
 
   .home-inner--dashboard .home-access-card {
-    min-height: 56px;
-    padding: 8px 12px;
+    min-height: 44px;
+    padding: 8px 10px;
   }
 
   .home-inner--dashboard .app-site-foot {
@@ -1575,8 +1568,8 @@
   }
 
   .home-hero {
-    min-height: 44px;
-    margin-bottom: 14px;
+    min-height: 0;
+    margin-bottom: 12px;
   }
 
   .home-shell {
@@ -1615,8 +1608,8 @@
   }
 
   .home-inner .game-mode-card {
-    padding: 10px;
-    min-height: 92px;
+    padding: 12px 10px 10px;
+    min-height: 0;
   }
 
   .home-inner .rv-mode-card__title {
