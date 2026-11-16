@@ -558,16 +558,6 @@ export const CoachPortalPage: React.FC = () => {
       <div className="coaching-page coaching-coach-portal rv-page">
         <div className="coach-portal-container">
           <header className="coach-portal-hero">
-            <div className="coach-portal-topbar">
-              <button
-                type="button"
-                className="coach-portal-back"
-                onClick={() => navigateToAppHome()}
-              >
-                <TablerIcon name="arrow-left" size={15} />
-                Inicio
-              </button>
-            </div>
             <p className="coach-portal-kicker">Riviera Coaching · Espacio del Coach</p>
             <h1 className="coach-portal-title">Espacio del Coach</h1>
             <p className="coach-portal-subtitle">Verificando credenciales de coach…</p>
@@ -676,16 +666,6 @@ export const CoachPortalPage: React.FC = () => {
       <div className="coach-portal-container">
         {/* Encabezado Principal */}
         <header className="coach-portal-hero">
-          <div className="coach-portal-topbar">
-            <button
-              type="button"
-              className="coach-portal-back"
-              onClick={() => navigateToAppHome()}
-            >
-              <TablerIcon name="arrow-left" size={15} />
-              Inicio
-            </button>
-          </div>
           <p className="coach-portal-kicker">Riviera Coaching · Espacio del Coach</p>
           <h1 className="coach-portal-title">Hola, {coachFirstName}</h1>
         </header>
