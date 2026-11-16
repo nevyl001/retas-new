@@ -335,6 +335,7 @@ describe("CoachPortalPage & CoachingRouter", () => {
     ]);
     jest.spyOn(coachingApi, "fetchCoachAgenda").mockResolvedValue([]);
     jest.spyOn(coachingApi, "fetchCoachFollowupDigest").mockResolvedValue([]);
+    jest.spyOn(coachingApi, "fetchCoachRelationshipLedger").mockResolvedValue([]);
     jest.spyOn(coachingApi, "fetchCoachClassFollowup").mockResolvedValue([
       {
         id: "ses-1",
@@ -361,7 +362,7 @@ describe("CoachPortalPage & CoachingRouter", () => {
     });
 
     const openFollowup = Array.from(container.querySelectorAll("button")).find((button) =>
-      button.textContent?.includes("Ver seguimiento")
+      button.textContent?.includes("Diego Palomares")
     );
     await act(async () => {
       openFollowup?.click();
@@ -401,6 +402,112 @@ describe("CoachPortalPage & CoachingRouter", () => {
       })
     );
     expect(recordSpy).not.toHaveBeenCalled();
+  });
+
+  it("muestra cada alumno una vez y abre solo sus próximas clases", async () => {
+    jest.spyOn(coachingApi, "fetchCurrentCoachProfile").mockResolvedValue(mockCoachProfile);
+    jest.spyOn(coachingApi, "fetchCoachAssignedStudents").mockResolvedValue([
+      {
+        id: "rel-1",
+        coachId: "coach-uuid-1",
+        coachNombre: "Coach Fernando",
+        jugadorId: "jugador-1",
+        jugadorNombre: "Diego Palomares",
+        rivieraId: "RIV-00000356",
+        status: "ACTIVE",
+        isPrimary: true,
+        balanceClasses: 4,
+        totalClassesGiven: 1,
+      },
+      {
+        id: "rel-2",
+        coachId: "coach-uuid-1",
+        coachNombre: "Coach Fernando",
+        jugadorId: "jugador-2",
+        jugadorNombre: "Ana Rivas",
+        rivieraId: "RIV-00000011",
+        status: "ACTIVE",
+        isPrimary: false,
+        balanceClasses: 5,
+        totalClassesGiven: 0,
+      },
+    ]);
+    jest.spyOn(coachingApi, "fetchCoachAgenda").mockResolvedValue([
+      {
+        id: "ses-diego",
+        coachId: "coach-uuid-1",
+        jugadorId: "jugador-1",
+        jugadorNombre: "Diego Palomares",
+        rivieraId: "RIV-00000356",
+        relationshipId: "rel-1",
+        startsAt: "2026-11-17T19:00:00Z",
+        endsAt: "2026-11-17T20:00:00Z",
+        durationMinutes: 60,
+        court: "Cancha 1",
+        focus: "Bandeja y víbora",
+        notesSummary: null,
+        status: "SCHEDULED",
+        createdAt: "2026-11-01T00:00:00Z",
+      },
+    ]);
+    jest.spyOn(coachingApi, "fetchCoachFollowupDigest").mockResolvedValue([]);
+    jest.spyOn(coachingApi, "fetchCoachClassFollowup").mockResolvedValue([]);
+    jest.spyOn(coachingApi, "fetchCoachRelationshipLedger").mockResolvedValue([]);
+
+    await act(async () => {
+      root.render(<CoachPortalPage />);
+    });
+
+    const names = Array.from(container.querySelectorAll(".coach-roster-card strong")).map(
+      (node) => node.textContent
+    );
+    expect(names).toEqual(["Diego Palomares", "Ana Rivas"]);
+    expect(container.textContent).not.toContain("Registrar impartida");
+    expect(container.textContent).not.toContain("Registrar clase impartida");
+    expect(container.textContent).not.toContain("Mis Próximas Clases Agendadas");
+
+    const search = container.querySelector("input[type='search']") as HTMLInputElement;
+    const setValue = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      "value"
+    )?.set;
+    await act(async () => {
+      setValue?.call(search, "00000011");
+      search.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(container.textContent).toContain("Ana Rivas");
+    expect(container.textContent).not.toContain("Diego Palomares");
+
+    await act(async () => {
+      setValue?.call(search, "");
+      search.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const unscheduled = Array.from(container.querySelectorAll("button")).find((button) =>
+      button.textContent === "Sin clases programadas"
+    );
+    await act(async () => {
+      unscheduled?.click();
+    });
+    expect(container.textContent).toContain("Ana Rivas");
+    expect(container.textContent).not.toContain("Diego Palomares");
+
+    const all = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Todos"
+    );
+    await act(async () => {
+      all?.click();
+    });
+    const diego = Array.from(container.querySelectorAll(".coach-roster-card")).find((button) =>
+      button.textContent?.includes("Diego Palomares")
+    );
+    await act(async () => {
+      diego?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(container.textContent).toContain("Bandeja y víbora");
+    expect(container.textContent).toContain("Cancha 1");
+    expect(container.textContent).not.toContain("Ana Rivas");
+    expect(container.textContent).toContain("Aún no hay sesiones registradas.");
   });
 });
 

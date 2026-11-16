@@ -5769,5 +5769,307 @@
   }
 }
 
+/* Directorio de alumnos del coach: una ficha por jugador. */
+.coach-roster {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--coach-text, #f4f1ea);
+}
+
+.coach-roster--detail .coach-roster__list,
+.coach-roster:not(.coach-roster--detail) .coach-roster__file {
+  display: none;
+}
+
+.coach-roster__list,
+.coach-roster__file {
+  min-width: 0;
+}
+
+.coach-roster__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.coach-roster__head h2 {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 0.04em;
+  font-weight: 400;
+}
+
+.coach-roster__head span,
+.coach-roster-card__body span,
+.coach-file-hero p,
+.coach-file-sessions span {
+  color: var(--coach-muted, rgba(244, 241, 234, 0.62));
+  font-size: 0.82rem;
+}
+
+.coach-roster__search {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.65rem;
+  padding: 0 0.75rem;
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.coach-roster__search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.coach-roster__search input:focus {
+  outline: none;
+}
+
+.coach-roster__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.coach-roster__tools button,
+.coach-roster__tools select,
+.coach-roster__more,
+.coach-roster__notice button,
+.coach-roster__back {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: inherit;
+  border-radius: 999px;
+  min-height: 32px;
+  padding: 0.2rem 0.7rem;
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+.coach-roster__tools button.is-on,
+.coach-roster-card.is-selected {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.coach-roster__tools select {
+  margin-left: auto;
+  border-radius: 8px;
+}
+
+.coach-roster__cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.coach-roster-card {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.55rem;
+  text-align: left;
+  color: inherit;
+  background: var(--coach-surface, #141414);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.coach-roster-card__photo {
+  width: 52px;
+  height: 70px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.coach-roster-card__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.coach-roster-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.coach-roster-card__body strong,
+.coach-file-hero h2 {
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.coach-roster-card__next {
+  color: rgba(244, 241, 234, 0.84);
+}
+
+.coach-roster__file {
+  padding-bottom: 1.5rem;
+}
+
+.coach-roster__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+  border-radius: 8px;
+}
+
+.coach-roster__placeholder,
+.coach-roster__notice p,
+.coach-file-block p {
+  margin: 0;
+}
+
+.coach-file-hero {
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+  margin-bottom: 1.1rem;
+}
+
+.coach-file-hero__photo {
+  width: 72px;
+  height: 96px;
+}
+
+.coach-file-hero h2 {
+  margin: 0 0 0.25rem;
+  font-size: 2rem;
+}
+
+.coach-file-hero p {
+  margin: 0;
+}
+
+.coach-file-block {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.coach-file-block h3 {
+  margin: 0 0 0.65rem;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+.coach-file-sessions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.coach-file-sessions button {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+}
+
+.coach-file-sessions strong {
+  font-size: 0.92rem;
+}
+
+.coach-file-ledger {
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.coach-file-ledger li {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: baseline;
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
+.coach-file-ledger strong {
+  font-weight: 650;
+}
+
+.coach-roster details.coach-follow-history__item {
+  display: block;
+}
+
+.coach-roster details.coach-follow-history__item > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.coach-roster details.coach-follow-history__item > summary::-webkit-details-marker {
+  display: none;
+}
+
+@media (min-width: 1080px) {
+  .coach-roster,
+  .coach-roster--detail .coach-roster__list,
+  .coach-roster:not(.coach-roster--detail) .coach-roster__file {
+    display: grid;
+  }
+
+  .coach-roster {
+    grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .coach-roster__list {
+    max-height: calc(100vh - 7rem);
+    overflow: auto;
+    padding-right: 0.2rem;
+  }
+
+  .coach-roster__back {
+    display: none;
+  }
+}
+
 
 

@@ -9,6 +9,7 @@ import {
   saveCoachSessionPreparation,
   fetchCoachClassFollowup,
   fetchCoachFollowupDigest,
+  fetchCoachRelationshipLedger,
   updateCoachClassFollowup,
 } from "../../lib/coaching/coachingApi";
 import type {
@@ -16,6 +17,7 @@ import type {
   CoachingPlayerLink,
   CoachScheduledSession,
   CoachClassFollowup,
+  CoachClassLedgerEntry,
   CoachFollowupDigest,
 } from "../../lib/coaching/types";
 import { selectOperativeCoachClubId } from "../../lib/coaching/studentTrainingScope";
@@ -30,6 +32,7 @@ import { Modal } from "../ui/Modal";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { CoachProfileEditor } from "./CoachProfileEditor";
 import { CoachPublicDetails, coachHasPublicStory } from "./CoachPublicStory";
+import { CoachStudentWorkspace } from "./CoachStudentWorkspace";
 import "./coaching.css";
 
 const DEFAULT_PADEL_TOPICS = [
@@ -118,7 +121,11 @@ export const CoachPortalPage: React.FC = () => {
   >({});
   const [followupStudent, setFollowupStudent] = useState<CoachingPlayerLink | null>(null);
   const [followupSessions, setFollowupSessions] = useState<CoachClassFollowup[]>([]);
+  const [followupLoading, setFollowupLoading] = useState(false);
   const [followupError, setFollowupError] = useState<string | null>(null);
+  const [packageMoves, setPackageMoves] = useState<CoachClassLedgerEntry[]>([]);
+  const [packageLoading, setPackageLoading] = useState(false);
+  const [packageError, setPackageError] = useState<string | null>(null);
   const [modalKey, setModalKey] = useState("");
   const [modalBusy, setModalBusy] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -178,6 +185,15 @@ export const CoachPortalPage: React.FC = () => {
   const canOperateClub = selectedMembership?.status === "ACTIVE";
 
   useEffect(() => {
+    setFollowupStudent(null);
+    setFollowupSessions([]);
+    setPackageMoves([]);
+    setPackageError(null);
+    const marker = window.history.state as { coachAlumno?: string } | null;
+    if (marker?.coachAlumno) window.history.replaceState({}, "");
+  }, [selectedClubId]);
+
+  useEffect(() => {
     if (profile && selectedClubId && canOperateClub) {
       void loadStudents(profile.id, selectedClubId);
       void loadUpcoming(selectedClubId);
@@ -186,6 +202,13 @@ export const CoachPortalPage: React.FC = () => {
       setUpcomingSessions([]);
     }
   }, [profile, selectedClubId, canOperateClub, loadStudents, loadUpcoming]);
+
+  useEffect(() => {
+    setFollowupStudent((current) => {
+      if (!current) return current;
+      return students.find((student) => student.id === current.id) ?? null;
+    });
+  }, [students]);
 
   useEffect(() => {
     let isMounted = true;
@@ -239,40 +262,6 @@ export const CoachPortalPage: React.FC = () => {
     } catch {
       return iso;
     }
-  };
-
-  const openRecordClassModal = (st: CoachingPlayerLink) => {
-    if (st.status === "PAUSED") {
-      setStudentsError(
-        "El alumno está en pausa. El administrador del club debe reactivar la relación para registrar clases."
-      );
-      return;
-    }
-    setModalStudent(st);
-    setModalSessionId(null);
-    setWorkedOnList([]);
-    setCustomTopic("");
-    setImprovements("");
-    setAreasToImprove("");
-    setRecommendations("");
-    setNextGoals("");
-    setMotivationalMessage("");
-    setDurationMinutes(60);
-    setClassNotes("");
-    setEditingFollowup(false);
-    setFollowupBaseline(
-      JSON.stringify({
-        workedOn: [] as string[],
-        improvements: "",
-        areas: "",
-        recommendations: "",
-        nextGoals: "",
-        message: "",
-        notes: "",
-      })
-    );
-    setModalError(null);
-    setModalKey(generateCoachingIdempotencyKey("session"));
   };
 
   const handleOpenDetails = (session: CoachScheduledSession) => {
@@ -426,12 +415,51 @@ export const CoachPortalPage: React.FC = () => {
     setFollowupStudent(student);
     setFollowupSessions([]);
     setFollowupError(null);
+    setFollowupLoading(true);
+    setPackageMoves([]);
+    setPackageError(null);
+    setPackageLoading(true);
     try {
-      setFollowupSessions(await fetchCoachClassFollowup(student.id));
+      const [sessions, moves] = await Promise.all([
+        fetchCoachClassFollowup(student.id),
+        fetchCoachRelationshipLedger(student.id).catch((err: unknown) => {
+          setPackageError(
+            err instanceof Error ? err.message : "No se pudo cargar el paquete."
+          );
+          return [] as CoachClassLedgerEntry[];
+        }),
+      ]);
+      setFollowupSessions(sessions);
+      setPackageMoves(moves);
     } catch (err) {
       setFollowupError(err instanceof Error ? err.message : "No se pudo abrir el seguimiento.");
+    } finally {
+      setFollowupLoading(false);
+      setPackageLoading(false);
     }
   };
+
+  const selectStudent = (student: CoachingPlayerLink) => {
+    window.history.pushState({ coachAlumno: student.id }, "");
+    void openStudentFollowup(student);
+  };
+
+  const leaveStudent = () => {
+    if (window.history.state && (window.history.state as { coachAlumno?: string }).coachAlumno) {
+      window.history.back();
+      return;
+    }
+    setFollowupStudent(null);
+  };
+
+  useEffect(() => {
+    const onPop = () => {
+      const marker = window.history.state as { coachAlumno?: string } | null;
+      if (!marker?.coachAlumno) setFollowupStudent(null);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const openEditFollowup = (session: CoachClassFollowup) => {
     if (!followupStudent) return;
@@ -539,9 +567,17 @@ export const CoachPortalPage: React.FC = () => {
       setModalStudent(null);
       setModalSessionId(null);
       if (profile && selectedClubId) {
+        const refreshFollowup =
+          followupStudent && followupStudent.id === modalStudent.id
+            ? Promise.all([
+                fetchCoachClassFollowup(followupStudent.id).then(setFollowupSessions),
+                fetchCoachRelationshipLedger(followupStudent.id).then(setPackageMoves),
+              ])
+            : Promise.resolve();
         await Promise.all([
           loadStudents(profile.id, selectedClubId),
           loadUpcoming(selectedClubId),
+          refreshFollowup,
         ]);
       }
     } catch (err) {
@@ -861,388 +897,32 @@ export const CoachPortalPage: React.FC = () => {
         ) : null}
 
         {canOperateClub ? (
-          <>
-            {/* Agenda: Próximas Clases Agendadas del Coach */}
-            <section className="coach-portal-section" aria-label="Próximas clases">
-              <div className="coach-portal-section-header">
-                <div>
-                  <h2 className="coach-portal-section-title">Mis Próximas Clases Agendadas</h2>
-                  <p className="coach-portal-section-desc">
-                    Consulta las sesiones programadas por la administración del club, revisa los detalles pedagógicos y registra la clase impartida al concluirla.
-                  </p>
-                </div>
-                {selectedClubId && (
-                  <button
-                    type="button"
-                    className="coaching-btn coaching-btn--secondary"
-                    style={{ fontSize: "0.8rem", padding: "0.35rem 0.75rem" }}
-                    onClick={() => void loadUpcoming(selectedClubId)}
-                    disabled={loadingUpcoming}
-                  >
-                    <TablerIcon name="refresh" size={14} className={loadingUpcoming ? "spin" : ""} />
-                    Actualizar
-                  </button>
-                )}
-              </div>
-
-              {loadingUpcoming ? (
-                <p className="coaching-muted">Cargando tus próximas clases agendadas…</p>
-              ) : upcomingError ? (
-                <div className="coach-portal-alert coach-portal-alert--error" style={{ justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <TablerIcon name="alert-circle" size={18} />
-                    <span>{upcomingError}</span>
-                  </div>
-                  <button
-                    type="button"
-                    className="coaching-btn coaching-btn--secondary"
-                    style={{ fontSize: "0.8rem", padding: "0.3rem 0.6rem" }}
-                    onClick={() => selectedClubId && void loadUpcoming(selectedClubId)}
-                  >
-                    Reintentar
-                  </button>
-                </div>
-              ) : upcomingSessions.length === 0 ? (
-                <div
-                  style={{
-                    padding: "1.75rem",
-                    textAlign: "center",
-                    background: "var(--coach-surface)",
-                    borderRadius: "12px",
-                    border: "1px dashed var(--coach-border)",
-                  }}
-                >
-                  <p className="coaching-muted" style={{ margin: 0 }}>
-                    No tienes clases programadas pendientes en este club. Las clases agendadas por la administración aparecerán aquí automáticamente.
-                  </p>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-                  {upcomingSessions.map((session) => {
-                    const formattedDate = formatSessionDate(session.startsAt);
-                    return (
-                      <div
-                        key={session.id}
-                        className="coach-session-card"
-                      >
-                        {/* Información principal: Alumno, Horario, Pista */}
-                        <div className="coach-session-card__left">
-                          <div className="coach-session-student-avatar">
-                            {session.jugadorFoto ? (
-                              <img src={session.jugadorFoto} alt={session.jugadorNombre || "Alumno"} />
-                            ) : (
-                              <span>{getInitials(session.jugadorNombre || "AL")}</span>
-                            )}
-                          </div>
-
-                          <div className="coach-session-card__info">
-                            <div className="coach-session-card__header-row">
-                              <span className="coach-session-card__student-name">
-                                {session.jugadorNombre || "Alumno"}
-                              </span>
-                              {session.rivieraId && (
-                                <span className="coach-session-card__riviera-id">
-                                  {session.rivieraId}
-                                </span>
-                              )}
-                              <span className="coaching-badge coaching-badge--active">
-                                PROGRAMADA
-                              </span>
-                            </div>
-
-                            <div className="coach-session-card__meta-row">
-                              <span className="coach-session-meta-item">
-                                <TablerIcon name="calendar" size={13} />
-                                {formattedDate}
-                              </span>
-                              <span className="coach-session-meta-item">
-                                <TablerIcon name="clock" size={13} />
-                                {session.durationMinutes} min
-                              </span>
-                              <span className="coach-session-meta-item">
-                                <TablerIcon name="map-pin" size={13} />
-                                {session.court || "Cancha por asignar"}
-                              </span>
-                              {session.balanceClasses !== undefined && (
-                                <span
-                                  className="coach-session-meta-balance"
-                                  style={{
-                                    color: session.balanceClasses > 0 ? "var(--coach-accent-green, #22c55e)" : "#fbbf24",
-                                  }}
-                                >
-                                  {session.balanceClasses} {session.balanceClasses === 1 ? "clase disp." : "clases disp."}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Estado y visualización de la preparación pedagógica */}
-                            <div className="coach-session-card__prep-row">
-                              {session.focus ? (
-                                <div className="coach-session-focus-container">
-                                  {parsePrepFocusTopics(session.focus).map((topic) => (
-                                    <span key={topic} className="coach-session-focus-tag">
-                                      <TablerIcon name="target" size={12} />
-                                      {topic}
-                                    </span>
-                                  ))}
-                                  {session.messageToStudent ? (
-                                    <span className="coach-session-notes-preview">
-                                      Mensaje al alumno listo
-                                    </span>
-                                  ) : null}
-                                </div>
-                              ) : (
-                                <span className="coach-session-pending-tag">
-                                  <TablerIcon name="notes" size={12} />
-                                  Sesión por preparar
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Acciones */}
-                        <div className="coach-session-card__actions">
-                          <button
-                            type="button"
-                            className="coaching-btn coaching-btn--secondary"
-                            style={{ fontSize: "0.8rem", padding: "0.45rem 0.85rem" }}
-                            onClick={() => handleOpenDetails(session)}
-                          >
-                            <TablerIcon name="clipboard-list" size={14} />
-                            Ver clase
-                          </button>
-
-                          <button
-                            type="button"
-                            className="coaching-btn coaching-btn--primary"
-                            style={{ fontSize: "0.8rem", padding: "0.45rem 0.85rem" }}
-                            onClick={() => openRecordClassForScheduled(session)}
-                          >
-                            <TablerIcon name="check" size={14} />
-                            Registrar impartida (-1)
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-
-            {/* Gestión de Alumnos y Clases del Coach */}
-            <section className="coach-portal-section coach-students-section" aria-label="Alumnos y control de clases">
-              <div className="coach-portal-section-header">
-                <div>
-                  <h2 className="coach-portal-section-title">Alumnos y Control de Clases</h2>
-                  <p className="coach-portal-section-desc">
-                    Supervisa a tus alumnos asignados, consulta sus clases restantes y registra las sesiones impartidas.
-                  </p>
-                </div>
-                {students.length > 0 ? (
-                  <span className="coach-students-count-badge">
-                    <TablerIcon name="users" size={14} />
-                    {students.length} {students.length === 1 ? "alumno" : "alumnos"}
-                  </span>
-                ) : null}
-              </div>
-
-              {loadingStudents ? (
-                <p className="coaching-muted">Cargando alumnos y saldos…</p>
-              ) : studentsError ? (
-                <div className="coach-portal-alert coach-portal-alert--error" style={{ justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <TablerIcon name="alert-circle" size={18} />
-                    <span>{studentsError}</span>
-                  </div>
-                  <button
-                    type="button"
-                    className="coaching-btn coaching-btn--secondary"
-                    style={{ fontSize: "0.8rem", padding: "0.3rem 0.6rem" }}
-                    onClick={() =>
-                      profile && selectedClubId && void loadStudents(profile.id, selectedClubId)
-                    }
-                  >
-                    Reintentar
-                  </button>
-                </div>
-              ) : students.length === 0 ? (
-                <div className="coach-students-empty">
-                  <div className="coach-students-empty__icon">
-                    <TablerIcon name="users" size={28} />
-                  </div>
-                  <h3 className="coach-students-empty__title">Sin alumnos asignados en este club</h3>
-                  <p className="coach-students-empty__desc">
-                    El administrador del club te asignará los alumnos con paquetes de clases activos para impartir y registrar sesiones.
-                  </p>
-                </div>
-              ) : (
-                <div className="coach-students-grid">
-                  {students.map((s) => {
-                    const hasBalance = (s.balanceClasses ?? 0) > 0;
-                    const isModalOpenForThis = modalStudent?.id === s.id;
-                    const card = digestByRelationship[s.id];
-                    const categoryLabel = card?.categoria
-                      ? JUGADOR_CATEGORIA_LABELS[card.categoria as keyof typeof JUGADOR_CATEGORIA_LABELS] ||
-                        card.categoria
-                      : null;
-                    const studentInitials = getInitials(s.jugadorNombre);
-
-                    return (
-                      <article key={s.id} className="coach-student-card coaching-card">
-                        {/* 1. Header: Avatar + Nombre + Estado + Riviera ID */}
-                        <div className="coach-student-card__header">
-                          <div className="coach-student-avatar" aria-hidden>
-                            {card?.fotoUrl ? (
-                              <img
-                                src={card.fotoUrl}
-                                alt=""
-                                className="coach-student-avatar__img"
-                              />
-                            ) : (
-                              <div className="coach-student-avatar__fallback">
-                                {studentInitials}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="coach-student-identity">
-                            <div className="coach-student-identity__top">
-                              <h3 className="coach-student-name" title={s.jugadorNombre}>
-                                {s.jugadorNombre}
-                              </h3>
-                              <span
-                                className={`coaching-badge coach-student-badge--status coaching-badge--${
-                                  s.status === "ACTIVE"
-                                    ? "active"
-                                    : s.status === "PAUSED"
-                                    ? "pending"
-                                    : "inactive"
-                                }`}
-                              >
-                                {s.status === "ACTIVE"
-                                  ? "Activo"
-                                  : s.status === "PAUSED"
-                                  ? "En pausa"
-                                  : "Inactivo"}
-                              </span>
-                            </div>
-                            <span className="coach-student-id">{s.rivieraId}</span>
-                          </div>
-                        </div>
-
-                        {/* 2. Banner de Clases Disponibles (Nivel 1 de Jerarquía) */}
-                        <div className="coach-student-balance-banner">
-                          <div
-                            className={`coach-student-balance-pill ${
-                              hasBalance
-                                ? "coach-student-balance-pill--positive"
-                                : "coach-student-balance-pill--empty"
-                            }`}
-                          >
-                            <TablerIcon name="calendar-event" size={16} />
-                            <span>
-                              <strong>{s.balanceClasses ?? 0}</strong>{" "}
-                              {s.balanceClasses === 1 ? "clase disponible" : "clases disponibles"}
-                            </span>
-                          </div>
-                          {(s.totalClassesGiven ?? 0) > 0 ? (
-                            <span className="coach-student-impartidas-tag">
-                              {s.totalClassesGiven}{" "}
-                              {s.totalClassesGiven === 1 ? "impartida" : "impartidas"}
-                            </span>
-                          ) : null}
-                        </div>
-
-                        {/* 3. Resumen Operativo: Categoría, Última sesión, Próxima clase */}
-                        <div className="coach-student-summary-grid">
-                          <div className="coach-student-summary-item">
-                            <span className="coach-student-summary-label">Categoría</span>
-                            <span className="coach-student-summary-value coach-student-summary-value--accent">
-                              {categoryLabel || "Sin categoría"}
-                            </span>
-                          </div>
-
-                          <div className="coach-student-summary-item">
-                            <span className="coach-student-summary-label">Última sesión</span>
-                            <span
-                              className={`coach-student-summary-value ${
-                                card?.lastSessionAt ? "" : "coach-student-summary-value--muted"
-                              }`}
-                            >
-                              {card?.lastSessionAt
-                                ? formatSessionDate(card.lastSessionAt)
-                                : "Sin clases impartidas"}
-                            </span>
-                          </div>
-
-                          <div className="coach-student-summary-item coach-student-summary-item--full">
-                            <span className="coach-student-summary-label">Próxima clase</span>
-                            <span
-                              className={`coach-student-summary-value ${
-                                card?.nextSessionAt ? "" : "coach-student-summary-value--muted"
-                              }`}
-                            >
-                              {card?.nextSessionAt
-                                ? formatSessionDate(card.nextSessionAt)
-                                : "Sin clase agendada"}
-                            </span>
-                          </div>
-
-                          {card?.lastGoal ? (
-                            <div className="coach-student-summary-item coach-student-summary-item--full">
-                              <span className="coach-student-summary-label">Último objetivo</span>
-                              <span className="coach-student-summary-value coach-student-summary-value--goal">
-                                “{card.lastGoal}”
-                              </span>
-                            </div>
-                          ) : null}
-                        </div>
-
-                        {/* 4. Acciones del Coach */}
-                        <div className="coach-student-actions">
-                          <button
-                            type="button"
-                            className="coaching-btn coaching-btn--secondary coach-student-btn--followup"
-                            onClick={() => void openStudentFollowup(s)}
-                          >
-                            <TablerIcon name="history" size={15} />
-                            Ver seguimiento
-                          </button>
-                          <button
-                            type="button"
-                            className="coaching-btn coaching-btn--primary coach-student-btn--record"
-                            disabled={!hasBalance || modalBusy || s.status === "PAUSED"}
-                            onClick={() => openRecordClassModal(s)}
-                          >
-                            <TablerIcon name="check" size={15} />
-                            <span>
-                              {modalBusy && isModalOpenForThis
-                                ? "Registrando…"
-                                : "Registrar clase impartida (-1)"}
-                            </span>
-                          </button>
-                        </div>
-
-                        {/* Alertas contextuales si aplica */}
-                        {s.status === "PAUSED" ? (
-                          <div className="coach-student-alert coach-student-alert--warning">
-                            <TablerIcon name="alert-triangle" size={14} />
-                            <span>Alumno en pausa. El club debe reactivarlo para registrar clases.</span>
-                          </div>
-                        ) : !hasBalance ? (
-                          <div className="coach-student-alert coach-student-alert--muted">
-                            <TablerIcon name="info-circle" size={14} />
-                            <span>Sin saldo disponible. Solicita recarga al administrador del club.</span>
-                          </div>
-                        ) : null}
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          </>
+          <CoachStudentWorkspace
+            students={students}
+            sessions={upcomingSessions}
+            digestByRelationship={digestByRelationship}
+            loadingStudents={loadingStudents}
+            studentsError={studentsError}
+            loadingSessions={loadingUpcoming}
+            sessionsError={upcomingError}
+            onRetryStudents={() => {
+              if (profile && selectedClubId) void loadStudents(profile.id, selectedClubId);
+            }}
+            onRetrySessions={() => {
+              if (selectedClubId) void loadUpcoming(selectedClubId);
+            }}
+            selected={followupStudent}
+            onSelect={selectStudent}
+            onBack={leaveStudent}
+            followupSessions={followupSessions}
+            followupLoading={followupLoading}
+            followupError={followupError}
+            packageMoves={packageMoves}
+            packageLoading={packageLoading}
+            packageError={packageError}
+            onOpenSession={handleOpenDetails}
+            onEditFollowup={openEditFollowup}
+          />
         ) : profile.memberships.length > 0 ? (
           <section className="coach-portal-section" aria-label="Sin club activo">
             <div className="coaching-empty-card" style={{ padding: "2rem", textAlign: "center" }}>
@@ -1549,100 +1229,6 @@ export const CoachPortalPage: React.FC = () => {
             </div>
           </form>
         ) : null}
-      </Modal>
-
-      <Modal
-        open={Boolean(followupStudent)}
-        onClose={() => setFollowupStudent(null)}
-        className="coach-portal-modal"
-        title={`Seguimiento · ${followupStudent?.jugadorNombre || ""}`}
-        size="lg"
-      >
-        {followupError ? <p className="coaching-muted">{followupError}</p> : null}
-        {followupSessions.length === 0 && !followupError ? (
-          <p className="coaching-muted">Todavía no hay clases impartidas para este alumno.</p>
-        ) : (
-          <div className="coach-follow-history">
-            {followupSessions.map((session) => (
-              <article key={session.id} className="coach-follow-history__item">
-                <header className="coach-follow-history__head">
-                  <strong className="coach-follow-history__date">
-                    {formatSessionDate(session.startsAt)}
-                  </strong>
-                  <span className="coach-follow-history__meta">
-                    {session.durationMinutes
-                      ? `${session.durationMinutes} min`
-                      : "Duración no indicada"}
-                  </span>
-                </header>
-
-                {session.workedOn.length > 0 ? (
-                  <div className="coach-follow-history__block">
-                    <span className="coach-follow-history__label">Temas trabajados</span>
-                    <div className="coach-follow-history__chips">
-                      {session.workedOn.map((topic) => (
-                        <span key={topic} className="coach-follow-history__chip">
-                          {topic}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="coach-follow-history__meta">Sin temas registrados</p>
-                )}
-
-                {session.improvements ? (
-                  <div className="coach-follow-history__block">
-                    <span className="coach-follow-history__label">Avances</span>
-                    <p className="coach-follow-history__text">{session.improvements}</p>
-                  </div>
-                ) : null}
-                {session.areasToImprove ? (
-                  <div className="coach-follow-history__block">
-                    <span className="coach-follow-history__label">Aspectos por mejorar</span>
-                    <p className="coach-follow-history__text">{session.areasToImprove}</p>
-                  </div>
-                ) : null}
-                {session.recommendations ? (
-                  <div className="coach-follow-history__block">
-                    <span className="coach-follow-history__label">Recomendaciones</span>
-                    <p className="coach-follow-history__text">{session.recommendations}</p>
-                  </div>
-                ) : null}
-                {session.nextGoals ? (
-                  <div className="coach-follow-history__block">
-                    <span className="coach-follow-history__label">Objetivo siguiente</span>
-                    <p className="coach-follow-history__text">{session.nextGoals}</p>
-                  </div>
-                ) : null}
-                {session.motivationalMessage ? (
-                  <div className="coach-follow-history__message">
-                    <span className="coach-follow-history__label">Mensaje para el alumno</span>
-                    <p className="coach-follow-history__text">{session.motivationalMessage}</p>
-                  </div>
-                ) : null}
-                {session.privateNotes ? (
-                  <div className="coach-follow-history__private">
-                    <span className="coach-follow-history__label">Nota privada</span>
-                    <p className="coach-follow-history__hint">
-                      Entrenador, club de la relación y administrador maestro. El alumno no la ve.
-                    </p>
-                    <p className="coach-follow-history__text">{session.privateNotes}</p>
-                  </div>
-                ) : null}
-                <div className="coach-follow-history__actions">
-                  <button
-                    type="button"
-                    className="coaching-btn coaching-btn--secondary"
-                    onClick={() => openEditFollowup(session)}
-                  >
-                    Editar seguimiento de clase
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
       </Modal>
 
       {/* Modal: Detalle y Preparación de Clase Programada */}

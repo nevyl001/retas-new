@@ -1148,6 +1148,52 @@ export async function fetchClubClassLedger(
   }));
 }
 
+/** Movimientos oficiales del paquete de un alumno. RLS limita la lectura al coach de la relación. */
+export async function fetchCoachRelationshipLedger(
+  relationshipId: string
+): Promise<CoachClassLedgerEntry[]> {
+  const { data, error } = await supabase
+    .from("coach_class_ledger")
+    .select(
+      `
+      id,
+      relationship_id,
+      organizador_id,
+      coach_id,
+      jugador_id,
+      session_id,
+      delta,
+      tipo,
+      notas,
+      idempotency_key,
+      recorded_by,
+      created_at
+    `
+    )
+    .eq("relationship_id", relationshipId)
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  if (error) {
+    throw new Error("No se pudo cargar el paquete de clases: " + error.message);
+  }
+
+  return (data ?? []).map((row: any) => ({
+    id: String(row.id),
+    relationshipId: row.relationship_id ? String(row.relationship_id) : null,
+    organizadorId: String(row.organizador_id),
+    coachId: String(row.coach_id),
+    jugadorId: String(row.jugador_id),
+    sessionId: row.session_id ? String(row.session_id) : null,
+    delta: Number(row.delta),
+    tipo: row.tipo,
+    notas: row.notas,
+    idempotencyKey: row.idempotency_key,
+    recordedBy: String(row.recorded_by),
+    createdAt: String(row.created_at),
+  }));
+}
+
 /**
  * Consulta los alumnos vinculados a un coach, incluyendo su saldo disponible actual.
  * No oculta errores de RLS o conectividad como listas vacías.
