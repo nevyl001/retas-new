@@ -123,6 +123,18 @@ describe("CoachPortalPage & CoachingRouter", () => {
     expect(container.textContent).toContain("Coach Fernando");
     expect(container.textContent).toContain("RIV-C-00042");
     expect(container.textContent).toContain("Entrenador certificado nivel 2");
+    expect(
+      container.textContent?.split("Entrenador certificado nivel 2").length
+    ).toBe(2);
+    expect(container.textContent).not.toContain("Técnica");
+
+    const profileButton = Array.from(container.querySelectorAll("button")).find((button) =>
+      button.textContent?.includes("Ver perfil completo")
+    );
+    await act(async () => {
+      profileButton?.click();
+    });
+
     expect(container.textContent).toContain("Técnica");
     expect(container.textContent).toContain("Defensa");
     expect(container.textContent).not.toContain("ID Club");

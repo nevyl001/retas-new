@@ -687,12 +687,7 @@ export const CoachPortalPage: React.FC = () => {
             </button>
           </div>
           <p className="coach-portal-kicker">Riviera Coaching · Espacio del Coach</p>
-          <h1 className="coach-portal-title">
-            Hola, {coachFirstName}
-          </h1>
-          <p className="coach-portal-subtitle">
-            Gestiona tu actividad como coach desde un solo lugar.
-          </p>
+          <h1 className="coach-portal-title">Hola, {coachFirstName}</h1>
         </header>
 
         {/* Tarjeta de Identidad Oficial del Coach */}
@@ -733,67 +728,52 @@ export const CoachPortalPage: React.FC = () => {
                 </div>
               </div>
 
-              {profile.bio ? (
-                <p className="coach-identity-bio">{profile.bio}</p>
-              ) : null}
-
-              {(profile.fuerzas.length > 0 || profile.especialidades.length > 0) && (
-                <div className="coach-identity-meta-grid">
-                  {profile.fuerzas.length > 0 ? (
-                    <div className="coach-identity-group">
-                      <span className="coach-identity-group__label">Fuerzas que entrenas</span>
-                      <div className="coach-identity-chips">
-                        {profile.fuerzas.map((f) => (
-                          <span key={f} className="coach-identity-chip">
-                            {JUGADOR_CATEGORIA_LABELS[f] || f}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {profile.especialidades.length > 0 ? (
-                    <div className="coach-identity-group">
-                      <span className="coach-identity-group__label">Especialidades</span>
-                      <div className="coach-identity-chips">
-                        {profile.especialidades.map((esp) => (
-                          <span key={esp} className="coach-identity-chip coach-identity-chip--spec">
-                            {esp}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              )}
             </div>
           </div>
         </section>
 
-        {coachHasPublicStory(profile) ? (
-          <section className="coach-story-card" aria-label="Mi perfil como entrenador">
+        {coachHasPublicStory(profile) ||
+        profile.fuerzas.length > 0 ||
+        profile.especialidades.length > 0 ? (
+          <section className="coach-story-card" aria-label="Mi perfil">
             <div className="coach-story-card__head">
-              <h2>Mi perfil como entrenador</h2>
+              <h2 className="coach-story-card__title">Mi perfil</h2>
               <button
                 type="button"
                 className="coaching-btn-ghost"
                 onClick={() => setProfileStoryOpen((open) => !open)}
+                aria-expanded={profileStoryOpen}
               >
                 {profileStoryOpen ? "Ocultar" : "Ver perfil completo"}
               </button>
             </div>
             {profile.bio ? <p className="coach-story-lead">{profile.bio}</p> : null}
-            <p className="coach-story-meta">
-              {[
-                profile.anosExperiencia != null
-                  ? `${profile.anosExperiencia} años de experiencia`
-                  : null,
-                profile.metodologiaEnsenanza,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
-            {profileStoryOpen ? <CoachPublicDetails profile={profile} /> : null}
+            {profileStoryOpen ? (
+              <div className="coach-story-details">
+                {profile.anosExperiencia != null ? (
+                  <p className="coach-story-meta">
+                    {profile.anosExperiencia}{" "}
+                    {profile.anosExperiencia === 1
+                      ? "año de experiencia"
+                      : "años de experiencia"}
+                  </p>
+                ) : null}
+                {profile.especialidades.length > 0 ? (
+                  <p className="coach-story-meta">{profile.especialidades.join(" · ")}</p>
+                ) : null}
+                {profile.fuerzas.length > 0 ? (
+                  <p className="coach-story-meta">
+                    {profile.fuerzas
+                      .map((fuerza) => JUGADOR_CATEGORIA_LABELS[fuerza] || fuerza)
+                      .join(" · ")}
+                  </p>
+                ) : null}
+                {profile.metodologiaEnsenanza ? (
+                  <p className="coach-story-meta">{profile.metodologiaEnsenanza}</p>
+                ) : null}
+                <CoachPublicDetails profile={profile} />
+              </div>
+            ) : null}
           </section>
         ) : null}
 
