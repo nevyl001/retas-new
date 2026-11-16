@@ -4395,21 +4395,17 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   min-width: 0;
 }
 
-.qm-ws__workbench .elegant-pair-player {
+.qm-ws__workbench .elegant-pair-player,
+.qm-ws__workbench .elegant-pair-player + .elegant-pair-player {
   display: block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--qm-ink-text);
+  color: var(--qm-ink-text) !important;
   font-size: 0.8125rem;
   font-weight: 650;
   line-height: 1.3;
-}
-
-.qm-ws__workbench .elegant-pair-player + .elegant-pair-player {
-  color: var(--qm-ink-muted);
-  font-weight: 550;
 }
 
 .qm-ws__workbench .elegant-pair-card button {
