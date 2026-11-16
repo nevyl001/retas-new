@@ -13,6 +13,7 @@ export interface GameModeConfig {
   title: string;
   description: string;
   icon: string;
+  tablerIcon?: string;
   accentColor: string;
   category: GameModeCategory;
   typeLabel: string;
@@ -25,7 +26,8 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Reta por Equipos",
     description: "Parejas agrupadas por equipos.",
     icon: "👥",
-    accentColor: "#ffffff",
+    tablerIcon: "users",
+    accentColor: "var(--brand-accent, var(--ro-accent))",
     category: "reta-rapida",
     typeLabel: "Reta rápida",
   },
@@ -34,7 +36,8 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Round Robin",
     description: "Todos contra todos.",
     icon: "🔄",
-    accentColor: "#ffffff",
+    tablerIcon: "refresh",
+    accentColor: "var(--brand-accent, var(--ro-accent))",
     category: "reta-rapida",
     typeLabel: "Reta rápida",
   },
@@ -43,7 +46,8 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Reta Pádel Americano",
     description: "Rotación dinámica por rondas.",
     icon: "🎾",
-    accentColor: "#10b981",
+    tablerIcon: "ball-tennis",
+    accentColor: "var(--brand-accent, var(--ro-accent))",
     category: "reta-rapida",
     typeLabel: "Reta rápida",
   },
@@ -52,7 +56,8 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Duelo 2 vs 2",
     description: "Dos parejas, suma al ranking.",
     icon: "⚔️",
-    accentColor: "#f59e0b",
+    tablerIcon: "swords",
+    accentColor: "var(--brand-accent, var(--ro-accent))",
     category: "reta-rapida",
     typeLabel: "Reta rápida",
   },
@@ -61,7 +66,8 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Torneos",
     description: "Grupos y fase final.",
     icon: "🏆",
-    accentColor: "#8b5cf6",
+    tablerIcon: "trophy",
+    accentColor: "var(--brand-accent, var(--ro-accent))",
     category: "competencia",
     typeLabel: "Competencia",
   },
@@ -70,7 +76,8 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Liga",
     description: "Temporada con jornadas.",
     icon: "📅",
-    accentColor: "#3b82f6",
+    tablerIcon: "calendar-event",
+    accentColor: "var(--brand-accent, var(--ro-accent))",
     category: "competencia",
     typeLabel: "Competencia",
   },

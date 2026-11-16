@@ -40,8 +40,10 @@ export const ModeCard: React.FC<ModeCardProps> = ({
       ) : null}
       {typeLabel ? <span className="rv-pill rv-pill--muted">{typeLabel}</span> : null}
     </div>
-    <h3 className="rv-mode-card__title">{title}</h3>
-    <p className="rv-mode-card__desc">{description}</p>
+    <div className="rv-mode-card__body">
+      <h3 className="rv-mode-card__title">{title}</h3>
+      <p className="rv-mode-card__desc">{description}</p>
+    </div>
     {!disabled && ctaLabel ? <span className="rv-mode-card__cta">{ctaLabel}</span> : null}
     {children}
   </button>

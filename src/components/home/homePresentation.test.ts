@@ -144,12 +144,22 @@ describe("home presentation", () => {
         })
       );
 
+      expect(view).toContain("home-inner--dashboard");
       expect(view).toContain("home-greeting");
       expect(view).toContain("Hola, Test User");
       expect(view).toContain("home-question");
       expect(view).toContain("¿Qué quieres organizar hoy?");
       expect(view).toContain("Retas rápidas");
       expect(view).toContain("Competencias organizadas");
+      expect(view).toContain("game-mode-card--reta-rapida");
+      expect(view).toContain("game-mode-card--competencia");
+      expect(view).toContain("rv-mode-card__body");
+      expect(view).toContain("ti-users");
+      expect(view).toContain("ti-refresh");
+      expect(view).toContain("ti-ball-tennis");
+      expect(view).toContain("ti-swords");
+      expect(view).toContain("ti-trophy");
+      expect(view).toContain("ti-calendar-event");
       // Sin elementos decorativos ni CTA visible: toda la tarjeta es el botón.
       expect(view).not.toContain("Próximamente");
       expect(view).not.toContain("rv-mode-card__cta");

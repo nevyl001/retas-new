@@ -1,5 +1,6 @@
 import React from "react";
 import { getRetaGameMode, getRetaId, getRetaName, type HomeRetaItem } from "../../lib/retasList";
+import { TablerIcon } from "../ui/TablerIcon";
 import { GAME_MODES } from "./gameModesConfig";
 
 interface HomeContinueStripProps {
@@ -31,12 +32,10 @@ export const HomeContinueStrip: React.FC<HomeContinueStripProps> = ({
               onClick={() => onContinue(item)}
             >
               <span className="home-pending-card__icon" aria-hidden>
-                {mode?.icon ?? "🎾"}
+                <TablerIcon name={mode?.tablerIcon ?? "ball-tennis"} size={18} />
               </span>
               <span className="home-pending-card__name">{getRetaName(item)}</span>
-              <span className="home-pending-card__go" aria-hidden>
-                →
-              </span>
+              <TablerIcon name="chevron-right" size={16} className="home-pending-card__go" />
             </button>
           );
         })}

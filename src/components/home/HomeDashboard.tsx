@@ -211,7 +211,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   }
 
   return (
-    <div className="home-inner rv-page">
+    <div className="home-inner home-inner--dashboard rv-page">
       <header className="home-hero">
         <p className="home-greeting">{greeting}</p>
         <h1 className="home-question">¿Qué quieres organizar hoy?</h1>
@@ -239,7 +239,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             onClick={() => navigateCoaching("/coaching")}
           >
             <span className="home-access-card__icon" aria-hidden>
-              <TablerIcon name="user-star" size={26} />
+              <TablerIcon name="user-star" size={20} />
             </span>
             <span className="home-access-card__body">
               <span className="home-access-card__title">Riviera Coaching</span>
@@ -247,7 +247,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                 Coaches, jugadores y agenda del club.
               </span>
             </span>
-            <TablerIcon name="chevron-right" size={20} className="home-access-card__go" />
+            <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
           </button>
 
           <button
@@ -256,7 +256,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             onClick={() => navigateRewards("/rewards")}
           >
             <span className="home-access-card__icon" aria-hidden>
-              <TablerIcon name="gift" size={26} />
+              <TablerIcon name="gift" size={20} />
             </span>
             <span className="home-access-card__body">
               <span className="home-access-card__title">Riviera Rewards</span>
@@ -264,7 +264,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                 Campañas, puntos, premios y canjes.
               </span>
             </span>
-            <TablerIcon name="chevron-right" size={20} className="home-access-card__go" />
+            <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
           </button>
 
           <button
@@ -273,7 +273,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             onClick={() => navigateJugadores()}
           >
             <span className="home-access-card__icon" aria-hidden>
-              <TablerIcon name="users" size={26} />
+              <TablerIcon name="users" size={20} />
             </span>
             <span className="home-access-card__body">
               <span className="home-access-card__title">Registro de jugadores</span>
@@ -281,7 +281,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                 {getOrganizerRegistryCardSubtitle(organizerName)}
               </span>
             </span>
-            <TablerIcon name="chevron-right" size={20} className="home-access-card__go" />
+            <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
           </button>
 
           <button
@@ -290,7 +290,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             onClick={() => navigateAppTo(buildRankingComoFuncionaPath())}
           >
             <span className="home-access-card__icon" aria-hidden>
-              <TablerIcon name="trophy" size={22} />
+              <TablerIcon name="trophy" size={20} />
             </span>
             <span className="home-access-card__body">
               <span className="home-access-card__title">Cómo funciona el ranking</span>
@@ -298,13 +298,13 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                 Conoce el sistema de puntos y niveles.
               </span>
             </span>
-            <TablerIcon name="chevron-right" size={20} className="home-access-card__go" />
+            <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
           </button>
 
           {onShowAllRetas ? (
             <button type="button" className="home-access-card" onClick={onShowAllRetas}>
               <span className="home-access-card__icon" aria-hidden>
-                <TablerIcon name="history" size={22} />
+                <TablerIcon name="history" size={20} />
               </span>
               <span className="home-access-card__body">
                 <span className="home-access-card__title">Historial</span>
@@ -312,7 +312,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                   Consulta eventos pasados y resultados.
                 </span>
               </span>
-              <TablerIcon name="chevron-right" size={20} className="home-access-card__go" />
+              <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
             </button>
           ) : null}
         </div>

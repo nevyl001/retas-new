@@ -70,7 +70,7 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1280px;
+  max-width: 1320px;
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
@@ -152,7 +152,7 @@
 
 .home-inner {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1320px;
   margin: 0 auto;
   position: relative;
   z-index: 1;
