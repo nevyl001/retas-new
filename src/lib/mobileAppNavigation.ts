@@ -88,6 +88,17 @@ export function resolveMobileNavTab(
   return null;
 }
 
+/** El espacio del coach no usa la barra de Inicio / Eventos / Jugadores / Ranking. */
+export function isCoachWorkspacePath(pathname: string): boolean {
+  const path = normalizeAppPathname(pathname);
+  return (
+    path === "/coaching/mi-espacio" ||
+    path.startsWith("/coaching/mi-espacio/") ||
+    path === "/coaching/portal" ||
+    path.startsWith("/coaching/portal/")
+  );
+}
+
 export function isActiveEventManagementScreen(pathname: string): boolean {
   const path = normalizeAppPathname(pathname);
   if (parseRetaIdFromPath(path)) return true;
@@ -119,6 +130,8 @@ export function shouldShowMobileAppNavigation(input: {
   const path = normalizeAppPathname(input.pathname);
 
   if (path.includes("/public/")) return false;
+
+  if (isCoachWorkspacePath(path)) return false;
 
   if (isActiveEventManagementScreen(path)) return false;
 

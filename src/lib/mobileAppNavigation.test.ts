@@ -116,6 +116,17 @@ describe("mobileAppNavigation", () => {
       ).toBe(false);
     });
 
+    it("no aparece en el espacio del coach", () => {
+      expect(
+        shouldShowMobileAppNavigation({
+          pathname: "/coaching/mi-espacio",
+          currentView: "coaching",
+          hasUser: true,
+          isPublicSpectatorView: false,
+        })
+      ).toBe(false);
+    });
+
     it("no aparece en gestión activa de un evento", () => {
       expect(
         shouldShowMobileAppNavigation({
