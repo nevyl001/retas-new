@@ -914,16 +914,13 @@ export const StudentCoachingPage: React.FC = () => {
                             <h3>Qué vamos a entrenar</h3>
                           </div>
                           {topics.length > 0 ? (
-                            <div className="student-next-class__focus-content">
-                              <p className="student-next-class__topic">
-                                {topics[0]}
-                              </p>
-                              {topics.length > 1 ? (
-                                <p className="student-next-class__topic-more">
-                                  {topics.slice(1).join(" · ")}
-                                </p>
-                              ) : null}
-                            </div>
+                            <ul className="student-next-class__topic-list">
+                              {topics.map((topic) => (
+                                <li key={topic} className="student-next-class__topic">
+                                  {topic}
+                                </li>
+                              ))}
+                            </ul>
                           ) : (
                             <p className="student-next-class__pending">
                               Tu coach aún no ha definido el enfoque de esta
