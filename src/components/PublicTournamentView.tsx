@@ -1322,17 +1322,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         ? rrFocus?.liveKey ?? sortedRoundKeys[0]
         : sortedRoundKeys[0];
 
-  const viewingRoundStatus = viewingRoundKey
-    ? rrFocus?.statusByKey[viewingRoundKey]
-    : undefined;
-  const viewingRoundLabel =
-    viewingRoundStatus === "live"
-      ? "En juego"
-      : viewingRoundStatus === "completed"
-        ? "Completada"
-        : viewingRoundStatus === "upcoming"
-          ? "Por jugar"
-          : null;
   const nextRoundKey = rrFocus?.nextKey ?? null;
   const nextRoundMatches = nextRoundKey
     ? matchesByRound[parseInt(nextRoundKey, 10)] ?? []
@@ -1412,51 +1401,19 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       >
         {isTeamsPublicView ? (
           <h2 className="te-public-section__title">{TEAMS_PUBLIC_LIVE_TITLE}</h2>
-        ) : viewingRoundKey ? (
-          <header className="reta-rr-broadcast">
-            <div className="reta-rr-broadcast__main">
-              <h2 className="reta-rr-broadcast__round">
-                {`Ronda ${String(parseInt(viewingRoundKey, 10)).padStart(2, "0")}`}
-                <span className="reta-rr-broadcast__total">
-                  {` / ${String(sortedRoundKeys.length).padStart(2, "0")}`}
-                </span>
-              </h2>
-              {viewingRoundLabel ? (
-                <p
-                  className={`reta-rr-broadcast__status reta-rr-broadcast__status--${viewingRoundStatus}`}
-                >
-                  {viewingRoundLabel}
-                </p>
-              ) : null}
-              <RoundTimerPublic
-                round={parseInt(viewingRoundKey, 10)}
-                timers={roundTimers}
-              />
-            </div>
-            {sortedRoundKeys.length > 1 ? (
-              <div
-                className="reta-rr-progress"
-                role="img"
-                aria-label={`Avance: ronda ${parseInt(viewingRoundKey, 10)} de ${sortedRoundKeys.length}`}
-              >
-                {sortedRoundKeys.map((roundKey) => {
-                  const status = rrFocus?.statusByKey[roundKey];
-                  const isCurrent = roundKey === rrFocus?.liveKey;
-                  return (
-                    <span
-                      key={`progress-${roundKey}`}
-                      className={`reta-rr-progress__seg${
-                        status === "completed" ? " is-done" : ""
-                      }${isCurrent && status !== "completed" ? " is-current" : ""}`}
-                    />
-                  );
-                })}
-              </div>
-            ) : null}
-          </header>
         ) : (
-          <h2 className="te-public-section__title">Partidos por ronda</h2>
+          <h2 className="reta-rr-sr">
+            {viewingRoundKey
+              ? `Ronda ${parseInt(viewingRoundKey, 10)} de ${sortedRoundKeys.length}`
+              : "Partidos por ronda"}
+          </h2>
         )}
+        {!isTeamsPublicView && viewingRoundKey ? (
+          <RoundTimerPublic
+            round={parseInt(viewingRoundKey, 10)}
+            timers={roundTimers}
+          />
+        ) : null}
         {isTeamsPublicView ? (
           <p className="te-public-section__tagline">{TEAMS_PUBLIC_TAGLINE}</p>
         ) : null}
