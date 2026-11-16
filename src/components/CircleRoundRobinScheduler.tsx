@@ -552,21 +552,7 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      // Primera escritura: confirmación + insert (no hay delete; no hay hueco parcial).
-      const okFirst = window.confirm(
-        `Preview válido: ${matches.length} partidos en ${totalRoundsPreview} rondas ` +
-          `(${pairs.length} parejas, ${courts} canchas).\n\n¿Guardar este calendario en Supabase?`
-      );
-      if (!okFirst) {
-        return {
-          success: false,
-          message:
-            "Preview cancelado: no se escribió nada en la base de datos.",
-          matches,
-          totalRounds: totalRoundsPreview,
-        };
-      }
-
+      // Primera escritura: el calendario ya se validó en memoria. Iniciar la reta lo guarda.
       const createdMatches = await createMatchesBulk(bulkRows);
       const expectedMatches = (pairs.length * (pairs.length - 1)) / 2;
 
