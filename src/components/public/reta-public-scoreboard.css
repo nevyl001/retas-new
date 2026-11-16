@@ -4085,18 +4085,20 @@
 }
 
 .te-public--reta:not(.te-public--reta-equipos) .reta-rr-next__item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.35rem 0.75rem;
+  display: grid;
+  grid-template-columns: 5.6rem minmax(0, 1fr);
+  align-items: start;
+  column-gap: 0.65rem;
   min-width: 0;
   font-family: var(--font-body, inherit);
   font-size: 0.82rem;
+  line-height: 1.35;
   color: var(--brand-text, #f5f2eb);
 }
 
 .te-public--reta:not(.te-public--reta-equipos) .reta-rr-next__court {
-  flex: 0 0 auto;
+  white-space: nowrap;
+  padding-top: 0.12rem;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -4106,9 +4108,7 @@
 
 .te-public--reta:not(.te-public--reta-equipos) .reta-rr-next__names {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .te-public--reta:not(.te-public--reta-equipos) .reta-rr-next__vs {
