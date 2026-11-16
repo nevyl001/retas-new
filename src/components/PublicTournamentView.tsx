@@ -9,7 +9,7 @@ import {
 } from "../lib/database";
 import { Match, Pair, Game, Tournament } from "../lib/database";
 import { repairMatchCourtRotation } from "../lib/circleRoundRobinSchedule";
-import { compareMatchCourt, maxAssignedCourt } from "../lib/matchCourt";
+import { compareMatchCourt, formatMatchCourtLabel, maxAssignedCourt } from "../lib/matchCourt";
 import { resolveTeamLogoUrl } from "../lib/reta/teamLogoDisplay";
 import { useTeamLogoAccentColors } from "../hooks/useTeamLogoAccentColors";
 import { isTeamsTournament } from "../lib/gameModeMapping";
@@ -109,6 +109,7 @@ import {
   type RoundRobinChampionshipConfig,
 } from "../lib/roundRobinChampionship";
 import { preferDbChampionshipOverLocal } from "../lib/reta/retaConfigEditRules";
+import { resolvePublicRoundFocus } from "../lib/reta/publicRoundFocus";
 import {
   formatPublicEventFechaHorarioLine,
   getPublicEventScheduleStatus,
@@ -233,8 +234,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   >({});
   /** Reta por equipos: canchas ocultas hasta "IR AL EN VIVO". */
   const [teamsLiveRevealed, setTeamsLiveRevealed] = useState(false);
-  /** Mobile: filtro de ronda en matriz pública (solo presentación). */
+  /** Filtro de ronda en la vista pública (solo presentación). */
   const [mobileRoundTab, setMobileRoundTab] = useState<string | null>(null);
+  /** Si el visitante no eligió otra ronda, la vista sigue a la ronda en curso. */
+  const roundFollowLiveRef = useRef(true);
   const configFetchOnDemandRef = useRef(false);
 
   const loadTournamentData = useCallback(async () => {
@@ -1032,6 +1035,39 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     };
   }, [publicTournamentName, organizerName]);
 
+  useEffect(() => {
+    if (isTeamsPublicView || !roundFollowLiveRef.current || matches.length === 0) {
+      return;
+    }
+    const { regular } = partitionMatches(matches, tournamentId, championshipConfig);
+    const byRound = new Map<string, { matchCount: number; finishedCount: number }>();
+    for (const match of regular) {
+      const key = String(match.round || 1);
+      const bucket = byRound.get(key) ?? { matchCount: 0, finishedCount: 0 };
+      bucket.matchCount += 1;
+      const scored =
+        match.status === "finished" ||
+        games.some((game) => game.match_id === match.id);
+      if (scored) bucket.finishedCount += 1;
+      byRound.set(key, bucket);
+    }
+    const snapshots = Array.from(byRound.entries())
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([key, counts]) => ({ key, ...counts }));
+    const focus = resolvePublicRoundFocus(snapshots, {
+      schedulePhase: "unknown",
+      tournamentFinished,
+    });
+    if (focus.liveKey) setMobileRoundTab(focus.liveKey);
+  }, [
+    championshipConfig,
+    games,
+    isTeamsPublicView,
+    matches,
+    tournamentFinished,
+    tournamentId,
+  ]);
+
   if (loading) {
     return (
       <PublicTorneoExpressShell
@@ -1258,6 +1294,50 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     }
   };
 
+  const rrFocus = isTeamsPublicView
+    ? null
+    : resolvePublicRoundFocus(
+        sortedRoundKeys.map((key) => {
+          const roundMatches = matchesByRound[parseInt(key, 10)] ?? [];
+          const finishedCount = roundMatches.filter(
+            (match) =>
+              match.status === "finished" || getMatchResult(match.id).hasResult
+          ).length;
+          return {
+            key,
+            matchCount: roundMatches.length,
+            finishedCount,
+          };
+        }),
+        {
+          schedulePhase: eventScheduleStatus.phase,
+          tournamentFinished: tournamentFinalizado,
+        }
+      );
+
+  const viewingRoundKey =
+    mobileRoundTab && sortedRoundKeys.includes(mobileRoundTab)
+      ? mobileRoundTab
+      : !isTeamsPublicView
+        ? rrFocus?.liveKey ?? sortedRoundKeys[0]
+        : sortedRoundKeys[0];
+
+  const viewingRoundStatus = viewingRoundKey
+    ? rrFocus?.statusByKey[viewingRoundKey]
+    : undefined;
+  const viewingRoundLabel =
+    viewingRoundStatus === "live"
+      ? "En juego"
+      : viewingRoundStatus === "completed"
+        ? "Completada"
+        : viewingRoundStatus === "upcoming"
+          ? "Por jugar"
+          : null;
+  const nextRoundKey = rrFocus?.nextKey ?? null;
+  const nextRoundMatches = nextRoundKey
+    ? matchesByRound[parseInt(nextRoundKey, 10)] ?? []
+    : [];
+
   const showMatchesSection = !isTeamsPublicView || teamsLiveRevealed;
 
   return (
@@ -1326,15 +1406,63 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {showMatchesSection ? (
       <section
         id="reta-equipos-en-vivo"
-        className="te-public-section te-pub-fade-in"
+        className={`te-public-section te-pub-fade-in${
+          isTeamsPublicView ? "" : " reta-rr-board"
+        }`}
       >
-        <h2 className="te-public-section__title">
-          {isTeamsPublicView ? TEAMS_PUBLIC_LIVE_TITLE : "Partidos por ronda"}
-        </h2>
+        {isTeamsPublicView ? (
+          <h2 className="te-public-section__title">{TEAMS_PUBLIC_LIVE_TITLE}</h2>
+        ) : viewingRoundKey ? (
+          <header className="reta-rr-broadcast">
+            <div className="reta-rr-broadcast__main">
+              <h2 className="reta-rr-broadcast__round">
+                {`Ronda ${String(parseInt(viewingRoundKey, 10)).padStart(2, "0")}`}
+                <span className="reta-rr-broadcast__total">
+                  {` / ${String(sortedRoundKeys.length).padStart(2, "0")}`}
+                </span>
+              </h2>
+              {viewingRoundLabel ? (
+                <p
+                  className={`reta-rr-broadcast__status reta-rr-broadcast__status--${viewingRoundStatus}`}
+                >
+                  {viewingRoundLabel}
+                </p>
+              ) : null}
+              <RoundTimerPublic
+                round={parseInt(viewingRoundKey, 10)}
+                timers={roundTimers}
+              />
+            </div>
+            {sortedRoundKeys.length > 1 ? (
+              <div
+                className="reta-rr-progress"
+                role="img"
+                aria-label={`Avance: ronda ${parseInt(viewingRoundKey, 10)} de ${sortedRoundKeys.length}`}
+              >
+                {sortedRoundKeys.map((roundKey) => {
+                  const status = rrFocus?.statusByKey[roundKey];
+                  const isCurrent = roundKey === rrFocus?.liveKey;
+                  return (
+                    <span
+                      key={`progress-${roundKey}`}
+                      className={`reta-rr-progress__seg${
+                        status === "completed" ? " is-done" : ""
+                      }${isCurrent && status !== "completed" ? " is-current" : ""}`}
+                    />
+                  );
+                })}
+              </div>
+            ) : null}
+          </header>
+        ) : (
+          <h2 className="te-public-section__title">Partidos por ronda</h2>
+        )}
         {isTeamsPublicView ? (
           <p className="te-public-section__tagline">{TEAMS_PUBLIC_TAGLINE}</p>
         ) : null}
-        <div className="te-public-section__divider" aria-hidden />
+        {isTeamsPublicView ? (
+          <div className="te-public-section__divider" aria-hidden />
+        ) : null}
 
         {sortedRoundKeys.length > 1 ? (
           <div
@@ -1344,19 +1472,24 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           >
             {sortedRoundKeys.map((roundKey) => {
               const roundNum = parseInt(roundKey, 10);
-              const isActive =
-                (mobileRoundTab && sortedRoundKeys.includes(mobileRoundTab)
-                  ? mobileRoundTab
-                  : sortedRoundKeys[0]) === roundKey;
+              const isActive = viewingRoundKey === roundKey;
+              const isLive = rrFocus?.liveKey === roundKey;
               return (
                 <button
                   key={`tab-${roundKey}`}
                   type="button"
                   role="tab"
                   aria-selected={isActive}
-                  aria-label={`Ronda ${roundNum}`}
-                  className={`reta-round-tabs__btn${isActive ? " is-active" : ""}`}
-                  onClick={() => setMobileRoundTab(roundKey)}
+                  aria-label={`Ronda ${roundNum}${isLive ? ", ronda actual" : ""}`}
+                  className={`reta-round-tabs__btn${isActive ? " is-active" : ""}${
+                    isLive ? " is-live" : ""
+                  }`}
+                  onClick={() => {
+                    setMobileRoundTab(roundKey);
+                    if (!isTeamsPublicView) {
+                      roundFollowLiveRef.current = roundKey === rrFocus?.liveKey;
+                    }
+                  }}
                 >
                   {`Ronda ${roundNum}`}
                 </button>
@@ -1374,12 +1507,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             const roundComplete =
               eventScheduleStatus.phase === "after" ||
               roundMatches.every((m) => m.status === "finished");
-            const activeMobileRound =
-              mobileRoundTab && sortedRoundKeys.includes(mobileRoundTab)
-                ? mobileRoundTab
-                : sortedRoundKeys[0];
             const tabHidden =
-              sortedRoundKeys.length > 1 && roundKey !== activeMobileRound;
+              sortedRoundKeys.length > 1 && roundKey !== viewingRoundKey;
+            if (!isTeamsPublicView && tabHidden) return null;
 
             const pairsPerTeam = teamConfig?.dynamicLineups?.pairsPerTeam;
             let restingPairsSource = pairs;
@@ -1441,7 +1571,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                       {courtsMeta} cancha{courtsMeta === 1 ? "" : "s"}
                     </span>
                   </p>
-                ) : (
+                ) : isTeamsPublicView ? (
                   <div className="te-public-round-head">
                     <h3 className="te-public-round-head__title">
                       <span className="te-public-round-head__num">
@@ -1466,7 +1596,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                       <RoundTimerPublic round={roundNum} timers={roundTimers} />
                     </div>
                   </div>
-                )}
+                ) : null}
 
                 <div
                   className={`te-pub-matches-grid te-pub-matches-grid--wide${
@@ -1500,6 +1630,30 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               </div>
             );
           })}
+
+        {!isTeamsPublicView && nextRoundMatches.length > 0 && nextRoundKey ? (
+          <aside className="reta-rr-next" aria-label="Próxima ronda">
+            <p className="reta-rr-next__kicker">
+              {`Próxima ronda · ${String(parseInt(nextRoundKey, 10)).padStart(2, "0")}`}
+            </p>
+            <ul className="reta-rr-next__list">
+              {[...nextRoundMatches]
+                .sort((a, b) => compareMatchCourt(a.court, b.court))
+                .map((match) => (
+                  <li key={`next-${match.id}`} className="reta-rr-next__item">
+                    <span className="reta-rr-next__court">
+                      {formatMatchCourtLabel(match.court)}
+                    </span>
+                    <span className="reta-rr-next__names">
+                      {formatPairLabel(match.pair1_id)}
+                      <span className="reta-rr-next__vs">vs</span>
+                      {formatPairLabel(match.pair2_id)}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          </aside>
+        ) : null}
 
         {remontadaActiva && (
           <div className="rr-championship rr-championship--public te-pub-fade-in-up">

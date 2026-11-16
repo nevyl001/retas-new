@@ -3920,3 +3920,268 @@
     transition: none;
   }
 }
+
+/* =============================================================================
+ * Round Robin público — una sola vista, ronda actual protagonista.
+ * No aplica a reta por equipos.
+ * ============================================================================= */
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-broadcast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 0.85rem;
+  padding: 0.15rem 0 0.35rem;
+  animation: reta-rr-rise 320ms ease both;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-broadcast__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem 0.85rem;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-broadcast__round {
+  margin: 0;
+  font-family: var(--font-display, var(--ro-font-heading), inherit);
+  font-size: clamp(2.1rem, 4.6vw, 4.25rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 0.9;
+  color: var(--brand-text, #f5f2eb);
+  text-transform: uppercase;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-broadcast__total {
+  color: color-mix(in srgb, var(--brand-text, #f5f2eb) 46%, transparent);
+  font-size: 0.62em;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-broadcast__status {
+  margin: 0;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--brand-text, #fff) 16%, transparent);
+  font-family: var(--font-body, inherit);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--brand-text, #f5f2eb) 78%, transparent);
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-broadcast__status--live {
+  color: var(--brand-primary, #12161b);
+  background: var(--brand-accent, var(--ro-success, #2f7d53));
+  border-color: transparent;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-progress {
+  display: flex;
+  width: min(100%, 28rem);
+  gap: 0.28rem;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-progress__seg {
+  flex: 1 1 0;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand-text, #fff) 14%, transparent);
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-progress__seg.is-done,
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-progress__seg.is-current {
+  background: var(--brand-accent, var(--ro-text-primary, #f5f2eb));
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-round-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  margin: 0 0 0.85rem;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-board .reta-round-meta {
+  display: none;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide {
+  grid-template-columns: 1fr !important;
+  gap: 0.75rem !important;
+  animation: reta-rr-edge 720ms ease;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .te-public-round-block {
+  animation: reta-rr-rise 340ms ease both;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide > .reta-sb-card {
+  animation: reta-rr-rise 360ms ease both;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide > .reta-sb-card:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide > .reta-sb-card:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide > .reta-sb-card:nth-child(4) {
+  animation-delay: 180ms;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-sb-card--am-court .am-court-board__pair {
+  max-width: none;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-sb-card--am-court .am-portrait {
+  width: min(100%, 9.5rem);
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-sb-card--am-court.te-pub-match--wide:hover {
+  transform: translateY(-2px) !important;
+  border-color: color-mix(in srgb, var(--brand-accent, #fff) 35%, transparent);
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-next {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--brand-text, #fff) 10%, transparent);
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-next__kicker {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-display, var(--ro-font-heading), inherit);
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--brand-text, #f5f2eb) 62%, transparent);
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-next__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-next__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+  min-width: 0;
+  font-family: var(--font-body, inherit);
+  font-size: 0.82rem;
+  color: var(--brand-text, #f5f2eb);
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-next__court {
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--brand-text, #f5f2eb) 55%, transparent);
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-next__names {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.te-public--reta:not(.te-public--reta-equipos) .reta-rr-next__vs {
+  margin: 0 0.35rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--brand-text, #f5f2eb) 45%, transparent);
+}
+
+@media (min-width: 900px) {
+  .te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide,
+  .te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide.te-pub-matches-grid--few,
+  .te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide.te-pub-matches-grid--three {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .te-public--reta:not(.te-public--reta-equipos) .reta-sb-card--am-court .am-portrait {
+    width: min(100%, 11rem);
+  }
+}
+
+@media (min-width: 1280px) {
+  .te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide.te-pub-matches-grid--three,
+  .te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide:has(> :nth-child(3)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide:has(> :nth-child(4)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .te-public--reta:not(.te-public--reta-equipos) .reta-sb-card--am-court .am-portrait {
+    width: min(100%, 12.5rem);
+  }
+}
+
+@media (min-width: 1800px) {
+  .te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide:has(> :nth-child(4)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .te-public--reta:not(.te-public--reta-equipos) .reta-sb-card--am-court .am-portrait {
+    width: min(100%, 15rem);
+  }
+
+  .te-public--reta:not(.te-public--reta-equipos) .reta-rr-broadcast__round {
+    font-size: 4.6rem;
+  }
+}
+
+@media (min-width: 2400px) {
+  .te-public--reta:not(.te-public--reta-equipos) .reta-sb-card--am-court .am-portrait {
+    width: min(100%, 18rem);
+  }
+}
+
+@keyframes reta-rr-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes reta-rr-edge {
+  0% {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-accent, #ffffff) 42%, transparent);
+  }
+  100% {
+    box-shadow: inset 0 0 0 1px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .te-public--reta:not(.te-public--reta-equipos) .reta-rr-broadcast,
+  .te-public--reta:not(.te-public--reta-equipos) .te-public-round-block,
+  .te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide,
+  .te-public--reta:not(.te-public--reta-equipos) .te-pub-matches-grid--wide > .reta-sb-card,
+  .te-public--reta:not(.te-public--reta-equipos) .reta-sb-card--am-court.te-pub-match--wide:hover {
+    animation: none;
+    transform: none !important;
+    transition: none;
+  }
+}
