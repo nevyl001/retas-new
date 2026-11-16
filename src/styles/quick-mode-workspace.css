@@ -4325,162 +4325,16 @@ html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(
   color: var(--qm-ink-muted);
 }
 
-/* Preparación de reta: cabe en la pantalla. El listado usa el alto sobrante. */
+/* El listado de jugadores permanece visible. Si no cabe, se mueve dentro de sí. */
 @media (min-width: 900px) {
-  .App:has(.qm-ws--wide):not(:has(.qm-ws--create-compose)) {
-    height: 100dvh;
-    max-height: 100dvh;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .main-layout:has(.qm-ws--wide):not(:has(.qm-ws--create-compose)),
-  .duelo2v2-page:has(.qm-ws--wide):not(:has(.qm-ws--create-compose)):not(.duelo2v2-page--public) {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding-top: 0.4rem;
-    padding-bottom: 0.45rem;
-  }
-
-  .main-layout > .reta-content:has(.qm-ws--wide),
-  .americano-screen:has(.qm-ws--wide),
-  .duelo2v2-page:has(.qm-ws--wide):not(.duelo2v2-page--public) .duelo2v2-page__inner {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding-top: 0.15rem;
-    padding-bottom: 0.35rem;
-  }
-
-  .reta-content:has(.qm-ws--wide) .reta-content__toolbar,
-  .americano-screen:has(.qm-ws--wide) .americano-screen__header,
-  .duelo2v2-page:has(.qm-ws--wide) .duelo2v2-toolbar {
-    flex: 0 0 auto;
-    margin-bottom: 0.35rem;
-  }
-
-  .tournament-details:has(> .qm-ws--wide),
-  .americano-registration--workspace:has(.qm-ws--wide) {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .qm-ws.qm-ws--wide:not(.qm-ws--create-compose) {
-    flex: 1 1 auto;
-    min-height: 0;
-    gap: 0.4rem;
-    padding-bottom: 0;
-    overflow: hidden;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) > .qm-event-header {
-    padding: 0.4rem 0.75rem;
-    gap: 0.45rem 0.85rem;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-event-header__title {
-    font-size: 1.15rem;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) > .qm-ws__details {
-    flex: 0 0 auto;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) > .qm-ws__body {
-    flex: 1 1 auto;
-    min-height: 0;
-    align-items: stretch;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__main,
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__workbench,
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__workbench-body,
-  .qm-ws--wide:not(.qm-ws--create-compose) .elegant-player-manager {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-stepper,
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__workbench-head,
-  .qm-ws--wide:not(.qm-ws--create-compose) .elegant-player-header,
-  .qm-ws--wide:not(.qm-ws--create-compose) .elegant-grid-filters,
-  .qm-ws--wide:not(.qm-ws--create-compose) .elegant-load-more {
-    flex: 0 0 auto;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-stepper__btn {
-    min-height: 40px;
-    padding: 0.3rem 0.5rem;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__workbench {
-    padding: 0.5rem 0.7rem;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__workbench-head,
-  .qm-ws--wide:not(.qm-ws--create-compose) .elegant-player-header {
-    margin-bottom: 0.35rem;
-    padding-bottom: 0.3rem;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) .elegant-player-manager {
-    gap: 0.35rem;
-    min-height: 0;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) .elegant-grid-filters {
-    margin-bottom: 0;
-  }
-
   .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__workbench .elegant-players-grid,
   .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__workbench .elegant-pairs-grid {
-    flex: 1 1 auto;
-    min-height: 0;
+    min-height: 280px;
+    max-height: calc(100dvh - 300px);
     overflow: auto;
     align-content: start;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 0.35rem;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__workbench .elegant-player-card.elegant-player-card,
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__workbench .elegant-pair-card {
-    min-height: 2.45rem !important;
-    padding: 0.28rem 0.5rem !important;
-    gap: 0.3rem;
-    align-items: center;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__workbench .elegant-player-name,
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__workbench .elegant-player-meta {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__sidebar {
-    position: static;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .qm-ws--wide:not(.qm-ws--create-compose) .qm-ws__sidebar .qm-ws-panel {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: auto;
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    gap: 0.45rem;
   }
 }
 
