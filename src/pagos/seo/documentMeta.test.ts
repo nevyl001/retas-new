@@ -17,6 +17,8 @@ describe("metadatos de la landing de pagos", () => {
         <meta property="og:title" content="Riviera Open — Retas y torneos de pádel" />
         <meta property="og:description" content="Organiza. Juega. Compite." />
         <meta name="description" content="Organiza. Juega. Compite." />
+        <meta property="twitter:card" content="summary" />
+        <meta property="twitter:title" content="Riviera Open — Retas y torneos de pádel" />
         </head><body></body></html>`,
       meta
     );
@@ -24,6 +26,9 @@ describe("metadatos de la landing de pagos", () => {
     expect(html).not.toContain("Organiza. Juega. Compite.");
     expect(html).not.toContain("Retas y torneos de pádel");
     expect(html.match(/<title>/g)).toHaveLength(1);
+    expect(html.match(/twitter:card/g)).toHaveLength(1);
+    expect(html).toContain('content="summary_large_image"');
+    expect(html).not.toContain('content="summary"');
   });
 });
 

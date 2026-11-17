@@ -27,7 +27,7 @@ export function injectPagosDocument(html: string, meta: PagosDocumentMeta): stri
     .replace(/<meta\s+[^>]*name=["']robots["'][^>]*>/gi, "")
     .replace(/<meta\s+[^>]*name=["']theme-color["'][^>]*>/gi, "")
     .replace(/<meta\s+[^>]*property=["']og:[^"']+["'][^>]*>/gi, "")
-    .replace(/<meta\s+[^>]*name=["']twitter:[^"']+["'][^>]*>/gi, "")
+    .replace(/<meta\s+[^>]*(?:name|property)=["']twitter:[^"']+["'][^>]*>/gi, "")
     .replace(/<link\s+[^>]*rel=["']canonical["'][^>]*>/gi, "");
   return stripped.replace("</head>", `${metaTags(meta)}</head>`);
 }
