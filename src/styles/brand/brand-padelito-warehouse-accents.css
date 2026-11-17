@@ -1,9 +1,9 @@
-/* Padelito Warehouse — el estilo es el compartido. El upgrade pinta el azul
-   y la lima solo en la acción principal. */
+/* Padelito Warehouse — acentos premium (negro + azul royal + lima). */
 
 [data-brand="padelito-warehouse"] .user-header,
 [data-club="padelito-warehouse"] .user-header {
-  border-bottom-color: var(--ro-chrome-border);
+  background: var(--brand-surface, #000000);
+  border-bottom-color: color-mix(in srgb, var(--brand-border) 55%, transparent);
 }
 
 [data-brand="padelito-warehouse"] .user-profile-btn:hover,
@@ -15,14 +15,14 @@
 
 [data-brand="padelito-warehouse"] .rv-button-primary,
 [data-club="padelito-warehouse"] .rv-button-primary {
-  background: #d6ef3a;
-  color: #12161b;
+  background: var(--brand-accent, #d6ef3a);
+  color: var(--ro-text-on-accent, #12161b);
   border-color: transparent;
 }
 
 [data-brand="padelito-warehouse"] .rv-button-primary:hover:not(:disabled),
 [data-club="padelito-warehouse"] .rv-button-primary:hover:not(:disabled) {
-  background: #e3f76a;
+  background: var(--ro-accent-hover, #e3f76a);
 }
 
 [data-brand="padelito-warehouse"] .home-mode-card:hover,
@@ -47,6 +47,16 @@
   outline-color: var(--brand-accent, #d6ef3a);
 }
 
+[data-brand="padelito-warehouse"] .club-identity__attribution-brand,
+[data-club="padelito-warehouse"] .club-identity__attribution-brand {
+  color: var(--brand-text, #ffffff);
+}
+
+[data-brand="padelito-warehouse"] .club-identity__attribution-by,
+[data-club="padelito-warehouse"] .club-identity__attribution-by {
+  color: var(--brand-muted, #a8b8d8);
+}
+
 [data-brand="padelito-warehouse"] .main-layout .game-mode-card:hover:not(:disabled),
 [data-club="padelito-warehouse"] .main-layout .game-mode-card:hover:not(:disabled),
 [data-brand="padelito-warehouse"] .main-layout .game-mode-card:focus-visible,
@@ -58,8 +68,8 @@
 [data-club="padelito-warehouse"] .main-layout .rv-button-primary,
 [data-brand="padelito-warehouse"] .liga-page .rv-button-primary,
 [data-club="padelito-warehouse"] .liga-page .rv-button-primary {
-  background: #d6ef3a;
-  color: #12161b;
+  background: var(--brand-accent, #d6ef3a);
+  color: var(--ro-text-on-accent, #12161b);
 }
 
 [data-brand="padelito-warehouse"] .liga-page .liga-tab--active,

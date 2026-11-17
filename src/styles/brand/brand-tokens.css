@@ -89,21 +89,26 @@ html[data-club="padel-court-series"] .ro-surface-dark,
 html[data-brand="padelito-warehouse"],
 html[data-club="padelito-warehouse"],
 .club-experience-scope[data-brand="padelito-warehouse"],
-.club-experience-scope[data-club="padelito-warehouse"] {
+.club-experience-scope[data-club="padelito-warehouse"],
+html[data-brand="padelito-warehouse"] .ro-surface-dark,
+html[data-club="padelito-warehouse"] .ro-surface-dark,
+.club-experience-scope[data-brand="padelito-warehouse"] .ro-surface-dark,
+.club-experience-scope[data-club="padelito-warehouse"] .ro-surface-dark {
   --brand-primary: #2a4ba7;
   --brand-secondary: #1e3578;
-  --brand-accent: #2a4ba7;
-  --brand-surface: #e9e4dc;
-  --brand-surface-alt: #ffffff;
-  --brand-border: #ddd8d0;
-  --brand-text: #14161a;
-  --brand-muted: #7e828a;
-  --brand-success: #2f7d53;
-  --brand-warning: #b5883f;
-  --brand-danger: #c0392b;
+  --brand-accent: #d6ef3a;
+  --brand-surface: #000000;
+  --brand-surface-alt: #0d1118;
+  --brand-border: #2a4ba7;
+  --brand-text: #ffffff;
+  --brand-muted: #a8b8d8;
+  --brand-success: #d6ef3a;
+  --brand-warning: #fbbf24;
+  --brand-danger: #f87171;
   --brand-font-heading: "Abadi MT Condensed Extra Bold", "Abadi MT Condensed",
-    "Stack Sans Headline", system-ui, sans-serif;
-  --brand-font-body: "Abadi MT Condensed", "Inter", system-ui, sans-serif;
+    "Arial Narrow", var(--ro-font-heading, system-ui, sans-serif);
+  --brand-font-body: "Abadi MT Condensed", "Arial Narrow",
+    var(--ro-font-body, system-ui, sans-serif);
   --brand-heading-weight: 700;
   --brand-heading-letter-spacing: 0.02em;
   --bg-canvas: var(--brand-surface);
