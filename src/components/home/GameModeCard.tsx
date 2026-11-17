@@ -47,18 +47,11 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
         } as React.CSSProperties
       }
     >
-      {!disabled ? (
-        <TablerIcon
-          name="chevron-right"
-          size={16}
-          className="game-mode-card__chevron"
-        />
-      ) : null}
-      {disabled ? (
-        <span className="game-mode-card__upgrade">
-          ¿Deseas el upgrade del sistema? Contacta al administrador por WhatsApp.
-        </span>
-      ) : null}
+      <TablerIcon
+        name="chevron-right"
+        size={16}
+        className="game-mode-card__chevron"
+      />
     </ModeCard>
   );
 };
