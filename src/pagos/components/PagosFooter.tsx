@@ -5,10 +5,12 @@ export const PagosFooter: React.FC = () => {
   return (
     <footer className="pagos-footer">
       <div className="pagos-wrap pagos-footer__inner">
-        <img src="/logo-riviera.png" alt="" width={32} height={32} />
-        <div>
-          <p className="pagos-footer__name">RIVIERA OPEN</p>
-          <p className="pagos-footer__line">Cada partido cuenta.</p>
+        <div className="pagos-footer__brand">
+          <img src="/logo-riviera.png" alt="" width={36} height={36} />
+          <div>
+            <p className="pagos-footer__name">RIVIERA OPEN</p>
+            <p className="pagos-footer__line">Cada partido cuenta.</p>
+          </div>
         </div>
         <a className="pagos-footer__site" href="https://rivieraopen.com">
           rivieraopen.com

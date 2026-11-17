@@ -18,8 +18,14 @@ describe("landing universal de pagos", () => {
     expect(pay.getAttribute("target")).toBe("_blank");
     expect(pay.getAttribute("rel")).toContain("noopener");
     expect(screen.getByText(/no solicita ni almacena los datos de tu tarjeta/i)).toBeTruthy();
+    expect(screen.getByText("Serás redirigido a Clip para completar tu pago de forma segura.")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Pago directo y seguro" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Proceso claro" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Acceso inmediato" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "SIGUE JUGANDO. SIGUE SUMANDO." })).toBeTruthy();
-    expect(screen.getByText("Cada partido es una nueva oportunidad para escribir tu historia.")).toBeTruthy();
+    expect(
+      screen.getByText("Cada partido es una nueva oportunidad para competir, mejorar y escribir tu historia.")
+    ).toBeTruthy();
     expect(screen.getByText("RIVIERA OPEN — CADA PARTIDO CUENTA.")).toBeTruthy();
   });
 });

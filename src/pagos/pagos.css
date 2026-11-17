@@ -9,6 +9,7 @@ html.pagos-surface #root {
 .pagos-root {
   min-height: 100vh;
   min-height: 100dvh;
+  overflow-x: clip;
   background: #0d0f12;
   color: #ffffff;
   font-family: Manrope, "Segoe UI", sans-serif;
@@ -29,14 +30,14 @@ html.pagos-surface #root {
   margin: 0;
   font-family: "Bebas Neue", "Arial Narrow", Impact, sans-serif;
   font-weight: 400;
-  letter-spacing: 0.045em;
-  line-height: 0.92;
+  letter-spacing: 0.03em;
+  line-height: 0.88;
   color: #ffffff;
 }
 
 .pagos-root p {
   margin: 0;
-  color: #f3f4f6;
+  color: #e5e7eb;
   font-size: 1rem;
   line-height: 1.55;
 }
@@ -56,7 +57,7 @@ html.pagos-surface #root {
 }
 
 .pagos-wrap {
-  width: min(920px, calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  width: min(1180px, calc(100% - 40px - env(safe-area-inset-left) - env(safe-area-inset-right)));
   margin: 0 auto;
 }
 
@@ -90,9 +91,10 @@ html.pagos-surface #root {
 .pagos-header {
   position: sticky;
   top: 0;
-  z-index: 3;
-  background: rgba(13, 15, 18, 0.94);
+  z-index: 4;
+  background: rgba(13, 15, 18, 0.88);
   border-bottom: 1px solid #2a2f38;
+  backdrop-filter: blur(16px);
 }
 
 .pagos-header__inner {
@@ -110,12 +112,11 @@ html.pagos-surface #root {
   min-height: 44px;
 }
 
-.pagos-brand img,
-.pagos-footer img {
+.pagos-brand img {
   display: block;
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
 }
 
 .pagos-root .pagos-header__label {
@@ -124,10 +125,11 @@ html.pagos-surface #root {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.18em;
+  white-space: nowrap;
 }
 
 .pagos-root .pagos-kicker {
-  margin: 0 0 16px;
+  margin: 0 0 18px;
   color: #8d939e;
   font-size: 0.75rem;
   font-weight: 600;
@@ -135,52 +137,155 @@ html.pagos-surface #root {
 }
 
 .pagos-hero {
-  padding: 48px 0 12px;
-  animation: pagos-rise 280ms ease both;
+  position: relative;
+  padding: 36px 0 8px;
+}
+
+.pagos-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(42, 47, 56, 0.7) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(42, 47, 56, 0.7) 1px, transparent 1px);
+  background-size: 72px 72px;
+  -webkit-mask-image: radial-gradient(ellipse at 72% 38%, #000 0%, transparent 68%);
+  mask-image: radial-gradient(ellipse at 72% 38%, #000 0%, transparent 68%);
 }
 
 .pagos-hero__grid {
+  position: relative;
   display: grid;
   gap: 28px;
-  align-items: end;
+}
+
+.pagos-hero__copy {
+  container-type: inline-size;
+  min-width: 0;
+  animation: pagos-rise 240ms ease both;
 }
 
 .pagos-hero h1 {
-  max-width: min(12ch, 100%);
-  font-size: clamp(3.1rem, 12vw, 6.2rem);
+  max-width: 100%;
+  font-size: clamp(3.25rem, 12vw, 6.5rem);
+  font-size: clamp(3.25rem, 18cqi, 6.5rem);
+  line-height: 0.86;
 }
 
 .pagos-root .pagos-lead {
-  max-width: 36rem;
-  margin-top: 18px;
-  color: #f3f4f6;
+  max-width: 38rem;
+  margin-top: 20px;
+  color: #e5e7eb;
   font-size: 1.0625rem;
 }
 
-.pagos-hero__court {
-  width: min(168px, 42vw);
+.pagos-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pagos-badges li {
+  padding: 8px 12px;
+  border: 1px solid #2a2f38;
+  border-radius: 999px;
+  background: #171a20;
+  color: #e5e7eb;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.pagos-blueprint {
+  min-width: 0;
+  margin: 0;
+  animation: pagos-rise 260ms ease 40ms both;
+}
+
+.pagos-blueprint__frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid #2a2f38;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.045), transparent 48%),
+    #171a20;
+}
+
+.pagos-blueprint__court {
+  width: min(72%, 240px);
+  height: auto;
+  color: #e5e7eb;
+}
+
+.pagos-root .pagos-blueprint__index {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  margin: 0;
   color: #8d939e;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+.pagos-blueprint figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 16px;
+  margin-top: 12px;
+  color: #e5e7eb;
+  font-size: 0.875rem;
+}
+
+.pagos-blueprint figcaption span {
+  color: #8d939e;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .pagos-paysection {
-  padding: 28px 0 20px;
+  padding: 28px 0 8px;
 }
 
-.pagos-sheet {
-  padding: 28px 22px 24px;
+.pagos-panel {
+  padding: 24px 18px 20px;
   border: 1px solid #2a2f38;
-  border-radius: 22px;
+  border-radius: 24px;
   background: #171a20;
+  animation: pagos-rise 260ms ease 80ms both;
 }
 
-.pagos-sheet h2 {
-  font-size: clamp(2.4rem, 7vw, 3.6rem);
+.pagos-panel__head {
+  display: grid;
+  gap: 8px;
+}
+
+.pagos-panel h2 {
+  font-size: clamp(2.8rem, 10vw, 4.4rem);
+}
+
+.pagos-root .pagos-panel__note {
+  max-width: 36rem;
+  margin: 10px 0 0;
+  color: #8d939e;
+  font-size: 0.9375rem;
 }
 
 .pagos-steps {
   display: grid;
-  gap: 14px;
-  margin: 26px 0 0;
+  gap: 12px;
+  margin: 24px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -190,7 +295,8 @@ html.pagos-surface #root {
   grid-template-columns: auto minmax(0, 1fr);
   gap: 14px;
   align-items: start;
-  padding: 16px;
+  min-width: 0;
+  padding: 18px 16px;
   border: 1px solid #2a2f38;
   border-radius: 16px;
   background: #0d0f12;
@@ -199,42 +305,47 @@ html.pagos-surface #root {
 .pagos-step__index,
 .pagos-steps h3 {
   font-family: "Bebas Neue", "Arial Narrow", Impact, sans-serif;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: #ffffff;
 }
 
 .pagos-step__index {
-  font-size: 1.8rem;
-  line-height: 1;
+  font-size: 2rem;
+  line-height: 0.9;
 }
 
 .pagos-steps h3 {
-  margin: 0 0 6px;
-  font-size: 1.55rem;
-  line-height: 1;
+  margin: 0 0 8px;
+  font-size: 1.7rem;
+  line-height: 0.95;
 }
 
 .pagos-root .pagos-steps p {
-  color: #f3f4f6;
-  font-size: 0.975rem;
+  color: #e5e7eb;
+  font-size: 1rem;
 }
 
-.pagos-root .pagos-example {
-  margin-top: 16px;
-  padding: 14px 16px;
-  border-left: 2px solid #2a2f38;
-  color: #8d939e;
-  font-size: 0.9375rem;
+.pagos-example {
+  margin-top: 14px;
+  padding: 16px 16px 14px;
+  border-left: 2px solid #e5e7eb;
+  background: #232833;
+  border-radius: 0 14px 14px 0;
 }
 
-.pagos-root .pagos-example span {
+.pagos-example span {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   color: #8d939e;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+.pagos-root .pagos-example p {
+  color: #ffffff;
+  font-size: 1.0625rem;
 }
 
 .pagos-root a.pagos-pay {
@@ -243,20 +354,20 @@ html.pagos-surface #root {
   justify-content: center;
   gap: 10px;
   width: 100%;
-  min-height: 56px;
-  margin-top: 22px;
-  padding: 0 18px;
+  min-height: 64px;
+  margin-top: 18px;
+  padding: 0 22px;
   border: 1px solid #ffffff;
   border-radius: 14px;
   background: #ffffff;
   color: #0d0f12;
   font-family: Manrope, "Segoe UI", sans-serif;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   cursor: pointer;
   touch-action: manipulation;
-  transition: background-color 180ms ease, transform 180ms ease;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 .pagos-root a.pagos-pay svg {
@@ -265,86 +376,123 @@ html.pagos-surface #root {
 }
 
 .pagos-root a.pagos-pay:hover {
-  background: #f3f4f6;
+  background: #e5e7eb;
   color: #0d0f12;
 }
 
-.pagos-pay:active {
-  transform: translateY(1px);
+.pagos-root .pagos-redirect {
+  margin-top: 12px;
+  color: #8d939e;
+  font-size: 0.875rem;
+  text-align: center;
 }
 
-.pagos-trust {
+.pagos-benefits {
+  padding: 36px 0 12px;
+}
+
+.pagos-benefits__grid {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px solid #2a2f38;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.pagos-trust svg {
-  width: 26px;
-  height: 26px;
-  margin-top: 2px;
-  color: #f3f4f6;
+.pagos-benefits__grid li {
+  min-width: 0;
+  padding: 22px 18px 20px;
+  border: 1px solid #2a2f38;
+  border-radius: 18px;
+  background: #171a20;
+  transition: border-color 220ms ease, background-color 220ms ease;
 }
 
-.pagos-trust h3 {
-  font-size: clamp(1.7rem, 4vw, 2.2rem);
+.pagos-benefits__grid li:hover {
+  border-color: #8d939e;
+  background: #232833;
+}
+
+.pagos-benefits svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 16px;
+  color: #e5e7eb;
+}
+
+.pagos-benefits h3 {
+  font-size: 1.85rem;
   line-height: 0.95;
 }
 
-.pagos-root .pagos-trust p {
-  margin-top: 8px;
-  color: #8d939e;
+.pagos-root .pagos-benefits p {
+  margin-top: 10px;
+  color: #e5e7eb;
   font-size: 0.975rem;
 }
 
 .pagos-close {
-  padding: 56px 0 64px;
+  margin-top: 36px;
+  padding: 72px 0 76px;
+  border-top: 1px solid #2a2f38;
+  border-bottom: 1px solid #2a2f38;
+  background: #171a20;
+}
+
+.pagos-close__inner {
+  container-type: inline-size;
 }
 
 .pagos-close h2 {
-  max-width: 12ch;
-  font-size: clamp(2.8rem, 8vw, 4.6rem);
+  max-width: 11ch;
+  font-size: clamp(3.5rem, 12vw, 7.6rem);
+  font-size: clamp(3.5rem, 16cqi, 7.6rem);
 }
 
 .pagos-root .pagos-close p {
   max-width: 36rem;
-  margin-top: 16px;
-  color: #f3f4f6;
+  margin-top: 20px;
+  color: #e5e7eb;
+  font-size: 1.0625rem;
 }
 
 .pagos-root .pagos-close__sign {
-  margin-top: 22px;
+  margin-top: 28px;
   color: #ffffff;
   font-family: "Bebas Neue", "Arial Narrow", Impact, sans-serif;
-  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-size: clamp(1.8rem, 4vw, 3rem);
   letter-spacing: 0.08em;
   line-height: 1;
 }
 
 .pagos-footer {
-  border-top: 1px solid #2a2f38;
   padding: 28px 0 calc(28px + env(safe-area-inset-bottom));
 }
 
 .pagos-footer__inner {
+  display: grid;
+  gap: 18px;
+  align-items: start;
+}
+
+.pagos-footer__brand {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px 14px;
+  gap: 12px;
+  min-width: 0;
 }
 
 .pagos-footer img {
-  width: 32px;
-  height: 32px;
+  display: block;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
 }
 
 .pagos-root .pagos-footer__name {
   font-family: "Bebas Neue", "Arial Narrow", Impact, sans-serif;
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   letter-spacing: 0.08em;
   line-height: 1;
   color: #ffffff;
@@ -356,55 +504,116 @@ html.pagos-surface #root {
   font-size: 0.875rem;
 }
 
-.pagos-root .pagos-footer__copy {
-  flex-basis: 100%;
-}
-
 .pagos-root a.pagos-footer__site {
-  min-height: 44px;
   display: inline-flex;
   align-items: center;
-  margin-left: auto;
+  min-height: 44px;
   color: #8d939e;
   font-size: 0.875rem;
+  transition: color 200ms ease;
 }
 
 .pagos-root a.pagos-footer__site:hover {
   color: #ffffff;
 }
 
-@media (min-width: 800px) {
+@media (min-width: 768px) {
+  .pagos-wrap {
+    width: min(1180px, calc(100% - 64px));
+  }
+
+  .pagos-header__inner {
+    min-height: 72px;
+  }
+
   .pagos-hero {
-    padding: 72px 0 20px;
+    padding: 72px 0 16px;
   }
 
   .pagos-hero__grid {
-    grid-template-columns: minmax(0, 1.4fr) minmax(160px, 0.45fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+    gap: 48px;
     align-items: center;
   }
 
-  .pagos-hero__court {
-    width: min(220px, 100%);
-    justify-self: end;
+  .pagos-blueprint__frame {
+    aspect-ratio: 4 / 5;
+    min-height: 460px;
   }
 
-  .pagos-sheet {
+  .pagos-blueprint__court {
+    width: min(78%, 340px);
+  }
+
+  .pagos-paysection {
+    padding-top: 40px;
+  }
+
+  .pagos-panel {
     padding: 40px 40px 32px;
   }
 
   .pagos-steps {
     grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .pagos-benefits {
+    padding-top: 28px;
+  }
+
+  .pagos-benefits__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
   }
 
   .pagos-close {
-    padding: 80px 0 88px;
+    margin-top: 56px;
+    padding: 104px 0 108px;
+  }
+
+  .pagos-close__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.7fr);
+    column-gap: 48px;
+    align-items: end;
+  }
+
+  .pagos-close h2 {
+    grid-column: 1;
+  }
+
+  .pagos-root .pagos-close p {
+    grid-column: 2;
+    margin-top: 0;
+  }
+
+  .pagos-root .pagos-close p.pagos-close__sign {
+    grid-column: 1 / -1;
+    margin-top: 36px;
+  }
+
+  .pagos-footer__inner {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .pagos-wrap {
+    width: min(1240px, calc(100% - 96px));
+  }
+
+  .pagos-hero {
+    padding-top: 88px;
   }
 }
 
 @keyframes pagos-rise {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
