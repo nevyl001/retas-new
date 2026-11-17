@@ -5,14 +5,14 @@ export const PAGOS_TITLE = "Riviera Open | Pagos oficiales";
 export const PAGOS_DESCRIPTION =
   "Realiza tu pago de Riviera Open en Clip. Ingresa el monto que te indicó el organizador y escribe el concepto de tu actividad.";
 
-const LOGO_PATH = "/logo-riviera.png";
+const SOCIAL_IMAGE = "/pagos/og.png";
 
 export function buildPagosMeta(): PagosDocumentMeta {
   return {
     title: PAGOS_TITLE,
     description: PAGOS_DESCRIPTION,
     canonical: `${PAGOS_ORIGIN}/`,
-    image: `${PAGOS_ORIGIN}${LOGO_PATH}`,
+    image: `${PAGOS_ORIGIN}${SOCIAL_IMAGE}`,
     imageAlt: "Riviera Open",
     robots: "index, follow",
     notFound: false,
@@ -45,8 +45,10 @@ function metaTags(meta: PagosDocumentMeta): string {
     `<meta property="og:description" content="${escapeHtml(meta.description)}" />`,
     `<meta property="og:url" content="${escapeHtml(meta.canonical)}" />`,
     `<meta property="og:image" content="${escapeHtml(meta.image)}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="1200" />`,
     `<meta property="og:image:alt" content="${escapeHtml(meta.imageAlt)}" />`,
-    `<meta name="twitter:card" content="summary" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${escapeHtml(meta.title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(meta.description)}" />`,
     `<meta name="twitter:image" content="${escapeHtml(meta.image)}" />`,

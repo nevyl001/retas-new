@@ -8,6 +8,7 @@ describe("metadatos de la landing de pagos", () => {
     expect(meta.title).toBe(PAGOS_TITLE);
     expect(meta.description).toBe(PAGOS_DESCRIPTION);
     expect(meta.canonical).toBe("https://pagos.rivieraopen.com/");
+    expect(meta.image).toBe("https://pagos.rivieraopen.com/pagos/og.png");
     expect(meta.notFound).toBe(false);
     expect(meta.description).not.toMatch(/evento/i);
 

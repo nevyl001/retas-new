@@ -29,7 +29,9 @@ export function applyPagosDocumentMeta(meta: PagosDocumentMeta): () => void {
   setMeta("property", "og:url", meta.canonical);
   setMeta("property", "og:image", meta.image);
   setMeta("property", "og:image:alt", meta.imageAlt);
-  setMeta("name", "twitter:card", meta.image.indexOf("/pagos/flyers/") !== -1 ? "summary_large_image" : "summary");
+  setMeta("name", "twitter:card", "summary_large_image");
+  setMeta("property", "og:image:width", "1200");
+  setMeta("property", "og:image:height", "1200");
   setMeta("name", "twitter:title", meta.title);
   setMeta("name", "twitter:description", meta.description);
   setMeta("name", "twitter:image", meta.image);
