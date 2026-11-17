@@ -4,7 +4,7 @@ import {
   initializeMatrix,
   updateMatrices,
 } from "../../americanoGenerator";
-import { FLEX_MAX_PLAYERS, FLEX_MAX_ROUNDS, FLEX_MIN_PLAYERS } from "./constants";
+import { FLEX_ALGORITHM_VERSION, FLEX_MAX_ROUNDS } from "./constants";
 
 export type FlexSchedulePlayer = { id: string; name: string };
 
@@ -25,9 +25,47 @@ export type FlexScheduleQuality = {
   partnerRepeats: number;
   rivalRepeats: number;
   consecutiveBenches: number;
+  maxPartnerRepeat: number;
+  courtsUsed: number;
+  rests: number;
+  algorithmVersion: string;
   needsConfirmation: boolean;
   limitations: string[];
 };
+
+export type FlexLayout =
+  | { ok: true; courtsUsed: number }
+  | { ok: false; pending: boolean; error: string };
+
+/** 12 usan 3 canchas y 16 usan 4. 13, 14 y 15 se quedan pendientes: nadie se borra. */
+export function officialFlexLayout(playerCount: number, courtsAvailable: number): FlexLayout {
+  const players = Math.floor(playerCount);
+  const courts = Math.floor(courtsAvailable);
+  if (players === 13 || players === 14 || players === 15) {
+    return {
+      ok: false,
+      pending: true,
+      error:
+        "Con 13, 14 o 15 jugadores no caben partidos de cuatro sin dejar a alguien fuera. Ajusta la lista a 12 o completa 16. No se retira a nadie.",
+    };
+  }
+  if (players !== 12 && players !== 16) {
+    return {
+      ok: false,
+      pending: false,
+      error: "La jornada oficial se juega con 12 o 16 jugadores.",
+    };
+  }
+  const courtsUsed = players / 4;
+  if (courts < courtsUsed) {
+    return {
+      ok: false,
+      pending: false,
+      error: `Hacen falta ${courtsUsed} canchas para que los ${players} jueguen a la vez. Hay ${Math.max(0, courts)}.`,
+    };
+  }
+  return { ok: true, courtsUsed };
+}
 
 export type FlexSchedule = {
   ok: true;
@@ -43,8 +81,6 @@ export type FlexSchedule = {
 
 export type FlexScheduleFailure = { ok: false; error: string };
 
-const SEARCH_TRIALS_EXACT = 4;
-
 export function generateFlexSchedule(input: {
   players: readonly FlexSchedulePlayer[];
   courts: number;
@@ -54,7 +90,7 @@ export function generateFlexSchedule(input: {
 }): FlexSchedule | FlexScheduleFailure {
   const prepared = prepare(input);
   if (!prepared.ok) return prepared;
-  const trials = input.trials ?? (prepared.players.length > 12 ? 1 : SEARCH_TRIALS_EXACT);
+  const trials = input.trials ?? (prepared.players.length > 12 ? 3 : 6);
   let best: FlexSchedule | null = null;
   for (let offset = 0; offset < trials; offset += 1) {
     const seed = normalizeSeed(input.seed + offset);
@@ -136,26 +172,16 @@ function prepare(input: {
   if (new Set(ids).size !== ids.length) {
     return { ok: false, error: "Hay un jugador duplicado en la jornada." };
   }
-  if (input.players.length < FLEX_MIN_PLAYERS || input.players.length > FLEX_MAX_PLAYERS) {
-    return {
-      ok: false,
-      error: `La jornada necesita entre ${FLEX_MIN_PLAYERS} y ${FLEX_MAX_PLAYERS} jugadores.`,
-    };
-  }
-  const courts = Math.floor(input.courts);
   const rounds = Math.floor(input.rounds);
-  if (courts < 1) return { ok: false, error: "Indica al menos una cancha." };
   if (rounds < 1 || rounds > FLEX_MAX_ROUNDS) {
     return { ok: false, error: `Las rondas deben estar entre 1 y ${FLEX_MAX_ROUNDS}.` };
   }
-  const active = Math.min(Math.floor(input.players.length / 4), courts) * 4;
-  if (active < 4) {
-    return { ok: false, error: "Con esas canchas no cabe un partido." };
-  }
+  const layout = officialFlexLayout(input.players.length, input.courts);
+  if (!layout.ok) return { ok: false, error: layout.error };
   return {
     ok: true,
     players: input.players.map((p) => ({ id: p.id, name: p.name })),
-    courts,
+    courts: layout.courtsUsed,
     rounds,
   };
 }
@@ -247,6 +273,9 @@ function hardErrors(
   names: Map<string, string>
 ): string[] {
   const errors: string[] = [];
+  if (round.benchPlayers.length > 0) {
+    errors.push("Flex League no admite descansos.");
+  }
   const roster = new Set(players.map((p) => p.id));
   const seen = new Set<string>();
   if (round.matches.length > courts) errors.push("Hay más partidos que canchas.");
@@ -288,12 +317,16 @@ function measure(
   const benchSpread = Math.max(...benches) - Math.min(...benches);
   let partnerRepeats = 0;
   let rivalRepeats = 0;
+  let maxPartnerRepeat = 0;
   for (let i = 0; i < players.length; i += 1) {
     for (let j = i + 1; j < players.length; j += 1) {
       const a = players[i]!.id;
       const b = players[j]!.id;
-      partnerRepeats += Math.max(0, (partnerMatrix[a]?.[b] ?? 0) - 1);
-      rivalRepeats += Math.max(0, (rivalMatrix[a]?.[b] ?? 0) - 1);
+      const together = partnerMatrix[a]?.[b] ?? 0;
+      const faced = rivalMatrix[a]?.[b] ?? 0;
+      partnerRepeats += Math.max(0, together - 1);
+      rivalRepeats += Math.max(0, faced - 1);
+      if (together > maxPartnerRepeat) maxPartnerRepeat = together;
     }
   }
   let consecutiveBenches = 0;
@@ -308,15 +341,10 @@ function measure(
   }
   const limitations: string[] = [];
   if (partnerRepeats > 0) {
-    limitations.push(
-      "Con estas rondas no existe una distribución sin repetir algún compañero. Se eligió la de menos repeticiones."
-    );
+    limitations.push("Algunas parejas se repiten. Con estas rondas no había otra combinación sin hacerlo.");
   }
-  if (playSpread > 1) {
-    limitations.push("La diferencia de partidos entre jugadores es mayor a uno.");
-  }
-  if (consecutiveBenches > 0) {
-    limitations.push("Algún descanso quedó seguido porque no hubo otra banca viable.");
+  if (benchSpread > 0 || consecutiveBenches > 0) {
+    limitations.push("La programación dejó descansos y no es válida para Flex League.");
   }
   return {
     rounds: planned.length,
@@ -328,7 +356,11 @@ function measure(
     partnerRepeats,
     rivalRepeats,
     consecutiveBenches,
-    needsConfirmation: limitations.length > 0,
+    maxPartnerRepeat,
+    courtsUsed: planned[0]?.matches.length ?? 0,
+    rests: planned.reduce((sum, round) => sum + round.benchIds.length, 0),
+    algorithmVersion: FLEX_ALGORITHM_VERSION,
+    needsConfirmation: partnerRepeats > 0,
     limitations,
   };
 }
@@ -337,9 +369,9 @@ function qualityScore(quality: FlexScheduleQuality): number {
   return (
     quality.partnerRepeats * 10000 +
     Math.max(0, quality.playSpread - 1) * 8000 +
-    quality.benchSpread * 2000 +
-    quality.consecutiveBenches * 1500 +
-    quality.rivalRepeats * 100
+    quality.rests * 50000 +
+    quality.maxPartnerRepeat * 500 +
+    quality.rivalRepeats * 10
   );
 }
 

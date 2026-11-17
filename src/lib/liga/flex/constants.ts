@@ -9,6 +9,8 @@ export const FLEX_DEFAULT_ROUNDS = 5;
 export const FLEX_DEFAULT_ROUND_MINUTES = 20;
 export const FLEX_DEFAULT_REST_MINUTES = 3;
 export const FLEX_DEFAULT_COURTS = 3;
+/** Rotación acotada: compañeros distintos dentro de las rondas pedidas, sin todos contra todos. */
+export const FLEX_ALGORITHM_VERSION = "flex-rotacion-v2";
 export const FLEX_MAX_ROUNDS = 24;
 export const FLEX_MAX_SEASON_JORNADAS = 48;
 

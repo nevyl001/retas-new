@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { LigaDetalle, LigaJugadorPoolItem, LigaPartido } from "../../lib/liga/types";
-import { FLEX_MIN_PLAYERS, FLEX_MAX_PLAYERS } from "../../lib/liga/flex/constants";
 import {
   generateFlexSchedule,
+  officialFlexLayout,
   regenerateFlexSchedule,
   scheduleHasCapturedResults,
   type FlexSchedule,
@@ -84,6 +84,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
   const jornada = detalle.jornadas.find((item) => item.id === selectedId) ?? null;
   const flex = bundle?.jornadas.find((item) => item.jornadaId === selectedId) ?? null;
   const participantIds = selectedId ? bundle?.participantes[selectedId] ?? [] : [];
+  const layout = officialFlexLayout(participantIds.length, flex?.canchas ?? 0);
   const hasScores = scheduleHasCapturedResults(
     (jornada?.partidos ?? []).map((partido) => ({
       scoreA: partido.score_pareja1,
@@ -281,10 +282,12 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
         <section className="liga-flex__panel">
           <h2>Jornada {String(jornada.numero).padStart(2, "0")}</h2>
           <p>
-            Participantes {participantIds.length}/{flex ? bundle?.config.jugadoresMax : FLEX_MAX_PLAYERS} ·{" "}
+            Participantes {participantIds.length}/16 · canchas utilizadas {layout.ok ? layout.courtsUsed : "—"} · rondas{" "}
+            {flex.rondas} · {flex.duracionRondaMin} min · estimado {estimate?.totalMinutes ?? "—"} min ·{" "}
             {jornada.estado === "completed" ? "cerrada" : jornada.estado === "in_progress" ? "en juego" : "pendiente"}
             {flex.esFinal ? " · jornada final" : ""}
           </p>
+          {!layout.ok && participantIds.length > 0 ? <p>{layout.error}</p> : null}
 
           <div className="liga-flex__config">
             <h3>Configuración de jornada</h3>
@@ -359,7 +362,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
             <Button
               type="button"
               variant="primary"
-              disabled={busy || hasScores || participantIds.length < FLEX_MIN_PLAYERS}
+              disabled={busy || hasScores || !layout.ok}
               onClick={() => {
                 const schedule = generateFlexSchedule({
                   players: playersOf(participantIds),
@@ -406,7 +409,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                 setNotice(next.changed ? "Hay otra distribución." : "No apareció otra distribución distinta con la misma equidad.");
               }}
             >
-              Regenerar distribución
+              Regenerar parejas
             </Button>
             <Button
               type="button"
@@ -562,8 +565,10 @@ function RoundPreview({ schedule, names }: { schedule: FlexSchedule; names: Map<
   return (
     <div className="liga-flex__preview">
       <p>
-        {schedule.quality.rounds} rondas · {schedule.quality.matches} partidos · repetidos de compañero{" "}
-        {schedule.quality.partnerRepeats} · rivales {schedule.quality.rivalRepeats}
+        Partidos por jugador: {schedule.quality.rounds}. Descansos: {schedule.quality.rests}. Parejas repetidas:{" "}
+        {schedule.quality.partnerRepeats}. Repetición máxima de una pareja: {schedule.quality.maxPartnerRepeat}. Rivales
+        repetidos: {schedule.quality.rivalRepeats}.
+        {schedule.quality.partnerRepeats === 0 ? " Nadie repite compañero." : ""}
       </p>
       {schedule.rounds.map((round) => (
         <article key={round.round}>

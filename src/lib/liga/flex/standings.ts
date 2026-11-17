@@ -41,9 +41,8 @@ type Acc = {
 };
 
 /**
- * Orden de la jornada: promedio de games ganados por partido, luego promedio
- * de diferencia. El orden alfabético no desempata. Si un grupo sigue empatado
- * y cambia los puntos, hace falta una resolución deportiva explícita.
+ * Todos juegan los mismos partidos, así que se ordena por games ganados y
+ * luego por diferencia. El nombre y el id no desempata.
  */
 export function rankFlexJornada(input: {
   players: readonly FlexPlayerRef[];
@@ -142,17 +141,11 @@ function addH2h(acc: Acc, rivalId: string, gf: number, gc: number): void {
   acc.h2hGc.set(rivalId, (acc.h2hGc.get(rivalId) ?? 0) + gc);
 }
 
-function avgGf(acc: Acc): number {
-  return acc.gf / acc.partidos;
-}
-
-function avgDif(acc: Acc): number {
-  return (acc.gf - acc.gc) / acc.partidos;
-}
-
 function compareSport(a: Acc, b: Acc): number {
-  if (avgGf(a) !== avgGf(b)) return avgGf(b) - avgGf(a);
-  if (avgDif(a) !== avgDif(b)) return avgDif(b) - avgDif(a);
+  if (a.gf !== b.gf) return b.gf - a.gf;
+  const diffA = a.gf - a.gc;
+  const diffB = b.gf - b.gc;
+  if (diffA !== diffB) return diffB - diffA;
   const aGf = a.h2hGf.get(b.id) ?? 0;
   const bGf = b.h2hGf.get(a.id) ?? 0;
   const aGc = a.h2hGc.get(b.id) ?? 0;

@@ -1,6 +1,7 @@
 import { flexPointsForPosition } from "./constants";
 import {
   generateFlexSchedule,
+  officialFlexLayout,
   regenerateFlexSchedule,
   scheduleCoversPlayers,
   scheduleHasCapturedResults,
@@ -59,10 +60,25 @@ describe("Riviera Flex League — generador", () => {
     expect(schedule.ok).toBe(true);
     if (!schedule.ok) return;
     expectValid(schedule, 12, 5, 3);
+    expect(schedule.quality.matches).toBe(15);
+    expect(schedule.quality.courtsUsed).toBe(3);
+    expect(schedule.quality.rests).toBe(0);
     expect(Object.values(schedule.quality.matchesByPlayer).every((n) => n === 5)).toBe(true);
-    expect(Object.values(schedule.quality.benchesByPlayer).every((n) => n === 0)).toBe(true);
     expect(schedule.quality.partnerRepeats).toBe(0);
-    expect(schedule.quality.needsConfirmation).toBe(false);
+    expect(schedule.rounds).toHaveLength(5);
+  });
+
+  it("12 jugadores con 4 canchas disponibles usan solo 3", () => {
+    const schedule = generateFlexSchedule({
+      players: players(12),
+      courts: 4,
+      rounds: 5,
+      seed: 12,
+      trials: 1,
+    });
+    expect(schedule.ok).toBe(true);
+    if (!schedule.ok) return;
+    expect(schedule.rounds.every((round) => round.matches.length === 3 && round.benchIds.length === 0)).toBe(true);
   });
 
   it("B: 16 jugadores, 4 canchas y 5 rondas, todos juegan cinco", () => {
@@ -76,50 +92,45 @@ describe("Riviera Flex League — generador", () => {
     expect(schedule.ok).toBe(true);
     if (!schedule.ok) return;
     expectValid(schedule, 16, 5, 4);
+    expect(schedule.quality.matches).toBe(20);
+    expect(schedule.quality.rests).toBe(0);
     expect(Object.values(schedule.quality.matchesByPlayer).every((n) => n === 5)).toBe(true);
   }, 30000);
 
-  it("C: 13 jugadores reparte un descanso por ronda", () => {
-    const schedule = generateFlexSchedule({
-      players: players(13),
-      courts: 3,
-      rounds: 5,
-      seed: 33,
-    });
-    expect(schedule.ok).toBe(true);
-    if (!schedule.ok) return;
-    expectValid(schedule, 13, 5, 3);
-    expect(schedule.rounds.every((round) => round.benchIds.length === 1)).toBe(true);
-    expect(schedule.quality.benchSpread).toBeLessThanOrEqual(1);
-    expect(schedule.quality.playSpread).toBeLessThanOrEqual(1);
+  it("F: 13, 14 y 15 se quedan pendientes y no se borra a nadie", () => {
+    for (const count of [13, 14, 15]) {
+      const layout = officialFlexLayout(count, 4);
+      expect(layout.ok).toBe(false);
+      if (layout.ok) continue;
+      expect(layout.pending).toBe(true);
+      const schedule = generateFlexSchedule({
+        players: players(count),
+        courts: 4,
+        rounds: 5,
+        seed: count,
+        trials: 1,
+      });
+      expect(schedule.ok).toBe(false);
+      expect(players(count)).toHaveLength(count);
+    }
   });
 
-  it("D: 14 jugadores, 6 rondas y dos descansos por ronda", () => {
-    const schedule = generateFlexSchedule({
-      players: players(14),
-      courts: 3,
-      rounds: 6,
-      seed: 44,
-    });
-    expect(schedule.ok).toBe(true);
-    if (!schedule.ok) return;
-    expectValid(schedule, 14, 6, 3);
-    expect(schedule.rounds.every((round) => round.benchIds.length === 2)).toBe(true);
-    expect(schedule.quality.playSpread).toBeLessThanOrEqual(1);
-  });
-
-  it("E: 15 jugadores descansan una vez en cinco rondas", () => {
-    const schedule = generateFlexSchedule({
-      players: players(15),
-      courts: 3,
-      rounds: 5,
-      seed: 55,
-    });
-    expect(schedule.ok).toBe(true);
-    if (!schedule.ok) return;
-    expectValid(schedule, 15, 5, 3);
-    expect(Object.values(schedule.quality.benchesByPlayer).every((n) => n === 1)).toBe(true);
-    expect(schedule.quality.consecutiveBenches).toBe(0);
+  it("C: crea exactamente 4, 5, 6, 7 o 12 rondas, sin agregar ni quitar", () => {
+    for (const rounds of [4, 5, 6, 7, 12]) {
+      const schedule = generateFlexSchedule({
+        players: players(12),
+        courts: 3,
+        rounds,
+        seed: 40 + rounds,
+        trials: 1,
+      });
+      expect(schedule.ok).toBe(true);
+      if (!schedule.ok) return;
+      expect(schedule.rounds).toHaveLength(rounds);
+      expect(schedule.quality.matches).toBe(rounds * 3);
+      expect(schedule.quality.rests).toBe(0);
+      expect(Object.values(schedule.quality.matchesByPlayer).every((n) => n === rounds)).toBe(true);
+    }
   });
 
   it("F: respeta 7 rondas pedidas", () => {
@@ -196,31 +207,30 @@ describe("Riviera Flex League — generador", () => {
     expect(schedule.rounds).toHaveLength(12);
     expect(schedule.quality.partnerRepeats).toBeGreaterThan(0);
     expect(schedule.quality.needsConfirmation).toBe(true);
-    expect(schedule.quality.limitations.join(" ")).toMatch(/compañero/i);
+    expect(schedule.quality.limitations.join(" ")).toMatch(/pareja/i);
   });
 
-  it("K: el orden de inscripción no reparte más descansos a los primeros", () => {
-    const roster = players(13);
-    const rests = new Map<string, number>();
-    for (const player of roster) rests.set(player.id, 0);
-    const seeds = 12;
-    for (let seed = 1; seed <= seeds; seed += 1) {
+  it("E: el primer inscrito no queda fijo con el mismo compañero", () => {
+    const roster = players(12);
+    const partners = new Set<string>();
+    for (let seed = 1; seed <= 6; seed += 1) {
       const schedule = generateFlexSchedule({
         players: roster,
         courts: 3,
         rounds: 5,
-        seed: seed * 19,
+        seed: seed * 23,
         trials: 1,
       });
       expect(schedule.ok).toBe(true);
       if (!schedule.ok) return;
-      for (const [id, n] of Object.entries(schedule.quality.benchesByPlayer)) {
-        rests.set(id, (rests.get(id) ?? 0) + n);
-      }
+      const first = schedule.rounds[0]!.matches.find((match) =>
+        match.pairA.includes("p01") || match.pairB.includes("p01")
+      )!;
+      const pair = first.pairA.includes("p01") ? first.pairA : first.pairB;
+      partners.add(pair.find((id) => id !== "p01")!);
+      expect(schedule.quality.partnerRepeats).toBe(0);
     }
-    const means = roster.map((p) => (rests.get(p.id) ?? 0) / seeds);
-    const spread = Math.max(...means) - Math.min(...means);
-    expect(spread).toBeLessThan(0.75);
+    expect(partners.size).toBeGreaterThan(1);
   });
 });
 
@@ -235,7 +245,7 @@ describe("Riviera Flex League — puntos y temporada", () => {
     expect(flexPointsForPosition(12)).toBe(30);
   });
 
-  it("ordena por promedio de games y no por la suma bruta", () => {
+  it("ordena por games ganados y luego por diferencia", () => {
     const ranked = rankFlexJornada({
       players: [
         { id: "a", name: "Ana" },

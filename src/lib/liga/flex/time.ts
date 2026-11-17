@@ -25,10 +25,10 @@ export function estimateFlexJornada(input: FlexTimeInput): FlexTimeEstimate {
   const fits =
     available == null || !Number.isFinite(available) ? null : totalMinutes <= available;
 
-  const clock = `${rounds} rondas × ${roundMinutes} min = ${playMinutes} min. ${Math.max(0, rounds - 1)} descansos × ${restEach} min = ${restMinutes} min. Duración estimada: ${totalMinutes} min.`;
+  const clock = `${rounds} rondas × ${roundMinutes} min = ${playMinutes} min. ${Math.max(0, rounds - 1)} transiciones × ${restEach} min = ${restMinutes} min. Duración estimada: ${totalMinutes} min.`;
   const message =
     fits === false
-      ? `${clock} El horario disponible (${available} min) no alcanza. Ajusta rondas, duración, descansos u horario antes de generar.`
+      ? `${clock} El horario disponible (${available} min) no alcanza. Ajusta rondas, duración, transiciones u horario antes de generar.`
       : clock;
 
   return { playMinutes, restMinutes, totalMinutes, fits, message };
