@@ -30,8 +30,10 @@ export function applyPagosDocumentMeta(meta: PagosDocumentMeta): () => void {
   setMeta("property", "og:image", meta.image);
   setMeta("property", "og:image:alt", meta.imageAlt);
   setMeta("name", "twitter:card", "summary_large_image");
+  setMeta("property", "og:image:secure_url", meta.image);
+  setMeta("property", "og:image:type", "image/jpeg");
   setMeta("property", "og:image:width", "1200");
-  setMeta("property", "og:image:height", "1200");
+  setMeta("property", "og:image:height", "630");
   setMeta("name", "twitter:title", meta.title);
   setMeta("name", "twitter:description", meta.description);
   setMeta("name", "twitter:image", meta.image);

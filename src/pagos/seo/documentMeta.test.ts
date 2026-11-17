@@ -8,7 +8,7 @@ describe("metadatos de la landing de pagos", () => {
     expect(meta.title).toBe(PAGOS_TITLE);
     expect(meta.description).toBe(PAGOS_DESCRIPTION);
     expect(meta.canonical).toBe("https://pagos.rivieraopen.com/");
-    expect(meta.image).toBe("https://pagos.rivieraopen.com/pagos/og.png");
+    expect(meta.image).toBe("https://pagos.rivieraopen.com/pagos/wa.jpg");
     expect(meta.notFound).toBe(false);
     expect(meta.description).not.toMatch(/evento/i);
 
@@ -19,6 +19,8 @@ describe("metadatos de la landing de pagos", () => {
         <meta name="description" content="Organiza. Juega. Compite." />
         <meta property="twitter:card" content="summary" />
         <meta property="twitter:title" content="Riviera Open — Retas y torneos de pádel" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon-180.png?v=9" />
+        <link rel="icon" href="/icon-192x192.png?v=9" />
         </head><body></body></html>`,
       meta
     );
@@ -29,6 +31,10 @@ describe("metadatos de la landing de pagos", () => {
     expect(html.match(/twitter:card/g)).toHaveLength(1);
     expect(html).toContain('content="summary_large_image"');
     expect(html).not.toContain('content="summary"');
+    expect(html).toContain("https://pagos.rivieraopen.com/pagos/wa.jpg");
+    expect(html).toContain('content="image/jpeg"');
+    expect(html).not.toContain("apple-touch-icon");
+    expect(html).not.toContain("logo-riviera.png");
   });
 });
 
