@@ -1,0 +1,172 @@
+.liga-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--liga-text, var(--brand-text, #14161a));
+}
+
+.liga-flex__head,
+.liga-flex__panel,
+.liga-flex__preview article {
+  border: 1px solid var(--liga-border, var(--brand-border, rgba(20, 22, 26, 0.12)));
+  border-radius: 18px;
+  background: var(--liga-surface, var(--brand-surface, #fff));
+  padding: 1rem 1.1rem;
+}
+
+.liga-flex__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.liga-flex__kicker {
+  margin: 0 0 0.2rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--brand-accent, var(--liga-accent, currentColor));
+}
+
+.liga-flex h1,
+.liga-flex h2,
+.liga-flex h3 {
+  font-family: "Bebas Neue", sans-serif;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.liga-flex p,
+.liga-flex td,
+.liga-flex th,
+.liga-flex label,
+.liga-flex button,
+.liga-flex input {
+  font-family: Manrope, sans-serif;
+}
+
+.liga-flex__row,
+.liga-flex__actions,
+.liga-flex__score,
+.liga-flex__jornadas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: end;
+}
+
+.liga-flex label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+}
+
+.liga-flex input {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--liga-border, rgba(20, 22, 26, 0.16));
+  background: transparent;
+  color: inherit;
+  padding: 0 0.7rem;
+}
+
+.liga-flex__jornadas button,
+.liga-flex__people button {
+  min-height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--liga-border, rgba(20, 22, 26, 0.16));
+  background: transparent;
+  color: inherit;
+  padding: 0 0.8rem;
+}
+
+.liga-flex__jornadas button.is-selected {
+  border-color: var(--brand-accent, currentColor);
+}
+
+.liga-flex__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.liga-flex__table th,
+.liga-flex__table td {
+  text-align: left;
+  padding: 0.55rem 0.2rem;
+  border-bottom: 1px solid var(--liga-border, rgba(20, 22, 26, 0.08));
+}
+
+.liga-flex__table tr:nth-child(-n + 3) td:first-child {
+  color: var(--ro-medal-gold, #c4a15a);
+}
+
+.liga-flex__people {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+}
+
+.liga-flex__people li,
+.liga-flex__score {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.35rem 0;
+}
+
+.liga-flex__score input {
+  width: 4rem;
+}
+
+.liga-flex__notice,
+.liga-flex__move {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--brand-accent, #fff) 12%, transparent);
+}
+
+.liga-flex__podio {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.liga-flex__podio li {
+  border-radius: 16px;
+  padding: 0.9rem;
+  background: var(--liga-surface, #fff);
+  border: 1px solid var(--liga-border, rgba(20, 22, 26, 0.12));
+}
+
+.liga-flex--public {
+  padding: 1rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .liga-flex__move,
+  .liga-flex__panel,
+  .liga-flex__preview article {
+    animation: liga-flex-in 240ms ease;
+  }
+}
+
+@keyframes liga-flex-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 720px) {
+  .liga-flex__head,
+  .liga-flex__score,
+  .liga-flex__podio {
+    display: flex;
+    flex-direction: column;
+  }
+}

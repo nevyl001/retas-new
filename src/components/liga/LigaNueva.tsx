@@ -44,6 +44,14 @@ const MODALIDAD_OPTIONS: ModalidadOption[] = [
     badge: "Semifinales + Final",
     icon: "trophy",
   },
+  {
+    value: "flex_league",
+    title: "Riviera Flex League",
+    description:
+      "Liga individual de permanencia voluntaria. Juega cuando quieras, suma puntos en cada jornada y compite por el campeonato.",
+    badge: "Americano dinámico",
+    icon: "calendar-event",
+  },
 ];
 
 function formatFechaResumen(value: string): string {
@@ -68,6 +76,9 @@ export const LigaNueva: React.FC = () => {
   const [canchas, setCanchas] = useState(3);
   const [modalidad, setModalidad] = useState<LigaModalidad>("individual_rotativo");
   const [vueltas, setVueltas] = useState<LigaVueltas>(1);
+  const [flexJornadas, setFlexJornadas] = useState(12);
+  const [flexCategoria, setFlexCategoria] = useState("6ª alta / 5ª baja");
+  const [flexHorario, setFlexHorario] = useState("Martes y jueves, 19:00–21:00");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -89,6 +100,14 @@ export const LigaNueva: React.FC = () => {
         canchas_disponibles: canchas,
         modalidad,
         vueltas: modalidad === "parejas_fijas" ? vueltas : 1,
+        flex:
+          modalidad === "flex_league"
+            ? {
+                jornadas: flexJornadas,
+                categoria: flexCategoria,
+                horario: flexHorario,
+              }
+            : undefined,
       });
       navigateLiga(ligaGestionarPath(liga.id));
     } catch (err) {
@@ -228,6 +247,38 @@ export const LigaNueva: React.FC = () => {
                 </div>
               </fieldset>
 
+              {modalidad === "flex_league" ? (
+                <div className="liga-form-row">
+                  <div className="liga-field">
+                    <label htmlFor="liga-flex-jornadas">Jornadas de la temporada</label>
+                    <input
+                      id="liga-flex-jornadas"
+                      type="number"
+                      min={1}
+                      max={48}
+                      value={flexJornadas}
+                      onChange={(e) => setFlexJornadas(Number(e.target.value) || 12)}
+                    />
+                  </div>
+                  <div className="liga-field">
+                    <label htmlFor="liga-flex-categoria">Categoría</label>
+                    <input
+                      id="liga-flex-categoria"
+                      value={flexCategoria}
+                      onChange={(e) => setFlexCategoria(e.target.value)}
+                    />
+                  </div>
+                  <div className="liga-field">
+                    <label htmlFor="liga-flex-horario">Horario sugerido</label>
+                    <input
+                      id="liga-flex-horario"
+                      value={flexHorario}
+                      onChange={(e) => setFlexHorario(e.target.value)}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
               {modalidad === "parejas_fijas" ? (
                 <div className="liga-field liga-nueva__vueltas">
                   <label htmlFor="liga-vueltas">Vueltas</label>
@@ -281,6 +332,12 @@ export const LigaNueva: React.FC = () => {
                     </span>
                   </dd>
                 </div>
+                {modalidad === "flex_league" ? (
+                  <div className="liga-nueva__summary-row">
+                    <dt>Temporada</dt>
+                    <dd>{flexJornadas} jornadas · participación voluntaria</dd>
+                  </div>
+                ) : null}
                 {modalidad === "parejas_fijas" ? (
                   <div className="liga-nueva__summary-row">
                     <dt>Vueltas</dt>

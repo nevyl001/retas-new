@@ -15,6 +15,7 @@ import type {
 import { ligaModalidadLabel } from "../../lib/liga/types";
 import {
   isEquiposModalidad,
+  isFlexLeague,
   isParejasFijasPlayoffs,
 } from "../../lib/liga/ligaModalidad";
 import { aplicarRatingsPendientesLigaPlayoffs } from "../../lib/rivieraJugadores/aplicarRatingPartido";
@@ -66,6 +67,7 @@ import {
   navigateLiga,
 } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
+import { LigaFlexAdmin } from "./LigaFlexAdmin";
 import { LigaInscripcionesPanel } from "./LigaInscripcionesPanel";
 import { LigaSustituirJugadorModal } from "./LigaSustituirJugadorModal";
 import "./liga-page.css";
@@ -247,10 +249,12 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
       setJugadoresPool(pool);
       setNombreDraft(d.nombre);
       setEditingNombre(false);
-      if (isEquiposModalidad(d.modalidad)) {
+      if (isEquiposModalidad(d.modalidad) || isFlexLeague(d.modalidad)) {
         setRankingItems([]);
         setSustituciones([]);
-        setTab((prev) => (prev === "jugadores" ? "parejas" : prev));
+        if (isEquiposModalidad(d.modalidad)) {
+          setTab((prev) => (prev === "jugadores" ? "parejas" : prev));
+        }
       } else {
         const [rank, sust] = await Promise.all([
           getRanking(ligaId),
@@ -277,6 +281,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   // Al abrir la liga, reparar historial de jornadas completed (Cuadra/César +50).
   useEffect(() => {
     if (!detalle?.id) return;
+    if (isFlexLeague(detalle.modalidad)) return;
     const needsCareerCheck = detalle.jornadas.filter(
       (jornada) =>
         jornada.estado === "completed" ||
@@ -780,6 +785,12 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
           Volver
         </Button>
       </LigaPageShell>
+    );
+  }
+
+  if (isFlexLeague(detalle.modalidad)) {
+    return (
+      <LigaFlexAdmin detalle={detalle} pool={jugadoresPool} onReload={() => void load()} />
     );
   }
 

@@ -5,7 +5,8 @@ export type LigaEstado = "upcoming" | "in_progress" | "completed";
 export type LigaModalidad =
   | "individual_rotativo"
   | "parejas_fijas"
-  | "parejas_fijas_playoffs";
+  | "parejas_fijas_playoffs"
+  | "flex_league";
 export type LigaVueltas = 1 | 2 | 3;
 export type LigaJornadaEstado = "upcoming" | "in_progress" | "completed";
 export type LigaPartidoEstado = "upcoming" | "in_progress" | "completed";
@@ -199,6 +200,7 @@ export function ligaModalidadLabel(modalidad: LigaModalidad): string {
   if (modalidad === "parejas_fijas_playoffs") {
     return "Liga por parejas fijas con semifinales y final";
   }
+  if (modalidad === "flex_league") return "Riviera Flex League";
   return "Liga individual con parejas rotativas";
 }
 
@@ -208,6 +210,7 @@ export function ligaModalidadCardLabel(modalidad: LigaModalidad): string {
   if (modalidad === "parejas_fijas_playoffs") {
     return "Liga por parejas fijas · Playoffs";
   }
+  if (modalidad === "flex_league") return "Riviera Flex League";
   return "Liga individual · Parejas rotativas";
 }
 
@@ -217,6 +220,7 @@ export function ligaModalidadPublicLabel(modalidad: LigaModalidad): string {
   if (modalidad === "parejas_fijas_playoffs") {
     return "Parejas fijas · semifinales y final";
   }
+  if (modalidad === "flex_league") return "Flex League";
   return "Parejas rotativas";
 }
 
@@ -250,6 +254,16 @@ export interface CreateLigaInput {
   canchas_disponibles?: number;
   modalidad?: LigaModalidad;
   vueltas?: LigaVueltas;
+  flex?: {
+    jornadas?: number;
+    categoria?: string;
+    horario?: string;
+    inscripcionTemporadaMxn?: number | null;
+    participacionJornadaMxn?: number | null;
+    premioCampeon?: string;
+    premioSubcampeon?: string;
+    premioTercer?: string;
+  };
 }
 
 export interface CreateLigaEquipoInput {

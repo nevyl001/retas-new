@@ -7,6 +7,7 @@ import type {
 } from "../../lib/liga/types";
 import {
   isEquiposModalidad,
+  isFlexLeague,
   isParejasFijasPlayoffs,
 } from "../../lib/liga/ligaModalidad";
 import { supabase } from "../../lib/supabaseClient";
@@ -38,6 +39,7 @@ import {
   publicLigaJornadaUrl,
 } from "../../services/ligaService";
 import { ClubExperienceScope, PublicEventBrandIdentity, PublicEventNeutralLoading, PublicScopedBrandGate, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
+import { LigaFlexPublica } from "./LigaFlexPublica";
 import { isPubDsV2Enabled } from "../../config/peds";
 import { useLigaRealtime } from "../../hooks/useLigaRealtime";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
@@ -157,7 +159,11 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       const d = await getLigaById(ligaId, true);
       if (cancelledRef.current) return;
       // Ranking en paralelo conceptual: detalle primero (nombres/nivel), ranking al lado.
-      if (isEquiposModalidad(d.modalidad)) {
+      if (isFlexLeague(d.modalidad)) {
+        setDetalle(d);
+        setRanking([]);
+        setRankingEquipos([]);
+      } else if (isEquiposModalidad(d.modalidad)) {
         setDetalle(d);
         setRanking([]);
         const rEq = await getRankingEquipos(ligaId);
@@ -440,6 +446,10 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
         <PublicEventNeutralLoading message={error ?? "No disponible"} />
       </ClubExperienceScope>
     );
+  }
+
+  if (isFlexLeague(detalle.modalidad)) {
+    return <LigaFlexPublica detalle={detalle} />;
   }
 
   const jornadaActiva = detalle.jornadas.find(

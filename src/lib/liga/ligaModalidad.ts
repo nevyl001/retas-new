@@ -15,8 +15,13 @@ export function isEquiposModalidad(m: LigaModalidad): boolean {
   return m === "parejas_fijas" || m === "parejas_fijas_playoffs";
 }
 
+export function isFlexLeague(m: LigaModalidad): boolean {
+  return m === "flex_league";
+}
+
 export function parseLigaModalidad(raw: unknown): LigaModalidad {
   if (raw === "parejas_fijas") return "parejas_fijas";
   if (raw === "parejas_fijas_playoffs") return "parejas_fijas_playoffs";
+  if (raw === "flex_league") return "flex_league";
   return "individual_rotativo";
 }

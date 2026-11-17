@@ -1,5 +1,5 @@
 import { computeJornadaPublicStats } from "../../liga/jornadaStats";
-import { isEquiposModalidad } from "../../liga/ligaModalidad";
+import { isEquiposModalidad, isFlexLeague } from "../../liga/ligaModalidad";
 import {
   ligaPodioLugarLabel,
   ligaPodioPlacement,
@@ -50,6 +50,9 @@ export async function syncLigaJornada(
     const organizadorId =
       (detalle.organizador_id && String(detalle.organizador_id).trim()) ||
       userId;
+    if (isFlexLeague(detalle.modalidad)) {
+      return { touchedJugadorIds: [], syncFailures: [] };
+    }
     const jornada = detalle.jornadas.find((j) => j.numero === jornadaNumero);
     if (!jornada) {
       console.error(

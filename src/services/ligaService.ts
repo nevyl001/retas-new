@@ -51,10 +51,12 @@ import {
 import { parsePlayoffsSetScoresJson } from "../lib/liga/parejasFijasPlayoffsMatchScore";
 import {
   isEquiposModalidad,
+  isFlexLeague,
   isParejasFijasLegacy,
   isParejasFijasPlayoffs,
   parseLigaModalidad,
 } from "../lib/liga/ligaModalidad";
+import { bootstrapFlexLeague } from "./ligaFlexService";
 import {
   normalizeHoraInicio,
   validateCancha,
@@ -220,7 +222,14 @@ export async function createLiga(data: CreateLigaInput): Promise<Liga> {
     .single();
 
   if (error) throw new Error(error.message);
-  return mapLiga(row as Record<string, unknown>);
+  const liga = mapLiga(row as Record<string, unknown>);
+  if (isFlexLeague(liga.modalidad)) {
+    await bootstrapFlexLeague(liga.id, {
+      ...data.flex,
+      canchas: data.canchas_disponibles ?? 3,
+    });
+  }
+  return liga;
 }
 
 /** Renombra la liga en cualquier estado (próxima, en curso o finalizada). */
@@ -751,6 +760,9 @@ export async function resetLiga(ligaId: string): Promise<void> {
     .maybeSingle();
 
   if (lErr) throw new Error(lErr.message);
+  if (isFlexLeague(parseLigaModalidad(liga?.modalidad))) {
+    throw new Error("Riviera Flex League no se reinicia con el calendario de otras ligas.");
+  }
 
   await deleteAllJornadasLiga(ligaId);
 
@@ -782,6 +794,9 @@ export async function regenerarCalendarioLiga(
 ): Promise<void> {
   await requireUserId();
   const detalle = await getLigaById(ligaId);
+  if (isFlexLeague(detalle.modalidad)) {
+    throw new Error("Riviera Flex League arma cada jornada por separado.");
+  }
 
   if (isParejasFijasPlayoffs(detalle.modalidad)) {
     validateEquiposParaPlayoffsCalendario(detalle.equipos.length);
@@ -1841,6 +1856,16 @@ export async function aplicarPuntosJornada(jornadaId: string): Promise<void> {
   if (jErr) throw new Error(jErr.message);
   if (!jornada) throw new Error("Jornada no encontrada.");
 
+  const { data: ligaRow, error: modErr } = await supabase
+    .from("ligas")
+    .select("modalidad")
+    .eq("id", jornada.liga_id)
+    .maybeSingle();
+  if (modErr) throw new Error(modErr.message);
+  if (isFlexLeague(parseLigaModalidad(ligaRow?.modalidad))) {
+    throw new Error("Riviera Flex League asigna puntos por la posición de la jornada.");
+  }
+
   const { data: partidos, error: pErr } = await supabase
     .from("liga_partidos")
     .select("estado")
@@ -1888,6 +1913,9 @@ export async function resyncLigaJornadaCareer(
   try {
     const ligaId = String(jornada.liga_id);
     const detalle = await getLigaById(ligaId);
+    if (isFlexLeague(detalle.modalidad)) {
+      return { careerSyncOk: true, alreadyRecorded: true };
+    }
     const organizadorId = String(detalle.organizador_id ?? userId);
     await ensureLigaInscripcionRankingForLiga(
       ligaId,
