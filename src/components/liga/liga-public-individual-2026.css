@@ -461,24 +461,33 @@
 
 @media (max-width: 719px) {
   .liga-pantalla--individual .liga-ind-rankhead {
-    margin-bottom: 0.7rem;
-    padding-bottom: 0.65rem;
+    gap: 0.1rem;
+    margin-bottom: 0.45rem;
+    padding-bottom: 0.45rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-rankhead__liga {
+    font-size: 1.16rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-rankhead__meta {
+    margin-top: 0.06rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3 {
     max-width: none;
-    gap: 0.5rem;
-    margin-bottom: 0.35rem;
+    gap: 0.4rem;
+    margin-bottom: 0.15rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__portrait {
-    max-height: 16.25rem;
+    max-height: 12rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--2 .liga-ind-top3__portrait,
   .liga-pantalla--individual .liga-ind-top3__card--3 .liga-ind-top3__portrait {
     aspect-ratio: 4 / 5;
-    max-height: 14.25rem;
+    max-height: 11rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--2 .liga-ind-top3__riviera-id,
@@ -489,15 +498,28 @@
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__body {
-    padding: 0.7rem 1rem 0.8rem;
+    padding: 0.4rem 0.9rem 0.48rem;
+    gap: 0.04rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--2 .liga-ind-top3__body,
   .liga-pantalla--individual .liga-ind-top3__card--3 .liga-ind-top3__body {
     align-items: center;
     text-align: center;
-    padding: 0.62rem 0.4rem 0.68rem;
-    gap: 0.12rem;
+    padding: 0.38rem 0.35rem 0.42rem;
+    gap: 0.04rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__pts {
+    margin-top: 0.1rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__support {
+    margin-top: 0.08rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__support {
+    margin-top: 0.12rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--2 .liga-ind-top3__pts,
@@ -527,11 +549,11 @@
 
   .liga-pantalla--individual .liga-ind-top3__card--2 .liga-ind-top3__pts-value,
   .liga-pantalla--individual .liga-ind-top3__card--3 .liga-ind-top3__pts-value {
-    font-size: 1.18rem;
+    font-size: 1.02rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__pts-value {
-    font-size: 1.55rem;
+    font-size: 1.22rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--2 .liga-ind-top3__pts-label,
@@ -592,6 +614,32 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--brand-accent, var(--liga-pub-text));
+}
+
+@media (max-width: 719px) {
+  .liga-pantalla--individual .liga-pantalla-ranking--individual-primary {
+    padding: 0.75rem 0.85rem 0.4rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-podio-note {
+    margin: 0.05rem 0 0;
+    padding: 0.5rem 0.2rem 0.05rem;
+  }
+
+  .liga-pantalla--individual .liga-ind-podio-note__title {
+    font-size: 0.74rem;
+    line-height: 1.25;
+  }
+
+  .liga-pantalla--individual .liga-ind-podio-note__text {
+    margin-top: 0.16rem;
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
+
+  .liga-pantalla--individual .liga-ind-podio-note__close {
+    margin-top: 0.22rem;
+  }
 }
 
 .liga-pantalla--individual .liga-ind-rest {
@@ -1187,7 +1235,7 @@
 
 @media (max-width: 420px) {
   .liga-pantalla--individual .liga-pantalla-ranking--individual-primary {
-    padding: 1.15rem 0.95rem 1.05rem;
+    padding: 0.7rem 0.8rem 0.4rem;
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__name {
@@ -1195,7 +1243,7 @@
   }
 
   .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__pts-value {
-    font-size: 1.4rem;
+    font-size: 1.22rem;
   }
 
   .liga-pantalla--individual .liga-ind-rest__riviera-id {
