@@ -244,23 +244,22 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 
         <HomeContinueStrip items={activeRetas} onContinue={handleContinueItem} />
 
-        <div className="ops-split">
-          <CompetitionModes onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
-          <section className="ops-section home-access" aria-labelledby="ops-admin-title">
-            <h2 id="ops-admin-title">Administración del club</h2>
-            <div className="ops-admin">
-              {clubModules.map((module) => (
-                <DashboardActionCard
-                  key={module.key}
-                  title={module.title}
-                  icon={module.icon}
-                  onClick={module.onClick}
-                  className="home-access-card"
-                />
-              ))}
-            </div>
-          </section>
-        </div>
+        <CompetitionModes onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
+
+        <section className="ops-section home-access" aria-labelledby="ops-admin-title">
+          <h2 id="ops-admin-title">Administración del club</h2>
+          <div className="ops-admin">
+            {clubModules.map((module) => (
+              <DashboardActionCard
+                key={module.key}
+                title={module.title}
+                icon={module.icon}
+                onClick={module.onClick}
+                className="home-access-card"
+              />
+            ))}
+          </div>
+        </section>
 
         <AppSiteFooter />
       </div>
