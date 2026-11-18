@@ -163,6 +163,10 @@ describe("LigaDetallePublica — identificador oficial RV/RIV en ranking acumula
     expect(card1BodyChildren[1]?.className).toContain(
       "liga-ind-top3__riviera-id"
     );
+    expect(container.textContent).toContain(
+      "¡Felicidades a los 3 primeros lugares!"
+    );
+    expect(container.textContent).toContain("Vive Riviera Open.");
 
     const restRows = Array.from(
       container.querySelectorAll(".liga-ind-rest__row")

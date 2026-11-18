@@ -631,6 +631,18 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                   })}
                 </div>
 
+                {podio.length >= 3 ? (
+                  <aside className="liga-ind-podio-note">
+                    <p className="liga-ind-podio-note__title">
+                      ¡Felicidades a los 3 primeros lugares!
+                    </p>
+                    <p className="liga-ind-podio-note__text">
+                      Sigan dándolo todo en la cancha, porque cada partido cuenta.
+                    </p>
+                    <p className="liga-ind-podio-note__close">Vive Riviera Open.</p>
+                  </aside>
+                ) : null}
+
                 {ranking.length > 3 ? (
                   <div className="liga-ind-rest">
                     <ul className="liga-ind-rest__list" aria-label="Resto del ranking">
