@@ -163,6 +163,9 @@ describe("LigaDetallePublica — identificador oficial RV/RIV en ranking acumula
     expect(card1BodyChildren[1]?.className).toContain(
       "liga-ind-top3__riviera-id"
     );
+    expect(
+      container.querySelector(".liga-ind-rankhead__liga")?.textContent
+    ).toBe("Liga 4ta Advance");
     expect(container.textContent).toContain(
       "¡Felicidades a los 3 primeros lugares!"
     );

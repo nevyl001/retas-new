@@ -39,6 +39,10 @@ import {
   publicLigaJornadaUrl,
 } from "../../services/ligaService";
 import { ClubExperienceScope, PublicEventBrandIdentity, PublicEventNeutralLoading, PublicScopedBrandGate, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
+import {
+  RIVIERA_CO_BRAND_ATTRIBUTION,
+  isRivieraOwnAccountName,
+} from "../../club-experience/motherBrand";
 import { LigaFlexPublica } from "./LigaFlexPublica";
 import { isPubDsV2Enabled } from "../../config/peds";
 import { useLigaRealtime } from "../../hooks/useLigaRealtime";
@@ -540,12 +544,19 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
               : { "aria-labelledby": "liga-ind-ranking-title" })}
           >
             {esParejasFijas ? null : (
-              <h2
-                id="liga-ind-ranking-title"
-                className="liga-pantalla-ranking__title"
-              >
-                Ranking acumulado
-              </h2>
+              <header className="liga-ind-rankhead">
+                <p id="liga-ind-ranking-title" className="liga-ind-rankhead__kicker">
+                  Ranking acumulado
+                </p>
+                <h2 className="liga-ind-rankhead__liga">{detalle.nombre}</h2>
+                <p className="liga-ind-rankhead__meta">
+                  {isClubBranded &&
+                  organizerName &&
+                  !isRivieraOwnAccountName(organizerName)
+                    ? `${organizerName} · ${RIVIERA_CO_BRAND_ATTRIBUTION}`
+                    : "Top 3 actual"}
+                </p>
+              </header>
             )}
             {esParejasFijas ? (
               <LigaPublicParejasStandings
