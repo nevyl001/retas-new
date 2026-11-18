@@ -1,6 +1,5 @@
 import React from "react";
-import { ModeCard } from "../platform/ModeCard";
-import { TablerIcon } from "../ui/TablerIcon";
+import { DashboardActionCard } from "./dashboard/DashboardActionCard";
 import type { GameModeConfig } from "./gameModesConfig";
 import { UNLOCK_GAME_MODES_WHATSAPP_URL } from "./unlockGameModesWhatsApp";
 
@@ -13,12 +12,9 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
   id,
   title,
   description,
-  icon,
   tablerIcon,
-  accentColor,
   category,
   disabled,
-  index,
   onClick,
 }) => {
   const handleClick = () => {
@@ -30,28 +26,16 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
   };
 
   return (
-    <ModeCard
+    <DashboardActionCard
       title={title}
       description={description}
-      typeLabel={disabled ? "Upgrade" : undefined}
-      icon={tablerIcon ? <TablerIcon name={tablerIcon} size={20} /> : icon}
+      icon={tablerIcon || "ball-tennis"}
       disabled={disabled}
+      badge={disabled ? "Upgrade" : undefined}
       onClick={handleClick}
       className={`game-mode-card game-mode-card--${id} game-mode-card--${category}${
         disabled ? " game-mode-card--disabled" : ""
       }`}
-      style={
-        {
-          "--mode-accent": accentColor,
-          animationDelay: `${index * 60}ms`,
-        } as React.CSSProperties
-      }
-    >
-      <TablerIcon
-        name="chevron-right"
-        size={16}
-        className="game-mode-card__chevron"
-      />
-    </ModeCard>
+    />
   );
 };

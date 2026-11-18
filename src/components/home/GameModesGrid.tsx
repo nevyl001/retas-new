@@ -13,72 +13,70 @@ interface GameModesGridProps {
   isModeEnabled?: (modeId: GameModeId) => boolean;
 }
 
-function renderModeCards(
-  modes: GameModeConfig[],
-  startIndex: number,
-  isModeEnabled: GameModesGridProps["isModeEnabled"],
-  onModeSelect: GameModesGridProps["onModeSelect"]
-) {
-  return modes.map((mode, offset) => {
-    const index = startIndex + offset;
-    const enabled = isModeEnabled ? isModeEnabled(mode.id) : true;
-    return (
-      <GameModeCard
-        key={mode.id}
-        {...mode}
-        index={index}
-        disabled={!enabled}
-        onClick={() => onModeSelect(mode.id)}
-      />
-    );
-  });
-}
-
-export const GameModesGrid: React.FC<GameModesGridProps> = ({
-  onModeSelect,
-  isModeEnabled,
-}) => {
+function usePresentedModes(): { quick: GameModeConfig[]; organized: GameModeConfig[] } {
   const { nombre } = useBranding();
-  const quickModes = useMemo(
-    () =>
-      QUICK_GAME_MODES.map((mode) =>
+  return useMemo(
+    () => ({
+      quick: QUICK_GAME_MODES.map((mode) =>
         mode.id === "duelo-2v2"
           ? { ...mode, description: getDuelo2v2ModeDescription(nombre) }
           : mode
       ),
+      organized: ORGANIZED_GAME_MODES,
+    }),
     [nombre]
   );
+}
 
+function ModeCards({
+  modes,
+  startIndex,
+  isModeEnabled,
+  onModeSelect,
+}: {
+  modes: GameModeConfig[];
+  startIndex: number;
+  isModeEnabled?: (modeId: GameModeId) => boolean;
+  onModeSelect: (modeId: GameModeId) => void;
+}) {
   return (
-    <div className="game-modes-groups rv-stack rv-stack--lg">
-      <section className="game-modes-section" aria-labelledby="game-modes-quick-heading">
-        <h2 id="game-modes-quick-heading" className="home-section-title rv-section-title">
-          Retas rápidas
-        </h2>
-        <div className="game-modes-grid rv-grid rv-grid--modes">
-          {renderModeCards(quickModes, 0, isModeEnabled, onModeSelect)}
-        </div>
-      </section>
+    <>
+      {modes.map((mode, offset) => {
+        const enabled = isModeEnabled ? isModeEnabled(mode.id) : true;
+        return (
+          <GameModeCard
+            key={mode.id}
+            {...mode}
+            index={startIndex + offset}
+            disabled={!enabled}
+            onClick={() => onModeSelect(mode.id)}
+          />
+        );
+      })}
+    </>
+  );
+}
 
-      <section
-        className="game-modes-section"
-        aria-labelledby="game-modes-organized-heading"
-      >
-        <h2
-          id="game-modes-organized-heading"
-          className="home-section-title rv-section-title"
-        >
-          Competencias organizadas
-        </h2>
-        <div className="game-modes-grid rv-grid rv-grid--modes game-modes-grid--organized">
-          {renderModeCards(
-            ORGANIZED_GAME_MODES,
-            QUICK_GAME_MODES.length,
-            isModeEnabled,
-            onModeSelect
-          )}
-        </div>
-      </section>
-    </div>
+export const OrganizeModes: React.FC<GameModesGridProps> = (props) => {
+  const { quick } = usePresentedModes();
+  return (
+    <section className="ops-section" aria-labelledby="ops-organize-title">
+      <h2 id="ops-organize-title">Organiza una actividad</h2>
+      <div className="ops-grid ops-grid--primary">
+        <ModeCards modes={quick} startIndex={0} {...props} />
+      </div>
+    </section>
+  );
+};
+
+export const CompetitionModes: React.FC<GameModesGridProps> = (props) => {
+  const { organized } = usePresentedModes();
+  return (
+    <section className="ops-section" aria-labelledby="ops-competitions-title">
+      <h2 id="ops-competitions-title">Competencias</h2>
+      <div className="ops-grid ops-grid--competitions">
+        <ModeCards modes={organized} startIndex={QUICK_GAME_MODES.length} {...props} />
+      </div>
+    </section>
   );
 };

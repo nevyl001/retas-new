@@ -144,16 +144,15 @@ describe("home presentation", () => {
         })
       );
 
-      expect(view).toContain("home-inner--dashboard");
+      expect(view).toContain("ops-dashboard");
       expect(view).not.toContain("home-greeting");
       expect(view).not.toContain("Hola, Test User");
-      expect(view).toContain("home-question");
-      expect(view).toContain("¿Qué quieres organizar hoy?");
-      expect(view).toContain("Retas rápidas");
-      expect(view).toContain("Competencias organizadas");
+      expect(view).toContain("Centro de operaciones");
+      expect(view).toContain("Organiza una actividad");
+      expect(view).toContain("Competencias");
       expect(view).toContain("game-mode-card--reta-rapida");
       expect(view).toContain("game-mode-card--competencia");
-      expect(view).toContain("rv-mode-card__body");
+      expect(view).toContain("ops-card__desc");
       expect(view).toContain("ti-users");
       expect(view).toContain("ti-refresh");
       expect(view).toContain("ti-ball-tennis");
@@ -167,7 +166,7 @@ describe("home presentation", () => {
       expect(view).not.toContain("home-quick-card");
       expect(view).not.toContain("Gestionar mis retas");
       expect(view).toContain("home-access");
-      expect(view).toContain("Gestión del club");
+      expect(view).toContain("Administración del club");
       expect(view).not.toContain("Accesos rápidos");
       expect(view).toContain("Riviera Rewards");
       expect(view).not.toContain("Campañas, puntos, premios y canjes.");

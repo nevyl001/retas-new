@@ -18,7 +18,6 @@ import { buildRankingComoFuncionaPath } from "../jugadores/jugadoresPublicNav";
 import { navigateJugadores } from "../jugadores/jugadoresNav";
 import { navigateCoaching } from "../coaching/coachingNav";
 import { navigateRewards } from "../rewards/rewardsNav";
-import { TablerIcon } from "../ui/TablerIcon";
 import { type GameModeId } from "./gameModesConfig";
 import {
   gameModeIdToTournamentFormat,
@@ -33,15 +32,17 @@ import {
   type HomeRetaItem,
 } from "../../lib/retasList";
 import { saveRetaConfig } from "../../lib/reta/updateRetaConfig";
-import { GameModesGrid } from "./GameModesGrid";
+import { CompetitionModes, OrganizeModes } from "./GameModesGrid";
 import { HomeContinueStrip } from "./HomeContinueStrip";
 import { QuickStartSheet, type QuickStartPayload } from "./QuickStartSheet";
+import { DashboardActionCard } from "./dashboard/DashboardActionCard";
 import { AppSiteFooter } from "../legal/AppSiteFooter";
 import {
   getAccountModeDisabledMessage,
   useBranding,
 } from "../../club-experience";
 import "./home.css";
+import "./dashboard/dashboard.css";
 
 interface HomeDashboardProps {
   userId?: string;
@@ -199,89 +200,70 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
     );
   }
 
+  const clubModules = [
+    {
+      key: "coaching",
+      title: "Riviera Coaching",
+      icon: "user-star",
+      onClick: () => navigateCoaching("/coaching"),
+    },
+    {
+      key: "rewards",
+      title: "Riviera Rewards",
+      icon: "gift",
+      onClick: () => navigateRewards("/rewards"),
+    },
+    {
+      key: "players",
+      title: "Registro de jugadores",
+      icon: "users",
+      onClick: () => navigateJugadores(),
+    },
+    {
+      key: "ranking",
+      title: "Cómo funciona el ranking",
+      icon: "trophy",
+      onClick: () => navigateAppTo(buildRankingComoFuncionaPath()),
+    },
+    ...(onShowAllRetas
+      ? [{ key: "history", title: "Historial", icon: "history", onClick: onShowAllRetas }]
+      : []),
+  ];
+
   return (
-    <div className="home-inner home-inner--dashboard rv-page">
-      <header className="home-hero">
-        <h1 className="home-question">¿Qué quieres organizar hoy?</h1>
-      </header>
+    <div className="home-inner ops-root rv-page">
+      <div className="ops-dashboard">
+        <header className="ops-head">
+          <h1>Centro de operaciones</h1>
+          <p>Gestiona tus actividades, competencias y jugadores desde un solo lugar.</p>
+        </header>
 
-      <HomeContinueStrip items={activeRetas} onContinue={handleContinueItem} />
+        {error ? <p className="ops-error">{error}</p> : null}
 
-      {error && <p className="home-error">{error}</p>}
+        <OrganizeModes onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
 
-      <div className="home-shell">
-        <div className="home-shell__main">
-          <GameModesGrid
-            onModeSelect={handleModeSelect}
-            isModeEnabled={isModeEnabled}
-          />
+        <HomeContinueStrip items={activeRetas} onContinue={handleContinueItem} />
+
+        <div className="ops-split">
+          <CompetitionModes onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
+          <section className="ops-section home-access" aria-labelledby="ops-admin-title">
+            <h2 id="ops-admin-title">Administración del club</h2>
+            <div className="ops-admin">
+              {clubModules.map((module) => (
+                <DashboardActionCard
+                  key={module.key}
+                  title={module.title}
+                  icon={module.icon}
+                  onClick={module.onClick}
+                  className="home-access-card"
+                />
+              ))}
+            </div>
+          </section>
         </div>
+
+        <AppSiteFooter />
       </div>
-
-      <section className="home-access" aria-label="Gestión del club">
-        <h2 className="home-section-title">Gestión del club</h2>
-        <div className="home-access__grid">
-          <button
-            type="button"
-            className="home-access-card home-access-card--primary"
-            onClick={() => navigateCoaching("/coaching")}
-          >
-            <span className="home-access-card__icon" aria-hidden>
-              <TablerIcon name="user-star" size={20} />
-            </span>
-            <span className="home-access-card__title">Riviera Coaching</span>
-            <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
-          </button>
-
-          <button
-            type="button"
-            className="home-access-card"
-            onClick={() => navigateRewards("/rewards")}
-          >
-            <span className="home-access-card__icon" aria-hidden>
-              <TablerIcon name="gift" size={20} />
-            </span>
-            <span className="home-access-card__title">Riviera Rewards</span>
-            <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
-          </button>
-
-          <button
-            type="button"
-            className="home-access-card"
-            onClick={() => navigateJugadores()}
-          >
-            <span className="home-access-card__icon" aria-hidden>
-              <TablerIcon name="users" size={20} />
-            </span>
-            <span className="home-access-card__title">Registro de jugadores</span>
-            <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
-          </button>
-
-          <button
-            type="button"
-            className="home-access-card"
-            onClick={() => navigateAppTo(buildRankingComoFuncionaPath())}
-          >
-            <span className="home-access-card__icon" aria-hidden>
-              <TablerIcon name="trophy" size={20} />
-            </span>
-            <span className="home-access-card__title">Cómo funciona el ranking</span>
-            <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
-          </button>
-
-          {onShowAllRetas ? (
-            <button type="button" className="home-access-card" onClick={onShowAllRetas}>
-              <span className="home-access-card__icon" aria-hidden>
-                <TablerIcon name="history" size={20} />
-              </span>
-              <span className="home-access-card__title">Historial</span>
-              <TablerIcon name="chevron-right" size={16} className="home-access-card__go" />
-            </button>
-          ) : null}
-        </div>
-      </section>
-
-      <AppSiteFooter />
     </div>
   );
 };

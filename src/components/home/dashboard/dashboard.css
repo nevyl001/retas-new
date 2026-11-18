@@ -1,0 +1,284 @@
+.ops-dashboard {
+  width: min(100%, 1440px);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 40px;
+}
+
+.ops-dashboard h1,
+.ops-dashboard h2,
+.ops-dashboard p {
+  margin: 0;
+}
+
+.ops-head h1 {
+  font-family: var(--font-body, var(--ro-font-body), Manrope, sans-serif);
+  font-size: clamp(1.75rem, 2.2vw, 2.125rem);
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--text-primary, var(--ro-text-primary));
+}
+
+.ops-head p {
+  max-width: 38rem;
+  margin-top: 8px;
+  color: var(--text-secondary, var(--ro-text-secondary));
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.ops-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ops-section h2 {
+  font-family: var(--font-body, var(--ro-font-body), Manrope, sans-serif);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--ro-text-muted));
+}
+
+.ops-grid {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.ops-grid--primary,
+.ops-grid--competitions {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ops-split {
+  display: grid;
+  gap: 32px;
+  align-items: start;
+  min-width: 0;
+}
+
+.ops-admin {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Gana a .home-inner .game-mode-card y a la variante compacta de competencias. */
+.ops-root .ops-card.game-mode-card,
+.ops-root .ops-card.game-mode-card.game-mode-card--competencia,
+.ops-root .ops-card.home-access-card {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  min-height: 132px;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--border-subtle, var(--ro-border-subtle));
+  border-radius: 16px;
+  background: var(--bg-card, var(--ro-bg-card));
+  box-shadow: none;
+  color: var(--text-primary, var(--ro-text-primary));
+  font-family: var(--font-body, var(--ro-font-body), Manrope, sans-serif);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  opacity: 1;
+  animation: none;
+  touch-action: manipulation;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.ops-root .ops-card.home-access-card {
+  align-items: center;
+  min-height: 72px;
+  padding: 16px 18px;
+}
+
+.ops-root .ops-split .home-access {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.ops-root .ops-card.game-mode-card:hover {
+  border-color: color-mix(in srgb, var(--brand-accent, var(--border-default)) 50%, var(--border-default, var(--ro-border)));
+  background: var(--bg-card-hover, var(--bg-elevated, var(--ro-bg-card)));
+  transform: translateY(-2px);
+}
+
+.ops-root .home-access-card:hover {
+  border-color: color-mix(in srgb, var(--brand-accent, var(--border-default)) 50%, var(--border-default, var(--ro-border)));
+  background: var(--bg-card-hover, var(--bg-elevated, var(--ro-bg-card)));
+}
+
+.ops-root .ops-card.home-access-card:hover {
+  transform: translateY(-2px);
+}
+
+.ops-root .ops-card.game-mode-card:focus-visible,
+.ops-root .ops-card.home-access-card:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--text-primary));
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+.ops-root .ops-card[aria-disabled="true"] {
+  opacity: 0.72;
+}
+
+.ops-card__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--bg-inset, var(--ro-bg-inset));
+  color: var(--text-secondary, var(--ro-text-secondary));
+  transition: color 180ms ease, background-color 180ms ease;
+}
+
+.ops-root .ops-card:hover .ops-card__icon,
+.ops-root .ops-card:focus-visible .ops-card__icon,
+.ops-live__item:hover .ops-card__icon,
+.ops-live__item:focus-visible .ops-card__icon {
+  color: var(--brand-accent, var(--text-primary));
+  background: color-mix(in srgb, var(--brand-accent, var(--border-default)) 14%, transparent);
+}
+
+.ops-card__copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ops-card__title {
+  color: var(--text-primary, var(--ro-text-primary));
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.ops-card__desc {
+  color: var(--text-secondary, var(--ro-text-secondary));
+  font-size: 0.875rem;
+  font-weight: 450;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.ops-card__badge {
+  flex: 0 0 auto;
+  color: var(--text-muted, var(--ro-text-muted));
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ops-card__go {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--text-muted, var(--ro-text-muted));
+}
+
+.ops-live__list {
+  display: grid;
+  gap: 12px;
+}
+
+.ops-live__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-subtle, var(--ro-border-subtle));
+  border-radius: 14px;
+  background: var(--bg-card, var(--ro-bg-card));
+  color: var(--text-primary, var(--ro-text-primary));
+  font-family: var(--font-body, var(--ro-font-body), Manrope, sans-serif);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.ops-live__item:hover {
+  border-color: color-mix(in srgb, var(--brand-accent, var(--border-default)) 45%, var(--border-default, var(--ro-border)));
+  background: var(--bg-card-hover, var(--bg-elevated, var(--ro-bg-card)));
+}
+
+.ops-live__item:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--text-primary));
+  outline-offset: 3px;
+}
+
+.ops-live__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ops-error {
+  margin: 0;
+  color: var(--ro-danger, var(--ro-text-primary));
+  font-size: 0.9375rem;
+}
+
+@media (min-width: 768px) {
+  .ops-grid--primary,
+  .ops-grid--competitions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ops-live__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .ops-split {
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+    gap: 40px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .ops-grid--primary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ops-root .ops-card,
+  .ops-live__item {
+    transition: none;
+  }
+
+  .ops-root .ops-card.game-mode-card:hover,
+  .ops-root .ops-card.home-access-card:hover {
+    transform: none;
+  }
+}

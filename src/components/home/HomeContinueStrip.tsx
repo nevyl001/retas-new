@@ -8,7 +8,7 @@ interface HomeContinueStripProps {
   onContinue: (item: HomeRetaItem) => void;
 }
 
-/** Franja superior: muestra retas activas primero para continuar o gestionarlas. */
+/** Solo se muestra cuando hay actividades reales en curso. */
 export const HomeContinueStrip: React.FC<HomeContinueStripProps> = ({
   items,
   onContinue,
@@ -16,26 +16,23 @@ export const HomeContinueStrip: React.FC<HomeContinueStripProps> = ({
   if (items.length === 0) return null;
 
   return (
-    <section className="home-pending" aria-label="Retas activas">
-      <div className="home-pending__header">
-        <h2 className="home-pending__title">Activas</h2>
-        <p className="home-pending__hint">Continúa o gestiona lo que tienes en curso</p>
-      </div>
-      <div className="home-pending__list">
+    <section className="ops-section ops-live" aria-labelledby="ops-live-title">
+      <h2 id="ops-live-title">En curso</h2>
+      <div className="ops-live__list">
         {items.map((item) => {
-          const mode = GAME_MODES.find((m) => m.id === getRetaGameMode(item));
+          const mode = GAME_MODES.find((entry) => entry.id === getRetaGameMode(item));
           return (
             <button
               key={getRetaId(item)}
               type="button"
-              className="home-pending-card"
+              className="ops-live__item"
               onClick={() => onContinue(item)}
             >
-              <span className="home-pending-card__icon" aria-hidden>
+              <span className="ops-card__icon" aria-hidden>
                 <TablerIcon name={mode?.tablerIcon ?? "ball-tennis"} size={18} />
               </span>
-              <span className="home-pending-card__name">{getRetaName(item)}</span>
-              <TablerIcon name="chevron-right" size={16} className="home-pending-card__go" />
+              <span className="ops-live__name">{getRetaName(item)}</span>
+              <TablerIcon name="chevron-right" size={16} className="ops-card__go" />
             </button>
           );
         })}
