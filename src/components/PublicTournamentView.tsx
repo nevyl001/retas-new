@@ -1620,10 +1620,12 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               <div>
                 <h3 className="rr-championship__title">REMONTADA FINAL</h3>
                 <p className="rr-championship__subtitle">
-                  Una oportunidad más de demostrar tu potencial
-                  {championshipMatches.length > 0
-                    ? ` · ${championshipMatches.length} partido${
-                        championshipMatches.length === 1 ? "" : "s"
+                  Resumen de todos los encuentros
+                  {regularMatches.length + championshipMatches.length > 0
+                    ? ` · ${regularMatches.length + championshipMatches.length} partido${
+                        regularMatches.length + championshipMatches.length === 1
+                          ? ""
+                          : "s"
                       }`
                     : ""}
                 </p>
@@ -1634,6 +1636,121 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                 Se publicarán aquí los partidos de remontada al terminar el
                 Round Robin.
               </p>
+            ) : null}
+            {regularMatches.length + championshipMatches.length > 0 ? (
+              <div className="rr-champ-summary" aria-label="Resumen de todos los encuentros">
+                {sortedRoundKeys.map((roundKey) => {
+                  const roundNum = parseInt(roundKey, 10);
+                  const roundMatches = [...(matchesByRound[roundNum] ?? [])].sort(
+                    (a, b) => compareMatchCourt(a.court, b.court)
+                  );
+                  return (
+                    <section
+                      key={`summary-rr-${roundKey}`}
+                      className="rr-champ-summary__group"
+                    >
+                      <h4 className="rr-champ-summary__label">
+                        {`Ronda ${String(roundNum).padStart(2, "0")}`}
+                      </h4>
+                      <ul className="rr-champ-summary__list">
+                        {roundMatches.map((match) => {
+                          const result = getMatchResult(match.id);
+                          const pair1Won =
+                            result.hasResult &&
+                            result.pair1Score > result.pair2Score;
+                          const pair2Won =
+                            result.hasResult &&
+                            result.pair2Score > result.pair1Score;
+                          return (
+                            <li key={`summary-${match.id}`} className="rr-champ-summary__row">
+                              <span
+                                className={`rr-champ-summary__side${
+                                  pair1Won ? " is-winner" : ""
+                                }`}
+                              >
+                                {formatPairLabel(match.pair1_id)}
+                              </span>
+                              <span className="rr-champ-summary__score">
+                                {result.hasResult
+                                  ? `${result.pair1Score}–${result.pair2Score}`
+                                  : "–"}
+                              </span>
+                              <span
+                                className={`rr-champ-summary__side rr-champ-summary__side--right${
+                                  pair2Won ? " is-winner" : ""
+                                }`}
+                              >
+                                {formatPairLabel(match.pair2_id)}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </section>
+                  );
+                })}
+                {Object.keys(championshipByRound)
+                  .sort((a, b) => Number(a) - Number(b))
+                  .map((roundKey) => {
+                    const idx = Number(roundKey);
+                    const totalRounds =
+                      effectiveChampionshipConfig?.championshipRounds ??
+                      championshipConfig?.championshipRounds ??
+                      idx;
+                    const semiMatches = championshipByRound[idx - 1] ?? [];
+                    const roundMatches = sortChampionshipRoundMatches(
+                      championshipByRound[idx] ?? [],
+                      idx,
+                      totalRounds,
+                      semiMatches,
+                      games
+                    );
+                    return (
+                      <section
+                        key={`summary-ch-${roundKey}`}
+                        className="rr-champ-summary__group"
+                      >
+                        <h4 className="rr-champ-summary__label">
+                          {championshipRoundLabel(idx, totalRounds)}
+                        </h4>
+                        <ul className="rr-champ-summary__list">
+                          {roundMatches.map((match) => {
+                            const result = getMatchResult(match.id);
+                            const pair1Won =
+                              result.hasResult &&
+                              result.pair1Score > result.pair2Score;
+                            const pair2Won =
+                              result.hasResult &&
+                              result.pair2Score > result.pair1Score;
+                            return (
+                              <li key={`summary-${match.id}`} className="rr-champ-summary__row">
+                                <span
+                                  className={`rr-champ-summary__side${
+                                    pair1Won ? " is-winner" : ""
+                                  }`}
+                                >
+                                  {formatPairLabel(match.pair1_id)}
+                                </span>
+                                <span className="rr-champ-summary__score">
+                                  {result.hasResult
+                                    ? `${result.pair1Score}–${result.pair2Score}`
+                                    : "–"}
+                                </span>
+                                <span
+                                  className={`rr-champ-summary__side rr-champ-summary__side--right${
+                                    pair2Won ? " is-winner" : ""
+                                  }`}
+                                >
+                                  {formatPairLabel(match.pair2_id)}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </section>
+                    );
+                  })}
+              </div>
             ) : null}
             {championshipMatches.length > 0 &&
               Object.keys(championshipByRound)

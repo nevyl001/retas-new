@@ -83,5 +83,10 @@ describe("resolveTournamentOutcome", () => {
     expect(outcome.winner?.pair.id).toBe("p1");
     expect(outcome.secondPair?.id).toBe("p2");
     expect(outcome.thirdPair?.id).toBe("p4");
+    // p1 jugó el RR (derrota) y los dos de remontada: el resumen no se queda en los últimos dos.
+    expect(outcome.winner?.matchesPlayed).toBe(3);
+    expect(outcome.winner?.victorias).toBe(2);
+    expect(outcome.winner?.derrotas).toBe(1);
+    expect(outcome.winner?.difJuegos).toBe(2);
   });
 });

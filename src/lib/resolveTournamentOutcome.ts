@@ -57,7 +57,7 @@ export function matchesForStandingsTable(
  * Podio del torneo:
  * - Con remontada: 1.º, 2.º y 3.º desde la final y el partido de 3er lugar.
  * - Sin remontada: top 3 de la tabla Round Robin.
- * Las estadísticas del campeón usan solo partidos de remontada si aplica.
+ * Las estadísticas del campeón resumen todos los encuentros (round robin y remontada).
  */
 export async function resolveTournamentPodiumOutcome(
   pairs: Pair[],
@@ -98,12 +98,9 @@ export async function resolveTournamentPodiumOutcome(
       secondPair = podium.second ?? null;
       thirdPair = podium.third ?? null;
 
-      const { championship } = partitionMatches(matches, tournamentId, champCfg);
-      if (championship.length > 0) {
-        const champStats = computePairsWithStats(pairs, championship, games);
-        winnerStats =
-          champStats.find((p) => p.id === winnerPair!.id) ?? winnerStats;
-      }
+      const fullStats = computePairsWithStats(pairs, matches, games);
+      winnerStats =
+        fullStats.find((p) => p.id === winnerPair!.id) ?? winnerStats;
     }
   }
 
