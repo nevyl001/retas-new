@@ -2768,67 +2768,6 @@
   font-style: italic;
 }
 
-.rr-champ-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  margin: 0 0 1.15rem;
-  padding-bottom: 0.9rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--text-muted) 28%, transparent);
-}
-
-.rr-champ-summary__label {
-  margin: 0 0 0.28rem;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.rr-champ-summary__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.28rem;
-}
-
-.rr-champ-summary__row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 0.45rem;
-  align-items: baseline;
-  min-width: 0;
-  font-size: 0.8rem;
-  line-height: 1.3;
-}
-
-.rr-champ-summary__side {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text-muted);
-}
-
-.rr-champ-summary__side--right {
-  text-align: right;
-}
-
-.rr-champ-summary__side.is-winner {
-  color: var(--text-primary, var(--liga-pub-text, #f2efe8));
-  font-weight: 650;
-}
-
-.rr-champ-summary__score {
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--text-primary, var(--liga-pub-text, #f2efe8));
-}
-
 /* Americano público — mismo faceoff en banda (pareja / VS / pareja) */
 @media (max-width: 768px) {
   .te-public--americano.te-public--americano-wide .te-pub-match--americano.te-pub-match--wide,
