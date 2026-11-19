@@ -1620,12 +1620,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               <div>
                 <h3 className="rr-championship__title">REMONTADA FINAL</h3>
                 <p className="rr-championship__subtitle">
-                  Resumen de todos los encuentros
-                  {regularMatches.length + championshipMatches.length > 0
-                    ? ` · ${regularMatches.length + championshipMatches.length} partido${
-                        regularMatches.length + championshipMatches.length === 1
-                          ? ""
-                          : "s"
+                  Una oportunidad más de demostrar tu potencial
+                  {championshipMatches.length > 0
+                    ? ` · ${championshipMatches.length} partido${
+                        championshipMatches.length === 1 ? "" : "s"
                       }`
                     : ""}
                 </p>
@@ -1637,40 +1635,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                 Round Robin.
               </p>
             ) : null}
-            {sortedRoundKeys.map((roundKey, roundIdx) => {
-              const roundNum = parseInt(roundKey, 10);
-              const roundMatches = [...(matchesByRound[roundNum] ?? [])].sort(
-                (a, b) => compareMatchCourt(a.court, b.court)
-              );
-              return (
-                <div
-                  key={`champ-rr-${roundKey}`}
-                  className="te-public-round-block te-pub-fade-in-up"
-                  style={{ animationDelay: `${0.04 + roundIdx * 0.04}s` }}
-                >
-                  <div className="te-public-round-head">
-                    <h3 className="te-public-round-head__title rr-championship__round-title">
-                      <span className="rr-championship__round-label">
-                        {`Ronda ${String(roundNum).padStart(2, "0")}`}
-                      </span>
-                    </h3>
-                  </div>
-                  <div
-                    className={`te-pub-matches-grid te-pub-matches-grid--wide${
-                      roundMatches.length <= 2
-                        ? " te-pub-matches-grid--few"
-                        : roundMatches.length === 3
-                          ? " te-pub-matches-grid--three"
-                          : ""
-                    }`}
-                  >
-                    {roundMatches.map((match, matchIdx) =>
-                      renderPublicMatchCard(match, matchIdx)
-                    )}
-                  </div>
-                </div>
-              );
-            })}
             {championshipMatches.length > 0 &&
               Object.keys(championshipByRound)
               .sort((a, b) => Number(a) - Number(b))
