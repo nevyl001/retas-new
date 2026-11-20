@@ -5725,7 +5725,7 @@
     justify-content: flex-end !important;
     align-items: stretch !important;
     gap: 0.02rem !important;
-    padding: 0.35rem 0.42rem 0.38rem !important;
+    padding: 0.35rem 2.55rem 0.38rem 0.42rem !important;
   }
 
   .te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__given,
@@ -5757,9 +5757,9 @@
   .te-public--americano
     .am-pub-match.reta-sb-card--split-vs
     .pub-split-vs-panel__rating.jugador-rating-chip {
-    top: 0.38rem !important;
+    top: auto !important;
     right: 0.38rem !important;
-    bottom: auto !important;
+    bottom: 0.38rem !important;
     left: auto !important;
   }
 }
