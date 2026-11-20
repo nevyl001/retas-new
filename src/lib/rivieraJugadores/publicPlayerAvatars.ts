@@ -1,5 +1,5 @@
 import { isMissingColumnError } from "../db/schemaHelpers";
-import { supabase, supabasePublicRead } from "../supabaseClient";
+import { anonRestGet, supabase, supabasePublicRead } from "../supabaseClient";
 import { normalizePlayerNameKey } from "./playerNameKey";
 
 export type PlayerAvatarLookupEntry = { id: string; name: string };
@@ -83,7 +83,24 @@ type OrganizadorRivieraRow = {
   nombre?: string | null;
   foto_url?: unknown;
   rating?: unknown;
+  updated_at?: string | null;
 };
+
+function pickFreshestRow(
+  rows: OrganizadorRivieraRow[]
+): OrganizadorRivieraRow | null {
+  if (rows.length === 0) return null;
+  let best = rows[0]!;
+  let bestTs = Date.parse(String(best.updated_at ?? "")) || 0;
+  for (const row of rows.slice(1)) {
+    const ts = Date.parse(String(row.updated_at ?? "")) || 0;
+    if (ts > bestTs) {
+      best = row;
+      bestTs = ts;
+    }
+  }
+  return best;
+}
 
 function entryNameKey(name?: string): string {
   const trimmed = name?.trim();
@@ -129,12 +146,15 @@ function resolveOrganizadorRowForEventEntry(
   }
 
   if (linked.length > 1) {
+    const freshest = pickFreshestRow(linked);
+    const freshestTs = Date.parse(String(freshest?.updated_at ?? "")) || 0;
+    if (freshest && freshestTs > 0) return freshest;
     const nameKey = entryNameKey(entry.name);
     if (nameKey) {
       const linkedByName = rowsMatchingEventName(linked, entry.name);
       if (linkedByName.length === 1) return linkedByName[0]!;
     }
-    return linked[0] ?? null;
+    return freshest ?? linked[0] ?? null;
   }
 
   return null;
@@ -473,32 +493,52 @@ export async function resolvePlayerPublicProfiles(
     organizadorId,
   });
 
-  let q = client
-    .from("riviera_jugadores")
-    .select("id, legacy_player_id, nombre, foto_url, rating")
-    .eq("organizador_id", organizadorId)
-    .eq("estado", "activo");
-
-  if (applyVisiblePublicoFilter) {
-    q = q.eq("visible_publico", true);
+  let anonRows: OrganizadorRivieraRow[] | null = null;
+  if (opts?.publicOnly) {
+    const fetched = await anonRestGet<Record<string, unknown>>(
+      "riviera_jugadores",
+      {
+        select: "id,legacy_player_id,nombre,foto_url,rating,updated_at",
+        organizador_id: `eq.${organizadorId}`,
+        estado: "eq.activo",
+      }
+    );
+    if (fetched) anonRows = fetched as OrganizadorRivieraRow[];
   }
 
-  let { data, error } = await q;
-  if (
-    error &&
-    isMissingColumnError(error, "riviera_jugadores", "rating")
-  ) {
-    let qBase = client
+  let data: OrganizadorRivieraRow[] | null = anonRows;
+  let error: { message?: string } | null = null;
+
+  if (!data) {
+    let q = client
       .from("riviera_jugadores")
-      .select("id, legacy_player_id, nombre, foto_url")
+      .select("id, legacy_player_id, nombre, foto_url, rating, updated_at")
       .eq("organizador_id", organizadorId)
       .eq("estado", "activo");
+
     if (applyVisiblePublicoFilter) {
-      qBase = qBase.eq("visible_publico", true);
+      q = q.eq("visible_publico", true);
     }
-    const retry = await qBase;
-    data = retry.data as typeof data;
-    error = retry.error;
+
+    const first = await q;
+    data = (first.data as OrganizadorRivieraRow[] | null) ?? null;
+    error = first.error;
+    if (
+      error &&
+      isMissingColumnError(error, "riviera_jugadores", "rating")
+    ) {
+      let qBase = client
+        .from("riviera_jugadores")
+        .select("id, legacy_player_id, nombre, foto_url")
+        .eq("organizador_id", organizadorId)
+        .eq("estado", "activo");
+      if (applyVisiblePublicoFilter) {
+        qBase = qBase.eq("visible_publico", true);
+      }
+      const retry = await qBase;
+      data = retry.data as OrganizadorRivieraRow[] | null;
+      error = retry.error;
+    }
   }
 
   const legacyKeyByEntryId = new Map<string, string>();

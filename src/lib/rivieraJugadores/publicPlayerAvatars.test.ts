@@ -1,4 +1,4 @@
-import { supabase, supabasePublicRead } from "../supabaseClient";
+import { anonRestGet, supabase, supabasePublicRead } from "../supabaseClient";
 import {
   fetchRivieraJugadorProfilesByIds,
   resolvePlayerPublicProfiles,
@@ -16,6 +16,7 @@ jest.mock("../supabaseClient", () => ({
     from: jest.fn(),
     rpc: jest.fn(),
   },
+  anonRestGet: jest.fn(),
 }));
 
 function mockRivieraJugadoresQuery(
@@ -44,6 +45,7 @@ describe("resolvePlayerPublicProfiles", () => {
     (supabase.auth.getSession as jest.Mock).mockResolvedValue({
       data: { session: null },
     });
+    (anonRestGet as jest.Mock).mockResolvedValue(null);
     (supabase.rpc as jest.Mock).mockResolvedValue({ data: [], error: null });
     (supabasePublicRead.rpc as jest.Mock).mockResolvedValue({
       data: [],
@@ -577,6 +579,40 @@ describe("resolvePlayerPublicProfiles", () => {
     expect(profiles[originLegacyId].rating).toBe(2.82);
     expect(profiles[originLegacyId].fotoUrl).toBe("https://example.com/daniel.jpg");
     expect(supabasePublicRead.rpc).toHaveBeenCalled();
+  });
+
+  it("en el celular usa el nombre vigente de la ficha aunque la sesión no sea el organizador", async () => {
+    const legacyId = "4624bac2-2b9f-4a55-a032-146f482121b4";
+    const hackOrg = "e724de97-3552-4a01-a269-f621e6f1ed26";
+
+    (anonRestGet as jest.Mock).mockResolvedValue([
+      {
+        id: "rj-viejo",
+        legacy_player_id: legacyId,
+        nombre: "yaf",
+        foto_url: "https://example.com/yaf-old.jpg",
+        rating: 3.01,
+        updated_at: "2026-11-01T00:00:00.000Z",
+      },
+      {
+        id: "rj-nuevo",
+        legacy_player_id: legacyId,
+        nombre: "Yaf O",
+        foto_url: "https://example.com/yaf-new.jpg",
+        rating: 3.12,
+        updated_at: "2026-11-20T18:00:00.000Z",
+      },
+    ]);
+    mockRivieraJugadoresQuery(supabasePublicRead.from as jest.Mock, []);
+
+    const profiles = await resolvePlayerPublicProfiles(
+      hackOrg,
+      [{ id: legacyId, name: "yaf" }],
+      { publicOnly: true }
+    );
+
+    expect(profiles[legacyId].nombre).toBe("Yaf O");
+    expect(profiles[legacyId].fotoUrl).toBe("https://example.com/yaf-new.jpg");
   });
 });
 

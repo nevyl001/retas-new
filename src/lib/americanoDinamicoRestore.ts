@@ -74,9 +74,9 @@ function collectSourcePlayersFromSnapshot(
   const orderedIds: string[] = [];
 
   const add = (id: string, name: string) => {
-    if (!nameById.has(id)) {
-      orderedIds.push(id);
-    }
+    if (!id) return;
+    if (nameById.has(id)) return;
+    orderedIds.push(id);
     nameById.set(id, name);
   };
 

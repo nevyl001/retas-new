@@ -17,16 +17,17 @@ export function collectAmericanoPlayersFromSnapshot(
   snap: AmericanoDinamicoSnapshotV1
 ): AmericanoPlayer[] {
   const nameById = new Map<string, string>();
-  for (const p of snap.ranking) {
-    nameById.set(p.id, p.name);
-  }
+  const remember = (id: string, name: string) => {
+    if (!id || nameById.has(id)) return;
+    nameById.set(id, name);
+  };
+  for (const p of snap.roster ?? []) remember(p.id, p.name);
+  for (const p of snap.ranking) remember(p.id, p.name);
   for (const r of snap.rounds) {
-    for (const b of r.benchPlayers) {
-      nameById.set(b.id, b.name);
-    }
+    for (const b of r.benchPlayers) remember(b.id, b.name);
     for (const m of r.matches) {
-      for (const pl of m.teamA) nameById.set(pl.id, pl.name);
-      for (const pl of m.teamB) nameById.set(pl.id, pl.name);
+      for (const pl of m.teamA) remember(pl.id, pl.name);
+      for (const pl of m.teamB) remember(pl.id, pl.name);
     }
   }
   return Array.from(nameById.entries()).map(([id, name]) => ({
