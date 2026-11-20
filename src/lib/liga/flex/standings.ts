@@ -178,17 +178,15 @@ function orderWithResolution(
       if (compareSport(candidate, best) < 0) best = candidate;
     }
     const group = remaining.filter((p) => sameSport(p, best) && sameSport(best, p));
-    if (group.length > 1) {
-      const known = group.every((p) => resolved.has(p.id));
-      if (!known) {
-        ties.push(group.map((p) => p.id));
-        return {
-          ok: false,
-          reason:
-            "Hay un empate que cambia los puntos. Hace falta una resolución deportiva explícita antes del cierre.",
-          ties,
-        };
+    if (group.length > 1 && !group.every((p) => resolved.has(p.id))) {
+      ties.push(group.map((p) => p.id));
+      for (const member of group) {
+        const index = remaining.findIndex((p) => p.id === member.id);
+        remaining.splice(index, 1);
       }
+      continue;
+    }
+    if (group.length > 1) {
       group.sort((a, b) => (resolved.get(a.id) ?? 0) - (resolved.get(b.id) ?? 0));
     }
     for (const member of group) {
@@ -196,6 +194,15 @@ function orderWithResolution(
       const index = remaining.findIndex((p) => p.id === member.id);
       remaining.splice(index, 1);
     }
+  }
+
+  if (ties.length > 0) {
+    return {
+      ok: false,
+      reason:
+        "Hay un empate que cambia los puntos. Hace falta una resolución deportiva explícita antes del cierre.",
+      ties,
+    };
   }
 
   return { ok: true, rows };

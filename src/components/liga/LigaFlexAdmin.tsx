@@ -8,9 +8,8 @@ import {
   type FlexSchedule,
 } from "../../lib/liga/flex/schedule";
 import { rankFlexJornada } from "../../lib/liga/flex/standings";
-import { rankFlexSeason } from "../../lib/liga/flex/season";
+import { honorResolution, rankFlexSeason } from "../../lib/liga/flex/season";
 import { estimateFlexJornada, windowMinutes } from "../../lib/liga/flex/time";
-import { addJugadorLiga } from "../../services/ligaService";
 import {
   applyFlexJornada,
   closeFlexLeague,
@@ -20,6 +19,7 @@ import {
   markFlexFinal,
   reopenFlexLeague,
   resizeFlexCalendar,
+  registerFlexPlayer,
   saveFlexJornadaSetup,
   saveFlexMatchScore,
   setFlexParticipantes,
@@ -43,6 +43,8 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
   const [preview, setPreview] = useState<FlexSchedule | null>(null);
   const [query, setQuery] = useState("");
   const [nuevoNombre, setNuevoNombre] = useState("");
+  const [nuevoEmail, setNuevoEmail] = useState("");
+  const [nuevoGenero, setNuevoGenero] = useState<"M" | "F">("M");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -87,6 +89,10 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
   }, [pool, detalle.jugadores]);
 
   const jornada = detalle.jornadas.find((item) => item.id === selectedId) ?? null;
+  const partidos = useMemo(
+    () => hydrateFlexPartidos(jornada?.partidos ?? [], jornada?.parejas ?? []),
+    [jornada]
+  );
   const flex = bundle?.jornadas.find((item) => item.jornadaId === selectedId) ?? null;
   const participantIds = selectedId ? bundle?.participantes[selectedId] ?? [] : [];
   const layout = officialFlexLayout(participantIds.length, flex?.canchas ?? 0);
@@ -114,18 +120,29 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
         posicion: row.posicion,
         puntos: row.puntos,
       })),
+      resolution: honorResolution(bundle.honores),
     });
   }, [bundle, detalle.jornadas]);
 
-  const provisional = useMemo(() => {
+  const unresolved = useMemo(() => {
     if (!jornada || jornada.estado === "completed") return null;
     const ids = selectedId ? bundle?.participantes[selectedId] ?? [] : [];
     return rankFlexJornada({
       players: ids.map((id) => ({ id, name: names.get(id) ?? "Jugador" })),
-      matches: (jornada.partidos ?? []).map(toScored),
+      matches: partidos.map(toScored),
+    });
+  }, [jornada, selectedId, bundle, names, partidos]);
+
+  const provisional = useMemo(() => {
+    if (!unresolved) return null;
+    if (unresolved.ok || unresolved.ties.length === 0) return unresolved;
+    const ids = selectedId ? bundle?.participantes[selectedId] ?? [] : [];
+    return rankFlexJornada({
+      players: ids.map((id) => ({ id, name: names.get(id) ?? "Jugador" })),
+      matches: partidos.map(toScored),
       resolution: jornadaOrden,
     });
-  }, [jornada, selectedId, bundle, names, jornadaOrden]);
+  }, [unresolved, selectedId, bundle, names, jornadaOrden, partidos]);
 
   const run = async (action: () => Promise<void>) => {
     setBusy(true);
@@ -252,6 +269,15 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
 
       <section className="liga-flex__panel">
         <h2>Clasificación</h2>
+        {bundle?.honores ? (
+          <p>
+            Campeón: {names.get(bundle.honores.campeonId) ?? "Jugador"} · Subcampeón:{" "}
+            {names.get(bundle.honores.subcampeonId) ?? "Jugador"}
+            {bundle.honores.tercerId
+              ? ` · Tercer lugar: ${names.get(bundle.honores.tercerId) ?? "Jugador"}`
+              : ""}
+          </p>
+        ) : null}
         {season?.ok ? (
           <table className="liga-flex__table">
             <thead>
@@ -353,23 +379,50 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
               })}
             </ul>
             <div className="liga-flex__row">
-              <input
-                value={nuevoNombre}
-                placeholder="Jugador nuevo de la temporada"
-                onChange={(event) => setNuevoNombre(event.target.value)}
-              />
+              <label>
+                Nombre
+                <input
+                  value={nuevoNombre}
+                  placeholder="Jugador nuevo de la temporada"
+                  onChange={(event) => setNuevoNombre(event.target.value)}
+                />
+              </label>
+              <label>
+                Correo
+                <input
+                  type="email"
+                  value={nuevoEmail}
+                  placeholder="correo@club.local"
+                  onChange={(event) => setNuevoEmail(event.target.value)}
+                />
+              </label>
+              <label>
+                Rama
+                <select
+                  value={nuevoGenero}
+                  onChange={(event) => setNuevoGenero(event.target.value === "F" ? "F" : "M")}
+                >
+                  <option value="M">Varonil</option>
+                  <option value="F">Femenil</option>
+                </select>
+              </label>
               <Button
                 type="button"
                 variant="secondary"
-                disabled={busy || !nuevoNombre.trim()}
+                disabled={busy || !nuevoNombre.trim() || !nuevoEmail.trim()}
                 onClick={() =>
                   void run(async () => {
                     const normalized = nuevoNombre.trim().toLowerCase();
                     if (pool.some((player) => player.nombre.trim().toLowerCase() === normalized)) {
                       throw new Error("Ese jugador ya existe. Selecciónalo de la lista.");
                     }
-                    await addJugadorLiga({ nombre: nuevoNombre.trim() });
+                    await registerFlexPlayer({
+                      nombre: nuevoNombre.trim(),
+                      email: nuevoEmail,
+                      genero: nuevoGenero,
+                    });
                     setNuevoNombre("");
+                    setNuevoEmail("");
                   })
                 }
               >
@@ -484,7 +537,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
           {preview ? <RoundPreview schedule={preview} names={names} /> : null}
           {flex.advertencia ? <p>{flex.advertencia}</p> : null}
           <MatchEditor
-            partidos={jornada.partidos ?? []}
+            partidos={partidos}
             names={names}
             disabled={busy || jornada.estado === "completed" || detalle.estado === "completed"}
             savedId={savedMatchId}
@@ -496,16 +549,21 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
               })
             }
           />
-          {provisional && !provisional.ok && provisional.ties.length > 0 ? (
-            <TieOrder
-              title="Empate de la jornada"
-              note="Games a favor, diferencia y enfrentamiento directo no los separan. El orden que confirmes solo aplica dentro de este empate."
-              ids={jornadaOrden.length > 0 ? jornadaOrden : provisional.ties.flat()}
-              names={names}
-              stats={statsOf(jornada.partidos ?? [])}
-              onChange={setJornadaOrden}
-            />
-          ) : null}
+          {unresolved && !unresolved.ok
+            ? unresolved.ties.map((group, index) => (
+                <TieOrder
+                  key={group.join("-")}
+                  title={unresolved.ties.length > 1 ? `Empate ${index + 1} de la jornada` : "Empate de la jornada"}
+                  note="Games a favor, diferencia y enfrentamiento directo no los separan. El orden que confirmes solo aplica dentro de este empate."
+                  ids={orderWithin(group, jornadaOrden)}
+                  names={names}
+                  stats={statsOf(partidos)}
+                  onChange={(next) =>
+                    setJornadaOrden(mergeTieOrder(unresolved.ties, jornadaOrden, index, next))
+                  }
+                />
+              ))
+            : null}
           {provisional?.ok ? (
             <p>Clasificación provisional lista. El servidor vuelve a calcular los puntos al cerrar la jornada.</p>
           ) : null}
@@ -521,14 +579,15 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
               disabled={busy || detalle.estado === "completed" || jornada.estado === "completed"}
               onClick={() =>
                 void run(async () => {
+                  const groups = unresolved && !unresolved.ok ? unresolved.ties : [];
+                  const orden = groups.length > 0 ? mergeTieOrder(groups, jornadaOrden, -1, []) : jornadaOrden;
                   const outcome = await applyFlexJornada({
                     jornadaId: jornada.id,
-                    orden: jornadaOrden,
+                    orden,
                     nota: jornadaMotivo,
                   });
                   if (outcome.needsResolution) {
-                    const flat = (outcome.ties ?? []).flat();
-                    setJornadaOrden(flat);
+                    setJornadaOrden(orden);
                     throw new Error(outcome.error || "Define el orden del empate.");
                   }
                   setNotice("Puntos de la jornada asignados. La tabla general se reconstruyó.");
@@ -540,7 +599,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
           </div>
           {jornada.estado === "completed" && detalle.estado !== "completed" ? (
             <CorrectionPanel
-              partidos={jornada.partidos ?? []}
+              partidos={partidos}
               names={names}
               motivo={correctionMotivo}
               orden={correctionOrden}
@@ -557,8 +616,9 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                     orden: correctionOrden,
                   });
                   if (outcome.needsResolution) {
-                    setCorrectionTies(outcome.ties ?? []);
-                    setCorrectionOrden((outcome.ties ?? []).flat());
+                    const groups = outcome.ties ?? [];
+                    setCorrectionTies(groups);
+                    setCorrectionOrden((current) => mergeTieOrder(groups, current, -1, []));
                     throw new Error(outcome.error || "La corrección dejó un empate.");
                   }
                   setCorrectionTies([]);
@@ -745,15 +805,16 @@ function CorrectionPanel({
           />
         </div>
       ))}
-      {ties.length > 0 ? (
+      {ties.map((group, index) => (
         <TieOrder
-          title="Empate después de la corrección"
+          key={group.join("-")}
+          title={ties.length > 1 ? `Empate ${index + 1} después de la corrección` : "Empate después de la corrección"}
           note="Confirma el orden antes de guardar la clasificación nueva."
-          ids={orden}
+          ids={orderWithin(group, orden)}
           names={names}
-          onChange={onOrden}
+          onChange={(next) => onOrden(mergeTieOrder(ties, orden, index, next))}
         />
-      ) : null}
+      ))}
       <div className="liga-flex__row">
         <input value={motivo} placeholder="Motivo de la corrección" onChange={(event) => onMotivo(event.target.value)} />
         <Button
@@ -884,6 +945,30 @@ function ScoreRow({
       </Button>
     </div>
   );
+}
+
+function orderWithin(group: string[], current: string[]): string[] {
+  const known = current.filter((id) => group.includes(id));
+  return known.length === group.length ? known : group;
+}
+
+function mergeTieOrder(groups: string[][], current: string[], index: number, next: string[]): string[] {
+  return groups.flatMap((group, groupIndex) => {
+    if (groupIndex === index) return next;
+    return orderWithin(group, current);
+  });
+}
+
+function hydrateFlexPartidos(
+  partidos: LigaPartido[],
+  parejas: NonNullable<LigaDetalle["jornadas"][number]["parejas"]>
+): LigaPartido[] {
+  const byId = new Map(parejas.map((pareja) => [pareja.id, pareja]));
+  return partidos.map((partido) => ({
+    ...partido,
+    pareja1: partido.pareja1 ?? byId.get(partido.pareja1_id),
+    pareja2: partido.pareja2 ?? byId.get(partido.pareja2_id),
+  }));
 }
 
 function toScored(partido: LigaPartido) {

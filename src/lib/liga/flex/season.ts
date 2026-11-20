@@ -24,6 +24,15 @@ export type FlexSeasonRank =
  * Suma los puntos oficiales de jornadas cerradas. No promedia, no resta
  * ausencias y no usa los games. El empate que cruza el podio no se rompe solo.
  */
+export function honorResolution(
+  honores: { campeonId: string; subcampeonId: string; tercerId?: string | null } | null | undefined
+): string[] | undefined {
+  if (!honores) return undefined;
+  return [honores.campeonId, honores.subcampeonId, honores.tercerId].filter(
+    (id): id is string => typeof id === "string" && id.length > 0
+  );
+}
+
 export function rankFlexSeason(input: {
   awards: readonly FlexAward[];
   resolution?: readonly string[];
@@ -230,10 +239,10 @@ export function seasonMovement(
   before: readonly { jugadorId: string; posicion: number }[],
   after: readonly { jugadorId: string; posicion: number; puntosJornada: number }[],
   jugadorId: string
-): { puntos: number; posicion: number; delta: number } | null {
+): { jugadorId: string; puntos: number; posicion: number; delta: number } | null {
   const now = after.find((r) => r.jugadorId === jugadorId);
   if (!now) return null;
   const prev = before.find((r) => r.jugadorId === jugadorId);
   const delta = prev ? prev.posicion - now.posicion : 0;
-  return { puntos: now.puntosJornada, posicion: now.posicion, delta };
+  return { jugadorId, puntos: now.puntosJornada, posicion: now.posicion, delta };
 }

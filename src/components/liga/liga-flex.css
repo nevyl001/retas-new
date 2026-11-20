@@ -63,7 +63,8 @@
   font-size: 0.78rem;
 }
 
-.liga-flex input {
+.liga-flex input,
+.liga-flex select {
   min-height: 40px;
   border-radius: 10px;
   border: 1px solid var(--liga-border, rgba(20, 22, 26, 0.16));

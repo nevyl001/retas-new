@@ -424,7 +424,7 @@ describe("Riviera Flex League — puntos y temporada", () => {
       [{ jugadorId: "plata", posicion: 3, puntosJornada: 90 }],
       "plata"
     );
-    expect(move).toEqual({ puntos: 90, posicion: 3, delta: 2 });
+    expect(move).toEqual({ jugadorId: "plata", puntos: 90, posicion: 3, delta: 2 });
   });
 
   it("corregir una jornada sustituye puntos y repetir la sustitución no los duplica", () => {

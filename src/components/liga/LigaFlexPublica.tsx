@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ClubExperienceScope, PublicEventBrandIdentity, useOrganizerDisplayName } from "../../club-experience";
 import type { LigaDetalle, LigaJornada } from "../../lib/liga/types";
-import { rankFlexSeason, seasonMovement } from "../../lib/liga/flex/season";
+import { honorResolution, rankFlexSeason, seasonMovement } from "../../lib/liga/flex/season";
 import { loadFlexLeague, type FlexBundle } from "../../services/ligaFlexService";
 import "./liga-flex.css";
 
@@ -60,7 +60,7 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
     posicion: row.posicion,
     puntos: row.puntos,
   }));
-  const season = rankFlexSeason({ awards });
+  const season = rankFlexSeason({ awards, resolution: honorResolution(bundle?.honores) });
   const current = detalle.jornadas.find((jornada) => jornada.id === jornadaId) ?? detalle.jornadas[0];
   const next = detalle.jornadas
     .filter((jornada) => jornada.estado !== "completed")
@@ -113,15 +113,15 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
       {error ? <p className="liga-error">{error}</p> : null}
       {highlight ? (
         <p className="liga-flex__move">
-          +{highlight.puntos} puntos · Posición general: {highlight.posicion}º
-          {highlight.delta > 0 ? ` · Subiste ${highlight.delta} ${highlight.delta === 1 ? "lugar" : "lugares"}` : ""}
+          {names.get(highlight.jugadorId) ?? "Jugador"} · +{highlight.puntos} puntos · Posición general: {highlight.posicion}º
+          {highlight.delta > 0 ? ` · Subió ${highlight.delta} ${highlight.delta === 1 ? "lugar" : "lugares"}` : ""}
         </p>
       ) : null}
       {bundle?.honores ? (
         <ol className="liga-flex__podio">
-          <li>{names.get(bundle.honores.campeonId) ?? "Campeón"}</li>
-          <li>{names.get(bundle.honores.subcampeonId) ?? "Subcampeón"}</li>
-          <li>{bundle.honores.tercerId ? names.get(bundle.honores.tercerId) : "Tercer lugar"}</li>
+          <li><p className="liga-flex__kicker">Campeón</p>{names.get(bundle.honores.campeonId) ?? "Jugador"}</li>
+          <li><p className="liga-flex__kicker">Subcampeón</p>{names.get(bundle.honores.subcampeonId) ?? "Jugador"}</li>
+          <li><p className="liga-flex__kicker">Tercer lugar</p>{bundle.honores.tercerId ? names.get(bundle.honores.tercerId) ?? "Jugador" : "Sin tercer lugar"}</li>
         </ol>
       ) : null}
       <section>
@@ -198,15 +198,20 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
           {(current.partidos ?? [])
             .slice()
             .sort((a, b) => a.ronda - b.ronda || (a.cancha ?? 0) - (b.cancha ?? 0))
-            .map((partido) => (
+            .map((partido) => {
+              const pairs = new Map((current.parejas ?? []).map((pareja) => [pareja.id, pareja]));
+              const left = partido.pareja1 ?? pairs.get(partido.pareja1_id);
+              const right = partido.pareja2 ?? pairs.get(partido.pareja2_id);
+              return (
               <p key={partido.id}>
-                Ronda {partido.ronda} · Cancha {partido.cancha ?? "—"}: {side(partido.pareja1, names)} vs{" "}
-                {side(partido.pareja2, names)}
+                Ronda {partido.ronda} · Cancha {partido.cancha ?? "—"}: {side(left, names)} vs{" "}
+                {side(right, names)}
                 {partido.score_pareja1 != null && partido.score_pareja2 != null
                   ? ` · ${partido.score_pareja1}-${partido.score_pareja2}`
                   : ""}
               </p>
-            ))}
+              );
+            })}
           <h3>Puntos de la jornada</h3>
           {(bundle?.posiciones ?? [])
             .filter((row) => row.jornadaId === current.id)
