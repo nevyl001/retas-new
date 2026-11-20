@@ -1,4 +1,5 @@
-import { planRetaScoreSave } from "./retaMatchScoreSave";
+import { matchAfterResultCleared, planRetaScoreSave } from "./retaMatchScoreSave";
+import type { Match } from "../database";
 
 describe("planRetaScoreSave", () => {
   test("0-0 se guarda y no se descarta como marcador vacío", () => {
@@ -41,6 +42,31 @@ describe("planRetaScoreSave", () => {
     expect(plan.sets).toHaveLength(1);
     expect(plan.sets[0].pair1_games).toBe(0);
     expect(plan.sets[0].pair2_games).toBe(0);
+  });
+
+  test("eliminar resultado deja el partido en su ronda sin marcador", () => {
+    const match = {
+      id: "m1",
+      tournament_id: "t1",
+      pair1_id: "a",
+      pair2_id: "b",
+      pair1_name: "Aimee / Ricardo S",
+      pair2_name: "Patricia Hdz / Dany Mont",
+      court: 2,
+      round: 5,
+      status: "finished",
+      pair1_score: 0,
+      pair2_score: 0,
+      created_at: "",
+    } as Match;
+    const cleared = matchAfterResultCleared(match);
+    expect(cleared.status).toBe("pending");
+    expect(cleared.round).toBe(5);
+    expect(cleared.court).toBe(2);
+    expect(cleared.pair1_id).toBe("a");
+    expect(cleared.pair2_id).toBe("b");
+    expect(cleared.pair1_score).toBeUndefined();
+    expect(cleared.pair2_score).toBeUndefined();
   });
 
   test("un marcador a medias no se envía", () => {

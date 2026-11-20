@@ -3,11 +3,18 @@ import { Match, Pair, Game } from "../lib/database";
 import {
   getGames,
   applyRetaMatchUpdate,
+  clearMatchResult,
   updateMatch,
   type RetaMatchSetInput,
 } from "../lib/database";
-import { aplicarRatingDesdePairs } from "../lib/rivieraJugadores/aplicarRatingPartido";
-import { planRetaScoreSave } from "../lib/reta/retaMatchScoreSave";
+import {
+  aplicarRatingDesdePairs,
+  quitarRatingPartido,
+} from "../lib/rivieraJugadores/aplicarRatingPartido";
+import {
+  matchAfterResultCleared,
+  planRetaScoreSave,
+} from "../lib/reta/retaMatchScoreSave";
 import { TeamBadge } from "./teams/TeamBadge";
 import {
   getPairTeamIndex,
@@ -400,6 +407,46 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       console.error("❌ Error corrigiendo resultado:", err);
       setError(parseGameError(err));
       await reloadGamesSilently();
+    } finally {
+      isUpdatingRef.current = false;
+      setSaving(false);
+    }
+  };
+
+  /** Quita el marcador. El partido sigue en la misma cancha y ronda. */
+  const clearResult = async () => {
+    if (!currentMatch || isUpdatingRef.current) return;
+    const confirmed = window.confirm(
+      "¿Eliminar el resultado de este partido?\n\nEl encuentro se queda en esta ronda, sin marcador."
+    );
+    if (!confirmed) return;
+
+    try {
+      isUpdatingRef.current = true;
+      setSaving(true);
+      setError(null);
+
+      const row = await clearMatchResult(currentMatch.id);
+      const cleared = matchAfterResultCleared({
+        ...currentMatch,
+        ...row,
+        round: row.round ?? currentMatch.round,
+        court: row.court ?? currentMatch.court,
+      });
+
+      void quitarRatingPartido(`reta:${currentMatch.id}`).catch((e) =>
+        console.warn("[rating] no se pudo quitar el resultado:", e)
+      );
+
+      setGames([]);
+      setPair1Score("");
+      setPair2Score("");
+      setIsEditing(false);
+      setCurrentMatch(cleared);
+      notifyParent(cleared);
+    } catch (err: unknown) {
+      console.error("❌ Error eliminando resultado:", err);
+      setError(parseGameError(err));
     } finally {
       isUpdatingRef.current = false;
       setSaving(false);
@@ -905,18 +952,35 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               Cancelar
             </Button>
           ) : (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                openCorrectEditor();
-              }}
-              title="Corregir marcador"
-            >
-              Corregir
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openCorrectEditor();
+                }}
+                title="Corregir marcador"
+                disabled={saving}
+              >
+                Corregir
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void clearResult();
+                }}
+                title="Eliminar resultado"
+                disabled={saving}
+                loading={saving}
+              >
+                Eliminar resultado
+              </Button>
+            </>
           )}
         </footer>
       )}

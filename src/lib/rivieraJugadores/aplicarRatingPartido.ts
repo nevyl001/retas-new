@@ -193,6 +193,30 @@ async function reconcileRatingPartidoRef(
   );
 }
 
+/** Quita el rating de un partido borrado. Si no había movimiento, no hace nada. */
+export async function quitarRatingPartido(partidoRef: string): Promise<void> {
+  const ref = partidoRef?.trim();
+  if (!ref) return;
+
+  const { data, error } = await supabase
+    .from("rating_historial")
+    .select("jugador_id")
+    .eq("partido_ref", ref);
+  if (error || !data?.length) return;
+
+  const ids = Array.from(new Set(data.map((row) => String(row.jugador_id))));
+  const { error: delErr } = await supabase
+    .from("rating_historial")
+    .delete()
+    .eq("partido_ref", ref);
+  if (delErr) {
+    console.warn("[rating] quitarRatingPartido:", delErr);
+    return;
+  }
+
+  await Promise.all(ids.map((id) => rebuildRatingFieldsFromHistorial(id)));
+}
+
 /**
  * Resuelve los dos jugadores de una pareja para rating.
  *

@@ -1627,6 +1627,28 @@ export const deleteGame = async (id: string) => {
   if (error) throw error;
 };
 
+/** Quita el marcador y deja el partido en su cancha y ronda, otra vez en curso. */
+export const clearMatchResult = async (matchId: string) => {
+  const { error: gamesError } = await supabase
+    .from("games")
+    .delete()
+    .eq("match_id", matchId);
+  if (gamesError) throw gamesError;
+
+  const { data, error } = await supabase
+    .from("matches")
+    .update({
+      status: "pending",
+      pair1_score: null,
+      pair2_score: null,
+    })
+    .eq("id", matchId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
 export interface RetaMatchSetInput {
   pair1_games: number;
   pair2_games: number;

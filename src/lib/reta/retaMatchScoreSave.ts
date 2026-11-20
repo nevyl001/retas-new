@@ -1,4 +1,4 @@
-import type { RetaMatchSetInput } from "../database";
+import type { Match, RetaMatchSetInput } from "../database";
 
 export type RetaScoreSaveMode = "finish" | "correct";
 
@@ -35,4 +35,14 @@ export function planRetaScoreSave(params: {
   }
 
   return { ok: true, sets: [...existingSets, next] };
+}
+
+/** El partido sigue en la misma cancha y ronda, sin marcador. */
+export function matchAfterResultCleared<T extends Match>(match: T): T {
+  return {
+    ...match,
+    status: "pending",
+    pair1_score: undefined,
+    pair2_score: undefined,
+  };
 }
