@@ -2,6 +2,7 @@ import type { AmericanoPlayer, AmericanoRound } from "../db/types";
 import {
   applyLiveNamesToAmericano,
   livePlayerLabel,
+  mergePublicPlayerNames,
 } from "./livePlayerIdentity";
 
 function player(id: string, name: string): AmericanoPlayer {
@@ -63,6 +64,21 @@ describe("livePlayerIdentity", () => {
     expect(applied.rounds[0].matches[0].scoreA).toBe(6);
     expect(applied.rounds[0].matches[0].scoreB).toBe(4);
     expect(applied.rounds[0].matches[0].teamB[1]).toBe(angelica);
+  });
+
+  it("en la ronda pública muestra el nombre del roster si la ficha no llega", () => {
+    expect(
+      mergePublicPlayerNames({
+        roster: [
+          { id: "yaf", name: "Yaf O" },
+          { id: "gre", name: "Gregorio" },
+        ],
+        live: { gre: "Gregorio G" },
+      })
+    ).toEqual({
+      yaf: "Yaf O",
+      gre: "Gregorio G",
+    });
   });
 
   it("no cambia el estado si la ficha ya coincide", () => {

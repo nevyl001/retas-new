@@ -35,7 +35,10 @@ import { isPubDsV2Enabled } from "../config/peds";
 import { isAmericanoPublicInitialLoadPending } from "../lib/americano/americanoPublicLoadState";
 import { useAmericanoLiveRealtime } from "../hooks/useAmericanoLiveRealtime";
 import { useLivePlayerProfiles } from "../hooks/useLivePlayerProfiles";
-import { livePlayerLabel } from "../lib/americano/livePlayerIdentity";
+import {
+  livePlayerLabel,
+  mergePublicPlayerNames,
+} from "../lib/americano/livePlayerIdentity";
 import {
   americanoInPlayRoundIndex,
   americanoRoundIsInPlay,
@@ -406,13 +409,16 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     return fotos;
   }, [liveProfiles, snapshotPlayerEntries]);
   const playerNames = useMemo(() => {
-    const names: Record<string, string> = {};
+    const live: Record<string, string> = {};
     for (const entry of snapshotPlayerEntries) {
       const nombre = liveProfiles[entry.id]?.nombre?.trim();
-      if (nombre) names[entry.id] = nombre;
+      if (nombre) live[entry.id] = nombre;
     }
-    return names;
-  }, [liveProfiles, snapshotPlayerEntries]);
+    const roster = snapshot?.roster?.length
+      ? snapshot.roster
+      : (snapshot?.ranking ?? []);
+    return mergePublicPlayerNames({ roster, live });
+  }, [snapshot, liveProfiles, snapshotPlayerEntries]);
 
   const matchHistoryByPlayerId = useMemo(() => {
     if (!snapshot || rankedRows.length === 0) {

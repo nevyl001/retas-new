@@ -13,6 +13,27 @@ export function livePlayerLabel(
 }
 
 /**
+ * Nombre que se muestra en la vista pública.
+ * La ficha manda. Si no llega, se usa el roster (el mismo de la clasificación)
+ * y no el nombre congelado dentro de la ronda.
+ */
+export function mergePublicPlayerNames(input: {
+  roster?: Array<{ id: string; name: string }>;
+  live?: Record<string, string | null | undefined>;
+}): Record<string, string> {
+  const names: Record<string, string> = {};
+  for (const player of input.roster ?? []) {
+    const name = player.name?.trim();
+    if (player.id && name) names[player.id] = name;
+  }
+  for (const [id, raw] of Object.entries(input.live ?? {})) {
+    const name = raw?.trim();
+    if (id && name) names[id] = name;
+  }
+  return names;
+}
+
+/**
  * Sustituye el nombre congelado al armar la reta por el de la ficha.
  * No toca marcadores ni emparejamientos.
  */
