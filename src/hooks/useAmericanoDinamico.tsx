@@ -8,6 +8,7 @@ import {
   type MutableRefObject,
 } from "react";
 import type { AmericanoMatch, AmericanoPlayer, AmericanoRound } from "../lib/db/types";
+import { applyLiveNamesToAmericano } from "../lib/americano/livePlayerIdentity";
 import {
   buildMatricesFromScoredRounds,
   generateAmericanoRound,
@@ -1063,6 +1064,30 @@ export function useAmericanoDinamico(
     [phase]
   );
 
+  const applyFichaNames = useCallback(
+    (namesById: Record<string, string | null | undefined>) => {
+      const applied = applyLiveNamesToAmericano(
+        playersRef.current,
+        roundsRef.current,
+        namesById
+      );
+      let rosterChanged = false;
+      if (baseRosterRef.current.length > 0) {
+        const nextRoster = baseRosterRef.current.map((player) => {
+          const live = namesById[player.id]?.trim();
+          if (!live || live === player.name) return player;
+          rosterChanged = true;
+          return { ...player, name: live };
+        });
+        if (rosterChanged) baseRosterRef.current = nextRoster;
+      }
+      if (!applied.changed && !rosterChanged) return;
+      setPlayers(applied.changed ? applied.players : playersRef.current.map((p) => ({ ...p })));
+      if (applied.changed) setRounds(applied.rounds);
+    },
+    []
+  );
+
   const ranking = useMemo(() => {
     if (phase === "registration") return [];
     const roster = rosterTemplateFromRef(baseRosterRef, players);
@@ -1111,6 +1136,7 @@ export function useAmericanoDinamico(
     updateTotalRounds,
     ranking,
     rosterForUi,
+    applyFichaNames,
     currentRound,
   };
 }

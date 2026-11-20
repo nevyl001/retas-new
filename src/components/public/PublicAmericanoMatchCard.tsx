@@ -6,22 +6,32 @@ import { TePubMatchStatus } from "./tePubShared";
 import "./reta-public-scoreboard.css";
 import "./public-duel-match.css";
 
+function shownName(
+  player: { id: string; name: string },
+  names?: Record<string, string>
+): string {
+  const live = names?.[player.id]?.trim();
+  return live || player.name;
+}
+
 function teamPlayers(
   pair: [{ id: string; name: string }, { id: string; name: string }],
   fotos?: Record<string, string | null>,
-  ratings?: Record<string, number>
+  ratings?: Record<string, number>,
+  names?: Record<string, string>
 ) {
   return pair.map((p) => ({
-    name: p.name,
+    name: shownName(p, names),
     fotoUrl: fotos?.[p.id] ?? null,
     rating: ratings?.[p.id] ?? null,
   }));
 }
 
 function teamLabel(
-  pair: [{ id: string; name: string }, { id: string; name: string }]
+  pair: [{ id: string; name: string }, { id: string; name: string }],
+  names?: Record<string, string>
 ): string {
-  return `${pair[0].name} / ${pair[1].name}`;
+  return `${shownName(pair[0], names)} / ${shownName(pair[1], names)}`;
 }
 
 export const PublicAmericanoMatchCard: React.FC<{
@@ -33,6 +43,7 @@ export const PublicAmericanoMatchCard: React.FC<{
   index: number;
   playerRatings?: Record<string, number>;
   playerFotos?: Record<string, string | null>;
+  playerNames?: Record<string, string>;
 }> = ({
   match: m,
   live,
@@ -40,6 +51,7 @@ export const PublicAmericanoMatchCard: React.FC<{
   index,
   playerRatings,
   playerFotos,
+  playerNames,
 }) => {
   const played =
     typeof m.scoreA === "number" && typeof m.scoreB === "number";
@@ -47,8 +59,8 @@ export const PublicAmericanoMatchCard: React.FC<{
   const matchState =
     scheduleStatus ?? (played ? "played" : live ? "live" : "pending");
 
-  const playersA = teamPlayers(m.teamA, playerFotos, playerRatings);
-  const playersB = teamPlayers(m.teamB, playerFotos, playerRatings);
+  const playersA = teamPlayers(m.teamA, playerFotos, playerRatings, playerNames);
+  const playersB = teamPlayers(m.teamB, playerFotos, playerRatings, playerNames);
 
   return (
     <article
@@ -70,8 +82,8 @@ export const PublicAmericanoMatchCard: React.FC<{
       <PublicDuelMatchBoard
         sideA={playersA}
         sideB={playersB}
-        labelA={teamLabel(m.teamA)}
-        labelB={teamLabel(m.teamB)}
+        labelA={teamLabel(m.teamA, playerNames)}
+        labelB={teamLabel(m.teamB, playerNames)}
         scoreA={played ? (m.scoreA as number) : null}
         scoreB={played ? (m.scoreB as number) : null}
         hasResult={played}

@@ -27,9 +27,21 @@ function playerInTeam(team: SnapshotTeam, playerId: string): boolean {
   return team[0].id === playerId || team[1].id === playerId;
 }
 
-function partnerNameFromTeam(team: SnapshotTeam, playerId: string): string {
-  if (team[0].id === playerId) return team[1].name;
-  if (team[1].id === playerId) return team[0].name;
+function shownName(
+  player: { id: string; name: string },
+  namesById?: Record<string, string>
+): string {
+  const live = namesById?.[player.id]?.trim();
+  return live || player.name;
+}
+
+function partnerNameFromTeam(
+  team: SnapshotTeam,
+  playerId: string,
+  namesById?: Record<string, string>
+): string {
+  if (team[0].id === playerId) return shownName(team[1], namesById);
+  if (team[1].id === playerId) return shownName(team[0], namesById);
   return "?";
 }
 
@@ -50,7 +62,8 @@ function isScoredMatch(match: AmericanoSnapshotMatch): boolean {
  */
 export function buildAmericanoPublicMatchHistory(
   playerId: string,
-  rounds: AmericanoSnapshotRound[]
+  rounds: AmericanoSnapshotRound[],
+  namesById?: Record<string, string>
 ): AmericanoPublicMatchHistoryEntry[] {
   if (!playerId || !rounds.length) return [];
 
@@ -72,8 +85,11 @@ export function buildAmericanoPublicMatchHistory(
       entries.push({
         matchId: match.id,
         roundNumber: round.roundNumber,
-        partnerName: partnerNameFromTeam(ownTeam, playerId),
-        rivalsLabel: formatRivalPair(rivalTeam[0].name, rivalTeam[1].name),
+        partnerName: partnerNameFromTeam(ownTeam, playerId, namesById),
+        rivalsLabel: formatRivalPair(
+          shownName(rivalTeam[0], namesById),
+          shownName(rivalTeam[1], namesById)
+        ),
         scoreFavor,
         scoreContra,
         result: resultadoFromScores(scoreFavor, scoreContra),
@@ -87,7 +103,8 @@ export function buildAmericanoPublicMatchHistory(
 /** Deriva historial por jugador en un solo pase sobre las rondas del snapshot. */
 export function buildAmericanoPublicMatchHistoryByPlayerId(
   playerIds: string[],
-  rounds: AmericanoSnapshotRound[]
+  rounds: AmericanoSnapshotRound[],
+  namesById?: Record<string, string>
 ): Map<string, AmericanoPublicMatchHistoryEntry[]> {
   const map = new Map<string, AmericanoPublicMatchHistoryEntry[]>();
   for (const id of playerIds) {
@@ -118,8 +135,11 @@ export function buildAmericanoPublicMatchHistoryByPlayerId(
         list.push({
           matchId: match.id,
           roundNumber: round.roundNumber,
-          partnerName: partnerNameFromTeam(ownTeam, p.id),
-          rivalsLabel: formatRivalPair(rivalTeam[0].name, rivalTeam[1].name),
+          partnerName: partnerNameFromTeam(ownTeam, p.id, namesById),
+          rivalsLabel: formatRivalPair(
+            shownName(rivalTeam[0], namesById),
+            shownName(rivalTeam[1], namesById)
+          ),
           scoreFavor,
           scoreContra,
           result: resultadoFromScores(scoreFavor, scoreContra),

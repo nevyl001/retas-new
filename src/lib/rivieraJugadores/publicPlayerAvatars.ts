@@ -7,9 +7,15 @@ export type PlayerAvatarLookupEntry = { id: string; name: string };
 export type PlayerPublicProfile = {
   fotoUrl: string | null;
   rating: number;
+  /** Nombre vigente en la ficha. Null si esta fila no lo trae. */
+  nombre: string | null;
 };
 
-const DEFAULT_PROFILE: PlayerPublicProfile = { fotoUrl: null, rating: 3.0 };
+const DEFAULT_PROFILE: PlayerPublicProfile = {
+  fotoUrl: null,
+  rating: 3.0,
+  nombre: null,
+};
 
 function isDefaultRating(rating: number): boolean {
   return rating === DEFAULT_PROFILE.rating;
@@ -32,6 +38,13 @@ function normalizeRating(raw: unknown): number {
   return 3.0;
 }
 
+function readProfileNombre(row: Record<string, unknown>): string | null {
+  const raw = row.nombre ?? row.name;
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  return trimmed || null;
+}
+
 function profileFromRow(row: Record<string, unknown>): PlayerPublicProfile {
   const foto =
     typeof row.foto_url === "string" && row.foto_url.trim()
@@ -40,6 +53,7 @@ function profileFromRow(row: Record<string, unknown>): PlayerPublicProfile {
   return {
     fotoUrl: foto,
     rating: normalizeRating(row.rating),
+    nombre: readProfileNombre(row),
   };
 }
 
@@ -50,6 +64,7 @@ function mergeProfile(
   return {
     fotoUrl: current.fotoUrl ?? incoming.fotoUrl,
     rating: preferCanonicalRating(current.rating, incoming.rating),
+    nombre: current.nombre?.trim() || incoming.nombre?.trim() || null,
   };
 }
 

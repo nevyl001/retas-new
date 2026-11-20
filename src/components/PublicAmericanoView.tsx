@@ -34,6 +34,8 @@ import {
 import { isPubDsV2Enabled } from "../config/peds";
 import { isAmericanoPublicInitialLoadPending } from "../lib/americano/americanoPublicLoadState";
 import { useAmericanoLiveRealtime } from "../hooks/useAmericanoLiveRealtime";
+import { useLivePlayerProfiles } from "../hooks/useLivePlayerProfiles";
+import { livePlayerLabel } from "../lib/americano/livePlayerIdentity";
 import { useVisiblePolling } from "../hooks/useVisiblePolling";
 import {
   formatPublicEventFechaHorarioLine,
@@ -44,7 +46,7 @@ import {
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { StatusBadge } from "./platform/StatusBadge";
 import { PublicHero } from "./public/peds";
-import { resolvePlayerAvatars, resolvePlayerPublicProfiles } from "../lib/rivieraJugadores/publicPlayerAvatars";
+import { resolvePlayerAvatars } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import { PublicAmericanoMatchCard } from "./public/PublicAmericanoMatchCard";
 import "./public/public-duel-match.css";
 import { PublicAmericanoPodiumCard } from "./public/PublicAmericanoPodiumCard";
@@ -144,12 +146,6 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   const [clockNow, setClockNow] = useState(() => new Date());
   const [organizadorId, setOrganizadorId] = useState<string | null>(null);
   const [podiumAvatars, setPodiumAvatars] = useState<
-    Record<string, string | null>
-  >({});
-  const [playerRatings, setPlayerRatings] = useState<Record<string, number>>(
-    {}
-  );
-  const [playerFotos, setPlayerFotos] = useState<
     Record<string, string | null>
   >({});
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -338,16 +334,6 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     return computeAmericanoLiveStatsMap(roster, rebuilt?.rounds ?? []);
   }, [snapshot]);
 
-  const matchHistoryByPlayerId = useMemo(() => {
-    if (!snapshot || rankedRows.length === 0) {
-      return new Map<string, AmericanoPublicMatchHistoryEntry[]>();
-    }
-    return buildAmericanoPublicMatchHistoryByPlayerId(
-      rankedRows.map((r) => r.id),
-      snapshot.rounds
-    );
-  }, [snapshot, rankedRows]);
-
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
   const selectedStanding = useMemo(() => {
@@ -395,30 +381,45 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     return entries;
   }, [snapshot]);
 
-  useEffect(() => {
-    if (!organizadorId || snapshotPlayerEntries.length === 0) {
-      setPlayerRatings({});
-      setPlayerFotos({});
-      return;
+  const liveProfiles = useLivePlayerProfiles(
+    organizadorId,
+    snapshotPlayerEntries,
+    { publicOnly: true }
+  );
+  const playerRatings = useMemo(() => {
+    const ratings: Record<string, number> = {};
+    for (const entry of snapshotPlayerEntries) {
+      const rating = liveProfiles[entry.id]?.rating;
+      if (rating != null && Number.isFinite(rating)) ratings[entry.id] = rating;
     }
-    let cancelled = false;
-    void resolvePlayerPublicProfiles(organizadorId, snapshotPlayerEntries, {
-      publicOnly: true,
-    }).then((profiles) => {
-      if (cancelled) return;
-      const ratings: Record<string, number> = {};
-      const fotos: Record<string, string | null> = {};
-      for (const e of snapshotPlayerEntries) {
-        ratings[e.id] = profiles[e.id]?.rating ?? 3;
-        fotos[e.id] = profiles[e.id]?.fotoUrl ?? null;
-      }
-      setPlayerRatings(ratings);
-      setPlayerFotos(fotos);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [organizadorId, snapshotPlayerEntries]);
+    return ratings;
+  }, [liveProfiles, snapshotPlayerEntries]);
+  const playerFotos = useMemo(() => {
+    const fotos: Record<string, string | null> = {};
+    for (const entry of snapshotPlayerEntries) {
+      fotos[entry.id] = liveProfiles[entry.id]?.fotoUrl ?? null;
+    }
+    return fotos;
+  }, [liveProfiles, snapshotPlayerEntries]);
+  const playerNames = useMemo(() => {
+    const names: Record<string, string> = {};
+    for (const entry of snapshotPlayerEntries) {
+      const nombre = liveProfiles[entry.id]?.nombre?.trim();
+      if (nombre) names[entry.id] = nombre;
+    }
+    return names;
+  }, [liveProfiles, snapshotPlayerEntries]);
+
+  const matchHistoryByPlayerId = useMemo(() => {
+    if (!snapshot || rankedRows.length === 0) {
+      return new Map<string, AmericanoPublicMatchHistoryEntry[]>();
+    }
+    return buildAmericanoPublicMatchHistoryByPlayerId(
+      rankedRows.map((r) => r.id),
+      snapshot.rounds,
+      playerNames
+    );
+  }, [snapshot, rankedRows, playerNames]);
 
   useEffect(() => {
     if (!organizadorId || podiumPlayers.length === 0) {
@@ -492,6 +493,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
         podiumAvatars={podiumAvatars}
         playerRatings={playerRatings}
         playerFotos={playerFotos}
+        playerNames={playerNames}
         liveStatsMap={liveStatsMap}
         matchHistoryByPlayerId={matchHistoryByPlayerId}
         selectedStanding={selectedStanding}
@@ -528,6 +530,7 @@ type AmericanoPublicBodyProps = {
   podiumAvatars: Record<string, string | null>;
   playerRatings: Record<string, number>;
   playerFotos: Record<string, string | null>;
+  playerNames: Record<string, string>;
   liveStatsMap: Map<string, UnifiedStandingStats>;
   matchHistoryByPlayerId: Map<string, AmericanoPublicMatchHistoryEntry[]>;
   selectedStanding: { row: AmericanoRankedRow; position: number } | null;
@@ -556,6 +559,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
   podiumAvatars,
   playerRatings,
   playerFotos,
+  playerNames,
   liveStatsMap,
   matchHistoryByPlayerId,
   selectedStanding,
@@ -564,6 +568,8 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
   roundMatchesSorted,
   roundFullyScored,
 }) => {
+  const nameOf = (id: string, fallback: string) =>
+    livePlayerLabel(playerNames, id, fallback);
   const { isClubBranded } = useClubExperience();
   const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
   const initialLoadPending = isAmericanoPublicInitialLoadPending(
@@ -827,7 +833,9 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                 {round.benchPlayers.length > 0 && (
                   <p className="te-public-bench">
                     <strong>Descansan:</strong>{" "}
-                    {round.benchPlayers.map((p) => p.name).join(", ")}
+                    {round.benchPlayers
+                      .map((p) => nameOf(p.id, p.name))
+                      .join(", ")}
                   </p>
                 )}
 
@@ -854,6 +862,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                         index={matchIdx}
                         playerRatings={playerRatings}
                         playerFotos={playerFotos}
+                        playerNames={playerNames}
                       />
                     );
                   })}
@@ -889,7 +898,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                     <PublicAmericanoPodiumCard
                       portrait
                       rank={1}
-                      name={rankedRows[0].name}
+                      name={nameOf(rankedRows[0].id, rankedRows[0].name)}
                       fotoUrl={podiumAvatars[rankedRows[0].id]}
                       statLabel={
                         Number.isFinite(rankedRows[0].stats.pointsFor)
@@ -902,7 +911,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                     <PublicAmericanoPodiumCard
                       portrait
                       rank={2}
-                      name={rankedRows[1].name}
+                      name={nameOf(rankedRows[1].id, rankedRows[1].name)}
                       fotoUrl={podiumAvatars[rankedRows[1].id]}
                       animationDelay="0.08s"
                       statLabel={
@@ -916,7 +925,7 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                     <PublicAmericanoPodiumCard
                       portrait
                       rank={3}
-                      name={rankedRows[2].name}
+                      name={nameOf(rankedRows[2].id, rankedRows[2].name)}
                       fotoUrl={podiumAvatars[rankedRows[2].id]}
                       animationDelay="0.12s"
                       statLabel={
@@ -936,7 +945,10 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
 
           {rankedRows.length > 0 && (
             <PublicAmericanoStandingsSection
-              rows={rankedRows}
+              rows={rankedRows.map((row) => ({
+                ...row,
+                name: nameOf(row.id, row.name),
+              }))}
               isFinished={showFinishedPodium}
               playerFotos={playerFotos}
               liveStatsMap={liveStatsMap}
@@ -950,7 +962,10 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
         <PublicAmericanoPlayerPerformance
           open
           onClose={() => onPlayerSelect(null)}
-          playerName={selectedStanding.row.name}
+          playerName={nameOf(
+            selectedStanding.row.id,
+            selectedStanding.row.name
+          )}
           position={selectedStanding.position}
           fotoUrl={playerFotos[selectedStanding.row.id]}
           eventName={tournamentName}

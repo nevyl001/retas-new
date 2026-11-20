@@ -25,7 +25,7 @@ import {
   persistAmericanoDinamicoSnapshot,
   persistAmericanoDinamicoMetadata,
 } from "../../lib/americanoDinamicoSync";
-import { resolvePlayerAvatars } from "../../lib/rivieraJugadores/publicPlayerAvatars";
+import { useLivePlayerProfiles } from "../../hooks/useLivePlayerProfiles";
 import { useUser } from "../../contexts/UserContext";
 import { PublicAmericanoPodiumCard } from "../public/PublicAmericanoPodiumCard";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
@@ -96,6 +96,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     phase,
     ranking,
     rosterForUi,
+    applyFichaNames,
     currentRound,
     totalRounds,
     syncRegistrationPlayers,
@@ -354,22 +355,32 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     () => rosterForUi.map((p) => ({ id: p.id, name: p.name })),
     [rosterForUi]
   );
+  const liveProfiles = useLivePlayerProfiles(
+    effectiveUserId,
+    rosterAvatarEntries
+  );
 
   React.useEffect(() => {
-    if (!effectiveUserId || rosterAvatarEntries.length === 0) {
+    if (rosterAvatarEntries.length === 0) {
       setPlayerFotos({});
       return;
     }
-    let cancelled = false;
-    void resolvePlayerAvatars(effectiveUserId, rosterAvatarEntries).then(
-      (map) => {
-        if (!cancelled) setPlayerFotos(map);
-      }
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [effectiveUserId, rosterAvatarEntries]);
+    const fotos: Record<string, string | null> = {};
+    const names: Record<string, string> = {};
+    for (const entry of rosterAvatarEntries) {
+      const profile = liveProfiles[entry.id];
+      fotos[entry.id] = profile?.fotoUrl ?? null;
+      const nombre = profile?.nombre?.trim();
+      if (nombre) names[entry.id] = nombre;
+    }
+    setPlayerFotos((prev) => {
+      const same =
+        Object.keys(prev).length === rosterAvatarEntries.length &&
+        rosterAvatarEntries.every((entry) => prev[entry.id] === fotos[entry.id]);
+      return same ? prev : fotos;
+    });
+    if (Object.keys(names).length > 0) applyFichaNames(names);
+  }, [applyFichaNames, liveProfiles, rosterAvatarEntries]);
 
   React.useEffect(() => {
     if (!effectiveUserId || podiumPlayers.length === 0 || phase !== "finished") {
@@ -390,17 +401,12 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       setPodiumAvatars(fromRoster);
       return;
     }
-    let cancelled = false;
-    void resolvePlayerAvatars(
-      effectiveUserId,
-      podiumPlayers.map((p) => ({ id: p.id, name: p.name }))
-    ).then((map) => {
-      if (!cancelled) setPodiumAvatars(map);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [effectiveUserId, phase, podiumPlayers, playerFotos]);
+    const fromLive: Record<string, string | null> = {};
+    for (const p of podiumPlayers) {
+      fromLive[p.id] = liveProfiles[p.id]?.fotoUrl ?? playerFotos[p.id] ?? null;
+    }
+    setPodiumAvatars(fromLive);
+  }, [effectiveUserId, phase, podiumPlayers, playerFotos, liveProfiles]);
 
   const [resetting, setResetting] = React.useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = React.useState(false);

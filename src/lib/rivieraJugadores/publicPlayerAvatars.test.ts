@@ -132,6 +132,7 @@ describe("resolvePlayerPublicProfiles", () => {
 
     expect(profiles[legacyId].rating).toBe(2.82);
     expect(profiles[legacyId].fotoUrl).toBe("https://example.com/daniel.jpg");
+    expect(profiles[legacyId].nombre).toBe("Daniel N");
   });
 
   it("en publicOnly resuelve cedido con rating origen vía RPC público (anon móvil)", async () => {
