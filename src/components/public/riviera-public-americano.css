@@ -5610,14 +5610,55 @@
   }
 }
 
-/* Móvil: la cara es el sujeto. Retrato a todo el ancho de cada mitad. */
+/* Móvil: la foto ocupa su mitad y el nombre se lee entero. */
 @media (max-width: 719px) {
+  .te-public--americano.te-public--americano-wide .te-public__inner {
+    padding-left: max(0.5rem, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(0.5rem, env(safe-area-inset-right, 0px)) !important;
+  }
+
   .te-public--americano .am-pub-match.reta-sb-card {
-    padding: 0.45rem 0.4rem 0.4rem !important;
+    padding: 0.4rem 0.35rem 0.35rem !important;
+  }
+
+  .te-public--americano .am-pub-match .liga-jornada-match-card__duel {
+    gap: 0.32rem 0.22rem !important;
+    padding: 0.1rem 0 0.25rem !important;
+  }
+
+  .te-public--americano .am-pub-match .liga-jornada-match-pair-half,
+  .te-public--americano .am-pub-match .liga-jornada-match-pair-half--left,
+  .te-public--americano .am-pub-match .liga-jornada-match-pair-half--right {
+    align-items: stretch !important;
+    width: 100% !important;
+  }
+
+  .te-public--americano .am-pub-match .liga-jornada-match-pair-half__grid,
+  .te-public--americano .am-pub-match .liga-jornada-match-pair-half__column {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .te-public--americano .am-pub-match .liga-jornada-match-card__duel-vs {
+    min-width: 1.15rem !important;
+    gap: 0.16rem !important;
+    padding: 0 !important;
+  }
+
+  .te-public--americano .am-pub-match .liga-jornada-match-card__duel-vs-label {
+    min-width: 1.55rem !important;
+    min-height: 1.55rem !important;
+    padding: 0.15rem 0.2rem !important;
+    font-size: 0.58rem !important;
+    letter-spacing: 0.06em !important;
+  }
+
+  .te-public--americano .am-pub-match .liga-jornada-match-card__duel-vs-rule {
+    height: 0.7rem !important;
   }
 
   .te-public--americano .am-pub-match.reta-sb-card--split-vs .reta-sb-card__board {
-    gap: 0.28rem !important;
+    gap: 0.22rem !important;
   }
 
   .te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-pair,
@@ -5676,6 +5717,50 @@
     width: 1.5rem !important;
     height: 1.5rem !important;
     font-size: 0.5rem !important;
+  }
+
+  .te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__identity {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-end !important;
+    align-items: stretch !important;
+    gap: 0.02rem !important;
+    padding: 0.35rem 0.42rem 0.38rem !important;
+  }
+
+  .te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__given,
+  .te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__family,
+  .te-public--americano
+    .am-pub-match.reta-sb-card--split-vs
+    .pub-split-vs-panel__given:not(:has(+ .pub-split-vs-panel__family)) {
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
+
+  .te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__given {
+    font-size: 0.84rem !important;
+    line-height: 1.05 !important;
+  }
+
+  .te-public--americano .am-pub-match.reta-sb-card--split-vs .pub-split-vs-panel__family {
+    font-size: 0.68rem !important;
+    line-height: 1.12 !important;
+  }
+
+  .te-public--americano
+    .am-pub-match.reta-sb-card--split-vs
+    .pub-split-vs-panel__rating.jugador-rating-chip {
+    top: 0.38rem !important;
+    right: 0.38rem !important;
+    bottom: auto !important;
+    left: auto !important;
   }
 }
 
