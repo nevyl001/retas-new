@@ -33,6 +33,11 @@ export type RetaConfigFieldsProps = {
    * full = layout legacy (todos los campos a la vista).
    */
   layout?: "full" | "essentials";
+  /**
+   * Corrección de una reta ya iniciada: sin pasos de alta y sin canchas
+   * (en Americano las canchas viven en la ronda, no en esta ficha).
+   */
+  correction?: boolean;
   /** Errores inline por campo (solo UX; no cambia validación de guardado). */
   fieldErrors?: Partial<Record<"name", string>>;
 };
@@ -58,6 +63,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   showChampionship = true,
   disabled = false,
   layout = "full",
+  correction = false,
   fieldErrors,
 }) => {
   const essentials = layout === "essentials";
@@ -779,7 +785,9 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           aria-labelledby="reta-details-sec-essential"
         >
           <div className="reta-details-form__section-head">
-            <span className="reta-details-form__step-badge">Paso 1</span>
+            {correction ? null : (
+              <span className="reta-details-form__step-badge">Paso 1</span>
+            )}
             <div className="reta-details-form__section-head-copy">
               <h3
                 id="reta-details-sec-essential"
@@ -788,7 +796,9 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
                 Información principal
               </h3>
               <p className="reta-details-form__section-lead">
-                Define el nombre, la fecha, el horario y las canchas para organizar tu reta.
+                {correction
+                  ? "Nombre, día, hora y sede."
+                  : "Define el nombre, la fecha, el horario y las canchas para organizar tu reta."}
               </p>
             </div>
           </div>
@@ -797,7 +807,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           </div>
           <div className="reta-details-form__row reta-details-form__row--primary">
             {scheduleField}
-            {courtsField}
+            {correction ? null : courtsField}
           </div>
         </section>
 
@@ -806,16 +816,20 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           aria-labelledby="reta-details-sec-sport"
         >
           <div className="reta-details-form__section-head">
-            <span className="reta-details-form__step-badge">Paso 2</span>
+            {correction ? null : (
+              <span className="reta-details-form__step-badge">Paso 2</span>
+            )}
             <div className="reta-details-form__section-head-copy">
               <h3
                 id="reta-details-sec-sport"
                 className="reta-details-form__section-title"
               >
-                Configuración deportiva
+                {correction ? "Categoría" : "Configuración deportiva"}
               </h3>
               <p className="reta-details-form__section-lead">
-                Establece la categoría, la rama y las reglas de cierre competitivo.
+                {correction
+                  ? "Categoría y rama."
+                  : "Establece la categoría, la rama y las reglas de cierre competitivo."}
               </p>
             </div>
           </div>
@@ -852,16 +866,20 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           aria-labelledby="reta-details-sec-optional"
         >
           <div className="reta-details-form__section-head">
-            <span className="reta-details-form__step-badge">Paso 3</span>
+            {correction ? null : (
+              <span className="reta-details-form__step-badge">Paso 3</span>
+            )}
             <div className="reta-details-form__section-head-copy">
               <h3
                 id="reta-details-sec-optional"
                 className="reta-details-form__section-title"
               >
-                Detalles opcionales
+                {correction ? "Ficha pública" : "Detalles opcionales"}
               </h3>
               <p className="reta-details-form__section-lead">
-                Elige qué información verán los jugadores en la ficha pública y el enlace.
+                {correction
+                  ? "Descripción, sede, costo y premio que ven los jugadores."
+                  : "Elige qué información verán los jugadores en la ficha pública y el enlace."}
               </p>
             </div>
           </div>

@@ -50,6 +50,7 @@ import {
   ModeSectionTabs,
 } from "../platform";
 import { PublicShareSection } from "../platform/PublicShareSection";
+import { RetaConfigPanel } from "../reta/RetaConfigPanel";
 import { Button, Input, Modal } from "../ui";
 import { LoadingProgressHint } from "../ui/LoadingProgressHint";
 import { AmericanoModeShell } from "./AmericanoModeShell";
@@ -452,6 +453,20 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     refreshAvailablePlayers,
   ]);
 
+  const liveRetaDetails = tournament ? (
+    <div className="qm-ws__details-inline americano-live-details">
+      <RetaConfigPanel
+        tournament={tournament}
+        matches={[]}
+        pairsCount={0}
+        showChampionship={false}
+        summary="facts"
+        subtitle="Si algo quedó mal, corrígelo aquí. Los partidos y marcadores no cambian."
+        onSaved={handleTournamentPatched}
+      />
+    </div>
+  ) : null;
+
   const tournamentBanner =
     tournamentName || tournamentDescription ? (
       <ModeHeader
@@ -724,6 +739,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         <div className="qm-competition">
         {syncWarning}
         {tournamentBanner}
+        {liveRetaDetails}
         {publicAmericanoUrl ? (
           <PublicShareSection
             publicUrl={publicAmericanoUrl}
@@ -807,6 +823,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   return (
     <AmericanoModeShell onBack={goBackToRetas}>
       {tournamentBanner}
+      {liveRetaDetails}
       {publicAmericanoUrl ? (
         <PublicShareSection
           publicUrl={publicAmericanoUrl}

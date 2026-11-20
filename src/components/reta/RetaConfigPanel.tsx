@@ -4,6 +4,7 @@ import {
   deriveRetaEditPhase,
 } from "../../lib/reta/retaConfigEditRules";
 import {
+  datetimeLocalToIso,
   resolveCanonicalChampionshipConfig,
   sameUpdatedAt,
   saveRetaConfig,
@@ -11,6 +12,7 @@ import {
   type RetaConfigFormValues,
 } from "../../lib/reta/updateRetaConfig";
 import { retaRamaPublicLabel } from "../../lib/reta/retaRama";
+import { formatPublicEventFechaHorarioLine } from "../../lib/public/eventScheduleStatus";
 import { RetaConfigFields } from "./RetaConfigFields";
 import { Button } from "../ui";
 
@@ -25,6 +27,11 @@ type Props = {
   showChampionship?: boolean;
   subtitle?: string;
   /**
+   * strip = prep (no repite el header).
+   * facts = reta ya iniciada: muestra los datos y permite corregirlos.
+   */
+  summary?: "strip" | "facts";
+  /**
    * Slot de convocatoria (prep): solo visible en modo edición.
    * No altera la lógica del gate; solo el layout.
    */
@@ -32,6 +39,17 @@ type Props = {
   /** Arranca expandido (p. ej. flujos que no usan resumen colapsado). */
   defaultEditing?: boolean;
 };
+
+function retaFactWhen(programadoLocal: string, durationMinutes: number): string {
+  const start = datetimeLocalToIso(programadoLocal);
+  if (!start) return "";
+  const mins =
+    Number.isFinite(durationMinutes) && durationMinutes > 0
+      ? durationMinutes
+      : 90;
+  const end = new Date(Date.parse(start) + mins * 60_000).toISOString();
+  return formatPublicEventFechaHorarioLine(start, end) || "";
+}
 
 function formSnapshot(values: RetaConfigFormValues): string {
   return JSON.stringify(values);
@@ -45,6 +63,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
   onCancel,
   showChampionship,
   subtitle = "Edita la configuración principal del evento.",
+  summary = "strip",
   publicSlot,
   defaultEditing = false,
 }) => {
@@ -297,6 +316,85 @@ export const RetaConfigPanel: React.FC<Props> = ({
   const ramaLabel = retaRamaPublicLabel(values.rama);
   /** Solo datos que el header del prep no muestra (evitar duplicar nombre/fecha/lugar). */
   const stripExtras = [values.nivel.trim(), ramaLabel].filter(Boolean);
+  const correction = summary === "facts";
+
+  const openEditor = () => {
+    if (savedFlashTimer.current != null) {
+      window.clearTimeout(savedFlashTimer.current);
+      savedFlashTimer.current = null;
+    }
+    setDiscardOpen(false);
+    setError(null);
+    setStatus(null);
+    setEditing(true);
+  };
+
+  if (!editing && correction) {
+    const when = retaFactWhen(values.programado_en, values.duration_minutes);
+    const facts: Array<{ label: string; value: string; empty: string; wide?: boolean }> = [
+      { label: "Nombre", value: values.name.trim(), empty: "Sin nombre" },
+      {
+        label: "Horario",
+        value: values.programado_en.trim() ? when : "",
+        empty: "Sin horario",
+      },
+      { label: "Sede", value: values.lugar.trim(), empty: "Sin sede" },
+      { label: "Categoría", value: values.nivel.trim(), empty: "Sin categoría" },
+      { label: "Rama", value: ramaLabel || "", empty: "Sin rama" },
+    ];
+    if (values.costo.trim()) {
+      facts.push({ label: "Costo", value: values.costo.trim(), empty: "" });
+    }
+    if (values.premio.trim()) {
+      facts.push({ label: "Premio", value: values.premio.trim(), empty: "" });
+    }
+    if (values.description.trim()) {
+      facts.push({
+        label: "Descripción",
+        value: values.description.trim(),
+        empty: "",
+        wide: true,
+      });
+    }
+
+    return (
+      <div className="reta-config-panel reta-config-panel--inline reta-config-panel--facts">
+        <div className="reta-config-panel__facts-head">
+          <div className="reta-config-panel__summary-copy">
+            <p className="reta-config-panel__summary-kicker">Datos de la reta</p>
+            <p className="reta-config-panel__facts-note">{subtitle}</p>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="reta-config-panel__edit-btn"
+            onClick={openEditor}
+          >
+            Corregir
+          </Button>
+        </div>
+        <dl className="reta-config-panel__facts">
+          {facts.map((fact) => {
+            const missing = !fact.value;
+            return (
+              <div
+                key={fact.label}
+                className={`reta-config-panel__fact${
+                  fact.wide ? " reta-config-panel__fact--wide" : ""
+                }`}
+              >
+                <dt>{fact.label}</dt>
+                <dd className={missing ? "is-empty" : undefined}>
+                  {missing ? fact.empty : fact.value}
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
+      </div>
+    );
+  }
 
   if (!editing) {
     return (
@@ -322,16 +420,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
             variant="ghost"
             size="sm"
             className="reta-config-panel__edit-btn"
-            onClick={() => {
-              if (savedFlashTimer.current != null) {
-                window.clearTimeout(savedFlashTimer.current);
-                savedFlashTimer.current = null;
-              }
-              setDiscardOpen(false);
-              setError(null);
-              setStatus(null);
-              setEditing(true);
-            }}
+            onClick={openEditor}
           >
             Editar
           </Button>
@@ -369,6 +458,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
           showChampionship ?? tournament.format !== "teams"
         }
         layout="essentials"
+        correction={correction}
         fieldErrors={fieldErrors}
       />
 
