@@ -750,6 +750,123 @@
   }
 }
 
+@media (min-width: 1080px) {
+  .americano-live-details .reta-config-panel__facts {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* Corrección ya iniciada: ficha compacta. No altera el alta (prep). */
+.americano-live-details.qm-ws__details-inline .reta-details-form__section-lead,
+.americano-live-details.qm-ws__details-inline .reta-details-form__field-help {
+  display: none;
+}
+
+.americano-live-details.qm-ws__details-inline .reta-config-panel--editing .reta-config-panel__toolbar {
+  align-items: flex-start;
+  padding: 0.95rem 1.05rem 0.75rem;
+}
+
+.americano-live-details.qm-ws__details-inline .reta-details-form__section {
+  padding: 0.85rem 1.05rem 1rem;
+}
+
+.americano-live-details.qm-ws__details-inline .reta-details-form__section-head {
+  margin-bottom: 0.7rem;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.americano-live-details.qm-ws__details-inline .reta-details-form__label-row {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.1rem;
+}
+
+.americano-live-details.qm-ws__details-inline .home-sheet__input,
+.americano-live-details.qm-ws__details-inline .riviera-input,
+.americano-live-details.qm-ws__details-inline .reta-details-form__stepper {
+  background: color-mix(in srgb, var(--qm-ink-text) 5%, var(--qm-ink-input));
+  border-color: color-mix(in srgb, var(--qm-ink-text) 16%, var(--qm-ink-input-border));
+}
+
+.americano-live-details.qm-ws__details-inline .reta-details-form__row--name .home-sheet__input,
+.americano-live-details.qm-ws__details-inline .reta-details-form__field--desc .reta-details-form__textarea,
+.americano-live-details.qm-ws__details-inline .reta-details-form__row--nivel .home-sheet__input {
+  max-width: 28rem;
+}
+
+.americano-live-details.qm-ws__details-inline .reta-details-form__row--primary {
+  display: grid;
+  grid-template-columns: minmax(9.5rem, 12.5rem) minmax(8rem, 10.5rem) minmax(9.5rem, 12.5rem);
+  justify-content: start;
+  gap: 0.75rem 0.85rem;
+  width: auto;
+  max-width: 100%;
+}
+
+.americano-live-details.qm-ws__details-inline .reta-details-form__row--primary > .reta-details-form__schedule-split {
+  display: contents;
+}
+
+.americano-live-details.qm-ws__details-inline .reta-details-form__sport-grid {
+  display: grid;
+  grid-template-columns: minmax(12rem, 18rem) minmax(16rem, 24rem);
+  justify-content: start;
+  gap: 0.85rem 1.25rem;
+  max-width: 44rem;
+}
+
+.americano-live-details.qm-ws__details-inline .reta-details-form__rama-options {
+  width: 100%;
+}
+
+.americano-live-details.qm-ws__details-inline .reta-details-form__row--public > .reta-details-form__row--meta {
+  grid-template-columns: repeat(3, minmax(0, 16.5rem));
+  justify-content: start;
+  max-width: 52rem;
+}
+
+.americano-live-details.qm-ws__details-inline .reta-config-panel__sticky-bar,
+.americano-live-details.qm-ws__details-inline .reta-config-panel__close-row {
+  padding-inline: 1.05rem;
+}
+
+@media (max-width: 719px) {
+  .americano-live-details.qm-ws__details-inline .reta-details-form__row--primary {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "date time"
+      "duration duration";
+    width: 100%;
+  }
+
+  .americano-live-details.qm-ws__details-inline .reta-details-form__field--date {
+    grid-area: date;
+  }
+
+  .americano-live-details.qm-ws__details-inline .reta-details-form__field--time {
+    grid-area: time;
+  }
+
+  .americano-live-details.qm-ws__details-inline .reta-details-form__field--duration {
+    grid-area: duration;
+  }
+
+  .americano-live-details.qm-ws__details-inline .reta-details-form__sport-grid,
+  .americano-live-details.qm-ws__details-inline .reta-details-form__row--public > .reta-details-form__row--meta {
+    grid-template-columns: 1fr;
+    max-width: none;
+  }
+
+  .americano-live-details.qm-ws__details-inline .reta-details-form__row--name .home-sheet__input,
+  .americano-live-details.qm-ws__details-inline .reta-details-form__field--desc .reta-details-form__textarea,
+  .americano-live-details.qm-ws__details-inline .reta-details-form__row--nivel .home-sheet__input {
+    max-width: none;
+  }
+}
+
 @media (max-width: 560px) {
   .americano-live-details .reta-config-panel__facts {
     grid-template-columns: 1fr;
