@@ -7,6 +7,7 @@ import {
   type RetaMatchSetInput,
 } from "../lib/database";
 import { aplicarRatingDesdePairs } from "../lib/rivieraJugadores/aplicarRatingPartido";
+import { planRetaScoreSave } from "../lib/reta/retaMatchScoreSave";
 import { TeamBadge } from "./teams/TeamBadge";
 import {
   getPairTeamIndex,
@@ -312,17 +313,17 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     setPair2Score("");
     setIsEditing(false);
     setGames(freshGames);
-    setCurrentMatch((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: "finished",
-            pair1_score: pair1FinalScore,
-            pair2_score: pair2FinalScore,
-          }
-        : prev
-    );
-    notifyParent();
+    const savedMatch: Match = {
+      ...activeMatch,
+      status: "finished",
+      pair1_score: pair1FinalScore,
+      pair2_score: pair2FinalScore,
+      round: activeMatch.round,
+      court: activeMatch.court,
+    };
+    setCurrentMatch(savedMatch);
+    // Incluye ronda y cancha: un 0 en el marcador no puede pisar la ubicación.
+    notifyParent(savedMatch);
     return true;
   };
 
@@ -340,10 +341,6 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
     const score1 = parseInt(pair1Score, 10);
     const score2 = parseInt(pair2Score, 10);
-    const hasNewScore =
-      !Number.isNaN(score1) &&
-      !Number.isNaN(score2) &&
-      !(score1 === 0 && score2 === 0);
 
     try {
       isUpdatingRef.current = true;
@@ -351,24 +348,18 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setError(null);
 
       const existingGames = await getGames(currentMatch.id);
-
-      if (!hasNewScore && existingGames.length === 0) {
-        setError("Ingresa el marcador de cada pareja");
+      const plan = planRetaScoreSave({
+        score1,
+        score2,
+        existingSets: existingGames.map(gameToSetInput),
+        mode: "finish",
+      });
+      if (!plan.ok) {
+        setError(plan.error);
         return;
       }
 
-      const setsPayload = existingGames.map(gameToSetInput);
-      if (hasNewScore) {
-        setsPayload.push({
-          pair1_games: score1,
-          pair2_games: score2,
-          is_tie_break: false,
-          tie_break_pair1_points: 0,
-          tie_break_pair2_points: 0,
-        });
-      }
-
-      await persistMatchSets(setsPayload, currentMatch, { applyRating: true });
+      await persistMatchSets(plan.sets, currentMatch, { applyRating: true });
     } catch (err: unknown) {
       console.error("❌ Error guardando resultado:", err);
       setError(parseGameError(err));
@@ -388,12 +379,14 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     const score1 = parseInt(pair1Score, 10);
     const score2 = parseInt(pair2Score, 10);
 
-    if (Number.isNaN(score1) || Number.isNaN(score2)) {
-      setError("Ingresa puntuaciones válidas");
-      return;
-    }
-    if (score1 === 0 && score2 === 0) {
-      setError("Ingresa el marcador (no puede ser 0-0)");
+    const plan = planRetaScoreSave({
+      score1,
+      score2,
+      existingSets: [],
+      mode: "correct",
+    });
+    if (!plan.ok) {
+      setError(plan.error);
       return;
     }
 
@@ -402,19 +395,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setSaving(true);
       setError(null);
 
-      await persistMatchSets(
-        [
-          {
-            pair1_games: score1,
-            pair2_games: score2,
-            is_tie_break: false,
-            tie_break_pair1_points: 0,
-            tie_break_pair2_points: 0,
-          },
-        ],
-        currentMatch,
-        { applyRating: false }
-      );
+      await persistMatchSets(plan.sets, currentMatch, { applyRating: false });
     } catch (err: unknown) {
       console.error("❌ Error corrigiendo resultado:", err);
       setError(parseGameError(err));

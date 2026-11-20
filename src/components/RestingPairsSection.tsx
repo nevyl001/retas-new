@@ -142,18 +142,50 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
 
     setBusy(true);
     setError(null);
+    const previousPlacement = new Map(
+      plan.patches.map((patch) => {
+        const current = tournamentMatches.find((m) => m.id === patch.matchId);
+        return [
+          patch.matchId,
+          {
+            round: current?.round ?? null,
+            court: current?.court ?? null,
+          },
+        ] as const;
+      })
+    );
+    const applied: string[] = [];
     try {
       for (const patch of plan.patches) {
         const updated = await updateMatch(patch.matchId, patch.updates);
+        applied.push(patch.matchId);
         onMatchUpdated?.(updated);
       }
       setSelectedRestingId(null);
       await onAfterSwap?.();
     } catch (e) {
+      // Si solo entra el primer cambio, el partido sale de la ronda y no llega
+      // el reemplazo: Aimee y Pati quedan las dos en descanso. Se revierte.
+      for (const matchId of [...applied].reverse()) {
+        const previous = previousPlacement.get(matchId);
+        if (!previous || previous.round == null) continue;
+        try {
+          const restored = await updateMatch(matchId, {
+            round: previous.round,
+            court: previous.court,
+          });
+          onMatchUpdated?.(restored);
+        } catch (restoreError) {
+          console.error(
+            "No se pudo devolver el partido a su ronda:",
+            restoreError
+          );
+        }
+      }
       setError(
         e instanceof Error
           ? e.message
-          : "No se pudo reacomodar la ronda. Intenta de nuevo."
+          : "No se pudo reacomodar la ronda. El partido se quedó en su cancha."
       );
     } finally {
       setBusy(false);
