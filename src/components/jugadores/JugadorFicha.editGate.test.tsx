@@ -159,5 +159,8 @@ describe("JugadorFicha — gate del panel de edición", () => {
     expect(container.textContent).toContain("Jugador Concedido");
     expect(container.textContent).toContain("Datos del jugador");
     expect(container.querySelector("#rj-nombre")).not.toBeNull();
+    expect(container.querySelector("#rj-rama")).not.toBeNull();
+    expect(container.textContent).toContain("Varonil");
+    expect(container.textContent).toContain("Femenil");
   });
 });

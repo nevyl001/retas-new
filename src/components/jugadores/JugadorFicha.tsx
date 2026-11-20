@@ -38,6 +38,12 @@ import type {
   RivieraJugadorWithStats,
 } from "../../lib/rivieraJugadores/types";
 import { PAISES_RIVIERA, paisSelectLabel } from "../../lib/rivieraJugadores/paises";
+import {
+  RIVIERA_GENERO_LABELS,
+  RIVIERA_GENERO_ORDER,
+  normalizeRivieraGenero,
+  type RivieraJugadorGenero,
+} from "../../lib/rivieraJugadores/genero";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { buildPublicJugadorPath, buildPublicRankingUrl } from "./jugadoresPublicNav";
 import { JugadorAvatar } from "./JugadorAvatar";
@@ -71,6 +77,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   );
   const [nombre, setNombre] = useState("");
   const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("open");
+  const [genero, setGenero] = useState<RivieraJugadorGenero>("M");
   const [edad, setEdad] = useState("");
   const [mano, setMano] = useState<ManoDominante | "">("");
   const [enCancha, setEnCancha] = useState<EnCancha | "">("");
@@ -97,6 +104,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
       if (j) {
         setNombre(j.nombre);
         setCategoria(j.categoria);
+        setGenero(normalizeRivieraGenero(j.genero) ?? "M");
         setEdad(j.edad != null ? String(j.edad) : "");
         setMano(j.mano_dominante ?? "");
         setEnCancha(j.en_cancha ?? "");
@@ -116,6 +124,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           setHistorial(profile.historialGlobal);
           setHistorialRating(profile.historialRating);
           setJugador(profile.jugador);
+          setGenero(normalizeRivieraGenero(profile.jugador.genero) ?? "M");
         }
       }
     } catch (e) {
@@ -142,6 +151,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
       const updated = await updateRivieraJugador(jugador.id, {
         nombre: nombreTrim,
         categoria,
+        genero,
         edad:
           edadNum != null && !Number.isNaN(edadNum) && edadNum >= 5 && edadNum <= 99
             ? edadNum
@@ -158,6 +168,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
       setJugador({ ...jugador, ...updated, stats: jugador.stats });
       setNombre(updated.nombre);
       setCategoria(updated.categoria);
+      setGenero(normalizeRivieraGenero(updated.genero) ?? genero);
       setEditOpen(false);
       if (updated.slug !== jugador.slug) {
         navigateJugadorFicha(updated.slug);
@@ -509,6 +520,23 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
                 {JUGADOR_CATEGORIAS_ORDER.map((c) => (
                   <option key={c} value={c}>
                     {JUGADOR_CATEGORIA_LABELS[c]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="riviera-field">
+              <label className="riviera-label" htmlFor="rj-rama">Rama</label>
+              <select
+                id="rj-rama"
+                className="riviera-input"
+                value={genero}
+                onChange={(e) =>
+                  setGenero(e.target.value === "F" ? "F" : "M")
+                }
+              >
+                {RIVIERA_GENERO_ORDER.map((g) => (
+                  <option key={g} value={g}>
+                    {RIVIERA_GENERO_LABELS[g]}
                   </option>
                 ))}
               </select>
