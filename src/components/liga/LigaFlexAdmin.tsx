@@ -15,6 +15,7 @@ import {
   applyFlexJornada,
   closeFlexLeague,
   confirmFlexSchedule,
+  correctFlexJornada,
   loadFlexLeague,
   markFlexFinal,
   reopenFlexLeague,
@@ -45,14 +46,19 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [resolution, setResolution] = useState("");
-  const [targetCount, setTargetCount] = useState(12);
+  const [jornadaOrden, setJornadaOrden] = useState<string[]>([]);
+  const [jornadaMotivo, setJornadaMotivo] = useState("");
+  const [seasonOrden, setSeasonOrden] = useState<string[]>([]);
+  const [seasonTied, setSeasonTied] = useState<string[]>([]);
+  const [correctionMotivo, setCorrectionMotivo] = useState("");
+  const [correctionOrden, setCorrectionOrden] = useState<string[]>([]);
+  const [correctionTies, setCorrectionTies] = useState<string[][]>([]);
+  const [savedMatchId, setSavedMatchId] = useState<string | null>(null);
   const [reopenMotivo, setReopenMotivo] = useState("");
 
   const refresh = async () => {
     const next = await loadFlexLeague(detalle.id);
     setBundle(next);
-    setTargetCount(next.config.jornadasPlaneadas);
     setSelectedId((current) => current ?? detalle.jornadas[0]?.id ?? null);
   };
 
@@ -62,7 +68,6 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
       .then((next) => {
         if (!active) return;
         setBundle(next);
-        setTargetCount(next.config.jornadasPlaneadas);
         setSelectedId((current) => current ?? detalle.jornadas[0]?.id ?? null);
       })
       .catch((err: unknown) => {
@@ -112,6 +117,16 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
     });
   }, [bundle, detalle.jornadas]);
 
+  const provisional = useMemo(() => {
+    if (!jornada || jornada.estado === "completed") return null;
+    const ids = selectedId ? bundle?.participantes[selectedId] ?? [] : [];
+    return rankFlexJornada({
+      players: ids.map((id) => ({ id, name: names.get(id) ?? "Jugador" })),
+      matches: (jornada.partidos ?? []).map(toScored),
+      resolution: jornadaOrden,
+    });
+  }, [jornada, selectedId, bundle, names, jornadaOrden]);
+
   const run = async (action: () => Promise<void>) => {
     setBusy(true);
     setError(null);
@@ -156,39 +171,32 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
       <section className="liga-flex__panel">
         <h2>Temporada</h2>
         <div className="liga-flex__row">
-          <label>
-            Jornadas
-            <input
-              type="number"
-              min={1}
-              max={48}
-              value={targetCount}
-              onChange={(event) => setTargetCount(Number(event.target.value) || 1)}
-            />
-          </label>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={busy}
-            onClick={() =>
-              void run(async () => {
-                await resizeFlexCalendar({
-                  ligaId: detalle.id,
-                  targetCount,
-                  canchas: detalle.canchas_disponibles,
-                  jornadas: detalle.jornadas.map((item) => ({
-                    id: item.id,
-                    numero: item.numero,
-                    hasOfficialResults: (bundle?.posiciones ?? []).some(
-                      (row) => row.jornadaId === item.id
-                    ),
-                  })),
-                });
-              })
-            }
-          >
-            Actualizar calendario
-          </Button>
+          <p>Temporada oficial de 12 jornadas. La asistencia de cada fecha es voluntaria.</p>
+          {detalle.jornadas.length !== 12 ? (
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={busy}
+              onClick={() =>
+                void run(async () => {
+                  await resizeFlexCalendar({
+                    ligaId: detalle.id,
+                    targetCount: 12,
+                    canchas: detalle.canchas_disponibles,
+                    jornadas: detalle.jornadas.map((item) => ({
+                      id: item.id,
+                      numero: item.numero,
+                      hasOfficialResults: (bundle?.posiciones ?? []).some(
+                        (row) => row.jornadaId === item.id
+                      ),
+                    })),
+                  });
+                })
+              }
+            >
+              Ajustar a 12 jornadas
+            </Button>
+          ) : null}
           {detalle.estado === "completed" ? (
             <>
               <input
@@ -212,10 +220,13 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
               disabled={busy}
               onClick={() =>
                 void run(async () => {
-                  const outcome = await closeFlexLeague(detalle.id);
+                  const outcome = await closeFlexLeague(detalle.id, seasonOrden);
                   if (outcome.needsResolution) {
+                    setSeasonTied(outcome.tied ?? []);
+                    setSeasonOrden(outcome.tied ?? []);
                     throw new Error(outcome.error || "El podio necesita una resolución.");
                   }
+                  setSeasonTied([]);
                   setNotice("Liga finalizada. El podio quedó registrado una sola vez.");
                 })
               }
@@ -224,6 +235,15 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
             </Button>
           )}
         </div>
+        {seasonTied.length > 0 ? (
+          <TieOrder
+            title="Empate de podio"
+            note="Ya se compararon puntos, veces en cada posición y jornadas jugadas. Ordena solo a quienes siguen empatados."
+            ids={seasonOrden}
+            names={names}
+            onChange={setSeasonOrden}
+          />
+        ) : null}
         <p className="liga-flex__meta">
           Inscripción de temporada ${bundle?.config.inscripcionTemporadaMxn ?? "—"} MXN · jornada $
           {bundle?.config.participacionJornadaMxn ?? "—"} MXN · {bundle?.config.premioCampeon}
@@ -293,7 +313,8 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
             <h3>Configuración de jornada</h3>
             <ConfigFields
               flex={flex}
-              disabled={busy || hasScores || jornada.estado === "completed"}
+              fecha={jornada.fecha}
+              disabled={busy || hasScores || jornada.estado === "completed" || detalle.estado === "completed"}
               onSave={(patch) => void run(() => saveFlexJornadaSetup(jornada.id, patch))}
             />
             {estimate ? <p>{estimate.message}</p> : null}
@@ -465,37 +486,90 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
           <MatchEditor
             partidos={jornada.partidos ?? []}
             names={names}
-            disabled={busy || (jornada.estado === "completed" && detalle.estado === "completed")}
+            disabled={busy || jornada.estado === "completed" || detalle.estado === "completed"}
+            savedId={savedMatchId}
             onSave={(partido, scoreA, scoreB) =>
-              void run(() => saveFlexMatchScore(partido.id, scoreA, scoreB))
+              void run(async () => {
+                await saveFlexMatchScore(partido.id, scoreA, scoreB);
+                setSavedMatchId(partido.id);
+                setNotice("Marcador guardado.");
+              })
             }
           />
+          {provisional && !provisional.ok && provisional.ties.length > 0 ? (
+            <TieOrder
+              title="Empate de la jornada"
+              note="Games a favor, diferencia y enfrentamiento directo no los separan. El orden que confirmes solo aplica dentro de este empate."
+              ids={jornadaOrden.length > 0 ? jornadaOrden : provisional.ties.flat()}
+              names={names}
+              stats={statsOf(jornada.partidos ?? [])}
+              onChange={setJornadaOrden}
+            />
+          ) : null}
+          {provisional?.ok ? (
+            <p>Clasificación provisional lista. El servidor vuelve a calcular los puntos al cerrar la jornada.</p>
+          ) : null}
           <div className="liga-flex__row">
             <input
-              value={resolution}
-              placeholder="Desempate: ids en orden, separados por coma"
-              onChange={(event) => setResolution(event.target.value)}
+              value={jornadaMotivo}
+              placeholder="Justificación del desempate, si hace falta"
+              onChange={(event) => setJornadaMotivo(event.target.value)}
             />
             <Button
               type="button"
               variant="primary"
-              disabled={busy || detalle.estado === "completed"}
+              disabled={busy || detalle.estado === "completed" || jornada.estado === "completed"}
               onClick={() =>
                 void run(async () => {
-                  const ranked = rankFlexJornada({
-                    players: playersOf(participantIds),
-                    matches: (jornada.partidos ?? []).map(toScored),
-                    resolution: resolution.split(",").map((id) => id.trim()).filter(Boolean),
+                  const outcome = await applyFlexJornada({
+                    jornadaId: jornada.id,
+                    orden: jornadaOrden,
+                    nota: jornadaMotivo,
                   });
-                  if (!ranked.ok) throw new Error(ranked.reason);
-                  await applyFlexJornada({ jornadaId: jornada.id, filas: ranked.rows });
+                  if (outcome.needsResolution) {
+                    const flat = (outcome.ties ?? []).flat();
+                    setJornadaOrden(flat);
+                    throw new Error(outcome.error || "Define el orden del empate.");
+                  }
                   setNotice("Puntos de la jornada asignados. La tabla general se reconstruyó.");
                 })
               }
             >
-              Asignar puntos de la jornada
+              Finalizar jornada
             </Button>
           </div>
+          {jornada.estado === "completed" && detalle.estado !== "completed" ? (
+            <CorrectionPanel
+              partidos={jornada.partidos ?? []}
+              names={names}
+              motivo={correctionMotivo}
+              orden={correctionOrden}
+              ties={correctionTies}
+              busy={busy}
+              onMotivo={setCorrectionMotivo}
+              onOrden={setCorrectionOrden}
+              onSubmit={(marcadores) =>
+                void run(async () => {
+                  const outcome = await correctFlexJornada({
+                    jornadaId: jornada.id,
+                    marcadores,
+                    motivo: correctionMotivo,
+                    orden: correctionOrden,
+                  });
+                  if (outcome.needsResolution) {
+                    setCorrectionTies(outcome.ties ?? []);
+                    setCorrectionOrden((outcome.ties ?? []).flat());
+                    throw new Error(outcome.error || "La corrección dejó un empate.");
+                  }
+                  setCorrectionTies([]);
+                  setNotice("Jornada corregida. Los puntos anteriores se sustituyeron.");
+                })
+              }
+            />
+          ) : null}
+          {jornada.estado === "completed" && detalle.estado === "completed" ? (
+            <p>La temporada ya tiene campeón. Reábrela con motivo antes de corregir un marcador.</p>
+          ) : null}
         </section>
       ) : null}
     </LigaPageShell>
@@ -504,12 +578,15 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
 
 function ConfigFields({
   flex,
+  fecha,
   disabled,
   onSave,
 }: {
   flex: NonNullable<FlexBundle["jornadas"][number]>;
+  fecha: string | null;
   disabled: boolean;
   onSave: (patch: {
+    fecha: string | null;
     canchas: number;
     rondas: number;
     duracionRondaMin: number;
@@ -518,6 +595,7 @@ function ConfigFields({
     horaFin: string | null;
   }) => void;
 }) {
+  const [dia, setDia] = useState(fecha ?? "");
   const [canchas, setCanchas] = useState(flex.canchas);
   const [rondas, setRondas] = useState(flex.rondas);
   const [duracion, setDuracion] = useState(flex.duracionRondaMin);
@@ -525,15 +603,17 @@ function ConfigFields({
   const [inicio, setInicio] = useState(flex.horaInicio ?? "");
   const [fin, setFin] = useState(flex.horaFin ?? "");
   useEffect(() => {
+    setDia(fecha ?? "");
     setCanchas(flex.canchas);
     setRondas(flex.rondas);
     setDuracion(flex.duracionRondaMin);
     setDescanso(flex.descansoMin);
     setInicio(flex.horaInicio ?? "");
     setFin(flex.horaFin ?? "");
-  }, [flex]);
+  }, [flex, fecha]);
   return (
     <div className="liga-flex__row">
+      <label>Fecha<input type="date" value={dia} onChange={(e) => setDia(e.target.value)} /></label>
       <label>Canchas<input type="number" min={1} max={12} value={canchas} onChange={(e) => setCanchas(Number(e.target.value) || 1)} /></label>
       <label>Rondas<input type="number" min={1} max={24} value={rondas} onChange={(e) => setRondas(Number(e.target.value) || 1)} /></label>
       <label>Minutos<input type="number" min={5} max={90} value={duracion} onChange={(e) => setDuracion(Number(e.target.value) || 20)} /></label>
@@ -546,6 +626,7 @@ function ConfigFields({
         disabled={disabled}
         onClick={() =>
           onSave({
+            fecha: dia || null,
             canchas,
             rondas,
             duracionRondaMin: duracion,
@@ -555,10 +636,164 @@ function ConfigFields({
           })
         }
       >
-        Guardar configuración
+        Guardar fecha y configuración
       </Button>
+      <p>Horario en America/Mexico_City. Una jornada finalizada no se reprograma.</p>
     </div>
   );
+}
+
+function TieOrder({
+  title,
+  note,
+  ids,
+  names,
+  stats,
+  onChange,
+}: {
+  title: string;
+  note: string;
+  ids: string[];
+  names: Map<string, string>;
+  stats?: Map<string, { gf: number; gc: number; pj: number }>;
+  onChange: (ids: string[]) => void;
+}) {
+  const move = (index: number, dir: -1 | 1) => {
+    const next = ids.slice();
+    const target = index + dir;
+    if (target < 0 || target >= next.length) return;
+    const [item] = next.splice(index, 1);
+    next.splice(target, 0, item!);
+    onChange(next);
+  };
+  return (
+    <div className="liga-flex__panel">
+      <h3>{title}</h3>
+      <p>{note}</p>
+      <ol className="liga-flex__people">
+        {ids.map((id, index) => {
+          const stat = stats?.get(id);
+          return (
+            <li key={id}>
+              <span>
+                {index + 1}. {names.get(id) ?? "Jugador"}
+                {stat ? ` · ${stat.pj} PJ · ${stat.gf} GF · ${stat.gf - stat.gc} DIF` : ""}
+              </span>
+              <span>
+                <button type="button" onClick={() => move(index, -1)}>Subir</button>
+                <button type="button" onClick={() => move(index, 1)}>Bajar</button>
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+function CorrectionPanel({
+  partidos,
+  names,
+  motivo,
+  orden,
+  ties,
+  busy,
+  onMotivo,
+  onOrden,
+  onSubmit,
+}: {
+  partidos: LigaPartido[];
+  names: Map<string, string>;
+  motivo: string;
+  orden: string[];
+  ties: string[][];
+  busy: boolean;
+  onMotivo: (value: string) => void;
+  onOrden: (ids: string[]) => void;
+  onSubmit: (marcadores: Array<{ partidoId: string; scoreA: number; scoreB: number }>) => void;
+}) {
+  const [draft, setDraft] = useState<Record<string, { a: string; b: string }>>({});
+  const value = (partido: LigaPartido, side: "a" | "b") =>
+    draft[partido.id]?.[side] ??
+    String(side === "a" ? partido.score_pareja1 ?? "" : partido.score_pareja2 ?? "");
+  return (
+    <div className="liga-flex__panel">
+      <h3>Corrección de jornada finalizada</h3>
+      <p>Los puntos anteriores se sustituyen. No se suman dos veces. Escribe el motivo antes de confirmar.</p>
+      {partidos.map((partido) => (
+        <div key={partido.id} className="liga-flex__score">
+          <span>R{partido.ronda} C{partido.cancha ?? "—"}</span>
+          <input
+            inputMode="numeric"
+            value={value(partido, "a")}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                [partido.id]: { a: event.target.value, b: value(partido, "b") },
+              }))
+            }
+          />
+          <input
+            inputMode="numeric"
+            value={value(partido, "b")}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                [partido.id]: { a: value(partido, "a"), b: event.target.value },
+              }))
+            }
+          />
+        </div>
+      ))}
+      {ties.length > 0 ? (
+        <TieOrder
+          title="Empate después de la corrección"
+          note="Confirma el orden antes de guardar la clasificación nueva."
+          ids={orden}
+          names={names}
+          onChange={onOrden}
+        />
+      ) : null}
+      <div className="liga-flex__row">
+        <input value={motivo} placeholder="Motivo de la corrección" onChange={(event) => onMotivo(event.target.value)} />
+        <Button
+          type="button"
+          variant="primary"
+          disabled={busy || motivo.trim().length < 4}
+          onClick={() =>
+            onSubmit(
+              partidos.map((partido) => ({
+                partidoId: partido.id,
+                scoreA: Number(value(partido, "a")),
+                scoreB: Number(value(partido, "b")),
+              }))
+            )
+          }
+        >
+          Confirmar corrección
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function statsOf(partidos: LigaPartido[]): Map<string, { gf: number; gc: number; pj: number }> {
+  const map = new Map<string, { gf: number; gc: number; pj: number }>();
+  const add = (id: string, gf: number, gc: number) => {
+    const row = map.get(id) ?? { gf: 0, gc: 0, pj: 0 };
+    row.gf += gf;
+    row.gc += gc;
+    row.pj += 1;
+    map.set(id, row);
+  };
+  for (const partido of partidos) {
+    if (partido.score_pareja1 == null || partido.score_pareja2 == null || !partido.pareja1 || !partido.pareja2) continue;
+    add(partido.pareja1.jugador1_id, partido.score_pareja1, partido.score_pareja2);
+    add(partido.pareja1.jugador2_id, partido.score_pareja1, partido.score_pareja2);
+    add(partido.pareja2.jugador1_id, partido.score_pareja2, partido.score_pareja1);
+    add(partido.pareja2.jugador2_id, partido.score_pareja2, partido.score_pareja1);
+  }
+  return map;
 }
 
 function RoundPreview({ schedule, names }: { schedule: FlexSchedule; names: Map<string, string> }) {
@@ -589,11 +824,13 @@ function MatchEditor({
   partidos,
   names,
   disabled,
+  savedId,
   onSave,
 }: {
   partidos: LigaPartido[];
   names: Map<string, string>;
   disabled: boolean;
+  savedId: string | null;
   onSave: (partido: LigaPartido, scoreA: number, scoreB: number) => void;
 }) {
   if (partidos.length === 0) return null;
@@ -603,7 +840,7 @@ function MatchEditor({
         .slice()
         .sort((a, b) => a.ronda - b.ronda || (a.cancha ?? 0) - (b.cancha ?? 0))
         .map((partido) => (
-          <ScoreRow key={partido.id} partido={partido} names={names} disabled={disabled} onSave={onSave} />
+          <ScoreRow key={partido.id} partido={partido} names={names} disabled={disabled} saved={savedId === partido.id} onSave={onSave} />
         ))}
     </div>
   );
@@ -613,11 +850,13 @@ function ScoreRow({
   partido,
   names,
   disabled,
+  saved,
   onSave,
 }: {
   partido: LigaPartido;
   names: Map<string, string>;
   disabled: boolean;
+  saved: boolean;
   onSave: (partido: LigaPartido, scoreA: number, scoreB: number) => void;
 }) {
   const [a, setA] = useState(partido.score_pareja1?.toString() ?? "");
@@ -631,9 +870,9 @@ function ScoreRow({
     <div className="liga-flex__score">
       <strong>R{partido.ronda} · Cancha {partido.cancha ?? "—"}</strong>
       <span>{pair("pareja1")}</span>
-      <input inputMode="numeric" value={a} onChange={(event) => setA(event.target.value)} />
+      <input inputMode="numeric" value={a} disabled={disabled} onChange={(event) => setA(event.target.value)} />
       <span>vs</span>
-      <input inputMode="numeric" value={b} onChange={(event) => setB(event.target.value)} />
+      <input inputMode="numeric" value={b} disabled={disabled} onChange={(event) => setB(event.target.value)} />
       <span>{pair("pareja2")}</span>
       <Button
         type="button"
@@ -641,7 +880,7 @@ function ScoreRow({
         disabled={disabled || a === "" || b === ""}
         onClick={() => onSave(partido, Number(a), Number(b))}
       >
-        Guardar
+        {saved ? "Guardado" : "Guardar"}
       </Button>
     </div>
   );

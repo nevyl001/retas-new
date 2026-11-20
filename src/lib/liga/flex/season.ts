@@ -143,8 +143,8 @@ export function resizeFlexSeason(input: {
   | { ok: true; removeNumeros: number[]; addNumeros: number[] }
   | { ok: false; error: string } {
   const target = Math.floor(input.targetCount);
-  if (!Number.isInteger(target) || target < 1 || target > 48) {
-    return { ok: false, error: "La temporada debe tener entre 1 y 48 jornadas." };
+  if (target !== 12) {
+    return { ok: false, error: "Riviera Flex League se juega a 12 jornadas." };
   }
   const numeros = input.jornadas.map((j) => j.numero).sort((a, b) => a - b);
   const max = numeros.length ? numeros[numeros.length - 1]! : 0;
@@ -205,6 +205,25 @@ export function replaceJornadaAwards(
     ...awards.filter((a) => a.jornadaNumero !== jornadaNumero),
     ...next.map((a) => ({ ...a, jornadaNumero })),
   ];
+}
+
+export function assertFlexSeasonCloseable(input: {
+  jornadasPlaneadas: number;
+  jornadas: readonly { numero: number; estado: string; hasPosiciones: boolean }[];
+}): { ok: true } | { ok: false; error: string } {
+  if (input.jornadasPlaneadas !== 12 || input.jornadas.length !== 12) {
+    return { ok: false, error: "La temporada oficial es de 12 jornadas. No se cierra una temporada incompleta." };
+  }
+  for (let numero = 1; numero <= 12; numero += 1) {
+    const row = input.jornadas.find((jornada) => jornada.numero === numero);
+    if (!row || row.estado !== "completed" || !row.hasPosiciones) {
+      return {
+        ok: false,
+        error: `La jornada ${numero} todavía no está terminada con puntos oficiales.`,
+      };
+    }
+  }
+  return { ok: true };
 }
 
 export function seasonMovement(

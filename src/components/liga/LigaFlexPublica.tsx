@@ -1,9 +1,22 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ClubExperienceScope, PublicEventBrandIdentity } from "../../club-experience";
-import type { LigaDetalle } from "../../lib/liga/types";
+import { ClubExperienceScope, PublicEventBrandIdentity, useOrganizerDisplayName } from "../../club-experience";
+import type { LigaDetalle, LigaJornada } from "../../lib/liga/types";
 import { rankFlexSeason, seasonMovement } from "../../lib/liga/flex/season";
 import { loadFlexLeague, type FlexBundle } from "../../services/ligaFlexService";
 import "./liga-flex.css";
+
+function fechaFlex(jornada: LigaJornada | undefined, inicio: string | null | undefined, fin: string | null | undefined): string {
+  if (!jornada?.fecha) return "Fecha por definir";
+  const [year, month, day] = jornada.fecha.split("-").map(Number);
+  if (!year || !month || !day) return jornada.fecha;
+  const label = new Date(year, month - 1, day).toLocaleDateString("es-MX", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+  const hours = [inicio, fin].filter(Boolean).join("–");
+  return hours ? `${label} · ${hours} · America/Mexico_City` : `${label} · America/Mexico_City`;
+}
 
 export const LigaFlexPublica: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) => (
   <ClubExperienceScope organizadorId={detalle.organizador_id}>
@@ -12,6 +25,7 @@ export const LigaFlexPublica: React.FC<{ detalle: LigaDetalle }> = ({ detalle })
 );
 
 const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) => {
+  const club = useOrganizerDisplayName(detalle.organizador_id);
   const [bundle, setBundle] = useState<FlexBundle | null>(null);
   const [jornadaId, setJornadaId] = useState<string | null>(detalle.jornadas[0]?.id ?? null);
   const [playerId, setPlayerId] = useState<string | null>(null);
@@ -48,6 +62,11 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
   }));
   const season = rankFlexSeason({ awards });
   const current = detalle.jornadas.find((jornada) => jornada.id === jornadaId) ?? detalle.jornadas[0];
+  const next = detalle.jornadas
+    .filter((jornada) => jornada.estado !== "completed")
+    .sort((a, b) => a.numero - b.numero)[0];
+  const currentFlex = bundle?.jornadas.find((row) => row.jornadaId === current?.id);
+  const nextFlex = bundle?.jornadas.find((row) => row.jornadaId === next?.id);
   const completed = detalle.jornadas
     .filter((jornada) => jornada.estado === "completed")
     .sort((a, b) => a.numero - b.numero);
@@ -81,12 +100,15 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
     <main className="liga-flex liga-flex--public">
       <PublicEventBrandIdentity />
       <header className="liga-flex__head">
-        <p className="liga-flex__kicker">Riviera Flex League</p>
+        <p className="liga-flex__kicker">Riviera Flex League · by Riviera Open</p>
         <h1>{detalle.nombre}</h1>
         <p>
-          {estado}
-          {current ? ` · Jornada ${current.numero}` : ""}
+          {club || "Club"} · {bundle?.config.categoria || "Categoría por definir"} · {estado}
         </p>
+        <p>
+          {current ? `Jornada ${current.numero} · ${fechaFlex(current, currentFlex?.horaInicio, currentFlex?.horaFin)}` : "Sin jornada publicada"}
+        </p>
+        {next ? <p>Próxima: jornada {next.numero} · {fechaFlex(next, nextFlex?.horaInicio, nextFlex?.horaFin)}</p> : null}
       </header>
       {error ? <p className="liga-error">{error}</p> : null}
       {highlight ? (
@@ -105,6 +127,7 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
       <section>
         <h2>Clasificación</h2>
         {season.ok ? (
+          <div className="liga-flex__table-wrap">
           <table className="liga-flex__table">
             <thead>
               <tr>
@@ -125,8 +148,9 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
               ))}
             </tbody>
           </table>
+          </div>
         ) : (
-          <p>{season.reason}</p>
+          <p className="liga-flex__empty">{season.reason}</p>
         )}
       </section>
       {playerId && season.ok ? (
@@ -163,6 +187,7 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
             onClick={() => setJornadaId(jornada.id)}
           >
             J{jornada.numero}
+            {jornada.fecha ? ` · ${jornada.fecha.slice(8, 10)}/${jornada.fecha.slice(5, 7)}` : ""}
           </button>
         ))}
       </div>

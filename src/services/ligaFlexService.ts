@@ -103,7 +103,7 @@ export async function bootstrapFlexLeague(
   options?: FlexLeagueCreateOptions
 ): Promise<void> {
   await requireUserId();
-  const jornadas = Math.min(48, Math.max(1, options?.jornadas ?? FLEX_DEFAULT_JORNADAS));
+  const jornadas = FLEX_DEFAULT_JORNADAS;
   const { data: config, error: cErr } = await supabase
     .from("liga_flex_config")
     .select("liga_id")
@@ -228,7 +228,12 @@ export async function updateFlexSeasonConfig(
   if (patch.premioCampeon !== undefined) row.premio_campeon = patch.premioCampeon;
   if (patch.premioSubcampeon !== undefined) row.premio_subcampeon = patch.premioSubcampeon;
   if (patch.premioTercer !== undefined) row.premio_tercer = patch.premioTercer;
-  if (patch.jornadasPlaneadas !== undefined) row.jornadas_planeadas = patch.jornadasPlaneadas;
+  if (patch.jornadasPlaneadas !== undefined) {
+    if (patch.jornadasPlaneadas !== FLEX_DEFAULT_JORNADAS) {
+      throw new Error("Riviera Flex League se juega a 12 jornadas.");
+    }
+    row.jornadas_planeadas = FLEX_DEFAULT_JORNADAS;
+  }
   const { error } = await supabase.from("liga_flex_config").update(row).eq("liga_id", ligaId);
   if (error) throw new Error(error.message);
 }
@@ -285,6 +290,7 @@ export async function resizeFlexCalendar(input: {
 export async function saveFlexJornadaSetup(
   jornadaId: string,
   patch: {
+    fecha: string | null;
     canchas: number;
     rondas: number;
     duracionRondaMin: number;
@@ -294,19 +300,18 @@ export async function saveFlexJornadaSetup(
   }
 ): Promise<void> {
   await requireUserId();
-  const { error } = await supabase
-    .from("liga_jornada_flex")
-    .update({
-      canchas: patch.canchas,
-      rondas: patch.rondas,
-      duracion_ronda_min: patch.duracionRondaMin,
-      descanso_min: patch.descansoMin,
-      hora_inicio: patch.horaInicio,
-      hora_fin: patch.horaFin,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("jornada_id", jornadaId);
+  const { data, error } = await supabase.rpc("flex_programar_jornada", {
+    p_jornada_id: jornadaId,
+    p_fecha: patch.fecha,
+    p_inicio: patch.horaInicio,
+    p_fin: patch.horaFin,
+    p_canchas: patch.canchas,
+    p_rondas: patch.rondas,
+    p_duracion: patch.duracionRondaMin,
+    p_descanso: patch.descansoMin,
+  });
   if (error) throw new Error(error.message);
+  rpcError(data as { ok?: boolean; error?: string }, "No se pudo programar la jornada.");
 }
 
 export async function setFlexParticipantes(jornadaId: string, jugadorIds: string[]): Promise<void> {
@@ -370,48 +375,76 @@ export async function saveFlexMatchScore(
   scoreB: number
 ): Promise<void> {
   await requireUserId();
-  const { error } = await supabase
-    .from("liga_partidos")
-    .update({
-      score_pareja1: scoreA,
-      score_pareja2: scoreB,
-      estado: "completed",
-    })
-    .eq("id", partidoId);
+  const { data, error } = await supabase.rpc("flex_guardar_marcador", {
+    p_partido_id: partidoId,
+    p_score_a: scoreA,
+    p_score_b: scoreB,
+  });
   if (error) throw new Error(error.message);
+  rpcError(data as { ok?: boolean; error?: string }, "No se pudo guardar el marcador.");
 }
+
+export type FlexServerResult = {
+  needsResolution?: boolean;
+  error?: string;
+  ties?: string[][];
+  tied?: string[];
+};
 
 export async function applyFlexJornada(input: {
   jornadaId: string;
-  filas: Array<{
-    jugadorId: string;
-    posicion: number;
-    puntos: number;
-    partidos: number;
-    gamesFavor: number;
-    gamesContra: number;
-    promedioGf: number;
-    promedioDif: number;
-  }>;
+  orden?: string[];
   nota?: string;
-}): Promise<void> {
+}): Promise<FlexServerResult> {
   await requireUserId();
   const { data, error } = await supabase.rpc("flex_aplicar_jornada", {
     p_jornada_id: input.jornadaId,
-    p_filas: input.filas.map((row) => ({
-      jugador_id: row.jugadorId,
-      posicion: row.posicion,
-      puntos: row.puntos,
-      partidos: row.partidos,
-      games_favor: row.gamesFavor,
-      games_contra: row.gamesContra,
-      promedio_gf: row.promedioGf,
-      promedio_dif: row.promedioDif,
-    })),
+    p_filas: (input.orden ?? []).map((jugadorId) => ({ jugador_id: jugadorId })),
     p_nota: input.nota ?? null,
   });
   if (error) throw new Error(error.message);
-  rpcError(data as { ok?: boolean; error?: string }, "No se pudieron asignar los puntos.");
+  const body = (data ?? {}) as {
+    ok?: boolean;
+    error?: string;
+    needs_resolution?: boolean;
+    ties?: string[][];
+  };
+  if (body.needs_resolution) {
+    return { needsResolution: true, error: body.error, ties: body.ties };
+  }
+  if (!body.ok) throw new Error(body.error || "No se pudieron asignar los puntos.");
+  return {};
+}
+
+export async function correctFlexJornada(input: {
+  jornadaId: string;
+  marcadores: Array<{ partidoId: string; scoreA: number; scoreB: number }>;
+  motivo: string;
+  orden?: string[];
+}): Promise<FlexServerResult> {
+  await requireUserId();
+  const { data, error } = await supabase.rpc("flex_corregir_jornada", {
+    p_jornada_id: input.jornadaId,
+    p_marcadores: input.marcadores.map((row) => ({
+      partido_id: row.partidoId,
+      score_a: row.scoreA,
+      score_b: row.scoreB,
+    })),
+    p_motivo: input.motivo,
+    p_orden: input.orden ?? null,
+  });
+  if (error) throw new Error(error.message);
+  const body = (data ?? {}) as {
+    ok?: boolean;
+    error?: string;
+    needs_resolution?: boolean;
+    ties?: string[][];
+  };
+  if (body.needs_resolution) {
+    return { needsResolution: true, error: body.error, ties: body.ties };
+  }
+  if (!body.ok) throw new Error(body.error || "No se pudo corregir la jornada.");
+  return {};
 }
 
 export async function markFlexFinal(input: {

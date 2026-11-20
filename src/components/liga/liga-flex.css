@@ -86,9 +86,19 @@
   border-color: var(--brand-accent, currentColor);
 }
 
+.liga-flex__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
 .liga-flex__table {
   width: 100%;
   border-collapse: collapse;
+}
+
+.liga-flex__empty {
+  margin: 0;
+  color: var(--liga-muted, rgba(20, 22, 26, 0.62));
 }
 
 .liga-flex__table th,

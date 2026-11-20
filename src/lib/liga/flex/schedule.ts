@@ -91,12 +91,12 @@ export function generateFlexSchedule(input: {
   const prepared = prepare(input);
   if (!prepared.ok) return prepared;
   const trials = input.trials ?? (prepared.players.length > 12 ? 3 : 6);
-  let best: FlexSchedule | null = null;
+  let best: (FlexSchedule & { selectionScore: number }) | null = null;
   for (let offset = 0; offset < trials; offset += 1) {
     const seed = normalizeSeed(input.seed + offset);
     const built = buildOnce(prepared.players, prepared.courts, prepared.rounds, seed);
     if (!built.ok) continue;
-    if (!best || qualityScore(built.quality) < qualityScore(best.quality)) {
+    if (!best || built.selectionScore < best.selectionScore) {
       best = built;
     }
   }
@@ -106,7 +106,8 @@ export function generateFlexSchedule(input: {
       error: "No se encontró una programación válida con estas canchas y rondas.",
     };
   }
-  return best;
+  const { selectionScore: _selectionScore, ...schedule } = best;
+  return schedule;
 }
 
 export function regenerateFlexSchedule(input: {
@@ -119,7 +120,7 @@ export function regenerateFlexSchedule(input: {
 }): (FlexSchedule & { changed: boolean }) | FlexScheduleFailure {
   const start = normalizeSeed(input.seed + 1);
   const attempts = input.trials ?? 8;
-  let fallback: FlexSchedule | null = null;
+  let fallback: (FlexSchedule & { selectionScore: number }) | null = null;
   for (let offset = 0; offset < attempts; offset += 1) {
     const next = generateFlexSchedule({
       players: input.players,
@@ -129,8 +130,9 @@ export function regenerateFlexSchedule(input: {
       trials: 1,
     });
     if (!next.ok) continue;
-    if (!fallback || qualityScore(next.quality) < qualityScore(fallback.quality)) {
-      fallback = next;
+    const scored = { ...next, selectionScore: qualityScore(next.quality) };
+    if (!fallback || scored.selectionScore < fallback.selectionScore) {
+      fallback = scored;
     }
     if (next.signature !== input.previousSignature) {
       return { ...next, changed: true };
@@ -191,7 +193,7 @@ function buildOnce(
   courts: number,
   rounds: number,
   seed: number
-): FlexSchedule | FlexScheduleFailure {
+): (FlexSchedule & { selectionScore: number }) | FlexScheduleFailure {
   const ordered = seededShuffle(players, seed);
   // El Americano, ante un empate de costo, ordena por id. El alias sigue la
   // semilla para que el Riviera ID o el orden de inscripción no tengan ventaja.
@@ -262,8 +264,15 @@ function buildOnce(
     return { ok: false, error: "No se generaron todas las rondas pedidas." };
   }
 
-  const quality = measure(live, partnerMatrix, rivalMatrix, planned, realOf);
-  return { ok: true, seed, signature: signatureOf(planned), rounds: planned, quality };
+  const measured = measure(live, partnerMatrix, rivalMatrix, planned, realOf);
+  return {
+    ok: true,
+    seed,
+    signature: signatureOf(planned),
+    rounds: planned,
+    quality: measured.quality,
+    selectionScore: measured.selectionScore,
+  };
 }
 
 function hardErrors(
@@ -297,13 +306,22 @@ function hardErrors(
   return errors;
 }
 
+function pairKey(a: string, b: string): string {
+  return a < b ? `${a}|${b}` : `${b}|${a}`;
+}
+
+function bumpPair(counts: Map<string, number>, a: string, b: string): void {
+  const key = pairKey(a, b);
+  counts.set(key, (counts.get(key) ?? 0) + 1);
+}
+
 function measure(
   players: AmericanoPlayer[],
-  partnerMatrix: Record<string, Record<string, number>>,
+  _partnerMatrix: Record<string, Record<string, number>>,
   rivalMatrix: Record<string, Record<string, number>>,
   planned: FlexSchedule["rounds"],
   realOf: Map<string, string>
-): FlexScheduleQuality {
+): { quality: FlexScheduleQuality; selectionScore: number } {
   const matchesByPlayer: Record<string, number> = {};
   const benchesByPlayer: Record<string, number> = {};
   for (const player of players) {
@@ -315,20 +333,36 @@ function measure(
   const benches = Object.values(benchesByPlayer);
   const playSpread = Math.max(...plays) - Math.min(...plays);
   const benchSpread = Math.max(...benches) - Math.min(...benches);
-  let partnerRepeats = 0;
-  let rivalRepeats = 0;
-  let maxPartnerRepeat = 0;
+  let matrixRivalRepeats = 0;
   for (let i = 0; i < players.length; i += 1) {
     for (let j = i + 1; j < players.length; j += 1) {
       const a = players[i]!.id;
       const b = players[j]!.id;
-      const together = partnerMatrix[a]?.[b] ?? 0;
       const faced = rivalMatrix[a]?.[b] ?? 0;
-      partnerRepeats += Math.max(0, together - 1);
-      rivalRepeats += Math.max(0, faced - 1);
-      if (together > maxPartnerRepeat) maxPartnerRepeat = together;
+      matrixRivalRepeats += Math.max(0, faced - 1);
     }
   }
+  const partnerCounts = new Map<string, number>();
+  const rivalCounts = new Map<string, number>();
+  for (const round of planned) {
+    for (const match of round.matches) {
+      bumpPair(partnerCounts, match.pairA[0], match.pairA[1]);
+      bumpPair(partnerCounts, match.pairB[0], match.pairB[1]);
+      for (const a of match.pairA) {
+        for (const b of match.pairB) bumpPair(rivalCounts, a, b);
+      }
+    }
+  }
+  let partnerRepeats = 0;
+  let maxPartnerRepeat = 0;
+  partnerCounts.forEach((count) => {
+    partnerRepeats += Math.max(0, count - 1);
+    if (count > maxPartnerRepeat) maxPartnerRepeat = count;
+  });
+  let rivalRepeats = 0;
+  rivalCounts.forEach((count) => {
+    rivalRepeats += Math.max(0, count - 1);
+  });
   let consecutiveBenches = 0;
   const benchByRound = planned.map((round) => new Set(round.benchIds));
   for (const player of players) {
@@ -346,7 +380,7 @@ function measure(
   if (benchSpread > 0 || consecutiveBenches > 0) {
     limitations.push("La programación dejó descansos y no es válida para Flex League.");
   }
-  return {
+  const quality: FlexScheduleQuality = {
     rounds: planned.length,
     matches: planned.reduce((sum, round) => sum + round.matches.length, 0),
     matchesByPlayer,
@@ -362,6 +396,10 @@ function measure(
     algorithmVersion: FLEX_ALGORITHM_VERSION,
     needsConfirmation: partnerRepeats > 0,
     limitations,
+  };
+  return {
+    quality,
+    selectionScore: qualityScore({ ...quality, rivalRepeats: matrixRivalRepeats }),
   };
 }
 

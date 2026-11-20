@@ -76,7 +76,7 @@ export const LigaNueva: React.FC = () => {
   const [canchas, setCanchas] = useState(3);
   const [modalidad, setModalidad] = useState<LigaModalidad>("individual_rotativo");
   const [vueltas, setVueltas] = useState<LigaVueltas>(1);
-  const [flexJornadas, setFlexJornadas] = useState(12);
+  const flexJornadas = 12;
   const [flexCategoria, setFlexCategoria] = useState("6ª alta / 5ª baja");
   const [flexHorario, setFlexHorario] = useState("Martes y jueves, 19:00–21:00");
   const [submitting, setSubmitting] = useState(false);
@@ -251,14 +251,7 @@ export const LigaNueva: React.FC = () => {
                 <div className="liga-form-row">
                   <div className="liga-field">
                     <label htmlFor="liga-flex-jornadas">Jornadas de la temporada</label>
-                    <input
-                      id="liga-flex-jornadas"
-                      type="number"
-                      min={1}
-                      max={48}
-                      value={flexJornadas}
-                      onChange={(e) => setFlexJornadas(Number(e.target.value) || 12)}
-                    />
+                    <input id="liga-flex-jornadas" value="12" readOnly />
                   </div>
                   <div className="liga-field">
                     <label htmlFor="liga-flex-categoria">Categoría</label>

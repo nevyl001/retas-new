@@ -10,6 +10,7 @@ import {
 import { rankFlexJornada } from "./standings";
 import {
   assertFlexFinalJornada,
+  assertFlexSeasonCloseable,
   rankFlexSeason,
   replaceJornadaAwards,
   resizeFlexSeason,
@@ -210,6 +211,36 @@ describe("Riviera Flex League — generador", () => {
     expect(schedule.quality.limitations.join(" ")).toMatch(/pareja/i);
   });
 
+  it("el aviso de rivales repetidos cuenta los partidos, no la matriz interna", () => {
+    const schedule = generateFlexSchedule({
+      players: players(12),
+      courts: 3,
+      rounds: 3,
+      seed: 20261120,
+    });
+    expect(schedule.ok).toBe(true);
+    if (!schedule.ok) return;
+    const rivals = new Map<string, number>();
+    for (const round of schedule.rounds) {
+      for (const match of round.matches) {
+        for (const a of match.pairA) {
+          for (const b of match.pairB) {
+            const key = [a, b].sort().join("|");
+            rivals.set(key, (rivals.get(key) ?? 0) + 1);
+          }
+        }
+      }
+    }
+    let extras = 0;
+    rivals.forEach((count) => {
+      extras += Math.max(0, count - 1);
+    });
+    expect(schedule.quality.rivalRepeats).toBe(extras);
+    expect(schedule.quality.rivalRepeats).toBe(0);
+    expect(schedule.quality.partnerRepeats).toBe(0);
+    expect(schedule.quality.rests).toBe(0);
+  });
+
   it("E: el primer inscrito no queda fijo con el mismo compañero", () => {
     const roster = players(12);
     const partners = new Set<string>();
@@ -341,14 +372,26 @@ describe("Riviera Flex League — puntos y temporada", () => {
       hasOfficialResults: i < 4,
     }));
     const grown = resizeFlexSeason({ jornadas: twelve, targetCount: 16 });
-    expect(grown.ok && grown.addNumeros).toEqual([13, 14, 15, 16]);
+    expect(grown.ok).toBe(false);
     const blocked = resizeFlexSeason({ jornadas: twelve, targetCount: 3 });
     expect(blocked.ok).toBe(false);
+    const same = resizeFlexSeason({ jornadas: twelve, targetCount: 12 });
+    expect(same.ok && same.addNumeros).toEqual([]);
+    expect(
+      assertFlexSeasonCloseable({
+        jornadasPlaneadas: 12,
+        jornadas: twelve.map((jornada) => ({
+          numero: jornada.numero,
+          estado: "completed",
+          hasPosiciones: jornada.numero < 12,
+        })),
+      }).ok
+    ).toBe(false);
     const shrunk = resizeFlexSeason({
       jornadas: twelve.map((j) => ({ ...j, hasOfficialResults: j.numero <= 9 })),
       targetCount: 10,
     });
-    expect(shrunk.ok && shrunk.removeNumeros).toEqual([12, 11]);
+    expect(shrunk.ok).toBe(false);
 
     expect(
       assertFlexFinalJornada({
@@ -382,6 +425,68 @@ describe("Riviera Flex League — puntos y temporada", () => {
       "plata"
     );
     expect(move).toEqual({ puntos: 90, posicion: 3, delta: 2 });
+  });
+
+  it("corregir una jornada sustituye puntos y repetir la sustitución no los duplica", () => {
+    const base = [
+      { jornadaNumero: 1, jugadorId: "a", posicion: 1, puntos: 100 },
+      { jornadaNumero: 1, jugadorId: "b", posicion: 2, puntos: 90 },
+      { jornadaNumero: 2, jugadorId: "a", posicion: 2, puntos: 90 },
+      { jornadaNumero: 2, jugadorId: "b", posicion: 1, puntos: 100 },
+    ];
+    const once = replaceJornadaAwards(base, 1, [
+      { jornadaNumero: 1, jugadorId: "a", posicion: 2, puntos: 90 },
+      { jornadaNumero: 1, jugadorId: "b", posicion: 1, puntos: 100 },
+    ]);
+    const twice = replaceJornadaAwards(once, 1, [
+      { jornadaNumero: 1, jugadorId: "a", posicion: 2, puntos: 90 },
+      { jornadaNumero: 1, jugadorId: "b", posicion: 1, puntos: 100 },
+    ]);
+    const season = rankFlexSeason({ awards: twice });
+    expect(season.ok && season.rows.find((row) => row.jugadorId === "a")?.puntos).toBe(180);
+    expect(season.ok && season.rows.find((row) => row.jugadorId === "b")?.puntos).toBe(200);
+    expect(twice.filter((row) => row.jornadaNumero === 1)).toHaveLength(2);
+  });
+
+  it("quien falta no recibe puntos y quien regresa conserva los anteriores", () => {
+    const season = rankFlexSeason({
+      awards: [
+        { jornadaNumero: 1, jugadorId: "fijo", posicion: 1, puntos: 100 },
+        { jornadaNumero: 1, jugadorId: "tarde", posicion: 2, puntos: 90 },
+        { jornadaNumero: 2, jugadorId: "fijo", posicion: 1, puntos: 100 },
+      ],
+    });
+    expect(season.ok && season.rows.find((row) => row.jugadorId === "tarde")?.puntos).toBe(90);
+    expect(season.ok && season.rows.find((row) => row.jugadorId === "tarde")?.jornadasJugadas).toBe(1);
+    expect(season.ok && season.rows.find((row) => row.jugadorId === "ausente")).toBeUndefined();
+  });
+
+  it("un empate de podio no se cierra con el nombre ni el orden de alta", () => {
+    const tied = rankFlexSeason({
+      awards: [
+        { jornadaNumero: 1, jugadorId: "zeta", posicion: 1, puntos: 100 },
+        { jornadaNumero: 1, jugadorId: "alfa", posicion: 2, puntos: 90 },
+        { jornadaNumero: 1, jugadorId: "medio", posicion: 3, puntos: 80 },
+        { jornadaNumero: 2, jugadorId: "alfa", posicion: 1, puntos: 100 },
+        { jornadaNumero: 2, jugadorId: "zeta", posicion: 2, puntos: 90 },
+        { jornadaNumero: 2, jugadorId: "medio", posicion: 3, puntos: 80 },
+      ],
+    });
+    expect(tied.ok).toBe(false);
+    if (tied.ok) return;
+    const resolved = rankFlexSeason({
+      awards: [
+        { jornadaNumero: 1, jugadorId: "zeta", posicion: 1, puntos: 100 },
+        { jornadaNumero: 1, jugadorId: "alfa", posicion: 2, puntos: 90 },
+        { jornadaNumero: 1, jugadorId: "medio", posicion: 3, puntos: 80 },
+        { jornadaNumero: 2, jugadorId: "alfa", posicion: 1, puntos: 100 },
+        { jornadaNumero: 2, jugadorId: "zeta", posicion: 2, puntos: 90 },
+        { jornadaNumero: 2, jugadorId: "medio", posicion: 3, puntos: 80 },
+      ],
+      resolution: ["zeta", "alfa"],
+    });
+    expect(resolved.ok && resolved.podio?.[0]).toBe("zeta");
+    expect(resolved.ok && resolved.podio?.[1]).toBe("alfa");
   });
 
   it("estima la duración y avisa si el horario no alcanza", () => {
