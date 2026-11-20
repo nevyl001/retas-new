@@ -364,7 +364,11 @@ describe("resolvePlayerPublicProfiles", () => {
     expect(profiles[davidRLegacyId].fotoUrl).toBe(
       "https://example.com/david-r.jpg"
     );
-    expect(supabasePublicRead.rpc).not.toHaveBeenCalled();
+    expect(supabasePublicRead.rpc).not.toHaveBeenCalledWith(
+      "riviera_public_event_legacy_player_profiles",
+      expect.anything()
+    );
+    expect(profiles[davidRLegacyId].nombre).toBe("David R");
   });
 
   it("no mezcla dos David R distintos: solo resuelve por legacy_player_id, no por nombre", async () => {
@@ -613,6 +617,39 @@ describe("resolvePlayerPublicProfiles", () => {
 
     expect(profiles[legacyId].nombre).toBe("Yaf O");
     expect(profiles[legacyId].fotoUrl).toBe("https://example.com/yaf-new.jpg");
+  });
+
+  it("en público el nombre de la ficha le gana al nombre congelado de la ronda", async () => {
+    const legacyId = "4624bac2-2b9f-4a55-a032-146f482121b4";
+    const hackOrg = "e724de97-3552-4a01-a269-f621e6f1ed26";
+
+    (anonRestGet as jest.Mock).mockResolvedValue([]);
+    mockRivieraJugadoresQuery(supabasePublicRead.from as jest.Mock, [
+      {
+        id: "rj-viejo",
+        legacy_player_id: legacyId,
+        nombre: "yaf",
+        foto_url: "https://example.com/yaf.jpg",
+        rating: 3.12,
+      },
+    ]);
+    (supabasePublicRead.rpc as jest.Mock).mockImplementation((name: string) => {
+      if (name === "riviera_public_event_player_names") {
+        return Promise.resolve({
+          data: [{ legacy_player_id: legacyId, nombre: "Yaf O" }],
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: [], error: null });
+    });
+
+    const profiles = await resolvePlayerPublicProfiles(
+      hackOrg,
+      [{ id: legacyId, name: "yaf" }],
+      { publicOnly: true }
+    );
+
+    expect(profiles[legacyId].nombre).toBe("Yaf O");
   });
 });
 

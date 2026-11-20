@@ -456,6 +456,48 @@ async function fetchPublicEventLegacyProfiles(
   return map;
 }
 
+/**
+ * Nombre vigente de la ficha para un evento ya publicado.
+ * La foto pública ya sale por una función que no depende de la sesión;
+ * el nombre tiene que salir por el mismo camino.
+ */
+async function fetchPublicEventPlayerNames(
+  organizadorId: string,
+  ids: string[]
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const unique = Array.from(new Set(ids.map((id) => id.trim()).filter(Boolean)));
+  if (!organizadorId.trim() || unique.length === 0) return map;
+
+  const { data, error } = await supabasePublicRead.rpc(
+    "riviera_public_event_player_names",
+    {
+      p_organizador_id: organizadorId,
+      p_legacy_player_ids: unique,
+    }
+  );
+  if (error) {
+    if (
+      !error.message?.includes("riviera_public_event_player_names") &&
+      !error.message?.includes("Could not find the function")
+    ) {
+      console.warn(
+        "[publicPlayerAvatars] riviera_public_event_player_names:",
+        error.message
+      );
+    }
+    return map;
+  }
+
+  for (const row of data ?? []) {
+    const record = row as { legacy_player_id?: string; nombre?: string | null };
+    const id = String(record.legacy_player_id ?? "").trim();
+    const nombre = record.nombre?.trim();
+    if (id && nombre) map.set(id, nombre);
+  }
+  return map;
+}
+
 function profileNeedsCanonicalLookup(profile: PlayerPublicProfile): boolean {
   // Rating real del club local: no reemplazar por otro club.
   // Pero si falta foto, sí buscar en RPC/canónico (cedidos u origen).
@@ -495,15 +537,25 @@ export async function resolvePlayerPublicProfiles(
 
   let anonRows: OrganizadorRivieraRow[] | null = null;
   if (opts?.publicOnly) {
+    const ids = Array.from(
+      new Set(entries.map((entry) => entry.id.trim()).filter(Boolean))
+    );
+    const params: Record<string, string> = {
+      select: "id,legacy_player_id,nombre,foto_url,rating,updated_at",
+      organizador_id: `eq.${organizadorId}`,
+      estado: "eq.activo",
+    };
+    if (ids.length > 0) {
+      const list = ids.join(",");
+      params.or = `(legacy_player_id.in.(${list}),id.in.(${list}))`;
+    }
     const fetched = await anonRestGet<Record<string, unknown>>(
       "riviera_jugadores",
-      {
-        select: "id,legacy_player_id,nombre,foto_url,rating,updated_at",
-        organizador_id: `eq.${organizadorId}`,
-        estado: "eq.activo",
-      }
+      params
     );
-    if (fetched) anonRows = fetched as OrganizadorRivieraRow[];
+    if (fetched && fetched.length > 0) {
+      anonRows = fetched as OrganizadorRivieraRow[];
+    }
   }
 
   let data: OrganizadorRivieraRow[] | null = anonRows;
@@ -640,6 +692,32 @@ export async function resolvePlayerPublicProfiles(
         rivieraIdByEntryId,
         fromRpc
       );
+    }
+  }
+
+  if (opts?.publicOnly) {
+    const fromNames = await fetchPublicEventPlayerNames(
+      organizadorId,
+      entries.flatMap((entry) => {
+        const legacyKey = legacyKeyByEntryId.get(entry.id);
+        const rivieraId = rivieraIdByEntryId.get(entry.id);
+        return [entry.id, legacyKey, rivieraId].filter(
+          (id): id is string => Boolean(id)
+        );
+      })
+    );
+    for (const entry of entries) {
+      const legacyKey = legacyKeyByEntryId.get(entry.id) ?? entry.id;
+      const rivieraId = rivieraIdByEntryId.get(entry.id);
+      const nombre =
+        fromNames.get(entry.id) ??
+        fromNames.get(legacyKey) ??
+        (rivieraId ? fromNames.get(rivieraId) : undefined);
+      if (!nombre) continue;
+      result[entry.id] = {
+        ...(result[entry.id] ?? { ...DEFAULT_PROFILE }),
+        nombre,
+      };
     }
   }
 
