@@ -37,7 +37,13 @@ function teamLabel(
 export const PublicAmericanoMatchCard: React.FC<{
   match: AmericanoSnapshotMatch;
   live: boolean;
-  scheduleStatus?: "finished" | "live" | "upcoming" | "pending" | "played";
+  scheduleStatus?:
+    | "finished"
+    | "live"
+    | "playing"
+    | "upcoming"
+    | "pending"
+    | "played";
   /** @deprecated Siempre se muestra el badge (paridad con Reta Split VS). */
   showStatusBadge?: boolean;
   index: number;
@@ -66,7 +72,11 @@ export const PublicAmericanoMatchCard: React.FC<{
     <article
       className={`te-pub-match te-pub-match--wide te-pub-match--americano am-pub-match am-pub-match--split-vs reta-sb-card reta-sb-card--split-vs te-pub-fade-in-up${
         isTie ? " te-pub-match--tie" : ""
-      }${matchState === "live" ? " reta-sb-card--live" : ""}`}
+      }${
+        matchState === "live" || matchState === "playing"
+          ? " reta-sb-card--live"
+          : ""
+      }`}
       data-match-state={matchState}
       style={{ animationDelay: `${0.12 + index * 0.07}s` }}
     >

@@ -36,6 +36,10 @@ import { isAmericanoPublicInitialLoadPending } from "../lib/americano/americanoP
 import { useAmericanoLiveRealtime } from "../hooks/useAmericanoLiveRealtime";
 import { useLivePlayerProfiles } from "../hooks/useLivePlayerProfiles";
 import { livePlayerLabel } from "../lib/americano/livePlayerIdentity";
+import {
+  americanoInPlayRoundIndex,
+  americanoRoundIsInPlay,
+} from "../lib/americano/publicRoundFocus";
 import { useVisiblePolling } from "../hooks/useVisiblePolling";
 import {
   formatPublicEventFechaHorarioLine,
@@ -576,21 +580,16 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
     fetchStatus,
     snapshot
   );
-  const roundCount = snapshot?.rounds.length ?? 0;
-  const [selectedRoundIndex, setSelectedRoundIndex] = useState(() =>
-    Math.max(roundCount - 1, 0)
-  );
+  const rounds = snapshot?.rounds ?? [];
+  const inPlayRoundIndex = americanoInPlayRoundIndex(rounds);
+  const [selectedRoundIndex, setSelectedRoundIndex] = useState(inPlayRoundIndex);
+  const followedInPlayRef = useRef(inPlayRoundIndex);
 
   useEffect(() => {
-    setSelectedRoundIndex((prev) => {
-      if (roundCount <= 0) return 0;
-      // Si llegó una ronda nueva, mostrar la más reciente.
-      if (prev === roundCount - 2 || prev >= roundCount) {
-        return roundCount - 1;
-      }
-      return Math.min(Math.max(prev, 0), roundCount - 1);
-    });
-  }, [roundCount]);
+    if (followedInPlayRef.current === inPlayRoundIndex) return;
+    followedInPlayRef.current = inPlayRoundIndex;
+    setSelectedRoundIndex(inPlayRoundIndex);
+  }, [inPlayRoundIndex]);
 
   return (
     <PublicScopedBrandGate message="Cargando Americano…">
@@ -710,21 +709,17 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
               snapshot.rounds.length - 1
             );
             const round = snapshot.rounds[roundIdx]!;
-            const isLastRound = roundIdx === snapshot.rounds.length - 1;
-            const roundLive =
-              eventScheduleStatus.phase === "in_window" &&
-              isLastRound &&
-              !roundFullyScored(round);
+            const roundInPlay = americanoRoundIsInPlay(snapshot.rounds, roundIdx);
             const matches = roundMatchesSorted(round);
             const phaseCaption = americanoRoundPhaseCaption(
               round,
               totalForPhaseLabels
             );
             const roundAllScored = roundFullyScored(round);
-            const roundStatusLabel = roundLive
-              ? "En curso"
-              : roundAllScored
-                ? "Completada"
+            const roundStatusLabel = roundAllScored
+              ? "Completada"
+              : roundInPlay
+                ? "En juego"
                 : phaseCaption || "Pendiente";
             const matchCount = matches.length;
             const courtsInRound = new Set(
@@ -762,18 +757,12 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                       <div className="am-pub-round-nav__track">
                         {snapshot.rounds.map((item, index) => {
                           const itemDone = roundFullyScored(item);
-                          const hasAnyScore = (item.matches ?? []).some(
-                            (m) =>
-                              typeof m.scoreA === "number" ||
-                              typeof m.scoreB === "number"
+                          const itemLive = americanoRoundIsInPlay(
+                            snapshot.rounds,
+                            index
                           );
-                          const itemLive =
-                            !itemDone &&
-                            (hasAnyScore ||
-                              (eventScheduleStatus.phase === "in_window" &&
-                                index === snapshot.rounds.length - 1));
                           const statusLabel = itemLive
-                            ? "en curso"
+                            ? "en juego"
                             : itemDone
                               ? "completada"
                               : "pendiente";
@@ -848,16 +837,18 @@ const AmericanoPublicBody: React.FC<AmericanoPublicBodyProps> = ({
                       typeof m.scoreB === "number";
                     const matchScheduleStatus = played
                       ? "played"
-                      : resolvePublicMatchStatusVariant({
-                          matchFinished: false,
-                          eventPhase: eventScheduleStatus.phase,
-                        });
+                      : roundInPlay
+                        ? "playing"
+                        : resolvePublicMatchStatusVariant({
+                            matchFinished: false,
+                            eventPhase: eventScheduleStatus.phase,
+                          });
 
                     return (
                       <PublicAmericanoMatchCard
                         key={m.id}
                         match={m}
-                        live={roundLive && !played}
+                        live={roundInPlay && !played}
                         scheduleStatus={matchScheduleStatus}
                         index={matchIdx}
                         playerRatings={playerRatings}
