@@ -886,7 +886,8 @@
   color: var(--ro-chrome-text-muted, var(--ro-text-muted));
 }
 
-.riviera-organizer-reta .omc-quick__save {
+.riviera-organizer-reta .omc-quick__save,
+.riviera-organizer-reta .omc-quick__clear {
   width: 100%;
   min-height: var(--ro-touch-target-min, 44px);
   margin-top: 0.15rem;

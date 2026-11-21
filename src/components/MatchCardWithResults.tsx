@@ -931,6 +931,21 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
             >
               {saving ? "Guardando…" : "Guardar"}
             </Button>
+            {isFinished ? (
+              <Button
+                type="button"
+                variant="danger"
+                className="omc-quick__clear"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  void clearResult();
+                }}
+                disabled={saving}
+              >
+                Eliminar resultado
+              </Button>
+            ) : null}
           </section>
         )}
       </div>
