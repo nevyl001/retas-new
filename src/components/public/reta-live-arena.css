@@ -28,10 +28,10 @@
 }
 
 .reta-live-arena .te-public__inner {
-  width: min(1680px, calc(100% - 1.5rem));
-  max-width: 1680px;
+  width: min(980px, calc(100% - 1.5rem));
+  max-width: 980px;
   margin-inline: auto;
-  padding-top: 0.85rem;
+  padding-top: 0.75rem;
   padding-bottom: 2rem;
 }
 
@@ -46,7 +46,7 @@
   margin: 0;
   color: var(--rla-text);
   font-family: var(--font-display, "Bebas Neue", sans-serif);
-  font-size: clamp(2.1rem, 4.2vw, 3.6rem);
+  font-size: clamp(1.85rem, 3.2vw, 2.45rem);
   font-weight: 400;
   letter-spacing: 0.045em;
   line-height: 0.92;
@@ -135,10 +135,10 @@
 .reta-live-arena .reta-sb-card,
 .reta-live-arena .reta-sb-card--am-court.reta-sb-card {
   border: 1px solid var(--rla-line);
-  border-radius: 16px;
+  border-radius: 14px;
   background: rgba(20, 23, 28, 0.92);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
-  padding: 0.7rem 0.7rem 0.55rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  padding: 0.55rem 0.55rem 0.4rem;
 }
 
 .reta-live-arena .reta-sb-card__meta-line,
@@ -167,8 +167,24 @@
   width: 100%;
 }
 
+.te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-card__duel {
+  justify-items: center;
+  gap: 0.28rem 0.35rem;
+  padding: 0.2rem 0.15rem 0.35rem;
+}
+
+.te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__grid,
+.te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__column {
+  width: 100%;
+  max-width: 132px !important;
+  margin-inline: auto;
+}
+
 .te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-player-panel.pub-split-vs-panel {
-  max-height: min(30vh, 360px) !important;
+  width: 100% !important;
+  max-width: 132px !important;
+  max-height: 154px !important;
+  aspect-ratio: 5 / 6 !important;
 }
 
 .reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-player-panel.pub-split-vs-panel,
@@ -184,8 +200,9 @@
 
 .reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .pub-split-vs-panel__watermark {
   color: #f5f5f5;
-  opacity: 0.92;
+  opacity: 0.72 !important;
   font-family: var(--font-display, "Bebas Neue", sans-serif);
+  font-size: 1.55rem !important;
   letter-spacing: 0.04em;
 }
 
@@ -205,17 +222,17 @@
 }
 
 .reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-card__duel-vs-label {
-  width: 2.55rem;
-  height: 2.55rem;
-  min-width: 2.55rem;
-  min-height: 2.55rem;
+  width: 2rem;
+  height: 2rem;
+  min-width: 2rem;
+  min-height: 2rem;
   padding: 0;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: #14171c;
   color: #f5f5f5;
   font-family: var(--font-display, "Bebas Neue", sans-serif);
-  font-size: 1.05rem;
+  font-size: 0.85rem;
   letter-spacing: 0.04em;
 }
 
@@ -299,24 +316,54 @@
   }
 }
 
-@media (min-width: 1100px) {
-  .te-public--reta.reta-live-arena .te-pub-matches-grid--wide,
-  .te-public--reta.reta-live-arena .te-pub-matches-grid--wide:has(> :nth-child(3)),
+@media (min-width: 860px) {
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--wide.te-pub-matches-grid--few,
   .te-public--reta.reta-live-arena .te-pub-matches-grid--wide:has(> :nth-child(4)) {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 1rem 1.1rem;
+    grid-template-columns: repeat(2, minmax(0, 420px)) !important;
+    justify-content: center;
+    gap: 0.75rem 0.85rem;
   }
 }
 
-@media (min-width: 1680px) {
-  .reta-live-arena .te-public__inner {
-    width: min(1760px, calc(100% - 3rem));
+/* Tres canchas: siempre una sola fila. */
+@media (min-width: 721px) {
+  .reta-live-arena .te-public__inner:has(.te-pub-matches-grid--three) {
+    width: min(1180px, calc(100% - 1.25rem));
+    max-width: 1180px;
+  }
+
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--wide.te-pub-matches-grid--three,
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--wide:has(> :nth-child(3):last-child) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    justify-content: stretch;
+    gap: 0.65rem;
+  }
+
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--three > .reta-sb-card {
+    min-width: 0;
+  }
+
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--three .liga-jornada-match-pair-half__grid,
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--three .liga-jornada-match-pair-half__column,
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--three .liga-jornada-match-player-panel.pub-split-vs-panel {
+    max-width: 100% !important;
+    max-height: 128px !important;
   }
 }
 
 @media (max-width: 720px) {
   .reta-live-arena .te-public__inner {
-    width: min(100% - 1rem, 1680px);
+    width: min(100% - 1rem, 980px);
+  }
+
+  .te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__grid,
+  .te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__column {
+    max-width: none !important;
+  }
+
+  .te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-player-panel.pub-split-vs-panel {
+    max-width: none !important;
+    max-height: 132px !important;
   }
 
   .reta-live-arena .peds-hero__evento {
