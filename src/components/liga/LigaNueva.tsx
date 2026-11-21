@@ -96,7 +96,7 @@ export const LigaNueva: React.FC = () => {
       const liga = await createLiga({
         nombre: nombre.trim(),
         fecha_inicio: fechaInicio || null,
-        canchas_disponibles: canchas,
+        canchas_disponibles: modalidad === "flex_league" ? undefined : canchas,
         modalidad,
         vueltas: modalidad === "parejas_fijas" ? vueltas : 1,
         flex:
@@ -161,7 +161,11 @@ export const LigaNueva: React.FC = () => {
                 />
               </div>
 
-              <div className="liga-form-row">
+              <div
+                className={
+                  modalidad === "flex_league" ? "liga-form-row liga-form-row--single" : "liga-form-row"
+                }
+              >
                 <div className="liga-field">
                   <label htmlFor="liga-fecha">Fecha de inicio</label>
                   <input
@@ -171,22 +175,24 @@ export const LigaNueva: React.FC = () => {
                     onChange={(e) => setFechaInicio(e.target.value)}
                   />
                 </div>
-                <div className="liga-field">
-                  <label htmlFor="liga-canchas">Canchas disponibles</label>
-                  <input
-                    id="liga-canchas"
-                    type="number"
-                    min={1}
-                    max={12}
-                    value={canchas}
-                    onChange={(e) => {
-                      const next = Number(e.target.value);
-                      if (Number.isInteger(next) && next >= 1 && next <= 12) {
-                        setCanchas(next);
-                      }
-                    }}
-                  />
-                </div>
+                {modalidad === "flex_league" ? null : (
+                  <div className="liga-field">
+                    <label htmlFor="liga-canchas">Canchas disponibles</label>
+                    <input
+                      id="liga-canchas"
+                      type="number"
+                      min={1}
+                      max={12}
+                      value={canchas}
+                      onChange={(e) => {
+                        const next = Number(e.target.value);
+                        if (Number.isInteger(next) && next >= 1 && next <= 12) {
+                          setCanchas(next);
+                        }
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </section>
 
@@ -251,36 +257,25 @@ export const LigaNueva: React.FC = () => {
               </fieldset>
 
               {modalidad === "flex_league" ? (
-                <div className="liga-form-row">
-                  <div className="liga-field">
-                    <label htmlFor="liga-flex-jornadas">Jornadas de la temporada</label>
-                    <input id="liga-flex-jornadas" value="12" readOnly />
+                <>
+                  <div className="liga-form-row">
+                    <div className="liga-field">
+                      <label htmlFor="liga-flex-jornadas">Jornadas de la temporada</label>
+                      <input id="liga-flex-jornadas" value="12" readOnly />
+                    </div>
+                    <div className="liga-field">
+                      <label htmlFor="liga-flex-categoria">Categoría</label>
+                      <input
+                        id="liga-flex-categoria"
+                        value={flexCategoria}
+                        onChange={(e) => setFlexCategoria(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div className="liga-field">
-                    <label htmlFor="liga-flex-canchas">Canchas</label>
-                    <input
-                      id="liga-flex-canchas"
-                      type="number"
-                      min={1}
-                      max={12}
-                      value={canchas}
-                      onChange={(e) => {
-                        const next = Number(e.target.value);
-                        if (Number.isInteger(next) && next >= 1 && next <= 12) {
-                          setCanchas(next);
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className="liga-field">
-                    <label htmlFor="liga-flex-categoria">Categoría</label>
-                    <input
-                      id="liga-flex-categoria"
-                      value={flexCategoria}
-                      onChange={(e) => setFlexCategoria(e.target.value)}
-                    />
-                  </div>
-                </div>
+                  <p className="liga-hint">
+                    Las canchas se eligen en cada jornada. Pueden ser 2, 3 o 4, según las que haya ese día.
+                  </p>
+                </>
               ) : null}
 
               {modalidad === "parejas_fijas" ? (
@@ -323,8 +318,10 @@ export const LigaNueva: React.FC = () => {
                 </div>
                 <div className="liga-nueva__summary-row">
                   <dt>Canchas</dt>
-                  <dd>
-                    {canchas} {canchas === 1 ? "cancha" : "canchas"}
+                  <dd className={modalidad === "flex_league" ? "is-muted" : undefined}>
+                    {modalidad === "flex_league"
+                      ? "Se definen en cada jornada"
+                      : `${canchas} ${canchas === 1 ? "cancha" : "canchas"}`}
                   </dd>
                 </div>
                 <div className="liga-nueva__summary-row">

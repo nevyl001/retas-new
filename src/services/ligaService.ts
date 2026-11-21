@@ -224,10 +224,7 @@ export async function createLiga(data: CreateLigaInput): Promise<Liga> {
   if (error) throw new Error(error.message);
   const liga = mapLiga(row as Record<string, unknown>);
   if (isFlexLeague(liga.modalidad)) {
-    await bootstrapFlexLeague(liga.id, {
-      ...data.flex,
-      canchas: data.canchas_disponibles ?? 3,
-    });
+    await bootstrapFlexLeague(liga.id, data.flex);
   }
   return liga;
 }
