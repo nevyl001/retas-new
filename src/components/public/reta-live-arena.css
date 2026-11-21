@@ -176,15 +176,18 @@
 .te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__grid,
 .te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__column {
   width: 100%;
-  max-width: 132px !important;
-  margin-inline: auto;
+  max-width: none !important;
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible;
 }
 
 .te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-player-panel.pub-split-vs-panel {
   width: 100% !important;
-  max-width: 132px !important;
-  max-height: 154px !important;
-  aspect-ratio: 5 / 6 !important;
+  max-width: none !important;
+  max-height: none !important;
+  height: auto !important;
+  aspect-ratio: 3 / 4 !important;
 }
 
 .reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-player-panel.pub-split-vs-panel,
@@ -243,6 +246,9 @@
 }
 
 .reta-live-arena .liga-jornada-match-card__final-score {
+  position: relative;
+  z-index: 2;
+  margin-top: 0.35rem;
   animation: rla-score-in 300ms ease-out both;
 }
 
@@ -323,6 +329,14 @@
     justify-content: center;
     gap: 0.75rem 0.85rem;
   }
+
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--few .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__grid,
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--few .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__column,
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--wide:has(> :nth-child(4)) .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__grid,
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--wide:has(> :nth-child(4)) .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__column {
+    max-width: 11.5rem !important;
+    max-height: none !important;
+  }
 }
 
 /* Tres canchas: siempre una sola fila. */
@@ -341,13 +355,8 @@
 
   .te-public--reta.reta-live-arena .te-pub-matches-grid--three > .reta-sb-card {
     min-width: 0;
-  }
-
-  .te-public--reta.reta-live-arena .te-pub-matches-grid--three .liga-jornada-match-pair-half__grid,
-  .te-public--reta.reta-live-arena .te-pub-matches-grid--three .liga-jornada-match-pair-half__column,
-  .te-public--reta.reta-live-arena .te-pub-matches-grid--three .liga-jornada-match-player-panel.pub-split-vs-panel {
-    max-width: 100% !important;
-    max-height: 128px !important;
+    height: auto;
+    overflow: visible;
   }
 }
 
@@ -383,16 +392,6 @@
 
   .reta-live-arena .te-public__inner {
     width: min(100% - 1rem, 980px);
-  }
-
-  .te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__grid,
-  .te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__column {
-    max-width: none !important;
-  }
-
-  .te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-player-panel.pub-split-vs-panel {
-    max-width: none !important;
-    max-height: 132px !important;
   }
 
   .reta-live-arena .reta-round-tabs {
