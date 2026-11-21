@@ -931,21 +931,29 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
             >
               {saving ? "Guardando…" : "Guardar"}
             </Button>
-            {isFinished ? (
-              <Button
-                type="button"
-                variant="danger"
-                className="omc-quick__clear"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
+            <Button
+              type="button"
+              variant="danger"
+              className="omc-quick__clear"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const saved =
+                  isFinished ||
+                  games.length > 0 ||
+                  typeof currentMatch.pair1_score === "number" ||
+                  typeof currentMatch.pair2_score === "number";
+                if (saved) {
                   void clearResult();
-                }}
-                disabled={saving}
-              >
-                Eliminar resultado
-              </Button>
-            ) : null}
+                  return;
+                }
+                setPair1Score("");
+                setPair2Score("");
+              }}
+              disabled={saving}
+            >
+              Eliminar resultado
+            </Button>
           </section>
         )}
       </div>
