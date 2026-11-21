@@ -1544,18 +1544,18 @@
 
 .liga-pantalla--individual .liga-ind-top3__photo .rj-avatar__img,
 .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__photo .rj-avatar__img {
-  object-fit: contain;
-  object-position: center center;
+  object-fit: cover;
+  object-position: center 18%;
 }
 
 .liga-pantalla--individual .liga-ind-top3__portrait::after {
-  height: 62%;
+  height: 46%;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(8, 8, 10, 0.08) 24%,
-    rgba(8, 8, 10, 0.78) 62%,
-    rgba(8, 8, 10, 0.94) 100%
+    rgba(8, 8, 10, 0.05) 18%,
+    rgba(8, 8, 10, 0.72) 58%,
+    rgba(8, 8, 10, 0.92) 100%
   );
 }
 
