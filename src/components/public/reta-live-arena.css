@@ -1,0 +1,344 @@
+/* Vista pública Round Robin — marcador. Solo .reta-live-arena.
+   No altera Liga, Americano, Torneo Express ni retas por equipos. */
+
+.reta-live-arena .te-ambient__dust {
+  display: none;
+}
+
+.reta-live-arena {
+  --rla-bg: #0d0f12;
+  --rla-surface: #14171c;
+  --rla-surface-2: #1b2028;
+  --rla-line: rgba(255, 255, 255, 0.1);
+  --rla-text: #f5f5f5;
+  --rla-muted: #a0a7b2;
+  color: var(--rla-text);
+  background-color: var(--rla-bg);
+  background-image:
+    linear-gradient(180deg, rgba(13, 15, 18, 0.78) 0%, rgba(13, 15, 18, 0.92) 42%, #0d0f12 100%),
+    radial-gradient(
+      ellipse 80% 42% at 50% 0%,
+      color-mix(in srgb, var(--brand-accent, #ffffff) 16%, transparent),
+      transparent 68%
+    ),
+    var(--rla-court, none);
+  background-size: cover;
+  background-position: center 28%;
+  background-repeat: no-repeat;
+}
+
+.reta-live-arena .te-public__inner {
+  width: min(1680px, calc(100% - 1.5rem));
+  max-width: 1680px;
+  margin-inline: auto;
+  padding-top: 0.85rem;
+  padding-bottom: 2rem;
+}
+
+.reta-live-arena .peds-hero--reta-compact {
+  gap: 0.28rem;
+  margin-block-end: 0.65rem;
+  padding: 0;
+}
+
+.reta-live-arena .peds-hero__evento {
+  max-width: none;
+  margin: 0;
+  color: var(--rla-text);
+  font-family: var(--font-display, "Bebas Neue", sans-serif);
+  font-size: clamp(2.1rem, 4.2vw, 3.6rem);
+  font-weight: 400;
+  letter-spacing: 0.045em;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.reta-live-arena .peds-hero__meta,
+.reta-live-arena .peds-hero__club,
+.reta-live-arena .peds-hero__descripcion,
+.reta-live-arena .peds-hero__meta-row {
+  color: var(--rla-muted);
+  font-family: var(--font-body, Manrope, sans-serif);
+}
+
+.reta-live-arena .peds-hero__descripcion {
+  max-width: 40rem;
+  font-size: 0.84rem;
+}
+
+.reta-live-arena .peds-hero__meta-row {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.te-public--reta.reta-live-arena .reta-round-tabs {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 100%;
+}
+
+.reta-live-arena .reta-round-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 0.85rem;
+  padding: 0.1rem 0 0.35rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.reta-live-arena .reta-round-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.reta-live-arena .reta-round-tabs__btn {
+  flex: 0 0 auto;
+  min-height: 2rem;
+  margin: 0;
+  padding: 0.28rem 0.85rem;
+  border: 1px solid var(--rla-line);
+  border-radius: 999px;
+  background: rgba(20, 23, 28, 0.72);
+  color: var(--rla-muted);
+  font-family: var(--font-body, Manrope, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: none;
+}
+
+.reta-live-arena .reta-round-tabs__btn.is-active {
+  border-color: color-mix(in srgb, var(--brand-accent, #fff) 80%, transparent);
+  background: color-mix(in srgb, var(--brand-accent, #fff) 12%, #14171c);
+  color: var(--rla-text);
+  animation: rla-pill-breathe 4s ease-in-out infinite;
+}
+
+.reta-live-arena .reta-round-meta {
+  margin-bottom: 0.7rem;
+  color: var(--rla-muted);
+  font-family: var(--font-body, Manrope, sans-serif);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reta-live-arena .reta-sb-card,
+.reta-live-arena .reta-sb-card--am-court.reta-sb-card {
+  border: 1px solid var(--rla-line);
+  border-radius: 16px;
+  background: rgba(20, 23, 28, 0.92);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+  padding: 0.7rem 0.7rem 0.55rem;
+}
+
+.reta-live-arena .reta-sb-card__meta-line,
+.reta-live-arena .reta-sb-card .te-pub-status {
+  font-family: var(--font-body, Manrope, sans-serif);
+  letter-spacing: 0.08em;
+}
+
+.reta-live-arena .reta-sb-card .te-pub-status--live .te-pub-status__dot {
+  background: var(--brand-accent, #f5f5f5);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-accent, #fff) 55%, transparent);
+  animation: rla-live-dot 2.8s ease-out infinite;
+}
+
+.reta-live-arena .te-pub-matches-grid--wide {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__grid,
+.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__column {
+  max-width: none;
+  width: 100%;
+}
+
+.te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-player-panel.pub-split-vs-panel {
+  max-height: min(30vh, 360px) !important;
+}
+
+.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-player-panel.pub-split-vs-panel,
+.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .pub-split-vs-panel--fallback {
+  background: linear-gradient(180deg, #24303c 0%, #1b2028 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .pub-split-vs-panel__photo {
+  object-fit: cover;
+  object-position: center 18%;
+}
+
+.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .pub-split-vs-panel__watermark {
+  color: #f5f5f5;
+  opacity: 0.92;
+  font-family: var(--font-display, "Bebas Neue", sans-serif);
+  letter-spacing: 0.04em;
+}
+
+.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .pub-split-vs-panel__given,
+.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .pub-split-vs-panel__family {
+  color: #f5f5f5;
+  font-family: var(--font-body, Manrope, sans-serif);
+}
+
+.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half--loss {
+  opacity: 0.84;
+  filter: none;
+}
+
+.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half--win .pub-split-vs-panel {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-accent, #fff) 72%, transparent);
+}
+
+.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-card__duel-vs-label {
+  width: 2.55rem;
+  height: 2.55rem;
+  min-width: 2.55rem;
+  min-height: 2.55rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #14171c;
+  color: #f5f5f5;
+  font-family: var(--font-display, "Bebas Neue", sans-serif);
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+}
+
+.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-card__duel-vs-rule {
+  width: 1px;
+  height: 1rem;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.reta-live-arena .liga-jornada-match-card__final-score {
+  animation: rla-score-in 300ms ease-out both;
+}
+
+.reta-live-arena__stage {
+  animation: rla-stage-in 480ms ease-out both;
+}
+
+.reta-live-arena .te-pub-fade-in-up {
+  animation-name: rla-court-in;
+  animation-duration: 480ms;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+
+.reta-live-arena__notice {
+  margin: 0 0 0.65rem;
+  color: var(--rla-text);
+  font-family: var(--font-display, "Bebas Neue", sans-serif);
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@keyframes rla-stage-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rla-court-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rla-score-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rla-pill-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-accent, #fff) 28%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 14px 1px color-mix(in srgb, var(--brand-accent, #fff) 42%, transparent);
+  }
+}
+
+@keyframes rla-live-dot {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-accent, #fff) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+
+@media (min-width: 1100px) {
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--wide,
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--wide:has(> :nth-child(3)),
+  .te-public--reta.reta-live-arena .te-pub-matches-grid--wide:has(> :nth-child(4)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1rem 1.1rem;
+  }
+}
+
+@media (min-width: 1680px) {
+  .reta-live-arena .te-public__inner {
+    width: min(1760px, calc(100% - 3rem));
+  }
+}
+
+@media (max-width: 720px) {
+  .reta-live-arena .te-public__inner {
+    width: min(100% - 1rem, 1680px);
+  }
+
+  .reta-live-arena .peds-hero__evento {
+    font-size: clamp(1.85rem, 11vw, 2.6rem);
+  }
+
+  .reta-live-arena .reta-round-tabs {
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reta-live-arena .reta-round-tabs__btn.is-active,
+  .reta-live-arena .reta-sb-card .te-pub-status--live .te-pub-status__dot,
+  .reta-live-arena__stage,
+  .reta-live-arena .te-pub-fade-in-up,
+  .reta-live-arena .liga-jornada-match-card__final-score {
+    animation: none;
+  }
+}
+
+.reta-live-arena--still .reta-round-tabs__btn.is-active,
+.reta-live-arena--still .te-pub-status--live .te-pub-status__dot {
+  animation-play-state: paused;
+}

@@ -118,6 +118,7 @@ import {
 } from "../lib/public/eventScheduleStatus";
 import "./public/riviera-public-americano.css";
 import "./public/reta-public-scoreboard.css";
+import "./public/reta-live-arena.css";
 import "./ModernStandingsTable.css";
 
 interface PublicTournamentViewProps {
@@ -236,6 +237,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [teamsLiveRevealed, setTeamsLiveRevealed] = useState(false);
   /** Filtro de ronda en la vista pública (solo presentación). */
   const [mobileRoundTab, setMobileRoundTab] = useState<string | null>(null);
+  const [roundNotice, setRoundNotice] = useState<string | null>(null);
+  const [arenaStill, setArenaStill] = useState(
+    () => typeof document !== "undefined" && document.hidden
+  );
+  const roundDoneSnap = useRef<string | null>(null);
   /** Si el visitante no eligió otra ronda, la vista sigue a la ronda en curso. */
   const roundFollowLiveRef = useRef(true);
   const configFetchOnDemandRef = useRef(false);
@@ -1036,6 +1042,70 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   }, [publicTournamentName, organizerName]);
 
   useEffect(() => {
+    const onVis = () => setArenaStill(document.hidden);
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  useEffect(() => {
+    if (isTeamsPublicView || loading) return;
+    const root = document.querySelector(".reta-live-arena");
+    if (!(root instanceof HTMLElement)) return;
+    const photo = `${process.env.PUBLIC_URL || ""}/images/cancha-riviera.jpg`;
+    root.style.setProperty("--rla-court", `url("${photo}")`);
+  }, [isTeamsPublicView, loading]);
+
+  useEffect(() => {
+    if (isTeamsPublicView || matches.length === 0) return;
+    const byRound = new Map<number, boolean>();
+    for (const match of matches) {
+      const round = match.round ?? 1;
+      const done = match.status === "finished";
+      byRound.set(round, (byRound.get(round) ?? true) && done);
+    }
+    const snap = Array.from(byRound.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([round, done]) => `${round}:${done ? 1 : 0}`)
+      .join("|");
+    if (roundDoneSnap.current == null) {
+      roundDoneSnap.current = snap;
+      return;
+    }
+    if (roundDoneSnap.current === snap) return;
+    const prev = new Map(
+      roundDoneSnap.current
+        .split("|")
+        .filter(Boolean)
+        .map((part) => {
+          const [round, done] = part.split(":");
+          return [Number(round), done === "1"] as const;
+        })
+    );
+    roundDoneSnap.current = snap;
+    const completed = Array.from(byRound.entries()).find(
+      ([round, done]) => done && prev.get(round) === false
+    );
+    if (completed) {
+      const [round] = completed;
+      const next = Array.from(byRound.keys())
+        .sort((a, b) => a - b)
+        .find((key) => key > round && byRound.get(key) === false);
+      setRoundNotice(
+        next != null
+          ? `Ronda ${round} completada · Siguiente ronda ${next}`
+          : `Ronda ${round} completada`
+      );
+      return;
+    }
+  }, [isTeamsPublicView, matches]);
+
+  useEffect(() => {
+    if (!roundNotice) return;
+    const timer = window.setTimeout(() => setRoundNotice(null), 2800);
+    return () => window.clearTimeout(timer);
+  }, [roundNotice]);
+
+  useEffect(() => {
     if (isTeamsPublicView || !roundFollowLiveRef.current || matches.length === 0) {
       return;
     }
@@ -1332,7 +1402,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   return (
     <PublicTorneoExpressShell
       className={`te-public--reta te-public--reta-wide${
-        isTeamsPublicView ? " te-public--reta-equipos" : ""
+        isTeamsPublicView
+          ? " te-public--reta-equipos"
+          : ` reta-live-arena${arenaStill ? " reta-live-arena--still" : ""}`
       }`}
       organizadorId={organizadorId}
     >
@@ -1368,12 +1440,20 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         <PublicHero
           className="peds-hero--reta-compact"
           estado={
-            <StatusBadge variant={eventScheduleStatus.tone}>
-              {eventScheduleStatus.label}
-            </StatusBadge>
+            eventScheduleStatus.phase === "unknown" ? undefined : (
+              <StatusBadge variant={eventScheduleStatus.tone}>
+                {eventScheduleStatus.label}
+              </StatusBadge>
+            )
           }
           nombreEvento={publicTournamentName || "Resultados en tiempo real"}
-          descripcion={publicTournamentDescription || undefined}
+          descripcion={
+            publicTournamentDescription &&
+            publicTournamentDescription.trim().toLowerCase() !==
+              formatKicker.trim().toLowerCase()
+              ? publicTournamentDescription
+              : undefined
+          }
           nivel={nivelPublico || undefined}
           fecha={fechaHorarioLine || undefined}
           lugar={lugarPublico || undefined}
@@ -1407,6 +1487,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               : "Partidos por ronda"}
           </h2>
         )}
+        {!isTeamsPublicView && roundNotice ? (
+          <p className="reta-live-arena__notice" role="status">
+            {roundNotice}
+          </p>
+        ) : null}
         {!isTeamsPublicView && viewingRoundKey ? (
           <RoundTimerPublic
             round={parseInt(viewingRoundKey, 10)}
@@ -1510,8 +1595,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               <div
                 key={roundKey}
                 className={`te-public-round-block te-pub-fade-in-up${
-                  tabHidden ? " is-tab-hidden" : ""
-                }`}
+                  !isTeamsPublicView ? " reta-live-arena__stage" : ""
+                }${tabHidden ? " is-tab-hidden" : ""}`}
                 style={{ animationDelay: `${0.05 + roundIdx * 0.06}s` }}
               >
                 {showTabsMeta ? (

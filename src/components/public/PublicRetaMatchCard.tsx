@@ -253,7 +253,7 @@ export const PublicRetaMatchCard: React.FC<{
       }${isTie ? " te-pub-match--tie" : ""}${
         statusVariant === "live" ? " reta-sb-card--live" : ""
       }${hasTeams ? " reta-sb-card--teams reta-eq-duel-card" : " am-pub-match reta-sb-card--am-court"}`}
-      style={{ animationDelay: `${0.08 + index * 0.05}s` }}
+      style={{ animationDelay: `${index * 0.08}s` }}
     >
       <header className="reta-sb-card__meta">
         <p className="reta-sb-card__meta-line">

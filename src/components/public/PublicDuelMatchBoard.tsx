@@ -85,7 +85,10 @@ export const PublicDuelMatchBoard: React.FC<{
             />
           </div>
           {played ? (
-            <div className="liga-jornada-match-card__final-score">
+            <div
+              key={`${scoreA}-${scoreB}`}
+              className="liga-jornada-match-card__final-score"
+            >
               <LigaJornadaMatchScoreGrid
                 board={{
                   kind: "simple",
