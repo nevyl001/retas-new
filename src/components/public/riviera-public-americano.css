@@ -5856,3 +5856,15 @@
     max-width: 7.25rem !important;
   }
 }
+
+.te-public--americano .am-pub-match .liga-jornada-match-card--duel-stacks .liga-jornada-match-card__duel {
+  justify-items: center;
+}
+
+.te-public--americano .am-pub-match .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half--left {
+  align-items: flex-end !important;
+}
+
+.te-public--americano .am-pub-match .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half--right {
+  align-items: flex-start !important;
+}
