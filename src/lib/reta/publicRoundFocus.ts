@@ -58,16 +58,12 @@ export function resolvePublicRoundFocus(
       statusByKey[round.key] = "completed";
       return;
     }
-    if (
-      index === liveIndex &&
-      round.finishedCount > 0 &&
-      !complete
-    ) {
+    if (index === liveIndex) {
+      if (options.schedulePhase === "upcoming" && round.finishedCount === 0) {
+        statusByKey[round.key] = "upcoming";
+        return;
+      }
       statusByKey[round.key] = "live";
-      return;
-    }
-    if (index === liveIndex && options.schedulePhase === "upcoming") {
-      statusByKey[round.key] = "upcoming";
       return;
     }
     statusByKey[round.key] = "plain";

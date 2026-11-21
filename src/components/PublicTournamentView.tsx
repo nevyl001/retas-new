@@ -637,14 +637,27 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         court={match.court}
         status={match.status === "finished" ? "finished" : "active"}
         live={
-          match.status !== "finished" &&
-          (eventScheduleStatus.phase === "in_window" ||
-            eventScheduleStatus.phase === "unknown")
+          isTeamsPublicView
+            ? match.status !== "finished" &&
+              (eventScheduleStatus.phase === "in_window" ||
+                eventScheduleStatus.phase === "unknown")
+            : match.status !== "finished" &&
+              rrFocus?.statusByKey[String(match.round || 1)] === "live"
         }
-        scheduleStatus={resolvePublicMatchStatusVariant({
-          matchFinished: match.status === "finished",
-          eventPhase: eventScheduleStatus.phase,
-        })}
+        scheduleStatus={
+          isTeamsPublicView
+            ? resolvePublicMatchStatusVariant({
+                matchFinished: match.status === "finished",
+                eventPhase: eventScheduleStatus.phase,
+              })
+            : match.status === "finished"
+              ? "finished"
+              : rrFocus?.statusByKey[String(match.round || 1)] === "live"
+                ? "live"
+                : eventScheduleStatus.phase === "upcoming"
+                  ? "upcoming"
+                  : "pending"
+        }
         index={matchIdx}
         winnerLabel={winnerLabel}
         games={matchGames.length > 0 ? matchGames : undefined}
@@ -1115,10 +1128,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       const key = String(match.round || 1);
       const bucket = byRound.get(key) ?? { matchCount: 0, finishedCount: 0 };
       bucket.matchCount += 1;
-      const scored =
-        match.status === "finished" ||
-        games.some((game) => game.match_id === match.id);
-      if (scored) bucket.finishedCount += 1;
+      if (match.status === "finished") bucket.finishedCount += 1;
       byRound.set(key, bucket);
     }
     const snapshots = Array.from(byRound.entries())
@@ -1131,7 +1141,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     if (focus.liveKey) setMobileRoundTab(focus.liveKey);
   }, [
     championshipConfig,
-    games,
     isTeamsPublicView,
     matches,
     tournamentFinished,
@@ -1370,8 +1379,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         sortedRoundKeys.map((key) => {
           const roundMatches = matchesByRound[parseInt(key, 10)] ?? [];
           const finishedCount = roundMatches.filter(
-            (match) =>
-              match.status === "finished" || getMatchResult(match.id).hasResult
+            (match) => match.status === "finished"
           ).length;
           return {
             key,
@@ -1542,12 +1550,15 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         {sortedRoundKeys.map((roundKey, roundIdx) => {
             const roundNum = parseInt(roundKey, 10);
             const roundMatches = matchesByRound[roundNum];
-            const roundInProgress =
-              eventScheduleStatus.phase === "in_window" &&
-              roundMatches.some((m) => m.status !== "finished");
-            const roundComplete =
-              eventScheduleStatus.phase === "after" ||
-              roundMatches.every((m) => m.status === "finished");
+            const focusStatus = rrFocus?.statusByKey[roundKey];
+            const roundInProgress = isTeamsPublicView
+              ? eventScheduleStatus.phase === "in_window" &&
+                roundMatches.some((m) => m.status !== "finished")
+              : focusStatus === "live";
+            const roundComplete = isTeamsPublicView
+              ? eventScheduleStatus.phase === "after" ||
+                roundMatches.every((m) => m.status === "finished")
+              : focusStatus === "completed";
             const tabHidden =
               sortedRoundKeys.length > 1 && roundKey !== viewingRoundKey;
             if (!isTeamsPublicView && tabHidden) return null;

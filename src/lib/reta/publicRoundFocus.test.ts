@@ -19,7 +19,7 @@ describe("resolvePublicRoundFocus", () => {
     expect(focus.statusByKey["3"]).toBe("plain");
   });
 
-  it("sin marcadores no afirma que la ronda está en juego", () => {
+  it("sin marcadores la ronda 1 sigue en vivo y la 2 no", () => {
     const focus = resolvePublicRoundFocus(
       [
         { key: "1", matchCount: 3, finishedCount: 0 },
@@ -28,8 +28,24 @@ describe("resolvePublicRoundFocus", () => {
       { schedulePhase: "unknown", tournamentFinished: false }
     );
     expect(focus.liveKey).toBe("1");
-    expect(focus.statusByKey["1"]).toBe("plain");
+    expect(focus.statusByKey["1"]).toBe("live");
+    expect(focus.statusByKey["2"]).toBe("plain");
     expect(focus.nextKey).toBe("2");
+  });
+
+  it("la siguiente ronda pasa a en vivo solo cuando la anterior está completa", () => {
+    const focus = resolvePublicRoundFocus(
+      [
+        { key: "1", matchCount: 3, finishedCount: 3 },
+        { key: "2", matchCount: 3, finishedCount: 0 },
+        { key: "3", matchCount: 3, finishedCount: 0 },
+      ],
+      { schedulePhase: "in_window", tournamentFinished: false }
+    );
+    expect(focus.liveKey).toBe("2");
+    expect(focus.statusByKey["1"]).toBe("completed");
+    expect(focus.statusByKey["2"]).toBe("live");
+    expect(focus.statusByKey["3"]).toBe("plain");
   });
 
   it("en la última ronda no anuncia una siguiente", () => {
