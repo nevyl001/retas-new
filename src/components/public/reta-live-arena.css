@@ -42,15 +42,15 @@
 }
 
 .reta-live-arena .peds-hero__evento {
-  max-width: none;
+  max-width: min(100%, 28ch);
   margin: 0;
   color: var(--rla-text);
-  font-family: var(--font-display, "Bebas Neue", sans-serif);
-  font-size: clamp(1.85rem, 3.2vw, 2.45rem);
-  font-weight: 400;
-  letter-spacing: 0.045em;
-  line-height: 0.92;
-  text-transform: uppercase;
+  font-family: var(--font-body, Manrope, sans-serif);
+  font-size: clamp(1.2rem, 2.2vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  text-transform: none;
 }
 
 .reta-live-arena .peds-hero__meta,
@@ -67,11 +67,11 @@
 }
 
 .reta-live-arena .peds-hero__meta-row {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-  border-radius: 0;
+  margin-block-start: 0.2rem;
+  padding: 0.38rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: min(100%, 36rem);
 }
 
 .te-public--reta.reta-live-arena .reta-round-tabs {
@@ -125,11 +125,11 @@
 }
 
 .reta-live-arena .reta-round-meta {
-  margin-bottom: 0.7rem;
+  margin-bottom: 0.55rem;
   color: var(--rla-muted);
   font-family: var(--font-body, Manrope, sans-serif);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-transform: none;
 }
 
 .reta-live-arena .reta-sb-card,
@@ -351,7 +351,36 @@
   }
 }
 
+@media (min-width: 900px) {
+  .reta-live-arena .reta-round-tabs {
+    justify-content: flex-end !important;
+    width: max-content;
+    max-width: min(58vw, 760px);
+    margin: -2.9rem 0 0.15rem auto;
+  }
+
+  .reta-live-arena .reta-round-meta,
+  .reta-live-arena .reta-round-meta--centered {
+    justify-content: flex-end;
+    width: max-content;
+    max-width: 100%;
+    margin-left: auto;
+    text-align: right;
+  }
+}
+
 @media (max-width: 720px) {
+  .reta-live-arena .reta-round-tabs {
+    justify-content: flex-start !important;
+    width: 100%;
+    margin: 0 0 0.65rem;
+  }
+
+  .reta-live-arena .peds-hero__evento {
+    font-size: clamp(1.35rem, 6.2vw, 1.7rem);
+    max-width: 100%;
+  }
+
   .reta-live-arena .te-public__inner {
     width: min(100% - 1rem, 980px);
   }
@@ -364,10 +393,6 @@
   .te-public--reta.reta-live-arena .liga-pantalla--jornada-fijas .liga-jornada-match-card--duel-stacks .liga-jornada-match-player-panel.pub-split-vs-panel {
     max-width: none !important;
     max-height: 132px !important;
-  }
-
-  .reta-live-arena .peds-hero__evento {
-    font-size: clamp(1.85rem, 11vw, 2.6rem);
   }
 
   .reta-live-arena .reta-round-tabs {
