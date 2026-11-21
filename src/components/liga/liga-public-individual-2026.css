@@ -1524,3 +1524,70 @@
     padding: 0.42rem 0.25rem;
   }
 }
+
+/* Podio: retrato, foto completa y puntos dentro de la imagen. */
+.liga-pantalla--individual .liga-ind-top3__card {
+  position: relative;
+  overflow: hidden;
+}
+
+.liga-pantalla--individual .liga-ind-top3__portrait,
+.liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__portrait,
+.liga-pantalla--individual .liga-ind-top3__card--2 .liga-ind-top3__portrait,
+.liga-pantalla--individual .liga-ind-top3__card--3 .liga-ind-top3__portrait {
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  background: #101114;
+}
+
+.liga-pantalla--individual .liga-ind-top3__photo .rj-avatar__img,
+.liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__photo .rj-avatar__img {
+  object-fit: contain;
+  object-position: center center;
+}
+
+.liga-pantalla--individual .liga-ind-top3__portrait::after {
+  height: 62%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(8, 8, 10, 0.08) 24%,
+    rgba(8, 8, 10, 0.78) 62%,
+    rgba(8, 8, 10, 0.94) 100%
+  );
+}
+
+.liga-pantalla--individual .liga-ind-top3__pos,
+.liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__pos {
+  top: 0.5rem;
+  bottom: auto;
+  z-index: 3;
+}
+
+.liga-pantalla--individual .liga-ind-top3__body,
+.liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__body,
+.liga-pantalla--individual .liga-ind-top3__card--2 .liga-ind-top3__body,
+.liga-pantalla--individual .liga-ind-top3__card--3 .liga-ind-top3__body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 0.7rem 0.65rem 0.75rem;
+  background: transparent;
+}
+
+.liga-pantalla--individual .liga-ind-top3__name,
+.liga-pantalla--individual .liga-ind-top3__pts-value,
+.liga-pantalla--individual .liga-ind-top3__vd {
+  color: #f5f5f5;
+}
+
+.liga-pantalla--individual .liga-ind-top3__riviera-id,
+.liga-pantalla--individual .liga-ind-top3__pts-label,
+.liga-pantalla--individual .liga-ind-top3__dif,
+.liga-pantalla--individual .liga-ind-top3__support {
+  color: rgba(245, 245, 245, 0.72);
+}
