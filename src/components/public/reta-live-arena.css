@@ -1,30 +1,14 @@
 /* Vista pública Round Robin — marcador. Solo .reta-live-arena.
    No altera Liga, Americano, Torneo Express ni retas por equipos. */
 
-.reta-live-arena .te-ambient__dust {
-  display: none;
-}
-
 .reta-live-arena {
-  --rla-bg: #0d0f12;
   --rla-surface: #14171c;
   --rla-surface-2: #1b2028;
   --rla-line: rgba(255, 255, 255, 0.1);
   --rla-text: #f5f5f5;
   --rla-muted: #a0a7b2;
   color: var(--rla-text);
-  background-color: var(--rla-bg);
-  background-image:
-    linear-gradient(180deg, rgba(13, 15, 18, 0.78) 0%, rgba(13, 15, 18, 0.92) 42%, #0d0f12 100%),
-    radial-gradient(
-      ellipse 80% 42% at 50% 0%,
-      color-mix(in srgb, var(--brand-accent, #ffffff) 16%, transparent),
-      transparent 68%
-    ),
-    var(--rla-court, none);
-  background-size: cover;
-  background-position: center 28%;
-  background-repeat: no-repeat;
+  background: transparent;
 }
 
 .reta-live-arena .te-public__inner {

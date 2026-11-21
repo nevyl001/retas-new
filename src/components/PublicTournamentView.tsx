@@ -1061,14 +1061,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   }, []);
 
   useEffect(() => {
-    if (isTeamsPublicView || loading) return;
-    const root = document.querySelector(".reta-live-arena");
-    if (!(root instanceof HTMLElement)) return;
-    const photo = `${process.env.PUBLIC_URL || ""}/images/cancha-riviera.jpg`;
-    root.style.setProperty("--rla-court", `url("${photo}")`);
-  }, [isTeamsPublicView, loading]);
-
-  useEffect(() => {
     if (isTeamsPublicView || matches.length === 0) return;
     const byRound = new Map<number, boolean>();
     for (const match of matches) {
