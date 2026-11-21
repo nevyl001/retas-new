@@ -15,7 +15,6 @@ export const FLEX_MAX_ROUNDS = 24;
 export const FLEX_MAX_SEASON_JORNADAS = 48;
 
 export const FLEX_DEFAULT_CATEGORIA = "6ª alta / 5ª baja";
-export const FLEX_DEFAULT_HORARIO = "Martes y jueves, 19:00–21:00";
 export const FLEX_DEFAULT_INSCRIPCION_MXN = 200;
 export const FLEX_DEFAULT_JORNADA_MXN = 300;
 export const FLEX_DEFAULT_PREMIO_CAMPEON = "$3,000 MXN";

@@ -1,7 +1,6 @@
 import { supabase } from "../lib/supabaseClient";
 import {
   FLEX_DEFAULT_CATEGORIA,
-  FLEX_DEFAULT_HORARIO,
   FLEX_DEFAULT_INSCRIPCION_MXN,
   FLEX_DEFAULT_JORNADA_MXN,
   FLEX_DEFAULT_JORNADAS,
@@ -122,7 +121,7 @@ export async function bootstrapFlexLeague(
       liga_id: ligaId,
       jornadas_planeadas: jornadas,
       categoria: options?.categoria?.trim() || FLEX_DEFAULT_CATEGORIA,
-      horario_sugerido: options?.horario?.trim() || FLEX_DEFAULT_HORARIO,
+      horario_sugerido: options?.horario?.trim() || null,
       inscripcion_temporada_mxn: options?.inscripcionTemporadaMxn ?? FLEX_DEFAULT_INSCRIPCION_MXN,
       participacion_jornada_mxn: options?.participacionJornadaMxn ?? FLEX_DEFAULT_JORNADA_MXN,
       premio_campeon: options?.premioCampeon?.trim() || FLEX_DEFAULT_PREMIO_CAMPEON,

@@ -174,7 +174,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
           <p className="liga-flex__kicker">Riviera Flex League</p>
           <h1>{detalle.nombre}</h1>
           <p>
-            {bundle?.config.categoria} · {bundle?.config.horarioSugerido} · participación voluntaria
+            {bundle?.config.categoria} · participación voluntaria · el horario se define en cada jornada
           </p>
         </div>
         <Button type="button" variant="back" onClick={() => navigateLiga("/liga")}>

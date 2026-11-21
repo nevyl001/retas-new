@@ -78,7 +78,6 @@ export const LigaNueva: React.FC = () => {
   const [vueltas, setVueltas] = useState<LigaVueltas>(1);
   const flexJornadas = 12;
   const [flexCategoria, setFlexCategoria] = useState("6ª alta / 5ª baja");
-  const [flexHorario, setFlexHorario] = useState("Martes y jueves, 19:00–21:00");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,7 +104,6 @@ export const LigaNueva: React.FC = () => {
             ? {
                 jornadas: flexJornadas,
                 categoria: flexCategoria,
-                horario: flexHorario,
               }
             : undefined,
       });
@@ -181,7 +179,12 @@ export const LigaNueva: React.FC = () => {
                     min={1}
                     max={12}
                     value={canchas}
-                    onChange={(e) => setCanchas(Number(e.target.value) || 3)}
+                    onChange={(e) => {
+                      const next = Number(e.target.value);
+                      if (Number.isInteger(next) && next >= 1 && next <= 12) {
+                        setCanchas(next);
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -254,19 +257,27 @@ export const LigaNueva: React.FC = () => {
                     <input id="liga-flex-jornadas" value="12" readOnly />
                   </div>
                   <div className="liga-field">
+                    <label htmlFor="liga-flex-canchas">Canchas</label>
+                    <input
+                      id="liga-flex-canchas"
+                      type="number"
+                      min={1}
+                      max={12}
+                      value={canchas}
+                      onChange={(e) => {
+                        const next = Number(e.target.value);
+                        if (Number.isInteger(next) && next >= 1 && next <= 12) {
+                          setCanchas(next);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="liga-field">
                     <label htmlFor="liga-flex-categoria">Categoría</label>
                     <input
                       id="liga-flex-categoria"
                       value={flexCategoria}
                       onChange={(e) => setFlexCategoria(e.target.value)}
-                    />
-                  </div>
-                  <div className="liga-field">
-                    <label htmlFor="liga-flex-horario">Horario sugerido</label>
-                    <input
-                      id="liga-flex-horario"
-                      value={flexHorario}
-                      onChange={(e) => setFlexHorario(e.target.value)}
                     />
                   </div>
                 </div>
