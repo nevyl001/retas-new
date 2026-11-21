@@ -1591,3 +1591,10 @@
 .liga-pantalla--individual .liga-ind-top3__support {
   color: rgba(245, 245, 245, 0.72);
 }
+
+@media (max-width: 719px) {
+  .liga-pantalla--individual .liga-ind-top3__card--1 .liga-ind-top3__portrait {
+    aspect-ratio: 4 / 3;
+    max-height: 15.5rem;
+  }
+}
