@@ -240,9 +240,9 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 
         {error ? <p className="ops-error">{error}</p> : null}
 
-        <OrganizeModes onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
-
         <HomeContinueStrip items={activeRetas} onContinue={handleContinueItem} />
+
+        <OrganizeModes onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
 
         <CompetitionModes onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
 

@@ -28,11 +28,15 @@ export const HomeContinueStrip: React.FC<HomeContinueStripProps> = ({
               className="ops-live__item"
               onClick={() => onContinue(item)}
             >
-              <span className="ops-card__icon" aria-hidden>
-                <TablerIcon name={mode?.tablerIcon ?? "ball-tennis"} size={18} />
+              <span className="ops-card__icon ops-live__icon" aria-hidden>
+                <TablerIcon name={mode?.tablerIcon ?? "ball-tennis"} size={22} />
               </span>
-              <span className="ops-live__name">{getRetaName(item)}</span>
-              <TablerIcon name="chevron-right" size={16} className="ops-card__go" />
+              <span className="ops-live__copy">
+                <span className="ops-live__kicker">Reta activa</span>
+                <span className="ops-live__name">{getRetaName(item)}</span>
+              </span>
+              <span className="ops-live__cta">Continuar</span>
+              <TablerIcon name="chevron-right" size={18} className="ops-card__go" />
             </button>
           );
         })}
