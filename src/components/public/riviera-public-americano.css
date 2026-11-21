@@ -5825,3 +5825,34 @@
     font-size: clamp(1.15rem, 1.8vw, 1.45rem);
   }
 }
+
+/* Americano público: mismo retrato 3:4 que Round Robin. */
+.te-public--americano .am-pub-match .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__grid,
+.te-public--americano .am-pub-match .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__column {
+  width: 100%;
+  max-width: 8.25rem !important;
+  max-height: none !important;
+}
+
+.te-public--americano .am-pub-match .liga-jornada-match-card--duel-stacks .liga-jornada-match-player-panel.pub-split-vs-panel {
+  aspect-ratio: 3 / 4 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+@media (min-width: 900px) {
+  .te-public--americano .am-pub-match .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__grid,
+  .te-public--americano .am-pub-match .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__column {
+    max-width: 9.25rem !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .te-public--americano .am-pub-match .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__grid,
+  .te-public--americano .am-pub-match .liga-jornada-match-card--duel-stacks .liga-jornada-match-pair-half__column {
+    max-width: 7.25rem !important;
+  }
+}
