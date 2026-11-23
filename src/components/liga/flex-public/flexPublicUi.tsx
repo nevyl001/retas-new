@@ -2,20 +2,6 @@ import React, { useEffect, useState } from "react";
 import type { FlexPointsPoint } from "../../../lib/liga/flex/publicView";
 import { isPhotographicSplitVsFoto } from "../jornada-public/ligaJornadaMatchNames";
 
-const FONT_ID = "flex-pub-fonts";
-
-export function useFlexPublicFonts(): void {
-  useEffect(() => {
-    if (typeof document === "undefined" || document.getElementById(FONT_ID)) return;
-    const link = document.createElement("link");
-    link.id = FONT_ID;
-    link.rel = "stylesheet";
-    link.href =
-      "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700&display=swap";
-    document.head.appendChild(link);
-  }, []);
-}
-
 export function useFlexPublicTitle(title: string): void {
   useEffect(() => {
     const previous = document.title;

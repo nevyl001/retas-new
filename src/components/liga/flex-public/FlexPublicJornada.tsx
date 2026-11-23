@@ -251,7 +251,7 @@ const FlexPublicJornadaBody: React.FC<{
   if (!jornada) {
     return (
       <PublicScopedBrandGate message="Cargando jornada…">
-        <div className="flex-pub-jornada liga-pantalla App--public-full-width ro-public-view ro-surface-dark liga-pantalla--jornada-fijas">
+        <div className="flex-pub-jornada liga-pantalla liga-pantalla--individual App--public-full-width ro-public-view ro-surface-dark liga-pantalla--jornada-fijas">
           <PublicModeShell className="liga-pantalla__inner">
             <p className="liga-pantalla__loading">
               Esa jornada no está en el calendario.

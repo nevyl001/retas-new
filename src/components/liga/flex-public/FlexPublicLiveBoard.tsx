@@ -11,7 +11,7 @@ import type {
   FlexJornadaStandingRow,
   FlexRoundNavItem,
 } from "./FlexPublicJornada";
-import { FlexNeutralAvatar, useFlexPublicFonts } from "./flexPublicUi";
+import { FlexNeutralAvatar } from "./flexPublicUi";
 import "./flex-public-live.css";
 
 type PublicProfile = { fotoUrl: string | null; rivieraId?: string | null };
@@ -184,7 +184,6 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
   seasonResolution,
   dataStale,
 }) => {
-  useFlexPublicFonts();
   const [historyRound, setHistoryRound] = useState<number | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [board, setBoard] = useState<"jornada" | "general">("jornada");
@@ -304,7 +303,7 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
 
   return (
     <div
-      className={`flex-pub-live liga-pantalla App--public-full-width ro-public-view ro-surface-dark${
+      className={`flex-pub-live liga-pantalla liga-pantalla--individual App--public-full-width ro-public-view ro-surface-dark${
         fullscreen ? " is-fullscreen" : ""
       }`}
     >
