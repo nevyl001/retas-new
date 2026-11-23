@@ -10,7 +10,7 @@ import {
 } from "../../lib/liga/flex/schedule";
 import { rankFlexJornada } from "../../lib/liga/flex/standings";
 import { honorResolution, rankFlexSeason } from "../../lib/liga/flex/season";
-import { estimateFlexJornada, windowMinutes } from "../../lib/liga/flex/time";
+import { windowMinutes } from "../../lib/liga/flex/time";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import {
   applyFlexJornada,
@@ -203,14 +203,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
       scoreB: partido.score_pareja2,
     }))
   );
-  const estimate = flex
-    ? estimateFlexJornada({
-        rounds: flex.rondas,
-        roundMinutes: flex.duracionRondaMin,
-        restMinutes: flex.descansoMin,
-        availableMinutes: windowMinutes(flex.horaInicio, flex.horaFin),
-      })
-    : null;
+  const retaMinutos = flex ? windowMinutes(flex.horaInicio, flex.horaFin) : null;
 
   const season = useMemo(() => {
     if (!bundle) return null;
@@ -1236,10 +1229,6 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                             setError(schedule.error);
                             return;
                           }
-                          if (estimate?.fits === false) {
-                            setError(estimate.message);
-                            return;
-                          }
                           setPreview(schedule);
                           setNotice(
                             schedule.quality.needsConfirmation
@@ -1461,13 +1450,11 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                       </div>
                       <div className="liga-flex-ops-summary__row">
                         <dt>Formato de rondas</dt>
-                        <dd>
-                          {flex.rondas} rondas · {flex.duracionRondaMin} min
-                        </dd>
+                        <dd>{flex.rondas} rondas</dd>
                       </div>
                       <div className="liga-flex-ops-summary__row">
-                        <dt>Duración estimada</dt>
-                        <dd>{estimate?.totalMinutes ?? "—"} min</dd>
+                        <dt>Tiempo de la reta</dt>
+                        <dd>{retaMinutos != null ? `${retaMinutos} min` : "—"}</dd>
                       </div>
                       <div className="liga-flex-ops-summary__row">
                         <dt>Programación</dt>
@@ -1905,6 +1892,16 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
   );
 };
 
+function retaEnd(inicio: string, minutes: number): string | null {
+  const match = /^(\d{1,2}):(\d{2})/.exec(inicio.trim());
+  if (!match) return null;
+  const total = Number(match[1]) * 60 + Number(match[2]) + Math.floor(minutes);
+  if (total >= 24 * 60) return null;
+  const hours = Math.floor(total / 60);
+  const mins = total % 60;
+  return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+}
+
 function ConfigFields({
   flex,
   fecha,
@@ -1927,31 +1924,24 @@ function ConfigFields({
   const [dia, setDia] = useState(fecha ?? "");
   const [canchas, setCanchas] = useState(flex.canchas);
   const [rondas, setRondas] = useState(flex.rondas);
-  const [duracion, setDuracion] = useState(flex.duracionRondaMin);
-  const [descanso, setDescanso] = useState(flex.descansoMin);
   const [inicio, setInicio] = useState(flex.horaInicio ?? "");
-  const [fin, setFin] = useState(flex.horaFin ?? "");
+  const [tiempo, setTiempo] = useState(
+    String(windowMinutes(flex.horaInicio, flex.horaFin) ?? "")
+  );
 
   useEffect(() => {
     setDia(fecha ?? "");
     setCanchas(flex.canchas);
     setRondas(flex.rondas);
-    setDuracion(flex.duracionRondaMin);
-    setDescanso(flex.descansoMin);
     setInicio(flex.horaInicio ?? "");
-    setFin(flex.horaFin ?? "");
+    setTiempo(String(windowMinutes(flex.horaInicio, flex.horaFin) ?? ""));
   }, [flex, fecha]);
 
-  const liveEstimate = useMemo(
-    () =>
-      estimateFlexJornada({
-        rounds: rondas,
-        roundMinutes: duracion,
-        restMinutes: descanso,
-        availableMinutes: windowMinutes(inicio || null, fin || null),
-      }),
-    [rondas, duracion, descanso, inicio, fin]
-  );
+  const tiempoMin = Number(tiempo);
+  const fin =
+    inicio && Number.isFinite(tiempoMin) && tiempoMin > 0
+      ? retaEnd(inicio, tiempoMin)
+      : null;
 
   return (
     <div className="liga-flex-config-card">
@@ -1994,32 +1984,6 @@ function ConfigFields({
         </label>
 
         <label className="liga-flex-field">
-          <span>Duración por ronda (min)</span>
-          <input
-            className="liga-flex-input"
-            type="number"
-            min={5}
-            max={90}
-            value={duracion}
-            disabled={disabled}
-            onChange={(e) => setDuracion(Number(e.target.value) || 20)}
-          />
-        </label>
-
-        <label className="liga-flex-field">
-          <span>Descanso entre rondas (min)</span>
-          <input
-            className="liga-flex-input"
-            type="number"
-            min={0}
-            max={30}
-            value={descanso}
-            disabled={disabled}
-            onChange={(e) => setDescanso(Number(e.target.value) || 0)}
-          />
-        </label>
-
-        <label className="liga-flex-field">
           <span>Hora de inicio</span>
           <input
             className="liga-flex-input"
@@ -2031,31 +1995,32 @@ function ConfigFields({
         </label>
 
         <label className="liga-flex-field">
-          <span>Hora estimada de finalización</span>
+          <span>Tiempo de la reta (min)</span>
           <input
             className="liga-flex-input"
-            type="time"
-            value={fin}
+            type="number"
+            min={1}
+            max={480}
+            value={tiempo}
             disabled={disabled}
-            onChange={(e) => setFin(e.target.value)}
+            onChange={(e) => setTiempo(e.target.value)}
           />
         </label>
       </div>
 
-      {/* Resumen dinámico en vivo */}
-      <div
-        className={`liga-flex-config-summary${
-          liveEstimate.fits === false ? " is-invalid" : ""
-        }`}
-      >
+      <div className="liga-flex-config-summary">
         <div className="liga-flex-config-summary__headline">
           {canchas} {canchas === 1 ? "CANCHA" : "CANCHAS"} · {rondas}{" "}
-          {rondas === 1 ? "RONDA" : "RONDAS"} · {duracion} MINUTOS
+          {rondas === 1 ? "RONDA" : "RONDAS"}
         </div>
         <div className="liga-flex-config-summary__duration">
-          DURACIÓN ESTIMADA: {liveEstimate.totalMinutes} MIN
+          TIEMPO DE LA RETA: {tiempoMin > 0 ? `${tiempoMin} MIN` : "—"}
         </div>
-        <p className="liga-flex-config-summary__detail">{liveEstimate.message}</p>
+        <p className="liga-flex-config-summary__detail">
+          {inicio && fin
+            ? `Empieza a las ${inicio} y termina a las ${fin}.`
+            : "Indica la hora de inicio y el tiempo de la reta."}
+        </p>
       </div>
 
       <Button
@@ -2068,10 +2033,10 @@ function ConfigFields({
             fecha: dia || null,
             canchas,
             rondas,
-            duracionRondaMin: duracion,
-            descansoMin: descanso,
+            duracionRondaMin: flex.duracionRondaMin,
+            descansoMin: flex.descansoMin,
             horaInicio: inicio || null,
-            horaFin: fin || null,
+            horaFin: fin,
           })
         }
       >

@@ -268,8 +268,10 @@ describe("LigaFlexAdmin — Rediseño Integral Premium", () => {
     // Vista por defecto: Jornadas con layout 2 columnas, Configuración y Participantes
     expect(container.textContent).toContain("PARTICIPANTES DE LA JORNADA");
     expect(container.textContent).toContain("CONFIGURACIÓN DE JORNADA");
-    expect(container.textContent).toContain("3 CANCHAS · 5 RONDAS · 20 MINUTOS");
-    expect(container.textContent).toContain("DURACIÓN ESTIMADA: 112 MIN");
+    expect(container.textContent).toContain("3 CANCHAS · 5 RONDAS");
+    expect(container.textContent).toContain("TIEMPO DE LA RETA: 120 MIN");
+    expect(container.textContent).not.toContain("Duración por ronda");
+    expect(container.textContent).not.toContain("Descanso entre rondas");
     expect(container.textContent).toContain("Guardar configuración");
 
     // Cambiar a Clasificación
