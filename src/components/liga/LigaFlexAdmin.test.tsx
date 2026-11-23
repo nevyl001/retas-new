@@ -194,6 +194,7 @@ describe("LigaFlexAdmin — Rediseño Integral Premium", () => {
     document.body.appendChild(container);
     root = createRoot(container);
     jest.spyOn(ligaFlexService, "loadFlexLeague").mockResolvedValue(mockBundle);
+    jest.spyOn(ligaFlexService, "loadFlexConfirmedRounds").mockResolvedValue([]);
   });
 
   afterEach(() => {

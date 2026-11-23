@@ -1,10 +1,12 @@
 import { flexPointsForPosition } from "./constants";
 import {
+  generateFlexNextRound,
   generateFlexSchedule,
   officialFlexLayout,
   regenerateFlexSchedule,
   scheduleCoversPlayers,
   scheduleHasCapturedResults,
+  type FlexPlannedMatch,
   type FlexSchedule,
 } from "./schedule";
 import { rankFlexJornada } from "./standings";
@@ -262,6 +264,95 @@ describe("Riviera Flex League — generador", () => {
       expect(schedule.quality.partnerRepeats).toBe(0);
     }
     expect(partners.size).toBeGreaterThan(1);
+  });
+});
+
+describe("Riviera Flex League — ronda progresiva", () => {
+  function appearances(matches: FlexPlannedMatch[]) {
+    const seen = new Map<string, number>();
+    for (const match of matches) {
+      for (const id of [...match.pairA, ...match.pairB]) {
+        seen.set(id, (seen.get(id) ?? 0) + 1);
+      }
+    }
+    return seen;
+  }
+
+  function partnerRepeats(history: FlexPlannedMatch[], next: FlexPlannedMatch[]) {
+    const seen = new Set<string>();
+    const key = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+    for (const match of history) {
+      seen.add(key(match.pairA[0], match.pairA[1]));
+      seen.add(key(match.pairB[0], match.pairB[1]));
+    }
+    let repeats = 0;
+    for (const match of next) {
+      if (seen.has(key(match.pairA[0], match.pairA[1]))) repeats += 1;
+      if (seen.has(key(match.pairB[0], match.pairB[1]))) repeats += 1;
+    }
+    return repeats;
+  }
+
+  it("con 12 jugadores la primera generación es una sola ronda de 3 partidos", () => {
+    const roster = players(12);
+    for (const seed of [3, 19, 41, 88, 120]) {
+      const round = generateFlexNextRound({
+        players: roster,
+        courts: 3,
+        seed,
+        history: [],
+      });
+      expect(round.ok).toBe(true);
+      if (!round.ok) return;
+      expect(round.rounds).toHaveLength(1);
+      expect(round.rounds[0]!.matches).toHaveLength(3);
+      const plays = appearances(round.rounds[0]!.matches);
+      expect(plays.size).toBe(12);
+      expect(Math.max.apply(null, Array.from(plays.values()))).toBe(1);
+      expect(round.quality.partnerRepeats).toBe(0);
+    }
+  });
+
+  it("con 16 jugadores cada ronda usa 4 canchas y no repite jugador", () => {
+    const roster = players(16);
+    const round = generateFlexNextRound({
+      players: roster,
+      courts: 4,
+      seed: 77,
+      history: [],
+    });
+    expect(round.ok).toBe(true);
+    if (!round.ok) return;
+    expect(round.rounds[0]!.matches).toHaveLength(4);
+    expect(appearances(round.rounds[0]!.matches).size).toBe(16);
+  });
+
+  it("la segunda ronda recuerda los compañeros de la primera", () => {
+    const roster = players(12);
+    let repeats = 0;
+    for (const seed of [5, 28, 63, 91, 144]) {
+      const first = generateFlexNextRound({
+        players: roster,
+        courts: 3,
+        seed,
+        history: [],
+      });
+      expect(first.ok).toBe(true);
+      if (!first.ok) return;
+      const second = generateFlexNextRound({
+        players: roster,
+        courts: 3,
+        seed: seed + 9,
+        history: first.rounds[0]!.matches,
+      });
+      expect(second.ok).toBe(true);
+      if (!second.ok) return;
+      expect(second.rounds[0]!.round).toBe(2);
+      expect(second.rounds[0]!.matches).toHaveLength(3);
+      expect(appearances(second.rounds[0]!.matches).size).toBe(12);
+      repeats += partnerRepeats(first.rounds[0]!.matches, second.rounds[0]!.matches);
+    }
+    expect(repeats).toBe(0);
   });
 });
 

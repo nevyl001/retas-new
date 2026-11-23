@@ -1,28 +1,38 @@
 import React, { useEffect, useMemo, useState } from "react";
 import * as clubExperience from "../../club-experience";
 import type { LigaDetalle, LigaJornada, LigaJugadorPoolItem, LigaPartido } from "../../lib/liga/types";
+import { FLEX_MAX_ROUNDS } from "../../lib/liga/flex/constants";
 import {
-  generateFlexSchedule,
+  adjustFlexTarget,
+  flexScoredRoundFloor,
+  nextFlexRoundAction,
+  resetFlexJornadaGuard,
+} from "../../lib/liga/flex/roundControl";
+import {
+  generateFlexNextRound,
   officialFlexLayout,
-  regenerateFlexSchedule,
   scheduleHasCapturedResults,
-  type FlexSchedule,
+  type FlexPlannedMatch,
 } from "../../lib/liga/flex/schedule";
 import { rankFlexJornada } from "../../lib/liga/flex/standings";
 import { honorResolution, rankFlexSeason } from "../../lib/liga/flex/season";
 import { windowMinutes } from "../../lib/liga/flex/time";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
 import {
+  adjustFlexRounds,
   applyFlexJornada,
   closeFlexLeague,
-  confirmFlexSchedule,
+  confirmFlexRound,
   correctFlexJornada,
+  loadFlexConfirmedRounds,
   loadFlexLeague,
   markFlexFinal,
   reopenFlexLeague,
   resizeFlexCalendar,
+  resetFlexJornada,
   saveFlexJornadaSetup,
   saveFlexMatchScore,
+  saveFlexRound,
   updateFlexSeasonConfig,
   setFlexParticipantes,
   startFlexJornada,
@@ -30,6 +40,7 @@ import {
   type FlexJornadaRow,
 } from "../../services/ligaFlexService";
 import { Button } from "../ui";
+import { Modal } from "../ui/Modal";
 import { TablerIcon } from "../ui/TablerIcon";
 import { LigaPageShell } from "./LigaPageShell";
 import { navigateJugadoresLista } from "../jugadores/jugadoresGeneroNav";
@@ -116,7 +127,10 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
   const [activeTab, setActiveTab] = useState<FlexAdminTab>("jornadas");
   const [bundle, setBundle] = useState<FlexBundle | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [preview, setPreview] = useState<FlexSchedule | null>(null);
+  const [pickedRound, setPickedRound] = useState<number | null>(null);
+  const [confirmedRounds, setConfirmedRounds] = useState<number[]>([]);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetText, setResetText] = useState("");
   const [query, setQuery] = useState("");
   const [directoryQuery, setDirectoryQuery] = useState("");
   const [participantFilter, setParticipantFilter] = useState<"ALL" | "SELECTED" | "AVAILABLE">("ALL");
@@ -202,6 +216,66 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
     }))
   );
   const retaMinutos = flex ? windowMinutes(flex.horaInicio, flex.horaFin) : null;
+  const generatedRounds = useMemo(
+    () => Array.from(new Set(partidos.map((partido) => partido.ronda))).sort((a, b) => a - b),
+    [partidos]
+  );
+  const roundScores = useMemo(
+    () =>
+      partidos.map((partido) => ({
+        round: partido.ronda,
+        scoreA: partido.score_pareja1,
+        scoreB: partido.score_pareja2,
+      })),
+    [partidos]
+  );
+  const openRound =
+    generatedRounds.find((ronda) =>
+      roundScores
+        .filter((match) => match.round === ronda)
+        .some((match) => match.scoreA == null || match.scoreB == null)
+    ) ?? generatedRounds[generatedRounds.length - 1] ?? null;
+  const shownRound =
+    pickedRound != null && generatedRounds.includes(pickedRound) ? pickedRound : openRound;
+  const shownMatches = partidos
+    .filter((partido) => partido.ronda === shownRound)
+    .slice()
+    .sort((a, b) => (a.cancha ?? 0) - (b.cancha ?? 0));
+  const roundAction =
+    flex == null
+      ? null
+      : nextFlexRoundAction({
+          target: flex.rondas,
+          generatedRounds,
+          confirmedRounds,
+          matches: roundScores,
+        });
+  const scoredFloor = flexScoredRoundFloor(roundScores);
+  const matchesWithResult = roundScores.filter(
+    (match) => match.scoreA != null || match.scoreB != null
+  ).length;
+  const resetGuard = resetFlexJornadaGuard({
+    seasonClosed: detalle.estado === "completed",
+    championJornada: bundle?.honores?.jornadaFinalId === jornada?.id,
+  });
+  const officialPoints = (bundle?.posiciones ?? []).filter(
+    (row) => row.jornadaId === jornada?.id
+  ).length;
+
+  useEffect(() => {
+    if (!jornada?.id) return;
+    let active = true;
+    void loadFlexConfirmedRounds(jornada.id)
+      .then((rounds) => {
+        if (active) setConfirmedRounds(rounds);
+      })
+      .catch(() => {
+        if (active) setConfirmedRounds([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [jornada?.id, bundle]);
 
   const season = useMemo(() => {
     if (!bundle) return null;
@@ -920,7 +994,9 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                       }`}
                       onClick={() => {
                         setSelectedId(item.id);
-                        setPreview(null);
+                        setPickedRound(null);
+                        setResetOpen(false);
+                        setResetText("");
                       }}
                     >
                       <div className="liga-flex-jornada-pill__top">
@@ -1136,102 +1212,177 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                     <FlexRegistroUnicoHint />
                   </section>
 
-                  {/* TARJETA 2: PAREJAS, RONDAS Y PARTIDOS */}
                   <section className="liga-flex-card">
                     <div className="liga-flex-card__head">
                       <div>
-                        <span className="liga-flex-card__eyebrow">Rotación y resultados</span>
-                        <h2 className="liga-flex-card__title">PAREJAS, RONDAS Y PARTIDOS</h2>
+                        <span className="liga-flex-card__eyebrow">Control de jornada</span>
+                        <h2 className="liga-flex-card__title">CONTROL DE JORNADA</h2>
                       </div>
                       <span className="liga-flex-pill">
-                        {partidos.length > 0
-                          ? `${partidos.length} partidos confirmados`
-                          : preview
-                          ? "Borrador generado"
-                          : "Sin partidos"}
+                        {shownRound
+                          ? `Ronda ${String(shownRound).padStart(2, "0")}`
+                          : "Sin ronda generada"}
                       </span>
                     </div>
 
-                    <div className="liga-flex__actions liga-flex-schedule-actions">
-                      <Button
-                        type="button"
-                        variant="primary"
-                        disabled={busy || hasScores || !layout.ok}
-                        onClick={() => {
-                          const schedule = generateFlexSchedule({
-                            players: playersOf(participantIds),
-                            courts: flex.canchas,
-                            rounds: flex.rondas,
-                            seed: Date.now() % 100000,
-                          });
-                          if (!schedule.ok) {
-                            setError(schedule.error);
-                            return;
-                          }
-                          setPreview(schedule);
-                          setNotice(
-                            schedule.quality.needsConfirmation
-                              ? schedule.quality.limitations.join(" ")
-                              : "Programación equilibrada lista para confirmar."
-                          );
-                        }}
-                      >
-                        <TablerIcon name="sparkles" size={15} />
-                        <span>Generar parejas</span>
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        disabled={busy || !preview || hasScores}
-                        onClick={() => {
-                          if (!preview) return;
-                          const next = regenerateFlexSchedule({
-                            players: playersOf(participantIds),
-                            courts: flex.canchas,
-                            rounds: flex.rondas,
-                            seed: preview.seed,
-                            previousSignature: preview.signature,
-                          });
-                          if (!next.ok) {
-                            setError(next.error);
-                            return;
-                          }
-                          setPreview(next);
-                          setNotice(
-                            next.changed
-                              ? "Hay otra distribución."
-                              : "No apareció otra distribución distinta con la misma equidad."
-                          );
-                        }}
-                      >
-                        <TablerIcon name="refresh" size={15} />
-                        <span>Regenerar parejas</span>
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="primary"
-                        disabled={busy || !preview}
-                        onClick={() =>
-                          preview
-                            ? void run(async () => {
-                                await confirmFlexSchedule({
-                                  jornadaId: jornada.id,
-                                  schedule: preview,
-                                });
-                                setPreview(null);
-                                setNotice("Jornada confirmada.");
-                              })
-                            : undefined
-                        }
-                      >
-                        <TablerIcon name="check" size={15} />
-                        <span>Confirmar jornada</span>
-                      </Button>
+                    <div className="liga-flex-round-status">
+                      <span>Ronda actual: {openRound ? `R${String(openRound).padStart(2, "0")}` : "—"}</span>
+                      <span>Confirmadas: {confirmedRounds.length}</span>
+                      <span>Pendientes: {Math.max(0, flex.rondas - generatedRounds.length)}</span>
                     </div>
 
-                    {preview ? <RoundPreview schedule={preview} names={names} /> : null}
+                    <div className="liga-flex-round-stepper">
+                      <span>Rondas programadas</span>
+                      <div className="liga-flex-round-stepper__control">
+                        <button
+                          type="button"
+                          aria-label="Quitar una ronda programada"
+                          disabled={
+                            busy ||
+                            jornada.estado === "completed" ||
+                            flex.rondas <= Math.max(1, scoredFloor)
+                          }
+                          onClick={() => {
+                            const next = flex.rondas - 1;
+                            const check = adjustFlexTarget({
+                              current: flex.rondas,
+                              next,
+                              matches: roundScores,
+                            });
+                            if (!check.ok) {
+                              setError(check.error);
+                              return;
+                            }
+                            void run(async () => {
+                              const removed = await adjustFlexRounds(jornada.id, next);
+                              setNotice(
+                                removed > 0
+                                  ? `Objetivo en ${next}. Se retiraron ${removed} partidos sin marcador.`
+                                  : `Objetivo en ${next} rondas.`
+                              );
+                            });
+                          }}
+                        >
+                          −
+                        </button>
+                        <strong>{flex.rondas}</strong>
+                        <button
+                          type="button"
+                          aria-label="Sumar una ronda programada"
+                          disabled={
+                            busy ||
+                            jornada.estado === "completed" ||
+                            flex.rondas >= FLEX_MAX_ROUNDS
+                          }
+                          onClick={() => {
+                            const next = flex.rondas + 1;
+                            const check = adjustFlexTarget({
+                              current: flex.rondas,
+                              next,
+                              matches: roundScores,
+                            });
+                            if (!check.ok) {
+                              setError(check.error);
+                              return;
+                            }
+                            void run(async () => {
+                              await adjustFlexRounds(jornada.id, next);
+                              setNotice(`Objetivo en ${next} rondas.`);
+                            });
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {generatedRounds.length > 0 ? (
+                      <div className="liga-flex-round-nav" role="tablist" aria-label="Rondas de la jornada">
+                        {generatedRounds.map((ronda) => (
+                          <button
+                            key={ronda}
+                            type="button"
+                            role="tab"
+                            aria-selected={ronda === shownRound}
+                            className={ronda === shownRound ? "is-selected" : ""}
+                            onClick={() => setPickedRound(ronda)}
+                          >
+                            R{String(ronda).padStart(2, "0")}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="liga-flex-card__desc">
+                        Todavía no hay rondas. Genera solo la primera.
+                      </p>
+                    )}
+
+                    <div className="liga-flex__actions liga-flex-schedule-actions">
+                      {roundAction?.kind === "generate" || roundAction?.kind === "replace" ? (
+                        <Button
+                          type="button"
+                          variant="primary"
+                          disabled={busy || !layout.ok || jornada.estado === "completed"}
+                          onClick={() => {
+                            if (!roundAction || (roundAction.kind !== "generate" && roundAction.kind !== "replace")) {
+                              return;
+                            }
+                            const round = roundAction.round;
+                            void run(async () => {
+                              const schedule = generateFlexNextRound({
+                                players: playersOf(participantIds),
+                                courts: flex.canchas,
+                                seed: Date.now() % 100000,
+                                history: plannedHistory(
+                                  partidos,
+                                  roundAction.kind === "replace" ? round : undefined
+                                ),
+                              });
+                              if (!schedule.ok) throw new Error(schedule.error);
+                              await saveFlexRound({
+                                jornadaId: jornada.id,
+                                round,
+                                schedule,
+                              });
+                              setPickedRound(round);
+                              setNotice(
+                                schedule.quality.needsConfirmation
+                                  ? schedule.quality.limitations.join(" ")
+                                  : `Ronda ${round} lista.`
+                              );
+                            });
+                          }}
+                        >
+                          <TablerIcon name="sparkles" size={15} />
+                          <span>
+                            {roundAction.kind === "replace"
+                              ? `Regenerar ronda ${roundAction.round}`
+                              : `Generar ronda ${roundAction.round}`}
+                          </span>
+                        </Button>
+                      ) : null}
+
+                      {roundAction?.kind === "confirm" ? (
+                        <Button
+                          type="button"
+                          variant="primary"
+                          disabled={busy}
+                          onClick={() =>
+                            void run(async () => {
+                              await confirmFlexRound(jornada.id, roundAction.round);
+                              setNotice(`Ronda ${roundAction.round} confirmada.`);
+                            })
+                          }
+                        >
+                          <TablerIcon name="check" size={15} />
+                          <span>Confirmar ronda {roundAction.round}</span>
+                        </Button>
+                      ) : null}
+
+                      {roundAction?.kind === "blocked" ? (
+                        <p className="liga-flex-card__desc">{roundAction.reason}</p>
+                      ) : null}
+                    </div>
 
                     {flex.advertencia ? (
                       <div className="liga-flex-warning-strip">
@@ -1241,22 +1392,38 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                     ) : null}
 
                     <MatchEditor
-                      partidos={partidos}
+                      partidos={shownMatches}
                       names={names}
                       disabled={
                         busy ||
                         jornada.estado === "completed" ||
-                        detalle.estado === "completed"
+                        detalle.estado === "completed" ||
+                        (shownRound != null && confirmedRounds.includes(shownRound))
                       }
                       savedId={savedMatchId}
                       onSave={(partido, scoreA, scoreB) =>
                         void run(async () => {
                           await saveFlexMatchScore(partido.id, scoreA, scoreB);
                           setSavedMatchId(partido.id);
-                          setNotice("Marcador guardado.");
+                          setNotice("Marcador guardado. La ronda sigue sin confirmar.");
                         })
                       }
                     />
+
+                    <details className="liga-flex-advanced">
+                      <summary>Acciones avanzadas</summary>
+                      <button
+                        type="button"
+                        className="liga-flex-advanced__reset"
+                        disabled={busy}
+                        onClick={() => {
+                          setResetText("");
+                          setResetOpen(true);
+                        }}
+                      >
+                        Reiniciar jornada
+                      </button>
+                    </details>
 
                     {unresolved && !unresolved.ok
                       ? unresolved.ties.map((group, index) => (
@@ -1398,11 +1565,9 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                       <div className="liga-flex-ops-summary__row">
                         <dt>Programación</dt>
                         <dd>
-                          {flex.programacionEstado === "confirmada"
-                            ? "Confirmada"
-                            : preview
-                            ? "En vista previa"
-                            : "Sin confirmar"}
+                          {generatedRounds.length > 0
+                            ? `${generatedRounds.length} generadas`
+                            : "Sin generar"}
                         </dd>
                       </div>
                     </dl>
@@ -1810,6 +1975,83 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
           </section>
         ) : null}
       </div>
+      <Modal
+        open={resetOpen && jornada != null}
+        onClose={() => {
+          if (busy) return;
+          setResetOpen(false);
+          setResetText("");
+        }}
+        title="¿REINICIAR ESTA JORNADA?"
+        size="sm"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={busy}
+              onClick={() => {
+                setResetOpen(false);
+                setResetText("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              disabled={busy || resetText !== "REINICIAR" || !resetGuard.ok || jornada == null}
+              onClick={() => {
+                if (!jornada || !resetGuard.ok) return;
+                void run(async () => {
+                  await resetFlexJornada(jornada.id, "REINICIAR");
+                  setResetOpen(false);
+                  setResetText("");
+                  setPickedRound(null);
+                  setNotice("Jornada reiniciada. Los convocados y el horario se conservan.");
+                });
+              }}
+            >
+              Reiniciar jornada
+            </Button>
+          </>
+        }
+      >
+        <div className="liga-flex-reset">
+          <p>
+            Se eliminará la programación deportiva y se restablecerán los resultados de esta jornada. Esta acción no afectará otras jornadas ni eliminará jugadores del Registro Único.
+          </p>
+          {jornada ? (
+            <dl>
+              <div><dt>Jornada</dt><dd>{String(jornada.numero).padStart(2, "0")}</dd></div>
+              <div><dt>Rondas generadas</dt><dd>{generatedRounds.length}</dd></div>
+              <div><dt>Partidos con resultados</dt><dd>{matchesWithResult}</dd></div>
+              <div><dt>Rondas confirmadas</dt><dd>{confirmedRounds.length}</dd></div>
+              <div><dt>Estado del cierre</dt><dd>{jornada.estado === "completed" ? "Cerrada" : "Abierta"}</dd></div>
+              <div>
+                <dt>Puntos oficiales de esta jornada</dt>
+                <dd>{officialPoints}</dd>
+              </div>
+            </dl>
+          ) : null}
+          {resetGuard.ok ? (
+            <p>
+              Los puntos Flex de esta jornada se retiran de la clasificación. No se borran movimientos de otras jornadas ni del registro de clases.
+            </p>
+          ) : (
+            <p className="liga-flex-reset__block">{resetGuard.error}</p>
+          )}
+          <label>
+            <span>Escribe REINICIAR para continuar</span>
+            <input
+              value={resetText}
+              disabled={busy || !resetGuard.ok}
+              autoComplete="off"
+              onChange={(event) => setResetText(event.target.value)}
+            />
+          </label>
+        </div>
+      </Modal>
     </LigaPageShell>
   );
 };
@@ -2372,70 +2614,26 @@ function statsOf(
   return map;
 }
 
-function RoundPreview({
-  schedule,
-  names,
-}: {
-  schedule: FlexSchedule;
-  names: Map<string, string>;
-}) {
-  return (
-    <div className="liga-flex__preview">
-      <div className="liga-flex-preview-quality">
-        <span className="liga-flex-perf-chip">
-          Partidos por jugador: <strong>{schedule.quality.rounds}</strong>
-        </span>
-        <span className="liga-flex-perf-chip">
-          Descansos: <strong>{schedule.quality.rests}</strong>
-        </span>
-        <span className="liga-flex-perf-chip">
-          Parejas repetidas: <strong>{schedule.quality.partnerRepeats}</strong>
-        </span>
-        <span className="liga-flex-perf-chip">
-          Rivales repetidos: <strong>{schedule.quality.rivalRepeats}</strong>
-        </span>
-        {schedule.quality.partnerRepeats === 0 ? (
-          <span className="liga-flex-perf-chip is-highlight">
-            Nadie repite compañero
-          </span>
-        ) : null}
-      </div>
-
-      <div className="liga-flex-preview-rounds">
-        {schedule.rounds.map((round) => (
-          <article key={round.round} className="liga-flex-preview-round">
-            <div className="liga-flex-preview-round__head">
-              <h3>Ronda {round.round}</h3>
-              <span>{round.matches.length} canchas</span>
-            </div>
-            <div className="liga-flex-preview-round__matches">
-              {round.matches.map((match) => (
-                <div
-                  key={`${match.round}-${match.court}`}
-                  className="liga-flex-preview-match"
-                >
-                  <span className="liga-flex-preview-match__court">
-                    Cancha {match.court}
-                  </span>
-                  <span className="liga-flex-preview-match__teams">
-                    <strong>{label(match.pairA, names)}</strong>
-                    <em>vs</em>
-                    <strong>{label(match.pairB, names)}</strong>
-                  </span>
-                </div>
-              ))}
-            </div>
-            {round.benchIds.length > 0 ? (
-              <p className="liga-flex-preview-round__bench">
-                Descansan:{" "}
-                {round.benchIds.map((id) => names.get(id) ?? id).join(", ")}
-              </p>
-            ) : null}
-          </article>
-        ))}
-      </div>
-    </div>
-  );
+function plannedHistory(
+  partidos: LigaPartido[],
+  beforeRound?: number
+): FlexPlannedMatch[] {
+  return partidos.flatMap((partido) => {
+    if (beforeRound != null && partido.ronda >= beforeRound) return [];
+    const a1 = partido.pareja1?.jugador1_id;
+    const a2 = partido.pareja1?.jugador2_id;
+    const b1 = partido.pareja2?.jugador1_id;
+    const b2 = partido.pareja2?.jugador2_id;
+    if (!a1 || !a2 || !b1 || !b2) return [];
+    return [
+      {
+        round: partido.ronda,
+        court: partido.cancha ?? 1,
+        pairA: [a1, a2],
+        pairB: [b1, b2],
+      },
+    ];
+  });
 }
 
 function MatchEditor({
@@ -2453,38 +2651,17 @@ function MatchEditor({
 }) {
   if (partidos.length === 0) return null;
 
-  const sorted = partidos
-    .slice()
-    .sort((a, b) => a.ronda - b.ronda || (a.cancha ?? 0) - (b.cancha ?? 0));
-
-  const roundsMap = new Map<number, LigaPartido[]>();
-  for (const p of sorted) {
-    const list = roundsMap.get(p.ronda) ?? [];
-    list.push(p);
-    roundsMap.set(p.ronda, list);
-  }
-
   return (
-    <div className="liga-flex__matches">
-      {Array.from(roundsMap.entries()).map(([rondaNum, list]) => (
-        <div key={rondaNum} className="liga-flex-round-group">
-          <div className="liga-flex-round-group__head">
-            <h3>Ronda {rondaNum}</h3>
-            <span>{list.length} partidos</span>
-          </div>
-          <div className="liga-flex-matches-list">
-            {list.map((partido) => (
-              <ScoreRow
-                key={partido.id}
-                partido={partido}
-                names={names}
-                disabled={disabled}
-                saved={savedId === partido.id}
-                onSave={onSave}
-              />
-            ))}
-          </div>
-        </div>
+    <div className="liga-flex-matches-list">
+      {partidos.map((partido) => (
+        <ScoreRow
+          key={partido.id}
+          partido={partido}
+          names={names}
+          disabled={disabled}
+          saved={savedId === partido.id}
+          onSave={onSave}
+        />
       ))}
     </div>
   );
@@ -2606,8 +2783,3 @@ function toScored(partido: LigaPartido) {
   };
 }
 
-function label(pair: [string, string], names: Map<string, string>): string {
-  return `${names.get(pair[0]) ?? "Jugador"} / ${
-    names.get(pair[1]) ?? "Jugador"
-  }`;
-}

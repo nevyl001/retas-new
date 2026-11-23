@@ -326,6 +326,83 @@ export async function setFlexParticipantes(jornadaId: string, jugadorIds: string
   rpcError(data as { ok?: boolean; error?: string }, "No se pudo guardar la lista de la jornada.");
 }
 
+export async function loadFlexConfirmedRounds(jornadaId: string): Promise<number[]> {
+  const { data, error } = await supabase
+    .from("liga_flex_auditoria")
+    .select("detalle")
+    .eq("jornada_id", jornadaId)
+    .eq("accion", "confirmar_ronda");
+  if (error) throw new Error(error.message);
+  const rounds = new Set<number>();
+  for (const row of data ?? []) {
+    const detalle = row.detalle as { ronda?: number } | null;
+    const ronda = Number(detalle?.ronda);
+    if (Number.isInteger(ronda)) rounds.add(ronda);
+  }
+  return Array.from(rounds).sort((a, b) => a - b);
+}
+
+export async function saveFlexRound(input: {
+  jornadaId: string;
+  round: number;
+  schedule: FlexSchedule;
+}): Promise<void> {
+  await requireUserId();
+  const partidos = input.schedule.rounds
+    .filter((item) => item.round === input.round)
+    .flatMap((item) =>
+      item.matches.map((match) => ({
+        ronda: match.round,
+        cancha: match.court,
+        a1: match.pairA[0],
+        a2: match.pairA[1],
+        b1: match.pairB[0],
+        b2: match.pairB[1],
+      }))
+    );
+  const { data, error } = await supabase.rpc("flex_guardar_ronda", {
+    p_jornada_id: input.jornadaId,
+    p_ronda: input.round,
+    p_seed: input.schedule.seed,
+    p_partidos: partidos,
+    p_calidad: input.schedule.quality,
+    p_advertencia: input.schedule.quality.limitations.join(" "),
+  });
+  if (error) throw new Error(error.message);
+  rpcError(data as { ok?: boolean; error?: string }, "No se pudo guardar la ronda.");
+}
+
+export async function confirmFlexRound(jornadaId: string, round: number): Promise<void> {
+  await requireUserId();
+  const { data, error } = await supabase.rpc("flex_confirmar_ronda", {
+    p_jornada_id: jornadaId,
+    p_ronda: round,
+  });
+  if (error) throw new Error(error.message);
+  rpcError(data as { ok?: boolean; error?: string }, "No se pudo confirmar la ronda.");
+}
+
+export async function adjustFlexRounds(jornadaId: string, rounds: number): Promise<number> {
+  await requireUserId();
+  const { data, error } = await supabase.rpc("flex_ajustar_rondas", {
+    p_jornada_id: jornadaId,
+    p_rondas: rounds,
+  });
+  if (error) throw new Error(error.message);
+  rpcError(data as { ok?: boolean; error?: string }, "No se pudo cambiar el número de rondas.");
+  return Number((data as { partidos_retirados?: number }).partidos_retirados ?? 0);
+}
+
+export async function resetFlexJornada(jornadaId: string, motivo: string): Promise<void> {
+  await requireUserId();
+  const { data, error } = await supabase.rpc("flex_reiniciar_jornada", {
+    p_jornada_id: jornadaId,
+    p_motivo: motivo,
+  });
+  if (error) throw new Error(error.message);
+  rpcError(data as { ok?: boolean; error?: string }, "No se pudo reiniciar la jornada.");
+}
+
 export async function confirmFlexSchedule(input: {
   jornadaId: string;
   schedule: FlexSchedule;

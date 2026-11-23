@@ -110,6 +110,58 @@ export function generateFlexSchedule(input: {
   return schedule;
 }
 
+/**
+ * Una sola ronda nueva, usando el historial ya generado.
+ * No arma el calendario completo.
+ */
+export function generateFlexNextRound(input: {
+  players: readonly FlexSchedulePlayer[];
+  courts: number;
+  seed: number;
+  history?: readonly FlexPlannedMatch[];
+  trials?: number;
+}): FlexSchedule | FlexScheduleFailure {
+  const ids = input.players.map((player) => player.id);
+  if (new Set(ids).size !== ids.length) {
+    return { ok: false, error: "Hay un jugador duplicado en la jornada." };
+  }
+  const layout = officialFlexLayout(input.players.length, input.courts);
+  if (!layout.ok) return { ok: false, error: layout.error };
+  const history = input.history ?? [];
+  const known = new Set(ids);
+  for (const match of history) {
+    for (const id of [...match.pairA, ...match.pairB]) {
+      if (!known.has(id)) {
+        return { ok: false, error: "El historial incluye a alguien que no está en la jornada." };
+      }
+    }
+  }
+  const nextRound =
+    history.reduce((max, match) => Math.max(max, match.round), 0) + 1;
+  if (nextRound > FLEX_MAX_ROUNDS) {
+    return { ok: false, error: `Las rondas deben estar entre 1 y ${FLEX_MAX_ROUNDS}.` };
+  }
+  const trials = input.trials ?? 16;
+  let best: (FlexSchedule & { selectionScore: number }) | null = null;
+  for (let offset = 0; offset < trials; offset += 1) {
+    const seed = normalizeSeed(input.seed + offset * 17);
+    const built = planOneRound(
+      input.players,
+      layout.courtsUsed,
+      nextRound,
+      seed,
+      history
+    );
+    if (!built.ok) continue;
+    if (!best || built.selectionScore < best.selectionScore) best = built;
+  }
+  if (!best) {
+    return { ok: false, error: "No se encontró una ronda válida con este historial." };
+  }
+  const { selectionScore: _score, ...schedule } = best;
+  return schedule;
+}
+
 export function regenerateFlexSchedule(input: {
   players: readonly FlexSchedulePlayer[];
   courts: number;
@@ -273,6 +325,150 @@ function buildOnce(
     quality: measured.quality,
     selectionScore: measured.selectionScore,
   };
+}
+
+function planOneRound(
+  players: readonly FlexSchedulePlayer[],
+  courts: number,
+  roundNumber: number,
+  seed: number,
+  history: readonly FlexPlannedMatch[]
+): (FlexSchedule & { selectionScore: number }) | FlexScheduleFailure {
+  const ordered = seededShuffle(players, seed);
+  const realOf = new Map<string, string>();
+  const aliasOf = new Map<string, string>();
+  const live: AmericanoPlayer[] = ordered.map((player, index) => {
+    const alias = `f${String(index).padStart(2, "0")}`;
+    realOf.set(alias, player.id);
+    aliasOf.set(player.id, alias);
+    return {
+      id: alias,
+      name: player.name,
+      stats: { pointsFor: 0, pointsAgainst: 0, gamesPlayed: 0, roundsOnBench: 0 },
+    };
+  });
+  const byAlias = new Map(live.map((player) => [player.id, player]));
+  const partnerMatrix = initializeMatrix(live);
+  const rivalMatrix = initializeMatrix(live);
+  const names = new Map(live.map((player) => [player.id, player.name]));
+
+  try {
+    const held = withRandom(mulberry32(seed), () => {
+      for (const match of history) {
+        const playersOf = (pair: [string, string]) => {
+          const a = byAlias.get(aliasOf.get(pair[0]) ?? "");
+          const b = byAlias.get(aliasOf.get(pair[1]) ?? "");
+          if (!a || !b) throw new Error("El historial no coincide con los jugadores.");
+          return [a, b] as [AmericanoPlayer, AmericanoPlayer];
+        };
+        const synthetic = {
+          id: `h-${match.round}-${match.court}`,
+          teamA: playersOf(match.pairA),
+          teamB: playersOf(match.pairB),
+          court: match.court,
+          scoreA: 1,
+          scoreB: 1,
+        };
+        updateMatrices(synthetic, partnerMatrix, rivalMatrix);
+        for (const player of [...synthetic.teamA, ...synthetic.teamB]) {
+          player.stats.gamesPlayed += 1;
+        }
+      }
+      const round = generateAmericanoRound({
+        allPlayers: live,
+        roundNumber,
+        totalRounds: roundNumber,
+        courts,
+        partnerMatrix,
+        rivalMatrix,
+        lastBenchPlayerIds: new Set(),
+        priorRounds: [],
+      });
+      const errors = hardErrors(round, live, courts, names);
+      if (errors.length > 0) throw new Error(errors[0]);
+      const real = (alias: string) => realOf.get(alias) ?? alias;
+      const planned = [
+        {
+          round: roundNumber,
+          benchIds: round.benchPlayers.map((player) => real(player.id)),
+          matches: round.matches.map((match) => ({
+            round: roundNumber,
+            court: match.court,
+            pairA: [real(match.teamA[0].id), real(match.teamA[1].id)] as [string, string],
+            pairB: [real(match.teamB[0].id), real(match.teamB[1].id)] as [string, string],
+          })),
+        },
+      ];
+      for (const match of round.matches) {
+        for (const player of [match.teamA[0], match.teamA[1], match.teamB[0], match.teamB[1]]) {
+          player.stats.gamesPlayed += 1;
+        }
+      }
+      const measured = measure(live, partnerMatrix, rivalMatrix, [
+        ...groupHistory(history),
+        ...planned,
+      ], realOf);
+      const freshRepeats = partnerRepeatsAgainst(history, planned[0]!.matches);
+      if (freshRepeats > 0) {
+        measured.quality.needsConfirmation = true;
+        measured.quality.partnerRepeats = freshRepeats;
+        if (!measured.quality.limitations.some((line) => line.includes("compañero"))) {
+          measured.quality.limitations.unshift(
+            "Esta ronda repite compañero. No apareció una combinación sin hacerlo."
+          );
+        }
+      } else {
+        measured.quality.needsConfirmation = false;
+        measured.quality.partnerRepeats = 0;
+        measured.quality.limitations = measured.quality.limitations.filter(
+          (line) => !line.includes("parejas se repiten")
+        );
+      }
+      return { planned, measured, freshRepeats };
+    });
+    return {
+      ok: true,
+      seed,
+      signature: signatureOf(held.planned),
+      rounds: held.planned,
+      quality: held.measured.quality,
+      selectionScore: held.freshRepeats * 10000 + held.measured.selectionScore,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "La ronda no fue válida.",
+    };
+  }
+}
+
+function groupHistory(history: readonly FlexPlannedMatch[]): FlexSchedule["rounds"] {
+  const byRound = new Map<number, FlexPlannedMatch[]>();
+  for (const match of history) {
+    const list = byRound.get(match.round) ?? [];
+    list.push(match);
+    byRound.set(match.round, list);
+  }
+  return Array.from(byRound.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([round, matches]) => ({ round, matches, benchIds: [] as string[] }));
+}
+
+function partnerRepeatsAgainst(
+  history: readonly FlexPlannedMatch[],
+  matches: readonly FlexPlannedMatch[]
+): number {
+  const seen = new Set<string>();
+  for (const match of history) {
+    seen.add(pairKey(match.pairA[0], match.pairA[1]));
+    seen.add(pairKey(match.pairB[0], match.pairB[1]));
+  }
+  let repeats = 0;
+  for (const match of matches) {
+    if (seen.has(pairKey(match.pairA[0], match.pairA[1]))) repeats += 1;
+    if (seen.has(pairKey(match.pairB[0], match.pairB[1]))) repeats += 1;
+  }
+  return repeats;
 }
 
 function hardErrors(
