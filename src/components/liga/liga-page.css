@@ -2626,6 +2626,65 @@
   cursor: not-allowed;
 }
 
+.liga-retiro-modal.liga-gestionar-danger-modal {
+  border-color: var(--liga-border);
+}
+
+.liga-retiro-modal .liga-gestionar-danger-modal__input {
+  background: var(--liga-surface, #ffffff);
+  color: var(--liga-text);
+  border: 1px solid color-mix(in srgb, var(--liga-text) 18%, var(--liga-border));
+}
+
+.liga-retiro-modal .liga-gestionar-danger-modal__input:focus {
+  border-color: var(--liga-text);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--liga-text) 10%, transparent);
+}
+
+.liga-retiro-modal .liga-gestionar-danger-modal__actions {
+  flex-direction: row;
+}
+
+.liga-retiro-modal .liga-gestionar-share-modal__btn {
+  flex: 1 1 0;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+  white-space: nowrap;
+}
+
+.liga-retiro-modal .liga-gestionar-share-modal__btn:hover {
+  filter: none;
+}
+
+.liga-retiro-modal .liga-gestionar-share-modal__btn--secondary {
+  background: var(--liga-surface, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--liga-text) 18%, var(--liga-border));
+  color: var(--liga-text);
+}
+
+.liga-retiro-modal .liga-gestionar-share-modal__btn--secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--liga-text) 6%, var(--liga-surface, #ffffff));
+}
+
+.liga-retiro-modal .liga-gestionar-danger-modal__confirm {
+  border: 1px solid transparent;
+  background: var(--ro-error, #c0392b);
+  color: #ffffff;
+  opacity: 1;
+}
+
+.liga-retiro-modal .liga-gestionar-danger-modal__confirm:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ro-error, #c0392b) 86%, #000000);
+}
+
+.liga-retiro-modal .liga-gestionar-danger-modal__confirm:disabled {
+  opacity: 1;
+  background: color-mix(in srgb, var(--liga-text) 10%, var(--liga-surface, #f4f1ec));
+  color: color-mix(in srgb, var(--liga-text) 42%, transparent);
+  border-color: transparent;
+  cursor: not-allowed;
+}
+
 .liga-gestionar-progress {
   margin-bottom: var(--liga-space-md, 16px);
   padding: 13px 18px;
