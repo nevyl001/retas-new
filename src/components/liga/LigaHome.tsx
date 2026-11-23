@@ -2,7 +2,12 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useClubModeEyebrow } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import type { Liga } from "../../lib/liga/types";
-import { deleteLiga, getLigas } from "../../services/ligaService";
+import {
+  LigaConActividadError,
+  ligaTieneHistorialDeportivo,
+  mensajeRetiroLiga,
+} from "../../lib/liga/ligaRetiro";
+import { archiveLiga, deleteLiga, getLigas } from "../../services/ligaService";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
 import { ModeHeader } from "../platform/ModeHeader";
@@ -13,6 +18,7 @@ import {
   LigaListaCard,
   type LigaListaFilter,
 } from "./LigaListaCard";
+import { LigaRetiroDialog } from "./LigaRetiroDialog";
 import "./liga-page.css";
 import "../torneo-express/te-action-menu.css";
 
@@ -20,9 +26,12 @@ const FILTERS: Array<{ id: LigaListaFilter; label: string }> = [
   { id: "all", label: "Todas" },
   { id: "in_progress", label: "En curso" },
   { id: "completed", label: "Finalizadas" },
+  { id: "archived", label: "Archivadas" },
 ];
 
 function matchesFilter(liga: Liga, filter: LigaListaFilter): boolean {
+  if (liga.estado === "archived") return filter === "archived";
+  if (filter === "archived") return false;
   if (filter === "all") return true;
   return liga.estado === filter;
 }
@@ -33,6 +42,12 @@ export const LigaHome: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [retiro, setRetiro] = useState<{
+    liga: Liga;
+    mode: "delete" | "archive";
+  } | null>(null);
+  const [confirmDraft, setConfirmDraft] = useState("");
   const [filter, setFilter] = useState<LigaListaFilter>("all");
 
   const load = useCallback(async () => {
@@ -54,9 +69,10 @@ export const LigaHome: React.FC = () => {
 
   const counts = useMemo(
     () => ({
-      all: ligas.length,
+      all: ligas.filter((l) => l.estado !== "archived").length,
       in_progress: ligas.filter((l) => l.estado === "in_progress").length,
       completed: ligas.filter((l) => l.estado === "completed").length,
+      archived: ligas.filter((l) => l.estado === "archived").length,
     }),
     [ligas]
   );
@@ -66,21 +82,46 @@ export const LigaHome: React.FC = () => {
     [ligas, filter]
   );
 
-  const handleDeleteLiga = async (liga: Liga) => {
-    if (
-      !window.confirm(
-        `¿Eliminar «${liga.nombre}»? Se borrarán inscripciones, jornadas y resultados. Esta acción no se puede deshacer.`
-      )
-    ) {
-      return;
-    }
-    setDeletingId(liga.id);
+  const openRetiro = (liga: Liga) => {
+    setError(null);
+    setNotice(null);
+    setConfirmDraft("");
+    setRetiro({
+      liga,
+      mode: ligaTieneHistorialDeportivo({ jornadasCount: liga.jornadas_count })
+        ? "archive"
+        : "delete",
+    });
+  };
+
+  const closeRetiro = () => {
+    if (deletingId) return;
+    setRetiro(null);
+    setConfirmDraft("");
+  };
+
+  const handleConfirmRetiro = async () => {
+    if (!retiro) return;
+    setDeletingId(retiro.liga.id);
     setError(null);
     try {
-      await deleteLiga(liga.id);
+      if (retiro.mode === "archive") {
+        await archiveLiga(retiro.liga.id);
+        setNotice("Liga archivada. El historial se conserva.");
+        setRetiro(null);
+        await load();
+        return;
+      }
+      await deleteLiga(retiro.liga.id);
+      setNotice("Liga eliminada.");
+      setRetiro(null);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo eliminar la liga");
+      if (e instanceof LigaConActividadError) {
+        setRetiro({ liga: retiro.liga, mode: "archive" });
+        return;
+      }
+      setError(mensajeRetiroLiga(e, "No se pudo completar la acción."));
     } finally {
       setDeletingId(null);
     }
@@ -137,6 +178,7 @@ export const LigaHome: React.FC = () => {
         </div>
       ) : null}
 
+      {notice ? <p className="liga-home__notice">{notice}</p> : null}
       {error ? <p className="liga-error liga-home__error">{error}</p> : null}
 
       {loading ? (
@@ -166,11 +208,22 @@ export const LigaHome: React.FC = () => {
               deleting={deletingId === liga.id}
               deleteDisabled={deletingId !== null}
               onManage={() => navigateLiga(`/liga/${liga.id}/gestionar`)}
-              onDelete={() => void handleDeleteLiga(liga)}
+              onDelete={() => openRetiro(liga)}
             />
           ))}
         </ul>
       )}
+      {retiro ? (
+        <LigaRetiroDialog
+          mode={retiro.mode}
+          nombre={retiro.liga.nombre}
+          busy={deletingId === retiro.liga.id}
+          confirmDraft={confirmDraft}
+          onConfirmDraft={setConfirmDraft}
+          onCancel={closeRetiro}
+          onConfirm={() => void handleConfirmRetiro()}
+        />
+      ) : null}
     </LigaPageShell>
   );
 };

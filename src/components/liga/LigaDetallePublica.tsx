@@ -82,6 +82,8 @@ function estadoLigaLabel(estado: LigaDetalle["estado"]): string {
       return "En curso";
     case "completed":
       return "Finalizada";
+    case "archived":
+      return "Archivada";
     default:
       return estado;
   }

@@ -94,7 +94,13 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
     : null;
 
   const estado =
-    detalle.estado === "completed" ? "Finalizada" : detalle.estado === "in_progress" ? "En curso" : "Por comenzar";
+    detalle.estado === "completed"
+      ? "Finalizada"
+      : detalle.estado === "archived"
+        ? "Archivada"
+        : detalle.estado === "in_progress"
+          ? "En curso"
+          : "Por comenzar";
 
   return (
     <main className="liga-flex liga-flex--public">

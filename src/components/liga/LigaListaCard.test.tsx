@@ -30,6 +30,7 @@ describe("LigaListaCard helpers", () => {
     expect(ligaEstadoLabel("upcoming")).toBe("Programada");
     expect(ligaEstadoLabel("in_progress")).toBe("En curso");
     expect(ligaEstadoLabel("completed")).toBe("Finalizada");
+    expect(ligaEstadoLabel("archived")).toBe("Archivada");
     expect(ligaParticipantesLabel(liga())).toBe("12 jugadores");
     expect(
       ligaParticipantesLabel(

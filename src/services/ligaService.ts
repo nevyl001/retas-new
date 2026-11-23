@@ -1,3 +1,7 @@
+import {
+  esErrorTecnicoDeLiga,
+  LigaConActividadError,
+} from "../lib/liga/ligaRetiro";
 import { supabase } from "../lib/supabaseClient";
 import type {
   AddJugadorLigaInput,
@@ -738,11 +742,42 @@ export async function deleteLiga(ligaId: string): Promise<void> {
     p_organizador_id: uid,
     p_liga_id: ligaId,
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (esErrorTecnicoDeLiga(error.message)) {
+      console.error("deleteLiga", error.message);
+      throw new LigaConActividadError();
+    }
+    throw new Error(error.message);
+  }
 
   const status = (data as { status?: string } | null)?.status;
   if (status === "not_found") {
     throw new Error("Liga no encontrada.");
+  }
+  if (status === "has_activity") {
+    throw new LigaConActividadError();
+  }
+}
+
+/** Oculta la liga de la lista activa. No borra partidos, resultados ni puntos. */
+export async function archiveLiga(ligaId: string): Promise<void> {
+  const uid = await requireUserId();
+
+  const { data, error } = await supabase.rpc("admin_archive_liga", {
+    p_organizador_id: uid,
+    p_liga_id: ligaId,
+  });
+  if (error) {
+    console.error("archiveLiga", error.message);
+    throw new Error("No se pudo archivar la liga. Inténtalo de nuevo.");
+  }
+
+  const status = (data as { status?: string } | null)?.status;
+  if (status === "not_found") {
+    throw new Error("Liga no encontrada.");
+  }
+  if (status !== "archived") {
+    throw new Error("No se pudo archivar la liga. Inténtalo de nuevo.");
   }
 }
 

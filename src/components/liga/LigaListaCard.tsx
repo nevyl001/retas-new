@@ -10,18 +10,20 @@ import {
   type TeActionMenuItem,
 } from "../torneo-express/TeActionMenu";
 
-export type LigaListaFilter = "all" | "in_progress" | "completed";
+export type LigaListaFilter = "all" | "in_progress" | "completed" | "archived";
 
 const ESTADO_LABEL: Record<Liga["estado"], string> = {
   upcoming: "Programada",
   in_progress: "En curso",
   completed: "Finalizada",
+  archived: "Archivada",
 };
 
 const ESTADO_BADGE: Record<Liga["estado"], BadgeVariant> = {
   upcoming: "scheduled",
   in_progress: "live",
   completed: "finished",
+  archived: "pending",
 };
 
 export function ligaEstadoLabel(estado: Liga["estado"]): string {

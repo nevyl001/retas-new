@@ -51,12 +51,14 @@ describe("estadoLigaLabel / estadoLigaStatusVariant — mismo texto e info que a
     expect(estadoLigaLabel("upcoming")).toBe("Próxima");
     expect(estadoLigaLabel("in_progress")).toBe("En curso");
     expect(estadoLigaLabel("completed")).toBe("Finalizada");
+    expect(estadoLigaLabel("archived")).toBe("Archivada");
   });
 
   it("mapea variantes de StatusBadge sin inventar estados nuevos", () => {
     expect(estadoLigaStatusVariant("upcoming")).toBe("pending");
     expect(estadoLigaStatusVariant("in_progress")).toBe("live");
     expect(estadoLigaStatusVariant("completed")).toBe("gold");
+    expect(estadoLigaStatusVariant("archived")).toBe("muted");
   });
 });
 

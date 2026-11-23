@@ -1,7 +1,7 @@
 import type { RivieraJugadorCategoria } from "../rivieraJugadores/types";
 import type { LigaPartidoSetScores } from "./parejasFijasMatchScore";
 
-export type LigaEstado = "upcoming" | "in_progress" | "completed";
+export type LigaEstado = "upcoming" | "in_progress" | "completed" | "archived";
 export type LigaModalidad =
   | "individual_rotativo"
   | "parejas_fijas"

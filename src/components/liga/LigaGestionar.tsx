@@ -35,6 +35,7 @@ import "../jugadores/riviera-jugadores.css";
 import {
   createEquipoLiga,
   deleteEquipoLiga,
+  archiveLiga,
   deleteLiga,
   desinscribirJugador,
   finishLiga,
@@ -67,7 +68,13 @@ import {
   navigateLiga,
 } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
+import {
+  LigaConActividadError,
+  ligaTieneHistorialDeportivo,
+  mensajeRetiroLiga,
+} from "../../lib/liga/ligaRetiro";
 import { LigaFlexAdmin } from "./LigaFlexAdmin";
+import { LigaRetiroDialog } from "./LigaRetiroDialog";
 import { LigaInscripcionesPanel } from "./LigaInscripcionesPanel";
 import { LigaSustituirJugadorModal } from "./LigaSustituirJugadorModal";
 import "./liga-page.css";
@@ -88,6 +95,8 @@ export function estadoLigaLabel(estado: LigaDetalle["estado"]): string {
       return "En curso";
     case "completed":
       return "Finalizada";
+    case "archived":
+      return "Archivada";
     default:
       return estado;
   }
@@ -101,6 +110,8 @@ export function estadoLigaStatusVariant(
       return "live";
     case "completed":
       return "gold";
+    case "archived":
+      return "muted";
     default:
       return "pending";
   }
@@ -182,7 +193,6 @@ function equipoNombre(e: LigaEquipo): string {
   );
 }
 
-const LIGA_DELETE_CONFIRM_PHRASE = "ELIMINAR";
 
 export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const modeEyebrow = useClubModeEyebrow();
@@ -207,7 +217,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [retiroMode, setRetiroMode] = useState<null | "delete" | "archive">(null);
   const [deleteConfirmDraft, setDeleteConfirmDraft] = useState("");
   const toolsRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
@@ -352,13 +362,13 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   }, [shareOpen]);
 
   useEffect(() => {
-    if (!shareOpen && !deleteConfirmOpen) return;
+    if (!shareOpen && retiroMode === null) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [shareOpen, deleteConfirmOpen]);
+  }, [shareOpen, retiroMode]);
 
   const inscritosIds = useMemo(
     () => new Set(detalle?.inscripciones.map((i) => i.jugador_id) ?? []),
@@ -651,21 +661,36 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   };
 
   const handleDeleteLiga = async () => {
-    if (!detalle) return;
-    if (
-      deleteConfirmDraft.trim().toUpperCase() !== LIGA_DELETE_CONFIRM_PHRASE
-    ) {
-      return;
-    }
+    if (!detalle || retiroMode !== "delete") return;
     setBusy(true);
     setError(null);
     try {
       await deleteLiga(ligaId);
-      setDeleteConfirmOpen(false);
+      setRetiroMode(null);
       setDeleteConfirmDraft("");
       navigateLiga("/liga");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
+      if (err instanceof LigaConActividadError) {
+        setRetiroMode("archive");
+        setBusy(false);
+        return;
+      }
+      setError(mensajeRetiroLiga(err, "No se pudo eliminar la liga."));
+      setBusy(false);
+    }
+  };
+
+  const handleArchiveLiga = async () => {
+    if (!detalle) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await archiveLiga(ligaId);
+      setRetiroMode(null);
+      setMessage("Liga archivada. El historial se conserva.");
+      navigateLiga("/liga");
+    } catch (err) {
+      setError(mensajeRetiroLiga(err, "No se pudo archivar la liga."));
       setBusy(false);
     }
   };
@@ -674,12 +699,18 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     setOptionsOpen(false);
     setShareOpen(false);
     setDeleteConfirmDraft("");
-    setDeleteConfirmOpen(true);
+    setRetiroMode(
+      ligaTieneHistorialDeportivo({
+        jornadasLength: detalle?.jornadas.length ?? 0,
+      })
+        ? "archive"
+        : "delete"
+    );
   };
 
   const closeDeleteConfirm = () => {
     if (busy) return;
-    setDeleteConfirmOpen(false);
+    setRetiroMode(null);
     setDeleteConfirmDraft("");
   };
 
@@ -1091,95 +1122,19 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
           )
         : null}
 
-      {deleteConfirmOpen && typeof document !== "undefined"
-        ? createPortal(
-            <div
-              id="liga-gestionar-delete-panel"
-              className="liga-gestionar-modal-backdrop"
-              role="presentation"
-              onClick={closeDeleteConfirm}
-            >
-              <div
-                className="liga-gestionar-share-modal liga-gestionar-danger-modal"
-                role="alertdialog"
-                aria-modal="true"
-                aria-labelledby="liga-gestionar-delete-title"
-                aria-describedby="liga-gestionar-delete-lead"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <button
-                  type="button"
-                  className="liga-gestionar-share-modal__close"
-                  aria-label="Cerrar"
-                  disabled={busy}
-                  onClick={closeDeleteConfirm}
-                >
-                  ×
-                </button>
-                <div className="liga-gestionar-danger-modal__lock" aria-hidden>
-                  <TablerIcon name="lock" size={22} />
-                </div>
-                <h2
-                  id="liga-gestionar-delete-title"
-                  className="liga-gestionar-share-modal__title"
-                >
-                  Eliminar liga
-                </h2>
-                <p
-                  id="liga-gestionar-delete-lead"
-                  className="liga-gestionar-share-modal__lead"
-                >
-                  Se borrarán jornadas, partidos, parejas y ranking de{" "}
-                  <strong>{detalle.nombre}</strong>. Esta acción no se puede
-                  deshacer.
-                </p>
-                <label
-                  className="liga-gestionar-danger-modal__label"
-                  htmlFor="liga-delete-confirm-input"
-                >
-                  Escribe <strong>{LIGA_DELETE_CONFIRM_PHRASE}</strong> para
-                  confirmar
-                </label>
-                <input
-                  id="liga-delete-confirm-input"
-                  name="liga-delete-confirm"
-                  className="liga-gestionar-danger-modal__input"
-                  type="text"
-                  value={deleteConfirmDraft}
-                  autoComplete="off"
-                  autoCapitalize="characters"
-                  spellCheck={false}
-                  disabled={busy}
-                  aria-label={`Confirmar escribiendo ${LIGA_DELETE_CONFIRM_PHRASE}`}
-                  onChange={(event) => setDeleteConfirmDraft(event.target.value)}
-                />
-                <div className="liga-gestionar-share-modal__actions liga-gestionar-danger-modal__actions">
-                  <button
-                    type="button"
-                    className="liga-gestionar-share-modal__btn liga-gestionar-share-modal__btn--secondary"
-                    disabled={busy}
-                    onClick={closeDeleteConfirm}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    className="liga-gestionar-share-modal__btn liga-gestionar-danger-modal__confirm"
-                    disabled={
-                      busy ||
-                      deleteConfirmDraft.trim().toUpperCase() !==
-                        LIGA_DELETE_CONFIRM_PHRASE
-                    }
-                    onClick={() => void handleDeleteLiga()}
-                  >
-                    {busy ? "Eliminando…" : "Eliminar liga"}
-                  </button>
-                </div>
-              </div>
-            </div>,
-            document.body
-          )
-        : null}
+      {retiroMode && detalle ? (
+        <LigaRetiroDialog
+          mode={retiroMode}
+          nombre={detalle.nombre}
+          busy={busy}
+          confirmDraft={deleteConfirmDraft}
+          onConfirmDraft={setDeleteConfirmDraft}
+          onCancel={closeDeleteConfirm}
+          onConfirm={() =>
+            void (retiroMode === "archive" ? handleArchiveLiga() : handleDeleteLiga())
+          }
+        />
+      ) : null}
 
       {jornadaProgress ? (
         <div className="liga-gestionar-progress" role="status">

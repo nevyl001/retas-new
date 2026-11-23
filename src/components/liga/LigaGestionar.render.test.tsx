@@ -46,6 +46,7 @@ jest.mock("../jugadores/jugadoresGeneroNav", () => ({
 jest.mock("../../services/ligaService", () => ({
   createEquipoLiga: jest.fn(),
   deleteEquipoLiga: jest.fn(),
+  archiveLiga: jest.fn(),
   deleteLiga: jest.fn(),
   desinscribirJugador: jest.fn(),
   finishLiga: jest.fn(),
@@ -473,6 +474,48 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
     });
 
     expect(deleteLiga).toHaveBeenCalledWith("liga-1");
+  });
+
+  it("una liga con jornadas no se borra: ofrece archivarla", async () => {
+    const { deleteLiga, archiveLiga } = jest.requireMock(
+      "../../services/ligaService"
+    ) as { deleteLiga: jest.Mock; archiveLiga: jest.Mock };
+    deleteLiga.mockResolvedValue(undefined);
+    archiveLiga.mockResolvedValue(undefined);
+
+    await renderLiga(
+      baseDetalle({
+        jornadas: [
+          {
+            id: "jor-1",
+            liga_id: "liga-1",
+            numero: 1,
+            estado: "upcoming",
+            fecha: null,
+            puntos_aplicados: false,
+          } as LigaDetalle["jornadas"][number],
+        ],
+      })
+    );
+
+    const optionsBtn = container.querySelector(
+      '[aria-label="Configuración de la liga"]'
+    ) as HTMLButtonElement;
+    await act(async () => {
+      optionsBtn.click();
+    });
+    const eliminarBtn = Array.from(
+      container.querySelectorAll(".liga-gestionar-options button")
+    ).find((b) => b.textContent?.includes("Eliminar liga")) as HTMLButtonElement;
+    await act(async () => {
+      eliminarBtn.click();
+      await Promise.resolve();
+    });
+
+    expect(document.body.textContent).toContain("No es posible eliminar esta liga");
+    expect(document.body.textContent).toContain("Archivar liga");
+    expect(deleteLiga).not.toHaveBeenCalled();
+    expect(document.querySelector("#liga-delete-confirm-input")).toBeNull();
   });
 
   it("liga en curso no muestra «Regenerar calendario»", async () => {

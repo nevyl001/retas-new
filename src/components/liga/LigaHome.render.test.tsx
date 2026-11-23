@@ -15,6 +15,7 @@ jest.mock("../../club-experience", () => ({
 jest.mock("../../services/ligaService", () => ({
   getLigas: jest.fn(),
   deleteLiga: jest.fn(),
+  archiveLiga: jest.fn(),
 }));
 
 jest.mock("./ligaNav", () => ({
@@ -103,7 +104,7 @@ describe("LigaHome — dashboard de tarjetas", () => {
     const chips = Array.from(
       container.querySelectorAll<HTMLButtonElement>(".liga-home__chip")
     );
-    expect(chips).toHaveLength(3);
+    expect(chips).toHaveLength(4);
     expect(chips[0].textContent).toContain("Todas");
     expect(chips[0].textContent).toContain("2");
     expect(chips[1].textContent).toContain("1");

@@ -52,6 +52,29 @@ describe("deleteLiga — RANK-002", () => {
     );
   });
 
+  it("no borra una liga con historial y pide archivarla", async () => {
+    mockRpc.mockResolvedValue({ data: { status: "has_activity" }, error: null });
+
+    await expect(deleteLiga("liga-con-partidos")).rejects.toThrow(
+      "No es posible eliminar esta liga"
+    );
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it("traduce el choque de la llave de partidos sin mostrar SQL", async () => {
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        message:
+          'update or delete on table "ligas" violates foreign key constraint "liga_partidos_liga_id_fkey" on table "liga_partidos"',
+      },
+    });
+
+    await expect(deleteLiga("liga-playoffs")).rejects.toThrow(
+      "No es posible eliminar esta liga"
+    );
+  });
+
   it("propaga el error de la RPC (p.ej. rechazo por RLS/ownership)", async () => {
     mockRpc.mockResolvedValue({
       data: null,
