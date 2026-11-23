@@ -286,9 +286,6 @@ const FlexPublicJornadaBody: React.FC<{
           )}
 
           <p className="liga-pantalla-ronda__meta liga-pantalla-ronda__meta--centered">
-            <a className="liga-pantalla-jornada-card__link" href={publicLigaUrl(detalle.id)}>
-              Volver a la liga
-            </a>
             {pantalla ? (
               <button type="button" className="liga-pantalla-jornada-card__link" onClick={enterFullscreen}>
                 Pantalla completa
