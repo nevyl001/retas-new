@@ -1968,6 +1968,7 @@ function SeasonEconomyEditor({
             id="flex-premio-campeon"
             className="liga-flex-season-spec__input"
             type="text"
+            placeholder="Escribe el premio"
             value={campeon}
             disabled={disabled}
             onChange={(event) => setCampeon(event.target.value)}
@@ -1979,6 +1980,7 @@ function SeasonEconomyEditor({
             id="flex-premio-sub"
             className="liga-flex-season-spec__input"
             type="text"
+            placeholder="Escribe el premio"
             value={subcampeon}
             disabled={disabled}
             onChange={(event) => setSubcampeon(event.target.value)}
@@ -1990,6 +1992,7 @@ function SeasonEconomyEditor({
             id="flex-premio-tercer"
             className="liga-flex-season-spec__input"
             type="text"
+            placeholder="Escribe el premio"
             value={tercer}
             disabled={disabled}
             onChange={(event) => setTercer(event.target.value)}

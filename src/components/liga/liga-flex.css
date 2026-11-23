@@ -529,6 +529,19 @@
   box-shadow: none;
 }
 
+.liga-flex-season-spec .liga-flex-season-spec__input:not(.liga-flex-season-spec__input--money) {
+  min-height: 42px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--lf-border-strong);
+  border-radius: 10px;
+  background: var(--lf-surface);
+}
+
+.liga-flex-season-spec .liga-flex-season-spec__input:not(.liga-flex-season-spec__input--money):focus {
+  border-color: var(--lf-text);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lf-text) 12%, transparent);
+}
+
 .liga-flex-season-spec__input--money {
   flex: 1 1 auto;
   min-width: 0;
