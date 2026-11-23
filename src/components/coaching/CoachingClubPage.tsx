@@ -1875,10 +1875,10 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
             <div className="coaching-ledger-header">
               <div className="coaching-ledger-header__titles">
                 <h3 className="coaching-ledger-title">
-                  Historial de Clases y Movimientos
+                  Historial de clases
                 </h3>
                 <p className="coaching-muted coaching-ledger-subtitle">
-                  Registro inmutable de asignaciones y deducciones de clases realizadas en tu club.
+                  Cada fila dice a quién se le movió el saldo, cuántas clases y por qué.
                 </p>
               </div>
 
@@ -1937,109 +1937,84 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
               </div>
             ) : (
               <div className="coaching-ledger-card">
-                <div className="coaching-ledger-table-wrap">
-                  <table className="coaching-ledger-table">
-                    <thead>
-                      <tr>
-                        <th>Fecha</th>
-                        <th>Alumno</th>
-                        <th>Coach</th>
-                        <th>Movimiento</th>
-                        <th>Notas / Referencia</th>
-                        <th>Responsable</th>
-                        <th className="is-right">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredLedgerEntries.map((entry) => {
-                        const renderMovementBadge = () => {
-                          switch (entry.tipo as string) {
-                            case "PACKAGE_CREDIT":
-                            case "ASSIGN":
-                              return (
-                                <span className="coaching-badge coaching-badge--active coaching-ledger-badge">
-                                  <TablerIcon name="plus" size={13} />
-                                  +{entry.delta} Clases asignadas
-                                </span>
-                              );
-                            case "CLASS_DEBIT":
-                              return (
-                                <span className="coaching-badge coaching-badge--primary coaching-ledger-badge">
-                                  <TablerIcon name="check" size={13} />
-                                  {entry.delta} Clase impartida
-                                </span>
-                              );
-                            case "TRANSFER_OUT":
-                              return (
-                                <span className="coaching-badge coaching-ledger-badge coaching-ledger-badge--transfer-out">
-                                  <TablerIcon name="arrow-right" size={13} />
-                                  {entry.delta} Clases transferidas
-                                </span>
-                              );
-                            case "TRANSFER_IN":
-                              return (
-                                <span className="coaching-badge coaching-ledger-badge coaching-ledger-badge--transfer-in">
-                                  <TablerIcon name="arrow-left" size={13} />
-                                  +{entry.delta} Clases recibidas
-                                </span>
-                              );
-                            case "ADJUSTMENT":
-                              return (
-                                <span className="coaching-badge coaching-ledger-badge coaching-ledger-badge--adjust">
-                                  <TablerIcon name="adjustments" size={13} />
-                                  {entry.delta > 0 ? `+${entry.delta}` : entry.delta} Ajuste
-                                </span>
-                              );
-                            default:
-                              return (
-                                <span
-                                  className={`coaching-badge coaching-ledger-badge ${
-                                    entry.delta > 0 ? "coaching-badge--active" : "coaching-badge--primary"
-                                  }`}
-                                >
-                                  {entry.delta > 0 ? `+${entry.delta}` : entry.delta} {entry.tipo}
-                                </span>
-                              );
-                          }
-                        };
+                <ul className="coaching-ledger-list">
+                  {filteredLedgerEntries.map((entry) => {
+                    const amount = Math.abs(entry.delta);
+                    const claseWord = amount === 1 ? "clase" : "clases";
+                    const when = new Date(entry.createdAt);
+                    const formattedWhen = when.toLocaleString("es-MX", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    });
+                    let story = `${entry.delta > 0 ? "+" : ""}${entry.delta} ${entry.tipo}`;
+                    let tone = entry.delta > 0 ? "in" : "out";
+                    let actor = "Lo registró el club";
+                    switch (entry.tipo as string) {
+                      case "PACKAGE_CREDIT":
+                      case "ASSIGN":
+                        story = `Se asignaron ${amount} ${claseWord}`;
+                        tone = "in";
+                        break;
+                      case "CLASS_DEBIT":
+                        story =
+                          amount === 1
+                            ? "Se impartió 1 clase"
+                            : `Se impartieron ${amount} clases`;
+                        tone = "out";
+                        actor = "Lo registró el coach";
+                        break;
+                      case "TRANSFER_OUT":
+                        story = `Salieron ${amount} ${claseWord} por transferencia`;
+                        tone = "out";
+                        break;
+                      case "TRANSFER_IN":
+                        story = `Llegaron ${amount} ${claseWord} por transferencia`;
+                        tone = "in";
+                        break;
+                      case "ADJUSTMENT":
+                        story =
+                          entry.delta > 0
+                            ? `Ajuste: se sumaron ${amount} ${claseWord}`
+                            : entry.delta < 0
+                              ? `Ajuste: se restaron ${amount} ${claseWord}`
+                              : "Ajuste sin cambio de clases";
+                        tone = entry.delta > 0 ? "in" : "adjust";
+                        break;
+                      default:
+                        break;
+                    }
 
-                        const formattedDate = new Date(entry.createdAt).toLocaleDateString();
-                        const formattedTime = new Date(entry.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        });
-
-                        return (
-                          <tr key={entry.id} className="coaching-ledger-row">
-                            <td data-label="Fecha" className="coaching-ledger-cell--date">
-                              <span className="coaching-ledger-date">{formattedDate}</span>
-                              <span className="coaching-ledger-time">{formattedTime}</span>
-                            </td>
-                            <td data-label="Alumno" className="coaching-ledger-cell--student">
-                              <span className="coaching-ledger-person">
-                                <span className="coaching-ledger-person__dot" aria-hidden>
-                                  {(entry.jugadorNombre || "A").slice(0, 1).toUpperCase()}
-                                </span>
-                                <span className="coaching-ledger-person__name">
-                                  {entry.jugadorNombre || "Alumno"}
-                                </span>
+                    return (
+                      <li key={entry.id} className="coaching-ledger-item">
+                        <div className="coaching-ledger-item__who">
+                          <span className="coaching-ledger-person">
+                            <span className="coaching-ledger-person__dot" aria-hidden>
+                              {(entry.jugadorNombre || "A").slice(0, 1).toUpperCase()}
+                            </span>
+                            <span className="coaching-ledger-person__text">
+                              <span className="coaching-ledger-person__name">
+                                {entry.jugadorNombre || "Alumno"}
                               </span>
-                            </td>
-                            <td data-label="Coach" className="coaching-ledger-cell--coach">
-                              {entry.coachNombre || "Coach"}
-                            </td>
-                            <td data-label="Movimiento" className="coaching-ledger-cell--movement">
-                              {renderMovementBadge()}
-                            </td>
-                            <td data-label="Notas / Referencia" className="coaching-ledger-cell--notes">
-                              {entry.notas || "—"}
-                            </td>
-                            <td data-label="Responsable" className="coaching-ledger-cell--actor">
-                              <span className="coaching-ledger-actor-pill">
-                                {entry.tipo === "CLASS_DEBIT" ? "Coach" : "Club"}
+                              <span className="coaching-ledger-person__coach">
+                                Coach {entry.coachNombre || "sin nombre"}
                               </span>
-                            </td>
-                            <td data-label="Acciones" className="coaching-ledger-cell--actions is-right">
+                            </span>
+                          </span>
+                        </div>
+                        <div className="coaching-ledger-item__what">
+                          <p className={`coaching-ledger-story coaching-ledger-story--${tone}`}>
+                            {story}
+                          </p>
+                          <p className="coaching-ledger-meta">
+                            <span>{formattedWhen}</span>
+                            {entry.notas ? <span>Motivo: {entry.notas}</span> : null}
+                            <span>{actor}</span>
+                          </p>
+                        </div>
+                        <div className="coaching-ledger-item__actions">
                               {(entry.tipo === "PACKAGE_CREDIT" ||
                                 entry.tipo === "ADJUSTMENT") && (
                                 <button
@@ -2062,7 +2037,7 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                                   title="Corregir saldo de clases para este alumno"
                                 >
                                   <TablerIcon name="adjustments" size={13} />
-                                  Corregir
+                                  Corregir saldo
                                 </button>
                               )}
                               {entry.tipo === "CLASS_DEBIT" && (
@@ -2100,13 +2075,11 @@ export const CoachingClubPage: React.FC<{ pathname: string }> = ({
                                   Revertir
                                 </button>
                               )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             )}
           </div>

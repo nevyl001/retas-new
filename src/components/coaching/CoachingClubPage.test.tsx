@@ -283,12 +283,12 @@ describe("CoachingClubPage UX/UI Redesign", () => {
     });
     expect(menuPopover?.classList.contains("is-open")).toBe(true);
 
-    // Ledger table & filters render properly
-    const ledgerTable = container.querySelector(".coaching-ledger-table");
-    expect(ledgerTable).not.toBeNull();
-    expect(ledgerTable?.textContent).toContain("+5 Clases asignadas");
-    expect(ledgerTable?.textContent).toContain("Paquete mensual");
-    expect(ledgerTable?.textContent).toContain("Corregir");
+    const ledgerList = container.querySelector(".coaching-ledger-list");
+    expect(ledgerList).not.toBeNull();
+    expect(ledgerList?.textContent).toContain("Se asignaron 5 clases");
+    expect(ledgerList?.textContent).toContain("Motivo: Paquete mensual");
+    expect(ledgerList?.textContent).toContain("Lo registró el club");
+    expect(ledgerList?.textContent).toContain("Corregir saldo");
 
     // Click "Todos" filter in student directory
     const chips = Array.from(container.querySelectorAll(".coaching-students-filters .coaching-chip"));
