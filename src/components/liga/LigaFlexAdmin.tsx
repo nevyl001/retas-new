@@ -192,7 +192,10 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
     [jornada]
   );
   const flex = bundle?.jornadas.find((item) => item.jornadaId === jornada?.id) ?? null;
-  const participantIds = jornada ? bundle?.participantes[jornada.id] ?? [] : [];
+  const participantIds = useMemo(
+    () => (jornada ? bundle?.participantes[jornada.id] ?? [] : []),
+    [jornada, bundle]
+  );
   const layout = officialFlexLayout(participantIds.length, flex?.canchas ?? 0);
   const hasScores = scheduleHasCapturedResults(
     (jornada?.partidos ?? []).map((partido) => ({
