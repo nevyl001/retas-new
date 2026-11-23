@@ -24,6 +24,7 @@ import {
   registerFlexPlayer,
   saveFlexJornadaSetup,
   saveFlexMatchScore,
+  updateFlexSeasonConfig,
   setFlexParticipantes,
   startFlexJornada,
   type FlexBundle,
@@ -605,26 +606,17 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                 </div>
               </div>
 
-              <div className="liga-flex-season-specs">
-                <div className="liga-flex-season-spec">
-                  <span className="liga-flex-season-spec__label">Inscripción temporada</span>
-                  <strong className="liga-flex-season-spec__value">
-                    ${bundle?.config.inscripcionTemporadaMxn ?? "—"} MXN
-                  </strong>
-                </div>
-                <div className="liga-flex-season-spec">
-                  <span className="liga-flex-season-spec__label">Participación jornada</span>
-                  <strong className="liga-flex-season-spec__value">
-                    ${bundle?.config.participacionJornadaMxn ?? "—"} MXN
-                  </strong>
-                </div>
-                <div className="liga-flex-season-spec">
-                  <span className="liga-flex-season-spec__label">Premio Campeón</span>
-                  <strong className="liga-flex-season-spec__value">
-                    {bundle?.config.premioCampeon || "—"}
-                  </strong>
-                </div>
-              </div>
+              <SeasonEconomyEditor
+                ligaId={detalle.id}
+                config={bundle?.config}
+                disabled={busy}
+                onSave={(action) =>
+                  void run(async () => {
+                    await action();
+                    setNotice("Premios y costos actualizados.");
+                  })
+                }
+              />
 
               <div className="liga-flex-season-actions">
                 {detalle.jornadas.length !== 12 ? (
@@ -1891,6 +1883,141 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
     </LigaPageShell>
   );
 };
+
+function parseMoney(raw: string, label: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const value = Number(trimmed);
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(`${label} tiene que ser un monto en pesos, cero o mayor.`);
+  }
+  return value;
+}
+
+function SeasonEconomyEditor({
+  ligaId,
+  config,
+  disabled,
+  onSave,
+}: {
+  ligaId: string;
+  config: FlexBundle["config"] | null | undefined;
+  disabled: boolean;
+  onSave: (action: () => Promise<void>) => void;
+}) {
+  const [inscripcion, setInscripcion] = useState("");
+  const [participacion, setParticipacion] = useState("");
+  const [campeon, setCampeon] = useState("");
+  const [subcampeon, setSubcampeon] = useState("");
+  const [tercer, setTercer] = useState("");
+
+  useEffect(() => {
+    setInscripcion(
+      config?.inscripcionTemporadaMxn == null ? "" : String(config.inscripcionTemporadaMxn)
+    );
+    setParticipacion(
+      config?.participacionJornadaMxn == null ? "" : String(config.participacionJornadaMxn)
+    );
+    setCampeon(config?.premioCampeon ?? "");
+    setSubcampeon(config?.premioSubcampeon ?? "");
+    setTercer(config?.premioTercer ?? "");
+  }, [config]);
+
+  return (
+    <div className="liga-flex-season-economy">
+      <div className="liga-flex-season-specs">
+        <label className="liga-flex-season-spec">
+          <span className="liga-flex-season-spec__label">Inscripción temporada</span>
+          <span className="liga-flex-season-spec__money">
+            <span>$</span>
+            <input
+              id="flex-inscripcion"
+              className="liga-flex-season-spec__input liga-flex-season-spec__input--money"
+              type="number"
+              min={0}
+              step="1"
+              inputMode="decimal"
+              value={inscripcion}
+              disabled={disabled}
+              onChange={(event) => setInscripcion(event.target.value)}
+            />
+            <span>MXN</span>
+          </span>
+        </label>
+        <label className="liga-flex-season-spec">
+          <span className="liga-flex-season-spec__label">Participación jornada</span>
+          <span className="liga-flex-season-spec__money">
+            <span>$</span>
+            <input
+              id="flex-participacion"
+              className="liga-flex-season-spec__input liga-flex-season-spec__input--money"
+              type="number"
+              min={0}
+              step="1"
+              inputMode="decimal"
+              value={participacion}
+              disabled={disabled}
+              onChange={(event) => setParticipacion(event.target.value)}
+            />
+            <span>MXN</span>
+          </span>
+        </label>
+        <label className="liga-flex-season-spec">
+          <span className="liga-flex-season-spec__label">Premio campeón</span>
+          <input
+            id="flex-premio-campeon"
+            className="liga-flex-season-spec__input"
+            type="text"
+            value={campeon}
+            disabled={disabled}
+            onChange={(event) => setCampeon(event.target.value)}
+          />
+        </label>
+        <label className="liga-flex-season-spec">
+          <span className="liga-flex-season-spec__label">Premio subcampeón</span>
+          <input
+            id="flex-premio-sub"
+            className="liga-flex-season-spec__input"
+            type="text"
+            value={subcampeon}
+            disabled={disabled}
+            onChange={(event) => setSubcampeon(event.target.value)}
+          />
+        </label>
+        <label className="liga-flex-season-spec">
+          <span className="liga-flex-season-spec__label">Premio tercer lugar</span>
+          <input
+            id="flex-premio-tercer"
+            className="liga-flex-season-spec__input"
+            type="text"
+            value={tercer}
+            disabled={disabled}
+            onChange={(event) => setTercer(event.target.value)}
+          />
+        </label>
+      </div>
+      <Button
+        type="button"
+        variant="secondary"
+        className="liga-flex-season-save"
+        disabled={disabled}
+        onClick={() =>
+          onSave(async () => {
+            await updateFlexSeasonConfig(ligaId, {
+              inscripcionTemporadaMxn: parseMoney(inscripcion, "La inscripción"),
+              participacionJornadaMxn: parseMoney(participacion, "La participación"),
+              premioCampeon: campeon.trim() || null,
+              premioSubcampeon: subcampeon.trim() || null,
+              premioTercer: tercer.trim() || null,
+            });
+          })
+        }
+      >
+        Guardar premios y costos
+      </Button>
+    </div>
+  );
+}
 
 function retaEnd(inicio: string, minutes: number): string | null {
   const match = /^(\d{1,2}):(\d{2})/.exec(inicio.trim());

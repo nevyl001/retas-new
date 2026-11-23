@@ -274,6 +274,23 @@ describe("LigaFlexAdmin — Rediseño Integral Premium", () => {
     expect(container.textContent).not.toContain("Descanso entre rondas");
     expect(container.textContent).toContain("Guardar configuración");
 
+    const resumenTab = tabs.find((t) => t.textContent?.includes("Resumen")) as HTMLButtonElement;
+    await act(async () => {
+      resumenTab.click();
+    });
+    expect((container.querySelector("#flex-inscripcion") as HTMLInputElement).value).toBe("200");
+    expect((container.querySelector("#flex-participacion") as HTMLInputElement).value).toBe("300");
+    expect((container.querySelector("#flex-premio-campeon") as HTMLInputElement).value).toBe(
+      "$3,000 MXN"
+    );
+    expect((container.querySelector("#flex-premio-sub") as HTMLInputElement).value).toBe(
+      "2 clases gratuitas"
+    );
+    expect((container.querySelector("#flex-premio-tercer") as HTMLInputElement).value).toBe(
+      "Kit Riviera Open"
+    );
+    expect(container.textContent).toContain("Guardar premios y costos");
+
     // Cambiar a Clasificación
     const clasificacionTab = tabs.find((t) =>
       t.textContent?.includes("Clasificación")
@@ -299,10 +316,6 @@ describe("LigaFlexAdmin — Rediseño Integral Premium", () => {
     expect(container.textContent).toContain("Ana Jugadora");
     expect(container.textContent).toContain("RIV-00000102");
 
-    // Cambiar a Resumen
-    const resumenTab = tabs.find((t) =>
-      t.textContent?.includes("Resumen")
-    ) as HTMLButtonElement;
     await act(async () => {
       resumenTab.click();
     });

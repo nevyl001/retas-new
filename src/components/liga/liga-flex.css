@@ -503,6 +503,41 @@
   color: var(--lf-text);
 }
 
+.liga-flex-season-spec__money {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--lf-text);
+}
+
+.liga-flex-season-spec .liga-flex-season-spec__input {
+  min-height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--lf-text);
+}
+
+.liga-flex-season-spec .liga-flex-season-spec__input:focus {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.liga-flex-season-spec__input--money {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.liga-flex-season-save {
+  margin-top: 0.85rem;
+}
+
 .liga-flex-season-actions {
   display: flex;
   flex-wrap: wrap;
