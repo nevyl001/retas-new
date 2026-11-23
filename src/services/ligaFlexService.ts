@@ -13,14 +13,7 @@ import {
 } from "../lib/liga/flex/constants";
 import { assertFlexFinalJornada, resizeFlexSeason } from "../lib/liga/flex/season";
 import type { FlexSchedule, FlexScheduleQuality } from "../lib/liga/flex/schedule";
-import { normalizeRequiredEmail } from "../lib/rivieraJugadores/emailValidation";
-import {
-  assertLigaJugadoresDelOrganizador,
-  ensureLegacyPlayerForRivieraJugador,
-  ensureLigaJugadorForRivieraJugador,
-} from "../lib/rivieraJugadores/playerPoolSync";
-import { createRivieraJugador } from "../lib/rivieraJugadores/rivieraJugadoresService";
-import type { RivieraJugadorGenero } from "../lib/rivieraJugadores/genero";
+import { assertLigaJugadoresDelOrganizador } from "../lib/rivieraJugadores/playerPoolSync";
 
 export type FlexLeagueCreateOptions = {
   jornadas?: number;
@@ -318,30 +311,6 @@ export async function saveFlexJornadaSetup(
   });
   if (error) throw new Error(error.message);
   rpcError(data as { ok?: boolean; error?: string }, "No se pudo programar la jornada.");
-}
-
-/** Alta de temporada por el mismo registro oficial: ficha Riviera, vínculo y jugador de liga activo. */
-export async function registerFlexPlayer(input: {
-  nombre: string;
-  email: string;
-  genero: RivieraJugadorGenero;
-}): Promise<void> {
-  const uid = await requireUserId();
-  const nombre = input.nombre.trim();
-  if (!nombre) throw new Error("Escribe el nombre del jugador.");
-  const email = normalizeRequiredEmail(input.email);
-  const created = await createRivieraJugador(uid, {
-    nombre,
-    email,
-    genero: input.genero === "F" ? "F" : "M",
-    categoria: "5ta_fuerza",
-    pais_codigo: "MX",
-  });
-  const ligaRow = await ensureLigaJugadorForRivieraJugador(uid, created);
-  await ensureLegacyPlayerForRivieraJugador(uid, created);
-  if (!ligaRow || ligaRow.estado !== "activo") {
-    throw new Error("El jugador no quedó activo en el registro de la liga.");
-  }
 }
 
 export async function setFlexParticipantes(jornadaId: string, jugadorIds: string[]): Promise<void> {

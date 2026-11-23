@@ -1354,44 +1354,36 @@
   cursor: not-allowed;
 }
 
-/* ── Alta rápida de jugador nuevo ──────────────────────────── */
-.liga-flex-new-player-box {
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: var(--lf-surface-alt);
-  border: 1px solid var(--lf-border);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.liga-flex-new-player-box__head {
+.liga-flex-registro-hint {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
 }
 
-.liga-flex-new-player-box__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.82rem;
+.liga-flex-registro-hint__title {
+  margin: 0;
+  font-size: 0.78rem;
   font-weight: 700;
-  color: var(--lf-text);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.liga-flex-new-player-form {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
-  gap: 10px;
-  align-items: end;
+.liga-flex-registro-hint__copy {
+  margin: 0.2rem 0 0;
+  color: var(--lf-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
 }
 
 @media (max-width: 780px) {
-  .liga-flex-new-player-form {
-    grid-template-columns: minmax(0, 1fr);
+  .liga-flex-registro-hint {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 

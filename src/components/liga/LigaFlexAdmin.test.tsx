@@ -267,6 +267,10 @@ describe("LigaFlexAdmin — Rediseño Integral Premium", () => {
 
     // Vista por defecto: Jornadas con layout 2 columnas, Configuración y Participantes
     expect(container.textContent).toContain("PARTICIPANTES DE LA JORNADA");
+    expect(container.textContent).toContain("¿No encuentras al jugador?");
+    expect(container.textContent).toContain("Ir al registro único");
+    expect(container.textContent).not.toContain("Registrar jugador nuevo");
+    expect(container.textContent).not.toContain("Dar de alta");
     expect(container.textContent).toContain("CONFIGURACIÓN DE JORNADA");
     expect(container.textContent).toContain("3 CANCHAS · 5 RONDAS");
     expect(container.textContent).toContain("TIEMPO DE LA RETA: 120 MIN");
@@ -313,6 +317,7 @@ describe("LigaFlexAdmin — Rediseño Integral Premium", () => {
     });
 
     expect(container.textContent).toContain("Directorio de Jugadores");
+    expect(container.textContent).not.toContain("Dar de alta nuevo jugador");
     expect(container.textContent).toContain("Ana Jugadora");
     expect(container.textContent).toContain("RIV-00000102");
 

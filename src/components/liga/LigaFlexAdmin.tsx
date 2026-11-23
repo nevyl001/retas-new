@@ -21,7 +21,6 @@ import {
   markFlexFinal,
   reopenFlexLeague,
   resizeFlexCalendar,
-  registerFlexPlayer,
   saveFlexJornadaSetup,
   saveFlexMatchScore,
   updateFlexSeasonConfig,
@@ -33,6 +32,7 @@ import {
 import { Button } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
 import { LigaPageShell } from "./LigaPageShell";
+import { navigateJugadoresLista } from "../jugadores/jugadoresGeneroNav";
 import { navigateLiga } from "./ligaNav";
 import { publicLigaJornadaUrl, publicLigaUrl } from "../../services/ligaService";
 import "./liga-flex.css";
@@ -120,10 +120,6 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
   const [query, setQuery] = useState("");
   const [directoryQuery, setDirectoryQuery] = useState("");
   const [participantFilter, setParticipantFilter] = useState<"ALL" | "SELECTED" | "AVAILABLE">("ALL");
-  const [showNewPlayerForm, setShowNewPlayerForm] = useState(false);
-  const [nuevoNombre, setNuevoNombre] = useState("");
-  const [nuevoEmail, setNuevoEmail] = useState("");
-  const [nuevoGenero, setNuevoGenero] = useState<"M" | "F">("M");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -381,22 +377,15 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
     (completedJornadasCount / Math.max(1, totalJornadas)) * 100
   );
 
-  const handleRegisterNewPlayer = () =>
-    void run(async () => {
-      const normalized = nuevoNombre.trim().toLowerCase();
-      if (pool.some((player) => player.nombre.trim().toLowerCase() === normalized)) {
-        throw new Error("Ese jugador ya existe. Selecciónalo de la lista.");
-      }
-      await registerFlexPlayer({
-        nombre: nuevoNombre.trim(),
-        email: nuevoEmail,
-        genero: nuevoGenero,
-      });
-      setNuevoNombre("");
-      setNuevoEmail("");
-      setShowNewPlayerForm(false);
-      setNotice("Jugador registrado en la temporada.");
-    });
+  const toggleParticipant = (jugadorId: string, selected: boolean) => {
+    if (!jornada) return;
+    const next = selected
+      ? participantIds.filter((id) => id !== jugadorId)
+      : participantIds.includes(jugadorId)
+        ? participantIds
+        : [...participantIds, jugadorId];
+    void run(() => setFlexParticipantes(jornada.id, next));
+  };
 
   const currentJornadaState = jornada
     ? resolveFlexJornadaVisualState(jornada, flex, participantIds.length)
@@ -1096,7 +1085,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                     </div>
 
                     <ul className="liga-flex__people liga-flex-people-grid">
-                      {filteredPool.slice(0, 16).map((player) => {
+                      {filteredPool.map((player) => {
                         const selected = participantIds.includes(player.id);
                         return (
                           <li
@@ -1135,12 +1124,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                                 jornada.estado === "completed" ||
                                 (!selected && participantIds.length >= 16)
                               }
-                              onClick={() => {
-                                const next = selected
-                                  ? participantIds.filter((id) => id !== player.id)
-                                  : [...participantIds, player.id];
-                                void run(() => setFlexParticipantes(jornada.id, next));
-                              }}
+                              onClick={() => toggleParticipant(player.id, selected)}
                             >
                               {selected ? "Quitar" : "Agregar"}
                             </button>
@@ -1149,69 +1133,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                       })}
                     </ul>
 
-                    {/* Alta rápida de jugador nuevo en la temporada */}
-                    <div className="liga-flex-new-player-box">
-                      <div className="liga-flex-new-player-box__head">
-                        <span className="liga-flex-new-player-box__title">
-                          <TablerIcon name="user-plus" size={15} />
-                          Registrar jugador nuevo en la temporada
-                        </span>
-                        <button
-                          type="button"
-                          className="liga-flex-link-btn"
-                          onClick={() => setShowNewPlayerForm((v) => !v)}
-                        >
-                          {showNewPlayerForm ? "Ocultar formulario" : "Nuevo jugador"}
-                        </button>
-                      </div>
-
-                      <div
-                        className={`liga-flex-new-player-form${
-                          showNewPlayerForm ? " is-open" : ""
-                        }`}
-                      >
-                        <label className="liga-flex-field">
-                          <span>Nombre</span>
-                          <input
-                            className="liga-flex-input"
-                            value={nuevoNombre}
-                            placeholder="Jugador nuevo de la temporada"
-                            onChange={(event) => setNuevoNombre(event.target.value)}
-                          />
-                        </label>
-                        <label className="liga-flex-field">
-                          <span>Correo</span>
-                          <input
-                            className="liga-flex-input"
-                            type="email"
-                            value={nuevoEmail}
-                            placeholder="correo@club.local"
-                            onChange={(event) => setNuevoEmail(event.target.value)}
-                          />
-                        </label>
-                        <label className="liga-flex-field">
-                          <span>Rama</span>
-                          <select
-                            className="liga-flex-input"
-                            value={nuevoGenero}
-                            onChange={(event) =>
-                              setNuevoGenero(event.target.value === "F" ? "F" : "M")
-                            }
-                          >
-                            <option value="M">Varonil</option>
-                            <option value="F">Femenil</option>
-                          </select>
-                        </label>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          disabled={busy || !nuevoNombre.trim() || !nuevoEmail.trim()}
-                          onClick={handleRegisterNewPlayer}
-                        >
-                          Dar de alta
-                        </Button>
-                      </div>
-                    </div>
+                    <FlexRegistroUnicoHint />
                   </section>
 
                   {/* TARJETA 2: PAREJAS, RONDAS Y PARTIDOS */}
@@ -1802,57 +1724,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
               </div>
             </div>
 
-            {/* Formulario de alta directa en el directorio */}
-            <div className="liga-flex-new-player-box">
-              <div className="liga-flex-new-player-box__head">
-                <span className="liga-flex-new-player-box__title">
-                  <TablerIcon name="user-plus" size={15} />
-                  Dar de alta nuevo jugador en el directorio del club
-                </span>
-              </div>
-              <div className="liga-flex-new-player-form is-open">
-                <label className="liga-flex-field">
-                  <span>Nombre</span>
-                  <input
-                    className="liga-flex-input"
-                    value={nuevoNombre}
-                    placeholder="Nombre completo del jugador"
-                    onChange={(event) => setNuevoNombre(event.target.value)}
-                  />
-                </label>
-                <label className="liga-flex-field">
-                  <span>Correo</span>
-                  <input
-                    className="liga-flex-input"
-                    type="email"
-                    value={nuevoEmail}
-                    placeholder="correo@club.local"
-                    onChange={(event) => setNuevoEmail(event.target.value)}
-                  />
-                </label>
-                <label className="liga-flex-field">
-                  <span>Rama</span>
-                  <select
-                    className="liga-flex-input"
-                    value={nuevoGenero}
-                    onChange={(event) =>
-                      setNuevoGenero(event.target.value === "F" ? "F" : "M")
-                    }
-                  >
-                    <option value="M">Varonil</option>
-                    <option value="F">Femenil</option>
-                  </select>
-                </label>
-                <Button
-                  type="button"
-                  variant="primary"
-                  disabled={busy || !nuevoNombre.trim() || !nuevoEmail.trim()}
-                  onClick={handleRegisterNewPlayer}
-                >
-                  Dar de alta
-                </Button>
-              </div>
-            </div>
+            <FlexRegistroUnicoHint />
 
             {directoryPlayers.length === 0 ? (
               <div className="liga-flex-empty-box">
@@ -1922,12 +1794,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                               busy ||
                               (!inCurrentJornada && participantIds.length >= 16)
                             }
-                            onClick={() => {
-                              const next = inCurrentJornada
-                                ? participantIds.filter((id) => id !== player.id)
-                                : [...participantIds, player.id];
-                              void run(() => setFlexParticipantes(jornada.id, next));
-                            }}
+                            onClick={() => toggleParticipant(player.id, inCurrentJornada)}
                           >
                             {inCurrentJornada
                               ? `Quitar de J${String(jornada.numero).padStart(2, "0")}`
@@ -1946,6 +1813,22 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
     </LigaPageShell>
   );
 };
+
+function FlexRegistroUnicoHint() {
+  return (
+    <div className="liga-flex-registro-hint">
+      <div>
+        <p className="liga-flex-registro-hint__title">¿No encuentras al jugador?</p>
+        <p className="liga-flex-registro-hint__copy">
+          Para participar en Riviera Flex League, primero debe contar con un registro único en Riviera Open.
+        </p>
+      </div>
+      <Button type="button" variant="secondary" onClick={() => navigateJugadoresLista()}>
+        Ir al registro único
+      </Button>
+    </div>
+  );
+}
 
 function parseMoney(raw: string, label: string): number | null {
   const trimmed = raw.trim();
