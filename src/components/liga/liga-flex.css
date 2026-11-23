@@ -1,40 +1,69 @@
+/* ============================================================
+   RIVIERA FLEX LEAGUE — Rediseño Integral Premium 2026
+   Arquitectura de 5 áreas: Header + KPIs, Navegación por 4 pestañas,
+   Resumen de Temporada, Workspace de Jornadas (65% / 35%),
+   Clasificación General y Directorio de Jugadores.
+   Compatible con tema claro (Riviera Open) y oscuro (Clubes con upgrade).
+   ============================================================ */
+
+.liga-page.liga-flex {
+  padding: 1.5rem clamp(1.5rem, 2.5vw, 2rem) 4rem;
+}
+
+@media (max-width: 767px) {
+  .liga-page.liga-flex {
+    padding: 1rem 1rem calc(var(--mobile-app-nav-total-height, 56px) + 2rem);
+  }
+}
+
 .liga-flex {
+  --lf-surface: var(--ro-bg-card, var(--liga-surface, var(--brand-surface, #ffffff)));
+  --lf-surface-alt: var(--ro-bg-surface, rgba(20, 22, 26, 0.035));
+  --lf-surface-elevated: var(--ro-bg-elevated, var(--lf-surface));
+  --lf-border: var(--ro-border-subtle, var(--liga-border, rgba(20, 22, 26, 0.12)));
+  --lf-border-strong: var(--ro-border, rgba(20, 22, 26, 0.22));
+  --lf-text: var(--ro-text-primary, var(--liga-text, var(--brand-text, #14161a)));
+  --lf-text-secondary: var(--ro-text-secondary, rgba(20, 22, 26, 0.72));
+  --lf-text-muted: var(--ro-text-muted, var(--liga-muted, rgba(20, 22, 26, 0.54)));
+  --lf-accent: var(--brand-accent, var(--ro-accent, #10b981));
+  --lf-success: var(--ro-success, #16a34a);
+  --lf-warning: #d97706;
+  --lf-danger: var(--ro-error, #dc2626);
+
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  color: var(--liga-text, var(--brand-text, #14161a));
+  gap: 1.5rem;
+  color: var(--lf-text);
+  font-family: var(--font-body, Manrope, system-ui, sans-serif);
 }
 
-.liga-flex__head,
-.liga-flex__panel,
-.liga-flex__preview article {
-  border: 1px solid var(--liga-border, var(--brand-border, rgba(20, 22, 26, 0.12)));
-  border-radius: 18px;
-  background: var(--liga-surface, var(--brand-surface, #fff));
-  padding: 1rem 1.1rem;
-}
-
-.liga-flex__head {
+.liga-flex-console {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 24px;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
+/* ── Tipografía base y compatibilidad con vista pública ─────── */
 .liga-flex__kicker {
-  margin: 0 0 0.2rem;
+  margin: 0 0 0.25rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-size: 0.72rem;
-  color: var(--brand-accent, var(--liga-accent, currentColor));
+  font-weight: 800;
+  color: var(--lf-accent);
 }
 
 .liga-flex h1,
 .liga-flex h2,
 .liga-flex h3 {
-  font-family: "Bebas Neue", sans-serif;
-  letter-spacing: 0.04em;
   margin: 0;
+  font-family: var(--font-display, var(--ro-font-heading, Manrope, sans-serif));
+  color: var(--lf-text);
 }
 
 .liga-flex p,
@@ -42,49 +71,1595 @@
 .liga-flex th,
 .liga-flex label,
 .liga-flex button,
-.liga-flex input {
-  font-family: Manrope, sans-serif;
+.liga-flex input,
+.liga-flex select {
+  font-family: var(--font-body, Manrope, system-ui, sans-serif);
 }
 
-.liga-flex__row,
-.liga-flex__actions,
-.liga-flex__score,
-.liga-flex__jornadas {
+/* ══════════════════════════════════════════════════════════════
+   1. HEADER PREMIUM DE LA LIGA + TARJETAS KPI
+   ══════════════════════════════════════════════════════════════ */
+.liga-flex-header,
+.liga-flex-card,
+.liga-flex-selector-card,
+.liga-flex__head,
+.liga-flex__panel,
+.liga-flex__preview article {
+  border: 1px solid var(--lf-border);
+  border-radius: 16px;
+  background: var(--lf-surface);
+  padding: 20px 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .liga-flex-header,
+  .liga-flex-card,
+  .liga-flex-selector-card,
+  .liga-flex__head,
+  .liga-flex__panel {
+    padding: 16px;
+    border-radius: 14px;
+  }
+}
+
+.liga-flex-header {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.liga-flex-header__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.liga-flex-header__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.liga-flex-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.32rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--lf-border-strong);
+  background: var(--lf-surface-alt);
+  color: var(--lf-text);
+}
+
+.liga-flex-status-pill__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.liga-flex-status-pill--in_progress {
+  border-color: color-mix(in srgb, var(--lf-accent) 45%, var(--lf-border));
+  background: color-mix(in srgb, var(--lf-accent) 12%, var(--lf-surface));
+  color: var(--lf-text);
+}
+
+.liga-flex-status-pill--in_progress .liga-flex-status-pill__dot {
+  background: var(--lf-accent);
+  box-shadow: 0 0 8px var(--lf-accent);
+}
+
+.liga-flex-status-pill--completed {
+  border-color: rgba(196, 161, 90, 0.45);
+  background: rgba(196, 161, 90, 0.14);
+  color: var(--ro-medal-gold, #c4a15a);
+}
+
+.liga-flex-header__main {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.liga-flex-header__title {
+  font-size: clamp(1.65rem, 2.8vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  margin: 0 0 0.5rem;
+}
+
+.liga-flex-header__meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.65rem;
+  color: var(--lf-text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.liga-flex-header__meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.liga-flex-header__meta-sep {
+  color: var(--lf-text-muted);
+}
+
+/* ── KPI Strip (4 tarjetas compactas en escritorio) ────────── */
+.liga-flex-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--lf-border);
+}
+
+@media (max-width: 960px) {
+  .liga-flex-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 440px) {
+  .liga-flex-kpis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.liga-flex-kpi {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.liga-flex-kpi__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lf-text-muted);
+}
+
+.liga-flex-kpi__value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--lf-text);
+}
+
+.liga-flex-kpi__value--next {
+  font-size: 1.2rem;
+}
+
+.liga-flex-kpi__value-unit {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--lf-text-muted);
+  margin-left: 0.25rem;
+}
+
+.liga-flex-kpi__sub {
+  font-size: 0.76rem;
+  color: var(--lf-text-secondary);
+  line-height: 1.3;
+}
+
+/* ── Alertas ───────────────────────────────────────────────── */
+.liga-flex-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.liga-flex-alert--error {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.32);
+  color: var(--lf-danger);
+}
+
+.liga-flex-alert--notice {
+  background: color-mix(in srgb, var(--lf-accent) 12%, var(--lf-surface));
+  border: 1px solid color-mix(in srgb, var(--lf-accent) 36%, var(--lf-border));
+  color: var(--lf-text);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   2. NAVEGACIÓN PRINCIPAL POR PESTAÑAS
+   ══════════════════════════════════════════════════════════════ */
+.liga-flex-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem;
+  border-radius: 14px;
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.liga-flex-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.liga-flex-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 42px;
+  padding: 0.5rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--lf-text-secondary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.16s ease;
+}
+
+.liga-flex-tab:hover {
+  color: var(--lf-text);
+  background: var(--lf-surface-alt);
+}
+
+.liga-flex-tab.is-active {
+  background: var(--lf-surface-alt);
+  border-color: color-mix(in srgb, var(--lf-accent) 45%, var(--lf-border-strong));
+  color: var(--lf-text);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.liga-flex-tab__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--lf-text) 10%, transparent);
+  color: var(--lf-text);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TARJETAS COMUNES Y COMPONENTES DE ESTRUCTURA
+   ══════════════════════════════════════════════════════════════ */
+.liga-flex-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.liga-flex-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.liga-flex-card__eyebrow {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--lf-text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.liga-flex-card__title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.liga-flex-card__desc {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-link-btn {
+  border: none;
+  background: transparent;
+  color: var(--lf-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   3. RESUMEN DE TEMPORADA
+   ══════════════════════════════════════════════════════════════ */
+.liga-flex-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .liga-flex-overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.liga-flex-overview-side {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.liga-flex-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.liga-flex-progress__bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  overflow: hidden;
+}
+
+.liga-flex-progress__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--lf-accent);
+  transition: width 0.25s ease;
+}
+
+.liga-flex-progress__labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-season-specs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 560px) {
+  .liga-flex-season-specs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.liga-flex-season-spec {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.liga-flex-season-spec__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--lf-text-muted);
+}
+
+.liga-flex-season-spec__value {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--lf-text);
+}
+
+.liga-flex-season-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--lf-border);
+}
+
+.liga-flex-reopen-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.liga-flex-reopen-bar .liga-flex-input {
+  flex: 1 1 220px;
+}
+
+.liga-flex-next-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+}
+
+.liga-flex-next-summary__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 560px) {
+  .liga-flex-next-summary__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.liga-flex-next-summary__label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--lf-text-muted);
+  margin-bottom: 2px;
+}
+
+.liga-flex-quick-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.liga-flex-quick-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--lf-border);
+  background: var(--lf-surface-alt);
+  color: var(--lf-text);
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.liga-flex-quick-link span {
+  flex: 1 1 auto;
+}
+
+.liga-flex-quick-link:hover {
+  border-color: var(--lf-border-strong);
+  transform: translateX(2px);
+}
+
+.liga-flex-mini-standings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.liga-flex-mini-standings__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  font-size: 0.85rem;
+}
+
+.liga-flex-mini-standings__pos {
+  font-weight: 800;
+  min-width: 1.75rem;
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-mini-standings__name {
+  flex: 1 1 auto;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liga-flex-mini-standings__jj {
+  font-size: 0.76rem;
+  color: var(--lf-text-muted);
+}
+
+.liga-flex-mini-standings__pts {
+  font-weight: 800;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   4. GESTIÓN DE JORNADAS — SELECTOR J01–J12 Y LAYOUT 65% / 35%
+   ══════════════════════════════════════════════════════════════ */
+.liga-flex-jornadas-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.liga-flex-selector-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.liga-flex-selector-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.liga-flex-selector-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.liga-flex-legend-item::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lf-border-strong);
+}
+
+.liga-flex-legend-item.is-configurada::before {
+  background: #3b82f6;
+}
+
+.liga-flex-legend-item.is-en_curso::before {
+  background: var(--lf-accent);
+}
+
+.liga-flex-legend-item.is-finalizada::before {
+  background: var(--lf-success);
+}
+
+.liga-flex__jornadas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .liga-flex__jornadas {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .liga-flex__jornadas > button {
+    flex: 0 0 96px;
+  }
+}
+
+.liga-flex-jornada-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 58px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--lf-border);
+  background: var(--lf-surface-alt);
+  color: var(--lf-text);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.liga-flex-jornada-pill:hover {
+  border-color: var(--lf-border-strong);
+}
+
+.liga-flex-jornada-pill.is-selected {
+  border-color: var(--lf-accent);
+  background: color-mix(in srgb, var(--lf-accent) 12%, var(--lf-surface));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lf-accent) 35%, transparent);
+}
+
+.liga-flex-jornada-pill__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 4px;
+}
+
+.liga-flex-jornada-pill__code {
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.liga-flex-jornada-pill__final {
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.08rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(196, 161, 90, 0.2);
+  color: var(--ro-medal-gold, #c4a15a);
+}
+
+.liga-flex-jornada-pill__status {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--lf-text-muted);
+}
+
+.liga-flex-jornada-pill.is-configurada .liga-flex-jornada-pill__status {
+  color: #3b82f6;
+}
+
+.liga-flex-jornada-pill.is-en_curso .liga-flex-jornada-pill__status {
+  color: var(--lf-accent);
+}
+
+.liga-flex-jornada-pill.is-finalizada .liga-flex-jornada-pill__status {
+  color: var(--lf-success);
+}
+
+.liga-flex-jornada-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.24rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--lf-border);
+  background: var(--lf-surface-alt);
+}
+
+.liga-flex-jornada-badge--configurada {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+
+.liga-flex-jornada-badge--en_curso {
+  border-color: color-mix(in srgb, var(--lf-accent) 45%, var(--lf-border));
+  background: color-mix(in srgb, var(--lf-accent) 14%, var(--lf-surface));
+  color: var(--lf-text);
+}
+
+.liga-flex-jornada-badge--finalizada {
+  border-color: rgba(22, 163, 74, 0.35);
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--lf-success);
+}
+
+/* ── Distribución de Dos Columnas (65% Principal / 35% Secundaria) ── */
+.liga-flex-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(320px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .liga-flex-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.liga-flex-workspace__main,
+.liga-flex-workspace__side {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   5. CONFIGURACIÓN DE JORNADA (Controles 44–48px + Resumen Dinámico)
+   ══════════════════════════════════════════════════════════════ */
+.liga-flex-config-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.liga-flex-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .liga-flex-config-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.liga-flex-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.liga-flex-field--full {
+  grid-column: 1 / -1;
+}
+
+.liga-flex-field > span {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-input,
+.liga-flex input,
+.liga-flex select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 0.85rem;
+  border-radius: 12px;
+  border: 1px solid var(--lf-border-strong);
+  background: var(--lf-surface-alt);
+  color: var(--lf-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.liga-flex-input:focus,
+.liga-flex input:focus,
+.liga-flex select:focus {
+  outline: none;
+  border-color: var(--lf-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lf-accent) 22%, transparent);
+}
+
+.liga-flex-input:disabled,
+.liga-flex input:disabled,
+.liga-flex select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.liga-flex-config-summary {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--lf-accent) 8%, var(--lf-surface-alt));
+  border: 1px solid color-mix(in srgb, var(--lf-accent) 30%, var(--lf-border));
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.liga-flex-config-summary.is-invalid {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.35);
+}
+
+.liga-flex-config-summary__headline {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-config-summary__duration {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--lf-text);
+}
+
+.liga-flex-config-summary__detail {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-config-save-btn {
+  width: 100%;
+  min-height: 46px;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.liga-flex-config-tz {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--lf-text-muted);
+  text-align: center;
+}
+
+/* ── Resumen Operativo Lateral ─────────────────────────────── */
+.liga-flex-ops-summary {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.liga-flex-ops-summary__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  font-size: 0.82rem;
+}
+
+.liga-flex-ops-summary__row dt {
+  color: var(--lf-text-secondary);
+  font-weight: 600;
+}
+
+.liga-flex-ops-summary__row dd {
+  margin: 0;
+  font-weight: 800;
+  color: var(--lf-text);
+}
+
+.liga-flex-side-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.liga-flex-side-actions__btn {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.liga-flex-close-jornada-box {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--lf-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   6. GESTIÓN DE PARTICIPANTES DE LA JORNADA
+   ══════════════════════════════════════════════════════════════ */
+.liga-flex-participants-counter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  font-size: 0.8rem;
+}
+
+.liga-flex-participants-counter strong {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.liga-flex-participants-counter strong.is-ready {
+  color: var(--lf-success);
+}
+
+.liga-flex-participants-counter strong.is-warning {
+  color: var(--lf-warning);
+}
+
+.liga-flex-capacity-banner {
+  display: flex;
+  align-items: center;
   gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-capacity-banner.is-valid {
+  background: rgba(22, 163, 74, 0.1);
+  border-color: rgba(22, 163, 74, 0.32);
+  color: var(--lf-text);
+}
+
+.liga-flex-capacity-banner.is-warning {
+  background: rgba(217, 119, 6, 0.1);
+  border-color: rgba(217, 119, 6, 0.35);
+  color: var(--lf-text);
+}
+
+.liga-flex-selected-roster {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+}
+
+.liga-flex-selected-roster__title {
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lf-text-muted);
+}
+
+.liga-flex-selected-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.liga-flex-selected-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border-strong);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.liga-flex-selected-chip__num {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--lf-text-muted);
+}
+
+.liga-flex-selected-chip__code {
+  font-size: 0.7rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--lf-text-muted);
+}
+
+.liga-flex-selected-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--lf-surface-alt);
+  color: var(--lf-text-secondary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.liga-flex-selected-chip__remove:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.15);
+  color: var(--lf-danger);
+}
+
+/* ── Buscador y Grid de Participantes del Directorio ────────── */
+.liga-flex-pool-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.liga-flex-search-box {
+  position: relative;
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.liga-flex-search-box__icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--lf-text-muted);
+  pointer-events: none;
+}
+
+.liga-flex-search-box__input {
+  padding-left: 2.35rem !important;
+  padding-right: 2.1rem !important;
+}
+
+.liga-flex-search-box__clear {
+  position: absolute;
+  right: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: var(--lf-surface);
+  color: var(--lf-text-secondary);
+  cursor: pointer;
+}
+
+.liga-flex-pool-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.liga-flex-filter-pill {
+  min-height: 36px;
+  padding: 0 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--lf-border);
+  background: var(--lf-surface-alt);
+  color: var(--lf-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.liga-flex-filter-pill.is-active,
+.liga-flex-filter-pill:hover {
+  border-color: var(--lf-border-strong);
+  color: var(--lf-text);
+  background: var(--lf-surface);
+}
+
+.liga-flex__people.liga-flex-people-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .liga-flex__people.liga-flex-people-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.liga-flex-person-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--lf-border);
+  background: var(--lf-surface-alt);
+  min-width: 0;
+  transition: border-color 0.15s ease;
+}
+
+.liga-flex-person-card.is-selected {
+  border-color: color-mix(in srgb, var(--lf-accent) 45%, var(--lf-border-strong));
+  background: color-mix(in srgb, var(--lf-accent) 7%, var(--lf-surface-alt));
+}
+
+.liga-flex-person-card__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--lf-text);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.liga-flex-person-card__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.liga-flex-person-card__info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.liga-flex-person-card__name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--lf-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liga-flex-person-card__meta {
+  font-size: 0.73rem;
+  color: var(--lf-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liga-flex-person-card__btn {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--lf-border-strong);
+  background: var(--lf-surface);
+  color: var(--lf-text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.liga-flex-person-card__btn.is-add:hover:not(:disabled) {
+  border-color: var(--lf-accent);
+  background: color-mix(in srgb, var(--lf-accent) 14%, var(--lf-surface));
+}
+
+.liga-flex-person-card__btn.is-remove {
+  border-color: rgba(220, 38, 38, 0.35);
+  color: var(--lf-danger);
+}
+
+.liga-flex-person-card__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Alta rápida de jugador nuevo ──────────────────────────── */
+.liga-flex-new-player-box {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.liga-flex-new-player-box__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.liga-flex-new-player-box__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--lf-text);
+}
+
+.liga-flex-new-player-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 10px;
   align-items: end;
 }
 
-.liga-flex label {
+@media (max-width: 780px) {
+  .liga-flex-new-player-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   7. PAREJAS, RONDAS Y PARTIDOS (MatchEditor & RoundPreview)
+   ══════════════════════════════════════════════════════════════ */
+.liga-flex-schedule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.liga-flex-schedule-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.liga-flex__preview {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 14px;
+}
+
+.liga-flex-preview-quality {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.liga-flex-preview-rounds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.liga-flex-preview-round {
+  padding: 14px 16px !important;
+  border-radius: 14px !important;
+  background: var(--lf-surface-alt) !important;
+  border: 1px solid var(--lf-border) !important;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.liga-flex-preview-round__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 0.78rem;
+  color: var(--lf-text-muted);
 }
 
-.liga-flex input,
-.liga-flex select {
-  min-height: 40px;
+.liga-flex-preview-round__head h3 {
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.liga-flex-preview-round__matches {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.liga-flex-preview-match {
+  padding: 8px 10px;
   border-radius: 10px;
-  border: 1px solid var(--liga-border, rgba(20, 22, 26, 0.16));
-  background: transparent;
-  color: inherit;
-  padding: 0 0.7rem;
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.8rem;
 }
 
-.liga-flex__jornadas button,
-.liga-flex__people button {
-  min-height: 36px;
-  border-radius: 999px;
-  border: 1px solid var(--liga-border, rgba(20, 22, 26, 0.16));
-  background: transparent;
-  color: inherit;
-  padding: 0 0.8rem;
+.liga-flex-preview-match__court {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--lf-text-muted);
 }
 
-.liga-flex__jornadas button.is-selected {
-  border-color: var(--brand-accent, currentColor);
+.liga-flex-preview-match__teams {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.liga-flex-preview-match__teams em {
+  font-style: normal;
+  color: var(--lf-text-muted);
+  font-size: 0.74rem;
+}
+
+.liga-flex__matches {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.liga-flex-round-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.liga-flex-round-group__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--lf-border);
+}
+
+.liga-flex-round-group__head h3 {
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.liga-flex-round-group__head span {
+  font-size: 0.75rem;
+  color: var(--lf-text-muted);
+}
+
+.liga-flex-matches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.liga-flex-match-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+}
+
+.liga-flex-match-row.is-captured {
+  border-color: color-mix(in srgb, var(--lf-success) 32%, var(--lf-border));
+}
+
+@media (max-width: 720px) {
+  .liga-flex-match-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+}
+
+.liga-flex-match-row__tag {
+  font-size: 0.73rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 8px;
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border);
+  white-space: nowrap;
+}
+
+.liga-flex-match-row__pair {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--lf-text);
+  min-width: 0;
+}
+
+.liga-flex-match-row__pair.is-right {
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .liga-flex-match-row__pair.is-right {
+    text-align: left;
+  }
+}
+
+.liga-flex-match-row__scores {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.liga-flex-score-input {
+  width: 56px !important;
+  min-height: 44px !important;
+  text-align: center;
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  padding: 0 0.35rem !important;
+}
+
+.liga-flex-match-row__vs {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--lf-text-muted);
+}
+
+/* ── Desempates y Correcciones ─────────────────────────────── */
+.liga-flex-tie-card,
+.liga-flex-correction-card {
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.liga-flex-tie-card__head h3,
+.liga-flex-correction-card__head h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.liga-flex-tie-card__head p,
+.liga-flex-correction-card__head p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-tie-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.liga-flex-tie-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border);
+  font-size: 0.85rem;
+}
+
+.liga-flex-tie-list__btns {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.liga-flex-correction-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.liga-flex-correction-footer .liga-flex-input {
+  flex: 1 1 240px;
+}
+
+.liga-flex-warning-strip,
+.liga-flex-provisional-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.liga-flex-warning-strip {
+  background: rgba(217, 119, 6, 0.1);
+  border: 1px solid rgba(217, 119, 6, 0.35);
+}
+
+.liga-flex-provisional-banner {
+  background: rgba(22, 163, 74, 0.1);
+  border: 1px solid rgba(22, 163, 74, 0.32);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   8. CLASIFICACIÓN GENERAL Y DIRECTORIO DE JUGADORES
+   ══════════════════════════════════════════════════════════════ */
+.liga-flex__podio {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 640px) {
+  .liga-flex__podio {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.liga-flex__podio li {
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .liga-flex__table-wrap {
@@ -95,41 +1670,237 @@
 .liga-flex__table {
   width: 100%;
   border-collapse: collapse;
-}
-
-.liga-flex__empty {
-  margin: 0;
-  color: var(--liga-muted, rgba(20, 22, 26, 0.62));
+  font-size: 0.875rem;
 }
 
 .liga-flex__table th,
 .liga-flex__table td {
   text-align: left;
-  padding: 0.55rem 0.2rem;
-  border-bottom: 1px solid var(--liga-border, rgba(20, 22, 26, 0.08));
+  padding: 0.85rem 0.9rem;
+  border-bottom: 1px solid var(--lf-border);
+  vertical-align: middle;
 }
 
-.liga-flex__table tr:nth-child(-n + 3) td:first-child {
+.liga-flex__table thead th {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lf-text-muted);
+  background: var(--lf-surface-alt);
+}
+
+.liga-flex-pos-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 28px;
+  padding: 0 0.45rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+}
+
+.liga-flex-pos-badge.is-top-1 {
+  background: rgba(196, 161, 90, 0.2);
+  border-color: rgba(196, 161, 90, 0.5);
   color: var(--ro-medal-gold, #c4a15a);
 }
 
-.liga-flex__people {
-  list-style: none;
-  margin: 0.6rem 0 0;
-  padding: 0;
+.liga-flex-pos-badge.is-top-2 {
+  background: rgba(148, 163, 184, 0.2);
+  border-color: rgba(148, 163, 184, 0.45);
 }
 
-.liga-flex__people li,
-.liga-flex__score {
+.liga-flex-pos-badge.is-top-3 {
+  background: rgba(180, 120, 80, 0.18);
+  border-color: rgba(180, 120, 80, 0.45);
+}
+
+.liga-flex-standings-player {
   display: flex;
-  justify-content: space-between;
-  gap: 0.6rem;
   align-items: center;
-  padding: 0.35rem 0;
+  gap: 0.7rem;
 }
 
-.liga-flex__score input {
-  width: 4rem;
+.liga-flex-standings-player__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.liga-flex-standings-player__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.liga-flex-standings-player__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.liga-flex-standings-player__cat {
+  font-size: 0.72rem;
+  color: var(--lf-text-muted);
+}
+
+.liga-flex-code-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.16rem 0.5rem;
+  border-radius: 6px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-standings-points {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--lf-text);
+}
+
+.liga-flex-standings-perf {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.liga-flex-perf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-perf-chip.is-highlight {
+  border-color: color-mix(in srgb, var(--lf-accent) 45%, var(--lf-border));
+  color: var(--lf-text);
+}
+
+/* ── Directorio de Jugadores ───────────────────────────────── */
+.liga-flex-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 1024px) {
+  .liga-flex-directory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .liga-flex-directory-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.liga-flex-directory-card {
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.liga-flex-directory-card__top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.liga-flex-directory-card__identity {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.liga-flex-directory-card__name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liga-flex-directory-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.liga-flex-directory-card__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border);
+  font-size: 0.78rem;
+}
+
+.liga-flex-directory-card__stats span {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--lf-text-muted);
+}
+
+.liga-flex-directory-card__actions .liga-flex-person-card__btn {
+  width: 100%;
+}
+
+.liga-flex-empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2.25rem 1rem;
+  border-radius: 14px;
+  background: var(--lf-surface-alt);
+  border: 1px dashed var(--lf-border-strong);
+  text-align: center;
+  color: var(--lf-text-muted);
+}
+
+.liga-flex__empty {
+  margin: 0;
+  color: var(--lf-text-muted);
+  font-size: 0.875rem;
 }
 
 .liga-flex__notice,
@@ -137,47 +1908,9 @@
   margin: 0;
   padding: 0.75rem 0.9rem;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--brand-accent, #fff) 12%, transparent);
-}
-
-.liga-flex__podio {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.liga-flex__podio li {
-  border-radius: 16px;
-  padding: 0.9rem;
-  background: var(--liga-surface, #fff);
-  border: 1px solid var(--liga-border, rgba(20, 22, 26, 0.12));
+  background: color-mix(in srgb, var(--lf-accent) 12%, transparent);
 }
 
 .liga-flex--public {
   padding: 1rem;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .liga-flex__move,
-  .liga-flex__panel,
-  .liga-flex__preview article {
-    animation: liga-flex-in 240ms ease;
-  }
-}
-
-@keyframes liga-flex-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
-}
-
-@media (max-width: 720px) {
-  .liga-flex__head,
-  .liga-flex__score,
-  .liga-flex__podio {
-    display: flex;
-    flex-direction: column;
-  }
 }
