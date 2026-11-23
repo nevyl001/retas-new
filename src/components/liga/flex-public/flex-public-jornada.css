@@ -1,0 +1,1080 @@
+/* =============================================================================
+   RIVIERA FLEX LEAGUE — JORNADA PÚBLICA PREMIUM (DESKTOP, TABLET & MOBILE)
+   Scope exclusivo: .flex-pub-jornada
+   Identidad monocromática carbón/negro + blanco + grises neutros + acento club.
+   ============================================================================= */
+
+.flex-pub-jornada.liga-pantalla {
+  --flex-pub-bg: #070708;
+  --flex-pub-surface: #111113;
+  --flex-pub-surface-elevated: #161619;
+  --flex-pub-surface-pair: #141417;
+  --flex-pub-avatar-bg: #1c1c20;
+  --flex-pub-border: #26262a;
+  --flex-pub-border-subtle: #1e1e22;
+  --flex-pub-border-strong: #38383e;
+  --flex-pub-text: #ffffff;
+  --flex-pub-text-secondary: #a3a3a3;
+  --flex-pub-text-muted: #737373;
+  --flex-pub-accent: var(--brand-accent, var(--liga-pub-gold, #ffffff));
+  background: var(--flex-pub-bg) !important;
+  color: var(--flex-pub-text);
+  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.flex-pub-jornada .liga-pantalla__inner {
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 24px 56px;
+  box-sizing: border-box;
+}
+
+.flex-pub-jornada.liga-pantalla--flex-screen .liga-pantalla__inner {
+  max-width: 1440px;
+}
+
+/* ── 1 & 2. Hero y Barra de Información de Liga y Jornada ── */
+
+.flex-pub-jornada .peds-hero.liga-pantalla-jornada-hero {
+  margin-bottom: 16px;
+}
+
+.flex-pub-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+  background: var(--flex-pub-surface);
+  border: 1px solid var(--flex-pub-border);
+}
+
+.flex-pub-toolbar__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  min-width: 0;
+}
+
+.flex-pub-toolbar__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text);
+  text-decoration: none;
+  padding: 6px 11px;
+  border-radius: 8px;
+  background: var(--flex-pub-surface-elevated);
+  border: 1px solid var(--flex-pub-border);
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.flex-pub-toolbar__back:hover {
+  border-color: var(--flex-pub-border-strong);
+  background: #1d1d21;
+}
+
+.flex-pub-toolbar__pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.flex-pub-toolbar__pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--flex-pub-text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--flex-pub-border-subtle);
+}
+
+.flex-pub-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flex-pub-toolbar__screen-link {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: "Manrope", sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text-secondary);
+  background: transparent;
+  border: 1px solid var(--flex-pub-border);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.flex-pub-toolbar__screen-link:hover {
+  color: var(--flex-pub-text);
+  border-color: var(--flex-pub-border-strong);
+  background: var(--flex-pub-surface-elevated);
+}
+
+/* ── Contenedor de secciones en orden jerárquico ── */
+
+.flex-pub-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+}
+
+/* ── Avatar Neutro Monocromático (Cero degradados de colores, cero siluetas) ── */
+
+.flex-pub-avatar {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--flex-pub-avatar-bg);
+  border: 1px solid var(--flex-pub-border);
+  color: var(--flex-pub-text);
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.flex-pub-avatar--participant {
+  width: 52px;
+  height: 60px;
+  border-radius: 7px;
+}
+
+.flex-pub-avatar--match {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+}
+
+.flex-pub-avatar--table {
+  width: 36px;
+  height: 36px;
+  border-radius: 7px;
+}
+
+.flex-pub-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  border-radius: inherit;
+}
+
+.flex-pub-avatar__initials {
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.flex-pub-avatar--participant .flex-pub-avatar__initials {
+  font-size: 14px;
+}
+
+.flex-pub-avatar--match .flex-pub-avatar__initials {
+  font-size: 13px;
+}
+
+.flex-pub-avatar--table .flex-pub-avatar__initials {
+  font-size: 11.5px;
+}
+
+/* ── 3. PARTIDOS — PRIORIDAD VISUAL Y NAVEGACIÓN DE RONDAS ── */
+
+.flex-pub-matches-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.flex-pub-rounds-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--flex-pub-border);
+}
+
+.flex-pub-rounds-header__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.flex-pub-rounds-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.flex-pub-rounds-header__title {
+  margin: 0;
+  font-family: var(--liga-font-display, "Bebas Neue", sans-serif);
+  font-size: clamp(28px, 3.2vw, 36px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: var(--flex-pub-text);
+  text-transform: uppercase;
+}
+
+.flex-pub-rounds-header__subtitle {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-rounds-header__right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px 12px;
+}
+
+.flex-pub-round-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--flex-pub-border);
+  background: var(--flex-pub-surface);
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-round-status-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.flex-pub-round-status-badge--actual {
+  color: var(--flex-pub-text);
+  border-color: color-mix(in srgb, var(--flex-pub-accent) 45%, var(--flex-pub-border));
+  background: color-mix(in srgb, var(--flex-pub-accent) 12%, var(--flex-pub-surface));
+}
+
+.flex-pub-round-status-badge--actual .flex-pub-round-status-badge__dot {
+  background: var(--flex-pub-accent);
+}
+
+.flex-pub-round-status-badge--confirmada {
+  color: #d4d4d8;
+  border-color: var(--flex-pub-border-strong);
+  background: var(--flex-pub-surface-elevated);
+}
+
+/* Navegación compacta de rondas */
+
+.flex-pub-round-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.flex-pub-round-nav__btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--flex-pub-border);
+  background: var(--flex-pub-surface);
+  color: var(--flex-pub-text-secondary);
+  font-family: "Manrope", sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.flex-pub-round-nav__btn:hover:not(:disabled) {
+  color: var(--flex-pub-text);
+  border-color: var(--flex-pub-border-strong);
+  background: var(--flex-pub-surface-elevated);
+}
+
+.flex-pub-round-nav__btn.is-selected {
+  color: #000000;
+  background: #ffffff;
+  border-color: #ffffff;
+}
+
+.flex-pub-round-nav__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.flex-pub-round-nav__state {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-round-nav__btn.is-selected .flex-pub-round-nav__state {
+  background: rgba(0, 0, 0, 0.14);
+  color: #000000;
+}
+
+.flex-pub-round-nav__btn.is-actual:not(.is-selected) {
+  border-color: color-mix(in srgb, var(--flex-pub-accent) 42%, var(--flex-pub-border));
+  color: var(--flex-pub-text);
+}
+
+/* Grid de partidos: Desktop 3 columnas, Tablet 2 columnas, Móvil 1 columna */
+
+.flex-pub-matches-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .flex-pub-matches-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .flex-pub-matches-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+/* Tarjeta de partido */
+
+.flex-pub-match-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--flex-pub-surface);
+  border: 1px solid var(--flex-pub-border);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.flex-pub-match-card--live {
+  border-color: color-mix(in srgb, var(--flex-pub-accent) 42%, var(--flex-pub-border));
+}
+
+.flex-pub-match-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--flex-pub-border-subtle);
+}
+
+.flex-pub-match-card__court {
+  font-family: "Manrope", sans-serif;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--flex-pub-surface-elevated);
+  border: 1px solid var(--flex-pub-border);
+}
+
+.flex-pub-match-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-match-card__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--flex-pub-text-muted);
+}
+
+.flex-pub-match-card__status--live {
+  color: var(--flex-pub-text);
+}
+
+.flex-pub-match-card__status--live .flex-pub-match-card__status-dot {
+  background: var(--flex-pub-accent);
+}
+
+.flex-pub-match-card__status--done {
+  color: var(--flex-pub-text);
+}
+
+.flex-pub-match-card__status--done .flex-pub-match-card__status-dot {
+  background: #ffffff;
+}
+
+/* Bloques de Pareja A y Pareja B */
+
+.flex-pub-match-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--flex-pub-surface-pair);
+  border: 1px solid var(--flex-pub-border-subtle);
+  min-width: 0;
+}
+
+.flex-pub-match-pair--win {
+  border-color: color-mix(in srgb, var(--flex-pub-accent) 45%, var(--flex-pub-border-strong));
+  background: #17171b;
+}
+
+.flex-pub-match-pair--loss {
+  opacity: 0.86;
+}
+
+.flex-pub-match-pair__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.flex-pub-match-pair__label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text-muted);
+}
+
+.flex-pub-match-pair--win .flex-pub-match-pair__label {
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-match-pair__score {
+  font-family: "Manrope", sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-match-pair__score--win {
+  color: var(--flex-pub-text);
+}
+
+.flex-pub-match-pair__players {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.flex-pub-match-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.flex-pub-match-player__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.flex-pub-match-player__name {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.22;
+  color: var(--flex-pub-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.flex-pub-match-player__id {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--flex-pub-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Divisor VS centrado + Marcador */
+
+.flex-pub-match-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+.flex-pub-match-vs__line {
+  flex: 1;
+  height: 1px;
+  background: var(--flex-pub-border);
+}
+
+.flex-pub-match-vs__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--flex-pub-surface-elevated);
+  border: 1px solid var(--flex-pub-border);
+  font-family: "Manrope", sans-serif;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-match-scorebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  background: #0c0c0e;
+  border: 1px solid var(--flex-pub-border);
+}
+
+.flex-pub-match-scorebar__label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text-muted);
+}
+
+.flex-pub-match-scorebar__numbers {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: "Manrope", sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--flex-pub-text);
+}
+
+.flex-pub-match-scorebar__num {
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-match-scorebar__num.is-win {
+  color: var(--flex-pub-text);
+}
+
+.flex-pub-match-scorebar__sep {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--flex-pub-text-muted);
+}
+
+/* ── 4. PARTICIPANTES — TARJETAS HORIZONTALES COMPACTAS ── */
+
+.flex-pub-participants-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.flex-pub-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--flex-pub-border);
+}
+
+.flex-pub-section-head__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.flex-pub-section-head__title {
+  margin: 0;
+  font-family: var(--liga-font-display, "Bebas Neue", sans-serif);
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+  color: var(--flex-pub-text);
+  text-transform: uppercase;
+}
+
+.flex-pub-section-head__subtitle {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-section-head__count {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text-secondary);
+  background: var(--flex-pub-surface);
+  border: 1px solid var(--flex-pub-border);
+}
+
+/* Grid de participantes: Móvil 1 col, Tablet 2 cols, Desktop 4 cols */
+
+.flex-pub-participants-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .flex-pub-participants-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1080px) {
+  .flex-pub-participants-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+/* Ficha horizontal compacta de participante (76–88 px en desktop, 76–84 px en móvil) */
+
+.flex-pub-participant-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  height: 84px;
+  min-height: 76px;
+  max-height: 88px;
+  padding: 12px;
+  border-radius: 11px;
+  background: var(--flex-pub-surface);
+  border: 1px solid var(--flex-pub-border);
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.flex-pub-participant-card:hover {
+  border-color: var(--flex-pub-border-strong);
+  background: #141417;
+}
+
+.flex-pub-participant-card__center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.flex-pub-participant-card__name {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #ffffff;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.flex-pub-participant-card__id {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: var(--flex-pub-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+.flex-pub-participant-card__id a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.flex-pub-participant-card__id a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.flex-pub-participant-card__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  text-align: right;
+  flex-shrink: 0;
+  padding-left: 6px;
+}
+
+.flex-pub-participant-card__pts-value {
+  font-family: "Manrope", sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+
+.flex-pub-participant-card__pts-value--pending {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--flex-pub-text-muted);
+}
+
+.flex-pub-participant-card__pts-label {
+  font-family: "Manrope", sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-participant-card__pts-status {
+  font-family: "Manrope", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--flex-pub-text-muted);
+}
+
+.flex-pub-participant-card__pts-status--scored {
+  color: var(--flex-pub-text-secondary);
+}
+
+/* ── 5. CLASIFICACIÓN DE LA JORNADA (Compacta) ── */
+
+.flex-pub-standings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.flex-pub-standings-card {
+  border-radius: 12px;
+  background: var(--flex-pub-surface);
+  border: 1px solid var(--flex-pub-border);
+  overflow: hidden;
+}
+
+.flex-pub-standings-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.flex-pub-standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Manrope", sans-serif;
+}
+
+.flex-pub-standings-table th {
+  padding: 12px 16px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text-muted);
+  text-align: left;
+  background: var(--flex-pub-surface-elevated);
+  border-bottom: 1px solid var(--flex-pub-border);
+}
+
+.flex-pub-standings-table th.is-num,
+.flex-pub-standings-table td.is-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.flex-pub-standings-table th.is-pos,
+.flex-pub-standings-table td.is-pos {
+  width: 68px;
+  text-align: center;
+}
+
+.flex-pub-standings-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--flex-pub-border-subtle);
+  vertical-align: middle;
+  color: var(--flex-pub-text);
+  font-size: 13.5px;
+}
+
+.flex-pub-standings-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.flex-pub-standings-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.flex-pub-standings-pos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  background: var(--flex-pub-surface-elevated);
+  border: 1px solid var(--flex-pub-border);
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-standings-pos--top {
+  color: #ffffff;
+  border-color: var(--flex-pub-border-strong);
+  background: #202026;
+}
+
+.flex-pub-standings-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.flex-pub-standings-player__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.flex-pub-standings-player__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.flex-pub-standings-player__id {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--flex-pub-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.flex-pub-standings-player__id a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.flex-pub-standings-player__id a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.flex-pub-standings-pj {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-standings-pts {
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.flex-pub-standings-pts small {
+  margin-left: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text-secondary);
+}
+
+/* Estado vacío */
+
+.flex-pub-empty-card {
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--flex-pub-surface);
+  border: 1px solid var(--flex-pub-border);
+  color: var(--flex-pub-text-secondary);
+  font-size: 13.5px;
+}
+
+/* ── Adaptación Responsive Móvil (< 640px) ── */
+
+@media (max-width: 639px) {
+  .flex-pub-jornada .liga-pantalla__inner {
+    padding: 16px 14px 40px;
+  }
+
+  .flex-pub-toolbar {
+    padding: 10px 12px;
+    margin-bottom: 18px;
+  }
+
+  .flex-pub-rounds-header {
+    align-items: flex-start;
+  }
+
+  .flex-pub-rounds-header__right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .flex-pub-round-nav {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+  }
+
+  .flex-pub-round-nav__btn {
+    flex: 0 0 auto;
+  }
+
+  .flex-pub-match-card {
+    padding: 16px;
+  }
+
+  .flex-pub-participant-card {
+    height: 80px;
+    min-height: 76px;
+    max-height: 84px;
+    padding: 11px 12px;
+    gap: 10px;
+  }
+
+  .flex-pub-avatar--participant {
+    width: 48px;
+    height: 56px;
+    border-radius: 7px;
+  }
+
+  .flex-pub-participant-card__name {
+    font-size: 14px;
+  }
+
+  .flex-pub-standings-table th,
+  .flex-pub-standings-table td {
+    padding: 10px 12px;
+  }
+
+  .flex-pub-standings-table th.is-pos,
+  .flex-pub-standings-table td.is-pos {
+    width: 48px;
+  }
+}
