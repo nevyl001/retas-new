@@ -364,6 +364,76 @@
   color: color-mix(in srgb, #fff 88%, transparent);
 }
 
+.liga-pantalla--jornada-fijas .flex-pub-roster {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.liga-pantalla--jornada-fijas .flex-pub-roster__card {
+  min-width: 0;
+}
+
+.liga-pantalla--jornada-fijas .flex-pub-roster .pub-split-vs-panel {
+  aspect-ratio: 3 / 4;
+  max-height: none;
+}
+
+.liga-pantalla--jornada-fijas .flex-pub-roster__id {
+  margin: 0.4rem 0 0;
+  text-align: center;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--liga-pub-text-muted, rgba(255, 255, 255, 0.62));
+}
+
+.liga-pantalla--individual .flex-pub-roster__hit,
+.liga-pantalla--individual .liga-ind-top3__card > .flex-pub-roster__hit,
+.liga-pantalla--individual .liga-ind-rest__row > .flex-pub-roster__hit {
+  display: contents;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.liga-pantalla--individual .flex-pub-roster__hit--row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.liga-pantalla--individual a.liga-ind-jornadas__tab {
+  text-decoration: none;
+}
+
+.liga-pantalla--flex-screen .peds-hero__evento {
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  max-width: none;
+}
+
+.liga-pantalla-ronda__meta--centered {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+@media (min-width: 768px) {
+  .liga-pantalla--jornada-fijas .flex-pub-roster {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .liga-pantalla--jornada-fijas .flex-pub-roster {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 /* Mini cards retrato — presencia sin gigantismo */
 .liga-jornada-match-pair-half__grid .pub-split-vs-panel,
 .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel,

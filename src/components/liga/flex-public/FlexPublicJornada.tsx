@@ -3,26 +3,46 @@ import {
   ClubExperienceScope,
   PublicEventBrandIdentity,
   PublicEventNeutralLoading,
+  PublicScopedBrandGate,
   useOrganizerDisplayName,
 } from "../../../club-experience";
+import { isPubDsV2Enabled } from "../../../config/peds";
 import { useVisiblePolling } from "../../../hooks/useVisiblePolling";
 import { honorResolution, rankFlexSeason } from "../../../lib/liga/flex/season";
 import { rankFlexJornada } from "../../../lib/liga/flex/standings";
 import { flexPublicJornadaEstado } from "../../../lib/liga/flex/publicView";
+import type { PublicRondaEstadoItem } from "../../../lib/liga/jornadaTemporal";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../../lib/liga/publicPoll";
 import { resolveLigaJugadorPublicProfiles } from "../../../lib/liga/publicParejaAvatars";
 import type { LigaDetalle, LigaJornada, LigaJornadaPareja, LigaPartido } from "../../../lib/liga/types";
 import { isFlexLeague } from "../../../lib/liga/ligaModalidad";
 import { loadFlexLeague, type FlexBundle } from "../../../services/ligaFlexService";
 import { getLigaById, publicLigaUrl } from "../../../services/ligaService";
-import {
-  fechaCorta,
-  FlexFace,
-  horarioFlex,
-  useFlexPublicFonts,
-  useFlexPublicTitle,
-} from "./flexPublicUi";
-import "./flex-public.css";
+import { PublicModeShell } from "../../platform/PublicModeShell";
+import { StatusBadge } from "../../platform/StatusBadge";
+import { PublicHero } from "../../public/peds";
+import { PublicSplitVsPlayerPanel } from "../../public/split-vs";
+import { JugadorAvatar } from "../../jugadores/JugadorAvatar";
+import { buildPublicJugadorByRivieraIdPath } from "../../jugadores/jugadoresPublicNav";
+import { LigaJornadaMatchCardFinal } from "../jornada-public/LigaJornadaMatchCardFinal";
+import { LigaJornadaMatchCardPending } from "../jornada-public/LigaJornadaMatchCardPending";
+import { LigaJornadaPublicRoundSelector } from "../jornada-public/LigaJornadaPublicRoundSelector";
+import type { LigaJornadaMatchPairSide } from "../jornada-public/ligaJornadaMatchTypes";
+import { fechaCorta, horarioFlex, useFlexPublicTitle } from "./flexPublicUi";
+import "../liga-public-pantalla.css";
+import "../liga-public-premium-2026.css";
+import "../liga-public-individual-2026.css";
+import "../jornada-public/liga-jornada-public-match.css";
+import "../jornada-public/liga-jornada-public-round-selector.css";
+import "../../jugadores/riviera-jugadores.css";
+
+type PublicProfile = { fotoUrl: string | null; rivieraId?: string | null };
+type StandingRow = {
+  jugadorId: string;
+  posicion: number;
+  puntos: number;
+  partidos: number;
+};
 
 export const FlexPublicPantallaPage: React.FC<{
   ligaId: string;
@@ -50,11 +70,15 @@ export const FlexPublicPantallaPage: React.FC<{
   }
   if (!isFlexLeague(detalle.modalidad)) {
     return (
-      <main className="flex-pub">
-        <div className="flex-pub__inner">
-          <p className="flex-pub__empty">Esta pantalla es de Riviera Flex League.</p>
-        </div>
-      </main>
+      <ClubExperienceScope organizadorId={detalle.organizador_id}>
+        <PublicScopedBrandGate message="Cargando pantalla…">
+          <div className="liga-pantalla App--public-full-width ro-public-view ro-surface-dark">
+            <PublicModeShell className="liga-pantalla__inner">
+              <p className="liga-pantalla__loading">Esta pantalla es de Riviera Flex League.</p>
+            </PublicModeShell>
+          </div>
+        </PublicScopedBrandGate>
+      </ClubExperienceScope>
     );
   }
   return <FlexPublicJornada detalle={detalle} numero={numero} pantalla />;
@@ -65,7 +89,7 @@ export const FlexPublicJornada: React.FC<{
   numero: number;
   pantalla?: boolean;
 }> = ({ detalle, numero, pantalla = false }) => (
-  <ClubExperienceScope organizadorId={detalle.organizador_id}>
+  <ClubExperienceScope organizadorId={detalle.organizador_id} pendingUntilOrganizador>
     <FlexPublicJornadaBody detalle={detalle} numero={numero} pantalla={pantalla} />
   </ClubExperienceScope>
 );
@@ -78,11 +102,8 @@ const FlexPublicJornadaBody: React.FC<{
   const club = useOrganizerDisplayName(detalle.organizador_id);
   const jornada = detalle.jornadas.find((item) => item.numero === numero) ?? null;
   const [bundle, setBundle] = useState<FlexBundle | null>(null);
-  const [profiles, setProfiles] = useState<
-    Record<string, { fotoUrl: string | null; rivieraId?: string | null }>
-  >({});
+  const [profiles, setProfiles] = useState<Record<string, PublicProfile>>({});
   const [round, setRound] = useState<number | null>(null);
-  useFlexPublicFonts();
   useFlexPublicTitle(
     jornada
       ? `Jornada ${jornada.numero} · ${detalle.nombre}`
@@ -153,12 +174,16 @@ const FlexPublicJornadaBody: React.FC<{
 
   if (!jornada) {
     return (
-      <main className="flex-pub">
-        <div className="flex-pub__inner">
-          <p className="flex-pub__empty">Esa jornada no está en el calendario.</p>
-          <a href={publicLigaUrl(detalle.id)}>Volver a la liga</a>
+      <PublicScopedBrandGate message="Cargando jornada…">
+        <div className="liga-pantalla App--public-full-width ro-public-view ro-surface-dark liga-pantalla--jornada-fijas">
+          <PublicModeShell className="liga-pantalla__inner">
+            <p className="liga-pantalla__loading">Esa jornada no está en el calendario.</p>
+            <a className="liga-pantalla-jornada-card__link" href={publicLigaUrl(detalle.id)}>
+              Volver a la liga
+            </a>
+          </PublicModeShell>
         </div>
-      </main>
+      </PublicScopedBrandGate>
     );
   }
 
@@ -169,14 +194,19 @@ const FlexPublicJornadaBody: React.FC<{
     confirmada: flex?.programacionEstado === "confirmada",
   });
   const convocados = bundle?.participantes[jornada.id] ?? [];
-  const partidos = (jornada.partidos ?? []).slice().sort((a, b) => a.ronda - b.ronda || (a.cancha ?? 0) - (b.cancha ?? 0));
+  const partidos = (jornada.partidos ?? [])
+    .slice()
+    .sort((a, b) => a.ronda - b.ronda || (a.cancha ?? 0) - (b.cancha ?? 0));
   const rounds = Array.from(new Set(partidos.map((partido) => partido.ronda)));
-  const focus = rounds.find((ronda) =>
-    partidos
-      .filter((partido) => partido.ronda === ronda)
-      .some((partido) => partido.score_pareja1 == null || partido.score_pareja2 == null)
-  ) ?? rounds[rounds.length - 1] ?? null;
-  const visibleRound = pantalla ? focus : round;
+  const focus =
+    rounds.find((ronda) =>
+      partidos
+        .filter((partido) => partido.ronda === ronda)
+        .some((partido) => partido.score_pareja1 == null || partido.score_pareja2 == null)
+    ) ??
+    rounds[rounds.length - 1] ??
+    null;
+  const visibleRound = pantalla ? focus : (round ?? focus);
   const visible =
     visibleRound != null
       ? partidos.filter((partido) => partido.ronda === visibleRound)
@@ -186,7 +216,36 @@ const FlexPublicJornadaBody: React.FC<{
     .filter((row) => row.jornadaId === jornada.id)
     .sort((a, b) => a.posicion - b.posicion);
   const provisional = !official ? provisionalRank(jornada, names, convocados) : null;
+  const standingRows: StandingRow[] = official
+    ? posiciones.map((row) => ({
+        jugadorId: row.jugadorId,
+        posicion: row.posicion,
+        puntos: row.puntos,
+        partidos: row.partidos,
+      }))
+    : provisional?.ok
+      ? provisional.rows.map((row) => ({
+          jugadorId: row.jugadorId,
+          posicion: row.posicion,
+          puntos: row.puntos,
+          partidos: row.partidos,
+        }))
+      : [];
+  const rondaEstados: PublicRondaEstadoItem[] = rounds.map((ronda) => {
+    const ofRound = partidos.filter((partido) => partido.ronda === ronda);
+    const scored = ofRound.every(
+      (partido) => partido.score_pareja1 != null && partido.score_pareja2 != null
+    );
+    if (scored) return { ronda, estado: "done" };
+    if (jornada.estado === "in_progress" && ronda === focus) return { ronda, estado: "live" };
+    return { ronda, estado: "pending" };
+  });
   const pantallaHref = `${publicLigaUrl(detalle.id)}/jornada/${jornada.numero}/pantalla`;
+  const fecha = fechaCorta(jornada.fecha);
+  const horario = horarioFlex(flex?.horaInicio, flex?.horaFin);
+  const badgeVariant =
+    status.key === "finalizada" ? "muted" : status.key === "en_curso" ? "live" : "pending";
+  const groups = groupByRound(visible);
 
   const enterFullscreen = () => {
     const node = document.documentElement;
@@ -194,125 +253,189 @@ const FlexPublicJornadaBody: React.FC<{
   };
 
   return (
-    <main className={pantalla ? "flex-pub flex-pub--pantalla" : "flex-pub"}>
-      <PublicEventBrandIdentity />
-      <div className="flex-pub__inner">
-        <header className="flex-pub__hero">
-          <p className="flex-pub__kicker">{club || "Club"} · by Riviera Open</p>
-          <h1>
-            {pantalla && visibleRound
-              ? `Jornada ${String(jornada.numero).padStart(2, "0")} — Ronda ${String(visibleRound).padStart(2, "0")}`
-              : `Jornada ${String(jornada.numero).padStart(2, "0")}`}
-          </h1>
-          <p className="flex-pub__meta">{detalle.nombre}</p>
-          <p className="flex-pub__lead">
-            {fechaCorta(jornada.fecha)} · {horarioFlex(flex?.horaInicio, flex?.horaFin)} · {status.label}
-            {flex ? ` · ${flex.canchas} canchas · ${flex.rondas} rondas` : ""}
-            {` · ${convocados.length} jugadores`}
-          </p>
-          <div className="flex-pub__actions">
-            <a href={publicLigaUrl(detalle.id)}>Volver a la liga</a>
+    <PublicScopedBrandGate message="Cargando jornada…">
+      <div
+        className={`liga-pantalla App--public-full-width ro-public-view ro-surface-dark liga-pantalla--jornada-fijas liga-pantalla--individual${
+          pantalla ? " liga-pantalla--flex-screen" : ""
+        }`}
+      >
+        <div className="liga-pantalla__grain" aria-hidden />
+        <PublicModeShell className="liga-pantalla__inner">
+          {isPubDsV2Enabled ? (
+            <PublicHero
+              className="liga-pantalla-jornada-hero"
+              logoClub={<PublicEventBrandIdentity className="peds-hero__club-identity" />}
+              estado={<StatusBadge variant={badgeVariant}>{status.label}</StatusBadge>}
+              nombreEvento={detalle.nombre}
+              club={club || undefined}
+              categoria={`Jornada ${String(jornada.numero).padStart(2, "0")}`}
+              fecha={fecha === "Por programar" ? "Por programar" : `${fecha} · ${horario}`}
+              meta={
+                pantalla && visibleRound
+                  ? `Ronda ${String(visibleRound).padStart(2, "0")} · ${flex?.canchas ?? "—"} canchas`
+                  : `${flex?.canchas ?? "—"} canchas · ${flex?.rondas ?? "—"} rondas · ${convocados.length} jugadores`
+              }
+            />
+          ) : (
+            <header className="liga-pantalla__header">
+              <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
+              <p className="liga-pantalla__subtitle">
+                Jornada {String(jornada.numero).padStart(2, "0")} · {status.label}
+              </p>
+            </header>
+          )}
+
+          <p className="liga-pantalla-ronda__meta liga-pantalla-ronda__meta--centered">
+            <a className="liga-pantalla-jornada-card__link" href={publicLigaUrl(detalle.id)}>
+              Volver a la liga
+            </a>
             {pantalla ? (
-              <button type="button" onClick={enterFullscreen}>
+              <button type="button" className="liga-pantalla-jornada-card__link" onClick={enterFullscreen}>
                 Pantalla completa
               </button>
             ) : (
-              <a href={pantallaHref}>Ver en pantalla</a>
+              <a className="liga-pantalla-jornada-card__link" href={pantallaHref}>
+                Ver en pantalla
+              </a>
             )}
-          </div>
-        </header>
+          </p>
 
-        {!pantalla ? (
-          <section className="flex-pub__section" aria-label="Participantes">
-            <h2>Participantes</h2>
-            {convocados.length === 0 ? (
-              <p className="flex-pub__empty">Todavía no hay jugadores convocados.</p>
-            ) : (
-              <div className="flex-pub__people">
-                {convocados.map((id) => (
-                  <article key={id} className="flex-pub__person">
-                    <FlexFace name={names.get(id) ?? "Jugador"} foto={profiles[id]?.fotoUrl ?? null} />
-                    <span className="flex-pub__who">
-                      <strong>{names.get(id) ?? "Jugador"}</strong>
-                      <span>{profiles[id]?.rivieraId || "Sin Riviera ID"}</span>
-                      {seasonPos.has(id) ? <span>{seasonPos.get(id)}º en la liga</span> : null}
-                    </span>
-                  </article>
-                ))}
-              </div>
-            )}
-          </section>
-        ) : null}
-
-        <section className="flex-pub__section" aria-label="Rondas">
-          {!pantalla && rounds.length > 1 ? (
-            <div className="flex-pub__actions">
-              <button type="button" onClick={() => setRound(null)}>
-                Todas
-              </button>
-              {rounds.map((ronda) => (
-                <button key={ronda} type="button" onClick={() => setRound(ronda)}>
-                  Ronda {String(ronda).padStart(2, "0")}
-                </button>
-              ))}
-            </div>
+          {!pantalla ? (
+            <section className="liga-pantalla-ranking" aria-label="Participantes">
+              <h2 className="liga-pantalla-ranking__title">Participantes</h2>
+              {convocados.length === 0 ? (
+                <article className="liga-pantalla-jornada-card">
+                  <div className="liga-pantalla-jornada-card__body">
+                    <p className="liga-pantalla-jornada-card__hint">
+                      Todavía no hay jugadores convocados.
+                    </p>
+                  </div>
+                </article>
+              ) : (
+                <div className="flex-pub-roster">
+                  {convocados.map((id) => {
+                    const name = names.get(id) ?? "Jugador";
+                    const profile = profiles[id];
+                    const pos = seasonPos.get(id);
+                    return (
+                      <article key={id} className="flex-pub-roster__card">
+                        <PublicSplitVsPlayerPanel name={name} foto={profile?.fotoUrl ?? null} />
+                        <p className="flex-pub-roster__id">
+                          {profile?.rivieraId || "Sin Riviera ID"}
+                          {pos ? ` · ${pos}º en la liga` : ""}
+                        </p>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
           ) : null}
-          {visible.length === 0 ? (
-            <p className="flex-pub__empty">La programación todavía no está confirmada.</p>
-          ) : (
-            groupByRound(visible).map(([ronda, matches]) => (
-              <div key={ronda} className="flex-pub__round">
-                {pantalla ? null : (
-                  <h3>Ronda {String(ronda).padStart(2, "0")}</h3>
-                )}
-                <div className="flex-pub__courts">
-                  {matches.map((partido) => (
-                    <MatchCard
-                      key={partido.id}
-                      partido={partido}
-                      parejas={jornada.parejas ?? []}
-                      names={names}
-                      profiles={profiles}
+
+          <div className="liga-pantalla__layout liga-pantalla__layout--parejas">
+            <div className="liga-pantalla__rondas">
+              {partidos.length === 0 ? (
+                <article className="liga-pantalla-jornada-card">
+                  <div className="liga-pantalla-jornada-card__head">
+                    <h2 className="liga-pantalla-jornada-card__num">Programación</h2>
+                  </div>
+                  <div className="liga-pantalla-jornada-card__body">
+                    <p className="liga-pantalla-jornada-card__hint">
+                      La programación todavía no está confirmada.
+                    </p>
+                  </div>
+                </article>
+              ) : (
+                <>
+                  {!pantalla && rondaEstados.length > 1 ? (
+                    <LigaJornadaPublicRoundSelector
+                      rondas={rondaEstados}
+                      selectedRonda={visibleRound ?? rondaEstados[0]!.ronda}
+                      onSelect={setRound}
+                    />
+                  ) : null}
+                  {groups.map(([ronda, matches]) => (
+                    <section
+                      key={ronda}
+                      className="liga-pantalla-ronda liga-pantalla-ronda--courts liga-pantalla-ronda--selected"
+                    >
+                      <div className="liga-pantalla-ronda__head">
+                        <h2 className="liga-pantalla-ronda__title">
+                          {pantalla
+                            ? `Jornada ${String(jornada.numero).padStart(2, "0")} — Ronda ${String(ronda).padStart(2, "0")}`
+                            : `Ronda ${ronda}`}
+                        </h2>
+                      </div>
+                      <div
+                        className="liga-pantalla-ronda__matches liga-pantalla-ronda__matches--courts"
+                        data-cols={String(Math.max(1, Math.min(flex?.canchas ?? matches.length, matches.length)))}
+                      >
+                        {matches.map((partido) => (
+                          <FlexMatchCard
+                            key={partido.id}
+                            partido={partido}
+                            parejas={jornada.parejas ?? []}
+                            names={names}
+                            profiles={profiles}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </>
+              )}
+            </div>
+
+            {!pantalla && standingRows.length > 0 ? (
+              <aside className="liga-pantalla-ranking liga-pantalla-ranking--individual-primary" aria-label={official ? "Resultados oficiales" : "Clasificación provisional"}>
+                <header className="liga-ind-rankhead">
+                  <p className="liga-ind-rankhead__kicker">
+                    {official ? "Resultados oficiales" : "Clasificación provisional"}
+                  </p>
+                  <h2 className="liga-ind-rankhead__liga">
+                    Jornada {String(jornada.numero).padStart(2, "0")}
+                  </h2>
+                  <p className="liga-ind-rankhead__meta">Puntos de esta jornada</p>
+                </header>
+                {official ? (
+                  <div className="liga-ind-top3" role="list">
+                    {standingRows.slice(0, 3).map((row) => (
+                      <StandingPortrait
+                        key={row.jugadorId}
+                        row={row}
+                        name={names.get(row.jugadorId) ?? "Jugador"}
+                        profile={profiles[row.jugadorId]}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                <ol className="liga-ind-rest__list">
+                  {standingRows.slice(official ? 3 : 0).map((row) => (
+                    <StandingLine
+                      key={row.jugadorId}
+                      row={row}
+                      name={names.get(row.jugadorId) ?? "Jugador"}
+                      profile={profiles[row.jugadorId]}
                     />
                   ))}
-                </div>
-              </div>
-            ))
-          )}
-        </section>
-
-        {!pantalla && official && posiciones.length > 0 ? (
-          <section className="flex-pub__section" aria-label="Resultados oficiales">
-            <h2>Resultados oficiales</h2>
-            <Standings rows={posiciones} names={names} profiles={profiles} />
-            <Podium rows={posiciones.slice(0, 3)} names={names} profiles={profiles} />
-            <p className="flex-pub__note">
-              Felicidades a nuestros destacados. Cada jornada es una nueva oportunidad para seguir sumando.
-            </p>
-          </section>
-        ) : null}
-
-        {!pantalla && !official && provisional?.ok ? (
-          <section className="flex-pub__section" aria-label="Clasificación provisional">
-            <h2>Clasificación provisional</h2>
-            <Standings
-              rows={provisional.rows.map((row) => ({
-                jugadorId: row.jugadorId,
-                posicion: row.posicion,
-                puntos: row.puntos,
-                partidos: row.partidos,
-              }))}
-              names={names}
-              profiles={profiles}
-            />
-          </section>
-        ) : null}
+                </ol>
+                {official ? (
+                  <aside className="liga-ind-podio-note">
+                    <p className="liga-ind-podio-note__title">
+                      Felicidades a nuestros destacados. Cada jornada es una nueva oportunidad para seguir sumando.
+                    </p>
+                  </aside>
+                ) : null}
+              </aside>
+            ) : null}
+          </div>
+        </PublicModeShell>
       </div>
-    </main>
+    </PublicScopedBrandGate>
   );
 };
 
-function MatchCard({
+function FlexMatchCard({
   partido,
   parejas,
   names,
@@ -321,138 +444,119 @@ function MatchCard({
   partido: LigaPartido;
   parejas: LigaJornadaPareja[];
   names: Map<string, string>;
-  profiles: Record<string, { fotoUrl: string | null }>;
+  profiles: Record<string, PublicProfile>;
 }) {
   const byId = new Map(parejas.map((pareja) => [pareja.id, pareja]));
   const left = partido.pareja1 ?? byId.get(partido.pareja1_id);
   const right = partido.pareja2 ?? byId.get(partido.pareja2_id);
+  const side1 = toSide(left, names, profiles);
+  const side2 = toSide(right, names, profiles);
   const hasScore = partido.score_pareja1 != null && partido.score_pareja2 != null;
+  const tie = hasScore && partido.score_pareja1 === partido.score_pareja2;
+  const estadoMod = hasScore ? (tie ? "draw" : "done") : partido.estado === "in_progress" ? "live" : "pending";
+  const estadoText = hasScore ? (tie ? "Empate" : "Final") : estadoMod === "live" ? "En juego" : "Pendiente";
+  if (!hasScore) {
+    return (
+      <LigaJornadaMatchCardPending
+        canchaNum={partido.cancha ?? "—"}
+        estadoMod={estadoMod === "draw" || estadoMod === "done" ? "pending" : estadoMod}
+        estadoText={estadoText}
+        side1={side1}
+        side2={side2}
+        matchLabel={`Ronda ${partido.ronda}`}
+      />
+    );
+  }
   return (
-    <article className="flex-pub__match">
-      <p className="flex-pub__eyebrow">
-        Ronda {String(partido.ronda).padStart(2, "0")} · Cancha {String(partido.cancha ?? "—").padStart(2, "0")}
-      </p>
-      <div className="flex-pub__vs">
-        <Side pareja={left} names={names} profiles={profiles} align="left" />
-        <b>VS</b>
-        <Side pareja={right} names={names} profiles={profiles} align="right" />
-      </div>
-      <p className="flex-pub__score">
-        {hasScore ? `${partido.score_pareja1} – ${partido.score_pareja2}` : "Sin marcador"}
-      </p>
-    </article>
+    <LigaJornadaMatchCardFinal
+      canchaNum={partido.cancha ?? "—"}
+      estadoMod={estadoMod}
+      estadoText={estadoText}
+      side1={side1}
+      side2={side2}
+      board={{ kind: "simple", s1: partido.score_pareja1 as number, s2: partido.score_pareja2 as number }}
+      p1Wins={!tie && (partido.score_pareja1 as number) > (partido.score_pareja2 as number)}
+      p2Wins={!tie && (partido.score_pareja2 as number) > (partido.score_pareja1 as number)}
+      scoreSummaryOnly
+      matchLabel={`Ronda ${partido.ronda}`}
+    />
   );
 }
 
-function Side({
-  pareja,
-  names,
-  profiles,
-  align,
-}: {
-  pareja: LigaJornadaPareja | undefined;
-  names: Map<string, string>;
-  profiles: Record<string, { fotoUrl: string | null }>;
-  align: "left" | "right";
-}) {
-  const ids = pareja ? [pareja.jugador1_id, pareja.jugador2_id] : [];
-  return (
-    <div className={align === "right" ? "flex-pub__side flex-pub__side--right" : "flex-pub__side"}>
-      {ids.map((id) => (
-        <span key={id} className="flex-pub__player">
-          <FlexFace name={names.get(id) ?? "Jugador"} foto={profiles[id]?.fotoUrl ?? null} />
-          <strong>{names.get(id) ?? "Jugador"}</strong>
-        </span>
-      ))}
-    </div>
-  );
+function toSide(
+  pareja: LigaJornadaPareja | undefined,
+  names: Map<string, string>,
+  profiles: Record<string, PublicProfile>
+): LigaJornadaMatchPairSide {
+  const id1 = pareja?.jugador1_id ?? "";
+  const id2 = pareja?.jugador2_id ?? "";
+  return {
+    name1: pareja?.jugador1?.nombre || names.get(id1) || "Jugador",
+    name2: pareja?.jugador2?.nombre || names.get(id2) || "Jugador",
+    foto1: profiles[id1]?.fotoUrl ?? null,
+    foto2: profiles[id2]?.fotoUrl ?? null,
+  };
 }
 
-function Standings({
-  rows,
-  names,
-  profiles,
-}: {
-  rows: { jugadorId: string; posicion: number; puntos: number; partidos: number }[];
-  names: Map<string, string>;
-  profiles: Record<string, { fotoUrl: string | null; rivieraId?: string | null }>;
-}) {
-  return (
-    <table className="flex-pub__table">
-      <thead>
-        <tr>
-          <th>Pos</th>
-          <th>Jugador</th>
-          <th className="flex-pub__col-secondary">PJ</th>
-          <th>PTS</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.jugadorId}>
-            <td>{row.posicion}</td>
-            <td>
-              <span className="flex-pub__player">
-                <FlexFace name={names.get(row.jugadorId) ?? "Jugador"} foto={profiles[row.jugadorId]?.fotoUrl ?? null} />
-                <span className="flex-pub__who">
-                  <strong>{names.get(row.jugadorId) ?? "Jugador"}</strong>
-                  <span>{profiles[row.jugadorId]?.rivieraId || ""}</span>
-                  <span className="flex-pub__mobile-meta">{row.partidos} PJ</span>
-                </span>
-              </span>
-            </td>
-            <td className="flex-pub__col-secondary">{row.partidos}</td>
-            <td>{row.puntos}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-function Podium({
-  rows,
-  names,
-  profiles,
-}: {
-  rows: { jugadorId: string; posicion: number; puntos: number }[];
-  names: Map<string, string>;
-  profiles: Record<string, { fotoUrl: string | null }>;
-}) {
-  const first = rows[0];
-  const rest = rows.slice(1, 3);
-  if (!first) return null;
-  return (
-    <div className="flex-pub__podio">
-      <PodiumCard row={first} names={names} profiles={profiles} large />
-      <div className="flex-pub__podio-rest">
-        {rest.map((row) => (
-          <PodiumCard key={row.jugadorId} row={row} names={names} profiles={profiles} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PodiumCard({
+function StandingPortrait({
   row,
-  names,
-  profiles,
-  large = false,
+  name,
+  profile,
 }: {
-  row: { jugadorId: string; posicion: number; puntos: number };
-  names: Map<string, string>;
-  profiles: Record<string, { fotoUrl: string | null }>;
-  large?: boolean;
+  row: StandingRow;
+  name: string;
+  profile?: PublicProfile;
 }) {
-  const name = names.get(row.jugadorId) ?? "Jugador";
   return (
-    <article className="flex-pub__podio-card">
-      <p className="flex-pub__eyebrow">{row.posicion}º lugar</p>
-      <FlexFace name={name} foto={profiles[row.jugadorId]?.fotoUrl ?? null} large={large} />
-      <h3 className="flex-pub__display">{name}</h3>
-      <p>{row.puntos} puntos</p>
+    <article className={`liga-ind-top3__card liga-ind-top3__card--${row.posicion}`} role="listitem">
+      <div className="liga-ind-top3__portrait">
+        <JugadorAvatar fotoUrl={profile?.fotoUrl} nombre={name} size="xl" className="liga-ind-top3__photo" alt="" />
+        <span className="liga-ind-top3__pos" aria-hidden>
+          {row.posicion}
+        </span>
+      </div>
+      <div className="liga-ind-top3__body">
+        <p className="liga-ind-top3__name">{name}</p>
+        {profile?.rivieraId ? (
+          <p className="liga-ind-top3__riviera-id">
+            <a href={buildPublicJugadorByRivieraIdPath(profile.rivieraId)}>{profile.rivieraId}</a>
+          </p>
+        ) : null}
+        <p className="liga-ind-top3__pts">
+          <span className="liga-ind-top3__pts-value">{row.puntos}</span>
+          <span className="liga-ind-top3__pts-label">pts</span>
+        </p>
+        <p className="liga-ind-top3__support">{row.partidos} partidos</p>
+      </div>
     </article>
+  );
+}
+
+function StandingLine({
+  row,
+  name,
+  profile,
+}: {
+  row: StandingRow;
+  name: string;
+  profile?: PublicProfile;
+}) {
+  return (
+    <li className="liga-ind-rest__row">
+      <span className="liga-ind-rest__rank">{row.posicion}</span>
+      <JugadorAvatar fotoUrl={profile?.fotoUrl} nombre={name} size="sm" className="liga-ind-rest__avatar" alt="" />
+      <span className="liga-ind-rest__identity">
+        <span className="liga-ind-rest__name">{name}</span>
+        {profile?.rivieraId ? <span className="liga-ind-rest__riviera-id">{profile.rivieraId}</span> : null}
+      </span>
+      <span className="liga-ind-rest__stats">
+        <span className="liga-ind-rest__pts">
+          <strong>{row.puntos}</strong>
+          <small>pts</small>
+        </span>
+        <span className="liga-ind-rest__jorn">{row.partidos} PJ</span>
+      </span>
+    </li>
   );
 }
 
@@ -480,9 +584,7 @@ function provisionalRank(
   const ids = convocados.length
     ? convocados
     : Array.from(
-        new Set(
-          (jornada.parejas ?? []).flatMap((pareja) => [pareja.jugador1_id, pareja.jugador2_id])
-        )
+        new Set((jornada.parejas ?? []).flatMap((pareja) => [pareja.jugador1_id, pareja.jugador2_id]))
       );
   return rankFlexJornada({
     players: ids.map((id) => ({ id, name: names.get(id) ?? "Jugador" })),
