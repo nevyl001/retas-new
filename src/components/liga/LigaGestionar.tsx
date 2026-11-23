@@ -35,7 +35,6 @@ import "../jugadores/riviera-jugadores.css";
 import {
   createEquipoLiga,
   deleteEquipoLiga,
-  archiveLiga,
   deleteLiga,
   desinscribirJugador,
   finishLiga,
@@ -69,7 +68,6 @@ import {
 } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
 import {
-  LigaConActividadError,
   ligaTieneHistorialDeportivo,
   mensajeRetiroLiga,
 } from "../../lib/liga/ligaRetiro";
@@ -670,27 +668,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
       setDeleteConfirmDraft("");
       navigateLiga("/liga");
     } catch (err) {
-      if (err instanceof LigaConActividadError) {
-        setRetiroMode("archive");
-        setBusy(false);
-        return;
-      }
       setError(mensajeRetiroLiga(err, "No se pudo eliminar la liga."));
-      setBusy(false);
-    }
-  };
-
-  const handleArchiveLiga = async () => {
-    if (!detalle) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await archiveLiga(ligaId);
-      setRetiroMode(null);
-      setMessage("Liga archivada. El historial se conserva.");
-      navigateLiga("/liga");
-    } catch (err) {
-      setError(mensajeRetiroLiga(err, "No se pudo archivar la liga."));
       setBusy(false);
     }
   };
@@ -699,13 +677,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     setOptionsOpen(false);
     setShareOpen(false);
     setDeleteConfirmDraft("");
-    setRetiroMode(
-      ligaTieneHistorialDeportivo({
-        jornadasLength: detalle?.jornadas.length ?? 0,
-      })
-        ? "archive"
-        : "delete"
-    );
+    setRetiroMode("delete");
   };
 
   const closeDeleteConfirm = () => {
@@ -1124,15 +1096,16 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
       {retiroMode && detalle ? (
         <LigaRetiroDialog
-          mode={retiroMode}
+          mode="delete"
           nombre={detalle.nombre}
+          borraResultados={ligaTieneHistorialDeportivo({
+            jornadasLength: detalle.jornadas.length,
+          })}
           busy={busy}
           confirmDraft={deleteConfirmDraft}
           onConfirmDraft={setDeleteConfirmDraft}
           onCancel={closeDeleteConfirm}
-          onConfirm={() =>
-            void (retiroMode === "archive" ? handleArchiveLiga() : handleDeleteLiga())
-          }
+          onConfirm={() => void handleDeleteLiga()}
         />
       ) : null}
 

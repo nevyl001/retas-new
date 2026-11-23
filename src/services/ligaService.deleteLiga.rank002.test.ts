@@ -52,15 +52,6 @@ describe("deleteLiga — RANK-002", () => {
     );
   });
 
-  it("no borra una liga con historial y pide archivarla", async () => {
-    mockRpc.mockResolvedValue({ data: { status: "has_activity" }, error: null });
-
-    await expect(deleteLiga("liga-con-partidos")).rejects.toThrow(
-      "No es posible eliminar esta liga"
-    );
-    expect(mockFrom).not.toHaveBeenCalled();
-  });
-
   it("traduce el choque de la llave de partidos sin mostrar SQL", async () => {
     mockRpc.mockResolvedValue({
       data: null,

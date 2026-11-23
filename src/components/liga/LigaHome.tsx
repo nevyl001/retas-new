@@ -3,11 +3,10 @@ import { useClubModeEyebrow } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import type { Liga } from "../../lib/liga/types";
 import {
-  LigaConActividadError,
   ligaTieneHistorialDeportivo,
   mensajeRetiroLiga,
 } from "../../lib/liga/ligaRetiro";
-import { archiveLiga, deleteLiga, getLigas } from "../../services/ligaService";
+import { deleteLiga, getLigas } from "../../services/ligaService";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
 import { ModeHeader } from "../platform/ModeHeader";
@@ -86,12 +85,7 @@ export const LigaHome: React.FC = () => {
     setError(null);
     setNotice(null);
     setConfirmDraft("");
-    setRetiro({
-      liga,
-      mode: ligaTieneHistorialDeportivo({ jornadasCount: liga.jornadas_count })
-        ? "archive"
-        : "delete",
-    });
+    setRetiro({ liga, mode: "delete" });
   };
 
   const closeRetiro = () => {
@@ -105,23 +99,12 @@ export const LigaHome: React.FC = () => {
     setDeletingId(retiro.liga.id);
     setError(null);
     try {
-      if (retiro.mode === "archive") {
-        await archiveLiga(retiro.liga.id);
-        setNotice("Liga archivada. El historial se conserva.");
-        setRetiro(null);
-        await load();
-        return;
-      }
       await deleteLiga(retiro.liga.id);
       setNotice("Liga eliminada.");
       setRetiro(null);
       await load();
     } catch (e) {
-      if (e instanceof LigaConActividadError) {
-        setRetiro({ liga: retiro.liga, mode: "archive" });
-        return;
-      }
-      setError(mensajeRetiroLiga(e, "No se pudo completar la acción."));
+      setError(mensajeRetiroLiga(e, "No se pudo eliminar la liga."));
     } finally {
       setDeletingId(null);
     }
@@ -215,8 +198,11 @@ export const LigaHome: React.FC = () => {
       )}
       {retiro ? (
         <LigaRetiroDialog
-          mode={retiro.mode}
+          mode="delete"
           nombre={retiro.liga.nombre}
+          borraResultados={ligaTieneHistorialDeportivo({
+            jornadasCount: retiro.liga.jornadas_count,
+          })}
           busy={deletingId === retiro.liga.id}
           confirmDraft={confirmDraft}
           onConfirmDraft={setConfirmDraft}

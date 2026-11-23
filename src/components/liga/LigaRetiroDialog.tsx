@@ -6,6 +6,7 @@ export const LIGA_DELETE_CONFIRM_PHRASE = "ELIMINAR";
 export const LigaRetiroDialog: React.FC<{
   mode: "delete" | "archive";
   nombre: string;
+  borraResultados?: boolean;
   busy: boolean;
   confirmDraft: string;
   onConfirmDraft: (value: string) => void;
@@ -14,6 +15,7 @@ export const LigaRetiroDialog: React.FC<{
 }> = ({
   mode,
   nombre,
+  borraResultados = false,
   busy,
   confirmDraft,
   onConfirmDraft,
@@ -59,6 +61,11 @@ export const LigaRetiroDialog: React.FC<{
               <strong>{nombre}</strong> ya tiene partidos registrados. Para
               conservar sus resultados y el historial de los jugadores, puedes
               archivarla.
+            </>
+          ) : borraResultados ? (
+            <>
+              Se borrarán las jornadas, los partidos y los resultados de{" "}
+              <strong>{nombre}</strong>. Esta acción no se puede deshacer.
             </>
           ) : (
             <>

@@ -476,12 +476,11 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
     expect(deleteLiga).toHaveBeenCalledWith("liga-1");
   });
 
-  it("una liga con jornadas no se borra: ofrece archivarla", async () => {
-    const { deleteLiga, archiveLiga } = jest.requireMock(
-      "../../services/ligaService"
-    ) as { deleteLiga: jest.Mock; archiveLiga: jest.Mock };
+  it("una liga iniciada se borra si se confirma", async () => {
+    const { deleteLiga } = jest.requireMock("../../services/ligaService") as {
+      deleteLiga: jest.Mock;
+    };
     deleteLiga.mockResolvedValue(undefined);
-    archiveLiga.mockResolvedValue(undefined);
 
     await renderLiga(
       baseDetalle({
@@ -512,10 +511,31 @@ describe("LigaGestionar — composición (render real, sin snapshots)", () => {
       await Promise.resolve();
     });
 
-    expect(document.body.textContent).toContain("No es posible eliminar esta liga");
-    expect(document.body.textContent).toContain("Archivar liga");
+    expect(document.body.textContent).toContain(
+      "Se borrarán las jornadas, los partidos y los resultados"
+    );
     expect(deleteLiga).not.toHaveBeenCalled();
-    expect(document.querySelector("#liga-delete-confirm-input")).toBeNull();
+
+    const confirmInput = document.querySelector(
+      "#liga-delete-confirm-input"
+    ) as HTMLInputElement;
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value"
+      )?.set;
+      setter?.call(confirmInput, "ELIMINAR");
+      confirmInput.dispatchEvent(new Event("input", { bubbles: true }));
+      await Promise.resolve();
+    });
+    const confirmDeleteBtn = document.querySelector(
+      ".liga-gestionar-danger-modal__confirm"
+    ) as HTMLButtonElement;
+    await act(async () => {
+      confirmDeleteBtn.click();
+      await Promise.resolve();
+    });
+    expect(deleteLiga).toHaveBeenCalledWith("liga-1");
   });
 
   it("liga en curso no muestra «Regenerar calendario»", async () => {

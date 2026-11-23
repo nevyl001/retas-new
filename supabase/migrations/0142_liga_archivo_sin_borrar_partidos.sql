@@ -1,8 +1,7 @@
--- Una liga con jornadas, partidos o participación oficial no se borra.
 -- liga_partidos.liga_id (playoffs y fase regular de parejas con playoffs)
 -- apunta a ligas sin ON DELETE CASCADE. DELETE FROM ligas chocaba con
--- liga_partidos_liga_id_fkey. No se cambia esa llave: el borrado físico
--- solo procede si no hay historial, y el resto se archiva.
+-- liga_partidos_liga_id_fkey. La llave no se cambia: el borrado confirmado
+-- quita primero esos partidos, dentro de la misma transacción.
 
 ALTER TABLE public.ligas DROP CONSTRAINT IF EXISTS ligas_estado_check;
 ALTER TABLE public.ligas
@@ -62,27 +61,11 @@ BEGIN
     RAISE EXCEPTION 'p_organizador_id no coincide con el dueño real de la liga' USING ERRCODE = '42501';
   END IF;
 
-  -- Historial deportivo: no borrar y no tocar rating ni ledger.
-  IF EXISTS (SELECT 1 FROM public.liga_jornadas WHERE liga_id = p_liga_id)
-     OR EXISTS (SELECT 1 FROM public.liga_partidos WHERE liga_id = p_liga_id)
-     OR EXISTS (
-       SELECT 1
-       FROM public.jugador_participaciones
-       WHERE tipo_evento = 'liga'
-         AND evento_id = p_liga_id
-     )
-  THEN
-    RETURN jsonb_build_object(
-      'status', 'has_activity',
-      'liga_id', p_liga_id
-    );
-  END IF;
-
   FOR v_partido_id IN
     SELECT lp.id
     FROM liga_partidos lp
-    JOIN liga_jornadas lj ON lj.id = lp.jornada_id
-    WHERE lj.liga_id = p_liga_id
+    LEFT JOIN liga_jornadas lj ON lj.id = lp.jornada_id
+    WHERE lj.liga_id = p_liga_id OR lp.liga_id = p_liga_id
   LOOP
     PERFORM public._revert_rating_for_partido_ref('liga:' || v_partido_id::text);
     v_rating_revertido := v_rating_revertido + 1;
@@ -100,6 +83,14 @@ BEGIN
     DELETE FROM jugador_participaciones WHERE id = v_participacion_id;
     v_participaciones_revertidas := v_participaciones_revertidas + 1;
   END LOOP;
+
+  -- Estos partidos referencian ligas.id sin cascada. Hay que quitarlos
+  -- antes de borrar la liga, o Postgres rechaza el DELETE.
+  DELETE FROM public.liga_partidos
+  WHERE liga_id = p_liga_id
+     OR jornada_id IN (
+       SELECT id FROM public.liga_jornadas WHERE liga_id = p_liga_id
+     );
 
   DELETE FROM ligas WHERE id = p_liga_id;
 
