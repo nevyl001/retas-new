@@ -20,7 +20,7 @@ class PagosBoundary extends React.Component<BoundaryProps, BoundaryState> {
   render() {
     if (this.state.failed) {
       return (
-        <p role="alert" style={{ color: "#fff", background: "#0D0F12", padding: 24 }}>
+        <p role="alert" style={{ color: "#fff", background: "#000000", padding: 24 }}>
           No se pudo cargar la página de pagos.
         </p>
       );
