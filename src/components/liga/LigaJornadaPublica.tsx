@@ -58,6 +58,7 @@ import {
 import { LigaJornadaMatchCardFinal } from "./jornada-public/LigaJornadaMatchCardFinal";
 import { LigaJornadaMatchCardPending } from "./jornada-public/LigaJornadaMatchCardPending";
 import { LigaJornadaPublicRoundSelector } from "./jornada-public/LigaJornadaPublicRoundSelector";
+import { LigaAjusteNota } from "./LigaAjusteNota";
 import { LigaJornadaStandingsRow } from "./jornada-public/LigaJornadaStandingsRow";
 import "./jornada-public/liga-jornada-public-round-selector.css";
 import { PublicSplitVsPairHalf } from "../public/split-vs";
@@ -1026,10 +1027,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                                   {row.nombre}
                                 </span>
                                 {row.puntosAjusteMotivo ? (
-                                  <span className="liga-pantalla-ranking__ajuste">
-                                    {" "}
-                                    Ajuste: {row.puntosAjusteMotivo}
-                                  </span>
+                                  <LigaAjusteNota motivo={row.puntosAjusteMotivo} />
                                 ) : null}
                               </td>
                               <td className="liga-pantalla-ranking__stat">

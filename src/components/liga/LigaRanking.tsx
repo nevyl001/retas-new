@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import type { RankingItem } from "../../lib/liga/types";
+import { LigaAjusteNota } from "./LigaAjusteNota";
 import { ligaRankingItemToMobileRow } from "../../lib/modePresentation/standingsRowAdapters";
 import {
   StandingsMobileCards,
@@ -70,9 +71,7 @@ export const LigaRanking: React.FC<LigaRankingProps> = ({
                       </span>
                     ) : null}
                     {row.puntos_ajuste_motivo ? (
-                      <span className="liga-ranking-player__ajuste">
-                        Ajuste: {row.puntos_ajuste_motivo}
-                      </span>
+                      <LigaAjusteNota motivo={row.puntos_ajuste_motivo} />
                     ) : null}
                   </span>
                 </td>

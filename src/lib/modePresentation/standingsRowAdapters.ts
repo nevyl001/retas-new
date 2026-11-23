@@ -17,9 +17,11 @@ export function ligaRankingItemToMobileRow(row: RankingItem): StandingsMobileCar
       ? `Sustituto desde Jornada ${row.ingreso_jornada_numero}${
           row.puntos_heredados ? ` · ${row.puntos_heredados} pts heredados` : ""
         }`
-      : row.puntos_ajuste_motivo
-        ? `Ajuste: ${row.puntos_ajuste_motivo}`
-        : null,
+      : null,
+    ajuste:
+      row.ingreso_jornada_numero || !row.puntos_ajuste_motivo
+        ? null
+        : row.puntos_ajuste_motivo,
   };
 }
 

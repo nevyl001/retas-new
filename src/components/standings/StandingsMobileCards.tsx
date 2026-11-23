@@ -10,6 +10,7 @@ import {
   type StandingsCriterionOrder,
 } from "../../utils/standingsCriterionHighlight";
 import "../../styles/standings-mobile-cards.css";
+import { LigaAjusteNota } from "../liga/LigaAjusteNota";
 
 export type StandingsMobileCardRow = {
   key: string;
@@ -24,8 +25,10 @@ export type StandingsMobileCardRow = {
   setsFavor?: number;
   setsContra?: number;
   tied?: boolean;
-  /** Nota secundaria (ej. motivo de ajuste manual de puntos). */
+  /** Nota secundaria (ej. sustitución). */
   note?: string | null;
+  /** Motivo de un ajuste de puntos. Se muestra cerrado hasta abrirlo. */
+  ajuste?: string | null;
 };
 
 function positionIcon(position: number): string {
@@ -115,6 +118,7 @@ export const StandingsMobileCards: React.FC<{
                 {row.note ? (
                   <p className="standings-mobile-card__note">{row.note}</p>
                 ) : null}
+                {row.ajuste ? <LigaAjusteNota motivo={row.ajuste} /> : null}
               </div>
               <span
                 className={`standings-mobile-card__fav-hero${

@@ -43,6 +43,7 @@ import {
   RIVIERA_CO_BRAND_ATTRIBUTION,
   isRivieraOwnAccountName,
 } from "../../club-experience/motherBrand";
+import { LigaAjusteNota } from "./LigaAjusteNota";
 import { LigaFlexPublica } from "./LigaFlexPublica";
 import { isPubDsV2Enabled } from "../../config/peds";
 import { useLigaRealtime } from "../../hooks/useLigaRealtime";
@@ -609,9 +610,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                               Sustituto desde Jornada {row.ingreso_jornada_numero}
                             </p>
                           ) : row.puntos_ajuste_motivo ? (
-                            <p className="liga-ind-top3__ajuste">
-                              Ajuste: {row.puntos_ajuste_motivo}
-                            </p>
+                            <LigaAjusteNota motivo={row.puntos_ajuste_motivo} />
                           ) : null}
                           <p className="liga-ind-top3__pts">
                             <span className="liga-ind-top3__pts-value">
@@ -698,9 +697,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                                     : ""}
                                 </span>
                               ) : row.puntos_ajuste_motivo ? (
-                                <span className="liga-ind-rest__ajuste">
-                                  Ajuste: {row.puntos_ajuste_motivo}
-                                </span>
+                                <LigaAjusteNota motivo={row.puntos_ajuste_motivo} />
                               ) : null}
                             </span>
                             <span className="liga-ind-rest__stats">

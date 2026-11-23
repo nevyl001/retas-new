@@ -1,0 +1,68 @@
+.liga-ajuste-nota {
+  display: inline-block;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0.12rem 0 0;
+  min-width: 0;
+  vertical-align: baseline;
+}
+
+.liga-ajuste-nota__summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.02rem 0;
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: color-mix(
+    in srgb,
+    var(--liga-pub-text, var(--liga-text, #f4f4f4)) 58%,
+    transparent
+  );
+}
+
+.liga-ajuste-nota__summary::-webkit-details-marker {
+  display: none;
+}
+
+.liga-ajuste-nota__summary::after {
+  content: "";
+  width: 0.32rem;
+  height: 0.32rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translateY(-0.05rem);
+  flex-shrink: 0;
+}
+
+.liga-ajuste-nota[open] .liga-ajuste-nota__summary::after {
+  transform: rotate(225deg) translate(-0.05rem, -0.02rem);
+}
+
+.liga-ajuste-nota__summary:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+}
+
+.liga-ajuste-nota__motivo {
+  margin: 0.18rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: color-mix(
+    in srgb,
+    var(--liga-pub-text, var(--liga-text, #f4f4f4)) 78%,
+    transparent
+  );
+}
