@@ -34,6 +34,7 @@ import { Button } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
 import { LigaPageShell } from "./LigaPageShell";
 import { navigateLiga } from "./ligaNav";
+import { publicLigaJornadaUrl, publicLigaUrl } from "../../services/ligaService";
 import "./liga-flex.css";
 
 type Props = {
@@ -301,6 +302,16 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
     }
     return map;
   }, [season]);
+
+  const copyLink = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setNotice("Enlace copiado.");
+      setError(null);
+    } catch {
+      setError("No se pudo copiar el enlace.");
+    }
+  };
 
   const run = async (action: () => Promise<void>) => {
     setBusy(true);
@@ -619,6 +630,20 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
               />
 
               <div className="liga-flex-season-actions">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => window.open(publicLigaUrl(detalle.id), "_blank", "noopener")}
+                >
+                  Ver liga pública
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => void copyLink(publicLigaUrl(detalle.id))}
+                >
+                  Copiar enlace de liga
+                </Button>
                 {detalle.jornadas.length !== 12 ? (
                   <Button
                     type="button"
@@ -1461,6 +1486,44 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                     </dl>
 
                     <div className="liga-flex-side-actions">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="liga-flex-side-actions__btn"
+                        onClick={() =>
+                          window.open(
+                            publicLigaJornadaUrl(detalle.id, jornada.numero),
+                            "_blank",
+                            "noopener"
+                          )
+                        }
+                      >
+                        Ver jornada pública
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="liga-flex-side-actions__btn"
+                        onClick={() =>
+                          void copyLink(publicLigaJornadaUrl(detalle.id, jornada.numero))
+                        }
+                      >
+                        Copiar enlace de jornada
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="liga-flex-side-actions__btn"
+                        onClick={() =>
+                          window.open(
+                            `${publicLigaJornadaUrl(detalle.id, jornada.numero)}/pantalla`,
+                            "_blank",
+                            "noopener"
+                          )
+                        }
+                      >
+                        Ver en pantalla
+                      </Button>
                       <Button
                         type="button"
                         variant="secondary"

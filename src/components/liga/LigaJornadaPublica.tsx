@@ -34,7 +34,8 @@ import {
   rondaPublicTemporalEstado,
 } from "../../lib/liga/jornadaTemporal";
 import type { LigaDetalle, LigaJornada, LigaJornadaPareja, LigaPartido } from "../../lib/liga/types";
-import { isEquiposModalidad, isParejasFijasPlayoffs } from "../../lib/liga/ligaModalidad";
+import { isEquiposModalidad, isFlexLeague, isParejasFijasPlayoffs } from "../../lib/liga/ligaModalidad";
+import { FlexPublicJornada } from "./flex-public/FlexPublicJornada";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
 import { resolveLigaJugadorPublicProfiles } from "../../lib/liga/publicParejaAvatars";
 import { getLigaById } from "../../services/ligaService";
@@ -442,6 +443,10 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         <PublicEventNeutralLoading message="Cargando jornada…" />
       </ClubExperienceScope>
     );
+  }
+
+  if (detalle && isFlexLeague(detalle.modalidad)) {
+    return <FlexPublicJornada detalle={detalle} numero={numero} />;
   }
 
   if (!detalle || !jornada) {

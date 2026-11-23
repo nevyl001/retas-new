@@ -7,4 +7,13 @@ describe("ruta pública de verificación", () => {
     });
     expect(isLigaPublicPath("/public/verificar-correo")).toBe(true);
   });
+
+  it("abre la pantalla pública de una jornada flex", () => {
+    expect(parseLigaPath("/public/liga/liga-1/jornada/3/pantalla")).toEqual({
+      kind: "publicaPantalla",
+      ligaId: "liga-1",
+      numero: 3,
+    });
+    expect(isLigaPublicPath("/public/liga/liga-1/jornada/3/pantalla")).toBe(true);
+  });
 });

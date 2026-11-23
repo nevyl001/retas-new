@@ -1,4 +1,5 @@
 import React from "react";
+import { FlexPublicPantallaPage } from "./flex-public/FlexPublicJornada";
 import { LigaDetallePublica } from "./LigaDetallePublica";
 import { LigaJornadaPublica } from "./LigaJornadaPublica";
 import { LigaGestionar } from "./LigaGestionar";
@@ -15,6 +16,7 @@ export type LigaRoute =
   | { kind: "jornada"; ligaId: string; numero: number }
   | { kind: "publica"; ligaId: string }
   | { kind: "publicaJornada"; ligaId: string; numero: number }
+  | { kind: "publicaPantalla"; ligaId: string; numero: number }
   | { kind: "verificarCorreo" }
   | { kind: "unknown" };
 
@@ -23,6 +25,17 @@ export function parseLigaPath(pathname: string): LigaRoute {
 
   if (path === "/public/verificar-correo") {
     return { kind: "verificarCorreo" };
+  }
+
+  const pantalla = path.match(
+    /^\/public\/liga\/([^/]+)\/jornada\/(\d+)\/pantalla$/i
+  );
+  if (pantalla) {
+    return {
+      kind: "publicaPantalla",
+      ligaId: pantalla[1],
+      numero: Number(pantalla[2]),
+    };
   }
 
   const publicaJornada = path.match(
@@ -62,6 +75,7 @@ export function isLigaPublicPath(pathname: string): boolean {
   return (
     kind === "publica" ||
     kind === "publicaJornada" ||
+    kind === "publicaPantalla" ||
     kind === "verificarCorreo"
   );
 }
@@ -83,6 +97,10 @@ export const LigaRouter: React.FC<{ pathname: string }> = ({ pathname }) => {
     case "publicaJornada":
       return (
         <LigaJornadaPublica ligaId={route.ligaId} numero={route.numero} />
+      );
+    case "publicaPantalla":
+      return (
+        <FlexPublicPantallaPage ligaId={route.ligaId} numero={route.numero} />
       );
     case "verificarCorreo":
       return <LigaVerificarCorreoPublica />;
