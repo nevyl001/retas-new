@@ -408,24 +408,32 @@ describe("FlexPublicJornada — Jornada Pública Riviera Flex League", () => {
       honores: null,
     });
 
-    render(<FlexPublicJornada detalle={detalle} numero={1} pantalla />);
+    const { container } = render(
+      <FlexPublicJornada detalle={detalle} numero={1} pantalla />
+    );
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Expandir a pantalla completa" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Expandir" })).toBeInTheDocument();
     });
+    expect(container.querySelector(".flex-pub-live.ro-public-view")).not.toBeNull();
     expect(screen.queryByText(/pantalla completa/i)).toBeNull();
     expect(screen.getByText(/ronda 01 de 05/i)).toBeInTheDocument();
     expect(screen.getByText(/4 rondas por disputar/i)).toBeInTheDocument();
     expect(screen.getByText(/cancha 01/i)).toBeInTheDocument();
     expect(screen.getByText(/clasificación de la jornada/i)).toBeInTheDocument();
-    expect(screen.getByText(/todavía no hay puntuaciones confirmadas/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/pendiente · en espera de resultados confirmados/i)
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: /ronda 02/i }));
     expect(screen.getByRole("button", { name: /volver a ronda actual/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /volver a ronda actual/i }));
     expect(screen.queryByRole("button", { name: /volver a ronda actual/i })).toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: "General" }));
+    fireEvent.click(screen.getByRole("tab", { name: /general/i }));
     expect(screen.getByText(/clasificación general/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/todavía no existen resultados oficiales acumulados de temporada/i)
+    ).toBeInTheDocument();
   });
 });

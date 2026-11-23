@@ -11,11 +11,12 @@ export function flexPublicJornadaEstado(input: {
   estado: string;
   fecha: string | null;
   confirmada: boolean;
+  enJuego?: boolean;
 }): { key: FlexPublicJornadaKey; label: string } {
   if (input.estado === "completed") {
     return { key: "finalizada", label: "Finalizada" };
   }
-  if (input.estado === "in_progress") {
+  if (input.estado === "in_progress" || input.enJuego) {
     return { key: "en_curso", label: "En curso" };
   }
   if (input.fecha || input.confirmada) {

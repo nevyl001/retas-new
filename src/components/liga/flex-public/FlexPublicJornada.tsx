@@ -269,17 +269,24 @@ const FlexPublicJornadaBody: React.FC<{
   }
 
   const flex = bundle?.jornadas.find((row) => row.jornadaId === jornada.id);
+  const partidos = (jornada.partidos ?? [])
+    .slice()
+    .sort((a, b) => a.ronda - b.ronda || (a.cancha ?? 0) - (b.cancha ?? 0));
+
+  const hasMatchActivity = partidos.some(
+    (p) =>
+      (p.score_pareja1 != null && p.score_pareja2 != null) ||
+      p.estado === "in_progress" ||
+      p.estado === "completed"
+  );
+
   const status = flexPublicJornadaEstado({
     estado: jornada.estado,
     fecha: jornada.fecha,
     confirmada:
-      flex?.programacionEstado === "confirmada" ||
-      (jornada.partidos?.length ?? 0) > 0,
+      flex?.programacionEstado === "confirmada" || partidos.length > 0,
+    enJuego: hasMatchActivity,
   });
-
-  const partidos = (jornada.partidos ?? [])
-    .slice()
-    .sort((a, b) => a.ronda - b.ronda || (a.cancha ?? 0) - (b.cancha ?? 0));
 
   const programmedRounds = Array.from(
     new Set(partidos.map((partido) => partido.ronda))
@@ -874,11 +881,9 @@ function FlexMatchCard({
       ? "live"
       : "pending";
   const estadoText = hasScore
-    ? tie
-      ? "Empate"
-      : "Final"
+    ? "Finalizado"
     : estadoMod === "live"
-      ? "En juego"
+      ? "En curso"
       : "Pendiente";
 
   const courtNumber =
