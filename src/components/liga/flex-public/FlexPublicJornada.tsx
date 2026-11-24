@@ -39,6 +39,7 @@ import "../liga-public-pantalla.css";
 import "../liga-public-premium-2026.css";
 import "../liga-public-individual-2026.css";
 import "./flex-public-jornada.css";
+import "./flex-public-neutral.css";
 
 type PublicProfile = { fotoUrl: string | null; rivieraId?: string | null };
 

@@ -484,7 +484,7 @@
 
 .flex-pub-live-match__team.is-win {
   border-color: color-mix(in srgb, var(--live-accent) 48%, var(--live-border-strong));
-  background: rgba(28, 28, 34, 0.88);
+  background: rgba(28, 28, 28, 0.88);
 }
 
 .flex-pub-live-match__team.is-loss {
@@ -551,13 +551,13 @@
   min-width: 128px;
   padding: 4px 18px;
   border-radius: 10px;
-  background: rgba(10, 10, 12, 0.78);
+  background: rgba(8, 8, 8, 0.78);
   border: 1px solid var(--live-border-strong);
 }
 
 .flex-pub-live-match__score-box.is-vs {
   border-color: var(--live-border);
-  background: rgba(16, 16, 20, 0.65);
+  background: rgba(16, 16, 16, 0.65);
 }
 
 .flex-pub-live-match__score-num {

@@ -1,0 +1,97 @@
+/* =============================================================================
+   RIVIERA FLEX LEAGUE — IDENTIDAD NEUTRA RIVIERA OPEN (fondo + superficies)
+
+   Rutas que lo usan (mismo tratamiento):
+     /public/liga/:ligaId/jornada/:numero            → .flex-pub-jornada
+     /public/liga/:ligaId/jornada/:numero/pantalla   → .flex-pub-live
+
+   Solo se aplica SIN upgrade. El permiso efectivo lo resuelve el sistema
+   oficial (ClubExperienceScope → resolveClubManifest →
+   isPremiumBrandingEnabledForOrganizador) y lo expone en
+   data-club: "riviera" (sin upgrade) o "pending" (aún resolviendo, que el
+   propio sistema pinta como Riviera Open). Con upgrade data-club es la clave
+   del club y NINGUNA regla de este archivo aplica: conserva su identidad.
+
+   No hay capas nuevas: se ajustan los pseudo-elementos que ya existen en
+   riviera-public-court.css (misma imagen, desktop y vertical móvil). El filtro
+   va solo en ::before, nunca en el contenedor, así que fotos, textos y botones
+   conservan su color.
+   ============================================================================= */
+
+/* ── Tokens de la isla oscura: escala neutra (solo Flex, solo sin upgrade) ── */
+.club-experience-scope:is([data-club="riviera"], [data-club="pending"])
+  :is(.flex-pub-jornada, .flex-pub-live).ro-surface-dark {
+  --ro-chrome-deep: #080808;
+  --ro-chrome-bg: #101010;
+  --ro-chrome-elevated: #161616;
+  --ro-chrome-active: #1c1c1c;
+  --ro-chrome-border: #292929;
+  --ro-chrome-text: #ffffff;
+  --ro-chrome-text-muted: #a3a3a3;
+  --ro-chrome-text-dim: #777777;
+
+  --ro-bg-deep: #080808;
+  --ro-bg-base: #101010;
+  --ro-bg-surface: #101010;
+  --ro-bg-inset: #101010;
+  --ro-bg-card: #161616;
+  --ro-bg-elevated: #1c1c1c;
+  --ro-bg-card-hover: #1c1c1c;
+  --ro-bg-input: #161616;
+
+  --ro-border: #292929;
+  --ro-border-subtle: #292929;
+  --ro-border-strong: #383838;
+
+  --ro-text-primary: #ffffff;
+  --ro-text-secondary: #a3a3a3;
+  --ro-text-muted: #777777;
+  --ro-accent-hover: #e5e5e5;
+
+  /* Aliases de marca que el scope de Riviera Open pinta en tonos azulados:
+     dentro de la isla oscura son neutros. */
+  --brand-primary: #1c1c1c;
+  --brand-secondary: #a3a3a3;
+  --brand-accent: #ffffff;
+  --brand-surface: #080808;
+  --brand-surface-alt: #161616;
+  --brand-border: #292929;
+  --brand-text: #ffffff;
+  --brand-muted: #a3a3a3;
+}
+
+/* ── Base del documento (overscroll / zonas fuera de la isla) ── */
+html:has(
+    .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
+      :is(.flex-pub-jornada, .flex-pub-live)
+  ),
+body:has(
+    .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
+      :is(.flex-pub-jornada, .flex-pub-live)
+  ),
+#root:has(
+    .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
+      :is(.flex-pub-jornada, .flex-pub-live)
+  ) {
+  background: #080808;
+}
+
+/* ── Color base de la vista: negro carbón (bajo la cancha) ── */
+.club-experience-scope:is([data-club="riviera"], [data-club="pending"])
+  :is(.flex-pub-jornada, .flex-pub-live).liga-pantalla.ro-public-view {
+  background: #080808 !important;
+  background-color: #080808 !important;
+}
+
+/* ── Fotografía de cancha: misma imagen, en escala de grises y sutil ── */
+.club-experience-scope:is([data-club="riviera"], [data-club="pending"])
+  :is(.flex-pub-jornada, .flex-pub-live).ro-public-view::before {
+  filter: grayscale(100%) brightness(0.42);
+  opacity: 0.24;
+}
+
+/* ── Overlay existente: negro carbón neutro (sin azul ni violeta) ── */
+.club-experience-scope:is([data-club="riviera"], [data-club="pending"])
+  :is(.flex-pub-jornada, .flex-pub-live).ro-public-view::after {
+  background: rgba(8, 8, 8, 0.76);
+}

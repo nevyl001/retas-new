@@ -13,6 +13,7 @@ import type {
 } from "./FlexPublicJornada";
 import { FlexNeutralAvatar } from "./flexPublicUi";
 import "./flex-public-live.css";
+import "./flex-public-neutral.css";
 
 type PublicProfile = { fotoUrl: string | null; rivieraId?: string | null };
 
