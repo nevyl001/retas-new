@@ -26,6 +26,7 @@ import { buildPublicJugadorByRivieraIdPath } from "../jugadores/jugadoresPublicN
 import { fechaCorta, horarioFlex, movementLabel, useFlexPublicTitle } from "./flex-public/flexPublicUi";
 import "./liga-public-pantalla.css";
 import "./liga-public-individual-2026.css";
+import "./flex-public/flex-public-neutral.css";
 import "../jugadores/riviera-jugadores.css";
 
 type PublicProfile = { fotoUrl: string | null; rivieraId?: string | null };
@@ -97,7 +98,7 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
 
   return (
     <PublicScopedBrandGate message="Cargando liga…">
-      <div className="liga-pantalla App--public-full-width ro-public-view ro-surface-dark liga-pantalla--individual">
+      <div className="flex-pub-liga liga-pantalla App--public-full-width ro-public-view ro-surface-dark liga-pantalla--individual">
         <div className="liga-pantalla__grain" aria-hidden />
         <PublicModeShell className="liga-pantalla__inner">
           {isPubDsV2Enabled ? (
