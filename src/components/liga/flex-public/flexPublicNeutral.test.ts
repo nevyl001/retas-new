@@ -74,11 +74,10 @@ describe("Flex pública — neutralidad de fondo y superficies", () => {
     expect(neutral).not.toMatch(/background-image/);
     expect(neutral).not.toMatch(/url\(/);
     expect(neutral).not.toMatch(/content\s*:/);
-    // Filtro solo en el pseudo-elemento de la foto, nunca en el contenedor.
-    const filters = neutral.match(/[^{}]*\{[^{}]*filter\s*:[^{}]*\}/g) ?? [];
-    expect(filters).toHaveLength(1);
-    expect(filters[0]).toContain("::before");
-    expect(filters[0]).toContain("grayscale(100%)");
+    expect(neutral).not.toMatch(/::before/);
+    expect(neutral).not.toMatch(/::after/);
+    expect(neutral).not.toMatch(/filter\s*:/);
+    expect(neutral).not.toMatch(/grayscale/i);
   });
 
   it("no introduce tonos prohibidos (dorado, verde, morado, neón)", () => {

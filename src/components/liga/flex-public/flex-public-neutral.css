@@ -1,95 +1,65 @@
 /* =============================================================================
-   RIVIERA FLEX LEAGUE — IDENTIDAD NEUTRA RIVIERA OPEN (fondo, superficies, tipo)
+   RIVIERA FLEX LEAGUE — SUPERFICIES NEUTRAS Y TIPOGRAFÍA OFICIAL RIVIERA OPEN
 
-   Rutas que lo usan (mismo tratamiento):
+   Rutas que lo usan:
      /public/liga/:ligaId                            → .flex-pub-liga
      /public/liga/:ligaId/jornada/:numero            → .flex-pub-jornada
      /public/liga/:ligaId/jornada/:numero/pantalla   → .flex-pub-live
 
-   Solo se aplica SIN upgrade. El permiso efectivo lo resuelve el sistema
-   oficial (ClubExperienceScope → resolveClubManifest →
-   isPremiumBrandingEnabledForOrganizador) y lo expone en
-   data-club: "riviera" (sin upgrade) o "pending" (aún resolviendo).
-   Con upgrade data-club es la clave del club y NINGUNA regla de este archivo
-   aplica: conserva íntegramente su identidad.
+   IMPORTANTE:
+   - El fondo deportivo oficial de cancha (.ro-public-view en
+     src/styles/riviera-public-court.css) se hereda ÍNTEGRAMENTE sin modificar
+     imagen, saturación, brillo, opacidad, contraste, posicionamiento, escala,
+     overlay, filtros ni comportamiento responsive.
+   - Este archivo únicamente neutraliza los tokens de superficie y tipografía
+     de los componentes de Flex League cuando la cuenta NO tiene upgrade
+     (data-club="riviera" o data-club="pending").
+   - Con upgrade, data-club es la clave del club y ninguna regla de este archivo
+     aplica.
    ============================================================================= */
 
-/* ── 1. Neutralizar tokens en .App.ro-public-view (ancestro), .club-experience-scope
-         (que tiene style inline del manifiesto claro) y la raíz de la vista Flex ── */
-.App.ro-public-view:has(
-    .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
-      :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga)
-  ),
 .club-experience-scope:is([data-club="riviera"], [data-club="pending"]):has(
     :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga)
   ),
 .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
   :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga).ro-surface-dark {
-  --ro-chrome-deep: #080808 !important;
-  --ro-chrome-bg: #101010 !important;
-  --ro-chrome-elevated: #141414 !important;
-  --ro-chrome-active: #1a1a1a !important;
-  --ro-chrome-border: #292929 !important;
-  --ro-chrome-text: #ffffff !important;
-  --ro-chrome-text-muted: #a3a3a3 !important;
-  --ro-chrome-text-dim: #777777 !important;
+  --ro-chrome-bg: #101010;
+  --ro-chrome-elevated: #141414;
+  --ro-chrome-active: #1a1a1a;
+  --ro-chrome-border: #292929;
+  --ro-chrome-text: #ffffff;
+  --ro-chrome-text-muted: #a3a3a3;
+  --ro-chrome-text-dim: #777777;
 
-  --ro-bg-deep: #080808 !important;
-  --ro-bg-base: #080808 !important;
-  --ro-bg-surface: #101010 !important;
-  --ro-bg-inset: #101010 !important;
-  --ro-bg-card: #141414 !important;
-  --ro-bg-elevated: #1a1a1a !important;
-  --ro-bg-card-hover: #1f1f1f !important;
-  --ro-bg-input: #141414 !important;
+  --ro-bg-surface: #101010;
+  --ro-bg-inset: #101010;
+  --ro-bg-card: #141414;
+  --ro-bg-elevated: #1a1a1a;
+  --ro-bg-card-hover: #1f1f1f;
+  --ro-bg-input: #141414;
 
-  --ro-border: #292929 !important;
-  --ro-border-subtle: #222222 !important;
-  --ro-border-strong: #383838 !important;
-  --ro-border-accent: rgba(255, 255, 255, 0.28) !important;
+  --ro-border: #292929;
+  --ro-border-subtle: #222222;
+  --ro-border-strong: #383838;
+  --ro-border-accent: rgba(255, 255, 255, 0.28);
 
-  --ro-text-primary: #ffffff !important;
-  --ro-text-secondary: #a3a3a3 !important;
-  --ro-text-muted: #777777 !important;
-  --ro-accent: #ffffff !important;
-  --ro-accent-hover: #e5e5e5 !important;
-  --ro-text-on-accent: #080808 !important;
+  --ro-text-primary: #ffffff;
+  --ro-text-secondary: #a3a3a3;
+  --ro-text-muted: #777777;
+  --ro-accent: #ffffff;
+  --ro-accent-hover: #e5e5e5;
+  --ro-text-on-accent: #101010;
 
   /* Neutralizar los inline styles del scope claro de Riviera Open */
   --brand-primary: #1a1a1a !important;
   --brand-secondary: #a3a3a3 !important;
   --brand-accent: #ffffff !important;
-  --brand-surface: #080808 !important;
+  --brand-surface: #101010 !important;
   --brand-surface-alt: #141414 !important;
   --brand-border: #292929 !important;
   --brand-text: #ffffff !important;
   --brand-muted: #a3a3a3 !important;
 
-  /* Superficies sólidas carbón neutro en tarjetas y bloques de Flex League */
-  --flex-pub-bg: #080808;
-  --flex-pub-surface: #141414;
-  --flex-pub-surface-elevated: #1a1a1a;
-  --flex-pub-surface-pair: #101010;
-  --flex-pub-avatar-bg: #1a1a1a;
-  --flex-pub-border: #292929;
-  --flex-pub-border-subtle: #222222;
-  --flex-pub-border-strong: #383838;
-  --flex-pub-text: #ffffff;
-  --flex-pub-text-secondary: #a3a3a3;
-  --flex-pub-text-muted: #777777;
-  --flex-pub-accent: #ffffff;
-
-  --live-card-bg: #141414;
-  --live-card-elevated: #1a1a1a;
-  --live-team-bg: #101010;
-  --live-border: #292929;
-  --live-border-strong: #383838;
-  --live-text: #ffffff;
-  --live-text-secondary: #a3a3a3;
-  --live-muted: #777777;
-  --live-accent: #ffffff;
-
-  --liga-pub-bg: #080808;
   --liga-pub-surface: #141414;
   --liga-pub-surface-deep: #101010;
   --liga-pub-border: #292929;
@@ -113,75 +83,6 @@
   --liga-pub-font-body: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
 }
 
-/* ── 2. Base del documento y de .App.ro-public-view: negro profundo #080808 ── */
-html:has(
-    .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
-      :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga)
-  ),
-body:has(
-    .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
-      :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga)
-  ),
-#root:has(
-    .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
-      :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga)
-  ),
-.App.ro-public-view:has(
-    .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
-      :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga)
-  ) {
-  background: #080808 !important;
-  background-color: #080808 !important;
-}
-
-/* Cuando la vista vive dentro de .App.ro-public-view, la raíz interna es
-   transparente y desactiva sus pseudo-elementos duplicados para que exista
-   UNA SOLA capa de fotografía y UN SOLO overlay en toda la página. */
-.App.ro-public-view
-  .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
-  :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga).liga-pantalla.ro-public-view {
-  background: transparent !important;
-  background-color: transparent !important;
-}
-
-.App.ro-public-view
-  .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
-  :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga).ro-public-view::before,
-.App.ro-public-view
-  .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
-  :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga).ro-public-view::after {
-  opacity: 0 !important;
-  background: none !important;
-}
-
-/* ── 3. Fotografía original de cancha: blanco y negro y apenas perceptible ── */
-.App.ro-public-view:has(
-    .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
-      :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga)
-  )::before,
-.club-experience-scope:is([data-club="riviera"], [data-club="pending"])
-  :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga).ro-public-view::before {
-  filter: grayscale(100%) contrast(0.92) brightness(0.32);
-  opacity: 0.09;
-}
-
-/* ── 4. Único overlay carbón neutro sobre la cancha (sin tinte azul) ── */
-.App.ro-public-view:has(
-    .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
-      :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga)
-  )::after,
-.club-experience-scope:is([data-club="riviera"], [data-club="pending"])
-  :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga).ro-public-view::after {
-  background: linear-gradient(
-    180deg,
-    rgba(8, 8, 8, 0.92) 0%,
-    rgba(8, 8, 8, 0.82) 35%,
-    rgba(8, 8, 8, 0.86) 68%,
-    rgba(8, 8, 8, 0.96) 100%
-  );
-}
-
-/* ── 5. Hero y chips de componentes compartidos en Flex sin upgrade ── */
 .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
   :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga)
   .peds-hero__evento {
@@ -193,7 +94,7 @@ body:has(
 .club-experience-scope:is([data-club="riviera"], [data-club="pending"])
   :is(.flex-pub-jornada, .flex-pub-live, .flex-pub-liga)
   :is(.peds-hero__categoria, .peds-hero__fecha) {
-  background: #141414 !important;
+  background: rgba(20, 20, 20, 0.88) !important;
   border: 1px solid #292929 !important;
   color: #a3a3a3 !important;
 }

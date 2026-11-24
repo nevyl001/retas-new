@@ -98,9 +98,9 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
 
   return (
     <PublicScopedBrandGate message="Cargando liga…">
-      <div className="flex-pub-liga liga-pantalla App--public-full-width ro-public-view ro-surface-dark liga-pantalla--individual">
+      <div className="flex-pub-liga liga-pantalla App--public-full-width ro-public-view ro-surface-dark">
         <div className="liga-pantalla__grain" aria-hidden />
-        <PublicModeShell className="liga-pantalla__inner">
+        <PublicModeShell className="liga-pantalla__inner liga-pantalla--individual">
           {isPubDsV2Enabled ? (
             <PublicHero
               logoClub={<PublicEventBrandIdentity className="peds-hero__club-identity" />}

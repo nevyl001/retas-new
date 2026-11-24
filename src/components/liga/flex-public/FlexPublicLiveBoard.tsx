@@ -304,7 +304,7 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
 
   return (
     <div
-      className={`flex-pub-live liga-pantalla liga-pantalla--individual App--public-full-width ro-public-view ro-surface-dark${
+      className={`flex-pub-live liga-pantalla App--public-full-width ro-public-view ro-surface-dark${
         fullscreen ? " is-fullscreen" : ""
       }`}
     >
