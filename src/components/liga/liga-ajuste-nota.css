@@ -1,11 +1,10 @@
 .liga-ajuste-nota {
-  display: inline-block;
-  align-self: flex-start;
-  width: fit-content;
+  display: block;
+  width: 100%;
   max-width: 100%;
-  margin: 0.12rem 0 0;
+  margin: 0.28rem 0 0;
   min-width: 0;
-  vertical-align: baseline;
+  text-align: inherit;
 }
 
 .liga-ajuste-nota__summary {

@@ -1966,6 +1966,10 @@
   table-layout: fixed;
 }
 
+.liga-pantalla-ranking__player-name {
+  display: block;
+}
+
 .liga-pantalla--jornada-fijas .liga-pantalla-ranking__table--compact th:first-child,
 .liga-pantalla--jornada-fijas .liga-pantalla-ranking__table--compact td:first-child {
   width: 2.25rem;
