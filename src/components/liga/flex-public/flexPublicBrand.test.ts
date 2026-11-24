@@ -10,6 +10,7 @@ const jornada = fs.readFileSync(
   path.join(__dirname, "flex-public-jornada.css"),
   "utf8"
 );
+const ui = fs.readFileSync(path.join(__dirname, "flexPublicUi.tsx"), "utf8");
 
 describe("identidad pública de Flex", () => {
   it("Club Test sin upgrade resuelve la marca Riviera Open", () => {
@@ -25,13 +26,20 @@ describe("identidad pública de Flex", () => {
   });
 
   it("la vista no impone otra fuente ni otro fondo encima del sistema público", () => {
-    for (const css of [live, jornada]) {
+    for (const css of [live, jornada, ui]) {
       expect(css).not.toMatch(/Bebas Neue|Manrope|Arial Narrow/);
-      expect(css).toContain("var(--font-display)");
-      expect(css).toContain("var(--font-body)");
+      expect(css).not.toMatch(/fonts\.googleapis/);
       expect(css).not.toMatch(/ro-public-view::before/);
       expect(css).not.toMatch(/ro-public-view::after/);
       expect(css).not.toContain("--liga-pub-gold");
+      expect(css).not.toMatch(/!important/);
     }
+    for (const css of [live, jornada]) {
+      expect(css).toContain("var(--font-display)");
+      expect(css).toContain("var(--font-body)");
+    }
+    expect(fs.existsSync(path.join(__dirname, "flex-public-neutral.css"))).toBe(
+      false
+    );
   });
 });

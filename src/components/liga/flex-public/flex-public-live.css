@@ -15,7 +15,6 @@
   --live-text-secondary: var(--ro-text-secondary);
   --live-muted: var(--ro-text-muted);
   --live-accent: var(--brand-accent, var(--ro-accent));
-  background: transparent !important;
   color: var(--live-text);
   font-family: var(--font-body);
   min-height: 100vh;

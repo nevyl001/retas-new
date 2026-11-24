@@ -17,7 +17,6 @@
   --flex-pub-text-secondary: var(--ro-text-secondary);
   --flex-pub-text-muted: var(--ro-text-muted);
   --flex-pub-accent: var(--brand-accent, var(--ro-accent));
-  background: transparent !important;
   color: var(--flex-pub-text);
   font-family: var(--font-body);
 }

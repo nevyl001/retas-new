@@ -26,7 +26,6 @@ import { buildPublicJugadorByRivieraIdPath } from "../jugadores/jugadoresPublicN
 import { fechaCorta, horarioFlex, movementLabel, useFlexPublicTitle } from "./flex-public/flexPublicUi";
 import "./liga-public-pantalla.css";
 import "./liga-public-individual-2026.css";
-import "./flex-public/flex-public-neutral.css";
 import "../jugadores/riviera-jugadores.css";
 
 type PublicProfile = { fotoUrl: string | null; rivieraId?: string | null };

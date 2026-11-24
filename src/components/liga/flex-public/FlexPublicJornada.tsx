@@ -38,7 +38,6 @@ import { FlexPublicLiveBoard } from "./FlexPublicLiveBoard";
 import "../liga-public-pantalla.css";
 import "../liga-public-premium-2026.css";
 import "./flex-public-jornada.css";
-import "./flex-public-neutral.css";
 
 type PublicProfile = { fotoUrl: string | null; rivieraId?: string | null };
 
