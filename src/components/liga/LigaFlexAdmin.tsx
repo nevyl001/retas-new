@@ -4,6 +4,9 @@ import type { LigaDetalle, LigaJornada, LigaJugadorPoolItem, LigaPartido } from 
 import { FLEX_MAX_ROUNDS } from "../../lib/liga/flex/constants";
 import {
   adjustFlexTarget,
+  flexActiveRound,
+  flexRoundActionVisible,
+  flexRoundEditMode,
   flexScoredRoundFloor,
   nextFlexRoundAction,
   resetFlexJornadaGuard,
@@ -23,7 +26,7 @@ import {
   applyFlexJornada,
   closeFlexLeague,
   confirmFlexRound,
-  correctFlexJornada,
+  correctFlexMatch,
   loadFlexConfirmedRounds,
   loadFlexLeague,
   markFlexFinal,
@@ -144,6 +147,13 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
   const [correctionMotivo, setCorrectionMotivo] = useState("");
   const [correctionOrden, setCorrectionOrden] = useState<string[]>([]);
   const [correctionTies, setCorrectionTies] = useState<string[][]>([]);
+  const [correctionError, setCorrectionError] = useState<string | null>(null);
+  const [correction, setCorrection] = useState<{
+    partido: LigaPartido;
+    scoreA: number;
+    scoreB: number;
+  } | null>(null);
+  const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [savedMatchId, setSavedMatchId] = useState<string | null>(null);
   const [reopenMotivo, setReopenMotivo] = useState("");
 
@@ -250,6 +260,73 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
           confirmedRounds,
           matches: roundScores,
         });
+  const seasonClosed = detalle.estado === "completed";
+  const jornadaCompleted = jornada?.estado === "completed";
+  const roundEditMode = flexRoundEditMode({
+    round: shownRound,
+    confirmedRounds,
+    jornadaCompleted,
+    seasonClosed,
+  });
+  const activeRound = flexActiveRound(roundAction, generatedRounds);
+  const roundActionShown = flexRoundActionVisible(
+    roundAction,
+    shownRound,
+    generatedRounds
+  );
+
+  // Cambiar de ronda o de jornada cancela cualquier edición en curso.
+  useEffect(() => {
+    setEditingMatchId(null);
+  }, [shownRound, jornada?.id]);
+
+  const closeCorrection = () => {
+    setCorrection(null);
+    setCorrectionMotivo("");
+    setCorrectionOrden([]);
+    setCorrectionTies([]);
+    setCorrectionError(null);
+  };
+
+  const submitCorrection = async () => {
+    if (!correction) return;
+    setBusy(true);
+    setCorrectionError(null);
+    try {
+      const outcome = await correctFlexMatch({
+        partidoId: correction.partido.id,
+        scoreA: correction.scoreA,
+        scoreB: correction.scoreB,
+        motivo: correctionMotivo,
+        orden: correctionOrden,
+      });
+      if (outcome.needsResolution) {
+        const groups = outcome.ties ?? [];
+        setCorrectionTies(groups);
+        setCorrectionOrden((current) => mergeTieOrder(groups, current, -1, []));
+        setCorrectionError(
+          outcome.error || "La corrección deja un empate. Define el orden para continuar."
+        );
+        return;
+      }
+      const partidoId = correction.partido.id;
+      closeCorrection();
+      setEditingMatchId(null);
+      setSavedMatchId(partidoId);
+      setError(null);
+      setNotice(
+        "Marcador corregido. La clasificación se actualizó y los puntos anteriores fueron sustituidos."
+      );
+      await refresh();
+      onReload();
+    } catch (err) {
+      setCorrectionError(
+        err instanceof Error ? err.message : "No se pudo corregir el marcador."
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
   const scoredFloor = flexScoredRoundFloor(roundScores);
   const matchesWithResult = roundScores.filter(
     (match) => match.scoreA != null || match.scoreB != null
@@ -1226,15 +1303,35 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                       </div>
                       <span className="liga-flex-pill">
                         {shownRound
-                          ? `Ronda ${String(shownRound).padStart(2, "0")}`
+                          ? `Ronda R${String(shownRound).padStart(2, "0")}${
+                              roundEditMode === "confirmed" ? " · Confirmada" : " · En curso"
+                            }`
                           : "Sin ronda generada"}
                       </span>
                     </div>
 
                     <div className="liga-flex-round-status">
-                      <span>Ronda actual: {openRound ? `R${String(openRound).padStart(2, "0")}` : "—"}</span>
-                      <span>Confirmadas: {confirmedRounds.length}</span>
-                      <span>Pendientes: {Math.max(0, flex.rondas - generatedRounds.length)}</span>
+                      <span>
+                        Ronda seleccionada:{" "}
+                        {shownRound ? `R${String(shownRound).padStart(2, "0")}` : "—"}
+                      </span>
+                      <span>
+                        Ronda activa:{" "}
+                        {jornada.estado === "completed"
+                          ? "Finalizada"
+                          : activeRound
+                          ? `R${String(activeRound).padStart(2, "0")}`
+                          : "—"}
+                      </span>
+                      <span>
+                        Rondas confirmadas:{" "}
+                        {jornada.estado === "completed"
+                          ? generatedRounds.length
+                          : confirmedRounds.length}
+                      </span>
+                      <span>
+                        Rondas pendientes: {Math.max(0, flex.rondas - generatedRounds.length)}
+                      </span>
                     </div>
 
                     <div className="liga-flex-round-stepper">
@@ -1304,18 +1401,41 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
 
                     {generatedRounds.length > 0 ? (
                       <div className="liga-flex-round-nav" role="tablist" aria-label="Rondas de la jornada">
-                        {generatedRounds.map((ronda) => (
-                          <button
-                            key={ronda}
-                            type="button"
-                            role="tab"
-                            aria-selected={ronda === shownRound}
-                            className={ronda === shownRound ? "is-selected" : ""}
-                            onClick={() => setPickedRound(ronda)}
-                          >
-                            R{String(ronda).padStart(2, "0")}
-                          </button>
-                        ))}
+                        {generatedRounds.map((ronda) => {
+                          const isConfirmed =
+                            jornada.estado === "completed" || confirmedRounds.includes(ronda);
+                          const isActive =
+                            jornada.estado !== "completed" &&
+                            activeRound === ronda &&
+                            !confirmedRounds.includes(ronda);
+                          const isSelected = ronda === shownRound;
+                          return (
+                            <button
+                              key={ronda}
+                              type="button"
+                              role="tab"
+                              aria-selected={isSelected}
+                              className={[
+                                isSelected ? "is-selected" : "",
+                                isConfirmed ? "is-confirmed" : "",
+                                isActive ? "is-active" : "",
+                              ]
+                                .filter(Boolean)
+                                .join(" ")}
+                              onClick={() => setPickedRound(ronda)}
+                            >
+                              <span>R{String(ronda).padStart(2, "0")}</span>
+                              {isConfirmed ? (
+                                <span
+                                  className="liga-flex-round-nav__check"
+                                  aria-label={`Ronda ${ronda} confirmada`}
+                                >
+                                  <TablerIcon name="check" size={11} />
+                                </span>
+                              ) : null}
+                            </button>
+                          );
+                        })}
                       </div>
                     ) : (
                       <p className="liga-flex-card__desc">
@@ -1323,72 +1443,77 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                       </p>
                     )}
 
-                    <div className="liga-flex__actions liga-flex-schedule-actions">
-                      {roundAction?.kind === "generate" || roundAction?.kind === "replace" ? (
-                        <Button
-                          type="button"
-                          variant="primary"
-                          disabled={busy || !layout.ok || jornada.estado === "completed"}
-                          onClick={() => {
-                            if (!roundAction || (roundAction.kind !== "generate" && roundAction.kind !== "replace")) {
-                              return;
+                    {roundActionShown && jornada.estado !== "completed" ? (
+                      <div className="liga-flex__actions liga-flex-schedule-actions">
+                        {roundAction?.kind === "generate" || roundAction?.kind === "replace" ? (
+                          <Button
+                            type="button"
+                            variant="primary"
+                            disabled={busy || !layout.ok}
+                            onClick={() => {
+                              if (
+                                !roundAction ||
+                                (roundAction.kind !== "generate" && roundAction.kind !== "replace")
+                              ) {
+                                return;
+                              }
+                              const round = roundAction.round;
+                              void run(async () => {
+                                const schedule = generateFlexNextRound({
+                                  players: playersOf(participantIds),
+                                  courts: flex.canchas,
+                                  seed: Date.now() % 100000,
+                                  history: plannedHistory(
+                                    partidos,
+                                    roundAction.kind === "replace" ? round : undefined
+                                  ),
+                                });
+                                if (!schedule.ok) throw new Error(schedule.error);
+                                await saveFlexRound({
+                                  jornadaId: jornada.id,
+                                  round,
+                                  schedule,
+                                });
+                                setPickedRound(round);
+                                setNotice(
+                                  schedule.quality.needsConfirmation
+                                    ? schedule.quality.limitations.join(" ")
+                                    : `Ronda ${round} lista.`
+                                );
+                              });
+                            }}
+                          >
+                            <TablerIcon name="sparkles" size={15} />
+                            <span>
+                              {roundAction.kind === "replace"
+                                ? `Regenerar ronda ${roundAction.round}`
+                                : `Generar ronda ${roundAction.round}`}
+                            </span>
+                          </Button>
+                        ) : null}
+
+                        {roundAction?.kind === "confirm" ? (
+                          <Button
+                            type="button"
+                            variant="primary"
+                            disabled={busy}
+                            onClick={() =>
+                              void run(async () => {
+                                await confirmFlexRound(jornada.id, roundAction.round);
+                                setNotice(`Ronda ${roundAction.round} confirmada.`);
+                              })
                             }
-                            const round = roundAction.round;
-                            void run(async () => {
-                              const schedule = generateFlexNextRound({
-                                players: playersOf(participantIds),
-                                courts: flex.canchas,
-                                seed: Date.now() % 100000,
-                                history: plannedHistory(
-                                  partidos,
-                                  roundAction.kind === "replace" ? round : undefined
-                                ),
-                              });
-                              if (!schedule.ok) throw new Error(schedule.error);
-                              await saveFlexRound({
-                                jornadaId: jornada.id,
-                                round,
-                                schedule,
-                              });
-                              setPickedRound(round);
-                              setNotice(
-                                schedule.quality.needsConfirmation
-                                  ? schedule.quality.limitations.join(" ")
-                                  : `Ronda ${round} lista.`
-                              );
-                            });
-                          }}
-                        >
-                          <TablerIcon name="sparkles" size={15} />
-                          <span>
-                            {roundAction.kind === "replace"
-                              ? `Regenerar ronda ${roundAction.round}`
-                              : `Generar ronda ${roundAction.round}`}
-                          </span>
-                        </Button>
-                      ) : null}
+                          >
+                            <TablerIcon name="check" size={15} />
+                            <span>Confirmar ronda {roundAction.round}</span>
+                          </Button>
+                        ) : null}
 
-                      {roundAction?.kind === "confirm" ? (
-                        <Button
-                          type="button"
-                          variant="primary"
-                          disabled={busy}
-                          onClick={() =>
-                            void run(async () => {
-                              await confirmFlexRound(jornada.id, roundAction.round);
-                              setNotice(`Ronda ${roundAction.round} confirmada.`);
-                            })
-                          }
-                        >
-                          <TablerIcon name="check" size={15} />
-                          <span>Confirmar ronda {roundAction.round}</span>
-                        </Button>
-                      ) : null}
-
-                      {roundAction?.kind === "blocked" ? (
-                        <p className="liga-flex-card__desc">{roundAction.reason}</p>
-                      ) : null}
-                    </div>
+                        {roundAction?.kind === "blocked" ? (
+                          <p className="liga-flex-card__desc">{roundAction.reason}</p>
+                        ) : null}
+                      </div>
+                    ) : null}
 
                     {flex.advertencia ? (
                       <div className="liga-flex-warning-strip">
@@ -1400,12 +1525,12 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                     <MatchEditor
                       partidos={shownMatches}
                       names={names}
-                      disabled={
-                        busy ||
-                        jornada.estado === "completed" ||
-                        detalle.estado === "completed"
-                      }
+                      mode={roundEditMode}
+                      busy={busy}
                       savedId={savedMatchId}
+                      editingId={editingMatchId}
+                      onStartEdit={(partidoId) => setEditingMatchId(partidoId)}
+                      onCancelEdit={() => setEditingMatchId(null)}
                       onSave={(partido, scoreA, scoreB) =>
                         void run(async () => {
                           await saveFlexMatchScore(partido.id, scoreA, scoreB);
@@ -1413,6 +1538,13 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                           setNotice("Marcador actualizado.");
                         })
                       }
+                      onRequestCorrection={(partido, scoreA, scoreB) => {
+                        setCorrection({ partido, scoreA, scoreB });
+                        setCorrectionMotivo("");
+                        setCorrectionOrden([]);
+                        setCorrectionTies([]);
+                        setCorrectionError(null);
+                      }}
                     />
 
                     <details className="liga-flex-advanced">
@@ -1459,43 +1591,6 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                           Clasificación provisional lista. El servidor vuelve a calcular los puntos al cerrar la jornada.
                         </span>
                       </div>
-                    ) : null}
-
-                    {jornada.estado === "completed" && detalle.estado !== "completed" ? (
-                      <CorrectionPanel
-                        partidos={partidos}
-                        names={names}
-                        motivo={correctionMotivo}
-                        orden={correctionOrden}
-                        ties={correctionTies}
-                        busy={busy}
-                        onMotivo={setCorrectionMotivo}
-                        onOrden={setCorrectionOrden}
-                        onSubmit={(marcadores) =>
-                          void run(async () => {
-                            const outcome = await correctFlexJornada({
-                              jornadaId: jornada.id,
-                              marcadores,
-                              motivo: correctionMotivo,
-                              orden: correctionOrden,
-                            });
-                            if (outcome.needsResolution) {
-                              const groups = outcome.ties ?? [];
-                              setCorrectionTies(groups);
-                              setCorrectionOrden((current) =>
-                                mergeTieOrder(groups, current, -1, [])
-                              );
-                              throw new Error(
-                                outcome.error || "La corrección dejó un empate."
-                              );
-                            }
-                            setCorrectionTies([]);
-                            setNotice(
-                              "Jornada corregida. Los puntos anteriores se sustituyeron."
-                            );
-                          })
-                        }
-                      />
                     ) : null}
 
                     {jornada.estado === "completed" && detalle.estado === "completed" ? (
@@ -2057,6 +2152,109 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
           </label>
         </div>
       </Modal>
+
+      <Modal
+        open={correction != null}
+        onClose={() => {
+          if (busy) return;
+          closeCorrection();
+        }}
+        title="CONFIRMAR CORRECCIÓN DE RESULTADO"
+        size="sm"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={busy}
+              onClick={closeCorrection}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              disabled={busy || correctionMotivo.trim().length < 4}
+              onClick={() => void submitCorrection()}
+            >
+              Confirmar corrección
+            </Button>
+          </>
+        }
+      >
+        {correction ? (
+          <div className="liga-flex-correction-modal">
+            <dl className="liga-flex-correction-modal__summary">
+              <div>
+                <dt>Ronda y cancha</dt>
+                <dd>
+                  Ronda R{String(correction.partido.ronda).padStart(2, "0")} · Cancha{" "}
+                  {correction.partido.cancha ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt>Parejas participantes</dt>
+                <dd>
+                  {formatPairNames(correction.partido, "pareja1", names)} vs{" "}
+                  {formatPairNames(correction.partido, "pareja2", names)}
+                </dd>
+              </div>
+              <div>
+                <dt>Resultado anterior</dt>
+                <dd>
+                  {correction.partido.score_pareja1 ?? "—"} -{" "}
+                  {correction.partido.score_pareja2 ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt>Resultado corregido</dt>
+                <dd className="is-new-score">
+                  {correction.scoreA} - {correction.scoreB}
+                </dd>
+              </div>
+            </dl>
+
+            <label className="liga-flex-correction-modal__field">
+              <span>Motivo de la corrección</span>
+              <input
+                className="liga-flex-input"
+                value={correctionMotivo}
+                disabled={busy}
+                placeholder="Motivo de la corrección (mínimo 4 caracteres)"
+                autoFocus
+                onChange={(event) => setCorrectionMotivo(event.target.value)}
+              />
+            </label>
+
+            {correctionTies.map((group, index) => (
+              <TieOrder
+                key={group.join("-")}
+                title={
+                  correctionTies.length > 1
+                    ? `Empate ${index + 1} después de la corrección`
+                    : "Empate después de la corrección"
+                }
+                note="Confirma el orden antes de guardar la clasificación actualizada."
+                ids={orderWithin(group, correctionOrden)}
+                names={names}
+                onChange={(next) =>
+                  setCorrectionOrden(mergeTieOrder(correctionTies, correctionOrden, index, next))
+                }
+              />
+            ))}
+
+            {correctionError ? (
+              <p className="liga-flex-correction-modal__error" role="alert">
+                {correctionError}
+              </p>
+            ) : null}
+
+            <p className="liga-flex-correction-modal__info">
+              La clasificación se actualizará automáticamente. Los puntos anteriores serán sustituidos sin duplicar registros.
+            </p>
+          </div>
+        ) : null}
+      </Modal>
     </LigaPageShell>
   );
 };
@@ -2437,143 +2635,16 @@ function TieOrder({
   );
 }
 
-function CorrectionPanel({
-  partidos,
-  names,
-  motivo,
-  orden,
-  ties,
-  busy,
-  onMotivo,
-  onOrden,
-  onSubmit,
-}: {
-  partidos: LigaPartido[];
-  names: Map<string, string>;
-  motivo: string;
-  orden: string[];
-  ties: string[][];
-  busy: boolean;
-  onMotivo: (value: string) => void;
-  onOrden: (ids: string[]) => void;
-  onSubmit: (
-    marcadores: Array<{ partidoId: string; scoreA: number; scoreB: number }>
-  ) => void;
-}) {
-  const [draft, setDraft] = useState<Record<string, { a: string; b: string }>>(
-    {}
-  );
-  const value = (partido: LigaPartido, side: "a" | "b") =>
-    draft[partido.id]?.[side] ??
-    String(
-      side === "a" ? partido.score_pareja1 ?? "" : partido.score_pareja2 ?? ""
-    );
-
-  const pairLabel = (partido: LigaPartido, side: "pareja1" | "pareja2") => {
-    const p = side === "pareja1" ? partido.pareja1 : partido.pareja2;
-    if (!p) return "Pareja";
-    return `${names.get(p.jugador1_id) ?? "Jugador"} / ${
-      names.get(p.jugador2_id) ?? "Jugador"
-    }`;
-  };
-
-  return (
-    <div className="liga-flex-correction-card">
-      <div className="liga-flex-correction-card__head">
-        <h3>Corrección de jornada finalizada</h3>
-        <p>
-          Los puntos anteriores se sustituyen. No se suman dos veces. Escribe el motivo antes de confirmar.
-        </p>
-      </div>
-
-      <div className="liga-flex-matches-list">
-        {partidos.map((partido) => (
-          <div key={partido.id} className="liga-flex-match-row">
-            <span className="liga-flex-match-row__tag">
-              R{partido.ronda} · C{partido.cancha ?? "—"}
-            </span>
-            <span className="liga-flex-match-row__pair">
-              {pairLabel(partido, "pareja1")}
-            </span>
-            <div className="liga-flex-match-row__scores">
-              <input
-                className="liga-flex-score-input"
-                inputMode="numeric"
-                value={value(partido, "a")}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    [partido.id]: {
-                      a: event.target.value,
-                      b: value(partido, "b"),
-                    },
-                  }))
-                }
-              />
-              <span className="liga-flex-match-row__vs">vs</span>
-              <input
-                className="liga-flex-score-input"
-                inputMode="numeric"
-                value={value(partido, "b")}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    [partido.id]: {
-                      a: value(partido, "a"),
-                      b: event.target.value,
-                    },
-                  }))
-                }
-              />
-            </div>
-            <span className="liga-flex-match-row__pair is-right">
-              {pairLabel(partido, "pareja2")}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {ties.map((group, index) => (
-        <TieOrder
-          key={group.join("-")}
-          title={
-            ties.length > 1
-              ? `Empate ${index + 1} después de la corrección`
-              : "Empate después de la corrección"
-          }
-          note="Confirma el orden antes de guardar la clasificación nueva."
-          ids={orderWithin(group, orden)}
-          names={names}
-          onChange={(next) => onOrden(mergeTieOrder(ties, orden, index, next))}
-        />
-      ))}
-
-      <div className="liga-flex-correction-footer">
-        <input
-          className="liga-flex-input"
-          value={motivo}
-          placeholder="Motivo de la corrección (mínimo 4 caracteres)"
-          onChange={(event) => onMotivo(event.target.value)}
-        />
-        <Button
-          type="button"
-          variant="primary"
-          disabled={busy || motivo.trim().length < 4}
-          onClick={() =>
-            onSubmit(
-              partidos.map((partido) => ({
-                partidoId: partido.id,
-                scoreA: Number(value(partido, "a")),
-                scoreB: Number(value(partido, "b")),
-              }))
-            )
-          }
-        >
-          Confirmar corrección
-        </Button>
-      </div>
-    </div>
-  );
+function formatPairNames(
+  partido: LigaPartido,
+  side: "pareja1" | "pareja2",
+  names: Map<string, string>
+): string {
+  const pair = side === "pareja1" ? partido.pareja1 : partido.pareja2;
+  if (!pair) return "Pareja";
+  return `${names.get(pair.jugador1_id) ?? "Jugador"} / ${
+    names.get(pair.jugador2_id) ?? "Jugador"
+  }`;
 }
 
 function statsOf(
@@ -2644,15 +2715,25 @@ function plannedHistory(
 function MatchEditor({
   partidos,
   names,
-  disabled,
+  mode,
+  busy,
   savedId,
+  editingId,
+  onStartEdit,
+  onCancelEdit,
   onSave,
+  onRequestCorrection,
 }: {
   partidos: LigaPartido[];
   names: Map<string, string>;
-  disabled: boolean;
+  mode: "capture" | "confirmed" | "locked";
+  busy: boolean;
   savedId: string | null;
+  editingId: string | null;
+  onStartEdit: (partidoId: string) => void;
+  onCancelEdit: () => void;
   onSave: (partido: LigaPartido, scoreA: number, scoreB: number) => void;
+  onRequestCorrection: (partido: LigaPartido, scoreA: number, scoreB: number) => void;
 }) {
   if (partidos.length === 0) return null;
 
@@ -2663,9 +2744,14 @@ function MatchEditor({
           key={partido.id}
           partido={partido}
           names={names}
-          disabled={disabled}
+          mode={mode}
+          busy={busy}
           saved={savedId === partido.id}
+          editing={editingId === partido.id}
+          onStartEdit={onStartEdit}
+          onCancelEdit={onCancelEdit}
           onSave={onSave}
+          onRequestCorrection={onRequestCorrection}
         />
       ))}
     </div>
@@ -2675,49 +2761,76 @@ function MatchEditor({
 function ScoreRow({
   partido,
   names,
-  disabled,
+  mode,
+  busy,
   saved,
+  editing,
+  onStartEdit,
+  onCancelEdit,
   onSave,
+  onRequestCorrection,
 }: {
   partido: LigaPartido;
   names: Map<string, string>;
-  disabled: boolean;
+  mode: "capture" | "confirmed" | "locked";
+  busy: boolean;
   saved: boolean;
+  editing: boolean;
+  onStartEdit: (partidoId: string) => void;
+  onCancelEdit: () => void;
   onSave: (partido: LigaPartido, scoreA: number, scoreB: number) => void;
+  onRequestCorrection: (partido: LigaPartido, scoreA: number, scoreB: number) => void;
 }) {
-  const [a, setA] = useState(partido.score_pareja1?.toString() ?? "");
-  const [b, setB] = useState(partido.score_pareja2?.toString() ?? "");
-
-  useEffect(() => {
-    setA(partido.score_pareja1?.toString() ?? "");
-    setB(partido.score_pareja2?.toString() ?? "");
-  }, [partido.score_pareja1, partido.score_pareja2]);
-
-  const pair = (id: "pareja1" | "pareja2") => {
-    const side = id === "pareja1" ? partido.pareja1 : partido.pareja2;
-    if (!side) return "Pareja";
-    return `${names.get(side.jugador1_id) ?? "Jugador"} / ${
-      names.get(side.jugador2_id) ?? "Jugador"
-    }`;
-  };
-
   const capturedA = partido.score_pareja1?.toString() ?? "";
   const capturedB = partido.score_pareja2?.toString() ?? "";
+  const [a, setA] = useState(capturedA);
+  const [b, setB] = useState(capturedB);
+
+  useEffect(() => {
+    if (!editing) {
+      setA(partido.score_pareja1?.toString() ?? "");
+      setB(partido.score_pareja2?.toString() ?? "");
+    }
+  }, [partido.score_pareja1, partido.score_pareja2, editing]);
+
   const hasCaptured = capturedA !== "" && capturedB !== "";
   const dirty = a !== capturedA || b !== capturedB;
+  const parsedA = Number(a);
+  const parsedB = Number(b);
+  const validScores =
+    a.trim() !== "" &&
+    b.trim() !== "" &&
+    Number.isInteger(parsedA) &&
+    parsedA >= 0 &&
+    Number.isInteger(parsedB) &&
+    parsedB >= 0;
+
+  const canEditInputs =
+    !busy && (mode === "capture" || (mode === "confirmed" && editing));
 
   return (
-    <div className={`liga-flex__score liga-flex-match-row${hasCaptured ? " is-captured" : ""}`}>
+    <div
+      className={[
+        "liga-flex__score",
+        "liga-flex-match-row",
+        hasCaptured ? "is-captured" : "",
+        editing ? "is-editing" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <span className="liga-flex-match-row__tag">
-        R{partido.ronda} · Cancha {partido.cancha ?? "—"}
+        R{String(partido.ronda).padStart(2, "0")} · Cancha {partido.cancha ?? "—"}
       </span>
-      <span className="liga-flex-match-row__pair">{pair("pareja1")}</span>
+      <span className="liga-flex-match-row__pair">
+        {formatPairNames(partido, "pareja1", names)}
+      </span>
       <div className="liga-flex-match-row__scores">
         <input
           className="liga-flex-score-input"
           inputMode="numeric"
           value={a}
-          disabled={disabled}
+          disabled={!canEditInputs}
           aria-label={`Marcador pareja 1 ronda ${partido.ronda} cancha ${partido.cancha ?? ""}`}
           onChange={(event) => setA(event.target.value)}
         />
@@ -2726,21 +2839,70 @@ function ScoreRow({
           className="liga-flex-score-input"
           inputMode="numeric"
           value={b}
-          disabled={disabled}
+          disabled={!canEditInputs}
           aria-label={`Marcador pareja 2 ronda ${partido.ronda} cancha ${partido.cancha ?? ""}`}
           onChange={(event) => setB(event.target.value)}
         />
       </div>
-      <span className="liga-flex-match-row__pair is-right">{pair("pareja2")}</span>
-      <Button
-        type="button"
-        variant="secondary"
-        className="liga-flex-match-row__save"
-        disabled={disabled || a === "" || b === ""}
-        onClick={() => onSave(partido, Number(a), Number(b))}
-      >
-        {saved && !dirty ? "Guardado" : hasCaptured ? "Corregir" : "Guardar"}
-      </Button>
+      <span className="liga-flex-match-row__pair is-right">
+        {formatPairNames(partido, "pareja2", names)}
+      </span>
+
+      {mode === "capture" ? (
+        <Button
+          type="button"
+          variant="secondary"
+          className="liga-flex-match-row__save"
+          disabled={busy || !validScores}
+          onClick={() => onSave(partido, parsedA, parsedB)}
+        >
+          {saved && !dirty ? "Guardado" : "Guardar"}
+        </Button>
+      ) : null}
+
+      {mode === "confirmed" && !editing ? (
+        <button
+          type="button"
+          className="liga-flex-match-row__edit"
+          disabled={busy}
+          aria-label={`Editar partido ronda ${partido.ronda} cancha ${partido.cancha ?? ""}`}
+          onClick={() => {
+            setA(capturedA);
+            setB(capturedB);
+            onStartEdit(partido.id);
+          }}
+        >
+          <TablerIcon name="pencil" size={14} />
+          <span>Editar</span>
+        </button>
+      ) : null}
+
+      {mode === "confirmed" && editing ? (
+        <div className="liga-flex-match-row__actions">
+          <Button
+            type="button"
+            variant="primary"
+            className="liga-flex-match-row__confirm-btn"
+            disabled={busy || !validScores || !dirty}
+            onClick={() => onRequestCorrection(partido, parsedA, parsedB)}
+          >
+            Guardar cambios
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            className="liga-flex-match-row__cancel-btn"
+            disabled={busy}
+            onClick={() => {
+              setA(capturedA);
+              setB(capturedB);
+              onCancelEdit();
+            }}
+          >
+            Cancelar
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

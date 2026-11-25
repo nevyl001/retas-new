@@ -523,6 +523,40 @@ export async function correctFlexJornada(input: {
   return {};
 }
 
+/**
+ * Corrige un partido ya confirmado (ronda confirmada o jornada finalizada).
+ * El servidor valida permisos, exige motivo, recalcula posiciones y puntos
+ * sustituyendo los anteriores y registra la auditoría en una sola transacción.
+ */
+export async function correctFlexMatch(input: {
+  partidoId: string;
+  scoreA: number;
+  scoreB: number;
+  motivo: string;
+  orden?: string[];
+}): Promise<FlexServerResult> {
+  await requireUserId();
+  const { data, error } = await supabase.rpc("flex_corregir_marcador", {
+    p_partido_id: input.partidoId,
+    p_score_a: input.scoreA,
+    p_score_b: input.scoreB,
+    p_motivo: input.motivo,
+    p_orden: input.orden && input.orden.length > 0 ? input.orden : null,
+  });
+  if (error) throw new Error(error.message);
+  const body = (data ?? {}) as {
+    ok?: boolean;
+    error?: string;
+    needs_resolution?: boolean;
+    ties?: string[][];
+  };
+  if (body.needs_resolution) {
+    return { needsResolution: true, error: body.error, ties: body.ties };
+  }
+  if (!body.ok) throw new Error(body.error || "No se pudo corregir el marcador.");
+  return {};
+}
+
 export async function markFlexFinal(input: {
   ligaId: string;
   jornadaId: string;

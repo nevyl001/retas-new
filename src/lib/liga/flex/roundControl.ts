@@ -89,6 +89,59 @@ export function nextFlexRoundAction(input: {
   return { kind: "blocked", reason: "Faltan marcadores de la ronda actual." };
 }
 
+/**
+ * Cómo se puede tocar el marcador de la ronda que se está viendo.
+ * - capture: ronda abierta. Se captura con Guardar.
+ * - confirmed: ronda confirmada o jornada finalizada. Solo se cambia con
+ *   Editar y una corrección con motivo.
+ * - locked: la temporada ya tiene campeón. Solo lectura hasta reabrirla.
+ */
+export type FlexRoundEditMode = "capture" | "confirmed" | "locked";
+
+export function flexRoundEditMode(input: {
+  round: number | null;
+  confirmedRounds: readonly number[];
+  jornadaCompleted: boolean;
+  seasonClosed: boolean;
+}): FlexRoundEditMode {
+  if (input.seasonClosed) return "locked";
+  if (input.jornadaCompleted) return "confirmed";
+  if (input.round != null && input.confirmedRounds.includes(input.round)) {
+    return "confirmed";
+  }
+  return "capture";
+}
+
+export type FlexRoundAction = ReturnType<typeof nextFlexRoundAction>;
+
+/** Ronda sobre la que actúa el botón principal (confirmar, regenerar o la última creada). */
+export function flexActiveRound(
+  action: FlexRoundAction | null,
+  generatedRounds: readonly number[]
+): number | null {
+  if (action && (action.kind === "confirm" || action.kind === "replace")) {
+    return action.round;
+  }
+  return generatedRounds.length > 0 ? Math.max(...generatedRounds) : null;
+}
+
+/**
+ * La acción principal solo se muestra cuando se está viendo la ronda sobre la
+ * que actúa. Confirmar la ronda 6 mientras se ve la 2 confundía qué se confirma.
+ */
+export function flexRoundActionVisible(
+  action: FlexRoundAction | null,
+  shownRound: number | null,
+  generatedRounds: readonly number[]
+): boolean {
+  if (!action) return false;
+  if (action.kind === "confirm" || action.kind === "replace") {
+    return shownRound === action.round;
+  }
+  const last = generatedRounds.length > 0 ? Math.max(...generatedRounds) : null;
+  return shownRound == null || shownRound === last;
+}
+
 export function resetFlexJornadaGuard(input: {
   seasonClosed: boolean;
   championJornada: boolean;

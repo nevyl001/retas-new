@@ -1572,6 +1572,55 @@
   border-color: color-mix(in srgb, var(--lf-success) 32%, var(--lf-border));
 }
 
+.liga-flex-match-row.is-editing {
+  border-color: color-mix(in srgb, var(--lf-accent) 55%, var(--lf-border-strong));
+  background: color-mix(in srgb, var(--lf-accent) 7%, var(--lf-surface-alt));
+}
+
+.liga-flex-match-row__edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 36px;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--lf-border-strong);
+  background: var(--lf-surface);
+  color: var(--lf-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.liga-flex-match-row__edit:hover:not(:disabled) {
+  border-color: var(--lf-accent);
+  color: var(--lf-text);
+  background: color-mix(in srgb, var(--lf-accent) 12%, var(--lf-surface));
+}
+
+.liga-flex-match-row__edit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.liga-flex-match-row__actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.liga-flex-match-row__confirm-btn,
+.liga-flex-match-row__cancel-btn {
+  min-height: 36px !important;
+  padding: 0 0.75rem !important;
+  font-size: 0.78rem !important;
+  white-space: nowrap;
+}
+
 @media (max-width: 720px) {
   .liga-flex-match-row {
     grid-template-columns: minmax(0, 1fr);
@@ -2057,19 +2106,121 @@
 }
 
 .liga-flex-round-nav button {
-  min-width: 44px;
-  padding: 6px 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 48px;
+  min-height: 34px;
+  padding: 6px 10px;
   border-radius: 999px;
   border: 1px solid var(--lf-border);
   background: transparent;
   color: inherit;
   font-size: 0.75rem;
   font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .liga-flex-round-nav button.is-selected {
   background: var(--lf-surface-alt);
   border-color: var(--lf-border-strong);
+}
+
+.liga-flex-round-nav button.is-confirmed {
+  border-color: color-mix(in srgb, var(--lf-success) 38%, var(--lf-border));
+}
+
+.liga-flex-round-nav button.is-selected.is-confirmed {
+  border-color: color-mix(in srgb, var(--lf-success) 55%, var(--lf-border-strong));
+}
+
+.liga-flex-round-nav button.is-active {
+  border-color: color-mix(in srgb, var(--lf-accent) 48%, var(--lf-border));
+}
+
+.liga-flex-round-nav__check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lf-success);
+  line-height: 1;
+}
+
+/* ── Modal compacto de confirmación de corrección ──────────── */
+.liga-flex-correction-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.liga-flex-correction-modal__summary {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--lf-surface-alt);
+  border: 1px solid var(--lf-border);
+}
+
+.liga-flex-correction-modal__summary > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.liga-flex-correction-modal__summary dt {
+  color: var(--lf-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.liga-flex-correction-modal__summary dd {
+  margin: 0;
+  font-weight: 800;
+  text-align: right;
+  color: var(--lf-text);
+}
+
+.liga-flex-correction-modal__summary dd.is-new-score {
+  color: var(--lf-accent);
+  font-size: 1rem;
+}
+
+.liga-flex-correction-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.liga-flex-correction-modal__field > span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--lf-text-secondary);
+}
+
+.liga-flex-correction-modal__error {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.32);
+  color: var(--lf-danger, #dc2626);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.liga-flex-correction-modal__info {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--lf-text-secondary);
+  line-height: 1.4;
 }
 
 .liga-flex-advanced {
