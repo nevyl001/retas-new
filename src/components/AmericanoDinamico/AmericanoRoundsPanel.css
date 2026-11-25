@@ -102,9 +102,46 @@
 }
 
 .am-journey__table td {
-  white-space: normal;
-  min-width: 148px;
-  max-width: 220px;
+  white-space: nowrap;
+  min-width: 0;
+  text-align: center;
+  padding: 6px 4px;
+}
+
+.am-journey__table th:first-child,
+.am-journey__table th[scope="row"] {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 8.5rem;
+  background: var(--rv-bg-card, var(--bg-card));
+}
+
+.am-journey__table tr.is-selected th[scope="row"] {
+  background: var(--rv-bg-card-soft, var(--ro-bg-inset));
+}
+
+.am-journey__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.25rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.am-journey__chip--bench,
+.am-journey__chip--pending,
+.am-journey__chip.is-P {
+  color: var(--text-muted);
+}
+
+.am-journey__chip.is-G {
+  color: var(--text-primary);
 }
 
 .am-journey__table th button {

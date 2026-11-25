@@ -50,9 +50,16 @@
 
 .americano-round__matches {
   display: grid;
-  gap: clamp(0.75rem, 1.4vw, 1rem);
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
-  margin-bottom: 14px;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: start;
+  margin-bottom: 12px;
+}
+
+@media (min-width: 720px) {
+  .americano-round__matches {
+    grid-template-columns: repeat(auto-fit, minmax(16.75rem, 22.5rem));
+  }
 }
 
 .americano-round__matches:has(> .americano-match-card:only-child) {
@@ -362,6 +369,15 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+}
+
+.americano-match-card .am-portrait {
+  width: min(100%, 8.75rem);
+  aspect-ratio: 3 / 4;
+}
+
+.americano-match-card .am-court-board__score {
+  width: min(100%, 8.75rem);
 }
 
 .americano-match-card__save {

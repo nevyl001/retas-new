@@ -882,3 +882,38 @@
   margin: 0 0 8px;
   font-size: 13px;
 }
+
+/* Escritorio en juego: canchas arriba, ranking y jugadores al lado. */
+.americano-playing {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.americano-playing__stage,
+.americano-playing__lower {
+  min-width: 0;
+}
+
+.americano-playing__lower {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+.americano-playing .americano-screen__rounds-edit,
+.americano-playing .americano-screen__block,
+.americano-playing .americano-ranking {
+  margin-bottom: 0;
+}
+
+.americano-playing__players .americano-screen__jugadores-list {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1080px) {
+  .americano-playing__lower {
+    grid-template-columns: minmax(0, 1.7fr) minmax(16.5rem, 0.85fr);
+  }
+}

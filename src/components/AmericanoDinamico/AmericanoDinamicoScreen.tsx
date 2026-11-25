@@ -695,37 +695,39 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         </ModeSectionPanel>
       </div>
     ) : (
-      <>
-        {roundsConfigPanel}
-        <AmericanoRoundsPanel
-          rounds={rounds}
-          currentRoundIndex={currentRoundIndex}
-          totalRounds={totalRounds}
-          phase={phase}
-          roster={rosterForUi}
-          playerFotos={playerFotos}
-          onCommitRound={commitRoundScores}
-          onSaveMatch={submitScore}
-          onRoundFinalized={() => void nextRound()}
-          onRegenerateRound={() => void regenerateCurrentRound()}
-          onSeatBenchWithPartner={(benchId, stayId) =>
-            void seatBenchWithPartner(benchId, stayId)
-          }
-          roundSyncPending={roundSyncPending}
-          roundSyncError={roundSyncError}
-        />
-        <div className="americano-screen__block americano-screen__block--inscritos">
-          {jugadoresPanel}
+      <div className="americano-playing">
+        <div className="americano-playing__stage">
+          {roundsConfigPanel}
+          <AmericanoRoundsPanel
+            rounds={rounds}
+            currentRoundIndex={currentRoundIndex}
+            totalRounds={totalRounds}
+            phase={phase}
+            roster={rosterForUi}
+            playerFotos={playerFotos}
+            onCommitRound={commitRoundScores}
+            onSaveMatch={submitScore}
+            onRoundFinalized={() => void nextRound()}
+            onRegenerateRound={() => void regenerateCurrentRound()}
+            onSeatBenchWithPartner={(benchId, stayId) =>
+              void seatBenchWithPartner(benchId, stayId)
+            }
+            roundSyncPending={roundSyncPending}
+            roundSyncError={roundSyncError}
+          />
         </div>
-        <div className="americano-screen__block">
+        <div className="americano-playing__lower">
           <LiveRanking
             ranked={ranking}
             roster={rosterForUi}
             rounds={rounds}
-            caption="Acumulado de todo el americano: suma cada cancha en cuanto guardas su marcador."
+            caption="Suma cada cancha en cuanto guardas su marcador."
           />
+          <div className="americano-screen__block americano-playing__players">
+            {jugadoresPanel}
+          </div>
         </div>
-        <div className="americano-screen__block">
+        <div className="americano-screen__block americano-playing__history">
           <RoundHistory
             rounds={rounds}
             totalRounds={totalRounds}
@@ -734,7 +736,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             onEditScore={editScore}
           />
         </div>
-      </>
+      </div>
     );
 
     return (

@@ -26,6 +26,15 @@ interface AmericanoRoundsPanelProps {
   roundSyncError?: string | null;
 }
 
+function cellChip(cell: AmericanoPlayerRoundCell): string {
+  if (cell.kind === "bench") return "Descansa";
+  if (cell.kind === "pending") return "—";
+  if (cell.result != null && cell.scoreFavor != null && cell.scoreContra != null) {
+    return `${cell.scoreFavor}–${cell.scoreContra}`;
+  }
+  return cell.court != null ? formatMatchCourtLabel(cell.court) : "Cancha";
+}
+
 function cellSummary(cell: AmericanoPlayerRoundCell): string {
   if (cell.kind === "bench") return "Descansa";
   if (cell.kind === "pending") return "Pendiente";
@@ -211,7 +220,18 @@ export const AmericanoRoundsPanel: React.FC<AmericanoRoundsPanelProps> = ({
                     </th>
                     {cells.map((cell) => (
                       <td key={`${player.id}-${cell.roundNumber}`}>
-                        {cellSummary(cell)}
+                        <span
+                          className={[
+                            "am-journey__chip",
+                            `am-journey__chip--${cell.kind}`,
+                            cell.result ? `is-${cell.result}` : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          title={cellSummary(cell)}
+                        >
+                          {cellChip(cell)}
+                        </span>
                       </td>
                     ))}
                   </tr>
