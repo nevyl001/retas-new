@@ -11,10 +11,15 @@ import type {
   FlexJornadaStandingRow,
   FlexRoundNavItem,
 } from "./FlexPublicJornada";
+import { LigaJornadaMatchPlayerPanel } from "../jornada-public/LigaJornadaMatchPlayerPanel";
 import { FlexNeutralAvatar } from "./flexPublicUi";
 import "./flex-public-live.css";
 
-type PublicProfile = { fotoUrl: string | null; rivieraId?: string | null };
+type PublicProfile = {
+  fotoUrl: string | null;
+  rivieraId?: string | null;
+  rating?: number | null;
+};
 
 type BoardRow = {
   jugadorId: string;
@@ -835,7 +840,7 @@ function LiveMatch({
           p1Wins ? " is-win" : p2Wins ? " is-loss" : ""
         }`}
       >
-        <PairSide players={pairA} profiles={profiles} />
+        <PairSide players={pairA} />
       </div>
 
       {/* MARCADOR CENTRAL */}
@@ -880,7 +885,7 @@ function LiveMatch({
           p2Wins ? " is-win" : p1Wins ? " is-loss" : ""
         }`}
       >
-        <PairSide players={pairB} profiles={profiles} />
+        <PairSide players={pairB} />
       </div>
     </article>
   );
@@ -898,38 +903,36 @@ function side(
       id: id1,
       name: pareja?.jugador1?.nombre || names.get(id1) || "Jugador",
       foto: profiles[id1]?.fotoUrl ?? null,
+      rating: profiles[id1]?.rating ?? null,
     },
     {
       id: id2,
       name: pareja?.jugador2?.nombre || names.get(id2) || "Jugador",
       foto: profiles[id2]?.fotoUrl ?? null,
+      rating: profiles[id2]?.rating ?? null,
     },
   ];
 }
 
 function PairSide({
   players,
-  profiles,
 }: {
-  players: Array<{ id: string; name: string; foto: string | null }>;
-  profiles: Record<string, PublicProfile>;
+  players: Array<{
+    id: string;
+    name: string;
+    foto: string | null;
+    rating: number | null;
+  }>;
 }) {
   return (
     <div className="flex-pub-live-match__pair">
       {players.map((player, idx) => (
-        <div
+        <LigaJornadaMatchPlayerPanel
           key={player.id || `${player.name}-${idx}`}
-          className="flex-pub-live-match__player"
-        >
-          <FlexNeutralAvatar
-            name={player.name}
-            fotoUrl={player.foto ?? profiles[player.id]?.fotoUrl}
-            variant="match"
-          />
-          <span className="flex-pub-live-match__player-name">
-            {player.name}
-          </span>
-        </div>
+          name={player.name}
+          foto={player.foto}
+          rating={player.rating}
+        />
       ))}
     </div>
   );

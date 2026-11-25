@@ -39,7 +39,11 @@ import "../liga-public-pantalla.css";
 import "../liga-public-premium-2026.css";
 import "./flex-public-jornada.css";
 
-type PublicProfile = { fotoUrl: string | null; rivieraId?: string | null };
+type PublicProfile = {
+  fotoUrl: string | null;
+  rivieraId?: string | null;
+  rating?: number | null;
+};
 
 export type FlexJornadaStandingRow = {
   jugadorId: string;
