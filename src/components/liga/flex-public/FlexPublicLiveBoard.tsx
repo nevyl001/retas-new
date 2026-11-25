@@ -21,6 +21,8 @@ type BoardRow = {
   posicion: number | null;
   puntos: number | null;
   count: number | null;
+  gc: number | null;
+  pg: number | null;
   resultado: string | null;
 };
 
@@ -252,6 +254,8 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
       posicion: row.posicion,
       puntos: row.puntos,
       count: row.jornadasJugadas,
+      gc: null,
+      pg: null,
       resultado: null,
     }));
     for (const id of convocados) {
@@ -261,6 +265,8 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
           posicion: null,
           puntos: null,
           count: null,
+          gc: null,
+          pg: null,
           resultado: null,
         });
       }
@@ -516,16 +522,11 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
             <div className="flex-pub-live__tables is-split">
               <StandingsTable
                 title="Jornada"
-                caption={
-                  official
-                    ? "Resultado acumulado. Gana quien sume más puntos; luego diferencia y partidos ganados."
-                    : "Suma de puntos de la jornada. Si empatan, manda la diferencia y después los partidos ganados."
-                }
+                caption="Orden: games a favor, diferencia y partidos ganados."
                 rows={jornadaRows}
                 names={names}
                 profiles={profiles}
-                countLabel="PJ"
-                showResult
+                kind="jornada"
               />
               <StandingsTable
                 title="General"
@@ -544,12 +545,14 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                         posicion: null,
                         puntos: null,
                         count: null,
+                        gc: null,
+                        pg: null,
                         resultado: null,
                       }))
                 }
                 names={names}
                 profiles={profiles}
-                countLabel="JJ"
+                kind="general"
               />
             </div>
           )}
@@ -605,6 +608,8 @@ function buildLiveJornadaBoard(input: {
       posicion: place,
       puntos: entry.gf,
       count: entry.pj,
+      gc: entry.gc,
+      pg: entry.pg,
       resultado: `${entry.gf}–${entry.gc}`,
     };
   });
@@ -618,6 +623,8 @@ function emptyBoardRow(jugadorId: string): BoardRow {
     posicion: null,
     puntos: null,
     count: null,
+    gc: null,
+    pg: null,
     resultado: null,
   };
 }
@@ -662,17 +669,16 @@ function StandingsTable({
   rows,
   names,
   profiles,
-  countLabel,
-  showResult = false,
+  kind,
 }: {
   title: string;
   caption: string;
   rows: BoardRow[];
   names: Map<string, string>;
   profiles: Record<string, PublicProfile>;
-  countLabel: string;
-  showResult?: boolean;
+  kind: "jornada" | "general";
 }) {
+  const stat = (value: number | null) => (value != null ? value : "—");
   return (
     <div className="flex-pub-live__table-card">
       <header className="flex-pub-live__table-head">
@@ -684,9 +690,28 @@ function StandingsTable({
           <tr>
             <th className="is-pos">POS</th>
             <th>JUGADOR</th>
-            <th className="is-pj">{countLabel}</th>
-            {showResult ? <th className="is-res">RES</th> : null}
-            <th className="is-pts">PTS</th>
+            {kind === "jornada" ? (
+              <>
+                <th className="is-stat" title="Games a favor">
+                  GF
+                </th>
+                <th className="is-stat" title="Games en contra">
+                  GC
+                </th>
+                <th className="is-stat" title="Partidos ganados">
+                  PG
+                </th>
+              </>
+            ) : (
+              <>
+                <th className="is-stat" title="Jornadas jugadas">
+                  JJ
+                </th>
+                <th className="is-pts" title="Puntos de temporada">
+                  PTS
+                </th>
+              </>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -721,21 +746,28 @@ function StandingsTable({
                     <span className="flex-pub-live__player-name">{name}</span>
                   </span>
                 </td>
-                <td className="is-pj">
-                  {row.count != null && row.count > 0 ? row.count : "—"}
-                </td>
-                {showResult ? (
-                  <td className="is-res">{row.resultado ?? "—"}</td>
-                ) : null}
-                <td className="is-pts">
-                  <span
-                    className={`flex-pub-live__pts-val${
-                      row.puntos != null ? " has-pts" : ""
-                    }`}
-                  >
-                    {row.puntos != null ? row.puntos : "—"}
-                  </span>
-                </td>
+                {kind === "jornada" ? (
+                  <>
+                    <td className="is-stat is-gf">{stat(row.puntos)}</td>
+                    <td className="is-stat">{stat(row.gc)}</td>
+                    <td className="is-stat">{stat(row.pg)}</td>
+                  </>
+                ) : (
+                  <>
+                    <td className="is-stat">
+                      {row.count != null && row.count > 0 ? row.count : "—"}
+                    </td>
+                    <td className="is-pts">
+                      <span
+                        className={`flex-pub-live__pts-val${
+                          row.puntos != null ? " has-pts" : ""
+                        }`}
+                      >
+                        {stat(row.puntos)}
+                      </span>
+                    </td>
+                  </>
+                )}
               </tr>
             );
           })}

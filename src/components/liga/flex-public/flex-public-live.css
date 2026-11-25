@@ -850,8 +850,8 @@
 
 /* Filas: 42–50 px en Full HD */
 .flex-pub-live__table td {
-  height: 45px;
-  padding: 5px 14px;
+  height: auto;
+  padding: 8px 12px;
   text-align: left;
   font-size: 15.5px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -868,29 +868,20 @@
   text-align: center;
 }
 
-.flex-pub-live__table th.is-pj,
-.flex-pub-live__table td.is-pj,
-.flex-pub-live__table th.is-res,
-.flex-pub-live__table td.is-res {
-  width: 68px;
+.flex-pub-live__table th.is-stat,
+.flex-pub-live__table td.is-stat,
+.flex-pub-live__table th.is-pts,
+.flex-pub-live__table td.is-pts {
+  width: 52px;
   text-align: center;
   font-variant-numeric: tabular-nums;
   color: var(--live-text-secondary);
   font-weight: 600;
 }
 
-.flex-pub-live__table td.is-res {
+.flex-pub-live__table td.is-gf {
   color: var(--ro-text-primary);
   font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.flex-pub-live__table th.is-pts,
-.flex-pub-live__table td.is-pts {
-  width: 88px;
-  text-align: right;
-  padding-right: 18px;
-  font-variant-numeric: tabular-nums;
 }
 
 .flex-pub-live__pos-badge {
@@ -923,16 +914,29 @@
 .flex-pub-live__player {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   min-width: 0;
 }
 
-/* Fotografía en tabla: 34×34 px (rango 30–36 px) */
 .flex-pub-live .flex-pub-avatar--table {
-  width: 34px;
-  height: 34px;
-  border-radius: 7px;
+  width: 52px;
+  height: 64px;
+  border-radius: 10px;
   flex-shrink: 0;
+}
+
+.flex-pub-live .flex-pub-avatar--table .flex-pub-avatar__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 16%;
+}
+
+.flex-pub-live .flex-pub-avatar--table .flex-pub-avatar__initials {
+  font-size: 15px;
+  letter-spacing: 0.06em;
 }
 
 /* Nombres en clasificación: 15–17 px */
@@ -1012,10 +1016,6 @@
   .flex-pub-live-match {
     min-height: 0;
     padding: 20px 22px;
-  }
-
-  .flex-pub-live__table td {
-    height: 46px;
   }
 
   .flex-pub-live__pts-val {
