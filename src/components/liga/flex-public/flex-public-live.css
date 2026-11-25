@@ -15,6 +15,17 @@
   --live-text-secondary: var(--ro-text-secondary);
   --live-muted: var(--ro-text-muted);
   --live-accent: var(--brand-accent, var(--ro-accent));
+  --flex-pub-surface: var(--live-card-bg);
+  --flex-pub-surface-elevated: var(--live-card-elevated);
+  --flex-pub-surface-pair: var(--live-team-bg);
+  --flex-pub-avatar-bg: var(--live-team-bg);
+  --flex-pub-border: var(--live-border);
+  --flex-pub-border-subtle: var(--live-border);
+  --flex-pub-border-strong: var(--live-border-strong);
+  --flex-pub-text: var(--live-text);
+  --flex-pub-text-secondary: var(--live-text-secondary);
+  --flex-pub-text-muted: var(--live-muted);
+  --flex-pub-accent: var(--live-accent);
   color: var(--live-text);
   font-family: var(--font-body);
   min-height: 100vh;
@@ -39,6 +50,56 @@
   --live-border-strong: rgba(255, 255, 255, 0.14);
   --live-text-secondary: #a3a3a3;
   --live-muted: #8a8a8a;
+  --flex-pub-surface: rgba(12, 12, 12, 0.52);
+  --flex-pub-surface-elevated: rgba(15, 15, 15, 0.62);
+  --flex-pub-surface-pair: rgba(10, 10, 10, 0.48);
+  --flex-pub-avatar-bg: rgba(16, 16, 16, 0.68);
+  --flex-pub-border: rgba(255, 255, 255, 0.08);
+  --flex-pub-border-subtle: rgba(255, 255, 255, 0.06);
+  --flex-pub-border-strong: rgba(255, 255, 255, 0.14);
+  --flex-pub-text-secondary: #a3a3a3;
+  --flex-pub-text-muted: #8a8a8a;
+}
+
+.flex-pub-live .flex-pub-podio-note {
+  margin: 0;
+  padding: 16px 18px 4px;
+  text-align: center;
+}
+
+.flex-pub-live .flex-pub-podio-note__title,
+.flex-pub-live .flex-pub-podio-note__text,
+.flex-pub-live .flex-pub-podio-note__close {
+  margin: 0;
+}
+
+.flex-pub-live .flex-pub-podio-note__title {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 1.6vw, 22px);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--ro-text-primary);
+}
+
+.flex-pub-live .flex-pub-podio-note__text {
+  margin-top: 6px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--live-text-secondary);
+}
+
+.flex-pub-live .flex-pub-podio-note__close {
+  margin-top: 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brand-accent, var(--ro-text-primary));
 }
 
 .flex-pub-live *,
@@ -52,7 +113,7 @@
   z-index: 2;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
   max-width: 1840px;
   width: 100%;

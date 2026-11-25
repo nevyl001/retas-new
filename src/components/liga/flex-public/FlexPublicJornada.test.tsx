@@ -421,13 +421,9 @@ describe("FlexPublicJornada — Jornada Pública Riviera Flex League", () => {
     expect(screen.getByText(/4 rondas por disputar/i)).toBeInTheDocument();
     expect(screen.getByText(/cancha 01/i)).toBeInTheDocument();
     expect(screen.getByText(/clasificación de la jornada/i)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /^jornada$/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /^general$/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^participantes$/i })).toBeInTheDocument();
     expect(
       screen.getByText(/pendiente · en espera de resultados confirmados/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/todavía no existen resultados oficiales acumulados de temporada/i)
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: /ronda 02/i }));
