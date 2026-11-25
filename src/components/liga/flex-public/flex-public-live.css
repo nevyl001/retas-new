@@ -444,11 +444,12 @@
 .flex-pub-live-match__court {
   display: inline-flex;
   align-items: center;
-  padding: 4px 11px;
-  border-radius: 7px;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ro-text-primary);
   background: rgba(255, 255, 255, 0.07);
@@ -518,24 +519,33 @@
 
 .flex-pub-live-match__player {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 11px;
+  gap: 8px;
   min-width: 0;
+  text-align: center;
 }
 
-/* Fotografías de cancha: 52×52 px (rango 48–64 px) */
+/* Retrato de cancha: la cara ocupa la tarjeta, no un icono de 52 px. */
 .flex-pub-live .flex-pub-avatar--match {
-  width: 52px;
-  height: 52px;
-  border-radius: 9px;
+  width: min(100%, 168px);
+  height: auto;
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
   flex-shrink: 0;
 }
 
-/* Nombres en cancha: 16–20 px en escritorio, máximo 2 líneas legibles */
+.flex-pub-live .flex-pub-avatar--match .flex-pub-avatar__initials {
+  font-family: var(--font-display);
+  font-size: 36px;
+}
+
 .flex-pub-live-match__player-name {
-  font-size: clamp(16px, 1.05vw, 18.5px);
+  width: 100%;
+  font-size: clamp(15px, 1.15vw, 18px);
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
+  text-align: center;
   color: var(--ro-text-primary);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -889,13 +899,8 @@
   }
 
   .flex-pub-live-match {
-    min-height: 300px;
+    min-height: 0;
     padding: 20px 22px;
-  }
-
-  .flex-pub-live .flex-pub-avatar--match {
-    width: 56px;
-    height: 56px;
   }
 
   .flex-pub-live__table td {
@@ -904,13 +909,6 @@
 
   .flex-pub-live__pts-val {
     font-size: 20px;
-  }
-}
-
-@media (max-width: 1360px) and (min-width: 1024px) {
-  .flex-pub-live-match__pair {
-    grid-template-columns: 1fr;
-    gap: 8px;
   }
 }
 
@@ -948,13 +946,7 @@
     padding: 16px;
   }
 
-  .flex-pub-live-match__pair {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
   .flex-pub-live .flex-pub-avatar--match {
-    width: 48px;
-    height: 48px;
+    width: min(100%, 42vw);
   }
 }
