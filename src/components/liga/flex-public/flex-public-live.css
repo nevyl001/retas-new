@@ -416,16 +416,16 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 8px;
+  gap: 4px;
   min-width: 0;
   min-height: 0;
-  padding: 14px 16px;
+  padding: 10px 12px 12px;
   border-radius: 14px;
   background: var(--live-card-bg);
   border: 1px solid var(--live-border);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
 }
 
 .flex-pub-live-match.is-live {
@@ -437,7 +437,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-bottom: 10px;
+  padding-bottom: 6px;
+  margin-bottom: 2px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -521,13 +522,17 @@
   opacity: 0.58;
 }
 
-.flex-pub-live-match__pair {
+.flex-pub-live .flex-pub-live-match__pair.liga-jornada-match-pair-half__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   justify-items: center;
   gap: 8px;
   min-width: 0;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 /* El hijo directo de la grilla oficial va al 100%. La tarjeta vive adentro, con ancho fijo. */
@@ -538,24 +543,54 @@
   min-width: 0;
 }
 
-/* Retrato compacto. El nombre y el rating los coloca la tarjeta oficial de la jornada. */
+/*
+  Retrato 3:4, ~20% menor que la card a sangre de la cancha.
+  120px en móvil, 148px en tablet, 164px en escritorio y pantalla pública.
+*/
 .flex-pub-live .liga-jornada-match-pair-half__grid .flex-pub-live-match__slot .liga-jornada-match-player-panel.pub-split-vs-panel {
-  width: min(100%, 112px);
-  max-width: 112px;
+  width: min(100%, 120px);
+  max-width: 120px;
   max-height: none;
   height: auto;
   aspect-ratio: 3 / 4;
-  border-radius: 10px;
+  border-radius: 12px;
   flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .flex-pub-live .liga-jornada-match-pair-half__grid .flex-pub-live-match__slot .liga-jornada-match-player-panel.pub-split-vs-panel {
-    width: min(100%, 124px);
-    max-width: 124px;
-    aspect-ratio: 3 / 4;
-    max-height: none;
+    width: min(100%, 148px);
+    max-width: 148px;
   }
+}
+
+@media (min-width: 1280px) {
+  .flex-pub-live .liga-jornada-match-pair-half__grid .flex-pub-live-match__slot .liga-jornada-match-player-panel.pub-split-vs-panel {
+    width: min(100%, 164px);
+    max-width: 164px;
+  }
+}
+
+.flex-pub-live .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel .pub-split-vs-panel__given {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.flex-pub-live .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel .pub-split-vs-panel__family {
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.flex-pub-live .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel .pub-split-vs-panel__rating.jugador-rating-chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  letter-spacing: 0.01em;
 }
 
 .flex-pub-live-match__player {
@@ -620,12 +655,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 2px 0;
+  gap: 10px;
+  padding: 1px 0;
 }
 
 .flex-pub-live-match__center-score.is-scored {
-  padding: 6px 0 4px;
+  padding: 2px 0;
 }
 
 .flex-pub-live-match__center-line {
@@ -1043,7 +1078,7 @@
 
   .flex-pub-live-match {
     min-height: 0;
-    padding: 20px 22px;
+    padding: 12px 14px;
   }
 
   .flex-pub-live__pts-val {
@@ -1082,7 +1117,7 @@
 
   .flex-pub-live-match {
     min-height: auto;
-    padding: 14px;
+    padding: 10px 12px 12px;
   }
 
   .flex-pub-live .flex-pub-avatar--match {
