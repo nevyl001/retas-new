@@ -544,16 +544,16 @@
 }
 
 /*
-  Retrato 3:4, ~20% menor que la card a sangre de la cancha.
-  120px en móvil, 148px en tablet, 164px en escritorio y pantalla pública.
+  Retrato 3:4. Un poco mayor que el paso anterior, sin volver a llenar la cancha.
+  148px en móvil, 180px en tablet, 200px en escritorio y pantalla pública.
 */
 .flex-pub-live .liga-jornada-match-pair-half__grid .flex-pub-live-match__slot .liga-jornada-match-player-panel.pub-split-vs-panel {
-  width: min(100%, 120px);
-  max-width: 120px;
+  width: min(100%, 148px);
+  max-width: 148px;
   max-height: none;
   height: auto;
   aspect-ratio: 3 / 4;
-  border-radius: 12px;
+  border-radius: 13px;
   flex: 0 0 auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
@@ -561,27 +561,27 @@
 
 @media (min-width: 768px) {
   .flex-pub-live .liga-jornada-match-pair-half__grid .flex-pub-live-match__slot .liga-jornada-match-player-panel.pub-split-vs-panel {
-    width: min(100%, 148px);
-    max-width: 148px;
+    width: min(100%, 180px);
+    max-width: 180px;
   }
 }
 
 @media (min-width: 1280px) {
   .flex-pub-live .liga-jornada-match-pair-half__grid .flex-pub-live-match__slot .liga-jornada-match-player-panel.pub-split-vs-panel {
-    width: min(100%, 164px);
-    max-width: 164px;
+    width: min(100%, 200px);
+    max-width: 200px;
   }
 }
 
 .flex-pub-live .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel .pub-split-vs-panel__given {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: 0;
 }
 
 .flex-pub-live .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel .pub-split-vs-panel__family {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 500;
   line-height: 1.1;
 }
