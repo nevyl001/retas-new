@@ -172,7 +172,6 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
   names,
   profiles,
   convocados,
-  standingRows,
   official,
   jornadaHref,
   seasonAwards,
@@ -236,10 +235,8 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
         convocados,
         partidos,
         parejas,
-        standingRows,
-        official,
       }),
-    [convocados, official, parejas, partidos, standingRows]
+    [convocados, parejas, partidos]
   );
 
   const hasSeasonResults =
@@ -521,8 +518,8 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                 title="Jornada"
                 caption={
                   official
-                    ? "Resultado acumulado y puntaje final de la jornada."
-                    : "Quienes ganan el mismo partido comparten resultado. El puntaje de la jornada se asigna al cerrar."
+                    ? "Resultado acumulado. Gana quien sume más puntos; luego diferencia y partidos ganados."
+                    : "Suma de puntos de la jornada. Si empatan, manda la diferencia y después los partidos ganados."
                 }
                 rows={jornadaRows}
                 names={names}
@@ -566,13 +563,8 @@ function buildLiveJornadaBoard(input: {
   convocados: string[];
   partidos: LigaPartido[];
   parejas: LigaJornadaPareja[];
-  standingRows: FlexJornadaStandingRow[];
-  official: boolean;
 }): BoardRow[] {
   const stats = accumulateResults(input.partidos, input.parejas);
-  const officialById = new Map(
-    input.standingRows.map((row) => [row.jugadorId, row])
-  );
   const ids = input.convocados.length
     ? input.convocados.slice()
     : Array.from(stats.keys());
@@ -580,26 +572,13 @@ function buildLiveJornadaBoard(input: {
     if (!ids.includes(id)) ids.push(id);
   }
 
-  if (input.official && input.standingRows.length > 0) {
-    const ordered: BoardRow[] = input.standingRows.map((row) => {
-      const stat = stats.get(row.jugadorId);
-      return {
-        jugadorId: row.jugadorId,
-        posicion: row.posicion,
-        puntos: row.puntos,
-        count: row.partidos,
-        resultado: stat && stat.pj > 0 ? `${stat.gf}–${stat.gc}` : null,
-      };
-    });
-    for (const id of ids) {
-      if (!officialById.has(id)) {
-        ordered.push(emptyBoardRow(id));
-      }
-    }
-    return ordered;
-  }
-
-  const played: Array<{ id: string; pj: number; gf: number; gc: number }> = [];
+  const played: Array<{
+    id: string;
+    pj: number;
+    gf: number;
+    gc: number;
+    pg: number;
+  }> = [];
   const idle: string[] = [];
   for (const id of ids) {
     const stat = stats.get(id);
@@ -608,13 +587,15 @@ function buildLiveJornadaBoard(input: {
   }
   played.sort((a, b) => {
     if (b.gf !== a.gf) return b.gf - a.gf;
-    return b.gf - b.gc - (a.gf - a.gc);
+    const diff = b.gf - b.gc - (a.gf - a.gc);
+    if (diff !== 0) return diff;
+    return b.pg - a.pg;
   });
 
   let place = 0;
   let previous = "";
   const rows: BoardRow[] = played.map((entry, index) => {
-    const key = `${entry.gf}:${entry.gf - entry.gc}`;
+    const key = `${entry.gf}:${entry.gf - entry.gc}:${entry.pg}`;
     if (key !== previous) {
       place = index + 1;
       previous = key;
@@ -622,7 +603,7 @@ function buildLiveJornadaBoard(input: {
     return {
       jugadorId: entry.id,
       posicion: place,
-      puntos: null,
+      puntos: entry.gf,
       count: entry.pj,
       resultado: `${entry.gf}–${entry.gc}`,
     };
@@ -644,9 +625,12 @@ function emptyBoardRow(jugadorId: string): BoardRow {
 function accumulateResults(
   partidos: LigaPartido[],
   parejas: LigaJornadaPareja[]
-): Map<string, { pj: number; gf: number; gc: number }> {
+): Map<string, { pj: number; gf: number; gc: number; pg: number }> {
   const byPareja = new Map(parejas.map((pareja) => [pareja.id, pareja]));
-  const stats = new Map<string, { pj: number; gf: number; gc: number }>();
+  const stats = new Map<
+    string,
+    { pj: number; gf: number; gc: number; pg: number }
+  >();
   const add = (
     pareja: LigaJornadaPareja | undefined,
     gf: number,
@@ -654,10 +638,11 @@ function accumulateResults(
   ) => {
     for (const id of [pareja?.jugador1_id, pareja?.jugador2_id]) {
       if (!id) continue;
-      const current = stats.get(id) ?? { pj: 0, gf: 0, gc: 0 };
+      const current = stats.get(id) ?? { pj: 0, gf: 0, gc: 0, pg: 0 };
       current.pj += 1;
       current.gf += gf;
       current.gc += gc;
+      if (gf > gc) current.pg += 1;
       stats.set(id, current);
     }
   };
