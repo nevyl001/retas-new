@@ -200,6 +200,39 @@
   border: 1px solid var(--ro-pub-court-border);
 }
 
+/* —— Pantalla completa, todas las vistas públicas —— */
+.ro-public-fullscreen {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 40;
+  appearance: none;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9px;
+  background: rgba(8, 10, 14, 0.72);
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.ro-public-fullscreen:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* Estas vistas ya traen su propio control. */
+.App:has(.flex-pub-live) .ro-public-fullscreen,
+.App:has(.te-live) .ro-public-fullscreen {
+  display: none;
+}
+
 /* —— Horario / fecha chips —— */
 .ro-public-view .te-pub-match-chip--hora {
   color: var(--ro-pub-schedule);

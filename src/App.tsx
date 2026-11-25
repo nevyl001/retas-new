@@ -30,6 +30,7 @@ import WinnerScreen from "./components/WinnerScreen";
 import { ModernToast } from "./components/ModernToast";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { UserHeader } from "./components/UserHeader";
+import { PublicFullscreenButton } from "./components/public/PublicFullscreenButton";
 import { AuthCallback } from "./components/auth/AuthCallback";
 import { ResetPasswordPage } from "./components/auth/ResetPasswordPage";
 import { AdminProvider, useAdmin } from "./contexts/AdminContext";
@@ -946,6 +947,7 @@ function AppContent() {
 
   return (
     <div className={appShellClass}>
+      {isPublicSpectatorView ? <PublicFullscreenButton /> : null}
       <ProtectedRoute>
         {/* Solo mostrar UserHeader cuando NO estemos en vista pública NI en admin */}
         {currentView !== "public" &&
