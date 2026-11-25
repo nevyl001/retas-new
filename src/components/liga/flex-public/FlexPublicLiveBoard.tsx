@@ -13,6 +13,7 @@ import type {
 } from "./FlexPublicJornada";
 import { LigaJornadaMatchPlayerPanel } from "../jornada-public/LigaJornadaMatchPlayerPanel";
 import { FlexNeutralAvatar } from "./flexPublicUi";
+import "../jornada-public/liga-jornada-public-match.css";
 import "./flex-public-live.css";
 
 type PublicProfile = {
@@ -925,7 +926,7 @@ function PairSide({
   }>;
 }) {
   return (
-    <div className="flex-pub-live-match__pair">
+    <div className="flex-pub-live-match__pair liga-jornada-match-pair-half__grid">
       {players.map((player, idx) => (
         <LigaJornadaMatchPlayerPanel
           key={player.id || `${player.name}-${idx}`}

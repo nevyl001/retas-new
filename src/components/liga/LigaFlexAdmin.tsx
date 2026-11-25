@@ -1403,15 +1403,14 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                       disabled={
                         busy ||
                         jornada.estado === "completed" ||
-                        detalle.estado === "completed" ||
-                        (shownRound != null && confirmedRounds.includes(shownRound))
+                        detalle.estado === "completed"
                       }
                       savedId={savedMatchId}
                       onSave={(partido, scoreA, scoreB) =>
                         void run(async () => {
                           await saveFlexMatchScore(partido.id, scoreA, scoreB);
                           setSavedMatchId(partido.id);
-                          setNotice("Marcador guardado. La ronda sigue sin confirmar.");
+                          setNotice("Marcador actualizado.");
                         })
                       }
                     />
@@ -2702,8 +2701,10 @@ function ScoreRow({
     }`;
   };
 
-  const hasCaptured =
-    partido.score_pareja1 != null && partido.score_pareja2 != null;
+  const capturedA = partido.score_pareja1?.toString() ?? "";
+  const capturedB = partido.score_pareja2?.toString() ?? "";
+  const hasCaptured = capturedA !== "" && capturedB !== "";
+  const dirty = a !== capturedA || b !== capturedB;
 
   return (
     <div className={`liga-flex__score liga-flex-match-row${hasCaptured ? " is-captured" : ""}`}>
@@ -2738,7 +2739,7 @@ function ScoreRow({
         disabled={disabled || a === "" || b === ""}
         onClick={() => onSave(partido, Number(a), Number(b))}
       >
-        {saved ? "Guardado" : "Guardar"}
+        {saved && !dirty ? "Guardado" : hasCaptured ? "Corregir" : "Guardar"}
       </Button>
     </div>
   );
