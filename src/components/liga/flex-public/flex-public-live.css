@@ -574,7 +574,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Marcador central protagonista (32–44 px) */
+/* Marcador central. El resultado cerrado es el protagonista; el VS queda discreto. */
 
 .flex-pub-live-match__center-score {
   display: flex;
@@ -584,10 +584,18 @@
   padding: 2px 0;
 }
 
+.flex-pub-live-match__center-score.is-scored {
+  padding: 6px 0 4px;
+}
+
 .flex-pub-live-match__center-line {
   flex: 1;
   height: 1px;
   background: rgba(255, 255, 255, 0.12);
+}
+
+.flex-pub-live-match__center-score.is-scored .flex-pub-live-match__center-line {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .flex-pub-live-match__score-box {
@@ -602,6 +610,16 @@
   border: 1px solid var(--live-border-strong);
 }
 
+.flex-pub-live-match__center-score.is-scored .flex-pub-live-match__score-box {
+  gap: 16px;
+  min-width: 188px;
+  padding: 6px 26px 8px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 .flex-pub-live-match__score-box.is-vs {
   border-color: var(--live-border);
   background: rgba(16, 16, 16, 0.65);
@@ -611,14 +629,23 @@
   font-family: var(--font-display);
   font-size: clamp(34px, 2.3vw, 42px);
   font-weight: 400;
-  line-height: 1;
-  letter-spacing: 0.04em;
+  line-height: 0.85;
+  letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
   color: var(--live-text-secondary);
 }
 
+.flex-pub-live-match__center-score.is-scored .flex-pub-live-match__score-num {
+  font-size: clamp(52px, 3.6vw, 68px);
+  color: var(--ro-text-primary);
+}
+
 .flex-pub-live-match__score-num.is-win {
   color: var(--ro-text-primary);
+}
+
+.flex-pub-live-match__score-num.is-loss {
+  color: rgba(255, 255, 255, 0.46);
 }
 
 .flex-pub-live-match__score-num.is-muted {
@@ -628,8 +655,14 @@
 
 .flex-pub-live-match__score-sep {
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 500;
+  line-height: 1;
   color: var(--live-muted);
+}
+
+.flex-pub-live-match__center-score.is-scored .flex-pub-live-match__score-sep {
+  font-size: 28px;
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .flex-pub-live-match__vs-pill {

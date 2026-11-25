@@ -758,7 +758,7 @@ function LiveMatch({
           <div className="flex-pub-live-match__score-box">
             <span
               className={`flex-pub-live-match__score-num${
-                p1Wins ? " is-win" : ""
+                p1Wins ? " is-win" : p2Wins ? " is-loss" : ""
               }`}
             >
               {s1}
@@ -766,7 +766,7 @@ function LiveMatch({
             <span className="flex-pub-live-match__score-sep">—</span>
             <span
               className={`flex-pub-live-match__score-num${
-                p2Wins ? " is-win" : ""
+                p2Wins ? " is-win" : p1Wins ? " is-loss" : ""
               }`}
             >
               {s2}
