@@ -10,6 +10,10 @@ const jornada = fs.readFileSync(
   path.join(__dirname, "flex-public-jornada.css"),
   "utf8"
 );
+const liga = fs.readFileSync(
+  path.join(__dirname, "flex-public-liga.css"),
+  "utf8"
+);
 const ui = fs.readFileSync(path.join(__dirname, "flexPublicUi.tsx"), "utf8");
 
 describe("identidad pública de Flex", () => {
@@ -26,7 +30,7 @@ describe("identidad pública de Flex", () => {
   });
 
   it("la vista no impone otra fuente ni otro fondo encima del sistema público", () => {
-    for (const css of [live, jornada, ui]) {
+    for (const css of [live, jornada, liga, ui]) {
       expect(css).not.toMatch(/Bebas Neue|Manrope|Arial Narrow/);
       expect(css).not.toMatch(/fonts\.googleapis/);
       expect(css).not.toMatch(/ro-public-view::before/);
@@ -34,10 +38,11 @@ describe("identidad pública de Flex", () => {
       expect(css).not.toContain("--liga-pub-gold");
       expect(css).not.toMatch(/!important/);
     }
-    for (const css of [live, jornada]) {
+    for (const css of [live, jornada, liga]) {
       expect(css).toContain("var(--font-display)");
       expect(css).toContain("var(--font-body)");
     }
+    expect(liga).toContain("var(--brand-accent");
     expect(fs.existsSync(path.join(__dirname, "flex-public-neutral.css"))).toBe(
       false
     );
