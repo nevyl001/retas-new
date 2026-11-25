@@ -52,13 +52,12 @@
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(0, 1fr);
-  justify-content: start;
   margin-bottom: 12px;
 }
 
-@media (min-width: 720px) {
+@media (min-width: 860px) {
   .americano-round__matches {
-    grid-template-columns: repeat(auto-fit, minmax(16.75rem, 22.5rem));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
   }
 }
 
@@ -371,19 +370,36 @@
   gap: 0.35rem;
 }
 
+.americano-match-card .am-court-board__pair {
+  align-items: center;
+}
+
 .americano-match-card .am-portrait {
-  width: min(100%, 8.75rem);
+  width: min(100%, 11.25rem);
   aspect-ratio: 3 / 4;
 }
 
 .americano-match-card .am-court-board__score {
-  width: min(100%, 8.75rem);
+  width: min(100%, 11.25rem);
+  margin-top: 8px;
+}
+
+.americano-match-card .am-court-board .am-match-board__score,
+.americano-match-card .am-court-board__score input {
+  width: 100%;
+  max-width: none;
+  min-height: 3.25rem;
+  padding: 0.2rem 0.35rem;
+  font-size: 1.85rem;
 }
 
 .americano-match-card__save {
   display: flex;
-  justify-content: center;
-  margin-top: 10px;
+  margin-top: 12px;
+}
+
+.americano-match-card__save-btn {
+  width: 100%;
 }
 
 .americano-round__actions {
