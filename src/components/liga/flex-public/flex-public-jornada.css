@@ -21,6 +21,37 @@
   font-family: var(--font-body);
 }
 
+/* Sin upgrade el chrome oficial es azul-gris (#12161b / #1a1f26).
+   Las cajas de Flex no lo heredan: carbón translúcido sobre la cancha. */
+.club-experience-scope:is(
+    [data-club="riviera"],
+    [data-brand="riviera"],
+    [data-club="pending"],
+    [data-brand="pending"]
+  )
+  .flex-pub-jornada.liga-pantalla {
+  --flex-pub-surface: rgba(12, 12, 12, 0.5);
+  --flex-pub-surface-elevated: rgba(15, 15, 15, 0.62);
+  --flex-pub-surface-pair: rgba(10, 10, 10, 0.46);
+  --flex-pub-avatar-bg: rgba(16, 16, 16, 0.68);
+  --flex-pub-border: rgba(255, 255, 255, 0.08);
+  --flex-pub-border-subtle: rgba(255, 255, 255, 0.06);
+  --flex-pub-border-strong: rgba(255, 255, 255, 0.14);
+  --flex-pub-text-secondary: #a3a3a3;
+  --flex-pub-text-muted: #8a8a8a;
+}
+
+.flex-pub-jornada :is(
+  .flex-pub-toolbar,
+  .flex-pub-match-card,
+  .flex-pub-participant-card,
+  .flex-pub-standings-card,
+  .flex-pub-empty-card
+) {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
 .flex-pub-jornada .liga-pantalla__inner {
   max-width: 1280px;
   width: 100%;
@@ -79,7 +110,7 @@
 
 .flex-pub-toolbar__back:hover {
   border-color: var(--flex-pub-border-strong);
-  background: var(--ro-bg-elevated);
+  background: var(--flex-pub-surface-elevated);
 }
 
 .flex-pub-toolbar__pills {
@@ -486,7 +517,7 @@
 
 .flex-pub-match-pair--win {
   border-color: color-mix(in srgb, var(--flex-pub-accent) 45%, var(--flex-pub-border-strong));
-  background: var(--ro-bg-inset);
+  background: var(--flex-pub-surface-pair);
 }
 
 .flex-pub-match-pair--loss {
@@ -613,7 +644,7 @@
   gap: 10px;
   padding: 8px 12px;
   border-radius: 9px;
-  background: var(--ro-bg-deep);
+  background: var(--flex-pub-surface-elevated);
   border: 1px solid var(--flex-pub-border);
 }
 
@@ -755,7 +786,7 @@
 
 .flex-pub-participant-card:hover {
   border-color: var(--flex-pub-border-strong);
-  background: var(--ro-bg-card);
+  background: var(--flex-pub-surface);
 }
 
 .flex-pub-participant-card__center {
@@ -940,7 +971,7 @@
 .flex-pub-standings-pos--top {
   color: var(--ro-text-primary);
   border-color: var(--flex-pub-border-strong);
-  background: var(--ro-bg-elevated);
+  background: var(--flex-pub-surface-elevated);
 }
 
 .flex-pub-standings-player {

@@ -23,6 +23,24 @@
   box-sizing: border-box;
 }
 
+/* Sin upgrade, el chrome (#1a1f26) pintaba las cajas de azul.
+   Aquí quedan en carbón translúcido. El fondo de cancha no se toca. */
+.club-experience-scope:is(
+    [data-club="riviera"],
+    [data-brand="riviera"],
+    [data-club="pending"],
+    [data-brand="pending"]
+  )
+  .flex-pub-live.liga-pantalla {
+  --live-card-bg: rgba(12, 12, 12, 0.52);
+  --live-card-elevated: rgba(15, 15, 15, 0.62);
+  --live-team-bg: rgba(10, 10, 10, 0.48);
+  --live-border: rgba(255, 255, 255, 0.08);
+  --live-border-strong: rgba(255, 255, 255, 0.14);
+  --live-text-secondary: #a3a3a3;
+  --live-muted: #8a8a8a;
+}
+
 .flex-pub-live *,
 .flex-pub-live *::before,
 .flex-pub-live *::after {

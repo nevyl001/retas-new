@@ -1598,3 +1598,29 @@
     max-height: 15.5rem;
   }
 }
+
+/* Flex sin upgrade: la clasificación no hereda el relleno azul-gris del chrome. */
+.club-experience-scope:is(
+    [data-club="riviera"],
+    [data-brand="riviera"],
+    [data-club="pending"],
+    [data-brand="pending"]
+  )
+  .flex-pub-liga
+  :is(.liga-pantalla-ranking--individual-primary, .liga-ind-top3__card) {
+  background: rgba(12, 12, 12, 0.5);
+  border-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.club-experience-scope:is(
+    [data-club="riviera"],
+    [data-brand="riviera"],
+    [data-club="pending"],
+    [data-brand="pending"]
+  )
+  .flex-pub-liga
+  .liga-ind-top3__portrait {
+  background: rgba(16, 16, 16, 0.55);
+}
