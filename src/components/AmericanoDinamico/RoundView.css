@@ -370,32 +370,60 @@
   gap: 0.35rem;
 }
 
+.americano-match-card {
+  padding: 10px 12px 12px;
+}
+
+.americano-match-card__top {
+  margin-bottom: 8px;
+}
+
+.americano-match-card .am-court-board {
+  align-items: start;
+  gap: 8px;
+}
+
 .americano-match-card .am-court-board__pair {
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  align-items: start;
+  justify-items: center;
 }
 
 .americano-match-card .am-portrait {
-  width: min(100%, 11.25rem);
+  width: 100%;
+  max-width: 5.75rem;
   aspect-ratio: 3 / 4;
 }
 
+.americano-match-card .am-portrait__given {
+  font-size: 0.72rem;
+}
+
+.americano-match-card .am-portrait__family {
+  font-size: 0.62rem;
+}
+
 .americano-match-card .am-court-board__score {
-  width: min(100%, 11.25rem);
-  margin-top: 8px;
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: none;
+  margin-top: 2px;
 }
 
 .americano-match-card .am-court-board .am-match-board__score,
 .americano-match-card .am-court-board__score input {
   width: 100%;
   max-width: none;
-  min-height: 3.25rem;
-  padding: 0.2rem 0.35rem;
-  font-size: 1.85rem;
+  min-height: 2.6rem;
+  padding: 0.15rem 0.3rem;
+  font-size: 1.45rem;
 }
 
 .americano-match-card__save {
   display: flex;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .americano-match-card__save-btn {

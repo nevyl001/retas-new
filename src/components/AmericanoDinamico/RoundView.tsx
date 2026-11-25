@@ -295,7 +295,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
                 <div className="americano-match-card__save">
                   <Button
                     type="button"
-                    size="md"
+                    size="sm"
                     variant="secondary"
                     className="americano-match-card__save-btn"
                     disabled={courtScore == null || courtSaved || roundSyncPending}
