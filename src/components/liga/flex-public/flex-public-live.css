@@ -444,12 +444,12 @@
 .flex-pub-live-match__court {
   display: inline-flex;
   align-items: center;
-  padding: 7px 14px;
-  border-radius: 8px;
+  padding: 4px 10px;
+  border-radius: 7px;
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 13px;
   font-weight: 400;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ro-text-primary);
   background: rgba(255, 255, 255, 0.07);
@@ -513,31 +513,34 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
-  gap: 10px;
+  justify-items: center;
+  gap: 12px;
   min-width: 0;
 }
 
 .flex-pub-live-match__player {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
   min-width: 0;
   text-align: center;
 }
 
-/* El retrato ocupa toda la mitad de la cancha. La foto llena el marco. */
+/* Marco fijo. La foto lo llena; las iniciales ocupan el mismo marco, sin estirar la cancha. */
 .flex-pub-live .flex-pub-avatar--match {
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 3 / 4;
-  border-radius: 14px;
+  width: 104px;
+  height: 128px;
+  border-radius: 12px;
   overflow: hidden;
   flex-shrink: 0;
+  background: var(--live-team-bg);
+  border: 1px solid var(--live-border);
 }
 
 .flex-pub-live .flex-pub-avatar--match .flex-pub-avatar__img {
@@ -551,16 +554,17 @@
 
 .flex-pub-live .flex-pub-avatar--match .flex-pub-avatar__initials {
   font-family: var(--font-body);
-  font-size: clamp(22px, 2.4vw, 32px);
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
 }
 
 .flex-pub-live-match__player-name {
   width: 100%;
-  font-size: clamp(15px, 1.15vw, 18px);
-  font-weight: 700;
-  line-height: 1.15;
+  max-width: 148px;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.2;
   text-align: center;
   color: var(--ro-text-primary);
   display: -webkit-box;
@@ -960,5 +964,10 @@
   .flex-pub-live-match {
     min-height: auto;
     padding: 14px;
+  }
+
+  .flex-pub-live .flex-pub-avatar--match {
+    width: 92px;
+    height: 114px;
   }
 }
