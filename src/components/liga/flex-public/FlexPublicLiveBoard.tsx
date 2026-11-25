@@ -180,6 +180,7 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
   names,
   profiles,
   convocados,
+  standingRows,
   official,
   jornadaHref,
   seasonAwards,
@@ -281,6 +282,22 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
   }, [convocados, season]);
 
   const hasConfirmedJornada = jornadaRows.some((row) => row.resultado != null);
+
+  const provisionalRows = useMemo(
+    () =>
+      official
+        ? []
+        : standingRows.map((row) => ({
+            jugadorId: row.jugadorId,
+            posicion: row.posicion,
+            puntos: row.puntos,
+            count: row.partidos,
+            gc: null,
+            pg: null,
+            resultado: null,
+          })),
+    [official, standingRows]
+  );
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) {
@@ -534,32 +551,44 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                 profiles={profiles}
                 kind="jornada"
               />
-              <StandingsTable
-                title="General"
-                caption={
-                  hasSeasonResults
-                    ? "Puntos acumulados de temporada."
-                    : season.ok
-                      ? "Todavía no existen resultados oficiales acumulados de temporada. Los puntos generales se registran al cerrar oficialmente cada jornada."
-                      : "La clasificación general está en espera de la resolución deportiva de un empate oficial."
-                }
-                rows={
-                  generalRows.length > 0
-                    ? generalRows
-                    : convocados.map((jugadorId) => ({
-                        jugadorId,
-                        posicion: null,
-                        puntos: null,
-                        count: null,
-                        gc: null,
-                        pg: null,
-                        resultado: null,
-                      }))
-                }
-                names={names}
-                profiles={profiles}
-                kind="general"
-              />
+              {provisionalRows.length > 0 ? (
+                <StandingsTable
+                  title="Provisional"
+                  caption="Clasificación provisional de la jornada. Los puntos de temporada se registran al cierre oficial."
+                  rows={provisionalRows}
+                  names={names}
+                  profiles={profiles}
+                  kind="provisional"
+                />
+              ) : null}
+              {hasSeasonResults || provisionalRows.length === 0 ? (
+                <StandingsTable
+                  title="General"
+                  caption={
+                    hasSeasonResults
+                      ? "Puntos acumulados de temporada."
+                      : season.ok
+                        ? "Todavía no existen resultados oficiales acumulados de temporada. Los puntos generales se registran al cerrar oficialmente cada jornada."
+                        : "La clasificación general está en espera de la resolución deportiva de un empate oficial."
+                  }
+                  rows={
+                    generalRows.length > 0
+                      ? generalRows
+                      : convocados.map((jugadorId) => ({
+                          jugadorId,
+                          posicion: null,
+                          puntos: null,
+                          count: null,
+                          gc: null,
+                          pg: null,
+                          resultado: null,
+                        }))
+                  }
+                  names={names}
+                  profiles={profiles}
+                  kind="general"
+                />
+              ) : null}
             </div>
           )}
         </section>
@@ -682,7 +711,7 @@ function StandingsTable({
   rows: BoardRow[];
   names: Map<string, string>;
   profiles: Record<string, PublicProfile>;
-  kind: "jornada" | "general";
+  kind: "jornada" | "general" | "provisional";
 }) {
   const stat = (value: number | null) => (value != null ? value : "—");
   return (
@@ -710,10 +739,24 @@ function StandingsTable({
               </>
             ) : (
               <>
-                <th className="is-stat" title="Jornadas jugadas">
-                  JJ
+                <th
+                  className="is-stat"
+                  title={
+                    kind === "provisional"
+                      ? "Partidos disputados"
+                      : "Jornadas jugadas"
+                  }
+                >
+                  {kind === "provisional" ? "PJ" : "JJ"}
                 </th>
-                <th className="is-pts" title="Puntos de temporada">
+                <th
+                  className="is-pts"
+                  title={
+                    kind === "provisional"
+                      ? "Puntos de jornada"
+                      : "Puntos de temporada"
+                  }
+                >
                   PTS
                 </th>
               </>
