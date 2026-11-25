@@ -21,6 +21,7 @@ type BoardRow = {
   posicion: number | null;
   puntos: number | null;
   count: number | null;
+  resultado: string | null;
 };
 
 export type FlexPublicLiveBoardProps = {
@@ -156,12 +157,6 @@ function roundMark(estado: FlexRoundNavItem["estado"]): string {
   return "○";
 }
 
-function splitRows(rows: BoardRow[]): [BoardRow[], BoardRow[]] {
-  if (rows.length <= 6) return [rows, []];
-  const mid = Math.ceil(rows.length / 2);
-  return [rows.slice(0, mid), rows.slice(mid)];
-}
-
 export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
   club,
   leagueName,
@@ -186,7 +181,6 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
 }) => {
   const [historyRound, setHistoryRound] = useState<number | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
-  const [board, setBoard] = useState<"jornada" | "general">("jornada");
 
   useEffect(() => {
     const sync = () => setFullscreen(Boolean(document.fullscreenElement));
@@ -237,8 +231,15 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
   );
 
   const jornadaRows = useMemo(
-    () => buildBoard(convocados, standingRows),
-    [convocados, standingRows]
+    () =>
+      buildLiveJornadaBoard({
+        convocados,
+        partidos,
+        parejas,
+        standingRows,
+        official,
+      }),
+    [convocados, official, parejas, partidos, standingRows]
   );
 
   const hasSeasonResults =
@@ -254,6 +255,7 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
       posicion: row.posicion,
       puntos: row.puntos,
       count: row.jornadasJugadas,
+      resultado: null,
     }));
     for (const id of convocados) {
       if (!ranked.has(id)) {
@@ -262,15 +264,14 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
           posicion: null,
           puntos: null,
           count: null,
+          resultado: null,
         });
       }
     }
     return ordered;
   }, [convocados, season]);
 
-  const rows = board === "jornada" ? jornadaRows : generalRows;
-  const [leftRows, rightRows] = splitRows(rows);
-  const hasConfirmedJornada = standingRows.length > 0;
+  const hasConfirmedJornada = jornadaRows.some((row) => row.resultado != null);
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) {
@@ -288,18 +289,11 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
   const activeRoundMeta =
     rounds.find((item) => item.ronda === visibleRound) ?? null;
 
-  const standingsSubtitle =
-    board === "general"
-      ? hasSeasonResults
-        ? "OFICIAL · PUNTOS ACUMULADOS DE TEMPORADA"
-        : season.ok
-          ? "TEMPORADA EN CURSO · SIN JORNADAS CERRADAS"
-          : "EMPATE OFICIAL EN ESPERA DE RESOLUCIÓN"
-      : official
-        ? "OFICIAL · RESULTADOS DEFINITIVOS DE LA JORNADA"
-        : hasConfirmedJornada
-          ? "PROVISIONAL · RESULTADOS CONFIRMADOS"
-          : "PENDIENTE · EN ESPERA DE RESULTADOS CONFIRMADOS";
+  const standingsSubtitle = official
+    ? "OFICIAL · RESULTADOS DEFINITIVOS DE LA JORNADA"
+    : hasConfirmedJornada
+      ? "PROVISIONAL · POR RESULTADO DE LA JORNADA"
+      : "PENDIENTE · EN ESPERA DE RESULTADOS CONFIRMADOS";
 
   return (
     <div
@@ -491,15 +485,10 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
           <header className="flex-pub-live__standings-head">
             <div className="flex-pub-live__standings-titles">
               <div className="flex-pub-live__standings-title-row">
-                <h2>
-                  {board === "jornada"
-                    ? "CLASIFICACIÓN DE LA JORNADA"
-                    : "CLASIFICACIÓN GENERAL"}
-                </h2>
+                <h2>CLASIFICACIÓN DE LA JORNADA</h2>
                 <span
                   className={`flex-pub-live__standings-badge${
-                    (board === "jornada" && official) ||
-                    (board === "general" && hasSeasonResults)
+                    official
                       ? " is-official"
                       : hasConfirmedJornada
                         ? " is-provisional"
@@ -517,61 +506,54 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                   Ficha de jornada
                 </a>
               ) : null}
-              <div
-                className="flex-pub-live__switch"
-                role="tablist"
-                aria-label="Tipo de clasificación"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={board === "jornada"}
-                  className={board === "jornada" ? "is-on" : ""}
-                  onClick={() => setBoard("jornada")}
-                >
-                  JORNADA
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={board === "general"}
-                  className={board === "general" ? "is-on" : ""}
-                  onClick={() => setBoard("general")}
-                >
-                  GENERAL
-                </button>
-              </div>
             </div>
           </header>
 
-          {board === "general" && !hasSeasonResults ? (
-            <div className="flex-pub-live__empty flex-pub-live__empty--standings">
-              {season.ok
-                ? "Todavía no existen resultados oficiales acumulados de temporada. Los puntos generales se registran al cerrar oficialmente cada jornada."
-                : "La clasificación general está en espera de la resolución deportiva de un empate oficial."}
-            </div>
-          ) : convocados.length === 0 && rows.length === 0 ? (
+          {convocados.length === 0 &&
+          jornadaRows.length === 0 &&
+          generalRows.length === 0 ? (
             <div className="flex-pub-live__empty flex-pub-live__empty--standings">
               Todavía no hay jugadores convocados en esta jornada.
             </div>
           ) : (
-            <div
-              className={`flex-pub-live__tables${
-                rightRows.length > 0 ? " is-split" : ""
-              }`}
-            >
+            <div className="flex-pub-live__tables is-split">
               <StandingsTable
-                rows={leftRows}
+                title="Jornada"
+                caption={
+                  official
+                    ? "Resultado acumulado y puntaje final de la jornada."
+                    : "Quienes ganan el mismo partido comparten resultado. El puntaje de la jornada se asigna al cerrar."
+                }
+                rows={jornadaRows}
                 names={names}
                 profiles={profiles}
+                countLabel="PJ"
+                showResult
               />
-              {rightRows.length > 0 ? (
-                <StandingsTable
-                  rows={rightRows}
-                  names={names}
-                  profiles={profiles}
-                />
-              ) : null}
+              <StandingsTable
+                title="General"
+                caption={
+                  hasSeasonResults
+                    ? "Puntos acumulados de temporada."
+                    : season.ok
+                      ? "Todavía no existen resultados oficiales acumulados de temporada. Los puntos generales se registran al cerrar oficialmente cada jornada."
+                      : "La clasificación general está en espera de la resolución deportiva de un empate oficial."
+                }
+                rows={
+                  generalRows.length > 0
+                    ? generalRows
+                    : convocados.map((jugadorId) => ({
+                        jugadorId,
+                        posicion: null,
+                        puntos: null,
+                        count: null,
+                        resultado: null,
+                      }))
+                }
+                names={names}
+                profiles={profiles}
+                countLabel="JJ"
+              />
             </div>
           )}
         </section>
@@ -580,55 +562,145 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
   );
 };
 
-function buildBoard(
-  convocados: string[],
-  standingRows: FlexJornadaStandingRow[]
-): BoardRow[] {
-  if (standingRows.length === 0) {
-    return convocados.map((jugadorId) => ({
-      jugadorId,
-      posicion: null,
-      puntos: null,
-      count: null,
-    }));
+function buildLiveJornadaBoard(input: {
+  convocados: string[];
+  partidos: LigaPartido[];
+  parejas: LigaJornadaPareja[];
+  standingRows: FlexJornadaStandingRow[];
+  official: boolean;
+}): BoardRow[] {
+  const stats = accumulateResults(input.partidos, input.parejas);
+  const officialById = new Map(
+    input.standingRows.map((row) => [row.jugadorId, row])
+  );
+  const ids = input.convocados.length
+    ? input.convocados.slice()
+    : Array.from(stats.keys());
+  for (const id of Array.from(stats.keys())) {
+    if (!ids.includes(id)) ids.push(id);
   }
-  const ranked = new Map(standingRows.map((row) => [row.jugadorId, row]));
-  const ordered: BoardRow[] = standingRows.map((row) => ({
-    jugadorId: row.jugadorId,
-    posicion: row.posicion,
-    puntos: row.puntos,
-    count: row.partidos,
-  }));
-  for (const id of convocados) {
-    if (!ranked.has(id)) {
-      ordered.push({
-        jugadorId: id,
-        posicion: null,
-        puntos: null,
-        count: null,
-      });
+
+  if (input.official && input.standingRows.length > 0) {
+    const ordered: BoardRow[] = input.standingRows.map((row) => {
+      const stat = stats.get(row.jugadorId);
+      return {
+        jugadorId: row.jugadorId,
+        posicion: row.posicion,
+        puntos: row.puntos,
+        count: row.partidos,
+        resultado: stat && stat.pj > 0 ? `${stat.gf}–${stat.gc}` : null,
+      };
+    });
+    for (const id of ids) {
+      if (!officialById.has(id)) {
+        ordered.push(emptyBoardRow(id));
+      }
     }
+    return ordered;
   }
-  return ordered;
+
+  const played: Array<{ id: string; pj: number; gf: number; gc: number }> = [];
+  const idle: string[] = [];
+  for (const id of ids) {
+    const stat = stats.get(id);
+    if (!stat || stat.pj < 1) idle.push(id);
+    else played.push({ id, ...stat });
+  }
+  played.sort((a, b) => {
+    if (b.gf !== a.gf) return b.gf - a.gf;
+    return b.gf - b.gc - (a.gf - a.gc);
+  });
+
+  let place = 0;
+  let previous = "";
+  const rows: BoardRow[] = played.map((entry, index) => {
+    const key = `${entry.gf}:${entry.gf - entry.gc}`;
+    if (key !== previous) {
+      place = index + 1;
+      previous = key;
+    }
+    return {
+      jugadorId: entry.id,
+      posicion: place,
+      puntos: null,
+      count: entry.pj,
+      resultado: `${entry.gf}–${entry.gc}`,
+    };
+  });
+  for (const id of idle) rows.push(emptyBoardRow(id));
+  return rows;
+}
+
+function emptyBoardRow(jugadorId: string): BoardRow {
+  return {
+    jugadorId,
+    posicion: null,
+    puntos: null,
+    count: null,
+    resultado: null,
+  };
+}
+
+function accumulateResults(
+  partidos: LigaPartido[],
+  parejas: LigaJornadaPareja[]
+): Map<string, { pj: number; gf: number; gc: number }> {
+  const byPareja = new Map(parejas.map((pareja) => [pareja.id, pareja]));
+  const stats = new Map<string, { pj: number; gf: number; gc: number }>();
+  const add = (
+    pareja: LigaJornadaPareja | undefined,
+    gf: number,
+    gc: number
+  ) => {
+    for (const id of [pareja?.jugador1_id, pareja?.jugador2_id]) {
+      if (!id) continue;
+      const current = stats.get(id) ?? { pj: 0, gf: 0, gc: 0 };
+      current.pj += 1;
+      current.gf += gf;
+      current.gc += gc;
+      stats.set(id, current);
+    }
+  };
+  for (const partido of partidos) {
+    if (partido.score_pareja1 == null || partido.score_pareja2 == null) continue;
+    const left = partido.pareja1 ?? byPareja.get(partido.pareja1_id);
+    const right = partido.pareja2 ?? byPareja.get(partido.pareja2_id);
+    add(left, partido.score_pareja1, partido.score_pareja2);
+    add(right, partido.score_pareja2, partido.score_pareja1);
+  }
+  return stats;
 }
 
 function StandingsTable({
+  title,
+  caption,
   rows,
   names,
   profiles,
+  countLabel,
+  showResult = false,
 }: {
+  title: string;
+  caption: string;
   rows: BoardRow[];
   names: Map<string, string>;
   profiles: Record<string, PublicProfile>;
+  countLabel: string;
+  showResult?: boolean;
 }) {
   return (
     <div className="flex-pub-live__table-card">
+      <header className="flex-pub-live__table-head">
+        <h3>{title}</h3>
+        <p>{caption}</p>
+      </header>
       <table className="flex-pub-live__table">
         <thead>
           <tr>
             <th className="is-pos">POS</th>
             <th>JUGADOR</th>
-            <th className="is-pj">PJ</th>
+            <th className="is-pj">{countLabel}</th>
+            {showResult ? <th className="is-res">RES</th> : null}
             <th className="is-pts">PTS</th>
           </tr>
         </thead>
@@ -667,6 +739,9 @@ function StandingsTable({
                 <td className="is-pj">
                   {row.count != null && row.count > 0 ? row.count : "—"}
                 </td>
+                {showResult ? (
+                  <td className="is-res">{row.resultado ?? "—"}</td>
+                ) : null}
                 <td className="is-pts">
                   <span
                     className={`flex-pub-live__pts-val${
