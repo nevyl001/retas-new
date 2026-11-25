@@ -18,6 +18,7 @@ interface AmericanoRoundsPanelProps {
   roster: AmericanoPlayer[];
   playerFotos?: Record<string, string | null>;
   onCommitRound: (scores: { matchId: string; scoreA: number; scoreB: number }[]) => void;
+  onSaveMatch?: (matchId: string, scoreA: number, scoreB: number) => void;
   onRoundFinalized: () => void;
   onRegenerateRound?: () => void;
   onSeatBenchWithPartner?: (benchPlayerId: string, stayPlayerId: string) => void;
@@ -73,6 +74,7 @@ export const AmericanoRoundsPanel: React.FC<AmericanoRoundsPanelProps> = ({
   roster,
   playerFotos,
   onCommitRound,
+  onSaveMatch,
   onRoundFinalized,
   onRegenerateRound,
   onSeatBenchWithPartner,
@@ -160,6 +162,7 @@ export const AmericanoRoundsPanel: React.FC<AmericanoRoundsPanelProps> = ({
             totalRounds={totalRounds}
             readOnly={!isCurrent}
             onCommitRound={onCommitRound}
+            onSaveMatch={onSaveMatch}
             onRoundFinalized={onRoundFinalized}
             onRegenerateRound={
               isCurrent && onRegenerateRound ? onRegenerateRound : undefined

@@ -103,6 +103,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     syncRegistrationPlayers,
     startTournament,
     commitRoundScores,
+    submitScore,
     editScore,
     nextRound,
     regenerateCurrentRound,
@@ -661,6 +662,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             roster={rosterForUi}
             playerFotos={playerFotos}
             onCommitRound={commitRoundScores}
+            onSaveMatch={submitScore}
             onRoundFinalized={() => void nextRound()}
             onRegenerateRound={() => void regenerateCurrentRound()}
             onSeatBenchWithPartner={(benchId, stayId) =>
@@ -685,7 +687,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             ranked={ranking}
             roster={rosterForUi}
             rounds={rounds}
-            caption="Acumulado de todo el americano: suma cada ronda en cuanto confirmes los marcadores."
+            caption="Acumulado de todo el americano: suma cada cancha en cuanto guardas su marcador."
           />
         </ModeSectionPanel>
         <ModeSectionPanel id="jugadores" activeId={playingTab}>
@@ -703,6 +705,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           roster={rosterForUi}
           playerFotos={playerFotos}
           onCommitRound={commitRoundScores}
+          onSaveMatch={submitScore}
           onRoundFinalized={() => void nextRound()}
           onRegenerateRound={() => void regenerateCurrentRound()}
           onSeatBenchWithPartner={(benchId, stayId) =>
@@ -719,7 +722,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             ranked={ranking}
             roster={rosterForUi}
             rounds={rounds}
-            caption="Acumulado de todo el americano: suma cada ronda en cuanto confirmes los marcadores."
+            caption="Acumulado de todo el americano: suma cada cancha en cuanto guardas su marcador."
           />
         </div>
         <div className="americano-screen__block">

@@ -21,6 +21,8 @@ interface RoundViewProps {
   totalRounds?: number;
   /** Persiste ranking + servidor solo al pulsar Confirmar (borrador local hasta entonces). */
   onCommitRound?: (scores: RoundScorePayload[]) => void;
+  /** Guarda el marcador de una sola cancha y lo suma al ranking. */
+  onSaveMatch?: (matchId: string, scoreA: number, scoreB: number) => void;
   onRoundFinalized?: () => void;
   /** Regenera emparejamientos/banca de la ronda actual (solo sin marcadores). */
   onRegenerateRound?: () => void;
@@ -59,6 +61,16 @@ function isDraftComplete(
   });
 }
 
+function parseCourtScore(a: string, b: string): { scoreA: number; scoreB: number } | null {
+  if (a === "" || b === "") return null;
+  const scoreA = Number(a);
+  const scoreB = Number(b);
+  if (!Number.isInteger(scoreA) || !Number.isInteger(scoreB) || scoreA < 0 || scoreB < 0) {
+    return null;
+  }
+  return { scoreA, scoreB };
+}
+
 function allMatchesCommitted(round: AmericanoRound): boolean {
   return round.matches.every(
     (m) =>
@@ -76,14 +88,12 @@ function draftsDifferFromCommitted(
   drafts: Record<string, { a?: string; b?: string }>
 ): boolean {
   return round.matches.some((m) => {
+    const draft = drafts[m.id];
+    if (!draft || (draft.a == null && draft.b == null)) return false;
     const { a, b } = readDraft(m, drafts);
-    if (typeof m.scoreA !== "number" || typeof m.scoreB !== "number") return false;
-    if (a === "" && b === "") return false;
-    const nA = Number(a);
-    const nB = Number(b);
-    if (a !== "" && !Number.isNaN(nA) && nA !== m.scoreA) return true;
-    if (b !== "" && !Number.isNaN(nB) && nB !== m.scoreB) return true;
-    return false;
+    const parsed = parseCourtScore(a, b);
+    if (!parsed) return true;
+    return parsed.scoreA !== m.scoreA || parsed.scoreB !== m.scoreB;
   });
 }
 
@@ -119,6 +129,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
   round,
   totalRounds = 0,
   onCommitRound,
+  onSaveMatch,
   onRoundFinalized,
   onRegenerateRound,
   onSeatBenchWithPartner,
@@ -164,6 +175,11 @@ export const RoundView: React.FC<RoundViewProps> = ({
   }, [matchesByCourt]);
 
   const handleConfirm = () => {
+    if (onSaveMatch) {
+      if (!canFinalizeRound) return;
+      onRoundFinalized?.();
+      return;
+    }
     if (!draftComplete) return;
     const scores: RoundScorePayload[] = round.matches.map((m) => {
       const { a, b } = readDraft(m, draftScores);
@@ -172,6 +188,8 @@ export const RoundView: React.FC<RoundViewProps> = ({
     onCommitRound?.(scores);
     setDraftScores({});
   };
+
+  const isLastRound = totalRounds > 0 && round.roundNumber >= totalRounds;
 
   return (
     <section className="americano-round rv-card">
@@ -197,7 +215,9 @@ export const RoundView: React.FC<RoundViewProps> = ({
         <p className="americano-round__hint">
           {readOnly
             ? "Resultado de una ronda anterior, solo lectura."
-            : "Captura los juegos de cada pareja. No se guardan ni suman al ranking hasta que pulses Confirmar resultados."}
+            : onSaveMatch
+              ? "Guarda el marcador de cada cancha. Confirmar resultados suelta la siguiente ronda."
+              : "Captura los juegos de cada pareja. No se guardan ni suman al ranking hasta que pulses Confirmar resultados."}
         </p>
       </header>
 
@@ -220,6 +240,11 @@ export const RoundView: React.FC<RoundViewProps> = ({
               name: player.name,
               fotoUrl: playerFotos[player.id] ?? null,
             }));
+          const courtScore = parseCourtScore(a, b);
+          const courtSaved =
+            courtScore != null &&
+            match.scoreA === courtScore.scoreA &&
+            match.scoreB === courtScore.scoreB;
 
           return (
             <article
@@ -266,6 +291,22 @@ export const RoundView: React.FC<RoundViewProps> = ({
                   )
                 }
               />
+              {!readOnly && onSaveMatch ? (
+                <div className="americano-match-card__save">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={courtScore == null || courtSaved || roundSyncPending}
+                    onClick={() => {
+                      if (!courtScore) return;
+                      onSaveMatch(match.id, courtScore.scoreA, courtScore.scoreB);
+                    }}
+                  >
+                    {courtSaved ? "Guardado" : "Guardar"}
+                  </Button>
+                </div>
+              ) : null}
             </article>
           );
         })}
@@ -334,18 +375,14 @@ export const RoundView: React.FC<RoundViewProps> = ({
               type="button"
               variant="primary"
               onClick={handleConfirm}
-              disabled={!draftComplete}
+              disabled={onSaveMatch ? !canFinalizeRound : !draftComplete}
+              loading={onSaveMatch ? roundSyncPending : false}
             >
-              Confirmar resultados
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => onRoundFinalized?.()}
-              disabled={!canFinalizeRound}
-              loading={roundSyncPending}
-            >
-              {roundSyncPending ? "Guardando…" : "Ronda finalizada"}
+              {onSaveMatch && roundSyncPending
+                ? "Guardando…"
+                : onSaveMatch && isLastRound
+                  ? "Confirmar y finalizar"
+                  : "Confirmar resultados"}
             </Button>
             {onRegenerateRound && !committed ? (
               <Button
@@ -358,22 +395,38 @@ export const RoundView: React.FC<RoundViewProps> = ({
               </Button>
             ) : null}
           </ActionBar>
-          {!draftComplete && (
-            <p className="americano-round__footer-hint">
-              Faltan marcadores por capturar
-            </p>
-          )}
-          {draftComplete && (!committed || dirty) && (
-            <p className="americano-round__footer-hint">Listo para confirmar</p>
-          )}
-          {committed && !dirty && (
-            <p className="americano-round__footer-hint">Resultados confirmados</p>
+          {onSaveMatch ? (
+            !canFinalizeRound ? (
+              <p className="americano-round__footer-hint">
+                Guarda cada cancha antes de confirmar
+              </p>
+            ) : (
+              <p className="americano-round__footer-hint">
+                {isLastRound
+                  ? "Listo para confirmar y cerrar el americano"
+                  : "Listo para confirmar y soltar la siguiente ronda"}
+              </p>
+            )
+          ) : (
+            <>
+              {!draftComplete && (
+                <p className="americano-round__footer-hint">
+                  Faltan marcadores por capturar
+                </p>
+              )}
+              {draftComplete && (!committed || dirty) && (
+                <p className="americano-round__footer-hint">Listo para confirmar</p>
+              )}
+              {committed && !dirty && (
+                <p className="americano-round__footer-hint">Resultados confirmados</p>
+              )}
+            </>
           )}
         </>
       )}
       {roundSyncError && !readOnly && (
         <p className="americano-round__footer-hint americano-round__footer-hint--error">
-          {roundSyncError} Puedes volver a pulsar «Ronda finalizada» — reintentar es seguro.
+          {roundSyncError} Puedes volver a pulsar «Confirmar resultados» — reintentar es seguro.
         </p>
       )}
     </section>

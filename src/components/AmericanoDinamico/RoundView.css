@@ -364,6 +364,12 @@
   gap: 0.35rem;
 }
 
+.americano-match-card__save {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
 .americano-round__actions {
   display: flex;
   flex-wrap: wrap;
