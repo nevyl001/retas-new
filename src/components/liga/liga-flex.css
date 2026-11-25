@@ -1220,6 +1220,46 @@
   cursor: pointer;
 }
 
+.liga-flex-pool-count {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lf-text-muted);
+  white-space: nowrap;
+}
+
+.liga-flex-pool-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+.liga-flex-pool-more span {
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--lf-text-muted);
+}
+
+.liga-flex-pool-more__btn {
+  min-height: 36px;
+  padding: 0 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--lf-border);
+  background: var(--lf-surface);
+  color: var(--lf-text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.liga-flex-pool-more__btn:hover {
+  border-color: var(--lf-border-strong);
+}
+
 .liga-flex-pool-filters {
   display: flex;
   flex-wrap: wrap;

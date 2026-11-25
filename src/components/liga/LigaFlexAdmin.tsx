@@ -133,7 +133,7 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
   const [resetText, setResetText] = useState("");
   const [query, setQuery] = useState("");
   const [directoryQuery, setDirectoryQuery] = useState("");
-  const [participantFilter, setParticipantFilter] = useState<"ALL" | "SELECTED" | "AVAILABLE">("ALL");
+  const [poolShown, setPoolShown] = useState(12);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -401,17 +401,23 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
   const playersOf = (ids: string[]) =>
     ids.map((id) => ({ id, name: names.get(id) ?? "Jugador" }));
 
-  const filteredPool = useMemo(() => {
+  const availablePool = useMemo(() => {
+    const selected = new Set(participantIds);
     const q = query.trim().toLowerCase();
     return pool.filter((player) => {
-      const selected = participantIds.includes(player.id);
-      if (participantFilter === "SELECTED" && !selected) return false;
-      if (participantFilter === "AVAILABLE" && selected) return false;
+      if (selected.has(player.id)) return false;
       if (!q) return true;
       const text = `${player.nombre} ${player.riviera_id ?? ""} ${player.email ?? ""}`.toLowerCase();
       return text.includes(q);
     });
-  }, [pool, query, participantIds, participantFilter]);
+  }, [pool, query, participantIds]);
+
+  useEffect(() => {
+    setPoolShown(12);
+  }, [query, selectedId]);
+
+  const visiblePool = availablePool.slice(0, poolShown);
+  const poolRemaining = availablePool.length - visiblePool.length;
 
   const directoryPlayers = useMemo(() => {
     const q = directoryQuery.trim().toLowerCase();
@@ -1138,36 +1144,21 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                         ) : null}
                       </div>
 
-                      <div className="liga-flex-pool-filters">
-                        {(
-                          [
-                            { id: "ALL", label: "Todos" },
-                            { id: "AVAILABLE", label: "Disponibles" },
-                            { id: "SELECTED", label: "Convocados" },
-                          ] as const
-                        ).map((f) => (
-                          <button
-                            key={f.id}
-                            type="button"
-                            className={`liga-flex-filter-pill${
-                              participantFilter === f.id ? " is-active" : ""
-                            }`}
-                            onClick={() => setParticipantFilter(f.id)}
-                          >
-                            {f.label}
-                          </button>
-                        ))}
-                      </div>
+                      <p className="liga-flex-pool-count">
+                        {availablePool.length} disponibles
+                      </p>
                     </div>
 
-                    <ul className="liga-flex__people liga-flex-people-grid">
-                      {filteredPool.map((player) => {
-                        const selected = participantIds.includes(player.id);
-                        return (
-                          <li
-                            key={player.id}
-                            className={`liga-flex-person-card${selected ? " is-selected" : ""}`}
-                          >
+                    {visiblePool.length === 0 ? (
+                      <p className="liga-flex__empty">
+                        {query.trim()
+                          ? "Nadie más coincide con esa búsqueda, o ya está en la jornada."
+                          : "Los convocados ya están arriba. Busca en el registro si falta alguien."}
+                      </p>
+                    ) : (
+                      <ul className="liga-flex__people liga-flex-people-grid">
+                        {visiblePool.map((player) => (
+                          <li key={player.id} className="liga-flex-person-card">
                             <div className="liga-flex-person-card__avatar" aria-hidden>
                               {player.foto_url ? (
                                 <img src={player.foto_url} alt={player.nombre} />
@@ -1191,23 +1182,38 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                             </div>
                             <button
                               type="button"
-                              className={`liga-flex-person-card__btn${
-                                selected ? " is-remove" : " is-add"
-                              }`}
+                              className="liga-flex-person-card__btn is-add"
                               disabled={
                                 busy ||
                                 hasScores ||
                                 jornada.estado === "completed" ||
-                                (!selected && participantIds.length >= 16)
+                                participantIds.length >= 16
                               }
-                              onClick={() => toggleParticipant(player.id, selected)}
+                              onClick={() => toggleParticipant(player.id, false)}
                             >
-                              {selected ? "Quitar" : "Agregar"}
+                              Agregar
                             </button>
                           </li>
-                        );
-                      })}
-                    </ul>
+                        ))}
+                      </ul>
+                    )}
+
+                    {availablePool.length > 0 ? (
+                      <div className="liga-flex-pool-more">
+                        <span>
+                          {visiblePool.length} de {availablePool.length}
+                        </span>
+                        {poolRemaining > 0 ? (
+                          <button
+                            type="button"
+                            className="liga-flex-pool-more__btn"
+                            onClick={() => setPoolShown((current) => current + 12)}
+                          >
+                            Ver {Math.min(12, poolRemaining)} más
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
 
                     <FlexRegistroUnicoHint />
                   </section>
