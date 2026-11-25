@@ -530,18 +530,29 @@
   min-width: 0;
 }
 
+/* El hijo directo de la grilla oficial va al 100%. La tarjeta vive adentro, con ancho fijo. */
+.flex-pub-live-match__slot {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 0;
+}
+
 /* Retrato compacto. El nombre y el rating los coloca la tarjeta oficial de la jornada. */
-.flex-pub-live .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel.pub-split-vs-panel {
+.flex-pub-live .liga-jornada-match-pair-half__grid .flex-pub-live-match__slot .liga-jornada-match-player-panel.pub-split-vs-panel {
   width: min(100%, 112px);
+  max-width: 112px;
   max-height: none;
   height: auto;
   aspect-ratio: 3 / 4;
   border-radius: 10px;
+  flex: 0 0 auto;
 }
 
 @media (min-width: 640px) {
-  .flex-pub-live .liga-jornada-match-pair-half__grid .liga-jornada-match-player-panel.pub-split-vs-panel {
+  .flex-pub-live .liga-jornada-match-pair-half__grid .flex-pub-live-match__slot .liga-jornada-match-player-panel.pub-split-vs-panel {
     width: min(100%, 124px);
+    max-width: 124px;
     aspect-ratio: 3 / 4;
     max-height: none;
   }

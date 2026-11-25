@@ -928,12 +928,13 @@ function PairSide({
   return (
     <div className="flex-pub-live-match__pair liga-jornada-match-pair-half__grid">
       {players.map((player, idx) => (
-        <LigaJornadaMatchPlayerPanel
-          key={player.id || `${player.name}-${idx}`}
-          name={player.name}
-          foto={player.foto}
-          rating={player.rating}
-        />
+        <div className="flex-pub-live-match__slot" key={player.id || `${player.name}-${idx}`}>
+          <LigaJornadaMatchPlayerPanel
+            name={player.name}
+            foto={player.foto}
+            rating={player.rating}
+          />
+        </div>
       ))}
     </div>
   );
