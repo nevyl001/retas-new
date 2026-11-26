@@ -1,14 +1,9 @@
 /* =============================================================================
-   RIVIERA FLEX LEAGUE — VISTA PÚBLICA GENERAL DE TEMPORADA (REDISEÑO DEFINITIVO)
+   RIVIERA FLEX LEAGUE — VISTA PÚBLICA GENERAL DE TEMPORADA
    Scope exclusivo: .flex-pub-liga
-   Contenedor centrado max-width 1240px, distribución equilibrada de 2 columnas
-   en escritorio (Podio 2º-1º-3º + Clasificación compacta) y calendario de 12 cols.
+   Ancho completo del viewport, mismo padding que la jornada pública.
+   En escritorio: podio 2º-1º-3º + clasificación, y calendario de 12 columnas.
    ============================================================================= */
-
-/* Ocultar el botón flotante de pantalla completa en la vista pública general de Flex League */
-.App:has(.flex-pub-liga) > .ro-public-fullscreen {
-  display: none;
-}
 
 .flex-pub-liga.liga-pantalla {
   --flex-liga-bg: var(--ro-bg-deep, #090a0d);
@@ -56,22 +51,16 @@
   --flex-liga-accent-ink: #ffffff;
 }
 
-/* Contenedor principal centrado a 1240px con márgenes automáticos */
+/* Vista pública a ancho completo con el mismo padding lateral que las demás vistas públicas */
 .flex-pub-liga .liga-pantalla__inner.flex-liga-shell {
-  max-width: 1240px;
+  max-width: none;
   width: 100%;
-  margin: 0 auto;
-  padding: clamp(14px, 2vw, 26px) clamp(12px, 2.2vw, 24px) clamp(28px, 4vw, 48px);
+  margin: 0;
+  padding: clamp(16px, 2vw, 28px) clamp(16px, 2.2vw, 32px) clamp(32px, 4vw, 56px);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-@media (min-width: 768px) {
-  .flex-pub-liga .liga-pantalla__inner.flex-liga-shell {
-    gap: 16px;
-  }
+  gap: 16px;
 }
 
 .flex-pub-liga :is(
@@ -349,7 +338,7 @@
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     gap: 24px;
-    align-items: center;
+    align-items: start;
   }
 
   .flex-liga-standings__layout--only-top3 {

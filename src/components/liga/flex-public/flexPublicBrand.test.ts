@@ -43,6 +43,7 @@ describe("identidad pública de Flex", () => {
       expect(css).toContain("var(--font-body)");
     }
     expect(liga).toContain("var(--brand-accent");
+    expect(liga).not.toContain("max-width: 1240px");
     expect(fs.existsSync(path.join(__dirname, "flex-public-neutral.css"))).toBe(
       false
     );
