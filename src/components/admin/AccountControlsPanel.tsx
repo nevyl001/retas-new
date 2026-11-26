@@ -28,6 +28,8 @@ interface AccountControlsPanelProps {
   organizadorId: string;
   accountLabel: string;
   layout?: "modal" | "page";
+  sectionFilter?: "all" | "configuracion" | "jugadores" | "personalizacion";
+  onSaved?: () => void;
 }
 
 const CATEGORIAS: RivieraJugadorCategoria[] = [
@@ -48,6 +50,8 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   organizadorId,
   accountLabel,
   layout = "modal",
+  sectionFilter = "all",
+  onSaved,
 }) => {
   const [modes, setModes] = useState<Record<GameModeId, boolean> | null>(null);
   const [permiteAjustePuntos, setPermiteAjustePuntos] = useState(true);
@@ -183,6 +187,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
           ? "Configuración guardada. El upgrade visual aplica al volver a entrar en la cuenta."
           : "Configuración guardada."
       );
+      onSaved?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo guardar la configuración");
     } finally {
@@ -309,89 +314,113 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
     );
   }
 
-  const modesSection = (
-    <section className="account-controls__section" aria-labelledby="ac-modes-title">
-      <h4 id="ac-modes-title" className="account-controls__title">
-        Modos de juego
-      </h4>
-      <p className="account-controls__hint">
-        Desactiva un modo para que esta cuenta no pueda usarlo en el inicio.
-      </p>
-      <ul className="account-controls__mode-list">
-        {GAME_MODES.map((mode) => (
-          <li key={mode.id} className="account-controls__mode-item">
-            <label className="account-controls__toggle">
+  const showConfigBlocks =
+    sectionFilter === "all" || sectionFilter === "configuracion";
+  const showBrandingBlock =
+    sectionFilter === "all" || sectionFilter === "personalizacion";
+  const showPlayersBlock =
+    sectionFilter === "all" || sectionFilter === "jugadores";
+
+  const modesSection =
+    showConfigBlocks || showBrandingBlock ? (
+      <section className="account-controls__section" aria-labelledby="ac-modes-title">
+        {showConfigBlocks ? (
+          <>
+            <h4 id="ac-modes-title" className="account-controls__title">
+              Modos de juego habilitados
+            </h4>
+            <p className="account-controls__hint">
+              Activa o desactiva los formatos deportivos disponibles para esta cuenta en su panel de organizador.
+            </p>
+            <ul className="account-controls__mode-list">
+              {GAME_MODES.map((mode) => (
+                <li key={mode.id} className="account-controls__mode-item">
+                  <label className="account-controls__toggle">
+                    <input
+                      type="checkbox"
+                      checked={modes?.[mode.id] !== false}
+                      onChange={() => toggleMode(mode.id)}
+                    />
+                    <span className="account-controls__toggle-label">
+                      {GAME_MODE_LABELS[mode.id]}
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <div className="account-controls__permiso-block">
+              <label className="account-controls__toggle account-controls__toggle--block">
+                <input
+                  type="checkbox"
+                  checked={permiteAjustePuntos}
+                  onChange={() => setPermiteAjustePuntos((v) => !v)}
+                />
+                <span className="account-controls__toggle-label">
+                  Permitir ajuste manual de puntos en el registro
+                </span>
+              </label>
+              <p className="account-controls__hint account-controls__hint--tight">
+                Si lo desactivas, el club solo acumula puntos por partidos registrados
+                en la app. No podrá sumar ni restar puntos manualmente.
+              </p>
+            </div>
+          </>
+        ) : null}
+
+        {showBrandingBlock ? (
+          <div className="account-controls__permiso-block">
+            <h4
+              id={!showConfigBlocks ? "ac-modes-title" : undefined}
+              className="account-controls__title"
+            >
+              Personalización y upgrade visual
+            </h4>
+            <label className="account-controls__toggle account-controls__toggle--block">
               <input
                 type="checkbox"
-                checked={modes?.[mode.id] !== false}
-                onChange={() => toggleMode(mode.id)}
+                checked={premiumBrandingEnabled}
+                onChange={() => setPremiumBrandingEnabled((v) => !v)}
               />
               <span className="account-controls__toggle-label">
-                {GAME_MODE_LABELS[mode.id]}
+                Activar upgrade de estilos, colores y logos del club
               </span>
             </label>
-          </li>
-        ))}
-      </ul>
-      <div className="account-controls__permiso-block">
-        <label className="account-controls__toggle account-controls__toggle--block">
-          <input
-            type="checkbox"
-            checked={permiteAjustePuntos}
-            onChange={() => setPermiteAjustePuntos((v) => !v)}
-          />
-          <span className="account-controls__toggle-label">
-            Permitir ajuste manual de puntos
-          </span>
-        </label>
-        <p className="account-controls__hint account-controls__hint--tight">
-          Si lo desactivas, el club solo acumula puntos por partidos registrados
-          en la app. No podrá sumar ni restar puntos con el lápiz del registro.
-        </p>
-      </div>
-      <div className="account-controls__permiso-block">
-        <h5 className="account-controls__subtitle">Experiencia visual premium</h5>
-        <label className="account-controls__toggle account-controls__toggle--block">
-          <input
-            type="checkbox"
-            checked={premiumBrandingEnabled}
-            onChange={() => setPremiumBrandingEnabled((v) => !v)}
-          />
-          <span className="account-controls__toggle-label">
-            Activar upgrade de estilos, colores y logos
-          </span>
-        </label>
-        <p className="account-controls__hint account-controls__hint--tight">
-          Solo cambia la apariencia (tema y logo del club). Los textos siguen
-          mostrando Riviera Open + nombre del organizador.
-        </p>
-        {premiumBrandingEnabled && (
-          <label className="account-controls__field">
-            <span className="account-controls__field-label">Manifiesto visual</span>
-            <select
-              className="account-controls__select"
-              value={brandingKey}
-              onChange={(e) => setBrandingKey(e.target.value)}
-            >
-              {PREMIUM_MANIFEST_OPTIONS.map((option) => (
-                <option key={option.key} value={option.key}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-      </div>
-      <button
-        type="button"
-        className="account-controls__btn account-controls__btn--primary"
-        onClick={() => void saveSettings()}
-        disabled={savingModes || !modes}
-      >
-        {savingModes ? "Guardando…" : "Guardar configuración"}
-      </button>
-    </section>
-  );
+            <p className="account-controls__hint account-controls__hint--tight">
+              Habilita la identidad visual personalizada del club (paleta, logo y manifiesto visual) en sus vistas operativas y públicas autorizadas.
+            </p>
+            {premiumBrandingEnabled && (
+              <label className="account-controls__field">
+                <span className="account-controls__field-label">Manifiesto visual asignado</span>
+                <select
+                  className="account-controls__select"
+                  value={brandingKey}
+                  onChange={(e) => setBrandingKey(e.target.value)}
+                >
+                  {PREMIUM_MANIFEST_OPTIONS.map((option) => (
+                    <option key={option.key} value={option.key}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          className="account-controls__btn account-controls__btn--primary"
+          onClick={() => void saveSettings()}
+          disabled={savingModes || !modes}
+        >
+          {savingModes
+            ? "Guardando…"
+            : sectionFilter === "personalizacion"
+            ? "Guardar personalización"
+            : "Guardar configuración"}
+        </button>
+      </section>
+    ) : null;
 
   const playersSection = (
     <section className="account-controls__section" aria-labelledby="ac-players-title">
@@ -694,15 +723,15 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
         </div>
       ) : null}
 
-      {layout === "page" ? (
+      {layout === "page" && sectionFilter === "all" ? (
         <div className="account-controls__sections-grid">
           {modesSection}
-          {playersSection}
+          {showPlayersBlock ? playersSection : null}
         </div>
       ) : (
         <>
           {modesSection}
-          {playersSection}
+          {showPlayersBlock ? playersSection : null}
         </>
       )}
     </div>

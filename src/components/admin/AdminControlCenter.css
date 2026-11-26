@@ -1,0 +1,700 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* ==========================================================================
+   RIVIERA OPEN — ADMIN CONTROL CENTER (SaaS Official Design System)
+   Strictly neutral black, white, and grayscale tokens + Bebas Neue & Manrope
+   + Official Riviera Open Padel Court background.
+   ========================================================================== */
+
+.admin-cc {
+  --acc-bg-base: #09090b;
+  --acc-surface-0: rgba(14, 14, 17, 0.88);
+  --acc-surface-1: rgba(19, 19, 23, 0.86);
+  --acc-surface-2: rgba(26, 26, 31, 0.92);
+  --acc-surface-3: rgba(36, 36, 42, 0.95);
+  --acc-surface-solid: #141418;
+  --acc-surface-elevated: #1b1b20;
+
+  --acc-border-subtle: rgba(255, 255, 255, 0.08);
+  --acc-border-default: rgba(255, 255, 255, 0.13);
+  --acc-border-strong: rgba(255, 255, 255, 0.24);
+  --acc-border-focus: rgba(255, 255, 255, 0.55);
+
+  --acc-text-primary: #f5f5f7;
+  --acc-text-secondary: #a1a1aa;
+  --acc-text-muted: #71717a;
+  --acc-text-on-light: #09090b;
+
+  --acc-accent-white: #ffffff;
+  --acc-accent-soft: rgba(255, 255, 255, 0.08);
+  --acc-accent-hover: rgba(255, 255, 255, 0.14);
+
+  --acc-status-live-bg: rgba(255, 255, 255, 0.12);
+  --acc-status-live-text: #ffffff;
+  --acc-status-live-dot: #e4e4e7;
+  --acc-status-ok-bg: rgba(34, 197, 94, 0.12);
+  --acc-status-ok-border: rgba(34, 197, 94, 0.32);
+  --acc-status-ok-text: #bbf7d0;
+  --acc-status-warn-bg: rgba(245, 158, 11, 0.12);
+  --acc-status-warn-border: rgba(245, 158, 11, 0.32);
+  --acc-status-warn-text: #fde68a;
+  --acc-status-danger-bg: rgba(239, 68, 68, 0.12);
+  --acc-status-danger-border: rgba(239, 68, 68, 0.35);
+  --acc-status-danger-text: #fecaca;
+
+  --acc-font-display: 'Bebas Neue', Impact, sans-serif;
+  --acc-font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --acc-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --acc-sidebar-width: 232px;
+  --acc-topbar-height: 60px;
+  --acc-radius-sm: 6px;
+  --acc-radius-md: 10px;
+  --acc-radius-lg: 12px;
+
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: clip;
+  background-color: var(--acc-bg-base);
+  color: var(--acc-text-primary);
+  font-family: var(--acc-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+
+.admin-cc *,
+.admin-cc *::before,
+.admin-cc *::after {
+  box-sizing: border-box;
+}
+
+/* Official Riviera Open Court Background + Neutral Carbon Overlay */
+.admin-cc__court-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: #0c0c0c;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(12, 12, 12, 0.82) 0%,
+      rgba(12, 12, 12, 0.55) 35%,
+      rgba(12, 12, 12, 0.68) 65%,
+      rgba(12, 12, 12, 0.92) 100%
+    ),
+    url('../../assets/cancha-riviera.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+@media (max-width: 768px), (orientation: portrait) and (max-width: 1024px) {
+  .admin-cc__court-bg {
+    background-image:
+      linear-gradient(
+        180deg,
+        rgba(12, 12, 12, 0.78) 0%,
+        rgba(12, 12, 12, 0.50) 35%,
+        rgba(12, 12, 12, 0.65) 62%,
+        rgba(12, 12, 12, 0.90) 100%
+      ),
+      url('../../assets/cancha-riviera-vertical.jpg');
+    background-position: center center;
+  }
+}
+
+/* App Shell */
+.admin-cc__shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--acc-sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+}
+
+/* Left Sidebar (Desktop 232px) */
+.admin-cc__sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  width: var(--acc-sidebar-width);
+  display: flex;
+  flex-direction: column;
+  background: rgba(12, 12, 15, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid var(--acc-border-subtle);
+  padding: 16px 12px;
+  z-index: 30;
+  user-select: none;
+}
+
+.admin-cc__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 8px 14px;
+  border-bottom: 1px solid var(--acc-border-subtle);
+  margin-bottom: 14px;
+}
+
+.admin-cc__brand-logo-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.admin-cc__brand-wordmark {
+  font-family: var(--acc-font-sans);
+  font-size: 0.96rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.admin-cc__brand-logo-btn .club-identity {
+  margin: 0;
+}
+
+.admin-cc__brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--acc-border-subtle);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--acc-text-secondary);
+}
+
+.admin-cc__brand-badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.admin-cc__nav-group-label {
+  padding: 0 10px;
+  margin: 0 0 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--acc-text-muted);
+}
+
+.admin-cc__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.admin-cc__nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: var(--acc-radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--acc-text-secondary);
+  font-family: var(--acc-font-sans);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+
+.admin-cc__nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--acc-text-primary);
+}
+
+.admin-cc__nav-item--active {
+  background: #ffffff;
+  color: #09090b;
+  border-color: #ffffff;
+  font-weight: 700;
+}
+
+.admin-cc__nav-item--active:hover {
+  background: #f4f4f5;
+  color: #09090b;
+}
+
+.admin-cc__nav-item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-cc__nav-icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.admin-cc__nav-item--active .admin-cc__nav-icon {
+  opacity: 1;
+}
+
+.admin-cc__nav-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-cc__nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 19px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--acc-text-secondary);
+}
+
+.admin-cc__nav-item--active .admin-cc__nav-badge {
+  background: rgba(9, 9, 11, 0.14);
+  color: #09090b;
+}
+
+.admin-cc__sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--acc-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-cc__system-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--acc-radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--acc-border-subtle);
+  font-size: 0.73rem;
+  color: var(--acc-text-secondary);
+}
+
+.admin-cc__system-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #e4e4e7;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+/* Main Content Area */
+.admin-cc__workspace {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Top Bar */
+.admin-cc__topbar {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  min-height: var(--acc-topbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 24px;
+  background: rgba(12, 12, 15, 0.84);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--acc-border-subtle);
+}
+
+.admin-cc__topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.admin-cc__mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--acc-radius-sm);
+  border: 1px solid var(--acc-border-default);
+  background: var(--acc-surface-2);
+  color: var(--acc-text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.admin-cc__topbar-titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-cc__topbar-eyebrow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--acc-text-muted);
+  line-height: 1.1;
+}
+
+.admin-cc__topbar-title {
+  margin: 2px 0 0;
+  font-family: var(--acc-font-display);
+  font-size: 1.45rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+  color: var(--acc-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-cc__topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.admin-cc__topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Account Menu Dropdown */
+.admin-cc__account-menu {
+  position: relative;
+}
+
+.admin-cc__account-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 10px 4px 6px;
+  border-radius: var(--acc-radius-sm);
+  border: 1px solid var(--acc-border-default);
+  background: var(--acc-surface-2);
+  color: var(--acc-text-primary);
+  font-family: var(--acc-font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+
+.admin-cc__account-trigger:hover {
+  border-color: var(--acc-border-strong);
+  background: var(--acc-surface-3);
+}
+
+.admin-cc__account-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #09090b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.admin-cc__account-email {
+  max-width: 190px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--acc-text-secondary);
+}
+
+.admin-cc__account-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 240px;
+  padding: 8px;
+  border-radius: var(--acc-radius-md);
+  background: #16161a;
+  border: 1px solid var(--acc-border-strong);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
+  z-index: 60;
+}
+
+.admin-cc__account-dropdown-head {
+  padding: 6px 8px 8px;
+  border-bottom: 1px solid var(--acc-border-subtle);
+  margin-bottom: 6px;
+}
+
+.admin-cc__account-dropdown-role {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--acc-text-muted);
+}
+
+.admin-cc__account-dropdown-mail {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--acc-text-primary);
+  word-break: break-all;
+}
+
+.admin-cc__account-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: var(--acc-radius-sm);
+  border: 0;
+  background: transparent;
+  color: var(--acc-text-primary);
+  font-family: var(--acc-font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-cc__account-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.admin-cc__account-dropdown-item--danger {
+  color: #fca5a5;
+}
+
+.admin-cc__account-dropdown-item--danger:hover {
+  background: var(--acc-status-danger-bg);
+}
+
+/* Main Content Inner Container */
+.admin-cc__content {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* Standard SaaS Buttons inside Control Center */
+.admin-cc__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: var(--acc-radius-sm);
+  border: 1px solid var(--acc-border-default);
+  background: var(--acc-surface-2);
+  color: var(--acc-text-primary);
+  font-family: var(--acc-font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+
+.admin-cc__btn:hover:not(:disabled) {
+  background: var(--acc-surface-3);
+  border-color: var(--acc-border-strong);
+}
+
+.admin-cc__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-cc__btn--primary {
+  background: #ffffff;
+  color: #09090b;
+  border-color: #ffffff;
+  font-weight: 700;
+}
+
+.admin-cc__btn--primary:hover:not(:disabled) {
+  background: #e4e4e7;
+  border-color: #e4e4e7;
+  color: #09090b;
+}
+
+.admin-cc__btn--ghost {
+  background: transparent;
+  border-color: var(--acc-border-subtle);
+  color: var(--acc-text-secondary);
+}
+
+.admin-cc__btn--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--acc-text-primary);
+  border-color: var(--acc-border-default);
+}
+
+.admin-cc__btn--danger {
+  background: var(--acc-status-danger-bg);
+  border-color: var(--acc-status-danger-border);
+  color: var(--acc-status-danger-text);
+}
+
+.admin-cc__btn--danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.admin-cc__btn--sm {
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+}
+
+/* Mobile Navigation Drawer */
+.admin-cc__mobile-backdrop {
+  display: none;
+}
+
+@media (max-width: 959px) {
+  .admin-cc__shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-cc__sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(280px, 84vw);
+    transform: translateX(-100%);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 80;
+    box-shadow: 16px 0 40px rgba(0, 0, 0, 0.75);
+  }
+
+  .admin-cc__sidebar--open {
+    transform: translateX(0);
+  }
+
+  .admin-cc__mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(3px);
+    z-index: 75;
+  }
+
+  .admin-cc__mobile-menu-btn {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .admin-cc__topbar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .admin-cc__topbar-eyebrow {
+    display: none;
+  }
+
+  .admin-cc__topbar-title {
+    font-size: 1.2rem;
+  }
+
+  .admin-cc__topbar-actions .admin-cc__btn--primary {
+    display: none;
+  }
+
+  .admin-cc__topbar-actions .admin-cc__btn--ghost span {
+    display: none;
+  }
+
+  .admin-cc__topbar-actions .admin-cc__btn--ghost {
+    padding: 6px 8px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .admin-cc__content {
+    padding: 14px 14px 36px;
+    gap: 16px;
+  }
+
+  .admin-cc__account-email {
+    display: none;
+  }
+
+  .admin-cc__account-trigger {
+    min-height: 40px;
+    padding: 4px 8px;
+  }
+
+  .admin-cc__nav-item {
+    min-height: 44px;
+  }
+}

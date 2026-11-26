@@ -20,7 +20,45 @@ export function parseAdminUserIdFromPath(pathname?: string): string | null {
   }
 }
 
-export function navigateAdminDashboard(): void {
+export type AdminControlSection =
+  | "resumen"
+  | "cuentas"
+  | "competencias"
+  | "actividad";
+
+const ADMIN_SECTION_STORAGE_KEY = "riviera_admin_active_section";
+
+export function readStoredAdminSection(): AdminControlSection {
+  if (typeof window === "undefined") return "resumen";
+  try {
+    const raw = window.sessionStorage.getItem(ADMIN_SECTION_STORAGE_KEY);
+    if (
+      raw === "resumen" ||
+      raw === "cuentas" ||
+      raw === "competencias" ||
+      raw === "actividad"
+    ) {
+      return raw;
+    }
+  } catch {
+    /* ignore */
+  }
+  return "resumen";
+}
+
+export function writeStoredAdminSection(section: AdminControlSection): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(ADMIN_SECTION_STORAGE_KEY, section);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function navigateAdminDashboard(section?: AdminControlSection): void {
+  if (section) {
+    writeStoredAdminSection(section);
+  }
   navigateAppTo("/admin-dashboard");
 }
 

@@ -1,7 +1,15 @@
 .account-controls {
   margin-top: 1.25rem;
   padding-top: 1.25rem;
-  border-top: 1px solid var(--admin-input-border, var(--ro-border-strong));
+  border-top: 1px solid var(--acc-border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.account-controls--page {
+  margin-top: 0;
+  padding: 16px 18px;
+  border-radius: var(--acc-radius-md, 10px);
+  background: var(--acc-surface-1, rgba(19, 19, 23, 0.86));
+  border: 1px solid var(--acc-border-subtle, rgba(255, 255, 255, 0.08));
 }
 
 .account-controls--loading {
@@ -109,15 +117,15 @@
   min-width: 0;
   padding: 0.45rem 0.6rem;
   border-radius: 6px;
-  border: 1px solid var(--admin-input-border, #2e343d);
-  background: var(--admin-input-bg, #1a1f26);
-  color: var(--admin-text, #ffffff);
+  border: 1px solid var(--acc-border-default, rgba(255, 255, 255, 0.14));
+  background: var(--acc-surface-2, #1b1b20);
+  color: var(--acc-text-primary, #f5f5f7);
   font-size: 0.8125rem;
   color-scheme: dark;
 }
 
 .account-controls__input::placeholder {
-  color: var(--admin-text-muted, #a8b0bc);
+  color: var(--acc-text-muted, #71717a);
   opacity: 1;
 }
 
@@ -129,11 +137,11 @@
 .account-controls__btn {
   padding: 0.45rem 0.75rem;
   border-radius: 6px;
-  border: 1px solid var(--admin-input-border, var(--ro-border-strong));
-  background: var(--admin-input-bg, var(--ro-bg-card));
-  color: var(--admin-text, var(--ro-text-primary));
+  border: 1px solid var(--acc-border-default, rgba(255, 255, 255, 0.14));
+  background: var(--acc-surface-2, #1b1b20);
+  color: var(--acc-text-primary, #f5f5f7);
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition:
     background-color 0.15s ease,
@@ -142,8 +150,8 @@
 }
 
 .account-controls__btn:hover:not(:disabled) {
-  border-color: var(--admin-border-strong, #2e343d);
-  background: var(--admin-accent-soft, #232931);
+  border-color: var(--acc-border-strong, rgba(255, 255, 255, 0.24));
+  background: var(--acc-surface-3, #24242a);
 }
 
 .account-controls__btn:disabled {
@@ -152,16 +160,16 @@
 }
 
 .account-controls__btn--primary {
-  background: var(--admin-accent, #f5f2eb);
-  border-color: var(--admin-accent, #f5f2eb);
-  color: var(--admin-ink, var(--ro-text-on-accent, #12161b));
-  font-weight: 600;
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #09090b;
+  font-weight: 700;
 }
 
 .account-controls__btn--primary:hover:not(:disabled) {
-  background: var(--admin-accent-hover, #ffffff);
-  border-color: var(--admin-accent-hover, #ffffff);
-  color: var(--admin-ink, var(--ro-text-on-accent, #12161b));
+  background: #e4e4e7;
+  border-color: #e4e4e7;
+  color: #09090b;
 }
 
 .account-controls__btn--ghost {

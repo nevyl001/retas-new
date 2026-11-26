@@ -1,424 +1,1153 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { ClubIdentity } from "../../club-experience";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useAdmin } from "../../contexts/AdminContext";
-import { supabase } from "../../lib/supabaseClient";
-import { Button } from "../ui";
-import { ErrorBoundary } from "../ErrorBoundary";
+import { TablerIcon } from "../ui/TablerIcon";
+import { AdminControlLayout } from "./AdminControlLayout";
 import { UserManagement } from "./UserManagement";
+import {
+  fetchAdminControlCenterSnapshot,
+  type AdminControlCenterSnapshot,
+  type AdminFormatKey,
+} from "../../lib/admin/adminControlCenterData";
+import {
+  navigateAdminUser,
+  readStoredAdminSection,
+  writeStoredAdminSection,
+  type AdminControlSection,
+} from "../../lib/admin/adminNav";
 import "./AdminDashboard.css";
 
-interface UserRow {
-  id: string;
-  email: string;
-  name: string;
-  created_at: string;
+const SECTION_TITLES: Record<
+  AdminControlSection,
+  { title: string; eyebrow: string }
+> = {
+  resumen: {
+    title: "Resumen General de Plataforma",
+    eyebrow: "Riviera Open · Control Center",
+  },
+  cuentas: {
+    title: "Gestión de Cuentas y Clubes",
+    eyebrow: "Riviera Open · Directorio Oficial",
+  },
+  competencias: {
+    title: "Competencias y Formatos Deportivos",
+    eyebrow: "Riviera Open · Operación Deportiva",
+  },
+  actividad: {
+    title: "Actividad del Sistema",
+    eyebrow: "Riviera Open · Bitácora Verificable",
+  },
+};
+
+function formatShortDate(iso: string): string {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "—";
+  return new Date(t).toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
-const DRAFT_DESCRIPTION = "Parejas en armado para torneo";
-
-function isDraftTournamentRow(row: {
-  name?: string | null;
-  description?: string | null;
-}): boolean {
-  const n = (row.name ?? "").trim();
-  const d = (row.description ?? "").trim();
-  return (
-    n.startsWith("(Borrador)") ||
-    n === "Torneo Express Draft" ||
-    n === DRAFT_DESCRIPTION ||
-    d === DRAFT_DESCRIPTION
-  );
+function formatDateTime(iso: string): string {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "—";
+  return new Date(t).toLocaleString("es-MX", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-function americanIdsFromPublicConfig(
-  rows: Record<string, unknown>[] | null | undefined
-): Set<string> {
-  const ids = new Set<string>();
-  if (!rows) return ids;
-  for (const row of rows) {
-    if (!("americano_live" in row)) continue;
-    const live = row.americano_live as unknown;
-    if (
-      live &&
-      typeof live === "object" &&
-      !Array.isArray(live) &&
-      (live as { version?: number }).version === 1
-    ) {
-      const tid = row.tournament_id;
-      if (typeof tid === "string") ids.add(tid);
-    }
+function getInitials(name: string, email: string): string {
+  const src = (name || email || "RO").trim();
+  const parts = src.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
   }
-  return ids;
-}
-
-function teamIdsFromPublicConfig(
-  rows: Record<string, unknown>[] | null | undefined
-): Set<string> {
-  const ids = new Set<string>();
-  if (!rows) return ids;
-  for (const row of rows) {
-    if (row.format !== "teams") continue;
-    const tc = row.team_config as
-      | { teamNames?: unknown[]; pairToTeam?: Record<string, unknown> }
-      | undefined;
-    const tid = row.tournament_id;
-    if (
-      typeof tid === "string" &&
-      Array.isArray(tc?.teamNames) &&
-      (tc?.teamNames?.length ?? 0) > 0 &&
-      tc?.pairToTeam &&
-      typeof tc.pairToTeam === "object"
-    ) {
-      ids.add(tid);
-    }
-  }
-  return ids;
-}
-
-type TournamentMode = "americano" | "teams" | "round_robin";
-
-function resolveTournamentMode(
-  tournamentId: string,
-  americanIds: Set<string>,
-  teamIds: Set<string>
-): TournamentMode {
-  if (americanIds.has(tournamentId)) return "americano";
-  if (teamIds.has(tournamentId)) return "teams";
-  return "round_robin";
-}
-
-interface ModeCounts {
-  total: number;
-  active: number;
-  finished: number;
-}
-
-function emptyModeCounts(): ModeCounts {
-  return { total: 0, active: 0, finished: 0 };
-}
-
-function bumpModeCounts(
-  counts: ModeCounts,
-  isFinished: boolean | null | undefined
-): void {
-  counts.total += 1;
-  if (isFinished === true) {
-    counts.finished += 1;
-  } else {
-    counts.active += 1;
-  }
-}
-
-interface DashboardStats {
-  totalUsers: number;
-  totalTournamentsApp: number;
-  tournamentsActive: number;
-  tournamentsFinished: number;
-  roundRobin: ModeCounts;
-  americano: ModeCounts;
-  teams: ModeCounts;
-  express: ModeCounts;
+  return src.slice(0, 2).toUpperCase();
 }
 
 export const AdminDashboard: React.FC = () => {
-  const { adminUser, logoutAdmin } = useAdmin();
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
-    totalUsers: 0,
-    totalTournamentsApp: 0,
-    tournamentsActive: 0,
-    tournamentsFinished: 0,
-    roundRobin: emptyModeCounts(),
-    americano: emptyModeCounts(),
-    teams: emptyModeCounts(),
-    express: emptyModeCounts(),
-  });
-  const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState<"dashboard" | "users">(
-    "dashboard"
+  const { adminUser } = useAdmin();
+  const [section, setSection] = useState<AdminControlSection>(() =>
+    readStoredAdminSection()
   );
+  const [snapshot, setSnapshot] = useState<AdminControlCenterSnapshot | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
-  const loadDashboardData = useCallback(async () => {
-    if (!adminUser) {
-      setLoading(false);
-      return;
-    }
+  // Competencias filters
+  const [compSearch, setCompSearch] = useState("");
+  const [compFormatFilter, setCompFormatFilter] = useState<
+    "all" | AdminFormatKey
+  >("all");
+  const [compStatusFilter, setCompStatusFilter] = useState<
+    "all" | "active" | "finished"
+  >("all");
+  const [compPage, setCompPage] = useState(1);
+  const COMP_PAGE_SIZE = 15;
 
-    try {
-      setLoading(true);
+  // Actividad filters
+  const [actCategory, setActCategory] = useState<
+    "all" | "competencia" | "cuenta" | "coaching"
+  >("all");
+  const [actSearch, setActSearch] = useState("");
+
+  const handleSelectSection = useCallback((next: AdminControlSection) => {
+    setSection(next);
+    writeStoredAdminSection(next);
+  }, []);
+
+  const loadSnapshot = useCallback(
+    async (isSilent = false) => {
+      if (isSilent) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError("");
-
-      const { data: users, error: usersError } = await supabase
-        .from("users")
-        .select("id, email, name, created_at")
-        .order("created_at", { ascending: false });
-
-      if (usersError) {
-        throw usersError;
-      }
-
-      const filteredUsers: UserRow[] =
-        users?.filter((u) => u.id !== adminUser?.user_id) ?? [];
-
-      const [{ data: tournaments, error: tournamentsError }, { data: expressRows, error: expressError }, { data: publicConfigs, error: publicConfigError }] =
-        await Promise.all([
-          supabase
-            .from("tournaments")
-            .select("id, created_at, user_id, is_finished, name, description"),
-          supabase.from("torneo_express").select("id, estado"),
-          supabase.from("tournament_public_config").select("*"),
-        ]);
-
-      if (tournamentsError) {
-        throw tournamentsError;
-      }
-      if (expressError) {
-        console.warn("Torneo Express dashboard:", expressError);
-      }
-      if (publicConfigError) {
-        console.warn("tournament_public_config dashboard:", publicConfigError);
-      }
-
-      const americanIds = americanIdsFromPublicConfig(
-        publicConfigs as Record<string, unknown>[] | null | undefined
-      );
-      const teamIds = teamIdsFromPublicConfig(
-        publicConfigs as Record<string, unknown>[] | null | undefined
-      );
-
-      const realTournaments =
-        tournaments?.filter((t) => !isDraftTournamentRow(t)) ?? [];
-
-      const roundRobin = emptyModeCounts();
-      const americano = emptyModeCounts();
-      const teams = emptyModeCounts();
-      let activeApp = 0;
-      let finishedApp = 0;
-
-      for (const t of realTournaments) {
-        if (t.is_finished === true) {
-          finishedApp += 1;
-        } else {
-          activeApp += 1;
-        }
-
-        const mode = resolveTournamentMode(
-          String(t.id),
-          americanIds,
-          teamIds
+      try {
+        const data = await fetchAdminControlCenterSnapshot(
+          adminUser?.id ?? null
         );
-        if (mode === "americano") {
-          bumpModeCounts(americano, t.is_finished);
-        } else if (mode === "teams") {
-          bumpModeCounts(teams, t.is_finished);
-        } else {
-          bumpModeCounts(roundRobin, t.is_finished);
-        }
+        setSnapshot(data);
+      } catch (e) {
+        setError(
+          e instanceof Error
+            ? e.message
+            : "No se pudieron cargar las métricas del panel de administración."
+        );
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-      const express = emptyModeCounts();
-      for (const row of expressRows ?? []) {
-        const estado = (row as { estado?: string }).estado ?? "pendiente";
-        bumpModeCounts(express, estado === "finalizado");
-      }
-
-      const stats: DashboardStats = {
-        totalUsers: filteredUsers.length,
-        totalTournamentsApp: realTournaments.length,
-        tournamentsActive: activeApp,
-        tournamentsFinished: finishedApp,
-        roundRobin,
-        americano,
-        teams,
-        express,
-      };
-
-      setDashboardStats(stats);
-    } catch (err) {
-      console.error("Error loading dashboard data:", err);
-      setError("Error al cargar los datos del dashboard");
-    } finally {
-      setLoading(false);
-    }
-  }, [adminUser]);
+    },
+    [adminUser?.id]
+  );
 
   useEffect(() => {
-    if (adminUser) {
-      void loadDashboardData();
-    }
-  }, [adminUser, loadDashboardData]);
+    void loadSnapshot(false);
+  }, [loadSnapshot]);
 
-  const handleLogout = () => {
-    void logoutAdmin();
-  };
+  const clubAccounts = useMemo(
+    () =>
+      snapshot?.accounts.filter((a) => a.account_kind === "club") ?? [],
+    [snapshot]
+  );
 
-  const modeSublabel = (c: ModeCounts) =>
-    `${c.active} activas · ${c.finished} fin.`;
+  const clubesActivos = useMemo(
+    () =>
+      clubAccounts.filter((c) => c.competencias_activas > 0).length,
+    [clubAccounts]
+  );
 
-  if (loading) {
-    return (
-      <div className="admin-dash ro-surface-dark">
-        <div className="admin-dash__loading">
-          <div className="admin-dash__spinner" aria-hidden="true" />
-          <p className="admin-dash__loading-text">Cargando datos...</p>
-        </div>
-      </div>
-    );
-  }
+  const clubesConUpgrade = useMemo(
+    () => clubAccounts.filter((c) => c.has_upgrade).length,
+    [clubAccounts]
+  );
+
+  const topClubs = useMemo(() => {
+    return [...clubAccounts]
+      .sort((a, b) => {
+        if (b.competencias_total !== a.competencias_total) {
+          return b.competencias_total - a.competencias_total;
+        }
+        return b.jugadores_total - a.jugadores_total;
+      })
+      .slice(0, 6);
+  }, [clubAccounts]);
+
+  const filteredCompetitions = useMemo(() => {
+    if (!snapshot) return [];
+    const q = compSearch.trim().toLowerCase();
+    return snapshot.competitions.filter((c) => {
+      if (compFormatFilter !== "all" && c.formatKey !== compFormatFilter) {
+        return false;
+      }
+      if (compStatusFilter !== "all" && c.status !== compStatusFilter) {
+        return false;
+      }
+      if (!q) return true;
+      return (
+        c.title.toLowerCase().includes(q) ||
+        c.organizadorName.toLowerCase().includes(q) ||
+        c.formatLabel.toLowerCase().includes(q) ||
+        c.id.toLowerCase().includes(q)
+      );
+    });
+  }, [snapshot, compSearch, compFormatFilter, compStatusFilter]);
+
+  useEffect(() => {
+    setCompPage(1);
+  }, [compSearch, compFormatFilter, compStatusFilter]);
+
+  const totalCompPages = Math.max(
+    1,
+    Math.ceil(filteredCompetitions.length / COMP_PAGE_SIZE)
+  );
+  const pagedCompetitions = useMemo(() => {
+    const start = (compPage - 1) * COMP_PAGE_SIZE;
+    return filteredCompetitions.slice(start, start + COMP_PAGE_SIZE);
+  }, [filteredCompetitions, compPage]);
+
+  const filteredActivities = useMemo(() => {
+    if (!snapshot) return [];
+    const q = actSearch.trim().toLowerCase();
+    return snapshot.activities.filter((a) => {
+      if (actCategory !== "all" && a.kind !== actCategory) return false;
+      if (!q) return true;
+      return (
+        a.title.toLowerCase().includes(q) ||
+        a.subtitle.toLowerCase().includes(q) ||
+        a.actorName.toLowerCase().includes(q)
+      );
+    });
+  }, [snapshot, actCategory, actSearch]);
+
+  const navBadges = useMemo(
+    () =>
+      snapshot
+        ? {
+            cuentas: snapshot.totalAccountsCount,
+            competencias: snapshot.competenciasTotal,
+            actividad: snapshot.activities.length,
+          }
+        : undefined,
+    [snapshot]
+  );
+
+  const currentSectionMeta = SECTION_TITLES[section];
 
   return (
-    <div className="admin-dash ro-surface-dark">
-      <header className="admin-dash__header">
-        <div className="admin-dash__brand">
-          <ClubIdentity variant="compact" showTagline={false} logoSurface="dark" />
-        </div>
-        <div className="admin-dash__header-title-wrap">
-          <h1 className="admin-dash__title">Panel de administración</h1>
-          {adminUser?.email ? (
-            <p className="admin-dash__subtitle">{adminUser.email}</p>
+    <AdminControlLayout
+      activeSection={section}
+      onSelectSection={handleSelectSection}
+      title={currentSectionMeta.title}
+      eyebrow={currentSectionMeta.eyebrow}
+      badges={navBadges}
+      headerActions={
+        <>
+          <button
+            type="button"
+            className="admin-cc__btn admin-cc__btn--ghost admin-cc__btn--sm"
+            onClick={() => void loadSnapshot(true)}
+            disabled={loading || refreshing}
+            title="Sincronizar estadísticas e información en tiempo real"
+          >
+            <TablerIcon name="refresh" size={15} />
+            <span>{refreshing ? "Actualizando…" : "Actualizar"}</span>
+          </button>
+          {section !== "cuentas" ? (
+            <button
+              type="button"
+              className="admin-cc__btn admin-cc__btn--primary admin-cc__btn--sm"
+              onClick={() => handleSelectSection("cuentas")}
+            >
+              <TablerIcon name="users" size={15} />
+              <span>Gestionar cuentas</span>
+            </button>
           ) : null}
-        </div>
-        <Button type="button" variant="ghost" size="sm" onClick={handleLogout}>
-          Cerrar sesión
-        </Button>
-      </header>
-
+        </>
+      }
+    >
       {error ? (
-        <div className="admin-dash__banner admin-dash__banner--error" role="alert">
-          {error}
+        <div className="admin-dash__alert" role="alert">
+          <div className="admin-dash__alert-text">
+            <strong>Error de sincronización:</strong> {error}
+          </div>
+          <button
+            type="button"
+            className="admin-cc__btn admin-cc__btn--sm"
+            onClick={() => void loadSnapshot(false)}
+          >
+            Reintentar
+          </button>
         </div>
       ) : null}
 
-      <nav className="admin-dash__tabs" aria-label="Sección del panel">
-        <button
-          type="button"
-          className={
-            activeSection === "dashboard"
-              ? "admin-dash__tab admin-dash__tab--active"
-              : "admin-dash__tab"
-          }
-          onClick={() => setActiveSection("dashboard")}
-        >
-          Resumen
-        </button>
-        <button
-          type="button"
-          className={
-            activeSection === "users"
-              ? "admin-dash__tab admin-dash__tab--active"
-              : "admin-dash__tab"
-          }
-          onClick={() => setActiveSection("users")}
-        >
-          Usuarios
-        </button>
-      </nav>
-
-      {activeSection === "dashboard" ? (
-        <section className="admin-dash__summary" aria-label="Resumen">
-          <h2 className="admin-dash__stat-section-title">General</h2>
-          <div className="admin-dash__stat-grid admin-dash__stat-grid--4">
-            <article className="admin-dash__stat-card">
-              <span className="admin-dash__stat-value">
-                {dashboardStats.totalUsers}
-              </span>
-              <div className="admin-dash__stat-meta">
-                <span className="admin-dash__stat-label">Usuarios</span>
-                <span className="admin-dash__stat-sublabel" aria-hidden="true">
-                  &nbsp;
-                </span>
-              </div>
-            </article>
-            <article className="admin-dash__stat-card">
-              <span className="admin-dash__stat-value">
-                {dashboardStats.totalTournamentsApp}
-              </span>
-              <div className="admin-dash__stat-meta">
-                <span className="admin-dash__stat-label">Retas totales</span>
-                <span className="admin-dash__stat-sublabel">Sin borradores</span>
-              </div>
-            </article>
-            <article className="admin-dash__stat-card">
-              <span className="admin-dash__stat-value">
-                {dashboardStats.tournamentsActive}
-              </span>
-              <div className="admin-dash__stat-meta">
-                <span className="admin-dash__stat-label">Retas activas</span>
-                <span className="admin-dash__stat-sublabel">En curso o pendientes</span>
-              </div>
-            </article>
-            <article className="admin-dash__stat-card">
-              <span className="admin-dash__stat-value">
-                {dashboardStats.tournamentsFinished}
-              </span>
-              <div className="admin-dash__stat-meta">
-                <span className="admin-dash__stat-label">Retas finalizadas</span>
-                <span className="admin-dash__stat-sublabel">Completadas</span>
-              </div>
-            </article>
+      {loading && !snapshot ? (
+        <div className="admin-dash__loading-state" aria-busy="true">
+          <div className="admin-dash__kpi-grid">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="admin-dash__kpi-card admin-dash__kpi-card--skeleton"
+              />
+            ))}
           </div>
-
-          <h2 className="admin-dash__stat-section-title">Por modo de juego</h2>
-          <div className="admin-dash__stat-grid admin-dash__stat-grid--4">
-            <article className="admin-dash__stat-card">
-              <span className="admin-dash__stat-value">
-                {dashboardStats.roundRobin.total}
-              </span>
-              <div className="admin-dash__stat-meta">
-                <span className="admin-dash__stat-label">Round robin</span>
-                <span className="admin-dash__stat-sublabel">
-                  {modeSublabel(dashboardStats.roundRobin)}
-                </span>
-              </div>
-            </article>
-            <article className="admin-dash__stat-card">
-              <span className="admin-dash__stat-value">
-                {dashboardStats.americano.total}
-              </span>
-              <div className="admin-dash__stat-meta">
-                <span className="admin-dash__stat-label">Pádel americano</span>
-                <span className="admin-dash__stat-sublabel">
-                  {modeSublabel(dashboardStats.americano)}
-                </span>
-              </div>
-            </article>
-            <article className="admin-dash__stat-card">
-              <span className="admin-dash__stat-value">
-                {dashboardStats.teams.total}
-              </span>
-              <div className="admin-dash__stat-meta">
-                <span className="admin-dash__stat-label">Por equipos</span>
-                <span className="admin-dash__stat-sublabel">
-                  {modeSublabel(dashboardStats.teams)}
-                </span>
-              </div>
-            </article>
-            <article className="admin-dash__stat-card">
-              <span className="admin-dash__stat-value">
-                {dashboardStats.express.total}
-              </span>
-              <div className="admin-dash__stat-meta">
-                <span className="admin-dash__stat-label">Torneo Express</span>
-                <span className="admin-dash__stat-sublabel">
-                  {modeSublabel(dashboardStats.express)}
-                </span>
-              </div>
-            </article>
-          </div>
-
-          <p className="admin-dash__hint-muted">
-            El listado completo está en Usuarios.
-          </p>
-        </section>
+          <div className="admin-dash__skeleton-panel" />
+        </div>
       ) : null}
 
-      {activeSection === "users" ? (
-        <section className="admin-dash__users-shell" aria-label="Gestión de usuarios">
-          <ErrorBoundary>
-            <UserManagement />
-          </ErrorBoundary>
-        </section>
+      {snapshot && section === "resumen" ? (
+        <div className="admin-dash__section-stack">
+          {/* 6 Compact KPI Cards (90-110px desktop height) */}
+          <section aria-label="Indicadores clave de la plataforma">
+            <div className="admin-dash__kpi-grid">
+              <article className="admin-dash__kpi-card">
+                <div className="admin-dash__kpi-top">
+                  <span className="admin-dash__kpi-label">
+                    Clubes registrados
+                  </span>
+                  <TablerIcon
+                    name="trophy"
+                    size={15}
+                    className="admin-dash__kpi-icon"
+                  />
+                </div>
+                <div className="admin-dash__kpi-value">
+                  {snapshot.clubesCount}
+                </div>
+                <div className="admin-dash__kpi-sub">
+                  {clubesActivos} en operación · {clubesConUpgrade} con upgrade
+                </div>
+              </article>
+
+              <article className="admin-dash__kpi-card">
+                <div className="admin-dash__kpi-top">
+                  <span className="admin-dash__kpi-label">
+                    Cuentas registradas
+                  </span>
+                  <TablerIcon
+                    name="users"
+                    size={15}
+                    className="admin-dash__kpi-icon"
+                  />
+                </div>
+                <div className="admin-dash__kpi-value">
+                  {snapshot.totalAccountsCount}
+                </div>
+                <div className="admin-dash__kpi-sub">
+                  {snapshot.clubesCount} clubes · {snapshot.coachesCount}{" "}
+                  coaches · {snapshot.studentsCount} alumnos
+                </div>
+              </article>
+
+              <article className="admin-dash__kpi-card">
+                <div className="admin-dash__kpi-top">
+                  <span className="admin-dash__kpi-label">
+                    Jugadores registrados
+                  </span>
+                  <TablerIcon
+                    name="user"
+                    size={15}
+                    className="admin-dash__kpi-icon"
+                  />
+                </div>
+                <div className="admin-dash__kpi-value">
+                  {snapshot.jugadoresTotal}
+                </div>
+                <div className="admin-dash__kpi-sub">
+                  {snapshot.jugadoresPublicos} publicados en ranking oficial
+                </div>
+              </article>
+
+              <article className="admin-dash__kpi-card admin-dash__kpi-card--highlight">
+                <div className="admin-dash__kpi-top">
+                  <span className="admin-dash__kpi-label">
+                    Competencias totales
+                  </span>
+                  <TablerIcon
+                    name="chart-bar"
+                    size={15}
+                    className="admin-dash__kpi-icon"
+                  />
+                </div>
+                <div className="admin-dash__kpi-value">
+                  {snapshot.competenciasTotal}
+                </div>
+                <div className="admin-dash__kpi-sub">
+                  {snapshot.retasTournamentsTableTotal} retas +{" "}
+                  {snapshot.formats.torneo_express.total} Express +{" "}
+                  {snapshot.formats.liga_individual.total +
+                    snapshot.formats.liga_parejas.total +
+                    snapshot.formats.liga_flex.total}{" "}
+                  Ligas + {snapshot.formats.duelo_2v2.total} Duelos
+                </div>
+              </article>
+
+              <article className="admin-dash__kpi-card">
+                <div className="admin-dash__kpi-top">
+                  <span className="admin-dash__kpi-label">
+                    Competencias activas
+                  </span>
+                  <TablerIcon
+                    name="bolt"
+                    size={15}
+                    className="admin-dash__kpi-icon"
+                  />
+                </div>
+                <div className="admin-dash__kpi-value">
+                  {snapshot.competenciasActivas}
+                </div>
+                <div className="admin-dash__kpi-sub">
+                  En curso o abiertas en los 8 formatos
+                </div>
+              </article>
+
+              <article className="admin-dash__kpi-card">
+                <div className="admin-dash__kpi-top">
+                  <span className="admin-dash__kpi-label">
+                    Competencias finalizadas
+                  </span>
+                  <TablerIcon
+                    name="circle-check"
+                    size={15}
+                    className="admin-dash__kpi-icon"
+                  />
+                </div>
+                <div className="admin-dash__kpi-value">
+                  {snapshot.competenciasFinalizadas}
+                </div>
+                <div className="admin-dash__kpi-sub">
+                  Completadas (excluye borradores)
+                </div>
+              </article>
+            </div>
+          </section>
+
+          {/* 2-Column Main Operational Overview */}
+          <div className="admin-dash__main-grid">
+            {/* Left: All 8 Active Sports Formats Breakdown */}
+            <section
+              className="admin-dash__panel"
+              aria-labelledby="dash-formats-heading"
+            >
+              <header className="admin-dash__panel-head">
+                <div>
+                  <span className="admin-dash__panel-eyebrow">
+                    Cobertura integral · 8 formatos activos
+                  </span>
+                  <h2
+                    id="dash-formats-heading"
+                    className="admin-dash__panel-title"
+                  >
+                    Distribución por formato deportivo
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  className="admin-cc__btn admin-cc__btn--ghost admin-cc__btn--sm"
+                  onClick={() => handleSelectSection("competencias")}
+                >
+                  <span>Explorar competencias</span>
+                  <TablerIcon name="chevron-right" size={14} />
+                </button>
+              </header>
+
+              <div className="admin-dash__format-table-wrap">
+                <table className="admin-dash__format-table">
+                  <thead>
+                    <tr>
+                      <th>Formato deportivo</th>
+                      <th className="is-num">Total</th>
+                      <th className="is-num">Activas</th>
+                      <th className="is-num">Finalizadas</th>
+                      <th>Proporción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {snapshot.formatList.map((fmt) => {
+                      const pct =
+                        snapshot.competenciasTotal > 0
+                          ? Math.round(
+                              (fmt.counts.total / snapshot.competenciasTotal) *
+                                100
+                            )
+                          : 0;
+                      return (
+                        <tr
+                          key={fmt.key}
+                          className="admin-dash__format-row"
+                          onClick={() => {
+                            setCompFormatFilter(fmt.key);
+                            handleSelectSection("competencias");
+                          }}
+                          title={`Filtrar competencias de ${fmt.label}`}
+                        >
+                          <td>
+                            <div className="admin-dash__format-name-cell">
+                              <span className="admin-dash__format-name">
+                                {fmt.label}
+                              </span>
+                              <span className="admin-dash__format-meta">
+                                {fmt.ruleNote}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="is-num">
+                            <span className="admin-dash__format-total">
+                              {fmt.counts.total}
+                            </span>
+                          </td>
+                          <td className="is-num">
+                            <span
+                              className={`admin-dash__pill${
+                                fmt.counts.active > 0
+                                  ? " admin-dash__pill--active"
+                                  : ""
+                              }`}
+                            >
+                              {fmt.counts.active}
+                            </span>
+                          </td>
+                          <td className="is-num">
+                            <span className="admin-dash__pill">
+                              {fmt.counts.finished}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="admin-dash__bar-cell">
+                              <div className="admin-dash__bar-track">
+                                <div
+                                  className="admin-dash__bar-fill"
+                                  style={{
+                                    width: `${Math.max(
+                                      fmt.counts.total > 0 ? 4 : 0,
+                                      pct
+                                    )}%`,
+                                  }}
+                                />
+                              </div>
+                              <span className="admin-dash__bar-pct">
+                                {pct}%
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <footer className="admin-dash__reconcile-note">
+                <div className="admin-dash__reconcile-row">
+                  <TablerIcon name="info-circle" size={15} />
+                  <span>
+                    <strong>Conciliación estadística verificada:</strong> El
+                    total general ({snapshot.competenciasTotal}) suma
+                    exactamente las retas en <code>tournaments</code> (
+                    {snapshot.retasTournamentsTableTotal}), los torneos en{" "}
+                    <code>torneo_express</code> (
+                    {snapshot.formats.torneo_express.total}), las temporadas en{" "}
+                    <code>ligas</code> (
+                    {snapshot.formats.liga_individual.total +
+                      snapshot.formats.liga_parejas.total +
+                      snapshot.formats.liga_flex.total}
+                    ; cada temporada cuenta como 1 competencia sin duplicar
+                    jornadas ni partidos) y los encuentros en{" "}
+                    <code>duelos_2v2</code> ({snapshot.formats.duelo_2v2.total}
+                    ).
+                  </span>
+                </div>
+                <div className="admin-dash__reconcile-row admin-dash__reconcile-row--muted">
+                  <span>
+                    <strong>Cancha Reina:</strong> formato sin tabla ni módulo
+                    persistido en base de datos actualmente (0 registros).
+                  </span>
+                </div>
+              </footer>
+            </section>
+
+            {/* Right: Riviera Coaching + Top Active Clubs */}
+            <div className="admin-dash__side-stack">
+              <section
+                className="admin-dash__panel"
+                aria-labelledby="dash-coaching-heading"
+              >
+                <header className="admin-dash__panel-head">
+                  <div>
+                    <span className="admin-dash__panel-eyebrow">
+                      Módulo formativo independiente
+                    </span>
+                    <h2
+                      id="dash-coaching-heading"
+                      className="admin-dash__panel-title"
+                    >
+                      Riviera Coaching
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-cc__btn admin-cc__btn--ghost admin-cc__btn--sm"
+                    onClick={() => handleSelectSection("cuentas")}
+                  >
+                    <span>Ver coaches y alumnos</span>
+                  </button>
+                </header>
+
+                <div className="admin-dash__coaching-grid">
+                  <div className="admin-dash__coaching-stat">
+                    <span className="admin-dash__coaching-label">
+                      Coaches activos
+                    </span>
+                    <strong className="admin-dash__coaching-val">
+                      {snapshot.coaching.coachesTotal}
+                    </strong>
+                  </div>
+                  <div className="admin-dash__coaching-stat">
+                    <span className="admin-dash__coaching-label">
+                      Alumnos vinculados
+                    </span>
+                    <strong className="admin-dash__coaching-val">
+                      {snapshot.coaching.alumnosVinculados}
+                    </strong>
+                  </div>
+                  <div className="admin-dash__coaching-stat">
+                    <span className="admin-dash__coaching-label">
+                      Clubes con coaching
+                    </span>
+                    <strong className="admin-dash__coaching-val">
+                      {snapshot.coaching.clubesConCoaching}
+                    </strong>
+                  </div>
+                  <div className="admin-dash__coaching-stat">
+                    <span className="admin-dash__coaching-label">
+                      Movimientos de clases
+                    </span>
+                    <strong className="admin-dash__coaching-val">
+                      {snapshot.coaching.movimientosClases}
+                    </strong>
+                  </div>
+                </div>
+              </section>
+
+              <section
+                className="admin-dash__panel"
+                aria-labelledby="dash-top-clubs-heading"
+              >
+                <header className="admin-dash__panel-head">
+                  <div>
+                    <span className="admin-dash__panel-eyebrow">
+                      Operación por organizador
+                    </span>
+                    <h2
+                      id="dash-top-clubs-heading"
+                      className="admin-dash__panel-title"
+                    >
+                      Clubes con mayor actividad
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-cc__btn admin-cc__btn--ghost admin-cc__btn--sm"
+                    onClick={() => handleSelectSection("cuentas")}
+                  >
+                    <span>Directorio ({clubAccounts.length})</span>
+                  </button>
+                </header>
+
+                {topClubs.length === 0 ? (
+                  <p className="admin-dash__empty-inline">
+                    No hay clubes registrados.
+                  </p>
+                ) : (
+                  <ul className="admin-dash__top-clubs-list">
+                    {topClubs.map((club) => (
+                      <li key={club.id} className="admin-dash__top-club-item">
+                        <div className="admin-dash__top-club-identity">
+                          <div className="admin-dash__club-avatar">
+                            {club.logo_url ? (
+                              <img
+                                src={club.logo_url}
+                                alt={`Logo de ${club.name || club.email}`}
+                                className="admin-dash__club-avatar-img"
+                              />
+                            ) : (
+                              <span>{getInitials(club.name, club.email)}</span>
+                            )}
+                          </div>
+                          <div className="admin-dash__top-club-text">
+                            <div className="admin-dash__top-club-name-row">
+                              <span className="admin-dash__top-club-name">
+                                {club.name || "Club sin nombre"}
+                              </span>
+                              {club.has_upgrade ? (
+                                <span className="admin-dash__upgrade-tag">
+                                  Upgrade
+                                </span>
+                              ) : null}
+                            </div>
+                            <span className="admin-dash__top-club-meta">
+                              {club.competencias_total} competencias ·{" "}
+                              {club.jugadores_total} jugadores
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="admin-cc__btn admin-cc__btn--ghost admin-cc__btn--sm"
+                          onClick={() => navigateAdminUser(club.id)}
+                        >
+                          Gestionar
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+          </div>
+
+          {/* Bottom Strip: Recent Verifiable Activity */}
+          <section
+            className="admin-dash__panel"
+            aria-labelledby="dash-recent-activity-heading"
+          >
+            <header className="admin-dash__panel-head">
+              <div>
+                <span className="admin-dash__panel-eyebrow">
+                  Eventos recientes en base de datos
+                </span>
+                <h2
+                  id="dash-recent-activity-heading"
+                  className="admin-dash__panel-title"
+                >
+                  Actividad reciente de la plataforma
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="admin-cc__btn admin-cc__btn--ghost admin-cc__btn--sm"
+                onClick={() => handleSelectSection("actividad")}
+              >
+                <span>Ver bitácora completa</span>
+                <TablerIcon name="chevron-right" size={14} />
+              </button>
+            </header>
+
+            {snapshot.activities.length === 0 ? (
+              <p className="admin-dash__empty-inline">
+                No hay eventos recientes registrados.
+              </p>
+            ) : (
+              <div className="admin-dash__activity-preview-grid">
+                {snapshot.activities.slice(0, 6).map((act) => (
+                  <article
+                    key={act.id}
+                    className="admin-dash__activity-card-mini"
+                  >
+                    <div className="admin-dash__activity-mini-top">
+                      <span
+                        className={`admin-dash__cat-badge admin-dash__cat-badge--${act.kind}`}
+                      >
+                        {act.badge}
+                      </span>
+                      <time className="admin-dash__activity-time">
+                        {formatShortDate(act.timestamp)}
+                      </time>
+                    </div>
+                    <h3 className="admin-dash__activity-mini-title">
+                      {act.title}
+                    </h3>
+                    <p className="admin-dash__activity-mini-sub">
+                      {act.subtitle} · {act.actorName}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       ) : null}
-    </div>
+
+      {section === "cuentas" ? (
+        <UserManagement
+          snapshot={snapshot}
+          onRefresh={() => void loadSnapshot(true)}
+        />
+      ) : null}
+
+      {snapshot && section === "competencias" ? (
+        <div className="admin-dash__section-stack">
+          {/* Format Filter Chips Strip */}
+          <section
+            className="admin-dash__formats-strip"
+            aria-label="Filtro rápido por formato deportivo"
+          >
+            <button
+              type="button"
+              className={`admin-dash__format-chip${
+                compFormatFilter === "all"
+                  ? " admin-dash__format-chip--active"
+                  : ""
+              }`}
+              onClick={() => setCompFormatFilter("all")}
+            >
+              <span className="admin-dash__format-chip-label">
+                Todos los formatos
+              </span>
+              <strong className="admin-dash__format-chip-count">
+                {snapshot.competenciasTotal}
+              </strong>
+            </button>
+            {snapshot.formatList.map((fmt) => (
+              <button
+                key={fmt.key}
+                type="button"
+                className={`admin-dash__format-chip${
+                  compFormatFilter === fmt.key
+                    ? " admin-dash__format-chip--active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setCompFormatFilter((prev) =>
+                    prev === fmt.key ? "all" : fmt.key
+                  )
+                }
+              >
+                <span className="admin-dash__format-chip-label">
+                  {fmt.shortLabel}
+                </span>
+                <strong className="admin-dash__format-chip-count">
+                  {fmt.counts.total}
+                </strong>
+              </button>
+            ))}
+          </section>
+
+          <section className="admin-dash__panel">
+            <div className="admin-dash__toolbar">
+              <div className="admin-dash__search-box">
+                <TablerIcon
+                  name="search"
+                  size={16}
+                  className="admin-dash__search-icon"
+                />
+                <input
+                  type="search"
+                  className="admin-dash__search-input"
+                  placeholder="Buscar por nombre de competencia, club organizador o formato…"
+                  value={compSearch}
+                  onChange={(e) => setCompSearch(e.target.value)}
+                  aria-label="Buscar competencias"
+                />
+              </div>
+
+              <div className="admin-dash__toolbar-filters">
+                <select
+                  className="admin-dash__select"
+                  value={compFormatFilter}
+                  onChange={(e) =>
+                    setCompFormatFilter(
+                      e.target.value as "all" | AdminFormatKey
+                    )
+                  }
+                  aria-label="Filtrar por formato"
+                >
+                  <option value="all">Todos los formatos (8)</option>
+                  {snapshot.formatList.map((f) => (
+                    <option key={f.key} value={f.key}>
+                      {f.label} ({f.counts.total})
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  className="admin-dash__select"
+                  value={compStatusFilter}
+                  onChange={(e) =>
+                    setCompStatusFilter(
+                      e.target.value as "all" | "active" | "finished"
+                    )
+                  }
+                  aria-label="Filtrar por estado"
+                >
+                  <option value="all">Todos los estados</option>
+                  <option value="active">
+                    Activas / En curso ({snapshot.competenciasActivas})
+                  </option>
+                  <option value="finished">
+                    Finalizadas ({snapshot.competenciasFinalizadas})
+                  </option>
+                </select>
+
+                <span className="admin-dash__result-count">
+                  {filteredCompetitions.length} resultados
+                </span>
+              </div>
+            </div>
+
+            {filteredCompetitions.length === 0 ? (
+              <div className="admin-dash__empty-box">
+                <p>
+                  Ninguna competencia coincide con los filtros seleccionados.
+                </p>
+                <button
+                  type="button"
+                  className="admin-cc__btn admin-cc__btn--sm"
+                  onClick={() => {
+                    setCompSearch("");
+                    setCompFormatFilter("all");
+                    setCompStatusFilter("all");
+                  }}
+                >
+                  Limpiar filtros
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="admin-dash__table-wrap">
+                  <table className="admin-dash__data-table">
+                    <thead>
+                      <tr>
+                        <th>Competencia</th>
+                        <th>Formato</th>
+                        <th>Club organizador</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                        <th className="is-right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pagedCompetitions.map((comp) => (
+                        <tr key={`${comp.formatKey}-${comp.id}`}>
+                          <td>
+                            <div className="admin-dash__comp-title-cell">
+                              <span className="admin-dash__comp-title">
+                                {comp.title}
+                              </span>
+                              <span className="admin-dash__comp-id">
+                                ID: {comp.id.slice(0, 8)}
+                              </span>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="admin-dash__format-badge">
+                              {comp.formatLabel}
+                            </span>
+                          </td>
+                          <td>
+                            {comp.organizadorId ? (
+                              <button
+                                type="button"
+                                className="admin-dash__link-btn"
+                                onClick={() =>
+                                  navigateAdminUser(comp.organizadorId)
+                                }
+                              >
+                                {comp.organizadorName}
+                              </button>
+                            ) : (
+                              <span className="admin-dash__muted">
+                                {comp.organizadorName}
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <span
+                              className={`admin-dash__status-badge${
+                                comp.status === "active"
+                                  ? " admin-dash__status-badge--active"
+                                  : " admin-dash__status-badge--finished"
+                              }`}
+                            >
+                              {comp.statusLabel}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="admin-dash__date-text">
+                              {formatShortDate(comp.createdAt)}
+                            </span>
+                          </td>
+                          <td className="is-right">
+                            <div className="admin-dash__row-actions">
+                              {comp.publicPath ? (
+                                <a
+                                  href={comp.publicPath}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="admin-cc__btn admin-cc__btn--ghost admin-cc__btn--sm"
+                                >
+                                  <span>Vista pública</span>
+                                  <TablerIcon name="external-link" size={13} />
+                                </a>
+                              ) : null}
+                              {comp.organizadorId ? (
+                                <button
+                                  type="button"
+                                  className="admin-cc__btn admin-cc__btn--sm"
+                                  onClick={() =>
+                                    navigateAdminUser(comp.organizadorId)
+                                  }
+                                >
+                                  Club
+                                </button>
+                              ) : null}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {totalCompPages > 1 ? (
+                  <div className="admin-dash__pagination">
+                    <span className="admin-dash__pagination-info">
+                      Página {compPage} de {totalCompPages} ·{" "}
+                      {filteredCompetitions.length} competencias
+                    </span>
+                    <div className="admin-dash__pagination-btns">
+                      <button
+                        type="button"
+                        className="admin-cc__btn admin-cc__btn--sm"
+                        disabled={compPage <= 1}
+                        onClick={() => setCompPage((p) => Math.max(1, p - 1))}
+                      >
+                        Anterior
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-cc__btn admin-cc__btn--sm"
+                        disabled={compPage >= totalCompPages}
+                        onClick={() =>
+                          setCompPage((p) => Math.min(totalCompPages, p + 1))
+                        }
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            )}
+          </section>
+        </div>
+      ) : null}
+
+      {snapshot && section === "actividad" ? (
+        <div className="admin-dash__section-stack">
+          <section className="admin-dash__panel">
+            <div className="admin-dash__toolbar">
+              <div className="admin-dash__search-box">
+                <TablerIcon
+                  name="search"
+                  size={16}
+                  className="admin-dash__search-icon"
+                />
+                <input
+                  type="search"
+                  className="admin-dash__search-input"
+                  placeholder="Filtrar eventos por nombre, club o formato…"
+                  value={actSearch}
+                  onChange={(e) => setActSearch(e.target.value)}
+                  aria-label="Buscar eventos en bitácora"
+                />
+              </div>
+
+              <div className="admin-dash__toolbar-filters">
+                <div
+                  className="admin-dash__segmented"
+                  role="group"
+                  aria-label="Categoría de actividad"
+                >
+                  {(
+                    [
+                      { id: "all", label: "Todos" },
+                      { id: "competencia", label: "Competencias" },
+                      { id: "cuenta", label: "Cuentas" },
+                      { id: "coaching", label: "Coaching" },
+                    ] as const
+                  ).map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      className={`admin-dash__seg-btn${
+                        actCategory === tab.id
+                          ? " admin-dash__seg-btn--active"
+                          : ""
+                      }`}
+                      onClick={() => setActCategory(tab.id)}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                <span className="admin-dash__result-count">
+                  {filteredActivities.length} eventos
+                </span>
+              </div>
+            </div>
+
+            {filteredActivities.length === 0 ? (
+              <div className="admin-dash__empty-box">
+                <p>No se encontraron eventos con los criterios actuales.</p>
+              </div>
+            ) : (
+              <div className="admin-dash__table-wrap">
+                <table className="admin-dash__data-table">
+                  <thead>
+                    <tr>
+                      <th>Fecha y hora</th>
+                      <th>Categoría</th>
+                      <th>Evento</th>
+                      <th>Detalle operativo</th>
+                      <th>Organizador / Actor</th>
+                      <th className="is-right">Acceso</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredActivities.map((act) => (
+                      <tr key={act.id}>
+                        <td>
+                          <span className="admin-dash__date-text">
+                            {formatDateTime(act.timestamp)}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            className={`admin-dash__cat-badge admin-dash__cat-badge--${act.kind}`}
+                          >
+                            {act.badge}
+                          </span>
+                        </td>
+                        <td>
+                          <strong className="admin-dash__comp-title">
+                            {act.title}
+                          </strong>
+                        </td>
+                        <td>
+                          <span className="admin-dash__comp-detail">
+                            {act.subtitle}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="admin-dash__comp-detail">
+                            {act.actorName}
+                          </span>
+                        </td>
+                        <td className="is-right">
+                          <div className="admin-dash__row-actions">
+                            {act.organizadorId ? (
+                              <button
+                                type="button"
+                                className="admin-cc__btn admin-cc__btn--sm"
+                                onClick={() =>
+                                  navigateAdminUser(act.organizadorId!)
+                                }
+                              >
+                                Ver club
+                              </button>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        </div>
+      ) : null}
+    </AdminControlLayout>
   );
 };
