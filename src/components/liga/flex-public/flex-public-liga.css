@@ -313,12 +313,30 @@
   border-bottom: 1px solid var(--flex-liga-border-subtle);
 }
 
+.flex-liga-section-head__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.flex-liga-section-head__kicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--flex-liga-accent);
+}
+
 .flex-liga-section-head__title {
   margin: 0;
   font-family: var(--font-display);
   font-size: clamp(1.05rem, 2vw, 1.25rem);
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--flex-liga-text);
 }
 
@@ -328,115 +346,115 @@
   color: var(--flex-liga-text-muted);
 }
 
-/* Layout de clasificación: 1 columna en móvil/tablet, 2 columnas equilibradas en escritorio */
+/* Clasificación en columna: podio, mensaje y el resto de la tabla. */
 .flex-liga-standings__layout {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 16px;
   min-width: 0;
 }
 
-@media (min-width: 1024px) {
-  .flex-liga-standings__layout {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 24px;
-    align-items: start;
-  }
-
-  .flex-liga-standings__layout--only-top3 {
-    display: flex;
-    justify-content: center;
-  }
+.flex-liga-standings__layout > .flex-liga-table {
+  align-self: stretch;
+  width: 100%;
 }
 
-/* ── A. Podio Top 3 (2º — 1º — 3º alineados por su base) ── */
+/* ── A. Podio. Móvil: 1º arriba. Escritorio: 2º — 1º — 3º. ── */
 
 .flex-liga-top3-wrap {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
   min-width: 0;
 }
 
 .flex-liga-top3 {
   display: grid;
-  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.04fr) minmax(0, 0.88fr);
-  align-items: end;
+  grid-template-columns: 118px 118px;
   justify-content: center;
+  justify-items: center;
+  align-items: end;
   gap: 8px;
-  width: 100%;
-  max-width: 530px;
+  width: auto;
+  max-width: 100%;
   margin: 0 auto;
 }
 
-/* Orden visual de podio: 2º a la izquierda, 1º al centro, 3º a la derecha */
-.flex-liga-top3__card--2 {
-  order: 1;
-}
-
 .flex-liga-top3__card--1 {
-  order: 2;
+  grid-column: 1 / -1;
+  width: 180px;
+  max-width: min(180px, 100%);
 }
 
+.flex-liga-top3__card--2,
 .flex-liga-top3__card--3 {
-  order: 3;
+  width: 118px;
+  max-width: 100%;
 }
 
-/* Teléfono: 1º arriba, 2º y 3º abajo */
-@media (max-width: 699px) {
+@media (min-width: 390px) {
   .flex-liga-top3 {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-end;
-    gap: 10px;
-    max-width: 320px;
+    grid-template-columns: 128px 128px;
   }
 
   .flex-liga-top3__card--1 {
+    width: 190px;
+    max-width: 190px;
+  }
+
+  .flex-liga-top3__card--2,
+  .flex-liga-top3__card--3 {
+    width: 128px;
+  }
+}
+
+@media (min-width: 430px) {
+  .flex-liga-top3 {
+    grid-template-columns: 136px 136px;
+  }
+
+  .flex-liga-top3__card--1 {
+    width: 196px;
+    max-width: 196px;
+  }
+
+  .flex-liga-top3__card--2,
+  .flex-liga-top3__card--3 {
+    width: 136px;
+  }
+}
+
+@media (min-width: 768px) {
+  .flex-liga-top3 {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .flex-liga-top3__card--2 {
     order: 1;
     flex: 0 0 168px;
     width: 168px;
     max-width: 168px;
   }
 
-  .flex-liga-top3__card--2,
-  .flex-liga-top3__card--3 {
-    flex: 0 0 132px;
-    width: 132px;
-    max-width: 132px;
-  }
-
-  .flex-liga-top3__card--2 {
+  .flex-liga-top3__card--1 {
     order: 2;
+    grid-column: auto;
+    flex: 0 0 196px;
+    width: 196px;
+    max-width: 196px;
   }
 
   .flex-liga-top3__card--3 {
     order: 3;
-  }
-}
-
-/* Escritorio: 1º lugar ~190-210px (198px), 2º y 3º lugar ~160-180px (168px) */
-@media (min-width: 768px) {
-  .flex-liga-top3 {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 12px;
-    max-width: none;
-    width: auto;
-  }
-
-  .flex-liga-top3__card--1 {
-    width: 198px;
-    flex: 0 0 198px;
-  }
-
-  .flex-liga-top3__card--2,
-  .flex-liga-top3__card--3 {
-    width: 168px;
     flex: 0 0 168px;
+    width: 168px;
+    max-width: 168px;
   }
 }
 
@@ -598,6 +616,81 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   color: rgba(255, 255, 255, 0.68);
+}
+
+.flex-liga-top3__role {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--flex-liga-accent);
+}
+
+.flex-liga-top3__id {
+  margin: 1px 0 0;
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.flex-liga-podium-note {
+  width: min(100%, 460px);
+  margin: 14px auto 0;
+  padding: 12px 8px 0;
+  text-align: center;
+}
+
+.flex-liga-podium-note__rule {
+  width: 36px;
+  height: 1px;
+  margin: 0 auto 10px;
+  background: color-mix(in srgb, var(--flex-liga-accent) 55%, transparent);
+}
+
+.flex-liga-podium-note__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(18px, 2.2vw, 22px);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: var(--flex-liga-text);
+}
+
+.flex-liga-podium-note__body {
+  margin: 6px auto 0;
+  max-width: 42ch;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--flex-liga-text-secondary);
+}
+
+.flex-liga-podium-note__line {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--flex-liga-text);
+}
+
+.flex-liga-podium-note__sign {
+  margin: 7px 0 0;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--flex-liga-accent);
 }
 
 

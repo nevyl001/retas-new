@@ -222,7 +222,6 @@ describe("LigaFlexPublica — rediseño definitivo de vista pública de temporad
 
     // Verifica que las 6 tarjetas redundantes fueron eliminadas
     expect(screen.queryByText("Total jornadas")).not.toBeInTheDocument();
-    expect(screen.queryByText("Líder actual")).not.toBeInTheDocument();
     expect(screen.queryByText("Puntos del líder")).not.toBeInTheDocument();
 
     // 2) Componente compacto de jornada actual o próxima
@@ -240,7 +239,14 @@ describe("LigaFlexPublica — rediseño definitivo de vista pública de temporad
       expect(screen.getByText("Luis Osorio")).toBeInTheDocument();
     });
     const podium = document.querySelector(".flex-liga-top3");
-    expect(podium?.textContent).not.toMatch(/RIV-/);
+    expect(podium?.textContent).toContain("RIV-00000409");
+    expect(podium?.textContent).toContain("Líder actual");
+    expect(podium?.textContent).not.toContain("Campeón");
+    expect(screen.getByText("La historia aún se escribe.")).toBeInTheDocument();
+    expect(screen.getByText("Vive Riviera Open")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Toca un jugador para consultar su detalle por jornada/i)
+    ).not.toBeInTheDocument();
     expect(screen.getByText("RIV-00000580")).toBeInTheDocument();
 
     // 4) El detalle del jugador se abre bajo demanda en modal/drawer
@@ -480,5 +486,8 @@ describe("LigaFlexPublica — rediseño definitivo de vista pública de temporad
 
     const header = screen.getByRole("banner", { name: /Encabezado de la liga/i });
     expect(within(header).getByText("Finalizada")).toBeInTheDocument();
+    expect(screen.getByText("Una temporada. Una historia.")).toBeInTheDocument();
+    expect(screen.queryByText("Líder actual")).not.toBeInTheDocument();
+    expect(screen.queryByText("Campeón")).not.toBeInTheDocument();
   });
 });

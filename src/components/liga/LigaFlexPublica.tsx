@@ -147,6 +147,9 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
 
   const top3Rows = season.ok ? season.rows.slice(0, 3) : [];
   const tableRows = season.ok ? season.rows.slice(3) : [];
+  const officialChampionId = isSeasonFinished
+    ? bundle?.honores?.campeonId ?? null
+    : null;
 
   return (
     <PublicScopedBrandGate message="Cargando liga…">
@@ -226,7 +229,10 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
           {/* 3) CLASIFICACIÓN GENERAL CON PODIO TOP 3 */}
           <section className="flex-liga-standings" aria-label="Clasificación general">
             <header className="flex-liga-section-head">
-              <h2 className="flex-liga-section-head__title">Clasificación general</h2>
+              <div className="flex-liga-section-head__titles">
+                <p className="flex-liga-section-head__kicker">Ranking oficial</p>
+                <h2 className="flex-liga-section-head__title">Líderes de la temporada</h2>
+              </div>
               {season.ok && season.rows.length > 0 ? (
                 <span className="flex-liga-section-head__meta">
                   {season.rows.length} clasificados
@@ -247,6 +253,14 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                       const name = names.get(row.jugadorId) ?? "Jugador";
                       const profile = profiles[row.jugadorId];
                       const isSelected = playerId === row.jugadorId;
+                      const role =
+                        row.posicion !== 1
+                          ? null
+                          : officialChampionId === row.jugadorId
+                            ? "Campeón"
+                            : !isSeasonFinished
+                              ? "Líder actual"
+                              : null;
 
                       return (
                         <article
@@ -259,6 +273,7 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                           <button
                             type="button"
                             className="flex-liga-top3__hit"
+                            aria-label={`${name}, ${row.posicion}º lugar, ${row.puntos} puntos. Ver detalle`}
                             onClick={() => setPlayerId(row.jugadorId)}
                           >
                             <div className="flex-liga-top3__portrait">
@@ -273,17 +288,52 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                                 {row.posicion}
                               </span>
                               <div className="flex-liga-top3__overlay">
+                                {role ? (
+                                  <p className="flex-liga-top3__role">{role}</p>
+                                ) : null}
                                 <p className="flex-liga-top3__name">{name}</p>
                                 <p className="flex-liga-top3__pts">
                                   <span className="flex-liga-top3__pts-value">{row.puntos}</span>
                                   <span className="flex-liga-top3__pts-unit">PTS</span>
                                 </p>
+                                {profile?.rivieraId ? (
+                                  <p className="flex-liga-top3__id">{profile.rivieraId}</p>
+                                ) : null}
                               </div>
                             </div>
                           </button>
                         </article>
                       );
                     })}
+                  </div>
+                  <div className="flex-liga-podium-note">
+                    <div className="flex-liga-podium-note__rule" aria-hidden />
+                    {isSeasonFinished ? (
+                      <>
+                        <p className="flex-liga-podium-note__title">
+                          Una temporada. Una historia.
+                        </p>
+                        <p className="flex-liga-podium-note__body">
+                          Gracias por competir, demostrar tu nivel y formar parte de esta experiencia.
+                        </p>
+                        <p className="flex-liga-podium-note__line">
+                          Nos vemos en la próxima temporada.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="flex-liga-podium-note__title">
+                          La historia aún se escribe.
+                        </p>
+                        <p className="flex-liga-podium-note__body">
+                          Todavía tienes la oportunidad de dar lo mejor de ti. Cada jornada cuenta y tu constancia puede hacer la diferencia.
+                        </p>
+                        <p className="flex-liga-podium-note__line">
+                          Sigue compitiendo. Crea tu historia.
+                        </p>
+                      </>
+                    )}
+                    <p className="flex-liga-podium-note__sign">Vive Riviera Open</p>
                   </div>
                 </div>
 
