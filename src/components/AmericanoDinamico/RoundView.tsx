@@ -1,11 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { AmericanoMatch, AmericanoRound } from "../../lib/db/types";
-import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
 import { formatMatchCourtLabel, sortByMatchCourt } from "../../lib/matchCourt";
 import { ActionBar } from "../platform/ActionBar";
 import { Button } from "../ui";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
-import { AmericanoCourtBoard, AmericanoPairMark } from "../americano/AmericanoCourtBoard";
 import "../jugadores/riviera-jugadores.css";
 import "./RoundView.css";
 
@@ -101,6 +99,29 @@ function teamPlayersLabel(players: ReadonlyArray<{ name: string }>): string {
   return players.map((p) => p.name.trim()).filter(Boolean).join(" · ");
 }
 
+function CapturePlayer({
+  name,
+  fotoUrl,
+  side,
+}: {
+  name: string;
+  fotoUrl?: string | null;
+  side: "a" | "b";
+}) {
+  return (
+    <div className={`am-capture-player am-capture-player--${side}`}>
+      <JugadorAvatar
+        fotoUrl={fotoUrl}
+        nombre={name}
+        size="sm"
+        className="am-capture-player__avatar"
+        alt=""
+      />
+      <span className="am-capture-player__name">{name}</span>
+    </div>
+  );
+}
+
 function ScoreField({
   value,
   ariaLabel,
@@ -190,6 +211,13 @@ export const RoundView: React.FC<RoundViewProps> = ({
   };
 
   const isLastRound = totalRounds > 0 && round.roundNumber >= totalRounds;
+  const savedCount = round.matches.filter(
+    (match) =>
+      typeof match.scoreA === "number" &&
+      typeof match.scoreB === "number" &&
+      match.scoreA >= 0 &&
+      match.scoreB >= 0
+  ).length;
 
   return (
     <section className="americano-round rv-card">
@@ -197,6 +225,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
         <div>
           <h3>
             Ronda {round.roundNumber}
+            {readOnly ? "" : " — En curso"}
             {totalRounds > 0 ? (
               <span className="americano-round__of-total">
                 {" "}
@@ -204,20 +233,17 @@ export const RoundView: React.FC<RoundViewProps> = ({
               </span>
             ) : null}
           </h3>
-          <span
-            className="americano-round__phase"
-            title="Rotación americana equilibrada: emparejamientos por costo, sin usar el ranking."
-          >
-            {americanoRoundPhaseCaption(round, totalRounds) ||
-              "Rotación americana"}
-          </span>
+          <p className="americano-round__meta">
+            {round.matches.length} partidos · {round.matches.length} canchas ·{" "}
+            {savedCount} de {round.matches.length} resultados guardados
+          </p>
         </div>
         <p className="americano-round__hint">
           {readOnly
             ? "Resultado de una ronda anterior, solo lectura."
             : onSaveMatch
-              ? "Guarda el marcador de cada cancha. Confirmar resultados suelta la siguiente ronda."
-              : "Captura los juegos de cada pareja. No se guardan ni suman al ranking hasta que pulses Confirmar resultados."}
+              ? "Guarda cada cancha. Confirmar resultados suelta la siguiente ronda."
+              : "Captura los juegos de cada pareja y confirma la ronda."}
         </p>
       </header>
 
@@ -234,69 +260,77 @@ export const RoundView: React.FC<RoundViewProps> = ({
             }));
           };
 
-          const toLine = (players: AmericanoMatch["teamA"]) =>
-            players.map((player) => ({
-              id: player.id,
-              name: player.name,
-              fotoUrl: playerFotos[player.id] ?? null,
-            }));
           const courtScore = parseCourtScore(a, b);
           const courtSaved =
             courtScore != null &&
             match.scoreA === courtScore.scoreA &&
             match.scoreB === courtScore.scoreB;
+          const scoreNode = (side: "a" | "b", value: string, label: string) =>
+            readOnly ? (
+              <span className="am-capture__readout">{value === "" ? "—" : value}</span>
+            ) : (
+              <ScoreField
+                value={value}
+                ariaLabel={`Resultado ${label}`}
+                onChange={(raw) => patchScore(side, raw)}
+              />
+            );
 
           return (
             <article
               key={match.id}
-              className="americano-match-card rv-card rv-match-card"
+              className="americano-match-card am-capture rv-card rv-match-card"
+              data-saved={courtSaved ? "true" : "false"}
             >
               <div className="americano-match-card__top">
                 <span className="americano-match-card__court">
                   {formatMatchCourtLabel(match.court)}
                 </span>
+                <span className="am-capture__status">
+                  {readOnly ? "Cerrada" : courtSaved ? "Guardado" : "En curso"}
+                </span>
               </div>
 
-              <AmericanoCourtBoard
-                sideA={toLine(match.teamA)}
-                sideB={toLine(match.teamB)}
-                labelA={teamALabel}
-                labelB={teamBLabel}
-                scoreA={
-                  readOnly ? (
-                    <AmericanoPairMark
-                      value={a === "" ? null : Number(a)}
-                      opponent={b === "" ? null : Number(b)}
+              <div className="am-capture__board">
+                <div className="am-capture__side" aria-label={teamALabel}>
+                  {match.teamA.map((player) => (
+                    <CapturePlayer
+                      key={player.id}
+                      name={player.name}
+                      fotoUrl={playerFotos[player.id]}
+                      side="a"
                     />
-                  ) : (
-                    <ScoreField
-                      value={a}
-                      ariaLabel={`Juegos ${teamALabel}`}
-                      onChange={(raw) => patchScore("a", raw)}
+                  ))}
+                </div>
+                <span className="am-capture__vs" aria-hidden>
+                  VS
+                </span>
+                <div className="am-capture__side" aria-label={teamBLabel}>
+                  {match.teamB.map((player) => (
+                    <CapturePlayer
+                      key={player.id}
+                      name={player.name}
+                      fotoUrl={playerFotos[player.id]}
+                      side="b"
                     />
-                  )
-                }
-                scoreB={
-                  readOnly ? (
-                    <AmericanoPairMark
-                      value={b === "" ? null : Number(b)}
-                      opponent={a === "" ? null : Number(a)}
-                    />
-                  ) : (
-                    <ScoreField
-                      value={b}
-                      ariaLabel={`Juegos ${teamBLabel}`}
-                      onChange={(raw) => patchScore("b", raw)}
-                    />
-                  )
-                }
-              />
+                  ))}
+                </div>
+                <label className="am-capture__result">
+                  <span>Resultado</span>
+                  {scoreNode("a", a, teamALabel)}
+                </label>
+                <span className="am-capture__result-gap" aria-hidden />
+                <label className="am-capture__result">
+                  <span>Resultado</span>
+                  {scoreNode("b", b, teamBLabel)}
+                </label>
+              </div>
               {!readOnly && onSaveMatch ? (
                 <div className="americano-match-card__save">
                   <Button
                     type="button"
-                    size="sm"
-                    variant="secondary"
+                    size="md"
+                    variant="primary"
                     className="americano-match-card__save-btn"
                     disabled={courtScore == null || courtSaved || roundSyncPending}
                     onClick={() => {
@@ -304,7 +338,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
                       onSaveMatch(match.id, courtScore.scoreA, courtScore.scoreB);
                     }}
                   >
-                    {courtSaved ? "Guardado" : "Guardar"}
+                    {courtSaved ? "Guardado" : "Guardar resultado"}
                   </Button>
                 </div>
               ) : null}

@@ -11,13 +11,21 @@
 }
 
 .americano-round__header h3 {
-  margin: 0 0 6px;
-  font-family: var(--font-display);
-  font-size: 1.6rem;
-  font-weight: 400;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.americano-round__meta {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
   color: var(--text-secondary);
-  letter-spacing: 0.03em;
-  line-height: 1.1;
 }
 
 .americano-round__of-total {
@@ -370,60 +378,126 @@
   gap: 0.35rem;
 }
 
-.americano-match-card {
-  padding: 10px 12px 12px;
+.am-capture__status {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
-.americano-match-card__top {
-  margin-bottom: 8px;
+.am-capture[data-saved="true"] .am-capture__status {
+  color: var(--text-secondary);
 }
 
-.americano-match-card .am-court-board {
-  align-items: start;
-  gap: 8px;
-}
-
-.americano-match-card .am-court-board__pair {
+.am-capture__board {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  align-items: start;
-  justify-items: center;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 10px 12px;
+  align-items: center;
 }
 
-.americano-match-card .am-portrait {
-  width: 100%;
-  max-width: 5.75rem;
-  aspect-ratio: 3 / 4;
+.am-capture__side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
 
-.americano-match-card .am-portrait__given {
+.am-capture-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.am-capture-player--b {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.am-capture-player__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.am-capture-player__avatar.rj-avatar {
+  width: 34px;
+  height: 34px;
   font-size: 0.72rem;
 }
 
-.americano-match-card .am-portrait__family {
+.am-capture__vs {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  background: var(--bg-card, var(--rv-bg-card));
+  color: var(--text-secondary);
   font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
 }
 
-.americano-match-card .am-court-board__score {
-  grid-column: 1 / -1;
-  width: 100%;
-  max-width: none;
-  margin-top: 2px;
+.am-capture__result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
-.americano-match-card .am-court-board .am-match-board__score,
-.americano-match-card .am-court-board__score input {
+.am-capture__result > span,
+.am-capture__readout {
+  font-variant-numeric: tabular-nums;
+}
+
+.am-capture__result > span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.am-capture__result .am-match-board__score,
+.am-capture__readout {
   width: 100%;
   max-width: none;
-  min-height: 2.6rem;
-  padding: 0.15rem 0.3rem;
+  min-height: 2.75rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 10px;
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  background: var(--bg-card, var(--rv-bg-card));
+  color: var(--text-primary);
+  font-family: var(--font-display, var(--font-body));
   font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+.am-capture__readout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.am-capture__result-gap {
+  width: 1.85rem;
 }
 
 .americano-match-card__save {
   display: flex;
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 .americano-match-card__save-btn {
