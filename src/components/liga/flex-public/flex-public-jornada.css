@@ -1234,6 +1234,50 @@
   .flex-pub-standings-table td.is-pos {
     width: 48px;
   }
+
+  .flex-pub-standings-pair .flex-pub-standings-table--jornada th,
+  .flex-pub-standings-pair .flex-pub-standings-table--jornada td {
+    padding: 8px 2px;
+  }
+
+  .flex-pub-standings-pair .flex-pub-standings-table--jornada th.is-pos,
+  .flex-pub-standings-pair .flex-pub-standings-table--jornada td.is-pos {
+    width: 34px;
+    padding-left: 6px;
+  }
+
+  .flex-pub-standings-pair .flex-pub-standings-table--jornada th.is-num,
+  .flex-pub-standings-pair .flex-pub-standings-table--jornada td.is-num {
+    width: 1.55rem;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .flex-pub-standings-pair .flex-pub-standings-table--jornada th.is-pts,
+  .flex-pub-standings-pair .flex-pub-standings-table--jornada td.is-pts {
+    width: 2.5rem;
+    padding-right: 8px;
+  }
+
+  .flex-pub-standings-pair .flex-pub-standings-table--jornada .flex-pub-standings-pts {
+    font-size: 13px;
+  }
+
+  .flex-pub-standings-pair .flex-pub-avatar--table {
+    width: 22px;
+    height: 22px;
+  }
+
+  .flex-pub-standings-pair .flex-pub-standings-player {
+    gap: 6px;
+  }
+
+  .flex-pub-standings-pos {
+    min-width: 0;
+    height: 20px;
+    padding: 0 4px;
+    font-size: 11px;
+  }
 }
 
 /* ── Cierre de la jornada: reconocimiento del top 3 ── */

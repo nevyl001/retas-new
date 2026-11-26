@@ -569,7 +569,7 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                       <th className="is-num" title="Games a favor">GF</th>
                       <th className="is-num" title="Games en contra">GC</th>
                       <th className="is-num" title="Diferencia">Dif</th>
-                      <th className="is-num" title="Puntos">Pts</th>
+                      <th className="is-num is-pts" title="Puntos">Pts</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -642,11 +642,8 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                                 : row.gamesFavor - row.gamesContra}
                             </span>
                           </td>
-                          <td className="is-num">
-                            <span className="flex-pub-standings-pts">
-                              {row.puntos}
-                              <small>PTS</small>
-                            </span>
+                          <td className="is-num is-pts">
+                            <span className="flex-pub-standings-pts">{row.puntos}</span>
                           </td>
                         </tr>
                       );
