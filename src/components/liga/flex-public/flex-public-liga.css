@@ -276,7 +276,10 @@
 }
 
 .flex-liga-matchday__cta:hover {
-  filter: brightness(1.07);
+  color: var(--flex-liga-accent-ink);
+  background: color-mix(in srgb, var(--flex-liga-accent) 84%, #000);
+  border-color: color-mix(in srgb, var(--flex-liga-accent) 84%, #000);
+  filter: none;
 }
 
 /* =============================================================================
@@ -895,6 +898,7 @@
 }
 
 a.flex-liga-cal-cell:hover {
+  color: inherit;
   border-color: var(--flex-liga-border-strong);
   background: rgba(255, 255, 255, 0.055);
 }
@@ -1235,6 +1239,12 @@ a.flex-liga-cal-cell:hover {
   text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
+}
+
+.flex-liga-drawer__btn-primary:hover {
+  color: var(--flex-liga-accent-ink);
+  background: color-mix(in srgb, var(--flex-liga-accent) 84%, #000);
+  border-color: color-mix(in srgb, var(--flex-liga-accent) 84%, #000);
 }
 
 .flex-liga-empty {
