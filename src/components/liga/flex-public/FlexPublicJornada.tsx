@@ -252,16 +252,16 @@ const FlexPublicJornadaBody: React.FC<{
   }, [standingRows]);
 
   const closeRows = useMemo(() => {
-    const top = standingRows
+    if (!official) return [];
+    const top = posiciones
       .filter((row) => row.posicion >= 1 && row.posicion <= 3)
       .sort((a, b) => a.posicion - b.posicion)
       .slice(0, 3);
     const ready =
       top.length === 3 &&
-      top.every((row, index) => row.posicion === index + 1) &&
-      (official || top.some((row) => row.partidos > 0));
+      top.every((row, index) => row.posicion === index + 1);
     return ready ? top : [];
-  }, [official, standingRows]);
+  }, [official, posiciones]);
 
   if (!jornada) {
     return (
@@ -817,55 +817,71 @@ const FlexPublicJornadaBody: React.FC<{
                 className="flex-pub-jornada-close"
                 aria-label="Cierre de la jornada"
               >
-                <ol className="flex-pub-jornada-close__podium">
-                  {closeRows.map((row) => {
-                    const name = names.get(row.jugadorId) ?? "Jugador";
-                    const profile = profiles[row.jugadorId];
-                    return (
-                      <li
-                        key={row.jugadorId}
-                        className={`flex-pub-jornada-close__card flex-pub-jornada-close__card--${row.posicion}`}
-                      >
-                        <FlexNeutralAvatar
-                          name={name}
-                          fotoUrl={profile?.fotoUrl}
-                          variant="close"
-                        />
-                        <span
-                          className="flex-pub-jornada-close__shade"
-                          aria-hidden
-                        />
-                        <span className="flex-pub-jornada-close__rank">
-                          {row.posicion}
-                        </span>
-                        <div className="flex-pub-jornada-close__meta">
-                          <span className="flex-pub-jornada-close__name">
-                            {name}
+                <div className="flex-pub-jornada-close__stage">
+                  <div className="flex-pub-jornada-close__rule" aria-hidden />
+                  <PublicEventBrandIdentity
+                    logoOnly
+                    className="flex-pub-jornada-close__logo"
+                  />
+                  <p className="flex-pub-jornada-close__league">{detalle.nombre}</p>
+                  <p className="flex-pub-jornada-close__jornada">
+                    Jornada {String(jornada.numero).padStart(2, "0")} · Finalizada
+                  </p>
+                  <h2 className="flex-pub-jornada-close__headline">¡Felicidades!</h2>
+                  <p className="flex-pub-jornada-close__places">
+                    Los 3 primeros lugares
+                  </p>
+                  <p className="flex-pub-jornada-close__lead">
+                    La constancia marca la diferencia.
+                  </p>
+                  <ol className="flex-pub-jornada-close__podium">
+                    {closeRows.map((row) => {
+                      const name = names.get(row.jugadorId) ?? "Jugador";
+                      const profile = profiles[row.jugadorId];
+                      const place =
+                        row.posicion === 1
+                          ? "1er lugar"
+                          : row.posicion === 2
+                            ? "2do lugar"
+                            : "3er lugar";
+                      return (
+                        <li
+                          key={row.jugadorId}
+                          className={`flex-pub-jornada-close__card flex-pub-jornada-close__card--${row.posicion}`}
+                        >
+                          <FlexNeutralAvatar
+                            name={name}
+                            fotoUrl={profile?.fotoUrl}
+                            variant="close"
+                          />
+                          <span
+                            className="flex-pub-jornada-close__shade"
+                            aria-hidden
+                          />
+                          <span className="flex-pub-jornada-close__rank">
+                            {row.posicion}
                           </span>
-                          <span className="flex-pub-jornada-close__pts">
-                            {row.puntos} PTS
-                          </span>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ol>
-                <div className="flex-pub-jornada-close__message">
-                  <h2 className="flex-pub-jornada-close__title">
-                    ¡FELICIDADES AL TOP 3 DE LA JORNADA!
-                  </h2>
-                  <p className="flex-pub-jornada-close__body">
-                    Cada jornada es una oportunidad para seguir creciendo,
-                    competir mejor y demostrar tu evolución dentro de la cancha.
+                          <div className="flex-pub-jornada-close__meta">
+                            <span className="flex-pub-jornada-close__place">
+                              {place}
+                            </span>
+                            <span className="flex-pub-jornada-close__name">
+                              {name}
+                            </span>
+                            <span className="flex-pub-jornada-close__pts">
+                              {row.puntos} PTS
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                  <div className="flex-pub-jornada-close__rule" aria-hidden />
+                  <p className="flex-pub-jornada-close__keep">
+                    Sigue compitiendo. Sigue evolucionando.
                   </p>
-                  <p className="flex-pub-jornada-close__lines">
-                    <span>Sigue compitiendo.</span>
-                    <span>Sigue sumando.</span>
-                    <span>Crea tu historia.</span>
-                  </p>
-                  <p className="flex-pub-jornada-close__sign">
-                    Vive Riviera Open.
-                  </p>
+                  <p className="flex-pub-jornada-close__story">Crea tu historia.</p>
+                  <p className="flex-pub-jornada-close__sign">Vive Riviera Open</p>
                 </div>
               </section>
             ) : null}

@@ -1143,25 +1143,105 @@
   }
 }
 
-/* ── Cierre de la jornada: top 3 + mensaje ── */
+/* ── Cierre de la jornada: reconocimiento del top 3 ── */
 
 .flex-pub-jornada-close {
   display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.flex-pub-jornada-close__stage {
+  display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
-  width: 100%;
-  padding-top: 4px;
+  width: min(100%, 720px);
+  margin: 0;
+  padding: 18px 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--flex-pub-border);
+  background: rgba(8, 8, 8, 0.38);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.flex-pub-jornada-close__rule {
+  width: 42px;
+  height: 1px;
+  margin: 2px 0 8px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.flex-pub-jornada-close__logo {
+  margin: 0 0 6px;
+}
+
+.flex-pub-jornada-close__logo .club-identity__logo {
+  width: 28px;
+  height: 28px;
+}
+
+.flex-pub-jornada-close__league {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  color: var(--flex-pub-text);
+}
+
+.flex-pub-jornada-close__jornada {
+  margin: 4px 0 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--flex-pub-text-muted);
+}
+
+.flex-pub-jornada-close__headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 3.2vw, 36px);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 0.95;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--flex-pub-text);
+}
+
+.flex-pub-jornada-close__places {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--flex-pub-text);
+}
+
+.flex-pub-jornada-close__lead {
+  margin: 6px 0 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--flex-pub-text-secondary);
 }
 
 .flex-pub-jornada-close__podium {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  justify-items: center;
-  align-items: end;
-  gap: 12px 14px;
-  width: min(100%, 440px);
-  margin: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 0 12px;
   padding: 0;
   list-style: none;
 }
@@ -1169,24 +1249,24 @@
 .flex-pub-jornada-close__card {
   position: relative;
   display: block;
-  width: min(156px, 42vw);
+  width: calc((100% - 20px) / 3.28);
   aspect-ratio: 3 / 4;
   margin: 0;
   overflow: hidden;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid var(--flex-pub-border-strong);
   background: var(--flex-pub-avatar-bg);
   box-sizing: border-box;
 }
 
 .flex-pub-jornada-close__card--1 {
-  grid-column: 1 / -1;
-  width: min(210px, 62vw);
-  order: 1;
+  order: 2;
+  width: calc((100% - 20px) / 3.28 * 1.13);
+  border-color: color-mix(in srgb, var(--flex-pub-accent) 50%, transparent);
 }
 
 .flex-pub-jornada-close__card--2 {
-  order: 2;
+  order: 1;
 }
 
 .flex-pub-jornada-close__card--3 {
@@ -1204,36 +1284,46 @@
 
 .flex-pub-avatar--close .flex-pub-avatar__initials {
   font-family: var(--font-display);
-  font-size: 42px;
-  letter-spacing: 0.06em;
+  font-size: clamp(22px, 4vw, 34px);
+  letter-spacing: 0.04em;
 }
 
 .flex-pub-jornada-close__shade {
   position: absolute;
-  inset: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 46%;
   background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.05) 34%,
-    rgba(0, 0, 0, 0.82) 100%
+    to top,
+    rgba(0, 0, 0, 0.86) 0%,
+    rgba(0, 0, 0, 0.42) 58%,
+    transparent 100%
   );
   pointer-events: none;
 }
 
 .flex-pub-jornada-close__rank {
   position: absolute;
-  top: 12px;
-  left: 14px;
-  z-index: 1;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.62);
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 13px;
   line-height: 1;
-  letter-spacing: 0.04em;
   color: var(--flex-pub-text);
 }
 
 .flex-pub-jornada-close__card--1 .flex-pub-jornada-close__rank {
-  font-size: 36px;
   color: var(--flex-pub-accent);
+  border-color: color-mix(in srgb, var(--flex-pub-accent) 55%, transparent);
 }
 
 .flex-pub-jornada-close__meta {
@@ -1241,18 +1331,35 @@
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 16px 14px 14px;
+  align-items: center;
+  gap: 1px;
+  padding: 18px 6px 8px;
+  text-align: center;
+}
+
+.flex-pub-jornada-close__place {
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.flex-pub-jornada-close__card--1 .flex-pub-jornada-close__place {
+  color: var(--flex-pub-accent);
 }
 
 .flex-pub-jornada-close__name {
+  max-width: 100%;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
   color: var(--flex-pub-text);
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -1260,14 +1367,10 @@
   overflow: hidden;
 }
 
-.flex-pub-jornada-close__card--1 .flex-pub-jornada-close__name {
-  font-size: 16px;
-}
-
 .flex-pub-jornada-close__pts {
   font-family: var(--font-display);
-  font-size: 18px;
-  letter-spacing: 0.08em;
+  font-size: 13px;
+  letter-spacing: 0.06em;
   line-height: 1;
   color: var(--flex-pub-text);
 }
@@ -1276,87 +1379,81 @@
   color: var(--flex-pub-accent);
 }
 
-.flex-pub-jornada-close__message {
-  width: min(100%, 640px);
-  margin: 0;
-  padding-top: 22px;
-  border-top: 1px solid var(--flex-pub-border);
-  text-align: center;
+.flex-pub-jornada-close__keep {
+  margin: 2px 0 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--flex-pub-text-secondary);
 }
 
-.flex-pub-jornada-close__title {
-  margin: 0;
+.flex-pub-jornada-close__story {
+  margin: 4px 0 0;
   font-family: var(--font-display);
-  font-size: clamp(26px, 3.4vw, 40px);
-  font-weight: 400;
-  letter-spacing: 0.045em;
-  line-height: 0.96;
+  font-size: clamp(18px, 2.2vw, 22px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
   text-transform: uppercase;
   color: var(--flex-pub-text);
 }
 
-.flex-pub-jornada-close__body {
-  margin: 14px auto 0;
-  max-width: 54ch;
+.flex-pub-jornada-close__sign {
+  margin: 6px 0 0;
   font-family: var(--font-body);
-  font-size: 15px;
-  line-height: 1.55;
-  color: var(--flex-pub-text-secondary);
-}
-
-.flex-pub-jornada-close__lines {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 18px 0 0;
-  font-family: var(--font-display);
-  font-size: clamp(20px, 2.2vw, 26px);
-  letter-spacing: 0.07em;
-  line-height: 1.15;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
   text-transform: uppercase;
   color: var(--flex-pub-accent);
 }
 
-.flex-pub-jornada-close__sign {
-  margin: 16px 0 0;
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--flex-pub-text);
-}
-
-@media (min-width: 760px) {
+@media (max-width: 359px) {
   .flex-pub-jornada-close__podium {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    width: auto;
-    max-width: 100%;
-    gap: 18px;
+    flex-wrap: wrap;
+    max-width: 268px;
+    gap: 8px;
   }
 
-  .flex-pub-jornada-close__card,
   .flex-pub-jornada-close__card--1 {
-    grid-column: auto;
+    order: 1;
+    flex: 0 0 156px;
+    width: 156px;
   }
 
   .flex-pub-jornada-close__card--2,
   .flex-pub-jornada-close__card--3 {
-    width: 196px;
+    flex: 0 0 118px;
+    width: 118px;
+  }
+}
+
+@media (min-width: 760px) {
+  .flex-pub-jornada-close__stage {
+    padding: 22px 20px 18px;
+  }
+
+  .flex-pub-jornada-close__podium {
+    gap: 12px;
+  }
+
+  .flex-pub-jornada-close__card--2,
+  .flex-pub-jornada-close__card--3 {
+    flex: 0 0 176px;
+    width: 176px;
   }
 
   .flex-pub-jornada-close__card--1 {
-    width: 248px;
-    order: 2;
+    flex: 0 0 200px;
+    width: 200px;
   }
 
-  .flex-pub-jornada-close__card--2 {
-    order: 1;
+  .flex-pub-jornada-close__name {
+    font-size: 13px;
   }
 
-  .flex-pub-jornada-close__card--3 {
-    order: 3;
+  .flex-pub-jornada-close__place {
+    font-size: 10px;
   }
 }

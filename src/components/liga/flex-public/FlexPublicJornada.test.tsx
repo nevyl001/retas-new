@@ -356,21 +356,9 @@ describe("FlexPublicJornada — Jornada Pública Riviera Flex League", () => {
     });
 
     const standings = container.querySelector(".flex-pub-standings-section");
-    const close = container.querySelector(".flex-pub-jornada-close");
     expect(standings).not.toBeNull();
-    expect(close).not.toBeNull();
-    expect(
-      standings!.compareDocumentPosition(close!) &
-        Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
-    expect(close!.querySelectorAll(".flex-pub-jornada-close__card")).toHaveLength(
-      3
-    );
-    expect(close!.textContent).toMatch(/100\s*PTS/);
-    expect(
-      screen.getByText("¡FELICIDADES AL TOP 3 DE LA JORNADA!")
-    ).toBeInTheDocument();
-    expect(screen.getByText("Vive Riviera Open.")).toBeInTheDocument();
+    expect(container.querySelector(".flex-pub-jornada-close")).toBeNull();
+    expect(screen.queryByText("¡Felicidades!")).not.toBeInTheDocument();
 
     expect(
       screen.getAllByText(/Clasificación provisional/i).length
@@ -381,6 +369,79 @@ describe("FlexPublicJornada — Jornada Pública Riviera Flex League", () => {
     fireEvent.click(r1Button);
     expect(screen.getByText("RONDA 01")).toBeInTheDocument();
     expect(screen.getAllByText("Resultado")).toHaveLength(3);
+  });
+
+  it("muestra el reconocimiento oficial encima del podio solo con la jornada finalizada", async () => {
+    const detalle = buildMockDetalle({
+      round1Scored: true,
+      jornadaCompleted: true,
+    });
+    mockLoadFlexLeague.mockResolvedValue({
+      config: {
+        ligaId: "liga-flex-1",
+        jornadasPlaneadas: 12,
+        jugadoresMin: 12,
+        jugadoresMax: 16,
+        rondasSugeridas: 5,
+        duracionRondaMin: 20,
+        descansoMin: 3,
+        categoria: "5ª Fuerza",
+        horarioSugerido: null,
+        inscripcionTemporadaMxn: 200,
+        participacionJornadaMxn: 300,
+        premioCampeon: null,
+        premioSubcampeon: null,
+        premioTercer: null,
+        jornadaFinalId: null,
+        cerradoAt: null,
+      },
+      jornadas: [],
+      participantes: { j1: ["p1", "p2", "p3"] },
+      posiciones: [1, 2, 3].map((posicion) => ({
+        jornadaId: "j1",
+        jugadorId: `p${posicion}`,
+        posicion,
+        puntos: posicion === 1 ? 100 : posicion === 2 ? 90 : 80,
+        partidos: 5,
+        gamesFavor: 0,
+        gamesContra: 0,
+      })),
+      honores: null,
+    });
+
+    const { container } = render(
+      <FlexPublicJornada detalle={detalle} numero={1} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("¡Felicidades!")).toBeInTheDocument();
+    });
+
+    const standings = container.querySelector(".flex-pub-standings-section");
+    const close = container.querySelector(".flex-pub-jornada-close");
+    expect(close).not.toBeNull();
+    expect(
+      standings!.compareDocumentPosition(close!) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      close!.querySelector(".flex-pub-jornada-close__headline")!.compareDocumentPosition(
+        close!.querySelector(".flex-pub-jornada-close__podium")!
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(close!.textContent).toContain("Riviera Flex League Test");
+    expect(close!.textContent).toContain("Jornada 01 · Finalizada");
+    expect(close!.textContent).toContain("Los 3 primeros lugares");
+    expect(close!.textContent).toContain("La constancia marca la diferencia.");
+    expect(close!.textContent).toContain("Jugador 1");
+    expect(close!.textContent).toContain("100 PTS");
+    expect(close!.textContent).toContain("Sigue compitiendo. Sigue evolucionando.");
+    expect(close!.textContent).toContain("Crea tu historia.");
+    expect(close!.textContent).toContain("Vive Riviera Open");
+    expect(close!.textContent).not.toContain("RIV-");
+    expect(
+      screen.queryByText(/Cada jornada es una oportunidad/i)
+    ).not.toBeInTheDocument();
   });
 
   it("en la vista en vivo muestra el progreso, la clasificación y un icono para expandir", async () => {
