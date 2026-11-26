@@ -804,10 +804,11 @@ const FlexPublicJornadaBody: React.FC<{
                     <h2 className="flex-pub-section-head__title">
                       CLASIFICACIÓN DE LA JORNADA
                     </h2>
-                    <p className="flex-pub-section-head__subtitle">
-                      Jornada {String(jornada.numero).padStart(2, "0")} · La
-                      posición sigue los games a favor y, si empatan, la
-                      diferencia
+                    <p
+                      className="flex-pub-section-head__subtitle"
+                      title="PJ partidos jugados, PG ganados, GF games a favor, GC games en contra. La posición sigue GF y, si empatan, la diferencia."
+                    >
+                      PJ · PG · GF · GC
                     </p>
                   </div>
                   <span
@@ -829,17 +830,17 @@ const FlexPublicJornadaBody: React.FC<{
 
                 <div className="flex-pub-standings-card">
                   <div className="flex-pub-standings-table-wrap">
-                    <table className="flex-pub-standings-table">
+                    <table className="flex-pub-standings-table flex-pub-standings-table--jornada">
                       <thead>
                         <tr>
                           <th className="is-pos">Pos</th>
                           <th>Jugador</th>
-                          <th className="is-num">PJ</th>
-                          <th className="is-num">PG</th>
-                          <th className="is-num">A favor</th>
-                          <th className="is-num">En contra</th>
-                          <th className="is-num">Dif</th>
-                          <th className="is-num">Puntos</th>
+                          <th className="is-num" title="Partidos jugados">PJ</th>
+                          <th className="is-num" title="Partidos ganados">PG</th>
+                          <th className="is-num" title="Games a favor">GF</th>
+                          <th className="is-num" title="Games en contra">GC</th>
+                          <th className="is-num" title="Diferencia">Dif</th>
+                          <th className="is-num" title="Puntos">Pts</th>
                         </tr>
                       </thead>
                       <tbody>

@@ -956,6 +956,12 @@
 .flex-pub-standings-pair .flex-pub-section-head {
   gap: 8px;
   padding-bottom: 8px;
+  min-width: 0;
+}
+
+.flex-pub-standings-pair .flex-pub-section-head__titles {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .flex-pub-standings-pair .flex-pub-section-head__title {
@@ -992,8 +998,20 @@
   text-overflow: ellipsis;
 }
 
+.flex-pub-standings-pair .flex-pub-standings-table {
+  table-layout: fixed;
+}
+
 .flex-pub-standings-pair .flex-pub-standings-table-wrap {
-  overflow-x: auto;
+  overflow-x: hidden;
+}
+
+.flex-pub-standings-pair .flex-pub-standings-table--jornada th.is-num,
+.flex-pub-standings-pair .flex-pub-standings-table--jornada td.is-num {
+  width: 1.9rem;
+  padding-left: 3px;
+  padding-right: 3px;
+  letter-spacing: 0.02em;
 }
 
 .flex-pub-standings-card {
@@ -1359,15 +1377,12 @@
 
 .flex-pub-jornada-close__card .flex-pub-avatar__img {
   position: absolute;
-  top: 0;
-  left: 50%;
-  width: auto;
-  height: 168%;
-  min-width: 100%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   max-width: none;
-  transform: translateX(-50%);
   object-fit: cover;
-  object-position: center top;
+  object-position: center center;
 }
 
 .flex-pub-avatar--close .flex-pub-avatar__initials {

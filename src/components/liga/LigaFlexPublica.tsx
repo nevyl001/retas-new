@@ -433,16 +433,14 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                   fecha: jornada.fecha,
                   confirmada: flex?.programacionEstado === "confirmada",
                 });
-                const isNext =
-                  !isSeasonFinished &&
-                  nextJornada?.id === jornada.id &&
-                  status.key !== "en_curso";
+                const hasDate =
+                  Boolean(jornada.fecha) && fechaCorta(jornada.fecha) !== "Por programar";
                 const cardVariant =
                   status.key === "finalizada"
                     ? "done"
                     : status.key === "en_curso"
                       ? "live"
-                      : isNext || status.key === "programada"
+                      : status.key === "programada" && hasDate
                         ? "next"
                         : "pending";
                 const statusLabel =
@@ -454,8 +452,6 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                         ? "Próxima"
                         : "Pendiente";
 
-                const hasDate =
-                  Boolean(jornada.fecha) && fechaCorta(jornada.fecha) !== "Por programar";
                 const hasContent =
                   cardVariant !== "pending" ||
                   hasDate ||

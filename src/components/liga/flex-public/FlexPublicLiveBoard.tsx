@@ -564,12 +564,12 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                     <tr>
                       <th className="is-pos">Pos</th>
                       <th>Jugador</th>
-                      <th className="is-num">PJ</th>
-                      <th className="is-num">PG</th>
-                      <th className="is-num">A favor</th>
-                      <th className="is-num">En contra</th>
-                      <th className="is-num">Dif</th>
-                      <th className="is-num">Puntos</th>
+                      <th className="is-num" title="Partidos jugados">PJ</th>
+                      <th className="is-num" title="Partidos ganados">PG</th>
+                      <th className="is-num" title="Games a favor">GF</th>
+                      <th className="is-num" title="Games en contra">GC</th>
+                      <th className="is-num" title="Diferencia">Dif</th>
+                      <th className="is-num" title="Puntos">Pts</th>
                     </tr>
                   </thead>
                   <tbody>

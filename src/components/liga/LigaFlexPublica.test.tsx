@@ -276,13 +276,16 @@ describe("LigaFlexPublica — rediseño definitivo de vista pública de temporad
     expect(within(calendar).getByText("J03")).toBeInTheDocument();
     expect(within(calendar).queryByText("Por programar")).not.toBeInTheDocument();
 
-    // J01 (Finalizada) y J02 (Próxima) son enlaces; J03 (Pendiente sin contenido) no es enlace
+    // J01 (Finalizada) es enlace. J02 sin fecha no se marca como próxima.
     expect(
       within(calendar).getByRole("link", { name: /J01 · Finalizada/i })
     ).toBeInTheDocument();
     expect(
-      within(calendar).getByRole("link", { name: /J02 · Próxima/i })
+      within(calendar).getByLabelText(/J02 · Pendiente/i)
     ).toBeInTheDocument();
+    expect(
+      within(calendar).queryByRole("link", { name: /J02 · Próxima/i })
+    ).not.toBeInTheDocument();
     expect(
       within(calendar).queryByRole("link", { name: /J03/i })
     ).not.toBeInTheDocument();
