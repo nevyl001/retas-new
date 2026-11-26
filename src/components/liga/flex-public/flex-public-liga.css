@@ -232,11 +232,17 @@
   border: 1px solid var(--flex-liga-border-subtle);
 }
 
-.flex-liga-matchday__badge--live,
-.flex-liga-matchday__badge--next {
+.flex-liga-matchday__badge--live {
   color: var(--flex-liga-accent);
-  background: var(--flex-liga-accent-soft);
-  border-color: var(--flex-liga-accent-border-subtle);
+  background: transparent;
+  border-color: color-mix(in srgb, var(--flex-liga-accent) 42%, transparent);
+}
+
+.flex-liga-matchday__badge--next,
+.flex-liga-matchday__badge--muted {
+  color: var(--flex-liga-text-secondary);
+  background: transparent;
+  border-color: var(--flex-liga-border);
 }
 
 .flex-liga-matchday__title {
@@ -1001,19 +1007,16 @@ a.flex-liga-cal-cell:hover {
   opacity: 0.72;
 }
 
+.flex-liga-cal-cell--live,
+.flex-liga-cal-cell--next,
+.flex-liga-cal-cell--done,
+.flex-liga-cal-cell--pending {
+  background: rgba(255, 255, 255, 0.028);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .flex-liga-cal-cell--live {
-  border-color: var(--flex-liga-accent-border);
-  background: var(--flex-liga-accent-soft);
-}
-
-.flex-liga-cal-cell--next {
-  border-color: color-mix(in srgb, var(--flex-liga-accent) 28%, transparent);
-  background: transparent;
-}
-
-.flex-liga-cal-cell--done {
-  border-color: var(--flex-liga-border);
-  background: rgba(255, 255, 255, 0.035);
+  border-color: color-mix(in srgb, var(--flex-liga-accent) 32%, transparent);
 }
 
 .flex-liga-cal-cell__top {
@@ -1032,8 +1035,9 @@ a.flex-liga-cal-cell:hover {
   font-variant-numeric: tabular-nums;
 }
 
-.flex-liga-cal-cell--live .flex-liga-cal-cell__num {
-  color: var(--flex-liga-accent);
+.flex-liga-cal-cell--live .flex-liga-cal-cell__num,
+.flex-liga-cal-cell--next .flex-liga-cal-cell__num {
+  color: var(--flex-liga-text);
 }
 
 .flex-liga-cal-cell__date {

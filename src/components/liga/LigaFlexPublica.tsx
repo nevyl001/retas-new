@@ -134,16 +134,23 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
     (bundle?.config.categoria || (detalle as { categoria?: string | null }).categoria || "").trim() ||
     null;
 
+  const focusHasDate = Boolean(
+    focusJornada?.fecha && fechaCorta(focusJornada.fecha) !== "Por programar"
+  );
   const focusJornadaStateLabel = isSeasonFinished
     ? "Finalizada"
     : activeJornada
       ? "En curso"
-      : "Próxima";
+      : focusHasDate
+        ? "Próxima"
+        : "Por confirmar";
   const focusJornadaTone = isSeasonFinished
     ? "done"
     : activeJornada
       ? "live"
-      : "next";
+      : focusHasDate
+        ? "next"
+        : "muted";
 
   const top3Rows = season.ok ? season.rows.slice(0, 3) : [];
   const tableRows = season.ok ? season.rows.slice(3) : [];
@@ -194,9 +201,11 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
               aria-label="Jornada actual o próxima"
             >
               <div className="flex-liga-matchday__info">
-                <span className={`flex-liga-matchday__badge flex-liga-matchday__badge--${focusJornadaTone}`}>
-                  {focusJornadaStateLabel}
-                </span>
+                {focusJornadaTone !== "muted" ? (
+                  <span className={`flex-liga-matchday__badge flex-liga-matchday__badge--${focusJornadaTone}`}>
+                    {focusJornadaStateLabel}
+                  </span>
+                ) : null}
                 <strong className="flex-liga-matchday__title">
                   Jornada {String(focusJornada.numero).padStart(2, "0")}
                 </strong>
