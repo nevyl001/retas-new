@@ -9,7 +9,6 @@ import { honorResolution, rankFlexSeason, type FlexAward } from "../../lib/liga/
 import {
   flexPointsSeries,
   flexPublicJornadaEstado,
-  flexPublicMovement,
 } from "../../lib/liga/flex/publicView";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
 import { resolveLigaJugadorPublicProfiles } from "../../lib/liga/publicParejaAvatars";
@@ -19,12 +18,24 @@ import { publicLigaJornadaUrl } from "../../services/ligaService";
 import { PublicModeShell } from "../platform/PublicModeShell";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import { buildPublicJugadorByRivieraIdPath } from "../jugadores/jugadoresPublicNav";
-import { fechaCorta, horarioFlex, movementLabel, useFlexPublicTitle } from "./flex-public/flexPublicUi";
+import { fechaCorta, useFlexPublicTitle } from "./flex-public/flexPublicUi";
 import "./liga-public-pantalla.css";
 import "../jugadores/riviera-jugadores.css";
 import "./flex-public/flex-public-liga.css";
 
 type PublicProfile = { fotoUrl: string | null; rivieraId?: string | null };
+
+function formatJornadaSchedule(
+  fecha: string | null | undefined,
+  horaInicio?: string | null,
+  horaFin?: string | null
+): string {
+  if (!fecha) return "Fecha por confirmar";
+  const dateLabel = fechaCorta(fecha);
+  if (dateLabel === "Por programar") return "Fecha por confirmar";
+  const hours = [horaInicio, horaFin].filter(Boolean).join(" – ");
+  return hours ? `${dateLabel} · ${hours}` : dateLabel;
+}
 
 export const LigaFlexPublica: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) => (
   <ClubExperienceScope organizadorId={detalle.organizador_id} pendingUntilOrganizador>
@@ -82,16 +93,22 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
   );
   const completed = sortedJornadas.filter((jornada) => jornada.estado === "completed");
   const activeJornada = sortedJornadas.find((jornada) => jornada.estado === "in_progress");
-  const next = sortedJornadas.find((jornada) => jornada.estado !== "completed");
-  const focusJornada = activeJornada ?? next ?? completed[completed.length - 1] ?? null;
+  const nextJornada = sortedJornadas.find((jornada) => jornada.estado !== "completed");
+
+  const totalJornadas = sortedJornadas.length || bundle?.config.jornadasPlaneadas || 12;
+  const isSeasonFinished =
+    detalle.estado === "completed" ||
+    (sortedJornadas.length > 0 && completed.length === sortedJornadas.length);
+
+  // Prioridad: 1) Jornada en curso, 2) Próxima jornada (si la temporada sigue abierta), 3) Última jornada finalizada
+  const focusJornada = isSeasonFinished
+    ? completed[completed.length - 1] ?? null
+    : activeJornada ?? nextJornada ?? completed[completed.length - 1] ?? null;
   const focusFlex = bundle?.jornadas.find((row) => row.jornadaId === focusJornada?.id);
 
   const awards = useMemo(() => officialAwards(detalle, bundle), [detalle, bundle]);
   const season = rankFlexSeason({ awards, resolution: honorResolution(bundle?.honores) });
-  const movement = flexPublicMovement(awards, completed.map((jornada) => jornada.numero));
-  const leader = season.ok ? season.rows[0] : undefined;
 
-  // El detalle del jugador solo se abre bajo demanda cuando el usuario selecciona a alguien.
   const selected =
     season.ok && playerId
       ? season.rows.find((row) => row.jugadorId === playerId) ?? null
@@ -100,12 +117,11 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
     ? flexPointsSeries(awards, selected.jugadorId, completed.map((j) => j.numero))
     : [];
 
-  const estado =
-    detalle.estado === "completed"
-      ? "Finalizada"
-      : detalle.estado === "in_progress" || activeJornada != null || completed.length > 0
-        ? "En curso"
-        : "Próxima";
+  const estado = isSeasonFinished
+    ? "Finalizada"
+    : detalle.estado === "in_progress" || activeJornada != null || completed.length > 0
+      ? "En curso"
+      : "Próxima";
   const statusTone =
     estado === "Finalizada" ? "done" : estado === "En curso" ? "live" : "upcoming";
 
@@ -114,24 +130,30 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
     ...Object.values(bundle?.participantes ?? {}).flat(),
   ]);
 
-  const totalJornadas = sortedJornadas.length || bundle?.config.jornadasPlaneadas || 12;
-  const currentJornadaSummary = activeJornada
-    ? `J${String(activeJornada.numero).padStart(2, "0")} · En curso`
-    : next
-      ? `J${String(next.numero).padStart(2, "0")} · Próxima`
-      : completed.length > 0
-        ? `J${String(completed[completed.length - 1]!.numero).padStart(2, "0")} · Final`
-        : "Por definir";
+  const categoriaLabel =
+    (bundle?.config.categoria || (detalle as { categoria?: string | null }).categoria || "").trim() ||
+    null;
 
-  const leaderName = leader ? names.get(leader.jugadorId) ?? "Jugador" : "Por definir";
-  const categoriaLabel = bundle?.config.categoria || null;
+  const focusJornadaStateLabel = isSeasonFinished
+    ? "Finalizada"
+    : activeJornada
+      ? "En curso"
+      : "Próxima";
+  const focusJornadaTone = isSeasonFinished
+    ? "done"
+    : activeJornada
+      ? "live"
+      : "next";
+
+  const top3Rows = season.ok ? season.rows.slice(0, 3) : [];
+  const tableRows = season.ok ? season.rows.slice(3) : [];
 
   return (
     <PublicScopedBrandGate message="Cargando liga…">
       <div className="flex-pub-liga liga-pantalla App--public-full-width ro-public-view ro-surface-dark">
         <PublicModeShell className="liga-pantalla__inner flex-liga-shell">
-          {/* 1) HERO / CABECERA SUPERIOR */}
-          <header className="flex-liga-hero" aria-label="Cabecera de la liga">
+          {/* 1) ENCABEZADO SIMPLIFICADO DE LA LIGA */}
+          <header className="flex-liga-hero" aria-label="Encabezado de la liga">
             <div className="flex-liga-hero__topbar">
               <div className="flex-liga-hero__brand-wrap">
                 <PublicEventBrandIdentity className="flex-liga-hero__brand" />
@@ -144,186 +166,147 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
             </div>
 
             <div className="flex-liga-hero__main">
-              <p className="flex-liga-hero__eyebrow">
-                Riviera Flex League{categoriaLabel ? ` · ${categoriaLabel}` : ""}
-              </p>
               <h1 className="flex-liga-hero__title">{detalle.nombre}</h1>
-            </div>
-
-            <div className="flex-liga-hero__footer">
-              <div className="flex-liga-hero__schedule">
-                {focusJornada ? (
-                  <>
-                    <span className="flex-liga-hero__schedule-tag">
-                      {activeJornada
-                        ? `Jornada ${String(focusJornada.numero).padStart(2, "0")} en juego`
-                        : next
-                          ? `Próxima · Jornada ${String(focusJornada.numero).padStart(2, "0")}`
-                          : `Última · Jornada ${String(focusJornada.numero).padStart(2, "0")}`}
-                    </span>
-                    <span>
-                      {fechaCorta(focusJornada.fecha)} ·{" "}
-                      {horarioFlex(focusFlex?.horaInicio, focusFlex?.horaFin)}
-                    </span>
-                  </>
-                ) : (
-                  <span>Temporada oficial · Riviera Open</span>
-                )}
-              </div>
-
-              {focusJornada ? (
-                <a
-                  className="flex-liga-hero__cta"
-                  href={publicLigaJornadaUrl(detalle.id, focusJornada.numero)}
-                >
-                  <span>
-                    Ver jornada {String(focusJornada.numero).padStart(2, "0")}
-                  </span>
-                  <span aria-hidden>→</span>
-                </a>
+              {categoriaLabel ? (
+                <p className="flex-liga-hero__category">{categoriaLabel}</p>
               ) : null}
+              <p className="flex-liga-hero__meta">
+                <span>
+                  {players.size} {players.size === 1 ? "jugador" : "jugadores"}
+                </span>
+                <span className="flex-liga-hero__meta-sep" aria-hidden>
+                  ·
+                </span>
+                <span>
+                  {completed.length} de {totalJornadas} jornadas completadas
+                </span>
+              </p>
             </div>
           </header>
 
-          {/* 2) BLOQUE DE RESUMEN RÁPIDO */}
-          <section className="flex-liga-summary" aria-label="Resumen rápido de temporada">
-            <article className="flex-liga-summary__item">
-              <span className="flex-liga-summary__label">Total jornadas</span>
-              <strong className="flex-liga-summary__value">{totalJornadas}</strong>
-              <span className="flex-liga-summary__sub">
-                {completed.length} completadas
-              </span>
-            </article>
+          {/* 2) JORNADA ACTUAL O PRÓXIMA (COMPONENTE COMPACTO ÚNICO) */}
+          {focusJornada ? (
+            <section
+              className={`flex-liga-matchday flex-liga-matchday--${focusJornadaTone}`}
+              aria-label="Jornada actual o próxima"
+            >
+              <div className="flex-liga-matchday__info">
+                <span className={`flex-liga-matchday__badge flex-liga-matchday__badge--${focusJornadaTone}`}>
+                  {focusJornadaStateLabel}
+                </span>
+                <strong className="flex-liga-matchday__title">
+                  Jornada {String(focusJornada.numero).padStart(2, "0")}
+                </strong>
+                <span className="flex-liga-matchday__sep" aria-hidden>
+                  ·
+                </span>
+                <span className="flex-liga-matchday__schedule">
+                  {isSeasonFinished && !focusJornada.fecha
+                    ? "Temporada concluida"
+                    : formatJornadaSchedule(
+                        focusJornada.fecha,
+                        focusFlex?.horaInicio,
+                        focusFlex?.horaFin
+                      )}
+                </span>
+              </div>
 
-            <article className="flex-liga-summary__item">
-              <span className="flex-liga-summary__label">Jornada actual</span>
-              <strong className="flex-liga-summary__value">{currentJornadaSummary}</strong>
-              <span className="flex-liga-summary__sub">
-                {focusJornada ? fechaCorta(focusJornada.fecha) : "Calendario"}
-              </span>
-            </article>
-
-            <article className="flex-liga-summary__item">
-              <span className="flex-liga-summary__label">Jugadores activos</span>
-              <strong className="flex-liga-summary__value">{players.size}</strong>
-              <span className="flex-liga-summary__sub">Ranking individual</span>
-            </article>
-
-            <article className="flex-liga-summary__item flex-liga-summary__item--highlight">
-              <span className="flex-liga-summary__label">Líder actual</span>
-              <strong className="flex-liga-summary__value">{leaderName}</strong>
-              <span className="flex-liga-summary__sub">
-                {leader ? `Posición #1` : "Sin jornadas cerradas"}
-              </span>
-            </article>
-
-            <article className="flex-liga-summary__item flex-liga-summary__item--highlight">
-              <span className="flex-liga-summary__label">Puntos del líder</span>
-              <strong className="flex-liga-summary__value">
-                {leader ? `${leader.puntos} PTS` : "—"}
-              </strong>
-              <span className="flex-liga-summary__sub">
-                {leader
-                  ? `${leader.jornadasJugadas} ${
-                      leader.jornadasJugadas === 1 ? "jornada" : "jornadas"
-                    }`
-                  : "En espera"}
-              </span>
-            </article>
-
-            <article className="flex-liga-summary__item">
-              <span className="flex-liga-summary__label">Estado temporada</span>
-              <strong className="flex-liga-summary__value">{estado}</strong>
-              <span className="flex-liga-summary__sub">
-                {completed.length}/{totalJornadas} fechas
-              </span>
-            </article>
-          </section>
+              <a
+                className="flex-liga-matchday__cta"
+                href={publicLigaJornadaUrl(detalle.id, focusJornada.numero)}
+              >
+                <span>Ver jornada</span>
+                <span aria-hidden>→</span>
+              </a>
+            </section>
+          ) : null}
 
           {error ? <p className="flex-liga-empty">{error}</p> : null}
 
-          {/* 3) CLASIFICACIÓN GENERAL — TOP 3 + RESTO DEL RANKING */}
+          {/* 3) CLASIFICACIÓN GENERAL CON PODIO TOP 3 */}
           <section className="flex-liga-standings" aria-label="Clasificación general">
             <header className="flex-liga-section-head">
-              <div className="flex-liga-section-head__titles">
-                <p className="flex-liga-section-head__kicker">Ranking oficial</p>
-                <h2 className="flex-liga-section-head__title">Clasificación general</h2>
-              </div>
-              <p className="flex-liga-section-head__hint">
-                Toca un jugador para consultar su detalle por jornada
-              </p>
+              <h2 className="flex-liga-section-head__title">Clasificación general</h2>
+              {season.ok && season.rows.length > 0 ? (
+                <span className="flex-liga-section-head__meta">
+                  {season.rows.length} clasificados
+                </span>
+              ) : null}
             </header>
 
             {season.ok && season.rows.length > 0 ? (
-              <>
-                {/* A. Top 3 Destacado */}
-                <div className="flex-liga-top3" role="list" aria-label="Top 3 de la temporada">
-                  {season.rows.slice(0, 3).map((row) => {
-                    const name = names.get(row.jugadorId) ?? "Jugador";
-                    const profile = profiles[row.jugadorId];
-                    const isSelected = playerId === row.jugadorId;
+              <div
+                className={`flex-liga-standings__layout${
+                  tableRows.length === 0 ? " flex-liga-standings__layout--only-top3" : ""
+                }`}
+              >
+                {/* A. Podio Top 3 (Orden visual 2º — 1º — 3º en escritorio y móvil) */}
+                <div className="flex-liga-top3-wrap">
+                  <div className="flex-liga-top3" role="list" aria-label="Podio Top 3">
+                    {top3Rows.map((row) => {
+                      const name = names.get(row.jugadorId) ?? "Jugador";
+                      const profile = profiles[row.jugadorId];
+                      const isSelected = playerId === row.jugadorId;
 
-                    return (
-                      <article
-                        key={row.jugadorId}
-                        role="listitem"
-                        className={`flex-liga-top3__card flex-liga-top3__card--${row.posicion}${
-                          isSelected ? " is-selected" : ""
-                        }`}
-                      >
-                        <button
-                          type="button"
-                          className="flex-liga-top3__hit"
-                          onClick={() => setPlayerId(row.jugadorId)}
+                      return (
+                        <article
+                          key={row.jugadorId}
+                          role="listitem"
+                          className={`flex-liga-top3__card flex-liga-top3__card--${row.posicion}${
+                            isSelected ? " is-selected" : ""
+                          }`}
                         >
-                          <div className="flex-liga-top3__portrait">
-                            <JugadorAvatar
-                              fotoUrl={profile?.fotoUrl}
-                              nombre={name}
-                              size="xl"
-                              className="flex-liga-top3__avatar"
-                              alt=""
-                            />
-                            <span className="flex-liga-top3__pos" aria-hidden>
-                              {row.posicion}
-                            </span>
-                            <div className="flex-liga-top3__overlay">
-                              {row.posicion === 1 ? (
-                                <span className="flex-liga-top3__role">Líder</span>
-                              ) : null}
-                              <p className="flex-liga-top3__name">{name}</p>
-                              <p className="flex-liga-top3__pts">
-                                <span className="flex-liga-top3__pts-value">{row.puntos}</span>
-                                <span className="flex-liga-top3__pts-unit">PTS</span>
-                              </p>
-                              <p className="flex-liga-top3__riviera-id">
-                                {profile?.rivieraId ?? "Riviera Open"}
-                              </p>
+                          <button
+                            type="button"
+                            className="flex-liga-top3__hit"
+                            onClick={() => setPlayerId(row.jugadorId)}
+                          >
+                            <div className="flex-liga-top3__portrait">
+                              <JugadorAvatar
+                                fotoUrl={profile?.fotoUrl}
+                                nombre={name}
+                                size="xl"
+                                className="flex-liga-top3__avatar"
+                                alt=""
+                              />
+                              <span className="flex-liga-top3__pos" aria-hidden>
+                                {row.posicion}
+                              </span>
+                              <div className="flex-liga-top3__overlay">
+                                <p className="flex-liga-top3__name">{name}</p>
+                                <p className="flex-liga-top3__pts">
+                                  <span className="flex-liga-top3__pts-value">{row.puntos}</span>
+                                  <span className="flex-liga-top3__pts-unit">PTS</span>
+                                </p>
+                                <p className="flex-liga-top3__riviera-id">
+                                  {profile?.rivieraId ?? "Riviera Open"}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        </button>
-                      </article>
-                    );
-                  })}
+                          </button>
+                        </article>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* B. Resto de la clasificación (posiciones 4+) */}
-                {season.rows.length > 3 ? (
-                  <div className="flex-liga-table">
+                {/* B. Tabla compacta de clasificación (Posiciones 4+) */}
+                {tableRows.length > 0 ? (
+                  <div className="flex-liga-table" aria-label="Posiciones 4 en adelante">
                     <div className="flex-liga-table__head" aria-hidden>
-                      <span>Pos</span>
-                      <span />
-                      <span>Jugador</span>
-                      <span>Jornadas</span>
-                      <span className="flex-liga-table__head-right">Puntos</span>
-                      <span className="flex-liga-table__head-chevron" />
+                      <span className="flex-liga-table__col-pos">Pos</span>
+                      <span className="flex-liga-table__col-player">Jugador</span>
+                      <span className="flex-liga-table__col-jj">
+                        <span className="flex-liga-table__jj-full">Jornadas</span>
+                        <span className="flex-liga-table__jj-abbr">JJ</span>
+                      </span>
+                      <span className="flex-liga-table__col-pts">Puntos</span>
                     </div>
-                    <ol className="flex-liga-table__list">
-                      {season.rows.slice(3).map((row) => {
+                    <ol className="flex-liga-table__list" start={4}>
+                      {tableRows.map((row) => {
                         const name = names.get(row.jugadorId) ?? "Jugador";
                         const profile = profiles[row.jugadorId];
                         const isSelected = playerId === row.jugadorId;
-                        const move = movementLabel(movement.get(row.jugadorId) ?? null);
                         return (
                           <li key={row.jugadorId} className="flex-liga-table__item">
                             <button
@@ -332,30 +315,27 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                               onClick={() => setPlayerId(row.jugadorId)}
                             >
                               <span className="flex-liga-row__pos">{row.posicion}</span>
-                              <JugadorAvatar
-                                fotoUrl={profile?.fotoUrl}
-                                nombre={name}
-                                size="sm"
-                                className="flex-liga-row__avatar"
-                                alt=""
-                              />
-                              <span className="flex-liga-row__identity">
-                                <span className="flex-liga-row__name">{name}</span>
-                                {profile?.rivieraId ? (
-                                  <span className="flex-liga-row__riviera-id">
-                                    {profile.rivieraId}
-                                  </span>
-                                ) : null}
+                              <span className="flex-liga-row__player">
+                                <JugadorAvatar
+                                  fotoUrl={profile?.fotoUrl}
+                                  nombre={name}
+                                  size="sm"
+                                  className="flex-liga-row__avatar"
+                                  alt=""
+                                />
+                                <span className="flex-liga-row__identity">
+                                  <span className="flex-liga-row__name">{name}</span>
+                                  {profile?.rivieraId ? (
+                                    <span className="flex-liga-row__riviera-id">
+                                      {profile.rivieraId}
+                                    </span>
+                                  ) : null}
+                                </span>
                               </span>
-                              <span className="flex-liga-row__jj">
-                                {row.jornadasJugadas} J{move !== "—" ? ` · ${move}` : ""}
-                              </span>
+                              <span className="flex-liga-row__jj">{row.jornadasJugadas}</span>
                               <span className="flex-liga-row__pts">
                                 <strong>{row.puntos}</strong>
                                 <small>PTS</small>
-                              </span>
-                              <span className="flex-liga-row__chevron" aria-hidden>
-                                ›
                               </span>
                             </button>
                           </li>
@@ -364,7 +344,7 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                     </ol>
                   </div>
                 ) : null}
-              </>
+              </div>
             ) : (
               <p className="flex-liga-empty">
                 {season.ok
@@ -374,16 +354,28 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
             )}
           </section>
 
-          {/* 6) CALENDARIO DE TEMPORADA */}
+          {/* 4) CALENDARIO COMPACTO DE TEMPORADA */}
           <section className="flex-liga-calendar" aria-label="Calendario de temporada">
             <header className="flex-liga-section-head">
-              <div className="flex-liga-section-head__titles">
-                <p className="flex-liga-section-head__kicker">Temporada</p>
-                <h2 className="flex-liga-section-head__title">Calendario de temporada</h2>
+              <h2 className="flex-liga-section-head__title">Calendario de temporada</h2>
+              <div className="flex-liga-calendar__legend" aria-label="Estados de jornada">
+                <span className="flex-liga-calendar__legend-item">
+                  <span className="flex-liga-cal-dot flex-liga-cal-dot--done" aria-hidden />
+                  <span>Finalizada</span>
+                </span>
+                <span className="flex-liga-calendar__legend-item">
+                  <span className="flex-liga-cal-dot flex-liga-cal-dot--live" aria-hidden />
+                  <span>En curso</span>
+                </span>
+                <span className="flex-liga-calendar__legend-item">
+                  <span className="flex-liga-cal-dot flex-liga-cal-dot--next" aria-hidden />
+                  <span>Próxima</span>
+                </span>
+                <span className="flex-liga-calendar__legend-item">
+                  <span className="flex-liga-cal-dot flex-liga-cal-dot--pending" aria-hidden />
+                  <span>Pendiente</span>
+                </span>
               </div>
-              <p className="flex-liga-section-head__hint">
-                {completed.length} de {totalJornadas} finalizadas
-              </p>
             </header>
 
             <div className="flex-liga-calendar__grid">
@@ -394,7 +386,10 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                   fecha: jornada.fecha,
                   confirmada: flex?.programacionEstado === "confirmada",
                 });
-                const isNext = next?.id === jornada.id && status.key !== "en_curso";
+                const isNext =
+                  !isSeasonFinished &&
+                  nextJornada?.id === jornada.id &&
+                  status.key !== "en_curso";
                 const cardVariant =
                   status.key === "finalizada"
                     ? "done"
@@ -404,41 +399,72 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                         ? "next"
                         : "pending";
                 const statusLabel =
-                  status.key === "finalizada"
+                  cardVariant === "done"
                     ? "Finalizada"
-                    : status.key === "en_curso"
+                    : cardVariant === "live"
                       ? "En curso"
-                      : isNext
+                      : cardVariant === "next"
                         ? "Próxima"
-                        : status.key === "programada"
-                          ? "Próxima"
-                          : "Por programar";
+                        : "Pendiente";
+
+                const hasDate =
+                  Boolean(jornada.fecha) && fechaCorta(jornada.fecha) !== "Por programar";
+                const hasContent =
+                  cardVariant !== "pending" ||
+                  hasDate ||
+                  (jornada.partidos?.length ?? 0) > 0 ||
+                  (bundle?.participantes?.[jornada.id]?.length ?? 0) > 0;
+
+                const codeLabel = `J${String(jornada.numero).padStart(2, "0")}`;
+                const cellInner = (
+                  <>
+                    <div className="flex-liga-cal-cell__top">
+                      <span className="flex-liga-cal-cell__num">{codeLabel}</span>
+                      <span
+                        className={`flex-liga-cal-dot flex-liga-cal-dot--${cardVariant}`}
+                        title={statusLabel}
+                        aria-hidden
+                      />
+                    </div>
+                    {hasDate ? (
+                      <span className="flex-liga-cal-cell__date">
+                        {fechaCorta(jornada.fecha)}
+                      </span>
+                    ) : null}
+                  </>
+                );
+
+                if (!hasContent) {
+                  return (
+                    <div
+                      key={jornada.id}
+                      className={`flex-liga-cal-cell flex-liga-cal-cell--${cardVariant} is-disabled`}
+                      aria-label={`${codeLabel} · ${statusLabel}`}
+                      title={`${codeLabel} · ${statusLabel}`}
+                    >
+                      {cellInner}
+                    </div>
+                  );
+                }
 
                 return (
                   <a
                     key={jornada.id}
-                    className={`flex-liga-cal-card flex-liga-cal-card--${cardVariant}`}
+                    className={`flex-liga-cal-cell flex-liga-cal-cell--${cardVariant}`}
                     href={publicLigaJornadaUrl(detalle.id, jornada.numero)}
+                    aria-label={`${codeLabel} · ${statusLabel}${
+                      hasDate ? ` · ${fechaCorta(jornada.fecha)}` : ""
+                    }`}
+                    title={`${codeLabel} · ${statusLabel}`}
                   >
-                    <div className="flex-liga-cal-card__top">
-                      <span className="flex-liga-cal-card__num">
-                        J{String(jornada.numero).padStart(2, "0")}
-                      </span>
-                      <span className="flex-liga-cal-card__dot" aria-hidden />
-                    </div>
-                    <span className="flex-liga-cal-card__status">{statusLabel}</span>
-                    {jornada.fecha ? (
-                      <span className="flex-liga-cal-card__date">
-                        {fechaCorta(jornada.fecha)}
-                      </span>
-                    ) : null}
+                    {cellInner}
                   </a>
                 );
               })}
             </div>
           </section>
 
-          {/* 4 & 5) DETALLE DE JUGADOR BAJO DEMANDA (MODAL / DRAWER CONTEXTUAL) */}
+          {/* DETALLE DE JUGADOR BAJO DEMANDA (MODAL / DRAWER CONTEXTUAL) */}
           {selected ? (
             <div
               className="flex-liga-drawer-backdrop"
