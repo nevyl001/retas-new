@@ -413,298 +413,212 @@
   color: var(--flex-liga-text-muted);
 }
 
-/* ── A. Top 3 Destacado (1er lugar tarjeta principal · 2do y 3er compactos) ── */
+/* ── A. Podio: ficha de jugador, la foto ocupa la card ── */
 
 .flex-liga-top3 {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-@media (min-width: 840px) {
-  .flex-liga-top3 {
-    grid-template-columns: 1.3fr 1fr 1fr;
-    gap: 12px;
-  }
-}
-
-.flex-liga-top3__card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border-radius: 14px;
-  background: var(--flex-liga-surface-elevated);
-  border: 1px solid var(--flex-liga-border);
-  overflow: hidden;
-  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
-}
-
-.flex-liga-top3__card:hover {
-  border-color: var(--flex-liga-border-strong);
-  transform: translateY(-1px);
-}
-
-.flex-liga-top3__card.is-selected {
-  border-color: var(--flex-liga-accent);
-  box-shadow: 0 0 0 1px var(--flex-liga-accent-border);
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  gap: 12px;
 }
 
 .flex-liga-top3__card--1 {
   grid-column: 1 / -1;
-  border-color: var(--flex-liga-accent-border);
-  background:
-    radial-gradient(
-      120% 120% at 0% 0%,
-      var(--flex-liga-accent-soft) 0%,
-      var(--flex-liga-surface-elevated) 68%
-    );
-  box-shadow:
-    inset 0 1px 0 var(--flex-liga-accent-border-subtle),
-    0 10px 28px rgba(0, 0, 0, 0.3);
 }
 
 @media (min-width: 840px) {
+  .flex-liga-top3 {
+    grid-template-columns: 1.28fr 1fr 1fr;
+    gap: 16px;
+  }
+
   .flex-liga-top3__card--1 {
     grid-column: auto;
   }
 }
 
-.flex-liga-top3__card--2 {
-  border-color: rgba(184, 188, 196, 0.28);
+.flex-liga-top3__card {
+  min-width: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.flex-liga-top3__card--3 {
-  border-color: rgba(205, 154, 106, 0.28);
+.flex-liga-top3__card--1 {
+  border-color: color-mix(in srgb, var(--flex-liga-accent) 55%, transparent);
+}
+
+.flex-liga-top3__card.is-selected {
+  border-color: var(--flex-liga-accent);
 }
 
 .flex-liga-top3__hit {
   appearance: none;
+  display: block;
   width: 100%;
-  height: 100%;
-  padding: 14px;
-  border: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
   background: transparent;
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 12px;
-  box-sizing: border-box;
 }
 
-.flex-liga-top3__card--1 .flex-liga-top3__hit {
-  flex-direction: row;
-  align-items: center;
-  padding: 16px;
-  gap: 14px;
+.flex-liga-top3__portrait {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  min-height: 240px;
+  overflow: hidden;
+  background: #141414;
+}
+
+.flex-liga-top3__card--1 .flex-liga-top3__portrait {
+  min-height: 320px;
+  aspect-ratio: 4 / 5;
 }
 
 @media (min-width: 840px) {
-  .flex-liga-top3__card--1 .flex-liga-top3__hit {
-    padding: 16px 18px;
+  .flex-liga-top3__portrait {
+    min-height: 280px;
+    aspect-ratio: 3 / 4;
+  }
+
+  .flex-liga-top3__card--1 .flex-liga-top3__portrait {
+    min-height: 380px;
+    aspect-ratio: 3 / 4;
   }
 }
 
-.flex-liga-top3__leader-left {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.flex-liga-top3__avatar-wrap {
-  position: relative;
-  flex-shrink: 0;
-}
-
 .flex-liga-top3__avatar.rj-avatar {
-  width: 64px;
-  height: 80px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1.5px solid var(--flex-liga-border-strong);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.32);
-}
-
-.flex-liga-top3__card--1 .flex-liga-top3__avatar.rj-avatar {
-  width: 84px;
-  height: 104px;
-  border-radius: 14px;
-  border: 2px solid var(--flex-liga-accent);
-  box-shadow:
-    0 0 0 3px var(--flex-liga-accent-dim),
-    0 8px 20px rgba(0, 0, 0, 0.38);
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: #141414;
 }
 
 .flex-liga-top3__avatar .rj-avatar__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 18%;
+  object-position: center 15%;
 }
 
-.flex-liga-top3__pos-badge {
+.flex-liga-top3__pos {
   position: absolute;
-  top: -5px;
-  left: -5px;
+  top: 12px;
+  left: 12px;
   z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 5px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  background: #14161b;
-  color: var(--flex-liga-text);
-  border: 1.5px solid var(--flex-liga-border-strong);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  background: rgba(10, 10, 10, 0.72);
+  color: #f5f4f0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-.flex-liga-top3__card--1 .flex-liga-top3__pos-badge {
-  min-width: 24px;
-  height: 24px;
-  font-size: 12px;
+.flex-liga-top3__card--1 .flex-liga-top3__pos {
+  min-width: 32px;
+  height: 32px;
   background: var(--flex-liga-accent);
   color: var(--flex-liga-accent-ink);
-  border-color: var(--flex-liga-accent);
 }
 
-.flex-liga-top3__card--2 .flex-liga-top3__pos-badge {
-  border-color: #b8bcc4;
-  color: #e2e5ea;
-}
-
-.flex-liga-top3__card--3 .flex-liga-top3__pos-badge {
-  border-color: #cd9a6a;
-  color: #ebc49f;
-}
-
-.flex-liga-top3__compact-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-}
-
-.flex-liga-top3__identity {
+.flex-liga-top3__overlay {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  gap: 4px;
+  padding: 56px 14px 14px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.88) 58%);
 }
 
-.flex-liga-top3__role-tag {
-  display: inline-flex;
+.flex-liga-top3__card--1 .flex-liga-top3__overlay {
+  padding: 72px 18px 18px;
+}
+
+.flex-liga-top3__role {
   align-self: flex-start;
-  padding: 2px 7px;
-  margin-bottom: 2px;
-  border-radius: 999px;
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--flex-liga-accent);
-  background: var(--flex-liga-accent-soft);
-  border: 1px solid var(--flex-liga-accent-border-subtle);
 }
 
 .flex-liga-top3__name {
   margin: 0;
-  font-size: 14px;
-  font-weight: 750;
-  line-height: 1.22;
-  letter-spacing: -0.01em;
-  color: var(--flex-liga-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.flex-liga-top3__card--1 .flex-liga-top3__name {
-  font-size: 16.5px;
-  font-weight: 800;
-  white-space: normal;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  color: #f7f6f2;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-}
-
-.flex-liga-top3__riviera-id {
-  margin: 0;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--flex-liga-text-muted);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.flex-liga-top3__metrics {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 3px;
-  flex-shrink: 0;
+.flex-liga-top3__card--1 .flex-liga-top3__name {
+  font-size: 28px;
 }
 
 .flex-liga-top3__pts {
-  margin: 0;
+  margin: 2px 0 0;
   display: inline-flex;
   align-items: baseline;
-  gap: 3px;
-  font-variant-numeric: tabular-nums;
+  gap: 4px;
 }
 
 .flex-liga-top3__pts-value {
   font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.02em;
-  color: var(--flex-liga-text);
+  color: #f7f6f2;
+  font-variant-numeric: tabular-nums;
 }
 
 .flex-liga-top3__card--1 .flex-liga-top3__pts-value {
-  font-size: 40px;
+  font-size: 22px;
   color: var(--flex-liga-accent);
 }
 
 .flex-liga-top3__pts-unit {
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--flex-liga-text-muted);
+  color: rgba(255, 255, 255, 0.62);
 }
 
-.flex-liga-top3__jornadas {
+.flex-liga-top3__riviera-id {
   margin: 0;
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
-  color: var(--flex-liga-text-secondary);
-  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.62);
   white-space: nowrap;
-}
-
-.flex-liga-top3__compact-bottom {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── B. Resto de la clasificación (Posiciones 4+) ── */

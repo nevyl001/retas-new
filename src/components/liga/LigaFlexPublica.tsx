@@ -262,58 +262,6 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                     const name = names.get(row.jugadorId) ?? "Jugador";
                     const profile = profiles[row.jugadorId];
                     const isSelected = playerId === row.jugadorId;
-                    const move = movementLabel(movement.get(row.jugadorId) ?? null);
-                    const jornadasLabel = `${row.jornadasJugadas} ${
-                      row.jornadasJugadas === 1 ? "jornada" : "jornadas"
-                    }${move !== "—" ? ` · ${move}` : ""}`;
-
-                    if (row.posicion === 1) {
-                      return (
-                        <article
-                          key={row.jugadorId}
-                          role="listitem"
-                          className={`flex-liga-top3__card flex-liga-top3__card--1${
-                            isSelected ? " is-selected" : ""
-                          }`}
-                        >
-                          <button
-                            type="button"
-                            className="flex-liga-top3__hit"
-                            onClick={() => setPlayerId(row.jugadorId)}
-                          >
-                            <div className="flex-liga-top3__leader-left">
-                              <div className="flex-liga-top3__avatar-wrap">
-                                <JugadorAvatar
-                                  fotoUrl={profile?.fotoUrl}
-                                  nombre={name}
-                                  size="lg"
-                                  className="flex-liga-top3__avatar"
-                                  alt=""
-                                />
-                                <span className="flex-liga-top3__pos-badge" aria-hidden>
-                                  1
-                                </span>
-                              </div>
-                              <div className="flex-liga-top3__identity">
-                                <span className="flex-liga-top3__role-tag">1.º Lugar · Líder</span>
-                                <p className="flex-liga-top3__name">{name}</p>
-                                <p className="flex-liga-top3__riviera-id">
-                                  {profile?.rivieraId ?? "Riviera Open"}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex-liga-top3__metrics">
-                              <p className="flex-liga-top3__pts">
-                                <span className="flex-liga-top3__pts-value">{row.puntos}</span>
-                                <span className="flex-liga-top3__pts-unit">PTS</span>
-                              </p>
-                              <p className="flex-liga-top3__jornadas">{jornadasLabel}</p>
-                            </div>
-                          </button>
-                        </article>
-                      );
-                    }
 
                     return (
                       <article
@@ -328,32 +276,26 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                           className="flex-liga-top3__hit"
                           onClick={() => setPlayerId(row.jugadorId)}
                         >
-                          <div className="flex-liga-top3__compact-top">
-                            <div className="flex-liga-top3__avatar-wrap">
-                              <JugadorAvatar
-                                fotoUrl={profile?.fotoUrl}
-                                nombre={name}
-                                size="md"
-                                className="flex-liga-top3__avatar"
-                                alt=""
-                              />
-                              <span className="flex-liga-top3__pos-badge" aria-hidden>
-                                {row.posicion}
-                              </span>
-                            </div>
-
-                            <div className="flex-liga-top3__metrics">
+                          <div className="flex-liga-top3__portrait">
+                            <JugadorAvatar
+                              fotoUrl={profile?.fotoUrl}
+                              nombre={name}
+                              size="xl"
+                              className="flex-liga-top3__avatar"
+                              alt=""
+                            />
+                            <span className="flex-liga-top3__pos" aria-hidden>
+                              {row.posicion}
+                            </span>
+                            <div className="flex-liga-top3__overlay">
+                              {row.posicion === 1 ? (
+                                <span className="flex-liga-top3__role">Líder</span>
+                              ) : null}
+                              <p className="flex-liga-top3__name">{name}</p>
                               <p className="flex-liga-top3__pts">
                                 <span className="flex-liga-top3__pts-value">{row.puntos}</span>
                                 <span className="flex-liga-top3__pts-unit">PTS</span>
                               </p>
-                              <p className="flex-liga-top3__jornadas">{jornadasLabel}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex-liga-top3__compact-bottom">
-                            <div className="flex-liga-top3__identity">
-                              <p className="flex-liga-top3__name">{name}</p>
                               <p className="flex-liga-top3__riviera-id">
                                 {profile?.rivieraId ?? "Riviera Open"}
                               </p>
