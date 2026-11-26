@@ -63,16 +63,21 @@
   -webkit-backdrop-filter: blur(10px);
 }
 
-.flex-pub-jornada .liga-pantalla__inner {
-  max-width: 1320px;
+.flex-pub-jornada.liga-pantalla .liga-pantalla__inner {
+  max-width: none;
   width: 100%;
-  margin: 0 auto;
-  padding: 28px 24px 56px;
+  margin: 0;
+  padding: clamp(16px, 2vw, 28px) clamp(16px, 2.2vw, 32px) clamp(32px, 4vw, 56px);
   box-sizing: border-box;
 }
 
 .flex-pub-jornada.liga-pantalla--flex-screen .liga-pantalla__inner {
-  max-width: 1440px;
+  max-width: none;
+}
+
+.flex-pub-jornada .liga-pantalla-jornada-hero.peds-hero {
+  max-width: none;
+  width: 100%;
 }
 
 /* ── 1 & 2. Hero y Barra de Información de Liga y Jornada ── */
@@ -187,7 +192,7 @@
 .flex-pub-sections {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
   width: 100%;
 }
 
@@ -1081,12 +1086,7 @@
 /* ── Adaptación Responsive Móvil (< 640px) ── */
 
 @media (max-width: 639px) {
-  .flex-pub-jornada .liga-pantalla__inner {
-    padding: 16px 14px 40px;
-  }
-
   .flex-pub-toolbar {
-    padding: 10px 12px;
     margin-bottom: 18px;
   }
 

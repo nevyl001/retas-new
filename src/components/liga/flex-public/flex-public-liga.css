@@ -53,21 +53,14 @@
 }
 
 .flex-pub-liga .liga-pantalla__inner.flex-liga-shell {
-  max-width: 1320px;
+  max-width: none;
   width: 100%;
-  margin: 0 auto;
-  padding: 20px 16px 48px;
+  margin: 0;
+  padding: clamp(16px, 2vw, 28px) clamp(16px, 2.2vw, 32px) clamp(32px, 4vw, 56px);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-@media (min-width: 768px) {
-  .flex-pub-liga .liga-pantalla__inner.flex-liga-shell {
-    padding: 28px 24px 64px;
-    gap: 20px;
-  }
+  gap: 24px;
 }
 
 .flex-pub-liga > .liga-pantalla__grain {
