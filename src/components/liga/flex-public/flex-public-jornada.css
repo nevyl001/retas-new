@@ -389,7 +389,7 @@
     color 150ms ease;
 }
 
-.flex-pub-round-nav__btn:hover:not(:disabled) {
+.flex-pub-round-nav__btn:hover:not(:disabled):not(.is-selected) {
   color: var(--flex-pub-text);
   border-color: var(--flex-pub-border-strong);
   background: var(--flex-pub-surface-elevated);
@@ -1349,10 +1349,25 @@
 .flex-pub-jornada-close__card .flex-pub-avatar--close {
   position: absolute;
   inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
   border: 0;
   border-radius: inherit;
+  overflow: hidden;
+}
+
+.flex-pub-jornada-close__card .flex-pub-avatar__img {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: auto;
+  height: 168%;
+  min-width: 100%;
+  max-width: none;
+  transform: translateX(-50%);
+  object-fit: cover;
+  object-position: center top;
 }
 
 .flex-pub-avatar--close .flex-pub-avatar__initials {
