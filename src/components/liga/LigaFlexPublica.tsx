@@ -278,9 +278,6 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                                   <span className="flex-liga-top3__pts-value">{row.puntos}</span>
                                   <span className="flex-liga-top3__pts-unit">PTS</span>
                                 </p>
-                                <p className="flex-liga-top3__riviera-id">
-                                  {profile?.rivieraId ?? "Riviera Open"}
-                                </p>
                               </div>
                             </div>
                           </button>

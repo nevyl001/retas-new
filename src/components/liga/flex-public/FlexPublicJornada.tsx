@@ -1013,9 +1013,6 @@ function FlexMatchCard({
             />
             <div className="flex-pub-match-player__info">
               <p className="flex-pub-match-player__name">{pairA.name1}</p>
-              {pairA.rivieraId1 ? (
-                <p className="flex-pub-match-player__id">{pairA.rivieraId1}</p>
-              ) : null}
             </div>
           </div>
           <div className="flex-pub-match-player">
@@ -1026,9 +1023,6 @@ function FlexMatchCard({
             />
             <div className="flex-pub-match-player__info">
               <p className="flex-pub-match-player__name">{pairA.name2}</p>
-              {pairA.rivieraId2 ? (
-                <p className="flex-pub-match-player__id">{pairA.rivieraId2}</p>
-              ) : null}
             </div>
           </div>
         </div>
@@ -1072,9 +1066,6 @@ function FlexMatchCard({
             />
             <div className="flex-pub-match-player__info">
               <p className="flex-pub-match-player__name">{pairB.name1}</p>
-              {pairB.rivieraId1 ? (
-                <p className="flex-pub-match-player__id">{pairB.rivieraId1}</p>
-              ) : null}
             </div>
           </div>
           <div className="flex-pub-match-player">
@@ -1085,9 +1076,6 @@ function FlexMatchCard({
             />
             <div className="flex-pub-match-player__info">
               <p className="flex-pub-match-player__name">{pairB.name2}</p>
-              {pairB.rivieraId2 ? (
-                <p className="flex-pub-match-player__id">{pairB.rivieraId2}</p>
-              ) : null}
             </div>
           </div>
         </div>

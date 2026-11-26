@@ -237,10 +237,10 @@ describe("LigaFlexPublica — rediseño definitivo de vista pública de temporad
 
     // 3) Podio Top 3 y tabla de clasificación desde la posición 4
     await waitFor(() => {
-      expect(screen.getByText("RIV-00000409")).toBeInTheDocument();
+      expect(screen.getByText("Luis Osorio")).toBeInTheDocument();
     });
-    expect(screen.getByText("RIV-00000412")).toBeInTheDocument();
-    expect(screen.getByText("RIV-00000415")).toBeInTheDocument();
+    const podium = document.querySelector(".flex-liga-top3");
+    expect(podium?.textContent).not.toMatch(/RIV-/);
     expect(screen.getByText("RIV-00000580")).toBeInTheDocument();
 
     // 4) El detalle del jugador se abre bajo demanda en modal/drawer
