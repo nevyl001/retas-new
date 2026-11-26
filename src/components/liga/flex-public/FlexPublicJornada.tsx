@@ -251,6 +251,18 @@ const FlexPublicJornadaBody: React.FC<{
     return map;
   }, [standingRows]);
 
+  const closeRows = useMemo(() => {
+    const top = standingRows
+      .filter((row) => row.posicion >= 1 && row.posicion <= 3)
+      .sort((a, b) => a.posicion - b.posicion)
+      .slice(0, 3);
+    const ready =
+      top.length === 3 &&
+      top.every((row, index) => row.posicion === index + 1) &&
+      (official || top.some((row) => row.partidos > 0));
+    return ready ? top : [];
+  }, [official, standingRows]);
+
   if (!jornada) {
     return (
       <PublicScopedBrandGate message="Cargando jornada…">
@@ -796,6 +808,64 @@ const FlexPublicJornadaBody: React.FC<{
                       </tbody>
                     </table>
                   </div>
+                </div>
+              </section>
+            ) : null}
+
+            {closeRows.length === 3 ? (
+              <section
+                className="flex-pub-jornada-close"
+                aria-label="Cierre de la jornada"
+              >
+                <ol className="flex-pub-jornada-close__podium">
+                  {closeRows.map((row) => {
+                    const name = names.get(row.jugadorId) ?? "Jugador";
+                    const profile = profiles[row.jugadorId];
+                    return (
+                      <li
+                        key={row.jugadorId}
+                        className={`flex-pub-jornada-close__card flex-pub-jornada-close__card--${row.posicion}`}
+                      >
+                        <FlexNeutralAvatar
+                          name={name}
+                          fotoUrl={profile?.fotoUrl}
+                          variant="close"
+                        />
+                        <span
+                          className="flex-pub-jornada-close__shade"
+                          aria-hidden
+                        />
+                        <span className="flex-pub-jornada-close__rank">
+                          {row.posicion}
+                        </span>
+                        <div className="flex-pub-jornada-close__meta">
+                          <span className="flex-pub-jornada-close__name">
+                            {name}
+                          </span>
+                          <span className="flex-pub-jornada-close__pts">
+                            {row.puntos} PTS
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+                <div className="flex-pub-jornada-close__message">
+                  <h2 className="flex-pub-jornada-close__title">
+                    ¡FELICIDADES AL TOP 3 DE LA JORNADA!
+                  </h2>
+                  <p className="flex-pub-jornada-close__body">
+                    Cada jornada es una oportunidad para seguir creciendo,
+                    competir mejor y demostrar tu evolución dentro de la cancha.
+                  </p>
+                  <p className="flex-pub-jornada-close__lines">
+                    <span>Sigue compitiendo.</span>
+                    <span>Sigue sumando.</span>
+                    <span>Crea tu historia.</span>
+                  </p>
+                  <p className="flex-pub-jornada-close__sign">
+                    Vive Riviera Open.
+                  </p>
                 </div>
               </section>
             ) : null}

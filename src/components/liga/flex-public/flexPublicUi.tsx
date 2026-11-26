@@ -82,7 +82,7 @@ function playerInitials(name: string): string {
 export const FlexNeutralAvatar: React.FC<{
   name: string;
   fotoUrl?: string | null;
-  variant: "participant" | "match" | "table";
+  variant: "participant" | "match" | "table" | "close";
 }> = ({ name, fotoUrl, variant }) => {
   const candidate = isPhotographicSplitVsFoto(fotoUrl) ? fotoUrl!.trim() : null;
   const [failed, setFailed] = useState(false);

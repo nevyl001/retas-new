@@ -287,6 +287,7 @@ describe("FlexPublicJornada — Jornada Pública Riviera Flex League", () => {
     // Sin resultados aún: muestra "—", "PTS JORNADA" y "Pendiente" (no muestra 0)
     expect(screen.getAllByText("PTS JORNADA")).toHaveLength(12);
     expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(12);
+    expect(container.querySelector(".flex-pub-jornada-close")).toBeNull();
   });
 
   it("actualiza automáticamente los puntos de jornada en cada tarjeta de participante y muestra CLASIFICACIÓN DE LA JORNADA al confirmar una ronda", async () => {
@@ -344,13 +345,32 @@ describe("FlexPublicJornada — Jornada Pública Riviera Flex League", () => {
     expect(rows[0]!.puntos).toBe(100);
     expect(rows[11]!.puntos).toBe(30);
 
-    render(<FlexPublicJornada detalle={detalle} numero={1} />);
+    const { container } = render(
+      <FlexPublicJornada detalle={detalle} numero={1} />
+    );
 
     await waitFor(() => {
       expect(
         screen.getByText("CLASIFICACIÓN DE LA JORNADA")
       ).toBeInTheDocument();
     });
+
+    const standings = container.querySelector(".flex-pub-standings-section");
+    const close = container.querySelector(".flex-pub-jornada-close");
+    expect(standings).not.toBeNull();
+    expect(close).not.toBeNull();
+    expect(
+      standings!.compareDocumentPosition(close!) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(close!.querySelectorAll(".flex-pub-jornada-close__card")).toHaveLength(
+      3
+    );
+    expect(close!.textContent).toMatch(/100\s*PTS/);
+    expect(
+      screen.getByText("¡FELICIDADES AL TOP 3 DE LA JORNADA!")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Vive Riviera Open.")).toBeInTheDocument();
 
     expect(
       screen.getAllByText(/Clasificación provisional/i).length

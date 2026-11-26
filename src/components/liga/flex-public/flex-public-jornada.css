@@ -1142,3 +1142,221 @@
     width: 48px;
   }
 }
+
+/* ── Cierre de la jornada: top 3 + mensaje ── */
+
+.flex-pub-jornada-close {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  width: 100%;
+  padding-top: 4px;
+}
+
+.flex-pub-jornada-close__podium {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  justify-items: center;
+  align-items: end;
+  gap: 12px 14px;
+  width: min(100%, 440px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flex-pub-jornada-close__card {
+  position: relative;
+  display: block;
+  width: min(156px, 42vw);
+  aspect-ratio: 3 / 4;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--flex-pub-border-strong);
+  background: var(--flex-pub-avatar-bg);
+  box-sizing: border-box;
+}
+
+.flex-pub-jornada-close__card--1 {
+  grid-column: 1 / -1;
+  width: min(210px, 62vw);
+  order: 1;
+}
+
+.flex-pub-jornada-close__card--2 {
+  order: 2;
+}
+
+.flex-pub-jornada-close__card--3 {
+  order: 3;
+}
+
+.flex-pub-jornada-close__card .flex-pub-avatar--close {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+}
+
+.flex-pub-avatar--close .flex-pub-avatar__initials {
+  font-family: var(--font-display);
+  font-size: 42px;
+  letter-spacing: 0.06em;
+}
+
+.flex-pub-jornada-close__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.05) 34%,
+    rgba(0, 0, 0, 0.82) 100%
+  );
+  pointer-events: none;
+}
+
+.flex-pub-jornada-close__rank {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: var(--flex-pub-text);
+}
+
+.flex-pub-jornada-close__card--1 .flex-pub-jornada-close__rank {
+  font-size: 36px;
+  color: var(--flex-pub-accent);
+}
+
+.flex-pub-jornada-close__meta {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 14px 14px;
+}
+
+.flex-pub-jornada-close__name {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--flex-pub-text);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.flex-pub-jornada-close__card--1 .flex-pub-jornada-close__name {
+  font-size: 16px;
+}
+
+.flex-pub-jornada-close__pts {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: var(--flex-pub-text);
+}
+
+.flex-pub-jornada-close__card--1 .flex-pub-jornada-close__pts {
+  color: var(--flex-pub-accent);
+}
+
+.flex-pub-jornada-close__message {
+  width: min(100%, 640px);
+  margin: 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--flex-pub-border);
+  text-align: center;
+}
+
+.flex-pub-jornada-close__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 400;
+  letter-spacing: 0.045em;
+  line-height: 0.96;
+  text-transform: uppercase;
+  color: var(--flex-pub-text);
+}
+
+.flex-pub-jornada-close__body {
+  margin: 14px auto 0;
+  max-width: 54ch;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--flex-pub-text-secondary);
+}
+
+.flex-pub-jornada-close__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 18px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2.2vw, 26px);
+  letter-spacing: 0.07em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--flex-pub-accent);
+}
+
+.flex-pub-jornada-close__sign {
+  margin: 16px 0 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--flex-pub-text);
+}
+
+@media (min-width: 760px) {
+  .flex-pub-jornada-close__podium {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: auto;
+    max-width: 100%;
+    gap: 18px;
+  }
+
+  .flex-pub-jornada-close__card,
+  .flex-pub-jornada-close__card--1 {
+    grid-column: auto;
+  }
+
+  .flex-pub-jornada-close__card--2,
+  .flex-pub-jornada-close__card--3 {
+    width: 196px;
+  }
+
+  .flex-pub-jornada-close__card--1 {
+    width: 248px;
+    order: 2;
+  }
+
+  .flex-pub-jornada-close__card--2 {
+    order: 1;
+  }
+
+  .flex-pub-jornada-close__card--3 {
+    order: 3;
+  }
+}
