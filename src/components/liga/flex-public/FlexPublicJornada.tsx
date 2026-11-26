@@ -616,7 +616,9 @@ const FlexPublicJornadaBody: React.FC<{
                       return (
                         <article
                           key={id}
-                          className="flex-pub-participant-card"
+                          className={`flex-pub-participant-card${
+                            standing?.posicion === 1 ? " is-leader" : ""
+                          }`}
                         >
                           <FlexNeutralAvatar
                             name={name}
@@ -731,7 +733,16 @@ const FlexPublicJornadaBody: React.FC<{
                           const rivieraId = profile?.rivieraId?.trim() || null;
 
                           return (
-                            <tr key={row.jugadorId}>
+                            <tr
+                              key={row.jugadorId}
+                              className={
+                                row.posicion === 1
+                                  ? "is-leader"
+                                  : row.posicion <= 3
+                                    ? "is-podium"
+                                    : undefined
+                              }
+                            >
                               <td className="is-pos">
                                 <span
                                   className={`flex-pub-standings-pos${

@@ -53,7 +53,7 @@
 }
 
 .flex-pub-liga .liga-pantalla__inner.flex-liga-shell {
-  max-width: 1040px;
+  max-width: 1320px;
   width: 100%;
   margin: 0 auto;
   padding: 20px 16px 48px;
@@ -68,6 +68,15 @@
     padding: 28px 24px 64px;
     gap: 20px;
   }
+}
+
+.flex-pub-liga > .liga-pantalla__grain {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: rgba(6, 6, 6, 0.62);
 }
 
 .flex-pub-liga :is(
@@ -174,7 +183,6 @@
 
 .flex-liga-status-badge--live .flex-liga-status-badge__dot {
   background: var(--flex-liga-accent);
-  box-shadow: 0 0 8px var(--flex-liga-accent);
 }
 
 .flex-liga-status-badge--upcoming {
@@ -202,7 +210,7 @@
 .flex-liga-hero__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.5rem, 4.5vw, 2.2rem);
+  font-size: clamp(2rem, 4.8vw, 3.1rem);
   font-weight: 800;
   letter-spacing: -0.025em;
   line-height: 1.1;
@@ -293,9 +301,10 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 3px;
-  padding: 11px 13px;
-  border-radius: 12px;
+  gap: 6px;
+  min-height: 92px;
+  padding: 14px 16px;
+  border-radius: 14px;
   background: var(--flex-liga-surface);
   border: 1px solid var(--flex-liga-border);
   min-width: 0;
@@ -324,7 +333,7 @@
 
 .flex-liga-summary__value {
   font-family: var(--font-display);
-  font-size: 15px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.2;
@@ -520,8 +529,8 @@
 }
 
 .flex-liga-top3__avatar.rj-avatar {
-  width: 54px;
-  height: 54px;
+  width: 64px;
+  height: 80px;
   border-radius: 12px;
   overflow: hidden;
   border: 1.5px solid var(--flex-liga-border-strong);
@@ -529,8 +538,8 @@
 }
 
 .flex-liga-top3__card--1 .flex-liga-top3__avatar.rj-avatar {
-  width: 68px;
-  height: 68px;
+  width: 84px;
+  height: 104px;
   border-radius: 14px;
   border: 2px solid var(--flex-liga-accent);
   box-shadow:
@@ -676,7 +685,7 @@
 }
 
 .flex-liga-top3__card--1 .flex-liga-top3__pts-value {
-  font-size: 26px;
+  font-size: 40px;
   color: var(--flex-liga-accent);
 }
 
@@ -851,7 +860,7 @@
 
 .flex-liga-row__pts strong {
   font-family: var(--font-display);
-  font-size: 15.5px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--flex-liga-text);
 }
@@ -1247,8 +1256,9 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 6px;
-  padding: 11px 12px;
+  gap: 8px;
+  min-height: 88px;
+  padding: 14px 14px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid var(--flex-liga-border-subtle);
@@ -1316,7 +1326,6 @@
 .flex-liga-cal-card--live .flex-liga-cal-card__dot {
   background: var(--flex-liga-accent);
   opacity: 1;
-  box-shadow: 0 0 8px var(--flex-liga-accent);
 }
 
 .flex-liga-cal-card--next .flex-liga-cal-card__dot {
