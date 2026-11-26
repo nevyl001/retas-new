@@ -483,6 +483,7 @@ export async function saveFlexMatchScore(
   });
   if (error) throw new Error(error.message);
   rpcError(data as { ok?: boolean; error?: string }, "No se pudo guardar el marcador.");
+  syncFlexMatchRating(partidoId);
 }
 
 export type FlexServerResult = {
@@ -591,7 +592,39 @@ export async function correctFlexMatch(input: {
     return { needsResolution: true, error: body.error, ties: body.ties };
   }
   if (!body.ok) throw new Error(body.error || "No se pudo corregir el marcador.");
+  syncFlexMatchRating(input.partidoId);
   return {};
+}
+
+function syncFlexMatchRating(partidoId: string): void {
+  void (async () => {
+    const { data: partido, error: partidoError } = await supabase
+      .from("liga_partidos")
+      .select("jornada_id")
+      .eq("id", partidoId)
+      .maybeSingle();
+    if (partidoError || !partido?.jornada_id) return;
+    const { data: jornada, error: jornadaError } = await supabase
+      .from("liga_jornadas")
+      .select("liga_id")
+      .eq("id", partido.jornada_id)
+      .maybeSingle();
+    if (jornadaError || !jornada?.liga_id) return;
+    const { data: liga, error: ligaError } = await supabase
+      .from("ligas")
+      .select("organizador_id, modalidad")
+      .eq("id", jornada.liga_id)
+      .maybeSingle();
+    if (ligaError || !liga?.organizador_id || liga.modalidad !== "flex_league") {
+      return;
+    }
+    const { aplicarRatingLigaPartido } = await import(
+      "../lib/rivieraJugadores/aplicarRatingPartido"
+    );
+    await aplicarRatingLigaPartido(partidoId, String(liga.organizador_id));
+  })().catch((error) => {
+    console.warn("[rating] flex:", error);
+  });
 }
 
 export async function markFlexFinal(input: {

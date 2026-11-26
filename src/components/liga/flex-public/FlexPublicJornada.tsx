@@ -9,6 +9,7 @@ import {
 import { isPubDsV2Enabled } from "../../../config/peds";
 import { useVisiblePolling } from "../../../hooks/useVisiblePolling";
 import { honorResolution, rankFlexSeason } from "../../../lib/liga/flex/season";
+import { aplicarRatingsPendientesFlex } from "../../../lib/rivieraJugadores/aplicarRatingPartido";
 import { rankFlexJornada } from "../../../lib/liga/flex/standings";
 import { flexPublicJornadaEstado } from "../../../lib/liga/flex/publicView";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../../lib/liga/publicPoll";
@@ -154,6 +155,7 @@ const FlexPublicJornadaBody: React.FC<{
     detalle.jornadas.find((item) => item.numero === numero) ?? null;
   const [bundle, setBundle] = useState<FlexBundle | null>(null);
   const [profiles, setProfiles] = useState<Record<string, PublicProfile>>({});
+  const [ratingGeneration, setRatingGeneration] = useState(0);
   const [round, setRound] = useState<number | null>(null);
   const [dataStale, setDataStale] = useState(false);
 
@@ -211,7 +213,23 @@ const FlexPublicJornadaBody: React.FC<{
     return () => {
       active = false;
     };
-  }, [detalle.organizador_id, ids, names]);
+  }, [detalle.organizador_id, ids, names, ratingGeneration]);
+
+  useEffect(() => {
+    const organizadorId = detalle.organizador_id;
+    if (!organizadorId) return;
+    let active = true;
+    void aplicarRatingsPendientesFlex(detalle.id, organizadorId)
+      .then((applied) => {
+        if (active && applied) setRatingGeneration((current) => current + 1);
+      })
+      .catch((error) => {
+        console.warn("[rating] flex pendientes:", error);
+      });
+    return () => {
+      active = false;
+    };
+  }, [detalle.id, detalle.organizador_id]);
 
   const fallbackParticipantIds = useMemo(
     () =>
@@ -1098,10 +1116,12 @@ type FlexPairResolved = {
   name1: string;
   foto1: string | null;
   rivieraId1: string | null;
+  rating1: number | null;
   id2: string;
   name2: string;
   foto2: string | null;
   rivieraId2: string | null;
+  rating2: number | null;
 };
 
 function resolvePairPlayers(
@@ -1116,10 +1136,12 @@ function resolvePairPlayers(
     name1: pareja?.jugador1?.nombre || names.get(id1) || "Jugador",
     foto1: profiles[id1]?.fotoUrl ?? null,
     rivieraId1: profiles[id1]?.rivieraId?.trim() || null,
+    rating1: finiteRating(profiles[id1]?.rating),
     id2,
     name2: pareja?.jugador2?.nombre || names.get(id2) || "Jugador",
     foto2: profiles[id2]?.fotoUrl ?? null,
     rivieraId2: profiles[id2]?.rivieraId?.trim() || null,
+    rating2: finiteRating(profiles[id2]?.rating),
   };
 }
 
@@ -1186,10 +1208,10 @@ function FlexMatchCard({
       <div className="flex-pub-match-court">
         <div className="flex-pub-match-court__photos">
           {[
-            { key: "a1", name: pairA.name1, foto: pairA.foto1, win: p1Wins },
-            { key: "b1", name: pairB.name1, foto: pairB.foto1, win: p2Wins },
-            { key: "a2", name: pairA.name2, foto: pairA.foto2, win: p1Wins },
-            { key: "b2", name: pairB.name2, foto: pairB.foto2, win: p2Wins },
+            { key: "a1", name: pairA.name1, foto: pairA.foto1, rating: pairA.rating1, win: p1Wins },
+            { key: "b1", name: pairB.name1, foto: pairB.foto1, rating: pairB.rating1, win: p2Wins },
+            { key: "a2", name: pairA.name2, foto: pairA.foto2, rating: pairA.rating2, win: p1Wins },
+            { key: "b2", name: pairB.name2, foto: pairB.foto2, rating: pairB.rating2, win: p2Wins },
           ].map((slot) => (
             <div
               key={slot.key}
@@ -1201,7 +1223,14 @@ function FlexMatchCard({
                   fotoUrl={slot.foto}
                   variant="match"
                 />
-                <p className="flex-pub-match-court__name">{slot.name}</p>
+                <div className="flex-pub-match-court__caption">
+                  <p className="flex-pub-match-court__name">{slot.name}</p>
+                  {slot.rating != null ? (
+                    <span className="flex-pub-match-court__rating">
+                      {slot.rating.toFixed(2)}
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </div>
           ))}
@@ -1386,6 +1415,10 @@ function tallyScoredMatches(jornada: LigaJornada): Map<string, MatchTally> {
     }
   }
   return map;
+}
+
+function finiteRating(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function formatSigned(value: number): string {

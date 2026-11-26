@@ -617,6 +617,7 @@ async function aplicarRatingLigaPorGanador(
 }
 
 const ligaPlayoffsRatingSynced = new Set<string>();
+const flexRatingSynced = new Set<string>();
 
 /**
  * Las jornadas de parejas fijas playoffs no pasaban por el motor de rating.
@@ -670,6 +671,72 @@ export async function aplicarRatingsPendientesLigaPlayoffs(
     if (!message.toLowerCase().includes("no autorizado")) {
       ligaPlayoffsRatingSynced.delete(key);
     }
+    throw error;
+  }
+}
+
+/**
+ * Flex no pasaba por el motor de rating. Aplica, en orden de jornada y ronda,
+ * cada partido ya cerrado. El RPC es idempotente por `liga:{partidoId}` y
+ * reconcilia si el ganador cambió. Solo corre con la sesión del organizador.
+ */
+export async function aplicarRatingsPendientesFlex(
+  ligaId: string,
+  organizadorId: string
+): Promise<boolean> {
+  const key = `${ligaId}:${organizadorId}`;
+  if (!ligaId || !organizadorId || flexRatingSynced.has(key)) return false;
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData.session?.user?.id !== organizadorId) return false;
+  flexRatingSynced.add(key);
+
+  try {
+    const { data: liga, error: ligaErr } = await supabase
+      .from("ligas")
+      .select("id, modalidad")
+      .eq("id", ligaId)
+      .maybeSingle();
+    if (ligaErr) throw new Error(ligaErr.message);
+    if (liga?.modalidad !== "flex_league") return false;
+
+    const { data: jornadas, error: jErr } = await supabase
+      .from("liga_jornadas")
+      .select("id, numero")
+      .eq("liga_id", ligaId)
+      .order("numero", { ascending: true });
+    if (jErr) throw new Error(jErr.message);
+
+    const order = new Map(
+      (jornadas ?? []).map((j) => [String(j.id), Number(j.numero ?? 0)])
+    );
+    const jornadaIds = Array.from(order.keys());
+    if (jornadaIds.length === 0) return false;
+
+    const { data: partidos, error: pErr } = await supabase
+      .from("liga_partidos")
+      .select("id, jornada_id, ronda, cancha, estado, score_pareja1, score_pareja2")
+      .in("jornada_id", jornadaIds)
+      .eq("estado", "completed");
+    if (pErr) throw new Error(pErr.message);
+
+    const list = (partidos ?? []).filter(
+      (p) => p.score_pareja1 != null && p.score_pareja2 != null
+    );
+    list.sort((a, b) => {
+      const ja = order.get(String(a.jornada_id)) ?? 0;
+      const jb = order.get(String(b.jornada_id)) ?? 0;
+      if (ja !== jb) return ja - jb;
+      const ra = Number(a.ronda ?? 0) - Number(b.ronda ?? 0);
+      if (ra !== 0) return ra;
+      return Number(a.cancha ?? 0) - Number(b.cancha ?? 0);
+    });
+
+    for (const partido of list) {
+      await aplicarRatingLigaPartido(String(partido.id), organizadorId);
+    }
+    return list.length > 0;
+  } catch (error) {
+    flexRatingSynced.delete(key);
     throw error;
   }
 }

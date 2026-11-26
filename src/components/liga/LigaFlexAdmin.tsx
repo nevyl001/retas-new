@@ -21,6 +21,7 @@ import { rankFlexJornada } from "../../lib/liga/flex/standings";
 import { honorResolution, rankFlexSeason } from "../../lib/liga/flex/season";
 import { windowMinutes } from "../../lib/liga/flex/time";
 import { JUGADOR_CATEGORIA_LABELS } from "../../lib/rivieraJugadores/constants";
+import { aplicarRatingsPendientesFlex } from "../../lib/rivieraJugadores/aplicarRatingPartido";
 import {
   adjustFlexRounds,
   applyFlexJornada,
@@ -166,6 +167,14 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
     setBundle(next);
     setSelectedId((current) => current ?? sortedJornadas[0]?.id ?? null);
   };
+
+  useEffect(() => {
+    const organizadorId = detalle.organizador_id;
+    if (!organizadorId) return;
+    void aplicarRatingsPendientesFlex(detalle.id, organizadorId).catch((error) => {
+      console.warn("[rating] flex pendientes:", error);
+    });
+  }, [detalle.id, detalle.organizador_id]);
 
   useEffect(() => {
     let active = true;
