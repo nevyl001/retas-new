@@ -428,12 +428,23 @@
 
 @media (min-width: 840px) {
   .flex-liga-top3 {
-    grid-template-columns: 1.28fr 1fr 1fr;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
     gap: 16px;
+  }
+
+  .flex-liga-top3__card {
+    flex: 0 1 280px;
+    width: 280px;
+    max-width: 280px;
   }
 
   .flex-liga-top3__card--1 {
     grid-column: auto;
+    flex-basis: 340px;
+    width: 340px;
+    max-width: 340px;
   }
 }
 
@@ -483,12 +494,13 @@
 
 @media (min-width: 840px) {
   .flex-liga-top3__portrait {
-    min-height: 280px;
+    min-height: 0;
+    height: auto;
     aspect-ratio: 3 / 4;
   }
 
   .flex-liga-top3__card--1 .flex-liga-top3__portrait {
-    min-height: 380px;
+    min-height: 0;
     aspect-ratio: 3 / 4;
   }
 }
