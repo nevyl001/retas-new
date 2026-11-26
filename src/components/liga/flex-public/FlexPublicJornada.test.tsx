@@ -376,7 +376,7 @@ describe("FlexPublicJornada — Jornada Pública Riviera Flex League", () => {
     const r1Button = screen.getByRole("button", { name: /RONDA 1/i });
     fireEvent.click(r1Button);
     expect(screen.getByText("RONDA 01")).toBeInTheDocument();
-    expect(screen.getAllByText("Resultado")).toHaveLength(3);
+    expect(container.querySelectorAll(".flex-pub-match-score")).toHaveLength(3);
   });
 
   it("muestra el reconocimiento oficial encima del podio solo con la jornada finalizada", async () => {

@@ -1025,127 +1025,52 @@ function FlexMatchCard({
         </span>
       </header>
 
-      {/* PAREJA A */}
-      <div
-        className={`flex-pub-match-pair${
-          p1Wins
-            ? " flex-pub-match-pair--win"
-            : p2Wins
-              ? " flex-pub-match-pair--loss"
-              : ""
-        }`}
-      >
-        <div className="flex-pub-match-pair__head">
-          <span className="flex-pub-match-pair__label">Pareja A</span>
-          {hasScore ? (
-            <span
-              className={`flex-pub-match-pair__score${
-                p1Wins ? " flex-pub-match-pair__score--win" : ""
-              }`}
+      <div className="flex-pub-match-court">
+        <div className="flex-pub-match-court__photos">
+          {[
+            { key: "a1", name: pairA.name1, foto: pairA.foto1, win: p1Wins },
+            { key: "b1", name: pairB.name1, foto: pairB.foto1, win: p2Wins },
+            { key: "a2", name: pairA.name2, foto: pairA.foto2, win: p1Wins },
+            { key: "b2", name: pairB.name2, foto: pairB.foto2, win: p2Wins },
+          ].map((slot) => (
+            <div
+              key={slot.key}
+              className={`flex-pub-match-court__player${slot.win ? " is-win" : ""}`}
             >
-              {s1}
-            </span>
-          ) : null}
-        </div>
-        <div className="flex-pub-match-pair__players">
-          <div className="flex-pub-match-player">
-            <FlexNeutralAvatar
-              name={pairA.name1}
-              fotoUrl={pairA.foto1}
-              variant="match"
-            />
-            <div className="flex-pub-match-player__info">
-              <p className="flex-pub-match-player__name">{pairA.name1}</p>
+              <FlexNeutralAvatar
+                name={slot.name}
+                fotoUrl={slot.foto}
+                variant="match"
+              />
             </div>
-          </div>
-          <div className="flex-pub-match-player">
-            <FlexNeutralAvatar
-              name={pairA.name2}
-              fotoUrl={pairA.foto2}
-              variant="match"
-            />
-            <div className="flex-pub-match-player__info">
-              <p className="flex-pub-match-player__name">{pairA.name2}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* VS CENTRADO */}
-      <div className="flex-pub-match-vs" aria-hidden>
-        <span className="flex-pub-match-vs__line" />
-        <span className="flex-pub-match-vs__badge">VS</span>
-        <span className="flex-pub-match-vs__line" />
-      </div>
-
-      {/* PAREJA B */}
-      <div
-        className={`flex-pub-match-pair${
-          p2Wins
-            ? " flex-pub-match-pair--win"
-            : p1Wins
-              ? " flex-pub-match-pair--loss"
-              : ""
-        }`}
-      >
-        <div className="flex-pub-match-pair__head">
-          <span className="flex-pub-match-pair__label">Pareja B</span>
-          {hasScore ? (
-            <span
-              className={`flex-pub-match-pair__score${
-                p2Wins ? " flex-pub-match-pair__score--win" : ""
-              }`}
-            >
-              {s2}
-            </span>
-          ) : null}
-        </div>
-        <div className="flex-pub-match-pair__players">
-          <div className="flex-pub-match-player">
-            <FlexNeutralAvatar
-              name={pairB.name1}
-              fotoUrl={pairB.foto1}
-              variant="match"
-            />
-            <div className="flex-pub-match-player__info">
-              <p className="flex-pub-match-player__name">{pairB.name1}</p>
-            </div>
-          </div>
-          <div className="flex-pub-match-player">
-            <FlexNeutralAvatar
-              name={pairB.name2}
-              fotoUrl={pairB.foto2}
-              variant="match"
-            />
-            <div className="flex-pub-match-player__info">
-              <p className="flex-pub-match-player__name">{pairB.name2}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {hasScore ? (
-        <div className="flex-pub-match-scorebar" aria-label="Marcador">
-          <span className="flex-pub-match-scorebar__label">Resultado</span>
-          <span className="flex-pub-match-scorebar__numbers">
-            <span
-              className={`flex-pub-match-scorebar__num${
-                p1Wins ? " is-win" : ""
-              }`}
-            >
-              {s1}
-            </span>
-            <span className="flex-pub-match-scorebar__sep">—</span>
-            <span
-              className={`flex-pub-match-scorebar__num${
-                p2Wins ? " is-win" : ""
-              }`}
-            >
-              {s2}
-            </span>
+          ))}
+          <span className="flex-pub-match-court__vs" aria-hidden>
+            VS
           </span>
         </div>
-      ) : null}
+        <div className="flex-pub-match-court__names">
+          {[pairA.name1, pairB.name1, pairA.name2, pairB.name2].map((name, index) => (
+            <p className="flex-pub-match-court__name" key={`${name}-${index}`}>
+              {name}
+            </p>
+          ))}
+        </div>
+      </div>
+
+      <p
+        className={`flex-pub-match-score${hasScore ? "" : " is-pending"}`}
+        aria-label={hasScore ? `Resultado ${s1} a ${s2}` : "Partido por jugar"}
+      >
+        {hasScore ? (
+          <>
+            <span className={p1Wins ? "is-win" : ""}>{s1}</span>
+            <span className="flex-pub-match-score__sep">–</span>
+            <span className={p2Wins ? "is-win" : ""}>{s2}</span>
+          </>
+        ) : (
+          "Por jugar"
+        )}
+      </p>
     </article>
   );
 }
