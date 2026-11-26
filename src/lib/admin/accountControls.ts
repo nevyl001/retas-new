@@ -1,6 +1,12 @@
 import { supabase } from "../supabaseClient";
 import type { RivieraJugadorCategoria } from "../rivieraJugadores/types";
 import {
+  publicacionLocalFallback,
+  type PublicacionMasivaResult,
+  type PublicacionOficialEstado,
+  type PublicacionOficialResult,
+} from "./publicacionOficial";
+import {
   DEFAULT_ORGANIZADOR_GAME_MODES,
   inputFromEnabledModes,
   rowToAccountSettings,
@@ -133,6 +139,62 @@ export interface AdminJugadorRow {
   suma_ranking: boolean;
   puntos_totales: number;
   created_at: string;
+  publicacion: PublicacionOficialEstado;
+}
+
+const PUBLICACION_CODES = [
+  "publicado",
+  "ya_publicado",
+  "retirado",
+  "sin_cambio",
+  "conflicto",
+  "prohibido",
+  "no_autorizado",
+] as const;
+
+function isMissingRpcError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const msg = (error.message ?? "").toLowerCase();
+  return (
+    error.code === "PGRST202" ||
+    msg.includes("admin_directorio_publicacion_oficial") ||
+    msg.includes("admin_set_publicacion_oficial") ||
+    (msg.includes("function") && msg.includes("does not exist"))
+  );
+}
+
+function asPublicacionEstado(raw: Record<string, unknown>): PublicacionOficialEstado {
+  return {
+    rivieraId: raw.riviera_id ? String(raw.riviera_id) : null,
+    esCedido: raw.es_cedido === true,
+    publicadoGlobal: raw.publicado_global === true,
+    publicacionPropia: raw.publicacion_propia === true,
+    origenOrganizadorId: raw.origen_organizador_id
+      ? String(raw.origen_organizador_id)
+      : null,
+    origenNombre: raw.origen_nombre ? String(raw.origen_nombre) : null,
+    conflicto: raw.conflicto === true,
+    puedePublicar: raw.puede_publicar === true,
+    puedeRetirar: raw.puede_retirar === true,
+    motivoBloqueo: raw.motivo_bloqueo ? String(raw.motivo_bloqueo) : null,
+  };
+}
+
+function asPublicacionResult(raw: Record<string, unknown>): PublicacionOficialResult {
+  const code = String(raw.code ?? "sin_cambio");
+  const known = PUBLICACION_CODES.find((item) => item === code) ?? "sin_cambio";
+  return {
+    ok: raw.ok === true,
+    code: known,
+    publicado: raw.publicado === true,
+    perfilPublicadoId: raw.perfil_publicado_id
+      ? String(raw.perfil_publicado_id)
+      : null,
+    origenNombre: raw.origen_nombre ? String(raw.origen_nombre) : null,
+    organizadorPublicadoId: raw.organizador_publicado_id
+      ? String(raw.organizador_publicado_id)
+      : null,
+  };
 }
 
 export async function listJugadoresForAdmin(
@@ -151,23 +213,65 @@ export async function listJugadoresForAdmin(
     throw error;
   }
 
-  return (data ?? []).map((raw) => {
+  const filas = (data ?? []).map((raw) => {
     const row = raw as Record<string, unknown>;
     const stats = row.stats as
       | { puntos_totales?: number }
       | { puntos_totales?: number }[]
       | null;
     const st = Array.isArray(stats) ? stats[0] : stats;
+    const visible = row.visible_publico === true;
+    const estado = String(row.estado ?? "activo");
     return {
       id: String(row.id),
       nombre: String(row.nombre ?? ""),
       slug: String(row.slug ?? ""),
       categoria: String(row.categoria ?? ""),
-      estado: String(row.estado ?? "activo"),
-      visible_publico: row.visible_publico === true,
+      estado,
+      visible_publico: visible,
       suma_ranking: row.suma_ranking !== false,
       puntos_totales: Number(st?.puntos_totales ?? 0),
       created_at: String(row.created_at ?? ""),
+      publicacion: publicacionLocalFallback(visible, estado === "archivado"),
+    };
+  });
+
+  const { data: publicacion, error: publicacionError } = await supabase.rpc(
+    "admin_directorio_publicacion_oficial",
+    { p_organizador_id: organizadorId }
+  );
+
+  if (publicacionError) {
+    if (isMissingRpcError(publicacionError)) return filas;
+    throw new Error(
+      publicacionError.message || "No se pudo leer la publicación oficial"
+    );
+  }
+
+  const porId = new Map<string, PublicacionOficialEstado>();
+  for (const raw of (publicacion ?? []) as Record<string, unknown>[]) {
+    const estado = asPublicacionEstado(raw);
+    const id = String(raw.jugador_id ?? "");
+    if (id) porId.set(id, estado);
+  }
+
+  return filas.map((fila) => {
+    const estado = porId.get(fila.id);
+    if (!estado) {
+      return {
+        ...fila,
+        publicacion: {
+          ...fila.publicacion,
+          puedePublicar: false,
+          puedeRetirar: false,
+          motivoBloqueo: "No se pudo verificar la publicación global.",
+        },
+      };
+    }
+    return {
+      ...fila,
+      visible_publico: estado.publicadoGlobal,
+      publicacion: estado,
     };
   });
 }
@@ -180,7 +284,8 @@ export async function updateJugadorAdminControls(
     estado: "activo" | "invitado" | "archivado";
   }>
 ): Promise<void> {
-  const { suma_ranking: _ignored, ...rest } = patch;
+  const { suma_ranking: _ignored, visible_publico: _publico, ...rest } = patch;
+  if (Object.keys(rest).length === 0) return;
   const { error } = await supabase
     .from("riviera_jugadores")
     .update({ ...rest, suma_ranking: true })
@@ -202,7 +307,8 @@ export async function bulkUpdateJugadoresAdminControls(
   );
   if (ids.length === 0) return 0;
 
-  const { suma_ranking: _ignored, ...rest } = patch;
+  const { suma_ranking: _ignored, visible_publico: _publico, ...rest } = patch;
+  if (Object.keys(rest).length === 0) return ids.length;
   const { error, count } = await supabase
     .from("riviera_jugadores")
     .update({ ...rest, suma_ranking: true }, { count: "exact" })
@@ -287,35 +393,82 @@ export async function updateJugadorAdminControlsForOrganizer(
   organizadorId: string,
   jugadorId: string,
   patch: Parameters<typeof updateJugadorAdminControls>[1]
-): Promise<void> {
-  if (patch.visible_publico === true) {
-    await ensureOrganizadorRankingPublico(organizadorId);
+): Promise<PublicacionOficialResult | null> {
+  let result: PublicacionOficialResult | null = null;
+  if (typeof patch.visible_publico === "boolean") {
+    const { data, error } = await supabase.rpc("admin_set_publicacion_oficial", {
+      p_organizador_id: organizadorId,
+      p_jugador_id: jugadorId,
+      p_publicar: patch.visible_publico,
+    });
+    if (error) {
+      if (isMissingRpcError(error)) {
+        throw new Error(
+          "Falta aplicar la migración de publicación oficial. No se creó otra ficha."
+        );
+      }
+      throw new Error(error.message || "No se pudo actualizar la publicación");
+    }
+    result = asPublicacionResult((data ?? {}) as Record<string, unknown>);
   }
   await updateJugadorAdminControls(jugadorId, patch);
   const { invalidatePlayersPool } = await import(
     "../rivieraJugadores/playersPoolCache"
   );
   invalidatePlayersPool(organizadorId);
+  return result;
 }
 
 export async function bulkUpdateJugadoresAdminControlsForOrganizer(
   organizadorId: string,
   jugadorIds: string[],
   patch: Parameters<typeof bulkUpdateJugadoresAdminControls>[2]
-): Promise<number> {
-  if (patch.visible_publico === true) {
-    await ensureOrganizadorRankingPublico(organizadorId);
+): Promise<PublicacionMasivaResult> {
+  if (typeof patch.visible_publico !== "boolean") {
+    await bulkUpdateJugadoresAdminControls(organizadorId, jugadorIds, patch);
+    return {
+      ok: true,
+      publicados: 0,
+      yaPublicados: 0,
+      retirados: 0,
+      conflictos: 0,
+      bloqueados: 0,
+      noAutorizados: 0,
+    };
   }
-  const count = await bulkUpdateJugadoresAdminControls(
-    organizadorId,
-    jugadorIds,
-    patch
+
+  const { data, error } = await supabase.rpc(
+    "admin_set_publicacion_oficial_masiva",
+    {
+      p_organizador_id: organizadorId,
+      p_jugador_ids: jugadorIds,
+      p_publicar: patch.visible_publico,
+    }
   );
+  if (error) {
+    if (isMissingRpcError(error)) {
+      throw new Error(
+        "Falta aplicar la migración de publicación oficial. No se creó otra ficha."
+      );
+    }
+    throw new Error(error.message || "No se pudo actualizar los jugadores");
+  }
+
+  const raw = (data ?? {}) as Record<string, unknown>;
+  const result: PublicacionMasivaResult = {
+    ok: raw.ok !== false,
+    publicados: Number(raw.publicados ?? 0),
+    yaPublicados: Number(raw.ya_publicados ?? 0),
+    retirados: Number(raw.retirados ?? 0),
+    conflictos: Number(raw.conflictos ?? 0),
+    bloqueados: Number(raw.bloqueados ?? 0),
+    noAutorizados: Number(raw.no_autorizados ?? 0),
+  };
   const { invalidatePlayersPool } = await import(
     "../rivieraJugadores/playersPoolCache"
   );
   invalidatePlayersPool(organizadorId);
-  return count;
+  return result;
 }
 
 export interface OrganizadorRankingOficial {

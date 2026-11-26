@@ -22,6 +22,11 @@ import {
 } from "../../lib/rivieraJugadores/emailValidation";
 import { GrantPlayerAccessModal } from "./GrantPlayerAccessModal";
 import { PlayerAccessListModal } from "./PlayerAccessListModal";
+import {
+  controlPublicacionOficial,
+  mensajePublicacionIndividual,
+  mensajePublicacionMasiva,
+} from "../../lib/admin/publicacionOficial";
 import "./AccountControlsPanel.css";
 
 interface AccountControlsPanelProps {
@@ -81,9 +86,10 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   const jugadoresFiltrados = useMemo(() => {
     const q = playerSearch.trim().toLowerCase();
     if (!q) return jugadores;
-    return jugadores.filter((j) =>
-      (j.nombre ?? "").toLowerCase().includes(q)
-    );
+    return jugadores.filter((j) => {
+      const blob = `${j.nombre ?? ""} ${j.publicacion?.rivieraId ?? ""}`.toLowerCase();
+      return blob.includes(q);
+    });
   }, [jugadores, playerSearch]);
 
   const jugadoresEditables = useMemo(
@@ -94,7 +100,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   const publicoBulk = useMemo(() => {
     const n = jugadoresEditables.length;
     if (n === 0) return { all: false, some: false, count: 0 };
-    const on = jugadoresEditables.filter((j) => j.visible_publico).length;
+    const on = jugadoresEditables.filter((j) => j.publicacion.publicadoGlobal).length;
     return { all: on === n, some: on > 0 && on < n, count: on };
   }, [jugadoresEditables]);
 
@@ -234,15 +240,13 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
     setError("");
     setNotice("");
     try {
-      await updateJugadorAdminControlsForOrganizer(
+      const result = await updateJugadorAdminControlsForOrganizer(
         organizadorId,
         jugador.id,
         patch
       );
-      if (patch.visible_publico === true) {
-        setNotice(`«${jugador.nombre}» publicado en el sitio oficial.`);
-      } else if (patch.visible_publico === false) {
-        setNotice(`«${jugador.nombre}» quitado del sitio oficial.`);
+      if (result) {
+        setNotice(mensajePublicacionIndividual(jugador.nombre, result));
       }
       await loadAll();
     } catch (e) {
@@ -253,8 +257,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   };
 
   const bulkPatchJugadores = async (
-    patch: Parameters<typeof bulkUpdateJugadoresAdminControlsForOrganizer>[2],
-    label: string
+    patch: Parameters<typeof bulkUpdateJugadoresAdminControlsForOrganizer>[2]
   ) => {
     const ids = jugadoresEditables.map((j) => j.id);
     if (ids.length === 0) return;
@@ -263,16 +266,18 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
     setError("");
     setNotice("");
     try {
-      const n = await bulkUpdateJugadoresAdminControlsForOrganizer(
+      const result = await bulkUpdateJugadoresAdminControlsForOrganizer(
         organizadorId,
         ids,
         patch
       );
-      const scope =
+      const alcance =
         playerSearch.trim() && jugadoresFiltrados.length < jugadores.length
-          ? ` (${n} visibles)`
+          ? " Sobre los jugadores visibles."
           : "";
-      setNotice(`${label}${scope}.`);
+      setNotice(
+        `${mensajePublicacionMasiva(result, patch.visible_publico === true)}${alcance}`
+      );
       await loadAll();
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo actualizar los jugadores");
@@ -521,12 +526,9 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                   }}
                   disabled={bulkBusy || jugadoresEditables.length === 0}
                   onChange={() =>
-                    void bulkPatchJugadores(
-                      { visible_publico: !publicoBulk.all },
-                      publicoBulk.all
-                        ? "Quitados del sitio oficial"
-                        : "Publicados en el sitio oficial"
-                    )
+                    void bulkPatchJugadores({
+                      visible_publico: !publicoBulk.all,
+                    })
                   }
                 />
                 <span>Todos en sitio oficial</span>
@@ -538,10 +540,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                 className="account-controls__btn account-controls__btn--ghost"
                 disabled={bulkBusy || jugadoresEditables.length === 0}
                 onClick={() =>
-                  void bulkPatchJugadores(
-                    { visible_publico: true },
-                    "Todos publicados en el sitio oficial"
-                  )
+                  void bulkPatchJugadores({ visible_publico: true })
                 }
               >
                 Publicar todos
@@ -551,10 +550,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                 className="account-controls__btn account-controls__btn--ghost"
                 disabled={bulkBusy || jugadoresEditables.length === 0}
                 onClick={() =>
-                  void bulkPatchJugadores(
-                    { visible_publico: false },
-                    "Todos quitados del sitio oficial"
-                  )
+                  void bulkPatchJugadores({ visible_publico: false })
                 }
               >
                 Quitar del sitio
@@ -597,11 +593,23 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
           {jugadoresFiltrados.map((j) => {
             const busy = busyJugadorId === j.id;
             const archivado = j.estado === "archivado";
+            const publicacion = controlPublicacionOficial(j.publicacion, archivado);
+            const meta = [
+              j.categoria.replace(/_/g, " "),
+              `${j.puntos_totales} pts`,
+              j.publicacion.esCedido ? "Cedido" : null,
+              j.publicacion.rivieraId,
+              archivado ? "archivado" : null,
+            ]
+              .filter(Boolean)
+              .join(" · ");
             return (
               <li
                 key={j.id}
                 className={`account-controls__player${
                   archivado ? " account-controls__player--archived" : ""
+                }${j.publicacion.esCedido ? " account-controls__player--cedido" : ""}${
+                  j.publicacion.conflicto ? " account-controls__player--conflicto" : ""
                 }${selectedJugadorIds.has(j.id) ? " account-controls__player--selected" : ""}`}
               >
                 <div className="account-controls__player-main">
@@ -616,25 +624,42 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                   </label>
                   <div className="account-controls__player-text">
                     <span className="account-controls__player-name">{j.nombre}</span>
-                    <span className="account-controls__player-meta">
-                      {j.categoria.replace(/_/g, " ")} · {j.puntos_totales} pts
-                      {archivado ? " · archivado" : ""}
-                    </span>
+                    <span className="account-controls__player-meta">{meta}</span>
+                    {publicacion.nota ? (
+                      <span
+                        className={`account-controls__player-note${
+                          publicacion.notaTono === "conflicto"
+                            ? " account-controls__player-note--conflicto"
+                            : ""
+                        }`}
+                      >
+                        {publicacion.nota}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 <div className="account-controls__player-actions">
                   <label
-                    className="account-controls__mini-toggle"
-                    title={`Publicar en ${getOfficialRankingsPageUrl()} (ranking interno siempre activo)`}
+                    className={`account-controls__mini-toggle${
+                      publicacion.disabled ? " account-controls__mini-toggle--locked" : ""
+                    }`}
+                    title={publicacion.title}
                   >
                     <input
                       type="checkbox"
-                      checked={j.visible_publico}
-                      disabled={busy || archivado || bulkBusy}
-                      onChange={() =>
+                      checked={publicacion.checked}
+                      disabled={publicacion.disabled || busy || bulkBusy}
+                      title={publicacion.title}
+                      onChange={() => {
+                        if (publicacion.disabled) return;
                         void patchJugador(j, {
-                          visible_publico: !j.visible_publico,
-                        })
+                          visible_publico: !publicacion.checked,
+                        });
+                      }}
+                      aria-label={
+                        publicacion.checked
+                          ? `Sitio oficial de ${j.nombre}`
+                          : `Publicar a ${j.nombre} en el sitio oficial`
                       }
                     />
                     <span>Sitio oficial</span>

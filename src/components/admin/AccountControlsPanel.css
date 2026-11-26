@@ -228,10 +228,16 @@
   font-weight: 600;
 }
 
-.account-controls__player-meta {
+.account-controls__player-meta,
+.account-controls__player-note {
   display: block;
   font-size: 0.6875rem;
   color: var(--admin-text-muted, var(--ro-text-muted));
+  line-height: 1.35;
+}
+
+.account-controls__player-note--conflicto {
+  color: var(--ro-error, #c98989);
 }
 
 .account-controls__player-actions {
@@ -252,6 +258,10 @@
 
 .account-controls__mini-toggle input {
   accent-color: var(--admin-accent, #f5f2eb);
+}
+
+.account-controls__mini-toggle--locked {
+  cursor: not-allowed;
 }
 
 .account-controls__sections-grid {

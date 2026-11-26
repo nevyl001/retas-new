@@ -85,6 +85,30 @@ describe("ensureGrantedLocalPlayerSumsRanking — no relee si ya está bien", ()
 
     expect(supabase.from).toHaveBeenCalledTimes(2);
   });
+
+  it("no publica el clon cuando la cesión marca ranking público", async () => {
+    const update = jest.fn().mockReturnValue({
+      eq: jest.fn().mockResolvedValue({ error: null }),
+    });
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "organizer_player_access") {
+        return maybeSingleChain({
+          data: { is_public_ranking: true },
+          error: null,
+        });
+      }
+      const chain = maybeSingleChain({
+        data: { suma_ranking: true, visible_publico: false, estado: "activo" },
+        error: null,
+      });
+      chain.update = update;
+      return chain;
+    });
+
+    await ensureGrantedLocalPlayerSumsRanking("org-1", "local-3");
+
+    expect(update).not.toHaveBeenCalled();
+  });
 });
 
 describe("prepareGrantedPlayersForParticipacionSync — una pasada en vuelo", () => {

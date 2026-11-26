@@ -602,7 +602,8 @@ export function resetGrantedRankingEnsureCache(): void {
 
 /**
  * Clon local de jugador concedido: siempre suma ranking interno del club anfitrión.
- * is_public_ranking solo controla visible_publico (ranking público del club).
+ * No toca visible_publico. La publicación del sitio oficial pertenece a la
+ * identidad global, no al clon de la cesión.
  */
 export async function ensureGrantedLocalPlayerSumsRanking(
   organizadorId: string,
@@ -658,9 +659,6 @@ async function ensureGrantedLocalPlayerSumsRankingUncached(
   const patch: Record<string, boolean> = {};
   if (row.suma_ranking === false) {
     patch.suma_ranking = true;
-  }
-  if (grant.is_public_ranking === true && row.visible_publico === false) {
-    patch.visible_publico = true;
   }
   if (Object.keys(patch).length === 0) {
     grantedSumsRankingOkUntil.set(
