@@ -928,13 +928,72 @@
   color: var(--flex-pub-text-muted);
 }
 
-/* ── 5. CLASIFICACIÓN DE LA JORNADA (Compacta) ── */
+/* ── 5. CLASIFICACIÓN DE LA JORNADA Y GENERAL, LADO A LADO ── */
+
+.flex-pub-standings-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
+  align-items: start;
+}
+
+@media (min-width: 1100px) {
+  .flex-pub-standings-pair:has(> .flex-pub-standings-section + .flex-pub-standings-section) {
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 0.85fr);
+    gap: 14px;
+  }
+}
 
 .flex-pub-standings-section {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   width: 100%;
+  min-width: 0;
+}
+
+.flex-pub-standings-pair .flex-pub-section-head {
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.flex-pub-standings-pair .flex-pub-section-head__title {
+  font-size: clamp(18px, 1.6vw, 22px);
+}
+
+.flex-pub-standings-pair .flex-pub-section-head__subtitle {
+  font-size: 10.5px;
+}
+
+.flex-pub-standings-pair .flex-pub-standings-table th,
+.flex-pub-standings-pair .flex-pub-standings-table td {
+  padding: 6px 8px;
+}
+
+.flex-pub-standings-pair .flex-pub-standings-table th.is-pos,
+.flex-pub-standings-pair .flex-pub-standings-table td.is-pos {
+  width: 44px;
+}
+
+.flex-pub-standings-pair .flex-pub-avatar--table {
+  width: 28px;
+  height: 28px;
+}
+
+.flex-pub-standings-pair .flex-pub-standings-player {
+  gap: 8px;
+}
+
+.flex-pub-standings-pair .flex-pub-standings-player__name {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flex-pub-standings-pair .flex-pub-standings-table-wrap {
+  overflow-x: auto;
 }
 
 .flex-pub-standings-card {

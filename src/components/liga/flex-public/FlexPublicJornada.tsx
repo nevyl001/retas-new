@@ -791,8 +791,10 @@ const FlexPublicJornadaBody: React.FC<{
               </section>
             ) : null}
 
-            {/* 5. CLASIFICACIÓN DE LA JORNADA (CUANDO EXISTAN RESULTADOS) */}
-            {!pantalla && standingRows.length > 0 ? (
+            {/* 5. CLASIFICACIÓN DE LA JORNADA Y GENERAL, EN LA MISMA FILA */}
+            {!pantalla ? (
+            <div className="flex-pub-standings-pair">
+            {standingRows.length > 0 ? (
               <section
                 className="flex-pub-standings-section"
                 aria-label="Clasificación de la jornada"
@@ -934,7 +936,6 @@ const FlexPublicJornadaBody: React.FC<{
               </section>
             ) : null}
 
-            {!pantalla ? (
               <section
                 className="flex-pub-standings-section"
                 aria-label="Clasificación general"
@@ -1029,6 +1030,7 @@ const FlexPublicJornadaBody: React.FC<{
                   </div>
                 )}
               </section>
+            </div>
             ) : null}
 
             {closeRows.length === 3 ? (
