@@ -29,7 +29,6 @@ import {
   correctFlexMatch,
   loadFlexConfirmedRounds,
   loadFlexLeague,
-  markFlexFinal,
   reopenFlexLeague,
   resizeFlexCalendar,
   resetFlexJornada,
@@ -833,34 +832,48 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                       Reabrir liga
                     </Button>
                   </div>
-                ) : (
+                ) : season && !season.ok ? (
                   <Button
                     type="button"
                     variant="primary"
                     disabled={busy}
                     onClick={() =>
                       void run(async () => {
-                        const outcome = await closeFlexLeague(detalle.id, seasonOrden);
+                        const orden =
+                          seasonOrden.length > 0
+                            ? seasonOrden
+                            : season.ties[0] ?? [];
+                        const outcome = await closeFlexLeague(detalle.id, orden);
                         if (outcome.needsResolution) {
                           setSeasonTied(outcome.tied ?? []);
                           setSeasonOrden(outcome.tied ?? []);
                           throw new Error(outcome.error || "El podio necesita una resolución.");
                         }
                         setSeasonTied([]);
-                        setNotice("Liga finalizada. El podio quedó registrado una sola vez.");
+                        setNotice("Temporada finalizada. El campeón quedó registrado.");
                       })
                     }
                   >
-                    Cerrar liga
+                    Resolver podio
                   </Button>
+                ) : (
+                  <p className="liga-flex-ops__status">
+                    El campeón se define solo cuando terminan las jornadas de la temporada.
+                  </p>
                 )}
               </div>
 
-              {seasonTied.length > 0 ? (
+              {seasonTied.length > 0 || (season && !season.ok) ? (
                 <TieOrder
                   title="Empate de podio"
                   note="Ya se compararon puntos, veces en cada posición y jornadas jugadas. Ordena solo a quienes siguen empatados."
-                  ids={seasonOrden}
+                  ids={
+                    seasonOrden.length > 0
+                      ? seasonOrden
+                      : season && !season.ok
+                        ? season.ties[0] ?? []
+                        : []
+                  }
                   names={names}
                   onChange={setSeasonOrden}
                 />
@@ -1499,8 +1512,25 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                             disabled={busy}
                             onClick={() =>
                               void run(async () => {
-                                await confirmFlexRound(jornada.id, roundAction.round);
-                                setNotice(`Ronda ${roundAction.round} confirmada.`);
+                                const outcome = await confirmFlexRound(jornada.id, roundAction.round);
+                                if (outcome.needsResolution) {
+                                  const groups = outcome.ties ?? [];
+                                  setJornadaOrden(mergeTieOrder(groups, jornadaOrden, -1, []));
+                                  throw new Error(outcome.error || "Define el orden del empate.");
+                                }
+                                if (outcome.seasonNeedsResolution) {
+                                  setSeasonTied(outcome.tied ?? []);
+                                  setSeasonOrden(outcome.tied ?? []);
+                                  setNotice("Jornada finalizada. El podio de la temporada sigue empatado.");
+                                  return;
+                                }
+                                setNotice(
+                                  outcome.seasonClosed
+                                    ? "Temporada finalizada. El campeón quedó registrado."
+                                    : outcome.closed
+                                      ? "Jornada finalizada. Los puntos ya están en la clasificación."
+                                      : `Ronda ${roundAction.round} confirmada.`
+                                );
                               })
                             }
                           >
@@ -1562,8 +1592,9 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                       </button>
                     </details>
 
-                    {unresolved && !unresolved.ok
-                      ? unresolved.ties.map((group, index) => (
+                    {unresolved && !unresolved.ok ? (
+                      <>
+                        {unresolved.ties.map((group, index) => (
                           <TieOrder
                             key={group.join("-")}
                             title={
@@ -1581,8 +1612,51 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                               )
                             }
                           />
-                        ))
-                      : null}
+                        ))}
+                        <label className="liga-flex-field">
+                          <span>Justificación del desempate</span>
+                          <input
+                            className="liga-flex-input"
+                            value={jornadaMotivo}
+                            placeholder="Por qué queda este orden"
+                            onChange={(event) => setJornadaMotivo(event.target.value)}
+                          />
+                        </label>
+                        <Button
+                          type="button"
+                          variant="primary"
+                          disabled={busy}
+                          onClick={() =>
+                            void run(async () => {
+                              const groups = unresolved.ties;
+                              const orden = mergeTieOrder(groups, jornadaOrden, -1, []);
+                              const outcome = await applyFlexJornada({
+                                jornadaId: jornada.id,
+                                orden,
+                                nota: jornadaMotivo,
+                              });
+                              if (outcome.needsResolution) {
+                                setJornadaOrden(orden);
+                                throw new Error(outcome.error || "Define el orden del empate.");
+                              }
+                              if (outcome.seasonNeedsResolution) {
+                                setSeasonTied(outcome.tied ?? []);
+                                setSeasonOrden(outcome.tied ?? []);
+                                setNotice("Jornada finalizada. El podio de la temporada sigue empatado.");
+                                return;
+                              }
+                              setNotice(
+                                outcome.seasonClosed
+                                  ? "Temporada finalizada. El campeón quedó registrado."
+                                  : "Empate resuelto. La jornada quedó finalizada y la tabla se reconstruyó."
+                              );
+                            })
+                          }
+                        >
+                          Resolver empate
+                        </Button>
+                      </>
+                    ) : null}
 
                     {provisional?.ok ? (
                       <div className="liga-flex-provisional-banner">
@@ -1672,138 +1746,82 @@ export const LigaFlexAdmin: React.FC<Props> = ({ detalle, pool, onReload }) => {
                       </div>
                     </dl>
 
-                    <div className="liga-flex-side-actions">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="liga-flex-side-actions__btn"
-                        onClick={() =>
-                          window.open(
-                            publicLigaJornadaUrl(detalle.id, jornada.numero),
-                            "_blank",
-                            "noopener"
-                          )
-                        }
-                      >
-                        Ver jornada pública
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="liga-flex-side-actions__btn"
-                        onClick={() =>
-                          void copyLink(publicLigaJornadaUrl(detalle.id, jornada.numero))
-                        }
-                      >
-                        Copiar enlace de jornada
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="liga-flex-side-actions__btn"
-                        onClick={() =>
-                          window.open(
-                            `${publicLigaJornadaUrl(detalle.id, jornada.numero)}/pantalla`,
-                            "_blank",
-                            "noopener"
-                          )
-                        }
-                      >
-                        Ver en pantalla
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="liga-flex-side-actions__btn"
-                        disabled={
-                          busy ||
-                          flex.programacionEstado !== "confirmada" ||
-                          jornada.estado !== "upcoming"
-                        }
-                        onClick={() =>
-                          void run(() => startFlexJornada(jornada.id, detalle.id))
-                        }
-                      >
-                        <TablerIcon name="player-play" size={15} />
-                        <span>Iniciar jornada</span>
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="liga-flex-side-actions__btn"
-                        disabled={busy || flex.esFinal}
-                        onClick={() =>
-                          void run(() =>
-                            markFlexFinal({
-                              ligaId: detalle.id,
-                              jornadaId: jornada.id,
-                              numero: jornada.numero,
-                              jornadas: detalle.jornadas.map((item) => ({
-                                id: item.id,
-                                numero: item.numero,
-                                hasData:
-                                  (item.partidos?.length ?? 0) > 0 ||
-                                  (bundle?.participantes[item.id]?.length ?? 0) > 0,
-                              })),
-                            })
-                          )
-                        }
-                      >
-                        <TablerIcon name="flag" size={15} />
-                        <span>
-                          {flex.esFinal ? "Jornada final marcada" : "Marcar jornada final"}
-                        </span>
-                      </Button>
-
-                      <div className="liga-flex-close-jornada-box">
-                        <label className="liga-flex-field">
-                          <span>Nota o justificación de desempate (opcional)</span>
-                          <input
-                            className="liga-flex-input"
-                            value={jornadaMotivo}
-                            placeholder="Justificación del desempate, si hace falta"
-                            onChange={(event) => setJornadaMotivo(event.target.value)}
-                          />
-                        </label>
-                        <Button
-                          type="button"
-                          variant="primary"
-                          className="liga-flex-side-actions__btn"
-                          disabled={
-                            busy ||
-                            detalle.estado === "completed" ||
-                            jornada.estado === "completed"
-                          }
-                          onClick={() =>
-                            void run(async () => {
-                              const groups =
-                                unresolved && !unresolved.ok ? unresolved.ties : [];
-                              const orden =
-                                groups.length > 0
-                                  ? mergeTieOrder(groups, jornadaOrden, -1, [])
-                                  : jornadaOrden;
-                              const outcome = await applyFlexJornada({
-                                jornadaId: jornada.id,
-                                orden,
-                                nota: jornadaMotivo,
-                              });
-                              if (outcome.needsResolution) {
-                                setJornadaOrden(orden);
-                                throw new Error(
-                                  outcome.error || "Define el orden del empate."
-                                );
-                              }
-                              setNotice(
-                                "Puntos de la jornada asignados. La tabla general se reconstruyó."
-                              );
-                            })
-                          }
-                        >
-                          <TablerIcon name="trophy" size={15} />
-                          <span>Finalizar jornada</span>
-                        </Button>
-                      </div>
+                    <div className="liga-flex-ops">
+                      <section className="liga-flex-ops__block">
+                        <h4 className="liga-flex-ops__title">Acciones de la jornada</h4>
+                        {flex.programacionEstado === "confirmada" &&
+                        jornada.estado === "upcoming" ? (
+                          <Button
+                            type="button"
+                            variant="primary"
+                            disabled={busy}
+                            onClick={() =>
+                              void run(() => startFlexJornada(jornada.id, detalle.id))
+                            }
+                          >
+                            Iniciar jornada
+                          </Button>
+                        ) : null}
+                        <p className="liga-flex-ops__status">
+                          {jornada.estado === "completed"
+                            ? `Finalizada${
+                                bundle?.posiciones.find(
+                                  (row) =>
+                                    row.jornadaId === jornada.id && row.posicion === 1
+                                )
+                                  ? ` · Ganador: ${
+                                      names.get(
+                                        bundle.posiciones.find(
+                                          (row) =>
+                                            row.jornadaId === jornada.id &&
+                                            row.posicion === 1
+                                        )!.jugadorId
+                                      ) ?? "Jugador"
+                                    }`
+                                  : ""
+                              }`
+                            : jornada.estado === "in_progress"
+                              ? "En juego. Se finaliza sola al confirmar la última ronda."
+                              : "Pendiente de inicio."}
+                        </p>
+                      </section>
+                      <section className="liga-flex-ops__block">
+                        <h4 className="liga-flex-ops__title">Enlaces públicos</h4>
+                        <div className="liga-flex-ops__link">
+                          <a
+                            href={publicLigaUrl(detalle.id)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Ver liga pública
+                          </a>
+                          <button
+                            type="button"
+                            aria-label="Copiar enlace de la liga"
+                            onClick={() => void copyLink(publicLigaUrl(detalle.id))}
+                          >
+                            <TablerIcon name="copy" size={15} />
+                          </button>
+                        </div>
+                        <div className="liga-flex-ops__link">
+                          <a
+                            href={publicLigaJornadaUrl(detalle.id, jornada.numero)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Ver jornada pública
+                          </a>
+                          <button
+                            type="button"
+                            aria-label="Copiar enlace de la jornada"
+                            onClick={() =>
+                              void copyLink(publicLigaJornadaUrl(detalle.id, jornada.numero))
+                            }
+                          >
+                            <TablerIcon name="copy" size={15} />
+                          </button>
+                        </div>
+                      </section>
                     </div>
                   </section>
                 </aside>

@@ -1,5 +1,4 @@
 import React from "react";
-import { FlexPublicPantallaPage } from "./flex-public/FlexPublicJornada";
 import { LigaDetallePublica } from "./LigaDetallePublica";
 import { LigaJornadaPublica } from "./LigaJornadaPublica";
 import { LigaGestionar } from "./LigaGestionar";
@@ -100,7 +99,7 @@ export const LigaRouter: React.FC<{ pathname: string }> = ({ pathname }) => {
       );
     case "publicaPantalla":
       return (
-        <FlexPublicPantallaPage ligaId={route.ligaId} numero={route.numero} />
+        <LigaJornadaPublica ligaId={route.ligaId} numero={route.numero} />
       );
     case "verificarCorreo":
       return <LigaVerificarCorreoPublica />;

@@ -372,14 +372,39 @@ export async function saveFlexRound(input: {
   rpcError(data as { ok?: boolean; error?: string }, "No se pudo guardar la ronda.");
 }
 
-export async function confirmFlexRound(jornadaId: string, round: number): Promise<void> {
+export async function confirmFlexRound(
+  jornadaId: string,
+  round: number
+): Promise<FlexServerResult> {
   await requireUserId();
   const { data, error } = await supabase.rpc("flex_confirmar_ronda", {
     p_jornada_id: jornadaId,
     p_ronda: round,
   });
   if (error) throw new Error(error.message);
-  rpcError(data as { ok?: boolean; error?: string }, "No se pudo confirmar la ronda.");
+  const body = (data ?? {}) as {
+    ok?: boolean;
+    error?: string;
+    needs_resolution?: boolean;
+    ties?: string[][];
+    closed?: boolean;
+    season_needs_resolution?: boolean;
+    season_error?: string;
+    tied?: string[];
+    season_closed?: boolean;
+  };
+  if (body.ok === false && !body.needs_resolution) {
+    throw new Error(body.error || "No se pudo confirmar la ronda.");
+  }
+  return {
+    needsResolution: Boolean(body.needs_resolution),
+    error: body.season_error || body.error,
+    ties: body.ties,
+    tied: body.tied,
+    closed: Boolean(body.closed),
+    seasonNeedsResolution: Boolean(body.season_needs_resolution),
+    seasonClosed: Boolean(body.season_closed),
+  };
 }
 
 export async function adjustFlexRounds(jornadaId: string, rounds: number): Promise<number> {
@@ -465,6 +490,9 @@ export type FlexServerResult = {
   error?: string;
   ties?: string[][];
   tied?: string[];
+  closed?: boolean;
+  seasonNeedsResolution?: boolean;
+  seasonClosed?: boolean;
 };
 
 export async function applyFlexJornada(input: {
@@ -484,12 +512,21 @@ export async function applyFlexJornada(input: {
     error?: string;
     needs_resolution?: boolean;
     ties?: string[][];
+    season_needs_resolution?: boolean;
+    season_closed?: boolean;
+    tied?: string[];
+    season_error?: string;
   };
   if (body.needs_resolution) {
     return { needsResolution: true, error: body.error, ties: body.ties };
   }
   if (!body.ok) throw new Error(body.error || "No se pudieron asignar los puntos.");
-  return {};
+  return {
+    seasonNeedsResolution: Boolean(body.season_needs_resolution),
+    seasonClosed: Boolean(body.season_closed),
+    tied: body.tied,
+    error: body.season_error,
+  };
 }
 
 export async function correctFlexJornada(input: {

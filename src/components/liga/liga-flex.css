@@ -2297,3 +2297,63 @@
   margin: 0;
   color: var(--lf-danger, #9b2c2c);
 }
+
+.liga-flex-ops {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.liga-flex-ops__block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.liga-flex-ops__title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--lf-muted));
+}
+
+.liga-flex-ops__status {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-secondary, var(--lf-muted));
+}
+
+.liga-flex-ops__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 2px 0 10px;
+  border: 1px solid var(--lf-border, var(--ro-border));
+  border-radius: 10px;
+}
+
+.liga-flex-ops__link a {
+  min-width: 0;
+  color: var(--text-primary, inherit);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.liga-flex-ops__link button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary, inherit);
+  cursor: pointer;
+}

@@ -360,7 +360,6 @@ const FlexPublicJornadaBody: React.FC<{
     uniqueCourts || visibleMatches.length || flex?.canchas || 3
   );
 
-  const pantallaHref = `${publicLigaUrl(detalle.id)}/jornada/${jornada.numero}/pantalla`;
   const fecha = fechaCorta(jornada.fecha);
   const horario = horarioFlex(flex?.horaInicio, flex?.horaFin);
   const badgeVariant =
@@ -411,13 +410,6 @@ const FlexPublicJornadaBody: React.FC<{
       </PublicScopedBrandGate>
     );
   }
-
-  const enterFullscreen = () => {
-    const node = document.documentElement;
-    if (node.requestFullscreen) {
-      void node.requestFullscreen().catch(() => undefined);
-    }
-  };
 
   return (
     <PublicScopedBrandGate message="Cargando jornada…">
@@ -484,24 +476,6 @@ const FlexPublicJornadaBody: React.FC<{
                   {convocados.length} participantes
                 </span>
               </div>
-            </div>
-            <div className="flex-pub-toolbar__actions">
-              {pantalla ? (
-                <button
-                  type="button"
-                  className="flex-pub-toolbar__screen-link"
-                  onClick={enterFullscreen}
-                >
-                  Pantalla completa
-                </button>
-              ) : (
-                <a
-                  className="flex-pub-toolbar__screen-link"
-                  href={pantallaHref}
-                >
-                  Ver en pantalla
-                </a>
-              )}
             </div>
           </div>
 
