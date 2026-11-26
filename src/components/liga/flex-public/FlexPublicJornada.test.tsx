@@ -360,8 +360,12 @@ describe("FlexPublicJornada — Jornada Pública Riviera Flex League", () => {
     expect(cards[0]?.textContent).toContain(leaderName);
     expect(cards[0]?.textContent).toContain("1º");
     expect(cards[0]?.textContent).toContain("PTS LIGA");
+    expect(cards[0]?.textContent).toContain("PJ");
+    expect(cards[0]?.textContent).toContain("PG");
     expect(cards[cards.length - 1]?.textContent).toContain("12º");
-    expect(screen.getByText("Puntos de liga")).toBeInTheDocument();
+    expect(screen.getByText("CLASIFICACIÓN GENERAL")).toBeInTheDocument();
+    expect(screen.getByText("A favor")).toBeInTheDocument();
+    expect(screen.getByText("En contra")).toBeInTheDocument();
 
     const standings = container.querySelector(".flex-pub-standings-section");
     expect(standings).not.toBeNull();

@@ -469,6 +469,12 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                           "Sin Riviera ID"
                         )}
                       </p>
+                      {hasResult ? (
+                        <p className="flex-pub-participant-card__record">
+                          {standing.partidos} PJ · {standing.ganados} PG ·{" "}
+                          {standing.gamesFavor}–{standing.gamesContra}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="flex-pub-participant-card__right">
                       <span
@@ -556,11 +562,14 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                 <table className="flex-pub-standings-table">
                   <thead>
                     <tr>
-                      <th className="is-pos">Posición</th>
+                      <th className="is-pos">Pos</th>
                       <th>Jugador</th>
-                      <th className="is-num">Partidos disputados</th>
-                      <th className="is-num">Puntos de jornada</th>
-                      <th className="is-num">Puntos de liga</th>
+                      <th className="is-num">PJ</th>
+                      <th className="is-num">PG</th>
+                      <th className="is-num">A favor</th>
+                      <th className="is-num">En contra</th>
+                      <th className="is-num">Dif</th>
+                      <th className="is-num">Puntos</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -612,14 +621,30 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                             </span>
                           </td>
                           <td className="is-num">
-                            <span className="flex-pub-standings-pts">
-                              {row.puntos}
-                              <small>PTS</small>
+                            <span className="flex-pub-standings-pj">
+                              {row.ganados}
                             </span>
                           </td>
                           <td className="is-num">
-                            <span className="flex-pub-standings-pts flex-pub-standings-pts--league">
-                              {seasonPoints.get(row.jugadorId) ?? 0}
+                            <span className="flex-pub-standings-pj">
+                              {row.gamesFavor}
+                            </span>
+                          </td>
+                          <td className="is-num">
+                            <span className="flex-pub-standings-pj">
+                              {row.gamesContra}
+                            </span>
+                          </td>
+                          <td className="is-num">
+                            <span className="flex-pub-standings-pj">
+                              {row.gamesFavor - row.gamesContra > 0
+                                ? `+${row.gamesFavor - row.gamesContra}`
+                                : row.gamesFavor - row.gamesContra}
+                            </span>
+                          </td>
+                          <td className="is-num">
+                            <span className="flex-pub-standings-pts">
+                              {row.puntos}
                               <small>PTS</small>
                             </span>
                           </td>

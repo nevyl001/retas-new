@@ -8,6 +8,7 @@ import {
 } from "../../../club-experience";
 import { isPubDsV2Enabled } from "../../../config/peds";
 import { useVisiblePolling } from "../../../hooks/useVisiblePolling";
+import { honorResolution, rankFlexSeason } from "../../../lib/liga/flex/season";
 import { rankFlexJornada } from "../../../lib/liga/flex/standings";
 import { flexPublicJornadaEstado } from "../../../lib/liga/flex/publicView";
 import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../../lib/liga/publicPoll";
@@ -50,6 +51,9 @@ export type FlexJornadaStandingRow = {
   posicion: number;
   puntos: number;
   partidos: number;
+  ganados: number;
+  gamesFavor: number;
+  gamesContra: number;
 };
 
 /** Orden de la grilla: quien va sumando en la jornada queda arriba. */
@@ -245,17 +249,28 @@ const FlexPublicJornadaBody: React.FC<{
     [bundle?.posiciones, jornada]
   );
 
+  const matchTallies = useMemo(
+    () => (jornada ? tallyScoredMatches(jornada) : new Map()),
+    [jornada]
+  );
+
   const standingRows: FlexJornadaStandingRow[] = useMemo(
     () =>
       official && posiciones.length > 0
-        ? posiciones.map((row) => ({
-            jugadorId: row.jugadorId,
-            posicion: row.posicion,
-            puntos: row.puntos,
-            partidos: row.partidos,
-          }))
+        ? posiciones.map((row) => {
+            const tally = matchTallies.get(row.jugadorId);
+            return {
+              jugadorId: row.jugadorId,
+              posicion: row.posicion,
+              puntos: row.puntos,
+              partidos: row.partidos,
+              ganados: tally?.ganados ?? 0,
+              gamesFavor: row.gamesFavor,
+              gamesContra: row.gamesContra,
+            };
+          })
         : provisionalRows,
-    [official, posiciones, provisionalRows]
+    [official, posiciones, provisionalRows, matchTallies]
   );
 
   const standingByPlayer = useMemo(() => {
@@ -271,15 +286,36 @@ const FlexPublicJornadaBody: React.FC<{
     [convocados, standingByPlayer]
   );
 
-  const seasonPoints = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const row of bundle?.posiciones ?? []) {
-      const source = detalle.jornadas.find((item) => item.id === row.jornadaId);
-      if (!source || source.estado !== "completed") continue;
-      map.set(row.jugadorId, (map.get(row.jugadorId) ?? 0) + row.puntos);
-    }
-    return map;
-  }, [bundle?.posiciones, detalle.jornadas]);
+  const seasonView = useMemo(() => {
+    const numeroById = new Map(
+      detalle.jornadas.map((item) => [item.id, item.numero])
+    );
+    const closed = new Set(
+      detalle.jornadas
+        .filter((item) => item.estado === "completed")
+        .map((item) => item.id)
+    );
+    const awards = (bundle?.posiciones ?? [])
+      .filter((row) => closed.has(row.jornadaId))
+      .map((row) => ({
+        jornadaNumero: numeroById.get(row.jornadaId) ?? 0,
+        jugadorId: row.jugadorId,
+        posicion: row.posicion,
+        puntos: row.puntos,
+      }))
+      .filter((row) => row.jornadaNumero > 0);
+    const season = rankFlexSeason({
+      awards,
+      resolution: honorResolution(bundle?.honores),
+    });
+    const rows = season.ok ? season.rows : [];
+    const points = new Map<string, number>();
+    for (const row of rows) points.set(row.jugadorId, row.puntos);
+    return { ok: season.ok, rows, points };
+  }, [bundle?.honores, bundle?.posiciones, detalle.jornadas]);
+
+  const seasonRows = seasonView.rows;
+  const seasonPoints = seasonView.points;
 
   const closeRows = useMemo(() => {
     if (!official) return [];
@@ -687,6 +723,15 @@ const FlexPublicJornadaBody: React.FC<{
                                 "Sin Riviera ID"
                               )}
                             </p>
+                            {hasResult ? (
+                              <p
+                                className="flex-pub-participant-card__record"
+                                title="Partidos jugados, partidos ganados, games a favor y games en contra. La posición sigue los games a favor y, si empatan, la diferencia."
+                              >
+                                {standing.partidos} PJ · {standing.ganados} PG ·{" "}
+                                {standing.gamesFavor}–{standing.gamesContra}
+                              </p>
+                            ) : null}
                           </div>
 
                           <div className="flex-pub-participant-card__right">
@@ -740,10 +785,9 @@ const FlexPublicJornadaBody: React.FC<{
                       CLASIFICACIÓN DE LA JORNADA
                     </h2>
                     <p className="flex-pub-section-head__subtitle">
-                      Jornada {String(jornada.numero).padStart(2, "0")} ·{" "}
-                      {official
-                        ? "Resultados oficiales"
-                        : "Clasificación provisional"}
+                      Jornada {String(jornada.numero).padStart(2, "0")} · La
+                      posición sigue los games a favor y, si empatan, la
+                      diferencia
                     </p>
                   </div>
                   <span
@@ -768,11 +812,14 @@ const FlexPublicJornadaBody: React.FC<{
                     <table className="flex-pub-standings-table">
                       <thead>
                         <tr>
-                          <th className="is-pos">Posición</th>
+                          <th className="is-pos">Pos</th>
                           <th>Jugador</th>
-                          <th className="is-num">Partidos disputados</th>
-                          <th className="is-num">Puntos de jornada</th>
-                          <th className="is-num">Puntos de liga</th>
+                          <th className="is-num">PJ</th>
+                          <th className="is-num">PG</th>
+                          <th className="is-num">A favor</th>
+                          <th className="is-num">En contra</th>
+                          <th className="is-num">Dif</th>
+                          <th className="is-num">Puntos</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -834,14 +881,28 @@ const FlexPublicJornadaBody: React.FC<{
                                 </span>
                               </td>
                               <td className="is-num">
-                                <span className="flex-pub-standings-pts">
-                                  {row.puntos}
-                                  <small>PTS</small>
+                                <span className="flex-pub-standings-pj">
+                                  {row.ganados}
                                 </span>
                               </td>
                               <td className="is-num">
-                                <span className="flex-pub-standings-pts flex-pub-standings-pts--league">
-                                  {seasonPoints.get(row.jugadorId) ?? 0}
+                                <span className="flex-pub-standings-pj">
+                                  {row.gamesFavor}
+                                </span>
+                              </td>
+                              <td className="is-num">
+                                <span className="flex-pub-standings-pj">
+                                  {row.gamesContra}
+                                </span>
+                              </td>
+                              <td className="is-num">
+                                <span className="flex-pub-standings-pj">
+                                  {formatSigned(row.gamesFavor - row.gamesContra)}
+                                </span>
+                              </td>
+                              <td className="is-num">
+                                <span className="flex-pub-standings-pts">
+                                  {row.puntos}
                                   <small>PTS</small>
                                 </span>
                               </td>
@@ -852,6 +913,103 @@ const FlexPublicJornadaBody: React.FC<{
                     </table>
                   </div>
                 </div>
+              </section>
+            ) : null}
+
+            {!pantalla ? (
+              <section
+                className="flex-pub-standings-section"
+                aria-label="Clasificación general"
+              >
+                <header className="flex-pub-section-head">
+                  <div className="flex-pub-section-head__titles">
+                    <h2 className="flex-pub-section-head__title">
+                      CLASIFICACIÓN GENERAL
+                    </h2>
+                    <p className="flex-pub-section-head__subtitle">
+                      Puntos oficiales de las jornadas cerradas
+                    </p>
+                  </div>
+                </header>
+                {seasonRows.length === 0 ? (
+                  <div className="flex-pub-empty-card">
+                    {seasonView.ok
+                      ? "Todavía no hay jornadas cerradas con puntos oficiales."
+                      : "La clasificación general se publica cuando el empate del podio queda resuelto."}
+                  </div>
+                ) : (
+                  <div className="flex-pub-standings-card">
+                    <div className="flex-pub-standings-table-wrap">
+                      <table className="flex-pub-standings-table">
+                        <thead>
+                          <tr>
+                            <th className="is-pos">Pos</th>
+                            <th>Jugador</th>
+                            <th className="is-num">Jornadas</th>
+                            <th className="is-num">Puntos de liga</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {seasonRows.map((row) => {
+                            const name = names.get(row.jugadorId) ?? "Jugador";
+                            const profile = profiles[row.jugadorId];
+                            const rivieraId = profile?.rivieraId?.trim() || null;
+                            return (
+                              <tr
+                                key={row.jugadorId}
+                                className={
+                                  row.posicion === 1 ? "is-leader" : undefined
+                                }
+                              >
+                                <td className="is-pos">
+                                  <span
+                                    className={`flex-pub-standings-pos${
+                                      row.posicion <= 3
+                                        ? " flex-pub-standings-pos--top"
+                                        : ""
+                                    }`}
+                                  >
+                                    #{row.posicion}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div className="flex-pub-standings-player">
+                                    <FlexNeutralAvatar
+                                      name={name}
+                                      fotoUrl={profile?.fotoUrl}
+                                      variant="table"
+                                    />
+                                    <div className="flex-pub-standings-player__info">
+                                      <span className="flex-pub-standings-player__name">
+                                        {name}
+                                      </span>
+                                      {rivieraId ? (
+                                        <span className="flex-pub-standings-player__id">
+                                          {rivieraId}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="is-num">
+                                  <span className="flex-pub-standings-pj">
+                                    {row.jornadasJugadas}
+                                  </span>
+                                </td>
+                                <td className="is-num">
+                                  <span className="flex-pub-standings-pts flex-pub-standings-pts--league">
+                                    {row.puntos}
+                                    <small>PTS</small>
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </section>
             ) : null}
 
@@ -1037,23 +1195,19 @@ function FlexMatchCard({
               key={slot.key}
               className={`flex-pub-match-court__player${slot.win ? " is-win" : ""}`}
             >
-              <FlexNeutralAvatar
-                name={slot.name}
-                fotoUrl={slot.foto}
-                variant="match"
-              />
+              <div className="flex-pub-match-court__frame">
+                <FlexNeutralAvatar
+                  name={slot.name}
+                  fotoUrl={slot.foto}
+                  variant="match"
+                />
+                <p className="flex-pub-match-court__name">{slot.name}</p>
+              </div>
             </div>
           ))}
           <span className="flex-pub-match-court__vs" aria-hidden>
             VS
           </span>
-        </div>
-        <div className="flex-pub-match-court__names">
-          {[pairA.name1, pairB.name1, pairA.name2, pairB.name2].map((name, index) => (
-            <p className="flex-pub-match-court__name" key={`${name}-${index}`}>
-              {name}
-            </p>
-          ))}
         </div>
       </div>
 
@@ -1136,14 +1290,12 @@ export function computeFlexJornadaProvisionalStandings(
     name: names.get(id) ?? "Jugador",
   }));
 
+  const tallies = tallyScoredMatches(jornada);
   const direct = rankFlexJornada({ players, matches });
   if (direct.ok) {
-    return direct.rows.map((row) => ({
-      jugadorId: row.jugadorId,
-      posicion: row.posicion,
-      puntos: row.puntos,
-      partidos: row.partidos,
-    }));
+    return direct.rows.map((row) =>
+      withMatchTally(row, tallies.get(row.jugadorId))
+    );
   }
 
   // Si existen empates parciales entre rondas antes del cierre oficial,
@@ -1155,12 +1307,88 @@ export function computeFlexJornadaProvisionalStandings(
     resolution: activeIds,
   });
   if (withProvisionalOrder.ok) {
-    return withProvisionalOrder.rows.map((row) => ({
-      jugadorId: row.jugadorId,
-      posicion: row.posicion,
-      puntos: row.puntos,
-      partidos: row.partidos,
-    }));
+    return withProvisionalOrder.rows.map((row) =>
+      withMatchTally(row, tallies.get(row.jugadorId))
+    );
   }
   return [];
+}
+
+function withMatchTally(
+  row: {
+    jugadorId: string;
+    posicion: number;
+    puntos: number;
+    partidos: number;
+    gamesFavor: number;
+    gamesContra: number;
+  },
+  tally: MatchTally | undefined
+): FlexJornadaStandingRow {
+  return {
+    jugadorId: row.jugadorId,
+    posicion: row.posicion,
+    puntos: row.puntos,
+    partidos: row.partidos,
+    ganados: tally?.ganados ?? 0,
+    gamesFavor: row.gamesFavor,
+    gamesContra: row.gamesContra,
+  };
+}
+
+type MatchTally = {
+  partidos: number;
+  ganados: number;
+  gamesFavor: number;
+  gamesContra: number;
+};
+
+function tallyScoredMatches(jornada: LigaJornada): Map<string, MatchTally> {
+  const map = new Map<string, MatchTally>();
+  const parejas = new Map(
+    (jornada.parejas ?? []).map((pareja) => [pareja.id, pareja])
+  );
+  for (const partido of jornada.partidos ?? []) {
+    if (partido.score_pareja1 == null || partido.score_pareja2 == null) continue;
+    const left = partido.pareja1 ?? parejas.get(partido.pareja1_id);
+    const right = partido.pareja2 ?? parejas.get(partido.pareja2_id);
+    const scoreA = partido.score_pareja1;
+    const scoreB = partido.score_pareja2;
+    const sides = [
+      {
+        ids: [left?.jugador1_id, left?.jugador2_id],
+        favor: scoreA,
+        contra: scoreB,
+        won: scoreA > scoreB,
+      },
+      {
+        ids: [right?.jugador1_id, right?.jugador2_id],
+        favor: scoreB,
+        contra: scoreA,
+        won: scoreB > scoreA,
+      },
+    ];
+    for (const side of sides) {
+      for (const id of side.ids) {
+        if (!id) continue;
+        const current = map.get(id) ?? {
+          partidos: 0,
+          ganados: 0,
+          gamesFavor: 0,
+          gamesContra: 0,
+        };
+        current.partidos += 1;
+        current.gamesFavor += side.favor;
+        current.gamesContra += side.contra;
+        if (side.won) current.ganados += 1;
+        map.set(id, current);
+      }
+    }
+  }
+  return map;
+}
+
+function formatSigned(value: number): string {
+  if (value > 0) return `+${value}`;
+  return String(value);
 }
