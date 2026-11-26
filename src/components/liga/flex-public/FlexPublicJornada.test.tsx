@@ -355,6 +355,14 @@ describe("FlexPublicJornada — Jornada Pública Riviera Flex League", () => {
       ).toBeInTheDocument();
     });
 
+    const cards = container.querySelectorAll(".flex-pub-participant-card");
+    const leaderName = names.get(rows[0]!.jugadorId);
+    expect(cards[0]?.textContent).toContain(leaderName);
+    expect(cards[0]?.textContent).toContain("1º");
+    expect(cards[0]?.textContent).toContain("PTS LIGA");
+    expect(cards[cards.length - 1]?.textContent).toContain("12º");
+    expect(screen.getByText("Puntos de liga")).toBeInTheDocument();
+
     const standings = container.querySelector(".flex-pub-standings-section");
     expect(standings).not.toBeNull();
     expect(container.querySelector(".flex-pub-jornada-close")).toBeNull();

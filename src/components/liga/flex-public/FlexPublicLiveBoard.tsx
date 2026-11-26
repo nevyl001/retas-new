@@ -35,6 +35,7 @@ export type FlexPublicLiveBoardProps = {
   profiles: Record<string, PublicProfile>;
   convocados: string[];
   standingRows: FlexJornadaStandingRow[];
+  seasonPoints: ReadonlyMap<string, number>;
   official: boolean;
   jornadaHref: string;
   seasonAwards: FlexAward[];
@@ -168,6 +169,7 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
   profiles,
   convocados,
   standingRows,
+  seasonPoints,
   official,
   dataStale,
 }) => {
@@ -448,6 +450,7 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                 const standing = standingByPlayer.get(id);
                 const hasResult = standing != null && standing.partidos > 0;
                 const rivieraId = profile?.rivieraId?.trim() || null;
+                const leaguePoints = seasonPoints.get(id) ?? 0;
                 return (
                   <article key={id} className="flex-pub-participant-card">
                     <FlexNeutralAvatar
@@ -492,6 +495,10 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                               official ? "Oficial" : "Provisional"
                             }`
                           : "Pendiente"}
+                      </span>
+                      <span className="flex-pub-participant-card__league">
+                        {leaguePoints}
+                        <small>PTS LIGA</small>
                       </span>
                     </div>
                   </article>
@@ -553,6 +560,7 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                       <th>Jugador</th>
                       <th className="is-num">Partidos disputados</th>
                       <th className="is-num">Puntos de jornada</th>
+                      <th className="is-num">Puntos de liga</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -606,6 +614,12 @@ export const FlexPublicLiveBoard: React.FC<FlexPublicLiveBoardProps> = ({
                           <td className="is-num">
                             <span className="flex-pub-standings-pts">
                               {row.puntos}
+                              <small>PTS</small>
+                            </span>
+                          </td>
+                          <td className="is-num">
+                            <span className="flex-pub-standings-pts flex-pub-standings-pts--league">
+                              {seasonPoints.get(row.jugadorId) ?? 0}
                               <small>PTS</small>
                             </span>
                           </td>

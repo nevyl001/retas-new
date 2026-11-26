@@ -52,6 +52,21 @@ export type FlexJornadaStandingRow = {
   partidos: number;
 };
 
+/** Orden de la grilla: quien va sumando en la jornada queda arriba. */
+export function orderParticipantsByJornadaStanding(
+  ids: readonly string[],
+  standingByPlayer: ReadonlyMap<string, { posicion: number }>
+): string[] {
+  return [...ids].sort((a, b) => {
+    const left = standingByPlayer.get(a)?.posicion;
+    const right = standingByPlayer.get(b)?.posicion;
+    if (left != null && right != null && left !== right) return left - right;
+    if (left != null) return -1;
+    if (right != null) return 1;
+    return 0;
+  });
+}
+
 export type FlexRoundVisualState = "confirmada" | "actual" | "pendiente";
 
 export type FlexRoundNavItem = {
@@ -251,6 +266,21 @@ const FlexPublicJornadaBody: React.FC<{
     return map;
   }, [standingRows]);
 
+  const orderedConvocados = useMemo(
+    () => orderParticipantsByJornadaStanding(convocados, standingByPlayer),
+    [convocados, standingByPlayer]
+  );
+
+  const seasonPoints = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of bundle?.posiciones ?? []) {
+      const source = detalle.jornadas.find((item) => item.id === row.jornadaId);
+      if (!source || source.estado !== "completed") continue;
+      map.set(row.jugadorId, (map.get(row.jugadorId) ?? 0) + row.puntos);
+    }
+    return map;
+  }, [bundle?.posiciones, detalle.jornadas]);
+
   const closeRows = useMemo(() => {
     if (!official) return [];
     const top = posiciones
@@ -398,8 +428,9 @@ const FlexPublicJornadaBody: React.FC<{
           parejas={jornada.parejas ?? []}
           names={names}
           profiles={profiles}
-          convocados={convocados}
+          convocados={orderedConvocados}
           standingRows={standingRows}
+          seasonPoints={seasonPoints}
           official={official}
           jornadaHref={publicLigaUrl(detalle.id) + `/jornada/${jornada.numero}`}
           seasonAwards={(bundle?.posiciones ?? [])
@@ -617,13 +648,14 @@ const FlexPublicJornadaBody: React.FC<{
                   </div>
                 ) : (
                   <div className="flex-pub-participants-grid">
-                    {convocados.map((id) => {
+                    {orderedConvocados.map((id) => {
                       const name = names.get(id) ?? "Jugador";
                       const profile = profiles[id];
                       const standing = standingByPlayer.get(id);
                       const hasResult =
                         standing != null && standing.partidos > 0;
                       const rivieraId = profile?.rivieraId?.trim() || null;
+                      const leaguePoints = seasonPoints.get(id) ?? 0;
 
                       return (
                         <article
@@ -683,6 +715,10 @@ const FlexPublicJornadaBody: React.FC<{
                                   }`
                                 : "Pendiente"}
                             </span>
+                            <span className="flex-pub-participant-card__league">
+                              {leaguePoints}
+                              <small>PTS LIGA</small>
+                            </span>
                           </div>
                         </article>
                       );
@@ -736,6 +772,7 @@ const FlexPublicJornadaBody: React.FC<{
                           <th>Jugador</th>
                           <th className="is-num">Partidos disputados</th>
                           <th className="is-num">Puntos de jornada</th>
+                          <th className="is-num">Puntos de liga</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -799,6 +836,12 @@ const FlexPublicJornadaBody: React.FC<{
                               <td className="is-num">
                                 <span className="flex-pub-standings-pts">
                                   {row.puntos}
+                                  <small>PTS</small>
+                                </span>
+                              </td>
+                              <td className="is-num">
+                                <span className="flex-pub-standings-pts flex-pub-standings-pts--league">
+                                  {seasonPoints.get(row.jugadorId) ?? 0}
                                   <small>PTS</small>
                                 </span>
                               </td>
