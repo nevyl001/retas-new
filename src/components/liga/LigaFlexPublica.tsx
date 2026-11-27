@@ -478,6 +478,11 @@ const LigaFlexPublicaBody: React.FC<{ detalle: LigaDetalle }> = ({ detalle }) =>
                         aria-hidden
                       />
                     </div>
+                    <span
+                      className={`flex-liga-cal-cell__status flex-liga-cal-cell__status--${cardVariant}`}
+                    >
+                      {statusLabel}
+                    </span>
                     {hasDate ? (
                       <span className="flex-liga-cal-cell__date">
                         {fechaCorta(jornada.fecha)}
