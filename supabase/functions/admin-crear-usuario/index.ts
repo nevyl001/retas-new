@@ -175,7 +175,14 @@ Deno.serve(async (req: Request) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { name },
+      app_metadata:
+        role === "organizador"
+          ? { account_type: "CLUB_ADMIN", role: "organizador" }
+          : { role: "admin_maestro" },
+      user_metadata: {
+        name,
+        ...(role === "organizador" ? { account_type: "CLUB_ADMIN" } : {}),
+      },
     });
 
   if (createAuthError || !createdAuth.user) {
@@ -208,6 +215,29 @@ Deno.serve(async (req: Request) => {
       ok: false,
       error: "No se pudo crear el perfil del usuario",
     });
+  }
+
+  if (role === "organizador") {
+    const { error: clubEntityError } = await supabaseAdmin
+      .from("organizador_game_modes")
+      .upsert({ organizador_id: newUserId }, { onConflict: "organizador_id" });
+    if (clubEntityError) {
+      await supabaseAdmin.from("users").delete().eq("id", newUserId);
+      const rolledBack = await rollbackAuthUser(supabaseAdmin, newUserId);
+      if (!rolledBack) {
+        return jsonResponse(500, {
+          ok: false,
+          error:
+            "Se creó la cuenta pero no la entidad de club y no se pudo revertir automáticamente.",
+          user_id: newUserId,
+          email,
+        });
+      }
+      return jsonResponse(500, {
+        ok: false,
+        error: "No se pudo crear la entidad de club del organizador",
+      });
+    }
   }
 
   if (role === "admin_maestro") {

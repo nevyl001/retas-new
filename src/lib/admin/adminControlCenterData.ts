@@ -3,13 +3,14 @@ import { getManifestByKey } from "../../club-experience/manifestCatalog";
 import { ORGANIZADOR_CLUB_BINDINGS } from "../../club-experience/organizadorClubIndex";
 import type { ClubBrandingKey } from "../../club-experience/types";
 import {
-  buildCoachDirectory,
-  coachDirectoryFromRpc,
-  isMissingDirectoryRpc,
+  accountHasRole,
   membershipStatusLabel,
-  resolveAdminAccountKind,
+  parseAdminDirectory,
+  type AdminAccountRoles,
   type AdminCoachDirectoryRow,
   type AdminCoachMembershipStatus,
+  type AdminDirectoryClassification,
+  type AdminStudentDirectoryRow,
 } from "./adminAccountClassification";
 
 const DRAFT_DESCRIPTION = "Parejas en armado para torneo";
@@ -141,6 +142,7 @@ export interface AdminAccountRow {
   created_at: string;
   updated_at: string;
   account_kind: "club" | "coach" | "student";
+  roles?: AdminAccountRoles;
   status_key: AdminAccountStatusKey;
   status_label: string;
   has_upgrade: boolean;
@@ -237,6 +239,7 @@ export interface AdminControlCenterSnapshot {
   accounts: AdminAccountRow[];
   competitions: AdminCompetitionItem[];
   activities: AdminActivityEvent[];
+  unclassifiedCount?: number;
 }
 
 function emptyClubBreakdown(): AdminClubFormatBreakdown {
@@ -353,9 +356,6 @@ export async function fetchAdminControlCenterSnapshot(
     studentLinksRows,
     identitiesRows,
     ledgerRows,
-    coachTableResult,
-    relationshipRowsResult,
-    classRowsResult,
     directoryRpcResult,
   ] = await Promise.all([
     safeSelect<Record<string, unknown>>(
@@ -434,15 +434,6 @@ export async function fetchAdminControlCenterSnapshot(
         .limit(120),
       "coach_class_ledger"
     ),
-    supabase
-      .from("riviera_coaches")
-      .select("id, auth_user_id, coach_code, nombre, foto_url, created_at"),
-    supabase
-      .from("coach_player_relationships")
-      .select("coach_id, jugador_id, status"),
-    supabase
-      .from("coach_class_ledger")
-      .select("coach_id, tipo"),
     supabase.rpc("admin_directorio_clasificacion"),
   ]);
 
@@ -456,13 +447,10 @@ export async function fetchAdminControlCenterSnapshot(
   }
 
   const userNamesById = new Map<string, string>();
-  const userEmailsById = new Map<string, string>();
   for (const u of usersRows) {
     const id = String(u.id ?? "");
     const name = String(u.name ?? u.email ?? "Organizador").trim();
-    const email = String(u.email ?? "").trim();
     if (id) userNamesById.set(id, name);
-    if (id && email) userEmailsById.set(id, email);
   }
 
   // Riviera IDs por jugador
@@ -531,36 +519,27 @@ export async function fetchAdminControlCenterSnapshot(
     }
   }
 
-  const rpcError = directoryRpcResult.error;
-  const rpcDirectory =
-    !rpcError
-      ? coachDirectoryFromRpc(directoryRpcResult.data, userNamesById)
-      : null;
-  let coachDirectory: AdminCoachDirectoryRow[];
-  if (rpcDirectory) {
-    coachDirectory = rpcDirectory;
-  } else if (rpcError && !isMissingDirectoryRpc(rpcError)) {
-    throw new Error(queryFailureMessage("la clasificación de cuentas", rpcError));
-  } else {
-    if (coachTableResult.error) {
-      throw new Error(queryFailureMessage("riviera_coaches", coachTableResult.error));
-    }
-    if (relationshipRowsResult.error) {
-      throw new Error(
-        queryFailureMessage("coach_player_relationships", relationshipRowsResult.error)
-      );
-    }
-    if (classRowsResult.error) {
-      throw new Error(queryFailureMessage("coach_class_ledger", classRowsResult.error));
-    }
-    coachDirectory = buildCoachDirectory({
-      coaches: coachTableResult.data ?? [],
-      memberships: membershipsRows,
-      relationships: relationshipRowsResult.data ?? [],
-      classes: classRowsResult.data ?? [],
-      namesByUserId: userNamesById,
-      emailsByUserId: userEmailsById,
-    });
+  if (directoryRpcResult.error || directoryRpcResult.data == null) {
+    throw new Error(
+      queryFailureMessage(
+        "la clasificación de cuentas",
+        directoryRpcResult.error ?? { message: "respuesta vacía" }
+      )
+    );
+  }
+  const directory: AdminDirectoryClassification | null = parseAdminDirectory(
+    directoryRpcResult.data
+  );
+  if (!directory) {
+    throw new Error(
+      "La clasificación del servidor no tiene el formato esperado. No se muestran cuentas parciales."
+    );
+  }
+  const coachDirectory: AdminCoachDirectoryRow[] = directory.coaches;
+  const clubIdSet = new Set(directory.clubIds);
+  const studentDirectory = new Map<string, AdminStudentDirectoryRow>();
+  for (const student of directory.students) {
+    studentDirectory.set(student.authUserId, student);
   }
 
   const authCoachMap = new Map<string, AdminCoachDirectoryRow>();
@@ -804,12 +783,19 @@ export async function fetchAdminControlCenterSnapshot(
     const updatedAt = String(u.updated_at ?? createdAt);
 
     const coachInfoRaw = authCoachMap.get(uid) ?? null;
-    const studentRaw = studentByAuth.get(uid) ?? null;
+    const studentFromServer = studentDirectory.get(uid) ?? null;
+    const roles = {
+      club: clubIdSet.has(uid),
+      coach: coachInfoRaw !== null,
+      student: studentFromServer !== null,
+    };
+    if (!roles.club && !roles.coach && !roles.student) continue;
 
-    const accountKind = resolveAdminAccountKind({
-      hasCoachProfile: coachInfoRaw !== null,
-      hasStudentLink: studentRaw !== null,
-    });
+    const accountKind: AdminAccountRow["account_kind"] = roles.coach
+      ? "coach"
+      : roles.student
+        ? "student"
+        : "club";
 
     const fmt = getClubFmt(uid);
     const ogm = ogmByOrg.get(uid) as
@@ -882,6 +868,7 @@ export async function fetchAdminControlCenterSnapshot(
       created_at: createdAt,
       updated_at: updatedAt,
       account_kind: accountKind,
+      roles,
       status_key: statusKey,
       status_label: statusLabel,
       has_upgrade: upgrade.hasUpgrade,
@@ -932,11 +919,11 @@ export async function fetchAdminControlCenterSnapshot(
             membership_status: coachInfoRaw.membershipStatus,
           }
         : null,
-      student_info: studentRaw
+      student_info: studentFromServer
         ? {
-            rivieraId: studentRaw.rivieraId,
-            isActive: studentRaw.isActive,
-            clubCount: studentRaw.clubs.size,
+            rivieraId: studentFromServer.rivieraId,
+            isActive: studentFromServer.isActive,
+            clubCount: studentFromServer.clubCount,
           }
         : null,
     });
@@ -961,6 +948,11 @@ export async function fetchAdminControlCenterSnapshot(
       created_at: createdAt,
       updated_at: createdAt,
       account_kind: "coach",
+      roles: {
+        club: clubIdSet.has(coach.authUserId),
+        coach: true,
+        student: studentDirectory.has(coach.authUserId),
+      },
       status_key: coach.membershipStatus === "activo" ? "con_actividad" : "registrada",
       status_label: membershipStatusLabel(coach.membershipStatus),
       has_upgrade: false,
@@ -1014,27 +1006,27 @@ export async function fetchAdminControlCenterSnapshot(
   }
 
   // Alumnos en coach_student_account_links que no tienen fila en public.users
-  for (const [authId, studentRaw] of Array.from(studentByAuth.entries())) {
+  for (const student of directory.students) {
     if (
-      knownIds.has(authId) ||
-      (excludeAdminUserId && authId === excludeAdminUserId) ||
-      authCoachMap.has(authId)
+      knownIds.has(student.authUserId) ||
+      (excludeAdminUserId && student.authUserId === excludeAdminUserId)
     ) {
       continue;
     }
-    knownIds.add(authId);
-    const createdAt = studentRaw.createdAt || new Date(0).toISOString();
+    knownIds.add(student.authUserId);
+    const createdAt = student.createdAt || new Date(0).toISOString();
     accounts.push({
-      id: authId,
-      email: studentRaw.email,
-      name: studentRaw.rivieraId || studentRaw.email || "Alumno",
+      id: student.authUserId,
+      email: student.email,
+      name: student.rivieraId || student.email || "Alumno",
       avatar_url: null,
       logo_url: null,
       created_at: createdAt,
       updated_at: createdAt,
       account_kind: "student",
-      status_key: studentRaw.isActive ? "con_actividad" : "registrada",
-      status_label: studentRaw.isActive ? "Acceso activo" : "Pendiente",
+      roles: { club: false, coach: false, student: true },
+      status_key: student.isActive ? "con_actividad" : "registrada",
+      status_label: student.isActive ? "Acceso activo" : "Pendiente",
       has_upgrade: false,
       upgrade_key: null,
       upgrade_label: null,
@@ -1073,9 +1065,9 @@ export async function fetchAdminControlCenterSnapshot(
       formats: emptyClubBreakdown(),
       coach_info: null,
       student_info: {
-        rivieraId: studentRaw.rivieraId,
-        isActive: studentRaw.isActive,
-        clubCount: studentRaw.clubs.size,
+        rivieraId: student.rivieraId,
+        isActive: student.isActive,
+        clubCount: student.clubCount,
       },
     });
   }
@@ -1238,9 +1230,9 @@ export async function fetchAdminControlCenterSnapshot(
     competenciasFinalizadas += item.counts.finished;
   }
 
-  const clubesCount = accounts.filter((a) => a.account_kind === "club").length;
-  const coachesCount = accounts.filter((a) => a.account_kind === "coach").length;
-  const studentsCount = accounts.filter((a) => a.account_kind === "student").length;
+  const clubesCount = accounts.filter((a) => accountHasRole(a, "club")).length;
+  const coachesCount = accounts.filter((a) => accountHasRole(a, "coach")).length;
+  const studentsCount = accounts.filter((a) => accountHasRole(a, "student")).length;
 
   return {
     clubesCount,
@@ -1264,5 +1256,6 @@ export async function fetchAdminControlCenterSnapshot(
     accounts,
     competitions,
     activities,
+    unclassifiedCount: directory.unclassified.length,
   };
 }

@@ -1,53 +1,69 @@
 import {
+  accountHasRole,
   buildCoachDirectory,
-  coachDirectoryFromRpc,
-  isMissingDirectoryRpc,
-  resolveAdminAccountKind,
+  parseAdminDirectory,
+  resolveAdminAccountRoles,
 } from "./adminAccountClassification";
 
-describe("resolveAdminAccountKind", () => {
-  it("un perfil de coach no se clasifica como club aunque exista en users", () => {
+describe("resolveAdminAccountRoles", () => {
+  it("un coach sin entidad de club no es club", () => {
     expect(
-      resolveAdminAccountKind({
+      resolveAdminAccountRoles({
         hasCoachProfile: true,
         hasStudentLink: false,
+        hasClubEntity: false,
       })
-    ).toBe("coach");
+    ).toEqual({ club: false, coach: true, student: false });
   });
 
-  it("un alumno vinculado no se clasifica como club", () => {
+  it("un alumno vinculado no es club", () => {
     expect(
-      resolveAdminAccountKind({
+      resolveAdminAccountRoles({
         hasCoachProfile: false,
         hasStudentLink: true,
+        hasClubEntity: false,
       })
-    ).toBe("student");
+    ).toEqual({ club: false, coach: false, student: true });
   });
 
-  it("una cuenta sin perfil de coach ni de alumno sigue siendo club", () => {
+  it("una fila de users sin entidad de club no es club", () => {
     expect(
-      resolveAdminAccountKind({
+      resolveAdminAccountRoles({
         hasCoachProfile: false,
         hasStudentLink: false,
+        hasClubEntity: false,
       })
-    ).toBe("club");
+    ).toEqual({ club: false, coach: false, student: false });
   });
 
-  it("si la cuenta es coach y alumno, conserva el perfil de coach", () => {
+  it("un coach con entidad de club conserva los dos roles", () => {
     expect(
-      resolveAdminAccountKind({
+      resolveAdminAccountRoles({
         hasCoachProfile: true,
-        hasStudentLink: true,
+        hasStudentLink: false,
+        hasClubEntity: true,
       })
-    ).toBe("coach");
+    ).toEqual({ club: true, coach: true, student: false });
+  });
+
+  it("las cuentas viejas sin roles siguen el account_kind", () => {
+    expect(accountHasRole({ account_kind: "club" }, "club")).toBe(true);
+    expect(accountHasRole({ account_kind: "club" }, "coach")).toBe(false);
+    expect(
+      accountHasRole(
+        {
+          account_kind: "coach",
+          roles: { club: true, coach: true, student: false },
+        },
+        "club"
+      )
+    ).toBe(true);
   });
 });
 
 describe("buildCoachDirectory", () => {
   it("arma el coach con código, club, alumnos y clases desde las tablas reales", () => {
-    const names = new Map<string, string>([
-      ["org-1", "Padelito Warehouse"],
-    ]);
+    const names = new Map<string, string>([["org-1", "Padelito Warehouse"]]);
     const emails = new Map<string, string>([
       ["coach-auth", "gabodcoachpadel@gmail.com"],
     ]);
@@ -92,7 +108,7 @@ describe("buildCoachDirectory", () => {
       classCount: 1,
       membershipStatus: "activo",
     });
-    expect(coach.clubs).toEqual([
+    expect(coach?.clubs).toEqual([
       {
         organizadorId: "org-1",
         name: "Padelito Warehouse",
@@ -102,53 +118,56 @@ describe("buildCoachDirectory", () => {
   });
 });
 
-describe("coachDirectoryFromRpc", () => {
-  it("lee la clasificación devuelta por el servidor", () => {
-    const rows = coachDirectoryFromRpc(
-      {
-        coaches: [
-          {
-            auth_user_id: "coach-auth",
-            coach_id: "coach-1",
-            coach_code: "RIV-C-00072",
-            nombre: "Gabriel Duran",
-            email: "gabodcoachpadel@gmail.com",
-            foto_url: null,
-            created_at: "2026-11-12T00:00:00.000Z",
-            clubs: [
-              {
-                organizador_id: "org-1",
-                nombre: "Padelito Warehouse",
-                status: "ACTIVE",
-              },
-            ],
-            student_count: 2,
-            class_count: 4,
-            membership_status: "activo",
-          },
-        ],
-      },
-      new Map()
-    );
+describe("parseAdminDirectory", () => {
+  it("exige el formato del servidor y separa clubes de coaches", () => {
+    const parsed = parseAdminDirectory({
+      coaches: [
+        {
+          auth_user_id: "coach-auth",
+          coach_id: "coach-1",
+          coach_code: "RIV-C-00072",
+          nombre: "Gabriel Duran",
+          email: "gabodcoachpadel@gmail.com",
+          foto_url: null,
+          created_at: "2026-11-12T00:00:00.000Z",
+          clubs: [],
+          student_count: 0,
+          class_count: 0,
+          membership_status: "activo",
+        },
+      ],
+      clubs: [
+        {
+          id: "club-1",
+          email: "padelitopadel@gmail.com",
+          name: "Padelito Warehouse",
+          created_at: "2026-08-25T00:00:00.000Z",
+        },
+      ],
+      students: [
+        {
+          auth_user_id: "student-1",
+          email: "alumno@example.com",
+          riviera_id: "RIV-0001",
+          is_active: true,
+          created_at: "2026-11-01T00:00:00.000Z",
+          club_count: 1,
+        },
+      ],
+      unclassified: [
+        { id: "generic-1", email: "pending@example.com", name: "Usuario" },
+      ],
+    });
 
-    expect(rows).toHaveLength(1);
-    expect(rows?.[0]?.coachCode).toBe("RIV-C-00072");
-    expect(rows?.[0]?.studentCount).toBe(2);
-    expect(rows?.[0]?.clubs[0]?.name).toBe("Padelito Warehouse");
+    expect(parsed?.coaches[0]?.coachCode).toBe("RIV-C-00072");
+    expect(parsed?.clubIds).toEqual(["club-1"]);
+    expect(parsed?.students[0]?.rivieraId).toBe("RIV-0001");
+    expect(parsed?.unclassified).toHaveLength(1);
+    expect(parsed?.clubIds).not.toContain("coach-auth");
   });
 
-  it("reconoce que la función todavía no está desplegada", () => {
-    expect(
-      isMissingDirectoryRpc({
-        code: "PGRST202",
-        message: "Could not find the function public.admin_directorio_clasificacion",
-      })
-    ).toBe(true);
-    expect(
-      isMissingDirectoryRpc({
-        code: "42501",
-        message: "no_autorizado",
-      })
-    ).toBe(false);
+  it("rechaza una respuesta que no trae la clasificación completa", () => {
+    expect(parseAdminDirectory({ coaches: [] })).toBeNull();
+    expect(parseAdminDirectory(null)).toBeNull();
   });
 });

@@ -8,6 +8,7 @@ import {
   type AdminControlCenterSnapshot,
   type AdminFormatKey,
 } from "../../lib/admin/adminControlCenterData";
+import { accountHasRole } from "../../lib/admin/adminAccountClassification";
 import {
   navigateAdminUser,
   readStoredAdminSection,
@@ -136,7 +137,7 @@ export const AdminDashboard: React.FC = () => {
 
   const clubAccounts = useMemo(
     () =>
-      snapshot?.accounts.filter((a) => a.account_kind === "club") ?? [],
+      snapshot?.accounts.filter((a) => accountHasRole(a, "club")) ?? [],
     [snapshot]
   );
 

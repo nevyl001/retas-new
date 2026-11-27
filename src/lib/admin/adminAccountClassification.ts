@@ -28,13 +28,33 @@ export interface AdminCoachDirectoryRow {
   membershipStatus: AdminCoachMembershipStatus;
 }
 
-export function resolveAdminAccountKind(input: {
+export interface AdminAccountRoles {
+  club: boolean;
+  coach: boolean;
+  student: boolean;
+}
+
+export function resolveAdminAccountRoles(input: {
   hasCoachProfile: boolean;
   hasStudentLink: boolean;
-}): AdminAccountKind {
-  if (input.hasCoachProfile) return "coach";
-  if (input.hasStudentLink) return "student";
-  return "club";
+  hasClubEntity: boolean;
+}): AdminAccountRoles {
+  return {
+    club: input.hasClubEntity,
+    coach: input.hasCoachProfile,
+    student: input.hasStudentLink,
+  };
+}
+
+export function accountHasRole(
+  account: {
+    account_kind?: AdminAccountKind;
+    roles?: AdminAccountRoles | null;
+  },
+  role: AdminAccountKind
+): boolean {
+  if (account.roles) return account.roles[role];
+  return account.account_kind === role;
 }
 
 export function membershipStatusFromLinks(
@@ -157,18 +177,79 @@ export function buildCoachDirectory(input: {
   return rows;
 }
 
-export function isMissingDirectoryRpc(error: {
-  code?: string;
-  message?: string;
-} | null): boolean {
-  if (!error) return false;
-  const code = String(error.code ?? "");
-  const message = String(error.message ?? "").toLowerCase();
-  return (
-    code === "PGRST202" ||
-    code === "42883" ||
-    message.includes("admin_directorio_clasificacion")
-  );
+export interface AdminStudentDirectoryRow {
+  authUserId: string;
+  email: string;
+  rivieraId: string | null;
+  isActive: boolean;
+  createdAt: string;
+  clubCount: number;
+}
+
+export interface AdminDirectoryClassification {
+  coaches: AdminCoachDirectoryRow[];
+  clubIds: string[];
+  students: AdminStudentDirectoryRow[];
+  unclassified: { id: string; email: string; name: string }[];
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+export function parseAdminDirectory(
+  payload: unknown
+): AdminDirectoryClassification | null {
+  const root = asRecord(payload);
+  if (!root || !Array.isArray(root.coaches) || !Array.isArray(root.clubs)) {
+    return null;
+  }
+  if (!Array.isArray(root.students)) return null;
+
+  const names = new Map<string, string>();
+  const clubIds: string[] = [];
+  for (const club of root.clubs) {
+    const row = asRecord(club);
+    const id = String(row?.id ?? "");
+    if (!id) continue;
+    clubIds.push(id);
+    const name = String(row?.name ?? "").trim();
+    if (name) names.set(id, name);
+  }
+
+  const coaches = coachDirectoryFromRpc({ coaches: root.coaches }, names) ?? [];
+  const students: AdminStudentDirectoryRow[] = [];
+  for (const student of root.students) {
+    const row = asRecord(student);
+    const authUserId = String(row?.auth_user_id ?? "");
+    if (!authUserId) continue;
+    const rivieraId = String(row?.riviera_id ?? "").trim();
+    students.push({
+      authUserId,
+      email: String(row?.email ?? "").trim(),
+      rivieraId: rivieraId || null,
+      isActive: row?.is_active === true,
+      createdAt: String(row?.created_at ?? ""),
+      clubCount: Number(row?.club_count ?? 0) || 0,
+    });
+  }
+
+  const unclassified: AdminDirectoryClassification["unclassified"] = [];
+  if (Array.isArray(root.unclassified)) {
+    for (const item of root.unclassified) {
+      const row = asRecord(item);
+      const id = String(row?.id ?? "");
+      if (!id) continue;
+      unclassified.push({
+        id,
+        email: String(row?.email ?? "").trim(),
+        name: String(row?.name ?? "").trim(),
+      });
+    }
+  }
+
+  return { coaches, clubIds, students, unclassified };
 }
 
 export function coachDirectoryFromRpc(

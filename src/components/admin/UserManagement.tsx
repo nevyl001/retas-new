@@ -11,6 +11,7 @@ import {
   type AdminAccountRow,
   type AdminControlCenterSnapshot,
 } from "../../lib/admin/adminControlCenterData";
+import { accountHasRole } from "../../lib/admin/adminAccountClassification";
 import "./UserManagement.css";
 
 type AccountTab = "clubs" | "coaches" | "students";
@@ -123,17 +124,17 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   const users: AdminAccountRow[] = useMemo(
     () =>
-      activeSnapshot?.accounts.filter((a) => a.account_kind === "club") ?? [],
+      activeSnapshot?.accounts.filter((a) => accountHasRole(a, "club")) ?? [],
     [activeSnapshot]
   );
   const coaches: AdminAccountRow[] = useMemo(
     () =>
-      activeSnapshot?.accounts.filter((a) => a.account_kind === "coach") ?? [],
+      activeSnapshot?.accounts.filter((a) => accountHasRole(a, "coach")) ?? [],
     [activeSnapshot]
   );
   const students: AdminAccountRow[] = useMemo(
     () =>
-      activeSnapshot?.accounts.filter((a) => a.account_kind === "student") ??
+      activeSnapshot?.accounts.filter((a) => accountHasRole(a, "student")) ??
       [],
     [activeSnapshot]
   );
@@ -339,6 +340,13 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           </button>
         </div>
       </div>
+
+      {activeSnapshot && (activeSnapshot.unclassifiedCount ?? 0) > 0 ? (
+        <p className="user-mgmt__counter">
+          {activeSnapshot.unclassifiedCount} cuentas sin entidad de club no se
+          listan como clubes.
+        </p>
+      ) : null}
 
       {/* Filter & Search Toolbar */}
       <div className="user-mgmt__toolbar">
