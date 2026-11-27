@@ -5,6 +5,56 @@
 -- Coach: fila en riviera_coaches. Alumno: vínculo en coach_student_account_links.
 -- Una cuenta puede salir en más de una lista si tiene más de un rol real.
 
+CREATE OR REPLACE FUNCTION public.admin_directorio_es_club(p_user_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT
+    p_user_id IS NOT NULL
+    AND (
+      EXISTS (
+        SELECT 1
+        FROM public.organizador_game_modes ogm
+        WHERE ogm.organizador_id = p_user_id
+      )
+      OR EXISTS (
+        SELECT 1
+        FROM auth.users au
+        WHERE au.id = p_user_id
+          AND (
+            COALESCE(au.raw_app_meta_data->>'account_type', '') = 'CLUB_ADMIN'
+            OR COALESCE(au.raw_user_meta_data->>'account_type', '') = 'CLUB_ADMIN'
+          )
+      )
+      OR EXISTS (
+        SELECT 1 FROM public.tournaments t WHERE t.user_id = p_user_id
+      )
+      OR EXISTS (
+        SELECT 1 FROM public.ligas l WHERE l.organizador_id = p_user_id
+      )
+      OR EXISTS (
+        SELECT 1 FROM public.torneo_express te WHERE te.organizador_id = p_user_id
+      )
+      OR EXISTS (
+        SELECT 1 FROM public.duelos_2v2 d WHERE d.organizador_id = p_user_id
+      )
+      OR EXISTS (
+        SELECT 1
+        FROM public.riviera_jugadores j
+        WHERE j.organizador_id = p_user_id
+          AND COALESCE(j.estado, 'activo') <> 'archivado'
+      )
+      OR EXISTS (
+        SELECT 1
+        FROM public.coach_club_memberships m
+        WHERE m.organizador_id = p_user_id
+      )
+    );
+$$;
+
 CREATE OR REPLACE FUNCTION public.admin_directorio_clasificacion()
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -156,57 +206,8 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.admin_directorio_es_club(p_user_id uuid)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT
-    p_user_id IS NOT NULL
-    AND (
-      EXISTS (
-        SELECT 1
-        FROM public.organizador_game_modes ogm
-        WHERE ogm.organizador_id = p_user_id
-      )
-      OR EXISTS (
-        SELECT 1
-        FROM auth.users au
-        WHERE au.id = p_user_id
-          AND (
-            COALESCE(au.raw_app_meta_data->>'account_type', '') = 'CLUB_ADMIN'
-            OR COALESCE(au.raw_user_meta_data->>'account_type', '') = 'CLUB_ADMIN'
-          )
-      )
-      OR EXISTS (
-        SELECT 1 FROM public.tournaments t WHERE t.user_id = p_user_id
-      )
-      OR EXISTS (
-        SELECT 1 FROM public.ligas l WHERE l.organizador_id = p_user_id
-      )
-      OR EXISTS (
-        SELECT 1 FROM public.torneo_express te WHERE te.organizador_id = p_user_id
-      )
-      OR EXISTS (
-        SELECT 1 FROM public.duelos_2v2 d WHERE d.organizador_id = p_user_id
-      )
-      OR EXISTS (
-        SELECT 1
-        FROM public.riviera_jugadores j
-        WHERE j.organizador_id = p_user_id
-          AND COALESCE(j.estado, 'activo') <> 'archivado'
-      )
-      OR EXISTS (
-        SELECT 1
-        FROM public.coach_club_memberships m
-        WHERE m.organizador_id = p_user_id
-      )
-    );
-$$;
-
 REVOKE ALL ON FUNCTION public.admin_directorio_clasificacion() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.admin_directorio_clasificacion() FROM anon;
 REVOKE ALL ON FUNCTION public.admin_directorio_es_club(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.admin_directorio_clasificacion() TO authenticated;
 REVOKE ALL ON FUNCTION public.admin_directorio_es_club(uuid) FROM authenticated;
