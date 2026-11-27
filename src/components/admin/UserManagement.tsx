@@ -278,7 +278,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           >
             <TablerIcon name="trophy" size={16} />
             <span>Clubes</span>
-            <span className="user-mgmt__tab-count">{users.length}</span>
+            <span className="user-mgmt__tab-count">
+              {activeSnapshot && !error ? users.length : "—"}
+            </span>
           </button>
 
           <button
@@ -292,7 +294,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           >
             <TablerIcon name="user-check" size={16} />
             <span>Coaches</span>
-            <span className="user-mgmt__tab-count">{coaches.length}</span>
+            <span className="user-mgmt__tab-count">
+              {activeSnapshot && !error ? coaches.length : "—"}
+            </span>
           </button>
 
           <button
@@ -306,7 +310,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           >
             <TablerIcon name="users" size={16} />
             <span>Alumnos</span>
-            <span className="user-mgmt__tab-count">{students.length}</span>
+            <span className="user-mgmt__tab-count">
+              {activeSnapshot && !error ? students.length : "—"}
+            </span>
           </button>
         </div>
 
@@ -423,12 +429,15 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           </button>
 
           <span className="user-mgmt__counter" aria-live="polite">
-            {activeListLength}{" "}
-            {activeTab === "clubs"
-              ? "clubes"
-              : activeTab === "coaches"
-              ? "coaches"
-              : "alumnos"}
+            {error || !activeSnapshot
+              ? "—"
+              : `${activeListLength} ${
+                  activeTab === "clubs"
+                    ? "clubes"
+                    : activeTab === "coaches"
+                    ? "coaches"
+                    : "alumnos"
+                }`}
           </span>
         </div>
       </div>
@@ -453,7 +462,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       ) : null}
 
       {/* TAB 1: CLUBES TABLE */}
-      {!loading && activeTab === "clubs" ? (
+      {!loading && !error && activeTab === "clubs" ? (
         filteredClubs.length === 0 ? (
           <div className="user-mgmt__empty">
             <p>
@@ -710,7 +719,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       ) : null}
 
       {/* TAB 2: COACHES TABLE */}
-      {!loading && activeTab === "coaches" ? (
+      {!loading && !error && activeTab === "coaches" ? (
         filteredCoaches.length === 0 ? (
           <div className="user-mgmt__empty">
             <p>
@@ -727,8 +736,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   <tr>
                     <th>Coach / Correo</th>
                     <th>Código</th>
+                    <th>Club</th>
+                    <th>Alumnos</th>
+                    <th>Clases</th>
                     <th>Registro</th>
-                    <th>Clubes vinculados</th>
                     <th>Estado</th>
                     <th className="is-right">Acciones</th>
                   </tr>
@@ -738,20 +749,35 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     const isDeleting = deletingUserId === coach.id;
                     const menuKey = `coach-${coach.id}`;
                     const menuOpen = openMenuId === menuKey;
-                    const code = coach.coach_info?.coach_code ?? "COACH";
+                    const code = coach.coach_info?.coach_code || "—";
+                    const clubLabel = coach.coach_info?.clubs.length
+                      ? coach.coach_info.clubs.map((club) => club.name).join(", ")
+                      : "Sin club asociado";
+                    const stateMod =
+                      coach.coach_info?.membership_status === "activo"
+                        ? "active"
+                        : "idle";
 
                     return (
                       <tr key={coach.id} className="user-mgmt__row">
                         <td data-label="Coach">
                           <div className="user-mgmt__club-cell">
                             <div className="user-mgmt__avatar">
-                              <span>
-                                {getInitials(coach.name, coach.email)}
-                              </span>
+                              {coach.avatar_url ? (
+                                <img
+                                  src={coach.avatar_url}
+                                  alt=""
+                                  className="user-mgmt__avatar-img"
+                                />
+                              ) : (
+                                <span>
+                                  {getInitials(coach.name, coach.email)}
+                                </span>
+                              )}
                             </div>
                             <div className="user-mgmt__club-info">
                               <span className="user-mgmt__club-name-static">
-                                {coach.name || coach.email}
+                                {coach.name || coach.email || "Coach"}
                               </span>
                               <span className="user-mgmt__club-email">
                                 {coach.email || "Sin correo"}
@@ -762,18 +788,28 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                         <td data-label="Código">
                           <code className="user-mgmt__code-badge">{code}</code>
                         </td>
+                        <td data-label="Club">
+                          <span className="user-mgmt__meta-text">{clubLabel}</span>
+                        </td>
+                        <td data-label="Alumnos">
+                          <span className="user-mgmt__meta-text">
+                            {coach.coach_info?.student_count ?? 0}
+                          </span>
+                        </td>
+                        <td data-label="Clases">
+                          <span className="user-mgmt__meta-text">
+                            {coach.coach_info?.class_count ?? 0}
+                          </span>
+                        </td>
                         <td data-label="Registro">
                           <span className="user-mgmt__date">
                             {formatDate(coach.created_at)}
                           </span>
                         </td>
-                        <td data-label="Clubes vinculados">
-                          <span className="user-mgmt__meta-text">
-                            {coach.coach_info?.club_count ?? 0} clubes
-                          </span>
-                        </td>
                         <td data-label="Estado">
-                          <span className="user-mgmt__state-badge user-mgmt__state-badge--active">
+                          <span
+                            className={`user-mgmt__state-badge user-mgmt__state-badge--${stateMod}`}
+                          >
                             {coach.status_label}
                           </span>
                         </td>
@@ -838,7 +874,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       ) : null}
 
       {/* TAB 3: ALUMNOS TABLE */}
-      {!loading && activeTab === "students" ? (
+      {!loading && !error && activeTab === "students" ? (
         filteredStudents.length === 0 ? (
           <div className="user-mgmt__empty">
             <p>

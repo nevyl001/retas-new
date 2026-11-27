@@ -8,7 +8,10 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
+  overflow-x: clip;
 }
 
 .user-mgmt__top-bar {
@@ -104,17 +107,22 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 12px 14px;
   border-radius: var(--acc-radius-md);
   background: var(--acc-surface-1);
   border: 1px solid var(--acc-border-subtle);
   flex-wrap: wrap;
+  box-sizing: border-box;
 }
 
 .user-mgmt__search-wrap {
   position: relative;
-  flex: 1 1 260px;
+  flex: 1 1 240px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .user-mgmt__search-icon {
@@ -199,6 +207,8 @@
 
 .user-mgmt__table-scroll {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
   overflow-y: visible;
 }
@@ -553,6 +563,9 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 36px 16px;
   border-radius: var(--acc-radius-md);
   background: var(--acc-surface-1);

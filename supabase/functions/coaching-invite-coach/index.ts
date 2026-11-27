@@ -416,7 +416,8 @@ Deno.serve(async (req: Request) => {
         initialPassword = null;
       }
 
-      // Sincronizar o crear fila en public.users de forma idempotente
+      // public.users es el perfil compartido de la cuenta (nombre y correo).
+      // No es un club. El club se decide por ausencia de riviera_coaches y de vínculo de alumno.
       const { error: profileError } = await supabaseAdmin.from("users").upsert(
         {
           id: targetUserId,

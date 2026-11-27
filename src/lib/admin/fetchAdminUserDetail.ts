@@ -129,7 +129,7 @@ export async function fetchAdminUserDetail(
       .eq("organizador_id", userId),
     supabase
       .from("riviera_coaches")
-      .select("id, coach_code, display_name"),
+      .select("id, coach_code, nombre"),
     supabase
       .from("coach_student_account_links")
       .select("auth_user_id, jugador_id, student_email, is_active, created_at")
@@ -351,7 +351,7 @@ export async function fetchAdminUserDetail(
     const row = c as Record<string, unknown>;
     coachById.set(String(row.id ?? ""), {
       code: String(row.coach_code ?? "RIV-C"),
-      name: String(row.display_name ?? row.coach_code ?? "Coach"),
+      name: String(row.nombre ?? row.coach_code ?? "Coach"),
     });
   }
 
