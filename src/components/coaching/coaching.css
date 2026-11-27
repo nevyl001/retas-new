@@ -3289,7 +3289,7 @@
   }
 
   .coaching-ledger-row__left,
-  .coaching-ledger-row__details {
+.coaching-ledger-row__details {
     min-width: 0;
     width: 100%;
     max-width: 100%;
@@ -3583,7 +3583,7 @@
   }
 
   .coaching-student-profile__actions .coaching-btn {
-    flex: 1;
+  flex: 1;
     justify-content: center;
   }
 }

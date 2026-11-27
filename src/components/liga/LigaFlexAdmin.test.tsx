@@ -1,364 +1,332 @@
-import React from "react";
-import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { LigaFlexAdmin } from "./LigaFlexAdmin";
+/**
+ * @jest-environment jsdom
+ */
+/* eslint-disable testing-library/no-unnecessary-act */
+import React, { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
 import type { LigaDetalle, LigaJugadorPoolItem } from "../../lib/liga/types";
-import * as flexService from "../../services/ligaFlexService";
+import * as ligaFlexService from "../../services/ligaFlexService";
+import { LigaFlexAdmin, resolveFlexJornadaVisualState } from "./LigaFlexAdmin";
+
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 jest.mock("../../club-experience", () => ({
-  useClubModeEyebrow: () => "Riviera Open",
-  useBranding: () => ({ nombre: "Riviera Open" }),
+  useBranding: () => ({ nombre: "Hack Pádel" }),
+  useClubModeEyebrow: () => "Hack Pádel",
 }));
 
-jest.mock("./LigaPageShell", () => ({
-  LigaPageShell: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="liga-page-shell">{children}</div>
-  ),
-}));
-
-jest.mock("../../services/ligaFlexService", () => {
-  const actual = jest.requireActual("../../services/ligaFlexService");
-  return {
-    ...actual,
-    loadFlexLeague: jest.fn(),
-    loadFlexConfirmedRounds: jest.fn(),
-    correctFlexMatch: jest.fn(),
-    saveFlexMatchScore: jest.fn(),
-    confirmFlexRound: jest.fn(),
-  };
-});
-
-const mockedService = flexService as jest.Mocked<typeof flexService>;
-
-const pool: LigaJugadorPoolItem[] = [
-  "Ana Uno",
-  "Beto Dos",
-  "Carla Tres",
-  "Dani Cuatro",
-  "Eva Cinco",
-  "Fran Seis",
-  "Gaby Siete",
-  "Hugo Ocho",
-].map((nombre, index) => ({
-  id: `p${index + 1}`,
-  nombre,
-  email: null,
-  telefono: null,
-  genero: null,
-  nivel: null,
-  estado: "activo",
+const mockDetalle: LigaDetalle = {
+  id: "liga-flex-1",
+  nombre: "Test Flex",
+  estado: "in_progress",
+  modalidad: "flex_league",
+  vueltas: 1,
   organizador_id: "org-1",
-  created_at: "2026-01-01T00:00:00Z",
-  categoria: null,
-  riviera_id: `RO-00${index + 1}`,
-  foto_url: null,
-}));
-
-function makeDetalle(jornadaEstado: "in_progress" | "completed" = "in_progress"): LigaDetalle {
-  return {
-    id: "liga-flex-1",
-    club_id: "club-1",
-    nombre: "Riviera Flex League",
-    temporada: "2026",
-    formato: "flex_league",
-    categoria: "3ra",
-    rama: "mixto",
-    estado: "in_progress",
-    puntos_victoria: 3,
-    puntos_derrota: 1,
-    puntos_no_presentado: 0,
-    created_at: "2026-01-01T00:00:00Z",
-    updated_at: "2026-01-01T00:00:00Z",
-    jugadores: pool,
-    equipos: [],
-    inscripciones: pool.map((p, index) => ({
-      id: `ins-${index + 1}`,
+  canchas_disponibles: 3,
+  fecha_inicio: "2026-11-01",
+  fecha_fin: null,
+  created_at: "2026-11-01T00:00:00Z",
+  inscripciones: [],
+  equipos: [],
+  jugadores: [
+    {
+      id: "p1",
+      nombre: "Carlos Jugador",
+      email: "carlos@club.com",
+      telefono: null,
+      genero: "M",
+      nivel: null,
+      estado: "activo",
+      organizador_id: "org-1",
+      created_at: "2026-11-01T00:00:00Z",
+    },
+    {
+      id: "p2",
+      nombre: "Ana Jugadora",
+      email: "ana@club.com",
+      telefono: null,
+      genero: "F",
+      nivel: null,
+      estado: "activo",
+      organizador_id: "org-1",
+      created_at: "2026-11-01T00:00:00Z",
+    },
+  ],
+  jornadas: [
+    {
+      id: "jor-1",
       liga_id: "liga-flex-1",
-      jugador_id: p.id,
-      puntos: 0,
-      partidos_jugados: 2,
-      partidos_ganados: 1,
-      partidos_perdidos: 1,
-      games_favor: 10,
-      games_contra: 10,
-      diferencia_games: 0,
-      created_at: "2026-01-01T00:00:00Z",
-      jugador: p,
-    })) as unknown as LigaDetalle["inscripciones"],
-    jornadas: [
-      {
-        id: "jor-1",
-        liga_id: "liga-flex-1",
-        numero: 1,
-        nombre: "Jornada 1",
-        fecha: "2026-05-10",
-        estado: jornadaEstado,
-        created_at: "2026-01-01T00:00:00Z",
-        parejas: [
-          {
-            id: "par-1",
-            jornada_id: "jor-1",
-            jugador1_id: "p1",
-            jugador2_id: "p2",
-            created_at: "2026-01-01T00:00:00Z",
-          },
-          {
-            id: "par-2",
-            jornada_id: "jor-1",
-            jugador1_id: "p3",
-            jugador2_id: "p4",
-            created_at: "2026-01-01T00:00:00Z",
-          },
-          {
-            id: "par-3",
-            jornada_id: "jor-1",
-            jugador1_id: "p5",
-            jugador2_id: "p6",
-            created_at: "2026-01-01T00:00:00Z",
-          },
-          {
-            id: "par-4",
-            jornada_id: "jor-1",
-            jugador1_id: "p7",
-            jugador2_id: "p8",
-            created_at: "2026-01-01T00:00:00Z",
-          },
-        ] as unknown as LigaDetalle["jornadas"][number]["parejas"],
-        partidos: [
-          {
-            id: "m-r1-c1",
-            liga_id: "liga-flex-1",
-            jornada_id: "jor-1",
-            ronda: 1,
-            cancha: 1,
-            pareja1_id: "par-1",
-            pareja2_id: "par-2",
-            score_pareja1: 6,
-            score_pareja2: 4,
-            estado: "completed",
-            created_at: "2026-01-01T00:00:00Z",
-          },
-          {
-            id: "m-r1-c2",
-            liga_id: "liga-flex-1",
-            jornada_id: "jor-1",
-            ronda: 1,
-            cancha: 2,
-            pareja1_id: "par-3",
-            pareja2_id: "par-4",
-            score_pareja1: 6,
-            score_pareja2: 2,
-            estado: "completed",
-            created_at: "2026-01-01T00:00:00Z",
-          },
-          {
-            id: "m-r2-c1",
-            liga_id: "liga-flex-1",
-            jornada_id: "jor-1",
-            ronda: 2,
-            cancha: 1,
-            pareja1_id: "par-1",
-            pareja2_id: "par-3",
-            score_pareja1: 6,
-            score_pareja2: 3,
-            estado: "completed",
-            created_at: "2026-01-01T00:00:00Z",
-          },
-          {
-            id: "m-r2-c2",
-            liga_id: "liga-flex-1",
-            jornada_id: "jor-1",
-            ronda: 2,
-            cancha: 2,
-            pareja1_id: "par-2",
-            pareja2_id: "par-4",
-            score_pareja1: 6,
-            score_pareja2: 5,
-            estado: "completed",
-            created_at: "2026-01-01T00:00:00Z",
-          },
-        ] as unknown as LigaDetalle["jornadas"][number]["partidos"],
-      },
-    ],
-  } as unknown as LigaDetalle;
-}
+      numero: 1,
+      estado: "completed",
+      fecha: "2026-11-10",
+      puntos_aplicados: true,
+      parejas: [],
+      partidos: [],
+    } as unknown as LigaDetalle["jornadas"][number],
+    {
+      id: "jor-2",
+      liga_id: "liga-flex-1",
+      numero: 2,
+      estado: "upcoming",
+      fecha: "2026-11-24",
+      puntos_aplicados: false,
+      parejas: [],
+      partidos: [],
+    } as unknown as LigaDetalle["jornadas"][number],
+  ],
+};
 
-function mockBundle() {
-  mockedService.loadFlexLeague.mockResolvedValue({
-    config: {
+const mockPool: LigaJugadorPoolItem[] = [
+  {
+    id: "p1",
+    nombre: "Carlos Jugador",
+    email: "carlos@club.com",
+    telefono: null,
+    genero: "M",
+    nivel: null,
+    estado: "activo",
+    organizador_id: "org-1",
+    created_at: "2026-11-01T00:00:00Z",
+    categoria: "4ta_fuerza",
+    riviera_id: "RIV-00000101",
+    foto_url: "https://example.com/carlos.jpg",
+  },
+  {
+    id: "p2",
+    nombre: "Ana Jugadora",
+    email: "ana@club.com",
+    telefono: null,
+    genero: "F",
+    nivel: null,
+    estado: "activo",
+    organizador_id: "org-1",
+    created_at: "2026-11-01T00:00:00Z",
+    categoria: "5ta_fuerza",
+    riviera_id: "RIV-00000102",
+    foto_url: null,
+  },
+];
+
+const mockBundle: ligaFlexService.FlexBundle = {
+  config: {
+    ligaId: "liga-flex-1",
+    jornadasPlaneadas: 12,
+    jugadoresMin: 12,
+    jugadoresMax: 16,
+    rondasSugeridas: 5,
+    duracionRondaMin: 20,
+    descansoMin: 3,
+    categoria: "5ta fuerza",
+    horarioSugerido: "19:00",
+    inscripcionTemporadaMxn: 200,
+    participacionJornadaMxn: 300,
+    premioCampeon: "$3,000 MXN",
+    premioSubcampeon: "2 clases gratuitas",
+    premioTercer: "Kit Riviera Open",
+    jornadaFinalId: null,
+    cerradoAt: null,
+  },
+  jornadas: [
+    {
+      jornadaId: "jor-1",
       ligaId: "liga-flex-1",
-      jornadasPlaneadas: 10,
-      jugadoresMin: 8,
-      jugadoresMax: 16,
-      rondasSugeridas: 5,
+      canchas: 3,
+      rondas: 5,
       duracionRondaMin: 20,
-      descansoMin: 0,
-      categoria: "3ra",
-      horarioSugerido: "18:00",
-      inscripcionTemporadaMxn: null,
-      participacionJornadaMxn: null,
-      premioCampeon: null,
-      premioSubcampeon: null,
-      premioTercer: null,
-      jornadaFinalId: null,
-      cerradoAt: null,
+      descansoMin: 3,
+      horaInicio: "19:00",
+      horaFin: "21:00",
+      seed: 123,
+      programacionEstado: "confirmada",
+      advertencia: null,
+      esFinal: false,
+      calidad: null,
     },
-    jornadas: [
-      {
-        jornadaId: "jor-1",
-        ligaId: "liga-flex-1",
-        canchas: 2,
-        rondas: 5,
-        duracionRondaMin: 20,
-        descansoMin: 0,
-        horaInicio: "18:00",
-        horaFin: "20:00",
-        seed: 123,
-        programacionEstado: "confirmada",
-        advertencia: null,
-        esFinal: false,
-        calidad: null,
-      },
-    ],
-    participantes: {
-      "jor-1": pool.map((p) => p.id),
+    {
+      jornadaId: "jor-2",
+      ligaId: "liga-flex-1",
+      canchas: 3,
+      rondas: 5,
+      duracionRondaMin: 20,
+      descansoMin: 3,
+      horaInicio: "19:00",
+      horaFin: "21:00",
+      seed: null,
+      programacionEstado: "vacia",
+      advertencia: null,
+      esFinal: false,
+      calidad: null,
     },
-    posiciones: [],
-    honores: null,
-  });
-}
+  ],
+  participantes: {
+    "jor-1": ["p1", "p2"],
+    "jor-2": ["p1"],
+  },
+  posiciones: [
+    {
+      jornadaId: "jor-1",
+      jugadorId: "p1",
+      posicion: 1,
+      puntos: 100,
+      partidos: 5,
+      gamesFavor: 30,
+      gamesContra: 15,
+    },
+    {
+      jornadaId: "jor-1",
+      jugadorId: "p2",
+      posicion: 2,
+      puntos: 90,
+      partidos: 5,
+      gamesFavor: 25,
+      gamesContra: 20,
+    },
+  ],
+  honores: null,
+};
 
-describe("LigaFlexAdmin — flujo unificado de captura y corrección por ronda", () => {
+describe("LigaFlexAdmin — Rediseño Integral Premium", () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockBundle();
-    mockedService.loadFlexConfirmedRounds.mockResolvedValue([1]);
-    mockedService.correctFlexMatch.mockResolvedValue({
-      needsResolution: false,
-    });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    jest.spyOn(ligaFlexService, "loadFlexLeague").mockResolvedValue(mockBundle);
+    jest.spyOn(ligaFlexService, "loadFlexConfirmedRounds").mockResolvedValue([]);
   });
 
-  it("oculta Confirmar ronda 2 al consultar R01 confirmada, permite Editar/Cancelar y confirma con motivo en modal", async () => {
-    const onReload = jest.fn();
-    render(
-      <LigaFlexAdmin
-        detalle={makeDetalle("in_progress")}
-        pool={pool}
-        onReload={onReload}
-      />
-    );
-
-    await waitFor(() => {
-      expect(mockedService.loadFlexLeague).toHaveBeenCalled();
+  afterEach(() => {
+    act(() => {
+      root.unmount();
     });
+    container.remove();
+    jest.restoreAllMocks();
+  });
 
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /Confirmar ronda 2/i })).toBeInTheDocument();
-    });
-
-    // Seleccionar R01 (ronda anterior confirmada mientras R02 está activa)
-    const r01Tab = screen.getByRole("tab", { name: /R01/i });
-    fireEvent.click(r01Tab);
-
-    // El botón Confirmar ronda 2 NO debe aparecer mientras se consulta R01
-    expect(screen.queryByRole("button", { name: /Confirmar ronda 2/i })).not.toBeInTheDocument();
-
-    // Los campos de R01 están deshabilitados por defecto y muestran Editar
-    const scoreA1 = screen.getByLabelText("Marcador pareja 1 ronda 1 cancha 1") as HTMLInputElement;
-    const scoreB1 = screen.getByLabelText("Marcador pareja 2 ronda 1 cancha 1") as HTMLInputElement;
-    const scoreA2 = screen.getByLabelText("Marcador pareja 1 ronda 1 cancha 2") as HTMLInputElement;
-    expect(scoreA1).toBeDisabled();
-    expect(scoreB1).toBeDisabled();
-    expect(scoreA2).toBeDisabled();
-
-    // Pulsar Editar en Cancha 1 habilita únicamente los campos de ese partido
-    const editBtnC1 = screen.getByRole("button", {
-      name: /Editar partido ronda 1 cancha 1/i,
-    });
-    fireEvent.click(editBtnC1);
-
-    expect(scoreA1).not.toBeDisabled();
-    expect(scoreB1).not.toBeDisabled();
-    expect(scoreA2).toBeDisabled();
-
-    // Probar Cancelar: modifica temporalmente y cancela sin alterar datos
-    fireEvent.change(scoreA1, { target: { value: "3" } });
-    expect(scoreA1.value).toBe("3");
-    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
-    expect(scoreA1.value).toBe("6");
-    expect(scoreA1).toBeDisabled();
-    expect(mockedService.correctFlexMatch).not.toHaveBeenCalled();
-
-    // Volver a pulsar Editar, cambiar marcador y abrir ventana de confirmación
-    fireEvent.click(
-      screen.getByRole("button", { name: /Editar partido ronda 1 cancha 1/i })
-    );
-    fireEvent.change(scoreA1, { target: { value: "4" } });
-    fireEvent.change(scoreB1, { target: { value: "6" } });
-    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
-
-    // Verificar contenido del modal compacto de confirmación
+  it("resuelve estados reales de jornada (Pendiente, Configurada, En curso, Finalizada)", () => {
     expect(
-      screen.getByText(/CONFIRMAR CORRECCIÓN DE RESULTADO/i)
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Ronda R01 · Cancha 1/i)).toBeInTheDocument();
-    expect(screen.getByText("6 - 4")).toBeInTheDocument();
-    expect(screen.getByText("4 - 6")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /La clasificación se actualizará automáticamente\. Los puntos anteriores serán sustituidos sin duplicar registros\./i
+      resolveFlexJornadaVisualState(
+        { estado: "completed", fecha: null } as any,
+        null,
+        0
       )
-    ).toBeInTheDocument();
+    ).toEqual({ key: "finalizada", label: "Finalizada" });
 
-    const confirmModalBtn = screen.getByRole("button", {
-      name: "Confirmar corrección",
-    });
-    expect(confirmModalBtn).toBeDisabled();
+    expect(
+      resolveFlexJornadaVisualState(
+        { estado: "in_progress", fecha: null } as any,
+        null,
+        12
+      )
+    ).toEqual({ key: "en_curso", label: "En curso" });
 
-    const motivoInput = screen.getByPlaceholderText(
-      /Motivo de la corrección/i
-    );
-    fireEvent.change(motivoInput, {
-      target: { value: "Error de captura en acta oficial" },
-    });
-    expect(confirmModalBtn).not.toBeDisabled();
+    expect(
+      resolveFlexJornadaVisualState(
+        { estado: "upcoming", fecha: "2026-11-24" } as any,
+        null,
+        0
+      )
+    ).toEqual({ key: "configurada", label: "Configurada" });
 
-    fireEvent.click(confirmModalBtn);
-
-    await waitFor(() => {
-      expect(mockedService.correctFlexMatch).toHaveBeenCalledWith({
-        partidoId: "m-r1-c1",
-        scoreA: 4,
-        scoreB: 6,
-        motivo: "Error de captura en acta oficial",
-        orden: [],
-      });
-    });
+    expect(
+      resolveFlexJornadaVisualState(
+        { estado: "upcoming", fecha: null } as any,
+        null,
+        0
+      )
+    ).toEqual({ key: "pendiente", label: "Pendiente" });
   });
 
-  it("elimina la sección duplicada 'Corrección de jornada finalizada' y permite corregir por ronda en jornada cerrada", async () => {
-    mockedService.loadFlexConfirmedRounds.mockResolvedValue([1, 2]);
-    render(
-      <LigaFlexAdmin
-        detalle={makeDetalle("completed")}
-        pool={pool}
-        onReload={jest.fn()}
-      />
+  it("renderiza el Header Premium con KPIs reales y navega entre las 4 pestañas principales", async () => {
+    await act(async () => {
+      root.render(
+        <LigaFlexAdmin detalle={mockDetalle} pool={mockPool} onReload={jest.fn()} />
+      );
+    });
+
+    // Header y KPIs reales
+    expect(container.textContent).toContain("RIVIERA FLEX LEAGUE");
+    expect(container.textContent).toContain("Test Flex");
+    expect(container.textContent).toContain("Hack Pádel");
+    expect(container.textContent).toContain("5ta fuerza");
+    expect(container.textContent).toContain("EN CURSO");
+    expect(container.textContent).toContain("Jornadas totales");
+    expect(container.textContent).toContain("Jornadas completadas");
+    expect(container.textContent).toContain("Jugadores registrados");
+    expect(container.textContent).toContain("Próxima jornada");
+
+    // 4 pestañas principales: Resumen, Jornadas, Clasificación, Jugadores
+    const tabs = Array.from(container.querySelectorAll(".liga-flex-tab"));
+    expect(tabs.map((t) => t.textContent)).toEqual([
+      expect.stringContaining("Resumen"),
+      expect.stringContaining("Jornadas"),
+      expect.stringContaining("Clasificación"),
+      expect.stringContaining("Jugadores"),
+    ]);
+
+    // Vista por defecto: Jornadas con layout 2 columnas, Configuración y Participantes
+    expect(container.textContent).toContain("PARTICIPANTES DE LA JORNADA");
+    expect(container.textContent).toContain("¿No encuentras al jugador?");
+    expect(container.textContent).toContain("Ir al registro único");
+    expect(container.textContent).not.toContain("Registrar jugador nuevo");
+    expect(container.textContent).not.toContain("Dar de alta");
+    expect(container.textContent).toContain("CONFIGURACIÓN DE JORNADA");
+    expect(container.textContent).toContain("3 CANCHAS · 5 RONDAS");
+    expect(container.textContent).toContain("TIEMPO DE LA RETA: 120 MIN");
+    expect(container.textContent).not.toContain("Duración por ronda");
+    expect(container.textContent).not.toContain("Descanso entre rondas");
+    expect(container.textContent).toContain("Guardar configuración");
+
+    const resumenTab = tabs.find((t) => t.textContent?.includes("Resumen")) as HTMLButtonElement;
+    await act(async () => {
+      resumenTab.click();
+    });
+    expect((container.querySelector("#flex-inscripcion") as HTMLInputElement).value).toBe("200");
+    expect((container.querySelector("#flex-participacion") as HTMLInputElement).value).toBe("300");
+    expect((container.querySelector("#flex-premio-campeon") as HTMLInputElement).value).toBe(
+      "$3,000 MXN"
     );
+    expect((container.querySelector("#flex-premio-sub") as HTMLInputElement).value).toBe(
+      "2 clases gratuitas"
+    );
+    expect((container.querySelector("#flex-premio-tercer") as HTMLInputElement).value).toBe(
+      "Kit Riviera Open"
+    );
+    expect(container.textContent).toContain("Guardar premios y costos");
 
-    await waitFor(() => {
-      expect(mockedService.loadFlexLeague).toHaveBeenCalled();
+    // Cambiar a Clasificación
+    const clasificacionTab = tabs.find((t) =>
+      t.textContent?.includes("Clasificación")
+    ) as HTMLButtonElement;
+    await act(async () => {
+      clasificacionTab.click();
     });
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: /Editar partido ronda 2 cancha 1/i })
-      ).toBeInTheDocument();
+    expect(container.textContent).toContain("Clasificación General");
+    expect(container.textContent).toContain("Carlos Jugador");
+    expect(container.textContent).toContain("RIV-00000101");
+    expect(container.textContent).toContain("100 pts");
+
+    // Cambiar a Jugadores
+    const jugadoresTab = tabs.find((t) =>
+      t.textContent?.includes("Jugadores")
+    ) as HTMLButtonElement;
+    await act(async () => {
+      jugadoresTab.click();
     });
 
-    // No existe el bloque duplicado al final de la página
-    expect(
-      screen.queryByText(/Corrección de jornada finalizada/i)
-    ).not.toBeInTheDocument();
+    expect(container.textContent).toContain("Directorio de Jugadores");
+    expect(container.textContent).not.toContain("Dar de alta nuevo jugador");
+    expect(container.textContent).toContain("Ana Jugadora");
+    expect(container.textContent).toContain("RIV-00000102");
+
+    await act(async () => {
+      resumenTab.click();
+    });
+
+    expect(container.textContent).toContain("Estado general y progreso");
+    expect(container.textContent).toContain("Líderes de la temporada");
   });
 });

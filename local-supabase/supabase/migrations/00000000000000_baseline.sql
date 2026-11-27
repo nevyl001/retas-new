@@ -1,0 +1,1 @@
+../../../supabase/baseline/public-schema.sql
